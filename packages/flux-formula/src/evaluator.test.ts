@@ -1,11 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { EvalContext, RendererEnv, ScopeDependencyCollector } from '@nop-chaos/flux-core';
-import {
-  createFormulaCompiler,
-  registerFunction,
-  registerNamespace,
-  resetFormulaRegistry,
-} from './index';
+import { createFormulaCompiler, createFormulaRegistry } from './index';
 import { evaluateAst } from './evaluator';
 import { parseFormula } from './parser';
 import type { FormulaAstNode, IdentifierNode, ObjectExpressionNode, PropertyNode } from './ast';
@@ -101,13 +96,10 @@ function arrow(params: string[], body: FormulaAstNode): FormulaAstNode {
 }
 
 describe('evaluateAst', () => {
-  afterEach(() => {
-    resetFormulaRegistry();
-  });
-
   it('preserves member-call receivers and supports imported $ aliases', () => {
-    createFormulaCompiler();
-    registerNamespace('$calc', {
+    const registry = createFormulaRegistry();
+    createFormulaCompiler(registry);
+    registry.registerNamespace('$calc', {
       base: 2,
       add(this: { base: number }, value: number) {
         return this.base + value;
@@ -118,6 +110,7 @@ describe('evaluateAst', () => {
       evaluateAst(parseFormula('$calc.add(3)'), {
         env,
         context: createContext({}),
+        registry: registry.getSnapshot(),
       }),
     ).toBe(5);
 
@@ -132,7 +125,8 @@ describe('evaluateAst', () => {
   });
 
   it('supports lambda shadowing, optional members, instanceof, and dependency collection', () => {
-    createFormulaCompiler();
+    const registry = createFormulaRegistry();
+    createFormulaCompiler(registry);
     const collector = {
       recordPath: vi.fn(),
       recordWildcard: vi.fn(),
@@ -142,6 +136,7 @@ describe('evaluateAst', () => {
       evaluateAst(parseFormula('ARRAYMAP(items, x => x + tax)[1]'), {
         env,
         context: createContext({ items: [1, 2], tax: 10, x: 100 }, collector),
+        registry: registry.getSnapshot(),
       }),
     ).toBe(12);
     expect(
@@ -169,13 +164,15 @@ describe('evaluateAst', () => {
   });
 
   it('reports and throws on invalid call targets', () => {
-    createFormulaCompiler();
+    const registry = createFormulaRegistry();
+    createFormulaCompiler(registry);
     const reportError = vi.fn();
 
     expect(() =>
       evaluateAst(parseFormula('value()'), {
         env,
         context: createContext({ value: 1 }),
+        registry: registry.getSnapshot(),
         reportError,
       }),
     ).toThrow(/Call target is not a function/);
@@ -189,12 +186,13 @@ describe('evaluateAst', () => {
   });
 
   it('covers identifier bindings, logical aliases, members, object keys, and callable resolution', () => {
-    createFormulaCompiler();
-    registerNamespace('TOOLS', { value: 4, label: 'namespace' });
-    registerFunction('LAZY_CAPTURE', (...args: Array<() => unknown>) => args.map((arg) => arg()), {
+    const registry = createFormulaRegistry();
+    createFormulaCompiler(registry);
+    registry.registerNamespace('TOOLS', { value: 4, label: 'namespace' });
+    registry.registerFunction('LAZY_CAPTURE', (...args: Array<() => unknown>) => args.map((arg) => arg()), {
       invoke: 'lazy',
     });
-    registerFunction('APPLY2', (fn: (left: number, right: number) => number) => fn(2, 3));
+    registry.registerFunction('APPLY2', (fn: (left: number, right: number) => number) => fn(2, 3));
 
     const collector = {
       recordPath: vi.fn(),
@@ -218,11 +216,13 @@ describe('evaluateAst', () => {
       collector,
     );
 
-    expect(evaluateAst(identifier('TOOLS', 'namespace'), { env, context })).toEqual({
+    const snapshot = registry.getSnapshot();
+
+    expect(evaluateAst(identifier('TOOLS', 'namespace'), { env, context, registry: snapshot })).toEqual({
       value: 4,
       label: 'namespace',
     });
-    expect(typeof evaluateAst(identifier('SUM'), { env, context })).toBe('function');
+    expect(typeof evaluateAst(identifier('SUM'), { env, context, registry: snapshot })).toBe('function');
     expect(evaluateAst(identifier('plainValue'), { env, context })).toBe('plain');
     expect(evaluateAst(identifier('libValue', 'library'), { env, context })).toBe('library');
 
@@ -275,7 +275,7 @@ describe('evaluateAst', () => {
     expect(
       evaluateAst(
         call(identifier('LAZY_CAPTURE'), [binary('+', literal(1), literal(2)), literal(7)]),
-        { env, context },
+        { env, context, registry: snapshot },
       ),
     ).toEqual([3, 7]);
     expect(
@@ -283,7 +283,7 @@ describe('evaluateAst', () => {
         call(identifier('APPLY2'), [
           arrow(['left', 'right'], binary('+', identifier('left'), identifier('right'))),
         ]),
-        { env, context },
+        { env, context, registry: snapshot },
       ),
     ).toBe(5);
 

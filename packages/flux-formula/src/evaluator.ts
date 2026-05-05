@@ -1,7 +1,10 @@
 import type { EvalContext, RendererEnv } from '@nop-chaos/flux-core';
 import type { FormulaAstNode, IdentifierNode, MemberExpressionNode } from './ast';
-import { customEquals } from './builtins';
-import { getFormulaRegistrySnapshot, type FormulaRegistrySnapshot } from './registry';
+import { customEquals, installBuiltins } from './builtins';
+import { createFormulaRegistry, type FormulaRegistrySnapshot } from './registry';
+
+const defaultRegistry = createFormulaRegistry();
+installBuiltins(defaultRegistry);
 
 const MAX_EVAL_DEPTH = 256;
 const DANGEROUS_MEMBER_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
@@ -114,7 +117,7 @@ function applyUnaryOperator(op: string, value: unknown): unknown {
 }
 
 export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unknown {
-  const registry = options.registry ?? getFormulaRegistrySnapshot();
+  const registry = options.registry ?? defaultRegistry.getSnapshot();
   let evalDepth = 0;
 
   const evaluateNode = (node: FormulaAstNode, frame?: LambdaFrame): unknown => {

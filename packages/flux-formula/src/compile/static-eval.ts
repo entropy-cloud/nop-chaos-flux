@@ -2,11 +2,12 @@ import type { ExpressionCompileOptions, RendererEnv } from '@nop-chaos/flux-core
 import { evaluateAst } from '../evaluator';
 import type { FormulaAstNode } from '../ast';
 import { toEvalContext } from '../scope';
-import { getFormulaRegistrySnapshot } from '../registry';
+import type { FormulaRegistrySnapshot } from '../registry';
 import { buildMemberPath } from './symbol-diagnostics';
 
 function evaluateStaticAst(
   ast: FormulaAstNode,
+  registry: FormulaRegistrySnapshot,
   options?: ExpressionCompileOptions,
 ): { static: true; value: unknown } | { static: false } {
   const symbolTable = options?.symbolTable;
@@ -29,7 +30,6 @@ function evaluateStaticAst(
 
         const resolved = symbolTable?.resolve(node.name);
         if (resolved?.kind === 'builtin-namespace') {
-          const registry = getFormulaRegistrySnapshot();
           return { static: true, value: registry.namespaces[node.name] };
         }
 
@@ -42,7 +42,7 @@ function evaluateStaticAst(
         }
         return {
           static: true,
-          value: evaluateAst(node, { env: staticEnv, context: staticContext }),
+          value: evaluateAst(node, { env: staticEnv, context: staticContext, registry }),
         };
       }
       case 'BinaryExpression': {
@@ -51,7 +51,7 @@ function evaluateStaticAst(
         if (!left.static || !right.static) {
           return { static: false };
         }
-        const value = evaluateAst(node, { env: staticEnv, context: staticContext });
+        const value = evaluateAst(node, { env: staticEnv, context: staticContext, registry });
         return { static: true, value };
       }
       case 'LogicalExpression': {
@@ -60,7 +60,7 @@ function evaluateStaticAst(
         if (!left.static || !right.static) {
           return { static: false };
         }
-        const value = evaluateAst(node, { env: staticEnv, context: staticContext });
+        const value = evaluateAst(node, { env: staticEnv, context: staticContext, registry });
         return { static: true, value };
       }
       case 'NullCoalesceExpression': {
@@ -69,7 +69,7 @@ function evaluateStaticAst(
         if (!left.static || !right.static) {
           return { static: false };
         }
-        const value = evaluateAst(node, { env: staticEnv, context: staticContext });
+        const value = evaluateAst(node, { env: staticEnv, context: staticContext, registry });
         return { static: true, value };
       }
       case 'ConditionalExpression': {
@@ -79,7 +79,7 @@ function evaluateStaticAst(
         if (!test.static || !consequent.static || !alternate.static) {
           return { static: false };
         }
-        const value = evaluateAst(node, { env: staticEnv, context: staticContext });
+        const value = evaluateAst(node, { env: staticEnv, context: staticContext, registry });
         return { static: true, value };
       }
       case 'ArrayExpression': {

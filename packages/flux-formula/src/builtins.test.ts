@@ -1,15 +1,16 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { createFormulaCompiler, getFormulaRegistrySnapshot, resetFormulaRegistry } from './index';
+import { describe, expect, it } from 'vitest';
+import { createFormulaCompiler, createFormulaRegistry } from './index';
 import { customEquals } from './builtins';
 
 describe('builtins', () => {
-  afterEach(() => {
-    resetFormulaRegistry();
-  });
+  function createBuiltinsSnapshot() {
+    const registry = createFormulaRegistry();
+    createFormulaCompiler(registry);
+    return registry.getSnapshot();
+  }
 
   it('installs v1 namespaces and eager builtins', () => {
-    createFormulaCompiler();
-    const snapshot = getFormulaRegistrySnapshot();
+    const snapshot = createBuiltinsSnapshot();
 
     expect((snapshot.namespaces.$Math as typeof Math).max(1, 4, 2)).toBe(4);
     expect((snapshot.namespaces.$JSON as typeof JSON).stringify({ ok: true })).toBe('{"ok":true}');
@@ -50,8 +51,7 @@ describe('builtins', () => {
   });
 
   it('keeps IF and SWITCH lazy', () => {
-    createFormulaCompiler();
-    const snapshot = getFormulaRegistrySnapshot();
+    const snapshot = createBuiltinsSnapshot();
     let touched = false;
 
     expect(snapshot.functionMeta.IF.invoke).toBe('lazy');
@@ -85,8 +85,7 @@ describe('builtins', () => {
   });
 
   it('covers lazy fallbacks and empty-input builtin branches', () => {
-    createFormulaCompiler();
-    const snapshot = getFormulaRegistrySnapshot();
+    const snapshot = createBuiltinsSnapshot();
 
     expect(
       snapshot.functions.IF(
@@ -131,8 +130,7 @@ describe('builtins', () => {
   });
 
   it('$JSON.parse strips dangerous keys from parsed objects', () => {
-    createFormulaCompiler();
-    const snapshot = getFormulaRegistrySnapshot();
+    const snapshot = createBuiltinsSnapshot();
     const $JSON = snapshot.namespaces.$JSON as {
       parse: (s: string) => unknown;
       stringify: typeof JSON.stringify;
@@ -148,8 +146,7 @@ describe('builtins', () => {
   });
 
   it('$JSON.parse strips dangerous keys recursively', () => {
-    createFormulaCompiler();
-    const snapshot = getFormulaRegistrySnapshot();
+    const snapshot = createBuiltinsSnapshot();
     const $JSON = snapshot.namespaces.$JSON as { parse: (s: string) => unknown };
 
     const result = $JSON.parse('{"a": {"__proto__": "bad", "ok": true}}') as Record<

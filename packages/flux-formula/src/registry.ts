@@ -66,37 +66,3 @@ export function createFormulaRegistry(): FormulaRegistry {
     },
   };
 }
-
-// Default global instance for backward compatibility
-const defaultRegistry = createFormulaRegistry();
-
-let builtinsInstalled = false;
-
-export function getBuiltinsInstalled(): boolean {
-  return builtinsInstalled;
-}
-
-export function setBuiltinsInstalled(value: boolean): void {
-  builtinsInstalled = value;
-}
-
-export function registerFunction(
-  name: string,
-  fn: FormulaFunction,
-  options: { invoke?: FormulaInvokeMode } = {},
-): void {
-  defaultRegistry.registerFunction(name, fn, options);
-}
-
-export function registerNamespace(name: string, value: unknown): void {
-  defaultRegistry.registerNamespace(name, value);
-}
-
-export function getFormulaRegistrySnapshot(): FormulaRegistrySnapshot {
-  return defaultRegistry.getSnapshot();
-}
-
-export function resetFormulaRegistry(): void {
-  defaultRegistry.reset();
-  builtinsInstalled = false;
-}

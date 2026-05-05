@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   createSchemaDiagnosticCollector,
   type RendererEnv,
@@ -7,18 +7,13 @@ import {
 import {
   createExpressionCompiler,
   createFormulaCompiler,
-  registerFunction,
-  resetFormulaRegistry,
+  createFormulaRegistry,
 } from './index';
 
 const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),
   notify: () => undefined,
 };
-
-afterEach(() => {
-  resetFormulaRegistry();
-});
 
 function createScope(data: Record<string, any>): ScopeRef {
   return {
@@ -100,12 +95,12 @@ describe('createFormulaCompiler', () => {
   });
 
   it('rewrites filter-pipe compatibility syntax to function calls', () => {
-    resetFormulaRegistry();
-    registerFunction(
+    const registry = createFormulaRegistry();
+    registry.registerFunction(
       'wrap',
       (value: unknown, left: string, right: string) => `${left}${String(value)}${right}`,
     );
-    const compiler = createFormulaCompiler();
+    const compiler = createFormulaCompiler(registry);
     const expression = compiler.compileExpression('${name | wrap:"[":"]"}');
 
     expect(expression.exec(createScope({ name: 'Ada' }), env)).toBe('[Ada]');

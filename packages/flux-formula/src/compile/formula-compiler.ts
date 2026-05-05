@@ -13,7 +13,7 @@ import { parseFormula } from '../parser';
 import { normalizeExpressionSource, parseTemplateSegments } from '../template';
 import { toEvalContext } from '../scope';
 import type { FormulaRegistry, FormulaRegistrySnapshot } from '../registry';
-import { getFormulaRegistrySnapshot } from '../registry';
+import { createFormulaRegistry } from '../registry';
 import { rewriteFilterPipeSyntax } from './pipe-syntax';
 import { emitSymbolDiagnostics } from './symbol-diagnostics';
 import { evaluateStaticAst } from './static-eval';
@@ -75,11 +75,10 @@ function createExpressionMonitorReporter(env: RendererEnv, source: string) {
 }
 
 function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompiler {
-  installBuiltins();
+  const registry = formulaRegistry ?? createFormulaRegistry();
+  installBuiltins(registry);
 
-  const getSnapshot: () => FormulaRegistrySnapshot = formulaRegistry
-    ? () => formulaRegistry.getSnapshot()
-    : getFormulaRegistrySnapshot;
+  const getSnapshot: () => FormulaRegistrySnapshot = () => registry.getSnapshot();
 
   function buildBindingContext(options?: ExpressionCompileOptions): BindingContext {
     const registry = getSnapshot();
@@ -116,7 +115,7 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
       const ast = parseFormula(normalized);
       bindAst(ast, buildBindingContext(resolvedOptions));
       emitSymbolDiagnostics(ast, resolvedOptions);
-      const staticEval = evaluateStaticAst(ast, resolvedOptions);
+      const staticEval = evaluateStaticAst(ast, getSnapshot(), resolvedOptions);
 
       return {
         kind: 'expression',
@@ -133,6 +132,7 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
             return evaluateAst(ast, {
               env,
               context,
+              registry: getSnapshot(),
               reportError: createExpressionMonitorReporter(env, source),
             }) as T;
           } catch {
@@ -175,7 +175,7 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
           return { static: true as const, value: segment.value };
         }
 
-        const evaluated = evaluateStaticAst(segment.value.ast, resolvedOptions);
+        const evaluated = evaluateStaticAst(segment.value.ast, getSnapshot(), resolvedOptions);
         if (!evaluated.static) {
           return evaluated;
         }
@@ -209,6 +209,7 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
                 const evaluated = evaluateAst(segment.value.ast, {
                   env,
                   context,
+                  registry: getSnapshot(),
                   reportError: createExpressionMonitorReporter(env, source),
                 });
 

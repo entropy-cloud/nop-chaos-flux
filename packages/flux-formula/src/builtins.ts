@@ -1,10 +1,5 @@
 import { dateHelper } from './date-helper';
-import {
-  registerFunction,
-  registerNamespace,
-  getBuiltinsInstalled,
-  setBuiltinsInstalled,
-} from './registry';
+import type { FormulaRegistry } from './registry';
 
 function flattenNumericArgs(args: unknown[]): number[] {
   const flattened = args.flatMap((value) => (Array.isArray(value) ? value : [value]));
@@ -57,20 +52,20 @@ function deepSanitize(value: unknown): unknown {
   return result;
 }
 
-export function installBuiltins(): void {
-  if (getBuiltinsInstalled()) return;
-  setBuiltinsInstalled(true);
+export function installBuiltins(registry: FormulaRegistry): void {
+  const snapshot = registry.getSnapshot();
+  if (snapshot.functions.SUM || snapshot.namespaces.$Math || snapshot.namespaces.$JSON) return;
 
-  registerNamespace('$Math', Math);
-  registerNamespace('$JSON', {
+  registry.registerNamespace('$Math', Math);
+  registry.registerNamespace('$JSON', {
     parse(text: string) {
       return deepSanitize(JSON.parse(text));
     },
     stringify: JSON.stringify.bind(JSON),
   });
-  registerNamespace('$Date', dateHelper);
+  registry.registerNamespace('$Date', dateHelper);
 
-  registerFunction(
+  registry.registerFunction(
     'IF',
     (condition: () => unknown, whenTrue: () => unknown, whenFalse?: () => unknown) => {
       return condition() ? whenTrue() : (whenFalse?.() ?? null);
@@ -78,7 +73,7 @@ export function installBuiltins(): void {
     { invoke: 'lazy' },
   );
 
-  registerFunction(
+  registry.registerFunction(
     'SWITCH',
     (expr: () => unknown, ...branches: Array<() => unknown>) => {
       const value = expr();
@@ -93,15 +88,15 @@ export function installBuiltins(): void {
     { invoke: 'lazy' },
   );
 
-  registerFunction('SUM', (...args: unknown[]) =>
+  registry.registerFunction('SUM', (...args: unknown[]) =>
     flattenNumericArgs(args).reduce((sum, value) => sum + value, 0),
   );
-  registerFunction('AVG', (...args: unknown[]) => {
+  registry.registerFunction('AVG', (...args: unknown[]) => {
     const values = flattenNumericArgs(args);
     return values.length === 0 ? 0 : values.reduce((sum, value) => sum + value, 0) / values.length;
   });
-  registerFunction('COUNT', (input: unknown) => (Array.isArray(input) ? input.length : 0));
-  registerFunction(
+  registry.registerFunction('COUNT', (input: unknown) => (Array.isArray(input) ? input.length : 0));
+  registry.registerFunction(
     'ARRAYMAP',
     (input: unknown, iteratee: (value: unknown, index: number, array: unknown[]) => unknown) => {
       return toArray(input as unknown[]).map((value, index, array) =>
@@ -109,7 +104,7 @@ export function installBuiltins(): void {
       );
     },
   );
-  registerFunction(
+  registry.registerFunction(
     'ARRAYFILTER',
     (input: unknown, predicate: (value: unknown, index: number, array: unknown[]) => unknown) => {
       return toArray(input as unknown[]).filter((value, index, array) =>
@@ -117,7 +112,7 @@ export function installBuiltins(): void {
       );
     },
   );
-  registerFunction(
+  registry.registerFunction(
     'ARRAYFIND',
     (input: unknown, predicate: (value: unknown, index: number, array: unknown[]) => unknown) => {
       return toArray(input as unknown[]).find((value, index, array) =>
@@ -125,7 +120,7 @@ export function installBuiltins(): void {
       );
     },
   );
-  registerFunction(
+  registry.registerFunction(
     'ARRAYFINDINDEX',
     (input: unknown, predicate: (value: unknown, index: number, array: unknown[]) => unknown) => {
       return toArray(input as unknown[]).findIndex((value, index, array) =>
@@ -133,7 +128,7 @@ export function installBuiltins(): void {
       );
     },
   );
-  registerFunction(
+  registry.registerFunction(
     'ARRAYSOME',
     (input: unknown, predicate: (value: unknown, index: number, array: unknown[]) => unknown) => {
       return toArray(input as unknown[]).some((value, index, array) =>
@@ -141,7 +136,7 @@ export function installBuiltins(): void {
       );
     },
   );
-  registerFunction(
+  registry.registerFunction(
     'ARRAYEVERY',
     (input: unknown, predicate: (value: unknown, index: number, array: unknown[]) => unknown) => {
       return toArray(input as unknown[]).every((value, index, array) =>
@@ -149,34 +144,34 @@ export function installBuiltins(): void {
       );
     },
   );
-  registerFunction('ARRAYINCLUDES', (input: unknown, item: unknown) => {
+  registry.registerFunction('ARRAYINCLUDES', (input: unknown, item: unknown) => {
     return toArray(input as unknown[]).some(
       (value) => customEquals(value, item) || Object.is(value, item),
     );
   });
-  registerFunction('CONCAT', (...arrays: unknown[]) =>
+  registry.registerFunction('CONCAT', (...arrays: unknown[]) =>
     arrays.flatMap((value) => (Array.isArray(value) ? value : [value])),
   );
-  registerFunction('UNIQ', (input: unknown) => Array.from(new Set(toArray(input as unknown[]))));
-  registerFunction('COMPACT', (input: unknown) => toArray(input as unknown[]).filter(Boolean));
-  registerFunction('LEN', (input: unknown) => toStringValue(input).length);
-  registerFunction('CONCATENATE', (...args: unknown[]) => args.map(toStringValue).join(''));
-  registerFunction('TRIM', (input: unknown) => toStringValue(input).trim());
-  registerFunction('UPPER', (input: unknown) => toStringValue(input).toUpperCase());
-  registerFunction('LOWER', (input: unknown) => toStringValue(input).toLowerCase());
-  registerFunction('REPLACE', (input: unknown, search: unknown, replacement: unknown) => {
+  registry.registerFunction('UNIQ', (input: unknown) => Array.from(new Set(toArray(input as unknown[]))));
+  registry.registerFunction('COMPACT', (input: unknown) => toArray(input as unknown[]).filter(Boolean));
+  registry.registerFunction('LEN', (input: unknown) => toStringValue(input).length);
+  registry.registerFunction('CONCATENATE', (...args: unknown[]) => args.map(toStringValue).join(''));
+  registry.registerFunction('TRIM', (input: unknown) => toStringValue(input).trim());
+  registry.registerFunction('UPPER', (input: unknown) => toStringValue(input).toUpperCase());
+  registry.registerFunction('LOWER', (input: unknown) => toStringValue(input).toLowerCase());
+  registry.registerFunction('REPLACE', (input: unknown, search: unknown, replacement: unknown) => {
     return toStringValue(input).split(toStringValue(search)).join(toStringValue(replacement));
   });
-  registerFunction('SPLIT', (input: unknown, separator: unknown) =>
+  registry.registerFunction('SPLIT', (input: unknown, separator: unknown) =>
     toStringValue(input).split(toStringValue(separator)),
   );
-  registerFunction('JOIN', (input: unknown, separator?: unknown) =>
+  registry.registerFunction('JOIN', (input: unknown, separator?: unknown) =>
     toArray(input as unknown[]).join(separator == null ? ',' : String(separator)),
   );
-  registerFunction('CONTAINS', (input: unknown, search: unknown) =>
+  registry.registerFunction('CONTAINS', (input: unknown, search: unknown) =>
     toStringValue(input).includes(toStringValue(search)),
   );
-  registerFunction('ISEMPTY', (input: unknown) => {
+  registry.registerFunction('ISEMPTY', (input: unknown) => {
     if (input == null) {
       return true;
     }
@@ -185,10 +180,10 @@ export function installBuiltins(): void {
     }
     return false;
   });
-  registerFunction('INT', (input: unknown) => Math.trunc(Number(input)));
-  registerFunction('MOD', (left: unknown, right: unknown) => Number(left) % Number(right));
-  registerFunction('RAND', () => Math.random());
-  registerFunction('PI', () => Math.PI);
+  registry.registerFunction('INT', (input: unknown) => Math.trunc(Number(input)));
+  registry.registerFunction('MOD', (left: unknown, right: unknown) => Number(left) % Number(right));
+  registry.registerFunction('RAND', () => Math.random());
+  registry.registerFunction('PI', () => Math.PI);
 }
 
 export { customEquals };
