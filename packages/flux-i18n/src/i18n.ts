@@ -60,7 +60,7 @@ export function initFluxI18n(options: FluxI18nOptions = {}): i18n {
   const instance = i18next.createInstance();
   instance.use(initReactI18next).init(initOptions);
 
-  setMessageFormatter((key, params) => instance.t(key, params));
+  setMessageFormatter((key, params) => instance.t(normalizeTranslationKey(key), params));
 
   fluxI18nInstance = instance;
   return instance;
