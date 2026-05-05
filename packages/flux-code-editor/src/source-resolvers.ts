@@ -1,7 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { ScopeRef, ApiSchema, ActionSchema, ActionResult } from '@nop-chaos/flux-core';
 import type { RendererHelpers } from '@nop-chaos/flux-core';
-import { isVariableSourceRef, isFuncSourceRef, isSQLSchemaSourceRef } from './types';
+import {
+  isVariableSourceRef,
+  isFuncSourceRef,
+  isSQLSchemaSourceRef,
+  resolveSourceRefPath,
+} from './types';
 import type {
   ExpressionEditorConfig,
   SQLEditorConfig,
@@ -10,9 +15,9 @@ import type {
   TableSchema,
 } from './types';
 
-function getDataAtPath(data: unknown, dataPath: string | undefined): unknown {
-  if (!dataPath) return data;
-  const parts = dataPath.split('.');
+function getDataAtPath(data: unknown, path: string | undefined): unknown {
+  if (!path) return data;
+  const parts = path.split('.');
   let current: unknown = data;
   for (const key of parts) {
     if (current == null || typeof current !== 'object') return undefined;
@@ -36,7 +41,7 @@ interface AsyncResolverState<T> {
  */
 function useAsyncApiResolver<T>(
   api: ApiSchema | undefined,
-  dataPath: string | undefined,
+  path: string | undefined,
   dispatch: RendererHelpers['dispatch'],
 ): { items: T[]; error: Error | null; loading: boolean } {
   const [state, setState] = useState<AsyncResolverState<T>>({
@@ -48,8 +53,8 @@ function useAsyncApiResolver<T>(
   // Memoize config to create stable dependency - includes all values needed in effect
   const config = useMemo(() => {
     if (!api) return null;
-    return { api, dataPath };
-  }, [api, dataPath]);
+    return { api, path };
+  }, [api, path]);
 
   useEffect(() => {
     if (!config) {
@@ -65,7 +70,7 @@ function useAsyncApiResolver<T>(
       return;
     }
 
-    const { api: currentApi, dataPath: currentDataPath } = config;
+    const { api: currentApi, path: currentPath } = config;
     const controller = new AbortController();
     const { signal } = controller;
 
@@ -80,7 +85,7 @@ function useAsyncApiResolver<T>(
       .then((result: ActionResult) => {
         if (signal.aborted) return;
         if (result.ok && result.data != null) {
-          const extracted = getDataAtPath(result.data, currentDataPath);
+          const extracted = getDataAtPath(result.data, currentPath);
           setState({
             items: Array.isArray(extracted) ? (extracted as T[]) : [],
             error: null,
@@ -131,7 +136,7 @@ export function useResolvedVariables(
     if (!isVariableSourceRef(raw)) return raw;
     if (raw.source === 'scope') {
       const data = raw.scopePath ? scope.get(raw.scopePath) : scope.readVisible();
-      const items = getDataAtPath(data, raw.dataPath);
+      const items = getDataAtPath(data, resolveSourceRefPath(raw));
       return Array.isArray(items) ? (items as VariableItem[]) : [];
     }
     return null;
@@ -140,7 +145,7 @@ export function useResolvedVariables(
   const apiConfig = raw && isVariableSourceRef(raw) && raw.source === 'api' ? raw : null;
   const { items: apiResolved } = useAsyncApiResolver<VariableItem>(
     apiConfig?.api,
-    apiConfig?.dataPath,
+    apiConfig ? resolveSourceRefPath(apiConfig) : undefined,
     dispatch,
   );
 
@@ -162,7 +167,7 @@ export function useResolvedFunctions(
   const apiConfig = raw && isFuncSourceRef(raw) && raw.source === 'api' ? raw : null;
   const { items: apiResolved } = useAsyncApiResolver<FuncGroup>(
     apiConfig?.api,
-    apiConfig?.dataPath,
+    apiConfig ? resolveSourceRefPath(apiConfig) : undefined,
     dispatch,
   );
 
@@ -181,7 +186,7 @@ export function useResolvedTables(
     if (!isSQLSchemaSourceRef(raw)) return raw;
     if (raw.source === 'scope') {
       const data = raw.scopePath ? scope.get(raw.scopePath) : scope.readVisible();
-      const items = getDataAtPath(data, raw.dataPath);
+      const items = getDataAtPath(data, resolveSourceRefPath(raw));
       return Array.isArray(items) ? (items as TableSchema[]) : [];
     }
     return null;
@@ -190,7 +195,7 @@ export function useResolvedTables(
   const apiConfig = raw && isSQLSchemaSourceRef(raw) && raw.source === 'api' ? raw : null;
   const { items: apiResolved } = useAsyncApiResolver<TableSchema>(
     apiConfig?.api,
-    apiConfig?.dataPath,
+    apiConfig ? resolveSourceRefPath(apiConfig) : undefined,
     dispatch,
   );
 
@@ -209,7 +214,7 @@ export function useResolvedSQLVariables(
     if (!isVariableSourceRef(raw)) return raw;
     if (raw.source === 'scope') {
       const data = raw.scopePath ? scope.get(raw.scopePath) : scope.readVisible();
-      const items = getDataAtPath(data, raw.dataPath);
+      const items = getDataAtPath(data, resolveSourceRefPath(raw));
       return Array.isArray(items) ? (items as VariableItem[]) : [];
     }
     return null;
@@ -218,7 +223,7 @@ export function useResolvedSQLVariables(
   const apiConfig = raw && isVariableSourceRef(raw) && raw.source === 'api' ? raw : null;
   const { items: apiResolved } = useAsyncApiResolver<VariableItem>(
     apiConfig?.api,
-    apiConfig?.dataPath,
+    apiConfig ? resolveSourceRefPath(apiConfig) : undefined,
     dispatch,
   );
 

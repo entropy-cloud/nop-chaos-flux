@@ -3,6 +3,7 @@ import {
   isVariableSourceRef,
   isFuncSourceRef,
   isSQLSchemaSourceRef,
+  resolveSourceRefPath,
   resolveVariables,
   resolveFunctions,
   resolveTables,
@@ -35,6 +36,12 @@ describe('type guards', () => {
   it('isSQLSchemaSourceRef returns true for source refs', () => {
     expect(isSQLSchemaSourceRef({ source: 'api', api: { url: '/api/schema' } as any })).toBe(true);
     expect(isSQLSchemaSourceRef([{ name: 'users', columns: [] }])).toBe(false);
+  });
+
+  it('resolveSourceRefPath prefers path and supports legacy dataPath', () => {
+    expect(resolveSourceRefPath({ path: 'items' })).toBe('items');
+    expect(resolveSourceRefPath({ dataPath: 'legacy.items' })).toBe('legacy.items');
+    expect(resolveSourceRefPath({ path: 'items', dataPath: 'legacy.items' })).toBe('items');
   });
 });
 

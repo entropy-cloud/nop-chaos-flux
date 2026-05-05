@@ -88,14 +88,14 @@ export type VariableSourceRef = {
   source: 'scope' | 'api';
   scopePath?: string;
   api?: ApiSchema;
-  dataPath?: string;
+  path?: string;
 };
 
 export type FuncSourceRef = {
   source: 'builtin' | 'api';
   builtinSet?: string[];
   api?: ApiSchema;
-  dataPath?: string;
+  path?: string;
 };
 
 export interface ExpressionLintConfig {
@@ -174,8 +174,15 @@ export type SQLSchemaSourceRef = {
   source: 'scope' | 'api';
   scopePath?: string;
   api?: ApiSchema;
-  dataPath?: string;
+  path?: string;
 };
+
+export function resolveSourceRefPath(sourceRef: {
+  path?: string;
+  dataPath?: string;
+}): string | undefined {
+  return sourceRef.path ?? sourceRef.dataPath;
+}
 
 export interface CodeEditorResolvedProps {
   language: EditorLanguage;
