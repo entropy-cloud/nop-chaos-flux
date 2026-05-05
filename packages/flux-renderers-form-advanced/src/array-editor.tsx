@@ -39,8 +39,10 @@ function ArrayEditorRow(props: {
   items: ArrayEditorItem[];
   itemLabel?: string;
   disabled?: boolean;
+  inputRef?: React.Ref<HTMLInputElement>;
+  onBeforeRemove?(index: number): void;
 }) {
-  const { item, index, name, currentForm, childBehavior, onSync, items, itemLabel, disabled } =
+  const { item, index, name, currentForm, childBehavior, onSync, items, itemLabel, disabled, inputRef, onBeforeRemove } =
     props;
   const itemPath = `${name}.${index}.value`;
   const itemFieldState = useCompositeChildFieldState(itemPath);
@@ -59,6 +61,7 @@ function ArrayEditorRow(props: {
         data-child-field-invalid={itemUi['data-child-field-invalid']}
       >
         <Input
+          ref={inputRef}
           type="text"
           value={item.value}
           disabled={disabled}
@@ -105,6 +108,7 @@ function ArrayEditorRow(props: {
         disabled={disabled}
         aria-label={`${t('flux.form.remove')} ${itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}`}
         onClick={() => {
+          onBeforeRemove?.(index);
           const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
 
           if (currentForm && name) {
@@ -158,6 +162,9 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   const itemsRef = React.useRef<ArrayEditorItem[]>([]);
   const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
   const modelGeneration = useCurrentFormModelGeneration();
+  const inputRefs = React.useRef<Map<string, HTMLInputElement | null>>(new Map());
+  const addButtonRef = React.useRef<HTMLButtonElement>(null);
+  const pendingFocusRef = React.useRef<{ kind: 'add' } | { kind: 'remove'; index: number } | null>(null);
 
   const formExternalValue = useCurrentFormState(
     (state) => (currentForm && name ? toArrayEditorItems(getIn(state.values, name)) : undefined),
@@ -194,6 +201,29 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       registrationRef.current.childPaths = childPaths;
     }
   }, [childPaths]);
+
+  React.useEffect(() => {
+    const pending = pendingFocusRef.current;
+    if (!pending) return;
+    pendingFocusRef.current = null;
+
+    requestAnimationFrame(() => {
+      if (pending.kind === 'add') {
+        const lastItem = items[items.length - 1];
+        if (lastItem) {
+          inputRefs.current.get(lastItem.id)?.focus();
+        }
+      } else {
+        const targetIndex = Math.min(pending.index, items.length - 1);
+        const targetItem = items[targetIndex];
+        if (targetItem) {
+          inputRefs.current.get(targetItem.id)?.focus();
+        } else {
+          addButtonRef.current?.focus();
+        }
+      }
+    });
+  }, [items]);
 
   const syncItems = React.useCallback(
     (nextItems: ArrayEditorItem[]) => {
@@ -276,10 +306,21 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             items={items}
             itemLabel={props.props.itemLabel ? String(props.props.itemLabel) : undefined}
             disabled={presentation.effectiveDisabled}
+            inputRef={(el) => {
+              if (el) {
+                inputRefs.current.set(item.id, el);
+              } else {
+                inputRefs.current.delete(item.id);
+              }
+            }}
+            onBeforeRemove={(removedIndex) => {
+              pendingFocusRef.current = { kind: 'remove', index: removedIndex };
+            }}
           />
         );
       })}
       <Button
+        ref={addButtonRef}
         type="button"
         variant="outline"
         size="sm"
@@ -288,6 +329,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           const nextItem = { id: createNextCompositeItemId(items, 'item-'), value: '' };
           const nextItems = [...items, nextItem];
           itemsRef.current = nextItems;
+          pendingFocusRef.current = { kind: 'add' };
 
           if (currentForm && name) {
             currentForm.appendValue(name, nextItem);
