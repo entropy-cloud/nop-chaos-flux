@@ -16,7 +16,7 @@ const textRenderer: RendererDefinition = {
 const containerRenderer: RendererDefinition = {
   type: 'container',
   component: () => null,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
   staticCapable: true,
 };
 
@@ -42,7 +42,7 @@ const inputRenderer: RendererDefinition = {
 const formRenderer: RendererDefinition = {
   type: 'form',
   component: () => null,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
   scopePolicy: 'form',
   staticCapable: false,
 };

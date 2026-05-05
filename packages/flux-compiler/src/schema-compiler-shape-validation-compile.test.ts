@@ -77,7 +77,7 @@ describe('compile and validate integration', () => {
     const renderer: RendererDefinition = {
       type: 'designer-host',
       component: () => null,
-      regions: ['toolbar'],
+      fields: [{ key: 'toolbar', kind: 'region', regionKey: 'toolbar' }],
       hostContract: {
         family: 'designer',
         defaultVersion: '1.0',
@@ -90,7 +90,7 @@ describe('compile and validate integration', () => {
     const childRenderer: RendererDefinition = {
       type: 'child-host',
       component: () => null,
-      regions: ['body'],
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
       hostContract: {
         family: 'designer',
         defaultVersion: '2.0',
@@ -131,7 +131,7 @@ describe('compile and validate integration', () => {
     const renderer: RendererDefinition = {
       type: 'container',
       component: () => null,
-      regions: ['body'],
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
     };
     const compiler = makeCompiler([renderer]);
 

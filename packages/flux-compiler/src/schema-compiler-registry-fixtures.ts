@@ -2,51 +2,6 @@ import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index';
 
-export const crudAuthoringTransform = (
-  context: import('@nop-chaos/flux-core').RendererAuthoringTransformContext<
-    import('@nop-chaos/flux-core').BaseSchema
-  >,
-) => {
-  if (context.schema.type !== 'crud') {
-    return context.schema;
-  }
-
-  const schema = context.schema as Record<string, unknown>;
-  const nextSchema: Record<string, unknown> = { ...schema };
-
-  if (nextSchema.filter !== undefined && nextSchema.queryForm === undefined) {
-    nextSchema.queryForm = nextSchema.filter;
-  }
-
-  if (nextSchema.primaryField !== undefined && nextSchema.rowKey === undefined) {
-    nextSchema.rowKey = nextSchema.primaryField;
-  }
-
-  if (nextSchema.perPageField !== undefined && nextSchema.pageSizeField === undefined) {
-    nextSchema.pageSizeField = nextSchema.perPageField;
-  }
-
-  delete nextSchema.filter;
-  delete nextSchema.primaryField;
-  delete nextSchema.perPageField;
-
-  if (nextSchema.bulkActions === undefined) {
-    return nextSchema as import('@nop-chaos/flux-core').BaseSchema;
-  }
-
-  if (nextSchema.listActions !== undefined) {
-    const { bulkActions, ...rest } = nextSchema;
-    void bulkActions;
-    return rest as import('@nop-chaos/flux-core').BaseSchema;
-  }
-
-  const { bulkActions, ...rest } = nextSchema;
-  return {
-    ...rest,
-    listActions: bulkActions,
-  } as unknown as import('@nop-chaos/flux-core').BaseSchema;
-};
-
 export const tableRenderer: RendererDefinition = {
   type: 'table',
   component: () => null,
@@ -67,7 +22,6 @@ export const crudRenderer: RendererDefinition = {
   component: () => null,
   rendererClass: 'flux-owner-renderer',
   rendererTraits: ['semantic-owner', 'composite'],
-  authoringTransform: crudAuthoringTransform,
   fields: [
     { key: 'queryForm', kind: 'prop' },
     { key: 'toolbar', kind: 'region' },
@@ -99,7 +53,7 @@ export const textRenderer: RendererDefinition = {
 export const pageRenderer: RendererDefinition = {
   type: 'page',
   component: () => null,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
 export const cardRenderer: RendererDefinition = {
@@ -125,7 +79,10 @@ export const importHostRenderer: RendererDefinition = {
 export const formRenderer: RendererDefinition = {
   type: 'form',
   component: () => null,
-  regions: ['body', 'actions'],
+  fields: [
+    { key: 'body', kind: 'region', regionKey: 'body' },
+    { key: 'actions', kind: 'region', regionKey: 'actions' },
+  ],
   scopePolicy: 'form',
   validation: {
     kind: 'container',

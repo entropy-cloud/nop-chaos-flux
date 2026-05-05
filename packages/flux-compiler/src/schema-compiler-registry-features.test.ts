@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import {
   importHostRenderer,
-  textRenderer,
-  localDataRendererDefinitions,
   createTestCompiler,
 } from './schema-compiler-registry-fixtures';
 
@@ -106,71 +104,6 @@ describe('createSchemaCompiler', () => {
     expect(node.regions['columns.0.cell']?.node).toBeTruthy();
     expect(node.propsProgram.value.columns[0].cell).toBeUndefined();
     expect(node.propsProgram.value.columns[0].cellRegionKey).toBe('columns.0.cell');
-  });
-
-  it('canonicalizes crud migration aliases before compilation', () => {
-    const compiler = createTestCompiler([...localDataRendererDefinitions]);
-
-    const compiled = compiler.compile({
-      type: 'crud',
-      filter: {
-        body: [{ type: 'text', text: 'Query region' }],
-      },
-      primaryField: 'id',
-      perPageField: 'pageSize',
-      columns: [{ name: 'name', label: 'Name' }],
-    });
-    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
-
-    expect(node.schema.queryForm).toBeTruthy();
-    expect(node.schema.rowKey).toBe('id');
-    expect(node.schema.pageSizeField).toBe('pageSize');
-    expect(node.schema.filter).toBeUndefined();
-    expect(node.schema.primaryField).toBeUndefined();
-    expect(node.schema.perPageField).toBeUndefined();
-  });
-
-  it('canonicalizes crud bulkActions to listActions before compilation', () => {
-    const compiler = createTestCompiler([textRenderer, ...localDataRendererDefinitions]);
-
-    const compiled = compiler.compile({
-      type: 'crud',
-      bulkActions: [{ type: 'text', text: 'Delete selected' }],
-      columns: [{ name: 'name', label: 'Name' }],
-    });
-    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
-
-    expect(node.schema.listActions).toEqual([{ type: 'text', text: 'Delete selected' }]);
-    expect(node.schema.bulkActions).toBeUndefined();
-  });
-
-  it('keeps canonical crud fields when legacy aliases are also present', () => {
-    const compiler = createTestCompiler([...localDataRendererDefinitions]);
-
-    const compiled = compiler.compile({
-      type: 'crud',
-      filter: {
-        body: [{ type: 'text', text: 'Legacy query region' }],
-      },
-      queryForm: {
-        body: [{ type: 'text', text: 'Canonical query region' }],
-      },
-      primaryField: 'legacy-id',
-      rowKey: 'canonical-id',
-      perPageField: 'legacyPageSize',
-      pageSizeField: 'canonicalPageSize',
-      columns: [{ name: 'name', label: 'Name' }],
-    });
-    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
-
-    expect(node.schema.queryForm).toEqual({
-      body: [{ type: 'text', text: 'Canonical query region' }],
-    });
-    expect(node.schema.rowKey).toBe('canonical-id');
-    expect(node.schema.pageSizeField).toBe('canonicalPageSize');
-    expect(node.schema.filter).toBeUndefined();
-    expect(node.schema.primaryField).toBeUndefined();
-    expect(node.schema.perPageField).toBeUndefined();
   });
 
   it('treats table empty as a plain prop or compiled region based on field metadata', () => {

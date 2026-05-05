@@ -50,10 +50,6 @@ export function getAcceptedSchemaKeys(renderer: RendererDefinition): Set<string>
     keys.add(key);
   }
 
-  for (const region of renderer.regions ?? []) {
-    keys.add(region);
-  }
-
   for (const field of renderer.fields ?? []) {
     keys.add(field.key);
   }

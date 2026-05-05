@@ -31,10 +31,6 @@ export function classifyField(renderer: RendererDefinition, key: string): Schema
     return { key, kind: 'meta' };
   }
 
-  if (renderer.regions?.includes(key)) {
-    return { key, kind: 'region', regionKey: key };
-  }
-
   if (LIFECYCLE_KEYS.has(key)) {
     return { key, kind: 'ignored' };
   }

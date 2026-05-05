@@ -16,9 +16,10 @@ const noop = () => null;
 const dialogRenderer: RendererDefinition = {
   type: 'dialog',
   component: noop,
-  regions: ['body', 'actions'],
   fields: [
     { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+    { key: 'body', kind: 'region', regionKey: 'body' },
+    { key: 'actions', kind: 'region', regionKey: 'actions' },
     { key: 'onOpen', kind: 'event' },
     { key: 'onClose', kind: 'event' },
     { key: 'container', kind: 'prop' },
@@ -29,9 +30,10 @@ const dialogRenderer: RendererDefinition = {
 const drawerRenderer: RendererDefinition = {
   type: 'drawer',
   component: noop,
-  regions: ['body', 'actions'],
   fields: [
     { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+    { key: 'body', kind: 'region', regionKey: 'body' },
+    { key: 'actions', kind: 'region', regionKey: 'actions' },
     { key: 'onOpen', kind: 'event' },
     { key: 'onClose', kind: 'event' },
     { key: 'container', kind: 'prop' },
@@ -61,8 +63,8 @@ const loopRenderer: RendererDefinition = {
   type: 'loop',
   component: noop,
   defaultSchema: { type: 'loop', body: [] },
-  regions: ['empty'],
   fields: [
+    { key: 'empty', kind: 'region', regionKey: 'empty' },
     { key: 'items', kind: 'prop' },
     { key: 'itemName', kind: 'prop' },
     { key: 'indexName', kind: 'prop' },
@@ -90,8 +92,8 @@ const recurseRenderer: RendererDefinition = {
 const tabsRenderer: RendererDefinition = {
   type: 'tabs',
   component: noop,
-  regions: ['toolbar'],
   fields: [
+    { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
     { key: 'onChange', kind: 'event' },
     { key: 'items', kind: 'prop' },
   ],
@@ -101,7 +103,6 @@ const formRenderer: RendererDefinition = {
   type: 'form',
   component: noop,
   defaultSchema: { type: 'form', body: [], actions: [] },
-  regions: ['body', 'actions'],
   propContracts: {
     data: { shape: { kind: 'object', fields: {} }, displayName: 'Data' },
     statusPath: { shape: { kind: 'string' }, displayName: 'Status Path' },
@@ -126,6 +127,8 @@ const formRenderer: RendererDefinition = {
     },
   },
   fields: [
+    { key: 'body', kind: 'region', regionKey: 'body' },
+    { key: 'actions', kind: 'region', regionKey: 'actions' },
     { key: 'initAction', kind: 'event' },
     { key: 'submitAction', kind: 'event' },
     { key: 'onSubmitSuccess', kind: 'event' },
@@ -234,9 +237,9 @@ const crudRenderer: RendererDefinition = {
 const variantFieldRenderer: RendererDefinition = {
   type: 'variant-field',
   component: noop,
-  regions: ['content'],
   fields: [
     { key: 'label', kind: 'value-or-region', regionKey: 'label' },
+    { key: 'content', kind: 'region', regionKey: 'content' },
     { key: 'variants', kind: 'ignored' },
     { key: 'selector', kind: 'ignored' },
     { key: 'selectorMode', kind: 'ignored' },
@@ -252,9 +255,10 @@ const detailFieldRenderer: RendererDefinition = {
   type: 'detail-field',
   component: noop,
   wrap: true,
-  regions: ['viewer', 'content'],
   fields: [
     { key: 'label', kind: 'value-or-region', regionKey: 'label' },
+    { key: 'viewer', kind: 'region', regionKey: 'viewer' },
+    { key: 'content', kind: 'region', regionKey: 'content' },
     { key: 'triggerLabel', kind: 'prop' },
     { key: 'readOnly', kind: 'prop' },
     { key: 'surface', kind: 'ignored' },

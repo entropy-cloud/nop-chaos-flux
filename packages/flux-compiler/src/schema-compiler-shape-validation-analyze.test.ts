@@ -41,7 +41,7 @@ describe('analyzeSchemaInput validation', () => {
     const renderer: RendererDefinition = {
       type: 'container',
       component: () => null,
-      regions: ['body'],
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
     };
     const compiler = makeCompiler([renderer]);
 
@@ -131,7 +131,6 @@ describe('analyzeSchemaInput validation', () => {
     const renderer: RendererDefinition = {
       type: 'page',
       component: () => null,
-      regions: ['body'],
       propSchema: { data: { type: 'object' } },
       fields: [{ key: 'data', kind: 'prop' }],
     };
@@ -151,7 +150,6 @@ describe('analyzeSchemaInput validation', () => {
     const renderer: RendererDefinition = {
       type: 'page',
       component: () => null,
-      regions: ['body'],
       propSchema: { data: { type: 'object' } },
       fields: [{ key: 'data', kind: 'prop' }],
     };
@@ -168,7 +166,11 @@ describe('analyzeSchemaInput validation', () => {
   });
 
   it('reports invalid dependsOn entries', () => {
-    const renderer: RendererDefinition = { type: 'page', component: () => null, regions: ['body'] };
+    const renderer: RendererDefinition = {
+      type: 'page',
+      component: () => null,
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+    };
     const compiler = makeCompiler([renderer]);
 
     const diagnostics = compiler.validate?.({
@@ -190,7 +192,11 @@ describe('analyzeSchemaInput validation', () => {
   });
 
   it('reports non-array dependsOn', () => {
-    const renderer: RendererDefinition = { type: 'page', component: () => null, regions: ['body'] };
+    const renderer: RendererDefinition = {
+      type: 'page',
+      component: () => null,
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+    };
     const compiler = makeCompiler([renderer]);
 
     expect(compiler.validate?.({ type: 'page', dependsOn: 'not-array' })).toEqual(

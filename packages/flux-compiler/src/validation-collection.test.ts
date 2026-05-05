@@ -12,7 +12,7 @@ import { collectValidationModel } from './schema-compiler/validation-collection'
 const formRenderer: RendererDefinition = {
   type: 'form',
   component: () => null,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
   scopePolicy: 'form',
   validation: {
     kind: 'container',
@@ -86,7 +86,7 @@ const blockingInputRenderer: RendererDefinition = {
 const childPrefixRenderer: RendererDefinition = {
   type: 'prefix-input',
   component: () => null,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
   validation: {
     kind: 'field',
     getFieldPath(schema) {
@@ -142,7 +142,7 @@ describe('collectValidationModel', () => {
     const detailRenderer: RendererDefinition = {
       type: 'detail-view',
       component: () => null,
-      regions: ['content'],
+      fields: [{ key: 'content', kind: 'region', regionKey: 'content' }],
       scopePolicy: 'form',
       validation: {
         kind: 'container',
@@ -438,7 +438,7 @@ describe('collectValidationModel', () => {
     const nestedFormRenderer: RendererDefinition = {
       type: 'nested-form',
       component: () => null,
-      regions: ['body'],
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
       scopePolicy: 'form',
       validation: {
         kind: 'container',
@@ -478,7 +478,7 @@ describe('collectValidationModel', () => {
     const detailRenderer: RendererDefinition = {
       type: 'detail-view',
       component: () => null,
-      regions: ['content'],
+      fields: [{ key: 'content', kind: 'region', regionKey: 'content' }],
       scopePolicy: 'form',
       validation: {
         kind: 'container',

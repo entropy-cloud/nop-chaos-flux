@@ -46,7 +46,10 @@ const automaticHostContract: RendererHostContract = {
 const automaticHostOwnerRenderer: RendererDefinition = {
   type: 'designer-page',
   component: () => null,
-  regions: ['toolbar', 'body'],
+  fields: [
+    { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
+    { key: 'body', kind: 'region', regionKey: 'body' },
+  ],
   hostContract: automaticHostContract,
 };
 
