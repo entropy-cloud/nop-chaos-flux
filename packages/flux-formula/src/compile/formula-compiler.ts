@@ -12,17 +12,21 @@ import { evaluateAst } from '../evaluator';
 import { parseFormula } from '../parser';
 import { normalizeExpressionSource, parseTemplateSegments } from '../template';
 import { toEvalContext } from '../scope';
+import type { FormulaRegistry, FormulaRegistrySnapshot } from '../registry';
 import { getFormulaRegistrySnapshot } from '../registry';
 import { rewriteFilterPipeSyntax } from './pipe-syntax';
 import { emitSymbolDiagnostics } from './symbol-diagnostics';
 import { evaluateStaticAst } from './static-eval';
 
-function ensureCompileOptions(options?: ExpressionCompileOptions): ExpressionCompileOptions {
+function ensureCompileOptions(
+  options: ExpressionCompileOptions | undefined,
+  getSnapshot: () => FormulaRegistrySnapshot,
+): ExpressionCompileOptions {
   if (options?.symbolTable) {
     return options;
   }
 
-  const registry = getFormulaRegistrySnapshot();
+  const registry = getSnapshot();
   const symbols = Object.fromEntries(
     Object.keys(registry.namespaces).map((name) => [
       name,
@@ -70,11 +74,15 @@ function createExpressionMonitorReporter(env: RendererEnv, source: string) {
   };
 }
 
-function createFormulaCompiler(): FormulaCompiler {
+function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompiler {
   installBuiltins();
 
+  const getSnapshot: () => FormulaRegistrySnapshot = formulaRegistry
+    ? () => formulaRegistry.getSnapshot()
+    : getFormulaRegistrySnapshot;
+
   function buildBindingContext(options?: ExpressionCompileOptions): BindingContext {
-    const registry = getFormulaRegistrySnapshot();
+    const registry = getSnapshot();
     const libraryNames = new Set(options?.libraryNames ?? []);
     const namespaceNames = new Set(Object.keys(registry.namespaces));
 
@@ -103,7 +111,7 @@ function createFormulaCompiler(): FormulaCompiler {
       source: string,
       options?: ExpressionCompileOptions,
     ): CompiledExpression<T> {
-      const resolvedOptions = ensureCompileOptions(options);
+      const resolvedOptions = ensureCompileOptions(options, getSnapshot);
       const normalized = rewriteFilterPipeSyntax(normalizeExpressionSource(source));
       const ast = parseFormula(normalized);
       bindAst(ast, buildBindingContext(resolvedOptions));
@@ -141,7 +149,7 @@ function createFormulaCompiler(): FormulaCompiler {
       source: string,
       options?: ExpressionCompileOptions,
     ): CompiledStringTemplate<T> {
-      const resolvedOptions = ensureCompileOptions(options);
+      const resolvedOptions = ensureCompileOptions(options, getSnapshot);
       const bindingContext = buildBindingContext(resolvedOptions);
       const segments: CompiledTemplateSegment[] = parseTemplateSegments(source).map((segment) => {
         if (segment.type === 'text') {
