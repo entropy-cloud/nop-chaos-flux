@@ -7,6 +7,10 @@ export default createSharedVitestConfig({
     reporter: ['text', 'json-summary'],
     include: [
       'src/compile.ts',
+      'src/index.ts',
+      'src/expression-compiler.ts',
+      'src/evaluate.ts',
+      'src/bind-ast.ts',
       'src/date-helper.ts',
       'src/lexer.ts',
       'src/parser.ts',
