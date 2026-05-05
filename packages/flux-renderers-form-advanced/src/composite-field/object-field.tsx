@@ -7,9 +7,10 @@ import type {
 } from '@nop-chaos/flux-core';
 import { actionAdapter, getIn, setIn } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
-import { FormContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
+import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
 import {
   useCurrentForm,
+  useCurrentValidationScope,
   useCurrentFormState,
   useRenderScope,
   useScopeSelector,
@@ -19,6 +20,7 @@ import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-render
 import { cn } from '@nop-chaos/ui';
 import { createProjectedInlineForm } from './projected-inline-form';
 import { createProjectedOwnerScope } from '../projected-owner-scope';
+import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime';
 
 type BaseNodeInstance = RendererComponentProps['node'];
 
@@ -96,6 +98,7 @@ function createObjectFieldChildScope(
 export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSchema>) {
   const parentScope = useRenderScope();
   const parentForm = useCurrentForm();
+  const parentValidationOwner = useCurrentValidationScope();
   const name = String(props.props.name ?? '');
   const readOnly = Boolean(props.props.readOnly);
   const schemaProps = props.props as ObjectFieldSchema;
@@ -191,6 +194,22 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   });
 
   const bodyContent = resolveRendererSlotContent(props, 'body');
+  const childValidationOwner = React.useMemo(() => {
+    if (parentForm || !parentValidationOwner || !name) {
+      return parentValidationOwner;
+    }
+
+    return createProjectedValidationRuntime(parentValidationOwner, {
+      ownerRootPath: name,
+      prefixPath(path) {
+        if (!path) {
+          return name;
+        }
+
+        return `${name}.${path}`;
+      },
+    });
+  }, [name, parentForm, parentValidationOwner]);
 
   const writeProjectedValue = React.useCallback(
     (path: string, nextLeafValue: unknown) => {
@@ -383,7 +402,9 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     >
       <FormContext.Provider value={childForm ?? undefined}>
         <ScopeContext.Provider value={childScope}>
-          <div data-slot="object-field-body">{bodyContent}</div>
+          <ValidationContext.Provider value={childValidationOwner}>
+            <div data-slot="object-field-body">{bodyContent}</div>
+          </ValidationContext.Provider>
         </ScopeContext.Provider>
       </FormContext.Provider>
     </div>

@@ -267,4 +267,66 @@ describe('tree controls - DOM structure, markers, and expand/collapse', () => {
     expect(depthValues).toContain('0');
     expect(depthValues).toContain('1');
   });
+
+  it('publishes a tree and group ARIA structure for nested tree controls', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/tree-structure.test.tsx#6"
+        schema={
+          {
+            type: 'form',
+            body: [
+              {
+                type: 'input-tree',
+                name: 'teams',
+                label: 'Teams',
+                treeMode: 'checkbox',
+                options: [
+                  {
+                    label: 'Engineering',
+                    value: 'eng',
+                    children: [{ label: 'Platform', value: 'platform' }],
+                  },
+                ],
+              },
+              {
+                type: 'tree-select',
+                name: 'department',
+                label: 'Department',
+                options: [
+                  {
+                    label: 'Operations',
+                    value: 'ops',
+                    children: [{ label: 'Support', value: 'support' }],
+                  },
+                ],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const inputTree = document
+      .querySelector('[data-slot="input-tree-control"]')
+      ?.querySelector('[role="tree"]');
+    expect(inputTree?.getAttribute('aria-multiselectable')).toBe('true');
+    const inputTreeItem = inputTree?.querySelector('[role="treeitem"]');
+    expect(inputTreeItem?.getAttribute('aria-level')).toBe('1');
+    expect(inputTreeItem?.getAttribute('aria-expanded')).toBe('true');
+    expect(inputTree?.querySelector('[role="group"]')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /Department/ }));
+
+    await waitFor(() => {
+      const trees = Array.from(document.querySelectorAll('[role="tree"]'));
+      expect(trees.length).toBeGreaterThanOrEqual(2);
+      expect(trees.some((tree) => tree.querySelector('[role="group"]'))).toBe(true);
+    });
+  });
 });

@@ -4,8 +4,10 @@ import {
   useChildFieldState,
   useCurrentForm,
   useCurrentFormState,
+  useCurrentValidationValues,
   useOwnedFieldState,
 } from '@nop-chaos/flux-react';
+import { isFieldEffectivelyRequired } from '@nop-chaos/flux-react';
 import type { ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { getValidationBehaviorForOwner } from './field-validation';
 
@@ -54,12 +56,19 @@ export function useFieldPresentation(
       left.readOnly === right.readOnly,
     { path: name },
   );
+  const ownerEffectiveRequired = useCurrentValidationValues(
+    (values) =>
+      Boolean(options?.required) ||
+      isFieldEffectivelyRequired(currentValidationScope?.validation, name, values as Record<string, any>),
+    Object.is,
+    { enabled: !currentForm, path: name },
+  );
   const presentation = currentForm
     ? currentPresentation
     : {
         ...fieldState,
         effectiveDisabled: Boolean(options?.disabled),
-        effectiveRequired: Boolean(options?.required),
+        effectiveRequired: ownerEffectiveRequired,
         showError: Boolean(
           fieldState.error &&
           shouldShowFieldError(behavior, {

@@ -48,6 +48,7 @@ export function createInputRenderer(inputType: string) {
     return (
       <Input
         type={inputType}
+        id={name ? `${name}-control` : undefined}
         name={name || undefined}
         value={inputValue}
         disabled={presentation.effectiveDisabled}
@@ -157,6 +158,7 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
         disabled={loading || presentation.effectiveDisabled}
       >
         <SelectTrigger
+          id={name ? `${name}-control` : undefined}
           data-slot="select-trigger"
           aria-label={ariaLabel}
           aria-invalid={presentation.showError ? true : undefined}
@@ -191,6 +193,7 @@ function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
 
   return (
     <Textarea
+      id={name ? `${name}-control` : undefined}
       name={name || undefined}
       value={textareaValue}
       rows={typeof props.props.rows === 'number' ? props.props.rows : 4}
@@ -220,6 +223,7 @@ function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
   return (
     <span className={cn('nop-checkbox-wrapper', props.meta.className)} data-slot="checkbox-wrapper">
       <Checkbox
+        id={name ? `${name}-control` : undefined}
         checked={checked}
         disabled={presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}
@@ -247,6 +251,7 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   return (
     <span className={cn('nop-switch-wrapper', props.meta.className)} data-slot="switch-wrapper">
       <Switch
+        id={name ? `${name}-control` : undefined}
         checked={checked}
         disabled={presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}

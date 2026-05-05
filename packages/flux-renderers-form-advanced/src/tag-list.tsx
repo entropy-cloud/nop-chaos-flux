@@ -1,6 +1,10 @@
 import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
-import { useCurrentFormFieldState, useCurrentFormModelGeneration } from '@nop-chaos/flux-react';
+import {
+  useCurrentFormFieldState,
+  useCurrentFormModelGeneration,
+  useCurrentValidationScope,
+} from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
@@ -25,30 +29,38 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const labelText = resolveFieldLabelText(props, name);
   const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];
   const modelGeneration = useCurrentFormModelGeneration();
+  const currentValidationScope = useCurrentValidationScope();
   const fieldState = useCurrentFormFieldState(name, { path: name, ownerPath: name });
 
   const syncErrorVisibility = React.useCallback(() => {
-    if (!currentForm || !name) {
+    if (!name) {
       return;
     }
 
-    if (currentForm.isTouched(name) || fieldState.submitting) {
+    if (currentForm && (currentForm.isTouched(name) || fieldState.submitting)) {
       void currentForm.validateField(name);
+      return;
     }
-  }, [currentForm, fieldState.submitting, name]);
+
+    if (currentValidationScope?.touchField && fieldState.touched) {
+      void currentValidationScope.validateAt(name, 'change');
+    }
+  }, [currentForm, currentValidationScope, fieldState.submitting, fieldState.touched, name]);
 
   React.useEffect(() => {
-    if (!currentForm || !name) {
+    const owner = currentForm ?? currentValidationScope;
+
+    if (!owner || !name) {
       return;
     }
 
-    return currentForm.registerField({
+    return owner.registerField({
       path: name,
       getValue() {
-        return currentForm.scope.get(name);
+        return (owner.scope ?? scope).get(name);
       },
       validate() {
-        const currentValue = currentForm.scope.get(name);
+        const currentValue = (owner.scope ?? scope).get(name);
         const currentTags = Array.isArray(currentValue)
           ? currentValue.map((item) => String(item))
           : [];
@@ -66,7 +78,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
         return [];
       },
     }).unregister;
-  }, [currentForm, labelText, modelGeneration, name]);
+  }, [currentForm, currentValidationScope, labelText, modelGeneration, name, scope]);
 
   return (
     <div
@@ -84,11 +96,13 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
             variant={active ? 'secondary' : 'outline'}
             size="sm"
             disabled={presentation.effectiveDisabled}
-            onFocus={() => {
-              if (currentForm && name) {
-                currentForm.visitField(name);
-              }
-            }}
+              onFocus={() => {
+                if (currentForm && name) {
+                  currentForm.visitField(name);
+                } else if (currentValidationScope && name) {
+                  currentValidationScope.visitField?.(name);
+                }
+              }}
             aria-pressed={active}
             onClick={() => {
               const nextValue = active ? value.filter((item) => item !== tag) : [...value, tag];
@@ -100,7 +114,9 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
                 currentForm.setValue(name, nextValue);
                 syncErrorVisibility();
               } else {
+                currentValidationScope?.touchField?.(name);
                 scope.update(name, nextValue);
+                void currentValidationScope?.validateAt(name, 'change');
               }
             }}
           >

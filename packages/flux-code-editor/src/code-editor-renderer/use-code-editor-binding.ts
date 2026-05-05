@@ -1,6 +1,7 @@
 import {
   useCurrentForm,
   useCurrentFormState,
+  useCurrentValidationScope,
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
@@ -10,6 +11,7 @@ import type { CodeEditorRendererProps } from './shared';
 export function useCodeEditorBinding(props: CodeEditorRendererProps, name: string) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
+  const currentValidationScope = useCurrentValidationScope();
 
   const formValue = useCurrentFormState(
     (state) => (name ? getIn(state.values, name) : state.values),
@@ -30,8 +32,11 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
   const handleChange = (newValue: string) => {
     if (currentForm && name) {
       currentForm.setValue(name, newValue);
+      void currentForm.validateField(name, 'change');
     } else if (name) {
+      currentValidationScope?.touchField?.(name);
       scope.update(name, newValue);
+      void currentValidationScope?.validateAt(name, 'change');
     }
     props.events.onChange?.({ value: newValue });
   };
@@ -39,6 +44,8 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
   const handleFocus = () => {
     if (currentForm && name) {
       currentForm.visitField(name);
+    } else if (name) {
+      currentValidationScope?.visitField?.(name);
     }
     props.events.onFocus?.();
   };
@@ -46,6 +53,10 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
   const handleBlur = () => {
     if (currentForm && name) {
       currentForm.touchField(name);
+      void currentForm.validateField(name, 'blur');
+    } else if (name) {
+      currentValidationScope?.touchField?.(name);
+      void currentValidationScope?.validateAt(name, 'blur');
     }
     props.events.onBlur?.();
   };

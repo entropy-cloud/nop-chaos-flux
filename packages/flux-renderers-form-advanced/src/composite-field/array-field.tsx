@@ -12,17 +12,19 @@ import {
   useCurrentForm,
   useCurrentFormModelGeneration,
   useCurrentFormState,
+  useCurrentValidationScope,
   useRenderInstancePath,
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import { FormContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
+import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas';
 import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { createItemFormProxy, createItemScope } from './array-field-runtime';
 import { WrappedFieldAction } from '../wrapped-field-action';
+import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -94,6 +96,7 @@ function ArrayItem(props: {
   itemKind: 'scalar' | 'object';
   parentScope: ScopeRef;
   parentForm: FormRuntime | undefined;
+  parentValidationOwner: import('@nop-chaos/flux-core').ValidationScopeRuntime | undefined;
   readOnly: boolean;
   removable: boolean;
   onRemove: (index: number) => void;
@@ -106,6 +109,7 @@ function ArrayItem(props: {
     itemKind,
     parentScope,
     parentForm,
+    parentValidationOwner,
     readOnly,
     removable,
     onRemove,
@@ -121,12 +125,29 @@ function ArrayItem(props: {
     () => (parentForm ? createItemFormProxy(parentForm, arrayPath, index, itemKind) : parentForm),
     [parentForm, arrayPath, index, itemKind],
   );
+  const itemValidationOwner = React.useMemo(() => {
+    if (parentForm || !parentValidationOwner) {
+      return parentValidationOwner;
+    }
+
+    return createProjectedValidationRuntime(parentValidationOwner, {
+      ownerRootPath: `${arrayPath}.${index}`,
+      scalarValueAlias: itemKind === 'scalar' ? 'value' : undefined,
+      prefixPath(path) {
+        if (!path) return `${arrayPath}.${index}`;
+        if (itemKind === 'scalar' && path === 'value') return `${arrayPath}.${index}`;
+        return `${arrayPath}.${index}.${path}`;
+      },
+    });
+  }, [arrayPath, index, itemKind, parentForm, parentValidationOwner]);
 
   return (
     <div data-slot="array-field-item">
       <div data-slot="array-field-item-body">
         <FormContext.Provider value={itemForm ?? undefined}>
-          <ScopeContext.Provider value={itemScope}>{renderItem()}</ScopeContext.Provider>
+          <ScopeContext.Provider value={itemScope}>
+            <ValidationContext.Provider value={itemValidationOwner}>{renderItem()}</ValidationContext.Provider>
+          </ScopeContext.Provider>
         </FormContext.Provider>
       </div>
       {removable && (
@@ -151,6 +172,7 @@ function getScalarItemFieldSchema(schema: ArrayFieldSchema): BaseSchema | undefi
 export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchema>) {
   const parentScope = useRenderScope();
   const parentForm = useCurrentForm();
+  const parentValidationOwner = useCurrentValidationScope();
   const parentInstancePath = useRenderInstancePath();
   const modelGeneration = useCurrentFormModelGeneration();
   const name = String(props.props.name ?? '');
@@ -363,6 +385,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
               itemKind={itemKind}
               parentScope={parentScope}
               parentForm={parentForm}
+              parentValidationOwner={parentValidationOwner}
               readOnly={readOnly || presentation.effectiveDisabled}
               removable={removable && !readOnly && !presentation.effectiveDisabled}
               onRemove={handleRemove}

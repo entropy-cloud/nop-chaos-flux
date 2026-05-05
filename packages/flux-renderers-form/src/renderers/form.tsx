@@ -181,6 +181,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     ? props.node.instancePath.map((f) => `${f.repeatedTemplateId}:${f.instanceKey}`).join('/')
     : `${props.id}:${props.path}`;
   const lastInitKeyRef = useRef<string | undefined>(undefined);
+  const initActionAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     ownedForm.setLifecycleHandlers({
@@ -262,8 +263,21 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       return;
     }
 
+    initActionAbortRef.current?.abort();
+    const controller = new AbortController();
+    initActionAbortRef.current = controller;
     lastInitKeyRef.current = activationKey;
-    void initAction(undefined, { scope: lifecycleScope, form: ownedForm });
+
+    void initAction(undefined, { scope: lifecycleScope, form: ownedForm, signal: controller.signal }).catch(
+      () => undefined,
+    );
+
+    return () => {
+      if (initActionAbortRef.current === controller) {
+        controller.abort();
+        initActionAbortRef.current = null;
+      }
+    };
   }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm]);
 
   const statusPath =

@@ -46,26 +46,31 @@ function TreeOptionNode(props: {
         )}
         style={{ paddingInlineStart: `${props.option.depth * 16 + 8}px` }}
         role="treeitem"
+        aria-level={props.option.depth + 1}
+        aria-expanded={hasChildren ? expanded : undefined}
         aria-selected={checked}
+        aria-disabled={props.disabled || undefined}
         tabIndex={props.disabled ? -1 : 0}
         onClick={handleSelect}
         onKeyDown={handleKeyDown}
       >
-        <span
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
           className={cn(
             'inline-flex size-5 shrink-0 items-center justify-center rounded-sm',
-            hasChildren ? 'cursor-pointer hover:bg-accent' : '',
+            hasChildren ? 'hover:bg-accent' : '',
             !hasChildren ? 'invisible' : '',
           )}
           aria-label={hasChildren ? (expanded ? 'Collapse node' : 'Expand node') : undefined}
-          role={hasChildren ? 'button' : undefined}
-          tabIndex={hasChildren ? 0 : undefined}
+          disabled={!hasChildren}
           onClick={handleChevronClick}
         >
           <ChevronRightIcon
             className={cn('size-3.5 transition-transform', expanded ? 'rotate-90' : '')}
           />
-        </span>
+        </Button>
         {props.multiple ? (
           <Checkbox
             checked={checked}
@@ -78,17 +83,21 @@ function TreeOptionNode(props: {
         </span>
       </div>
       {hasChildren && expanded
-        ? props.option.children.map((child) => (
-            <TreeOptionNode
-              key={`${child.valueKey}:${child.depth}`}
-              option={child}
-              value={props.value}
-              multiple={props.multiple}
-              showPathLabel={props.showPathLabel}
-              disabled={props.disabled}
-              onChange={props.onChange}
-            />
-          ))
+        ? (
+            <div role="group" data-slot="tree-option-group">
+              {props.option.children.map((child) => (
+                <TreeOptionNode
+                  key={`${child.valueKey}:${child.depth}`}
+                  option={child}
+                  value={props.value}
+                  multiple={props.multiple}
+                  showPathLabel={props.showPathLabel}
+                  disabled={props.disabled}
+                  onChange={props.onChange}
+                />
+              ))}
+            </div>
+          )
         : null}
     </div>
   );
@@ -121,7 +130,11 @@ function TreeOptionList(props: {
           />
         </Label>
       ) : null}
-      <div data-slot="tree-option-items">
+      <div
+        data-slot="tree-option-items"
+        role="tree"
+        aria-multiselectable={props.multiple || undefined}
+      >
         {filteredOptions.map((option) => (
           <TreeOptionNode
             key={`${option.valueKey}:${option.depth}`}

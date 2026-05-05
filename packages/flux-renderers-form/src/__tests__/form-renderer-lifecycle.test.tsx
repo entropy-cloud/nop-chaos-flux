@@ -422,4 +422,56 @@ describe('FormRenderer lifecycle wiring', () => {
 
     expect(runtime.createFormRuntime).toHaveBeenCalledTimes(1);
   });
+
+  it('cancels and catches fire-and-forget initAction work on cleanup', async () => {
+    const parentScope = makeScope({ id: 'parent', visible: { parentValue: 'plain' } });
+    const ownedScope = makeScope({ id: 'owned-init', visible: { localValue: 'plain-owned' } });
+    const initAction = vi.fn(
+      async (_value: unknown, options?: { signal?: AbortSignal }) =>
+        new Promise<void>((_resolve, reject) => {
+          options?.signal?.addEventListener(
+            'abort',
+            () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+            { once: true },
+          );
+        }),
+    );
+    const ownedForm = {
+      scope: ownedScope,
+      store: { getState: () => ({ values: {} }) },
+      setLifecycleHandlers: vi.fn(),
+    } as any;
+    const runtime = {
+      getImportedExpressionBindings: vi.fn(() => ({})),
+      createFormRuntime: vi.fn(() => ownedForm),
+    } as any;
+
+    mocks.useRendererRuntime.mockReturnValue(runtime);
+    mocks.useCurrentActionScope.mockReturnValue(undefined);
+    mocks.useCurrentComponentRegistry.mockReturnValue(undefined);
+    mocks.useCurrentPage.mockReturnValue(undefined);
+    mocks.useRenderScope.mockReturnValue(parentScope);
+
+    const { unmount } = render(
+      <FormRenderer
+        {...buildProps({
+          events: { initAction },
+          regions: {},
+          templateNode: { validationPlan: undefined, importsPlan: undefined, schemaUrl: undefined },
+          node: { instancePath: [] },
+        })}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(initAction).toHaveBeenCalledTimes(1);
+    });
+
+    const initCall = initAction.mock.calls[0];
+    expect(initCall?.[1]?.signal).toBeInstanceOf(AbortSignal);
+
+    unmount();
+
+    expect((initCall?.[1] as { signal?: AbortSignal } | undefined)?.signal?.aborted).toBe(true);
+  });
 });

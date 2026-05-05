@@ -316,4 +316,5 @@ describe('code-editor integration', () => {
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
+
 });
