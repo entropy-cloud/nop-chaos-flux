@@ -293,6 +293,12 @@ export interface CompiledApiConfig {
  */
 export interface CompiledOperationControl {
   dedup?: RequestDedupStrategy;
+  retry?: {
+    times: number;
+    delay?: number;
+    strategy?: 'fixed' | 'exponential';
+    maxDelay?: number;
+  };
   throttle?: number;
   cacheTTL?: number;
   cacheKey?: string;

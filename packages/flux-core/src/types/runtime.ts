@@ -18,7 +18,13 @@ import type {
   ChildValidationContractRegistration,
 } from './validation';
 import type { ActionScope } from './actions';
-import type { ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
+import type {
+  ComponentHandleRegistry,
+  RenderNodeInput,
+  RenderRegionHandle,
+  RendererRuntime,
+  ResolvedNodeMeta,
+} from './renderer';
 
 export interface FieldState {
   touched?: true;
@@ -186,6 +192,12 @@ export interface OwnedSurfaceStateBase {
   ownerNodeInstance?: NodeInstance;
   title?: RenderNodeInput | string;
   body?: RenderNodeInput;
+  actions?: RenderNodeInput;
+  meta?: Pick<ResolvedNodeMeta, 'className' | 'testid' | 'cid'>;
+  regionHandles?: Readonly<Record<string, RenderRegionHandle>>;
+  controlledOpen?: boolean;
+  onOpen?: () => Promise<ActionResult> | ActionResult | void;
+  onClose?: () => Promise<ActionResult> | ActionResult | void;
 }
 
 export interface SurfaceEntry extends OwnedSurfaceStateBase {
@@ -213,6 +225,7 @@ export interface SurfaceStoreApi {
   getState(): SurfaceStoreState;
   subscribe(listener: () => void): () => void;
   push(entry: SurfaceEntry): void;
+  upsert(entry: SurfaceEntry): void;
   remove(surfaceId?: string): SurfaceEntry | undefined;
 }
 
@@ -223,13 +236,30 @@ export interface SurfaceRuntime {
     surface: Record<string, any>;
     scope: ScopeRef;
     runtime: RendererRuntime;
+    surfaceId?: string;
     options?: {
       actionScope?: ActionScope;
       componentRegistry?: ComponentHandleRegistry;
       ownerTemplateNode?: TemplateNode;
       ownerNodeInstance?: NodeInstance;
+      title?: RenderNodeInput | string;
+      body?: RenderNodeInput;
+      actions?: RenderNodeInput;
+      meta?: Pick<ResolvedNodeMeta, 'className' | 'testid' | 'cid'>;
+      regionHandles?: Readonly<Record<string, RenderRegionHandle>>;
+      controlledOpen?: boolean;
+      onOpen?: () => Promise<ActionResult> | ActionResult | void;
+      onClose?: () => Promise<ActionResult> | ActionResult | void;
     };
   }): string;
+  upsert(entry: SurfaceEntry): void;
+  publishStatus(surfaceId?: string): void;
+  publishClosed(input: {
+    surfaceId: string;
+    kind: 'dialog' | 'drawer' | 'sheet';
+    scope: ScopeRef;
+    statusPath?: string;
+  }): void;
   close(surfaceId?: string): void;
   closeTop(): void;
 }

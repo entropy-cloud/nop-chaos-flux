@@ -39,19 +39,28 @@ export function compileApiConfig(
 function compileOperationControl(schema: DataSourceSchema): CompiledOperationControl | undefined {
   const control = (
     schema as {
-      control?: { dedup?: string; throttle?: number; cacheTTL?: number; cacheKey?: string };
+      control?: {
+        dedup?: string;
+        retry?: { times: number; delay?: number; strategy?: 'fixed' | 'exponential'; maxDelay?: number };
+        throttle?: number;
+        cacheTTL?: number;
+        cacheKey?: string;
+      };
+      retry?: { times: number; delay?: number; strategy?: 'fixed' | 'exponential'; maxDelay?: number };
     }
   ).control;
+  const topLevelRetry = (schema as { retry?: CompiledOperationControl['retry'] }).retry;
 
-  if (!control) {
+  if (!control && !topLevelRetry) {
     return undefined;
   }
 
   return {
-    dedup: control.dedup as CompiledOperationControl['dedup'],
-    throttle: control.throttle,
-    cacheTTL: control.cacheTTL,
-    cacheKey: control.cacheKey,
+    dedup: control?.dedup as CompiledOperationControl['dedup'],
+    retry: control?.retry ?? topLevelRetry,
+    throttle: control?.throttle,
+    cacheTTL: control?.cacheTTL,
+    cacheKey: control?.cacheKey,
   };
 }
 
