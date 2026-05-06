@@ -81,6 +81,7 @@ const queryCrud = {
       type: 'crud',
       source: '${records}',
       rowKey: 'id',
+      selection: {},
       queryForm: {
         body: [{ type: 'input-text', name: 'keyword', label: 'Keyword' }],
       },
@@ -263,6 +264,7 @@ const selectionRefreshCrud = {
       source: '${records}',
       rowKey: 'id',
       autoClearSelectionOnRefresh: true,
+      selection: {},
       toolbar: [
         {
           type: 'button',

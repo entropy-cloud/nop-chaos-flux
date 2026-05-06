@@ -188,7 +188,7 @@ export function normalizeCrudSchema(schema: CrudSchema): CrudSchema {
     ...schema,
     rowKey: schema.rowKey ?? 'id',
     autoClearSelectionOnRefresh: schema.autoClearSelectionOnRefresh ?? true,
-    selectionOwnership: schema.selectionOwnership ?? 'local',
+    selectionOwnership: schema.selection ? (schema.selectionOwnership ?? 'local') : undefined,
     paginationOwnership: schema.paginationOwnership ?? 'local',
     sortOwnership: schema.sortOwnership ?? 'local',
     filterOwnership: schema.filterOwnership ?? 'local',

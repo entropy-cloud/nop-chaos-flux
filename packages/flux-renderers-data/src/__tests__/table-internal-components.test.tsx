@@ -1,6 +1,6 @@
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { TableBodyRows } from '../table-renderer/table-body-rows';
 import { TableLoadingOverlay } from '../table-renderer/table-loading-overlay';
@@ -10,6 +10,8 @@ beforeEach(() => {
   resetFluxI18n();
   initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 });
+
+afterEach(cleanup);
 
 function makeTableProps(overrides: Record<string, unknown> = {}) {
   return {
@@ -174,5 +176,177 @@ describe('table internal components', () => {
     expect(document.querySelector('[data-slot="table-expanded-row"]')).toBeTruthy();
     fireEvent.click(screen.getByLabelText('Collapse'));
     expect(onToggleExpand).toHaveBeenCalledWith('1');
+  });
+
+  it('renders data rows with checkbox selection cells and correct field values', () => {
+    const onSelectRow = vi.fn();
+    const rowScopeCache = new Map<string, any>([
+      ['1', makeRowScope({ name: 'Alice', status: 'active' }, 0)],
+      ['2', makeRowScope({ name: 'Bob', status: 'draft' }, 1)],
+    ]);
+    const processedData = [
+      { rowKey: '1', sourceIndex: 0, record: { name: 'Alice', status: 'active' } },
+      { rowKey: '2', sourceIndex: 1, record: { name: 'Bob', status: 'draft' } },
+    ];
+
+    render(
+      <table>
+        <TableBodyRows
+          props={makeTableProps({
+            props: { expandable: undefined, rowSelection: { type: 'checkbox' } },
+            events: {},
+          })}
+          columns={[
+            { label: 'Name', name: 'name' } as any,
+            { label: 'Status', name: 'status' } as any,
+          ]}
+          responsiveHiddenColumns={[]}
+          processedData={processedData as any}
+          rowScopeCache={rowScopeCache}
+          rowRepeatedTemplateId="row"
+          expandedRowKeys={new Set()}
+          selectedRowKeys={new Set(['2'])}
+          columnCount={3}
+          isStriped={false}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
+          emptyContent={null}
+          showExpandColumn={false}
+          expandRowByClick={false}
+          onToggleExpand={() => {}}
+          onSelectRow={onSelectRow}
+          virtualEnabled={false}
+        />
+      </table>,
+    );
+
+    const rows = document.querySelectorAll('[data-slot="table-row"]');
+    expect(rows.length).toBe(2);
+
+    const row1Cells = rows[0].querySelectorAll('td');
+    expect(row1Cells.length).toBe(3);
+    expect(row1Cells[0].getAttribute('data-slot')).toBe('table-select-cell');
+    expect(row1Cells[1].textContent).toBe('Alice');
+    expect(row1Cells[2].textContent).toBe('active');
+
+    const row2Cells = rows[1].querySelectorAll('td');
+    expect(row2Cells.length).toBe(3);
+    expect(row2Cells[0].getAttribute('data-slot')).toBe('table-select-cell');
+    expect(row2Cells[1].textContent).toBe('Bob');
+    expect(row2Cells[2].textContent).toBe('draft');
+
+    const checkboxes = document.querySelectorAll('[data-slot="checkbox"]');
+    expect(checkboxes.length).toBe(2);
+    expect(checkboxes[0].getAttribute('aria-checked')).toBe('false');
+    expect(checkboxes[1].getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(checkboxes[0]);
+    expect(onSelectRow).toHaveBeenCalledWith('1', true);
+  });
+
+  it('renders data rows with radio selection cells (circle shape)', () => {
+    const onSelectRow = vi.fn();
+    const rowScopeCache = new Map<string, any>([
+      ['1', makeRowScope({ name: 'Alice' }, 0)],
+      ['2', makeRowScope({ name: 'Bob' }, 1)],
+    ]);
+    const processedData = [
+      { rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } },
+      { rowKey: '2', sourceIndex: 1, record: { name: 'Bob' } },
+    ];
+
+    render(
+      <table>
+        <TableBodyRows
+          props={makeTableProps({
+            props: { expandable: undefined, rowSelection: { type: 'radio' } },
+            events: {},
+          })}
+          columns={[{ label: 'Name', name: 'name' } as any]}
+          responsiveHiddenColumns={[]}
+          processedData={processedData as any}
+          rowScopeCache={rowScopeCache}
+          rowRepeatedTemplateId="row"
+          expandedRowKeys={new Set()}
+          selectedRowKeys={new Set(['1'])}
+          columnCount={2}
+          isStriped={false}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
+          emptyContent={null}
+          showExpandColumn={false}
+          expandRowByClick={false}
+          onToggleExpand={() => {}}
+          onSelectRow={onSelectRow}
+          virtualEnabled={false}
+        />
+      </table>,
+    );
+
+    expect(document.querySelector('[data-slot="table-row"]')).toBeTruthy();
+    expect(screen.getAllByText('Alice').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Bob').length).toBeGreaterThanOrEqual(1);
+
+    const selectCells = document.querySelectorAll('[data-slot="table-select-cell"]');
+    expect(selectCells.length).toBe(2);
+
+    const radios = document.querySelectorAll('[data-slot="checkbox"][data-shape="circle"]');
+    expect(radios.length).toBe(2);
+
+    fireEvent.click(radios[1]);
+    expect(onSelectRow).toHaveBeenCalledWith('2', true);
+  });
+
+  it('renders data rows without selection cells when rowSelection is not set', () => {
+    const rowScopeCache = new Map<string, any>([
+      ['1', makeRowScope({ name: 'Alice' }, 0)],
+    ]);
+    const processedData = [
+      { rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } },
+    ];
+
+    render(
+      <table>
+        <TableBodyRows
+          props={makeTableProps({ props: { expandable: undefined }, events: {} })}
+          columns={[{ label: 'Name', name: 'name' } as any]}
+          responsiveHiddenColumns={[]}
+          processedData={processedData as any}
+          rowScopeCache={rowScopeCache}
+          rowRepeatedTemplateId="row"
+          expandedRowKeys={new Set()}
+          selectedRowKeys={new Set()}
+          columnCount={1}
+          isStriped={false}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
+          emptyContent={null}
+          showExpandColumn={false}
+          expandRowByClick={false}
+          onToggleExpand={() => {}}
+          onSelectRow={() => {}}
+          virtualEnabled={false}
+        />
+      </table>,
+    );
+
+    expect(document.querySelector('[data-slot="table-row"]')).toBeTruthy();
+    expect(screen.getByText('Alice')).toBeTruthy();
+    expect(document.querySelector('[data-slot="table-select-cell"]')).toBeNull();
   });
 });

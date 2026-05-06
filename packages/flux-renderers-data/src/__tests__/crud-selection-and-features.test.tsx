@@ -1,8 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Button } from '@nop-chaos/ui';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support';
+
+afterEach(cleanup);
 
 function DisabledAwareButtonRenderer(props: RendererComponentProps) {
   return (
@@ -38,6 +40,7 @@ describe('CRUD selection and features', () => {
               type: 'crud',
               id: 'selection-list-action-crud',
               autoClearSelectionOnRefresh: true,
+              selection: {},
               source: [
                 { id: '1', name: 'Alice' },
                 { id: '2', name: 'Bob' },
@@ -236,5 +239,243 @@ describe('CRUD selection and features', () => {
     expect(handle?.capabilities?.hasMethod?.('refresh')).toBe(true);
     expect(handle?.capabilities?.hasMethod?.('getSelection')).toBe(true);
     expect(handle?.capabilities?.hasMethod?.('clearSelection')).toBe(true);
+  });
+
+  describe('CRUD table body rendering', () => {
+    const records = [
+      { id: 1, name: 'Alpha', status: 'active' },
+      { id: 2, name: 'Beta', status: 'draft' },
+      { id: 3, name: 'Gamma', status: 'archived' },
+    ];
+
+    it('renders table body rows with correct field values for basic CRUD', async () => {
+      const SchemaRenderer = createDataSchemaRenderer();
+
+      render(
+        <SchemaRenderer
+          schemaUrl="test://data/crud-basic"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'crud',
+                source: records,
+                rowKey: 'id',
+                columns: [
+                  { label: 'ID', name: 'id' },
+                  { label: 'Name', name: 'name' },
+                  { label: 'Status', name: 'status' },
+                ],
+              },
+            ],
+          }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      const bodyRowSelector = 'tbody [data-slot="table-row"]';
+      await waitFor(() => {
+        const allRows = document.querySelectorAll(bodyRowSelector);
+        expect(allRows.length).toBe(3);
+      });
+
+      const rows = document.querySelectorAll(bodyRowSelector);
+      const row0Cells = rows[0].querySelectorAll('td');
+      expect(row0Cells.length).toBe(3);
+      expect(row0Cells[0].textContent).toBe('1');
+      expect(row0Cells[1].textContent).toBe('Alpha');
+      expect(row0Cells[2].textContent).toBe('active');
+    });
+
+    it('renders table body rows via expression-bound source and page data', async () => {
+      const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
+
+      render(
+        <SchemaRenderer
+          schemaUrl="test://data/crud-expr-source"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'crud',
+                source: '${records}',
+                rowKey: 'id',
+                toolbar: [{ type: 'button', label: 'Create' }],
+                columns: [
+                  { label: 'ID', name: 'id' },
+                  { label: 'Name', name: 'name' },
+                  { label: 'Status', name: 'status' },
+                ],
+              },
+            ],
+          }}
+          data={{ records }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      const bodyRowSelector = 'tbody [data-slot="table-row"]';
+      await waitFor(() => {
+        const _container = document.querySelector('[data-slot="crud-table"]');
+        const allRows = document.querySelectorAll(bodyRowSelector);
+        const _tableContainer = document.querySelector('[data-slot="table"]');
+        if (allRows.length === 0) {
+          console.log('DEBUG body.innerHTML:', document.body.innerHTML?.substring(0, 3000));
+        }
+        expect(allRows.length).toBe(3);
+      });
+
+      const rows = document.querySelectorAll(bodyRowSelector);
+      const row0Cells = rows[0].querySelectorAll('td');
+      expect(row0Cells.length).toBe(3);
+      expect(row0Cells[0].textContent).toBe('1');
+      expect(row0Cells[1].textContent).toBe('Alpha');
+      expect(row0Cells[2].textContent).toBe('active');
+
+      const row1Cells = rows[1].querySelectorAll('td');
+      expect(row1Cells[0].textContent).toBe('2');
+      expect(row1Cells[1].textContent).toBe('Beta');
+      expect(row1Cells[2].textContent).toBe('draft');
+
+      const row2Cells = rows[2].querySelectorAll('td');
+      expect(row2Cells[0].textContent).toBe('3');
+      expect(row2Cells[1].textContent).toBe('Gamma');
+      expect(row2Cells[2].textContent).toBe('archived');
+    });
+
+    it('renders table header columns', async () => {
+      const SchemaRenderer = createDataSchemaRenderer();
+
+      render(
+        <SchemaRenderer
+          schemaUrl="test://data/crud-headers"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'crud',
+                source: records,
+                rowKey: 'id',
+                columns: [
+                  { label: 'ID', name: 'id' },
+                  { label: 'Name', name: 'name' },
+                  { label: 'Status', name: 'status' },
+                ],
+              },
+            ],
+          }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      await waitFor(() => {
+        const headers = document.querySelectorAll('[data-slot="table-head"]');
+        expect(headers.length).toBe(3);
+      });
+
+      const headers = document.querySelectorAll('[data-slot="table-head"]');
+      expect(headers[0].textContent).toBe('ID');
+      expect(headers[1].textContent).toBe('Name');
+      expect(headers[2].textContent).toBe('Status');
+    });
+
+    it('renders table body with toolbar and pagination', async () => {
+      const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
+
+      render(
+        <SchemaRenderer
+          schemaUrl="test://data/crud-with-toolbar"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'crud',
+                source: records,
+                rowKey: 'id',
+                toolbar: [{ type: 'button', label: 'Create' }],
+                toolbarLayout: {
+                  header: ['listActions', 'pagination'],
+                  footer: ['statistics', 'switch-per-page'],
+                },
+                columns: [
+                  { label: 'ID', name: 'id' },
+                  { label: 'Name', name: 'name' },
+                ],
+              },
+            ],
+          }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
+      });
+
+      const bodyRows = document.querySelectorAll('tbody [data-slot="table-row"]');
+      expect(bodyRows.length).toBe(3);
+      expect(bodyRows[0].querySelectorAll('td')[0].textContent).toBe('1');
+      expect(bodyRows[0].querySelectorAll('td')[1].textContent).toBe('Alpha');
+      expect(bodyRows[1].querySelectorAll('td')[0].textContent).toBe('2');
+      expect(bodyRows[1].querySelectorAll('td')[1].textContent).toBe('Beta');
+
+      expect(document.querySelector('[data-slot="table-pagination"]')).toBeTruthy();
+    });
+
+    it('renders table body with checkbox selection and field values', async () => {
+      const SchemaRenderer = createDataSchemaRenderer();
+
+      render(
+        <SchemaRenderer
+          schemaUrl="test://data/crud-selection"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'crud',
+                source: records,
+                rowKey: 'id',
+                selection: { type: 'checkbox' },
+                columns: [
+                  { label: 'ID', name: 'id' },
+                  { label: 'Name', name: 'name' },
+                  { label: 'Status', name: 'status' },
+                ],
+              },
+            ],
+          }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(document.querySelectorAll('tbody [data-slot="table-row"]').length).toBe(3);
+      });
+
+      const rows = document.querySelectorAll('tbody [data-slot="table-row"]');
+      const row0Cells = rows[0].querySelectorAll('td');
+      expect(row0Cells[0].getAttribute('data-slot')).toBe('table-select-cell');
+      expect(row0Cells[1].textContent).toBe('1');
+      expect(row0Cells[2].textContent).toBe('Alpha');
+      expect(row0Cells[3].textContent).toBe('active');
+
+      const allCheckboxes = document.querySelectorAll('[data-slot="checkbox"]');
+      expect(allCheckboxes.length).toBe(4);
+
+      const rowCheckboxes = Array.from(allCheckboxes).filter(
+        (cb) => (cb.closest('td') || cb.closest('th'))?.closest('tbody'),
+      );
+      expect(rowCheckboxes.length).toBe(3);
+
+      fireEvent.click(rowCheckboxes[0]);
+      await waitFor(() => {
+        expect(rowCheckboxes[0].getAttribute('aria-checked')).toBe('true');
+      });
+    });
   });
 });

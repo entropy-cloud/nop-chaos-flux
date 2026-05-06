@@ -278,8 +278,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       quickSaveItemAction: normalizedSchema.quickSaveItemAction,
     };
 
-    if (normalizedSchema.selectionOwnership) {
-      base.rowSelection = { type: normalizedSchema.selection?.type ?? 'checkbox', selectedRowKeys };
+    if (normalizedSchema.selection) {
+      base.rowSelection = { type: normalizedSchema.selection.type ?? 'checkbox', selectedRowKeys };
     }
 
     if (normalizedSchema.onRefresh) {
@@ -310,8 +310,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     normalizedSchema.quickSaveItemAction,
     normalizedSchema.responsive,
     normalizedSchema.rowKey,
-    normalizedSchema.selection?.type,
-    normalizedSchema.selectionOwnership,
+    normalizedSchema.selection,
     paginationState.currentPage,
     paginationState.pageSize,
     paginationStatePath,

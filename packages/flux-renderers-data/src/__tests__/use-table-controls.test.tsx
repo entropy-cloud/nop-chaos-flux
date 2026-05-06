@@ -305,6 +305,233 @@ describe('useTableSelection', () => {
     });
     expect(renderScopeUpdate).toHaveBeenCalledWith('tableState.selected', []);
   });
+
+  it('accumulates checkbox selections in scope ownership mode', () => {
+    const helpers = createHelpers();
+    const onSelectionChange = vi.fn();
+    const source = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+    let api: any;
+
+    mockScopeState.data = { sel: [] };
+    renderScopeUpdate.mockImplementation((_path: string, value: string[]) => {
+      mockScopeState.data = { sel: value };
+    });
+
+    const { rerender } = render(
+      <SelectionProbe
+        schemaProps={{
+          selectionOwnership: 'scope',
+          selectionStatePath: 'sel',
+          rowSelection: { selectedRowKeys: [], type: 'checkbox' },
+        }}
+        source={source}
+        onSelectionChange={onSelectionChange}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handleSelectRow('a', true);
+    });
+    expect(renderScopeUpdate).toHaveBeenLastCalledWith('sel', ['a']);
+    mockScopeState.data = { sel: ['a'] };
+
+    rerender(
+      <SelectionProbe
+        schemaProps={{
+          selectionOwnership: 'scope',
+          selectionStatePath: 'sel',
+          rowSelection: { selectedRowKeys: [], type: 'checkbox' },
+        }}
+        source={source}
+        onSelectionChange={onSelectionChange}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handleSelectRow('b', true);
+    });
+    expect(renderScopeUpdate).toHaveBeenLastCalledWith('sel', ['a', 'b']);
+    mockScopeState.data = { sel: ['a', 'b'] };
+
+    rerender(
+      <SelectionProbe
+        schemaProps={{
+          selectionOwnership: 'scope',
+          selectionStatePath: 'sel',
+          rowSelection: { selectedRowKeys: [], type: 'checkbox' },
+        }}
+        source={source}
+        onSelectionChange={onSelectionChange}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handleSelectRow('a', false);
+    });
+    expect(renderScopeUpdate).toHaveBeenLastCalledWith('sel', ['b']);
+  });
+
+  it('replaces selection in radio mode (scope ownership)', () => {
+    const helpers = createHelpers();
+    const onSelectionChange = vi.fn();
+    const source = [{ id: 'x' }, { id: 'y' }];
+    let api: any;
+
+    mockScopeState.data = { sel: [] };
+    renderScopeUpdate.mockImplementation((_path: string, value: string[]) => {
+      mockScopeState.data = { sel: value };
+    });
+
+    const { rerender } = render(
+      <SelectionProbe
+        schemaProps={{
+          selectionOwnership: 'scope',
+          selectionStatePath: 'sel',
+          rowSelection: { selectedRowKeys: [], type: 'radio' },
+        }}
+        source={source}
+        onSelectionChange={onSelectionChange}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handleSelectRow('x', true);
+    });
+    expect(renderScopeUpdate).toHaveBeenLastCalledWith('sel', ['x']);
+
+    mockScopeState.data = { sel: ['x'] };
+    rerender(
+      <SelectionProbe
+        schemaProps={{
+          selectionOwnership: 'scope',
+          selectionStatePath: 'sel',
+          rowSelection: { selectedRowKeys: [], type: 'radio' },
+        }}
+        source={source}
+        onSelectionChange={onSelectionChange}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handleSelectRow('y', true);
+    });
+    expect(renderScopeUpdate).toHaveBeenLastCalledWith('sel', ['y']);
+
+    mockScopeState.data = { sel: ['y'] };
+    rerender(
+      <SelectionProbe
+        schemaProps={{
+          selectionOwnership: 'scope',
+          selectionStatePath: 'sel',
+          rowSelection: { selectedRowKeys: [], type: 'radio' },
+        }}
+        source={source}
+        onSelectionChange={onSelectionChange}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handleSelectRow('y', false);
+    });
+    expect(renderScopeUpdate).toHaveBeenLastCalledWith('sel', []);
+  });
+
+  it('accumulates local checkbox selections across multiple clicks', () => {
+    const helpers = createHelpers();
+    const onSelectionChange = vi.fn();
+    const source = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+    let api: any;
+
+    render(
+      <SelectionProbe
+        schemaProps={{ rowSelection: { selectedRowKeys: [], type: 'checkbox' } }}
+        source={source}
+        onSelectionChange={onSelectionChange}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handleSelectRow('a', true);
+    });
+    expect(Array.from(api.selectedRowKeys)).toEqual(['a']);
+
+    act(() => {
+      api.handleSelectRow('b', true);
+    });
+    expect(Array.from(api.selectedRowKeys)).toEqual(['a', 'b']);
+
+    act(() => {
+      api.handleSelectRow('c', true);
+    });
+    expect(Array.from(api.selectedRowKeys)).toEqual(['a', 'b', 'c']);
+
+    act(() => {
+      api.handleSelectRow('a', false);
+    });
+    expect(Array.from(api.selectedRowKeys)).toEqual(['b', 'c']);
+  });
+
+  it('replaces local selection in radio mode', () => {
+    const helpers = createHelpers();
+    const onSelectionChange = vi.fn();
+    const source = [{ id: 'x' }, { id: 'y' }];
+    let api: any;
+
+    render(
+      <SelectionProbe
+        schemaProps={{ rowSelection: { selectedRowKeys: [], type: 'radio' } }}
+        source={source}
+        onSelectionChange={onSelectionChange}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handleSelectRow('x', true);
+    });
+    expect(Array.from(api.selectedRowKeys)).toEqual(['x']);
+
+    act(() => {
+      api.handleSelectRow('y', true);
+    });
+    expect(Array.from(api.selectedRowKeys)).toEqual(['y']);
+
+    act(() => {
+      api.handleSelectRow('y', false);
+    });
+    expect(Array.from(api.selectedRowKeys)).toEqual([]);
+  });
 });
 
 describe('useTableSort', () => {

@@ -162,5 +162,5 @@ export function useTableRowScopeCache(
 
   void version;
 
-  return rowScopeCache;
+  return useMemo(() => new Map(rowScopeCache), [version]);
 }

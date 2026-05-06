@@ -30,9 +30,9 @@ test.describe('crud renderer rendering and style', () => {
     const headerStyle = await readComputedStyle(fixedHeader, ['position', 'left']);
     const cellStyle = await readComputedStyle(fixedCell, ['position', 'left']);
     expect(headerStyle.position).toBe('sticky');
-    expect(headerStyle.left).toBe('40px');
+    expect(headerStyle.left).toBe('0px');
     expect(cellStyle.position).toBe('sticky');
-    expect(cellStyle.left).toBe('40px');
+    expect(cellStyle.left).toBe('0px');
 
     const tableHtml = await readInnerHtml(crudTable(stage));
     expect(tableHtml).toContain('data-fixed="left"');
