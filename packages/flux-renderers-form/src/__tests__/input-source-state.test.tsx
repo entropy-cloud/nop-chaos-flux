@@ -39,6 +39,37 @@ describe('input renderer source state branches', () => {
     );
 
     expect(screen.getByText('Options failed')).toBeTruthy();
+    const alert = screen.getByRole('alert');
+    const trigger = screen.getByRole('combobox', { name: 'Role' });
+    expect(trigger.getAttribute('aria-required')).toBeNull();
+    expect(trigger.getAttribute('aria-describedby')).toBe(alert.id);
+    expect(trigger.getAttribute('aria-errormessage')).toBe(alert.id);
+  });
+
+  it('publishes required semantics on select triggers', () => {
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/input-source-state#select-required"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'select',
+              name: 'role',
+              label: 'Role',
+              required: true,
+              options: [{ label: 'Admin', value: 'admin' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    expect(screen.getByRole('combobox', { name: 'Role' }).getAttribute('aria-required')).toBe('true');
   });
 
   it('renders an object message source error for radio-group options', () => {

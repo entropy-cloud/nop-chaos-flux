@@ -53,6 +53,7 @@ export function createInputRenderer(inputType: string) {
         value={inputValue}
         disabled={presentation.effectiveDisabled}
         aria-label={String((props.props.label ?? name) || '') || undefined}
+        aria-required={props.props.required ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}
         placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
         onFocus={handlers.onFocus}
@@ -95,7 +96,7 @@ function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
     return (sourceState.error as { message: string }).message;
   }
 
-  return 'Failed to load options.';
+  return t('flux.form.failedToLoadOptions');
 }
 
 export function createFieldValidation(
@@ -161,7 +162,10 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           id={name ? `${name}-control` : undefined}
           data-slot="select-trigger"
           aria-label={ariaLabel}
+          aria-required={props.props.required ? true : undefined}
           aria-invalid={presentation.showError ? true : undefined}
+          aria-describedby={errorMessage && name ? `${name}-source-error` : undefined}
+          aria-errormessage={errorMessage && name ? `${name}-source-error` : undefined}
           onFocus={handlers.onFocus}
           onBlur={handlers.onBlur}
         >
@@ -176,7 +180,11 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           ))}
         </SelectContent>
       </Select>
-      {errorMessage ? <span data-slot="select-error">{errorMessage}</span> : null}
+      {errorMessage ? (
+        <span data-slot="select-error" id={name ? `${name}-source-error` : undefined} role="alert">
+          {errorMessage}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -199,6 +207,7 @@ function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
       rows={typeof props.props.rows === 'number' ? props.props.rows : 4}
       disabled={presentation.effectiveDisabled}
       aria-label={String((props.props.label ?? name) || '') || undefined}
+      aria-required={props.props.required ? true : undefined}
       aria-invalid={presentation.showError ? true : undefined}
       placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
       onFocus={handlers.onFocus}
