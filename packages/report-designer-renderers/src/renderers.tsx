@@ -15,17 +15,31 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'report-inspector-shell',
     component: ReportInspectorShellRenderer,
-    fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
+    fields: [
+      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'noSelectionLabel', kind: 'prop' },
+      { key: 'errorLabel', kind: 'prop' },
+    ],
   },
   {
     type: 'report-inspector',
     component: ReportInspectorRenderer,
-    fields: [{ key: 'body', kind: 'prop' }],
+    fields: [
+      { key: 'body', kind: 'prop' },
+      { key: 'emptyLabel', kind: 'prop' },
+      { key: 'noSelectionLabel', kind: 'prop' },
+    ],
   },
   {
     type: 'report-field-panel',
     component: ReportFieldPanelRenderer,
-    fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
+    fields: [
+      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'fieldSources', kind: 'prop' },
+      { key: 'emptyLabel', kind: 'prop' },
+      { key: 'showFieldSourceHeader', kind: 'prop' },
+      { key: 'dragEnabled', kind: 'prop' },
+    ],
   },
   {
     type: 'report-designer-page',

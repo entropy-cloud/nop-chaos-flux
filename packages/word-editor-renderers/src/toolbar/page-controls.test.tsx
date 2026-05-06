@@ -17,6 +17,7 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
 });
 
 function createStore(overrides?: {
+  pageMode?: string;
   paperSettings?: {
     width: number;
     height: number;
@@ -26,6 +27,7 @@ function createStore(overrides?: {
 }) {
   const state = {
     scale: 1,
+    pageMode: overrides?.pageMode ?? 'paging',
     paperSettings: {
       width: 595,
       height: 842,
@@ -40,6 +42,9 @@ function createStore(overrides?: {
     getState: () => state,
     setPaperSettings: vi.fn((next) => {
       state.paperSettings = next;
+    }),
+    setPageMode: vi.fn((next) => {
+      state.pageMode = next;
     }),
   };
 }
@@ -97,5 +102,34 @@ describe('PageControls', () => {
       });
       expect(executeSetPaperMargin).toHaveBeenCalledWith([77, 88, 99, 111]);
     });
+  });
+
+  it('toggles page mode through the shared editor store', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+
+    const store = createStore({ pageMode: 'paging' });
+    const executePageMode = vi.fn();
+    const bridge = {
+      command: {
+        executePageScaleAdd: vi.fn(),
+        executePageScaleMinus: vi.fn(),
+        executePageScaleRecovery: vi.fn(),
+        executePageMode,
+        executePaperSize: vi.fn(),
+        executePaperDirection: vi.fn(),
+        executeSetPaperMargin: vi.fn(),
+        executeAddWatermark: vi.fn(),
+        executeDeleteWatermark: vi.fn(),
+        executePrint: vi.fn(),
+      },
+    } as any;
+
+    render(<PageControls bridge={bridge} store={store as any} />);
+
+    fireEvent.click(screen.getByTitle('Toggle Page Mode'));
+
+    expect(store.setPageMode).toHaveBeenCalledWith('continuity');
+    expect(executePageMode).toHaveBeenCalledWith('continuity');
   });
 });

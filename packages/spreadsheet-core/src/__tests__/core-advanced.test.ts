@@ -113,6 +113,7 @@ describe('transactions', () => {
 
     const snap = core.getSnapshot();
     expect(snap.document.workbook.sheets[0].cells?.['A1']).toBeUndefined();
+    expect(snap.history.canUndo).toBe(false);
   });
 
   it('should commit transaction', async () => {
@@ -126,6 +127,49 @@ describe('transactions', () => {
 
     const snap = core.getSnapshot();
     expect(snap.document.workbook.sheets[0].cells?.['A1']?.value).toBe('Committed');
+    expect(snap.history.undoDepth).toBe(1);
+  });
+
+  it('should treat multiple transaction edits as one undo step', async () => {
+    await core.dispatch({ type: 'spreadsheet:beginTransaction' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'First',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B1', row: 0, col: 1 },
+      value: 'Second',
+    });
+    await core.dispatch({ type: 'spreadsheet:commitTransaction' });
+
+    expect(core.getSnapshot().history.undoDepth).toBe(1);
+
+    await core.dispatch({ type: 'spreadsheet:undo' });
+    const snap = core.getSnapshot();
+
+    expect(snap.document.workbook.sheets[0].cells?.['A1']).toBeUndefined();
+    expect(snap.document.workbook.sheets[0].cells?.['B1']).toBeUndefined();
+  });
+
+  it('should clear stale editing state during undo', async () => {
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'Test',
+    });
+
+    (core.getSnapshot() as any).editing = {
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      editorId: 'editor',
+      initialValue: 'Test',
+      draftValue: 'Draft',
+    };
+
+    await core.dispatch({ type: 'spreadsheet:undo' });
+
+    expect(core.getSnapshot().editing).toBeUndefined();
   });
 });
 
@@ -187,6 +231,23 @@ describe('replaceDocument/exportDocument', () => {
 
     const exported = core.exportDocument();
     expect(exported.workbook.sheets[0].cells?.['A1']?.value).toBe('Export me');
+  });
+
+  it('should clone replaced and exported documents to avoid aliasing', () => {
+    const doc1 = createEmptyDocument('doc1');
+    const doc2 = createEmptyDocument('doc2');
+    doc2.name = 'Doc2';
+    const core = createSpreadsheetCore({ document: doc1 });
+
+    core.replaceDocument(doc2);
+    doc2.name = 'mutated-outside';
+
+    expect(core.getSnapshot().document.name).toBe('Doc2');
+
+    const exported = core.exportDocument();
+    exported.name = 'mutated-export';
+
+    expect(core.getSnapshot().document.name).toBe('Doc2');
   });
 });
 

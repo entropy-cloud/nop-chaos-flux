@@ -34,7 +34,7 @@ function extractHeadings(elements: IElement[]): HeadingItem[] {
     if (element.level) {
       headings.push({
         id: element.titleId || element.id || Math.random().toString(),
-        name: element.value || 'Untitled',
+        name: element.value || t('flux.wordEditor.untitledHeading'),
         level: element.level,
         pageNo: 1,
         subCatalog: [],
@@ -83,7 +83,7 @@ function readOutline(bridge: CanvasEditorBridge | null): HeadingItem[] {
 
     return buildHeadingTree(extractHeadings(result.data.main));
   } catch (error) {
-    console.error('Failed to fetch outline:', error);
+        console.error('[word-editor] outline fetch failed', error);
     return [];
   }
 }
@@ -147,7 +147,7 @@ export function OutlinePanel({ bridge }: OutlinePanelProps) {
       try {
         bridge.command.executeLocationCatalog(item.id);
       } catch (error) {
-        console.error('Failed to navigate to heading:', error);
+        console.error('[word-editor] outline navigation failed', error);
       }
     },
     [bridge],

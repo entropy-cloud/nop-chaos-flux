@@ -81,6 +81,7 @@ export interface ExportTemplateCommand extends ReportDesignerCommandBase {
 export interface ReportDesignerCommandResult {
   ok: boolean;
   changed: boolean;
+  cancelled?: boolean;
   error?: unknown;
   data?: unknown;
 }

@@ -45,6 +45,12 @@ export function PageControls({ bridge, store }: PageControlsProps) {
     store.getState,
     (state) => state.paperSettings,
   );
+  const pageMode = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.getState,
+    store.getState,
+    (state) => state.pageMode,
+  );
 
   const [showMarginDialog, setShowMarginDialog] = useState(false);
   const [showWatermarkDialog, setShowWatermarkDialog] = useState(false);
@@ -57,12 +63,10 @@ export function PageControls({ bridge, store }: PageControlsProps) {
   const handleZoomOut = () => bridge?.command?.executePageScaleMinus();
   const handleZoomReset = () => bridge?.command?.executePageScaleRecovery();
 
-  const [pageMode, setPageMode] = useState<string>(PageMode.PAGING);
-
   const handlePageModeToggle = () => {
     const nextMode = pageMode === PageMode.PAGING ? PageMode.CONTINUITY : PageMode.PAGING;
     bridge?.command?.executePageMode(nextMode);
-    setPageMode(nextMode);
+    store.setPageMode(nextMode);
   };
 
   const paperSizeKey =

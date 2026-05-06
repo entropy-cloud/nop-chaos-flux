@@ -328,6 +328,9 @@ describe('WordEditorPage actions and events', () => {
     const useNamespaceRegistrationSpy = vi
       .spyOn(FluxReact, 'useNamespaceRegistration')
       .mockImplementation(() => undefined);
+    const useRendererEnvSpy = vi
+      .spyOn(FluxReact, 'useRendererEnv')
+      .mockReturnValue({ notify: vi.fn() } as any);
     const useStatusPathPublicationSpy = vi
       .spyOn(FluxReact, 'useStatusPathPublication')
       .mockImplementation(() => undefined);
@@ -371,6 +374,7 @@ describe('WordEditorPage actions and events', () => {
     useHostScopeSpy.mockRestore();
     useCurrentActionScopeSpy.mockRestore();
     useNamespaceRegistrationSpy.mockRestore();
+    useRendererEnvSpy.mockRestore();
     useStatusPathPublicationSpy.mockRestore();
     hasRendererSlotContentSpy.mockRestore();
     resolveRendererSlotContentSpy.mockRestore();
@@ -420,4 +424,5 @@ describe('WordEditorPage actions and events', () => {
     consoleError.mockRestore();
     providerSpy.mockRestore();
   });
+
 });

@@ -1,10 +1,11 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { RendererComponentProps, RenderNodeInput } from '@nop-chaos/flux-core';
 import type { ReportDesignerHostStatusSummary } from '@nop-chaos/report-designer-core';
 import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useCurrentActionScope,
+  useRendererEnv,
   useStatusPathPublication,
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
@@ -76,6 +77,7 @@ export function ReportDesignerPageRenderer(
     [core],
   );
   const actionScope = useCurrentActionScope();
+  const env = useRendererEnv();
 
   useLayoutEffect(() => {
     if (!actionScope) {
@@ -94,8 +96,13 @@ export function ReportDesignerPageRenderer(
   }, [actionScope, spreadsheetProvider]);
 
   useEffect(() => {
-    void core.refreshFieldSources().catch(() => undefined);
-  }, [core]);
+    void core.refreshFieldSources().catch((error) => {
+      env.notify?.(
+        'warning',
+        error instanceof Error && error.message ? error.message : t('flux.reportDesigner.loadPanelsFailed'),
+      );
+    });
+  }, [core, env]);
 
   useEffect(() => {
     return () => {
@@ -109,8 +116,14 @@ export function ReportDesignerPageRenderer(
     spreadsheetCore.getSnapshot,
     spreadsheetCore.getSnapshot,
   );
+  const didSyncSpreadsheetRef = useRef(false);
 
   useEffect(() => {
+    if (!didSyncSpreadsheetRef.current) {
+      didSyncSpreadsheetRef.current = true;
+      return;
+    }
+
     core.syncSpreadsheetDocument(spreadsheetSnapshot.document);
   }, [core, spreadsheetSnapshot.document]);
 

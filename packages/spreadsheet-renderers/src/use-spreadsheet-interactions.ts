@@ -131,10 +131,12 @@ export function useSpreadsheetInteractions(
   config: SpreadsheetInteractionsConfig,
 ): SpreadsheetInteractionsReturn {
   const { bridge, sheetId, onLog } = config;
-  const { addLog, cellValue, setCellValue, commentText, setCommentText, gridRef } =
-    useSpreadsheetShell(onLog);
-
   const snapshot = useSnapshot(bridge);
+  const selectedCell = snapshot.activeCell
+    ? { row: snapshot.activeCell.row, col: snapshot.activeCell.col }
+    : null;
+  const { addLog, cellValue, setCellValue, commentText, setCommentText, gridRef } =
+    useSpreadsheetShell(snapshot, selectedCell, onLog);
 
   const {
     editingCell,
@@ -150,7 +152,7 @@ export function useSpreadsheetInteractions(
   } = useEditing(snapshot, bridge, sheetId, null, cellValue);
 
   const {
-    selectedCell,
+    selectedCell: selectionCell,
     setSelectedCell,
     getSelectedRange,
     isInRange,
@@ -209,7 +211,7 @@ export function useSpreadsheetInteractions(
   const { handleStyleTool } = useStyleCommands(
     snapshot,
     bridge,
-    selectedCell,
+    selectionCell,
     getSelectedRange,
     addLog,
   );
@@ -246,10 +248,10 @@ export function useSpreadsheetInteractions(
     handleFind,
     handleReplace,
     handleReplaceAll,
-  } = useFindReplace(bridge, sheetId, selectedCell, addLog);
+  } = useFindReplace(bridge, sheetId, selectionCell, addLog);
 
   const { showCommentInput, setShowCommentInput, handleAddComment, handleDeleteComment } =
-    useComments(bridge, sheetId, selectedCell, addLog, commentText, setCommentText);
+    useComments(bridge, sheetId, selectionCell, addLog, commentText, setCommentText);
 
   const {
     dropTargetCell,
@@ -258,10 +260,10 @@ export function useSpreadsheetInteractions(
     handleFieldDrop,
     handleFieldDragOver,
     handleFieldDragLeave,
-  } = useFieldDrop(selectedCell);
+  } = useFieldDrop(selectionCell);
 
   useKeyboard(
-    selectedCell,
+    selectionCell,
     handleCopy,
     handleCut,
     handlePaste,
@@ -282,19 +284,19 @@ export function useSpreadsheetInteractions(
   const handleCellValueChange = useCellValueSync({
     bridge,
     sheetId,
-    selectedCell,
+    selectedCell: selectionCell,
     setCellValue,
   });
 
-  const currentCell = selectedCell
-    ? snapshot.activeSheet?.cells?.[cellAddress(selectedCell.row, selectedCell.col)]
+  const currentCell = selectionCell
+    ? snapshot.activeSheet?.cells?.[cellAddress(selectionCell.row, selectionCell.col)]
     : undefined;
 
   const hasComment = !!currentCell?.comment;
 
   return {
     snapshot,
-    selectedCell,
+    selectedCell: selectionCell,
     setSelectedCell,
     cellValue,
     getSelectedRange,

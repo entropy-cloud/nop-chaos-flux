@@ -6,13 +6,21 @@ import type {
   UndoSpreadsheetCommand,
   RedoSpreadsheetCommand,
 } from '../commands.js';
-import { pushUndo } from '../core/internal-state.js';
+import {
+  clearTransientState,
+  cloneSpreadsheetDocument,
+  pushUndoDocument,
+} from '../core/internal-state.js';
 
 export const handleBeginTransaction: CommandHandler<BeginSpreadsheetTransactionCommand> = (
   store,
 ) => {
   const state = store.getState();
-  store.setState({ transactionDoc: state.document });
+  if (state.transactionDoc) {
+    return { ok: true, changed: false };
+  }
+
+  store.setState({ transactionDoc: cloneSpreadsheetDocument(state.document) });
   return { ok: true, changed: false };
 };
 
@@ -21,8 +29,15 @@ export const handleCommitTransaction: CommandHandler<CommitSpreadsheetTransactio
 ) => {
   const state = store.getState();
   if (state.transactionDoc) {
-    const updated = pushUndo(store.getState());
-    store.setState({ ...updated, transactionDoc: null });
+    if (state.document !== state.transactionDoc) {
+      const updated = pushUndoDocument(
+        { ...state, transactionDoc: null },
+        state.transactionDoc,
+      );
+      store.setState({ ...updated, transactionDoc: null });
+    } else {
+      store.setState({ transactionDoc: null });
+    }
   }
   return { ok: true, changed: false };
 };
@@ -32,7 +47,12 @@ export const handleRollbackTransaction: CommandHandler<RollbackSpreadsheetTransa
 ) => {
   const state = store.getState();
   if (state.transactionDoc) {
-    store.setState({ document: state.transactionDoc, transactionDoc: null });
+    store.setState({
+      document: state.transactionDoc,
+      transactionDoc: null,
+      ...clearTransientState(state),
+      redoStack: [],
+    });
   }
   return { ok: true, changed: true };
 };
@@ -48,6 +68,7 @@ export const handleUndo: CommandHandler<UndoSpreadsheetCommand> = (store) => {
     undoStack,
     redoStack: [...current.redoStack, current.document],
     dirty: true,
+    ...clearTransientState(current),
   });
   return { ok: true, changed: true };
 };
@@ -63,6 +84,7 @@ export const handleRedo: CommandHandler<RedoSpreadsheetCommand> = (store) => {
     undoStack: [...current.undoStack, current.document],
     redoStack,
     dirty: true,
+    ...clearTransientState(current),
   });
   return { ok: true, changed: true };
 };

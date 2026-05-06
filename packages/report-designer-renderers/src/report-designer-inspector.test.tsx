@@ -64,14 +64,18 @@ describe('ReportInspectorRenderer', () => {
     expect(screen.getByText('Panel body')).toBeTruthy();
   });
 
-  it('has data-testid when schema body is present', () => {
+  it('renders the root class without injecting a default test id', () => {
     renderInspector({
       body: { type: 'text', text: 'x' },
     });
 
-    const inspector = screen.getByTestId('report-inspector');
+    const inspector = document.querySelector('.nop-report-inspector') as HTMLElement | null;
     expect(inspector).toBeTruthy();
+    if (!inspector) {
+      throw new Error('Expected inspector root');
+    }
     expect(inspector.classList.contains('nop-report-inspector')).toBe(true);
+    expect(document.querySelector('[data-testid="report-inspector"]')).toBeNull();
   });
 
   it('renders noSelectionLabel when selection is absent', () => {

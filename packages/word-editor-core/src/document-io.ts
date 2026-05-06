@@ -14,6 +14,14 @@ export interface SavedDocumentData {
   savedAt: string;
 }
 
+function getStorage(): Storage | null {
+  if (typeof localStorage === 'undefined') {
+    return null;
+  }
+
+  return localStorage;
+}
+
 function normalizeWordDocument(value: unknown): WordDocument | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
@@ -58,6 +66,9 @@ export function saveDocument(
   extras?: { charts?: DocChart[]; codes?: DocCode[] },
 ): boolean {
   try {
+    const storage = getStorage();
+    if (!storage) return false;
+
     const value = bridge.getValue();
     if (!value) return false;
 
@@ -74,7 +85,7 @@ export function saveDocument(
       paperSettings,
     });
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved));
     return true;
   } catch {
     return false;
@@ -83,7 +94,10 @@ export function saveDocument(
 
 export function loadDocument(): SavedDocumentData | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const storage = getStorage();
+    if (!storage) return null;
+
+    const raw = storage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     const data = normalizeWordDocument(parsed.data);
@@ -102,16 +116,19 @@ export function loadDocument(): SavedDocumentData | null {
 }
 
 export function clearDocument(): void {
-  localStorage.removeItem(STORAGE_KEY);
+  getStorage()?.removeItem(STORAGE_KEY);
 }
 
 export function saveDatasets(datasets: Dataset[]): void {
-  localStorage.setItem(DATASET_STORAGE_KEY, JSON.stringify(datasets));
+  getStorage()?.setItem(DATASET_STORAGE_KEY, JSON.stringify(datasets));
 }
 
 export function loadDatasets(): Dataset[] {
   try {
-    const raw = localStorage.getItem(DATASET_STORAGE_KEY);
+    const storage = getStorage();
+    if (!storage) return [];
+
+    const raw = storage.getItem(DATASET_STORAGE_KEY);
     if (!raw) return [];
     return JSON.parse(raw) as Dataset[];
   } catch {

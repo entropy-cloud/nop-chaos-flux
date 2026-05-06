@@ -56,13 +56,14 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
           <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">
             {t('flux.wordEditor.datasets')}
           </h2>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            onClick={onAddDataset}
-            title="Add Dataset"
-          >
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={onAddDataset}
+              title={t('flux.wordEditor.addDataset')}
+              aria-label={t('flux.wordEditor.addDataset')}
+            >
             <Plus className="w-4 h-4 text-[var(--nop-accent)]" />
           </Button>
         </div>
@@ -111,7 +112,7 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
                         </span>
                       </div>
                       <p className="text-[11px] text-[var(--nop-body-copy)] line-clamp-2">
-                        {dataset.description || 'No description'}
+                        {dataset.description || t('flux.wordEditor.noDescription')}
                       </p>
                       {dataset.columns.length > 0 && (
                         <div className="mt-2 flex items-center gap-1 text-[10px] text-[var(--nop-body-copy)]">
@@ -128,7 +129,8 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
                       size="icon-xs"
                       onClick={(e) => handleDatasetMenu(dataset.id, e)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Dataset Options"
+                      title={t('flux.wordEditor.datasetOptions')}
+                      aria-label={t('flux.wordEditor.datasetOptions')}
                     >
                       <MoreVertical className="w-4 h-4 text-[var(--nop-body-copy)]" />
                     </Button>

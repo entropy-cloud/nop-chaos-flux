@@ -47,6 +47,7 @@ export interface EditorState {
   bridge: CanvasEditorBridge | null;
   isReady: boolean;
   isDirty: boolean;
+  pageMode: string;
   paperSettings: PaperSettings;
   selection: EditorSelectionState;
   currentPage: number;
@@ -59,6 +60,7 @@ const initialState: EditorState = {
   bridge: null,
   isReady: false,
   isDirty: false,
+  pageMode: 'paging',
   paperSettings: { ...DEFAULT_PAPER_SETTINGS },
   selection: { ...DEFAULT_SELECTION },
   currentPage: 0,
@@ -84,6 +86,10 @@ export function createEditorStore() {
 
     setDirty(isDirty: boolean) {
       store.setState({ isDirty });
+    },
+
+    setPageMode(pageMode: string) {
+      store.setState({ pageMode });
     },
 
     setTotalPages(total: number) {

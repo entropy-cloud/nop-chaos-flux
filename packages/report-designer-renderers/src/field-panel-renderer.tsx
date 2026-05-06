@@ -6,8 +6,9 @@ import {
   useOwnScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
+import { cn } from '@nop-chaos/ui';
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
-import { getFieldCount, joinClassNames } from './helpers.js';
+import { getFieldCount } from './helpers.js';
 import type { ReportFieldPanelSchema } from './types.js';
 
 export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFieldPanelSchema>) {
@@ -31,7 +32,7 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
 
   return (
     <section
-      className={joinClassNames('nop-report-designer', props.meta.className)}
+      className={cn('nop-report-designer', props.meta.className)}
       data-slot="report-field-panel-shell"
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}

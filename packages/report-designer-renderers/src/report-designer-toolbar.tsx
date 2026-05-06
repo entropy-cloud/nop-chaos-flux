@@ -38,7 +38,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
         'nop-report-toolbar min-h-[44px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-lg bg-background shadow-sm',
         props.meta.className,
       )}
-      data-testid={props.meta.testid || 'report-toolbar'}
+      data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
       {items.map((item, index) => {

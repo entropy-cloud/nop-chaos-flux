@@ -55,11 +55,15 @@ function renderToolbarInPage(overrides: { itemsOverride?: any[] }) {
 }
 
 describe('report-toolbar renderer', () => {
-  it('renders with default items (no overrides)', () => {
+  it('renders with default items (no overrides) and no implicit default test id', () => {
     renderToolbarInPage({});
-    const toolbar = screen.getByTestId('report-toolbar');
+    const toolbar = document.querySelector('.nop-report-toolbar') as HTMLElement | null;
     expect(toolbar).toBeTruthy();
+    if (!toolbar) {
+      throw new Error('Expected toolbar root');
+    }
     expect(toolbar.className).toContain('nop-report-toolbar');
+    expect(document.querySelector('[data-testid="report-toolbar"]')).toBeNull();
   });
 
   it('renders with itemsOverride that adds a button', () => {

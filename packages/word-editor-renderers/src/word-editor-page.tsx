@@ -10,6 +10,7 @@ import {
   useCurrentActionScope,
   useHostScope,
   useNamespaceRegistration,
+  useRendererEnv,
   useStatusPathPublication,
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
@@ -178,6 +179,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   );
 
   const hostScope = useHostScope(hostScopeData, props.path, 'word-editor');
+  const env = useRendererEnv();
 
   const actionProvider = useMemo(
     () =>
@@ -236,11 +238,28 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
             setSaveMessage(null);
           }
         }, 2000);
+        return;
       }
+
+      env.notify?.(
+        'warning',
+        result.error instanceof Error && result.error.message
+          ? result.error.message
+          : t('flux.reportDesigner.saveFailed'),
+      );
+    } catch (error) {
+      if (!mountedRef.current) {
+        return;
+      }
+
+      env.notify?.(
+        'warning',
+        error instanceof Error && error.message ? error.message : t('flux.reportDesigner.saveFailed'),
+      );
     } finally {
       isSavingRef.current = false;
     }
-  }, [actionProvider]);
+  }, [actionProvider, env]);
 
   useWordEditorShortcuts({ bridge, onSave: handleSave, scopeRef: rootRef });
 

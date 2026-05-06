@@ -10,6 +10,7 @@ describe('createEditorStore', () => {
     expect(state.bridge).toBeNull();
     expect(state.isReady).toBe(false);
     expect(state.isDirty).toBe(false);
+    expect(state.pageMode).toBe('paging');
     expect(state.currentPage).toBe(0);
     expect(state.totalPages).toBe(0);
     expect(state.scale).toBe(1);
@@ -42,6 +43,12 @@ describe('createEditorStore', () => {
     expect(store.getState().isDirty).toBe(true);
     store.setDirty(false);
     expect(store.getState().isDirty).toBe(false);
+  });
+
+  it('setPageMode updates pageMode', () => {
+    const store = createEditorStore();
+    store.setPageMode('continuity');
+    expect(store.getState().pageMode).toBe('continuity');
   });
 
   it('setReady updates isReady', () => {
@@ -128,6 +135,7 @@ describe('createEditorStore', () => {
     expect(state.bridge).toBeNull();
     expect(state.isReady).toBe(false);
     expect(state.isDirty).toBe(false);
+    expect(state.pageMode).toBe('paging');
     expect(state.currentPage).toBe(0);
     expect(state.totalPages).toBe(0);
     expect(state.scale).toBe(1);

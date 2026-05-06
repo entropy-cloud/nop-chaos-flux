@@ -25,6 +25,7 @@ function toActionError(error: unknown): Error | undefined {
 export function toReportDesignerActionResult(response: ReportDesignerCommandResult): ActionResult {
   return {
     ok: response.ok,
+    cancelled: response.cancelled,
     data: response.data,
     error: toActionError(response.error),
   };
@@ -40,11 +41,19 @@ export function createReportDesignerActionProvider(
     },
     async invoke(method, payload) {
       const args = isCommandRecord(payload) ? payload : {};
-      const result = await dispatch({
-        type: `report-designer:${method}`,
-        ...args,
-      } as ReportDesignerCommand);
-      return toReportDesignerActionResult(result);
+      try {
+        const result = await dispatch({
+          type: `report-designer:${method}`,
+          ...args,
+        } as ReportDesignerCommand);
+        return toReportDesignerActionResult(result);
+      } catch (error) {
+        console.warn(`[report-designer] action ${method} failed`, error);
+        return {
+          ok: false,
+          error: toActionError(error),
+        } satisfies ActionResult;
+      }
     },
   };
 }

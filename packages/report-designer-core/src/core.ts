@@ -275,6 +275,23 @@ export function createReportDesignerCore(
     return { undoStack, redoStack: [] };
   }
 
+  function applyDocumentChange(nextDocument: ReportTemplateDocument): boolean {
+    let changed = false;
+    store.setState((current) => {
+      if (current.document === nextDocument) {
+        return current;
+      }
+
+      changed = true;
+      return {
+        ...current,
+        ...pushUndoEntry(current),
+        document: nextDocument,
+      };
+    });
+    return changed;
+  }
+
   const dispatchCtx: DispatchContext = {
     store,
     registry,
@@ -369,28 +386,19 @@ export function createReportDesignerCore(
     },
 
     setMetadata(target: ReportSelectionTarget, nextMeta: MetadataBag): void {
-      store.setState((current) => {
-        const result = updateMetadata(current.document, target, nextMeta);
-        return result.changed ? { ...current, document: result.document } : current;
-      });
+      const result = updateMetadata(store.getState().document, target, nextMeta);
+      if (!result.changed) {
+        return;
+      }
+
+      applyDocumentChange(result.document);
     },
 
     syncSpreadsheetDocument(nextDocument) {
-      let changed = false;
-      store.setState((current) => {
-        if (current.document.spreadsheet === nextDocument) {
-          return current;
-        }
-
-        changed = true;
-
-        return {
-          ...current,
-          document: {
-            ...current.document,
-            spreadsheet: nextDocument,
-          },
-        };
+      const currentDocument = store.getState().document;
+      const changed = applyDocumentChange({
+        ...currentDocument,
+        spreadsheet: nextDocument,
       });
 
       if (changed) {

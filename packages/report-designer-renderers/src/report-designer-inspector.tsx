@@ -5,6 +5,9 @@ import { useOwnScopeSelector } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { ReportInspectorSchema } from './schemas.js';
+import type { ReportInspectorShellSchema } from './types.js';
+
+type ReportInspectorLikeSchema = ReportInspectorSchema | ReportInspectorShellSchema;
 
 interface InspectorSlice {
   hasSelection: boolean;
@@ -21,7 +24,7 @@ function selectInspectorSlice(data: Record<string, unknown>): InspectorSlice {
   };
 }
 
-export function ReportInspectorRenderer(props: RendererComponentProps<ReportInspectorSchema>) {
+export function ReportInspectorRenderer(props: RendererComponentProps<ReportInspectorLikeSchema>) {
   const slice = useOwnScopeSelector(selectInspectorSlice, shallowEqual);
   const { hasSelection } = slice;
   const body = (props.props.body ?? slice.inspectorBody ?? slice.resolvedSchema) as
@@ -59,7 +62,7 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
   return (
     <section
       className={cn('nop-report-inspector', props.meta.className)}
-      data-testid={props.meta.testid || 'report-inspector'}
+      data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
       {

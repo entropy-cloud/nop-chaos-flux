@@ -22,6 +22,7 @@ export interface ReportToolbarSchema extends BaseSchema {
 
 export interface ReportFieldPanelSchema extends BaseSchema {
   type: 'report-field-panel';
+  fieldSources?: SchemaObject[];
   emptyLabel?: string;
   showFieldSourceHeader?: boolean;
   dragEnabled?: boolean;

@@ -219,7 +219,7 @@ export async function dispatchReportDesignerCommand(
             ctx.cancelPreviewRun();
           }
           if (isAbortError(err)) {
-            return { ok: false, changed: false, error: err };
+            return { ok: false, changed: false, cancelled: true, error: err };
           }
           return { ok: false, changed: false, error: err };
         }
@@ -241,6 +241,7 @@ export async function dispatchReportDesignerCommand(
           });
           store.setState((current) => ({
             ...current,
+            ...ctx.pushUndoEntry(current),
             document: imported,
             selectionTarget: undefined,
             inspector: {

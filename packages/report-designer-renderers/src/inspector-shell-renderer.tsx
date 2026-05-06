@@ -10,7 +10,8 @@ import type {
   ReportSelectionTarget,
 } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { joinClassNames } from './helpers.js';
+import { cn } from '@nop-chaos/ui';
+import type { ReportInspectorSchema } from './schemas.js';
 import type { ReportInspectorShellSchema } from './types.js';
 import { ReportInspectorRenderer } from './report-designer-inspector.js';
 
@@ -22,10 +23,14 @@ export function ReportInspectorShellRenderer(
   const target = scopeData.selectionTarget as ReportSelectionTarget | undefined;
   const inspector = scopeData.inspector as ReportDesignerRuntimeSnapshot['inspector'] | undefined;
   const inspectorErrorLabel = inspector?.error != null ? String(inspector.error) : undefined;
+  const inspectorProps: RendererComponentProps<ReportInspectorSchema | ReportInspectorShellSchema> = {
+    ...props,
+    props: { ...props.props, body: inspector?.resolvedSchema },
+  };
 
   return (
     <section
-      className={joinClassNames('nop-report-designer', props.meta.className)}
+      className={cn('nop-report-designer', props.meta.className)}
       data-slot="report-designer-inspector-shell"
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
@@ -51,10 +56,7 @@ export function ReportInspectorShellRenderer(
           <p data-slot="report-designer-empty">{inspectorErrorLabel}</p>
         </div>
       ) : (
-        <ReportInspectorRenderer
-          {...(props as any)}
-          props={{ ...props.props, body: inspector?.resolvedSchema }}
-        />
+        <ReportInspectorRenderer {...inspectorProps} />
       )}
     </section>
   );

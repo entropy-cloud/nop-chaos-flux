@@ -22,6 +22,10 @@ export interface SpreadsheetInternalState {
   maxUndoDepth: number;
 }
 
+export function cloneSpreadsheetDocument(document: SpreadsheetDocument): SpreadsheetDocument {
+  return JSON.parse(JSON.stringify(document)) as SpreadsheetDocument;
+}
+
 export function buildSnapshot(state: SpreadsheetInternalState): SpreadsheetRuntimeSnapshot {
   return {
     document: state.document,
@@ -45,12 +49,33 @@ export function pushUndo(
   state: SpreadsheetInternalState,
   maxUndoDepth?: number,
 ): SpreadsheetInternalState {
+  return pushUndoDocument(state, state.document, maxUndoDepth);
+}
+
+export function pushUndoDocument(
+  state: SpreadsheetInternalState,
+  previousDocument: SpreadsheetDocument,
+  maxUndoDepth?: number,
+): SpreadsheetInternalState {
+  if (state.transactionDoc) {
+    return { ...state, redoStack: [] };
+  }
+
   const maxDepth = maxUndoDepth ?? state.maxUndoDepth ?? 100;
-  const undoStack = [...state.undoStack, state.document];
+  const undoStack = [...state.undoStack, previousDocument];
   if (undoStack.length > maxDepth) {
     undoStack.shift();
   }
   return { ...state, undoStack, redoStack: [] };
+}
+
+export function clearTransientState(
+  _state: SpreadsheetInternalState,
+): Pick<SpreadsheetInternalState, 'selection' | 'editing'> {
+  return {
+    selection: { kind: 'none' },
+    editing: undefined,
+  };
 }
 
 export function applySimpleDocumentMutation(

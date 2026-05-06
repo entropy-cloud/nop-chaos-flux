@@ -211,6 +211,53 @@ describe('spreadsheet grid selection', () => {
     });
   });
 
+  it('resyncs toolbar draft cell values from the selected live cell', async () => {
+    const documentModel = createEmptyDocument('toolbar-cell-value-sync');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'first',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B2', row: 1, col: 1 },
+      value: 'second',
+    });
+
+    const bridge = createSpreadsheetBridge(core);
+
+    function Probe() {
+      const interactions = useSpreadsheetInteractions({
+        bridge,
+        sheetId,
+        rows: 5,
+        cols: 5,
+      });
+
+      return (
+        <div>
+          <button type="button" onClick={() => interactions.handleCellClick(0, 0)}>
+            Select A1
+          </button>
+          <button type="button" onClick={() => interactions.handleCellClick(1, 1)}>
+            Select B2
+          </button>
+          <div data-testid="cell-value">{interactions.cellValue}</div>
+        </div>
+      );
+    }
+
+    render(<Probe />);
+
+    fireEvent.click(document.querySelector('button') as HTMLButtonElement);
+    await waitFor(() => expect(document.querySelector('[data-testid="cell-value"]')?.textContent).toBe('first'));
+
+    fireEvent.click(document.querySelectorAll('button')[1] as HTMLButtonElement);
+    await waitFor(() => expect(document.querySelector('[data-testid="cell-value"]')?.textContent).toBe('second'));
+  });
+
   it('exposes domain host metadata on the registered spreadsheet page renderer', () => {
     const definition = spreadsheetRendererDefinitions.find(
       (candidate) => candidate.type === 'spreadsheet-page',

@@ -7,7 +7,11 @@ import type {
 } from './types.js';
 import { createDefaultViewport } from './types.js';
 import type { SpreadsheetCommand, SpreadsheetCommandResult } from './commands.js';
-import { buildSnapshot, type SpreadsheetInternalState } from './core/internal-state.js';
+import {
+  buildSnapshot,
+  cloneSpreadsheetDocument,
+  type SpreadsheetInternalState,
+} from './core/internal-state.js';
 import { dispatchSpreadsheetCommand } from './core-dispatch.js';
 
 export interface SpreadsheetCore {
@@ -27,10 +31,11 @@ export interface CreateSpreadsheetCoreOptions {
 
 export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): SpreadsheetCore {
   const { document, config, readonly = false } = options;
-  const firstSheetId = document.workbook.sheets[0]?.id ?? '';
+  const initialDocument = cloneSpreadsheetDocument(document);
+  const firstSheetId = initialDocument.workbook.sheets[0]?.id ?? '';
 
   const store = createStore<SpreadsheetInternalState>(() => ({
-    document,
+    document: initialDocument,
     activeSheetId: firstSheetId,
     selection: { kind: 'none' },
     editing: undefined,
@@ -67,20 +72,22 @@ export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): Sp
     dispatch,
 
     replaceDocument(nextDocument: SpreadsheetDocument) {
-      const activeSheetId = nextDocument.workbook.sheets[0]?.id ?? '';
+      const replacedDocument = cloneSpreadsheetDocument(nextDocument);
+      const activeSheetId = replacedDocument.workbook.sheets[0]?.id ?? '';
       store.setState({
-        document: nextDocument,
+        document: replacedDocument,
         activeSheetId,
         selection: { kind: 'none' },
         editing: undefined,
         dirty: false,
         undoStack: [],
         redoStack: [],
+        transactionDoc: null,
       });
     },
 
     exportDocument() {
-      return store.getState().document;
+      return cloneSpreadsheetDocument(store.getState().document);
     },
 
     getClipboard() {
