@@ -60,6 +60,7 @@ function TextInput({
     <Input
       type="text"
       value={value == null ? '' : String(value)}
+      aria-label={t('conditionBuilder.valueLabel')}
       placeholder={placeholder}
       disabled={disabled}
       className="h-7 text-xs min-w-[100px]"
@@ -81,6 +82,7 @@ function NumberInput({
     <Input
       type="number"
       value={value == null ? '' : String(value)}
+      aria-label={t('conditionBuilder.valueLabel')}
       placeholder={t('conditionBuilder.numberPlaceholder')}
       disabled={disabled}
       className="h-7 text-xs min-w-[80px]"
@@ -123,7 +125,11 @@ function SelectInput({
   const stringValue = value == null ? '' : String(value);
   return (
     <Select value={stringValue} onValueChange={(v) => onChange(v)} disabled={disabled}>
-      <SelectTrigger size="sm" className="h-7 text-xs min-w-[100px]">
+      <SelectTrigger
+        size="sm"
+        className="h-7 text-xs min-w-[100px]"
+        aria-label={t('conditionBuilder.valueLabel')}
+      >
         <SelectValue placeholder={field.placeholder ?? t('conditionBuilder.selectPlaceholder')} />
       </SelectTrigger>
       <SelectContent>
@@ -183,6 +189,7 @@ function MultiSelectInput({
       <div className="relative">
         <NativeSelect
           className="absolute inset-0 w-full opacity-0"
+          aria-label={t('conditionBuilder.valueLabel')}
           disabled={disabled}
           value=""
           onChange={(e) => {
@@ -225,7 +232,11 @@ function BooleanInput({
 
   return (
     <Select value={stringValue} onValueChange={(v) => onChange(v === 'true')} disabled={disabled}>
-      <SelectTrigger size="sm" className="h-7 text-xs min-w-[80px]">
+      <SelectTrigger
+        size="sm"
+        className="h-7 text-xs min-w-[80px]"
+        aria-label={t('conditionBuilder.valueLabel')}
+      >
         <SelectValue placeholder={t('conditionBuilder.selectPlaceholder')} />
       </SelectTrigger>
       <SelectContent>

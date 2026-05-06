@@ -64,11 +64,20 @@ export function DetailDraftBody(props: DetailDraftBodyProps) {
 export function DetailDraftFooter(props: DetailDraftFooterProps) {
   return (
     <>
-      {props.error && <p data-slot={props.errorSlot}>{props.error}</p>}
+      {props.error && (
+        <p data-slot={props.errorSlot} role="status" aria-live="assertive">
+          {props.error}
+        </p>
+      )}
       <Button type="button" variant="outline" onClick={props.onCancel} disabled={props.confirming}>
         {t('flux.common.cancel')}
       </Button>
-      <Button type="button" onClick={props.onConfirm} disabled={props.confirming}>
+      <Button
+        type="button"
+        onClick={props.onConfirm}
+        disabled={props.confirming}
+        aria-label={props.confirming ? t('flux.form.confirming') : t('flux.common.confirm')}
+      >
         {props.confirming ? t('flux.form.confirming') : t('flux.common.confirm')}
       </Button>
     </>

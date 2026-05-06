@@ -106,7 +106,7 @@ export function publishValidateResultErrors(
     errors: issues.map((issue) => ({
       path: issue.path ?? fieldPath,
       message: issue.message,
-      rule: 'custom' as any,
+      rule: 'async',
       sourceKind: 'runtime-overlay' as const,
     })),
     replace: true,

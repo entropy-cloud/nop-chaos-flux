@@ -63,7 +63,13 @@ function TreeOptionNode(props: {
             hasChildren ? 'hover:bg-accent' : '',
             !hasChildren ? 'invisible' : '',
           )}
-          aria-label={hasChildren ? (expanded ? 'Collapse node' : 'Expand node') : undefined}
+          aria-label={
+            hasChildren
+              ? expanded
+                ? t('flux.common.collapse')
+                : t('flux.common.expand')
+              : undefined
+          }
           disabled={!hasChildren}
           onClick={handleChevronClick}
         >
@@ -111,6 +117,7 @@ function TreeOptionList(props: {
   searchable: boolean;
   disabled: boolean;
   onChange: (value: unknown) => void;
+  searchLabel: string;
 }) {
   const { query, setQuery, filteredOptions } = useTreeOptionListController({
     options: props.options,
@@ -125,7 +132,8 @@ function TreeOptionList(props: {
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search tree options"
+            aria-label={props.searchLabel}
+            placeholder={props.searchLabel}
             disabled={props.disabled}
           />
         </Label>
@@ -164,6 +172,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
     getTreeOptionConfig(props.props as InputTreeSchema),
   );
   const sourceError = getSourceErrorMessage(optionsSourceState);
+  const searchLabel = `${t('flux.common.search')} ${String((props.props.label ?? name) || 'tree')}`;
 
   return (
     <div data-slot="input-tree-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
@@ -176,12 +185,17 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           searchable={props.props.searchable === true}
           disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
           onChange={(nextValue) => handlers.onChange(nextValue)}
+          searchLabel={searchLabel}
         />
       </div>
       {sourceError ? (
-        <span data-slot="input-tree-source-error">{sourceError}</span>
+        <span data-slot="input-tree-source-error" role="alert">
+          {sourceError}
+        </span>
       ) : optionsSourceState?.loading === true ? (
-        <span data-slot="input-tree-source-loading">{t('flux.common.loading')}</span>
+        <span data-slot="input-tree-source-loading" role="status" aria-live="polite">
+          {t('flux.common.loading')}
+        </span>
       ) : null}
     </div>
   );
@@ -205,6 +219,8 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
     placeholder: props.props.placeholder,
   });
   const sourceError = getSourceErrorMessage(optionsSourceState);
+  const fieldLabel = String(props.props.label ?? name);
+  const searchLabel = `${t('flux.common.search')} ${fieldLabel || 'tree'}`;
 
   return (
     <div data-slot="tree-select-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
@@ -212,12 +228,12 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
         <div className="flex items-center gap-2" data-slot="tree-select-trigger-row">
           <PopoverTrigger
             render={
-              <Button
-                type="button"
-                variant="outline"
-                aria-label={String(props.props.label ?? name)}
-                disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
-              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  aria-label={fieldLabel}
+                  disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
+                >
                 <span
                   data-slot="tree-select-value"
                   className={cn(triggerText ? undefined : 'text-muted-foreground')}
@@ -231,12 +247,12 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             }
           />
           {props.props.clearable === true && hasSelection ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              aria-label="Clear tree selection"
-              disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label={t('flux.common.clear')}
+                disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -256,13 +272,18 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             searchable={props.props.searchable === true}
             disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
             onChange={(nextValue) => handlers.onChange(nextValue)}
+            searchLabel={searchLabel}
           />
         </PopoverContent>
       </Popover>
       {sourceError ? (
-        <span data-slot="tree-select-source-error">{sourceError}</span>
+        <span data-slot="tree-select-source-error" role="alert">
+          {sourceError}
+        </span>
       ) : optionsSourceState?.loading === true ? (
-        <span data-slot="tree-select-source-loading">{t('flux.common.loading')}</span>
+        <span data-slot="tree-select-source-loading" role="status" aria-live="polite">
+          {t('flux.common.loading')}
+        </span>
       ) : null}
     </div>
   );

@@ -154,6 +154,7 @@ function arrayItemsEqual(a: ArrayEditorItem[], b: ArrayEditorItem[]): boolean {
 
 export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
   const name = String(props.props.name ?? '');
+  const hasName = name.length > 0;
   const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
@@ -167,21 +168,23 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   const pendingFocusRef = React.useRef<{ kind: 'add' } | { kind: 'remove'; index: number } | null>(null);
 
   const formExternalValue = useCurrentFormState(
-    (state) => (currentForm && name ? toArrayEditorItems(getIn(state.values, name)) : undefined),
+    (state) => (currentForm && hasName ? toArrayEditorItems(getIn(state.values, name)) : undefined),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
       return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
     },
-    { path: name || undefined },
+    { enabled: Boolean(currentForm && hasName), path: hasName ? name : undefined },
   );
   const scopeExternalValue = useScopeSelector(
-    (scopeData) => (currentForm || !name ? undefined : toArrayEditorItems(getIn(scopeData, name))),
+    (scopeData) =>
+      currentForm || !hasName ? undefined : toArrayEditorItems(getIn(scopeData, name)),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
       return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
     },
+    { enabled: Boolean(!currentForm && hasName), fallback: undefined },
   );
   const externalValue = currentForm ? formExternalValue : scopeExternalValue;
   const items = externalValue ?? EMPTY_ARRAY_EDITOR_ITEMS;

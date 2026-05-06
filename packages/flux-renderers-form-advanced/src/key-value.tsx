@@ -37,10 +37,12 @@ function KeyValueRow(props: {
   currentForm: FormRuntime | undefined;
   childBehavior: CompiledValidationBehavior;
   onSync(nextPairs: KeyValuePair[]): void;
+  onRemove: (index: number) => void;
   pairs: KeyValuePair[];
   disabled?: boolean;
+  removeButtonRef?: (button: HTMLButtonElement | null) => void;
 }) {
-  const { pair, index, name, currentForm, childBehavior, onSync, pairs, disabled } = props;
+  const { pair, index, name, currentForm, childBehavior, onSync, onRemove, pairs, disabled, removeButtonRef } = props;
   const keyPath = `${name}.${index}.key`;
   const valuePath = `${name}.${index}.value`;
   const keyFieldState = useCompositeChildFieldState(keyPath);
@@ -151,22 +153,13 @@ function KeyValueRow(props: {
         <FieldHint errorMessage={valueUi.error?.message} showError={valueUi.showError} />
       </div>
       <Button
+        ref={removeButtonRef}
         type="button"
         variant="destructive"
         size="sm"
         disabled={disabled}
         aria-label={`${t('flux.form.remove')} entry ${index + 1}`}
-        onClick={() => {
-          const nextPairs = pairs.filter((_, candidateIndex) => candidateIndex !== index);
-
-          if (currentForm && name) {
-            currentForm.removeValue(name, index);
-            void currentForm.validateSubtree(name);
-            return;
-          }
-
-          onSync(nextPairs);
-        }}
+        onClick={() => onRemove(index)}
       >
         {t('flux.form.remove')}
       </Button>
@@ -201,6 +194,7 @@ function keyValuePairsEqual(a: KeyValuePair[], b: KeyValuePair[]): boolean {
 
 export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
   const name = String(props.props.name ?? '');
+  const hasName = name.length > 0;
   const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
@@ -208,10 +202,11 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const pairsRef = React.useRef<KeyValuePair[]>([]);
   const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
+  const removeButtonRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
   const modelGeneration = useCurrentFormModelGeneration();
 
   const formExternalValue = useCurrentFormState(
-    (state) => (currentForm && name ? toKeyValuePairs(getIn(state.values, name)) : undefined),
+    (state) => (currentForm && hasName ? toKeyValuePairs(getIn(state.values, name)) : undefined),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
@@ -220,10 +215,10 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value,
       );
     },
-    { path: name || undefined },
+    { enabled: Boolean(currentForm && hasName), path: hasName ? name : undefined },
   );
   const scopeExternalValue = useScopeSelector(
-    (scopeData) => (currentForm || !name ? undefined : toKeyValuePairs(getIn(scopeData, name))),
+    (scopeData) => (currentForm || !hasName ? undefined : toKeyValuePairs(getIn(scopeData, name))),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
@@ -232,6 +227,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value,
       );
     },
+    { enabled: Boolean(!currentForm && hasName), fallback: undefined },
   );
   const externalValue = currentForm ? formExternalValue : scopeExternalValue;
   const pairs = externalValue ?? EMPTY_KEY_VALUE_PAIRS;
@@ -269,6 +265,27 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       void currentForm.validateField(name);
     },
     [currentForm, name, scope],
+  );
+
+  const handleRemove = React.useCallback(
+    (index: number) => {
+      const nextPairs = pairs.filter((_, candidateIndex) => candidateIndex !== index);
+      const nextFocusIndex = Math.min(index, nextPairs.length - 1);
+
+      if (currentForm && name) {
+        currentForm.removeValue(name, index);
+        void currentForm.validateSubtree(name);
+      } else {
+        syncField(nextPairs);
+      }
+
+      queueMicrotask(() => {
+        if (nextFocusIndex >= 0) {
+          removeButtonRefs.current[nextFocusIndex]?.focus();
+        }
+      });
+    },
+    [currentForm, name, pairs, syncField],
   );
 
   React.useEffect(() => {
@@ -352,8 +369,12 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             currentForm={currentForm}
             childBehavior={childBehavior}
             onSync={syncField}
+            onRemove={handleRemove}
             pairs={pairs}
             disabled={presentation.effectiveDisabled}
+            removeButtonRef={(button) => {
+              removeButtonRefs.current[index] = button;
+            }}
           />
         );
       })}
@@ -376,7 +397,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           syncField(nextPairs);
         }}
       >
-        {props.props.addLabel ? String(props.props.addLabel) : 'Add entry'}
+        {props.props.addLabel ? String(props.props.addLabel) : t('flux.form.addEntry')}
       </Button>
     </div>
   );

@@ -43,7 +43,7 @@ describe('tree controls source state and picker branches', () => {
     );
 
     expect(await screen.findByText('Loading...')).toBeTruthy();
-    expect((screen.getByPlaceholderText('Search tree options') as HTMLInputElement).disabled).toBe(
+    expect((screen.getByPlaceholderText('Search Categories') as HTMLInputElement).disabled).toBe(
       true,
     );
     expect(screen.getByRole('treeitem', { name: 'Runtime' }).tabIndex).toBe(-1);
@@ -124,7 +124,7 @@ describe('tree controls source state and picker branches', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Department/ }));
-    const search = await screen.findByPlaceholderText('Search tree options');
+    const search = await screen.findByPlaceholderText('Search Department');
     fireEvent.change(search, { target: { value: 'platform' } });
 
     await waitFor(() => {
@@ -180,7 +180,7 @@ describe('tree controls source state and picker branches', () => {
       ).toEqual(['platform', 'design']);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Clear tree selection' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
 
     await waitFor(() => {
       expect(

@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { GripVerticalIcon, Trash2Icon } from 'lucide-react';
+import { Button } from '@nop-chaos/ui';
 import type {
   ConditionField,
   ConditionItemValue,
@@ -105,12 +106,16 @@ export function ConditionItem({
       className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 hover:shadow-sm transition-shadow group"
     >
       {draggable && !disabled && (
-        <div
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
           className="cursor-grab p-0.5 text-muted-foreground hover:text-foreground active:cursor-grabbing"
+          aria-label={t('conditionBuilder.reorderCondition')}
           {...dragHandleProps}
         >
           <GripVerticalIcon className="size-3.5" />
-        </div>
+        </Button>
       )}
 
       <FieldSelect

@@ -27,7 +27,11 @@ export function OperatorSelect({ operators, value, onChange, disabled }: Operato
       }}
       disabled={disabled}
     >
-      <SelectTrigger size="sm" className="h-7 text-xs min-w-[80px] max-w-[120px]">
+      <SelectTrigger
+        size="sm"
+        className="h-7 text-xs min-w-[80px] max-w-[120px]"
+        aria-label={t('conditionBuilder.operatorLabel')}
+      >
         <SelectValue placeholder={t('conditionBuilder.operatorPlaceholder')} />
       </SelectTrigger>
       <SelectContent>

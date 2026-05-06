@@ -145,7 +145,7 @@ describe('tree controls - DOM structure, markers, and expand/collapse', () => {
       expect(screen.getByText('Compiler')).toBeTruthy();
     });
 
-    const collapseBtn = screen.getAllByLabelText('Collapse node')[0];
+    const collapseBtn = screen.getAllByLabelText('Collapse')[0];
     fireEvent.click(collapseBtn);
 
     await waitFor(() => {
@@ -154,7 +154,7 @@ describe('tree controls - DOM structure, markers, and expand/collapse', () => {
     });
     expect(screen.getByText('Platform')).toBeTruthy();
 
-    const expandBtn = screen.getAllByLabelText('Expand node')[0];
+    const expandBtn = screen.getAllByLabelText('Expand')[0];
     fireEvent.click(expandBtn);
 
     await waitFor(() => {
@@ -205,7 +205,7 @@ describe('tree controls - DOM structure, markers, and expand/collapse', () => {
       expect(screen.getByText('Backend')).toBeTruthy();
     });
 
-    const collapseBtn = screen.getAllByLabelText('Collapse node')[0];
+    const collapseBtn = screen.getAllByLabelText('Collapse')[0];
     fireEvent.click(collapseBtn);
 
     await waitFor(() => {
@@ -214,7 +214,7 @@ describe('tree controls - DOM structure, markers, and expand/collapse', () => {
     });
     expect(screen.getByText('Engineering')).toBeTruthy();
 
-    const expandBtn = screen.getAllByLabelText('Expand node')[0];
+    const expandBtn = screen.getAllByLabelText('Expand')[0];
     fireEvent.click(expandBtn);
 
     await waitFor(() => {

@@ -78,6 +78,7 @@ export function FieldSelect({
       <ComboboxInput
         className="h-7 text-xs min-w-[100px] max-w-[160px]"
         placeholder={selectedItem?.label ?? t('conditionBuilder.selectField')}
+        aria-label={t('conditionBuilder.fieldLabel')}
         showClear={false}
       />
       <ComboboxContent>

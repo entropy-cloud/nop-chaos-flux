@@ -212,14 +212,14 @@ describe('tree controls - value handling and form integration', () => {
       expect(screen.getByText('Frontend')).toBeTruthy();
     });
 
-    const collapseBtn = screen.getAllByLabelText('Collapse node')[0];
+    const collapseBtn = screen.getAllByLabelText('Collapse')[0];
     fireEvent.click(collapseBtn);
 
     await waitFor(() => {
       expect(screen.queryByText('Frontend')).toBeNull();
     });
 
-    const expandBtn = screen.getAllByLabelText('Expand node')[0];
+    const expandBtn = screen.getAllByLabelText('Expand')[0];
     fireEvent.click(expandBtn);
 
     await waitFor(() => {

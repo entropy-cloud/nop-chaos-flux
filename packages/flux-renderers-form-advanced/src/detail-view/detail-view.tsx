@@ -47,11 +47,13 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const staticData = schemaProps.data as Record<string, unknown> | undefined;
   const surfaceMode = (schemaProps.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
   const surfaceTitle = (schemaProps.surface as { title?: string } | undefined)?.title ?? '';
-  const triggerLabel = String(schemaProps.triggerLabel ?? 'Edit');
+  const labelContent = resolveFieldLabelContent(props);
+  const labelText = typeof labelContent === 'string' && labelContent ? labelContent : undefined;
+  const triggerLabel = String(
+    schemaProps.triggerLabel ?? t('flux.common.editItem', { item: labelText ?? t('flux.common.detail') }),
+  );
   const validationMessage = t('flux.common.detailDraftValidationError');
   const effectiveDisabled = Boolean(props.meta.disabled);
-
-  const labelContent = resolveFieldLabelContent(props);
 
   const scopeProjectedValue = useScopeSelector(
     (data) => (scopePath ? (data as Record<string, unknown>)[scopePath] : undefined),
@@ -297,6 +299,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
           type="button"
           variant="outline"
           size="sm"
+          aria-label={triggerLabel}
           onClick={() => {
             handleOpen().catch((error) => {
               logDetailViewAsyncError('open', error);

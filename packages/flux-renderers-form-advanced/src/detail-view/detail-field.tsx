@@ -40,10 +40,14 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const parentValidationOwner = useCurrentValidationScope();
   const schemaProps = props.props;
   const name = String(schemaProps.name ?? '');
+  const hasName = name.length > 0;
   const readOnly = Boolean(schemaProps.readOnly);
   const surfaceMode = (schemaProps.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
   const surfaceTitle = (schemaProps.surface as { title?: string } | undefined)?.title ?? '';
-  const triggerLabel = String(schemaProps.triggerLabel ?? 'Edit');
+  const fieldLabel = String((schemaProps.label ?? name) || t('flux.common.detail'));
+  const triggerLabel = String(
+    schemaProps.triggerLabel ?? t('flux.common.editItem', { item: fieldLabel }),
+  );
   const validationMessage = t('flux.common.detailDraftValidationError');
 
   const presentation = useFieldPresentation(name, parentForm, {
@@ -52,13 +56,14 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   });
 
   const currentValue = useCurrentFormState(
-    (state) => (name ? (state.values as Record<string, unknown>)[name] : undefined),
+    (state) => (hasName ? (state.values as Record<string, unknown>)[name] : undefined),
     Object.is,
-    { path: name || undefined },
+    { enabled: hasName, path: hasName ? name : undefined },
   );
   const scopeValue = useScopeSelector(
-    (data) => (name ? getIn(data as Record<string, unknown>, name) : undefined),
+    (data) => (hasName ? getIn(data as Record<string, unknown>, name) : undefined),
     Object.is,
+    { enabled: hasName, fallback: undefined },
   );
   const fieldValue = parentForm ? currentValue : scopeValue;
 
@@ -217,6 +222,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
             type="button"
             variant="outline"
             size="sm"
+            aria-label={triggerLabel}
             onClick={() => {
               handleOpen().catch((error) => {
                 logDetailFieldAsyncError('open', error);
