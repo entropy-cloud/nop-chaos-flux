@@ -6,17 +6,14 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '../../flux-formula/src/index';
 import { createSchemaRenderer } from '../../flux-react/src/index';
 import type { RendererDefinition } from '../../flux-core/src/index';
-import { createDesignerCore } from '../../flow-designer-core/src/index';
-import { createDesignerCommandAdapter } from './designer-command-adapter';
-import { DesignerContext } from './designer-context';
-import { normalizeConfig } from '../../flow-designer-core/src/core/config';
 import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';
+import { DesignerContext } from './designer-context';
 
 afterEach(() => cleanup());
 
 vi.mock('@xyflow/react', () => {
   return {
-    BaseEdge: ({ children, ...props }: any) => <svg data-testid="base-edge" />,
+    BaseEdge: ({ ..._props }: any) => <svg data-testid="base-edge" />,
     EdgeLabelRenderer: ({ children }: any) => (
       <div data-testid="edge-label-renderer">{children}</div>
     ),
@@ -86,29 +83,6 @@ function createDesignerContextValue(config: DesignerConfig, doc: GraphDocument) 
     dispatch: (cmd: any) => adapter.dispatch(cmd),
     config,
   };
-}
-
-function renderEdgeWithRuntime(
-  edgeProps: any,
-  designerCtx: ReturnType<typeof createDesignerContextValue>,
-) {
-  const SchemaRenderer = createSchemaRenderer([textWithBody]);
-
-  return render(
-    <SchemaRenderer
-      schemaUrl="test://edge-render"
-      schema={{ type: 'edge-host' }}
-      env={env}
-      formulaCompiler={createFormulaCompiler()}
-      extraContext={(runtime: any, scope: any) => ({
-        designer: (
-          <DesignerContext.Provider value={designerCtx}>
-            {null}
-          </DesignerContext.Provider>
-        ),
-      })}
-    />,
-  );
 }
 
 describe('DesignerXyflowEdge label rendering', () => {

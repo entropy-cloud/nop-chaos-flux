@@ -1,19 +1,15 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '../../flux-formula/src/index';
 import { createSchemaRenderer } from '../../flux-react/src/index';
 import { RenderNodes } from '../../flux-react/src/helpers';
 import type { RendererDefinition } from '../../flux-core/src/index';
 import { flowDesignerRendererDefinitions } from './index';
 import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';
-import { createDesignerCore } from '../../flow-designer-core/src/index';
-import { DesignerContext } from './designer-context';
-import { createDesignerCommandAdapter } from './designer-command-adapter';
 import { normalizeConfig } from '../../flow-designer-core/src/core/config';
-import { DesignerXyflowEdge } from './designer-xyflow-canvas/designer-xyflow-edge';
 
 afterEach(() => cleanup());
 
@@ -134,16 +130,7 @@ describe('Edge label expression rendering', () => {
       lineStyle: 'solid',
     };
 
-    const SchemaRenderer = createSchemaRenderer([textWithBody]);
-
-    const Wrapper = () => (
-      <SchemaRenderer
-        schemaUrl="test://edge-expr-direct"
-        schema={{ type: 'binding-host' }}
-        env={env}
-        formulaCompiler={createFormulaCompiler()}
-      />
-    );
+    createSchemaRenderer([textWithBody]);
 
     const hostRenderer: RendererDefinition = {
       type: 'binding-host',

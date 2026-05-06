@@ -162,5 +162,6 @@ export function useTableRowScopeCache(
 
   void version;
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization, react-hooks/exhaustive-deps -- intentionally re-create Map only when version changes to break React Compiler memoization
   return useMemo(() => new Map(rowScopeCache), [version]);
 }
