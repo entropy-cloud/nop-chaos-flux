@@ -25,6 +25,21 @@ export function EditorCanvas({
   onAutosave,
 }: EditorCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const chartsRef = useRef<DocChart[] | undefined>(charts);
+  const codesRef = useRef<DocCode[] | undefined>(codes);
+  const onAutosaveRef = useRef(onAutosave);
+
+  useEffect(() => {
+    chartsRef.current = charts;
+  }, [charts]);
+
+  useEffect(() => {
+    codesRef.current = codes;
+  }, [codes]);
+
+  useEffect(() => {
+    onAutosaveRef.current = onAutosave;
+  }, [onAutosave]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -41,17 +56,17 @@ export function EditorCanvas({
           const editorValue = value.data;
           const paperSettings = bridge.getPaperSettings();
           const saved = createSavedDocumentData({
-            data: {
-              header: editorValue.header ?? [],
-              main: editorValue.main,
-              footer: editorValue.footer ?? [],
-              charts: charts ?? [],
-              codes: codes ?? [],
-            },
+              data: {
+                header: editorValue.header ?? [],
+                main: editorValue.main,
+                footer: editorValue.footer ?? [],
+                charts: chartsRef.current ?? [],
+                codes: codesRef.current ?? [],
+              },
             paperSettings: paperSettings ?? { ...DEFAULT_PAPER_SETTINGS },
           });
           localStorage.setItem('nop-word-editor-document', JSON.stringify(saved));
-          onAutosave?.(saved);
+          onAutosaveRef.current?.(saved);
           editorStore.setDirty(false);
         }
       }, 500);
@@ -145,7 +160,7 @@ export function EditorCanvas({
       editorStore.setBridge(null);
       editorStore.setReady(false);
     };
-  }, [bridge, charts, codes, editorStore, initialDocument, onAutosave]);
+  }, [bridge, editorStore, initialDocument]);
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
 }

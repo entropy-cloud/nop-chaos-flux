@@ -103,4 +103,48 @@ describe('EditorCanvas', () => {
     expect(savedArg.data.codes).not.toEqual([{ id: 'initial-code', codeName: 'Initial' }]);
     expect(autosaveSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('does not remount the editor bridge when charts and codes props change', async () => {
+    const bridge = {
+      mount: vi.fn(),
+      unmount: vi.fn(),
+      getValue: vi.fn(() => ({ data: { header: [], main: [{ value: 'draft' }], footer: [] } })),
+      getPaperSettings: vi.fn(() => null),
+      getWordCount: vi.fn(() => Promise.resolve(0)),
+    };
+    const editorStore = {
+      setDirty: vi.fn(),
+      setBridge: vi.fn(),
+      setReady: vi.fn(),
+      setPaperSettings: vi.fn(),
+      setWordCount: vi.fn(),
+      setSelection: vi.fn(),
+      setTotalPages: vi.fn(),
+      setScale: vi.fn(),
+    };
+
+    const { rerender } = render(
+      <EditorCanvas
+        editorStore={editorStore as any}
+        bridge={bridge as any}
+        charts={[{ id: 'chart-1', chartName: 'One' } as any]}
+        codes={[{ id: 'code-1', codeName: 'One' } as any]}
+      />,
+    );
+
+    expect(bridge.mount).toHaveBeenCalledTimes(1);
+    expect(bridge.unmount).not.toHaveBeenCalled();
+
+    rerender(
+      <EditorCanvas
+        editorStore={editorStore as any}
+        bridge={bridge as any}
+        charts={[{ id: 'chart-2', chartName: 'Two' } as any]}
+        codes={[{ id: 'code-2', codeName: 'Two' } as any]}
+      />,
+    );
+
+    expect(bridge.mount).toHaveBeenCalledTimes(1);
+    expect(bridge.unmount).not.toHaveBeenCalled();
+  });
 });
