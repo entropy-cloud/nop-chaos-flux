@@ -151,7 +151,7 @@ function ArrayItem(props: {
         </FormContext.Provider>
       </div>
       {removable && (
-        <WrappedFieldAction variant="destructive" size="sm" onClick={() => onRemove(index)}>
+        <WrappedFieldAction variant="destructive" size="sm" className="mt-1" onClick={() => onRemove(index)}>
           {t('flux.form.remove')}
         </WrappedFieldAction>
       )}
