@@ -1,6 +1,6 @@
 # 217 Deep Audit 2026-05-06 Confirmed Defect Remediation Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-06
 > Source: `docs/analysis/2026-05-06-deep-audit-full/summary.md`, `docs/analysis/2026-05-06-deep-audit-full/review-results.md`, per-dimension files under `docs/analysis/2026-05-06-deep-audit-full/`
 > Related: `docs/plans/211-runtime-state-reactivity-and-safety-closure-plan.md`, `docs/plans/212-renderer-workbench-contract-and-accessibility-closure-plan.md`, `docs/plans/216-open-ended-adversarial-review-residual-integrity-plan.md`
@@ -16,7 +16,8 @@
 - 05-06 draft 再复核后发现，部分 finding 与更早 owner-plan 的已落地修复或既定设计决定相邻但不等价，尤其是 surface 双态历史问题、`NodeRenderer` render-phase side effect、以及 wrapped secondary action 的非 labelable 基线；这些不能混成一个新的“大而全” remediation plan。
 - `docs/plans/211-runtime-state-reactivity-and-safety-closure-plan.md` 已持有并为更早一轮 declarative surface second-source-of-truth、duplicate closed publication、`NodeRenderer` render-phase side-effect 等 runtime/react integration defect 记录了 phase-level landed proof / owner adjudication；217 只拥有 05-06 仍然独立存在的 residual items。
 - `docs/plans/212-renderer-workbench-contract-and-accessibility-closure-plan.md` 与 `docs/logs/2026/05-03.md` 已明确记录：`WrappedFieldAction` 当前支持基线是 non-labelable button-like control，而不是简单回退成真实 `<Button>`；217 不得把该既定裁定重新当成 must-fix defect。
-- 仓库当前仍有 unrelated baseline blockers：`pnpm lint` 卡在 `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-spreadsheet-shell.ts:22`，`pnpm typecheck` / `pnpm build` 卡在 `packages/flux-renderers-basic/src/use-surface-renderer.ts` 缺失 `SurfaceStoreApi` 方法；217 不拥有这些 blocker，但 closure 仍需要记录 repo-level verification attempt。
+- 初稿里记录过的 repo-level blocker 已在本次执行闭环中被重新验证并清空：`pnpm check:workspace-manifest-deps`、`pnpm typecheck`、`pnpm build`、`pnpm lint`、`pnpm test` 最终全部通过，因此 217 可以按 live repo 而不是旧 blocker 文本收口。
+- `pnpm install` 在本次执行中成功完成；输出包含 `pnpm-lock.yaml not compatible with current pnpm` 的兼容性 warning，但未阻塞安装或后续验证。
 
 ## Goals
 
@@ -92,147 +93,147 @@
 
 ### Phase 1 - P1 Critical Fixes
 
-Status: planned
+Status: completed
 Targets: `packages/word-editor-renderers/src/editor-canvas.tsx`, `packages/flux-runtime/src/action-adapter.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] [Fix] **P1-1**: `editor-canvas.tsx:148` - remove `charts` and `codes` from the effect dependency array and carry the latest values through refs so chart/code insertion no longer tears down the active editor bridge.
-- [ ] [Fix] **P1-2**: `action-adapter.ts:166-170` - narrow `submitForm` catch scope so only form-handle resolution failure becomes `Form not found`; `invoke('submit', ...)` failures must preserve and propagate the real cause.
-- [ ] [Proof] Add or update focused verification proving chart/code insertion does not remount the editor or lose undo/redo state.
-- [ ] [Proof] Add or update focused verification proving submit validation/network/permission failures surface their real error instead of `Form not found`.
+- [x] [Fix] **P1-1**: `editor-canvas.tsx:148` - remove `charts` and `codes` from the effect dependency array and carry the latest values through refs so chart/code insertion no longer tears down the active editor bridge.
+- [x] [Fix] **P1-2**: `action-adapter.ts:166-170` - narrow `submitForm` catch scope so only form-handle resolution failure becomes `Form not found`; `invoke('submit', ...)` failures must preserve and propagate the real cause.
+- [x] [Proof] Add or update focused verification proving chart/code insertion does not remount the editor or lose undo/redo state.
+- [x] [Proof] Add or update focused verification proving submit validation/network/permission failures surface their real error instead of `Form not found`.
 
 Exit Criteria:
 
-- [ ] Word editor chart/code insertion no longer remounts the editor.
-- [ ] `submitForm` preserves and propagates the real submit failure semantics.
-- [ ] No owner-doc update required.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] Word editor chart/code insertion no longer remounts the editor.
+- [x] `submitForm` preserves and propagates the real submit failure semantics.
+- [x] No owner-doc update required.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 2 - Async Error Observability
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/form.tsx`, `packages/flux-renderers-form/src/field-utils/field-handlers.tsx`, `packages/flux-runtime/src/async-data/source-registry.ts`, `packages/report-designer-core/src/core.ts`, `packages/flux-renderers-data/src/table-renderer/table-quick-edit-controller.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] [Fix] **T1-1**: `form.tsx:271` - replace `initAction.catch(() => undefined)` with monitored reporting that suppresses only abort-path noise.
-- [ ] [Fix] **T1-2**: `field-utils/field-handlers.tsx` - attach explicit rejection handling to the fire-and-forget `validateField` path so it cannot become an unhandled rejection.
-- [ ] [Fix] **T1-3**: `source-registry.ts:204` - replace `refresh().catch(console.warn)` with a runtime-host-visible reporting channel.
-- [ ] [Fix] **T1-4**: `report-designer-core/src/core.ts:349` - replace `refreshDerivedState().catch(() => undefined)` with designer-visible error reporting.
-- [ ] [Fix] **T1-5**: `source-registry.ts:198` - fix `sourceCascadeDepth` underflow so the counter cannot end below zero on the reset path.
-- [ ] [Fix] **T1-6**: `table-quick-edit-controller.ts:100` - expose save failure state after the callback so consumers have a UI-visible error channel.
-- [ ] [Proof] Focused tests or equivalent proof cover each landed observability path.
+- [x] [Fix] **T1-1**: `form.tsx:271` - replace `initAction.catch(() => undefined)` with monitored reporting that suppresses only abort-path noise.
+- [x] [Fix] **T1-2**: `field-utils/field-handlers.tsx` - attach explicit rejection handling to the fire-and-forget `validateField` path so it cannot become an unhandled rejection.
+- [x] [Fix] **T1-3**: `source-registry.ts:204` - replace `refresh().catch(console.warn)` with a runtime-host-visible reporting channel.
+- [x] [Fix] **T1-4**: `report-designer-core/src/core.ts:349` - replace `refreshDerivedState().catch(() => undefined)` with designer-visible error reporting.
+- [x] [Fix] **T1-5**: `source-registry.ts:198` - fix `sourceCascadeDepth` underflow so the counter cannot end below zero on the reset path.
+- [x] [Fix] **T1-6**: `table-quick-edit-controller.ts:100` - expose save failure state after the callback so consumers have a UI-visible error channel.
+- [x] [Proof] Focused tests or equivalent proof cover each landed observability path.
 
 Exit Criteria:
 
-- [ ] All 6 in-scope async error paths have an observable exit.
-- [ ] `sourceCascadeDepth` cannot underflow below zero.
-- [ ] No owner-doc update required.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] All 6 in-scope async error paths have an observable exit.
+- [x] `sourceCascadeDepth` cannot underflow below zero.
+- [x] No owner-doc update required.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 3 - Renderer `className` Contract Fix
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/condition-builder/condition-builder.tsx`, `packages/flux-renderers-form-advanced/src/tag-list.tsx`, `packages/flux-renderers-form-advanced/src/key-value.tsx`, `packages/flux-renderers-form-advanced/src/array-editor.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] [Fix] **T2-1**: `condition-builder.tsx:110` - merge `props.meta.className` into the root `nop-condition-builder` element.
-- [ ] [Fix] **T2-2**: `tag-list.tsx:85` - merge `props.meta.className` into the root `nop-tag-list` element.
-- [ ] [Fix] **T2-3**: `key-value.tsx:357` - merge `props.meta.className` into the root `nop-key-value` element.
-- [ ] [Fix] **T2-4**: `array-editor.tsx:294` - merge `props.meta.className` into the root `nop-array-editor` element.
-- [ ] [Proof] Focused proof confirms schema `className` now reaches each widget root.
+- [x] [Fix] **T2-1**: `condition-builder.tsx:110` - merge `props.meta.className` into the root `nop-condition-builder` element.
+- [x] [Fix] **T2-2**: `tag-list.tsx:85` - merge `props.meta.className` into the root `nop-tag-list` element.
+- [x] [Fix] **T2-3**: `key-value.tsx:357` - merge `props.meta.className` into the root `nop-key-value` element.
+- [x] [Fix] **T2-4**: `array-editor.tsx:294` - merge `props.meta.className` into the root `nop-array-editor` element.
+- [x] [Proof] Focused proof confirms schema `className` now reaches each widget root.
 
 Exit Criteria:
 
-- [ ] All 4 widget roots merge `props.meta.className`.
-- [ ] Schema consumers can override or extend widget root styling through `className`.
-- [ ] No owner-doc update required.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] All 4 widget roots merge `props.meta.className`.
+- [x] Schema consumers can override or extend widget root styling through `className`.
+- [x] No owner-doc update required.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 4 - Type Safety And Lifecycle Residuals
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-basic/src/use-surface-renderer.ts`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-renderers-form-advanced/src/condition-builder/types.ts`, `packages/flux-renderers-form-advanced/src/wrapped-field-action.tsx`, `packages/flux-code-editor/src/code-editor-renderer/toolbar-button.tsx`, shared typed dispatch metadata helpers if needed
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] **T3-1**: `condition-builder/types.ts:144,156` - replace `fields?: any[]` with `fields?: ConditionField[]` and `operators?: any` with `operators?: ConditionOperatorOverrides`, matching `docs/components/condition-builder/design.md`.
-- [ ] [Fix] **T3-2**: `wrapped-field-action.tsx:87` and `code-editor-renderer/toolbar-button.tsx:40` - remove `KeyboardEvent -> MouseEvent` assertions by widening the handler contract or splitting keyboard activation logic.
-- [ ] [Fix] **T3-3**: `use-surface-renderer.ts:102-107` - replace hidden `any` dispatch metadata reads with a shared typed carrier for `__actionScope` / `__componentRegistry`; do not reopen the broader architecture rewrite.
-- [ ] [Fix] **T3-4**: `node-renderer.tsx:246,272,285` - eliminate the hot-path `as any` casts around action dispatch and region node rendering by introducing local typed narrowing/helpers.
-- [ ] [Fix] **T3-5**: `use-surface-renderer.ts:230-266` - remove the close-reopen hazard caused by overlapping declarative lifecycle effects when the derived scope changes while the surface stays open.
-- [ ] [Decision] Record that this phase does not reopen the already-owned `defaultOpen/localOpen` split or render-phase prepared-import side-effect defects from plan `211`.
-- [ ] [Proof] Focused proof covers typed dispatch metadata access, `node-renderer` region/event paths, and declarative surface stability across scope churn.
+- [x] [Fix] **T3-1**: `condition-builder/types.ts:144,156` - replace `fields?: any[]` with `fields?: ConditionField[]` and `operators?: any` with `operators?: ConditionOperatorOverrides`, matching `docs/components/condition-builder/design.md`.
+- [x] [Fix] **T3-2**: `wrapped-field-action.tsx:87` and `code-editor-renderer/toolbar-button.tsx:40` - remove `KeyboardEvent -> MouseEvent` assertions by widening the handler contract or splitting keyboard activation logic.
+- [x] [Fix] **T3-3**: `use-surface-renderer.ts:102-107` - replace hidden `any` dispatch metadata reads with a shared typed carrier for `__actionScope` / `__componentRegistry`; do not reopen the broader architecture rewrite.
+- [x] [Fix] **T3-4**: `node-renderer.tsx:246,272,285` - eliminate the hot-path `as any` casts around action dispatch and region node rendering by introducing local typed narrowing/helpers.
+- [x] [Fix] **T3-5**: `use-surface-renderer.ts:230-266` - remove the close-reopen hazard caused by overlapping declarative lifecycle effects when the derived scope changes while the surface stays open.
+- [x] [Decision] Record that this phase does not reopen the already-owned `defaultOpen/localOpen` split or render-phase prepared-import side-effect defects from plan `211`.
+- [x] [Proof] Focused proof covers typed dispatch metadata access, `node-renderer` region/event paths, and declarative surface stability across scope churn.
 
 Exit Criteria:
 
-- [ ] condition-builder schema typing no longer uses `any` for `fields` or `operators`.
-- [ ] keyboard activation no longer relies on `KeyboardEvent -> MouseEvent` assertion.
-- [ ] hidden dispatch metadata no longer crosses this path through `any`.
-- [ ] `node-renderer` hot-path `as any` sites are removed from the confirmed locations.
-- [ ] declarative surface scope churn no longer triggers an unnecessary close-reopen cycle.
-- [ ] Owner-doc adjudication against `docs/architecture/{renderer-runtime.md,surface-owner.md}` is recorded; update only if supported semantics changed.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] condition-builder schema typing no longer uses `any` for `fields` or `operators`.
+- [x] keyboard activation no longer relies on `KeyboardEvent -> MouseEvent` assertion.
+- [x] hidden dispatch metadata no longer crosses this path through `any`.
+- [x] `node-renderer` hot-path `as any` sites are removed from the confirmed locations.
+- [x] declarative surface scope churn no longer triggers an unnecessary close-reopen cycle.
+- [x] Owner-doc adjudication against `docs/architecture/{renderer-runtime.md,surface-owner.md}` is recorded; update only if supported semantics changed.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 5 - Accessibility And Validation Contract Gaps
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/input.tsx`, `packages/flux-renderers-form-advanced/src/condition-builder/condition-group.tsx`, `packages/flux-runtime/src/form-runtime-validation.ts`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] **T4-1**: `input.tsx` RadioGroup - add `aria-required` to the group control and `role="alert"` to the async error surface.
-- [ ] [Fix] **T4-2**: `input.tsx` CheckboxGroup - add `role="group"` and `aria-required` to the group root.
-- [ ] [Fix] **T4-3**: `condition-builder/condition-group.tsx` - add stable group-level ARIA structure for nested condition groups.
-- [ ] [Fix] **T6-1**: `form-runtime-validation.ts:443-449` - apply `hiddenFieldPolicy.validateWhenHidden` to runtime-registered hidden-field validation, matching compiled-field behavior.
-- [ ] [Decision] Record that `WrappedFieldAction` real-`<Button>` migration remains out of scope because the supported baseline is a non-labelable button-like control.
-- [ ] [Proof] Focused proof covers RadioGroup, CheckboxGroup, ConditionBuilder accessibility semantics, and runtime-registered hidden-field policy behavior.
+- [x] [Fix] **T4-1**: `input.tsx` RadioGroup - add `aria-required` to the group control and `role="alert"` to the async error surface.
+- [x] [Fix] **T4-2**: `input.tsx` CheckboxGroup - add `role="group"` and `aria-required` to the group root.
+- [x] [Fix] **T4-3**: `condition-builder/condition-group.tsx` - add stable group-level ARIA structure for nested condition groups.
+- [x] [Fix] **T6-1**: `form-runtime-validation.ts:443-449` - apply `hiddenFieldPolicy.validateWhenHidden` to runtime-registered hidden-field validation, matching compiled-field behavior.
+- [x] [Decision] Record that `WrappedFieldAction` real-`<Button>` migration remains out of scope because the supported baseline is a non-labelable button-like control.
+- [x] [Proof] Focused proof covers RadioGroup, CheckboxGroup, ConditionBuilder accessibility semantics, and runtime-registered hidden-field policy behavior.
 
 Exit Criteria:
 
-- [ ] RadioGroup has required-state and error-alert semantics.
-- [ ] CheckboxGroup exposes group semantics and required-state semantics.
-- [ ] ConditionBuilder nested groups expose stable group-level ARIA structure.
-- [ ] runtime-registered hidden fields obey `hiddenFieldPolicy.validateWhenHidden`.
-- [ ] Owner-doc adjudication against `docs/architecture/form-validation.md` is recorded; update only if supported semantics changed.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] RadioGroup has required-state and error-alert semantics.
+- [x] CheckboxGroup exposes group semantics and required-state semantics.
+- [x] ConditionBuilder nested groups expose stable group-level ARIA structure.
+- [x] runtime-registered hidden fields obey `hiddenFieldPolicy.validateWhenHidden`.
+- [x] Owner-doc adjudication against `docs/architecture/form-validation.md` is recorded; update only if supported semantics changed.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 6 - Ghost Dependencies Cleanup
 
-Status: planned
+Status: completed
 Targets: `packages/word-editor-renderers/package.json`, `packages/flux-renderers-basic/package.json`, `packages/flux-renderers-form-advanced/package.json`, `packages/flux-renderers-data/package.json`, `packages/flow-designer-renderers/package.json`, `packages/spreadsheet-renderers/package.json`, `packages/report-designer-renderers/package.json`
 
 - Item Types: `Fix | Proof`
 
-- [ ] [Fix] **T5-1**: remove `@nop-chaos/theme-tokens` from `packages/word-editor-renderers/package.json`.
-- [ ] [Fix] **T5-2**: move test-only `@nop-chaos/flux-runtime` usage from `dependencies` to `devDependencies` in `flux-renderers-basic`, `flux-renderers-form-advanced`, `flux-renderers-data`, and `word-editor-renderers`.
-- [ ] [Fix] **T5-3**: remove unused `react-dom` declarations from `word-editor-renderers`, `flow-designer-renderers`, `spreadsheet-renderers`, and `report-designer-renderers`.
-- [ ] [Proof] `pnpm install` succeeds and manifest hygiene checks stay green after the cleanup.
-- [ ] [Proof] package-scoped typecheck/build verification confirms the declaration moves do not break the owned packages.
+- [x] [Fix] **T5-1**: remove `@nop-chaos/theme-tokens` from `packages/word-editor-renderers/package.json`.
+- [x] [Fix] **T5-2**: move test-only `@nop-chaos/flux-runtime` usage from `dependencies` to `devDependencies` in `flux-renderers-basic`, `flux-renderers-form-advanced`, `flux-renderers-data`, and `word-editor-renderers`.
+- [x] [Fix] **T5-3**: remove unused `react-dom` declarations from `word-editor-renderers`, `flow-designer-renderers`, `spreadsheet-renderers`, and `report-designer-renderers`.
+- [x] [Proof] `pnpm install` succeeds and manifest hygiene checks stay green after the cleanup.
+- [x] [Proof] package-scoped typecheck/build verification confirms the declaration moves do not break the owned packages.
 
 Exit Criteria:
 
-- [ ] All 3 ghost-dependency clusters are cleaned, covering 9 concrete dependency declarations across 7 manifests.
-- [ ] `pnpm install` succeeds.
-- [ ] `pnpm check:workspace-manifest-deps` passes or remains blocked only by unrelated pre-existing issues.
-- [ ] No owner-doc update required.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] All 3 ghost-dependency clusters are cleaned, covering 9 concrete dependency declarations across 7 manifests.
+- [x] `pnpm install` succeeds.
+- [x] `pnpm check:workspace-manifest-deps` passes or remains blocked only by unrelated pre-existing issues.
+- [x] No owner-doc update required.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
-- [ ] Every plan-owned confirmed defect listed in `## Confirmed Item Adjudication` is fixed or moved to explicit successor ownership with recorded reasoning.
-- [ ] No plan-owned confirmed defect is silently downgraded to optimization-only cleanup or generic follow-up.
-- [ ] The overlap with prior owner plans is explicitly adjudicated: plan `211` keeps the earlier declarative-surface and render-phase-side-effect defects, and plan `212` / `docs/logs/2026/05-03.md` keep the WrappedFieldAction non-labelable baseline.
-- [ ] Focused verification exists for each landed defect family: P1 word-editor/action-adapter, async observability, widget `className`, type/lifecycle residuals, accessibility/validation, and manifest hygiene.
-- [ ] Affected owner docs are synced to the live baseline, or each phase records why `No owner-doc update required` remains correct.
-- [ ] `pnpm typecheck` is attempted and its pass/block status is recorded honestly in the closure note.
-- [ ] `pnpm build` is attempted and its pass/block status is recorded honestly in the closure note.
-- [ ] `pnpm lint` is attempted and its pass/block status is recorded honestly in the closure note.
-- [ ] `pnpm test` is attempted and its pass/block status is recorded honestly in the closure note.
-- [ ] `docs/logs/` 对应日期条目已更新。
-- [ ] Independent closure audit is completed and evidence is recorded below.
+- [x] Every plan-owned confirmed defect listed in `## Confirmed Item Adjudication` is fixed or moved to explicit successor ownership with recorded reasoning.
+- [x] No plan-owned confirmed defect is silently downgraded to optimization-only cleanup or generic follow-up.
+- [x] The overlap with prior owner plans is explicitly adjudicated: plan `211` keeps the earlier declarative-surface and render-phase-side-effect defects, and plan `212` / `docs/logs/2026/05-03.md` keep the WrappedFieldAction non-labelable baseline.
+- [x] Focused verification exists for each landed defect family: P1 word-editor/action-adapter, async observability, widget `className`, type/lifecycle residuals, accessibility/validation, and manifest hygiene.
+- [x] Affected owner docs are synced to the live baseline, or each phase records why `No owner-doc update required` remains correct.
+- [x] `pnpm typecheck` is attempted and its pass/block status is recorded honestly in the closure note.
+- [x] `pnpm build` is attempted and its pass/block status is recorded honestly in the closure note.
+- [x] `pnpm lint` is attempted and its pass/block status is recorded honestly in the closure note.
+- [x] `pnpm test` is attempted and its pass/block status is recorded honestly in the closure note.
+- [x] `docs/logs/` 对应日期条目已更新。
+- [x] Independent closure audit is completed and evidence is recorded below.
 
 ## Deferred But Adjudicated
 
@@ -240,26 +241,27 @@ Exit Criteria:
 
 - Classification: `optimization candidate`
 - Why Not Blocking Closure: 217 owns only the minimal type-safe carrier needed to remove the confirmed `any` boundary; replacing the hidden carrier with a new explicit context-passing architecture is a broader runtime design task.
-- Successor Required: yes
-- Successor Path: future runtime/type-safety owner plan; fill in the concrete plan path before 217 closure if this rewrite is still considered necessary.
+- Successor Required: no
+- Successor Path: `n/a`.
 
 ### Broader `node-renderer.tsx` Generic Cleanup Beyond The Confirmed Hot-Path Casts
 
 - Classification: `optimization candidate`
 - Why Not Blocking Closure: 217 closes only the confirmed `action as any` / `region.node as any` sites; broader generic cleanup around `Object.entries()` typing can remain separate once the confirmed hot path is no longer using `any`.
-- Successor Required: yes
-- Successor Path: future `flux-react` type-safety owner plan; fill in the concrete plan path before 217 closure if the broader cleanup remains open.
+- Successor Required: no
+- Successor Path: `n/a`.
 
 ## Closure
 
-Status Note: *(to be filled when plan is completed)*
+Status Note: Plan-owned confirmed defects, focused proof, and manifest hygiene cleanup are landed and re-audited against the live repo. `pnpm install` succeeded with a non-blocking lockfile-compatibility warning; `pnpm check:workspace-manifest-deps`, `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` all passed on the final recorded execution path.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: *(to be filled)*
-- Evidence: *(to be filled)*
+- Reviewer / Agent: independent `general` subagent closure audits `ses_20436cebaffeB1lfkDnAE3Ptcf` and final re-audit `ses_204257a74ffeAmb13758FmWrYZ`.
+- Evidence: the first audit caught the remaining `packages/word-editor-renderers/package.json` manifest duplication and the stale workspace-test blocker note; after that cleanup, the final re-audit confirmed 217 is closure-ready once the plan and `docs/logs/2026/05-06.md` are synchronized. Final full-workspace test evidence: `C:\Users\a758371\.local\share\opencode\tool-output\tool_dfbd1607d001ebiDCAA5XrBJBS`.
 
 Follow-up:
 
-- `__actionScope` hidden channel architecture rewrite -> successor plan
-- broader `node-renderer.tsx` generic cleanup -> successor plan
+- No remaining plan-owned follow-up blocks closure.
+- Future reopen candidate only: `__actionScope` hidden channel architecture rewrite if a new runtime owner plan is created.
+- Future reopen candidate only: broader `node-renderer.tsx` generic cleanup if a new `flux-react` type-safety owner plan is created.
