@@ -169,6 +169,23 @@ export function booleanStringAdapter(): ValueAdapter<unknown, boolean> {
   });
 }
 
+export function numberAdapter(): ValueAdapter<unknown, number | undefined> {
+  return markSyncAdapter({
+    in(value: unknown) {
+      if (value == null || value === '') return undefined;
+      if (typeof value === 'number') return Number.isNaN(value) ? undefined : value;
+      const parsed = Number(value);
+      return Number.isNaN(parsed) ? undefined : parsed;
+    },
+    out(value: unknown) {
+      if (value == null || value === '') return undefined;
+      if (typeof value === 'number') return value;
+      const parsed = Number(value);
+      return Number.isNaN(parsed) ? undefined : parsed;
+    },
+  });
+}
+
 export function nullableAdapter<TValue, TContext extends AdapterContext = AdapterContext>(
   inner: ValueAdapter<TValue, TValue, TContext>,
 ): ValueAdapter<TValue | null | undefined, TValue | null | undefined, TContext> {
