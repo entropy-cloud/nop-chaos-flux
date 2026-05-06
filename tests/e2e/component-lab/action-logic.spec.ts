@@ -95,14 +95,14 @@ test.describe('reaction renderer', () => {
 // dynamic-renderer
 // ---------------------------------------------------------------------------
 test.describe('dynamic-renderer renderer', () => {
-  test('read: schemaApi-loaded schema renders the returned fragment', async ({ page }) => {
+  test('read: loadAction-loaded schema renders the returned fragment', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('dynamic-renderer');
 
-    const slug = scenarioSlug('Static schema loaded through schemaApi');
+    const slug = scenarioSlug('Static schema loaded through loadAction');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    await expect(stage.getByText('Rendered from schemaApi')).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('Rendered from loadAction')).toBeVisible({ timeout: 5_000 });
   });
 
   test('write: schema-switching buttons reload the dynamic schema fragment', async ({ page }) => {

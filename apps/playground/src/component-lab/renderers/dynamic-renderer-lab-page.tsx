@@ -8,7 +8,7 @@ const dynamicRendererEnv = {
         status: 200,
         data: {
           type: 'badge',
-          text: 'Rendered from schemaApi',
+          text: 'Rendered from loadAction',
           level: 'info',
         } as T,
       };
@@ -53,11 +53,12 @@ const dynamicRendererEnv = {
 const staticFromApi = {
   type: 'page',
   body: [
-    { type: 'text', text: 'The dynamic-renderer loads its schema from schemaApi at runtime.' },
+    { type: 'text', text: 'The dynamic-renderer loads its schema from loadAction at runtime.' },
     {
       type: 'dynamic-renderer',
-      schemaApi: {
-        url: '/api/component-lab/dynamic-renderer/static-schema',
+      loadAction: {
+        action: 'ajax',
+        args: { url: '/api/component-lab/dynamic-renderer/static-schema' },
       },
       body: {
         type: 'text',
@@ -107,8 +108,11 @@ const schemaSwitcher = {
     { type: 'text', text: 'Currently rendering: ${schemaType ?? "(none)"}' },
     {
       type: 'dynamic-renderer',
-      schemaApi: {
-        url: '${schemaType === "text" ? "/api/component-lab/dynamic-renderer/by-type/text" : schemaType === "button" ? "/api/component-lab/dynamic-renderer/by-type/button" : "/api/component-lab/dynamic-renderer/by-type"}',
+      loadAction: {
+        action: 'ajax',
+        args: {
+          url: '${schemaType === "text" ? "/api/component-lab/dynamic-renderer/by-type/text" : schemaType === "button" ? "/api/component-lab/dynamic-renderer/by-type/button" : "/api/component-lab/dynamic-renderer/by-type"}',
+        },
       },
       body: {
         type: 'text',
@@ -121,19 +125,19 @@ const schemaSwitcher = {
 export function DynamicRendererLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Renders a schema node loaded at runtime through schemaApi. Suitable for delayed or remote schema assembly, not direct scope-injected schema objects."
+      introDescription="Renders a schema node loaded at runtime through loadAction. Suitable for delayed or remote schema assembly, not direct scope-injected schema objects."
       scenarios={[
         {
-          title: 'Static schema loaded through schemaApi',
+          title: 'Static schema loaded through loadAction',
           description:
-            'The renderer shows a loading placeholder first, then replaces it with the schema returned by schemaApi.',
+            'The renderer shows a loading placeholder first, then replaces it with the schema returned by loadAction.',
           schema: staticFromApi,
           env: dynamicRendererEnv,
         },
         {
           title: 'Runtime schema switching via buttons',
           description:
-            'Click a button to update schemaType in scope. schemaApi re-runs and the dynamic-renderer swaps to the returned schema fragment.',
+            'Click a button to update schemaType in scope. loadAction re-runs and the dynamic-renderer swaps to the returned schema fragment.',
           schema: schemaSwitcher,
           data: {
             schemaType: 'badge',

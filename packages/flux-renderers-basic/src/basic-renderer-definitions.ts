@@ -236,7 +236,10 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'advanced',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: DynamicRenderer,
-    fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+    fields: [
+      { key: 'loadAction', kind: 'prop' },
+      { key: 'body', kind: 'region', regionKey: 'body' },
+    ],
   },
   {
     type: 'reaction',

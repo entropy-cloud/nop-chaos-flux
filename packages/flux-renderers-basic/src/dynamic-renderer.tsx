@@ -4,8 +4,6 @@ import type {
   DynamicRendererSchema,
   RendererComponentProps,
 } from '@nop-chaos/flux-core';
-import { useRendererEnv, useRendererRuntime } from '@nop-chaos/flux-react';
-import { executeApiObject } from '@nop-chaos/flux-react/unstable';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { asReactNode } from './utils';
@@ -25,34 +23,28 @@ type DynamicRendererState = {
 };
 
 export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSchema>) {
-  const runtime = useRendererRuntime();
-  const env = useRendererEnv();
-  const schemaApi = props.props.schemaApi;
-
+  const loadAction = props.props.loadAction;
   const [state, setState] = useState<DynamicRendererState>({
     loading: true,
-    error: undefined,
+    error: loadAction ? undefined : 'loadAction is required',
     schema: null,
   });
 
   useEffect(() => {
+    if (!loadAction) return;
+
     const controller = new AbortController();
 
     const loadSchema = async () => {
       try {
-        const scope = props.helpers.createScope({});
-        const result = await executeApiObject(
-          schemaApi as DynamicRendererSchema['schemaApi'],
-          scope,
-          env,
-          runtime.expressionCompiler,
-          { signal: controller.signal },
-        );
+        const result = await props.helpers.dispatch(loadAction, {
+          signal: controller.signal,
+        });
 
         if (controller.signal.aborted) return;
 
         if (!isBaseSchemaLike(result.data)) {
-          setState({ loading: false, error: 'Invalid schema received from API', schema: null });
+          setState({ loading: false, error: 'Invalid schema received from action', schema: null });
           return;
         }
 
@@ -68,7 +60,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     return () => {
       controller.abort();
     };
-  }, [schemaApi, runtime, env, props.helpers]);
+  }, [loadAction, props.helpers]);
 
   if (state.error) {
     return (

@@ -177,7 +177,7 @@ export interface ReactionSchema extends BaseSchema {
 
 export interface DynamicRendererSchema extends BaseSchema {
   type: 'dynamic-renderer';
-  schemaApi: ApiSchema;
+  loadAction: ActionSchema;
   body?: SchemaInput;
 }
 

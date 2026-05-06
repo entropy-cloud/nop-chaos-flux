@@ -25,7 +25,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
           body: [
             {
               type: 'dynamic-renderer',
-              schemaApi: { url: '/api/schema' },
+              loadAction: { action: 'ajax', args: { url: '/api/schema' } },
               body: { type: 'text', text: 'Loading...' },
             },
           ],
@@ -53,7 +53,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
           body: [
             {
               type: 'dynamic-renderer',
-              schemaApi: { url: '/api/schema' },
+              loadAction: { action: 'ajax', args: { url: '/api/schema' } },
               body: { type: 'text', text: 'Loading...' },
             },
           ],
@@ -67,10 +67,12 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
     cleanup();
   });
 
-  it('shows error message on fetch failure', async () => {
-    const fetcher = vi.fn(async () => {
-      throw new Error('Failed to load schema');
-    }) as RendererEnv['fetcher'];
+  it('shows error message when action returns no valid schema', async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: false,
+      status: 500,
+      data: null,
+    })) as RendererEnv['fetcher'];
     const SchemaRenderer = createBasicSchemaRenderer();
     render(
       <SchemaRenderer
@@ -80,7 +82,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
           body: [
             {
               type: 'dynamic-renderer',
-              schemaApi: { url: '/api/schema' },
+              loadAction: { action: 'ajax', args: { url: '/api/schema' } },
               body: { type: 'text', text: 'Loading...' },
             },
           ],
@@ -89,11 +91,13 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    await waitFor(() => expect(screen.getByText('Error: Failed to load schema')).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByText('Error: Invalid schema received from action')).toBeTruthy(),
+    );
     cleanup();
   });
 
-  it('shows an error when the API returns an invalid schema payload', async () => {
+  it('shows an error when the action returns an invalid schema payload', async () => {
     const fetcher = vi.fn(async () => ({
       ok: true,
       status: 200,
@@ -108,7 +112,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
           body: [
             {
               type: 'dynamic-renderer',
-              schemaApi: { url: '/api/schema' },
+              loadAction: { action: 'ajax', args: { url: '/api/schema' } },
               body: { type: 'text', text: 'Loading...' },
             },
           ],
@@ -118,7 +122,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
       />,
     );
     await waitFor(() =>
-      expect(screen.getByText('Error: Invalid schema received from API')).toBeTruthy(),
+      expect(screen.getByText('Error: Invalid schema received from action')).toBeTruthy(),
     );
     cleanup();
   });
