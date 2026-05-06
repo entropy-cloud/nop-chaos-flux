@@ -134,3 +134,22 @@ export interface ArrayEditorItem {
   id: string;
   value: string;
 }
+
+export interface InputNumberSchema extends BoundFieldSchemaBase {
+  type: 'input-number';
+  placeholder?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  precision?: number;
+  prefix?: string;
+  suffix?: string;
+  showStepper?: boolean;
+  keyboard?: boolean;
+  validate?: {
+    action?: ActionSchema;
+    debounce?: number;
+    message?: string;
+  };
+  hiddenFieldPolicy?: HiddenFieldPolicy;
+}

@@ -1,5 +1,6 @@
 import {
   booleanStringAdapter,
+  numberAdapter,
   stringAdapter,
   type RendererComponentProps,
   type RendererDefinition,
@@ -27,6 +28,7 @@ import { formLabelFieldRule, useFormFieldController } from '../field-utils';
 import type {
   CheckboxGroupSchema,
   CheckboxSchema,
+  InputNumberSchema,
   InputSchema,
   RadioGroupSchema,
   SelectSchema,
@@ -387,6 +389,147 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
   );
 }
 
+const numericAdapter = numberAdapter();
+
+function clamp(value: number, min: number | undefined, max: number | undefined): number {
+  let result = value;
+  if (min !== undefined && result < min) result = min;
+  if (max !== undefined && result > max) result = max;
+  return result;
+}
+
+function applyPrecision(value: number, precision: number | undefined): number {
+  if (precision === undefined || precision < 0) return value;
+  const factor = Math.pow(10, precision);
+  return Math.round(value * factor) / factor;
+}
+
+function InputNumberRenderer(props: RendererComponentProps<InputNumberSchema>) {
+  const name = String(props.props.name ?? '');
+  const min = typeof props.props.min === 'number' ? props.props.min : undefined;
+  const max = typeof props.props.max === 'number' ? props.props.max : undefined;
+  const step = typeof props.props.step === 'number' ? props.props.step : 1;
+  const precision = typeof props.props.precision === 'number' ? props.props.precision : undefined;
+  const prefix = typeof props.props.prefix === 'string' ? props.props.prefix : undefined;
+  const suffix = typeof props.props.suffix === 'string' ? props.props.suffix : undefined;
+  const showStepper = props.props.showStepper !== false;
+  const keyboard = props.props.keyboard !== false;
+
+  const { value, handlers, presentation } = useFormFieldController(name, {
+    adapter: numericAdapter,
+    disabled: props.meta.disabled,
+    required: Boolean(props.props.required),
+    readOnly: Boolean(props.props.readOnly),
+  });
+
+  const numericValue = value as number | undefined;
+
+  function handleBlur() {
+    if (numericValue !== undefined) {
+      const clamped = clamp(numericValue, min, max);
+      const withPrecision = applyPrecision(clamped, precision);
+      if (withPrecision !== numericValue) {
+        handlers.onChange(withPrecision);
+      }
+    }
+    handlers.onBlur();
+  }
+
+  function handleStep(direction: 1 | -1) {
+    const current = numericValue ?? 0;
+    let next = current + direction * step;
+    next = clamp(next, min, max);
+    next = applyPrecision(next, precision);
+    handlers.onChange(next);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!keyboard) return;
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      handleStep(1);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      handleStep(-1);
+    }
+  }
+
+  return (
+    <div className={cn('nop-input-number')} data-slot="field-control" data-testid={props.meta.testid}>
+      <div className="relative flex items-center">
+        {prefix ? (
+          <span data-slot="prefix" className="pointer-events-none absolute left-3 text-sm text-muted-foreground">
+            {prefix}
+          </span>
+        ) : null}
+        <Input
+          type="number"
+          id={name ? `${name}-control` : undefined}
+          name={name || undefined}
+          value={numericValue !== undefined ? numericValue : ''}
+          disabled={presentation.effectiveDisabled}
+          aria-label={String((props.props.label ?? name) || '') || undefined}
+          aria-required={props.props.required ? true : undefined}
+          aria-invalid={presentation.showError ? true : undefined}
+          placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
+          min={min}
+          max={max}
+          step={step}
+          className={cn(prefix && 'pl-8', suffix && 'pr-8', showStepper && 'pr-16')}
+          onFocus={handlers.onFocus}
+          onChange={(event) => {
+            const raw = event.target.value;
+            if (raw === '') {
+              handlers.onChange(undefined);
+              return;
+            }
+            const parsed = Number(raw);
+            if (!Number.isNaN(parsed)) {
+              handlers.onChange(parsed);
+            }
+          }}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          readOnly={Boolean(props.props.readOnly)}
+        />
+        {suffix ? (
+          <span data-slot="suffix" className="pointer-events-none absolute right-3 text-sm text-muted-foreground">
+            {suffix}
+          </span>
+        ) : null}
+        {showStepper ? (
+          <span data-slot="stepper" className="absolute right-1 flex flex-col">
+            <button
+              type="button"
+              data-slot="stepper-increase"
+              aria-label="Increase"
+              aria-disabled={presentation.effectiveDisabled ? 'true' : undefined}
+              className="flex h-4 w-6 items-center justify-center rounded-sm text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+              disabled={presentation.effectiveDisabled}
+              onClick={() => handleStep(1)}
+              tabIndex={-1}
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              data-slot="stepper-decrease"
+              aria-label="Decrease"
+              aria-disabled={presentation.effectiveDisabled ? 'true' : undefined}
+              className="flex h-4 w-6 items-center justify-center rounded-sm text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+              disabled={presentation.effectiveDisabled}
+              onClick={() => handleStep(-1)}
+              tabIndex={-1}
+            >
+              ▼
+            </button>
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-text',
@@ -459,5 +602,12 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     validation: createFieldValidation(),
     wrap: true,
     component: CheckboxGroupRenderer,
+  },
+  {
+    type: 'input-number',
+    fields: [formLabelFieldRule],
+    validation: createFieldValidation(),
+    wrap: true,
+    component: InputNumberRenderer,
   },
 ];
