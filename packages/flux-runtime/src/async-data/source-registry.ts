@@ -34,6 +34,27 @@ interface RuntimeSourceEntry {
   dispose(): void;
 }
 
+function tryEnterSourceCascade(): boolean {
+  if (sourceCascadeDepth >= MAX_SOURCE_CASCADE_DEPTH) {
+    return false;
+  }
+
+  sourceCascadeDepth += 1;
+  return true;
+}
+
+function leaveSourceCascade() {
+  sourceCascadeDepth = Math.max(0, sourceCascadeDepth - 1);
+}
+
+export function __getSourceCascadeDepthForTests(): number {
+  return sourceCascadeDepth;
+}
+
+export function __setSourceCascadeDepthForTests(value: number) {
+  sourceCascadeDepth = Math.max(0, value);
+}
+
 function extractExpressionSource(
   compiled: import('@nop-chaos/flux-core').CompiledRuntimeValue<unknown> | undefined,
 ): string | undefined {
@@ -195,18 +216,23 @@ export function createRuntimeSourceRegistry(input: {
         return;
       }
 
-      sourceCascadeDepth += 1;
-      if (sourceCascadeDepth > MAX_SOURCE_CASCADE_DEPTH) {
-        sourceCascadeDepth = 0;
+      if (!tryEnterSourceCascade()) {
         console.error('[flux-runtime] Source cascade depth limit exceeded');
         return;
       }
+
       try {
-        controller.refresh().catch((error) => {
-          console.warn('[source-registry] refresh failed', error);
-        });
-      } finally {
-        sourceCascadeDepth -= 1;
+        const refreshPromise = controller.refresh();
+        void refreshPromise
+          .catch((error) => {
+            console.warn('[source-registry] refresh failed', error);
+          })
+          .finally(() => {
+            leaveSourceCascade();
+          });
+      } catch (error) {
+        leaveSourceCascade();
+        console.warn('[source-registry] refresh failed', error);
       }
     });
 

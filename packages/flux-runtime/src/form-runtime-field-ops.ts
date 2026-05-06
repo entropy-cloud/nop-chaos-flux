@@ -1,4 +1,5 @@
 import type {
+  CompiledFormValidationModel,
   FieldRegistrationHandle,
   FieldState,
   RuntimeFieldRegistration,
@@ -239,6 +240,56 @@ export function updateFieldRegistration(
   });
 }
 
+function isHiddenPath(sharedState: ManagedFormRuntimeSharedState, path: string): boolean {
+  for (const hiddenPath of sharedState.hiddenFields) {
+    if (path === hiddenPath || path.startsWith(`${hiddenPath}.`)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function clearHiddenSubtreeFieldStates(
+  sharedState: ManagedFormRuntimeSharedState,
+  path: string,
+  currentValidation: CompiledFormValidationModel | undefined,
+) {
+  const fieldStates = sharedState.store.getState().fieldStates;
+  let changed = false;
+  const nextFieldStates: Record<string, FieldState> = { ...fieldStates };
+
+  for (const [fieldPath, existingFieldState] of Object.entries(fieldStates)) {
+    if (fieldPath !== path && !fieldPath.startsWith(`${path}.`)) {
+      continue;
+    }
+
+    const field = getCompiledValidationField(currentValidation, fieldPath);
+    if (field?.hiddenFieldPolicy.validateWhenHidden) {
+      continue;
+    }
+
+    if (!existingFieldState?.errors && !existingFieldState?.validating) {
+      continue;
+    }
+
+    changed = true;
+    const nextFieldState: FieldState = { ...existingFieldState };
+    delete nextFieldState.errors;
+    delete nextFieldState.validating;
+
+    if (Object.keys(nextFieldState).length > 0) {
+      nextFieldStates[fieldPath] = nextFieldState;
+    } else {
+      delete nextFieldStates[fieldPath];
+    }
+  }
+
+  if (changed) {
+    sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
+  }
+}
+
 export function notifyFieldHidden(
   sharedState: ManagedFormRuntimeSharedState,
   path: string,
@@ -261,23 +312,7 @@ export function notifyFieldHidden(
       sharedState.pendingValidationDebounces.delete(path);
     }
     sharedState.hiddenFields.add(path);
-
-    const fieldStates = sharedState.store.getState().fieldStates;
-    const existingFieldState = fieldStates[path];
-    if (existingFieldState?.errors || existingFieldState?.validating) {
-      const nextFieldState: FieldState = { ...existingFieldState };
-      delete nextFieldState.errors;
-      delete nextFieldState.validating;
-      const nextFieldStates =
-        Object.keys(nextFieldState).length > 0
-          ? { ...fieldStates, [path]: nextFieldState }
-          : (() => {
-              const next = { ...fieldStates };
-              delete next[path];
-              return next;
-            })();
-      sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
-    }
+    clearHiddenSubtreeFieldStates(sharedState, path, currentValidation);
 
     const field = getCompiledValidationField(currentValidation, path);
 
@@ -287,4 +322,11 @@ export function notifyFieldHidden(
   } else {
     sharedState.hiddenFields.delete(path);
   }
+}
+
+export function isPathHiddenByOwner(
+  sharedState: ManagedFormRuntimeSharedState,
+  path: string,
+): boolean {
+  return isHiddenPath(sharedState, path);
 }

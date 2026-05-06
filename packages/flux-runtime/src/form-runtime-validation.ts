@@ -17,6 +17,7 @@ import { collectSubtreeNodePaths, collectSubtreePaths } from './form-runtime-sub
 import type { FormRuntimeValidationState } from './form-runtime-types';
 import { scheduleDebounce } from '@nop-chaos/flux-core';
 import { normalizeRuntimeValidationErrors } from './validation';
+import { isPathHiddenByOwner } from './form-runtime-field-ops';
 
 function createValidationResult(errors: ValidationError[]): ValidationResult {
   return {
@@ -46,6 +47,10 @@ async function waitForActiveLifecycle(sharedState: FormRuntimeValidationState): 
 }
 
 const VALIDATION_CANCELLED = Symbol('validation-cancelled');
+
+function isPathHidden(sharedState: FormRuntimeValidationState, path: string): boolean {
+  return isPathHiddenByOwner(sharedState as FormRuntimeValidationState & Parameters<typeof isPathHiddenByOwner>[0], path);
+}
 
 function setPathErrors(
   sharedState: FormRuntimeValidationState,
@@ -368,8 +373,8 @@ async function validateCompiledField(
     const normalizedError = error instanceof Error ? error : new Error(String(error));
     if (validationRun) {
       sharedState.validationAsyncGovernance.settleRun(validationRun, {
-        outcome: 'cancelled',
-        cancelled: true,
+        outcome: 'failed',
+        error: normalizedError,
       });
     }
 
@@ -428,7 +433,7 @@ export async function validatePath(
   }
 
   if (field && !field.hiddenFieldPolicy.validateWhenHidden) {
-    const isHidden = sharedState.hiddenFields.has(path);
+    const isHidden = isPathHidden(sharedState, path);
     if (isHidden) {
       commitPathValidationState({ sharedState, path, errors: [] });
       return createValidationResult([]);
@@ -436,7 +441,7 @@ export async function validatePath(
   }
 
   if (!field && runtimeRegistration) {
-    const isHidden = sharedState.hiddenFields.has(path);
+    const isHidden = isPathHidden(sharedState, path);
     if (isHidden) {
       commitPathValidationState({ sharedState, path, errors: [] });
       return createValidationResult([]);

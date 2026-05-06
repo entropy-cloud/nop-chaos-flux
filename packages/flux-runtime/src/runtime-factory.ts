@@ -183,6 +183,11 @@ export function createRendererRuntime(input: {
     expressionCompiler,
     getEnv,
   );
+  const actionRootScope = createScopeRef({
+    id: `${runtimeId}:action-root`,
+    path: '$',
+    initialData: {},
+  });
 
   const actionDispatcherRef: {
     current?: (action: ActionSchema, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
@@ -533,8 +538,33 @@ export function createRendererRuntime(input: {
     runtime,
   });
 
-  actionDispatcherRef.current = (action, ctx) =>
-    actionDispatcher.dispatch(action, ctx as ActionContext);
+  actionDispatcherRef.current = (action, ctx) => {
+    if (!ctx) {
+      return actionDispatcher.dispatch(action, {
+        runtime,
+        scope: actionRootScope,
+      });
+    }
+
+    return actionDispatcher.dispatch(action, {
+      runtime,
+      scope: ctx.scope ?? actionRootScope,
+      instancePath: ctx.instancePath,
+      nodeInstance: ctx.nodeInstance,
+      getInstanceKey: ctx.getInstanceKey,
+      interactionId: ctx.interactionId,
+      signal: ctx.signal,
+      actionScope: ctx.actionScope,
+      componentRegistry: ctx.componentRegistry,
+      event: ctx.event,
+      form: ctx.form,
+      page: ctx.page,
+      surfaceRuntime: ctx.surfaceRuntime,
+      dialogId: ctx.dialogId,
+      prevResult: ctx.prevResult,
+      evaluationBindings: ctx.evaluationBindings,
+    } satisfies ActionContext);
+  };
 
   sourceRegistryRef.current = createRuntimeSourceRegistry({
     runtime,

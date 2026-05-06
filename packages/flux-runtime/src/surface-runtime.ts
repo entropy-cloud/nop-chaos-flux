@@ -161,6 +161,9 @@ export function createManagedSurfaceRuntime(
     },
     close(surfaceId) {
       const removed = store.remove(surfaceId);
+      if (removed && removed.controlledOpen === false) {
+        store.setUncontrolledOpen(removed.id, false);
+      }
       clearSurfaceStatus(removed);
       removed?.validationOwner?.dispose();
       if (removed?.validationOwner) {
@@ -171,6 +174,9 @@ export function createManagedSurfaceRuntime(
     },
     closeTop() {
       const removed = store.remove();
+      if (removed && removed.controlledOpen === false) {
+        store.setUncontrolledOpen(removed.id, false);
+      }
       clearSurfaceStatus(removed);
       removed?.validationOwner?.dispose();
       if (removed?.validationOwner) {

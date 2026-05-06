@@ -30,6 +30,27 @@ export interface ReactionRegistration {
   dispose(): void;
 }
 
+function tryEnterGlobalCascade(): boolean {
+  if (globalCascadeDepth >= MAX_GLOBAL_CASCADE_DEPTH) {
+    return false;
+  }
+
+  globalCascadeDepth += 1;
+  return true;
+}
+
+function leaveGlobalCascade() {
+  globalCascadeDepth = Math.max(0, globalCascadeDepth - 1);
+}
+
+export function __getGlobalCascadeDepthForTests(): number {
+  return globalCascadeDepth;
+}
+
+export function __setGlobalCascadeDepthForTests(value: number) {
+  globalCascadeDepth = Math.max(0, value);
+}
+
 export interface RuntimeReactionRegistry {
   registerReaction(input: {
     id: string;
@@ -126,9 +147,8 @@ export function registerReaction(input: {
     }),
     cascadeDepth = 0,
   ) {
-    globalCascadeDepth += 1;
-    if (globalCascadeDepth > MAX_GLOBAL_CASCADE_DEPTH) {
-      globalCascadeDepth = 0;
+    const enteredGlobalCascade = tryEnterGlobalCascade();
+    if (!enteredGlobalCascade) {
       console.error('[flux-runtime] Global reaction cascade depth limit exceeded');
       if (run && input.asyncGovernance) {
         input.asyncGovernance.settleRun(run, {
@@ -269,7 +289,9 @@ export function registerReaction(input: {
         input.asyncGovernance.settleRun(run, { outcome: 'failed', error });
       }
     } finally {
-      globalCascadeDepth -= 1;
+      if (enteredGlobalCascade) {
+        leaveGlobalCascade();
+      }
       running = false;
       emitDebug();
 

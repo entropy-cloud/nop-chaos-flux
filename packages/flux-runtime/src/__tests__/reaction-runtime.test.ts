@@ -3,6 +3,10 @@ import { createRendererRegistry, type RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { compileReaction } from '@nop-chaos/flux-compiler';
 import { createRendererRuntime } from '../index';
+import {
+  __getGlobalCascadeDepthForTests,
+  __setGlobalCascadeDepthForTests,
+} from '../async-data/reaction-runtime';
 
 const textRenderer = {
   type: 'text' as const,
@@ -31,6 +35,7 @@ describe('registerReaction dispose race with scheduled microtask', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    __setGlobalCascadeDepthForTests(0);
   });
 
   it('does not create a debounce setTimeout when dispose races the scheduled microtask', async () => {
@@ -247,5 +252,38 @@ describe('registerReaction dispose race with scheduled microtask', () => {
     } finally {
       registration.dispose();
     }
+  });
+
+  it('does not underflow the global cascade counter when the limit is exceeded', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    __setGlobalCascadeDepthForTests(200);
+
+    const runtime = createRuntime();
+    const page = runtime.createPageRuntime({ count: 0 });
+
+    const registration = runtime.registerReaction({
+      id: 'global-cascade-limit',
+      scope: page.scope,
+      compiledReaction: compileReaction(
+        'global-cascade-limit',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          actions: { action: 'custom:noop' },
+        },
+        expressionCompiler,
+      ),
+      dispatch: vi.fn(),
+    });
+
+    page.scope.update('count', 1);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(error).toHaveBeenCalledWith('[flux-runtime] Global reaction cascade depth limit exceeded');
+    expect(__getGlobalCascadeDepthForTests()).toBe(200);
+
+    registration.dispose();
+    error.mockRestore();
   });
 });

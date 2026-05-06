@@ -254,6 +254,55 @@ describe('hidden field validation participation', () => {
     expect(runtime.getError('email')).toBeUndefined();
     expect(runtime.getFieldState('email')?.validating).toBeFalsy();
   });
+
+  it('hidden parent path excludes descendant compiled fields from validation', async () => {
+    const model = makeFormModel({
+      parent: {
+        path: 'parent',
+        kind: 'object',
+        rules: [],
+        behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+        children: ['parent.child'],
+        parent: '',
+      },
+      'parent.child': makeNode('parent.child', { parent: 'parent', required: true }),
+    });
+    const { runtime, validateRule } = makeRuntime(model, { parent: { child: '' } });
+
+    runtime.notifyFieldHidden('parent', true);
+    const result = await runtime.validateField('parent.child');
+
+    expect(result.ok).toBe(true);
+    expect(validateRule).not.toHaveBeenCalled();
+  });
+
+  it('notifyFieldHidden clears descendant field errors for hidden parent paths', async () => {
+    const model = makeFormModel({
+      parent: {
+        path: 'parent',
+        kind: 'object',
+        rules: [],
+        behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+        children: ['parent.child'],
+        parent: '',
+      },
+      'parent.child': makeNode('parent.child', { parent: 'parent', required: true }),
+    });
+    const { runtime, validateRule } = makeRuntime(model, { parent: { child: '' } });
+
+    validateRule.mockReturnValue({
+      path: 'parent.child',
+      message: 'Required',
+      rule: 'required',
+    });
+
+    await runtime.validateField('parent.child');
+    expect(runtime.getError('parent.child')).toBeTruthy();
+
+    runtime.notifyFieldHidden('parent', true);
+
+    expect(runtime.getError('parent.child')).toBeUndefined();
+  });
 });
 
 describe('clearValueWhenHidden behavior', () => {
