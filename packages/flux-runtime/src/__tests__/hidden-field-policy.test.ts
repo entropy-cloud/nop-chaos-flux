@@ -188,6 +188,32 @@ describe('hidden field validation participation', () => {
     expect(validateRule).toHaveBeenCalled();
   });
 
+  it('runtime-registered hidden fields still validate when form defaultHiddenFieldPolicy enables it', async () => {
+    const model = makeFormModel({ sentinel: makeNode('sentinel') }, { validateWhenHidden: true });
+    const { runtime } = makeRuntime(model, { tags: [] });
+
+    runtime.registerField({
+      path: 'tags',
+      getValue() {
+        return runtime.scope.get('tags');
+      },
+      validate() {
+        const currentTags = runtime.scope.get('tags');
+        return Array.isArray(currentTags) && currentTags.length === 0
+          ? [{ path: 'tags', message: 'Required', rule: 'required' }]
+          : [];
+      },
+    });
+
+    runtime.notifyFieldHidden('tags', true);
+    const result = await runtime.validateField('tags');
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toEqual([
+      expect.objectContaining({ path: 'tags', rule: 'required' }),
+    ]);
+  });
+
   it('validateForm skips hidden fields with default policy', async () => {
     const model = makeFormModel({
       name: makeNode('name', { required: true }),

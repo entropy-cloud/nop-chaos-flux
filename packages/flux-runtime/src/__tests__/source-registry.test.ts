@@ -61,10 +61,10 @@ describe('createRuntimeSourceRegistry', () => {
     void refresh;
   });
 
-  it('logs refresh rejections instead of swallowing them', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  it('reports refresh rejections through the runtime host channel', async () => {
     const refresh = vi.fn().mockRejectedValue(new Error('refresh failed'));
     let emitChange: ((change: { paths: string[] }) => void) | undefined;
+    const notify = vi.fn();
 
     const scope = {
       id: 'scope-1',
@@ -78,7 +78,7 @@ describe('createRuntimeSourceRegistry', () => {
 
     const registry = createRuntimeSourceRegistry({
       runtime: {
-        env: {} as never,
+        env: { notify } as never,
         expressionCompiler: {
           evaluateValue: (value: { value?: unknown }) => value.value,
           compileValue: (value: unknown) => ({ isStatic: true, value }),
@@ -111,7 +111,7 @@ describe('createRuntimeSourceRegistry', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(warn).toHaveBeenCalledWith('[source-registry] refresh failed', expect.any(Error));
+    expect(notify).toHaveBeenCalledWith('error', 'Data source refresh failed: source-1');
     registration.dispose();
   });
 

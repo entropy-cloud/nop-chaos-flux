@@ -12,6 +12,7 @@ import { normalizeRootPaths } from '@nop-chaos/flux-core';
 const MAX_SOURCE_CASCADE_DEPTH = 100;
 let sourceCascadeDepth = 0;
 import type { ApiCacheStore } from './api-cache';
+import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import {
   createDataSourceController,
   createFormulaDataSourceController,
@@ -199,6 +200,22 @@ export function createRuntimeSourceRegistry(input: {
 
     const abortController = new AbortController();
 
+    function reportRefreshFailure(error: unknown) {
+      reportRuntimeHostIssue({
+        env: input.runtime.env,
+        level: 'error',
+        message: `Data source refresh failed: ${args.id}`,
+        error,
+        phase: 'api',
+        details: {
+          sourceId: args.id,
+          ownerScopeId,
+          targetPath,
+          statusPath,
+        },
+      });
+    }
+
     const unsubscribe = args.scope.store?.subscribe((change) => {
       if (abortController.signal.aborted) {
         return;
@@ -225,14 +242,14 @@ export function createRuntimeSourceRegistry(input: {
         const refreshPromise = controller.refresh();
         void refreshPromise
           .catch((error) => {
-            console.warn('[source-registry] refresh failed', error);
+            reportRefreshFailure(error);
           })
           .finally(() => {
             leaveSourceCascade();
           });
       } catch (error) {
         leaveSourceCascade();
-        console.warn('[source-registry] refresh failed', error);
+        reportRefreshFailure(error);
       }
     });
 

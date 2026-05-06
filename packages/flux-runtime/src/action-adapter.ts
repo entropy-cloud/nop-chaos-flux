@@ -145,30 +145,33 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
                 ),
               };
             }
+            let handle;
             try {
-              const handle = ctx.componentRegistry.resolve({
+              handle = ctx.componentRegistry.resolve({
                 componentId: invocation.targeting.formId,
               });
-              if (!handle) {
-                return {
-                  ok: false,
-                  error: new Error(`Form not found: ${invocation.targeting.formId}`),
-                };
-              }
-              return handle.capabilities.invoke(
-                'submit',
-                {
-                  interactionId: ctx.interactionId,
-                  signal: invocation.signal,
-                },
-                ctx,
-              );
             } catch {
               return {
                 ok: false,
                 error: new Error(`Form not found: ${invocation.targeting.formId}`),
               };
             }
+
+            if (!handle) {
+              return {
+                ok: false,
+                error: new Error(`Form not found: ${invocation.targeting.formId}`),
+              };
+            }
+
+            return handle.capabilities.invoke(
+              'submit',
+              {
+                interactionId: ctx.interactionId,
+                signal: invocation.signal,
+              },
+              ctx,
+            );
           }
 
           if (!ctx.form) {

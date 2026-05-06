@@ -534,4 +534,25 @@ describe('formId targeting in built-in actions', () => {
     expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
     expect(form.submit).not.toHaveBeenCalled();
   });
+
+  it('submitForm preserves remote submit failures from the resolved handle', async () => {
+    const adapter = createAdapter();
+    const submitError = new Error('permission denied');
+    const remoteHandle = {
+      capabilities: {
+        invoke: vi.fn().mockRejectedValue(submitError),
+      },
+    };
+
+    await expect(
+      adapter.invokeBuiltInAction(
+        createBuiltInInvocation('submitForm', undefined, { formId: 'remote-form' }),
+        createCtx({
+          componentRegistry: {
+            resolve: vi.fn().mockReturnValue(remoteHandle),
+          },
+        }),
+      ),
+    ).rejects.toThrow('permission denied');
+  });
 });

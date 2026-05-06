@@ -19,6 +19,12 @@ import { scheduleDebounce } from '@nop-chaos/flux-core';
 import { normalizeRuntimeValidationErrors } from './validation';
 import { isPathHiddenByOwner } from './form-runtime-field-ops';
 
+function shouldValidateHiddenRuntimeRegistration(
+  sharedState: FormRuntimeValidationState,
+): boolean {
+  return sharedState.inputValue.validation?.defaultHiddenFieldPolicy?.validateWhenHidden === true;
+}
+
 function createValidationResult(errors: ValidationError[]): ValidationResult {
   return {
     ok: errors.length === 0,
@@ -442,7 +448,7 @@ export async function validatePath(
 
   if (!field && runtimeRegistration) {
     const isHidden = isPathHidden(sharedState, path);
-    if (isHidden) {
+    if (isHidden && !shouldValidateHiddenRuntimeRegistration(sharedState)) {
       commitPathValidationState({ sharedState, path, errors: [] });
       return createValidationResult([]);
     }
