@@ -6,6 +6,7 @@ type ToolbarButtonProps = ButtonHTMLAttributes<HTMLSpanElement> & {
   size?: 'icon-xs' | 'xs';
   'aria-label'?: string;
   children: ReactNode;
+  onPress?: (event: React.MouseEvent<HTMLSpanElement> | React.KeyboardEvent<HTMLSpanElement>) => void;
 };
 
 const sizeClasses: Record<string, string> = {
@@ -18,6 +19,7 @@ export function ToolbarButton({
   size = 'icon-xs',
   className,
   onClick,
+  onPress,
   onKeyDown,
   children,
   ...rest
@@ -33,11 +35,14 @@ export function ToolbarButton({
         sizeClasses[size] ?? sizeClasses['icon-xs'],
         className,
       )}
-      onClick={onClick}
+      onClick={(event) => {
+        onClick?.(event);
+        onPress?.(event);
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onClick?.(e as unknown as React.MouseEvent<HTMLSpanElement>);
+          onPress?.(e);
         }
         onKeyDown?.(e);
       }}

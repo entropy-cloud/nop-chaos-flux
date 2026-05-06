@@ -50,6 +50,19 @@ import { useNodeLifecycleActions, useRenderMonitor } from './node-renderer-effec
 import { NodeRendererProviders } from './node-renderer-providers';
 import { buildSlotFrame, readSlotFrame, SLOT_KEY } from './slot-frame';
 
+function isCompiledActionProgram(
+  action: import('@nop-chaos/flux-core').CompiledActionProgram | undefined,
+): action is import('@nop-chaos/flux-core').CompiledActionProgram {
+  return Boolean(action);
+}
+
+function renderRegionNode(
+  regionNode: TemplateNode | readonly TemplateNode[] | null,
+  options: import('@nop-chaos/flux-core').RenderFragmentOptions,
+) {
+  return <RenderNodes input={regionNode} options={options} />;
+}
+
 export { resolveFrameWrapMode } from './node-renderer-utils';
 
 function useMountedCid(runtime: import('@nop-chaos/flux-core').RendererRuntime) {
@@ -236,14 +249,14 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const events = useMemo(() => {
     return Object.fromEntries(
       Object.entries(props.node.eventPlans).map(([key, action]) => {
-        if (!action) {
+        if (!isCompiledActionProgram(action)) {
           return [key, undefined];
         }
 
         return [
           key,
           (event?: unknown, eventContext?: Partial<import('@nop-chaos/flux-core').ActionContext>) =>
-            helpers.dispatch(action as any, {
+            helpers.dispatch(action, {
               ...eventContext,
               nodeInstance: eventContext?.nodeInstance ?? nodeInstance,
               event: createNormalizedActionEvent(event),
@@ -267,28 +280,18 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
               (renderScope.readVisible?.() as Record<string, unknown> | undefined) ?? {};
             const outerSlotFrame = readSlotFrame(currentScopeData);
             const slotFrame = buildSlotFrame(rawBindings, outerSlotFrame);
-            return (
-              <RenderNodes
-                input={region.node as any}
-                options={{
-                  ...options,
-                  bindings: { [SLOT_KEY]: slotFrame },
-                  isolate: options?.isolate ?? regionIsolate,
-                  ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance,
-                }}
-              />
-            );
+            return renderRegionNode(region.node, {
+              ...options,
+              bindings: { [SLOT_KEY]: slotFrame },
+              isolate: options?.isolate ?? regionIsolate,
+              ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance,
+            });
           }
 
-          return (
-            <RenderNodes
-              input={region.node as any}
-              options={{
-                ...options,
-                ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance,
-              }}
-            />
-          );
+          return renderRegionNode(region.node, {
+            ...options,
+            ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance,
+          });
         }
 
         return [

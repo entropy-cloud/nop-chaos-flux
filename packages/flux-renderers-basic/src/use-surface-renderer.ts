@@ -1,11 +1,28 @@
 import React from 'react';
 import type {
+  ActionScope,
+  ComponentHandleRegistry,
   RendererComponentProps,
   SurfaceEntry,
   SurfaceStatusSummary,
 } from '@nop-chaos/flux-core';
 import { useCurrentSurfaceRuntime, useRendererRuntime } from '@nop-chaos/flux-react';
 import type { DialogSchema, DrawerSchema } from './schemas';
+
+type DispatchMetadataCarrier = typeof import('@nop-chaos/flux-core') extends infer _T
+  ? {
+      __actionScope?: ActionScope;
+      __componentRegistry?: ComponentHandleRegistry;
+    }
+  : never;
+
+function readDispatchMetadata(dispatch: RendererComponentProps<DialogSchema>['helpers']['dispatch']) {
+  const carrier = dispatch as typeof dispatch & DispatchMetadataCarrier;
+  return {
+    actionScope: carrier.__actionScope,
+    componentRegistry: carrier.__componentRegistry,
+  };
+}
 
 function getSurfaceScopeId(
   surfaceId: string,
@@ -99,12 +116,9 @@ export function useSurfaceRenderer(
     [id, kind, node.scope, openRevision, openingData, runtime],
   );
 
-  const actionScope = (
-    helpers.dispatch as typeof helpers.dispatch & { __actionScope?: any }
-  ).__actionScope;
-  const componentRegistry = (
-    helpers.dispatch as typeof helpers.dispatch & { __componentRegistry?: any }
-  ).__componentRegistry;
+  const dispatchMetadata = readDispatchMetadata(helpers.dispatch);
+  const actionScope = dispatchMetadata.actionScope;
+  const componentRegistry = dispatchMetadata.componentRegistry;
   const surfacePayload = React.useMemo(
     () => ({
       ...resolvedProps,
@@ -235,6 +249,20 @@ export function useSurfaceRenderer(
     if (effectiveOpen) {
       closedPublishedRef.current = false;
       openSurface();
+      return;
+    }
+
+    const existing = surfaceRuntime.store.getState().entries.find((candidate) => candidate.id === id);
+    if (!existing) {
+      if (!closedPublishedRef.current) {
+        surfaceRuntime.publishClosed({
+          surfaceId: id,
+          kind,
+          scope: declarativeScope,
+          statusPath,
+        });
+        closedPublishedRef.current = true;
+      }
       return;
     }
 

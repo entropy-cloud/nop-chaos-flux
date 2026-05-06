@@ -666,6 +666,49 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     cleanup();
   });
 
+  it('does not close and immediately reopen a declarative dialog when parent scope churns while open', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const schema = {
+      type: 'page',
+      body: [
+        {
+          type: 'dialog',
+          title: 'Dialog title',
+          open: true,
+          data: {
+            recordId: '${currentRecord.id}',
+          },
+          body: [{ type: 'text', text: 'Dialog body' }],
+        },
+      ],
+    } as const;
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout#surface-stable"
+        schema={schema}
+        data={{ currentRecord: { id: 11 } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeTruthy());
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout#surface-stable"
+        schema={schema}
+        data={{ currentRecord: { id: 22 } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeTruthy());
+    expect(screen.getByText('Dialog body')).toBeTruthy();
+  });
+
   it('renders page header and footer through normalized regions', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
