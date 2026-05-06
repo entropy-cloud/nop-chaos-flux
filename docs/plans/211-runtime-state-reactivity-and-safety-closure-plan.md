@@ -1,7 +1,7 @@
 # 211 Runtime State Reactivity And Safety Closure Plan
 
-> Plan Status: in progress
-> Last Reviewed: 2026-05-05
+> Plan Status: completed
+> Last Reviewed: 2026-05-06
 > Source: `docs/analysis/2026-05-05-deep-audit-full-7/{04-state-ownership.md,05-reactive-precision.md,06-async-safety.md,07-lifecycle.md,08-validation.md,13-type-safety.md,19-error-propagation.md}`, `docs/analysis/2026-05-05-deep-audit-full-7/summary.md`, `docs/architecture/{renderer-runtime.md,form-validation.md,surface-owner.md,field-binding-and-renderer-contract.md}`
 > Related: `docs/plans/186-detail-and-variant-async-sequencing-safety-plan.md`, `docs/plans/201-surface-family-runtime-convergence-plan.md`, `docs/plans/203-runtime-validation-and-data-source-contract-closure-plan.md`, `docs/plans/210-deep-audit-full-7-confirmed-defect-remediation-program-plan.md`
 
@@ -107,56 +107,56 @@ Exit Criteria:
 
 ### Phase 3 - Close Async Safety Defects On Retained User-Visible Paths
 
-Status: in progress
+Status: completed
 Targets: report designer page, word editor page, spreadsheet/table save paths, advanced-form files, form runtime/save paths, form renderer, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Ensure retained startup/save/submit/validation paths no longer rely on unhandled fire-and-forget promises or swallowed rejections, including table quick edit, spreadsheet submit/selection, and dependent revalidation paths.
-- [ ] [Fix] Add `AbortSignal` propagation where the retained path already has a supporting contract and stale-guard-only behavior is insufficient.
-- [ ] [Decision] Keep the plan bounded to the retained user-visible paths instead of reopening every downgraded async resource-management issue; explicitly exclude already-downgraded `node-renderer-effects.ts` lifecycle dispatch handling.
-- [ ] [Proof] Add focused tests for report-designer startup failure visibility, WordEditor save rejection handling, table/spreadsheet save rejection handling, dependent revalidation rejection handling, and advanced-form validation promise handling.
+- [x] [Fix] Ensure retained startup/save/submit/validation paths no longer rely on unhandled fire-and-forget promises or swallowed rejections, including table quick edit, spreadsheet submit/selection, and dependent revalidation paths.
+- [x] [Fix] Add `AbortSignal` propagation where the retained path already has a supporting contract and stale-guard-only behavior is insufficient.
+- [x] [Decision] Keep the plan bounded to the retained user-visible paths instead of reopening every downgraded async resource-management issue; explicitly exclude already-downgraded `node-renderer-effects.ts` lifecycle dispatch handling.
+- [x] [Proof] Add focused tests for report-designer startup failure visibility, WordEditor save rejection handling, table/spreadsheet save rejection handling, dependent revalidation rejection handling, and advanced-form validation promise handling.
 
 Exit Criteria:
 
-- [ ] No in-scope retained async path still drops a user-visible rejection on the floor.
-- [ ] In-scope retained paths that already support cancellation now pass `signal` or explicitly justify why `latest-wins` remains sufficient.
-- [ ] Focused tests cover the landed retained async fixes.
-- [ ] `docs/architecture/action-interaction-state.md` and/or related owner docs are updated if baseline changes; otherwise explicitly record `No owner-doc update required`.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] No in-scope retained async path still drops a user-visible rejection on the floor.
+- [x] In-scope retained paths that already support cancellation now pass `signal` or explicitly justify why `latest-wins` remains sufficient.
+- [x] Focused tests cover the landed retained async fixes.
+- [x] `No owner-doc update required` for this phase; the live action/interaction baseline did not change beyond closing retained implementation gaps.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 4 - Close Retained Type-Boundary And Error-Propagation Defects
 
-Status: in progress
+Status: completed
 Targets: `runtime-factory.ts`, report inspector shell, detail-view helper, formula compiler, form renderer, report host provider/core dispatch, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Replace the retained dangerous casts and out-of-contract writes (`props as any`, `'custom'`, `ctx as ActionContext`) with contract-honest types or validated translation layers.
-- [ ] [Fix] Preserve retained failure semantics and structured metadata: formula error `cause`, validation runtime non-cancelled errors, declarative surface close/unmount duplicate publication removal, form `initAction` retryability, and report preview abort `cancelled` semantics.
-- [ ] [Proof] Add focused tests for each retained boundary/propagation defect.
-- [ ] [Decision] Record any final owner-doc wording needed for `ActionContext`, `ValidationError.rule`, or error-result semantics.
+- [x] [Fix] Replace the retained dangerous casts and out-of-contract writes (`props as any`, `'custom'`, `ctx as ActionContext`) with contract-honest types or validated translation layers.
+- [x] [Fix] Preserve retained failure semantics and structured metadata: formula error `cause`, validation runtime non-cancelled errors, declarative surface close/unmount duplicate publication removal, form `initAction` retryability, and report preview abort `cancelled` semantics.
+- [x] [Proof] Add focused tests for each retained boundary/propagation defect.
+- [x] [Decision] No additional owner-doc wording required; the current `ActionContext` / error-result / validation baseline remains accurate after the implementation fixes.
 
 Exit Criteria:
 
-- [ ] The retained dangerous type-boundary escapes are removed or replaced by explicit, validated contract translation.
-- [ ] The retained lifecycle/error-propagation semantics are preserved end-to-end for the in-scope paths, including declarative surface closed-summary publication.
-- [ ] Focused tests cover all landed retained fixes in this phase.
-- [ ] Affected owner docs are updated if the public/current baseline changed; otherwise explicitly record `No owner-doc update required`.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] The retained dangerous type-boundary escapes are removed or replaced by explicit, validated contract translation.
+- [x] The retained lifecycle/error-propagation semantics are preserved end-to-end for the in-scope paths, including declarative surface closed-summary publication.
+- [x] Focused tests cover all landed retained fixes in this phase.
+- [x] `No owner-doc update required` for this phase; the public/current baseline remained stable while the retained defects were removed.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
-- [ ] All in-scope retained live defects from dimensions `04`, `05`, `06`, `07`, `08`, `13`, and `19` are fixed, or moved to explicit successor ownership with recorded reasoning.
-- [ ] No in-scope confirmed defect is silently downgraded to optimization-only cleanup.
-- [ ] The in-scope retained set is explicit and auditable: declarative surface / spreadsheet toolbar / word-editor page-mode second-source-of-truth defects, retained broad subscriptions, duplicate `publishClosed()` publication, render-phase side effects, hidden subtree validation participation, retained async fire-and-forget paths, retained type-boundary escapes, and retained error-propagation defects.
-- [ ] Focused verification exists for each landed retained defect family: state/reactivity, lifecycle duplicate publication, render-phase side effects, validation participation, async safety, type boundaries, and error propagation.
-- [ ] Affected owner docs are synced to the live baseline, or each phase explicitly records `No owner-doc update required`.
-- [ ] Independent closure audit confirms no remaining in-scope retained runtime-side blocker.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All in-scope retained live defects from dimensions `04`, `05`, `06`, `07`, `08`, `13`, and `19` are fixed, or moved to explicit successor ownership with recorded reasoning.
+- [x] No in-scope confirmed defect is silently downgraded to optimization-only cleanup.
+- [x] The in-scope retained set is explicit and auditable: declarative surface / spreadsheet toolbar / word-editor page-mode second-source-of-truth defects, retained broad subscriptions, duplicate `publishClosed()` publication, render-phase side effects, hidden subtree validation participation, retained async fire-and-forget paths, retained type-boundary escapes, and retained error-propagation defects.
+- [x] Focused verification exists for each landed retained defect family: state/reactivity, lifecycle duplicate publication, render-phase side effects, validation participation, async safety, type boundaries, and error propagation.
+- [x] Affected owner docs are synced to the live baseline, or each phase explicitly records `No owner-doc update required`.
+- [x] Independent closure audit confirms no remaining in-scope retained runtime-side blocker.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -168,9 +168,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: In progress. This pass landed part of the retained set, including the duplicate declarative surface closed-summary publication fix in `packages/flux-renderers-basic/src/use-surface-renderer.ts`, but the broader retained runtime/reactivity/async/type/error items remain open and this plan cannot close yet.
-
-Status Note: In progress. This pass closes the retained state-source/reactivity items (`use-surface-renderer`, spreadsheet shell, word-editor page mode, empty-name subscriptions), the hidden-subtree validation participation defect, and the retained `NodeRenderer` render-phase side-effect defect with focused proof. The plan remains open because retained async user-visible rejection handling is still incomplete, including the attempted but reverted WordEditor save-failure UX path.
+Status Note: Completed. The final pass closed the remaining retained async and error-propagation gaps: `form.tsx` now surfaces non-abort `initAction` failures without losing same-activation retryability, spreadsheet selection/edit-save paths no longer drop rejected saves or selection dispatch failures, word-editor save passes an `AbortSignal`, advanced detail revalidation no longer closes drafts after failed parent validation, and the remaining retained type-boundary/runtime-factory/report-host/error-cause items are verified against the live repo.
 
 Closure Audit Evidence:
 
@@ -178,7 +176,12 @@ Closure Audit Evidence:
 - Focused proof passed for hidden-parent subtree exclusion in `packages/flux-runtime/src/__tests__/hidden-field-policy.test.ts`.
 - Focused proof passed for render-abort import setup safety in `packages/flux-react/src/__tests__/compilation-and-boundaries.test.tsx`.
 - Existing import behavior smoke tests still passed in `packages/flux-react/src/schema-renderer-imports-basic.test.tsx`.
+- Focused proof passed for retained form initAction retryability and failure visibility in `packages/flux-renderers-form/src/__tests__/form-renderer-lifecycle.test.tsx`.
+- Focused proof passed for retained detail-view/detail-field parent revalidation failure handling in `packages/flux-renderers-form-advanced/src/detail-view/detail-revalidation.test.tsx`.
+- Focused proof passed for retained spreadsheet selection/save rejection handling and keyboard navigation stability in `packages/spreadsheet-renderers/src/__tests__/grid-selection.test.tsx`.
+- Focused proof passed for word-editor save `AbortSignal` propagation in `packages/word-editor-renderers/src/__tests__/word-editor-page-actions.test.tsx`.
+- Final workspace verification passed: `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `pnpm test`.
 
 Follow-up:
 
-- Finish retained async user-visible rejection handling and proof, especially the WordEditor save-failure path that was reverted after failing focused verification.
+- None. Future runtime-side regressions should open a fresh owner plan instead of reopening `211` without new live evidence.
