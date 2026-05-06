@@ -1,3 +1,4 @@
+import { useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import type { TableSchema } from '../schemas';
 import type { TableRowEntry } from './types';
@@ -11,33 +12,63 @@ interface RowScopePayload {
 interface RowScopeCacheState {
   scopes: Map<string, ScopeRef>;
   snapshots: Map<string, RowScopePayload>;
+  version: number;
+  listeners: Set<() => void>;
 }
 
 const tableRowScopeCaches = new Map<string, RowScopeCacheState>();
 
-function getRowScopeCacheState(cacheKey: string): RowScopeCacheState {
-  let state = tableRowScopeCaches.get(cacheKey);
-  if (!state) {
-    state = {
-      scopes: new Map<string, ScopeRef>(),
-      snapshots: new Map<string, RowScopePayload>(),
-    };
-    tableRowScopeCaches.set(cacheKey, state);
-  }
-  return state;
+export function __getTableRowScopeCacheSizeForTests() {
+  return tableRowScopeCaches.size;
 }
 
-function syncRowScope(
+export function __hasTableRowScopeCacheForTests(cacheKey: string) {
+  return tableRowScopeCaches.has(cacheKey);
+}
+
+function createRowScopeCacheState(): RowScopeCacheState {
+  return {
+    scopes: new Map<string, ScopeRef>(),
+    snapshots: new Map<string, RowScopePayload>(),
+    version: 0,
+    listeners: new Set(),
+  };
+}
+
+function notifyListeners(state: RowScopeCacheState) {
+  state.version += 1;
+  for (const listener of state.listeners) {
+    listener();
+  }
+}
+
+function subscribeToCache(state: RowScopeCacheState, listener: () => void) {
+  state.listeners.add(listener);
+  return () => {
+    state.listeners.delete(listener);
+  };
+}
+
+function publishRowScopePayload(
   scope: ScopeRef,
   payload: RowScopePayload,
   previous: RowScopePayload | undefined,
 ): void {
+  const changedRoots: Partial<RowScopePayload> = {};
+
   if (!previous || previous.record !== payload.record) {
-    scope.merge({ record: payload.record });
+    changedRoots.record = payload.record;
   }
+
   if (!previous || previous.index !== payload.index) {
-    scope.merge({ index: payload.index });
+    changedRoots.index = payload.index;
   }
+
+  if (Object.keys(changedRoots).length === 0) {
+    return;
+  }
+
+  scope.merge(changedRoots);
 }
 
 export function useTableRowScopeCache(
@@ -46,41 +77,90 @@ export function useTableRowScopeCache(
   helpers: RendererComponentProps<TableSchema>['helpers'],
   path: RendererComponentProps<TableSchema>['path'],
 ) {
-  const cacheState = getRowScopeCacheState(`${ownerKey}::${path}`);
+  const cacheKey = `${ownerKey}::${path}`;
+
+  const [cacheState] = useState(() => {
+    const existing = tableRowScopeCaches.get(cacheKey);
+    if (existing) return existing;
+    const created = createRowScopeCacheState();
+    tableRowScopeCaches.set(cacheKey, created);
+    return created;
+  });
+
   const rowScopeCache = cacheState.scopes;
   const rowScopeSnapshots = cacheState.snapshots;
 
-  const nextVisibleKeys = new Set<string>();
+  const version = useSyncExternalStore(
+    (listener) => subscribeToCache(cacheState, listener),
+    () => cacheState.version,
+  );
 
-  for (const entry of processedData) {
-    nextVisibleKeys.add(entry.rowKey);
-    const existingScope = rowScopeCache.get(entry.rowKey);
-    const payload = { record: entry.record, index: entry.sourceIndex };
+  const entries = useMemo(
+    () =>
+      processedData.map((entry) => ({
+        rowKey: entry.rowKey,
+        payload: { record: entry.record, index: entry.sourceIndex },
+      })),
+    [processedData],
+  );
 
-    if (!existingScope) {
-      const createdScope = helpers.createScope(payload, {
-        scopeKey: createRowScopeId(ownerKey, entry.rowKey),
-        pathSuffix: createRowScopePath(path, entry.rowKey),
-        isolate: true,
-        source: 'row',
-      });
-      rowScopeCache.set(entry.rowKey, createdScope);
-      rowScopeSnapshots.set(entry.rowKey, payload);
-      continue;
+  const visibleKeys = useMemo(
+    () => new Set(processedData.map((entry) => entry.rowKey)),
+    [processedData],
+  );
+
+  useLayoutEffect(() => {
+    return () => {
+      if (tableRowScopeCaches.get(cacheKey) === cacheState) {
+        rowScopeCache.clear();
+        rowScopeSnapshots.clear();
+        tableRowScopeCaches.delete(cacheKey);
+      }
+    };
+  }, [cacheKey, cacheState, rowScopeCache, rowScopeSnapshots]);
+
+  useLayoutEffect(() => {
+    let changed = false;
+
+    for (const { rowKey, payload } of entries) {
+      const existingScope = rowScopeCache.get(rowKey);
+
+      if (!existingScope) {
+        const createdScope = helpers.createScope(payload, {
+          scopeKey: createRowScopeId(ownerKey, rowKey),
+          pathSuffix: createRowScopePath(path, rowKey),
+          isolate: true,
+          source: 'row',
+        });
+        rowScopeCache.set(rowKey, createdScope);
+        rowScopeSnapshots.set(rowKey, payload);
+        changed = true;
+        continue;
+      }
+
+      const previous = rowScopeSnapshots.get(rowKey);
+      const payloadChanged = !previous || previous.record !== payload.record || previous.index !== payload.index;
+      publishRowScopePayload(existingScope, payload, previous);
+      rowScopeSnapshots.set(rowKey, payload);
+      changed = changed || payloadChanged;
     }
 
-    const previous = rowScopeSnapshots.get(entry.rowKey);
-    syncRowScope(existingScope, payload, previous);
-    rowScopeSnapshots.set(entry.rowKey, payload);
-  }
+    for (const key of Array.from(rowScopeCache.keys())) {
+      if (visibleKeys.has(key)) {
+        continue;
+      }
 
-  for (const key of Array.from(rowScopeCache.keys())) {
-    if (nextVisibleKeys.has(key)) {
-      continue;
+      rowScopeCache.delete(key);
+      rowScopeSnapshots.delete(key);
+      changed = true;
     }
-    rowScopeCache.delete(key);
-    rowScopeSnapshots.delete(key);
-  }
+
+    if (changed) {
+      notifyListeners(cacheState);
+    }
+  }, [cacheState, entries, helpers, ownerKey, path, rowScopeCache, rowScopeSnapshots, visibleKeys]);
+
+  void version;
 
   return rowScopeCache;
 }
