@@ -474,4 +474,62 @@ describe('FormRenderer lifecycle wiring', () => {
 
     expect((initCall?.[1] as { signal?: AbortSignal } | undefined)?.signal?.aborted).toBe(true);
   });
+
+  it('retries a rejected initAction on rerender within the same activation and reports the failure', async () => {
+    const parentScope = makeScope({ id: 'parent', visible: { parentValue: 'plain' } });
+    const ownedScope = makeScope({ id: 'owned-init', visible: { localValue: 'plain-owned' } });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const rejectedInitAction = vi.fn(async () => {
+      throw new Error('first init failed');
+    });
+    const successfulInitAction = vi.fn(async () => ({ ok: true }));
+    const ownedForm = {
+      scope: ownedScope,
+      store: { getState: () => ({ values: {} }) },
+      setLifecycleHandlers: vi.fn(),
+    } as any;
+    const runtime = {
+      getImportedExpressionBindings: vi.fn(() => ({})),
+      createFormRuntime: vi.fn(() => ownedForm),
+    } as any;
+
+    mocks.useRendererRuntime.mockReturnValue(runtime);
+    mocks.useCurrentActionScope.mockReturnValue(undefined);
+    mocks.useCurrentComponentRegistry.mockReturnValue(undefined);
+    mocks.useCurrentPage.mockReturnValue(undefined);
+    mocks.useRenderScope.mockReturnValue(parentScope);
+
+    const { rerender } = render(
+      <FormRenderer
+        {...buildProps({
+          events: { initAction: rejectedInitAction },
+          regions: {},
+          templateNode: { validationPlan: undefined, importsPlan: undefined, schemaUrl: undefined },
+          node: { instancePath: [] },
+        })}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(rejectedInitAction).toHaveBeenCalledTimes(1);
+    });
+    expect(warnSpy).toHaveBeenCalledWith('[form] initAction failed', expect.any(Error));
+
+    rerender(
+      <FormRenderer
+        {...buildProps({
+          events: { initAction: successfulInitAction },
+          regions: {},
+          templateNode: { validationPlan: undefined, importsPlan: undefined, schemaUrl: undefined },
+          node: { instancePath: [] },
+        })}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(successfulInitAction).toHaveBeenCalledTimes(1);
+    });
+
+    warnSpy.mockRestore();
+  });
 });

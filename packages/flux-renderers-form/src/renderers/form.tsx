@@ -108,6 +108,10 @@ function resolveLifecycleWriteScope(parentScope: ScopeRef): ScopeRef {
     : parentScope;
 }
 
+function logFormInitActionError(error: unknown) {
+  console.warn('[form] initAction failed', error);
+}
+
 export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const runtime = useRendererRuntime();
   const currentActionScope = useCurrentActionScope();
@@ -287,6 +291,8 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         ) {
           return;
         }
+
+        logFormInitActionError(error);
 
         if (inFlightInitKeyRef.current === activationKey) {
           inFlightInitKeyRef.current = undefined;

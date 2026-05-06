@@ -259,6 +259,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
     });
   });
 
+
   it('publishes initial form values through valuesPath to the parent scope', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
