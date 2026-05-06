@@ -19,6 +19,17 @@ import {
   useSpreadsheetShell,
 } from './spreadsheet-interactions/index.js';
 
+function isAbortLike(error: unknown): boolean {
+  return (
+    (error instanceof Error && error.name === 'AbortError') ||
+    ((error as { name?: string } | null | undefined)?.name === 'AbortError')
+  );
+}
+
+function formatFailureMessage(prefix: string, error: unknown): string {
+  return error instanceof Error && error.message ? `${prefix}: ${error.message}` : prefix;
+}
+
 export type {
   DragState,
   ResizeState,
@@ -277,9 +288,13 @@ export function useSpreadsheetInteractions(
 
   const onCanvasMouseDown = useCallback(() => {
     if (editingCellRef.current) {
-      handleEditSave();
+      void handleEditSave().catch((error) => {
+        if (!isAbortLike(error)) {
+          addLog(formatFailureMessage('Cell save failed', error));
+        }
+      });
     }
-  }, [handleEditSave, editingCellRef]);
+  }, [addLog, handleEditSave, editingCellRef]);
 
   const handleCellValueChange = useCellValueSync({
     bridge,

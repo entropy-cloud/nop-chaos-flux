@@ -14,6 +14,17 @@ export interface DragState {
   endCol: number;
 }
 
+function isAbortLike(error: unknown): boolean {
+  return (
+    (error instanceof Error && error.name === 'AbortError') ||
+    ((error as { name?: string } | null | undefined)?.name === 'AbortError')
+  );
+}
+
+function formatFailureMessage(prefix: string, error: unknown): string {
+  return error instanceof Error && error.message ? `${prefix}: ${error.message}` : prefix;
+}
+
 function createRange(
   sheetId: string,
   startRow: number,
@@ -75,17 +86,59 @@ export function useSelection(
   });
   const hasDraggedRef = useRef(false);
 
+  const settleSelectionDispatch = useCallback(
+    async (work: () => Promise<unknown>, successLog?: string) => {
+      try {
+        await work();
+        if (successLog) {
+          addLog(successLog);
+        }
+      } catch (error) {
+        if (!isAbortLike(error)) {
+          addLog(formatFailureMessage('Selection failed', error));
+        }
+      }
+    },
+    [addLog],
+  );
+
+  const commitEditingCell = useCallback(async () => {
+    const currentEditCell = editingCellRef.current;
+    if (!currentEditCell) {
+      return;
+    }
+
+    const currentEditValue = editValueRef.current;
+    const addr = cellAddress(currentEditCell.row, currentEditCell.col);
+    // eslint-disable-next-line react-compiler/react-compiler
+    editingCellRef.current = null;
+    editValueRef.current = '';
+    setEditingCell(null);
+
+    try {
+      await bridge.dispatch({
+        type: 'spreadsheet:setCellValue',
+        cell: { sheetId, address: addr, row: currentEditCell.row, col: currentEditCell.col },
+        value: currentEditValue,
+      });
+    } catch (error) {
+      if (!isAbortLike(error)) {
+        addLog(formatFailureMessage('Cell save failed', error));
+      }
+    }
+  }, [addLog, bridge, editValueRef, editingCellRef, setEditingCell, sheetId]);
+
   const syncSelectionToCore = useCallback(
-    (selection: SpreadsheetSelection) => {
-      void bridge.dispatch({ type: 'spreadsheet:setSelection', selection });
+    async (selection: SpreadsheetSelection) => {
+      await bridge.dispatch({ type: 'spreadsheet:setSelection', selection });
     },
     [bridge],
   );
 
-  const setSelectedCell = useCallback(
-    (cell: { row: number; col: number } | null) => {
+  const requestSelectedCell = useCallback(
+    async (cell: { row: number; col: number } | null) => {
       if (cell) {
-        syncSelectionToCore({
+        await syncSelectionToCore({
           kind: 'cell',
           sheetId,
           anchor: {
@@ -96,15 +149,22 @@ export function useSelection(
           },
         });
       } else {
-        syncSelectionToCore({ kind: 'none' });
+        await syncSelectionToCore({ kind: 'none' });
       }
     },
     [sheetId, syncSelectionToCore],
   );
 
+  const setSelectedCell = useCallback(
+    (cell: { row: number; col: number } | null) => {
+      void settleSelectionDispatch(() => requestSelectedCell(cell));
+    },
+    [requestSelectedCell, settleSelectionDispatch],
+  );
+
   const syncRangeSelectionToCore = useCallback(
-    (range: SpreadsheetRange) => {
-      syncSelectionToCore({
+    async (range: SpreadsheetRange) => {
+      await syncSelectionToCore({
         kind: 'range',
         sheetId,
         range,
@@ -167,21 +227,6 @@ export function useSelection(
   const handleCellClick = useCallback(
     (row: number, col: number) => {
       if (!hasDraggedRef.current) {
-        if (editingCellRef.current) {
-          const currentEditCell = editingCellRef.current;
-          const currentEditValue = editValueRef.current;
-          const addr = cellAddress(currentEditCell.row, currentEditCell.col);
-          // eslint-disable-next-line react-compiler/react-compiler
-          editingCellRef.current = null;
-          editValueRef.current = '';
-          setEditingCell(null);
-          bridge.dispatch({
-            type: 'spreadsheet:setCellValue',
-            cell: { sheetId, address: addr, row: currentEditCell.row, col: currentEditCell.col },
-            value: currentEditValue,
-          });
-        }
-        setSelectedCell({ row, col });
         dragStateRef.current = {
           isDragging: false,
           startRow: row,
@@ -194,21 +239,23 @@ export function useSelection(
         setCellValue(String(cell?.value ?? ''));
         const comment = cell?.comment;
         setCommentText(typeof comment === 'string' ? comment : (comment?.text ?? ''));
-        addLog(`Selected ${cellAddress(row, col)}`);
+        void (async () => {
+          await commitEditingCell();
+          await settleSelectionDispatch(
+            () => requestSelectedCell({ row, col }),
+            `Selected ${cellAddress(row, col)}`,
+          );
+        })();
       }
       hasDraggedRef.current = false;
     },
     [
       snapshot,
-      addLog,
-      bridge,
-      sheetId,
-      editingCellRef,
-      editValueRef,
-      setEditingCell,
+      commitEditingCell,
       setCommentText,
       setCellValue,
-      setSelectedCell,
+      requestSelectedCell,
+      settleSelectionDispatch,
     ],
   );
 
@@ -225,9 +272,9 @@ export function useSelection(
         endCol: col,
       };
       setPreviewRange(createRange(sheetId, row, col, row, col));
-      setSelectedCell({ row, col });
+      void settleSelectionDispatch(() => requestSelectedCell({ row, col }));
     },
-    [setSelectedCell, sheetId],
+    [requestSelectedCell, settleSelectionDispatch, sheetId],
   );
 
   const handleCellMouseEnter = useCallback(
@@ -258,9 +305,9 @@ export function useSelection(
         dragStateRef.current = { ...dragStateRef.current, isDragging: false };
         const range = getSelectedRangeFn();
         if (range && hasDraggedRef.current) {
-          syncRangeSelectionToCore(range);
           setPreviewRange(null);
-          addLog(
+          void settleSelectionDispatch(
+            () => syncRangeSelectionToCore(range),
             `Selected range ${cellAddress(range.startRow, range.startCol)}:${cellAddress(range.endRow, range.endCol)}`,
           );
         } else {
@@ -271,12 +318,11 @@ export function useSelection(
         onResizeEnd();
       }
     },
-    [addLog, syncRangeSelectionToCore],
+    [settleSelectionDispatch, syncRangeSelectionToCore],
   );
 
   const handleSelectRow = useCallback(
     (row: number, extend = false) => {
-      void bridge.dispatch({ type: 'spreadsheet:selectRow', sheetId, row, extend });
       dragStateRef.current = {
         isDragging: false,
         startRow: row,
@@ -285,14 +331,16 @@ export function useSelection(
         endCol: 0,
       };
       setPreviewRange(null);
-      addLog(`Selected row ${row + 1}`);
+      void settleSelectionDispatch(
+        () => bridge.dispatch({ type: 'spreadsheet:selectRow', sheetId, row, extend }),
+        `Selected row ${row + 1}`,
+      );
     },
-    [addLog, bridge, sheetId],
+    [bridge, settleSelectionDispatch, sheetId],
   );
 
   const handleSelectColumn = useCallback(
     (col: number, extend = false) => {
-      void bridge.dispatch({ type: 'spreadsheet:selectColumn', sheetId, col, extend });
       dragStateRef.current = {
         isDragging: false,
         startRow: 0,
@@ -301,17 +349,22 @@ export function useSelection(
         endCol: col,
       };
       setPreviewRange(null);
-      addLog(`Selected column ${cellAddress(0, col).replace(/[0-9]/g, '')}`);
+      void settleSelectionDispatch(
+        () => bridge.dispatch({ type: 'spreadsheet:selectColumn', sheetId, col, extend }),
+        `Selected column ${cellAddress(0, col).replace(/[0-9]/g, '')}`,
+      );
     },
-    [addLog, bridge, sheetId],
+    [bridge, settleSelectionDispatch, sheetId],
   );
 
   const handleSelectAll = useCallback(() => {
-    void bridge.dispatch({ type: 'spreadsheet:selectAll', sheetId });
     dragStateRef.current = { isDragging: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0 };
     setPreviewRange(null);
-    addLog('Selected entire sheet');
-  }, [addLog, bridge, sheetId]);
+    void settleSelectionDispatch(
+      () => bridge.dispatch({ type: 'spreadsheet:selectAll', sheetId }),
+      'Selected entire sheet',
+    );
+  }, [bridge, settleSelectionDispatch, sheetId]);
 
   return {
     selectedCell,

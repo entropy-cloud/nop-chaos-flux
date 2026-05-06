@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+ import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
 import {
   createSpreadsheetBridge,
@@ -268,5 +268,93 @@ describe('spreadsheet grid selection', () => {
       expect.arrayContaining(['workbench-shell', 'builder-facing']),
     );
     expect(definition?.propContracts?.document?.required).toBe(true);
+  });
+
+  it('records selection dispatch failures instead of dropping them silently', async () => {
+    const documentModel = createEmptyDocument('selection-failure-log');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const dispatchSpy = vi.spyOn(bridge, 'dispatch').mockRejectedValueOnce(new Error('select failed'));
+    const logs: string[] = [];
+
+    function Probe() {
+      const interactions = useSpreadsheetInteractions({
+        bridge,
+        sheetId,
+        rows: 5,
+        cols: 5,
+        onLog: (message) => logs.push(message),
+      });
+
+      return (
+        <button type="button" onClick={() => interactions.handleSelectAll()}>
+          Select all
+        </button>
+      );
+    }
+
+    render(<Probe />);
+    fireEvent.click(screen.getByRole('button', { name: 'Select all' }));
+
+    await waitFor(() => {
+      expect(dispatchSpy).toHaveBeenCalled();
+      expect(logs).toContain('Selection failed: select failed');
+    });
+  });
+
+  it('logs edit-save failures before selecting a different cell', async () => {
+    const documentModel = createEmptyDocument('selection-save-failure-log');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const originalDispatch = bridge.dispatch.bind(bridge);
+    const dispatchSpy = vi.spyOn(bridge, 'dispatch').mockImplementation((action) => {
+      if (action.type === 'spreadsheet:setCellValue') {
+        return Promise.reject(new Error('save failed'));
+      }
+
+      return originalDispatch(action);
+    });
+    const logs: string[] = [];
+
+    function Probe() {
+      const interactions = useSpreadsheetInteractions({
+        bridge,
+        sheetId,
+        rows: 5,
+        cols: 5,
+        onLog: (message) => logs.push(message),
+      });
+
+      return (
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              interactions.handleCellDoubleClick(0, 0);
+              interactions.handleEditValueChange('draft');
+            }}
+          >
+            Edit A1
+          </button>
+          <button type="button" onClick={() => interactions.handleCellClick(1, 1)}>
+            Select B2
+          </button>
+        </div>
+      );
+    }
+
+    render(<Probe />);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit A1' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Select B2' }));
+
+    await waitFor(() => {
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'spreadsheet:setCellValue' }),
+      );
+      expect(logs).toContain('Cell save failed: save failed');
+      expect(core.getSnapshot().selection.anchor?.address).toBe('B2');
+    });
   });
 });

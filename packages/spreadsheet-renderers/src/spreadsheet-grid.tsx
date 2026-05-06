@@ -164,10 +164,16 @@ export function SpreadsheetGrid({
   const [scrollLeft, setScrollLeft] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(600);
   const [viewportWidth, setViewportWidth] = useState(800);
+  const keyboardCellRef = useRef<{ row: number; col: number }>(selectedCell ?? { row: 0, col: 0 });
+
+  useEffect(() => {
+    keyboardCellRef.current = selectedCell ?? { row: 0, col: 0 };
+  }, [selectedCell]);
 
   const moveSelection = useCallback(
     (nextRow: number, nextCol: number) => {
       const next = clampCell(nextRow, nextCol);
+      keyboardCellRef.current = next;
       onCellClick(next.row, next.col);
       requestAnimationFrame(() => {
         const cell = scrollRef.current?.querySelector(
@@ -387,7 +393,7 @@ export function SpreadsheetGrid({
             return;
           }
 
-          const active = selectedCell ?? { row: 0, col: 0 };
+          const active = keyboardCellRef.current;
 
           if (event.key === 'ArrowUp') {
             event.preventDefault();
