@@ -221,6 +221,7 @@ export const formRendererDefinition: RendererDefinition = {
   fields: [
     { key: 'body', kind: 'region', regionKey: 'body' },
     { key: 'actions', kind: 'region', regionKey: 'actions' },
+    { key: 'data', kind: 'prop' },
     { key: 'initAction', kind: 'event' },
     { key: 'submitAction', kind: 'event' },
     { key: 'onSubmitSuccess', kind: 'event' },
