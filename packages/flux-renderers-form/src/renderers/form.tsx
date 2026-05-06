@@ -181,6 +181,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     ? props.node.instancePath.map((f) => `${f.repeatedTemplateId}:${f.instanceKey}`).join('/')
     : `${props.id}:${props.path}`;
   const lastInitKeyRef = useRef<string | undefined>(undefined);
+  const inFlightInitKeyRef = useRef<string | undefined>(undefined);
   const initActionAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -263,14 +264,42 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       return;
     }
 
+    if (inFlightInitKeyRef.current === activationKey) {
+      return;
+    }
+
     initActionAbortRef.current?.abort();
     const controller = new AbortController();
     initActionAbortRef.current = controller;
-    lastInitKeyRef.current = activationKey;
+    inFlightInitKeyRef.current = activationKey;
 
-    void initAction(undefined, { scope: lifecycleScope, form: ownedForm, signal: controller.signal }).catch(
-      () => undefined,
-    );
+    void initAction(undefined, { scope: lifecycleScope, form: ownedForm, signal: controller.signal })
+      .then(() => {
+        if (initActionAbortRef.current === controller) {
+          lastInitKeyRef.current = activationKey;
+        }
+      })
+      .catch((error) => {
+        if (
+          controller.signal.aborted ||
+          (error instanceof Error && error.name === 'AbortError') ||
+          ((error as { name?: string } | null | undefined)?.name === 'AbortError')
+        ) {
+          return;
+        }
+
+        if (inFlightInitKeyRef.current === activationKey) {
+          inFlightInitKeyRef.current = undefined;
+        }
+      })
+      .finally(() => {
+        if (inFlightInitKeyRef.current === activationKey) {
+          inFlightInitKeyRef.current = undefined;
+        }
+        if (initActionAbortRef.current === controller) {
+          initActionAbortRef.current = null;
+        }
+      });
 
     return () => {
       if (initActionAbortRef.current === controller) {
