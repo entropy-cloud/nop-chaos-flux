@@ -122,20 +122,22 @@
           "type": "flex",
           "direction": "column",
           "gap": 4,
-          "className": "nop-af-node nop-af-node--entry",
+          "className": "af-node-root",
+          "data-slot": "af-node",
+          "data-node-variant": "entry",
           "items": [
             {
               "type": "flex",
-              "className": "nop-af-node__header",
+              "data-slot": "af-node-header",
               "items": [
-                { "type": "icon", "icon": "play", "className": "nop-af-node__icon" },
-                { "type": "text", "body": "${label}", "className": "nop-af-node__title" }
+                { "type": "icon", "icon": "play", "data-slot": "af-node-icon" },
+                { "type": "text", "body": "${label}", "data-slot": "af-node-title" }
               ]
             },
             {
               "type": "text",
               "body": "流程入口",
-              "className": "nop-af-node__subtitle"
+              "data-slot": "af-node-subtitle"
             }
           ]
         },
@@ -150,36 +152,40 @@
           "type": "flex",
           "direction": "column",
           "gap": 4,
-          "className": "nop-af-node nop-af-node--step",
+          "className": "af-node-root",
+          "data-slot": "af-node",
+          "data-node-variant": "step",
           "items": [
             {
               "type": "flex",
-              "className": "nop-af-node__header",
+              "data-slot": "af-node-header",
               "items": [
-                { "type": "icon", "icon": "zap", "className": "nop-af-node__icon" },
-                { "type": "text", "body": "${label}", "className": "nop-af-node__title" }
+                { "type": "icon", "icon": "zap", "data-slot": "af-node-icon" },
+                { "type": "text", "body": "${label}", "data-slot": "af-node-title" }
               ]
             },
             {
               "type": "flex",
-              "className": "nop-af-node__body",
+              "data-slot": "af-node-body",
               "direction": "column",
               "gap": 2,
               "items": [
                 {
                   "type": "text",
                   "body": "${action}",
-                  "className": "nop-af-node__subtitle"
+                  "data-slot": "af-node-subtitle"
                 },
                 {
                   "type": "text",
                   "body": "${when}",
-                  "className": "nop-af-node__meta nop-af-node__meta--when"
+                  "data-slot": "af-node-meta",
+                  "data-meta-variant": "when"
                 },
                 {
                   "type": "text",
                   "body": "${timeout}",
-                  "className": "nop-af-node__meta nop-af-node__meta--timeout"
+                  "data-slot": "af-node-meta",
+                  "data-meta-variant": "timeout"
                 }
               ]
             }
@@ -218,8 +224,10 @@
         "icon": "square",
         "body": {
           "type": "flex",
-          "className": "nop-af-node nop-af-node--end",
-          "items": [{ "type": "text", "body": "${label}", "className": "nop-af-node__title" }]
+          "className": "af-node-root",
+          "data-slot": "af-node",
+          "data-node-variant": "end",
+          "items": [{ "type": "text", "body": "${label}", "data-slot": "af-node-title" }]
         },
         "appearance": { "minWidth": 80, "minHeight": 60 },
         "tree": { "allowChild": false, "allowBranches": false, "isTerminal": true }

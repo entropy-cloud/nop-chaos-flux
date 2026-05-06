@@ -102,17 +102,19 @@
           "type": "flex",
           "direction": "column",
           "gap": 4,
-          "className": "nop-dt-node nop-dt-node--initiator",
+          "className": "dt-node-root",
+          "data-slot": "dt-node",
+          "data-node-variant": "initiator",
           "items": [
             {
               "type": "flex",
-              "className": "nop-dt-node__header",
+              "data-slot": "dt-node-header",
               "items": [
-                { "type": "icon", "icon": "user", "className": "nop-dt-node__icon" },
-                { "type": "text", "body": "${label}", "className": "nop-dt-node__title" }
+                { "type": "icon", "icon": "user", "data-slot": "dt-node-icon" },
+                { "type": "text", "body": "${label}", "data-slot": "dt-node-title" }
               ]
             },
-            { "type": "text", "body": "所有人", "className": "nop-dt-node__subtitle" }
+            { "type": "text", "body": "所有人", "data-slot": "dt-node-subtitle" }
           ]
         },
         "appearance": { "minWidth": 200, "minHeight": 80 },
@@ -126,20 +128,22 @@
           "type": "flex",
           "direction": "column",
           "gap": 4,
-          "className": "nop-dt-node nop-dt-node--approval",
+          "className": "dt-node-root",
+          "data-slot": "dt-node",
+          "data-node-variant": "approval",
           "items": [
             {
               "type": "flex",
-              "className": "nop-dt-node__header",
+              "data-slot": "dt-node-header",
               "items": [
-                { "type": "icon", "icon": "user-check", "className": "nop-dt-node__icon" },
-                { "type": "text", "body": "${label}", "className": "nop-dt-node__title" }
+                { "type": "icon", "icon": "user-check", "data-slot": "dt-node-icon" },
+                { "type": "text", "body": "${label}", "data-slot": "dt-node-title" }
               ]
             },
             {
               "type": "text",
               "body": "${examineMode === 1 ? '依次审批' : examineMode === 2 ? '会签' : examineMode === 3 ? '或签' : '审批'}",
-              "className": "nop-dt-node__subtitle"
+              "data-slot": "dt-node-subtitle"
             }
           ]
         },
@@ -182,17 +186,19 @@
           "type": "flex",
           "direction": "column",
           "gap": 4,
-          "className": "nop-dt-node nop-dt-node--cc",
+          "className": "dt-node-root",
+          "data-slot": "dt-node",
+          "data-node-variant": "cc",
           "items": [
             {
               "type": "flex",
-              "className": "nop-dt-node__header",
+              "data-slot": "dt-node-header",
               "items": [
-                { "type": "icon", "icon": "mail", "className": "nop-dt-node__icon" },
-                { "type": "text", "body": "${label}", "className": "nop-dt-node__title" }
+                { "type": "icon", "icon": "mail", "data-slot": "dt-node-icon" },
+                { "type": "text", "body": "${label}", "data-slot": "dt-node-title" }
               ]
             },
-            { "type": "text", "body": "抄送给相关人员", "className": "nop-dt-node__subtitle" }
+            { "type": "text", "body": "抄送给相关人员", "data-slot": "dt-node-subtitle" }
           ]
         },
         "appearance": { "minWidth": 200, "minHeight": 80 },
@@ -206,14 +212,16 @@
           "type": "flex",
           "direction": "column",
           "gap": 4,
-          "className": "nop-dt-node nop-dt-node--condition",
+          "className": "dt-node-root",
+          "data-slot": "dt-node",
+          "data-node-variant": "condition",
           "items": [
             {
               "type": "flex",
-              "className": "nop-dt-node__header",
-              "items": [{ "type": "text", "body": "${label}", "className": "nop-dt-node__title" }]
+              "data-slot": "dt-node-header",
+              "items": [{ "type": "text", "body": "${label}", "data-slot": "dt-node-title" }]
             },
-            { "type": "text", "body": "排他分支", "className": "nop-dt-node__description" }
+            { "type": "text", "body": "排他分支", "data-slot": "dt-node-description" }
           ]
         },
         "appearance": { "minWidth": 200, "minHeight": 80 },
@@ -250,17 +258,19 @@
           "type": "flex",
           "direction": "column",
           "gap": 4,
-          "className": "nop-dt-node nop-dt-node--parallel",
+          "className": "dt-node-root",
+          "data-slot": "dt-node",
+          "data-node-variant": "parallel",
           "items": [
             {
               "type": "flex",
-              "className": "nop-dt-node__header",
+              "data-slot": "dt-node-header",
               "items": [
-                { "type": "icon", "icon": "git-merge", "className": "nop-dt-node__icon" },
-                { "type": "text", "body": "${label}", "className": "nop-dt-node__title" }
+                { "type": "icon", "icon": "git-merge", "data-slot": "dt-node-icon" },
+                { "type": "text", "body": "${label}", "data-slot": "dt-node-title" }
               ]
             },
-            { "type": "text", "body": "同时执行多个分支", "className": "nop-dt-node__subtitle" }
+            { "type": "text", "body": "同时执行多个分支", "data-slot": "dt-node-subtitle" }
           ]
         },
         "appearance": { "minWidth": 200, "minHeight": 80 },
@@ -280,17 +290,19 @@
           "type": "flex",
           "direction": "column",
           "gap": 4,
-          "className": "nop-dt-node nop-dt-node--subprocess",
+          "className": "dt-node-root",
+          "data-slot": "dt-node",
+          "data-node-variant": "subprocess",
           "items": [
             {
               "type": "flex",
-              "className": "nop-dt-node__header",
+              "data-slot": "dt-node-header",
               "items": [
-                { "type": "icon", "icon": "layers", "className": "nop-dt-node__icon" },
-                { "type": "text", "body": "${label}", "className": "nop-dt-node__title" }
+                { "type": "icon", "icon": "layers", "data-slot": "dt-node-icon" },
+                { "type": "text", "body": "${label}", "data-slot": "dt-node-title" }
               ]
             },
-            { "type": "text", "body": "${callProcess}", "className": "nop-dt-node__subtitle" }
+            { "type": "text", "body": "${callProcess}", "data-slot": "dt-node-subtitle" }
           ]
         },
         "appearance": { "minWidth": 200, "minHeight": 80 },
@@ -318,8 +330,10 @@
           "direction": "column",
           "justifyContent": "center",
           "alignItems": "center",
-          "className": "nop-dt-node nop-dt-node--end",
-          "items": [{ "type": "text", "body": "${label}", "className": "nop-dt-node__title" }]
+          "className": "dt-node-root",
+          "data-slot": "dt-node",
+          "data-node-variant": "end",
+          "items": [{ "type": "text", "body": "${label}", "data-slot": "dt-node-title" }]
         },
         "appearance": { "minWidth": 120, "minHeight": 40 },
         "tree": { "allowChild": false, "allowBranches": false, "isTerminal": true }
