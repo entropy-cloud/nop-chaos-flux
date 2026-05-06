@@ -379,11 +379,13 @@ Disposal rule:
 
 - evict the row scope when its `rowKey` is no longer materialized in the current table render output
 - do not retain hidden-page or filtered-out row scopes by default
+- also remove the owning table's module-level row-scope cache entry when that table instance unmounts or its owner-qualified cache key changes
 
 React note:
 
 - if an implementation synchronizes an existing row scope after render, it should do so in a pre-paint phase so descendants do not visibly commit stale row data
 - one extra rerender of the changed row caused by that pre-paint synchronization is acceptable; mutating shared row-scope state during render to avoid that rerender is not
+- the current supported table owner path uses an owner-controlled pre-paint reconciliation step for create, publish, and stale-row eviction, then rerenders once so descendants observe the synchronized row payload
 
 Render-phase rule:
 
@@ -514,6 +516,10 @@ This follows the lexical-root direction in `docs/architecture/dependency-trackin
 ### Row Scope Publication
 
 When the table synchronizes a cached row scope, it should publish only the row-local roots that changed.
+
+Publication rule:
+
+- publish one minimal change-set per affected row reconciliation, not multiple sequential per-root merges for the same reconciliation turn
 
 Examples:
 

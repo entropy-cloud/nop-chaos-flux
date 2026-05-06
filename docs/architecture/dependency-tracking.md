@@ -261,17 +261,22 @@ This includes current uses such as:
 
 Not all of these need to participate in source/reaction invalidation today. The missing piece is not merely "preserve everything"; it is that the ownership boundary is currently undocumented.
 
-### Gap 4: Collection And Row-Scope Invalidation Is Underspecified
+### Gap 4: Generic Collection And Row-Scope Translation Is Still Incomplete
 
-The current change surface reports raw paths such as `tableData.3.name`.
+The current change surface still reports raw paths such as `tableData.3.name`.
 
-That is enough for conservative invalidation, but it does not define the desired row-local behavior:
+The supported runtime baseline is now split into two states:
+
+- table already owns a supported row-local translation slice
+- generic collection owners such as loop/list/tree still do not share one unified translation substrate
+
+That means the desired row-local behavior is now defined for table, but not yet generalized across every collection owner:
 
 - collection-level consumers should depend on `tableData`
 - row-local consumers should depend on `row` or `record`
 - changing one row should not force unrelated row scopes to re-run
 
-This is especially important for tables and loops.
+This remaining gap is therefore about generic collection-owner convergence, not about whether table is allowed to own row-local translation at all.
 
 ### Gap 5: Validation Uses A Separate Dependency Substrate
 
@@ -440,7 +445,12 @@ This keeps the dependency boundary narrow:
 
 ### 3.7 Collection And Row-Scope Invalidation
 
-This section is normative for tables, loops, and similar collection renderers.
+This section is normative for table today and is the target direction for other collection renderers.
+
+Current live baseline:
+
+- table owns a supported row-local translation slice
+- generic collection owners such as loop/list/tree are expected to follow the same rules when they land equivalent row/item scope reuse, but that convergence is not complete yet
 
 Rules:
 
@@ -459,6 +469,13 @@ Concretely:
 - if a row object is referentially unchanged after reconciliation, that row scope should not emit a change just because the parent array instance changed
 
 The collection owner is therefore responsible for translating parent collection updates into row-local invalidation. Without that translation, root-only tracking would collapse row consumers back to whole-collection invalidation.
+
+Table-specific note:
+
+- the current supported table owner path keeps one stable isolated row scope per materialized `rowKey`
+- table reconciles row-scope publication in a pre-paint owner-controlled step instead of mutating shared row-scope state during render
+- table publishes one minimal row-local root change-set per affected row reconciliation, typically `record`, `index`, or both
+- table removes its module-level row-scope cache entry when the owning table instance unmounts or its owner identity changes
 
 ### 3.8 Validation Dependency Boundary
 
@@ -567,11 +584,12 @@ This direction is correct because data visibility flows downward through lexical
 7. ~~Preserve the current runtime rule that explicit roots are authoritative for invalidation, while runtime-collected roots remain the fallback when `dependsOn` is absent.~~ **Done**: `reaction-runtime.ts` line 73 uses `createRootDependencySet(input.dependsOn)` first, falls back to `collectRuntimeDependencies()` only when absent.
 8. Optionally add dev-only diagnostics that compare explicit roots with runtime-collected reads. **Deferred**: Not yet implemented, low priority.
 
-### Phase 4: Collection/Row Reconciliation
+### Phase 4: Generic Collection/Row Reconciliation Follow-Up
 
-9. Define row-scope reconciliation where tables/loops create child scopes.
-10. Preserve unchanged row scopes when stable row identity allows it.
-11. Publish row-local root changes only to affected rows instead of fan-out invalidating the whole collection subtree.
+9. Keep the current table-owned row-scope reconciliation baseline as the reference owner slice.
+10. Extend equivalent row/item-scope reconciliation rules to other collection owners that need them.
+11. Preserve unchanged row scopes when stable row identity allows it.
+12. Publish row-local root changes only to affected rows instead of fan-out invalidating the whole collection subtree.
 
 ### Phase 5: Optional Follow-Up Work
 
@@ -602,4 +620,4 @@ Current runtime note:
 
 - `scopeChangeHitsDependencies()` now keeps the root-normalization baseline while using prefix-aware deep-path matching for multi-segment paths instead of the older pairwise overlap scan.
 - Form-store value subscriptions now support `subscribeToPaths(paths, listener)` so hot-path consumers can subscribe to exact dependency sets without whole-store fallback.
-- Collection/row reconciliation remains the next owner surface under Phase 4; the current landing does not change that scope.
+- Table row-scope reconciliation is now a supported owner baseline in `packages/flux-renderers-data`; Phase 4 follow-up refers to generic collection-owner convergence beyond table.

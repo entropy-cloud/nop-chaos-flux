@@ -577,5 +577,6 @@ After fixing any non-trivial bug, you MUST:
 
 1. **Evaluate whether regression tests are needed.** If the bug had a non-obvious root cause, could be reintroduced by refactoring, or crossed package boundaries, add a test.
 2. **Add tests that verify the correct result**, not just the absence of an error. For example, if a renderer was using wrong props, the test should assert the correct prop produces the expected output.
-3. **Record complex bugs** in `docs/bugs/` following `docs/bugs/00-bug-fix-note-writing-guide.md`.
-4. **Re-run the full test suite** after adding new tests to confirm nothing is broken.
+3. **Prefer adding new regression tests instead of rewriting or weakening existing ones.** Modify an existing test only when the old test is incorrect, obsolete, or the supported contract intentionally changed. Preserve prior coverage whenever possible.
+4. **Record complex bugs** in `docs/bugs/` following `docs/bugs/00-bug-fix-note-writing-guide.md`.
+5. **Re-run the full test suite** after adding new tests to confirm nothing is broken.

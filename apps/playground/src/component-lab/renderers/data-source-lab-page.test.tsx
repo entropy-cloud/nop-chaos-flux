@@ -1,7 +1,11 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { DataSourceLabPage } from './data-source-lab-page';
+
+afterEach(() => {
+  cleanup();
+});
 
 describe('DataSourceLabPage', () => {
   it('renders preloaded users with loop slot bindings', async () => {
@@ -21,6 +25,7 @@ describe('DataSourceLabPage', () => {
   it('renders empty state safely when the sandbox data-source resolves to null', async () => {
     render(<DataSourceLabPage />);
 
-    expect(await screen.findByText('Users loaded: 0', {}, { timeout: 10000 })).toBeTruthy();
+    const sandboxScenario = screen.getAllByTestId('scenario-real-data-source-schema-empty-in-sandbox')[0];
+    expect(within(sandboxScenario).getByText('Users loaded: 0')).toBeTruthy();
   });
 });
