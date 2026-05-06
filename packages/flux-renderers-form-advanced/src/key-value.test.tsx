@@ -129,6 +129,47 @@ describe('key-value renderer', () => {
     expect(screen.getByTestId('key-value-probe').textContent).toContain('pair-');
   });
 
+  it('restores focus to the next remove button after deletion', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      ...formAdvancedRendererDefinitions,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/key-value.test.tsx#focus-restore"
+        schema={{
+          type: 'form',
+          data: {
+            settings: [
+              { id: 'pair-1', key: 'theme', value: 'dark' },
+              { id: 'pair-2', key: 'locale', value: 'en-US' },
+            ],
+          },
+          body: [
+            {
+              type: 'key-value',
+              name: 'settings',
+              label: 'Settings',
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const removeButtons = await screen.findAllByRole('button', { name: /Remove entry/ });
+    fireEvent.click(removeButtons[0]);
+
+    await waitFor(() => {
+      const remaining = screen.getByRole('button', { name: 'Remove entry 1' });
+      expect(document.activeElement).toBe(remaining);
+    });
+  });
+
   it('collects unique-key validation rules with default and custom messages', () => {
     const validation = keyValueRendererDefinition.validation as unknown as KeyValueValidation;
 

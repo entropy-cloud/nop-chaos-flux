@@ -67,8 +67,8 @@ vi.mock('@nop-chaos/ui', () => {
       </div>
     );
   }
-  function MockComboboxInput({ placeholder }: any) {
-    return <input data-testid="mock-combobox-input" placeholder={placeholder} />;
+  function MockComboboxInput({ placeholder, ...props }: any) {
+    return <input data-testid="mock-combobox-input" placeholder={placeholder} {...props} />;
   }
   function MockComboboxContent({ children }: any) {
     return <div data-testid="mock-combobox-content">{children}</div>;
@@ -202,6 +202,9 @@ describe('ConditionItem', () => {
     );
     expect(container.querySelector('[data-slot="condition-item"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="mock-combobox"]')).toBeTruthy();
+    expect(screen.getByLabelText('Condition field')).toBeTruthy();
+    expect(screen.getByLabelText('Condition operator')).toBeTruthy();
+    expect(screen.getByLabelText('Condition value')).toBeTruthy();
   });
 
   it('calls onRemove when remove button is clicked', () => {
@@ -233,7 +236,7 @@ describe('ConditionItem', () => {
   });
 
   it('renders drag handle when draggable and not disabled', () => {
-    const { container } = render(
+    render(
       <ConditionItem
         value={makeItem()}
         fields={testFields}
@@ -243,7 +246,7 @@ describe('ConditionItem', () => {
         dragHandleProps={{ 'data-dnd-listeners': true } as React.HTMLAttributes<HTMLElement>}
       />,
     );
-    expect(container.querySelector('.cursor-grab')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Reorder condition' })).toBeTruthy();
   });
 
   it('does not render drag handle when disabled', () => {

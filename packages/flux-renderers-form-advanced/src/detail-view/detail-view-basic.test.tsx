@@ -192,6 +192,36 @@ describe('detail-view renderer basic behavior', () => {
     expect(document.querySelector('[data-slot="detail-view-draft-error"]')?.textContent).toContain(
       'Please fix validation errors before confirming.',
     );
+    expect(document.querySelector('[data-slot="detail-view-draft-error"]')?.getAttribute('role')).toBe(
+      'status',
+    );
+    expect(screen.getByRole('button', { name: 'Confirm' })).toBeTruthy();
+  });
+
+  it('uses a descriptive default trigger aria label when triggerLabel is omitted', async () => {
+    cleanup();
+    const SchemaRenderer = createPageSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-basic.test.tsx#default-trigger-label"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'detail-view',
+              data: { theme: 'dark' },
+              label: 'Settings',
+              content: [{ type: 'input-text', name: 'theme', label: 'Theme' }],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Edit Settings' })).toBeTruthy());
   });
 
   it('applies confirmed updates for data-only detail-view on page scope', async () => {

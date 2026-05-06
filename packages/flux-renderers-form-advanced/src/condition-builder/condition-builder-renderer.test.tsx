@@ -221,7 +221,7 @@ describe('condition-builder renderer integration', () => {
       />,
     );
 
-    const trigger = await screen.findByRole('button', { name: /Filters/ });
+    const trigger = await screen.findByRole('button', { name: 'Click to configure conditions' });
     expect((trigger as HTMLButtonElement).disabled).toBe(true);
   });
 

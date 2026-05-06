@@ -116,13 +116,13 @@ describe('detail value adaptation helpers', () => {
         {
           path: 'profile',
           message: 'invalid field',
-          rule: 'custom',
+          rule: 'async',
           sourceKind: 'runtime-overlay',
         },
         {
           path: 'profile.name',
           message: 'nested issue',
-          rule: 'custom',
+          rule: 'async',
           sourceKind: 'runtime-overlay',
         },
       ],
