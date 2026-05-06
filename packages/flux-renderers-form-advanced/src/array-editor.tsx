@@ -291,7 +291,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
   return (
     <div
-      className={cn('nop-array-editor', 'grid gap-3')}
+      className={cn('nop-array-editor', 'grid gap-3', props.meta.className)}
       data-slot="field-control"
       data-testid={props.meta.testid}
       data-cid={props.meta.cid}

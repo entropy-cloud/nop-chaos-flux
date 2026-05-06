@@ -107,7 +107,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   }
 
   return (
-    <div className={cn('nop-condition-builder')}>
+    <div className={cn('nop-condition-builder', props.meta.className)}>
       <ConditionGroup
         value={effectiveValue}
         schema={props.schema}
@@ -139,7 +139,7 @@ function PickerModeContent({
   const hasConditions = value.children.length > 0;
 
   return (
-    <div className={cn('nop-condition-builder')}>
+    <div className={cn('nop-condition-builder', schema.className)}>
       <Popover>
         <PopoverTrigger
           render={

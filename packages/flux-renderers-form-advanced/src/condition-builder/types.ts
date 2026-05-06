@@ -1,4 +1,4 @@
-import type { BaseSchema } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
 
 export type ConditionFieldType =
   | 'text'
@@ -12,25 +12,25 @@ export type ConditionFieldType =
 
 export type ConditionConjunction = 'and' | 'or';
 
-export interface BaseConditionField {
+export interface BaseConditionField extends SchemaObject {
   name: string;
   label: string;
   type: ConditionFieldType;
   placeholder?: string;
   operators?: (string | ConditionCustomOperator)[];
   defaultOp?: string;
-  defaultValue?: unknown;
+  defaultValue?: SchemaValue;
   disabled?: boolean;
   valueTypes?: Array<'value' | 'field' | 'func'>;
 }
 
-export interface ConditionCustomOperator {
+export interface ConditionCustomOperator extends SchemaObject {
   label: string;
   value: string;
   values?: ConditionCustomOperatorValueField[];
 }
 
-export interface ConditionCustomOperatorValueField {
+export interface ConditionCustomOperatorValueField extends SchemaObject {
   type: string;
   name: string;
   label?: string;
@@ -76,7 +76,7 @@ export interface ConditionDateTimeField extends BaseConditionField {
 
 export interface ConditionSelectField extends BaseConditionField {
   type: 'select';
-  options?: Array<{ label: string; value: unknown }>;
+  options?: Array<{ label: string; value: SchemaValue } & SchemaObject>;
   source?: string;
   searchable?: boolean;
   multiple?: boolean;
@@ -95,7 +95,7 @@ export interface ConditionCustomField extends BaseConditionField {
   value: BaseSchema;
 }
 
-export interface ConditionFieldGroup {
+export interface ConditionFieldGroup extends SchemaObject {
   type: 'group';
   label: string;
   children: ConditionField[];
@@ -132,16 +132,19 @@ export interface ConditionItemValue {
 
 export type ConditionValueNode = ConditionGroupValue | ConditionItemValue;
 
-export interface ConditionOperatorOverrides {
+export interface ConditionOperatorOverrides extends SchemaObject {
   labels?: Record<string, string>;
   operatorsByType?: Record<string, string[]>;
   defaultOpByType?: Record<string, string>;
 }
 
+export type ConditionFieldSchemaValue = ConditionField & SchemaValue;
+export type ConditionOperatorOverridesSchemaValue = ConditionOperatorOverrides & SchemaValue;
+
 export interface ConditionBuilderSchema extends BaseSchema {
   type: 'condition-builder';
   name: string;
-  fields?: any[];
+  fields?: ConditionFieldSchemaValue[];
   source?: string;
   builderMode?: 'full' | 'simple';
   embed?: boolean;
@@ -153,7 +156,7 @@ export interface ConditionBuilderSchema extends BaseSchema {
   showNot?: boolean;
   showIf?: boolean;
   uniqueFields?: boolean;
-  operators?: any;
+  operators?: ConditionOperatorOverridesSchemaValue;
   addBtnVisibleOn?: string;
   addGroupBtnVisibleOn?: string;
   placeholder?: string;

@@ -236,7 +236,12 @@ export function ConditionGroup({
   );
 
   return (
-    <div data-slot="condition-group" className="flex flex-col gap-2">
+    <div
+      data-slot="condition-group"
+      className="flex flex-col gap-2"
+      role="group"
+      aria-label={depth === 0 ? t('conditionBuilder.satisfyFollowing') : `${t('conditionBuilder.satisfyFollowing')} ${depth + 1}`}
+    >
       {depth === 0 && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>{t('conditionBuilder.satisfyFollowing')}</span>

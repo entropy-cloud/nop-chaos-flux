@@ -5,6 +5,7 @@ type WrappedFieldActionProps = Omit<React.HTMLAttributes<HTMLSpanElement>, 'onCl
   size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon' | 'icon-xs' | 'icon-sm' | 'icon-lg';
   disabled?: boolean;
   onClick?: (event: React.MouseEvent<HTMLSpanElement>) => void;
+  onPress?: (event: React.MouseEvent<HTMLSpanElement> | React.KeyboardEvent<HTMLSpanElement>) => void;
 };
 
 function joinClassNames(...parts: Array<string | undefined | false>) {
@@ -58,6 +59,7 @@ export function WrappedFieldAction(props: WrappedFieldActionProps) {
     size = 'default',
     disabled,
     onClick,
+    onPress,
     onKeyDown,
     children,
     ...rest
@@ -72,6 +74,7 @@ export function WrappedFieldAction(props: WrappedFieldActionProps) {
 
     e.stopPropagation();
     onClick?.(e);
+    onPress?.(e);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
@@ -84,7 +87,7 @@ export function WrappedFieldAction(props: WrappedFieldActionProps) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       e.stopPropagation();
-      onClick?.(e as unknown as React.MouseEvent<HTMLSpanElement>);
+      onPress?.(e);
     }
   };
 

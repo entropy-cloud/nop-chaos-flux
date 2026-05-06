@@ -82,7 +82,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
 
   return (
     <div
-      className={cn('nop-tag-list', 'flex flex-wrap gap-2.5')}
+      className={cn('nop-tag-list', 'flex flex-wrap gap-2.5', props.meta.className)}
       data-slot="field-control"
       data-testid={props.meta.testid}
       data-cid={props.meta.cid}

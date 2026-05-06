@@ -354,7 +354,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
   return (
     <div
-      className={cn('nop-key-value', 'grid gap-3')}
+      className={cn('nop-key-value', 'grid gap-3', props.meta.className)}
       data-slot="field-control"
       data-testid={props.meta.testid}
       data-cid={props.meta.cid}
