@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Plus } from 'lucide-react';
 import { Button } from '@nop-chaos/ui';
 import { BTN_DIAMETER } from './dingflow-constants';
@@ -15,7 +16,7 @@ export function DingFlowMergeOverlay({ onClick }: DingFlowMergeOverlayProps) {
       variant="ghost"
       className={DINGFLOW_PLUS_BUTTON_CLASSNAME}
       style={{ width: BTN_DIAMETER, height: BTN_DIAMETER }}
-      aria-label="Add merge node"
+      aria-label={t('flux.flowDesigner.addMergeNode')}
       onClick={(e) => {
         e.stopPropagation();
         onClick(e);

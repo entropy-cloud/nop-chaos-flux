@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Plus } from 'lucide-react';
 import { Button } from '@nop-chaos/ui';
 import { BTN_DIST, BTN_DIAMETER } from './dingflow-constants';
@@ -15,7 +16,7 @@ export function DingFlowPlusButton({ onClick }: DingFlowPlusButtonProps) {
       variant="ghost"
       className={`absolute left-1/2 z-[2] -translate-x-1/2 cursor-pointer ${DINGFLOW_PLUS_BUTTON_CLASSNAME}`}
       style={{ width: BTN_DIAMETER, height: BTN_DIAMETER, bottom: -BTN_DIST }}
-      aria-label="Add node"
+      aria-label={t('flux.flowDesigner.addNode')}
       onClick={(e) => {
         e.stopPropagation();
         onClick(e);

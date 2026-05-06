@@ -3,7 +3,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import { useNodeTypeConfig } from './designer-context';
 import { Badge, Button, Input, Label, Textarea, cn } from '@nop-chaos/ui';
-import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
+import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { resolveNodeTypeAccent, resolveNodeTypeMeta } from './designer-node-appearance';
 
@@ -21,8 +21,10 @@ export interface DefaultInspectorProps {
 
 export function DefaultInspector(props: DefaultInspectorProps = {}) {
   const { dispatch } = useDesignerContext();
-  const snapshot = useDesignerFullSnapshot();
-  const { activeNode, activeEdge, doc } = snapshot;
+  const activeNode = useDesignerSnapshotSelector((snapshot) => snapshot.activeNode);
+  const activeEdge = useDesignerSnapshotSelector((snapshot) => snapshot.activeEdge);
+  const doc = useDesignerSnapshotSelector((snapshot) => snapshot.doc);
+  const activeBranch = useDesignerSnapshotSelector((snapshot) => snapshot.activeBranch);
   const nodeCount = doc.nodes.length;
   const edgeCount = doc.edges.length;
 
@@ -35,7 +37,6 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
         : [],
     [activeNode],
   );
-  const activeBranch = snapshot.activeBranch;
   const focusedBranch =
     activeBranch && branchItems.some((branch) => branch.id === activeBranch.id)
       ? activeBranch

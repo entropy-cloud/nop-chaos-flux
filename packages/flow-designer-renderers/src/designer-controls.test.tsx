@@ -179,6 +179,8 @@ describe('flow designer controls', () => {
     expect(document.querySelector('[data-type="task"]')?.className).toContain(
       'fd-palette-appearance-task',
     );
+    expect(screen.getByText('拖拽或点击添加')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '添加Task' })).toBeTruthy();
     randomSpy.mockRestore();
   });
 

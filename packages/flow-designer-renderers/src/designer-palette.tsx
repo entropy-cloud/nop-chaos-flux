@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import type { NodeTypeConfig } from '@nop-chaos/flow-designer-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge';
@@ -74,7 +75,7 @@ export function DesignerPaletteContent(props: {
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
           <div className="text-sm font-semibold text-foreground">节点库</div>
-          <div className="text-sm text-muted-foreground">拖拽或点击添加</div>
+          <div className="text-sm text-muted-foreground">{t('flux.flowDesigner.addNodeHint')}</div>
         </div>
         <div className="flex items-center gap-1">
           <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-border bg-transparent">
@@ -84,7 +85,7 @@ export function DesignerPaletteContent(props: {
             variant="ghost"
             size="icon-sm"
             onClick={() => dispatch({ type: 'togglePalette' })}
-            aria-label="Collapse palette"
+            aria-label={t('flux.flowDesigner.collapsePalette')}
             data-testid="collapse-palette"
           >
             <DesignerIcon icon="chevron-left" />
@@ -158,7 +159,7 @@ export function DesignerPaletteContent(props: {
                         size="icon-sm"
                         className="text-muted-foreground"
                         onClick={() => handleAddNode(nt)}
-                        aria-label={`Add ${nt.label}`}
+                        aria-label={t('flux.flowDesigner.addNodeWithLabel', { label: nt.label })}
                       >
                         <DesignerIcon icon="plus" />
                       </Button>

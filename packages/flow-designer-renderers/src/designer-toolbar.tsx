@@ -1,11 +1,22 @@
 import React, { useCallback, useMemo } from 'react';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
-import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
+import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context';
 import { DesignerIcon } from './designer-icon';
 import { useCurrentActionScope, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { Badge, Button, Label, Switch, cn } from '@nop-chaos/ui';
 
-function readState(name: string, snapshot: DesignerSnapshot) {
+type ToolbarSnapshot = Pick<
+  DesignerSnapshot,
+  | 'canUndo'
+  | 'canRedo'
+  | 'isDirty'
+  | 'gridEnabled'
+  | 'paletteCollapsed'
+  | 'inspectorCollapsed'
+  | 'doc'
+>;
+
+function readState(name: string, snapshot: ToolbarSnapshot) {
   switch (name) {
     case 'canUndo':
       return snapshot.canUndo;
@@ -24,7 +35,7 @@ function readState(name: string, snapshot: DesignerSnapshot) {
   }
 }
 
-function evalBooleanExpr(value: boolean | string | undefined, snapshot: DesignerSnapshot) {
+function evalBooleanExpr(value: boolean | string | undefined, snapshot: ToolbarSnapshot) {
   if (typeof value === 'boolean') return value;
   if (typeof value !== 'string') return false;
   const trimmed = value.trim();
@@ -36,7 +47,7 @@ function evalBooleanExpr(value: boolean | string | undefined, snapshot: Designer
   return readState(expr, snapshot) === true;
 }
 
-function evalTextTemplate(template: string | undefined, snapshot: DesignerSnapshot) {
+function evalTextTemplate(template: string | undefined, snapshot: ToolbarSnapshot) {
   if (!template) return '';
 
   const normalized = template.replace(/\{\{([^}]+)\}\}/g, '${$1}');
@@ -97,7 +108,15 @@ export function DesignerToolbarContent(props: {
   autoLayoutBusy?: boolean;
 }) {
   const { config, dispatch } = useDesignerContext();
-  const snapshot = useDesignerFullSnapshot();
+  const snapshot = useDesignerSnapshotSelector<ToolbarSnapshot>((state) => ({
+    canUndo: state.canUndo,
+    canRedo: state.canRedo,
+    isDirty: state.isDirty,
+    gridEnabled: state.gridEnabled,
+    paletteCollapsed: state.paletteCollapsed,
+    inspectorCollapsed: state.inspectorCollapsed,
+    doc: state.doc,
+  }));
   const actionScope = useCurrentActionScope();
   const runtime = useRendererRuntime();
   const scope = useRenderScope();

@@ -369,7 +369,7 @@ function DesignerPageBody({
           leftPanel={<DesignerPaletteContent />}
           leftCollapsed={snapshot.paletteCollapsed}
           onLeftToggle={() => dispatch({ type: 'togglePalette' })}
-          leftLabel="Expand palette"
+          leftLabel={t('flux.flowDesigner.expandPalette')}
           canvas={<DesignerCanvasContent />}
           rightPanel={
             hasRendererSlotContent(asReactNode(inspectorSlot)) ? (
@@ -380,7 +380,7 @@ function DesignerPageBody({
           }
           rightCollapsed={snapshot.inspectorCollapsed}
           onRightToggle={() => dispatch({ type: 'toggleInspector' })}
-          rightLabel="Expand inspector"
+          rightLabel={t('flux.flowDesigner.expandInspector')}
           dialogs={
             hasRendererSlotContent(asReactNode(dialogsSlot)) ? asReactNode(dialogsSlot) : undefined
           }
@@ -418,7 +418,9 @@ function DesignerPageBody({
           <DialogHeader>
             <DialogTitle>
               {pendingCreateDialog?.nodeType.createDialog?.title ??
-                `Create ${pendingCreateDialog?.nodeType.label ?? 'Node'}`}
+                t('flux.flowDesigner.createNodeWithLabel', {
+                  label: pendingCreateDialog?.nodeType.label ?? t('flux.flowDesigner.node'),
+                })}
             </DialogTitle>
           </DialogHeader>
           <DialogBody data-slot="designer-create-dialog-body">

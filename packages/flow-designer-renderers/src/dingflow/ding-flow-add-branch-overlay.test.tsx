@@ -35,4 +35,19 @@ describe('DingFlowAddBranchOverlay', () => {
     expect(screen.getByRole('button', { name: 'Add node' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Add merge node' })).toBeTruthy();
   });
+
+  it('localizes controls through flux i18n keys', async () => {
+    await resetFluxI18n();
+    initFluxI18n({ lng: 'zh-CN', fallbackLng: 'zh-CN' });
+
+    render(
+      <>
+        <DingFlowPlusButton onClick={vi.fn()} />
+        <DingFlowMergeOverlay onClick={vi.fn()} />
+      </>,
+    );
+
+    expect(screen.getByRole('button', { name: '添加节点' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '添加合并节点' })).toBeTruthy();
+  });
 });
