@@ -1,6 +1,6 @@
 # 218 Form Runtime Structure And Type Topology Simplification Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-06
 > Source: `docs/analysis/over-engineering-analysis.md`, `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/plans/{163-core-boundary-and-validation-owner-convergence-plan.md,185-large-file-hotspot-split-plan.md,200-duplicate-code-convergence-plan.md,201-surface-family-runtime-convergence-plan.md,211-runtime-state-reactivity-and-safety-closure-plan.md,217-deep-audit-2026-05-06-confirmed-defect-remediation-plan.md}`, `docs/architecture/{form-validation.md,flux-runtime-module-boundaries.md}`, live repo re-audit of `packages/flux-runtime/src/{form-runtime.ts,form-runtime-owner.ts,form-runtime-types.ts,form-runtime-state.ts,form-runtime-owner-field-states.ts,form-runtime-lifecycle.ts,form-runtime-submit.ts,form-runtime-validation.ts,form-runtime-submit-flow.ts}`
 > Related: `docs/plans/217-deep-audit-2026-05-06-confirmed-defect-remediation-plan.md`, `docs/plans/211-runtime-state-reactivity-and-safety-closure-plan.md`
@@ -69,71 +69,71 @@
 
 ### Phase 1 - Re-Audit Internal Topology And Freeze The Narrow Owner Surface
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/form-runtime-types.ts`, directly touched type-only consumers, this plan
 
 - Item Types: `Decision | Proof`
 
-- [ ] [Decision] Re-audit every internal state/type layer in `form-runtime-types.ts` and explicitly classify it as `keep`, `merge`, `rename`, or `delete`.
-- [ ] [Decision] Freeze the cut line against active neighbors: this plan owns internal topology simplification only and must not absorb `217` defect fixes or reopen `163/185/200/201/211` adjudications.
-- [ ] [Proof] Record the live before-state in this plan using repo-observable anchors, not the raw wording from `over-engineering-analysis.md`.
+- [x] [Decision] Re-audit every internal state/type layer in `form-runtime-types.ts` and explicitly classify it as `keep`, `merge`, `rename`, or `delete`.
+- [x] [Decision] Freeze the cut line against active neighbors: this plan owns internal topology simplification only and must not absorb `217` defect fixes or reopen `163/185/200/201/211` adjudications.
+- [x] [Proof] Record the live before-state in this plan using repo-observable anchors, not the raw wording from `over-engineering-analysis.md`.
 
 Exit Criteria:
 
-- [ ] The exact in-scope type/topology items are frozen and auditable.
-- [ ] The boundary against plan `217` and prior completed plans is explicitly recorded.
-- [ ] No owner-doc update required.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] The exact in-scope type/topology items are frozen and auditable.
+- [x] The boundary against plan `217` and prior completed plans is explicitly recorded.
+- [x] No owner-doc update required.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 2 - Flatten Form Runtime Internal State Types
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/form-runtime-types.ts`, directly touched type-only consumers, focused tests
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Replace the current deep internal `extends` chain with a smaller set of owner-facing internal state groups whose composition is readable without traversing most of the file.
-- [ ] [Fix] Limit consumer edits to type-only or import-only adaptation; behavior changes in validation/submit/lifecycle paths remain out of scope.
-- [ ] [Decision] Preserve any intermediate grouping that still carries real ownership meaning; do not force an arbitrary `2-3 interfaces only` target if live code becomes less clear.
-- [ ] [Proof] Add or update focused tests that prove `form-runtime` behavior is unchanged after the internal type regrouping.
+- [x] [Fix] Replace the current deep internal `extends` chain with a smaller set of owner-facing internal state groups whose composition is readable without traversing most of the file.
+- [x] [Fix] Limit consumer edits to type-only or import-only adaptation; behavior changes in validation/submit/lifecycle paths remain out of scope.
+- [x] [Decision] Preserve any intermediate grouping that still carries real ownership meaning; do not force an arbitrary `2-3 interfaces only` target if live code becomes less clear.
+- [x] [Proof] Add or update focused tests that prove `form-runtime` behavior is unchanged after the internal type regrouping.
 
 Exit Criteria:
 
-- [ ] `form-runtime-types.ts` no longer relies on the current multi-hop relay chain from `FormRuntimeRegistrationState` through `FormRuntimeValidationState` / `FormRuntimeOwnerState` to explain shared owner state.
-- [ ] Public/runtime semantics remain unchanged under focused proof.
-- [ ] `docs/architecture/form-validation.md` and/or `docs/architecture/flux-runtime-module-boundaries.md` are updated only if stable ownership wording changes; otherwise explicitly record `No owner-doc update required`.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] `form-runtime-types.ts` no longer relies on the current multi-hop relay chain from `FormRuntimeRegistrationState` through `FormRuntimeValidationState` / `FormRuntimeOwnerState` to explain shared owner state.
+- [x] Public/runtime semantics remain unchanged under focused proof.
+- [x] `docs/architecture/form-validation.md` and/or `docs/architecture/flux-runtime-module-boundaries.md` are updated only if stable ownership wording changes; otherwise explicitly record `No owner-doc update required`.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 3 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: in-scope runtime files, focused tests, this plan
 
 - Item Types: `Proof | Decision`
 
-- [ ] [Proof] Run focused verification for the regrouped internal state topology.
-- [ ] [Proof] Attempt required workspace verification after code changes land, and record unrelated blockers honestly if they remain external to this plan.
-- [ ] [Decision] Perform an independent closure audit that re-checks this plan against `over-engineering-analysis.md` and confirms only the justified narrow slice was taken.
+- [x] [Proof] Run focused verification for the regrouped internal state topology.
+- [x] [Proof] Attempt required workspace verification after code changes land, and record unrelated blockers honestly if they remain external to this plan.
+- [x] [Decision] Perform an independent closure audit that re-checks this plan against `over-engineering-analysis.md` and confirms only the justified narrow slice was taken.
 
 Exit Criteria:
 
-- [ ] Focused verification exists for all landed in-scope changes.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are attempted and honestly recorded, including any unrelated baseline blocker adjudication.
-- [ ] Independent closure audit confirms no remaining plan-owned work in this narrow owner surface.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] Focused verification exists for all landed in-scope changes.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are attempted and honestly recorded, including any unrelated baseline blocker adjudication.
+- [x] Independent closure audit confirms no remaining plan-owned work in this narrow owner surface.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
-- [ ] Every in-scope topology item is fixed, or moved to explicit successor ownership with recorded reasoning.
-- [ ] No in-scope item is silently downgraded into a broad “future over-engineering cleanup” bucket.
-- [ ] The overlap with plans `163`, `185`, `200`, `201`, `211`, and `217` remains explicitly adjudicated.
-- [ ] Focused verification exists for the internal state regrouping.
-- [ ] Affected owner docs are synced to the live baseline, or each phase records why `No owner-doc update required` remains correct.
-- [ ] Independent closure audit is completed and recorded below.
-- [ ] `pnpm typecheck` attempted and recorded honestly
-- [ ] `pnpm build` attempted and recorded honestly
-- [ ] `pnpm lint` attempted and recorded honestly
-- [ ] `pnpm test` attempted and recorded honestly
+- [x] Every in-scope topology item is fixed, or moved to explicit successor ownership with recorded reasoning.
+- [x] No in-scope item is silently downgraded into a broad “future over-engineering cleanup” bucket.
+- [x] The overlap with plans `163`, `185`, `200`, `201`, `211`, and `217` remains explicitly adjudicated.
+- [x] Focused verification exists for the internal state regrouping.
+- [x] Affected owner docs are synced to the live baseline, or each phase records why `No owner-doc update required` remains correct.
+- [x] Independent closure audit is completed and recorded below.
+- [x] `pnpm typecheck` attempted and recorded honestly
+- [x] `pnpm build` attempted and recorded honestly
+- [x] `pnpm lint` attempted and recorded honestly
+- [x] `pnpm test` attempted and recorded honestly
 
 ## Deferred But Adjudicated
 
@@ -161,12 +161,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: _(to be filled when plan is completed)_
+Status Note: Completed after flattening `form-runtime-types.ts` into explicit owner-facing state groups, keeping all touched consumer changes type-only, adding focused registration proof, and re-running focused plus full-workspace verification.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: _(to be filled)_
-- Evidence: _(to be filled)_
+- Reviewer / Agent: Independent `general` subagent closure audit after landing the narrow slice.
+- Evidence: Confirmed the final implementation stays inside `packages/flux-runtime/src/form-runtime-types.ts` plus focused `flux-runtime` tests/log sync, does not reopen plans `163`, `185`, `200`, `201`, `211`, or `217`, and leaves `docs/architecture/{form-validation.md,flux-runtime-module-boundaries.md}` unchanged because ownership/module semantics did not move.
+- Evidence: Verified `ManagedFormRuntimeSharedState` now reads as direct composition instead of a required multi-hop relay chain, and recorded proof from `pnpm --filter @nop-chaos/flux-runtime exec vitest run src/__tests__/form-runtime-array.test.ts src/__tests__/form-runtime-owner-lifecycle.test.ts src/__tests__/form-runtime-subtree.test.ts src/__tests__/form-runtime-registration.test.ts --reporter=verbose`, plus successful full-workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` runs.
 
 Follow-up:
 
