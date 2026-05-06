@@ -198,4 +198,5 @@ describe('detail-view renderer owner update behavior', () => {
     expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('First Edit');
     expect((screen.getByLabelText('Author') as HTMLInputElement).value).toBe('Alice');
   });
+
 });

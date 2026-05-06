@@ -120,7 +120,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     node: props.node,
   });
 
-  async function handleOpen() {
+async function handleOpen() {
     if (effectiveDisabled) return;
 
     const openToken = openSequencer.nextToken();
@@ -151,7 +151,24 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     openDraft(newDraftForm);
   }
 
-  async function applyCommitResult(draftValues: Record<string, unknown>) {
+  async function settleParentValidation(): Promise<boolean> {
+    if (!parentForm) {
+      return true;
+    }
+
+    const result = scopePath
+      ? await parentForm.validateSubtree(scopePath)
+      : await parentForm.validateAll('commit');
+
+    if (!result.ok) {
+      setDraftErrorSafe(result.errors[0]?.message ?? validationMessage);
+      return false;
+    }
+
+    return true;
+  }
+
+  async function applyCommitResult(draftValues: Record<string, unknown>): Promise<boolean> {
     const commitValue = Object.prototype.hasOwnProperty.call(draftValues, '__value')
       ? draftValues.__value
       : draftValues;
@@ -187,8 +204,8 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         }
       }
 
-      if (parentForm && scopePath) {
-        void parentForm.validateSubtree(scopePath);
+      if (parentForm) {
+        return await settleParentValidation();
       }
     } else {
       const updates =
@@ -200,11 +217,13 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         for (const [key, val] of Object.entries(updates as Record<string, unknown>)) {
           parentForm.setValue(key, val);
         }
-        void parentForm.validateAll('commit');
+        return await settleParentValidation();
       } else {
         parentScope.merge(updates as Record<string, unknown>);
       }
     }
+
+    return true;
   }
 
   async function handleConfirm() {
@@ -265,11 +284,19 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         return;
       }
 
-      await applyCommitResult(
+      const commitApplied = await applyCommitResult(
         typeof commitResult === 'object' && commitResult !== null
           ? (commitResult as Record<string, unknown>)
           : { __value: commitResult },
       );
+
+      if (!confirmSequencer.isCurrent(confirmToken)) {
+        return;
+      }
+
+      if (!commitApplied) {
+        return;
+      }
 
       closeDraft();
     } finally {

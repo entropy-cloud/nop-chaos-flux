@@ -146,10 +146,10 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     }
 
     try {
-      const result = await draftForm.validateAll('submit');
+      const submitValidationResult = await draftForm.validateAll('submit');
       if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
 
-      if (!result.ok) {
+      if (!submitValidationResult.ok) {
         setDraftErrorSafe(validationMessage);
         return;
       }
@@ -190,7 +190,14 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
       parentForm.setValue(name, writeback);
       parentForm.touchField(name);
-      void parentForm.validateField(name);
+      const fieldValidationResult = await parentForm.validateField(name);
+
+      if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
+
+      if (!fieldValidationResult.ok) {
+        setDraftErrorSafe(fieldValidationResult.errors[0]?.message ?? validationMessage);
+        return;
+      }
 
       closeDraft();
     } finally {

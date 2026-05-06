@@ -457,4 +457,5 @@ describe('detail-field renderer commit behavior', () => {
     await waitFor(() => expect(submitValues.length).toBe(1));
     expect(submitValues[0]).toMatchObject({ address: 'Alpha' });
   });
+
 });
