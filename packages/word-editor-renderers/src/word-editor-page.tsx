@@ -55,6 +55,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
   const isSavingRef = useRef(false);
+  const saveAbortRef = useRef<AbortController | null>(null);
   const [activePanel, setActivePanel] = useState<'datasets' | 'fields'>('datasets');
   const [datasetDialogOpen, setDatasetDialogOpen] = useState(false);
   const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null);
@@ -94,6 +95,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   useEffect(() => {
     return () => {
       mountedRef.current = false;
+      saveAbortRef.current?.abort();
       if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current);
     };
   }, []);
@@ -224,8 +226,11 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     }
 
     isSavingRef.current = true;
+    saveAbortRef.current?.abort();
+    const controller = new AbortController();
+    saveAbortRef.current = controller;
     try {
-      const result = await actionProvider.invoke('save', undefined, {} as any);
+      const result = await actionProvider.invoke('save', undefined, { signal: controller.signal } as any);
       if (!mountedRef.current) {
         return;
       }
@@ -252,11 +257,22 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         return;
       }
 
+       if (
+        controller.signal.aborted ||
+        (error instanceof Error && error.name === 'AbortError') ||
+        ((error as { name?: string } | null | undefined)?.name === 'AbortError')
+      ) {
+        return;
+      }
+
       env.notify?.(
         'warning',
         error instanceof Error && error.message ? error.message : t('flux.reportDesigner.saveFailed'),
       );
     } finally {
+      if (saveAbortRef.current === controller) {
+        saveAbortRef.current = null;
+      }
       isSavingRef.current = false;
     }
   }, [actionProvider, env]);

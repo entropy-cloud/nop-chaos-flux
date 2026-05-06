@@ -254,6 +254,35 @@ describe('WordEditorPage actions and events', () => {
     });
   });
 
+  it('passes an AbortSignal into word-editor save actions', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    const invoke = vi.fn(async () => ({ ok: true }));
+    const providerSpy = vi
+      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
+      .mockReturnValue({
+        kind: 'host',
+        listMethods() {
+          return ['save'];
+        },
+        invoke,
+      } as any);
+
+    renderWordEditor();
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+
+    await waitFor(() => {
+      expect(invoke).toHaveBeenCalledTimes(1);
+      const invokeCall = invoke.mock.calls[0] as unknown[] | undefined;
+      const invokeCtx = invokeCall?.[2] as { signal?: AbortSignal } | undefined;
+      expect(invokeCtx?.signal).toBeInstanceOf(AbortSignal);
+    });
+
+    providerSpy.mockRestore();
+  });
+
   it('ignores concurrent save triggers while a save is already running', async () => {
     resetFluxI18n();
     initFluxI18n();
