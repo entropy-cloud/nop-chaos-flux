@@ -33,6 +33,17 @@ test.describe('Performance Table Page', () => {
       timeout: 20_000,
     });
 
+    await page.getByRole('button', { name: 'Full Stress' }).click();
+    await expect(page.getByText('Scenario B: Nested loop card list')).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText('Scenario C: Scope-owned selection and pagination')).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText('Scenario D: Editable subset form')).toBeVisible({
+      timeout: 20_000,
+    });
+
     await page.getByRole('button', { name: 'Run 20 Host Mutations' }).click();
     await expect(page.getByText('Last Measurement')).toBeVisible({ timeout: 60_000 });
     await expect(page.getByText('Host row mutation benchmark: 20 updates')).toBeVisible({

@@ -47,3 +47,7 @@
 - Do not call React state setters from a hot `Profiler onRender` path unless the state update is explicitly throttled or otherwise guaranteed not to feed back into the same render loop.
 - If a page changes between materially different schemas, `SchemaRenderer` identity must change too; updating only the `schema` prop may leave the old runtime in place.
 - Performance/demo pages should default to a stable entry mode. Keep the heaviest stress scenarios reachable by explicit interaction, not as the required first-paint baseline for e2e.
+
+## Related Notes
+
+- `docs/bugs/44-performance-table-full-stress-root-array-form-hang-fix.md` documents a later `Full Stress` regression on the same page. That later issue partially repeated the `Profiler` feedback-loop mistake, but also added a separate root-array inline form hang in `Scenario D`.

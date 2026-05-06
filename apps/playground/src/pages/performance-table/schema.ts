@@ -368,11 +368,12 @@ const FULL_STRESS_SCENARIOS: SchemaInput[] = [
       {
         type: 'form',
         name: 'perfInlineForm',
-        data: '${perfRows.slice(0, 8)}',
+        data: { rows: '${perfRows.slice(0, 8)}' },
         body: [
           {
             type: 'array-field',
-            name: '',
+            name: 'rows',
+            itemKind: 'object',
             item: [
               { type: 'input-text', name: 'username', label: 'User' },
               { type: 'input-email', name: 'email', label: 'Email' },

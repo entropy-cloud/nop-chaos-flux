@@ -57,4 +57,4 @@ docs/testing/
 
 ### 2026-05
 
-- [05-06](2026/05-06.md) — ArrayField 删除按钮位置不合适；Flow Designer 报错 Renderer not found for type: input-number；Flow Designer 节点内容丢失、连线文字为空
+- [05-06](2026/05-06.md) — ArrayField 删除按钮位置不合适；Flow Designer 报错 Renderer not found for type: input-number；Flow Designer 节点内容丢失、连线文字为空；chart 缺少 series 颜色；line chart 未显示连线；Performance Table 的 Full Stress 点击后疑似崩溃

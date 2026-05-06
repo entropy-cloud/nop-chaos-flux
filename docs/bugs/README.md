@@ -44,3 +44,8 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/32-react19-external-store-derived-snapshot-loop-fix.md`
 - `docs/bugs/37-report-designer-demo-selection-bridge-inspector-stuck-on-sheet-fix.md`
 - `docs/bugs/38-report-designer-preview-cancellation-and-stale-result-fix.md`
+- `docs/bugs/40-performance-table-profiler-loop-and-mode-remount-fix.md`
+- `docs/bugs/41-variant-field-strictmode-mounted-guard-tab-switch-fix.md`
+- `docs/bugs/42-crud-selection-always-on-table-body-empty-fix.md`
+- `docs/bugs/43-flow-designer-node-edge-text-empty-expression-pre-evaluation-fix.md`
+- `docs/bugs/44-performance-table-full-stress-root-array-form-hang-fix.md`

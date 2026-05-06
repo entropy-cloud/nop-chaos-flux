@@ -82,7 +82,6 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
   ) => {
     const next = recordProfilerCommit(metricsRef.current, actualDuration, Date.now());
     metricsRef.current = next;
-    setMetrics(next);
   };
 
   async function runHostBatch(label: string, steps: number) {
