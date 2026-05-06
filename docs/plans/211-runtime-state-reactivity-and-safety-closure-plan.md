@@ -71,19 +71,19 @@ Targets: `use-surface-renderer.ts`, flow-designer shell files, `use-code-editor-
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Remove the retained pseudo-controlled `localOpen` vs `SurfaceRuntime` split so declarative surface open state has one live source of truth.
-- [ ] [Fix] Close the retained state-source defects in spreadsheet toolbar (`cellValue/commentText`) and word-editor `PageControls.pageMode` so local state no longer drifts from the owned runtime/store truth.
-- [ ] [Fix] Narrow the retained high-confidence broad subscriptions: surface-summary stack read, designer toolbar/inspector full snapshots, and the empty-`name` owner subscriptions in code-editor / detail-field / key-value / array-editor.
-- [ ] [Decision] Explicitly document which remaining broad subscriptions are still allowed because they own host-scope projection or shell composition, so the plan does not silently expand into full reactive perfectionism.
-- [ ] [Proof] Add focused tests proving declarative close does not reopen from stale local state and that the in-scope empty-`name` paths no longer subscribe to full owner state unnecessarily.
+- [x] [Fix] Remove the retained pseudo-controlled `localOpen` vs `SurfaceRuntime` split so declarative surface open state has one live source of truth.
+- [x] [Fix] Close the retained state-source defects in spreadsheet toolbar (`cellValue/commentText`) and word-editor `PageControls.pageMode` so local state no longer drifts from the owned runtime/store truth.
+- [x] [Fix] Narrow the retained high-confidence broad subscriptions: surface-summary stack read, designer toolbar/inspector full snapshots, and the empty-`name` owner subscriptions in code-editor / detail-field / key-value / array-editor.
+- [x] [Decision] Explicitly document which remaining broad subscriptions are still allowed because they own host-scope projection or shell composition, so the plan does not silently expand into full reactive perfectionism.
+- [x] [Proof] Add focused tests proving declarative close does not reopen from stale local state and that the in-scope empty-`name` paths no longer subscribe to full owner state unnecessarily.
 
 Exit Criteria:
 
-- [ ] The retained declarative surface, spreadsheet-toolbar, and word-editor page-mode second-source-of-truth defects are closed.
-- [ ] Only the retained must-fix broad subscriptions are changed; non-retained shell-wide subscriptions are either left alone or explicitly adjudicated.
-- [ ] Focused tests cover the corrected state/reactivity baseline.
-- [ ] `docs/architecture/renderer-runtime.md` and/or `docs/architecture/surface-owner.md` are updated if the supported baseline changes; otherwise explicitly record `No owner-doc update required`.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] The retained declarative surface, spreadsheet-toolbar, and word-editor page-mode second-source-of-truth defects are closed.
+- [x] Only the retained must-fix broad subscriptions are changed; non-retained shell-wide subscriptions are either left alone or explicitly adjudicated.
+- [x] Focused tests cover the corrected state/reactivity baseline.
+- [x] `docs/architecture/renderer-runtime.md` and/or `docs/architecture/surface-owner.md` are updated if the supported baseline changes; otherwise explicitly record `No owner-doc update required`.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 2 - Remove Render-Phase Side Effects And Validation Participation Drift
 
@@ -92,18 +92,18 @@ Targets: `node-renderer.tsx`, `form-runtime-validation.ts`, `form-runtime-field-
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Move namespace registration and prepared-import installation out of render phase into an effect/commit-safe path without reintroducing lifecycle leaks.
-- [ ] [Fix] Change hidden participation semantics so hiding a parent path actually removes descendant compiled fields from active validation participation.
-- [ ] [Decision] Record the final owner-baseline wording for hidden subtree participation and render-phase side-effect guardrails.
-- [ ] [Proof] Add focused tests for render-phase side-effect removal and hidden-parent subtree validation exclusion.
+- [x] [Fix] Move namespace registration and prepared-import installation out of render phase into an effect/commit-safe path without reintroducing lifecycle leaks.
+- [x] [Fix] Change hidden participation semantics so hiding a parent path actually removes descendant compiled fields from active validation participation.
+- [x] [Decision] Record the final owner-baseline wording for hidden subtree participation and render-phase side-effect guardrails.
+- [x] [Proof] Add focused tests for render-phase side-effect removal and hidden-parent subtree validation exclusion.
 
 Exit Criteria:
 
-- [ ] `NodeRenderer` no longer mutates runtime state during render for the retained namespace/import paths.
-- [ ] Hidden parent paths no longer leave descendant compiled fields participating in validation.
-- [ ] Focused tests cover both retained defects.
-- [ ] `docs/architecture/renderer-runtime.md` and/or `docs/architecture/form-validation.md` are updated to the final baseline.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] `NodeRenderer` no longer mutates runtime state during render for the retained namespace/import paths.
+- [x] Hidden parent paths no longer leave descendant compiled fields participating in validation.
+- [x] Focused tests cover both retained defects.
+- [x] `docs/architecture/renderer-runtime.md` and/or `docs/architecture/form-validation.md` are updated to the final baseline.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 3 - Close Async Safety Defects On Retained User-Visible Paths
 
@@ -170,10 +170,15 @@ Exit Criteria:
 
 Status Note: In progress. This pass landed part of the retained set, including the duplicate declarative surface closed-summary publication fix in `packages/flux-renderers-basic/src/use-surface-renderer.ts`, but the broader retained runtime/reactivity/async/type/error items remain open and this plan cannot close yet.
 
+Status Note: In progress. This pass closes the retained state-source/reactivity items (`use-surface-renderer`, spreadsheet shell, word-editor page mode, empty-name subscriptions), the hidden-subtree validation participation defect, and the retained `NodeRenderer` render-phase side-effect defect with focused proof. The plan remains open because retained async user-visible rejection handling is still incomplete, including the attempted but reverted WordEditor save-failure UX path.
+
 Closure Audit Evidence:
 
-- Pending.
+- Focused proof passed for declarative surface stale-reopen prevention in `packages/flux-renderers-basic/src/__tests__/basic-page-layout.test.tsx`.
+- Focused proof passed for hidden-parent subtree exclusion in `packages/flux-runtime/src/__tests__/hidden-field-policy.test.ts`.
+- Focused proof passed for render-abort import setup safety in `packages/flux-react/src/__tests__/compilation-and-boundaries.test.tsx`.
+- Existing import behavior smoke tests still passed in `packages/flux-react/src/schema-renderer-imports-basic.test.tsx`.
 
 Follow-up:
 
-- None yet. Confirmed in-scope defects must be fixed before closure.
+- Finish retained async user-visible rejection handling and proof, especially the WordEditor save-failure path that was reverted after failing focused verification.

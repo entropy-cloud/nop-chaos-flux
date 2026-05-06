@@ -6,6 +6,12 @@
 > Source: `docs/analysis/2026-05-04-deep-audit-full/summary.md`, `docs/analysis/2026-05-04-adversarial-review.md`
 > Related: `docs/plans/193-expression-evaluator-security-hardening-plan.md`, `docs/plans/194-form-submit-validation-timing-and-lifecycle-safety-plan.md`, `docs/plans/195-accessibility-compliance-remediation-plan.md`, `docs/plans/196-interface-contract-alignment-and-api-hygiene-plan.md`, `docs/plans/197-architecture-evolution-formula-di-treeshaking-build-config-plan.md`, `docs/plans/198-renderer-and-workbench-surface-contract-closure-plan.md`, `docs/plans/199-doc-and-verification-closure-plan.md`
 
+## Supersession Note
+
+- 2026-05-06 live re-audit reopened part of this plan's historical closure wording for reaction/source cascade safety and `withRetry` metadata integrity.
+- Successor ownership for those reopened correctness gaps now lives in `docs/plans/216-open-ended-adversarial-review-residual-integrity-plan.md`.
+- The rest of plan `192` remains accepted as closed; only the specific reopened closure claims should be treated as superseded.
+
 ## Purpose
 
 收口 2026-05-04 审计中仍未由 193-199 接管的 residual runtime/compiler defects，并维护全套 retained findings 的单一 owner map。

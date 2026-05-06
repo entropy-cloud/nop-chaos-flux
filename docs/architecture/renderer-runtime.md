@@ -84,7 +84,7 @@ Helpers such as `evaluate`, `dispatch`, `render`, and `createScope` should be st
 The following are architecture-level constraints distilled from historical regressions.
 
 - Reactive render paths must subscribe. Components that need reactive scope data in render must use selector/subscription APIs such as `useScopeSelector`, not imperative reads such as `scope.get(...)`.
-- Render phase must stay side-effect free. Renderer paths must not call store writers or state setters during render. If synchronization is needed, buffer and flush in an effect.
+- Render phase must stay side-effect free. Renderer paths must not call store writers or state setters during render. If synchronization is needed, buffer and flush in an effect. Current live baseline: `NodeRenderer` installs prepared import frames and named-action namespaces from layout effects, and import-owned nodes may return `null` for the pre-commit pass instead of mutating runtime state during render.
 - Root page scope should be seeded when `SchemaRenderer` creates the page runtime. Effects should only reconcile subsequent prop changes so mount-time child effects do not lose writes to a later root-data sync.
 - Scope identity and lifecycle must stay stable. Fragment/dialog render paths should avoid unnecessary scope recreation and must preserve parent-child reactivity when parent scope data changes.
 - React host effects should not republish owner summaries that already belong to runtime owners. For example, `DialogHost` may render the mounted surface tree, but `statusPath` publication belongs to `SurfaceRuntime` so React rendering does not create a second source of truth or write to the wrong scope.
@@ -157,7 +157,7 @@ Practical ownership split:
 - build region handles for child schema
 - create stable `helpers`
 - execute node-local optional provider closures such as class-alias publication
-- synchronously install compiled import-owned capability boundaries from preloaded import data
+- install compiled import-owned capability boundaries from preloaded import data in a commit-safe effect before rendering the import-owned subtree
 - dispatch node lifecycle actions
 - invoke the concrete renderer component
 
@@ -903,6 +903,13 @@ Root uses explicit props because:
 - `env` changes trigger a lightweight page refresh so env-dependent expressions and props can re-evaluate without dropping form/page state
 
 Hosts should still prefer stable `env` objects when practical, but memoization is now an optimization, not a correctness requirement.
+
+Current root fallback baseline:
+
+- import preparation failure must render an explicit root error fallback instead of returning `null`
+- while schema imports are still being prepared, `SchemaRenderer` may render a host-level loading/status fallback
+- root render failures inside the compiled schema tree or host-only siblings are isolated by a top-level root error boundary instead of white-screening the entire host tree
+- these root fallback surfaces are host-level diagnostics/status UI, distinct from per-node `NodeErrorBoundary` fallbacks
 
 ## Surface Ownership In React Runtime
 

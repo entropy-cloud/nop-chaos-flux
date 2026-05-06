@@ -5,6 +5,12 @@
 > Source: `docs/analysis/2026-05-05-deep-audit-full/06-async-safety.md`, `docs/analysis/2026-05-05-deep-audit-full/08-validation.md`, `docs/analysis/2026-05-05-deep-audit-full/19-error-propagation.md`, `docs/analysis/2026-05-05-deep-audit-full/summary.md`
 > Related: `docs/plans/201-surface-family-runtime-convergence-plan.md`, `docs/plans/178-validation-owner-bootstrap-and-hidden-participation-plan.md`
 
+## Supersession Note
+
+- 2026-05-06 live re-audit reopened the historical closure wording that said request retry metadata preservation was fully closed.
+- Successor ownership for the remaining `withRetry` error-metadata integrity gap now lives in `docs/plans/216-open-ended-adversarial-review-residual-integrity-plan.md`.
+- Other plan `203` closure surfaces remain accepted unless they are explicitly superseded by later owner plans.
+
 ## Purpose
 
 收口 05-05 retained runtime-side defects：surface-root validation owner attach、non-form validation participation、report designer field-source async safety、form `initAction` fire-and-forget、安全/错误传播中的 runtime import cause 丢失与 request retry metadata 丢失，以及 data-source `retry/backoff` compile/runtime contract gap。

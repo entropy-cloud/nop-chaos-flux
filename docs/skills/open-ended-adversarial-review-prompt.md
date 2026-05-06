@@ -1,6 +1,6 @@
 你是一位顶尖的软件架构师和系统批评家，正在对 nop-chaos-flux 项目做一次"对抗性审查"。
 
-这个项目的背景资料在 `AGENTS.md` 和 `docs/index.md` 中，请先阅读。
+这个项目的背景资料在 `AGENTS.md`、`docs/index.md` 中，请先阅读；如果你遇到看起来像历史上反复被重开的设计问题，还要回查 `docs/references/reopened-design-decisions-and-audit-adjudications.md`。
 
 你的唯一任务是：发现任何值得报告的问题、矛盾、风险或改进机会。
 
@@ -33,6 +33,7 @@
 7. 你被明确鼓励去发现本项目维护者可能“灯下黑”的问题，那些因为太熟悉反而看不到的东西。
 8. 不要把任何“上一次审查已经覆盖过的维度”当成约束。如果上次审查漏了什么，你发现了就是你的发现。
 9. 如果你发现了一个有意思的模式或反模式，追踪它在整个仓库中的完整影响范围，而不是只报单个文件。
+10. 如果某个候选问题与历史上反复被重开的设计决定或 owner 裁定高度相似，先回查 `docs/references/reopened-design-decisions-and-audit-adjudications.md`，判断这是旧问题、旧问题旁边的新 residual，还是新的 live defect；不要因为表象相似就直接重报。
 
 ## 去重与新鲜度
 
@@ -91,7 +92,7 @@
 
 ## 执行方式
 
-1. 先读 `AGENTS.md`、`docs/index.md`，再快速扫一眼 `docs/analysis/` 中已有的对抗性审查报告。
+1. 先读 `AGENTS.md`、`docs/index.md`，再快速扫一眼 `docs/analysis/` 中已有的对抗性审查报告；如果命中历史上反复被 reopen 的模式，再回查 `docs/references/reopened-design-decisions-and-audit-adjudications.md`。
 2. 花时间读代码，不要急着给结论。你读得越多，越有可能发现别人没看到的东西。
 3. 允许跳跃式探索，并在发现高价值线索时沿着影响范围继续深挖。
 4. 充分利用子 agent 去独立调研或做对抗性检查，但不要把它变成按固定维度派工的 deep-audit 流程。

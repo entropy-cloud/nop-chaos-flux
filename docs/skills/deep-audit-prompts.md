@@ -362,7 +362,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 1. docs/index.md（文档导航基线）
 2. AGENTS.md（代码规范、验证命令、agent 工作流）
 3. docs/references/deep-audit-calibration-patterns.md（项目特定的误报校准与举证门槛）
-4. 本维度列出的 owner 文档
+4. docs/references/reopened-design-decisions-and-audit-adjudications.md（反复被重开的设计决定与裁定边界）
+5. 本维度列出的 owner 文档
 
 注意：这是一个持续演进中的仓库，很多 domain 包和复杂 host 能力仍在逐步收敛。审核时不要默认所有包都已经完成最终契约收口；要区分“当前真实缺陷”和“尚未完成的实现切片/过渡结构”。
 
@@ -376,7 +377,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 7. 初审输出只是线索，不是最终事实；最终结论必须经过独立复核。
 8. 命中 calibration patterns 的候选问题，必须按该文档要求执行 reject / downgrade / require-stronger-evidence 规则，不得跳过。
 9. 如果某条发现看起来像历史上的高频误报模式，必须明确写出“为什么这次不是同类误报”。
-10. 文件大小规则：>500 行需评估是否拆分，>700 行默认必须拆分。
+10. 如果某条发现看起来像已被反复重开的设计决定或 owner 裁定，必须先按 reopened-design-decisions 文档核对：这是同一个旧问题、已收口旧问题旁边的新 residual，还是一个真正新的 live defect。
+11. 文件大小规则：>500 行需评估是否拆分，>700 行默认必须拆分。
 
 严重程度判级：
 - P0: 当前已构成错误行为、安全违约、核心数据损坏风险、或违反 CI/硬性架构红线。
@@ -391,6 +393,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 - 共享方法论、严重程度判级、命令基线策略只维护在“共享提示词前缀”中。
 - 项目特定的重复误报模式、降级模式、举证门槛维护在 `docs/references/deep-audit-calibration-patterns.md` 中。
+- 反复被重开的设计决定、owner 归属裁定、以及“旧问题 vs 新 residual”的边界维护在 `docs/references/reopened-design-decisions-and-audit-adjudications.md` 中。
 - 各维度正文只保留该维度特有的目标、owner 文档、执行步骤、特例说明和额外输出要求。
 - 如果某个维度需要额外约束，只写该维度新增部分，不要重复抄写共享前缀内容。
 
@@ -398,7 +401,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 ## 通用审计口径
 
-以下口径会嵌入每个子 agent 的提示词中，所有维度的审核员必须遵守。项目特定的误报校准与例外模式不再在此处展开，统一维护在 `docs/references/deep-audit-calibration-patterns.md`：
+以下口径会嵌入每个子 agent 的提示词中，所有维度的审核员必须遵守。项目特定的误报校准与例外模式不再在此处展开，统一维护在 `docs/references/deep-audit-calibration-patterns.md`；反复被重开的设计决定与裁定边界统一维护在 `docs/references/reopened-design-decisions-and-audit-adjudications.md`：
 
 1. **以当前代码为准**，不以历史日志、已关闭的计划或口头约定为准。
 2. **不重复报告已收敛的问题**。如果代码中已按架构规则实现，不再标记为问题。
@@ -408,7 +411,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 6. **区分已自动化 vs 需人工发现**。已被 lint/check 覆盖的问题只在"自动化有漏洞"时才报告。
 7. **所有结论都必须经过独立复核**。初审 agent 的输出只是线索，不是最终事实；维度级结论与每条发现都要由新的独立子 agent 二次核验。
 8. **命中 calibration patterns 的候选问题必须按校准文档抬高举证门槛**。没有越过证据门槛时，应驳回或降级，而不是直接进入 remediation backlog。
-9. **文件大小限额**。源代码文件超过 **500 行**需要仔细考虑是否要拆分（职责混合、多 owner、入口文件泄露实现）；超过 **700 行**必须拆分。报告时区分"超过 700 行必须拆"和"500-700 行需评估"两档。
+9. **命中反复重开模式时必须先核对裁定文档**。如果候选问题与 `docs/references/reopened-design-decisions-and-audit-adjudications.md` 中的条目相似，必须先判断这是已裁定旧问题、旧问题旁边的新 residual，还是新的 live defect；不能只因表象相似就直接重报。
+10. **文件大小限额**。源代码文件超过 **500 行**需要仔细考虑是否要拆分（职责混合、多 owner、入口文件泄露实现）；超过 **700 行**必须拆分。报告时区分"超过 700 行必须拆"和"500-700 行需评估"两档。
 
 **自动化执行工具**：
 
@@ -424,6 +428,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 ## 项目校准说明
 
 项目特定的高频误报模式、降级规则、以及“什么时候仍可保留该发现”的说明，统一维护在 `docs/references/deep-audit-calibration-patterns.md`。
+
+项目中那些已经多次被 reopen/re-report 的设计决定、owner 归属裁定、以及“表面相似但不应视为同一 defect”的边界，统一维护在 `docs/references/reopened-design-decisions-and-audit-adjudications.md`。
 
 不要再在本文件重复维护第二份“项目背景 + 特例口径”清单，以避免提示词与历史 meta-review 结论继续漂移。
 
@@ -1814,9 +1820,10 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 7. **增量审核**: 可以只选择部分维度执行，不必每次全量审核。用维度编号指定要执行的维度即可，但选中的维度仍需完整深挖+复核链路。
 8. **与现有检查的关系**: 审核发现的机械问题应优先转化为 lint 规则或 check 脚本，而非持续依赖审核。
 9. **先读项目校准文档**: 派发前先读取 `docs/references/deep-audit-calibration-patterns.md`；命中其中模式的候选问题，必须按校准要求抬高证据门槛或直接降级/驳回。
-10. **结果归档**: 审核结果必须保存到 `docs/analysis/{YYYY}-{MM}-{DD}-deep-audit-{简短标识}/` 子目录中，每个维度一个 md 文件（含所有深挖轮次和复核结论），汇总报告写入 `summary.md`。详见"结果输出与归档"章节。
-11. **需要命令基线的维度**: 若某维度依赖 `pnpm check:*`、依赖图、文件行数等命令输出，优先由主 agent 先跑命令并把结果传给子 agent，避免不同子 agent 对工具能力做出不一致假设。
-12. **深挖轮次上限**: 每个维度最多 5 轮深挖（含初审），防止无限循环。达到上限后强制进入复核阶段。
+10. **先读反复重开裁定文档**: 派发前先读取 `docs/references/reopened-design-decisions-and-audit-adjudications.md`；命中其中条目的候选问题，必须先判断这是已裁定旧问题、旧问题旁边的新 residual，还是新的 live defect。
+11. **结果归档**: 审核结果必须保存到 `docs/analysis/{YYYY}-{MM}-{DD}-deep-audit-{简短标识}/` 子目录中，每个维度一个 md 文件（含所有深挖轮次和复核结论），汇总报告写入 `summary.md`。详见"结果输出与归档"章节。
+12. **需要命令基线的维度**: 若某维度依赖 `pnpm check:*`、依赖图、文件行数等命令输出，优先由主 agent 先跑命令并把结果传给子 agent，避免不同子 agent 对工具能力做出不一致假设。
+13. **深挖轮次上限**: 每个维度最多 5 轮深挖（含初审），防止无限循环。达到上限后强制进入复核阶段。
 
 ---
 

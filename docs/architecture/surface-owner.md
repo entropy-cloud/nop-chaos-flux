@@ -22,6 +22,7 @@ Current live implementation note:
 
 - 当前 live 基线已经收口到一个共享 surface-family runtime：declarative `type: 'dialog' | 'drawer'` 与 built-in `openDialog` / `openDrawer` 都注册到同一个 `SurfaceRuntime` / root host / `SurfaceEntry` stack。
 - React host 只负责渲染 root surface stack；surface open/close/status publication 与 active/top-surface 语义统一归 `SurfaceRuntime`。
+- declarative uncontrolled open state (`defaultOpen`) 现在也由 `SurfaceRuntime` / `SurfaceStore` 持有；local close 或 runtime close 会写回同一 owner truth，而不会再被 renderer-local `defaultOpen` 状态重新打开。
 
 ## Core Claim
 

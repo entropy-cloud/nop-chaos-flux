@@ -764,6 +764,7 @@ Current live participation baseline:
 
 - hidden-field participation is published through the nearest `ValidationScopeRuntime` via `notifyFieldHidden(...)`
 - forms and non-form validation owners therefore use the same supported hidden-participation contract
+- hiding a parent path excludes descendant compiled fields from active validation participation, and owner cleanup clears stale descendant errors when that subtree transitions to hidden
 
 Branch inactivity follows the same principle:
 

@@ -5,6 +5,12 @@
 > Source: `docs/analysis/2026-05-05-deep-audit-full-7/15-security-performance.md`, `docs/analysis/2026-05-05-deep-audit-full-7/summary.md`, `docs/architecture/performance-design-requirements.md`, `docs/architecture/report-designer/design.md`
 > Related: `docs/plans/210-deep-audit-full-7-confirmed-defect-remediation-program-plan.md`
 
+## Supersession Note
+
+- 2026-05-06 live re-audit confirmed that this plan's performance closure stayed valid, but shared call paths in `report-designer-core` still had separate undo/dirty/document-integrity correctness gaps.
+- Successor ownership for those reopened correctness semantics now lives in `docs/plans/216-open-ended-adversarial-review-residual-integrity-plan.md`.
+- Plan `214` remains the accepted owner and closure record for the deep-copy performance baseline only; it does not own the later reopened undo/history correctness defects on the same paths.
+
 ## Purpose
 
 收口 `full-7` 中 report-designer retained performance hot-path defects：spreadsheet 同步、metadata undo、字段源刷新上下文构造这三条路径上的整份文档深拷贝。这不是一般性的“未来可以优化”建议，而是已被独立复核确认为当前热路径上的真实性能 defect，且违反 `performance-design-requirements.md` 中避免热路径深拷贝/无谓分配的要求。

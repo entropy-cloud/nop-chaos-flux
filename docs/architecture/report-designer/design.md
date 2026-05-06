@@ -410,6 +410,7 @@ Dirty 语义收敛规则:
 - `designer.dirty` 只表示 report-designer 自身语义层是否有未保存变更，例如 metadata / inspector 驱动的文档修改
 - `runtime.dirty` 表示对宿主发布的聚合 dirty，等于 `designer.dirty || spreadsheet.runtime.dirty`
 - bridge、status summary、host scope 必须使用这同一套定义，不能把 `designer.dirty` 再降级成 spreadsheet-only dirty
+- supported editable document mutations (`setMetadata`, spreadsheet subtree sync, template import) must participate in the same undo/redo + dirty baseline as ordinary designer editing; out-of-band document replacement must stay explicit instead of masquerading as normal editable history
 
 导入模板后，`report-designer:importTemplate` 必须立即刷新 `fieldSources`、`inspector.resolvedSchema` 和相关 loading/error 状态，避免新文档与旧派生缓存并存。
 
