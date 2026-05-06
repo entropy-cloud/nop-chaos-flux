@@ -34,27 +34,69 @@ export function useSurfaceRenderer(
   const runtime = useRendererRuntime();
   const surfaceRuntime = useCurrentSurfaceRuntime();
   const controlledOpen = resolvedProps.open;
-  const [localOpen, setLocalOpen] = React.useState(Boolean(resolvedProps.defaultOpen ?? false));
-  const effectiveOpen = controlledOpen !== undefined ? Boolean(controlledOpen) : localOpen;
+  const defaultOpen = Boolean(resolvedProps.defaultOpen ?? false);
   const closedPublishedRef = React.useRef(false);
   const statusPath = typeof resolvedProps.statusPath === 'string' ? resolvedProps.statusPath : undefined;
+  const resolvedData =
+    resolvedProps.data && typeof resolvedProps.data === 'object'
+      ? (resolvedProps.data as Record<string, unknown>)
+      : undefined;
+  const [openRevision, setOpenRevision] = React.useState(0);
+  const uncontrolledOpen = React.useSyncExternalStore(
+    surfaceRuntime?.store.subscribe ?? (() => () => undefined),
+    () => {
+      if (!surfaceRuntime) {
+        return defaultOpen;
+      }
+
+      return surfaceRuntime.store.getUncontrolledOpen(id) ?? defaultOpen;
+    },
+    () => defaultOpen,
+  );
+  const effectiveOpen = controlledOpen !== undefined ? Boolean(controlledOpen) : uncontrolledOpen;
+  const [openingData, setOpeningData] = React.useState<Record<string, unknown> | undefined>(() =>
+    effectiveOpen ? resolvedData : undefined,
+  );
+  const lastOpenRef = React.useRef(effectiveOpen);
+
+  React.useEffect(() => {
+    if (!surfaceRuntime || controlledOpen !== undefined) {
+      return;
+    }
+
+    surfaceRuntime.store.setUncontrolledOpen(id, defaultOpen);
+
+    return () => {
+      surfaceRuntime.store.clearUncontrolledOpen(id);
+    };
+  }, [controlledOpen, defaultOpen, id, surfaceRuntime]);
+
+  React.useLayoutEffect(() => {
+    if (effectiveOpen && !lastOpenRef.current) {
+      setOpeningData(resolvedData);
+      setOpenRevision((value) => value + 1);
+    } else if (!effectiveOpen && lastOpenRef.current) {
+      setOpeningData(undefined);
+    }
+
+    lastOpenRef.current = effectiveOpen;
+  }, [effectiveOpen, resolvedData]);
+
   const declarativeScope = React.useMemo(
     () =>
       runtime.createChildScope(
         node.scope,
         {
           dialogId: id,
-          ...(resolvedProps.data && typeof resolvedProps.data === 'object'
-            ? (resolvedProps.data as Record<string, unknown>)
-            : {}),
+          ...(openingData ?? {}),
           ...(kind === 'drawer' ? { drawerId: id } : {}),
         },
         {
-          scopeKey: getSurfaceScopeId(id, kind),
+          scopeKey: `${getSurfaceScopeId(id, kind)}:${openRevision}`,
           pathSuffix: kind,
         },
       ),
-    [id, kind, node.scope, resolvedProps.data, runtime],
+    [id, kind, node.scope, openRevision, openingData, runtime],
   );
 
   const actionScope = (
@@ -68,7 +110,7 @@ export function useSurfaceRenderer(
       ...resolvedProps,
       __handleOpenChange: (nextOpen: boolean) => {
         if (controlledOpen === undefined) {
-          setLocalOpen(nextOpen);
+          surfaceRuntime?.store.setUncontrolledOpen(id, nextOpen);
         }
 
         if (!nextOpen) {
@@ -79,7 +121,7 @@ export function useSurfaceRenderer(
         void events.onOpen?.();
       },
     }),
-    [controlledOpen, events, resolvedProps],
+    [controlledOpen, events, id, resolvedProps, surfaceRuntime],
   );
   const meta = React.useMemo(
     () => ({

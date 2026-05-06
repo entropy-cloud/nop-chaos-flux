@@ -165,6 +165,10 @@ stack 中只有最上层 surface 拥有当前交互控制权。
 
 - child scope 由打开位置的当前 scope 派生，而不是默认挂到 page root
 - `data` 的语义是 child scope init patch
+- 如果 `data` 含表达式，表达式在 surface 打开时基于 opening scope 求值一次
+- 求值结果写入 surface child scope 后，`data` 不再代表 parent -> surface 的持续 live binding
+- surface 保持打开期间，parent scope 后续变化默认不应替换该 surface child scope 或覆盖其中已存在的值
+- 需要重新取新的 `data` 时，应通过关闭后重新打开、remount，或显式 action/lifecycle 完成，而不是给 `data` 增加 sync 开关
 - 关闭 surface 时，对应 child scope 生命周期结束
 
 因此这些都应成立：
@@ -172,6 +176,22 @@ stack 中只有最上层 surface 拥有当前交互控制权。
 - page scope -> dialog scope
 - form scope -> dialog scope
 - row scope -> drawer scope
+
+推荐心智模型：
+
+```text
+opening scope
+  --evaluate surface.data once when opening-->
+surface init patch snapshot
+  --seed-->
+surface child scope
+```
+
+这也意味着：
+
+- `data` 应保持“初始化快照”单一语义，不承担 live sync 模式
+- surface subtree 若需要持续读取父级某些值，应直接走 lexical scope 读取，而不是把这些值先复制进 `data`
+- 如果未来确实需要显式 live projection，应设计独立字段，而不是复用 `data`
 
 不应长期保留：
 

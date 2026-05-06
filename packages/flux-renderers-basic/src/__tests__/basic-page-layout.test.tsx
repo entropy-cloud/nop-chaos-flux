@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support';
@@ -278,6 +279,54 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     cleanup();
   });
 
+  it('does not reopen a defaultOpen declarative dialog after runtime close', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const schema = {
+      type: 'page',
+      body: [
+        {
+          type: 'dialog',
+          title: 'Dialog title',
+          statusPath: 'ui.dialogStatus',
+          defaultOpen: true,
+          body: [{ type: 'text', text: 'Dialog body' }],
+        },
+        { type: 'text', text: '${ui?.dialogStatus?.open}' },
+      ],
+    } as const;
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={schema}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('true')).toBeTruthy());
+
+    fireEvent.click(document.querySelector('[data-slot="dialog-close"]') as Element);
+
+    await waitFor(() => {
+      expect(screen.getByText('false')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={schema}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('false')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
   it('wraps declarative drawer body content in a drawer-body slot', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     render(
@@ -485,6 +534,135 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     );
 
     await waitFor(() => expect(screen.getByText(/8:preview:root:.*:.*/)).toBeTruthy());
+    cleanup();
+  });
+
+  it('evaluates declarative dialog data expressions once when opening', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dialog',
+              title: 'Dialog title',
+              open: true,
+              data: {
+                recordId: '${currentRecord.id}',
+                mode: 'Mode:${currentRecord.mode}',
+              },
+              body: [{ type: 'text', text: '${recordId}:${mode}:${pageOnly}' }],
+            },
+          ],
+        }}
+        data={{ pageOnly: 'root', currentRecord: { id: 11, mode: 'edit' } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('11:Mode:edit:root')).toBeTruthy());
+    cleanup();
+  });
+
+  it('does not rebind declarative dialog data while the surface stays open', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const schema = {
+      type: 'page',
+      body: [
+        {
+          type: 'dialog',
+          title: 'Dialog title',
+          open: true,
+          data: {
+            recordId: '${currentRecord.id}',
+          },
+          body: [{ type: 'text', text: '${recordId}' }],
+        },
+      ],
+    } as const;
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={schema}
+        data={{ currentRecord: { id: 11 } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('11')).toBeTruthy());
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={schema}
+        data={{ currentRecord: { id: 22 } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('11')).toBeTruthy());
+    expect(screen.queryByText('22')).toBeNull();
+    cleanup();
+  });
+
+  it('re-evaluates declarative dialog data after close and reopen', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const schema = {
+      type: 'page',
+      body: [
+        {
+          type: 'dialog',
+          title: 'Dialog title',
+          open: '${dialogOpen}',
+          data: {
+            recordId: '${currentRecord.id}',
+          },
+          body: [{ type: 'text', text: '${recordId}' }],
+        },
+      ],
+    } as const;
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={schema}
+        data={{ dialogOpen: true, currentRecord: { id: 11 } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('11')).toBeTruthy());
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={schema}
+        data={{ dialogOpen: false, currentRecord: { id: 22 } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={schema}
+        data={{ dialogOpen: true, currentRecord: { id: 22 } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('22')).toBeTruthy());
     cleanup();
   });
 
