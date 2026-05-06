@@ -12,28 +12,33 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
   const currentValidationScope = useCurrentValidationScope();
+  const hasName = name.length > 0;
 
   const formValue = useCurrentFormState(
-    (state) => (name ? getIn(state.values, name) : state.values),
+    (state) => (hasName ? getIn(state.values, name) : undefined),
     Object.is,
-    { path: name || undefined },
+    { enabled: hasName, path: hasName ? name : undefined },
   );
-  const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is);
+  const scopeValue = useScopeSelector(
+    (data) => (hasName ? getIn(data, name) : undefined),
+    Object.is,
+    { enabled: hasName, fallback: undefined },
+  );
 
   let value: string;
-  if (currentForm && name) {
+  if (currentForm && hasName) {
     value = String(formValue ?? '');
-  } else if (name) {
+  } else if (hasName) {
     value = String(scopeValue ?? '');
   } else {
     value = String(props.props.value ?? '');
   }
 
   const handleChange = (newValue: string) => {
-    if (currentForm && name) {
+    if (currentForm && hasName) {
       currentForm.setValue(name, newValue);
       void currentForm.validateField(name, 'change');
-    } else if (name) {
+    } else if (hasName) {
       currentValidationScope?.touchField?.(name);
       scope.update(name, newValue);
       void currentValidationScope?.validateAt(name, 'change');
@@ -42,19 +47,19 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
   };
 
   const handleFocus = () => {
-    if (currentForm && name) {
+    if (currentForm && hasName) {
       currentForm.visitField(name);
-    } else if (name) {
+    } else if (hasName) {
       currentValidationScope?.visitField?.(name);
     }
     props.events.onFocus?.();
   };
 
   const handleBlur = () => {
-    if (currentForm && name) {
+    if (currentForm && hasName) {
       currentForm.touchField(name);
       void currentForm.validateField(name, 'blur');
-    } else if (name) {
+    } else if (hasName) {
       currentValidationScope?.touchField?.(name);
       void currentValidationScope?.validateAt(name, 'blur');
     }

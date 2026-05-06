@@ -24,7 +24,14 @@ const readOnlyCompartment = new Compartment();
 const extensionsCompartment = new Compartment();
 const placeholderCompartment = new Compartment();
 
-function createEditorState(options: UseCodeMirrorOptions): EditorState {
+function createEditorState(
+  options: UseCodeMirrorOptions,
+  callbacks: {
+    onChange(value: string): void;
+    onFocus(): void;
+    onBlur(): void;
+  },
+): EditorState {
   const extensions: Extension[] = [
     history(),
     readOnlyCompartment.of(EditorState.readOnly.of(options.readOnly ?? false)),
@@ -32,13 +39,13 @@ function createEditorState(options: UseCodeMirrorOptions): EditorState {
     placeholderCompartment.of(options.placeholder ? cmPlaceholder(options.placeholder) : []),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
-        options.onChange?.(update.state.doc.toString());
+        callbacks.onChange(update.state.doc.toString());
       }
       if (update.focusChanged) {
         if (update.view.hasFocus) {
-          options.onFocus?.();
+          callbacks.onFocus();
         } else {
-          options.onBlur?.();
+          callbacks.onBlur();
         }
       }
     }),
@@ -55,15 +62,31 @@ export function useCodeMirror(options: UseCodeMirrorOptions): UseCodeMirrorResul
   const viewRef = useRef<EditorView | null>(null);
   const [view, setView] = useState<EditorView | null>(null);
   const optionsRef = useRef(options);
+  const onChangeRef = useRef(options.onChange);
+  const onFocusRef = useRef(options.onFocus);
+  const onBlurRef = useRef(options.onBlur);
 
   useEffect(() => {
     optionsRef.current = options;
+    onChangeRef.current = options.onChange;
+    onFocusRef.current = options.onFocus;
+    onBlurRef.current = options.onBlur;
   }, [options]);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const state = createEditorState(optionsRef.current);
+    const state = createEditorState(optionsRef.current, {
+      onChange: (value) => {
+        onChangeRef.current?.(value);
+      },
+      onFocus: () => {
+        onFocusRef.current?.();
+      },
+      onBlur: () => {
+        onBlurRef.current?.();
+      },
+    });
     const editorView = new EditorView({
       state,
       parent: containerRef.current,

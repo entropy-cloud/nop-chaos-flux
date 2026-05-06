@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { ScopeRef, ApiSchema, ActionSchema, ActionResult } from '@nop-chaos/flux-core';
 import type { RendererHelpers } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   isVariableSourceRef,
   isFuncSourceRef,
@@ -97,7 +98,7 @@ function useAsyncApiResolver<T>(
               ? result.error.message
               : typeof result.error === 'string'
                 ? result.error
-                : 'API request failed';
+                : t('flux.codeEditor.apiRequestFailed');
           setState({
             items: [],
             error: new Error(errorMessage),
@@ -107,7 +108,7 @@ function useAsyncApiResolver<T>(
       })
       .catch((err: unknown) => {
         if (signal.aborted) return;
-        const errorMessage = err instanceof Error ? err.message : 'Unknown resolver error';
+        const errorMessage = err instanceof Error ? err.message : t('flux.codeEditor.unknownResolverError');
         console.warn('[source-resolvers] API request failed:', errorMessage);
         setState({
           items: [],
