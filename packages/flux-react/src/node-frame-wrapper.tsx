@@ -49,6 +49,10 @@ export function NodeFrameWrapper(props: {
   const labelWidthValue = schema.labelWidth as string | number | undefined;
   const usesInteractiveControlRoot =
     props.templateNode.type === 'array-editor' ||
+    props.templateNode.type === 'array-field' ||
+    props.templateNode.type === 'input-tree' ||
+    props.templateNode.type === 'tree-select' ||
+    props.templateNode.type === 'condition-builder' ||
     props.templateNode.type === 'key-value' ||
     props.templateNode.type === 'detail-field';
 

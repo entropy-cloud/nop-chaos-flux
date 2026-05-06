@@ -15,10 +15,12 @@ import {
   ScopeContext,
   SurfaceContext,
   ValidationContext,
+  type ValidationContextValue,
 } from './contexts';
 import { RenderNodes, EMPTY_SCOPE_DATA } from './helpers';
 import { DialogHost } from './dialog-host';
 import { collectSchemaImports } from './node-renderer-utils';
+import { SchemaRootError, SchemaRootErrorBoundary, SchemaRootStatus } from './node-error-boundary';
 
 const EMPTY_PREPARED_IMPORTS = new Map<string, import('@nop-chaos/flux-core').PreparedImportSpec>();
 
@@ -30,6 +32,91 @@ function getSingleRootNode(
   }
 
   return template.root as import('@nop-chaos/flux-core').TemplateNode;
+}
+
+function CompiledSchemaTree(props: {
+  runtime: import('@nop-chaos/flux-core').RendererRuntime;
+  schema: SchemaRendererProps['schema'];
+  schemaUrl: string;
+  env: SchemaRendererProps['env'];
+  preparedImports: ReadonlyMap<string, import('@nop-chaos/flux-core').PreparedImportSpec>;
+  strictMode: boolean;
+  renderScope: import('@nop-chaos/flux-core').ScopeRef;
+  page: import('@nop-chaos/flux-core').PageRuntime;
+  rootValidationOwner: ValidationContextValue;
+  surfaceRuntime: import('@nop-chaos/flux-core').SurfaceRuntime;
+  rootActionScope: import('@nop-chaos/flux-core').ActionScope;
+  rootComponentRegistry: import('@nop-chaos/flux-core').ComponentHandleRegistry;
+}) {
+  const compiledRoot = useMemo<import('@nop-chaos/flux-core').CompiledTemplate | null>(() => {
+    return props.runtime.schemaCompiler.compile(props.schema, {
+      schemaUrl: props.schemaUrl,
+      importLoader: props.env.importLoader,
+      resolveImportUrl: props.env.resolveImportUrl,
+      preparedImports: props.preparedImports,
+      validation: {
+        strictMode: props.strictMode,
+      },
+      diagnostics: props.strictMode
+        ? {
+            enabled: true,
+            continueOnError: true,
+          }
+        : undefined,
+    });
+  }, [
+    props.runtime,
+    props.schema,
+    props.schemaUrl,
+    props.env.importLoader,
+    props.env.resolveImportUrl,
+    props.preparedImports,
+    props.strictMode,
+  ]);
+
+  useEffect(() => {
+    const rootNode = getSingleRootNode(compiledRoot);
+    if (!rootNode) {
+      return;
+    }
+
+    const validationPlan = rootNode.validationPlan;
+    if (!validationPlan) {
+      return;
+    }
+
+    props.page.validationOwner?.refreshCompiledModel(validationPlan);
+  }, [compiledRoot, props.page]);
+
+  if (!compiledRoot) {
+    return <SchemaRootStatus message="Schema is preparing." />;
+  }
+
+  return (
+    <RuntimeContext.Provider value={props.runtime}>
+      <ActionScopeContext.Provider value={props.rootActionScope}>
+        <ComponentRegistryContext.Provider value={props.rootComponentRegistry}>
+          <ScopeContext.Provider value={props.renderScope}>
+            <PageContext.Provider value={props.page}>
+              <ValidationContext.Provider value={props.rootValidationOwner}>
+                <SurfaceContext.Provider value={props.surfaceRuntime}>
+                  <RenderNodes
+                    input={compiledRoot}
+                    options={{
+                      scope: props.renderScope,
+                      actionScope: props.rootActionScope,
+                      componentRegistry: props.rootComponentRegistry,
+                    }}
+                  />
+                  <DialogHost />
+                </SurfaceContext.Provider>
+              </ValidationContext.Provider>
+            </PageContext.Provider>
+          </ScopeContext.Provider>
+        </ComponentRegistryContext.Provider>
+      </ActionScopeContext.Provider>
+    </RuntimeContext.Provider>
+  );
 }
 
 export function createSchemaRenderer(registryDefinitions: RendererDefinition[] = []) {
@@ -123,7 +210,9 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [runtime]);
 
     const rootScope = props.parentScope ?? page.scope;
-    const rootValidationOwner = props.parentScope ? NO_VALIDATION_OWNER : page.validationOwner;
+    const rootValidationOwner: ValidationContextValue = props.parentScope
+      ? NO_VALIDATION_OWNER
+      : page.validationOwner;
     const surfaceRuntime = props.surfaceRuntime ?? ownedSurfaceRuntime;
     const rootActionScope = useMemo(
       () => props.actionScope ?? runtime.createActionScope({ id: 'root-action-scope' }),
@@ -227,83 +316,32 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
 
     const strictMode = isStrictValidationEnabled(props.strictValidation);
 
-    const compiledRoot = useMemo<import('@nop-chaos/flux-core').CompiledTemplate | null>(() => {
-      if (!preparedImports) {
-        return null;
-      }
-
-      return runtime.schemaCompiler.compile(props.schema, {
-        schemaUrl: props.schemaUrl,
-        importLoader: props.env.importLoader,
-        resolveImportUrl: props.env.resolveImportUrl,
-        preparedImports,
-        validation: {
-          strictMode,
-        },
-        diagnostics: strictMode
-          ? {
-              enabled: true,
-              continueOnError: true,
-            }
-          : undefined,
-      });
-    }, [
-      runtime,
-      props.schema,
-      props.schemaUrl,
-      props.env.importLoader,
-      props.env.resolveImportUrl,
-      preparedImports,
-      strictMode,
-    ]);
-
-    useEffect(() => {
-      const rootNode = getSingleRootNode(compiledRoot);
-      if (!rootNode) {
-        return;
-      }
-
-      const validationPlan = rootNode.validationPlan;
-      if (!validationPlan) {
-        return;
-      }
-
-      page.validationOwner?.refreshCompiledModel(validationPlan);
-    }, [compiledRoot, page]);
-
     if (prepareError) {
-      return null;
+      return <SchemaRootError error={prepareError} />;
     }
 
-    if (!compiledRoot) {
-      return null;
+    if (!preparedImports) {
+      return <SchemaRootStatus message="Preparing schema imports." />;
     }
 
     return (
       <div data-runtime-id={runtime.runtimeId} className="contents">
-        <RuntimeContext.Provider value={runtime}>
-          <ActionScopeContext.Provider value={rootActionScope}>
-            <ComponentRegistryContext.Provider value={rootComponentRegistry}>
-              <ScopeContext.Provider value={renderScope}>
-                <PageContext.Provider value={page}>
-                  <ValidationContext.Provider value={rootValidationOwner}>
-                    <SurfaceContext.Provider value={surfaceRuntime}>
-                      <RenderNodes
-                        input={compiledRoot}
-                        options={{
-                          scope: renderScope,
-                          actionScope: rootActionScope,
-                          componentRegistry: rootComponentRegistry,
-                        }}
-                      />
-                      <DialogHost />
-                    </SurfaceContext.Provider>
-                  </ValidationContext.Provider>
-                </PageContext.Provider>
-              </ScopeContext.Provider>
-            </ComponentRegistryContext.Provider>
-          </ActionScopeContext.Provider>
-        </RuntimeContext.Provider>
+        <SchemaRootErrorBoundary>
+          <CompiledSchemaTree
+            runtime={runtime}
+            schema={props.schema}
+            schemaUrl={props.schemaUrl}
+            env={props.env}
+            preparedImports={preparedImports}
+            strictMode={strictMode}
+            renderScope={renderScope}
+            page={page}
+            rootValidationOwner={rootValidationOwner}
+            surfaceRuntime={surfaceRuntime}
+            rootActionScope={rootActionScope}
+            rootComponentRegistry={rootComponentRegistry}
+          />
+        </SchemaRootErrorBoundary>
       </div>
     );
   };

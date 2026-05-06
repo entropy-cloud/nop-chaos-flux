@@ -1,7 +1,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { NodeErrorBoundary } from '../node-error-boundary';
+import { NodeErrorBoundary, SchemaRootErrorBoundary } from '../node-error-boundary';
 
 afterEach(() => {
   cleanup();
@@ -124,6 +124,25 @@ describe('NodeErrorBoundary', () => {
     const alert = document.querySelector('[data-slot="node-error"]');
     expect(alert).toBeTruthy();
     expect(alert?.getAttribute('role')).toBe('alert');
+    consoleSpy.mockRestore();
+  });
+});
+
+describe('SchemaRootErrorBoundary', () => {
+  it('catches root-level render errors and shows a fallback', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(
+      <SchemaRootErrorBoundary>
+        <ThrowingComponent error={new Error('Root renderer failed')} />
+      </SchemaRootErrorBoundary>,
+    );
+
+    const alert = document.querySelector('[data-slot="schema-root-error"]');
+    expect(alert).toBeTruthy();
+    expect(alert?.getAttribute('role')).toBe('alert');
+    expect(alert?.textContent).toContain('Root renderer failed');
+
     consoleSpy.mockRestore();
   });
 });

@@ -81,6 +81,58 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     expect(createChildScopeSpy).not.toHaveBeenCalled();
   });
 
+  it('does not install prepared imports when render aborts before commit', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        importLoader: {
+          load: vi.fn(async () => ({
+            createNamespace: () => ({
+              kind: 'import' as const,
+              invoke: async () => ({ ok: true }),
+            }),
+            createExpressionHelpers: () => ({
+              formatName(first: string, last: string) {
+                return `${first} ${last}`;
+              },
+            }),
+          })),
+        },
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const compiled = runtime.compile({
+      type: 'text',
+      'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+      text: 'Imported ${$demo.formatName(user.firstName, user.lastName)}',
+    } as any);
+    const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    const installPreparedSpy = vi.spyOn(runtime.importStack, 'installPrepared');
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    function CrashOnRender(): React.ReactNode {
+      throw new Error('abort render');
+    }
+
+    expect(() =>
+      render(
+        <RuntimeContext.Provider value={runtime}>
+          <ScopeContext.Provider value={page.scope}>
+            <>
+              <NodeRenderer node={root} scope={page.scope} />
+              <CrashOnRender />
+            </>
+          </ScopeContext.Provider>
+        </RuntimeContext.Provider>,
+      ),
+    ).toThrow('abort render');
+
+    expect(installPreparedSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
   it('keeps the no-class-alias path off alias merge and resolution work', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),

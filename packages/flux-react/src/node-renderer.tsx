@@ -1,4 +1,13 @@
-import { useContext, useEffect, useMemo, memo } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+  memo,
+} from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { NodeErrorBoundary } from './node-error-boundary';
 import type {
@@ -56,6 +65,22 @@ function createImportOwnedActionScope(
     id: `${nodeId}:action-scope`,
     parent,
   });
+}
+
+function createImportFrameStore() {
+  const listeners = new Set<() => void>();
+
+  return {
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    publish() {
+      for (const listener of listeners) {
+        listener();
+      }
+    },
+  };
 }
 
 const NodeRendererResolved = memo(function NodeRendererResolved(props: {
@@ -411,54 +436,77 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         : undefined,
     [props.node, props.scope, importSetupState, mountedCid, instancePath, nodeImports],
   );
-  const importFrame = useMemo(
-    () =>
-      nodeImports?.length
-        ? runtime.importStack.installPrepared({
-            ownerNodeId: props.node.id,
-            parentFrame: parentImportFrame,
-            imports: nodeImports,
-            actionScope: resolvedActionScope,
-            componentRegistry: activeComponentRegistry,
-            scope: props.scope,
-            nodeInstance: importOwnerNodeInstance,
-          })
-        : parentImportFrame,
-    [
-      runtime,
-      props.node.id,
-      parentImportFrame,
-      nodeImports,
-      resolvedActionScope,
-      activeComponentRegistry,
-      props.scope,
-      importOwnerNodeInstance,
-    ],
+  const importFrameStore = useMemo(() => createImportFrameStore(), []);
+  const importFrameRef = useRef<import('@nop-chaos/flux-core').ImportFrame | undefined>(
+    nodeImports?.length ? undefined : parentImportFrame,
   );
-  useEffect(() => {
+  const getImportFrameSnapshot = useCallback(
+    () => (nodeImports?.length ? importFrameRef.current : parentImportFrame),
+    [nodeImports, parentImportFrame],
+  );
+  const importFrame = useSyncExternalStore(
+    importFrameStore.subscribe,
+    getImportFrameSnapshot,
+    getImportFrameSnapshot,
+  );
+  useLayoutEffect(() => {
+    if (!nodeImports?.length) {
+      if (importFrameRef.current !== parentImportFrame) {
+        importFrameRef.current = parentImportFrame;
+        importFrameStore.publish();
+      }
+      return;
+    }
+
+    const nextFrame = runtime.importStack.installPrepared({
+      ownerNodeId: props.node.id,
+      parentFrame: parentImportFrame,
+      imports: nodeImports,
+      actionScope: resolvedActionScope,
+      componentRegistry: activeComponentRegistry,
+      scope: props.scope,
+      nodeInstance: importOwnerNodeInstance,
+    });
+    if (importFrameRef.current !== nextFrame) {
+      importFrameRef.current = nextFrame;
+      importFrameStore.publish();
+    }
+
     return () => {
-      if (importFrame && importFrame !== parentImportFrame) {
-        runtime.importStack.pop(importFrame.id);
+      if (nextFrame && nextFrame !== parentImportFrame) {
+        runtime.importStack.pop(nextFrame.id);
+      }
+
+      if (importFrameRef.current === nextFrame) {
+        importFrameRef.current = undefined;
+        importFrameStore.publish();
       }
     };
-  }, [runtime, importFrame, parentImportFrame]);
+  }, [
+    importFrameStore,
+    runtime,
+    props.node.id,
+    parentImportFrame,
+    nodeImports,
+    resolvedActionScope,
+    activeComponentRegistry,
+    props.scope,
+    importOwnerNodeInstance,
+  ]);
   const namedActionPlans = props.node.namedActionPlans;
-  const namedActionCleanup = useMemo<(() => void) | undefined>(() => {
+  useLayoutEffect(() => {
     if (!namedActionPlans || !resolvedActionScope) {
-      return undefined;
+      return;
     }
+
     const provider = createNamedActionProvider(
       namedActionPlans,
       resolvedActionScope.parent,
       (program, ctx) => ctx.runtime.dispatch(program, ctx),
     );
+
     return resolvedActionScope.registerNamespace('__xui_actions__', provider);
   }, [namedActionPlans, resolvedActionScope]);
-  useEffect(() => {
-    return () => {
-      namedActionCleanup?.();
-    };
-  }, [namedActionCleanup]);
   const importBindings = useMemo(
     () => (importFrame ? runtime.importStack.currentBindings(importFrame.id) : undefined),
     [runtime, importFrame],
@@ -473,6 +521,10 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
           }),
     [runtime, props.scope, importBindings, props.node.id],
   );
+
+  if (nodeImports?.length && !importFrame) {
+    return null;
+  }
 
   return (
     <NodeErrorBoundary nodeId={props.node.id}>

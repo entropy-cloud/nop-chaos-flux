@@ -112,7 +112,7 @@ describe('SchemaRenderer data update', () => {
 });
 
 describe('SchemaRenderer import preparation', () => {
-  it('shows nothing when import preparation fails', async () => {
+  it('shows a root fallback when import preparation fails', async () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const failingLoader = {
       load: vi.fn(async () => {
@@ -138,7 +138,9 @@ describe('SchemaRenderer import preparation', () => {
 
     await waitFor(() => expect(failingLoader.load).toHaveBeenCalled());
 
-    expect(container.querySelector('[data-runtime-id]')?.children.length ?? 0).toBe(0);
+    expect(container.querySelector('[data-slot="schema-root-error"]')?.textContent).toContain(
+      'Import load failed',
+    );
     consoleSpy.mockRestore();
   });
 });
