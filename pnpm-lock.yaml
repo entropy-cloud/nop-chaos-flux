@@ -797,9 +797,6 @@ importers:
       '@nop-chaos/flux-react':
         specifier: workspace:*
         version: link:../flux-react
-      '@nop-chaos/flux-runtime':
-        specifier: workspace:*
-        version: link:../flux-runtime
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
@@ -822,6 +819,9 @@ importers:
       '@nop-chaos/flux-formula':
         specifier: workspace:*
         version: link:../flux-formula
+      '@nop-chaos/flux-runtime':
+        specifier: workspace:*
+        version: link:../flux-runtime
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1

@@ -3,7 +3,7 @@ import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
 const preloadedData = {
   type: 'page',
   body: [
-    { type: 'text', text: 'Users loaded via page data: ${users.length}' },
+    { type: 'text', text: 'Users loaded via page data: ${COUNT(users)}' },
     {
       type: 'loop',
       items: '${users}',
@@ -16,8 +16,8 @@ const preloadedData = {
           align: 'center',
           body: [
             { type: 'icon', icon: 'User', size: 14 },
-            { type: 'text', text: '${user.username}' },
-            { type: 'badge', label: '${user.role}', variant: 'secondary' },
+            { type: 'text', text: '${$slot.user.username}' },
+            { type: 'badge', text: '${$slot.user.role}', level: 'warning' },
           ],
         },
       ],
@@ -28,18 +28,20 @@ const preloadedData = {
 const withDataSource = {
   type: 'page',
   body: [
-    { type: 'text', text: 'Users loaded: ${users.length}' },
+    { type: 'text', text: 'Users loaded: ${COUNT(users)}' },
     {
       type: 'data-source',
-      name: 'userLoader',
-      api: { method: 'get', url: '/api/users' },
-      target: 'users',
+      name: 'users',
+      action: 'ajax',
+      args: { method: 'get', url: '/api/users' },
+      initialData: [],
+      mergeStrategy: 'append',
     },
     {
       type: 'loop',
       items: '${users}',
       itemName: 'user',
-      body: [{ type: 'text', text: '${user.username}' }],
+      body: [{ type: 'text', text: '${$slot.user.username}' }],
     },
   ],
 };
@@ -53,7 +55,7 @@ const preloadedUsers = [
 export function DataSourceLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Logic-only renderer: loads remote data and injects results into a named scope path via target. Renders nothing itself — a companion renderer displays the loaded data."
+      introDescription="Logic-only renderer: loads remote data and publishes results into the current scope by `name`. Renders nothing itself; companion renderers consume the published value."
       scenarios={[
         {
           title: 'Pre-loaded data via page scope (sandbox equivalent)',
@@ -65,7 +67,7 @@ export function DataSourceLabPage() {
         {
           title: 'Real data-source schema (empty in sandbox)',
           description:
-            'This shows the actual data-source schema. The /api/users request returns empty because no fetcher is configured here. In a real environment, results are injected into the users scope path and the loop renders them.',
+            'This shows the actual live data-source contract. The default playground fetcher returns null for /api/users here, so the loop stays empty; in a real environment the named `users` value would be published and rendered below.',
           schema: withDataSource,
           data: { users: [] },
         },

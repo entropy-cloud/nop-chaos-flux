@@ -121,24 +121,24 @@ The canonicalization rules below explain why the same AMIS source type may appea
 
 ### 4. Form Core
 
-| Flux component   | Role                             | AMIS source                                                              | Status           | Owner doc                                  | Implementation wave |
-| ---------------- | -------------------------------- | ------------------------------------------------------------------------ | ---------------- | ------------------------------------------ | ------------------- |
-| `form`           | form owner                       | `form`                                                                   | `runtime`        | `docs/components/form/design.md`           | landed              |
-| `input-text`     | single-line text field           | `input-text`, `input-url`                                                | `runtime`        | `docs/components/input-text/design.md`     | landed              |
-| `input-email`    | email field                      | `input-email`                                                            | `runtime`        | `docs/components/input-email/design.md`    | landed              |
-| `input-password` | password field                   | `input-password`, `password`                                             | `runtime`        | `docs/components/input-password/design.md` | landed              |
-| `textarea`       | multiline text field             | `textarea`                                                               | `runtime`        | `docs/components/textarea/design.md`       | landed              |
-| `input-number`   | numeric field                    | `input-number`, `native-number`                                          | `targetContract` | `docs/components/input-number/design.md`   | wave 2              |
-| `select`         | select field                     | `select`, `multi-select`                                                 | `runtime`        | `docs/components/select/design.md`         | landed              |
-| `checkbox`       | single checkbox field            | `checkbox`                                                               | `runtime`        | `docs/components/checkbox/design.md`       | landed              |
-| `radio-group`    | radio-group field                | `radio`, `radios`                                                        | `runtime`        | `docs/components/radio-group/design.md`    | landed              |
-| `checkbox-group` | checkbox-group field             | `checkboxes`, `matrix-checkboxes`                                        | `runtime`        | `docs/components/checkbox-group/design.md` | landed              |
-| `switch`         | switch field                     | `switch`                                                                 | `runtime`        | `docs/components/switch/design.md`         | landed              |
-| `input-tree`     | tree field                       | `input-tree`                                                             | `runtime`        | `docs/components/input-tree/design.md`     | landed              |
-| `tree-select`    | popup tree field                 | `tree-select`, `nested-select`, `chained-select`                         | `runtime`        | `docs/components/tree-select/design.md`    | landed              |
-| `tag-list`       | lightweight tag collection field | no direct single AMIS top-level type; absorbs tag-list-like field scenes | `runtime`        | `docs/components/tag-list/design.md`       | landed              |
-| `key-value`      | key-value editor field           | no direct single AMIS top-level type; absorbs KV editing scenes          | `runtime`        | `docs/components/key-value/design.md`      | landed              |
-| `array-editor`   | array value editor               | `input-array`                                                            | `runtime`        | `docs/components/array-editor/design.md`   | landed              |
+| Flux component   | Role                             | AMIS source                                                              | Status    | Owner doc                                  | Implementation wave |
+| ---------------- | -------------------------------- | ------------------------------------------------------------------------ | --------- | ------------------------------------------ | ------------------- |
+| `form`           | form owner                       | `form`                                                                   | `runtime` | `docs/components/form/design.md`           | landed              |
+| `input-text`     | single-line text field           | `input-text`, `input-url`                                                | `runtime` | `docs/components/input-text/design.md`     | landed              |
+| `input-email`    | email field                      | `input-email`                                                            | `runtime` | `docs/components/input-email/design.md`    | landed              |
+| `input-password` | password field                   | `input-password`, `password`                                             | `runtime` | `docs/components/input-password/design.md` | landed              |
+| `textarea`       | multiline text field             | `textarea`                                                               | `runtime` | `docs/components/textarea/design.md`       | landed              |
+| `input-number`   | numeric field                    | `input-number`, `native-number`                                          | `runtime` | `docs/components/input-number/design.md`   | landed              |
+| `select`         | select field                     | `select`, `multi-select`                                                 | `runtime` | `docs/components/select/design.md`         | landed              |
+| `checkbox`       | single checkbox field            | `checkbox`                                                               | `runtime` | `docs/components/checkbox/design.md`       | landed              |
+| `radio-group`    | radio-group field                | `radio`, `radios`                                                        | `runtime` | `docs/components/radio-group/design.md`    | landed              |
+| `checkbox-group` | checkbox-group field             | `checkboxes`, `matrix-checkboxes`                                        | `runtime` | `docs/components/checkbox-group/design.md` | landed              |
+| `switch`         | switch field                     | `switch`                                                                 | `runtime` | `docs/components/switch/design.md`         | landed              |
+| `input-tree`     | tree field                       | `input-tree`                                                             | `runtime` | `docs/components/input-tree/design.md`     | landed              |
+| `tree-select`    | popup tree field                 | `tree-select`, `nested-select`, `chained-select`                         | `runtime` | `docs/components/tree-select/design.md`    | landed              |
+| `tag-list`       | lightweight tag collection field | no direct single AMIS top-level type; absorbs tag-list-like field scenes | `runtime` | `docs/components/tag-list/design.md`       | landed              |
+| `key-value`      | key-value editor field           | no direct single AMIS top-level type; absorbs KV editing scenes          | `runtime` | `docs/components/key-value/design.md`      | landed              |
+| `array-editor`   | array value editor               | `input-array`                                                            | `runtime` | `docs/components/array-editor/design.md`   | landed              |
 
 ### 5. Form Advanced And Composite
 

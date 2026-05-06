@@ -7,6 +7,7 @@ import {
   env,
   formulaCompiler,
   nodeInstanceProbeRenderer,
+  rowRecordNameProbeRenderer,
   registerProbeNamespace,
   rowScopeIdProbeRenderer,
 } from '../test-support';
@@ -407,6 +408,60 @@ describe('dataRendererDefinitions table behavior', () => {
       />,
     );
     expect((await screen.findByTestId('row-scope-id-probe')).textContent).toBe(initialScopeId);
+  });
+
+  it('reuses the same row scope while row-local consumers observe updated record content', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer([rowScopeIdProbeRenderer, rowRecordNameProbeRenderer]);
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://data/table-row-scope-record"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              rowKey: 'id',
+              columns: [
+                { label: 'Scope', cell: { type: 'row-scope-id-probe' } },
+                { label: 'Name', cell: { type: 'row-record-name-probe' } },
+              ],
+              source: [{ id: 1, name: 'Alice' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const initialScopeId = (await screen.findByTestId('row-scope-id-probe')).textContent;
+    expect((await screen.findByTestId('row-record-name-probe')).textContent).toBe('Alice');
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://data/table-row-scope-record"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              rowKey: 'id',
+              columns: [
+                { label: 'Scope', cell: { type: 'row-scope-id-probe' } },
+                { label: 'Name', cell: { type: 'row-record-name-probe' } },
+              ],
+              source: [{ id: 1, name: 'Alice updated' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect((await screen.findByTestId('row-scope-id-probe')).textContent).toBe(initialScopeId);
+    expect((await screen.findByTestId('row-record-name-probe')).textContent).toBe('Alice updated');
   });
 
   it('binds form controls in cells via $slot.record.fieldName path', async () => {

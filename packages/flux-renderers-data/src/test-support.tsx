@@ -12,6 +12,7 @@ import {
   createSchemaRenderer,
   useCurrentComponentRegistry,
   useRenderScope,
+  useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { dataRendererDefinitions } from './index';
 
@@ -55,6 +56,18 @@ function RowScopeIdProbeRenderer() {
 export const rowScopeIdProbeRenderer: RendererDefinition = {
   type: 'row-scope-id-probe',
   component: RowScopeIdProbeRenderer,
+};
+
+function RowRecordNameProbeRenderer() {
+  const name = useScopeSelector(
+    (scope: { $slot?: { record?: { name?: unknown } } }) => String(scope.$slot?.record?.name ?? ''),
+  );
+  return <span data-testid="row-record-name-probe">{name}</span>;
+}
+
+export const rowRecordNameProbeRenderer: RendererDefinition = {
+  type: 'row-record-name-probe',
+  component: RowRecordNameProbeRenderer,
 };
 
 function DispatchProbeRenderer(props: RendererComponentProps) {
