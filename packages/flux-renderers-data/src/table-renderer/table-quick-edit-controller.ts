@@ -29,6 +29,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
   const [bodyDirty, setBodyDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [saveError, setSaveError] = useState<unknown>(undefined);
 
   useEffect(() => {
     const nextValue = toOptionalDraftValue(record, field);
@@ -36,6 +37,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     setSavedValue(nextValue);
     setBodyDirty(false);
     setDialogOpen(false);
+    setSaveError(undefined);
   }, [field, record]);
 
   const dirty = hasCustomBody ? bodyDirty : draftValue !== savedValue;
@@ -88,6 +90,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     }
 
     setSaving(true);
+    setSaveError(undefined);
     try {
       await helpers.dispatch(saveAction, { scope: rowScope });
       const nextSavedValue = field
@@ -98,6 +101,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
       setBodyDirty(false);
       setDialogOpen(false);
     } catch (error) {
+      setSaveError(error);
       onSaveError?.(error);
     } finally {
       setSaving(false);
@@ -130,6 +134,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     dialogOpen,
     dirty,
     savedValue,
+    saveError,
     setDialogOpen,
     markBodyDirty,
     restoreSavedValue,

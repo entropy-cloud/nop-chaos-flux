@@ -49,6 +49,7 @@ export interface CreateReportDesignerCoreOptions {
   config: ReportDesignerConfig;
   adapters?: Partial<ReportDesignerAdapterRegistry>;
   profile?: ReportDesignerProfile;
+  onError?: (error: unknown, context: { phase: 'refresh-derived-state'; selectionTarget?: ReportSelectionTarget }) => void;
 }
 
 function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntimeSnapshot {
@@ -73,7 +74,7 @@ function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntim
 export function createReportDesignerCore(
   options: CreateReportDesignerCoreOptions,
 ): ReportDesignerCore {
-  const { document, config, adapters: providedAdapters, profile } = options;
+  const { document, config, adapters: providedAdapters, profile, onError } = options;
   const registry = resolveRegistry(providedAdapters);
 
   const initialDocument = cloneDocument(document);
@@ -242,6 +243,10 @@ export function createReportDesignerCore(
             error,
           },
         }));
+        onError?.(error, {
+          phase: 'refresh-derived-state',
+          selectionTarget: snapshot.selectionTarget,
+        });
       }
       return [];
     } finally {
@@ -363,7 +368,9 @@ export function createReportDesignerCore(
     return promise;
   }
 
-  void refreshDerivedState().catch(() => undefined);
+  void refreshDerivedState().catch((error) => {
+    onError?.(error, { phase: 'refresh-derived-state', selectionTarget: store.getState().selectionTarget });
+  });
 
   return {
     getSnapshot() {

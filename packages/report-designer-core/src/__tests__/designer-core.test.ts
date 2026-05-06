@@ -588,6 +588,36 @@ describe('createReportDesignerCore', () => {
     expect(fieldSourceProvider.load).toHaveBeenCalledTimes(1);
   });
 
+  it('reports startup refreshDerivedState failures through onError', async () => {
+    const startupError = new Error('field source failed');
+    const onError = vi.fn();
+    const fieldSourceProvider: FieldSourceProvider = {
+      id: 'async-provider',
+      load: vi.fn(async () => {
+        throw startupError;
+      }),
+    };
+
+    createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        fieldSources: [{ id: 'remote', label: 'Remote', provider: 'async-provider', groups: [] }],
+      },
+      adapters: {
+        fieldSources: new Map([[fieldSourceProvider.id, fieldSourceProvider]]),
+      },
+      onError,
+    });
+
+    await vi.waitFor(() => {
+      expect(onError).toHaveBeenCalledWith(
+        startupError,
+        expect.objectContaining({ phase: 'refresh-derived-state' }),
+      );
+    });
+  });
+
   it('reuses one document snapshot for adapter context and designer snapshot', async () => {
     let receivedContext:
       | import('../adapters.js').ReportDesignerAdapterContext

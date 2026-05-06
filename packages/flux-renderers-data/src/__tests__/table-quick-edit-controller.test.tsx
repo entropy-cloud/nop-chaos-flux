@@ -52,6 +52,7 @@ function ControllerHarness(props: {
       <span data-testid="dirty">{String(controller.dirty)}</span>
       <span data-testid="dialog-open">{String(controller.dialogOpen)}</span>
       <span data-testid="draft">{controller.draftValue}</span>
+      <span data-testid="save-error">{String(controller.saveError instanceof Error ? controller.saveError.message : controller.saveError ?? '')}</span>
       <button type="button" onClick={() => controller.handleInlineValueChange('Alicia')}>
         change
       </button>
@@ -169,6 +170,30 @@ describe('useTableQuickEditController', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('dialog-open').textContent).toBe('false');
+    });
+  });
+
+  it('exposes save failures through controller state', async () => {
+    cleanup();
+    const dispatch = vi.fn<() => Promise<{ ok: boolean }>>(async () => {
+      throw new Error('save failed');
+    });
+
+    render(
+      <ControllerHarness
+        field="name"
+        record={{ name: 'Alice' }}
+        rowScope={createRowScope({ name: 'Alice' })}
+        helpers={createHelpers(dispatch)}
+        saveAction={{ action: 'save' }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'change' }));
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('save-error').textContent).toBe('save failed');
     });
   });
 });
