@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { FormContext, FormLayoutContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
-import { type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
+import { reportRuntimeHostIssue, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
@@ -108,8 +108,19 @@ function resolveLifecycleWriteScope(parentScope: ScopeRef): ScopeRef {
     : parentScope;
 }
 
-function logFormInitActionError(error: unknown) {
-  console.warn('[form] initAction failed', error);
+function reportFormInitActionError(
+  runtime: ReturnType<typeof useRendererRuntime>,
+  path: string,
+  error: unknown,
+) {
+  reportRuntimeHostIssue({
+    env: runtime.env,
+    level: 'error',
+    message: 'Form initAction failed',
+    error,
+    phase: 'action',
+    path,
+  });
 }
 
 export function FormRenderer(props: RendererComponentProps<FormSchema>) {
@@ -292,7 +303,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
           return;
         }
 
-        logFormInitActionError(error);
+        reportFormInitActionError(runtime, props.path, error);
 
         if (inFlightInitKeyRef.current === activationKey) {
           inFlightInitKeyRef.current = undefined;
@@ -313,7 +324,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         initActionAbortRef.current = null;
       }
     };
-  }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm]);
+  }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm, props.path, runtime]);
 
   const statusPath =
     typeof (props.props as FormSchema).statusPath === 'string'

@@ -27,6 +27,18 @@ function isPromiseLike<T>(value: T | Promise<T>): value is Promise<T> {
   return typeof value === 'object' && value !== null && 'then' in value;
 }
 
+function reportFieldHandlerError(prefix: string, error: unknown) {
+  console.warn(prefix, error);
+}
+
+function attachValidationRejectionHandler(result: void | Promise<unknown>, prefix: string) {
+  if (isPromiseLike(result)) {
+    void result.catch((error: unknown) => {
+      reportFieldHandlerError(prefix, error);
+    });
+  }
+}
+
 export function useBoundFieldValue(
   name: string,
   currentForm: FormRuntime | undefined,
@@ -108,7 +120,10 @@ export function createFieldHandlers(args: {
         currentForm.touchField(name);
 
         if (shouldValidateOn(name, currentForm, 'blur')) {
-          void currentForm.validateField(name);
+          attachValidationRejectionHandler(
+            currentForm.validateField(name),
+            '[field-utils] validateField failed in onBlur',
+          );
         }
 
         return;
@@ -118,7 +133,10 @@ export function createFieldHandlers(args: {
         validationOwnerWithFieldState?.touchField?.(name);
 
         if (shouldValidateOnOwner(name, currentValidationScope, 'blur')) {
-          void currentValidationScope.validateAt(name, 'blur');
+          attachValidationRejectionHandler(
+            currentValidationScope.validateAt(name, 'blur'),
+            '[field-utils] validateAt failed in onBlur',
+          );
         }
       }
     },

@@ -305,6 +305,7 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
         data-slot="radio-group-options"
         value={selectedValue}
         disabled={loading || presentation.effectiveDisabled}
+        aria-required={props.props.required ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}
         onFocus={handlers.onFocus}
         onValueChange={(nextValue) => handlers.onChange(nextValue)}
@@ -317,7 +318,11 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
           </Label>
         ))}
       </RadioGroup>
-      {errorMessage ? <span data-slot="radio-group-error">{errorMessage}</span> : null}
+      {errorMessage ? (
+        <span data-slot="radio-group-error" role="alert">
+          {errorMessage}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -340,6 +345,8 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
     <div
       className={cn('nop-checkbox-group-wrapper', props.meta.className)}
       data-slot="checkbox-group-wrapper"
+      role="group"
+      aria-required={props.props.required ? true : undefined}
     >
       {loading ? (
         <span data-slot="checkbox-group-loading">

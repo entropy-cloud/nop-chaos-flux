@@ -162,4 +162,5 @@ describe('hidden field policy - renderer integration', () => {
 
     expect(capturedForm.scope.get('notes')).toBe('preserved note');
   });
+
 });

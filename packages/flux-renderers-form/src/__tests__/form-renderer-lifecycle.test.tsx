@@ -478,7 +478,6 @@ describe('FormRenderer lifecycle wiring', () => {
   it('retries a rejected initAction on rerender within the same activation and reports the failure', async () => {
     const parentScope = makeScope({ id: 'parent', visible: { parentValue: 'plain' } });
     const ownedScope = makeScope({ id: 'owned-init', visible: { localValue: 'plain-owned' } });
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const rejectedInitAction = vi.fn(async () => {
       throw new Error('first init failed');
     });
@@ -489,6 +488,7 @@ describe('FormRenderer lifecycle wiring', () => {
       setLifecycleHandlers: vi.fn(),
     } as any;
     const runtime = {
+      env: { notify: vi.fn(), monitor: undefined },
       getImportedExpressionBindings: vi.fn(() => ({})),
       createFormRuntime: vi.fn(() => ownedForm),
     } as any;
@@ -513,7 +513,7 @@ describe('FormRenderer lifecycle wiring', () => {
     await waitFor(() => {
       expect(rejectedInitAction).toHaveBeenCalledTimes(1);
     });
-    expect(warnSpy).toHaveBeenCalledWith('[form] initAction failed', expect.any(Error));
+    expect(runtime.env.notify).toHaveBeenCalledWith('error', 'Form initAction failed');
 
     rerender(
       <FormRenderer
@@ -529,7 +529,5 @@ describe('FormRenderer lifecycle wiring', () => {
     await waitFor(() => {
       expect(successfulInitAction).toHaveBeenCalledTimes(1);
     });
-
-    warnSpy.mockRestore();
   });
 });

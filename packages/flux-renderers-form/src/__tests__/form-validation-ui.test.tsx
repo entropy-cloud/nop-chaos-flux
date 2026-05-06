@@ -464,4 +464,63 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
     expect(await screen.findByText('Email is required')).toBeTruthy();
   });
+
+  it('adds required and alert semantics to radio-group async errors', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/validation-ui#radio-aria"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'radio-group',
+              name: 'status',
+              label: 'Status',
+              required: true,
+              optionsSourceState: { status: 'error', error: 'Failed to load choices' },
+              options: [],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const group = document.querySelector('[data-slot="radio-group-options"]');
+    expect(group?.getAttribute('aria-required')).toBe('true');
+    expect(document.querySelector('[data-slot="radio-group-error"]')?.getAttribute('role')).toBe('alert');
+  });
+
+  it('adds group semantics to checkbox-group roots', () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/validation-ui#checkbox-group-aria"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'checkbox-group',
+              name: 'tags',
+              label: 'Tags',
+              required: true,
+              options: [{ label: 'Stable', value: 'stable' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const group = document.querySelector('[data-slot="checkbox-group-wrapper"]');
+    expect(group?.getAttribute('role')).toBe('group');
+    expect(group?.getAttribute('aria-required')).toBe('true');
+  });
 });
