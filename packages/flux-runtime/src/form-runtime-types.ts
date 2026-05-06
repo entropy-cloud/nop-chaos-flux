@@ -75,6 +75,9 @@ export interface FormRuntimeInitialStateSlice {
   initialFieldState: InitialFieldState;
 }
 
+export interface FormRuntimeCoreState
+  extends FormRuntimeStoreScopeState, FormRuntimeInitialStateSlice {}
+
 export interface FormRuntimeValidationRunState {
   validationRuns: Map<string, number>;
   pendingValidationDebounces: Map<string, PendingValidationDebounce>;
@@ -82,15 +85,15 @@ export interface FormRuntimeValidationRunState {
   validationAsyncGovernance: AsyncGovernanceStore;
 }
 
-export interface FormRuntimeRegistrationState
-  extends FormRuntimeStoreScopeState, FormRuntimeInitialStateSlice {
+export interface FormRuntimeRegistrationIndexState {
   runtimeFieldRegistrations: Map<string, RegisteredFieldEntry>;
   pathToRegistrationId: Map<string, string>;
   childPathToRegistrationId: Map<string, string>;
 }
 
-export interface FormRuntimeValidationState
-  extends FormRuntimeRegistrationState, FormRuntimeValidationRunState {
+export type FormRuntimeRegistrationState = FormRuntimeCoreState & FormRuntimeRegistrationIndexState;
+
+export interface FormRuntimeValidationOwnerState {
   inputValue: CreateManagedFormRuntimeInput;
   hiddenFields: Set<string>;
   lifecycleState: ValidationOwnerLifecycleState;
@@ -98,7 +101,12 @@ export interface FormRuntimeValidationState
   lifecycleWaiters: Set<() => void>;
 }
 
-export interface FormRuntimeExternalErrorState extends FormRuntimeStoreScopeState {
+export type FormRuntimeValidationState = FormRuntimeCoreState &
+  FormRuntimeRegistrationIndexState &
+  FormRuntimeValidationRunState &
+  FormRuntimeValidationOwnerState;
+
+export interface FormRuntimeExternalErrorState {
   externalErrors: Map<string, ExternalErrorEntry>;
 }
 
@@ -106,10 +114,16 @@ export interface FormRuntimeChildContractState {
   childContracts: Map<string, ChildValidationContractRegistration>;
 }
 
-export interface FormRuntimeOwnerState
-  extends
-    FormRuntimeValidationState,
-    FormRuntimeExternalErrorState,
-    FormRuntimeChildContractState {}
+export type FormRuntimeOwnerState = FormRuntimeCoreState &
+  FormRuntimeRegistrationIndexState &
+  FormRuntimeValidationRunState &
+  FormRuntimeValidationOwnerState &
+  FormRuntimeExternalErrorState &
+  FormRuntimeChildContractState;
 
-export interface ManagedFormRuntimeSharedState extends FormRuntimeOwnerState {}
+export type ManagedFormRuntimeSharedState = FormRuntimeCoreState &
+  FormRuntimeRegistrationIndexState &
+  FormRuntimeValidationRunState &
+  FormRuntimeValidationOwnerState &
+  FormRuntimeExternalErrorState &
+  FormRuntimeChildContractState;
