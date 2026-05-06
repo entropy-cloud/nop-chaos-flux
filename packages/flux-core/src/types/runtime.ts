@@ -206,6 +206,7 @@ export interface SurfaceEntry extends OwnedSurfaceStateBase {
 
 export interface SurfaceStoreState {
   entries: SurfaceEntry[];
+  uncontrolledOpenById: Readonly<Record<string, boolean>>;
 }
 
 export interface PageStoreState {
@@ -227,6 +228,9 @@ export interface SurfaceStoreApi {
   push(entry: SurfaceEntry): void;
   upsert(entry: SurfaceEntry): void;
   remove(surfaceId?: string): SurfaceEntry | undefined;
+  setUncontrolledOpen(surfaceId: string, open: boolean): void;
+  getUncontrolledOpen(surfaceId: string): boolean | undefined;
+  clearUncontrolledOpen(surfaceId: string): void;
 }
 
 export interface SurfaceRuntime {

@@ -33,6 +33,19 @@ export const DEBUGGER_STYLES = `
   --nop-debugger-badge-notify-text: #ffbac8;
   --nop-debugger-badge-error-bg: rgba(255, 128, 128, 0.18);
   --nop-debugger-badge-error-text: #ffadad;
+  --nop-debugger-highlight-bg: rgba(255, 207, 139, 0.22);
+  --nop-debugger-highlight-text: #fff3d6;
+  --nop-debugger-json-key: #9bd9ff;
+  --nop-debugger-json-string: #9df3ca;
+  --nop-debugger-json-number: #ffd18a;
+  --nop-debugger-json-boolean: #dcc0ff;
+  --nop-debugger-launcher-badge-bg: #ff6b6b;
+  --nop-debugger-launcher-badge-text: #ffffff;
+  --nop-debugger-overlay-accent: #1c76c4;
+  --nop-debugger-overlay-hover-bg: rgba(28, 118, 196, 0.06);
+  --nop-debugger-overlay-active-bg: rgba(28, 118, 196, 0.1);
+  --nop-debugger-overlay-selected-bg: rgba(28, 118, 196, 0.15);
+  --nop-debugger-overlay-selected-outline: rgba(28, 118, 196, 0.3);
 }
 
 .nop-debugger {
@@ -278,13 +291,13 @@ export const DEBUGGER_STYLES = `
   gap: 8px;
 }
 
-.ndbg-highlight { border-radius: 4px; background: rgba(255, 207, 139, 0.22); color: #fff3d6; padding: 0 2px; }
+.ndbg-highlight { border-radius: 4px; background: var(--nop-debugger-highlight-bg); color: var(--nop-debugger-highlight-text); padding: 0 2px; }
 
 .ndbg-entry { cursor: pointer; }
-.ndbg-json-key { color: #9bd9ff; }
-.ndbg-json-string { color: #9df3ca; }
-.ndbg-json-number { color: #ffd18a; }
-.ndbg-json-boolean { color: #dcc0ff; }
+.ndbg-json-key { color: var(--nop-debugger-json-key); }
+.ndbg-json-string { color: var(--nop-debugger-json-string); }
+.ndbg-json-number { color: var(--nop-debugger-json-number); }
+.ndbg-json-boolean { color: var(--nop-debugger-json-boolean); }
 .ndbg-json-null { color: var(--nop-debugger-muted-text); font-style: italic; }
 .ndbg-json-toggle { cursor: pointer; user-select: none; color: var(--nop-debugger-muted-text); font-size: 11px; }
 .ndbg-json-toggle:hover { color: var(--nop-debugger-text); }
@@ -297,7 +310,7 @@ export const DEBUGGER_STYLES = `
 
 .ndbg-launcher-badge {
   position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px;
-  padding: 0 4px; border-radius: 999px; background: #ff6b6b; color: white;
+  padding: 0 4px; border-radius: 999px; background: var(--nop-debugger-launcher-badge-bg); color: var(--nop-debugger-launcher-badge-text);
   font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;
   animation: nop-debugger-pulse 2s ease-in-out infinite;
 }
@@ -318,12 +331,12 @@ export const DEBUGGER_STYLES = `
 .nop-debugger-overlay {
   position: fixed; pointer-events: none; z-index: 10000; border-radius: 2px; transition: all 0.05s ease;
 }
-.nop-debugger-overlay[data-overlay-state="hover"] { outline: 1px dashed #1c76c4; background: rgba(28, 118, 196, 0.06); }
-.nop-debugger-overlay[data-overlay-state="active"] { outline: 2px solid #1c76c4; background: rgba(28, 118, 196, 0.1); }
+.nop-debugger-overlay[data-overlay-state="hover"] { outline: 1px dashed var(--nop-debugger-overlay-accent); background: var(--nop-debugger-overlay-hover-bg); }
+.nop-debugger-overlay[data-overlay-state="active"] { outline: 2px solid var(--nop-debugger-overlay-accent); background: var(--nop-debugger-overlay-active-bg); }
 .ndbg-component-tree { max-height: 180px; overflow-y: auto; border: 1px solid var(--nop-debugger-chip-border); border-radius: 8px; padding: 4px; }
 .ndbg-tree-item { padding: 4px 8px; border-radius: 4px; cursor: pointer; }
 .ndbg-tree-item:hover { background: var(--nop-debugger-chip-active-bg); }
-.ndbg-tree-item.selected { background: rgba(28, 118, 196, 0.15); outline: 1px solid rgba(28, 118, 196, 0.3); }
+.ndbg-tree-item.selected { background: var(--nop-debugger-overlay-selected-bg); outline: 1px solid var(--nop-debugger-overlay-selected-outline); }
 .ndbg-resize-handle {
   position: absolute; left: 0; top: 22px; bottom: 22px; width: 6px;
   cursor: ew-resize; border-radius: 3px 0 0 3px; z-index: 2;
