@@ -135,12 +135,14 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
               registry: getSnapshot(),
               reportError: createExpressionMonitorReporter(env, source),
             }) as T;
-          } catch {
-            createExpressionMonitorReporter(env, source)(
-              new Error('Expression evaluation failed'),
-              { source: 'formula-compiler' },
-            );
-            throw new Error(`Expression evaluation failed for: ${source}`);
+          } catch (error) {
+            const wrappedError = new Error(`Expression evaluation failed for: ${source}`, {
+              cause: error,
+            });
+            createExpressionMonitorReporter(env, source)(wrappedError, {
+              source: 'formula-compiler',
+            });
+            throw wrappedError;
           }
         },
       };

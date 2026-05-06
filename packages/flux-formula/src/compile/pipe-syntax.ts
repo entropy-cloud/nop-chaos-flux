@@ -59,7 +59,13 @@ function splitFilterArgs(source: string): string[] {
   return args.filter((item) => item.length > 0);
 }
 
-function rewriteFilterPipeSyntax(source: string): string {
+function isFilterIdentifier(value: string): boolean {
+  return /^[A-Za-z_$][A-Za-z0-9_$.]*$/.test(value);
+}
+
+function parseTopLevelFilterSegments(source: string): string[] | null {
+  const segments: string[] = [];
+  let start = 0;
   let quote: string | undefined;
   let depth = 0;
 
@@ -93,18 +99,37 @@ function rewriteFilterPipeSyntax(source: string): string {
     }
 
     if (depth === 0 && isPipeBoundary(source, index)) {
-      const left = source.slice(0, index).trim();
-      const right = source.slice(index + 1).trim();
-      const [filterName, ...argParts] = splitFilterArgs(right);
-      if (!filterName) {
-        return source;
-      }
-      const args = [left, ...argParts].join(', ');
-      return `${filterName}(${args})`;
+      segments.push(source.slice(start, index).trim());
+      start = index + 1;
     }
   }
 
-  return source;
+  if (segments.length === 0) {
+    return null;
+  }
+
+  segments.push(source.slice(start).trim());
+  return segments;
+}
+
+function rewriteFilterPipeSyntax(source: string): string {
+  const segments = parseTopLevelFilterSegments(source);
+  if (!segments) {
+    return source;
+  }
+
+  let rewritten = segments[0];
+  for (const segment of segments.slice(1)) {
+    const [filterName, ...argParts] = splitFilterArgs(segment);
+    if (!filterName || !isFilterIdentifier(filterName)) {
+      return source;
+    }
+
+    const args = [rewritten, ...argParts].join(', ');
+    rewritten = `${filterName}(${args})`;
+  }
+
+  return rewritten;
 }
 
 export { rewriteFilterPipeSyntax };

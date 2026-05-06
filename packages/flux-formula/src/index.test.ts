@@ -106,6 +106,27 @@ describe('createFormulaCompiler', () => {
     expect(expression.exec(createScope({ name: 'Ada' }), env)).toBe('[Ada]');
   });
 
+  it('does not rewrite bitwise OR expressions as filter pipes', () => {
+    const compiler = createFormulaCompiler();
+    const expression = compiler.compileExpression('${5 | 3}');
+
+    expect(expression.exec(createScope({}), env)).toBe(7);
+  });
+
+  it('rewrites chained filter-pipe syntax left-to-right', () => {
+    const registry = createFormulaRegistry();
+    registry.registerFunction('wrap', (value: unknown, left: string, right: string) => {
+      return `${left}${String(value)}${right}`;
+    });
+    registry.registerFunction('suffix', (value: unknown, suffix: string) => {
+      return `${String(value)}${suffix}`;
+    });
+    const compiler = createFormulaCompiler(registry);
+    const expression = compiler.compileExpression('${name | wrap:"[":"]" | suffix:"!"}');
+
+    expect(expression.exec(createScope({ name: 'Ada' }), env)).toBe('[Ada]!');
+  });
+
   it('reports runtime expression errors through monitor.onError and throws', () => {
     const onError = vi.fn();
     const compiler = createFormulaCompiler();
@@ -119,6 +140,19 @@ describe('createFormulaCompiler', () => {
     ).toThrow(/Expression evaluation failed/);
 
     expect(onError).toHaveBeenCalled();
+  });
+
+  it('preserves the original evaluation error as cause', () => {
+    const compiler = createFormulaCompiler();
+    const expression = compiler.compileExpression('${user.name.first}');
+
+    try {
+      expression.exec(createScope({ user: null }), env);
+      throw new Error('Expected expression execution to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error & { cause?: unknown }).cause).toBeTruthy();
+    }
   });
 
   it('keeps IF lazy and does not evaluate the untaken branch', () => {
