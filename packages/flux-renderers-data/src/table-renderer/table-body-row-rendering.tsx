@@ -5,7 +5,7 @@ import type {
   RendererComponentProps,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import { Button, Checkbox, RadioGroupItem, TableCell, TableRow } from '@nop-chaos/ui';
+import { Button, Checkbox, TableCell, TableRow } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema } from '../schemas';
@@ -139,14 +139,19 @@ export function renderDataRow(
           style={fixedColumnLayout.getSelectionCellProps().style}
           onClick={(event) => event.stopPropagation()}
         >
-          {schemaProps.rowSelection.type === 'checkbox' ? (
+          {schemaProps.rowSelection.type === 'radio' ? (
             <Checkbox
+              shape="circle"
               checked={isSelected}
               onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))}
               aria-label={t('flux.table.selectRow')}
             />
           ) : (
-            <RadioGroupItem value={rowKey} />
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))}
+              aria-label={t('flux.table.selectRow')}
+            />
           )}
         </TableCell>
       ) : null}

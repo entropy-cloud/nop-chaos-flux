@@ -77,15 +77,22 @@ export function useTableSelection(
     [selectionOwnership, selectionStatePath, source, onSelectionChange, helpers, renderScope],
   );
 
+  const isRadio = schemaProps.rowSelection?.type === 'radio';
+
   const handleSelectRow = useCallback(
     (rowKey: string, checked: boolean) => {
-      const baseSet = selectionOwnership === 'controlled' ? selectedRowKeys : localSelectedRowKeys;
-      const newSet = new Set(baseSet);
+      const baseSet = selectionOwnership === 'local' ? localSelectedRowKeys : selectedRowKeys;
 
-      if (checked) {
-        newSet.add(rowKey);
+      let newSet: Set<string>;
+      if (isRadio) {
+        newSet = checked ? new Set([rowKey]) : new Set<string>();
       } else {
-        newSet.delete(rowKey);
+        newSet = new Set(baseSet);
+        if (checked) {
+          newSet.add(rowKey);
+        } else {
+          newSet.delete(rowKey);
+        }
       }
 
       startTransition(() => {
@@ -105,6 +112,7 @@ export function useTableSelection(
     },
     [
       helpers,
+      isRadio,
       localSelectedRowKeys,
       onSelectionChange,
       renderScope,
