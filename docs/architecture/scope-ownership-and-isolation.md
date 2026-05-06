@@ -52,6 +52,9 @@ child scope = parent lexical visibility + own patch shadowing
 - 在该节点创建 own scope 时，向 own snapshot 写入初始 patch
 - 它只影响当前节点 own scope
 - 它与父 scope 的关系仍然受默认继承 / 显式隔离规则约束
+- 如果 `data` 含表达式，这些表达式应在该 owner / scope 创建时，基于父 lexical scope 求值一次
+- 求值结果写入 own snapshot 后，该 `data` 不再被视为对父 scope 的持续 live binding
+- parent scope 后续变化默认不反向覆盖 child owner / scope 已经持有的值；需要重同步时应使用显式 lifecycle/action
 
 这意味着：
 
@@ -59,11 +62,22 @@ child scope = parent lexical visibility + own patch shadowing
 - `form.data` 初始化 form own scope / initial values carrier
 - future `dialog.data` 若存在，应初始化 dialog own scope
 
+推荐心智模型：
+
+```text
+parent lexical scope
+  --evaluate node.data once at owner/scope creation-->
+initial patch snapshot
+  --seed-->
+child own scope
+```
+
 不应把 `data` 理解为：
 
 - 第二套“局部 props 系统”
 - 与 scope 脱节的静态常量袋
 - 隐式关闭父级可见性的标志
+- 父 scope 到 child own scope 的持续双向同步协议
 
 ## Recommended Naming
 

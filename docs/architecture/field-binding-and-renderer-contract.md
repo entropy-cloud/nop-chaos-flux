@@ -351,19 +351,19 @@ interface BoundFieldSchemaBase extends BaseSchema {
 
 ### Field Channel Assignment
 
-| Author-Facing Field                                  | Normalized Channel               | Frozen Rule                                                                              |
-| ---------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------- |
-| `name`                                               | `props.name`                     | 从 META_FIELDS 移除，由 renderer metadata 分类为 prop；editable field 的唯一双向绑定入口 |
-| `readOnly`                                           | `props.readOnly`                 | 业务编辑语义，进入 props，不进入 meta                                                    |
-| `required`                                           | `props.required`                 | 字段级校验语义，进入 props                                                               |
-| `label`                                              | `props.label` 或 `regions.label` | 由 renderer metadata 决定；不再硬编码为全局 meta                                         |
-| `title`                                              | `props.title` 或 `regions.title` | 由 renderer metadata 决定；不再硬编码为全局 meta                                         |
-| `disabled`                                           | `meta.disabled`                  | runtime 节点控制态，保留在 meta                                                          |
-| `visible` / `hidden`                                 | `meta.*`                         | runtime 节点可见性，保留在 meta                                                          |
-| `className` / `testid` / `id`                        | `meta.*`                         | 外层 wrapper / observability，保留在 meta                                                |
-| `text`, `data`, `options`, `items`, `placeholder`, … | `props.*`                        | 语义化内容字段，保留命名，通过 renderer metadata 进入 props                              |
-| `body`, `header`, `footer`, `actions`, `toolbar`     | `regions.*`                      | 子 schema 片段，由 renderer metadata 分类为 region                                       |
-| `onClick`, `onSubmit`, `onChange`, …                 | `events.*`                       | declarative action，保留 on\* 命名                                                       |
+| Author-Facing Field                                  | Normalized Channel               | Frozen Rule                                                                                                                                 |
+| ---------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                                               | `props.name`                     | 从 META_FIELDS 移除，由 renderer metadata 分类为 prop；editable field 的唯一双向绑定入口                                                    |
+| `readOnly`                                           | `props.readOnly`                 | 业务编辑语义，进入 props，不进入 meta                                                                                                       |
+| `required`                                           | `props.required`                 | 字段级校验语义，进入 props                                                                                                                  |
+| `label`                                              | `props.label` 或 `regions.label` | 由 renderer metadata 决定；不再硬编码为全局 meta                                                                                            |
+| `title`                                              | `props.title` 或 `regions.title` | 由 renderer metadata 决定；不再硬编码为全局 meta                                                                                            |
+| `disabled`                                           | `meta.disabled`                  | runtime 节点控制态，保留在 meta                                                                                                             |
+| `visible` / `hidden`                                 | `meta.*`                         | runtime 节点可见性，保留在 meta                                                                                                             |
+| `className` / `testid` / `id`                        | `meta.*`                         | 外层 wrapper / observability，保留在 meta                                                                                                   |
+| `text`, `data`, `options`, `items`, `placeholder`, … | `props.*`                        | 语义化内容字段，保留命名，通过 renderer metadata 进入 props；owner `data` 默认表示 one-time evaluated initial snapshot，而不是 live binding |
+| `body`, `header`, `footer`, `actions`, `toolbar`     | `regions.*`                      | 子 schema 片段，由 renderer metadata 分类为 region                                                                                          |
+| `onClick`, `onSubmit`, `onChange`, …                 | `events.*`                       | declarative action，保留 on\* 命名                                                                                                          |
 
 ### Global META_FIELDS Frozen Set
 

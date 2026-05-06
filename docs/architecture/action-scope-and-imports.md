@@ -822,6 +822,58 @@ The button `confirm` in the dialog resolves to the dialog's `xui:actions.confirm
 - `xui:actions` names do not use namespace syntax; they are plain identifiers (e.g., `submitOrder`, not `form:submitOrder`)
 - `xui:actions` names must not contain `:` to avoid confusion with namespaced actions
 
+### Execution Scope Semantics
+
+`xui:actions` uses lexical visibility for name resolution, but the resolved action program executes against the caller's runtime `ActionContext`.
+
+That means two different scope questions have different answers:
+
+- **which named action definition is selected**: lexical lookup from the current node to ancestors
+- **which data scope expression evaluation reads and writes**: the runtime `ActionContext.scope` of the dispatch site
+
+Normative rules:
+
+- resolving `{ "action": "submitOrder" }` chooses the nearest visible `xui:actions.submitOrder` by lexical ancestry
+- once resolved, the compiled action chain evaluates `when`, `args`, `then`, `onError`, and nested action expressions against the caller's current runtime scope rather than the defining node's data scope
+- `xui:actions` does not implicitly capture or freeze the declaring node's `ScopeRef`
+- if the same named action is invoked from a row scope, dialog scope, or form scope, expression reads should see that caller-visible runtime data just like any inline action dispatched from the same location
+
+This model intentionally treats `xui:actions` as a schema-local named program, not as a closure object. Name visibility is lexical; data binding is runtime.
+
+Example:
+
+```json
+{
+  "type": "form",
+  "xui:actions": {
+    "submitCurrent": {
+      "action": "ajax",
+      "args": {
+        "url": "/api/orders/${id}",
+        "method": "post",
+        "data": {
+          "customer": "${customerName}"
+        }
+      }
+    }
+  },
+  "body": [
+    {
+      "type": "table",
+      "rowActions": [
+        {
+          "type": "button",
+          "label": "Submit Row",
+          "onClick": { "action": "submitCurrent" }
+        }
+      ]
+    }
+  ]
+}
+```
+
+When `submitCurrent` is triggered from a table row action, the action name still resolves lexically to the form's `xui:actions.submitCurrent`, but `${id}` and `${customerName}` should resolve from the row/button dispatch context if that is the current runtime scope at invocation time. The definition site controls visibility; the call site controls data context.
+
 ### Resolution In The Action Pipeline
 
 `xui:actions` is resolved at step 3 of the resolution order, before `ActionScope` namespace lookup:
@@ -1145,6 +1197,7 @@ The key rule is:
 
 - do not force all callers to know the full action-scope chain manually
 - do make action-scope use explicit at host boundaries
+- do preserve the caller's runtime `ActionContext.scope` when dispatching a resolved `xui:actions` program; action-scope lookup must not silently switch data evaluation back to the definition site's data scope
 
 The runtime will also need a component-target dispatch path for actions that identify `componentId` or `componentName`.
 

@@ -267,6 +267,33 @@ Data Domain Owner =
 - “surface 里有 own scope” 不等于 “surface 本身拥有业务提交语义”
 - “surface 里出现 form / detail / local draft editor” 才表示 surface subtree 内承载了 data domain owner
 
+## Owner `data` Initialization Rule
+
+对任何会创建 own data domain 或 own scope 的 owner-like 节点，`data` 都应遵循同一初始化规则：
+
+1. `data` 的职责是提供 owner-owned initial snapshot / initial patch。
+2. 如果 `data` 含表达式，表达式在 owner 创建时基于 parent lexical scope 求值一次。
+3. 求值结果写入 owner-owned working state 之后，`data` 不再代表 parent -> owner 的持续 live binding。
+4. owner 内部子节点后续读取和修改的是真正的 owner-owned state，而不是回头反复重算 authoring-time `data`。
+5. 如果产品语义需要根据外部变化重新装载 owner 值，必须通过显式 `reset`、`setValues`、`initAction`、remount 或等价 lifecycle 入口完成。
+
+这个规则同时服务于两条边界：
+
+1. owner read facet 必须稳定，不能让 parent churn 隐式覆盖 owner 内正在编辑的值。
+2. owner publish facet 必须显式，外部重同步不能伪装成 `data` 的自然持续绑定。
+
+推荐心智模型：
+
+```text
+parent scope
+  --evaluate owner.data once-->
+owner initial snapshot
+  --seed-->
+owner-owned working state
+  --read/write by owner subtree-->
+live owner data
+```
+
 ## Canonical Identity And Addressing
 
 `Data Domain Owner` 不只回答“谁拥有值”，还必须回答“owner 内的 canonical address 是什么”。

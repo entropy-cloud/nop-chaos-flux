@@ -24,6 +24,8 @@
 - `statusPath` 用于把当前 form 的只读语义状态摘要发布到外层 scope。
 - `valuesPath` 用于把当前 form 的只读 values snapshot 发布到外层 scope。
 - `name` 仍是 form owner identity，不应在组件文档里被解释成“自动对外发布路径”；外部值发布边界见 `docs/architecture/form-external-publication-and-reserved-bindings.md`。
+- `data` 的正式语义是 form owner 的 initial values snapshot：如果其中含表达式，应在 form 创建时基于 parent lexical scope 求值一次，再把结果写入 form-owned working state。
+- `form.data` 不是 live binding。parent scope 后续变化默认不应覆盖 form 内已经初始化或已编辑的值；需要重同步时应通过显式 `reset`、`setValues`、`initAction` 或 remount 完成。
 - 提交逻辑继续以 action/runtime 为主，不直接把请求逻辑塞进 renderer JSX。
 - 命名上不应把 `initAction`、`submitAction` 机械改为 `onInit`、`onSubmit`。它们表示 form owner 的主生命周期入口；`onSubmitSuccess`、`onSubmitError`、`onValidateError` 才是 follow-up hook 风格的结果分支入口。
 
@@ -59,6 +61,7 @@
 ## 9. 数据源、表达式、导入能力接入点
 
 - 初始值通过 `data` 注入。
+- `data` 中的表达式在 form 创建时求值一次，结果成为 form store 的初始 values。
 - 表单内字段表达式读取 form scope。
 - 表单内元状态表达式读取 `$form`，不读取 `$store`。
 - 异步校验和提交请求应复用统一 API/DataSource 契约。
