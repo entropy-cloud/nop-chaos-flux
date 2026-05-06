@@ -35,6 +35,48 @@ test.describe('form renderer', () => {
       timeout: 5_000,
     });
   });
+
+  test('write: hidden required field is skipped until shown, then resumes validation', async ({
+    page,
+  }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('form');
+
+    const slug = scenarioSlug('Hidden required field skips validation until shown');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+
+    const collectSecret = stage.getByRole('checkbox', { name: 'Collect secret code' });
+    const submitButton = stage.getByRole('button', { name: 'Submit Access Settings' });
+    const secretCode = stage.locator('input[name="secretCode"]');
+    const scopeDebug = stage.locator('[data-slot="scope-debug-json"]');
+
+    await expect(collectSecret).toBeVisible();
+    await expect(secretCode).toHaveCount(0);
+    await expect(scopeDebug).toContainText('"errorCount": 0');
+    await expect(scopeDebug).toContainText('"valid": true');
+
+    await submitButton.click();
+    await expect(scopeDebug).toContainText('"errorCount": 0');
+    await expect(scopeDebug).toContainText('"valid": true');
+    await expect(stage.locator('[data-slot="field-error"]')).toHaveCount(0);
+
+    await collectSecret.click();
+    await expect(secretCode).toBeVisible();
+
+    await submitButton.click();
+    await expect(stage.locator('[data-slot="field-error"]')).toContainText(
+      /Secret Code.*(不能为空|required)|不能为空|required/i,
+    );
+    await expect(scopeDebug).toContainText('"errorCount": 1');
+    await expect(scopeDebug).toContainText('"valid": false');
+
+    await secretCode.fill('alpha-42');
+    await submitButton.click();
+    await expect(scopeDebug).toContainText('"errorCount": 0');
+    await expect(scopeDebug).toContainText('"valid": true');
+    await expect(scopeDebug).toContainText('"secretCode": "alpha-42"');
+  });
 });
 
 // ---------------------------------------------------------------------------

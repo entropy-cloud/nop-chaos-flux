@@ -60,6 +60,33 @@ const formWithSubmitFeedback = {
   ],
 };
 
+const formWithHiddenRequiredField = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      statusPath: 'ui.hiddenFieldStatus',
+      data: { collectSecret: false },
+      body: [
+        {
+          type: 'checkbox',
+          name: 'collectSecret',
+          label: 'Collect secret code',
+        },
+        {
+          type: 'input-text',
+          name: 'secretCode',
+          label: 'Secret Code',
+          placeholder: 'Enter secret code',
+          required: true,
+          visible: '${collectSecret === true}',
+        },
+      ],
+      actions: [{ type: 'button', label: 'Submit Access Settings', onClick: { action: 'submit' } }],
+    },
+  ],
+};
+
 export function FormLabPage() {
   return (
     <MultiScenarioLabPage
@@ -75,6 +102,12 @@ export function FormLabPage() {
           description:
             'Fill in username and email, then click Submit. The form lifecycle writes the local username into a parent success message.',
           schema: formWithSubmitFeedback,
+        },
+        {
+          title: 'Hidden required field skips validation until shown',
+          description:
+            'Submit once with the secret field hidden to prove hidden fields do not block submission. Then reveal the required field and submit again to verify validation resumes when the field becomes visible.',
+          schema: formWithHiddenRequiredField,
         },
       ]}
     />
