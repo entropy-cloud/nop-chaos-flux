@@ -304,10 +304,13 @@ export function renderExpandedRow(
                 typeof column.cellRegionKey === 'string'
                   ? parentProps.regions[column.cellRegionKey]
                   : undefined;
+              const labelRegion =
+                typeof column.labelRegionKey === 'string'
+                  ? parentProps.regions[column.labelRegionKey]
+                  : undefined;
               const label =
-                typeof column.label === 'string'
-                  ? column.label
-                  : (column.name ?? `Column ${index + 1}`);
+                asReactNode(labelRegion?.render()) ??
+                (typeof column.label === 'string' ? column.label : (column.name ?? `Column ${index + 1}`));
               const columnKey = column.name ?? `${label}-${column.type ?? 'value'}`;
               return (
                 <div

@@ -40,7 +40,7 @@ function createStickyStyle(
     position: 'sticky',
     [fixed]: `${offset}px`,
     zIndex: fixed === 'left' ? 2 : 1,
-    background: 'var(--background)',
+    background: 'hsl(var(--background))',
     ...(width !== undefined ? { width, minWidth: width } : {}),
   };
 }

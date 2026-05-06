@@ -372,4 +372,44 @@ describe('table row rendering helpers', () => {
       ),
     ).toBeNull();
   });
+
+  it('renders responsive hidden-column labels from labelRegionKey regions', () => {
+    const parentProps = makeParentProps({
+      helpers: { render: vi.fn(() => null) },
+      regions: {
+        responsiveLabel: { render: vi.fn(() => <span data-testid="responsive-label">Custom Label</span>) },
+      },
+    });
+    const rowScope = makeRowScope({ email: 'alice@example.com' }, 0);
+
+    const { container } = render(
+      <table>
+        <tbody>
+          {renderExpandedRow(
+            { kind: 'expanded', rowKey: 'r1', columnCount: 1 },
+            { type: 'table' } as TableSchema,
+            parentProps.helpers,
+            parentProps,
+            new Map([['r1', rowScope]]),
+            'table-row:unit',
+            [
+              {
+                label: 'Email',
+                name: 'email',
+                labelRegionKey: 'responsiveLabel',
+              },
+            ] as TableColumnSchema[],
+          )}
+        </tbody>
+      </table>,
+    );
+
+    expect(screen.getByTestId('responsive-label')).toBeTruthy();
+    expect(document.querySelector('[data-slot="table-responsive-expanded-label"]')?.textContent).toBe(
+      'Email',
+    );
+    expect(container.querySelector('[data-slot="table-responsive-expanded-value"]')?.textContent).toBe(
+      'alice@example.com',
+    );
+  });
 });

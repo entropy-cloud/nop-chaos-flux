@@ -91,6 +91,7 @@ export function TableHeaderRow({
             ? props.regions[column.labelRegionKey]
             : undefined;
         const labelContent = asReactNode(labelRegion?.render()) ?? column.label ?? column.name;
+        const columnLabelText = typeof column.label === 'string' ? column.label : column.name;
         const isSortable = column.sortable === true;
         const filterConfig =
           typeof column.filterable === 'object' && column.filterable
@@ -189,6 +190,11 @@ export function TableHeaderRow({
                         <div className="p-2">
                           <Input
                             value={currentKeyword}
+                            aria-label={
+                              columnLabelText
+                                ? `${t('flux.table.search')} ${columnLabelText}`
+                                : t('flux.table.search')
+                            }
                             placeholder={
                               typeof column.searchable === 'object' && column.searchable
                                 ? String(

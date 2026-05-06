@@ -43,6 +43,7 @@ export interface TableColumnSchema extends BaseSchema {
   cellRegionKey?: string;
   buttons?: BaseSchema[];
   buttonsRegionKey?: string;
+  quickEditBodyRegionKey?: string;
   width?: number | string;
   fixed?: 'left' | 'right';
   hidden?: boolean;

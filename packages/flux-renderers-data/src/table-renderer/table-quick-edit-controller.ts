@@ -18,10 +18,11 @@ export interface UseTableQuickEditControllerInput {
   helpers: RendererComponentProps<TableSchema>['helpers'];
   saveAction?: ActionSchema;
   hasCustomBody: boolean;
+  onSaveError?: (error: unknown) => void;
 }
 
 export function useTableQuickEditController(input: UseTableQuickEditControllerInput) {
-  const { field, record, rowScope, helpers, saveAction, hasCustomBody } = input;
+  const { field, record, rowScope, helpers, saveAction, hasCustomBody, onSaveError } = input;
   const initialValue = toOptionalDraftValue(record, field);
   const [draftValue, setDraftValue] = useState(initialValue);
   const [savedValue, setSavedValue] = useState(initialValue);
@@ -96,10 +97,12 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
       setDraftValue(nextSavedValue);
       setBodyDirty(false);
       setDialogOpen(false);
+    } catch (error) {
+      onSaveError?.(error);
     } finally {
       setSaving(false);
     }
-  }, [dirty, draftValue, field, helpers, record, rowScope, saveAction, saving]);
+  }, [dirty, draftValue, field, helpers, onSaveError, record, rowScope, saveAction, saving]);
 
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {

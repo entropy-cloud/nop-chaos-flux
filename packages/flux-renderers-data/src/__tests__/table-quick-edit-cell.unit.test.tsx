@@ -2,6 +2,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { initFluxI18n, resetFluxI18n, t } from '@nop-chaos/flux-i18n';
+import { RuntimeContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
 import {
   resolveTableQuickEditConfig,
   TableQuickEditCell,
@@ -33,6 +34,14 @@ function createHelpers() {
   } as any;
 }
 
+function wrapWithProviders(ui: React.ReactNode, rowScope: any) {
+  return (
+    <RuntimeContext.Provider value={{ env: { notify: vi.fn() } } as any}>
+      <ScopeContext.Provider value={rowScope}>{ui}</ScopeContext.Provider>
+    </RuntimeContext.Provider>
+  );
+}
+
 function renderCell(overrides: Record<string, unknown> = {}) {
   const helpers = (overrides.helpers as any) ?? createHelpers();
   const rowScope = createRowScope({ name: 'Alice' });
@@ -49,7 +58,7 @@ function renderCell(overrides: Record<string, unknown> = {}) {
     helpers,
     rowScope,
     props,
-    ...render(<TableQuickEditCell {...props} />),
+    ...render(wrapWithProviders(<TableQuickEditCell {...props} />, rowScope)),
   };
 }
 
@@ -110,13 +119,16 @@ describe('TableQuickEditCell', () => {
     });
 
     rerender(
-      <TableQuickEditCell
-        column={{ type: 'text', name: 'name', label: 'Name', quickEdit: true }}
-        rowScope={rowScope}
-        record={{ name: 'Bob' }}
-        helpers={helpers}
-        quickSaveAction={undefined}
-      />,
+      wrapWithProviders(
+        <TableQuickEditCell
+          column={{ type: 'text', name: 'name', label: 'Name', quickEdit: true }}
+          rowScope={rowScope}
+          record={{ name: 'Bob' }}
+          helpers={helpers}
+          quickSaveAction={undefined}
+        />,
+        rowScope,
+      ),
     );
     expect((screen.getByRole('textbox', { name: 'Name' }) as HTMLInputElement).value).toBe('Bob');
   });
@@ -170,6 +182,39 @@ describe('TableQuickEditCell', () => {
     fireEvent.click(saveButton);
     await waitFor(() => {
       expect(customHelpers.dispatch).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('renders compiled quickEdit body regions when quickEditBodyRegionKey is provided', async () => {
+    const regionRender = vi.fn(() => <input aria-label="Region body" defaultValue="Alice" />);
+    const helpers = {
+      ...createHelpers(),
+      regions: {
+        quickBody: { render: regionRender },
+      },
+    } as any;
+
+    renderCell({
+      column: {
+        label: 'Name',
+        quickEdit: { saveImmediately: false },
+        quickEditBodyRegionKey: 'quickBody',
+      },
+      helpers,
+    });
+
+    expect(screen.getByRole('textbox', { name: 'Region body' })).toBeTruthy();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Region body' }), {
+      target: { value: 'Changed' },
+    });
+
+    await waitFor(() => {
+      expect(regionRender).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scope: expect.anything(),
+          pathSuffix: 'quickEdit.custom',
+        }),
+      );
     });
   });
 

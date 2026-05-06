@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react';
 import type { ActionSchema, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
+import { useRendererEnv } from '@nop-chaos/flux-react';
 import {
   Button,
   Dialog,
@@ -66,10 +67,17 @@ export interface TableQuickEditCellProps {
 
 export function TableQuickEditCell(props: TableQuickEditCellProps) {
   const { column, rowScope, record, helpers, quickSaveAction, quickSaveItemAction } = props;
+  const env = useRendererEnv();
   const config = useMemo(() => resolveTableQuickEditConfig(column), [column]);
   const field = column.name;
   const containerRef = useRef<HTMLDivElement>(null);
-  const hasCustomBody = config?.body !== undefined;
+  const quickEditBodyRegion =
+    typeof column.quickEditBodyRegionKey === 'string'
+      ? (helpers as RendererComponentProps<TableSchema>['helpers'] & {
+          regions?: Record<string, { render: (options?: unknown) => unknown }>;
+        }).regions?.[column.quickEditBodyRegionKey]
+      : undefined;
+  const hasCustomBody = config?.body !== undefined || Boolean(quickEditBodyRegion);
 
   const saveAction = quickSaveItemAction ?? quickSaveAction;
   const mode = config?.mode ?? 'inline';
@@ -91,15 +99,30 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
     helpers,
     saveAction,
     hasCustomBody,
+    onSaveError(error) {
+      env.notify?.(
+        'warning',
+        error instanceof Error && error.message ? error.message : t('flux.reportDesigner.saveFailed'),
+      );
+    },
   });
 
   const editorNode = hasCustomBody ? (
-    asReactNode(
-      helpers.render(config.body!, {
-        scope: rowScope,
-        pathSuffix: `quickEdit.${field ?? 'custom'}`,
-      }),
-    )
+    quickEditBodyRegion
+      ? asReactNode(
+          quickEditBodyRegion.render({
+            scope: rowScope,
+            pathSuffix: `quickEdit.${field ?? 'custom'}`,
+          }),
+        )
+      : config?.body
+        ? asReactNode(
+            helpers.render(config.body, {
+              scope: rowScope,
+              pathSuffix: `quickEdit.${field ?? 'custom'}`,
+            }),
+          )
+        : null
   ) : (
     <Input
       name={`quick-edit-${field}`}
