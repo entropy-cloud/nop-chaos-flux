@@ -18,8 +18,16 @@ function withRetryMetadata(
   error: unknown,
   metadata: { attempts: number; failureCount: number; lastFailureReason?: unknown },
 ): unknown {
+  if (error instanceof Error) {
+    const wrapped = new Error(error.message, { cause: error });
+    wrapped.name = error.name;
+    wrapped.stack = error.stack;
+
+    return Object.assign(wrapped, metadata);
+  }
+
   if (error && typeof error === 'object') {
-    return Object.assign(error as Record<string, unknown>, metadata);
+    return Object.assign({}, error as Record<string, unknown>, metadata);
   }
 
   return Object.assign(new Error(String(error)), metadata);

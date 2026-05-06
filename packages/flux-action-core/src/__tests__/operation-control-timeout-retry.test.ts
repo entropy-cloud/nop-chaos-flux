@@ -170,6 +170,26 @@ describe('withRetry timeout integration', () => {
       expect(err.attempts).toBe(2);
     }
   });
+
+  it('does not mutate the original error object when retries are exhausted', async () => {
+    const original = new Error('boom');
+
+    try {
+      await withRetry(
+        async () => {
+          throw original;
+        },
+        { times: 1, delay: 0 },
+        () => true,
+      );
+      expect.unreachable('should have thrown');
+    } catch (error) {
+      expect(error).not.toBe(original);
+      expect(original).not.toHaveProperty('attempts');
+      expect(error).toMatchObject({ attempts: 2, failureCount: 2, lastFailureReason: original });
+      expect(() => JSON.stringify(error)).not.toThrow();
+    }
+  });
 });
 
 describe('createAbortScope', () => {
