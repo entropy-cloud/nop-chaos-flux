@@ -384,13 +384,15 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       ) : null}
 
       {hasToolbar || hasListActions || headerBlocks.length > 0 ? (
-        <div className="nop-crud-toolbar" data-slot="crud-toolbar">
+        <div className="nop-crud-toolbar flex flex-col gap-3" data-slot="crud-toolbar">
+          <div className="flex flex-wrap items-center gap-3">
           {hasToolbar ? (
             <div data-slot="crud-toolbar-main">{asReactNode(toolbarContent)}</div>
           ) : null}
           {hasListActions ? (
             <div data-slot="crud-list-actions">{asReactNode(listActionsContent)}</div>
           ) : null}
+          </div>
           <CrudToolbarBlocks
             slot="header"
             blocks={headerBlocks}

@@ -8,7 +8,7 @@ import {
   useStatusPathPublication,
 } from '@nop-chaos/flux-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
-import { ChevronRightIcon, DotIcon } from 'lucide-react';
+import { ChevronRightIcon } from 'lucide-react';
 import type { TreeSchema } from './schemas';
 
 function asReactNode(value: unknown): React.ReactNode {
@@ -93,7 +93,7 @@ function TreeNodeRenderer(props: {
   return (
     <div data-slot="tree-node" data-depth={depth} data-node-key={nodeKey} role="treeitem" aria-expanded={hasChildren ? open : undefined}>
       <Collapsible open={open} onOpenChange={setOpen}>
-        <div className="flex items-start gap-2" style={{ paddingInlineStart: `${depth * 16}px` }}>
+        <div className="flex items-center gap-2" style={{ paddingInlineStart: `${depth * 16 + 8}px` }}>
           {hasChildren ? (
             <CollapsibleTrigger
               aria-label={open ? t('flux.common.collapse') : t('flux.common.expand')}
@@ -105,11 +105,9 @@ function TreeNodeRenderer(props: {
             </CollapsibleTrigger>
           ) : (
             <span
-              className="inline-flex size-6 items-center justify-center text-muted-foreground"
+              className="inline-flex size-5 shrink-0 items-center justify-center"
               aria-hidden="true"
-            >
-              <DotIcon className="size-3.5" />
-            </span>
+            />
           )}
 
           <div

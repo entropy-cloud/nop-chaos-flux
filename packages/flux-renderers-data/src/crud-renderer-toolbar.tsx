@@ -87,12 +87,13 @@ export function CrudToolbarBlocks(props: {
           <div
             key={`${slot}-switch-per-page-${index}`}
             data-slot={`${slot}-toolbar-page-size`}
-            className="flex items-center gap-2 text-sm text-muted-foreground"
+            className="flex items-center gap-2 text-sm text-muted-foreground whitespace-nowrap"
           >
             <Label htmlFor={pageSizeSelectId}>{t('flux.pagination.rowsPerPage')}</Label>
             <NativeSelect
               id={pageSizeSelectId}
               size="sm"
+              className="min-w-16"
               value={String(pagination.pageSize)}
               onChange={(event) => onPageSizeChange(Number(event.target.value))}
             >
