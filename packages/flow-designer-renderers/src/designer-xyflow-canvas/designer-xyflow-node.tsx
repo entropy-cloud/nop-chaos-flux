@@ -24,24 +24,28 @@ export function DesignerXyflowNode(props: NodeProps) {
   const hideToolbarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const nodeRenderData = useMemo(
-    () => ({
-      config:
+    () => {
+      const dataRecord =
         typeof props.data === 'object' && props.data !== null
-          ? (((props.data as Record<string, unknown>).config as
-              | Record<string, unknown>
-              | undefined) ?? (props.data as Record<string, unknown>))
-          : undefined,
-      node: {
-        id: props.id,
-        type: data.typeId,
-        label: data.label,
+          ? (props.data as Record<string, unknown>)
+          : {};
+      const configRecord =
+        typeof dataRecord.config === 'object' && dataRecord.config !== null
+          ? (dataRecord.config as Record<string, unknown>)
+          : undefined;
+      return {
+        config: configRecord ?? dataRecord,
+        node: {
+          id: props.id,
+          type: data.typeId,
+          label: data.label,
+          data: props.data,
+        },
         data: props.data,
-      },
-      data: props.data,
-      ...(typeof props.data === 'object' && props.data !== null
-        ? (props.data as Record<string, unknown>)
-        : {}),
-    }),
+        ...dataRecord,
+        ...(configRecord ?? {}),
+      };
+    },
     [props.id, props.data, data.typeId, data.label],
   );
 

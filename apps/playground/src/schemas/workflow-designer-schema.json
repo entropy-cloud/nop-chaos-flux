@@ -707,8 +707,8 @@
         { "type": "title", "body": "{{doc.name}}" },
         {
           "type": "badge",
-          "level": "isDirty ? 'warning' : 'success'",
-          "text": "isDirty ? '未保存' : '已保存'"
+          "level": "${isDirty ? 'warning' : 'success'}",
+          "text": "${isDirty ? '未保存' : '已保存'}"
         },
         { "type": "divider" },
         { "type": "text", "body": "{{doc.nodes.length}} 节点 · {{doc.edges.length}} 边" },

@@ -103,3 +103,4 @@ export function canonicalizeSchemaInput(
 
   return nextNode as BaseSchema;
 }
+

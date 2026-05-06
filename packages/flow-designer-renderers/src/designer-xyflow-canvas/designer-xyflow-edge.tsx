@@ -36,6 +36,9 @@ export function DesignerXyflowEdge(props: EdgeProps) {
         data: props.data,
       },
       data: props.data,
+      ...(typeof props.data === 'object' && props.data !== null
+        ? (props.data as Record<string, unknown>)
+        : {}),
     }),
     [props.id, props.source, props.target, props.data],
   );

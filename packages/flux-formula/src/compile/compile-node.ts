@@ -44,7 +44,8 @@ function compileNode<T>(
     if (isPureExpression(trimmed)) {
       try {
         const compiled = formulaCompiler.compileExpression<T>(input, options);
-        if (hasStaticValue(compiled)) {
+        const isStaticVal = hasStaticValue(compiled);
+        if (isStaticVal) {
           return {
             kind: 'static-node',
             value: compiled.staticValue,

@@ -4,6 +4,7 @@ import type { DesignerHostStatusSummary } from '@nop-chaos/flow-designer-core';
 import {
   hasRendererSlotContent,
   useCurrentActionScope,
+  useCurrentNodeMeta,
   useRendererEnv,
   useStatusPathPublication,
   WorkbenchShell,
@@ -118,7 +119,8 @@ function TreeModeLayoutWrapper(
 }
 
 export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>) {
-  const config = readDesignerResolvedProp<DesignerConfig>(props, 'config');
+  const meta = useCurrentNodeMeta();
+  const config = (meta.templateNode.schema as DesignerPageSchema).config as DesignerConfig | undefined;
 
   if (!config) {
     return <div>{t('flux.flowDesigner.configRequired')}</div>;
