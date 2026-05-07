@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import '@nop-chaos/spreadsheet-renderers/canvas-styles.css';
 import {
   createSchemaRenderer,
   createDefaultEnv,

@@ -153,8 +153,7 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
   action: 'designer:addNode',
   nodeType: 'task',
   position?: { x: number, y: number },
-  data?: Record<string, unknown>,
-  openInspector?: boolean
+  data?: Record<string, unknown>
 }
 ```
 
@@ -183,9 +182,9 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
 ```ts
 {
   action: 'designer:updateMultipleNodes',
-  patches: Array<{
+  updates: Array<{
     nodeId: string,
-    patch: Record<string, unknown>
+    data: Record<string, unknown>
   }>
 }
 ```
@@ -195,11 +194,7 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
 ```ts
 {
   action: 'designer:moveNodes',
-  moves: Array<{
-    nodeId: string,
-    position: { x: number, y: number }
-  }>,
-  transaction?: string
+  deltas: Record<string, { dx: number, dy: number }>
 }
 ```
 

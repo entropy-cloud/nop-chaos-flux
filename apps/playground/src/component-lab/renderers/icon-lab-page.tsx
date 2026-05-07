@@ -9,10 +9,10 @@ const iconGallery = {
       align: 'center',
       gap: 4,
       body: [
-        { type: 'icon', icon: 'Star' },
-        { type: 'icon', icon: 'Heart' },
-        { type: 'icon', icon: 'Bell' },
-        { type: 'icon', icon: 'Settings' },
+        { type: 'icon', icon: 'star' },
+        { type: 'icon', icon: 'heart' },
+        { type: 'icon', icon: 'bell' },
+        { type: 'icon', icon: 'settings' },
       ],
     },
   ],
@@ -32,7 +32,7 @@ const inlineWithText = {
           align: 'center',
           gap: 2,
           body: [
-            { type: 'icon', icon: 'User' },
+            { type: 'icon', icon: 'user' },
             { type: 'text', text: 'Alice Johnson' },
           ],
         },
@@ -42,7 +42,7 @@ const inlineWithText = {
           align: 'center',
           gap: 2,
           body: [
-            { type: 'icon', icon: 'Mail' },
+            { type: 'icon', icon: 'mail' },
             { type: 'text', text: 'alice@example.com' },
           ],
         },
@@ -52,7 +52,7 @@ const inlineWithText = {
           align: 'center',
           gap: 2,
           body: [
-            { type: 'icon', icon: 'MapPin' },
+            { type: 'icon', icon: 'map-pin' },
             { type: 'text', text: 'San Francisco, CA' },
           ],
         },

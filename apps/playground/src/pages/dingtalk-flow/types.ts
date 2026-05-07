@@ -27,7 +27,7 @@ export interface ApprovalData {
   label: string;
   desc: string;
   color: string;
-  icon: 'user' | 'usercheck' | 'send';
+  icon: 'user' | 'user-check' | 'send';
   showAddBtn: boolean;
 }
 

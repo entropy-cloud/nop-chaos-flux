@@ -57,7 +57,7 @@ const userDetailView = {
               gap: 2,
               align: 'center',
               body: [
-                { type: 'icon', icon: 'User', size: 16 },
+                { type: 'icon', icon: 'user', size: 16 },
                 { type: 'text', text: '${user.name}' },
                 { type: 'badge', label: '${user.role}', variant: 'secondary' },
               ],

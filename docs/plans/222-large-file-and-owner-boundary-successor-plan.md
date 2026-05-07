@@ -1,6 +1,6 @@
 # 222 Module Boundary And Owner Boundary Successor Plan
 
-> Plan Status: planned
+> Plan Status: in progress
 > Last Reviewed: 2026-05-07
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,02-module-responsibility.md}`
 > Related: `docs/plans/{185-large-file-hotspot-split-plan.md,220-cross-boundary-state-and-host-contract-closure-plan.md,221-deep-audit-2026-05-07-confirmed-defect-remediation-plan.md}`
@@ -52,115 +52,115 @@
 
 ### Workstream 1 - Freeze Carve-Outs And Target Boundaries
 
-Status: planned
+Status: completed
 Targets: in-scope hotspot files, this plan, affected refactoring docs only if needed
 
 - Item Types: `Decision | Proof`
 
-- [ ] [Decision] Re-audit each in-scope hotspot and freeze the target post-split owner boundary before editing code.
-- [ ] [Decision] Record the exact carve-out with `220` so refactors do not silently reopen already-closed correctness semantics.
-- [ ] [Proof] Capture the pre-split line-count and owner-mix baseline for each retained hotspot.
+- [x] [Decision] Re-audit each in-scope hotspot and freeze the target post-split owner boundary before editing code.
+- [x] [Decision] Record the exact carve-out with `220` so refactors do not silently reopen already-closed correctness semantics.
+- [x] [Proof] Capture the pre-split line-count and owner-mix baseline for each retained hotspot.
 
 Exit Criteria:
 
-- [ ] Every in-scope hotspot has an explicit target boundary recorded in this plan.
-- [ ] The carve-out against `220` is explicit and auditable.
-- [ ] The pre-split baseline is recorded for closure re-audit.
-- [ ] `No owner-doc update required` is explicit unless this work introduces stable new split guidance.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] Every in-scope hotspot has an explicit target boundary recorded in this plan.
+- [x] The carve-out against `220` is explicit and auditable.
+- [x] The pre-split baseline is recorded for closure re-audit.
+- [x] `No owner-doc update required` is explicit unless this work introduces stable new split guidance.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 2 - Remove Cross-Package Boundary Leakage
 
-Status: planned
+Status: completed
 Targets: report-designer, word-editor, spreadsheet root entry, and i18n boundaries, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Replace report-designer direct consumption of spreadsheet internals with a package-owned adapter/bridge boundary.
-- [ ] [Fix] Replace `word-editor-core` third-party re-exports with self-owned adapter/types that describe the supported public surface.
-- [ ] [Fix] Reduce `spreadsheet-renderers/src/index.ts` to a clear root entry boundary instead of a mixed CSS-side-effect/internal-composition export surface.
-- [ ] [Fix] Separate `flux-i18n` headless initialization from React adapter exports so the package boundary is explicit.
-- [ ] [Proof] Add focused proof that the new boundaries preserve supported behavior without reopening `220` correctness ownership.
-- [ ] [Decision] Update only the owner docs directly changed by the final boundary decision.
+- [x] [Fix] Replace report-designer direct consumption of spreadsheet internals with a package-owned adapter/bridge boundary.
+- [x] [Fix] Replace `word-editor-core` third-party re-exports with self-owned adapter/types that describe the supported public surface.
+- [x] [Fix] Reduce `spreadsheet-renderers/src/index.ts` to a clear root entry boundary instead of a mixed CSS-side-effect/internal-composition export surface.
+- [x] [Fix] Separate `flux-i18n` headless initialization from React adapter exports so the package boundary is explicit.
+- [x] [Proof] Add focused proof that the new boundaries preserve supported behavior without reopening `220` correctness ownership.
+- [x] [Decision] Update only the owner docs directly changed by the final boundary decision. `No owner-doc update required` for this slice because no active architecture doc describes these exact internal split surfaces today.
 
 Exit Criteria:
 
-- [ ] Report-designer no longer depends on spreadsheet internals as a live owner boundary.
-- [ ] `word-editor-core` no longer treats the third-party package as its public API surface.
-- [ ] `spreadsheet-renderers/src/index.ts` and `flux-i18n` no longer mix the retained boundary families identified by the audit.
-- [ ] Focused tests prove the replacement boundaries preserve the supported baseline.
-- [ ] The owner docs directly changed by this plan are updated if the stable boundary changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] Report-designer no longer depends on spreadsheet internals as a live owner boundary.
+- [x] `word-editor-core` no longer treats the third-party package as its public API surface.
+- [x] `spreadsheet-renderers/src/index.ts` and `flux-i18n` no longer mix the retained boundary families identified by the audit.
+- [x] Focused tests prove the replacement boundaries preserve the supported baseline.
+- [x] The owner docs directly changed by this plan are updated if the stable boundary changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 3 - Split Retained Hotspot Files
 
-Status: planned
+Status: completed
 Targets: `schema-compiler.ts`, `word-editor-page.tsx`, `designer-page.tsx`, `designer-xyflow-canvas.tsx`, `hooks.ts`, `node-renderer.tsx`, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Split `schema-compiler.ts` by compile/prepare/validate responsibility.
-- [ ] [Fix] Split `word-editor-page.tsx` and `designer-page.tsx` into thinner page shells plus focused controller/host/panel helpers.
-- [ ] [Fix] Split `designer-xyflow-canvas.tsx` into thinner canvas shell plus focused viewport/overlay/DOM-patch helpers.
-- [ ] [Fix] Split `hooks.ts` and `node-renderer.tsx` into narrower owner modules.
-- [ ] [Proof] Add or update focused proof for each split surface so closure is not just file movement.
-- [ ] [Decision] Record whether each new boundary becomes part of the stable owner-doc baseline.
+- [x] [Fix] Split `schema-compiler.ts` by compile/prepare/validate responsibility.
+- [x] [Fix] Split `word-editor-page.tsx` and `designer-page.tsx` into thinner page shells plus focused controller/host/panel helpers.
+- [x] [Fix] Split `designer-xyflow-canvas.tsx` into thinner canvas shell plus focused viewport/overlay/DOM-patch helpers.
+- [x] [Fix] Split `hooks.ts` and `node-renderer.tsx` into narrower owner modules.
+- [x] [Proof] Add or update focused proof for each split surface so closure is not just file movement.
+- [x] [Decision] Record whether each new boundary becomes part of the stable owner-doc baseline. `No owner-doc update required` for this slice because the split preserves the supported public surface without changing published architecture contracts.
 
 Exit Criteria:
 
-- [ ] The retained hotspots no longer mix the owner families identified by the audit.
-- [ ] The root files land as thin orchestrators or equivalent honest shells.
-- [ ] Focused tests prove public behavior remains stable after the split.
-- [ ] Affected owner docs are updated where the stable module baseline changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] The retained hotspots no longer mix the owner families identified by the audit.
+- [x] The root files land as thin orchestrators or equivalent honest shells.
+- [x] Focused tests prove public behavior remains stable after the split.
+- [x] Affected owner docs are updated where the stable module baseline changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 4 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: in-scope packages/tests/docs, this plan
 
 - Item Types: `Proof | Decision`
 
-- [ ] Run focused verification for each boundary change after code/doc updates land.
-- [ ] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all code/doc changes land.
+- [x] Run focused verification for each boundary change after code/doc updates land.
+- [x] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all code/doc changes land.
 - [ ] Perform an independent closure audit and fix any remaining in-scope owner-boundary ambiguity before closing the plan.
 
 Exit Criteria:
 
-- [ ] Focused verification is recorded for each landed split surface.
+- [x] Focused verification is recorded for each landed split surface.
 - [ ] Workspace verification passes.
 - [ ] Independent closure audit confirms no remaining plan-owned blocker.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
-- [ ] All in-scope module-boundary defects from `full-8` are fixed.
-- [ ] The in-scope hotspot roots no longer mix the retained owner families.
-- [ ] Focused verification exists for each landed split surface.
-- [ ] No in-scope retained defect is silently deferred or downgraded.
-- [ ] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
+- [x] All in-scope module-boundary defects from `full-8` are fixed.
+- [x] The in-scope hotspot roots no longer mix the retained owner families.
+- [x] Focused verification exists for each landed split surface.
+- [x] No in-scope retained defect is silently deferred or downgraded.
+- [x] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
 - [ ] Independent closure audit confirms no remaining in-scope blocker.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [ ] `pnpm test` (`flux-renderers-form-advanced` retains 10 pre-existing `detail-view` failures in 3 files; not introduced by this plan)
 
 ## Validation Checklist
 
-- [ ] `220` owned correctness semantics remain explicitly carved out.
-- [ ] Each split is justified by live owner-boundary evidence, not by line count alone.
-- [ ] Focused tests cover boundary behavior after the split.
-- [ ] No retained `full-8` module-boundary finding is left without an owner decision.
+- [x] `220` owned correctness semantics remain explicitly carved out.
+- [x] Each split is justified by live owner-boundary evidence, not by line count alone.
+- [x] Focused tests cover boundary behavior after the split.
+- [x] No retained `full-8` module-boundary finding is left without an owner decision.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: Workstreams 1-4 landed. Module boundaries were narrowed by moving spreadsheet CSS ownership out of the root barrel, introducing package-owned word-editor type aliases instead of direct third-party re-exports, adding optional headless `initFluxI18n({ react: false })` support, and splitting the retained hotspot files into thin orchestrators plus focused helpers. The plan remains open only because full workspace `pnpm test` still reports 10 pre-existing `flux-renderers-form-advanced` `detail-view` failures and an independent closure audit has not yet been recorded.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: pending
-- Evidence: pending
+- Evidence: pending independent closure audit; implementation verification completed with green `pnpm typecheck`, `pnpm build`, and `pnpm lint`.
 
 Follow-up:
 
-- Pending execution.
+- Record independent closure audit after re-checking the retained pre-existing `flux-renderers-form-advanced` failures against live baseline.

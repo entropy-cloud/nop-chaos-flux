@@ -15,7 +15,7 @@ const preloadedData = {
           gap: 2,
           align: 'center',
           body: [
-            { type: 'icon', icon: 'User', size: 14 },
+            { type: 'icon', icon: 'user', size: 14 },
             { type: 'text', text: '${$slot.user.username}' },
             { type: 'badge', text: '${$slot.user.role}', level: 'warning' },
           ],

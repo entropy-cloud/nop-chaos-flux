@@ -23,7 +23,7 @@ export function setOnPlusClick(handler: typeof onPlusClick) {
 
 const ICONS: Record<string, React.ReactNode> = {
   user: <User size={14} />,
-  usercheck: <UserCheck size={14} />,
+  'user-check': <UserCheck size={14} />,
   send: <Send size={14} />,
 };
 

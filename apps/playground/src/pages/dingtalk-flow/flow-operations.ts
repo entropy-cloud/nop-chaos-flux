@@ -55,7 +55,7 @@ export function buildFlowData(): FlowData {
       label: 'Manager Approval',
       desc: 'Direct Manager',
       color: COLORS.approval,
-      icon: 'usercheck',
+      icon: 'user-check',
       showAddBtn: true,
     } satisfies ApprovalData,
   });
@@ -112,7 +112,7 @@ export function buildFlowData(): FlowData {
       label: 'Director Approval',
       desc: 'Alice',
       color: COLORS.approval,
-      icon: 'usercheck',
+      icon: 'user-check',
       showAddBtn: true,
     } satisfies ApprovalData,
   });
@@ -127,7 +127,7 @@ export function buildFlowData(): FlowData {
       label: 'Manager Approval',
       desc: 'Direct Manager',
       color: COLORS.approval,
-      icon: 'usercheck',
+      icon: 'user-check',
       showAddBtn: true,
     } satisfies ApprovalData,
   });
@@ -202,7 +202,7 @@ export function insertNode(
   const label = addType === 'approver' ? 'Approver' : 'CC';
   const desc = 'Please set';
   const color = addType === 'approver' ? COLORS.approval : COLORS.cc;
-  const icon = addType === 'approver' ? 'usercheck' : 'send';
+  const icon = addType === 'approver' ? 'user-check' : 'send';
 
   const newData: ApprovalData = { label, desc, color, icon, showAddBtn: true };
 

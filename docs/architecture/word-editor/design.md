@@ -34,15 +34,15 @@ Pure TypeScript package with no React dependencies. Contains:
 
 React 19 rendering layer. Contains:
 
-| Module               | Responsibility                               |
-| -------------------- | -------------------------------------------- |
-| `WordEditorPage.tsx` | Main page component orchestrating all panels |
-| `EditorCanvas.tsx`   | Canvas-editor wrapper with React lifecycle   |
-| `toolbar/`           | Ribbon-style toolbar components              |
-| `panels/`            | Side panels (dataset, properties)            |
-| `dialogs/`           | Modal dialogs (chart config, code config)    |
-| `preview/`           | Document preview components                  |
-| `hooks/`             | React hooks for editor integration           |
+| Module                 | Responsibility                               |
+| ---------------------- | -------------------------------------------- |
+| `word-editor-page.tsx` | Main page component orchestrating all panels |
+| `editor-canvas.tsx`    | Canvas-editor wrapper with React lifecycle   |
+| `toolbar/`             | Ribbon-style toolbar components              |
+| `panels/`              | Side panels (dataset, properties)            |
+| `dialogs/`             | Modal dialogs (chart config, code config)    |
+| `preview/`             | Document preview components                  |
+| `hooks/`               | React hooks for editor integration           |
 
 ## Data Flow
 
@@ -171,6 +171,5 @@ Template compilation flow:
 
 ## Related Documentation
 
-- Component contract: `docs/components/word-editor-page/README.md`
 - Development plan (historical): `docs/archive/plans/24-word-editor-development-plan.md`
 - Bug fixes: `docs/bugs/24-*`, `docs/bugs/25-*`, `docs/bugs/26-*`

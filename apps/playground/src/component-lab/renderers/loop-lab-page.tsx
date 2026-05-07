@@ -35,7 +35,7 @@ const productLoop = {
               align: 'center',
               gap: 2,
               body: [
-                { type: 'icon', icon: 'Package', size: 16 },
+                { type: 'icon', icon: 'package', size: 16 },
                 { type: 'text', text: '${$slot.product.name}' },
               ],
             },

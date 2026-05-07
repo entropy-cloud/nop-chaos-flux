@@ -26,7 +26,7 @@ When this document needs to be checked against code, start with:
 - `packages/flux-core/src/schema-diagnostics/manifest.ts` for manifest envelope types, structural shape contract, and resolver contracts
 - `packages/flux-core/src/schema-diagnostics/index.ts` for host-specific diagnostic codes and `SchemaCompileValidationOptions.hostContractContext`
 - `packages/flux-core/src/types/renderer-core.ts` for `RendererDefinition.hostContract`
-- `packages/flux-runtime/src/schema-compiler/diagnostics.ts` for `xui:version` validation and diagnostics context
+- `packages/flux-compiler/src/schema-compiler/diagnostics.ts` for `xui:version` validation and diagnostics context
 - `docs/architecture/schema-file-validator.md` for compiler-integrated diagnostics framework
 
 ## Relationship To Existing Docs
@@ -861,7 +861,7 @@ If a product wants runtime result-conformance checks for debugging, that should 
 Recommended ownership split:
 
 - `packages/flux-core/src/schema-diagnostics/` or a nearby dependency-safe shared contract area for manifest envelope types, manifest resolution contracts, and the reused structural shape types
-- `packages/flux-runtime/src/schema-compiler/` for compiler validation against manifests
+- `packages/flux-compiler/src/schema-compiler/` for compiler validation against manifests
 - domain renderer packages such as `flow-designer-renderers` and `report-designer-renderers` for manifest publication of their host families
 
 Shape ownership split:
