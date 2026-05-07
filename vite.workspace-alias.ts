@@ -34,11 +34,11 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-renderers-basic': fileURLToPath(
     new URL('./packages/flux-renderers-basic/src/index.tsx', import.meta.url),
   ),
-  '@nop-chaos/flux-renderers-form': fileURLToPath(
-    new URL('./packages/flux-renderers-form/src/index.tsx', import.meta.url),
-  ),
   '@nop-chaos/flux-renderers-form/test-support': fileURLToPath(
     new URL('./packages/flux-renderers-form/src/test-support.tsx', import.meta.url),
+  ),
+  '@nop-chaos/flux-renderers-form': fileURLToPath(
+    new URL('./packages/flux-renderers-form/src/index.tsx', import.meta.url),
   ),
   '@nop-chaos/flux-renderers-form-advanced': fileURLToPath(
     new URL('./packages/flux-renderers-form-advanced/src/index.tsx', import.meta.url),
@@ -64,9 +64,15 @@ export const workspacePackageAliases = {
   '@nop-chaos/ui/chart': fileURLToPath(
     new URL('./packages/ui/src/components/ui/chart.tsx', import.meta.url),
   ),
+  '@nop-chaos/ui/lib/utils': fileURLToPath(
+    new URL('./packages/ui/src/lib/utils.ts', import.meta.url),
+  ),
   '@nop-chaos/ui': fileURLToPath(new URL('./packages/ui/src/index.ts', import.meta.url)),
   '@nop-chaos/spreadsheet-core': fileURLToPath(
     new URL('./packages/spreadsheet-core/src/index.ts', import.meta.url),
+  ),
+  '@nop-chaos/spreadsheet-renderers/canvas-styles.css': fileURLToPath(
+    new URL('./packages/spreadsheet-renderers/src/canvas-styles.css', import.meta.url),
   ),
   '@nop-chaos/spreadsheet-renderers': fileURLToPath(
     new URL('./packages/spreadsheet-renderers/src/index.ts', import.meta.url),

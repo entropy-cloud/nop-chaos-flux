@@ -34,12 +34,19 @@
       "@nop-chaos/flux-renderers-data": ["./packages/flux-renderers-data/src/index.tsx"],
       "@nop-chaos/theme-tokens": ["./packages/theme-tokens/src/index.ts"],
       "@nop-chaos/ui/chart": ["./packages/ui/src/components/ui/chart.tsx"],
+      "@nop-chaos/ui/lib/utils": ["./packages/ui/src/lib/utils.ts"],
       "@nop-chaos/ui": ["./packages/ui/src/index.ts"],
       "@nop-chaos/spreadsheet-core": ["./packages/spreadsheet-core/src/index.ts"],
+      "@nop-chaos/spreadsheet-renderers/canvas-styles.css": [
+        "./packages/spreadsheet-renderers/src/canvas-styles.css"
+      ],
       "@nop-chaos/spreadsheet-renderers": ["./packages/spreadsheet-renderers/src/index.ts"],
       "@nop-chaos/report-designer-core": ["./packages/report-designer-core/src/index.ts"],
       "@nop-chaos/report-designer-renderers": ["./packages/report-designer-renderers/src/index.ts"],
       "@nop-chaos/flow-designer-core": ["./packages/flow-designer-core/src/index.ts"],
+      "@nop-chaos/flow-designer-renderers/unstable": [
+        "./packages/flow-designer-renderers/src/unstable.ts"
+      ],
       "@nop-chaos/flow-designer-renderers": ["./packages/flow-designer-renderers/src/index.tsx"],
       "@nop-chaos/flux-code-editor": ["./packages/flux-code-editor/src/index.ts"],
       "@nop-chaos/word-editor-core": ["./packages/word-editor-core/src/index.ts"],
