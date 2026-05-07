@@ -4,13 +4,13 @@ import type { EditorStoreApi } from '@nop-chaos/word-editor-core';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import { createSavedDocumentData, DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core';
 import type { PaperSettings, SavedDocumentData, WordDocument } from '@nop-chaos/word-editor-core';
-import { loadDocument } from '@nop-chaos/word-editor-core';
 import type { DocChart, DocCode } from '@nop-chaos/word-editor-core';
 
 export interface EditorCanvasProps {
   editorStore: EditorStoreApi;
   bridge: CanvasEditorBridge;
   initialDocument?: WordDocument;
+  recoveredDocument?: SavedDocumentData | null;
   charts?: DocChart[];
   codes?: DocCode[];
   onAutosave?: (saved: SavedDocumentData) => void;
@@ -20,6 +20,7 @@ export function EditorCanvas({
   editorStore,
   bridge,
   initialDocument,
+  recoveredDocument,
   charts,
   codes,
   onAutosave,
@@ -72,13 +73,14 @@ export function EditorCanvas({
       }, 500);
     };
 
-    const savedDocument = loadDocument();
-    const documentSource = initialDocument
-      ? createSavedDocumentData({
-          data: initialDocument,
-          paperSettings: null,
-        })
-      : savedDocument;
+    const documentSource =
+      recoveredDocument ??
+      (initialDocument
+        ? createSavedDocumentData({
+            data: initialDocument,
+            paperSettings: null,
+          })
+        : null);
     let editorData: IEditorData;
     let paperSettings: PaperSettings;
 
@@ -160,7 +162,7 @@ export function EditorCanvas({
       editorStore.setBridge(null);
       editorStore.setReady(false);
     };
-  }, [bridge, editorStore, initialDocument]);
+  }, [bridge, editorStore, initialDocument, recoveredDocument]);
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
 }

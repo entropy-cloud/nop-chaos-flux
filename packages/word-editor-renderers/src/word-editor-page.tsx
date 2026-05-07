@@ -20,7 +20,7 @@ import {
   createDatasetStore,
   createEditorStore,
   createSavedDocumentData,
-  loadDatasets,
+  loadRecoveredState,
 } from '@nop-chaos/word-editor-core';
 import type {
   DatasetSourceType,
@@ -47,6 +47,12 @@ function asReactNode(value: unknown): React.ReactNode {
 }
 
 export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchema>) {
+  const initialDocument = props.props.initialDocument as WordDocument | undefined;
+  const initialDatasets = props.props.datasets as Dataset[] | undefined;
+  const recoveredState = useMemo(
+    () => loadRecoveredState(initialDatasets),
+    [initialDatasets],
+  );
   const bridge = useMemo(() => new CanvasEditorBridge(), []);
   const editorStore = useMemo(() => createEditorStore(), []);
   const datasetStore = useMemo(() => createDatasetStore(), []);
@@ -68,10 +74,10 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     () => (props.props.initialCodes as DocCode[] | undefined) ?? [],
   );
   const [savedDocument, setSavedDocument] = useState<SavedDocumentData | null>(() => {
-    const initialDocument = props.props.initialDocument as WordDocument | undefined;
-    return initialDocument
-      ? createSavedDocumentData({ data: initialDocument, paperSettings: null })
-      : null;
+    return recoveredState.document ??
+      (initialDocument
+        ? createSavedDocumentData({ data: initialDocument, paperSettings: null })
+        : null);
   });
   const updateSavedDocumentExtras = useCallback(
     (extras: { charts: DocChart[]; codes: DocCode[] }) => {
@@ -210,15 +216,10 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   useNamespaceRegistration(actionScope, 'word-editor', actionProvider);
 
   useEffect(() => {
-    const savedDatasets = loadDatasets();
-    if (savedDatasets.length > 0) {
-      datasetStore.load(savedDatasets);
+    if (recoveredState.datasets.length > 0) {
+      datasetStore.load(recoveredState.datasets);
     }
-    const initialDatasets = props.props.datasets as Dataset[] | undefined;
-    if (initialDatasets && initialDatasets.length > 0) {
-      datasetStore.load(initialDatasets);
-    }
-  }, [datasetStore, props.props.datasets]);
+  }, [datasetStore, recoveredState.datasets]);
 
   const handleSave = useCallback(async () => {
     if (isSavingRef.current) {
@@ -490,7 +491,8 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       <EditorCanvas
         editorStore={editorStore}
         bridge={bridge}
-        initialDocument={props.props.initialDocument as WordDocument | undefined}
+        initialDocument={initialDocument}
+        recoveredDocument={recoveredState.document}
         charts={charts}
         codes={codes}
         onAutosave={setSavedDocument}

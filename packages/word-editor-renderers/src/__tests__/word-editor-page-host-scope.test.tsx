@@ -4,6 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
+import type { SavedDocumentData, Dataset } from '@nop-chaos/word-editor-core';
 import {
   createDefaultRegistry,
   createSchemaRenderer,
@@ -19,7 +20,9 @@ import {
 const mockedCore = vi.hoisted(() => ({
   saveDocumentMock: vi.fn(() => true),
   saveDatasetsMock: vi.fn(),
-  loadDatasetsMock: vi.fn(() => []),
+  loadRecoveredStateMock: vi.fn<() => { document: SavedDocumentData | null; datasets: Dataset[] }>(
+    () => ({ document: null, datasets: [] }),
+  ),
 }));
 
 const mockState: {
@@ -108,7 +111,7 @@ function resetMockStores() {
   editorStore.setDirty.mockClear();
   mockedCore.saveDocumentMock.mockClear();
   mockedCore.saveDatasetsMock.mockClear();
-  mockedCore.loadDatasetsMock.mockClear();
+  mockedCore.loadRecoveredStateMock.mockClear();
   mockState.shortcutOptions = undefined;
   datasetStore.load.mockClear();
   datasetStore.getAll.mockClear();
@@ -147,7 +150,7 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
     saveDocument: mockedCore.saveDocumentMock,
     loadDocument: vi.fn(() => null),
     saveDatasets: mockedCore.saveDatasetsMock,
-    loadDatasets: mockedCore.loadDatasetsMock,
+    loadRecoveredState: mockedCore.loadRecoveredStateMock,
   };
 });
 
@@ -509,6 +512,83 @@ describe('WordEditorPage host scope', () => {
     expect(container.querySelector('.nop-word-editor-page')).toBeTruthy();
     expect(screen.getByTestId('editor-canvas')).toBeTruthy();
     expect(screen.getByTestId('ribbon-toolbar')).toBeTruthy();
+  });
+
+  it('publishes recovered document into host scope instead of stale schema seed', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+    const recoveredDocument: SavedDocumentData = {
+      data: {
+        header: [],
+        main: [{ value: 'persisted-main' }],
+        footer: [],
+        charts: [],
+        codes: [],
+      },
+      paperSettings: {
+        width: 595,
+        height: 842,
+        direction: 'vertical',
+        margins: [100, 120, 100, 120],
+      },
+      savedAt: '2026-05-07T00:00:00.000Z',
+    };
+    mockedCore.loadRecoveredStateMock.mockReturnValueOnce({
+      document: recoveredDocument,
+      datasets: [],
+    });
+
+    const DocumentValueProbe: RendererDefinition = {
+      type: 'document-value-probe',
+      component: function DocumentValueProbeComponent() {
+        const text = useScopeSelector((data: any) => data.document?.main?.[0]?.value ?? '');
+        return <span data-testid="document-value-probe">{String(text)}</span>;
+      },
+    };
+
+    renderWordEditor({
+      schema: {
+        type: 'word-editor-page',
+        initialDocument: { header: [], main: [{ value: 'schema-seed' }], footer: [] },
+        leftPanel: { type: 'document-value-probe' },
+      },
+      extraRenderers: [DocumentValueProbe],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('document-value-probe').textContent).toBe('persisted-main');
+    });
+  });
+
+  it('keeps persisted datasets instead of overwriting them with schema datasets on mount', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+    const persistedDatasets: Dataset[] = [
+      {
+        id: 'persisted-1',
+        name: 'Persisted Dataset',
+        description: '',
+        type: 'static',
+        columns: [],
+      },
+    ];
+    mockedCore.loadRecoveredStateMock.mockReturnValueOnce({
+      document: null,
+      datasets: persistedDatasets,
+    });
+
+    renderWordEditor({
+      schema: {
+        type: 'word-editor-page',
+        datasets: [{ id: 'schema-1', name: 'Schema Dataset' }] as any,
+      },
+    });
+
+    await waitFor(() => {
+      expect(datasetStore.load).toHaveBeenCalledWith(persistedDatasets);
+    });
   });
 
   it('exposes domain host metadata on the registered renderer definition', () => {

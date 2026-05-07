@@ -12,9 +12,10 @@ export {
   clearDocument,
   saveDatasets,
   loadDatasets,
+  loadRecoveredState,
 } from './document-io.js';
 export { createSavedDocumentData } from './document-io.js';
-export type { SavedDocumentData } from './document-io.js';
+export type { SavedDocumentData, WordEditorRecoveredState } from './document-io.js';
 export type { DocumentData, WordDocument, SavedDocument } from './template-model.js';
 export { DEFAULT_PAPER_SETTINGS, PAPER_SIZE_PRESETS } from './paper-settings.js';
 export type { PaperSettings } from './paper-settings.js';

@@ -14,6 +14,11 @@ export interface SavedDocumentData {
   savedAt: string;
 }
 
+export interface WordEditorRecoveredState {
+  document: SavedDocumentData | null;
+  datasets: Dataset[];
+}
+
 function getStorage(): Storage | null {
   if (typeof localStorage === 'undefined') {
     return null;
@@ -134,4 +139,14 @@ export function loadDatasets(): Dataset[] {
   } catch {
     return [];
   }
+}
+
+export function loadRecoveredState(initialDatasets?: Dataset[]): WordEditorRecoveredState {
+  const document = loadDocument();
+  const persistedDatasets = loadDatasets();
+
+  return {
+    document,
+    datasets: persistedDatasets.length > 0 ? persistedDatasets : (initialDatasets ?? []),
+  };
 }

@@ -9,7 +9,6 @@ const mockedCore = vi.hoisted(() => ({
     ...value,
     savedAt: '2026-05-02T00:00:00.000Z',
   })),
-  loadDocumentMock: vi.fn(() => null),
 }));
 
 vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
@@ -17,7 +16,6 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
   return {
     ...actual,
     createSavedDocumentData: mockedCore.createSavedDocumentDataMock,
-    loadDocument: mockedCore.loadDocumentMock,
   };
 });
 
@@ -35,7 +33,6 @@ describe('EditorCanvas', () => {
       configurable: true,
     });
     mockedCore.createSavedDocumentDataMock.mockClear();
-    mockedCore.loadDocumentMock.mockClear();
   });
 
   afterEach(() => {
@@ -146,5 +143,60 @@ describe('EditorCanvas', () => {
 
     expect(bridge.mount).toHaveBeenCalledTimes(1);
     expect(bridge.unmount).not.toHaveBeenCalled();
+  });
+
+  it('prefers recovered persisted documents over schema initialDocument', () => {
+    const bridge = {
+      mount: vi.fn(),
+      unmount: vi.fn(),
+      getValue: vi.fn(() => ({ data: { header: [], main: [], footer: [] } })),
+      getPaperSettings: vi.fn(() => null),
+      getWordCount: vi.fn(() => Promise.resolve(0)),
+    };
+    const editorStore = {
+      setDirty: vi.fn(),
+      setBridge: vi.fn(),
+      setReady: vi.fn(),
+      setPaperSettings: vi.fn(),
+      setWordCount: vi.fn(),
+      setSelection: vi.fn(),
+      setTotalPages: vi.fn(),
+      setScale: vi.fn(),
+    };
+
+    render(
+      <EditorCanvas
+        editorStore={editorStore as any}
+        bridge={bridge as any}
+        initialDocument={{
+          header: [],
+          main: [{ value: 'schema-seed' }],
+          footer: [],
+        }}
+        recoveredDocument={{
+          data: {
+            header: [],
+            main: [{ value: 'persisted-doc' }],
+            footer: [],
+            charts: [],
+            codes: [],
+          },
+          paperSettings: {
+            width: 595,
+            height: 842,
+            direction: 'vertical',
+            margins: [100, 120, 100, 120],
+          },
+          savedAt: '2026-05-07T00:00:00.000Z',
+        }}
+      />,
+    );
+
+    expect(bridge.mount).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      expect.objectContaining({ main: [{ value: 'persisted-doc' }] }),
+      expect.any(Object),
+      expect.any(Object),
+    );
   });
 });

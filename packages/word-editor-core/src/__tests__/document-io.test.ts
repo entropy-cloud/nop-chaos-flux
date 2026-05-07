@@ -6,6 +6,7 @@ import {
   clearDocument,
   saveDatasets,
   loadDatasets,
+  loadRecoveredState,
 } from '../document-io.js';
 import type { Dataset } from '../dataset-model.js';
 
@@ -226,5 +227,21 @@ describe('saveDatasets', () => {
 describe('loadDatasets', () => {
   it('returns empty array when nothing saved', () => {
     expect(loadDatasets()).toEqual([]);
+  });
+});
+
+describe('loadRecoveredState', () => {
+  it('prefers persisted datasets over schema seed datasets', () => {
+    localStorageState.current._store[DATASET_STORAGE_KEY] = JSON.stringify([
+      { id: 'persisted', name: 'Persisted', description: '', type: 'sql', columns: [] },
+    ]);
+
+    const recovered = loadRecoveredState([
+      { id: 'schema', name: 'Schema', description: '', type: 'api', columns: [] },
+    ]);
+
+    expect(recovered.datasets).toEqual([
+      { id: 'persisted', name: 'Persisted', description: '', type: 'sql', columns: [] },
+    ]);
   });
 });
