@@ -60,7 +60,7 @@ The compiled meta program for a single template node.
 
 Defined in `node-identity.ts`, it carries compiled runtime values for standard meta fields:
 
-- `id`, `className`, `visible`, `hidden`, `disabled`, `testid`
+- `id`, `className`, `frameClassName`, `visible`, `hidden`, `disabled`, `testid`
 
 Each field is an optional `CompiledRuntimeValue<T>` that resolves at render time. This type was formerly exposed as `CompiledSchemaMeta` via a type alias.
 
@@ -86,6 +86,7 @@ This carries runtime control and outer-layer meta only:
 
 - `id`
 - `className`
+- `frameClassName`
 - `visible`
 - `hidden`
 - `disabled`
@@ -207,9 +208,11 @@ The per-`RendererRuntime` stack of `ImportFrame` objects that manages import ali
 
 It provides:
 
+- `preload(...)` — async preload of import module data before frame creation
 - `installPrepared(...)` — synchronous frame creation from compiler-prepared import data
 - `push(...)` / `pop(...)` — frame lifecycle during node mount/unmount
 - `resolveAlias(...)` — nearest-frame alias lookup with parent-chain fallback
+- `currentBindings(...)` — current alias-to-value bindings snapshot for a frame
 - `dispose()` — cleanup on runtime teardown
 
 Architecture detail lives in `docs/architecture/module-cache-and-import-stack.md`.
@@ -244,6 +247,7 @@ It owns:
 - validating state
 - touched, dirty, and visited flags
 - submitting state
+- submit-attempted state
 
 ## `PageRuntime`
 

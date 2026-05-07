@@ -123,7 +123,7 @@ Role summary:
 
 Stable field groups:
 
-- Runtime registration: `type`, `component`, `fields`, `regions`, `scopePolicy`, `actionScopePolicy`, `componentRegistryPolicy`, `wrap`, `schemaValidator`, `validation`, `staticCapable`
+- Runtime registration: `type`, `component`, `fields`, `scopePolicy`, `actionScopePolicy`, `componentRegistryPolicy`, `wrap`, `schemaValidator`, `validation`, `staticCapable`
 - Discovery metadata: `displayName`, `icon`, `category`, `sourcePackage`, `defaultSchema`
 - Renderer classification: `rendererClass`, `rendererTraits`, `injectedLocals`
 - Ordinary renderer authoring contracts: `propContracts`, `eventContracts`, `componentCapabilityContracts`, `scopeExportContracts`
@@ -315,7 +315,7 @@ Boundary inputs remain explicit:
 - `data`
 - `env`
 - `formulaCompiler`
-- optional `registry`, `plugins`, `pageStore`, `surfaceRuntime`, `moduleCache`, `parentScope`, `actionScope`, `componentRegistry`, `onRuntimeChange`, `onComponentRegistryChange`, `onActionScopeChange`, and `onActionError`
+- optional `registry`, `plugins`, `pageStore`, `surfaceRuntime`, `moduleCache`, `parentScope`, `actionScope`, `componentRegistry`, `strictValidation`, `onRuntimeChange`, `onComponentRegistryChange`, `onActionScopeChange`, and `onActionError`
 
 ## Recommended Reading Path
 

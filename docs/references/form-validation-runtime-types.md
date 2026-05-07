@@ -106,6 +106,7 @@ interface CompiledValidationRule {
   dependencyPaths: string[];
   precompiled?: {
     regex?: RegExp;
+    error?: string;
   };
 }
 
@@ -214,12 +215,21 @@ interface ValidationStoreApi {
   getState(): FormStoreState;
   subscribe(listener: () => void): () => void;
   subscribeToPath(path: string, listener: () => void): () => void;
+  subscribeToPaths(paths: readonly string[], listener: () => void): () => void;
   subscribeToSubmitting(listener: () => void): () => void;
   getPathState(path: string): FormPathState;
   getFieldState(path: string): FieldState | undefined;
 }
 
-interface FormStoreApi extends ValidationStoreApi {
+interface FormStoreApi {
+  getState(): FormStoreState;
+  subscribe(listener: () => void): () => void;
+  subscribeToPath(path: string, listener: () => void): () => void;
+  subscribeToPaths(paths: readonly string[], listener: () => void): () => void;
+  subscribeToSubmitting(listener: () => void): () => void;
+  getPathState(path: string): FormPathState;
+  getFieldState(path: string): FieldState | undefined;
+
   setFieldState(path: string, state: Partial<FieldState>): void;
   setValues(values: Record<string, any>): void;
   setValue(path: string, value: unknown): void;
@@ -307,6 +317,9 @@ interface ValidationScopeRuntime {
     patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths'>>,
   ): void;
   notifyFieldHidden(path: string, hidden: boolean): void;
+
+  touchField?(path: string): void;
+  visitField?(path: string): void;
 
   refreshCompiledModel(newModel: CompiledFormValidationModel): void;
   dispose(): void;

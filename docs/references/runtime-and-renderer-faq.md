@@ -64,10 +64,12 @@ SchemaRenderer root
   |       - createPageRuntime(...)
   |       - createSurfaceRuntime(...)
   |       - createFormRuntime(...)
-  |     internal bookkeeping:
-  |       - ownedPages: Set<PageRuntime>
-  |       - ownedSurfaceRuntimes: Set<SurfaceRuntime>
-  |       - ownedActionScopes: Set<ActionScope>
+   |     internal bookkeeping:
+   |       - ownedPages: Set<PageRuntime>
+   |       - ownedSurfaceRuntimes: Set<SurfaceRuntime>
+   |       - ownedActionScopes: Set<ActionScope>
+   |       - ownedValidationScopes: Set<ValidationScopeRuntime>
+   |       - ownedFormRuntimes: Set<FormRuntime>
   |
   +-- create root ActionScope
   +-- create PageRuntime via runtime.createPageRuntime(...)
@@ -137,7 +139,7 @@ That split is why a tree can have one page runtime, one shared surface runtime, 
 
 Implementation note:
 
-- `RendererRuntime` internally keeps owned registries such as `Set<PageRuntime>` and `Set<SurfaceRuntime>`.
+- `RendererRuntime` internally keeps owned registries such as `Set<PageRuntime>`, `Set<SurfaceRuntime>`, `Set<ActionScope>`, `Set<ValidationScopeRuntime>`, and `Set<FormRuntime>`.
 - those sets are mainly bookkeeping for cleanup and disposal, not the main runtime lookup path used during normal rendering.
 - the currently active page/surface/form during execution comes from React contexts and scope boundaries, while the active opened surfaces live in `SurfaceRuntime.store.entries`.
 
