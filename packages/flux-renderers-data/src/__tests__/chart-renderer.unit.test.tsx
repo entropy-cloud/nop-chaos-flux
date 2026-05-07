@@ -241,6 +241,11 @@ describe('ChartRenderer', () => {
     expect(screen.getByTestId('XAxis').getAttribute('data-props')).toContain('Month');
     expect(screen.getAllByTestId('Scatter')).toHaveLength(2);
 
+    const scatterProps = screen.getAllByTestId('Scatter').map((node) =>
+      node.getAttribute('data-props'),
+    );
+    expect(scatterProps[0]).toContain('Revenue');
+
     rerender(
       <ChartRenderer
         {...makeProps({
@@ -254,6 +259,7 @@ describe('ChartRenderer', () => {
 
     expect(screen.getByTestId('LineChart')).toBeTruthy();
     expect(screen.getByTestId('Line').getAttribute('data-props')).toContain('value');
+    expect(screen.getByTestId('Line').getAttribute('data-props')).toContain('hsl(var(--chart-1))');
     expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).toContain('Value');
 
     rerender(
@@ -269,5 +275,34 @@ describe('ChartRenderer', () => {
 
     expect(screen.getByTestId('BarChart')).toBeTruthy();
     expect(screen.getByTestId('Bar').getAttribute('data-props')).toContain('value');
+    expect(screen.getByTestId('Bar').getAttribute('data-props')).toContain('hsl(var(--chart-1))');
+  });
+
+  it('uses visible theme colors for named cartesian series', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'line',
+            xAxis: { dataKey: 'month', label: 'Month' },
+            source: [
+              { month: 'Jan', revenue: 12, expenses: 8 },
+              { month: 'Feb', revenue: 15, expenses: 9 },
+            ],
+            series: [
+              { name: 'Revenue', dataRegionKey: 'revenue' },
+              { name: 'Expenses', dataRegionKey: 'expenses' },
+            ],
+          },
+        })}
+      />,
+    );
+
+    const lines = screen.getAllByTestId('Line');
+    expect(lines).toHaveLength(2);
+    expect(lines[0].getAttribute('data-props')).toContain('hsl(var(--chart-1))');
+    expect(lines[1].getAttribute('data-props')).toContain('hsl(var(--chart-2))');
+    expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).toContain('Revenue');
+    expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).toContain('Expenses');
   });
 });
