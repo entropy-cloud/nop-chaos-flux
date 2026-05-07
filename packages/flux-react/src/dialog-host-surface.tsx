@@ -15,8 +15,8 @@ import {
   ComponentRegistryContext,
   ScopeContext,
   ValidationContext,
-} from './contexts';
-import { RenderNodes } from './render-nodes';
+} from './contexts.js';
+import { RenderNodes } from './render-nodes.js';
 
 export interface SurfaceRenderContext {
   scope: ScopeRef;

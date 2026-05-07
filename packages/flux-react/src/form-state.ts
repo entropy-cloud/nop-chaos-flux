@@ -7,7 +7,7 @@ import type {
   FormStoreState,
   ValidationError,
 } from '@nop-chaos/flux-core';
-import { resolveShowErrorTriggers, shouldShowFieldError } from './field-error-visibility';
+import { resolveShowErrorTriggers, shouldShowFieldError } from './field-error-visibility.js';
 
 type CompiledValidationField = ReturnType<typeof getCompiledValidationField>;
 

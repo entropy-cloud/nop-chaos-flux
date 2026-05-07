@@ -6,9 +6,9 @@ import type {
   ExecutableApiRequest,
   RendererComponentProps,
 } from '@nop-chaos/flux-core';
-import type { RendererDefinition } from '../react-contracts';
-import { createDefaultEnv, createDefaultRegistry } from '../defaults';
-import { createAutoRendererComponent, ensureRendererComponent } from '../auto-renderer';
+import type { RendererDefinition } from '../react-contracts.js';
+import { createDefaultEnv, createDefaultRegistry } from '../defaults.js';
+import { createAutoRendererComponent, ensureRendererComponent } from '../auto-renderer.js';
 
 describe('defaults and auto renderer', () => {
   it('creates default env and allows input overrides', async () => {

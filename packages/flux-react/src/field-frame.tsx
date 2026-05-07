@@ -7,15 +7,15 @@ import {
   useCurrentValidationValues,
   useCurrentValidationScope,
   useFormLayout,
-} from './hooks';
+} from './hooks.js';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
 import {
   EMPTY_FORM_FIELD_STATE,
   getDynamicRequiredDependencyPaths,
   isFieldEffectivelyRequired,
-} from './form-state';
-import { shouldShowFieldError } from './field-error-visibility';
+} from './form-state.js';
+import { shouldShowFieldError } from './field-error-visibility.js';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 

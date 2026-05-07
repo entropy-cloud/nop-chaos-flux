@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import type { ComponentHandleRegistry } from '@nop-chaos/flux-core';
-import { useCurrentComponentRegistry } from './hooks';
+import { useCurrentComponentRegistry } from './hooks.js';
 
 export function useResolvedContainer(
   containerId: string | undefined,

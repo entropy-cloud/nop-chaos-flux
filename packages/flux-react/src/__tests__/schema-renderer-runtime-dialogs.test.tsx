@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { createSchemaRenderer } from '../index';
+import { createSchemaRenderer } from '../index.js';
 import {
   buttonRenderer,
   componentHandleProviderRenderer,
@@ -16,7 +16,7 @@ import {
   scopedHostRenderer,
   sharedFormulaCompiler,
   textRenderer,
-} from '../test-support';
+} from '../test-support.js';
 
 describe('createSchemaRenderer dialog and provider behavior', () => {
   it('reopens dialog with fresh child providers and falls back after close', async () => {

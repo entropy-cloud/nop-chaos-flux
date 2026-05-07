@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { TemplateNode, ScopeRef } from '@nop-chaos/flux-core';
-import { useRendererRuntime } from './hooks';
-import { isSourceSchema } from './use-source-value';
-import { createNodeSourcePropController } from './node-source-prop-controller';
+import { useRendererRuntime } from './hooks.js';
+import { isSourceSchema } from './use-source-value.js';
+import { createNodeSourcePropController } from './node-source-prop-controller.js';
 
-export type { SourceTransientState } from './node-source-prop-controller';
+export type { SourceTransientState } from './node-source-prop-controller.js';
 
 export function useNodeSourceProps(
   node: TemplateNode,

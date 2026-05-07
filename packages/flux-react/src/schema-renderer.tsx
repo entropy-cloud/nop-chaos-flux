@@ -4,8 +4,8 @@ import { createRendererRegistry, isStrictValidationEnabled } from '@nop-chaos/fl
 import { reportImportFailure } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
-import { ensureRendererComponent } from './auto-renderer';
-import type { RendererDefinition } from './react-contracts';
+import { ensureRendererComponent } from './auto-renderer.js';
+import type { RendererDefinition } from './react-contracts.js';
 import {
   ActionScopeContext,
   ComponentRegistryContext,
@@ -16,11 +16,11 @@ import {
   SurfaceContext,
   ValidationContext,
   type ValidationContextValue,
-} from './contexts';
-import { RenderNodes, EMPTY_SCOPE_DATA } from './helpers';
-import { DialogHost } from './dialog-host';
-import { collectSchemaImports } from './node-renderer-utils';
-import { SchemaRootError, SchemaRootErrorBoundary, SchemaRootStatus } from './node-error-boundary';
+} from './contexts.js';
+import { RenderNodes, EMPTY_SCOPE_DATA } from './helpers.js';
+import { DialogHost } from './dialog-host.js';
+import { collectSchemaImports } from './node-renderer-utils.js';
+import { SchemaRootError, SchemaRootErrorBoundary, SchemaRootStatus } from './node-error-boundary.js';
 
 const EMPTY_PREPARED_IMPORTS = new Map<string, import('@nop-chaos/flux-core').PreparedImportSpec>();
 

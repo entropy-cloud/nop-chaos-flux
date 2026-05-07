@@ -2,9 +2,9 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 import type { CompiledFormValidationModel } from '@nop-chaos/flux-core';
-import { FormContext, FormLayoutContext, ValidationContext } from './contexts';
-import { FieldFrame } from './field-frame';
-import { EMPTY_FORM_STORE_STATE } from './form-state';
+import { FormContext, FormLayoutContext, ValidationContext } from './contexts.js';
+import { FieldFrame } from './field-frame.js';
+import { EMPTY_FORM_STORE_STATE } from './form-state.js';
 
 function createMockForm(overrides?: Record<string, unknown>) {
   return {

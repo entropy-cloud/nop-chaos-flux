@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createFragmentScopeChange } from './fragment-scope';
+import { createFragmentScopeChange } from './fragment-scope.js';
 
 describe('createFragmentScopeChange', () => {
   it('returns minimal changed roots for fragment scope updates', () => {

@@ -20,7 +20,7 @@ import {
   RuntimeContext,
   ScopeContext,
   SurfaceContext,
-} from './contexts';
+} from './contexts.js';
 import {
   useAggregateError,
   useChildFieldState,
@@ -34,9 +34,9 @@ import {
   useRenderScope,
   useRendererRuntime,
   useValidationNodeState,
-} from './hooks';
-import { RenderNodes } from './helpers';
-import { fragmentScopedProbeFormSchema } from './test-support-core';
+} from './hooks.js';
+import { RenderNodes } from './helpers.js';
+import { fragmentScopedProbeFormSchema } from './test-support-core.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;

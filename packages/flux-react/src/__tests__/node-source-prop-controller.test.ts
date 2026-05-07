@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createNodeSourcePropController } from '../node-source-prop-controller';
+import { createNodeSourcePropController } from '../node-source-prop-controller.js';
 
 function createScope() {
   return {

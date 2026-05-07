@@ -1,7 +1,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { WorkbenchShell } from './workbench-shell';
+import { WorkbenchShell } from './workbench-shell.js';
 
 afterEach(() => {
   cleanup();

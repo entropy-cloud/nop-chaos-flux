@@ -3,9 +3,9 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
-import { FormContext } from './contexts';
-import { EMPTY_FORM_STORE_STATE } from './form-state';
-import { useCurrentFormError, useCurrentFormErrors } from './hooks';
+import { FormContext } from './contexts.js';
+import { EMPTY_FORM_STORE_STATE } from './form-state.js';
+import { useCurrentFormError, useCurrentFormErrors } from './hooks.js';
 
 function ErrorsProbe(props: { query?: import('@nop-chaos/flux-core').FormErrorQuery }) {
   useCurrentFormErrors(props.query);

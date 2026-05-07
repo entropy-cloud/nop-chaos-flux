@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSlotFrame, readSlotFrame, SLOT_KEY } from '../slot-frame';
+import { buildSlotFrame, readSlotFrame, SLOT_KEY } from '../slot-frame.js';
 
 describe('SLOT_KEY', () => {
   it('is $slot', () => {

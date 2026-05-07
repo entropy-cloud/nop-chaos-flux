@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createSchemaRenderer } from './schema-renderer';
+import { createSchemaRenderer } from './schema-renderer.js';
 import {
   componentHandleProviderRenderer,
   createDispatchCaptureRenderer,
@@ -10,9 +10,9 @@ import {
   namespaceProviderRenderer,
   scopedHostRenderer,
   toggleHostRenderer,
-} from './test-support-runtime';
-import { env, pageRenderer, sharedFormulaCompiler } from './test-support-core';
-import { useCurrentActionScope } from './hooks';
+} from './test-support-runtime.js';
+import { env, pageRenderer, sharedFormulaCompiler } from './test-support-core.js';
+import { useCurrentActionScope } from './hooks.js';
 
 describe('createSchemaRenderer import scope boundaries', () => {
   it('creates an import-owned action scope without depending on renderer actionScopePolicy', async () => {

@@ -1,12 +1,12 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { FormContext } from './contexts';
-import { createSchemaRenderer } from './schema-renderer';
-import { hasRendererSlotContent, resolveRendererSlotContent } from './render-nodes';
-import { FieldFrame } from './field-frame';
-import { EMPTY_FORM_STORE_STATE } from './form-state';
-import { resolveFrameWrapMode } from './node-renderer-utils';
+import { FormContext } from './contexts.js';
+import { createSchemaRenderer } from './schema-renderer.js';
+import { hasRendererSlotContent, resolveRendererSlotContent } from './render-nodes.js';
+import { FieldFrame } from './field-frame.js';
+import { EMPTY_FORM_STORE_STATE } from './form-state.js';
+import { resolveFrameWrapMode } from './node-renderer-utils.js';
 import {
   buttonRenderer,
   env,
@@ -16,7 +16,7 @@ import {
   probeQueryInputRenderer,
   sharedFormulaCompiler,
   textRenderer,
-} from './test-support';
+} from './test-support.js';
 
 describe('resolveFrameWrapMode', () => {
   it('returns none when renderer definition is not wrap-compatible', () => {

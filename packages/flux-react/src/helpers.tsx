@@ -13,7 +13,7 @@ import type {
   RenderFragmentOptions,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import { RenderNodes } from './render-nodes';
+import { RenderNodes } from './render-nodes.js';
 
 function isFluxActionEventCandidate(
   value: unknown,
@@ -73,7 +73,7 @@ function normalizeActionEvent(event: unknown): ActionContext['event'] {
   };
 }
 
-export { RenderNodes } from './render-nodes';
+export { RenderNodes } from './render-nodes.js';
 
 export function mergeActionContext(
   base: {

@@ -12,7 +12,7 @@ import {
   createNormalizedActionEvent,
   createHelpers,
   EMPTY_SCOPE_DATA,
-} from '../helpers';
+} from '../helpers.js';
 
 type DispatchWithMeta = RendererHelpers['dispatch'] & {
   __actionScope?: ActionScope;

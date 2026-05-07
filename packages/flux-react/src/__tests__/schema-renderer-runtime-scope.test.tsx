@@ -2,8 +2,8 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { useScopeSelector } from '../hooks';
-import { createSchemaRenderer } from '../schema-renderer';
+import { useScopeSelector } from '../hooks.js';
+import { createSchemaRenderer } from '../schema-renderer.js';
 import { createExpressionCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
@@ -18,12 +18,12 @@ import {
   probeInputRenderer,
   scopeLayerProbeRenderer,
   sharedFormulaCompiler,
-} from '../test-support-core';
+} from '../test-support-core.js';
 import {
   fragmentRenderHostRenderer,
   fragmentScopeProbeHostRenderer,
   renderWithRuntimeProviders,
-} from '../test-support-runtime';
+} from '../test-support-runtime.js';
 
 function FormStatusProbeRenderer() {
   const formStatus = useScopeSelector((scope) => scope.$form, Object.is) as

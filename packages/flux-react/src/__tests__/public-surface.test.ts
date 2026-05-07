@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import * as fluxReact from '../index';
-import * as fluxReactUnstable from '../unstable';
+import * as fluxReact from '../index.js';
+import * as fluxReactUnstable from '../unstable.js';
 
 describe('flux-react public surface', () => {
   it('keeps internal orchestration exports off the root entry', () => {

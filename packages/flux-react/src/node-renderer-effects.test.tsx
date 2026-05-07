@@ -4,7 +4,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ActionSchema, NodeInstance, RendererHelpers } from '@nop-chaos/flux-core';
-import { useNodeLifecycleActions } from './node-renderer-effects';
+import { useNodeLifecycleActions } from './node-renderer-effects.js';
 
 function LifecycleProbe(props: {
   helpers: RendererHelpers;

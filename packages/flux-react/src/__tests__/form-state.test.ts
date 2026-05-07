@@ -7,7 +7,7 @@ import {
   selectCurrentFormFieldState,
   selectCurrentFormFieldPresentation,
   isFieldEffectivelyRequired,
-} from '../form-state';
+} from '../form-state.js';
 
 function makeError(
   overrides: Partial<import('@nop-chaos/flux-core').ValidationError> = {},

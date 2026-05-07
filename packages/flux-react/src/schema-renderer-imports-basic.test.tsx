@@ -2,9 +2,9 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createModuleCache } from '@nop-chaos/flux-runtime';
-import { createSchemaRenderer } from './schema-renderer';
-import { buttonRenderer, dispatchProbeRenderer, scopedHostRenderer } from './test-support-runtime';
-import { env, pageRenderer, sharedFormulaCompiler, textRenderer } from './test-support-core';
+import { createSchemaRenderer } from './schema-renderer.js';
+import { buttonRenderer, dispatchProbeRenderer, scopedHostRenderer } from './test-support-runtime.js';
+import { env, pageRenderer, sharedFormulaCompiler, textRenderer } from './test-support-core.js';
 
 describe('createSchemaRenderer import basics', () => {
   it('does not invoke import preload when the schema has no xui imports', async () => {

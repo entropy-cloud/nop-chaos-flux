@@ -2,9 +2,9 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
-import { FormContext } from './contexts';
-import { EMPTY_FORM_STORE_STATE } from './form-state';
-import { useCurrentFormFieldState, useCurrentFormState, useFieldError } from './hooks';
+import { FormContext } from './contexts.js';
+import { EMPTY_FORM_STORE_STATE } from './form-state.js';
+import { useCurrentFormFieldState, useCurrentFormState, useFieldError } from './hooks.js';
 
 function FormStateProbe() {
   useCurrentFormState((state) => state.values, Object.is, { path: 'profile.email' });

@@ -1,8 +1,8 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { RuntimeContext, ScopeContext } from '../contexts';
-import { isSourceSchema, useSourceValue } from '../use-source-value';
+import { RuntimeContext, ScopeContext } from '../contexts.js';
+import { isSourceSchema, useSourceValue } from '../use-source-value.js';
 
 function makeScope() {
   return {

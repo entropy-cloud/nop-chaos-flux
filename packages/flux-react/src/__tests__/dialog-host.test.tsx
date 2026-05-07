@@ -93,7 +93,7 @@ vi.mock('@nop-chaos/ui', () => ({
   DrawerTitle: ({ children }: any) => <div data-testid="drawer-title">{children}</div>,
 }));
 
-import { DialogHost } from '../dialog-host';
+import { DialogHost } from '../dialog-host.js';
 
 function makeScope() {
   return {

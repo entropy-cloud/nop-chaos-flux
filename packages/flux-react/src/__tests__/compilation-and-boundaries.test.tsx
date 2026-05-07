@@ -3,10 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { createActionScope } from '@nop-chaos/flux-runtime';
 import * as fluxCore from '@nop-chaos/flux-core';
-import { NodeMetaContext, RuntimeContext, ScopeContext } from '../contexts';
-import { createSchemaRenderer } from '../schema-renderer';
-import { RenderNodes } from '../helpers';
-import { NodeRenderer } from '../node-renderer';
+import { NodeMetaContext, RuntimeContext, ScopeContext } from '../contexts.js';
+import { createSchemaRenderer } from '../schema-renderer.js';
+import { RenderNodes } from '../helpers.js';
+import { NodeRenderer } from '../node-renderer.js';
 import {
   createExpressionCompiler,
   createFormulaCompiler,
@@ -17,7 +17,7 @@ import {
   scopedHostRenderer,
   sharedFormulaCompiler,
   textRenderer,
-} from '../test-support';
+} from '../test-support.js';
 
 describe('createSchemaRenderer compilation and boundary flags', () => {
   it('compiles runtime boundary flags for form, scope, provider, and class alias changes', () => {
@@ -207,7 +207,7 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     const capturedInputs: unknown[] = [];
 
     vi.resetModules();
-    const actualHelpers = await vi.importActual<typeof import('../helpers')>('../helpers');
+    const actualHelpers = await vi.importActual<typeof import('../helpers.js')>('../helpers');
     vi.doMock('../helpers', () => ({
       ...actualHelpers,
       RenderNodes(props: Parameters<typeof actualHelpers.RenderNodes>[0]) {
@@ -218,7 +218,7 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
 
     try {
       const { createSchemaRenderer: createSchemaRendererWithMock } =
-        await import('../schema-renderer');
+        await import('../schema-renderer.js');
       const SchemaRenderer = createSchemaRendererWithMock([textRenderer]);
 
       render(

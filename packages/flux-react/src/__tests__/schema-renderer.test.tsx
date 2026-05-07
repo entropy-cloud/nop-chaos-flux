@@ -4,9 +4,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { Button } from '@nop-chaos/ui';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer } from '../schema-renderer';
+import { createSchemaRenderer } from '../schema-renderer.js';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
-import { env, pageRenderer, textRenderer } from '../test-support-core';
+import { env, pageRenderer, textRenderer } from '../test-support-core.js';
 
 const openDialogButtonRenderer = {
   type: 'open-dialog-button',

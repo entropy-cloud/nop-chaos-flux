@@ -2,12 +2,12 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import type { ScopeRef } from '@nop-chaos/flux-core';
-import { ActionScopeContext, ComponentRegistryContext, ScopeContext } from '../contexts';
+import { ActionScopeContext, ComponentRegistryContext, ScopeContext } from '../contexts.js';
 import {
   SurfaceScopeProviders,
   renderSurfaceNode,
   useSurfaceScopeSnapshot,
-} from '../dialog-host-surface';
+} from '../dialog-host-surface.js';
 
 function makeScope(overrides: Record<string, unknown> = {}): ScopeRef {
   const data = { value: 'test' };

@@ -4,7 +4,7 @@ import type {
   FormStoreState,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import { EMPTY_FORM_STORE_STATE } from './form-state';
+import { EMPTY_FORM_STORE_STATE } from './form-state.js';
 
 export function shallowEqualFormFieldState(
   a: FormFieldStateSnapshot,

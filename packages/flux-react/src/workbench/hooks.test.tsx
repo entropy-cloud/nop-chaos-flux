@@ -5,8 +5,8 @@ import { cleanup, render } from '@testing-library/react';
 import { createRendererRegistry, type ScopeRef } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
-import { RuntimeContext, ScopeContext } from '../contexts';
-import { useHostScope } from './hooks';
+import { RuntimeContext, ScopeContext } from '../contexts.js';
+import { useHostScope } from './hooks.js';
 
 const env = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),

@@ -4,7 +4,7 @@ import type {
   RendererComponentProps,
   RendererResolvedProps,
 } from '@nop-chaos/flux-core';
-import type { RendererDefinition } from './react-contracts';
+import type { RendererDefinition } from './react-contracts.js';
 
 export function createAutoRendererComponent<
   S extends BaseSchema = BaseSchema,

@@ -1,8 +1,8 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { createSchemaRenderer } from '../schema-renderer';
-import { useRenderScope } from '../hooks';
+import { createSchemaRenderer } from '../schema-renderer.js';
+import { useRenderScope } from '../hooks.js';
 import {
   createFormulaCompiler,
   env,
@@ -14,7 +14,7 @@ import {
   selectorRenderer,
   sharedFormulaCompiler,
   textRenderer,
-} from '../test-support';
+} from '../test-support.js';
 
 describe('createSchemaRenderer scope and reactivity', () => {
   it('exposes template nodes through renderer props and current-node meta hooks', () => {

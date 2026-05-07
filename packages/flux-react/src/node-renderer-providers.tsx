@@ -14,7 +14,7 @@ import {
   ImportFrameContext,
   NodeMetaContext,
   ScopeContext,
-} from './contexts';
+} from './contexts.js';
 
 type TemplateNodeWithProviderPlan = TemplateNode & {
   providerPlan?: {

@@ -7,8 +7,8 @@ import {
   useRenderScope,
   useRendererRuntime,
   useScopeSelector,
-} from '../hooks';
-import { createSchemaRenderer } from '../schema-renderer';
+} from '../hooks.js';
+import { createSchemaRenderer } from '../schema-renderer.js';
 import {
   cidProbeRenderer,
   createExpressionCompiler,
@@ -18,7 +18,7 @@ import {
   pageRenderer,
   textRenderer,
   wrapProbeRenderer,
-} from '../test-support';
+} from '../test-support.js';
 
 const testState: {
   expressionCompiler: ReturnType<typeof createExpressionCompiler>;
@@ -267,7 +267,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
   });
 
   it('does not fabricate a cid for createNodeInstance when none is provided', async () => {
-    const { createNodeInstance } = await import('../node-instance');
+    const { createNodeInstance } = await import('../node-instance.js');
     const templateNode = {
       templateNodeId: 99,
       id: 'probe',

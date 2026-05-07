@@ -2,7 +2,7 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ActionNamespaceProvider, ActionScope } from '@nop-chaos/flux-core';
-import { useNamespaceRegistration } from './hooks';
+import { useNamespaceRegistration } from './hooks.js';
 
 afterEach(() => {
   cleanup();

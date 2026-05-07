@@ -1,7 +1,7 @@
 import { useLayoutEffect, useState, useSyncExternalStore } from 'react';
 import type { ActionNamespaceProvider, ActionScope, ScopeRef } from '@nop-chaos/flux-core';
 import type { DomainBridge } from '@nop-chaos/flux-core';
-import { useRendererRuntime, useRenderScope } from '../hooks';
+import { useRendererRuntime, useRenderScope } from '../hooks.js';
 
 interface HostScopeStore {
   current: ScopeRef;

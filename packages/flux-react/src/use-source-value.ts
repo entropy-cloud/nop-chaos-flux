@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ActionResult, ScopeRef, SourceSchema } from '@nop-chaos/flux-core';
-import { useRenderScope, useRendererRuntime } from './hooks';
+import { useRenderScope, useRendererRuntime } from './hooks.js';
 
 export function isSourceSchema(value: unknown): value is SourceSchema {
   return (

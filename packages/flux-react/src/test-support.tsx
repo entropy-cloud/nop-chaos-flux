@@ -1,6 +1,6 @@
-export * from './test-support-core';
-export * from './test-support-runtime';
-export { FormContext } from './contexts';
+export * from './test-support-core.js';
+export * from './test-support-runtime.js';
+export { FormContext } from './contexts.js';
 export { createRendererRegistry } from '@nop-chaos/flux-core';
 export { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 export { createRendererRuntime } from '@nop-chaos/flux-runtime';

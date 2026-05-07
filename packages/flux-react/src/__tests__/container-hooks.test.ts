@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createComponentHandleRegistry } from '@nop-chaos/flux-runtime';
-import { resolveContainerElement } from '../container-hooks';
+import { resolveContainerElement } from '../container-hooks.js';
 
 describe('resolveContainerElement', () => {
   it('returns null for undefined containerId', () => {

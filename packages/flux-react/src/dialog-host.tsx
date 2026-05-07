@@ -1,11 +1,11 @@
 import React from 'react';
 import type { SurfaceEntry, SurfaceRuntime } from '@nop-chaos/flux-core';
-import { useCurrentPage, useCurrentSurfaceRuntime } from './hooks';
+import { useCurrentPage, useCurrentSurfaceRuntime } from './hooks.js';
 import {
   renderSurfaceNode,
   SurfaceScopeProviders,
   useSurfaceScopeSnapshot,
-} from './dialog-host-surface';
+} from './dialog-host-surface.js';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import {
   Dialog,
@@ -22,7 +22,7 @@ import {
   DrawerTitle,
   cn,
 } from '@nop-chaos/ui';
-import { resolveContainerElement } from './container-hooks';
+import { resolveContainerElement } from './container-hooks.js';
 
 function sameSurfaces(left: SurfaceEntry[], right: SurfaceEntry[]) {
   if (left === right) {

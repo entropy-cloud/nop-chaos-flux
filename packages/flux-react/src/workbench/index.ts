@@ -1,3 +1,3 @@
-export { useBridgeSnapshot, useHostScope, useNamespaceRegistration } from './hooks';
-export { WorkbenchShell } from './workbench-shell';
-export type { WorkbenchShellProps } from './workbench-shell';
+export { useBridgeSnapshot, useHostScope, useNamespaceRegistration } from './hooks.js';
+export { WorkbenchShell } from './workbench-shell.js';
+export type { WorkbenchShellProps } from './workbench-shell.js';

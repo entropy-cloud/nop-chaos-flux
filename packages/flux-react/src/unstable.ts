@@ -1,7 +1,7 @@
-export { mergeActionContext, createHelpers, EMPTY_SCOPE_DATA } from './helpers';
-export { RenderNodes } from './render-nodes';
-export { rendererHooks } from './hooks';
-export type { FormLayoutContextValue } from './contexts';
+export { mergeActionContext, createHelpers, EMPTY_SCOPE_DATA } from './helpers.js';
+export { RenderNodes } from './render-nodes.js';
+export { rendererHooks } from './hooks.js';
+export type { FormLayoutContextValue } from './contexts.js';
 export {
   ActionScopeContext,
   ClassAliasesContext,
@@ -17,7 +17,7 @@ export {
   SurfaceContext,
   ValidationContext,
   useRequiredContext,
-} from './contexts';
+} from './contexts.js';
 export {
   publishOwnerStatus,
   createFormComponentHandle,

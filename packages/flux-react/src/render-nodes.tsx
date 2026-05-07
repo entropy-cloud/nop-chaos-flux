@@ -17,10 +17,10 @@ import {
   useRenderScope,
   useCurrentActionScope,
   useCurrentComponentRegistry,
-} from './hooks';
-import { NodeMetaContext, RenderInstancePathContext } from './contexts';
-import { createFragmentScopeChange } from './fragment-scope';
-import { NodeRenderer } from './node-renderer';
+} from './hooks.js';
+import { NodeMetaContext, RenderInstancePathContext } from './contexts.js';
+import { createFragmentScopeChange } from './fragment-scope.js';
+import { NodeRenderer } from './node-renderer.js';
 
 /**
  * Bridge resolved props to schema type for complex nested properties.

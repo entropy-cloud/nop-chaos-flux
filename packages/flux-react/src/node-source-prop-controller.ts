@@ -6,7 +6,7 @@ import type {
   TemplateNode,
 } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
-import { isSourceSchema } from './use-source-value';
+import { isSourceSchema } from './use-source-value.js';
 
 export interface SourceTransientState {
   loading: boolean;

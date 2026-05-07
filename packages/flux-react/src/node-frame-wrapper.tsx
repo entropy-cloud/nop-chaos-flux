@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import type { ResolvedNodeMeta, TemplateNode } from '@nop-chaos/flux-core';
-import type { RenderRegionHandle } from './react-contracts';
-import { FieldFrame, toFieldRemarkProps } from './field-frame';
-import type { FieldRemarkSchemaLike } from './field-frame';
-import { resolveFrameWrapMode } from './node-renderer-utils';
+import type { RenderRegionHandle } from './react-contracts.js';
+import { FieldFrame, toFieldRemarkProps } from './field-frame.js';
+import type { FieldRemarkSchemaLike } from './field-frame.js';
+import { resolveFrameWrapMode } from './node-renderer-utils.js';
 
 export function NodeFrameWrapper(props: {
   templateNode: TemplateNode;

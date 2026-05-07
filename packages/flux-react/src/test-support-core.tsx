@@ -4,7 +4,7 @@ import { cleanup } from '@testing-library/react';
 import { Button, Input, Label } from '@nop-chaos/ui';
 import type { RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { FormContext, ScopeContext } from './contexts';
+import { FormContext, ScopeContext } from './contexts.js';
 import {
   useCurrentActionScope,
   useCurrentComponentRegistry,
@@ -14,7 +14,7 @@ import {
   useRenderScope,
   useRendererRuntime,
   useScopeSelector,
-} from './hooks';
+} from './hooks.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;

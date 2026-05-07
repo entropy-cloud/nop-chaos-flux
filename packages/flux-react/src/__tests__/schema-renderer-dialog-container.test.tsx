@@ -1,15 +1,15 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createSchemaRenderer } from '../schema-renderer';
+import { createSchemaRenderer } from '../schema-renderer.js';
 import {
   buttonRenderer,
   createDispatchCaptureRenderer,
   componentHandleProviderRenderer,
   namespaceProviderRenderer,
   scopedHostRenderer,
-} from '../test-support-runtime';
-import { env, pageRenderer, sharedFormulaCompiler, textRenderer } from '../test-support-core';
+} from '../test-support-runtime.js';
+import { env, pageRenderer, sharedFormulaCompiler, textRenderer } from '../test-support-core.js';
 
 describe('dialog container resolution', () => {
   it('renders dialog with showMask: false and no overlay element', async () => {
