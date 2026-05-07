@@ -11,5 +11,15 @@
     "declaration": true,
     "declarationMap": true,
     "outDir": "dist"
-  }
+  },
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/__tests__",
+    "src/**/test-support*",
+    "src/**/test-utils*",
+    "src/**/*-test-utils*",
+    "src/**/*-fixtures*",
+    "src/**/*-test-support*"
+  ]
 }

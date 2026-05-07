@@ -25,6 +25,7 @@
       "@nop-chaos/nop-debugger": ["./packages/nop-debugger/src/index.tsx"],
       "@nop-chaos/flux-runtime": ["./packages/flux-runtime/src/index.ts"],
       "@nop-chaos/flux-react": ["./packages/flux-react/src/index.tsx"],
+      "@nop-chaos/flux-react/unstable": ["./packages/flux-react/src/unstable.ts"],
       "@nop-chaos/flux-renderers-basic": ["./packages/flux-renderers-basic/src/index.tsx"],
       "@nop-chaos/flux-renderers-form": ["./packages/flux-renderers-form/src/index.tsx"],
       "@nop-chaos/flux-renderers-form/test-support": [
