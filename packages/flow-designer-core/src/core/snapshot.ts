@@ -1,7 +1,7 @@
-import type { DesignerSelectionState } from './selection';
-import { getSelectionSummary } from './selection';
-import type { DesignerShellState } from './shell-state';
-import type { DesignerSnapshot, BranchSummary, GraphDocument } from '../types';
+import type { DesignerSelectionState } from './selection.js';
+import { getSelectionSummary } from './selection.js';
+import type { DesignerShellState } from './shell-state.js';
+import type { DesignerSnapshot, BranchSummary, GraphDocument } from '../types.js';
 
 function resolveActiveBranch(
   activeNode: DesignerSnapshot['activeNode'],

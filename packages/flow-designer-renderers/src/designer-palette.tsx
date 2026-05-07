@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import type { NodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context';
-import { DesignerIcon } from './designer-icon';
-import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge';
+import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
+import { DesignerIcon } from './designer-icon.js';
+import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge.js';
 import { Button, cn } from '@nop-chaos/ui';
 
 const PALETTE_APPEARANCE_BY_ID: Record<string, string> = {

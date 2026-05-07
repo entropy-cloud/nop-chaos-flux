@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import type { DesignerConfig, DesignerCore } from '@nop-chaos/flow-designer-core';
-import { flowDesignerRendererDefinitions } from './index';
+import { flowDesignerRendererDefinitions } from './index.js';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { render, waitFor, within } from '@testing-library/react';

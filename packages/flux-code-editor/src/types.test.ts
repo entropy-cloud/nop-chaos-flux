@@ -10,14 +10,14 @@ import {
   getDefaultLineNumbers,
   getDefaultAutoHeight,
   getDefaultHeight,
-} from './types';
+} from './types.js';
 import type {
   VariableItem,
   FuncGroup,
   TableSchema,
   ExpressionEditorConfig,
   SQLEditorConfig,
-} from './types';
+} from './types.js';
 
 describe('type guards', () => {
   it('isVariableSourceRef returns true for source refs', () => {

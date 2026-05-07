@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseTableAliases, SQL_KEYWORDS } from './completion';
-import type { TableSchema } from '../../types';
+import { parseTableAliases, SQL_KEYWORDS } from './completion.js';
+import type { TableSchema } from '../../types.js';
 
 describe('parseTableAliases', () => {
   const tables: TableSchema[] = [

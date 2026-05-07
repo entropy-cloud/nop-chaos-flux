@@ -1,4 +1,4 @@
-import type { GraphDocument, GraphNode, GraphEdge } from '../types';
+import type { GraphDocument, GraphNode, GraphEdge } from '../types.js';
 
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;

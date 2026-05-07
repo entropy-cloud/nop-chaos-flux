@@ -1,4 +1,4 @@
-import type { GraphDocument, GraphNode, NormalizedDesignerConfig } from '../types';
+import type { GraphDocument, GraphNode, NormalizedDesignerConfig } from '../types.js';
 
 export function addNodeToDocument(doc: GraphDocument, node: GraphNode): GraphDocument {
   return {

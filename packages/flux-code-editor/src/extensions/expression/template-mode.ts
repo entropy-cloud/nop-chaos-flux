@@ -2,8 +2,8 @@ import type { Extension } from '@codemirror/state';
 import { StreamLanguage } from '@codemirror/language';
 import { autocompletion } from '@codemirror/autocomplete';
 import type { StringStream } from '@codemirror/language';
-import { expressionCompletionSource } from './completion';
-import type { VariableItem, FuncGroup } from '../../types';
+import { expressionCompletionSource } from './completion.js';
+import type { VariableItem, FuncGroup } from '../../types.js';
 
 const templateTokenizer = {
   name: 'template',

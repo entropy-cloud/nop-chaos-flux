@@ -1,4 +1,4 @@
-import type { TreeDomainAdapter } from './types';
+import type { TreeDomainAdapter } from './types.js';
 
 const adapters = new Map<string, TreeDomainAdapter>();
 

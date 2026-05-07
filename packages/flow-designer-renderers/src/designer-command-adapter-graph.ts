@@ -1,5 +1,5 @@
 import type { DesignerCore } from '@nop-chaos/flow-designer-core';
-import type { DesignerCommand, DesignerCommandResult } from './designer-command-types';
+import type { DesignerCommand, DesignerCommandResult } from './designer-command-types.js';
 import {
   createFailure,
   createSuccess,
@@ -9,7 +9,7 @@ import {
   relayoutAfterTreeMutation,
   validateEdgeMutation,
   viewportsEqual,
-} from './designer-command-adapter-helpers';
+} from './designer-command-adapter-helpers.js';
 
 export function executeGraphOnlyCommand(
   core: DesignerCore,
@@ -113,7 +113,7 @@ export function executeGraphOnlyCommand(
         return createFailure(
           core,
           result.error ?? 'Unable to reconnect edge.',
-          (result.reason as import('./designer-command-types').DesignerCommandReason | undefined) ??
+          (result.reason as import('./designer-command-types.js').DesignerCommandReason | undefined) ??
             'missing-edge',
         );
       }
@@ -121,7 +121,7 @@ export function executeGraphOnlyCommand(
       return createSuccess(core, {
         data: result.edge,
         reason: result.reason as
-          | import('./designer-command-types').DesignerCommandReason
+          | import('./designer-command-types.js').DesignerCommandReason
           | undefined,
       });
     }

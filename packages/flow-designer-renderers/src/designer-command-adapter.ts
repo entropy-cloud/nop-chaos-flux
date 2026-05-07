@@ -4,7 +4,7 @@ import type {
   DesignerCommandAdapter,
   DesignerCommandReason,
   DesignerCommandResult,
-} from './designer-command-types';
+} from './designer-command-types.js';
 import {
   createFailure,
   createSuccess,
@@ -12,8 +12,8 @@ import {
   hasNode,
   relayoutAfterTreeMutation,
   type TreeCommandOwner,
-} from './designer-command-adapter-helpers';
-import { executeGraphOnlyCommand } from './designer-command-adapter-graph';
+} from './designer-command-adapter-helpers.js';
+import { executeGraphOnlyCommand } from './designer-command-adapter-graph.js';
 import {
   addBranchInTreeDocument,
   deleteNodeInTreeDocument,
@@ -25,7 +25,7 @@ import {
   projectTreeDocumentToGraph,
   updateBranchDataInTreeDocument,
   updateNodeDataInTreeDocument,
-} from './tree-commands';
+} from './tree-commands.js';
 
 export type {
   DesignerCommand,
@@ -433,4 +433,4 @@ export function createDesignerCommandAdapter(
 }
 
 export type { GraphNode } from '@nop-chaos/flow-designer-core';
-export type { GraphEdge } from './designer-command-types';
+export type { GraphEdge } from './designer-command-types.js';

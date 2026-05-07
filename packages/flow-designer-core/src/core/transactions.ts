@@ -1,5 +1,5 @@
-import type { GraphDocument } from '../types';
-import { cloneDocument, generateId } from './clone';
+import type { GraphDocument } from '../types.js';
+import { cloneDocument, generateId } from './clone.js';
 
 export interface DesignerTransaction {
   id: string;

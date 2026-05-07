@@ -1,5 +1,5 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
-import type { GraphNode, GraphEdge, NodeTypeConfig } from './types';
+import type { GraphNode, GraphEdge, NodeTypeConfig } from './types.js';
 
 const elk = new ELK();
 

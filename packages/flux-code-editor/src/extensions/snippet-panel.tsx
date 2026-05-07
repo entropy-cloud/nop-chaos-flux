@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
-import type { CodeSnippetTemplate } from '../types';
-import { ToolbarButton } from '../code-editor-renderer/toolbar-button';
+import type { CodeSnippetTemplate } from '../types.js';
+import { ToolbarButton } from '../code-editor-renderer/toolbar-button.js';
 
 interface SnippetPanelProps {
   snippets: CodeSnippetTemplate[];

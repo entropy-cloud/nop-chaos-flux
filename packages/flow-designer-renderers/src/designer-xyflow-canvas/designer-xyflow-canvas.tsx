@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Background,
   BackgroundVariant,
@@ -7,37 +7,23 @@ import {
   ReactFlow,
   ReactFlowProvider,
   ViewportPortal,
-  useNodesState,
-  useEdgesState,
 } from '@xyflow/react';
-import type {
-  Connection,
-  Edge,
-  EdgeChange,
-  NodeChange,
-  ReactFlowInstance,
-  OnReconnect,
-  OnSelectionChangeParams,
-} from '@xyflow/react';
+import type { ReactFlowInstance } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { DesignerXyflowNode } from './designer-xyflow-node';
-import { DesignerXyflowEdge } from './designer-xyflow-edge';
-import { DingFlowEdge } from '../dingflow';
+import { DesignerXyflowNode } from './designer-xyflow-node.js';
+import { DesignerXyflowEdge } from './designer-xyflow-edge.js';
+import { DingFlowEdge } from '../dingflow/index.js';
 import {
   computeDingFlowOverlays,
   DingFlowAddBranchOverlay,
   DingFlowMergeOverlay,
-} from '../dingflow';
-import {
-  createXyflowNodes,
-  createXyflowEdges,
-  normalizeControlledViewport,
-  viewportsEqual,
-  normalizeViewportChange,
-  normalizePositionSignature,
-} from './xyflow-utils';
-import type { XyflowViewportChange } from './types';
+} from '../dingflow/index.js';
+import { createXyflowNodes, createXyflowEdges, normalizeControlledViewport } from './xyflow-utils.js';
+import type { XyflowViewportChange } from './types.js';
 import type { CanvasConfig, DesignerSnapshot } from '@nop-chaos/flow-designer-core';
+import { useMinimapNavigation } from './use-minimap-navigation.js';
+import { useXyflowSync } from './use-xyflow-sync.js';
+import { useXyflowInteractions } from './use-xyflow-interactions.js';
 
 export const DESIGNER_PALETTE_NODE_MIME = 'application/x-flow-designer-node-type';
 
@@ -170,7 +156,6 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
 
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
-  const lastCommittedPositionsRef = useRef<Map<string, string>>(new Map());
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -182,13 +167,9 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     };
   }, []);
 
-  const [localNodes, setLocalNodes, onNodesChangeInternal] = useNodesState(snapshotNodes);
-  const [localEdges, setLocalEdges, onEdgesChangeInternal] = useEdgesState(snapshotEdges);
-
   const showMinimap = props.showMinimap !== false;
   const showControls = props.showControls !== false;
   const surfaceRef = useRef<HTMLDivElement | null>(null);
-  const viewportRef = useRef(viewport);
   const isTreeMode = props.documentMode === 'tree';
   const gridSize = props.canvasConfig?.gridSize ?? 24;
   const minZoom = props.canvasConfig?.minZoom ?? 0.1;
@@ -206,250 +187,35 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   const showBackground = props.snapshot.gridEnabled && backgroundType !== 'none';
   const onViewportChange = props.onViewportChange;
 
-  useEffect(() => {
-    viewportRef.current = viewport;
-  }, [viewport]);
+  useMinimapNavigation({ surfaceRef, viewport, showMinimap, onViewportChange });
 
-  useEffect(() => {
-    if (!showMinimap) return;
+  const { localNodes, renderedEdges, onNodesChangeInternal, onEdgesChangeInternal, lastCommittedPositionsRef } =
+    useXyflowSync({ snapshotNodes, snapshotEdges, hoveredEdgeId });
 
-    const minimapSvg = surfaceRef.current?.querySelector('.react-flow__minimap svg');
-    if (minimapSvg && minimapSvg.getAttribute('preserveAspectRatio') !== 'none') {
-      minimapSvg.setAttribute('preserveAspectRatio', 'none');
-    }
-  }, [showMinimap]);
-
-  useEffect(() => {
-    if (!showMinimap) return;
-
-    const svgEl = surfaceRef.current?.querySelector('.react-flow__minimap svg');
-    if (!svgEl) return;
-
-    let startClient: { x: number; y: number } | null = null;
-
-    const onMouseDown = (e: MouseEvent) => {
-      if (e.button !== 0) return;
-      startClient = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseUp = (e: MouseEvent) => {
-      if (!startClient) return;
-      const dx = e.clientX - startClient.x;
-      const dy = e.clientY - startClient.y;
-      startClient = null;
-
-      if (dx * dx + dy * dy > 25) return;
-
-      const viewBox = svgEl.getAttribute('viewBox');
-      if (!viewBox) return;
-      const [vx, vy, vw, vh] = viewBox.split(/[\s,]+/).map(Number);
-      const rect = svgEl.getBoundingClientRect();
-      const relX = (e.clientX - rect.left) / rect.width;
-      const relY = (e.clientY - rect.top) / rect.height;
-      const flowX = vx + relX * vw;
-      const flowY = vy + relY * vh;
-
-      const cw = surfaceRef.current?.clientWidth ?? 0;
-      const ch = surfaceRef.current?.clientHeight ?? 0;
-      const z = viewportRef.current.zoom;
-      onViewportChange(
-        {
-          x: cw / 2 - flowX * z,
-          y: ch / 2 - flowY * z,
-          zoom: z,
-        },
-        undefined,
-      );
-    };
-
-    svgEl.addEventListener('mousedown', onMouseDown as EventListener);
-    window.addEventListener('mouseup', onMouseUp as EventListener, true);
-
-    return () => {
-      svgEl.removeEventListener('mousedown', onMouseDown as EventListener);
-      window.removeEventListener('mouseup', onMouseUp as EventListener, true);
-    };
-  }, [showMinimap, onViewportChange]);
-
-  useEffect(() => {
-    const snapshotPositionMap = new Map(
-      snapshotNodes.map((node) => [node.id, normalizePositionSignature(node.position)]),
-    );
-
-    setLocalNodes((currentNodes) => {
-      if (currentNodes.length === 0) {
-        return snapshotNodes;
-      }
-
-      const snapshotIdSet = new Set(snapshotNodes.map((n) => n.id));
-      const localIdSet = new Set(currentNodes.map((n) => n.id));
-      const structureChanged =
-        snapshotIdSet.size !== localIdSet.size ||
-        [...snapshotIdSet].some((id) => !localIdSet.has(id));
-
-      if (structureChanged) {
-        const currentNodeMap = new Map(currentNodes.map((node) => [node.id, node]));
-        const lastCommitted = lastCommittedPositionsRef.current;
-        return snapshotNodes.map((snapshotNode) => {
-          const localNode = currentNodeMap.get(snapshotNode.id);
-          if (!localNode) return snapshotNode;
-          const snapshotSignature = snapshotPositionMap.get(snapshotNode.id);
-          const committedSignature = lastCommitted.get(snapshotNode.id);
-          if (committedSignature && snapshotSignature === committedSignature) return localNode;
-          return snapshotNode;
-        });
-      }
-
-      const lastCommitted = lastCommittedPositionsRef.current;
-      let changed = false;
-      const snapshotNodeMap = new Map(snapshotNodes.map((n) => [n.id, n]));
-      const merged = currentNodes.map((localNode) => {
-        const snapNode = snapshotNodeMap.get(localNode.id);
-        if (!snapNode) return localNode;
-        const snapshotSignature = snapshotPositionMap.get(snapNode.id);
-        const committedSignature = lastCommitted.get(snapNode.id);
-        if (committedSignature && snapshotSignature === committedSignature) return localNode;
-        changed = true;
-        return snapNode;
-      });
-      return changed ? merged : currentNodes;
-    });
-  }, [snapshotNodes, setLocalNodes]);
-
-  useEffect(() => {
-    setLocalEdges(snapshotEdges);
-  }, [snapshotEdges, setLocalEdges]);
-
-  const renderedEdges = useMemo<Edge[]>(
-    () =>
-      localEdges.map((edge) => ({
-        ...edge,
-        data: {
-          ...((edge.data as Record<string, unknown> | undefined) ?? {}),
-          __fdHovered: edge.id === hoveredEdgeId,
-        },
-      })),
-    [localEdges, hoveredEdgeId],
-  );
-
-  const { onDeleteNode, onMoveNode, onDeleteEdge, onStartReconnect, onCompleteReconnect } = props;
-
-  const handleNodesChange = useCallback(
-    (changes: NodeChange[]) => {
-      onNodesChangeInternal(changes);
-
-      for (const change of changes) {
-        if (change.type === 'remove') {
-          onDeleteNode(change.id, undefined);
-          lastCommittedPositionsRef.current.delete(change.id);
-          continue;
-        }
-
-        if (change.type === 'position' && change.dragging === false && change.position) {
-          const position = {
-            x: Math.round(change.position.x),
-            y: Math.round(change.position.y),
-          };
-          const signature = normalizePositionSignature(position);
-          lastCommittedPositionsRef.current.set(change.id, signature);
-          onMoveNode(change.id, undefined, position);
-        }
-      }
-    },
-    [onNodesChangeInternal, onDeleteNode, onMoveNode],
-  );
-
-  const handleEdgesChange = useCallback(
-    (changes: EdgeChange[]) => {
-      onEdgesChangeInternal(changes);
-
-      for (const change of changes) {
-        if (change.type === 'remove') {
-          onDeleteEdge(change.id, undefined);
-        }
-      }
-    },
-    [onEdgesChangeInternal, onDeleteEdge],
-  );
-
-  function handleViewportChange(nextViewport: XyflowViewportChange) {
-    const normalized = normalizeViewportChange(nextViewport);
-    if (!normalized) {
-      return;
-    }
-
-    if (!viewportsEqual(viewport, normalized)) {
-      props.onViewportChange(normalized, undefined);
-    }
-  }
-
-  function handleConnect(connection: Connection) {
-    if (!connection.source || !connection.target || connection.source === connection.target) {
-      return;
-    }
-
-    props.onStartConnection(connection.source, undefined);
-    props.onCompleteConnection(
-      connection.target,
-      undefined,
-      connection.sourceHandle ?? undefined,
-      connection.targetHandle ?? undefined,
-    );
-  }
-
-  const handleReconnect = useCallback<NonNullable<OnReconnect>>(
-    (oldEdge, newConnection) => {
-      if (
-        !oldEdge.id ||
-        !newConnection.source ||
-        !newConnection.target ||
-        newConnection.source === newConnection.target
-      ) {
-        return;
-      }
-
-      onStartReconnect(oldEdge.id, undefined);
-      onCompleteReconnect(
-        oldEdge.id,
-        newConnection.source,
-        newConnection.target,
-        undefined,
-        newConnection.sourceHandle ?? undefined,
-        newConnection.targetHandle ?? undefined,
-      );
-    },
-    [onStartReconnect, onCompleteReconnect],
-  );
-
-  const lastSelectionRef = useRef<{ nodeId: string | null; edgeId: string | null }>({
-    nodeId: null,
-    edgeId: null,
+  const {
+    handleNodesChange,
+    handleEdgesChange,
+    handleViewportChange,
+    handleConnect,
+    handleReconnect,
+    handleSelectionChange,
+  } = useXyflowInteractions({
+    viewport,
+    onNodesChangeInternal,
+    onEdgesChangeInternal,
+    lastCommittedPositionsRef,
+    onDeleteNode: props.onDeleteNode,
+    onMoveNode: props.onMoveNode,
+    onDeleteEdge: props.onDeleteEdge,
+    onStartConnection: props.onStartConnection,
+    onCompleteConnection: props.onCompleteConnection,
+    onStartReconnect: props.onStartReconnect,
+    onCompleteReconnect: props.onCompleteReconnect,
+    onViewportChange,
+    onNodeSelect: props.onNodeSelect,
+    onEdgeSelect: props.onEdgeSelect,
+    onPaneClick: props.onPaneClick,
   });
-
-  function handleSelectionChange(selection: OnSelectionChangeParams) {
-    if (selection.nodes.length > 0) {
-      const nodeId = selection.nodes[0].id;
-      if (lastSelectionRef.current.nodeId !== nodeId) {
-        lastSelectionRef.current = { nodeId, edgeId: null };
-        props.onNodeSelect(nodeId, undefined);
-      }
-      return;
-    }
-
-    if (selection.edges.length > 0) {
-      const edgeId = selection.edges[0].id;
-      if (lastSelectionRef.current.edgeId !== edgeId) {
-        lastSelectionRef.current = { nodeId: null, edgeId };
-        props.onEdgeSelect(edgeId, undefined);
-      }
-      return;
-    }
-
-    if (lastSelectionRef.current.nodeId || lastSelectionRef.current.edgeId) {
-      lastSelectionRef.current = { nodeId: null, edgeId: null };
-      props.onPaneClick();
-    }
-  }
 
   return (
     <ReactFlowProvider>

@@ -2,7 +2,7 @@ import type { Extension } from '@codemirror/state';
 import { linter, type Diagnostic } from '@codemirror/lint';
 import { EditorView } from '@codemirror/view';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import type { ExpressionLintConfig } from '../../types';
+import type { ExpressionLintConfig } from '../../types.js';
 
 const formulaCompiler = createFormulaCompiler();
 

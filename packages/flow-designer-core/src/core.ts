@@ -7,10 +7,10 @@ import type {
   DesignerSnapshot,
   DesignerEvent,
   TreeDocument,
-} from './types';
-import type { DesignerCore } from './designer-core-types';
-import { cloneDocument } from './core/clone';
-import { normalizeConfig } from './core/config';
+} from './types.js';
+import type { DesignerCore } from './designer-core-types.js';
+import { cloneDocument } from './core/clone.js';
+import { normalizeConfig } from './core/config.js';
 import {
   canRedoHistory,
   canUndoHistory,
@@ -20,19 +20,19 @@ import {
   redoHistory,
   undoHistory,
   type DesignerHistoryState,
-} from './core/history';
-import { createSelectionState, type DesignerSelectionState } from './core/selection';
-import { createSelectionController } from './core/selection-controller';
+} from './core/history.js';
+import { createSelectionState, type DesignerSelectionState } from './core/selection.js';
+import { createSelectionController } from './core/selection-controller.js';
 import {
   beginTransactionState,
   commitTransactionState,
   rollbackTransactionState,
   type DesignerTransaction,
-} from './core/transactions';
-import { createDesignerShellState, resetShellViewportFromDocument } from './core/shell-state';
-import { createShellControls } from './core/shell-controls';
-import { createDesignerSnapshotCache, getDesignerSnapshot } from './core/snapshot';
-import { layoutNodesInDocument } from './core/node-operations';
+} from './core/transactions.js';
+import { createDesignerShellState, resetShellViewportFromDocument } from './core/shell-state.js';
+import { createShellControls } from './core/shell-controls.js';
+import { createDesignerSnapshotCache, getDesignerSnapshot } from './core/snapshot.js';
+import { layoutNodesInDocument } from './core/node-operations.js';
 import {
   addNodeCommand,
   updateNodeCommand,
@@ -41,14 +41,14 @@ import {
   moveNodesCommand,
   updateMultipleNodesCommand,
   type NodeCommandContext,
-} from './core-node-commands';
+} from './core-node-commands.js';
 import {
   addEdgeCommand,
   reconnectEdgeCommand,
   updateEdgeCommand,
   deleteEdgeCommand,
   type EdgeCommandContext,
-} from './core-edge-commands';
+} from './core-edge-commands.js';
 export function createDesignerCore(
   initialDoc: GraphDocument,
   config: DesignerConfig,

@@ -9,8 +9,8 @@ import {
   toggleExistingEdgeSelection,
   toggleNodeSelection as toggleExistingNodeSelection,
   type DesignerSelectionState,
-} from './selection';
-import type { DesignerEvent } from '../types';
+} from './selection.js';
+import type { DesignerEvent } from '../types.js';
 
 interface SelectionControllerArgs {
   getSelectionState(): DesignerSelectionState;

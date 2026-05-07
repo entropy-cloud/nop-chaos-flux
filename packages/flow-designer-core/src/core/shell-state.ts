@@ -1,6 +1,6 @@
-import type { GraphDocument, GraphNode } from '../types';
-import { cloneNode } from './clone';
-import { normalizeViewport, normalizeViewportInput, viewportsEqual } from './viewport';
+import type { GraphDocument, GraphNode } from '../types.js';
+import { cloneNode } from './clone.js';
+import { normalizeViewport, normalizeViewportInput, viewportsEqual } from './viewport.js';
 
 export interface DesignerShellState {
   clipboard: GraphNode | null;

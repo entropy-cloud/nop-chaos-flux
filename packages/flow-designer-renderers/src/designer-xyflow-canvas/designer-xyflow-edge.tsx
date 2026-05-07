@@ -3,10 +3,10 @@ import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 import { isSchema } from '@nop-chaos/flux-core';
 import { RenderNodes } from '@nop-chaos/flux-react/unstable';
-import { useEdgeTypeConfig, useDesignerContext } from '../designer-context';
+import { useEdgeTypeConfig, useDesignerContext } from '../designer-context.js';
 import type { SchemaInput } from '@nop-chaos/flux-core';
-import type { DesignerFlowEdgeData } from './types';
-import { DesignerIcon } from '../designer-icon';
+import type { DesignerFlowEdgeData } from './types.js';
+import { DesignerIcon } from '../designer-icon.js';
 import { Button, cn } from '@nop-chaos/ui';
 
 function isSchemaInput(value: unknown): value is SchemaInput {

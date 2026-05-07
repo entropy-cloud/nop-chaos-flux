@@ -1,5 +1,5 @@
-import type { GraphDocument, TreeDocument } from '../types';
-import { cloneDocument } from './clone';
+import type { GraphDocument, TreeDocument } from '../types.js';
+import { cloneDocument } from './clone.js';
 
 function cloneTreeDocument(tree: TreeDocument | undefined): TreeDocument | undefined {
   return tree ? (JSON.parse(JSON.stringify(tree)) as TreeDocument) : undefined;

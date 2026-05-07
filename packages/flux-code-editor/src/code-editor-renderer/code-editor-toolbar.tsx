@@ -1,8 +1,8 @@
 import { t } from '@nop-chaos/flux-i18n';
 import { ChevronDownIcon, ChevronRightIcon, Maximize2Icon, PlayIcon } from 'lucide-react';
-import { SnippetPanel } from '../extensions/snippet-panel';
-import { ToolbarButton } from './toolbar-button';
-import type { CodeSnippetTemplate, SQLFormatConfig } from '../types';
+import { SnippetPanel } from '../extensions/snippet-panel.js';
+import { ToolbarButton } from './toolbar-button.js';
+import type { CodeSnippetTemplate, SQLFormatConfig } from '../types.js';
 
 interface CodeEditorToolbarProps {
   language: string;

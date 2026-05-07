@@ -1,4 +1,4 @@
-import type { DesignerCommand } from '../designer-command-types';
+import type { DesignerCommand } from '../designer-command-types.js';
 
 export function createDingFlowMenuCommand(
   sourceId: string,

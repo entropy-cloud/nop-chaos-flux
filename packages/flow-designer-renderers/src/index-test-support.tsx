@@ -2,7 +2,7 @@ import { afterEach, beforeEach } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererEnv, createTestConfig, ensureResizeObserverMock } from './test-support';
+import { createRendererEnv, createTestConfig, ensureResizeObserverMock } from './test-support.js';
 
 export const textRenderer: RendererDefinition = {
   type: 'text',

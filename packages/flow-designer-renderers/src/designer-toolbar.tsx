@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
-import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context';
-import { DesignerIcon } from './designer-icon';
+import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
+import { DesignerIcon } from './designer-icon.js';
 import { useCurrentActionScope, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { Badge, Button, Label, Switch, cn } from '@nop-chaos/ui';
 
@@ -78,7 +78,7 @@ function evalTextTemplate(template: string | undefined, snapshot: ToolbarSnapsho
 
 function toCommand(
   action: string | undefined,
-): import('./designer-command-adapter').DesignerCommand | null {
+): import('./designer-command-adapter.js').DesignerCommand | null {
   switch (action) {
     case 'designer:undo':
       return { type: 'undo' };

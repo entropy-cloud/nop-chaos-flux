@@ -7,14 +7,14 @@ import {
   isFuncSourceRef,
   isSQLSchemaSourceRef,
   resolveSourceRefPath,
-} from './types';
+} from './types.js';
 import type {
   ExpressionEditorConfig,
   SQLEditorConfig,
   VariableItem,
   FuncGroup,
   TableSchema,
-} from './types';
+} from './types.js';
 
 function getDataAtPath(data: unknown, path: string | undefined): unknown {
   if (!path) return data;

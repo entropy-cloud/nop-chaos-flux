@@ -1,8 +1,8 @@
 import type { ActionNamespaceProvider } from '@nop-chaos/flux-core';
 import type { DesignerCore } from '@nop-chaos/flow-designer-core';
-import { createDesignerCommandAdapter } from './designer-command-adapter';
-import type { DesignerCommandAdapter } from './designer-command-adapter';
-import { notifyCommandFailure, toActionResult } from './designer-context';
+import { createDesignerCommandAdapter } from './designer-command-adapter.js';
+import type { DesignerCommandAdapter } from './designer-command-adapter.js';
+import { notifyCommandFailure, toActionResult } from './designer-context.js';
 
 export function createDesignerActionProvider(
   core: DesignerCore,

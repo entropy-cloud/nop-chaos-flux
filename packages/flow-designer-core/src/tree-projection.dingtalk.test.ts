@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import type { TreeDocument, NormalizedDesignerConfig } from './types';
-import { projectTree, resetProjectionState } from './tree-projection';
-import { layoutTreeWithElk } from './tree-layout';
-import { normalizeConfig } from './core/config';
+import type { TreeDocument, NormalizedDesignerConfig } from './types.js';
+import { projectTree, resetProjectionState } from './tree-projection.js';
+import { layoutTreeWithElk } from './tree-layout.js';
+import { normalizeConfig } from './core/config.js';
 
 function makeDingtalkConfig(): NormalizedDesignerConfig {
   return normalizeConfig({

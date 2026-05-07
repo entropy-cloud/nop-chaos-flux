@@ -1,5 +1,5 @@
 import { format as sqlFormat } from 'sql-formatter';
-import type { SQLFormatConfig, SQLDialect } from '../../types';
+import type { SQLFormatConfig, SQLDialect } from '../../types.js';
 
 const DIALECT_MAP: Record<SQLDialect, 'sql' | 'mysql' | 'postgresql' | 'sqlite' | 'tsql'> = {
   standard: 'sql',

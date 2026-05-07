@@ -3,9 +3,9 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { DingFlowAddBranchOverlay } from './ding-flow-add-condition-overlay';
-import { DingFlowPlusButton } from './ding-flow-plus-button';
-import { DingFlowMergeOverlay } from './ding-flow-merge-overlay';
+import { DingFlowAddBranchOverlay } from './ding-flow-add-condition-overlay.js';
+import { DingFlowPlusButton } from './ding-flow-plus-button.js';
+import { DingFlowMergeOverlay } from './ding-flow-merge-overlay.js';
 
 describe('DingFlowAddBranchOverlay', () => {
   beforeEach(async () => {

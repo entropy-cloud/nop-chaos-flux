@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import { ScrollArea } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { ChevronRightIcon, ChevronLeftIcon, CopyIcon, CornerDownRightIcon } from 'lucide-react';
-import type { VariableItem } from './types';
-import { renderInsertTemplate } from './types';
-import { ToolbarButton } from './code-editor-renderer/toolbar-button';
+import type { VariableItem } from './types.js';
+import { renderInsertTemplate } from './types.js';
+import { ToolbarButton } from './code-editor-renderer/toolbar-button.js';
 
 interface VariablePanelProps {
   variables: VariableItem[];

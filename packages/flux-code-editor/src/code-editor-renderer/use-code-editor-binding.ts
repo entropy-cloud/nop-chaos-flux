@@ -6,7 +6,7 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { getIn } from '@nop-chaos/flux-core';
-import type { CodeEditorRendererProps } from './shared';
+import type { CodeEditorRendererProps } from './shared.js';
 
 export function useCodeEditorBinding(props: CodeEditorRendererProps, name: string) {
   const scope = useRenderScope();

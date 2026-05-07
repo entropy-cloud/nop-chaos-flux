@@ -1,11 +1,11 @@
 import React from 'react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { SchemaInput } from '@nop-chaos/flux-core';
-import { useNodeTypeConfig } from './designer-context';
+import { useNodeTypeConfig } from './designer-context.js';
 import { Badge, Button, Input, Label, Textarea, cn } from '@nop-chaos/ui';
-import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context';
-import { DesignerIcon } from './designer-icon';
-import { resolveNodeTypeAccent, resolveNodeTypeMeta } from './designer-node-appearance';
+import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
+import { DesignerIcon } from './designer-icon.js';
+import { resolveNodeTypeAccent, resolveNodeTypeMeta } from './designer-node-appearance.js';
 
 interface BranchItemData {
   id: string;

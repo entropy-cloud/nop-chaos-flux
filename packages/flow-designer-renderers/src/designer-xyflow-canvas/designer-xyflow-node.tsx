@@ -4,14 +4,14 @@ import { NodeToolbar, Position } from '@xyflow/react';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import { isSchema } from '@nop-chaos/flux-core';
 import { RenderNodes, ClassAliasesContext } from '@nop-chaos/flux-react/unstable';
-import { useNodeTypeConfig, useDesignerContext } from '../designer-context';
-import { renderPorts } from './render-ports';
-import type { DesignerFlowNodeData } from './types';
-import { DesignerIcon } from '../designer-icon';
+import { useNodeTypeConfig, useDesignerContext } from '../designer-context.js';
+import { renderPorts } from './render-ports.js';
+import type { DesignerFlowNodeData } from './types.js';
+import { DesignerIcon } from '../designer-icon.js';
 import { Badge, Button, Card, CardContent, CardHeader, cn } from '@nop-chaos/ui';
-import { DingFlowPlusButton } from '../dingflow';
+import { DingFlowPlusButton } from '../dingflow/index.js';
 import type { TreeNodeTypeConfig } from '@nop-chaos/flow-designer-core';
-import { resolveNodeTypeAccent, resolveNodeTypeMeta } from '../designer-node-appearance';
+import { resolveNodeTypeAccent, resolveNodeTypeMeta } from '../designer-node-appearance.js';
 
 function isSchemaInput(value: unknown): value is SchemaInput {
   return isSchema(value);

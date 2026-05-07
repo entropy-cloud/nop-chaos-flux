@@ -9,7 +9,7 @@ import {
 } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { XIcon } from 'lucide-react';
-import { ToolbarButton } from './code-editor-renderer/toolbar-button';
+import { ToolbarButton } from './code-editor-renderer/toolbar-button.js';
 
 export type SQLResultState =
   | { status: 'idle' }

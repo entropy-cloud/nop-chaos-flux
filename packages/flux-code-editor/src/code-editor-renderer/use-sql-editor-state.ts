@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import type { ActionResult, ActionSchema, ApiSchema, SchemaValue } from '@nop-chaos/flux-core';
 import type { EditorView } from '@codemirror/view';
-import { formatSQL } from '../extensions/sql/format';
-import type { SQLResultState } from '../sql-result-panel';
-import type { SQLEditorConfig } from '../types';
-import type { CodeEditorRendererProps } from './shared';
+import { formatSQL } from '../extensions/sql/format.js';
+import type { SQLResultState } from '../sql-result-panel.js';
+import type { SQLEditorConfig } from '../types.js';
+import type { CodeEditorRendererProps } from './shared.js';
 
 function isSchemaValue(value: unknown): value is SchemaValue {
   if (value == null) {

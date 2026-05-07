@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi } from 'vitest';
-import { createDesignerActionProvider, flowDesignerRendererDefinitions } from './index';
-import { DesignerIcon } from './designer-icon';
+import { createDesignerActionProvider, flowDesignerRendererDefinitions } from './index.js';
+import { DesignerIcon } from './designer-icon.js';
 import { render } from '@testing-library/react';
-import { installFlowDesignerTestHooks } from './index-test-support';
+import { installFlowDesignerTestHooks } from './index-test-support.js';
 
 installFlowDesignerTestHooks();
 
@@ -251,13 +251,13 @@ describe('flowDesignerRendererDefinitions', () => {
 
 describe('flow-designer manifest', () => {
   it('exports FLOW_DESIGNER_MANIFEST_V1 with correct family and version', async () => {
-    const { FLOW_DESIGNER_MANIFEST_V1 } = await import('./designer-manifest');
+    const { FLOW_DESIGNER_MANIFEST_V1 } = await import('./designer-manifest.js');
     expect(FLOW_DESIGNER_MANIFEST_V1.family).toBe('designer');
     expect(FLOW_DESIGNER_MANIFEST_V1.version).toBe('1.0');
   });
 
   it('manifest projection includes expected fields', async () => {
-    const { FLOW_DESIGNER_MANIFEST_V1 } = await import('./designer-manifest');
+    const { FLOW_DESIGNER_MANIFEST_V1 } = await import('./designer-manifest.js');
     const fields = FLOW_DESIGNER_MANIFEST_V1.projection.fields;
     expect(fields.doc).toBeTruthy();
     expect(fields.selection).toBeTruthy();

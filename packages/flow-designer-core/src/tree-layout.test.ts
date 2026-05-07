@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import type { GraphNode, GraphEdge, TreeConfig, TreeDocument } from './types';
-import { layoutStructuredTree, layoutTreeWithElk, simpleTreeLayout } from './tree-layout';
+import type { GraphNode, GraphEdge, TreeConfig, TreeDocument } from './types.js';
+import { layoutStructuredTree, layoutTreeWithElk, simpleTreeLayout } from './tree-layout.js';
 
 function makeNodes(count: number): GraphNode[] {
   return Array.from({ length: count }, (_, i) => ({

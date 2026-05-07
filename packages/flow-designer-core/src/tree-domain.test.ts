@@ -1,11 +1,11 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import type { TreeDocument } from './types';
+import type { TreeDocument } from './types.js';
 import {
   registerTreeDomainAdapter,
   getTreeDomainAdapter,
   listTreeDomainAdapters,
   clearTreeDomainAdapters,
-} from './tree-domain';
+} from './tree-domain.js';
 
 const sampleTree: TreeDocument = {
   id: 'test',

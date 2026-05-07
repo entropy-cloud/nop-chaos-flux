@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 vi.mock('./canvas-bridge', async () => {
-  const actual = await vi.importActual<typeof import('./canvas-bridge')>('./canvas-bridge');
+  const actual = await vi.importActual<typeof import('./canvas-bridge.js')>('./canvas-bridge');
 
   function MockXyflowBridge(props: any) {
     return (
@@ -77,7 +77,7 @@ vi.mock('./canvas-bridge', async () => {
   };
 });
 
-import { flowDesignerRendererDefinitions } from './index';
+import { flowDesignerRendererDefinitions } from './index.js';
 
 function createTestConfig(): DesignerConfig {
   return {

@@ -3,9 +3,9 @@
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { DesignerToolbarContent } from './designer-toolbar';
-import { DesignerPaletteContent } from './designer-palette';
-import { DefaultInspector } from './designer-inspector';
+import { DesignerToolbarContent } from './designer-toolbar.js';
+import { DesignerPaletteContent } from './designer-palette.js';
+import { DefaultInspector } from './designer-inspector.js';
 
 type MockContext = {
   config: any;

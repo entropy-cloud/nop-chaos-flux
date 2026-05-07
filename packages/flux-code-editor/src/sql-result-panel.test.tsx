@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { render, screen, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { SQLResultPanel } from './sql-result-panel';
-import type { SQLResultState } from './sql-result-panel';
+import { SQLResultPanel } from './sql-result-panel.js';
+import type { SQLResultState } from './sql-result-panel.js';
 
 afterEach(() => {
   cleanup();

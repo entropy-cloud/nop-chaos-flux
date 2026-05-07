@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import type { RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
-import type { DesignerFieldSchema } from './schemas';
-import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context';
+import type { DesignerFieldSchema } from './schemas.js';
+import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
 import {
   Input,
   Label,

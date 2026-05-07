@@ -5,7 +5,7 @@ import type {
   DesignerFlowNodeData,
   DesignerXyflowControlledViewport,
   XyflowViewportChange,
-} from './types';
+} from './types.js';
 
 const VIEWPORT_EPSILON = 0.001;
 

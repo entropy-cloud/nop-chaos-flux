@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createDesignerCore } from './core';
-import type { DesignerConfig, GraphDocument } from './types';
+import { createDesignerCore } from './core.js';
+import type { DesignerConfig, GraphDocument } from './types.js';
 
 function createTestDesignerConfig(): DesignerConfig {
   return {

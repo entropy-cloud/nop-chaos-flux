@@ -2,7 +2,7 @@ import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { cn } from '@nop-chaos/ui';
 import type { PortConfig } from '@nop-chaos/flow-designer-core';
-import { POSITION_MAP } from './types';
+import { POSITION_MAP } from './types.js';
 
 const defaultHandleClass = '!w-3 !h-3 !rounded-full !bg-primary !border-2 !border-white';
 

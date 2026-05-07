@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import * as flowDesigner from './index';
-import * as flowDesignerUnstable from './unstable';
+import * as flowDesigner from './index.js';
+import * as flowDesignerUnstable from './unstable.js';
 
 describe('flow-designer-renderers public surface', () => {
   it('keeps xyflow internals and renderer-only helpers off the root entry', () => {

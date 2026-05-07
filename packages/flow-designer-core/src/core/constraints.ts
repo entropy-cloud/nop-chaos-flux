@@ -1,4 +1,4 @@
-import type { GraphDocument, NormalizedDesignerConfig, NodeConstraintConfig } from '../types';
+import type { GraphDocument, NormalizedDesignerConfig, NodeConstraintConfig } from '../types.js';
 
 export const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not supported in the playground example.';
 export const EDGE_MISSING_NODE_ERROR = 'Edges must connect existing nodes.';

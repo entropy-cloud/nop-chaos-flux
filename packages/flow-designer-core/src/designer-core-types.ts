@@ -6,7 +6,7 @@ import type {
   DesignerSnapshot,
   DesignerEvent,
   TreeDocument,
-} from './types';
+} from './types.js';
 
 export interface DesignerCore {
   getSnapshot(): DesignerSnapshot;

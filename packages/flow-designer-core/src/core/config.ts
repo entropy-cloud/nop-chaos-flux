@@ -1,4 +1,4 @@
-import type { DesignerConfig, NormalizedDesignerConfig } from '../types';
+import type { DesignerConfig, NormalizedDesignerConfig } from '../types.js';
 
 export function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfig {
   const nodeTypes = new Map(config.nodeTypes.map((nodeType) => [nodeType.id, nodeType]));

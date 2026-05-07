@@ -30,7 +30,7 @@ vi.mock('@nop-chaos/flow-designer-core', async () => {
 });
 
 vi.mock('./canvas-bridge', async () => {
-  const actual = await vi.importActual<typeof import('./canvas-bridge')>('./canvas-bridge');
+  const actual = await vi.importActual<typeof import('./canvas-bridge.js')>('./canvas-bridge');
 
   function MockCanvas(props: any) {
     const firstNode = props.snapshot?.doc?.nodes?.[0];
@@ -49,7 +49,7 @@ vi.mock('./canvas-bridge', async () => {
   };
 });
 
-import { flowDesignerRendererDefinitions } from './index';
+import { flowDesignerRendererDefinitions } from './index.js';
 
 const SchemaRenderer = createSchemaRenderer([
   ...flowDesignerRendererDefinitions,

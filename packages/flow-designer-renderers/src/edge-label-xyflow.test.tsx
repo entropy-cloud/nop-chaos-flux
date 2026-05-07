@@ -8,8 +8,8 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
-import { DesignerContext } from './designer-context';
-import { createDesignerCommandAdapter } from './designer-command-adapter';
+import { DesignerContext } from './designer-context.js';
+import { createDesignerCommandAdapter } from './designer-command-adapter.js';
 
 afterEach(() => cleanup());
 
@@ -25,7 +25,7 @@ vi.mock('@xyflow/react', () => {
   };
 });
 
-import { DesignerXyflowEdge } from './designer-xyflow-canvas/designer-xyflow-edge';
+import { DesignerXyflowEdge } from './designer-xyflow-canvas/designer-xyflow-edge.js';
 
 const env = {
   fetcher: async function <T>() {

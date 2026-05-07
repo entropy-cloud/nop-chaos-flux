@@ -5,7 +5,7 @@ import type {
   GraphNode,
   TreeDocument,
 } from '@nop-chaos/flow-designer-core';
-import type { DesignerCommandReason, DesignerCommandResult } from './designer-command-types';
+import type { DesignerCommandReason, DesignerCommandResult } from './designer-command-types.js';
 
 export interface TreeCommandOwner {
   getTreeDocument(): TreeDocument;

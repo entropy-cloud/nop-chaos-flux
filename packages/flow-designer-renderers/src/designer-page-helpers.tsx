@@ -5,9 +5,9 @@ import type {
   SchemaInput,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import type { DesignerCommandResult } from './designer-command-types';
-import type { DesignerPageSchema } from './schemas';
-import type { DesignerContextValue } from './designer-context';
+import type { DesignerCommandResult } from './designer-command-types.js';
+import type { DesignerPageSchema } from './schemas.js';
+import type { DesignerContextValue } from './designer-context.js';
 import type {
   DesignerConfig,
   GraphDocument,
@@ -189,7 +189,7 @@ export async function confirmCreateDialog(args: {
   helpers: RendererComponentProps<DesignerPageSchema>['helpers'];
   designerScope: ScopeRef;
   actionScope: ActionScope | undefined;
-  dispatch: (command: import('./designer-command-types').DesignerCommand) => DesignerCommandResult;
+  dispatch: (command: import('./designer-command-types.js').DesignerCommand) => DesignerCommandResult;
 }) {
   let nextData: Record<string, unknown> | undefined = args.pendingCreateDialog.nodeType.defaults
     ? { ...args.pendingCreateDialog.nodeType.defaults }

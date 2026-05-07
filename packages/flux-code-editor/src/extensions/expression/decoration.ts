@@ -8,7 +8,7 @@ import {
 } from '@codemirror/view';
 import type { Extension } from '@codemirror/state';
 import { RangeSetBuilder } from '@codemirror/state';
-import type { VariableItem } from '../../types';
+import type { VariableItem } from '../../types.js';
 
 class FriendlyNameWidget extends WidgetType {
   constructor(

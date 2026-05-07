@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { createDesignerCore } from '@nop-chaos/flow-designer-core';
-import { matchesShortcut } from './designer-page-helpers';
-import type { DesignerCommand } from './designer-command-types';
+import { matchesShortcut } from './designer-page-helpers.js';
+import type { DesignerCommand } from './designer-command-types.js';
 
 type DesignerCoreLike = ReturnType<typeof createDesignerCore>;
 

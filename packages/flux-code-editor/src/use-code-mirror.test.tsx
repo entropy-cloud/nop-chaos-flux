@@ -84,7 +84,7 @@ vi.mock('@codemirror/view', () => {
   };
 });
 
-import { useCodeMirror } from './use-code-mirror';
+import { useCodeMirror } from './use-code-mirror.js';
 
 afterEach(() => {
   cleanup();

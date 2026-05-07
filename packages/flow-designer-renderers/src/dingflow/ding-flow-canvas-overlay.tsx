@@ -1,19 +1,19 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { ViewportPortal } from '@xyflow/react';
-import { useDesignerContext, useDesignerSnapshotSelector } from '../designer-context';
-import { DesignerIcon } from '../designer-icon';
-import { computeDingFlowOverlays } from './dingflow-overlays';
-import { DingFlowAddBranchOverlay } from './ding-flow-add-condition-overlay';
-import { DingFlowMergeOverlay } from './ding-flow-merge-overlay';
-import { DingFlowAddNodeMenu } from './ding-flow-add-node-menu';
-import type { DingFlowMenuItem } from './ding-flow-add-node-menu';
-import { createDingFlowMenuCommand } from './dingflow-command-dispatch';
+import { useDesignerContext, useDesignerSnapshotSelector } from '../designer-context.js';
+import { DesignerIcon } from '../designer-icon.js';
+import { computeDingFlowOverlays } from './dingflow-overlays.js';
+import { DingFlowAddBranchOverlay } from './ding-flow-add-condition-overlay.js';
+import { DingFlowMergeOverlay } from './ding-flow-merge-overlay.js';
+import { DingFlowAddNodeMenu } from './ding-flow-add-node-menu.js';
+import type { DingFlowMenuItem } from './ding-flow-add-node-menu.js';
+import { createDingFlowMenuCommand } from './dingflow-command-dispatch.js';
 import {
   compareTreeMenuNodeTypes,
   resolveNodeTypeAccent,
   resolveNodeTypeMeta,
   shouldIncludeInTreeAddMenu,
-} from '../designer-node-appearance';
+} from '../designer-node-appearance.js';
 
 interface PopoverState {
   sourceId: string;

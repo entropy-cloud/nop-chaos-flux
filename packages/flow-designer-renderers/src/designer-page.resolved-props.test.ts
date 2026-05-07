@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
-import { flowDesignerRendererDefinitions } from './index';
-import { createTestConfig, createRendererEnv } from './test-support';
+import { flowDesignerRendererDefinitions } from './index.js';
+import { createTestConfig, createRendererEnv } from './test-support.js';
 
 describe('designer-page resolved props contract', () => {
   it('resolves document and statusPath through renderer prop fields', () => {

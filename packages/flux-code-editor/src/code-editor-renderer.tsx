@@ -4,34 +4,34 @@ import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useRenderScope } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
-import { ToolbarButton } from './code-editor-renderer/toolbar-button';
-import { CodeEditorBody } from './code-editor-renderer/code-editor-body';
-import { CodeEditorToolbar } from './code-editor-renderer/code-editor-toolbar';
-import type { CodeEditorRendererProps } from './code-editor-renderer/shared';
-import { useCodeEditorBinding } from './code-editor-renderer/use-code-editor-binding';
-import { useSQLEditorState } from './code-editor-renderer/use-sql-editor-state';
-import { createBaseExtensions } from './extensions/base';
+import { ToolbarButton } from './code-editor-renderer/toolbar-button.js';
+import { CodeEditorBody } from './code-editor-renderer/code-editor-body.js';
+import { CodeEditorToolbar } from './code-editor-renderer/code-editor-toolbar.js';
+import type { CodeEditorRendererProps } from './code-editor-renderer/shared.js';
+import { useCodeEditorBinding } from './code-editor-renderer/use-code-editor-binding.js';
+import { useSQLEditorState } from './code-editor-renderer/use-sql-editor-state.js';
+import { createBaseExtensions } from './extensions/base.js';
 import {
   useResolvedFunctions,
   useResolvedSQLVariables,
   useResolvedTables,
   useResolvedVariables,
-} from './source-resolvers';
-import { SQLResultPanel } from './sql-result-panel';
+} from './source-resolvers.js';
+import { SQLResultPanel } from './sql-result-panel.js';
 import type {
   CodeEditorSchema,
   EditorLanguage,
   EditorMode,
   ExpressionEditorConfig,
   SQLEditorConfig,
-} from './types';
+} from './types.js';
 import {
   getDefaultAutoHeight,
   getDefaultHeight,
   getDefaultLineNumbers,
   resolveFormatConfig,
-} from './types';
-import { useCodeMirror } from './use-code-mirror';
+} from './types.js';
+import { useCodeMirror } from './use-code-mirror.js';
 
 export const codeEditorFieldRules: SchemaFieldRule[] = [
   { key: 'label', kind: 'value-or-region', regionKey: 'label' },

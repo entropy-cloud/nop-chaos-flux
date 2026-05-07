@@ -1,5 +1,5 @@
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
-import type { TableSchema } from '../../types';
+import type { TableSchema } from '../../types.js';
 
 export const SQL_KEYWORDS = [
   'SELECT',

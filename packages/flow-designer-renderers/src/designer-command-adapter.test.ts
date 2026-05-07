@@ -10,7 +10,7 @@ import type {
   GraphDocument,
   TreeDocument,
 } from '@nop-chaos/flow-designer-core';
-import { createDesignerCommandAdapter } from './designer-command-adapter';
+import { createDesignerCommandAdapter } from './designer-command-adapter.js';
 
 function createTestDesignerConfig(): DesignerConfig {
   return {

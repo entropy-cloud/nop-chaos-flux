@@ -9,7 +9,7 @@ import type {
   EdgeTypeConfig,
   NormalizedDesignerConfig,
 } from '@nop-chaos/flow-designer-core';
-import type { DesignerCommandAdapter } from './designer-command-adapter';
+import type { DesignerCommandAdapter } from './designer-command-adapter.js';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 
 /**
@@ -20,8 +20,8 @@ export interface DesignerContextValue {
   core: DesignerCore;
   commandAdapter: DesignerCommandAdapter;
   dispatch: (
-    command: import('./designer-command-adapter').DesignerCommand,
-  ) => import('./designer-command-adapter').DesignerCommandResult;
+    command: import('./designer-command-adapter.js').DesignerCommand,
+  ) => import('./designer-command-adapter.js').DesignerCommandResult;
   config: DesignerConfig;
   openCreateDialog?: (nodeType: NodeTypeConfig, position: { x: number; y: number }) => void;
   onPlusButtonClick?: (
@@ -97,7 +97,7 @@ export function notifyCommandFailure(
   notify?.('warning', error);
 }
 
-export function toActionResult(result: import('./designer-command-adapter').DesignerCommandResult) {
+export function toActionResult(result: import('./designer-command-adapter.js').DesignerCommandResult) {
   return {
     ok: result.ok,
     data: result.exported ?? result.data,

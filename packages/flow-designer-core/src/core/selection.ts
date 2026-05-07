@@ -1,4 +1,4 @@
-import type { SelectionSummary } from '../types';
+import type { SelectionSummary } from '../types.js';
 
 export interface DesignerSelectionState {
   selectedNodeIds: string[];

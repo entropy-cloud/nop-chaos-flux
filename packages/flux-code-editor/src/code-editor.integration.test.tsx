@@ -8,7 +8,7 @@ import type { RendererEnv, SchemaInput } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
-import { codeEditorRendererDefinition } from './index';
+import { codeEditorRendererDefinition } from './index.js';
 
 const env: RendererEnv = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),

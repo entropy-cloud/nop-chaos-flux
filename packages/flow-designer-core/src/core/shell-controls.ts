@@ -1,11 +1,11 @@
-import type { DesignerEvent, GraphDocument } from '../types';
-import { cloneDocument } from './clone';
+import type { DesignerEvent, GraphDocument } from '../types.js';
+import { cloneDocument } from './clone.js';
 import {
   resetShellViewportFromDocument,
   setShellClipboard,
   setShellViewport,
   type DesignerShellState,
-} from './shell-state';
+} from './shell-state.js';
 
 export function createShellControls(args: {
   getDocument: () => GraphDocument;

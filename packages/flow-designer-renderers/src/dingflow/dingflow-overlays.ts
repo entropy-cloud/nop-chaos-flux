@@ -1,7 +1,7 @@
 import type { GraphNode, GraphEdge } from '@nop-chaos/flow-designer-core';
 
-import { BRANCH_SHORT_LEG, MERGE_SHORT_LEG, BTN_DIST } from './dingflow-constants';
-import type { DingFlowOverlay } from './dingflow-constants';
+import { BRANCH_SHORT_LEG, MERGE_SHORT_LEG, BTN_DIST } from './dingflow-constants.js';
+import type { DingFlowOverlay } from './dingflow-constants.js';
 
 const DW = 220;
 const DH = 80;

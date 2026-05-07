@@ -7,7 +7,7 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { RenderNodes } from '@nop-chaos/flux-react/unstable';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { flowDesignerRendererDefinitions } from './index';
+import { flowDesignerRendererDefinitions } from './index.js';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
 import { normalizeConfig } from '@nop-chaos/flow-designer-core';
 

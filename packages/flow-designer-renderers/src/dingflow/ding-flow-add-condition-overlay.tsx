@@ -1,7 +1,7 @@
 import React from 'react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button } from '@nop-chaos/ui';
-import { DINGFLOW_CONDITION_BADGE_CLASSNAME } from './dingflow-theme';
+import { DINGFLOW_CONDITION_BADGE_CLASSNAME } from './dingflow-theme.js';
 
 interface DingFlowAddConditionOverlayProps {
   onClick: (e: React.MouseEvent) => void;

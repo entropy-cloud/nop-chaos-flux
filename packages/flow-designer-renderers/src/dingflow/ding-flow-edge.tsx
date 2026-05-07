@@ -2,9 +2,9 @@ import { memo } from 'react';
 import type { EdgeProps } from '@xyflow/react';
 import { BaseEdge, EdgeLabelRenderer } from '@xyflow/react';
 
-import { BRANCH_SHORT_LEG, MERGE_SHORT_LEG, CONNECTOR_COLOR } from './dingflow-constants';
-import type { EdgeLeg } from './dingflow-constants';
-import { DINGFLOW_EDGE_LABEL_STYLE } from './dingflow-theme';
+import { BRANCH_SHORT_LEG, MERGE_SHORT_LEG, CONNECTOR_COLOR } from './dingflow-constants.js';
+import type { EdgeLeg } from './dingflow-constants.js';
+import { DINGFLOW_EDGE_LABEL_STYLE } from './dingflow-theme.js';
 
 function DingFlowEdgeInner({ sourceX, sourceY, targetX, targetY, markerEnd, data }: EdgeProps) {
   const sx = Math.round(sourceX);

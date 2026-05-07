@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { renderDesignerCanvasBridge } from './canvas-bridge';
-import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
-import { DingFlowAddNodeMenu, type DingFlowMenuItem } from './dingflow';
-import { createDingFlowMenuCommand } from './dingflow/dingflow-command-dispatch';
-import { DesignerIcon } from './designer-icon';
+import { renderDesignerCanvasBridge } from './canvas-bridge.js';
+import { useDesignerContext, useDesignerFullSnapshot } from './designer-context.js';
+import { DingFlowAddNodeMenu, type DingFlowMenuItem } from './dingflow/index.js';
+import { createDingFlowMenuCommand } from './dingflow/dingflow-command-dispatch.js';
+import { DesignerIcon } from './designer-icon.js';
 import {
   compareTreeMenuNodeTypes,
   resolveNodeTypeAccent,
   resolveNodeTypeMeta,
   shouldIncludeInTreeAddMenu,
-} from './designer-node-appearance';
+} from './designer-node-appearance.js';
 
 const plusButtonHandlerHolder: {
   current:

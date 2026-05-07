@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { resolveVariablePath, lastSegment, flattenVariables, flattenFunctions } from './completion';
-import type { VariableItem, FuncGroup } from '../../types';
+import { resolveVariablePath, lastSegment, flattenVariables, flattenFunctions } from './completion.js';
+import type { VariableItem, FuncGroup } from '../../types.js';
 
 describe('lastSegment', () => {
   it('returns last dot-separated segment', () => {

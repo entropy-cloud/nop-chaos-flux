@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDingFlowMenuCommand } from './dingflow-command-dispatch';
+import { createDingFlowMenuCommand } from './dingflow-command-dispatch.js';
 
 describe('createDingFlowMenuCommand', () => {
   it('uses addBranch for condition nodes on an existing branch group', () => {

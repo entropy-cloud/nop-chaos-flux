@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { TreeDocument, DesignerConfig } from './types';
-import type { NormalizedDesignerConfig } from './types';
-import { projectTree, resetProjectionState } from './tree-projection';
-import { normalizeConfig } from './core/config';
+import type { TreeDocument, DesignerConfig } from './types.js';
+import type { NormalizedDesignerConfig } from './types.js';
+import { projectTree, resetProjectionState } from './tree-projection.js';
+import { normalizeConfig } from './core/config.js';
 
 function makeConfig(overrides?: Partial<DesignerConfig>): NormalizedDesignerConfig {
   return normalizeConfig({

@@ -1,5 +1,5 @@
-import { VariablePanel } from '../variable-panel';
-import type { VariableItem } from '../types';
+import { VariablePanel } from '../variable-panel.js';
+import type { VariableItem } from '../types.js';
 
 interface CodeEditorBodyProps {
   editorRef: React.RefObject<HTMLDivElement | null>;

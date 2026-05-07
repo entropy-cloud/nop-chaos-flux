@@ -5,14 +5,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react';
 import { cleanup, render, waitFor, fireEvent, within, screen } from '@testing-library/react';
-import { flowDesignerRendererDefinitions } from './index';
+import { flowDesignerRendererDefinitions } from './index.js';
 import {
   basicTestRendererDefinitions,
   createRendererEnv,
   createTestConfig,
   formulaCompiler,
   installFlowDesignerTestHooks,
-} from './index-test-support';
+} from './index-test-support.js';
 
 installFlowDesignerTestHooks();
 
@@ -322,9 +322,9 @@ describe('DesignerPageRenderer basic rendering', () => {
       />,
     );
 
-    expect(view.container.querySelector('input[type="text"]')).toBeDisabled();
-    expect(view.container.querySelector('textarea')).toBeDisabled();
-    expect(view.container.querySelector('input[type="number"]')).toBeDisabled();
+    expect((view.container.querySelector('input[type="text"]') as HTMLInputElement)?.disabled).toBe(true);
+    expect((view.container.querySelector('textarea') as HTMLTextAreaElement)?.disabled).toBe(true);
+    expect((view.container.querySelector('input[type="number"]') as HTMLInputElement)?.disabled).toBe(true);
   });
 
   it('renders the designer page with xyflow canvas', () => {

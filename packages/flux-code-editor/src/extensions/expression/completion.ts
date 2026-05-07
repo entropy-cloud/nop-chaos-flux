@@ -1,5 +1,5 @@
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
-import type { VariableItem, FuncGroup } from '../../types';
+import type { VariableItem, FuncGroup } from '../../types.js';
 
 export function resolveVariablePath(variables: VariableItem[], path: string): VariableItem | null {
   function findInTree(items: VariableItem[]): VariableItem | null {

@@ -3,7 +3,7 @@ import {
   CodeEditorRenderer,
   codeEditorRendererDefinition,
   codeEditorFieldRules,
-} from './code-editor-renderer';
+} from './code-editor-renderer.js';
 
 export type {
   CodeEditorSchema,
@@ -28,7 +28,7 @@ export type {
   CodeSnippetTemplate,
   VariablePanelConfig,
   SQLExecutionConfig,
-} from './types';
+} from './types.js';
 
 export {
   getDefaultLineNumbers,
@@ -39,17 +39,17 @@ export {
   isSQLSchemaSourceRef,
   resolveFormatConfig,
   renderInsertTemplate,
-} from './types';
+} from './types.js';
 
 export {
   useResolvedVariables,
   useResolvedFunctions,
   useResolvedTables,
   useResolvedSQLVariables,
-} from './source-resolvers';
+} from './source-resolvers.js';
 
-export { useCodeMirror } from './use-code-mirror';
-export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror';
+export { useCodeMirror } from './use-code-mirror.js';
+export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror.js';
 
 export { CodeEditorRenderer, codeEditorRendererDefinition, codeEditorFieldRules };
 export const codeEditorRendererDefinitions = [codeEditorRendererDefinition] as const;

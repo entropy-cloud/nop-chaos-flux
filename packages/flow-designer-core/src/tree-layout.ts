@@ -1,6 +1,6 @@
-import type { GraphNode, GraphEdge, TreeConfig, NodeTypeConfig, TreeDocument, TreeNode } from './types';
-import { layoutWithElk } from './elk-layout';
-import type { ElkLayoutOwner } from './elk-layout';
+import type { GraphNode, GraphEdge, TreeConfig, NodeTypeConfig, TreeDocument, TreeNode } from './types.js';
+import { layoutWithElk } from './elk-layout.js';
+import type { ElkLayoutOwner } from './elk-layout.js';
 
 const DEFAULT_NODE_WIDTH = 220;
 const DEFAULT_NODE_HEIGHT = 80;

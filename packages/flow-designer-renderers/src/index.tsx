@@ -8,18 +8,18 @@ import {
   DesignerPageRenderer,
   DesignerCanvasRenderer,
   DesignerPaletteRenderer,
-} from './designer-page';
-import { DesignerFieldRenderer } from './designer-field';
-import { designerHostContract } from './designer-manifest';
+} from './designer-page.js';
+import { DesignerFieldRenderer } from './designer-field.js';
+import { designerHostContract } from './designer-manifest.js';
 
-export * from './schemas';
-export { createDesignerActionProvider } from './designer-action-provider';
+export * from './schemas.js';
+export { createDesignerActionProvider } from './designer-action-provider.js';
 export {
   FLOW_DESIGNER_MANIFEST_V1,
   resolveDesignerManifest,
   designerHostContract,
   DESIGNER_CAPABILITY_PUBLICATION,
-} from './designer-manifest';
+} from './designer-manifest.js';
 
 export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   {

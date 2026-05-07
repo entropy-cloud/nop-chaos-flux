@@ -1,4 +1,4 @@
-import type { GraphDocument, GraphEdge } from '../types';
+import type { GraphDocument, GraphEdge } from '../types.js';
 
 export function addEdgeToDocument(doc: GraphDocument, edge: GraphEdge): GraphDocument {
   return {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
-import { createXyflowEdges, createXyflowNodes } from './xyflow-utils';
+import { createXyflowEdges, createXyflowNodes } from './xyflow-utils.js';
 
 function createSnapshot(): DesignerSnapshot {
   return {

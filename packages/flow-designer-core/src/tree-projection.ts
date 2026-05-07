@@ -5,7 +5,7 @@ import type {
   GraphNode,
   GraphEdge,
   TreeNodeTypeConfig,
-} from './types';
+} from './types.js';
 
 let edgeCounter = 0;
 

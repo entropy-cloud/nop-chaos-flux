@@ -1,6 +1,6 @@
-import type { GraphDocument, GraphNode, NormalizedDesignerConfig, DesignerEvent } from './types';
-import { generateId } from './core/clone';
-import { checkMaxInstances, checkMinInstances } from './core/constraints';
+import type { GraphDocument, GraphNode, NormalizedDesignerConfig, DesignerEvent } from './types.js';
+import { generateId } from './core/clone.js';
+import { checkMaxInstances, checkMinInstances } from './core/constraints.js';
 import {
   addNodeToDocument,
   moveNodesInDocument,
@@ -8,12 +8,12 @@ import {
   replaceNodeInDocument,
   updateMultipleNodesInDocument,
   updateNodeDataInDocument,
-} from './core/node-operations';
+} from './core/node-operations.js';
 import {
   removeNodeFromSelection,
   getSelectionSummary,
   type DesignerSelectionState,
-} from './core/selection';
+} from './core/selection.js';
 
 export interface NodeCommandContext {
   doc: GraphDocument;

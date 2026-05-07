@@ -1,24 +1,24 @@
-import type { GraphDocument, GraphEdge, NormalizedDesignerConfig, DesignerEvent } from './types';
-import { generateId } from './core/clone';
+import type { GraphDocument, GraphEdge, NormalizedDesignerConfig, DesignerEvent } from './types.js';
+import { generateId } from './core/clone.js';
 import {
   countIncomingEdges,
   countOutgoingEdges,
   EDGE_MISSING_NODE_ERROR,
   EDGE_SELF_LOOP_ERROR,
   validateEdgeConnection,
-} from './core/constraints';
+} from './core/constraints.js';
 import {
   addEdgeToDocument,
   removeEdgeFromDocument,
   replaceEdgeInDocument,
   updateEdgeDataInDocument,
-} from './core/edge-operations';
+} from './core/edge-operations.js';
 import {
   getSelectionSummary,
   removeEdgeFromSelection,
   selectSingleEdge,
   type DesignerSelectionState,
-} from './core/selection';
+} from './core/selection.js';
 
 export interface EdgeCommandContext {
   doc: GraphDocument;

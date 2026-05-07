@@ -12,11 +12,11 @@ import { html } from '@codemirror/lang-html';
 import { css } from '@codemirror/lang-css';
 import { linter } from '@codemirror/lint';
 import { autocompletion } from '@codemirror/autocomplete';
-import { expressionCompletionSource } from './expression/completion';
-import { createFriendlyNameDecoration } from './expression/decoration';
-import { createTemplateModeExtension } from './expression/template-mode';
-import { sqlCompletionSource } from './sql/completion';
-import { createExpressionLinter } from './expression/linter';
+import { expressionCompletionSource } from './expression/completion.js';
+import { createFriendlyNameDecoration } from './expression/decoration.js';
+import { createTemplateModeExtension } from './expression/template-mode.js';
+import { sqlCompletionSource } from './sql/completion.js';
+import { createExpressionLinter } from './expression/linter.js';
 import type {
   EditorLanguage,
   EditorMode,
@@ -25,7 +25,7 @@ import type {
   VariableItem,
   FuncGroup,
   TableSchema,
-} from '../types';
+} from '../types.js';
 
 const defaultLightTheme = EditorView.theme({
   '&': {

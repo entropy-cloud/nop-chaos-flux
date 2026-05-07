@@ -3,8 +3,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
-import { DesignerXyflowCanvasBridge, renderDesignerCanvasBridge } from './canvas-bridge';
-import { DesignerXyflowNode } from './designer-xyflow-canvas';
+import { DesignerXyflowCanvasBridge, renderDesignerCanvasBridge } from './canvas-bridge.js';
+import { DesignerXyflowNode } from './designer-xyflow-canvas/index.js';
 
 const mockState: { latestReactFlowProps: any } = {
   latestReactFlowProps: null,

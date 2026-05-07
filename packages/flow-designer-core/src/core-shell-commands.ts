@@ -1,6 +1,6 @@
-import type { GraphDocument, DesignerEvent } from './types';
-import { setShellClipboard, setShellViewport, type DesignerShellState } from './core/shell-state';
-import type { DesignerTransaction } from './core/transactions';
+import type { GraphDocument, DesignerEvent } from './types.js';
+import { setShellClipboard, setShellViewport, type DesignerShellState } from './core/shell-state.js';
+import type { DesignerTransaction } from './core/transactions.js';
 
 export interface ShellCommandContext {
   get shellState(): DesignerShellState;

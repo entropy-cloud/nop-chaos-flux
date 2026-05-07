@@ -1,4 +1,4 @@
-import type { GraphDocument } from '../types';
+import type { GraphDocument } from '../types.js';
 
 export function normalizeViewport(viewport: GraphDocument['viewport']) {
   return viewport ? { ...viewport } : { x: 0, y: 0, zoom: 1 };

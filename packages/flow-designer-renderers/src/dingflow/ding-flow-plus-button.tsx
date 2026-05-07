@@ -2,8 +2,8 @@ import React from 'react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Plus } from 'lucide-react';
 import { Button } from '@nop-chaos/ui';
-import { BTN_DIST, BTN_DIAMETER } from './dingflow-constants';
-import { DINGFLOW_PLUS_BUTTON_CLASSNAME } from './dingflow-theme';
+import { BTN_DIST, BTN_DIAMETER } from './dingflow-constants.js';
+import { DINGFLOW_PLUS_BUTTON_CLASSNAME } from './dingflow-theme.js';
 
 interface DingFlowPlusButtonProps {
   onClick: (e: React.MouseEvent) => void;
