@@ -265,7 +265,122 @@ visit(node, parentIds):
 
 ### 布局
 
-投影后调用现有 `elk-layout.ts`，配置 `'elk.direction': 'DOWN'` 即为钉钉风格纵向树。树模式 `autoLayout` 默认为 true，每次数据变更后重新投影 + 重排。
+当前 tree mode 的真实基线不是“单纯把投影结果交给 ELK”，而是两层布局职责：
+
+1. **结构化 tree layout（默认/同步路径）**
+2. **ELK auto-layout（显式自动布局按钮和初始 mount 后的异步增强路径）**
+
+也就是说，tree mode 平时必须先有一套稳定、可同步执行、与 TreeDocument 结构严格一致的 nested-tree 布局；ELK 只是后续增强，不是唯一真相。
+
+#### Why
+
+钉钉工作流和 Action orchestration 的视觉预期不是“任意 DAG 分层图”，而是更接近 `wflow-web-next` DingFlow 的嵌套树：
+
+- branch owner 自己占据一层
+- 下方是一组 branch columns
+- 每个 branch column 内部继续递归渲染自己的 chain / nested branch group
+- 所有 branch 完成后，continuation 居中落到整组 branch fan-out 的下方，再继续向下
+
+如果只根据投影后的 edges 做普通 graph layering，很容易让 continuation 看起来“只是某个 merge target”，而不是 branch group 的统一后继。
+
+#### Structured Tree Layout Variables
+
+当前实现位于 `packages/flow-designer-core/src/tree-layout.ts` 的 `layoutStructuredTree()`，核心变量是轴抽象而不是写死 `x/y`：
+
+- `cross`: 横向展开轴（`direction: 'TB'` 时等价于 `x`；`direction: 'LR'` 时等价于 `y`）
+- `main`: 主流程推进轴（`direction: 'TB'` 时等价于 `y`；`direction: 'LR'` 时等价于 `x`）
+- `crossStart`: 当前子树在 cross 轴上的起点
+- `mainStart`: 当前节点在 main 轴上的起点
+- `allocatedCross`: 当前节点/子树可使用的 cross 轴宽度
+- `nodeSpacing`: sibling branch columns 之间的间距
+- `layerSpacing`: 节点与其 child / branch group / continuation 之间沿 main 轴的层间距
+
+节点尺寸来自 `NodeTypeConfig.appearance.minWidth/minHeight`；若未提供，则退回默认值。
+
+#### Measurement Pass
+
+先递归测量每棵子树占用的包围盒：
+
+```text
+measure(node):
+  nodeSize = size(node)
+
+  if no branches:
+    child = measure(node.child?)
+    cross = max(nodeSize.cross, child.cross)
+    main  = nodeSize.main + gap(child)
+
+  if has branches:
+    branchMeasures = measure(branch.child) for each branch
+    branchesCross = sum(branch.cross) + spacing between columns
+    branchesMain = max(branch.main)
+    child = measure(node.child?)  // continuation subtree
+
+    cross = max(nodeSize.cross, branchesCross, child.cross)
+    main  = nodeSize.main
+            + layerSpacing
+            + branchesMain
+            + gap(continuation child)
+```
+
+这里的关键点是：
+
+- branch group 的 cross 尺寸由所有 branch columns 的总宽度决定
+- branch group 的 main 尺寸由“最深 branch”决定
+- continuation 不属于任何单一 branch，而属于整个 branch group 之后的统一后继
+
+#### Placement Pass
+
+测量完成后再递归放置：
+
+```text
+place(node, crossStart, mainStart, allocatedCross):
+  place node itself at the center of allocatedCross
+
+  if no branches and has child:
+    place child centered below node
+
+  if has branches:
+    branchesSpan = total measured width of all branch columns
+    branchCrossCursor = center(branchesSpan within allocatedCross)
+
+    for each branch:
+      place branch subtree in its own column
+      advance branchCrossCursor by branchWidth + nodeSpacing
+
+    branchBottom = max(bottom of every branch subtree)
+
+    if continuation exists:
+      place continuation centered below the full branch group
+```
+
+因此 continuation 的对齐基线是“整组 branches 的包围盒中心”，不是任一条 merge edge 的几何平均值，也不是某个 graph layer 的局部中心。
+
+#### Resulting Invariants
+
+当前实现保证这些结构不变量：
+
+- chain child 一定沿 `main` 轴继续推进
+- sibling branches 一定共享同一 branch row 起点
+- branch owner 的 continuation 一定在所有 branch subtree 的最下方之后
+- nested branch group 必须完全落在其所属 branch column 内部
+- `TB` 和 `LR` 只是轴映射不同，结构算法相同
+
+#### Relationship With ELK
+
+`layoutTreeWithElk()` 仍然保留，用于 tree mode 的异步 auto-layout。但它现在是增强层，不应推翻结构化 tree layout 的 owner 语义。
+
+因此当前推荐理解是：
+
+- `layoutStructuredTree()` owns the semantic nested-tree baseline
+- `layoutTreeWithElk()` may refine the projected graph presentation
+- 如果两者结果冲突，以结构化 tree 的 branch/continuation 语义为准，后续应让 ELK 配置向这个语义靠拢，而不是反过来削弱 tree 结构
+
+#### Implementation Notes
+
+- 初始 tree document 投影使用 `computeTreeModeDocument()`，先 `projectTree()` 再 `layoutStructuredTree()`。
+- tree commands（add branch / move branch / insert chain node 等）修改 `TreeDocument` 后，也走同一条“重新投影 + 结构化 tree layout”路径。
+- 这保证首次渲染、属性更新、以及界面交互后的结果共享同一位置变量和同一树形语义。
 
 ### 反向：Graph → Tree
 
