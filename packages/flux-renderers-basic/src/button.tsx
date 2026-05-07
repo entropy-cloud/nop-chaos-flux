@@ -1,7 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { Button } from '@nop-chaos/ui';
-import type { ButtonSchema } from './schemas';
+import type { ButtonSchema } from './schemas.js';
 
 type ButtonVariant = NonNullable<ButtonSchema['variant']>;
 type ButtonSize = NonNullable<ButtonSchema['size']>;

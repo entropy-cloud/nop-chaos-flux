@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { TableSchema } from '../schemas';
+import type { TableSchema } from '../schemas.js';
 
 export function useTableExpand(schemaProps: TableSchema) {
   const [expandedRowKeys, setExpandedRowKeys] = useState<Set<string>>(

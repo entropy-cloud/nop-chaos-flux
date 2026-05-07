@@ -1,9 +1,9 @@
 import { startTransition, useCallback, useMemo, useState } from 'react';
 import { getIn } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
-import type { TableSchema } from '../schemas';
-import { areStringArraysEqual, normalizeOrderedColumns } from './column-settings-state';
-import { toStringArray } from './table-data';
+import type { TableSchema } from '../schemas.js';
+import { areStringArraysEqual, normalizeOrderedColumns } from './column-settings-state.js';
+import { toStringArray } from './table-data.js';
 
 export function useTableVisibleColumns(
   schemaProps: TableSchema,

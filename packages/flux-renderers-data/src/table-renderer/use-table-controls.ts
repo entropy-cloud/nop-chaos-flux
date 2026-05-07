@@ -1,6 +1,6 @@
-export { useTablePagination } from './use-table-pagination';
-export { useTableSelection } from './use-table-selection';
-export { useTableSort } from './use-table-sort';
-export { useTableFilter } from './use-table-filter';
-export { useTableExpand } from './use-table-expand';
-export { useTableVisibleColumns } from './use-table-visible-columns';
+export { useTablePagination } from './use-table-pagination.js';
+export { useTableSelection } from './use-table-selection.js';
+export { useTableSort } from './use-table-sort.js';
+export { useTableFilter } from './use-table-filter.js';
+export { useTableExpand } from './use-table-expand.js';
+export { useTableVisibleColumns } from './use-table-visible-columns.js';

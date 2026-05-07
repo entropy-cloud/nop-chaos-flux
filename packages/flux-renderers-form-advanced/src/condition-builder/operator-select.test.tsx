@@ -2,8 +2,8 @@ import React from 'react';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { render, cleanup, screen, fireEvent } from '@testing-library/react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { OperatorSelect } from './operator-select';
-import type { ConditionOperatorInfo } from './operators';
+import { OperatorSelect } from './operator-select.js';
+import type { ConditionOperatorInfo } from './operators.js';
 
 vi.mock('@nop-chaos/ui', () => {
   const forwardRef = React.forwardRef;

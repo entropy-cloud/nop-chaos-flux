@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support';
+import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support.js';
 
 describe('detail-field renderer basic behavior', () => {
   it('renders the trigger button when not readOnly', async () => {

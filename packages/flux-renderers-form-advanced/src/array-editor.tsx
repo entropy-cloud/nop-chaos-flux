@@ -25,7 +25,7 @@ import {
 } from '@nop-chaos/flux-renderers-form';
 import type { ArrayEditorItem, ArrayEditorSchema } from '@nop-chaos/flux-renderers-form';
 import { FieldHint } from '@nop-chaos/flux-renderers-form';
-import { createNextCompositeItemId } from './composite-field/composite-item-id';
+import { createNextCompositeItemId } from './composite-field/composite-item-id.js';
 
 const EMPTY_ARRAY_EDITOR_ITEMS: ArrayEditorItem[] = [];
 

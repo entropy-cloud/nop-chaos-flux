@@ -16,10 +16,10 @@ import type {
   ConditionGroupValue,
   ConditionOperatorOverrides,
   ConditionField,
-} from './types';
-import { ConditionGroup } from './condition-group';
-import { genId } from './id-utils';
-import { groupValuesEqual } from './utils';
+} from './types.js';
+import { ConditionGroup } from './condition-group.js';
+import { genId } from './id-utils.js';
+import { groupValuesEqual } from './utils.js';
 
 function toGroupValue(value: unknown): ConditionGroupValue {
   if (value && typeof value === 'object' && 'children' in value) {

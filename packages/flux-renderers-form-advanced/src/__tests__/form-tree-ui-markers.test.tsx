@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { env } from '@nop-chaos/flux-renderers-form/test-support';
-import { allFormDefs } from './tree-checkbox-fields-test-helpers';
+import { allFormDefs } from './tree-checkbox-fields-test-helpers.js';
 
 describe('tree controls - UI markers, slots, and collapse/expand', () => {
   it('lets FieldFrame own tree control field chrome while tree controls publish control slots', async () => {

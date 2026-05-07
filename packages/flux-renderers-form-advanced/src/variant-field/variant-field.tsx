@@ -28,14 +28,14 @@ import {
   TabsList,
   TabsTrigger,
 } from '@nop-chaos/ui';
-import type { VariantFieldSchema, VariantOption } from '../composite-field/composite-schemas';
+import type { VariantFieldSchema, VariantOption } from '../composite-field/composite-schemas.js';
 import { formLabelFieldRule, resolveFieldLabelContent } from '@nop-chaos/flux-renderers-form';
 import {
   detectMatchedVariant,
   extractDetectedVariant,
   resolveInitialVariant,
-} from './variant-field-matching';
-import { createVariantFormProxy, createVariantScope } from './variant-field-runtime';
+} from './variant-field-matching.js';
+import { createVariantFormProxy, createVariantScope } from './variant-field-runtime.js';
 
 function resolveVariantFrameWrap(
   frameWrap: boolean | 'label' | 'group' | 'none' | undefined,

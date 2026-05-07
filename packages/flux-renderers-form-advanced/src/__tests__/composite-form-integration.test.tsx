@@ -7,7 +7,7 @@ import {
   baseEnv,
   formulaCompiler,
   makeCapturingFetcher,
-} from './composite-form-support';
+} from './composite-form-support.js';
 
 describe('composite form - six-component integration', () => {
   it('renders all six components together and submits when valid', async () => {

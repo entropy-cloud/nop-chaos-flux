@@ -9,7 +9,7 @@ import {
   formulaCompiler,
   submitButtonRenderer,
   makeCapturingFetcher,
-} from './__tests__/object-field-test-support';
+} from './__tests__/object-field-test-support.js';
 
 describe('object-field transform actions', () => {
   it('runs transformInAction before publishing child scope values', async () => {

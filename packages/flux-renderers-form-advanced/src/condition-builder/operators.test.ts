@@ -8,7 +8,7 @@ import {
   resolveOperators,
   resolveDefaultOp,
   resolveOperatorLabel,
-} from './operators';
+} from './operators.js';
 
 describe('operators', () => {
   describe('OPERATOR_LABEL_KEYS', () => {

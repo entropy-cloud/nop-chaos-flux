@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { t } from '@nop-chaos/flux-i18n';
-import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support';
+import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 describe('CRUD renderer', () => {
   it('renders crud shell with toolbar and list action regions', async () => {

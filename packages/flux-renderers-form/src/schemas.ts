@@ -48,7 +48,7 @@ export interface FormSchema extends BaseSchema {
   actionsClassName?: string;
 }
 
-export type { FieldsetSchema } from './renderers/fieldset';
+export type { FieldsetSchema } from './renderers/fieldset.js';
 
 export interface SelectSchema extends InputSchema {
   options?: SelectOptionsValue;

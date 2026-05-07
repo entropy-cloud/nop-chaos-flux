@@ -2,8 +2,8 @@ import React from 'react';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { render, cleanup, screen } from '@testing-library/react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { FieldSelect } from './field-select';
-import type { ConditionField } from './types';
+import { FieldSelect } from './field-select.js';
+import type { ConditionField } from './types.js';
 
 vi.mock('@nop-chaos/ui', () => {
   function MockCombobox({ children, onValueChange, disabled }: any) {

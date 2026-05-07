@@ -2,7 +2,7 @@ import React from 'react';
 import type { RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { basicRendererDefinitions } from './index';
+import { basicRendererDefinitions } from './index.js';
 
 export const env: RendererEnv = {
   fetcher: async function <T>() {

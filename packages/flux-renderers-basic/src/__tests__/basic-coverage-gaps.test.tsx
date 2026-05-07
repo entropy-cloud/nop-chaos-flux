@@ -1,16 +1,16 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { registerBasicRenderers } from '../index';
+import { registerBasicRenderers } from '../index.js';
 import {
   buildSlotBindings,
   createStructuralRepeatedTemplateId,
   renderStructuralLoop,
   resolveLoopBindings,
-} from '../structural-loop';
-import { classNames, resolveDirection } from '../utils';
+} from '../structural-loop.js';
+import { classNames, resolveDirection } from '../utils.js';
 import { resolveGap } from '@nop-chaos/flux-react';
-import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support';
+import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 describe('basic renderer coverage gaps', () => {
   it('covers layout utility helpers across token, numeric, and css gap inputs', () => {

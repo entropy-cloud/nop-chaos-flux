@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createProjectedFormRuntime, createProjectedFormStore } from './projected-form-runtime';
+import { createProjectedFormRuntime, createProjectedFormStore } from './projected-form-runtime.js';
 
 describe('projected form runtime helpers', () => {
   it('projects store values, caches repeated parent state, and prefixes store paths', () => {

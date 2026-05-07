@@ -10,7 +10,7 @@ import {
   formStateProbeRenderer,
   scopeStateProbeRenderer,
 } from '@nop-chaos/flux-renderers-form/test-support';
-import { formAdvancedRendererDefinitions } from '../index';
+import { formAdvancedRendererDefinitions } from '../index.js';
 
 const allDefs = [
   ...basicRendererDefinitions,

@@ -12,7 +12,7 @@ import {
   useFormFieldController,
 } from '@nop-chaos/flux-renderers-form';
 import type { TagListSchema } from '@nop-chaos/flux-renderers-form';
-import { WrappedFieldAction } from './wrapped-field-action';
+import { WrappedFieldAction } from './wrapped-field-action.js';
 
 export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const name = String(props.props.name ?? '');

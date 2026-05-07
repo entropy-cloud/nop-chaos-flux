@@ -1,7 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
-import type { TextSchema } from './schemas';
+import type { TextSchema } from './schemas.js';
 
 export function TextRenderer(props: RendererComponentProps<TextSchema>) {
   const text = props.props.body ?? props.props.text;

@@ -5,7 +5,7 @@ import {
   env,
   formulaCompiler,
   scopeProbeRenderer,
-} from '../test-support';
+} from '../test-support.js';
 
 describe('basicRendererDefinitions structural rendering', () => {
   it('renders fragment body with inherited scope data', () => {

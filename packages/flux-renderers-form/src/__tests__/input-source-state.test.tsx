@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { formRendererDefinitions } from '../index';
-import { env, formStateProbeRenderer } from './form-test-support';
+import { formRendererDefinitions } from '../index.js';
+import { env, formStateProbeRenderer } from './form-test-support.js';
 
 afterEach(() => {
   cleanup();

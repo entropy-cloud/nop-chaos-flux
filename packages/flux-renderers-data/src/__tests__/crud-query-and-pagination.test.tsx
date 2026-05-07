@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { describe, expect, it } from 'vitest';
 import type { ActionContext } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support';
+import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 describe('CRUD query and pagination', () => {
   it('updates $crud query and visible rows after search and reset actions', async () => {

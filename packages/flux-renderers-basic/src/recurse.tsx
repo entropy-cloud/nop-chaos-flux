@@ -7,13 +7,13 @@ import type {
 } from '@nop-chaos/flux-core';
 import { useStructuralLoopContext } from '@nop-chaos/flux-react';
 import { StructuralLoopContext } from '@nop-chaos/flux-react/unstable';
-import type { RecurseSchema } from './schemas';
+import type { RecurseSchema } from './schemas.js';
 import {
   createStructuralRepeatedTemplateId,
   renderStructuralLoop,
   resolveLoopBindings,
-} from './structural-loop';
-import { asReactNode } from './utils';
+} from './structural-loop.js';
+import { asReactNode } from './utils.js';
 
 const DEFAULT_RECURSE_BINDINGS = {
   itemName: 'item',

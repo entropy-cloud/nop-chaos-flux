@@ -5,8 +5,8 @@ import { useScopeSelector } from '@nop-chaos/flux-react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
-import { formAdvancedRendererDefinitions } from '../index';
-import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support';
+import { formAdvancedRendererDefinitions } from '../index.js';
+import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support.js';
 
 function ScopeSelectorProbeRenderer() {
   const snapshot = useScopeSelector(

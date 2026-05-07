@@ -6,7 +6,7 @@ import {
   toggleTreeSelection,
   type TreeOptionConfig,
   type TreeOptionMeta,
-} from './tree-options';
+} from './tree-options.js';
 
 export function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
   if (sourceState?.status !== 'error') {

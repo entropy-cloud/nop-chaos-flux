@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Button } from '@nop-chaos/ui';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
-import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support';
+import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 afterEach(cleanup);
 

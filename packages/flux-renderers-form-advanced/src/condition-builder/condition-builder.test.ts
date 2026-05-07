@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { formAdvancedRendererDefinitions } from '../index';
+import { formAdvancedRendererDefinitions } from '../index.js';
 
 describe('condition-builder renderer', () => {
   it('registers in formAdvancedRendererDefinitions', () => {

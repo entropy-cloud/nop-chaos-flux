@@ -1,7 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { Badge } from '@nop-chaos/ui';
-import type { BadgeSchema } from './schemas';
+import type { BadgeSchema } from './schemas.js';
 
 export function BadgeRenderer(props: RendererComponentProps<BadgeSchema>) {
   const text = props.props.text;

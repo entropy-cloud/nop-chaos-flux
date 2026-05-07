@@ -19,7 +19,7 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { Input } from '@nop-chaos/ui';
-import { useFieldHandlers } from '../field-utils';
+import { useFieldHandlers } from '../field-utils.js';
 
 resetFluxI18n();
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });

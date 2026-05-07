@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support';
+import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 describe('dataRendererDefinitions table pagination and selection', () => {
   it('uses local pagination state by default', async () => {

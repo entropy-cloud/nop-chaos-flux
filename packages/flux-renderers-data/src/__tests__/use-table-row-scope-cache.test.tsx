@@ -7,7 +7,7 @@ import {
   __hasTableRowScopeCacheForTests,
   __resetTableRowScopeCachesForTests,
   useTableRowScopeCache,
-} from '../table-renderer/use-table-row-scope-cache';
+} from '../table-renderer/use-table-row-scope-cache.js';
 
 type TestScope = ScopeRef & {
   merge: ReturnType<typeof vi.fn>;

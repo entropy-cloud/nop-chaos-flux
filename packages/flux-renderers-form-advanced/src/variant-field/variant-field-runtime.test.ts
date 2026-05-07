@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createVariantScope, createVariantFormProxy } from './variant-field-runtime';
+import { createVariantScope, createVariantFormProxy } from './variant-field-runtime.js';
 import type {
   FieldRegistrationHandle,
   FormRuntime,

@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { makeEmptyGroup, renderGroup } from './config-test-support';
+import { makeEmptyGroup, renderGroup } from './config-test-support.js';
 
 describe('condition-builder config integration action behavior', () => {
   describe('draggable', () => {

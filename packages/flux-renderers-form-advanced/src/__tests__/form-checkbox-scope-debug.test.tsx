@@ -12,7 +12,7 @@ import {
   scopeStateProbeRenderer,
   submitCalls,
 } from '@nop-chaos/flux-renderers-form/test-support';
-import { allFormDefs } from './tree-checkbox-fields-test-helpers';
+import { allFormDefs } from './tree-checkbox-fields-test-helpers.js';
 
 describe('checkbox-group values and scope-debug', () => {
   it('preserves non-string checkbox-group values in form state and submit payloads', async () => {

@@ -1,20 +1,20 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { BadgeRenderer } from './badge';
-import { ButtonRenderer } from './button';
-import { ContainerRenderer } from './container';
-import { DialogRenderer } from './dialog';
-import { DrawerRenderer } from './drawer';
-import { DynamicRenderer } from './dynamic-renderer';
-import { FlexRenderer } from './flex';
-import { FragmentRenderer } from './fragment';
-import { IconRenderer } from './icon';
-import { LoopRenderer } from './loop';
-import { PageRenderer } from './page';
-import { ReactionRenderer } from './reaction';
-import { RecurseRenderer } from './recurse';
-import { ScopeDebugRenderer } from './scope-debug';
-import { TabsRenderer } from './tabs';
-import { TextRenderer } from './text';
+import { BadgeRenderer } from './badge.js';
+import { ButtonRenderer } from './button.js';
+import { ContainerRenderer } from './container.js';
+import { DialogRenderer } from './dialog.js';
+import { DrawerRenderer } from './drawer.js';
+import { DynamicRenderer } from './dynamic-renderer.js';
+import { FlexRenderer } from './flex.js';
+import { FragmentRenderer } from './fragment.js';
+import { IconRenderer } from './icon.js';
+import { LoopRenderer } from './loop.js';
+import { PageRenderer } from './page.js';
+import { ReactionRenderer } from './reaction.js';
+import { RecurseRenderer } from './recurse.js';
+import { ScopeDebugRenderer } from './scope-debug.js';
+import { TabsRenderer } from './tabs.js';
+import { TextRenderer } from './text.js';
 
 export const basicRendererDefinitions: RendererDefinition[] = [
   {

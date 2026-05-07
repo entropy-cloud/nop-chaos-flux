@@ -6,9 +6,9 @@ import { useCurrentFormState } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { describe, expect, it } from 'vitest';
-import { formAdvancedRendererDefinitions } from './index';
-import { keyValueRendererDefinition } from './key-value';
-import { baseEnv, formulaCompiler } from './test-support';
+import { formAdvancedRendererDefinitions } from './index.js';
+import { keyValueRendererDefinition } from './key-value.js';
+import { baseEnv, formulaCompiler } from './test-support.js';
 
 type KeyValueValidation = {
   getFieldPath(schema: Record<string, unknown>, ctx?: unknown): string | undefined;

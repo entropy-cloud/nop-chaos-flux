@@ -5,7 +5,7 @@ import {
   useScopeSelector,
   useStatusPathPublication,
 } from '@nop-chaos/flux-react';
-import type { CrudSchema, CrudStatusSummary } from './crud-schema';
+import type { CrudSchema, CrudStatusSummary } from './crud-schema.js';
 
 export const EMPTY_ROWS: unknown[] = [];
 export const DEFAULT_PAGE_SIZE = 10;

@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RendererHelpers } from '@nop-chaos/flux-core';
-import type { VariantOption } from '../composite-field/composite-schemas';
+import type { VariantOption } from '../composite-field/composite-schemas.js';
 import {
   detectMatchedVariant,
   extractDetectedVariant,
   matchesVariant,
   resolveInitialVariant,
-} from './variant-field-matching';
+} from './variant-field-matching.js';
 
 describe('variant-field matching utilities', () => {
   it('matches built-in kinds and rejects unsupported values', () => {

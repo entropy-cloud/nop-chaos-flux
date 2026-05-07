@@ -9,7 +9,7 @@ import {
   baseEnv,
   formulaCompiler,
   makeCapturingFetcher,
-} from './composite-form-support';
+} from './composite-form-support.js';
 
 function ScopeSelectorProbeRenderer() {
   const snapshot = useScopeSelector(

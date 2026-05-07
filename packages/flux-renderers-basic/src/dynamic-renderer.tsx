@@ -6,7 +6,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { asReactNode } from './utils';
+import { asReactNode } from './utils.js';
 
 function isBaseSchemaLike(value: unknown): value is BaseSchema {
   return (

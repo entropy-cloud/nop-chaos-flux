@@ -14,9 +14,9 @@ import {
 } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { ArrowUpDownIcon, ChevronDownIcon } from 'lucide-react';
-import type { TableColumnSchema, TableSchema } from '../schemas';
-import type { FixedColumnLayout } from './fixed-columns';
-import type { FilterState, SortState } from './types';
+import type { TableColumnSchema, TableSchema } from '../schemas.js';
+import type { FixedColumnLayout } from './fixed-columns.js';
+import type { FilterState, SortState } from './types.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;

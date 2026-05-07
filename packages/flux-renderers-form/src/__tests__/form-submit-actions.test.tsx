@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
-import { formRendererDefinitions } from '../index';
+import { formRendererDefinitions } from '../index.js';
 import {
   buttonRenderer,
   env,
@@ -12,7 +12,7 @@ import {
   formStateProbeRenderer,
   scopeStateProbeRenderer,
   selectOption,
-} from './form-test-support';
+} from './form-test-support.js';
 
 const { notifyCalls, submitCalls } = formTestHarness;
 

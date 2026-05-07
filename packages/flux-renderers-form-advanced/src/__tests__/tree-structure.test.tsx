@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { allFormDefs } from './form-tree-checkbox-fields.shared';
+import { allFormDefs } from './form-tree-checkbox-fields.shared.js';
 import { env } from '@nop-chaos/flux-renderers-form/test-support';
 
 describe('tree controls - DOM structure, markers, and expand/collapse', () => {

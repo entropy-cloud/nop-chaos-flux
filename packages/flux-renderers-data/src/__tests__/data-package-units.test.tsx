@@ -4,9 +4,9 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { ComponentRegistryContext } from '@nop-chaos/flux-react/unstable';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { CrudToolbarBlocks, normalizeToolbarBlocks } from '../crud-renderer-toolbar';
-import { dataRendererDefinitions, registerDataRenderers } from '../index';
-import { useTableHandle } from '../table-renderer/use-table-handle';
+import { CrudToolbarBlocks, normalizeToolbarBlocks } from '../crud-renderer-toolbar.js';
+import { dataRendererDefinitions, registerDataRenderers } from '../index.js';
+import { useTableHandle } from '../table-renderer/use-table-handle.js';
 
 beforeEach(() => {
   resetFluxI18n();

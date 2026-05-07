@@ -2,9 +2,9 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { TableBodyRows } from '../table-renderer/table-body-rows';
-import { TableLoadingOverlay } from '../table-renderer/table-loading-overlay';
-import { TablePaginationBar } from '../table-renderer/table-pagination-bar';
+import { TableBodyRows } from '../table-renderer/table-body-rows.js';
+import { TableLoadingOverlay } from '../table-renderer/table-loading-overlay.js';
+import { TablePaginationBar } from '../table-renderer/table-pagination-bar.js';
 
 beforeEach(() => {
   resetFluxI18n();

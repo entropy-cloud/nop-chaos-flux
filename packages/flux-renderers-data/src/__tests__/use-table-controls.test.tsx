@@ -7,7 +7,7 @@ import {
   useTablePagination,
   useTableSelection,
   useTableSort,
-} from '../table-renderer/use-table-controls';
+} from '../table-renderer/use-table-controls.js';
 
 const mockScopeState: { data: Record<string, unknown> } = {
   data: {},

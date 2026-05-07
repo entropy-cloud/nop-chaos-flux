@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { createSchemaRenderer, useCurrentForm } from '@nop-chaos/flux-react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
-import { formAdvancedRendererDefinitions } from '../index';
+import { formAdvancedRendererDefinitions } from '../index.js';
 import {
   buttonRenderer,
   env,

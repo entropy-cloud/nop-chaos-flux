@@ -6,7 +6,7 @@ import {
   formulaCompiler,
   iconRenderer,
   nodeInstanceProbeRenderer,
-} from '../test-support';
+} from '../test-support.js';
 
 describe('dataRendererDefinitions tree and chart behavior', () => {
   it('renders visual tree nodes through the node region with inherited bindings', async () => {

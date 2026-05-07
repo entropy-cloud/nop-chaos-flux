@@ -10,7 +10,7 @@ import {
   useCurrentFormState,
 } from '@nop-chaos/flux-react';
 import { Button, cn } from '@nop-chaos/ui';
-import type { DetailFieldSchema } from '../composite-field/composite-schemas';
+import type { DetailFieldSchema } from '../composite-field/composite-schemas.js';
 import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { t } from '@nop-chaos/flux-i18n';
 import {
@@ -18,15 +18,15 @@ import {
   runTransformIn,
   runTransformOut,
   runValidate,
-} from './value-adaptation-helper';
-import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface';
+} from './value-adaptation-helper.js';
+import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface.js';
 import {
   buildDetailDraftInitialValues,
   readDetailDraftValues,
   useDetailAdaptationAction,
   useDetailChildValidationContract,
   useDetailDraftControllerState,
-} from './detail-draft-controller';
+} from './detail-draft-controller.js';
 import { useCurrentValidationScope } from '@nop-chaos/flux-react';
 
 function logDetailFieldAsyncError(action: 'open' | 'confirm', error: unknown) {

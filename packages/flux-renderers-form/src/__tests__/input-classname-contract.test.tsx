@@ -3,7 +3,7 @@ import { cleanup, render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { formRendererDefinitions } from '../index';
+import { formRendererDefinitions } from '../index.js';
 
 const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
 

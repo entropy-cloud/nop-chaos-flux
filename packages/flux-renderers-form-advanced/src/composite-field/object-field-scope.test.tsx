@@ -9,7 +9,7 @@ import {
   formulaCompiler,
   scopeSelectorProbeRenderer,
   objectScopeMutationRenderer,
-} from './__tests__/object-field-test-support';
+} from './__tests__/object-field-test-support.js';
 
 describe('object-field scope and state', () => {
   it('publishes object-field scope as value and readOnly while keeping relative child names', async () => {

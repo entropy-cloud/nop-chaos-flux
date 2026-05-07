@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import React from 'react';
-import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support';
+import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support.js';
 
 describe('detail-field unmount protection', () => {
   it('does not update state after unmount when handleOpen async operation is in flight', async () => {

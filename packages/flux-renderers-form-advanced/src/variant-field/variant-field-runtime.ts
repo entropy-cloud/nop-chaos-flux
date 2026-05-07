@@ -1,7 +1,7 @@
 import type { FormRuntime, FormStoreApi, ScopeRef } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { createProjectedInlineForm } from '../composite-field/projected-inline-form';
-import { createProjectedOwnerScope } from '../projected-owner-scope';
+import { createProjectedInlineForm } from '../composite-field/projected-inline-form.js';
+import { createProjectedOwnerScope } from '../projected-owner-scope.js';
 
 export function createVariantFormProxy(parentForm: FormRuntime, prefix: string): FormRuntime {
   function prefixPath(path: string) {

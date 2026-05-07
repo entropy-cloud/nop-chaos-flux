@@ -6,7 +6,7 @@ import {
   createFormSchemaRendererWithButton,
   formulaCompiler,
   makeCapturingFetcher,
-} from '../test-support';
+} from '../test-support.js';
 
 describe('detail-field renderer commit behavior', () => {
   it('cancel closes dialog without writing back to parent form', async () => {

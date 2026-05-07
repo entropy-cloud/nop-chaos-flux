@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { ApiSchema } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { allFormDefs } from './form-tree-checkbox-fields.shared';
+import { allFormDefs } from './form-tree-checkbox-fields.shared.js';
 import {
   buttonRenderer,
   env,

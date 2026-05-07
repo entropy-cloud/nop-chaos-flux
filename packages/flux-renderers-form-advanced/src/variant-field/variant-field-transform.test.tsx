@@ -5,7 +5,7 @@ import {
   createFormSchemaRenderer,
   createPageSchemaRenderer,
   formulaCompiler,
-} from '../test-support';
+} from '../test-support.js';
 
 describe('variant-field renderer transform behavior', () => {
   it('runs target variant transformInAction when switching variants', async () => {

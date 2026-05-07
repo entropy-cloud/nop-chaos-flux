@@ -1,6 +1,6 @@
 import { t } from '@nop-chaos/flux-i18n';
-import { FieldError } from './error';
-import { FieldHelpText } from './help-text';
+import { FieldError } from './error.js';
+import { FieldHelpText } from './help-text.js';
 
 export function FieldHint(props: {
   errorMessage?: string;

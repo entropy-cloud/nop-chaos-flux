@@ -10,8 +10,8 @@ import {
 import { createReadonlyScopeBinding } from '@nop-chaos/flux-react/unstable';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Separator, cn } from '@nop-chaos/ui';
-import type { CrudSchema, CrudStatusSummary } from './crud-schema';
-import { normalizeCrudSchema } from './crud-schema';
+import type { CrudSchema, CrudStatusSummary } from './crud-schema.js';
+import { normalizeCrudSchema } from './crud-schema.js';
 import {
   applyQueryToRows,
   DEFAULT_PAGE_SIZE,
@@ -22,13 +22,13 @@ import {
   useCrudRuntimeState,
   useCrudStatusPublisher,
   type InternalTableHandle,
-} from './crud-renderer-state';
-import { CrudToolbarBlocks, normalizeToolbarBlocks } from './crud-renderer-toolbar';
+} from './crud-renderer-state.js';
+import { CrudToolbarBlocks, normalizeToolbarBlocks } from './crud-renderer-toolbar.js';
 import {
   createCrudOwnerPaths,
   useCrudQueryBridge,
   useCrudVisibleColumnNames,
-} from './crud-renderer-ownership';
+} from './crud-renderer-ownership.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;

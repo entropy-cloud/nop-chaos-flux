@@ -1,6 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support';
+import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 describe('per-slot className props', () => {
   afterEach(() => cleanup());

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support';
+import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support.js';
 
 describe('variant-field renderer detection behavior', () => {
   it('detects variant by match rules when value is provided', async () => {

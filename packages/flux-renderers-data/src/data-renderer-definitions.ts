@@ -1,12 +1,12 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { ChartRenderer } from './chart-renderer';
-import { DataSourceRenderer } from './data-source-renderer';
-import { validateTableSchema } from './data-schema-validation';
-import { TableRenderer } from './table-renderer';
-import { TreeRenderer } from './tree-renderer';
-import { crudRendererDefinition } from './crud-renderer-definition';
+import { ChartRenderer } from './chart-renderer.js';
+import { DataSourceRenderer } from './data-source-renderer.js';
+import { validateTableSchema } from './data-schema-validation.js';
+import { TableRenderer } from './table-renderer.js';
+import { TreeRenderer } from './tree-renderer.js';
+import { crudRendererDefinition } from './crud-renderer-definition.js';
 
-export { crudRendererDefinition } from './crud-renderer-definition';
+export { crudRendererDefinition } from './crud-renderer-definition.js';
 
 export const dataRendererDefinitions: RendererDefinition[] = [
   {

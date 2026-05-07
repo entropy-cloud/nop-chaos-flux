@@ -2,8 +2,8 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { FieldsetRenderer } from '../renderers/fieldset';
-import type { FieldsetSchema } from '../renderers/fieldset';
+import { FieldsetRenderer } from '../renderers/fieldset.js';
+import type { FieldsetSchema } from '../renderers/fieldset.js';
 import { RuntimeContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
 import type { ScopeRef, RendererRuntime } from '@nop-chaos/flux-core';
 

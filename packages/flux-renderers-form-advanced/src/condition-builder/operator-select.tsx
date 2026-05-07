@@ -1,6 +1,6 @@
 import { t } from '@nop-chaos/flux-i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@nop-chaos/ui';
-import type { ConditionOperatorInfo } from './operators';
+import type { ConditionOperatorInfo } from './operators.js';
 
 interface OperatorSelectProps {
   operators: ConditionOperatorInfo[];

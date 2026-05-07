@@ -1,4 +1,4 @@
-import type { ConditionCustomOperator, ConditionOperatorOverrides } from './types';
+import type { ConditionCustomOperator, ConditionOperatorOverrides } from './types.js';
 import { t } from '@nop-chaos/flux-i18n';
 
 export interface ConditionOperatorInfo {

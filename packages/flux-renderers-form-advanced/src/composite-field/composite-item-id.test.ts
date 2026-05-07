@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createNextCompositeItemId } from './composite-item-id';
+import { createNextCompositeItemId } from './composite-item-id.js';
 
 describe('createNextCompositeItemId', () => {
   it('generates next id starting from length + 1', () => {

@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import type { TableColumnSchema, TableSchema } from '../schemas';
+import type { TableColumnSchema, TableSchema } from '../schemas.js';
 
 const CONTROL_COLUMN_WIDTH = 40;
 const DEFAULT_FIXED_COLUMN_WIDTH = 160;

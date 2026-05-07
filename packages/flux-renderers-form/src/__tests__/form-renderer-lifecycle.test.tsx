@@ -55,7 +55,7 @@ vi.mock('@nop-chaos/ui', () => ({
   cn: (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' '),
 }));
 
-import { FormRenderer } from '../renderers/form';
+import { FormRenderer } from '../renderers/form.js';
 
 afterEach(() => {
   cleanup();

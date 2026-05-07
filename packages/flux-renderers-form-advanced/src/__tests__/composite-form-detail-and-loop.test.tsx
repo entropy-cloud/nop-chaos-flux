@@ -7,7 +7,7 @@ import {
   baseEnv,
   formulaCompiler,
   makeCapturingFetcher,
-} from './composite-form-support';
+} from './composite-form-support.js';
 
 describe('composite form - variant-field branch-only validation', () => {
   it('submits when only active branch has valid values', async () => {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ActionSchema, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
-import type { TableSchema } from '../schemas';
+import type { TableSchema } from '../schemas.js';
 
 function toDraftValue(record: Record<string, unknown>, field: string) {
   const value = record[field];

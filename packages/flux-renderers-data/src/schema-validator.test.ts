@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { dataRendererDefinitions } from './index';
+import { dataRendererDefinitions } from './index.js';
 
 const tableRendererDefinition = dataRendererDefinitions.find(
   (definition) => definition.type === 'table',

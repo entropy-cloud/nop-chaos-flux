@@ -4,7 +4,7 @@ import {
   runTransformIn,
   runTransformOut,
   runValidate,
-} from './value-adaptation-helper';
+} from './value-adaptation-helper.js';
 
 describe('detail value adaptation helpers', () => {
   it('falls back to raw and working values when no action is provided', async () => {

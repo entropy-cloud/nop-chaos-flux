@@ -24,7 +24,7 @@ import {
   Switch,
   Textarea,
 } from '@nop-chaos/ui';
-import { formLabelFieldRule, useFormFieldController } from '../field-utils';
+import { formLabelFieldRule, useFormFieldController } from '../field-utils.js';
 import type {
   CheckboxGroupSchema,
   CheckboxSchema,
@@ -34,7 +34,7 @@ import type {
   SelectSchema,
   SwitchSchema,
   TextareaSchema,
-} from '../schemas';
+} from '../schemas.js';
 
 export function createInputRenderer(inputType: string) {
   return function InputRenderer(props: RendererComponentProps<InputSchema>) {

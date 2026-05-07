@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { computeUsedFields, groupValuesEqual } from './utils';
-import type { ConditionItemValue, ConditionGroupValue } from './types';
+import { computeUsedFields, groupValuesEqual } from './utils.js';
+import type { ConditionItemValue, ConditionGroupValue } from './types.js';
 
 describe('computeUsedFields', () => {
   it('returns empty set for empty children', () => {

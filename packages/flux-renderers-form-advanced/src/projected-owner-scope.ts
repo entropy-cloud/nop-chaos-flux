@@ -1,6 +1,6 @@
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { createProjectedScopeHelpers } from './detail-view/projected-scope';
+import { createProjectedScopeHelpers } from './detail-view/projected-scope.js';
 
 interface CreateProjectedOwnerScopeOptions {
   parentScope: ScopeRef;

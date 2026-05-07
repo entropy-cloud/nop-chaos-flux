@@ -4,8 +4,8 @@ import { cleanup, render } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
-import { formRendererDefinitions } from '../index';
-import { env } from './form-test-support';
+import { formRendererDefinitions } from '../index.js';
+import { env } from './form-test-support.js';
 
 const FormSchemaRenderer = createSchemaRenderer([
   ...basicRendererDefinitions,

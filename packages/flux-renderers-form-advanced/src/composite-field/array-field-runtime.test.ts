@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createItemScope, createItemFormProxy } from './array-field-runtime';
+import { createItemScope, createItemFormProxy } from './array-field-runtime.js';
 import type {
   FieldRegistrationHandle,
   FormRuntime,

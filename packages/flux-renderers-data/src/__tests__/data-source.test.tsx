@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { RendererEnv } from '@nop-chaos/flux-core';
-import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support';
+import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 describe('dataRendererDefinitions data-source behavior', () => {
   it('allows formula data-sources to publish by name', async () => {

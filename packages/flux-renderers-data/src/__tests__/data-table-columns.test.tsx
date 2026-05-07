@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { t } from '@nop-chaos/flux-i18n';
-import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support';
+import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 describe('dataRendererDefinitions table columns', () => {
   it('renders left fixed columns as sticky cells', async () => {

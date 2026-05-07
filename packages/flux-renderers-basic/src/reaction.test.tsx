@@ -12,7 +12,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useRenderScope: () => ({ scopeId: 'test-scope' }),
 }));
 
-import { ReactionRenderer } from './reaction';
+import { ReactionRenderer } from './reaction.js';
 
 function createProps(): RendererComponentProps<any> {
   return {

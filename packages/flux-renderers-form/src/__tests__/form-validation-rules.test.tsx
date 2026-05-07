@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { formRendererDefinitions } from '../index';
-import { buttonRenderer, env, selectOption } from './form-test-support';
+import { formRendererDefinitions } from '../index.js';
+import { buttonRenderer, env, selectOption } from './form-test-support.js';
 
 describe('formRendererDefinitions - relational and conditional field validation', () => {
   it('supports relational field validation with dependent revalidation in the UI', async () => {

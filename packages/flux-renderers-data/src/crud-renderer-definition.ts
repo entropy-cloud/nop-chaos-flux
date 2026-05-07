@@ -1,6 +1,6 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { CrudRenderer } from './crud-renderer';
-import { transformCrudAuthoringSchema, validateCrudSchema } from './data-schema-validation';
+import { CrudRenderer } from './crud-renderer.js';
+import { transformCrudAuthoringSchema, validateCrudSchema } from './data-schema-validation.js';
 
 export const crudRendererDefinition: RendererDefinition = {
   type: 'crud',

@@ -1,7 +1,7 @@
 /* eslint-disable max-lines */
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support';
+import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 describe('basicRendererDefinitions page and layout behavior', () => {
   it('renders page title from a plain value', () => {

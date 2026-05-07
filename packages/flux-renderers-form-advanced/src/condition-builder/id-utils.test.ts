@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { genId, resetIdSeq } from './id-utils';
+import { genId, resetIdSeq } from './id-utils.js';
 
 describe('id-utils', () => {
   it('generates sequential ids with default prefix', () => {

@@ -16,14 +16,14 @@ import { ChevronRightIcon, ChevronsUpDownIcon, SearchIcon, XIcon } from 'lucide-
 import { formLabelFieldRule, useFormFieldController } from '@nop-chaos/flux-renderers-form';
 import { createFieldValidation } from '@nop-chaos/flux-renderers-form';
 import type { InputTreeSchema, TreeSelectSchema } from '@nop-chaos/flux-renderers-form';
-import { buildTreeOptionMetaList, getTreeOptionConfig, type TreeOptionMeta } from './tree-options';
+import { buildTreeOptionMetaList, getTreeOptionConfig, type TreeOptionMeta } from './tree-options.js';
 import {
   getSourceErrorMessage,
   isMultipleMode,
   useTreeOptionListController,
   useTreeOptionNodeController,
   useTreeSelectController,
-} from './tree-control-controllers';
+} from './tree-control-controllers.js';
 
 function TreeOptionNode(props: {
   option: TreeOptionMeta;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeWindowRange } from '../table-renderer/table-pagination-bar';
+import { computeWindowRange } from '../table-renderer/table-pagination-bar.js';
 
 describe('computeWindowRange', () => {
   it('returns [1, 0] for 0 pages', () => {

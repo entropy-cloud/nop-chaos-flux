@@ -2,7 +2,7 @@ import type { FormRuntime, FormStoreApi, FormStoreState } from '@nop-chaos/flux-
 import {
   createProjectedFormRuntime,
   createProjectedFormStore,
-} from '../detail-view/projected-form-runtime';
+} from '../detail-view/projected-form-runtime.js';
 
 interface CreateProjectedInlineFormOptions {
   parentForm: FormRuntime;

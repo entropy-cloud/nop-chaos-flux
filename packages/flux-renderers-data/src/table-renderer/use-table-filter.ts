@@ -1,8 +1,8 @@
 import { startTransition, useCallback, useMemo, useState } from 'react';
 import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
-import type { TableSchema } from '../schemas';
-import type { FilterState } from './types';
+import type { TableSchema } from '../schemas.js';
+import type { FilterState } from './types.js';
 
 export function useTableFilter(
   schemaProps: TableSchema,

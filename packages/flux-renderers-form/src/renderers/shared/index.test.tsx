@@ -2,7 +2,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { FieldHint, FieldLabel } from './index';
+import { FieldHint, FieldLabel } from './index.js';
 
 beforeEach(async () => {
   resetFluxI18n();

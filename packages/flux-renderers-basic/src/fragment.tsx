@@ -1,7 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import type { FragmentSchema } from './schemas';
-import { asReactNode } from './utils';
+import type { FragmentSchema } from './schemas.js';
+import { asReactNode } from './utils.js';
 
 export function FragmentRenderer(props: RendererComponentProps<FragmentSchema>) {
   return (

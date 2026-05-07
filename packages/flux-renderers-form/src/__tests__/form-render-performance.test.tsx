@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { formRendererDefinitions } from '../index';
-import { buttonRenderer, env, formTestHarness, formStateProbeRenderer } from './form-test-support';
+import { formRendererDefinitions } from '../index.js';
+import { buttonRenderer, env, formTestHarness, formStateProbeRenderer } from './form-test-support.js';
 
 const { formStateProbeRenderCounts } = formTestHarness;
 

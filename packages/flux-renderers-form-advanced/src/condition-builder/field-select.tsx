@@ -8,7 +8,7 @@ import {
   ComboboxInput,
 } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { ConditionField, ConditionFieldGroup } from './types';
+import type { ConditionField, ConditionFieldGroup } from './types.js';
 
 interface FieldSelectProps {
   fields: ConditionField[];

@@ -12,8 +12,8 @@ import {
   DialogTitle,
   Input,
 } from '@nop-chaos/ui';
-import type { TableColumnQuickEditConfig, TableColumnSchema, TableSchema } from '../schemas';
-import { useTableQuickEditController } from './table-quick-edit-controller';
+import type { TableColumnQuickEditConfig, TableColumnSchema, TableSchema } from '../schemas.js';
+import { useTableQuickEditController } from './table-quick-edit-controller.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -102,7 +102,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
     onSaveError(error) {
       env.notify?.(
         'warning',
-        error instanceof Error && error.message ? error.message : t('flux.reportDesigner.saveFailed'),
+        error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
       );
     },
   });

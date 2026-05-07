@@ -1,5 +1,5 @@
 import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
-import type { VariantOption } from '../composite-field/composite-schemas';
+import type { VariantOption } from '../composite-field/composite-schemas.js';
 
 export function matchesVariant(
   option: VariantOption,

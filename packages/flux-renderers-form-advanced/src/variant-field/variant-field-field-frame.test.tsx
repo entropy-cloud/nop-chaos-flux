@@ -1,6 +1,6 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support';
+import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support.js';
 
 describe('variant-field FieldFrame attribute forwarding', () => {
   it('forwards required to FieldFrame and renders required marker', async () => {

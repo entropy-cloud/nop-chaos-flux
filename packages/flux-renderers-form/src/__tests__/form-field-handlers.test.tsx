@@ -3,14 +3,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { formRendererDefinitions } from '../index';
+import { formRendererDefinitions } from '../index.js';
 import {
   buttonRenderer,
   env,
   formTestHarness,
   handlerIdentityProbeRenderer,
   sharedFormulaCompiler,
-} from './form-test-support';
+} from './form-test-support.js';
 
 const { handlerIdentitySnapshots, submitCalls } = formTestHarness;
 

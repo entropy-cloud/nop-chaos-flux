@@ -5,7 +5,7 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
-import { allFormDefs } from './form-tree-checkbox-fields.shared';
+import { allFormDefs } from './form-tree-checkbox-fields.shared.js';
 import {
   buttonRenderer,
   env,

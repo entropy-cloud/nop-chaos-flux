@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ConditionField } from './types';
+import type { ConditionField } from './types.js';
 
 function flattenFields(
   fields: ConditionField[],

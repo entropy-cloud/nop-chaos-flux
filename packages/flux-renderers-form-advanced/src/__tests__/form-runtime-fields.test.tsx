@@ -5,7 +5,7 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
-import { formAdvancedRendererDefinitions } from '../index';
+import { formAdvancedRendererDefinitions } from '../index.js';
 import { buttonRenderer, env, submitCalls } from '@nop-chaos/flux-renderers-form/test-support';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];

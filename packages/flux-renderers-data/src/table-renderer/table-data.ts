@@ -1,5 +1,5 @@
 import { getIn, toPositiveNumber, toStringArray } from '@nop-chaos/flux-core';
-import type { FilterState, SortState, TableRowEntry } from './types';
+import type { FilterState, SortState, TableRowEntry } from './types.js';
 
 function isDevRuntime() {
   const importMeta = import.meta as ImportMeta & { env?: { DEV?: boolean } };

@@ -5,8 +5,8 @@ import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { dataRendererDefinitions } from '@nop-chaos/flux-renderers-data';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { describe, expect, it } from 'vitest';
-import { formAdvancedRendererDefinitions } from './index';
-import { baseEnv, formulaCompiler } from './test-support';
+import { formAdvancedRendererDefinitions } from './index.js';
+import { baseEnv, formulaCompiler } from './test-support.js';
 
 describe('tag-list renderer', () => {
   it('toggles page-scope values when used outside a form', async () => {

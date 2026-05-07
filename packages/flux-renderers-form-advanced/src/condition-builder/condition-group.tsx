@@ -26,11 +26,11 @@ import type {
   ConditionItemValue,
   ConditionOperatorOverrides,
   ConditionValueNode,
-} from './types';
-import { ConditionItem } from './condition-item';
-import { genId } from './id-utils';
-import { computeUsedFields } from './utils';
-import { WrappedFieldAction } from '../wrapped-field-action';
+} from './types.js';
+import { ConditionItem } from './condition-item.js';
+import { genId } from './id-utils.js';
+import { computeUsedFields } from './utils.js';
+import { WrappedFieldAction } from '../wrapped-field-action.js';
 
 interface ConditionGroupProps {
   value: ConditionGroupValue;

@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support';
+import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 beforeEach(async () => {
   resetFluxI18n();

@@ -9,7 +9,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { isFieldEffectivelyRequired } from '@nop-chaos/flux-react';
 import type { ValidationScopeRuntime } from '@nop-chaos/flux-core';
-import { getValidationBehaviorForOwner } from './field-validation';
+import { getValidationBehaviorForOwner } from './field-validation.js';
 
 function useFormFieldState(name: string) {
   return useOwnedFieldState(name);

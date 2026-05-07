@@ -16,8 +16,8 @@ import {
   type FormLayoutContextValue,
 } from '@nop-chaos/flux-react/unstable';
 import { resolveGap } from '@nop-chaos/flux-react';
-import type { FormSchema } from '../schemas';
-import { usePublishedFormStatus, usePublishedFormValues } from './form-status-publication';
+import type { FormSchema } from '../schemas.js';
+import { usePublishedFormStatus, usePublishedFormValues } from './form-status-publication.js';
 
 function createFormLifecycleScope(
   scope: ScopeRef,
@@ -389,4 +389,4 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   );
 }
 
-export { formRendererDefinition } from './form-definition';
+export { formRendererDefinition } from './form-definition.js';

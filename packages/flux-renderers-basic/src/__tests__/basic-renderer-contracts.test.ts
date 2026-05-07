@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { basicRendererDefinitions } from '../index';
+import { basicRendererDefinitions } from '../index.js';
 
 describe('basic renderer static contracts', () => {
   it('declares button as an instance renderer with prop and event contracts', () => {

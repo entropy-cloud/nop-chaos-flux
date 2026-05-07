@@ -6,12 +6,12 @@ import type {
   ConditionItemValue,
   ConditionOperatorOverrides,
   BaseConditionField,
-} from './types';
-import { FieldSelect } from './field-select';
-import { OperatorSelect } from './operator-select';
-import { ValueInput } from './value-input';
-import { resolveOperators, resolveDefaultOp } from './operators';
-import { WrappedFieldAction } from '../wrapped-field-action';
+} from './types.js';
+import { FieldSelect } from './field-select.js';
+import { OperatorSelect } from './operator-select.js';
+import { ValueInput } from './value-input.js';
+import { resolveOperators, resolveDefaultOp } from './operators.js';
+import { WrappedFieldAction } from '../wrapped-field-action.js';
 import { t } from '@nop-chaos/flux-i18n';
 
 interface ConditionItemProps {

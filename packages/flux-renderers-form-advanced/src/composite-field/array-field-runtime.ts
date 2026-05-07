@@ -1,7 +1,7 @@
 import type { FormRuntime, ScopeRef } from '@nop-chaos/flux-core';
 import { getIn, toRecord } from '@nop-chaos/flux-core';
-import { createProjectedInlineForm } from './projected-inline-form';
-import { createProjectedOwnerScope } from '../projected-owner-scope';
+import { createProjectedInlineForm } from './projected-inline-form.js';
+import { createProjectedOwnerScope } from '../projected-owner-scope.js';
 
 export function createItemScope(
   parentScope: ScopeRef,

@@ -119,4 +119,4 @@ export interface TreeSchema extends BaseSchema {
   statusPath?: string;
 }
 
-export * from './chart-schemas';
+export * from './chart-schemas.js';

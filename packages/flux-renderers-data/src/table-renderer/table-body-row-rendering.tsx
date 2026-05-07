@@ -8,10 +8,10 @@ import type {
 import { Button, Checkbox, TableCell, TableRow } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
-import type { TableSchema } from '../schemas';
-import type { FixedColumnLayout } from './fixed-columns';
-import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell';
-import type { TableRowEntry } from './types';
+import type { TableSchema } from '../schemas.js';
+import type { FixedColumnLayout } from './fixed-columns.js';
+import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell.js';
+import type { TableRowEntry } from './types.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -80,7 +80,7 @@ export function buildFlattenedItems(
 export function renderDataRow(
   item: FlattenedRow,
   schemaProps: TableSchema,
-  columns: import('../schemas').TableColumnSchema[],
+  columns: import('../schemas.js').TableColumnSchema[],
   helpers: RendererComponentProps<TableSchema>['helpers'],
   parentProps: RendererComponentProps<TableSchema>,
   fixedColumnLayout: FixedColumnLayout,
@@ -285,7 +285,7 @@ export function renderExpandedRow(
   parentProps: RendererComponentProps<TableSchema>,
   rowScopeCache: Map<string, ScopeRef>,
   rowRepeatedTemplateId: string,
-  responsiveHiddenColumns: import('../schemas').TableColumnSchema[],
+  responsiveHiddenColumns: import('../schemas.js').TableColumnSchema[],
 ) {
   const regionKey = schemaProps.expandable?.expandedRowRegionKey;
   const hasResponsiveHiddenColumns = responsiveHiddenColumns.length > 0;

@@ -10,10 +10,10 @@ import {
   useSchemaProps,
 } from '@nop-chaos/flux-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger, cn } from '@nop-chaos/ui';
-import type { TabsItemSchema, TabsSchema } from './schemas';
-import { useOwnedAxisValue } from './interaction-owner';
-import { useStatusPathPublication } from './status-hooks';
-import { asReactNode } from './utils';
+import type { TabsItemSchema, TabsSchema } from './schemas.js';
+import { useOwnedAxisValue } from './interaction-owner.js';
+import { useStatusPathPublication } from './status-hooks.js';
+import { asReactNode } from './utils.js';
 
 const EMPTY_ITEMS: TabsItemSchema[] = [];
 

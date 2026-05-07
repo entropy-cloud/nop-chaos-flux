@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { formRendererDefinition } from './form';
+import { formRendererDefinition } from './form.js';
 
 describe('form schemaValidator', () => {
   const compiler = createSchemaCompiler({

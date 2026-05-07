@@ -1,7 +1,7 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { useTableQuickEditController } from '../table-renderer/table-quick-edit-controller';
+import { useTableQuickEditController } from '../table-renderer/table-quick-edit-controller.js';
 
 function createRowScope(record: Record<string, unknown>) {
   const state = { record: { ...record } };

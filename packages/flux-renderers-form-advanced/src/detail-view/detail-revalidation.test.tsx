@@ -72,8 +72,8 @@ vi.mock('./value-adaptation-helper', () => ({
   runValidate: () => Promise.resolve({ valid: true }),
 }));
 
-import { DetailFieldRenderer } from './detail-field';
-import { DetailViewRenderer } from './detail-view';
+import { DetailFieldRenderer } from './detail-field.js';
+import { DetailViewRenderer } from './detail-view.js';
 
 afterEach(() => {
   cleanup();

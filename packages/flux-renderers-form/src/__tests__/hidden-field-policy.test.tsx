@@ -12,7 +12,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentForm } from '@nop-chaos/flux-react';
-import { formRendererDefinitions } from '../index';
+import { formRendererDefinitions } from '../index.js';
 
 const sharedFormulaCompiler = createFormulaCompiler();
 

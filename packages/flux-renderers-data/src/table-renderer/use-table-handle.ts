@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry } from '@nop-chaos/flux-react';
-import type { TableSchema } from '../schemas';
-import { toSelectionPayload } from './table-data';
+import type { TableSchema } from '../schemas.js';
+import { toSelectionPayload } from './table-data.js';
 
 export function useTableHandle(
   props: RendererComponentProps<TableSchema>,

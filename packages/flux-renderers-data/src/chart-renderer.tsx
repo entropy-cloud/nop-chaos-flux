@@ -17,16 +17,16 @@ import {
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
+import { cn } from '@nop-chaos/ui';
 import {
-  cn,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
   type ChartConfig,
-} from '@nop-chaos/ui';
-import type { ChartSchema, ChartSeriesSchema, ChartType } from './chart-schemas';
+} from '@nop-chaos/ui/chart';
+import type { ChartSchema, ChartSeriesSchema, ChartType } from './chart-schemas.js';
 
 const COLORS = [
   'hsl(var(--chart-1))',

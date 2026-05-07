@@ -4,8 +4,8 @@ import {
   type RendererDefinition,
   type RendererSchemaValidationContext,
 } from '@nop-chaos/flux-core';
-import { FormRenderer } from './form';
-import type { FormSchema } from '../schemas';
+import { FormRenderer } from './form.js';
+import type { FormSchema } from '../schemas.js';
 
 function escapeJsonPointerSegment(segment: string) {
   return segment.replace(/~/g, '~0').replace(/\//g, '~1');

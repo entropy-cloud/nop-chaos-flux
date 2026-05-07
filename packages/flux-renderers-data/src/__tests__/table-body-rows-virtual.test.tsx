@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TableBodyRows } from '../table-renderer/table-body-rows';
-import type { TableRowEntry } from '../table-renderer/types';
+import { TableBodyRows } from '../table-renderer/table-body-rows.js';
+import type { TableRowEntry } from '../table-renderer/types.js';
 
 const useVirtualizerMock = vi.fn();
 

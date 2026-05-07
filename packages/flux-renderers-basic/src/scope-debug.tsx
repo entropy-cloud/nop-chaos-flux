@@ -3,7 +3,7 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { ScopeDebugSchema } from './schemas';
+import type { ScopeDebugSchema } from './schemas.js';
 
 function stringifyDebugValue(value: unknown) {
   const seen = new WeakSet<object>();

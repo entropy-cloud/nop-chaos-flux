@@ -2,8 +2,8 @@ import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveGap, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
-import type { ContainerSchema } from './schemas';
-import { asReactNode, resolveDirection } from './utils';
+import type { ContainerSchema } from './schemas.js';
+import { asReactNode, resolveDirection } from './utils.js';
 
 export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
   const slotProps = props.props;

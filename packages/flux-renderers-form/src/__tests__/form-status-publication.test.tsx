@@ -5,7 +5,7 @@ import type { FormRuntime, FormStoreState, ScopeRef, ValidationError } from '@no
 import {
   usePublishedFormStatus,
   usePublishedFormValues,
-} from '../renderers/form-status-publication';
+} from '../renderers/form-status-publication.js';
 
 function createFormStore(initial: FormStoreState) {
   let state = initial;

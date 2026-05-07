@@ -14,7 +14,7 @@ import {
   shouldValidateOnOwner,
   useFormFieldController,
   useHiddenFieldPolicy,
-} from '../field-utils';
+} from '../field-utils.js';
 
 function makeScope(overrides: Partial<ScopeRef> = {}): ScopeRef {
   const data: Record<string, unknown> = { value: 'scope-value', checks: ['a', 2] };

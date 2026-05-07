@@ -14,8 +14,8 @@ import {
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import { shouldValidateOn, shouldValidateOnOwner } from './field-validation';
-import { useFieldPresentation } from './field-presentation';
+import { shouldValidateOn, shouldValidateOnOwner } from './field-validation.js';
+import { useFieldPresentation } from './field-presentation.js';
 
 const UNUSED_VALUE: unique symbol = Symbol('unused');
 

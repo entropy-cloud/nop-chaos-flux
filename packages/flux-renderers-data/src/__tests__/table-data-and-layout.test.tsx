@@ -2,9 +2,9 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ScopeRef } from '@nop-chaos/flux-core';
-import type { FixedColumnLayout } from '../table-renderer/fixed-columns';
-import type { TableColumnSchema, TableSchema } from '../schemas';
-import { createFixedColumnLayout } from '../table-renderer/fixed-columns';
+import type { FixedColumnLayout } from '../table-renderer/fixed-columns.js';
+import type { TableColumnSchema, TableSchema } from '../schemas.js';
+import { createFixedColumnLayout } from '../table-renderer/fixed-columns.js';
 import {
   buildTableRowEntries,
   createRowScopeId,
@@ -15,12 +15,12 @@ import {
   serializeInstancePath,
   toSelectionPayload,
   warnOnDuplicateRowKeys,
-} from '../table-renderer/table-data';
+} from '../table-renderer/table-data.js';
 import {
   buildFlattenedItems,
   renderDataRow,
   renderExpandedRow,
-} from '../table-renderer/table-body-row-rendering';
+} from '../table-renderer/table-body-row-rendering.js';
 
 function makeRowScope(record: Record<string, unknown>, index: number): ScopeRef {
   return {
@@ -217,7 +217,7 @@ describe('table row rendering helpers', () => {
       isEven: true,
     });
     expect(
-      (flattened[0] as import('../table-renderer/table-body-row-rendering').FlattenedRow)
+      (flattened[0] as import('../table-renderer/table-body-row-rendering.js').FlattenedRow)
         .rowInstancePath,
     ).toEqual([
       { repeatedTemplateId: 'page', instanceKey: 'root' },

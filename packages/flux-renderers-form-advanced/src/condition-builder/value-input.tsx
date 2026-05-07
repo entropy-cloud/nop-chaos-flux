@@ -4,7 +4,7 @@ import { Input } from '@nop-chaos/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@nop-chaos/ui';
 import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import { Badge } from '@nop-chaos/ui';
-import type { ConditionField, ConditionSelectField } from './types';
+import type { ConditionField, ConditionSelectField } from './types.js';
 
 interface ValueInputProps {
   field: ConditionField;

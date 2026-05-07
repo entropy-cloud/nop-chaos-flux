@@ -9,7 +9,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { DetailViewSchema } from '../composite-field/composite-schemas';
+import type { DetailViewSchema } from '../composite-field/composite-schemas.js';
 import {
   formLabelFieldRule,
   resolveFieldLabelContent,
@@ -20,15 +20,15 @@ import {
   runTransformIn,
   runTransformOut,
   runValidate,
-} from './value-adaptation-helper';
-import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface';
+} from './value-adaptation-helper.js';
+import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface.js';
 import {
   buildDetailDraftInitialValues,
   readDetailDraftValues,
   useDetailAdaptationAction,
   useDetailChildValidationContract,
   useDetailDraftControllerState,
-} from './detail-draft-controller';
+} from './detail-draft-controller.js';
 import { useCurrentValidationScope } from '@nop-chaos/flux-react';
 
 function logDetailViewAsyncError(action: 'open' | 'confirm', error: unknown) {

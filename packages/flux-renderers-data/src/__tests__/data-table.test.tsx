@@ -11,7 +11,7 @@ import {
   resolvedNameProbeRenderer,
   registerProbeNamespace,
   rowScopeIdProbeRenderer,
-} from '../test-support';
+} from '../test-support.js';
 
 describe('dataRendererDefinitions table behavior', () => {
   it('renders row-scope actions that open dialogs with row data', async () => {

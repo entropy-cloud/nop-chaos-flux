@@ -1,9 +1,9 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
-import { asReactNode, resolveDirection } from './utils';
+import { asReactNode, resolveDirection } from './utils.js';
 import { resolveGap } from '@nop-chaos/flux-react';
-import type { FlexSchema } from './schemas';
+import type { FlexSchema } from './schemas.js';
 
 export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
   const direction = props.props.direction === 'column' ? 'column' : 'row';

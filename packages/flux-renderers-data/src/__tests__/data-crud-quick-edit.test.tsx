@@ -7,7 +7,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button } from '@nop-chaos/ui';
-import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support';
+import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 function SaveProbeRenderer(props: RendererComponentProps) {
   return (

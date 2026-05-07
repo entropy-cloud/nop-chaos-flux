@@ -7,7 +7,7 @@ import {
   readDetailDraftValues,
   useDetailChildValidationContract,
   useDetailDraftControllerState,
-} from './detail-draft-controller';
+} from './detail-draft-controller.js';
 
 describe('detail draft controller helpers', () => {
   it('builds initial values from object, scalar, and fallback inputs', () => {

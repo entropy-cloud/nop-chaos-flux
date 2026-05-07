@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { baseEnv, createPageSchemaRenderer, formulaCompiler } from '../test-support';
+import { baseEnv, createPageSchemaRenderer, formulaCompiler } from '../test-support.js';
 
 describe('detail-view renderer owner update behavior', () => {
   it('confirm with data projection applies changes via confirm flow', async () => {

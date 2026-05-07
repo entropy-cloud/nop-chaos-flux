@@ -4,7 +4,7 @@ import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-ch
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { useCurrentForm, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
-import { formAdvancedRendererDefinitions } from '../../index';
+import { formAdvancedRendererDefinitions } from '../../index.js';
 
 export const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 

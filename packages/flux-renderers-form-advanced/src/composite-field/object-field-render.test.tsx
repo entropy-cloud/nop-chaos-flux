@@ -9,7 +9,7 @@ import {
   fieldValueProbeRenderer,
   submitButtonRenderer,
   makeCapturingFetcher,
-} from './__tests__/object-field-test-support';
+} from './__tests__/object-field-test-support.js';
 
 describe('object-field renderer', () => {
   it('renders child fields and reads relative paths correctly', async () => {

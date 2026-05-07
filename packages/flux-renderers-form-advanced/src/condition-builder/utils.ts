@@ -1,5 +1,5 @@
 import { isRecord } from '@nop-chaos/flux-core';
-import type { ConditionItemValue, ConditionValueNode } from './types';
+import type { ConditionItemValue, ConditionValueNode } from './types.js';
 
 export function computeUsedFields(children: ConditionValueNode[], excludeId?: string): Set<string> {
   const used = new Set<string>();

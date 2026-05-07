@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { baseEnv, createPageSchemaRenderer, formulaCompiler } from '../test-support';
+import { baseEnv, createPageSchemaRenderer, formulaCompiler } from '../test-support.js';
 
 describe('detail-view renderer transform behavior', () => {
   it('applyCommitResult handles updates dict shape', async () => {

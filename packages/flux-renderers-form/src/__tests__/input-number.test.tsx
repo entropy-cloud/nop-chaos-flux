@@ -5,8 +5,8 @@ import type { BaseSchema } from '@nop-chaos/flux-core';
 import { resetFluxI18n, initFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { formRendererDefinitions } from '../index';
-import { buttonRenderer, env, formTestHarness } from './form-test-support';
+import { formRendererDefinitions } from '../index.js';
+import { buttonRenderer, env, formTestHarness } from './form-test-support.js';
 
 const { submitCalls } = formTestHarness;
 

@@ -1,8 +1,8 @@
 import { startTransition, useCallback, useState } from 'react';
 import { getIn, shallowEqual, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
-import type { TableSchema } from '../schemas';
-import { toPositiveNumber } from './table-data';
+import type { TableSchema } from '../schemas.js';
+import { toPositiveNumber } from './table-data.js';
 
 export function useTablePagination(
   schemaProps: TableSchema,

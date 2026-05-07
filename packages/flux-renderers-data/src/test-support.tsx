@@ -14,7 +14,7 @@ import {
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import { dataRendererDefinitions } from './index';
+import { dataRendererDefinitions } from './index.js';
 
 export const env: RendererEnv = {
   fetcher: async function <T>() {

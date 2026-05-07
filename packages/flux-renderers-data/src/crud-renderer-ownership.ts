@@ -1,9 +1,9 @@
 import { startTransition, useCallback, useMemo } from 'react';
 import { getIn, toRecord, type RendererEventHandler, type ScopeRef } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
-import type { CrudSchema } from './crud-schema';
-import type { CrudPaginationState, CrudQueryState } from './crud-renderer-state';
-import { areStringArraysEqual } from './table-renderer/column-settings-state';
+import type { CrudSchema } from './crud-schema.js';
+import type { CrudPaginationState, CrudQueryState } from './crud-renderer-state.js';
+import { areStringArraysEqual } from './table-renderer/column-settings-state.js';
 
 interface CrudQueryFormHandle {
   capabilities?: {

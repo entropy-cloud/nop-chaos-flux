@@ -7,9 +7,9 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
-import type { PageSchema } from './schemas';
-import { useStatusPathPublication } from './status-hooks';
-import { asReactNode } from './utils';
+import type { PageSchema } from './schemas.js';
+import { useStatusPathPublication } from './status-hooks.js';
+import { asReactNode } from './utils.js';
 
 export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');

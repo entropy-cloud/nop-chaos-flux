@@ -1,7 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn, resolveLucideIcon } from '@nop-chaos/ui';
-import type { IconSchema } from './schemas';
+import type { IconSchema } from './schemas.js';
 
 export function IconRenderer(props: RendererComponentProps<IconSchema>) {
   const icon = typeof props.props.icon === 'string' ? props.props.icon : undefined;

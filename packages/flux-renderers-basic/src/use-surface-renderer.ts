@@ -7,7 +7,7 @@ import type {
   SurfaceStatusSummary,
 } from '@nop-chaos/flux-core';
 import { useCurrentSurfaceRuntime, useRendererRuntime } from '@nop-chaos/flux-react';
-import type { DialogSchema, DrawerSchema } from './schemas';
+import type { DialogSchema, DrawerSchema } from './schemas.js';
 
 type DispatchMetadataCarrier = typeof import('@nop-chaos/flux-core') extends infer _T
   ? {

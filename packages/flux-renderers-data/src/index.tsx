@@ -1,14 +1,14 @@
 import { registerRendererDefinitions, type RendererRegistry } from '@nop-chaos/flux-core';
-import { dataRendererDefinitions } from './data-renderer-definitions';
+import { dataRendererDefinitions } from './data-renderer-definitions.js';
 
-export * from './schemas';
-export * from './crud-schema';
-export { TableRenderer } from './table-renderer';
-export { DataSourceRenderer } from './data-source-renderer';
-export { ChartRenderer } from './chart-renderer';
-export { TreeRenderer } from './tree-renderer';
-export { CrudRenderer } from './crud-renderer';
-export { crudRendererDefinition, dataRendererDefinitions } from './data-renderer-definitions';
+export * from './schemas.js';
+export * from './crud-schema.js';
+export { TableRenderer } from './table-renderer.js';
+export { DataSourceRenderer } from './data-source-renderer.js';
+export { ChartRenderer } from './chart-renderer.js';
+export { TreeRenderer } from './tree-renderer.js';
+export { CrudRenderer } from './crud-renderer.js';
+export { crudRendererDefinition, dataRendererDefinitions } from './data-renderer-definitions.js';
 
 export function registerDataRenderers(registry: RendererRegistry) {
   return registerRendererDefinitions(registry, dataRendererDefinitions);

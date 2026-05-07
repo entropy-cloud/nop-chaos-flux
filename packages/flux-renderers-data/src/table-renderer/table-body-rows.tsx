@@ -2,18 +2,18 @@ import React from 'react';
 import type { InstanceFrame, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { TableBody, TableCell, TableRow } from '@nop-chaos/ui';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import type { TableSchema } from '../schemas';
-import type { FixedColumnLayout } from './fixed-columns';
-import type { TableRowEntry } from './types';
-import { buildFlattenedItems, renderDataRow, renderExpandedRow } from './table-body-row-rendering';
+import type { TableSchema } from '../schemas.js';
+import type { FixedColumnLayout } from './fixed-columns.js';
+import type { TableRowEntry } from './types.js';
+import { buildFlattenedItems, renderDataRow, renderExpandedRow } from './table-body-row-rendering.js';
 
 const DEFAULT_ROW_ESTIMATE = 44;
 const OVERSCAN = 5;
 
 interface TableBodyRowsProps {
   props: RendererComponentProps<TableSchema>;
-  columns: import('../schemas').TableColumnSchema[];
-  responsiveHiddenColumns: import('../schemas').TableColumnSchema[];
+  columns: import('../schemas.js').TableColumnSchema[];
+  responsiveHiddenColumns: import('../schemas.js').TableColumnSchema[];
   processedData: TableRowEntry[];
   rowScopeCache: Map<string, ScopeRef>;
   rowRepeatedTemplateId: string;

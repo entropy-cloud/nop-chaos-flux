@@ -2,10 +2,10 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
-import { FieldError, FieldHelpText, FieldLabel } from '../renderers/shared';
-import { FieldsetRenderer } from '../renderers/fieldset';
-import type { FieldsetSchema } from '../renderers/fieldset';
-import { formRendererDefinition, formRendererDefinitions, registerFormRenderers } from '../index';
+import { FieldError, FieldHelpText, FieldLabel } from '../renderers/shared/index.js';
+import { FieldsetRenderer } from '../renderers/fieldset.js';
+import type { FieldsetSchema } from '../renderers/fieldset.js';
+import { formRendererDefinition, formRendererDefinitions, registerFormRenderers } from '../index.js';
 
 describe('form package exports', () => {
   it('re-exports form definitions and registers them', () => {

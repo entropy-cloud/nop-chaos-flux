@@ -6,7 +6,7 @@ import { RuntimeContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
 import {
   resolveTableQuickEditConfig,
   TableQuickEditCell,
-} from '../table-renderer/table-quick-edit-cell';
+} from '../table-renderer/table-quick-edit-cell.js';
 
 function createRowScope(record: Record<string, unknown>) {
   const state = { record: { ...record } };

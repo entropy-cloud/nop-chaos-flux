@@ -1,8 +1,8 @@
 import { useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
-import type { TableSchema } from '../schemas';
-import type { TableRowEntry } from './types';
-import { createRowScopeId, createRowScopePath } from './table-data';
+import type { TableSchema } from '../schemas.js';
+import type { TableRowEntry } from './types.js';
+import { createRowScopeId, createRowScopePath } from './table-data.js';
 
 interface RowScopePayload {
   record: Record<string, any>;

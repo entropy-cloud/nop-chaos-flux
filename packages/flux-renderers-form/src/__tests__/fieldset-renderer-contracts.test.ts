@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fieldsetRendererDefinition } from '../renderers/fieldset';
+import { fieldsetRendererDefinition } from '../renderers/fieldset.js';
 
 describe('fieldset renderer static contracts', () => {
   it('declares fieldset with correct type, field metadata, and no scope policy', () => {

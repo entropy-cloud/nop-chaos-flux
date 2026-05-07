@@ -15,12 +15,12 @@ import {
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import type { ObjectFieldSchema } from './composite-schemas';
+import type { ObjectFieldSchema } from './composite-schemas.js';
 import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { cn } from '@nop-chaos/ui';
-import { createProjectedInlineForm } from './projected-inline-form';
-import { createProjectedOwnerScope } from '../projected-owner-scope';
-import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime';
+import { createProjectedInlineForm } from './projected-inline-form.js';
+import { createProjectedOwnerScope } from '../projected-owner-scope.js';
+import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime.js';
 
 type BaseNodeInstance = RendererComponentProps['node'];
 

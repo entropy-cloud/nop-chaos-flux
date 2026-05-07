@@ -9,7 +9,7 @@ import {
   useCrudHandle,
   useCrudRuntimeState,
   useCrudStatusPublisher,
-} from '../crud-renderer-state';
+} from '../crud-renderer-state.js';
 
 const mockState: {
   currentRegistry: { register: ReturnType<typeof vi.fn> } | undefined;

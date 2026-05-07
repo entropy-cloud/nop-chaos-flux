@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dataRendererDefinitions } from '../index';
+import { dataRendererDefinitions } from '../index.js';
 
 describe('data renderer static contracts', () => {
   it('declares crud as a flux-owner renderer with scope exports and component capabilities', () => {

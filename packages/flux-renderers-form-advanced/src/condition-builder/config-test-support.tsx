@@ -2,8 +2,8 @@ import React from 'react';
 import { afterEach, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { ConditionGroup } from './condition-group';
-import type { ConditionBuilderSchema, ConditionField, ConditionGroupValue } from './types';
+import { ConditionGroup } from './condition-group.js';
+import type { ConditionBuilderSchema, ConditionField, ConditionGroupValue } from './types.js';
 
 vi.mock('@dnd-kit/core', () => ({
   DndContext: ({ children }: any) => <>{children}</>,
@@ -197,7 +197,7 @@ export function renderGroup(
   value?: ConditionGroupValue,
   onChange?: (v: ConditionGroupValue) => void,
   options?: {
-    operatorsOverride?: import('./types').ConditionOperatorOverrides;
+    operatorsOverride?: import('./types.js').ConditionOperatorOverrides;
     disabled?: boolean;
     depth?: number;
   },

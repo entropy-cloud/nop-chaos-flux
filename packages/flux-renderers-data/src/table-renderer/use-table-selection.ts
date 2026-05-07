@@ -1,8 +1,8 @@
 import { startTransition, useCallback, useMemo, useState } from 'react';
 import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
-import type { TableSchema } from '../schemas';
-import { toStringArray } from './table-data';
+import type { TableSchema } from '../schemas.js';
+import { toStringArray } from './table-data.js';
 
 export function useTableSelection(
   schemaProps: TableSchema,

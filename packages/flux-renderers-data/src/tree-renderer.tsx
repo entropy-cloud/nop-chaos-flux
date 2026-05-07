@@ -9,7 +9,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
 import { ChevronRightIcon } from 'lucide-react';
-import type { TreeSchema } from './schemas';
+import type { TreeSchema } from './schemas.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;

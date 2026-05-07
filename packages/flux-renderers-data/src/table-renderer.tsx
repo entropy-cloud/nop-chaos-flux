@@ -20,17 +20,17 @@ import {
   TableHeader,
   cn,
 } from '@nop-chaos/ui';
-import type { TableColumnSchema, TableSchema } from './schemas';
+import type { TableColumnSchema, TableSchema } from './schemas.js';
 import {
   createTableRowRepeatedTemplateId,
   processTableData,
   serializeInstancePath,
-} from './table-renderer/table-data';
-import { TableBodyRows } from './table-renderer/table-body-rows';
-import { createFixedColumnLayout } from './table-renderer/fixed-columns';
-import { TableHeaderRow } from './table-renderer/table-header-row';
-import { TableLoadingOverlay } from './table-renderer/table-loading-overlay';
-import { TablePaginationBar } from './table-renderer/table-pagination-bar';
+} from './table-renderer/table-data.js';
+import { TableBodyRows } from './table-renderer/table-body-rows.js';
+import { createFixedColumnLayout } from './table-renderer/fixed-columns.js';
+import { TableHeaderRow } from './table-renderer/table-header-row.js';
+import { TableLoadingOverlay } from './table-renderer/table-loading-overlay.js';
+import { TablePaginationBar } from './table-renderer/table-pagination-bar.js';
 import {
   useTablePagination,
   useTableSelection,
@@ -38,10 +38,10 @@ import {
   useTableFilter,
   useTableExpand,
   useTableVisibleColumns,
-} from './table-renderer/use-table-controls';
-import { useTableHandle } from './table-renderer/use-table-handle';
-import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache';
-import type { TableResponsiveConfig } from './schemas';
+} from './table-renderer/use-table-controls.js';
+import { useTableHandle } from './table-renderer/use-table-handle.js';
+import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache.js';
+import type { TableResponsiveConfig } from './schemas.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;

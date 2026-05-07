@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formRendererDefinition } from '../renderers/form';
+import { formRendererDefinition } from '../renderers/form.js';
 
 describe('form renderer static contracts', () => {
   it('declares form as a flux-owner renderer with scope exports and component capabilities', () => {

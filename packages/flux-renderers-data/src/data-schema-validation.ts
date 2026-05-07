@@ -3,8 +3,8 @@ import {
   type BaseSchema,
   type RendererSchemaValidationContext,
 } from '@nop-chaos/flux-core';
-import type { CrudSchema } from './crud-schema';
-import type { TableSchema } from './schemas';
+import type { CrudSchema } from './crud-schema.js';
+import type { TableSchema } from './schemas.js';
 
 function escapeJsonPointerSegment(segment: string) {
   return segment.replace(/~/g, '~0').replace(/\//g, '~1');
