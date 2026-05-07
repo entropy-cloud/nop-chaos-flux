@@ -6,7 +6,7 @@ export { createElkLayoutOwner, layoutWithElk } from './elk-layout';
 export type { ElkLayoutOptions, ElkLayoutOwner } from './elk-layout';
 export { projectTree, resetProjectionState } from './tree-projection';
 export type { ProjectionResult } from './tree-projection';
-export { layoutTreeWithElk, simpleTreeLayout } from './tree-layout';
+export { layoutStructuredTree, layoutTreeWithElk, simpleTreeLayout } from './tree-layout';
 export {
   registerTreeDomainAdapter,
   getTreeDomainAdapter,

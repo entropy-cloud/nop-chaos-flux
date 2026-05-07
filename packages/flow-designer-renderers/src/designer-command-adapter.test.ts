@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createDesignerCore,
-  simpleTreeLayout,
+  layoutStructuredTree,
   projectTree,
   normalizeConfig,
 } from '../../flow-designer-core/src/index';
@@ -360,12 +360,7 @@ function projectTreeToDoc(treeDoc: TreeDocument, config: DesignerConfig): GraphD
   const normalizedConfig = normalizeConfig(config);
   const projected = projectTree(treeDoc, normalizedConfig);
   const treeConfig = normalizedConfig.treeConfig!;
-  const nodes = simpleTreeLayout(
-    projected.nodes,
-    projected.edges,
-    treeConfig,
-    normalizedConfig.nodeTypes,
-  );
+  const nodes = layoutStructuredTree(treeDoc, projected.nodes, treeConfig, normalizedConfig.nodeTypes);
   return {
     id: treeDoc.id,
     kind: treeDoc.kind,
@@ -572,6 +567,40 @@ describe('insertChainNode in tree mode', () => {
     expect(ownedTree.root.child?.branches).toHaveLength(3);
     expect(ownedTree.root.child?.branches?.[2]?.data.priority).toBe(3);
     expect(ownedTree.root.child?.branches?.[2]?.child?.data.label).toBe('分支C审批');
+  });
+
+  it('keeps continuation below all branches after adding a branch', () => {
+    const config = createDingFlowConfig();
+    let ownedTree = structuredClone(createBranchingTreeDocument());
+    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
+    const adapter = createDesignerCommandAdapter(core, {
+      getTreeDocument: () => ownedTree,
+      setTreeDocument: (next) => {
+        ownedTree = next;
+      },
+      config,
+    });
+
+    const result = adapter.execute({
+      type: 'addBranch',
+      nodeId: 'n2',
+      branchData: { label: '条件3' },
+      childType: 'dt-approval',
+      childData: { label: '分支C审批' },
+    });
+
+    expect(result.ok).toBe(true);
+
+    const nodeMap = new Map(core.getSnapshot().doc.nodes.map((node) => [node.id, node]));
+    const continuation = nodeMap.get('n5');
+    const branchLeaves = ['n3', 'n4', ownedTree.root.child?.branches?.[2]?.child?.id].filter(
+      (id): id is string => Boolean(id),
+    );
+
+    expect(continuation).toBeDefined();
+    for (const leafId of branchLeaves) {
+      expect(continuation!.position.y).toBeGreaterThan(nodeMap.get(leafId)!.position.y);
+    }
   });
 
   it('moves a branch through the owned TreeDocument', () => {

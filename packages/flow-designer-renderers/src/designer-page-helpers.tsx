@@ -14,7 +14,7 @@ import type {
   NormalizedDesignerConfig,
   TreeDocument,
 } from '@nop-chaos/flow-designer-core';
-import { projectTree, simpleTreeLayout } from '@nop-chaos/flow-designer-core';
+import { layoutStructuredTree, projectTree } from '@nop-chaos/flow-designer-core';
 
 export function normalizeTreeModeConfig(config: DesignerConfig): NormalizedDesignerConfig {
   return {
@@ -166,7 +166,7 @@ export function computeTreeModeDocument(
   const projected = projectTree(treeDocument, normalizedConfig);
   const treeConfig = normalizedConfig.treeConfig;
   const nodes = treeConfig
-    ? simpleTreeLayout(projected.nodes, projected.edges, treeConfig, normalizedConfig.nodeTypes)
+    ? layoutStructuredTree(treeDocument, projected.nodes, treeConfig, normalizedConfig.nodeTypes)
     : projected.nodes;
   return {
     id: treeDocument.id,
