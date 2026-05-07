@@ -225,6 +225,7 @@ describe('SchemaRenderer surface runtime seam', () => {
     expect(screen.getByText('External surface runtime')).toBeTruthy();
     runtime.dispose();
   });
+
 });
 
 describe('SchemaRenderer debug data gating', () => {

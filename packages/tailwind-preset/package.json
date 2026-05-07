@@ -18,6 +18,9 @@
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint",
     "typecheck": "tsc -p tsconfig.json"
   },
+  "peerDependencies": {
+    "tailwindcss": "^4.1.4"
+  },
   "dependencies": {
     "tailwindcss-animate": "^1.0.7"
   }

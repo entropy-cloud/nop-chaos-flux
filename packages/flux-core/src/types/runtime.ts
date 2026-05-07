@@ -266,6 +266,7 @@ export interface SurfaceRuntime {
   }): void;
   close(surfaceId?: string): void;
   closeTop(): void;
+  dispose(): void;
 }
 
 export interface DataSourceController {
