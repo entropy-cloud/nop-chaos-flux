@@ -1,5 +1,5 @@
-import type { BaseSchema, SchemaInput } from '../types';
-import { isPlainObject } from './object';
+import type { BaseSchema, SchemaInput } from '../types.js';
+import { isPlainObject } from './object.js';
 
 export function isSchema(value: unknown): value is BaseSchema {
   return isPlainObject(value) && typeof value.type === 'string';

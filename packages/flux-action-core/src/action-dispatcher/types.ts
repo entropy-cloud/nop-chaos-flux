@@ -7,7 +7,7 @@ import type {
   RendererPlugin,
   RendererRuntime,
 } from '@nop-chaos/flux-core';
-import type { ActionEvaluator } from '../action-core';
+import type { ActionEvaluator } from '../action-core.js';
 
 export interface ActionDispatcherConfig {
   getEnv: () => RendererEnv;

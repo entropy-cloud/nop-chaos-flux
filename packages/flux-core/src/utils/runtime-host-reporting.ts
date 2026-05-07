@@ -1,4 +1,4 @@
-import type { ErrorMonitorPayload, RendererEnv } from '../types/renderer-api';
+import type { ErrorMonitorPayload, RendererEnv } from '../types/renderer-api.js';
 
 export interface RuntimeHostIssueInput {
   env: RendererEnv;

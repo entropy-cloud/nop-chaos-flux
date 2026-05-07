@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { EvalContext, RendererEnv, ScopeDependencyCollector } from '@nop-chaos/flux-core';
-import { createFormulaCompiler, createFormulaRegistry } from './index';
-import { evaluateAst } from './evaluator';
-import { parseFormula } from './parser';
-import type { FormulaAstNode, IdentifierNode, ObjectExpressionNode, PropertyNode } from './ast';
+import { createFormulaCompiler, createFormulaRegistry } from './index.js';
+import { evaluateAst } from './evaluator.js';
+import { parseFormula } from './parser.js';
+import type { FormulaAstNode, IdentifierNode, ObjectExpressionNode, PropertyNode } from './ast.js';
 
 const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),

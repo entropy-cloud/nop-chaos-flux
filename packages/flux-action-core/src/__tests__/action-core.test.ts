@@ -13,7 +13,7 @@ import {
   mergeEvaluationBindings,
   normalizeActionResult,
   withEvaluationBindings,
-} from '../action-core';
+} from '../action-core.js';
 
 function createMockScope(data: Record<string, unknown>): ScopeRef {
   const store = {

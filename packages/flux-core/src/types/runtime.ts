@@ -1,7 +1,7 @@
-import type { ActionResult } from './actions';
-import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance';
-import type { NodeInstance, TemplateNode } from './node-identity';
-import type { ScopeRef } from './scope';
+import type { ActionResult } from './actions.js';
+import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance.js';
+import type { NodeInstance, TemplateNode } from './node-identity.js';
+import type { ScopeRef } from './scope.js';
 import type {
   ValidationRule,
   ValidationError,
@@ -16,15 +16,15 @@ import type {
   ApplyExternalErrorsInput,
   ScopeValidationStateSnapshot,
   ChildValidationContractRegistration,
-} from './validation';
-import type { ActionScope } from './actions';
+} from './validation.js';
+import type { ActionScope } from './actions.js';
 import type {
   ComponentHandleRegistry,
   RenderNodeInput,
   RenderRegionHandle,
   RendererRuntime,
   ResolvedNodeMeta,
-} from './renderer';
+} from './renderer.js';
 
 export interface FieldState {
   touched?: true;

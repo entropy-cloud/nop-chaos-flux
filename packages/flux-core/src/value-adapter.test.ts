@@ -7,7 +7,7 @@ import {
   stringAdapter,
   type ActionSchema,
   type ScopeRef,
-} from './index';
+} from './index.js';
 
 const scope = {
   id: 'scope:test',

@@ -1,15 +1,15 @@
-import type { NodeInstance, InstanceFrame } from './node-identity';
+import type { NodeInstance, InstanceFrame } from './node-identity.js';
 import type {
   ApiSchema,
   SchemaObject,
   SchemaValue,
   SchemaPath,
   OperationControlConfig,
-} from './schema';
-import type { ScopeRef } from './scope';
-import type { ComponentHandleRegistry, RendererRuntime, RendererEnv } from './renderer';
-import type { FormRuntime, PageRuntime, SurfaceRuntime } from './runtime';
-import type { CompiledRuntimeValue } from './compilation';
+} from './schema.js';
+import type { ScopeRef } from './scope.js';
+import type { ComponentHandleRegistry, RendererRuntime, RendererEnv } from './renderer.js';
+import type { FormRuntime, PageRuntime, SurfaceRuntime } from './runtime.js';
+import type { CompiledRuntimeValue } from './compilation.js';
 
 export interface SetValueActionArgs extends SchemaObject {
   path?: string;
@@ -243,13 +243,13 @@ export interface ImportedLibraryModule {
     context: ImportedNamespaceContext,
   ): Promise<Record<string, unknown>> | Record<string, unknown>;
   getStaticMeta?():
-    | import('./compilation').ImportedLibraryStaticMeta
-    | Promise<import('./compilation').ImportedLibraryStaticMeta>;
+    | import('./compilation.js').ImportedLibraryStaticMeta
+    | Promise<import('./compilation.js').ImportedLibraryStaticMeta>;
 }
 
 export interface ImportedLibraryLoader {
   load(
-    spec: import('./schema').XuiImportSpec,
+    spec: import('./schema.js').XuiImportSpec,
     signal?: AbortSignal,
   ): Promise<ImportedLibraryModule>;
 }
@@ -260,7 +260,7 @@ export interface ImportedNamespaceContext {
   actionScope: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   scope: ScopeRef;
-  spec: import('./schema').XuiImportSpec;
+  spec: import('./schema.js').XuiImportSpec;
   nodeInstance?: NodeInstance;
 }
 

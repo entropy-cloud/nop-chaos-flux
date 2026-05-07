@@ -6,7 +6,7 @@ import type {
   CompiledActionNode,
   CompiledActionProgram,
 } from '@nop-chaos/flux-core';
-import { withRetry, withTimeout } from '../operation-control';
+import { withRetry, withTimeout } from '../operation-control.js';
 import {
   buildActionMonitorPayload,
   classifyActionResult,
@@ -22,17 +22,17 @@ import {
   resolveActionControl,
   shouldRunActionWhen,
   isAbortError,
-} from '../action-core';
+} from '../action-core.js';
 import { cancelPendingDebounce, scheduleDebounce } from '@nop-chaos/flux-core';
-import type { ActionDispatcherConfig, ActionDispatcherContext } from './types';
+import type { ActionDispatcherConfig, ActionDispatcherContext } from './types.js';
 import {
   isRequestBackedAction,
   normalizeCompiledActionProgram,
   applyActionControl,
-} from './program-utils';
-import { finishAction } from './action-runners';
-import { runBuiltInAction } from './built-in-actions';
-import { runComponentAction, runNamespacedAction, runNamedAction } from './action-runners';
+} from './program-utils.js';
+import { finishAction } from './action-runners.js';
+import { runBuiltInAction } from './built-in-actions.js';
+import { runComponentAction, runNamespacedAction, runNamedAction } from './action-runners.js';
 
 async function runParallelActions(
   ctx: ActionDispatcherContext,

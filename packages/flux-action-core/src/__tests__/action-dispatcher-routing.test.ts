@@ -9,7 +9,7 @@ import {
   createTestDispatcher,
   makeCompiledProgram,
   staticCompiled,
-} from './action-dispatcher-test-support';
+} from './action-dispatcher-test-support.js';
 
 describe('action-dispatcher routing', () => {
   it('dispatches built-in setValue through adapter', async () => {

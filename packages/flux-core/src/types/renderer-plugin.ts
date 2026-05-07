@@ -1,8 +1,8 @@
-import type { ActionContext, ActionSchema } from './actions';
-import type { ErrorMonitorPayload } from './renderer-api';
-import type { CompiledTemplate } from './node-identity';
-import type { RendererDefinition } from './renderer-core';
-import type { BaseSchema, SchemaInput } from './schema';
+import type { ActionContext, ActionSchema } from './actions.js';
+import type { ErrorMonitorPayload } from './renderer-api.js';
+import type { CompiledTemplate } from './node-identity.js';
+import type { RendererDefinition } from './renderer-core.js';
+import type { BaseSchema, SchemaInput } from './schema.js';
 
 export interface RendererPlugin {
   name: string;

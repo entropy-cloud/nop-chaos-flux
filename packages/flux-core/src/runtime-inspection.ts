@@ -1,5 +1,5 @@
-import type { ScopeRef } from './types/scope';
-import type { ScopeSnapshot } from './types/node-identity';
+import type { ScopeRef } from './types/scope.js';
+import type { ScopeSnapshot } from './types/node-identity.js';
 
 /**
  * Checks if an error is an AbortError (from AbortController.abort() or similar).

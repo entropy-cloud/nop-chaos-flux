@@ -9,8 +9,8 @@ import type {
   RendererRuntime,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import { createActionDispatcher } from '../action-dispatcher';
-import type { ActionEvaluator } from '../action-core';
+import { createActionDispatcher } from '../action-dispatcher.js';
+import type { ActionEvaluator } from '../action-core.js';
 
 export function createMockScope(): ScopeRef {
   const data: Record<string, unknown> = {};

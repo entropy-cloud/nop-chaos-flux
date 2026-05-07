@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createPathBinding, projectBooleanMap, projectFieldStates } from './path-binding';
+import { createPathBinding, projectBooleanMap, projectFieldStates } from './path-binding.js';
 
 describe('createPathBinding', () => {
   it('maps relative and absolute paths for nested owners', () => {

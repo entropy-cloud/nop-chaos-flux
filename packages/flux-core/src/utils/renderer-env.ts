@@ -3,7 +3,7 @@ import type {
   ApiRequestContext,
   ApiResponse,
   RendererEnv,
-} from '../types/renderer-api';
+} from '../types/renderer-api.js';
 
 export interface RendererEnvDecoratorHooks {
   fetcher?: <T = unknown>(

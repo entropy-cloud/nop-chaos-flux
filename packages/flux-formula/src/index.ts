@@ -1,8 +1,8 @@
-export { createFormulaCompiler } from './compile';
-export { createExpressionCompiler } from './expression-compiler';
-export { parseFormula } from './parser';
-export { evaluateAst } from './evaluator';
-export { createFormulaRegistry } from './registry';
-export type { FormulaRegistry, FormulaRegistrySnapshot } from './registry';
-export { dateHelper } from './date-helper';
-export { bindAst, type BindingContext } from './bind-ast';
+export { createFormulaCompiler } from './compile.js';
+export { createExpressionCompiler } from './expression-compiler.js';
+export { parseFormula } from './parser.js';
+export { evaluateAst } from './evaluator.js';
+export { createFormulaRegistry } from './registry.js';
+export type { FormulaRegistry, FormulaRegistrySnapshot } from './registry.js';
+export { dateHelper } from './date-helper.js';
+export { bindAst, type BindingContext } from './bind-ast.js';

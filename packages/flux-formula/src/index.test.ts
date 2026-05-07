@@ -8,7 +8,7 @@ import {
   createExpressionCompiler,
   createFormulaCompiler,
   createFormulaRegistry,
-} from './index';
+} from './index.js';
 
 const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),

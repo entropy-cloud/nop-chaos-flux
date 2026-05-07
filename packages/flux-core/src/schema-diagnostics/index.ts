@@ -1,5 +1,5 @@
-import type { BaseSchema, SchemaPath } from '../types/schema';
-import type { HostContractContext } from './manifest';
+import type { BaseSchema, SchemaPath } from '../types/schema.js';
+import type { HostContractContext } from './manifest.js';
 
 export type SchemaDiagnosticSeverity = 'error' | 'warning' | 'info';
 export type SchemaDiagnosticSource = 'core' | 'renderer' | 'namespace' | 'host-contract';
@@ -135,4 +135,4 @@ export function createSchemaDiagnosticCollector() {
   };
 }
 
-export * from './manifest';
+export * from './manifest.js';

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ApiFetcher, RendererEnv } from '../types/renderer-api';
-import { decorateRendererEnv } from './renderer-env';
+import type { ApiFetcher, RendererEnv } from '../types/renderer-api.js';
+import { decorateRendererEnv } from './renderer-env.js';
 
 function createEnv(): RendererEnv {
   const fetcher: ApiFetcher = async <T>(api: unknown) => ({

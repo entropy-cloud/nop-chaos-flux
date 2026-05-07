@@ -5,7 +5,7 @@ import type {
   CompiledValidationNode,
   CompiledValidationNodeKind,
   HiddenFieldPolicy,
-} from './types';
+} from './types.js';
 
 const DEFAULT_HIDDEN_FIELD_POLICY: HiddenFieldPolicy = {
   validateWhenHidden: false,

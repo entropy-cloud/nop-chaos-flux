@@ -1,4 +1,4 @@
-import type { FieldState, ValidationError } from '../types';
+import type { FieldState, ValidationError } from '../types.js';
 
 export interface PathBindingContext {
   ownerRootPath: string;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { tokenizeFormula } from './lexer';
+import { tokenizeFormula } from './lexer.js';
 
 describe('tokenizeFormula', () => {
   it('tokenizes unicode identifiers, numbers, strings, keywords, and operators', () => {

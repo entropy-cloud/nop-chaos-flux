@@ -1,15 +1,15 @@
-import type { ActionContext, ActionScope } from './actions';
-import type { FormulaCompiler, ModuleCache } from './compilation';
-import type { CompiledTemplate, InstanceFrame, NodeInstance, TemplateNode } from './node-identity';
-import type { ComponentHandleRegistry } from './renderer-component';
-import type { RendererEnv } from './renderer-api';
+import type { ActionContext, ActionScope } from './actions.js';
+import type { FormulaCompiler, ModuleCache } from './compilation.js';
+import type { CompiledTemplate, InstanceFrame, NodeInstance, TemplateNode } from './node-identity.js';
+import type { ComponentHandleRegistry } from './renderer-component.js';
+import type { RendererEnv } from './renderer-api.js';
 import type {
   RendererHelpers,
   RendererRegistry,
   RendererRenderOutput,
   RendererRuntime,
-} from './renderer-core';
-import type { RendererPlugin } from './renderer-plugin';
+} from './renderer-core.js';
+import type { RendererPlugin } from './renderer-plugin.js';
 import type {
   DataSourceStatusSummary,
   FormErrorQuery,
@@ -20,10 +20,10 @@ import type {
   PageStoreApi,
   SurfaceRuntime,
   ValidationScopeRuntime,
-} from './runtime';
-import type { SchemaInput, SchemaPath } from './schema';
-import type { ScopeRef } from './scope';
-import type { ValidationError } from './validation';
+} from './runtime.js';
+import type { SchemaInput, SchemaPath } from './schema.js';
+import type { ScopeRef } from './scope.js';
+import type { ValidationError } from './validation.js';
 
 export interface RenderFragmentOptions {
   /**

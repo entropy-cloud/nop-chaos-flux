@@ -12,7 +12,7 @@ import type {
   ValueEvaluationResult,
 } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
-import { createScopeDependencyCollector } from './scope';
+import { createScopeDependencyCollector } from './scope.js';
 
 function createEvalContext(scope: ScopeRef): EvalContext {
   let materialized: Record<string, any> | undefined;

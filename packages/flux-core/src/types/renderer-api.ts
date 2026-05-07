@@ -1,6 +1,6 @@
-import type { ActionMonitorPayload, ActionResult, ImportedLibraryLoader } from './actions';
-import type { ScopeRef } from './scope';
-import type { ExecutableApiRequest, SchemaPath } from './schema';
+import type { ActionMonitorPayload, ActionResult, ImportedLibraryLoader } from './actions.js';
+import type { ScopeRef } from './scope.js';
+import type { ExecutableApiRequest, SchemaPath } from './schema.js';
 
 export interface ApiRequestContext {
   scope: ScopeRef;

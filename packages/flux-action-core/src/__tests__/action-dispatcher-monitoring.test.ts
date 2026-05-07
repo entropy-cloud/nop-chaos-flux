@@ -5,7 +5,7 @@ import {
   createTestDispatcher,
   makeCompiledProgram,
   staticCompiled,
-} from './action-dispatcher-test-support';
+} from './action-dispatcher-test-support.js';
 
 describe('action-dispatcher monitoring', () => {
   it('fires monitor onActionStart and onActionEnd', async () => {

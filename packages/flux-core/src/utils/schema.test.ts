@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createNodeId } from './schema';
+import { createNodeId } from './schema.js';
 
 describe('createNodeId', () => {
   it('returns schema.id directly if present', () => {

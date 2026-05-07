@@ -4,4 +4,4 @@ export type {
   BusyActionState,
   WorkbenchSessionState,
   ResourceBrowserInteractionPolicy,
-} from './types';
+} from './types.js';

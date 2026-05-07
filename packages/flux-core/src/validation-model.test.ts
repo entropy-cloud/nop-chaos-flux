@@ -13,7 +13,7 @@ import {
   resolveHiddenFieldPolicy,
   type CompiledValidationBehavior,
   type CompiledValidationNode,
-} from './index';
+} from './index.js';
 
 const defaultBehavior: CompiledValidationBehavior = {
   triggers: ['blur'],

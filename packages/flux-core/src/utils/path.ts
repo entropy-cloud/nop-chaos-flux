@@ -1,4 +1,4 @@
-import { isPlainObject } from './object';
+import { isPlainObject } from './object.js';
 
 const DANGEROUS_PATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
 

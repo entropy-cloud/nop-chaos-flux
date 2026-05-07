@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { withTimeout, withRetry, createAbortScope } from '../operation-control';
+import { withTimeout, withRetry, createAbortScope } from '../operation-control.js';
 
 describe('withTimeout edge cases', () => {
   it('ignores second resolve after timeout', async () => {

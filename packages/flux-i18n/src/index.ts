@@ -11,8 +11,8 @@ export {
   SUPPORTED_LANGUAGES,
   type FluxI18nOptions,
   type SupportedLanguage,
-} from './i18n';
+} from './i18n.js';
 
-export { useFluxTranslation, type TFunction } from './hooks';
+export { useFluxTranslation, type TFunction } from './hooks.js';
 
-export { zhCN, enUS } from './locales';
+export { zhCN, enUS } from './locales/index.js';

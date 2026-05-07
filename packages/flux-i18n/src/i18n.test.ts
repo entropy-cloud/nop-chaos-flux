@@ -11,8 +11,8 @@ import {
   initFluxI18n,
   resetFluxI18n,
   t,
-} from './i18n';
-import { useFluxTranslation } from './hooks';
+} from './i18n.js';
+import { useFluxTranslation } from './hooks.js';
 
 describe('flux i18n', () => {
   afterEach(() => {

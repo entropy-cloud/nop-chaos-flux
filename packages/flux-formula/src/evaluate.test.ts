@@ -5,8 +5,8 @@ import type {
   RendererEnv,
   StaticValueNode,
 } from '@nop-chaos/flux-core';
-import { createFormulaCompiler } from './compile';
-import { createEvalContext, createStateFromNode, evaluateNode } from './evaluate';
+import { createFormulaCompiler } from './compile.js';
+import { createEvalContext, createStateFromNode, evaluateNode } from './evaluate.js';
 
 const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),

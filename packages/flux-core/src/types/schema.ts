@@ -1,4 +1,4 @@
-import type { ActionSchema, ActionShapeFields } from './actions';
+import type { ActionSchema, ActionShapeFields } from './actions.js';
 
 export type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 

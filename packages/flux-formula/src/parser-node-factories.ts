@@ -1,5 +1,5 @@
-import type { FormulaToken } from './lexer';
-import type { IdentifierNode, LiteralNode, MemberExpressionNode, SourceLocation } from './ast';
+import type { FormulaToken } from './lexer.js';
+import type { IdentifierNode, LiteralNode, MemberExpressionNode, SourceLocation } from './ast.js';
 
 export function createSourceLocation(start: number, end: number): SourceLocation {
   return { start, end };
@@ -28,8 +28,8 @@ export function createIdentifierNode(token: FormulaToken): IdentifierNode {
 }
 
 export function createMemberExpressionNode(args: {
-  object: import('./ast').FormulaAstNode;
-  property: import('./ast').FormulaAstNode;
+  object: import('./ast.js').FormulaAstNode;
+  property: import('./ast.js').FormulaAstNode;
   computed: boolean;
   optional: boolean;
   end: number;

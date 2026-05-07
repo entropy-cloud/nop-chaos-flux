@@ -3,7 +3,7 @@ import type {
   CapabilityMethodContract,
   HostCapabilityProjectionManifest,
   HostManifestResolver,
-} from './manifest';
+} from './manifest.js';
 
 describe('host manifest contracts', () => {
   it('supports resolved and unsupported-version resolver results', () => {

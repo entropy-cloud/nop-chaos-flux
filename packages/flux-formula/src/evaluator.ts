@@ -1,7 +1,7 @@
 import type { EvalContext, RendererEnv } from '@nop-chaos/flux-core';
-import type { FormulaAstNode, IdentifierNode, MemberExpressionNode } from './ast';
-import { customEquals, installBuiltins } from './builtins';
-import { createFormulaRegistry, type FormulaRegistrySnapshot } from './registry';
+import type { FormulaAstNode, IdentifierNode, MemberExpressionNode } from './ast.js';
+import { customEquals, installBuiltins } from './builtins.js';
+import { createFormulaRegistry, type FormulaRegistrySnapshot } from './registry.js';
 
 const defaultRegistry = createFormulaRegistry();
 installBuiltins(defaultRegistry);

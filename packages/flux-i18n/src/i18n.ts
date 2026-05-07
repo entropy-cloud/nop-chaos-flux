@@ -1,8 +1,8 @@
 import i18next, { type i18n, type InitOptions, type Resource } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { setMessageFormatter } from '@nop-chaos/flux-core';
-import { zhCN } from './locales/zh-CN';
-import { enUS } from './locales/en-US';
+import { zhCN } from './locales/zh-CN.js';
+import { enUS } from './locales/en-US.js';
 
 export type SupportedLanguage = 'zh-CN' | 'en-US';
 
@@ -28,6 +28,7 @@ export interface FluxI18nOptions {
   fallbackLng?: SupportedLanguage;
   resources?: Resource;
   debug?: boolean;
+  react?: boolean;
 }
 
 export function initFluxI18n(options: FluxI18nOptions = {}): i18n {
@@ -40,6 +41,7 @@ export function initFluxI18n(options: FluxI18nOptions = {}): i18n {
     fallbackLng = DEFAULT_LANGUAGE,
     resources = defaultResources,
     debug = false,
+    react = true,
   } = options;
 
   const initOptions: InitOptions = {
@@ -58,7 +60,10 @@ export function initFluxI18n(options: FluxI18nOptions = {}): i18n {
   };
 
   const instance = i18next.createInstance();
-  instance.use(initReactI18next).init(initOptions);
+  if (react) {
+    instance.use(initReactI18next);
+  }
+  instance.init(initOptions);
 
   setMessageFormatter((key, params) => instance.t(normalizeTranslationKey(key), params));
 

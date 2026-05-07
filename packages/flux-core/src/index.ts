@@ -1,10 +1,10 @@
-export * from './types';
-export * from './schema-diagnostics';
-export * from './validation-model';
-export * from './constants';
-export * from './compiled-cid';
-export * from './value-adapter';
-export * from './registry';
+export * from './types.js';
+export * from './schema-diagnostics/index.js';
+export * from './validation-model.js';
+export * from './constants.js';
+export * from './compiled-cid.js';
+export * from './value-adapter.js';
+export * from './registry.js';
 
 export {
   clampArrayIndex,
@@ -13,9 +13,9 @@ export {
   moveArrayValue,
   removeArrayValue,
   swapArrayValue,
-} from './utils/array';
+} from './utils/array.js';
 
-export { resolveClassAliases, mergeClassAliases } from './class-aliases';
+export { resolveClassAliases, mergeClassAliases } from './class-aliases.js';
 
 export {
   isPlainObject,
@@ -25,36 +25,36 @@ export {
   toStringArray,
   shallowEqualRecords,
   shallowEqual,
-} from './utils/object';
-export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn } from './utils/path';
-export { isSchema, isSchemaArray, isSchemaInput, createNodeId } from './utils/schema';
-export { decorateRendererEnv } from './utils/renderer-env';
+} from './utils/object.js';
+export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn } from './utils/path.js';
+export { isSchema, isSchemaArray, isSchemaInput, createNodeId } from './utils/schema.js';
+export { decorateRendererEnv } from './utils/renderer-env.js';
 export {
   isReportedImportError,
   markImportErrorReported,
   reportImportFailure,
-} from './utils/import-failure';
-export { reportRuntimeHostIssue } from './utils/runtime-host-reporting';
+} from './utils/import-failure.js';
+export { reportRuntimeHostIssue } from './utils/runtime-host-reporting.js';
 
-export { createNamedActionProvider } from './named-action-provider';
+export { createNamedActionProvider } from './named-action-provider.js';
 
 export {
   STRICT_VALIDATION_KEY,
   isStrictValidationEnabled,
   setStrictValidationGlobal,
-} from './strict-mode';
+} from './strict-mode.js';
 
-export type { PathBindingContext, PathBindingService } from './utils/path-binding';
-export { createPathBinding, projectBooleanMap, projectFieldStates } from './utils/path-binding';
-export type { RendererEnvDecoratorHooks } from './utils/renderer-env';
-export type { RuntimeHostIssueInput } from './utils/runtime-host-reporting';
+export type { PathBindingContext, PathBindingService } from './utils/path-binding.js';
+export { createPathBinding, projectBooleanMap, projectFieldStates } from './utils/path-binding.js';
+export type { RendererEnvDecoratorHooks } from './utils/renderer-env.js';
+export type { RuntimeHostIssueInput } from './utils/runtime-host-reporting.js';
 
-export { validationErrorsEqual } from './utils/validation-utils';
-export { normalizeInstancePath } from './utils/instance-path';
-export { cancelPendingDebounce, scheduleDebounce } from './utils/debounce';
+export { validationErrorsEqual } from './utils/validation-utils.js';
+export { normalizeInstancePath } from './utils/instance-path.js';
+export { cancelPendingDebounce, scheduleDebounce } from './utils/debounce.js';
 
-export { setMessageFormatter, getMessageFormatter } from './i18n-sink';
-export type { MessageFormatter } from './i18n-sink';
+export { setMessageFormatter, getMessageFormatter } from './i18n-sink.js';
+export type { MessageFormatter } from './i18n-sink.js';
 
 export type {
   DomainBridge,
@@ -62,8 +62,8 @@ export type {
   BusyActionState,
   WorkbenchSessionState,
   ResourceBrowserInteractionPolicy,
-} from './workbench';
+} from './workbench/index.js';
 
-export type { StructuralLoopBindings, StructuralLoopRenderContext } from './types/renderer-hooks';
+export type { StructuralLoopBindings, StructuralLoopRenderContext } from './types/renderer-hooks.js';
 
-export { isAbortError, buildScopeChain } from './runtime-inspection';
+export { isAbortError, buildScopeChain } from './runtime-inspection.js';

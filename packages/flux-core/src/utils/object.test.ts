@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isPlainObject, shallowEqual } from '../index';
+import { isPlainObject, shallowEqual } from '../index.js';
 
 describe('object utils', () => {
   it('detects plain objects but not arrays or null', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getIn, parsePath, setIn } from './path';
+import { getIn, parsePath, setIn } from './path.js';
 
 describe('path utils', () => {
   it('parses bracket indexes without changing path semantics', () => {

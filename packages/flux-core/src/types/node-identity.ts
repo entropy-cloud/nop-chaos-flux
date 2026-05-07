@@ -3,11 +3,11 @@ import type {
   RuntimeValueState,
   CompiledDataSource,
   CompiledReaction,
-} from './compilation';
-import type { CompiledActionProgram } from './actions';
-import type { BaseSchema, SchemaPath } from './schema';
-import type { ScopeDependencySet, ScopeRef } from './scope';
-import type { WrapProvidersFn } from './renderer-compiler';
+} from './compilation.js';
+import type { CompiledActionProgram } from './actions.js';
+import type { BaseSchema, SchemaPath } from './schema.js';
+import type { ScopeDependencySet, ScopeRef } from './scope.js';
+import type { WrapProvidersFn } from './renderer-compiler.js';
 
 /**
  * Compiler-computed static analysis results.
@@ -77,7 +77,7 @@ export type ScopePlan =
     };
 
 export type RegistryPlan = Readonly<Record<string, unknown>>;
-export type ValidationPlan = import('./validation').CompiledFormValidationModel;
+export type ValidationPlan = import('./validation.js').CompiledFormValidationModel;
 export type RuntimeProgramState<T = unknown> = RuntimeValueState<T>;
 
 export interface NodeRuntimeState {
@@ -85,10 +85,10 @@ export interface NodeRuntimeState {
   props?: RuntimeValueState<Record<string, unknown>>;
   metaDependencies?: ScopeDependencySet;
   propsDependencies?: ScopeDependencySet;
-  resolvedMeta?: import('./renderer-compiler').ResolvedNodeMeta;
+  resolvedMeta?: import('./renderer-compiler.js').ResolvedNodeMeta;
   resolvedProps?: Readonly<Record<string, unknown>>;
-  _staticPropsResult?: import('./renderer-compiler').ResolvedNodeProps;
-  _lastPropsResult?: import('./renderer-compiler').ResolvedNodeProps;
+  _staticPropsResult?: import('./renderer-compiler.js').ResolvedNodeProps;
+  _lastPropsResult?: import('./renderer-compiler.js').ResolvedNodeProps;
 }
 
 export type NodeMetaProgram = {
@@ -108,10 +108,10 @@ export interface TemplateProviderPlan {
 }
 
 export interface TemplateImportsPlan {
-  imports: readonly import('./schema').XuiImportSpec[];
-  resolvedImports: readonly import('./schema').XuiImportSpec[];
-  preparedImports: readonly import('./compilation').PreparedImportSpec[];
-  staticMeta?: Readonly<Record<string, import('./compilation').ImportedLibraryStaticMeta>>;
+  imports: readonly import('./schema.js').XuiImportSpec[];
+  resolvedImports: readonly import('./schema.js').XuiImportSpec[];
+  preparedImports: readonly import('./compilation.js').PreparedImportSpec[];
+  staticMeta?: Readonly<Record<string, import('./compilation.js').ImportedLibraryStaticMeta>>;
 }
 
 export interface TemplateClassAliasesPlan {
@@ -126,7 +126,7 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   templatePath: SchemaPath;
   schemaUrl?: string;
   rendererType: string;
-  component: import('./renderer-core').RendererDefinition<S>;
+  component: import('./renderer-core.js').RendererDefinition<S>;
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
   metaProgram: NodeMetaProgram;
   eventPlans: Readonly<Record<string, CompiledActionProgram>>;
@@ -142,7 +142,7 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   scopePlan: ScopePlan;
   registryPlan?: RegistryPlan;
   validationPlan?: ValidationPlan;
-  validationOwnerPlan?: import('./validation').ValidationOwnerPlan;
+  validationOwnerPlan?: import('./validation.js').ValidationOwnerPlan;
   sourcePropKeys: readonly string[];
   sourceStatePropKeys: Readonly<Record<string, string>>;
   /**
@@ -169,7 +169,7 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
    * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
    */
   compiledReactions?: readonly CompiledReaction[];
-  namedActionPlans?: Readonly<Record<string, import('./actions').CompiledActionProgram>>;
+  namedActionPlans?: Readonly<Record<string, import('./actions.js').CompiledActionProgram>>;
 }
 
 export interface RepeatedTemplate {

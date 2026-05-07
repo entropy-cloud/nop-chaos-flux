@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAbortScope, withTimeout, withRetry } from '../operation-control';
+import { createAbortScope, withTimeout, withRetry } from '../operation-control.js';
 
 describe('createAbortScope', () => {
   it('returns a signal that is not aborted initially', () => {

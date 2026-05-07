@@ -1,4 +1,4 @@
-import type { RendererDefinition, RendererRegistry } from './types';
+import type { RendererDefinition, RendererRegistry } from './types.js';
 
 function validateDefinition(definition: RendererDefinition): void {
   if (!definition.component) {

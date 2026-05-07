@@ -6,7 +6,7 @@ import {
   moveArrayValue,
   removeArrayValue,
   swapArrayValue,
-} from './array';
+} from './array.js';
 
 describe('array utils', () => {
   it('clamps insert indexes into the valid append range', () => {

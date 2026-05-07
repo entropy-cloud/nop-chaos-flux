@@ -1,2 +1,2 @@
-export { createFormulaCompiler } from './compile/formula-compiler';
-export { compileNode } from './compile/compile-node';
+export { createFormulaCompiler } from './compile/formula-compiler.js';
+export { compileNode } from './compile/compile-node.js';

@@ -1,7 +1,7 @@
-import type { ActionContext, ActionResult, ActionSchema } from './types/actions';
-import type { FormRuntime } from './types/runtime';
-import type { SchemaValue } from './types/schema';
-import type { ScopeRef } from './types/scope';
+import type { ActionContext, ActionResult, ActionSchema } from './types/actions.js';
+import type { FormRuntime } from './types/runtime.js';
+import type { SchemaValue } from './types/schema.js';
+import type { ScopeRef } from './types/scope.js';
 
 export interface AdapterContext {
   name?: string;

@@ -1,5 +1,5 @@
-import type { ActionSchema } from './actions';
-import type { ValidationTrigger, ValidationVisibilityTrigger, SchemaObject } from './schema';
+import type { ActionSchema } from './actions.js';
+import type { ValidationTrigger, ValidationVisibilityTrigger, SchemaObject } from './schema.js';
 
 export interface HiddenFieldPolicy extends SchemaObject {
   validateWhenHidden?: boolean;

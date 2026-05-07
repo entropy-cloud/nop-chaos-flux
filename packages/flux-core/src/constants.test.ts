@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { META_FIELDS } from './constants';
+import { META_FIELDS } from './constants.js';
 
 describe('META_FIELDS', () => {
   it('is a Set', () => {

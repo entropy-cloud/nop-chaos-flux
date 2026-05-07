@@ -1,9 +1,9 @@
 import type { ExpressionCompileOptions, RendererEnv } from '@nop-chaos/flux-core';
-import { evaluateAst } from '../evaluator';
-import type { FormulaAstNode } from '../ast';
-import { toEvalContext } from '../scope';
-import type { FormulaRegistrySnapshot } from '../registry';
-import { buildMemberPath } from './symbol-diagnostics';
+import { evaluateAst } from '../evaluator.js';
+import type { FormulaAstNode } from '../ast.js';
+import { toEvalContext } from '../scope.js';
+import type { FormulaRegistrySnapshot } from '../registry.js';
+import { buildMemberPath } from './symbol-diagnostics.js';
 
 function evaluateStaticAst(
   ast: FormulaAstNode,

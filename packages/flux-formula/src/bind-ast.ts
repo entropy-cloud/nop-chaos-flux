@@ -1,4 +1,4 @@
-import type { FormulaAstNode, IdentifierBinding, IdentifierNode } from './ast';
+import type { FormulaAstNode, IdentifierBinding, IdentifierNode } from './ast.js';
 
 export interface BindingContext {
   libraryNames?: ReadonlySet<string>;

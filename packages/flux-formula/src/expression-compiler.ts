@@ -12,8 +12,8 @@ import type {
   StaticRuntimeValue,
   ValueEvaluationResult,
 } from '@nop-chaos/flux-core';
-import { compileNode, createFormulaCompiler } from './compile';
-import { createEvalContext, createStateFromNode, evaluateNode } from './evaluate';
+import { compileNode, createFormulaCompiler } from './compile.js';
+import { createEvalContext, createStateFromNode, evaluateNode } from './evaluate.js';
 
 export function createExpressionCompiler(
   formulaCompiler: FormulaCompiler = createFormulaCompiler(),

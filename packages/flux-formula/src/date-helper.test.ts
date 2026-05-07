@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dateHelper } from './date-helper';
+import { dateHelper } from './date-helper.js';
 
 describe('dateHelper', () => {
   it('parses, formats, and reads date parts', () => {

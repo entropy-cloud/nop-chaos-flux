@@ -3,12 +3,12 @@ import type {
   ActionNamespaceProvider,
   ActionResult,
   CompiledActionProgram,
-} from './types';
-import { XUI_ACTIONS_NAMESPACE } from './constants';
+} from './types.js';
+import { XUI_ACTIONS_NAMESPACE } from './constants.js';
 
 export function createNamedActionProvider(
   plans: Readonly<Record<string, CompiledActionProgram>>,
-  parentActionScope: import('./types').ActionScope | undefined,
+  parentActionScope: import('./types.js').ActionScope | undefined,
   executeProgram: (program: CompiledActionProgram, ctx: ActionContext) => Promise<ActionResult>,
 ): ActionNamespaceProvider {
   return {

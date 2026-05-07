@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from './types';
-import { resolveRendererAuthoringContract, resolveHostContractManifest } from './types';
+import type { RendererDefinition } from './types.js';
+import { resolveRendererAuthoringContract, resolveHostContractManifest } from './types.js';
 
 describe('resolveRendererAuthoringContract', () => {
   it('assembles ordinary renderer metadata without host-only fields', () => {

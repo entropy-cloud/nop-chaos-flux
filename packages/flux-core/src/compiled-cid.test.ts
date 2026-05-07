@@ -3,7 +3,7 @@ import {
   attachCompiledCidState,
   createCompiledCidState,
   getCompiledCidState,
-} from './compiled-cid';
+} from './compiled-cid.js';
 
 describe('createCompiledCidState', () => {
   it('creates state with default nextCid of 0', () => {

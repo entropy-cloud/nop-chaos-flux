@@ -6,14 +6,14 @@ import type {
   CompiledActionNode,
   NamespacedActionInvocation,
 } from '@nop-chaos/flux-core';
-import { evaluateActionArgs, normalizeActionResult } from '../action-core';
-import type { ActionDispatcherContext } from './types';
+import { evaluateActionArgs, normalizeActionResult } from '../action-core.js';
+import type { ActionDispatcherContext } from './types.js';
 import {
   isComponentAction,
   extractComponentMethod,
   isNamespacedAction,
   parseNamespacedAction,
-} from './action-parsing';
+} from './action-parsing.js';
 import { XUI_ACTIONS_NAMESPACE } from '@nop-chaos/flux-core';
 
 export function finishAction(

@@ -6,8 +6,8 @@ import {
   createTestDispatcher,
   makeCompiledProgram,
   staticCompiled,
-} from './action-dispatcher-test-support';
-import type { ActionEvaluator } from '../action-core';
+} from './action-dispatcher-test-support.js';
+import type { ActionEvaluator } from '../action-core.js';
 
 describe('action-dispatcher control flow', () => {
   it('executes sequential actions in order', async () => {

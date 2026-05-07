@@ -5,7 +5,7 @@ import type {
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { getIn, normalizeRootPath, parsePath } from '@nop-chaos/flux-core';
-import { createEvalContext } from './evaluate';
+import { createEvalContext } from './evaluate.js';
 
 function normalizeTrackedPath(path: string): string | undefined {
   return normalizeRootPath(path);

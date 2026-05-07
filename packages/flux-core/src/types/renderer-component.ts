@@ -1,7 +1,7 @@
-import type { ActionContext, ActionResult } from './actions';
-import type { InspectResult, NodeInstance } from './node-identity';
-import type { ResolvedNodeMeta, ResolvedNodeProps } from './renderer-compiler';
-import type { ScopeRef } from './scope';
+import type { ActionContext, ActionResult } from './actions.js';
+import type { InspectResult, NodeInstance } from './node-identity.js';
+import type { ResolvedNodeMeta, ResolvedNodeProps } from './renderer-compiler.js';
+import type { ScopeRef } from './scope.js';
 
 export interface ComponentTarget {
   _targetCid?: number;

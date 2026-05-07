@@ -3,7 +3,7 @@ import type {
   SchemaDiagnosticCode,
   SchemaDiagnosticSeverity,
 } from '@nop-chaos/flux-core';
-import type { FormulaAstNode } from '../ast';
+import type { FormulaAstNode } from '../ast.js';
 
 function buildMemberPath(node: FormulaAstNode): string[] | undefined {
   if (node.type === 'Identifier') {

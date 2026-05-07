@@ -24,6 +24,7 @@ export const zhCN: Resource = {
       detailDraftValidationError: '请先修复校验错误后再确认。',
       detail: '详情',
       editItem: '编辑{{item}}',
+      saveFailed: '保存失败',
     },
     pagination: {
       morePages: '更多页',

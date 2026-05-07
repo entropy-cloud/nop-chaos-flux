@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { getFluxI18n, FLUX_NAMESPACE } from './i18n';
+import { getFluxI18n, FLUX_NAMESPACE } from './i18n.js';
 
 export function useFluxTranslation() {
   const i18n = getFluxI18n();

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RendererEnv } from '@nop-chaos/flux-core';
-import { createFormulaCompiler, createFormulaRegistry } from './index';
+import { createFormulaCompiler, createFormulaRegistry } from './index.js';
 
 const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),

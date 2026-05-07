@@ -11,9 +11,9 @@ import {
   resolveSetValuePayload,
   resolveSetValuesPayload,
   type ActionEvaluator,
-} from '../action-core';
-import type { ActionDispatcherContext } from './types';
-import { finishAction } from './action-runners';
+} from '../action-core.js';
+import type { ActionDispatcherContext } from './types.js';
+import { finishAction } from './action-runners.js';
 
 function evaluateSurfaceArgs(
   action: CompiledActionNode,

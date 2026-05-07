@@ -1,4 +1,4 @@
-import type { ValidationError } from '../types/validation';
+import type { ValidationError } from '../types/validation.js';
 
 export function validationErrorsEqual(
   left: ValidationError[] | undefined,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isPureExpression, normalizeExpressionSource, parseTemplateSegments } from './template';
+import { isPureExpression, normalizeExpressionSource, parseTemplateSegments } from './template.js';
 
 describe('template helpers', () => {
   it('normalizes direct expressions and plain text', () => {

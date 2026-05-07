@@ -1,4 +1,4 @@
-import type { InstanceFrame } from '../types/node-identity';
+import type { InstanceFrame } from '../types/node-identity.js';
 
 /**
  * Normalizes an instance path array, returning undefined for empty or null paths.

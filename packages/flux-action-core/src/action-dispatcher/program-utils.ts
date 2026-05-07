@@ -5,7 +5,7 @@ import type {
   OperationControlConfig,
 } from '@nop-chaos/flux-core';
 import { compileActions } from '@nop-chaos/flux-compiler';
-import type { ActionDispatcherContext } from './types';
+import type { ActionDispatcherContext } from './types.js';
 
 export function isRequestBackedAction(action: CompiledActionNode): boolean {
   return action.action === 'ajax' || action.action === 'submitForm' || action.action === 'submit';

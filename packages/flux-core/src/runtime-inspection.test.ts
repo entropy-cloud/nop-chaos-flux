@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { isAbortError, buildScopeChain } from './runtime-inspection';
-import type { ScopeRef } from './types/scope';
+import { isAbortError, buildScopeChain } from './runtime-inspection.js';
+import type { ScopeRef } from './types/scope.js';
 
 describe('isAbortError', () => {
   it('returns true for AbortError name', () => {

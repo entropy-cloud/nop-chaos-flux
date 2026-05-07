@@ -2,11 +2,11 @@ import type {
   SchemaCompileDiagnosticsOptions,
   SchemaCompileValidationOptions,
   SchemaDiagnostic,
-} from '../schema-diagnostics';
-import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy } from './schema';
-import type { CompiledCidState } from '../compiled-cid';
-import type { CompiledTemplate } from './node-identity';
-import type { CompileSymbolTable } from './compilation';
+} from '../schema-diagnostics/index.js';
+import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy } from './schema.js';
+import type { CompiledCidState } from '../compiled-cid.js';
+import type { CompiledTemplate } from './node-identity.js';
+import type { CompileSymbolTable } from './compilation.js';
 
 export type WrapProvidersFn = (
   wrapProvider: (kind: string, value: unknown, children: unknown) => unknown,
@@ -39,8 +39,8 @@ export interface CompileSchemaOptions {
   parentScopePolicy?: ScopePolicy;
   cidState?: CompiledCidState;
   symbolTable?: CompileSymbolTable;
-  preparedImports?: ReadonlyMap<string, import('./compilation').PreparedImportSpec>;
-  importLoader?: import('./actions').ImportedLibraryLoader;
+  preparedImports?: ReadonlyMap<string, import('./compilation.js').PreparedImportSpec>;
+  importLoader?: import('./actions.js').ImportedLibraryLoader;
   resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
   diagnostics?: SchemaCompileDiagnosticsOptions;
   validation?: SchemaCompileValidationOptions;
@@ -48,7 +48,7 @@ export interface CompileSchemaOptions {
 
 export interface PreparedSchemaCompileResult {
   schema: SchemaInput;
-  preparedImports: ReadonlyMap<string, import('./compilation').PreparedImportSpec>;
+  preparedImports: ReadonlyMap<string, import('./compilation.js').PreparedImportSpec>;
 }
 
 export interface CompileNodeOptions {
@@ -56,8 +56,8 @@ export interface CompileNodeOptions {
   parentPath?: SchemaPath;
   schemaUrl?: string;
   symbolTable?: CompileSymbolTable;
-  preparedImports?: ReadonlyMap<string, import('./compilation').PreparedImportSpec>;
-  renderer: import('./renderer-core').RendererDefinition;
+  preparedImports?: ReadonlyMap<string, import('./compilation.js').PreparedImportSpec>;
+  renderer: import('./renderer-core.js').RendererDefinition;
   fieldRules?: readonly SchemaFieldRule[];
   diagnostics?: { enabled?: boolean };
 }
@@ -71,6 +71,6 @@ export interface SchemaCompiler {
   compileNode(
     schema: BaseSchema,
     options: CompileNodeOptions,
-  ): import('./node-identity').TemplateNode;
+  ): import('./node-identity.js').TemplateNode;
   validate?(schema: SchemaInput, options?: CompileSchemaOptions): SchemaDiagnostic[];
 }

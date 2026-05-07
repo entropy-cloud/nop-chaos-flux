@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeInstancePath } from './instance-path';
+import { normalizeInstancePath } from './instance-path.js';
 
 describe('normalizeInstancePath', () => {
   it('returns undefined for empty-like inputs', () => {

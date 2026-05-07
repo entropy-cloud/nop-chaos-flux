@@ -3,14 +3,14 @@ import type {
   FluxValueShape,
   HostCapabilityMethod,
   HostProjectionContract,
-} from '../schema-diagnostics';
+} from '../schema-diagnostics/index.js';
 import type {
   RendererDefinition,
   RendererEventContract,
   RendererPropContract,
   RendererRendererClass,
   RendererCapabilityContract,
-} from './renderer-core';
+} from './renderer-core.js';
 
 export interface ResolvedAuthoringContract {
   rendererType: string;
@@ -22,7 +22,7 @@ export interface ResolvedAuthoringContract {
   scopeExports: Readonly<Record<string, FluxValueShape>>;
   hostProjection?: HostProjectionContract;
   hostActions?: Readonly<Record<string, CapabilityMethodContract>>;
-  hostManifest?: import('../schema-diagnostics').HostCapabilityProjectionManifest;
+  hostManifest?: import('../schema-diagnostics/index.js').HostCapabilityProjectionManifest;
 }
 
 function toCapabilityMethodContract(method: HostCapabilityMethod): CapabilityMethodContract {
@@ -49,7 +49,7 @@ function toCapabilityMethodContract(method: HostCapabilityMethod): CapabilityMet
 export function resolveHostContractManifest(
   definition: RendererDefinition,
   versionSelector?: string,
-): import('../schema-diagnostics').HostCapabilityProjectionManifest | undefined {
+): import('../schema-diagnostics/index.js').HostCapabilityProjectionManifest | undefined {
   const hostContract = definition.hostContract;
   if (!hostContract) {
     return undefined;

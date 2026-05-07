@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EvalContext } from '@nop-chaos/flux-core';
-import { createFormulaScope, createScopeDependencyCollector, toEvalContext } from './scope';
+import { createFormulaScope, createScopeDependencyCollector, toEvalContext } from './scope.js';
 
 function makeEvalContext(data: Record<string, any>): EvalContext {
   return {

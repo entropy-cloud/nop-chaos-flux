@@ -8,7 +8,7 @@ import {
   normalizeActionResult,
   createBranchEvaluationBindings,
   createInteractionId,
-} from '../action-core';
+} from '../action-core.js';
 
 describe('ActionResult classification', () => {
   it('classifies simple success', () => {

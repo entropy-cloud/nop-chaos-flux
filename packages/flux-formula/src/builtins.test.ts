@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createFormulaCompiler, createFormulaRegistry } from './index';
-import { customEquals } from './builtins';
+import { createFormulaCompiler, createFormulaRegistry } from './index.js';
+import { customEquals } from './builtins.js';
 
 describe('builtins', () => {
   function createBuiltinsSnapshot() {

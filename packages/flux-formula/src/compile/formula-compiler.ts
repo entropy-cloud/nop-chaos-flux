@@ -6,17 +6,17 @@ import type {
   FormulaCompiler,
   RendererEnv,
 } from '@nop-chaos/flux-core';
-import { bindAst, type BindingContext } from '../bind-ast';
-import { installBuiltins } from '../builtins';
-import { evaluateAst } from '../evaluator';
-import { parseFormula } from '../parser';
-import { normalizeExpressionSource, parseTemplateSegments } from '../template';
-import { toEvalContext } from '../scope';
-import type { FormulaRegistry, FormulaRegistrySnapshot } from '../registry';
-import { createFormulaRegistry } from '../registry';
-import { rewriteFilterPipeSyntax } from './pipe-syntax';
-import { emitSymbolDiagnostics } from './symbol-diagnostics';
-import { evaluateStaticAst } from './static-eval';
+import { bindAst, type BindingContext } from '../bind-ast.js';
+import { installBuiltins } from '../builtins.js';
+import { evaluateAst } from '../evaluator.js';
+import { parseFormula } from '../parser.js';
+import { normalizeExpressionSource, parseTemplateSegments } from '../template.js';
+import { toEvalContext } from '../scope.js';
+import type { FormulaRegistry, FormulaRegistrySnapshot } from '../registry.js';
+import { createFormulaRegistry } from '../registry.js';
+import { rewriteFilterPipeSyntax } from './pipe-syntax.js';
+import { emitSymbolDiagnostics } from './symbol-diagnostics.js';
+import { evaluateStaticAst } from './static-eval.js';
 
 function ensureCompileOptions(
   options: ExpressionCompileOptions | undefined,

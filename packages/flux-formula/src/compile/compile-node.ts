@@ -5,7 +5,7 @@ import type {
   StaticValueNode,
 } from '@nop-chaos/flux-core';
 import { isPlainObject } from '@nop-chaos/flux-core';
-import { isPureExpression } from '../template';
+import { isPureExpression } from '../template.js';
 
 function hasStaticValue<T>(value: { staticValue?: T }): value is { staticValue: T } {
   return Object.prototype.hasOwnProperty.call(value, 'staticValue');

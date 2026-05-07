@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeClassAliases, resolveClassAliases } from './index';
+import { mergeClassAliases, resolveClassAliases } from './index.js';
 
 describe('class-aliases', () => {
   it('expands nested aliases recursively', () => {

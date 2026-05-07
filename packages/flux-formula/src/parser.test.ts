@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseFormula } from './parser';
+import { parseFormula } from './parser.js';
 
 describe('parseFormula', () => {
   it('parses operator precedence and null coalescing', () => {

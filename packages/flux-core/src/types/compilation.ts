@@ -3,10 +3,10 @@ import type {
   ActionScope,
   CompiledActionProgram,
   ImportedLibraryModule,
-} from './actions';
-import type { EvalContext, ScopeDependencySet, ScopeRef } from './scope';
-import type { RendererEnv } from './renderer';
-import type { RequestDedupStrategy } from './schema';
+} from './actions.js';
+import type { EvalContext, ScopeDependencySet, ScopeRef } from './scope.js';
+import type { RendererEnv } from './renderer.js';
+import type { RequestDedupStrategy } from './schema.js';
 
 export type CompileSymbolKind =
   | 'builtin-namespace'
@@ -40,8 +40,8 @@ export interface ImportedLibraryStaticMeta {
 
 export interface PreparedImportSpec {
   schemaUrl: string;
-  spec: import('./schema').XuiImportSpec;
-  resolvedSpec: import('./schema').XuiImportSpec;
+  spec: import('./schema.js').XuiImportSpec;
+  resolvedSpec: import('./schema.js').XuiImportSpec;
   staticMeta?: ImportedLibraryStaticMeta;
 }
 
@@ -68,7 +68,7 @@ export interface ModuleCache {
 
 export interface ImportStackEntry {
   alias: string;
-  spec: import('./schema').XuiImportSpec;
+  spec: import('./schema.js').XuiImportSpec;
   actionProvider?: ActionNamespaceProvider;
   expressionHelpers?: Readonly<Record<string, unknown>>;
   staticMeta?: ImportedLibraryStaticMeta;
@@ -86,27 +86,27 @@ export interface ImportFrame {
 export interface ImportStack {
   readonly frames: readonly ImportFrame[];
   preload(input: {
-    imports?: readonly import('./schema').XuiImportSpec[];
+    imports?: readonly import('./schema.js').XuiImportSpec[];
     schemaUrl: string;
   }): Promise<void>;
   push(input: {
     ownerNodeId: string;
     parentFrameId?: string;
-    imports?: readonly import('./schema').XuiImportSpec[];
+    imports?: readonly import('./schema.js').XuiImportSpec[];
     actionScope?: ActionScope;
-    componentRegistry?: import('./renderer-component').ComponentHandleRegistry;
+    componentRegistry?: import('./renderer-component.js').ComponentHandleRegistry;
     scope: ScopeRef;
     schemaUrl: string;
-    nodeInstance?: import('./node-identity').NodeInstance;
+    nodeInstance?: import('./node-identity.js').NodeInstance;
   }): Promise<ImportFrame | undefined>;
   installPrepared(input: {
     ownerNodeId: string;
     parentFrame?: ImportFrame;
     imports?: readonly PreparedImportSpec[];
     actionScope?: ActionScope;
-    componentRegistry?: import('./renderer-component').ComponentHandleRegistry;
+    componentRegistry?: import('./renderer-component.js').ComponentHandleRegistry;
     scope: ScopeRef;
-    nodeInstance?: import('./node-identity').NodeInstance;
+    nodeInstance?: import('./node-identity.js').NodeInstance;
   }): ImportFrame | undefined;
   pop(frameId: string): void;
   resolveAlias(alias: string, frameId?: string): ImportStackEntry | undefined;
@@ -133,11 +133,11 @@ export interface ExpressionCompileOptions {
   symbolTable?: CompileSymbolTable;
   sourcePath?: string;
   reportDiagnostic?: (issue: {
-    code: import('../schema-diagnostics').SchemaDiagnosticCode;
+    code: import('../schema-diagnostics/index.js').SchemaDiagnosticCode;
     message: string;
     path: string;
-    severity?: import('../schema-diagnostics').SchemaDiagnosticSeverity;
-    source?: import('../schema-diagnostics').SchemaDiagnosticSource;
+    severity?: import('../schema-diagnostics/index.js').SchemaDiagnosticSeverity;
+    source?: import('../schema-diagnostics/index.js').SchemaDiagnosticSource;
   }) => void;
 }
 

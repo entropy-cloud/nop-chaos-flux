@@ -4,8 +4,8 @@ import type {
   ActionSchema,
   ActionScope,
   CompiledActionProgram,
-} from './actions';
-import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance';
+} from './actions.js';
+import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance.js';
 import type {
   CompiledApiConfig,
   CompiledDataSource,
@@ -16,23 +16,23 @@ import type {
   ModuleCache,
   PreparedImportSpec,
   SymbolInfo,
-} from './compilation';
+} from './compilation.js';
 import type {
   CapabilityMethodContract,
   FluxValueShape,
   RendererHostContract,
-} from '../schema-diagnostics';
+} from '../schema-diagnostics/index.js';
 import type {
   NodeInstance,
   NodeRuntimeState,
   ResolutionContext,
   TemplateNode,
-} from './node-identity';
-import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component';
-import type { RendererEnv } from './renderer-api';
-import type { ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler';
-import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
-import type { RendererPlugin } from './renderer-plugin';
+} from './node-identity.js';
+import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component.js';
+import type { RendererEnv } from './renderer-api.js';
+import type { ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler.js';
+import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks.js';
+import type { RendererPlugin } from './renderer-plugin.js';
 import type {
   DataSourceController,
   DataSourceRegistration,
@@ -40,7 +40,7 @@ import type {
   FormRuntime,
   PageRuntime,
   ValidationScopeRuntime,
-} from './runtime';
+} from './runtime.js';
 import type {
   BaseSchema,
   SchemaFieldRule,
@@ -49,15 +49,15 @@ import type {
   ScopePolicy,
   SourceSchema,
   XuiImportSpec,
-} from './schema';
-import type { CreateScopeOptions, ScopeRef } from './scope';
+} from './schema.js';
+import type { CreateScopeOptions, ScopeRef } from './scope.js';
 import type {
   ChildValidationMode,
   CompiledFormValidationModel,
   ValidationOwnerBoundaryKind,
   ValidationRule,
-} from './validation';
-import type { CompiledTemplate } from './node-identity';
+} from './validation.js';
+import type { CompiledTemplate } from './node-identity.js';
 
 export interface ValidationCollectContext<S extends BaseSchema = BaseSchema> {
   schema: S;
@@ -217,11 +217,11 @@ export interface RendererDefinition<
   sourcePackage?: string;
   fields?: readonly SchemaFieldRule[];
   authoringTransform?: BivariantCallback<
-    [import('../schema-diagnostics').RendererAuthoringTransformContext<S>],
+    [import('../schema-diagnostics/index.js').RendererAuthoringTransformContext<S>],
     S
   >;
   schemaValidator?: BivariantCallback<
-    [import('../schema-diagnostics').RendererSchemaValidationContext<S>],
+    [import('../schema-diagnostics/index.js').RendererSchemaValidationContext<S>],
     void
   >;
   scopePolicy?: ScopePolicy;
@@ -341,7 +341,7 @@ export interface RendererRuntime {
   }): ValidationScopeRuntime;
   createSurfaceRuntime(input?: {
     disposeScope?: (scopeId: string) => void;
-  }): import('./runtime').SurfaceRuntime;
+  }): import('./runtime.js').SurfaceRuntime;
   createDataSourceController(input: {
     compiledApi: CompiledApiConfig;
     scope: ScopeRef;

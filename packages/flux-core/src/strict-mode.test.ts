@@ -3,7 +3,7 @@ import {
   STRICT_VALIDATION_KEY,
   isStrictValidationEnabled,
   setStrictValidationGlobal,
-} from './strict-mode';
+} from './strict-mode.js';
 
 describe('isStrictValidationEnabled', () => {
   afterEach(() => {

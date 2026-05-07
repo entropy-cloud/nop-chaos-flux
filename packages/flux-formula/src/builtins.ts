@@ -1,5 +1,5 @@
-import { dateHelper } from './date-helper';
-import type { FormulaRegistry } from './registry';
+import { dateHelper } from './date-helper.js';
+import type { FormulaRegistry } from './registry.js';
 
 function flattenNumericArgs(args: unknown[]): number[] {
   const flattened = args.flatMap((value) => (Array.isArray(value) ? value : [value]));

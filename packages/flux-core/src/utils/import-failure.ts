@@ -1,5 +1,5 @@
-import type { ErrorMonitorPayload, RendererEnv } from '../types/renderer-api';
-import type { XuiImportSpec } from '../types/schema';
+import type { ErrorMonitorPayload, RendererEnv } from '../types/renderer-api.js';
+import type { XuiImportSpec } from '../types/schema.js';
 
 type ReportableImportError = Error & { __fluxImportReported?: boolean };
 

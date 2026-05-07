@@ -5,14 +5,14 @@ import type {
   IdentifierNode,
   ObjectExpressionNode,
   PropertyNode,
-} from './ast';
-import { tokenizeFormula, type FormulaToken } from './lexer';
+} from './ast.js';
+import { tokenizeFormula, type FormulaToken } from './lexer.js';
 import {
   createIdentifierNode,
   createLiteralNode,
   createMemberExpressionNode,
   createSourceLocation,
-} from './parser-node-factories';
+} from './parser-node-factories.js';
 
 export interface FormulaSyntaxError extends Error {
   index: number;

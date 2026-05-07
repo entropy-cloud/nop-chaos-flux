@@ -22,7 +22,7 @@ export {
   isAbortError,
   type ActionResultClass,
   type ActionEvaluator,
-} from './action-core';
+} from './action-core.js';
 
 export {
   createAbortScope,
@@ -30,8 +30,8 @@ export {
   withRetry,
   type RetryOptions,
   type RetryResult,
-} from './operation-control';
+} from './operation-control.js';
 
-export { createActionDispatcher, type ActionDispatcherConfig } from './action-dispatcher';
+export { createActionDispatcher, type ActionDispatcherConfig } from './action-dispatcher.js';
 
 export { cancelPendingDebounce, scheduleDebounce } from '@nop-chaos/flux-core';

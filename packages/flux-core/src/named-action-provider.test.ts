@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createNamedActionProvider } from './named-action-provider';
-import type { ActionContext, ActionResult, ActionScope, CompiledActionProgram } from './types';
+import { createNamedActionProvider } from './named-action-provider.js';
+import type { ActionContext, ActionResult, ActionScope, CompiledActionProgram } from './types.js';
 
 function createMockProgram(): CompiledActionProgram {
   return {

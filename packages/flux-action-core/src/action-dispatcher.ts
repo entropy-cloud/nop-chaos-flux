@@ -1,1 +1,1 @@
-export { createActionDispatcher, type ActionDispatcherConfig } from './action-dispatcher/index';
+export { createActionDispatcher, type ActionDispatcherConfig } from './action-dispatcher/index.js';
