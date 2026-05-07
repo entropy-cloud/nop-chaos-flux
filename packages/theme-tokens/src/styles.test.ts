@@ -48,6 +48,8 @@ describe('@nop-chaos/theme-tokens styles contract', () => {
       expect(blockText).toContain('--background:');
       expect(blockText).toContain('--card:');
       expect(blockText).toContain('--border:');
+      expect(blockText).toContain('--chart-1:');
+      expect(blockText).toContain('--chart-5:');
     }
   });
 });

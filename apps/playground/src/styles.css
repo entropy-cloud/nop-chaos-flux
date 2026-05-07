@@ -51,6 +51,11 @@
   --secondary-surface: 32 30% 96%;
   --secondary-surface-hover: 28 25% 93%;
   --secondary-foreground: 25 20% 35%;
+  --chart-1: 217 91% 60%;
+  --chart-2: 0 72% 51%;
+  --chart-3: 142 71% 45%;
+  --chart-4: 262 83% 58%;
+  --chart-5: 24 95% 53%;
   --popover: 30 20% 98%;
   --popover-foreground: 25 15% 35%;
   --radius: 0.75rem;

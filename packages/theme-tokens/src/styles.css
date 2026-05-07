@@ -30,6 +30,11 @@
   --space-field-label-gap: 8px;
   --space-field-label-h-gap: 16px;
   --space-tabs-content-gap: 16px;
+  --chart-1: 217 91% 60%;
+  --chart-2: 0 72% 51%;
+  --chart-3: 142 71% 45%;
+  --chart-4: 262 83% 58%;
+  --chart-5: 24 95% 53%;
 }
 
 :root[data-theme='classic'][data-mode='light'] {
@@ -69,6 +74,11 @@
   --input: 214 32% 91%;
   --ring: 217 89% 53%;
   --primary-foreground: 0 0% 100%;
+  --chart-1: 217 91% 60%;
+  --chart-2: 0 72% 51%;
+  --chart-3: 142 71% 45%;
+  --chart-4: 262 83% 58%;
+  --chart-5: 24 95% 53%;
   --glass-blur: none;
   --app-topbar-bg: rgba(255, 255, 255, 0.78);
   --app-sidebar-bg: rgba(248, 250, 252, 0.97);
@@ -115,6 +125,11 @@
   --input: 217 33% 18%;
   --ring: 217 89% 63%;
   --primary-foreground: 0 0% 100%;
+  --chart-1: 213 94% 68%;
+  --chart-2: 0 84% 67%;
+  --chart-3: 142 69% 58%;
+  --chart-4: 263 85% 70%;
+  --chart-5: 27 96% 61%;
   --glass-blur: none;
   --app-topbar-bg: rgba(15, 23, 42, 0.8);
   --app-sidebar-bg: rgba(15, 23, 42, 0.96);
@@ -161,6 +176,11 @@
   --input: 214 32% 91%;
   --ring: 172 76% 40%;
   --primary-foreground: 0 0% 100%;
+  --chart-1: 199 89% 48%;
+  --chart-2: 343 82% 59%;
+  --chart-3: 172 76% 40%;
+  --chart-4: 262 83% 58%;
+  --chart-5: 32 95% 44%;
   --glass-blur: blur(12px);
   --app-topbar-bg: rgba(255, 255, 255, 0.56);
   --app-sidebar-bg: rgba(255, 255, 255, 0.82);
@@ -207,6 +227,11 @@
   --input: 217 33% 18%;
   --ring: 172 76% 50%;
   --primary-foreground: 0 0% 100%;
+  --chart-1: 191 91% 64%;
+  --chart-2: 340 82% 72%;
+  --chart-3: 172 76% 50%;
+  --chart-4: 263 85% 70%;
+  --chart-5: 33 96% 62%;
   --glass-blur: blur(12px);
   --app-topbar-bg: rgba(15, 23, 42, 0.56);
   --app-sidebar-bg: rgba(15, 23, 42, 0.86);
