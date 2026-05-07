@@ -196,6 +196,35 @@ function compareOptionalText(left: string | undefined, right: string | undefined
   return (left ?? '').localeCompare(right ?? '');
 }
 
+function getRuntimeRoot(runtime: RendererRuntime | undefined): ParentNode | undefined {
+  if (typeof document === 'undefined' || !runtime) {
+    return undefined;
+  }
+
+  return document.querySelector(`[data-runtime-id="${runtime.runtimeId}"]`) ?? undefined;
+}
+
+function queryRuntimeScopedElement(
+  runtime: RendererRuntime | undefined,
+  cid: number,
+): HTMLElement | undefined {
+  if (typeof document === 'undefined') {
+    return undefined;
+  }
+
+  const selector = `[data-cid="${cid}"]`;
+  const runtimeRoot = getRuntimeRoot(runtime);
+  if (runtimeRoot instanceof Element) {
+    return (runtimeRoot.querySelector(selector) as HTMLElement | null) ?? undefined;
+  }
+
+   if (runtime) {
+    return undefined;
+  }
+
+  return (document.querySelector(selector) as HTMLElement | null) ?? undefined;
+}
+
 function getComponentTreeDepth(
   path: string | undefined,
   instancePath: NopComponentTreeItem['instancePath'],
@@ -234,7 +263,7 @@ export function buildInspectByCid(
     const runtime = getRuntime?.();
     if (!componentRegistry) return undefined;
     const inspected = componentRegistry.inspectCid?.(cid);
-    const element = document.querySelector(`[data-cid="${cid}"]`);
+    const element = queryRuntimeScopedElement(runtime, cid);
     const handle = componentRegistry.getHandleByCid?.(cid);
 
     if (inspected?.kind === 'resolved') {
@@ -323,9 +352,13 @@ export function buildInspectByElement(
   };
 }
 
-export function buildGetComponentTree(componentRegistry: ComponentHandleRegistry | undefined) {
+export function buildGetComponentTree(
+  componentRegistry: ComponentHandleRegistry | undefined,
+  getRuntime?: () => RendererRuntime | undefined,
+) {
   return (): NopComponentTreeItem[] => {
     const handles = componentRegistry?.getDebugSnapshot?.().handles;
+    const runtime = getRuntime?.();
 
     if (!handles) {
       return [];
@@ -339,7 +372,7 @@ export function buildGetComponentTree(componentRegistry: ComponentHandleRegistry
       .map((entry) => {
         const debugData = componentRegistry?.getHandleDebugData?.(entry.cid);
         const instancePath = debugData?.nodeInstance?.instancePath;
-        const element = document.querySelector(`[data-cid="${entry.cid}"]`) as HTMLElement | null;
+        const element = queryRuntimeScopedElement(runtime, entry.cid) ?? null;
         const className =
           typeof element?.className === 'string' && element.className.length > 0
             ? element.className

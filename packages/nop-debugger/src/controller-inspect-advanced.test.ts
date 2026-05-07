@@ -139,6 +139,53 @@ describe('controller inspector — advanced data', () => {
     });
   });
 
+  it('inspectByCid scopes DOM lookup to the active runtime root', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-runtime-scoped-dom', enabled: true });
+
+    const foreignRoot = document.createElement('div');
+    foreignRoot.setAttribute('data-runtime-id', 'runtime-foreign');
+    const foreignNode = document.createElement('div');
+    foreignNode.setAttribute('data-cid', '701');
+    foreignNode.className = 'foreign-node';
+    foreignRoot.appendChild(foreignNode);
+
+    const localRoot = document.createElement('div');
+    localRoot.setAttribute('data-runtime-id', 'runtime-local');
+    const localNode = document.createElement('section');
+    localNode.setAttribute('data-cid', '701');
+    localNode.className = 'local-node';
+    localRoot.appendChild(localNode);
+
+    document.body.appendChild(foreignRoot);
+    document.body.appendChild(localRoot);
+
+    ctrl.setRuntime({ runtimeId: 'runtime-local' } as never);
+    ctrl.setComponentRegistry({ id: 'reg-1', getHandleByCid: () => undefined } as never);
+
+    expect(ctrl.inspectByCid(701)).toMatchObject({
+      cid: 701,
+      tagName: 'section',
+      className: 'local-node',
+    });
+  });
+
+  it('inspectByCid does not fall back to page-global DOM lookup when the runtime root is missing', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-runtime-missing-root', enabled: true });
+
+    const foreignRoot = document.createElement('div');
+    foreignRoot.setAttribute('data-runtime-id', 'runtime-foreign');
+    const foreignNode = document.createElement('div');
+    foreignNode.setAttribute('data-cid', '702');
+    foreignNode.className = 'foreign-node';
+    foreignRoot.appendChild(foreignNode);
+    document.body.appendChild(foreignRoot);
+
+    ctrl.setRuntime({ runtimeId: 'runtime-local-missing' } as never);
+    ctrl.setComponentRegistry({ id: 'reg-2', getHandleByCid: () => undefined } as never);
+
+    expect(ctrl.inspectByCid(702)).toBeUndefined();
+  });
+
   it('getComponentTree enumerates mounted registry snapshot entries even without matching DOM elements', () => {
     const ctrl = createNopDebugger({ id: 'inspect-component-tree', enabled: true });
     const mockRegistry = {
@@ -187,6 +234,73 @@ describe('controller inspector — advanced data', () => {
       mounted: true,
     });
     expect(result[0]?.depth).toBeGreaterThan(0);
+  });
+
+  it('getComponentTree scopes DOM metadata lookup to the active runtime root', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-component-tree-runtime-scoped', enabled: true });
+
+    const foreignRoot = document.createElement('div');
+    foreignRoot.setAttribute('data-runtime-id', 'runtime-foreign');
+    const foreignNode = document.createElement('div');
+    foreignNode.setAttribute('data-cid', '901');
+    foreignNode.className = 'foreign-tree-node';
+    foreignRoot.appendChild(foreignNode);
+
+    const localRoot = document.createElement('div');
+    localRoot.setAttribute('data-runtime-id', 'runtime-local');
+    const localNode = document.createElement('section');
+    localNode.setAttribute('data-cid', '901');
+    localNode.className = 'local-tree-node';
+    localRoot.appendChild(localNode);
+
+    document.body.appendChild(foreignRoot);
+    document.body.appendChild(localRoot);
+
+    ctrl.setRuntime({ runtimeId: 'runtime-local' } as never);
+    ctrl.setComponentRegistry({
+      id: 'reg-tree',
+      getDebugSnapshot: () => ({
+        handles: [{ cid: 901, id: 'node-901', name: 'localNode', type: 'page', mounted: true }],
+      }),
+      getHandleDebugData: () => ({ rendererType: 'page' }),
+    } as never);
+
+    expect(ctrl.getComponentTree()).toEqual([
+      expect.objectContaining({
+        cid: 901,
+        tagName: 'section',
+        className: 'local-tree-node',
+      }),
+    ]);
+  });
+
+  it('getComponentTree does not fall back to page-global DOM lookup when the runtime root is missing', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-component-tree-missing-root', enabled: true });
+
+    const foreignRoot = document.createElement('div');
+    foreignRoot.setAttribute('data-runtime-id', 'runtime-foreign');
+    const foreignNode = document.createElement('div');
+    foreignNode.setAttribute('data-cid', '902');
+    foreignNode.className = 'foreign-tree-node';
+    foreignRoot.appendChild(foreignNode);
+    document.body.appendChild(foreignRoot);
+
+    ctrl.setRuntime({ runtimeId: 'runtime-local-missing' } as never);
+    ctrl.setComponentRegistry({
+      id: 'reg-tree-missing',
+      getDebugSnapshot: () => ({
+        handles: [{ cid: 902, id: 'node-902', name: 'missingRootNode', type: 'page', mounted: true }],
+      }),
+      getHandleDebugData: () => ({ rendererType: 'page' }),
+    } as never);
+
+    expect(ctrl.getComponentTree()).toEqual([
+      expect.objectContaining({
+        cid: 902,
+        tagName: undefined,
+        className: undefined,
+      }),
+    ]);
   });
 
   it('inspectByCid exposes nodeInstance-backed node state summary when present in debug data', () => {

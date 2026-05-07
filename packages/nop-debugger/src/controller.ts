@@ -133,7 +133,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const getRuntime = () => runtime;
   let currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
   let currentInspectByElement = buildInspectByElement(componentRegistry, getRuntime);
-  let currentGetComponentTree = buildGetComponentTree(componentRegistry);
+  let currentGetComponentTree = buildGetComponentTree(componentRegistry, getRuntime);
   let currentEvaluateNodeExpression = buildEvaluateNodeExpression(currentInspectByCid);
 
   const getSnapshot = () => store.getSnapshot();
@@ -391,7 +391,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       }
       currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
       currentInspectByElement = buildInspectByElement(componentRegistry, getRuntime);
-      currentGetComponentTree = buildGetComponentTree(componentRegistry);
+      currentGetComponentTree = buildGetComponentTree(componentRegistry, getRuntime);
       currentEvaluateNodeExpression = buildEvaluateNodeExpression(currentInspectByCid);
     },
     setActionScope(nextActionScope: ActionScope | null) {
