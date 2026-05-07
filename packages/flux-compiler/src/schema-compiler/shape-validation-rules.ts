@@ -1,6 +1,6 @@
-import { appendJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics';
+import { appendJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics.js';
 import { isPlainObject, normalizeRootPath } from '@nop-chaos/flux-core';
-import { validateHostAction, type HostActionValidationContext } from './host-action-validation';
+import { validateHostAction, type HostActionValidationContext } from './host-action-validation.js';
 
 export function emitSchemaDiagnostic(
   diagnostics: SchemaCompilerDiagnosticsContext,

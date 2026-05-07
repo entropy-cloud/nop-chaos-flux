@@ -12,9 +12,9 @@ import {
 import {
   createSchemaCompilerDiagnosticsContext,
   schemaPathToJsonPointer,
-} from './schema-compiler/diagnostics';
-import { canonicalizeSchemaInput } from './schema-compiler/authoring-transform';
-import { collectSchemaImportSpecs, normalizeImportSpecKey } from './schema-compiler/symbol-helpers';
+} from './schema-compiler/diagnostics.js';
+import { canonicalizeSchemaInput } from './schema-compiler/authoring-transform.js';
+import { collectSchemaImportSpecs, normalizeImportSpecKey } from './schema-compiler/symbol-helpers.js';
 
 export const MAX_COMPILE_DEPTH = 64;
 

@@ -6,8 +6,8 @@ import type {
 } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaCompiler, validateSchema } from './index';
-import { makeCompiler } from './schema-compiler-shape-validation-test-utils';
+import { createSchemaCompiler, validateSchema } from './index.js';
+import { makeCompiler } from './schema-compiler-shape-validation-test-utils.js';
 
 describe('compile and validate integration', () => {
   it('handles plugins with beforeCompile and afterCompile', () => {

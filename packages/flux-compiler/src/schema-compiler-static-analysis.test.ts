@@ -5,7 +5,7 @@ import {
   type TemplateNode,
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaCompiler } from './index';
+import { createSchemaCompiler } from './index.js';
 
 const textRenderer: RendererDefinition = {
   type: 'text',

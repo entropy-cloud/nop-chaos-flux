@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { compileReaction, isReactionFullyStatic } from './reaction-compiler';
+import { compileReaction, isReactionFullyStatic } from './reaction-compiler.js';
 import type { ReactionSchema } from '@nop-chaos/flux-core';
 
 describe('compileReaction', () => {

@@ -3,7 +3,7 @@ import type { RendererDefinition, RendererPlugin } from '@nop-chaos/flux-core';
 import {
   isNamespacedSchemaKey,
   applyWrapComponentPlugins,
-} from './schema-compiler/shape-validation';
+} from './schema-compiler/shape-validation.js';
 
 describe('isNamespacedSchemaKey', () => {
   it('returns true for namespaced keys', () => {

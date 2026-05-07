@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
-import { validateSchema } from './index';
+import { validateSchema } from './index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 describe('schema compiler renderer contract integration', () => {

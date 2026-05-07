@@ -6,9 +6,9 @@ import type {
   SchemaInput,
 } from '@nop-chaos/flux-core';
 import { isSchemaInput } from '@nop-chaos/flux-core';
-import { schemaPathToJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics';
-import { classifyField } from './fields';
-import { applyWrapComponentPlugins } from './shape-validation';
+import { schemaPathToJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics.js';
+import { classifyField } from './fields.js';
+import { applyWrapComponentPlugins } from './shape-validation.js';
 
 export function applyRendererAuthoringTransform(
   schema: BaseSchema,

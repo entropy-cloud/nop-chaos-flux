@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ActionSchema, ExpressionCompiler } from '@nop-chaos/flux-core';
-import { compileAction, compileActions } from './action-compiler';
+import { compileAction, compileActions } from './action-compiler.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 function createCompiler(): ExpressionCompiler {

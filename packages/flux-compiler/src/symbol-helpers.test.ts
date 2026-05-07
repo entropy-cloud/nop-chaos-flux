@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PreparedImportSpec, SchemaInput, XuiImportSpec } from '@nop-chaos/flux-core';
-import { createCompileSymbolTable } from './compile-symbol-table';
+import { createCompileSymbolTable } from './compile-symbol-table.js';
 import {
   pushImportSymbols,
   normalizeImportSpecKey,
@@ -8,7 +8,7 @@ import {
   pushPreparedImportSymbols,
   pushInjectedLocalSymbols,
   pushRegionParamSymbols,
-} from './schema-compiler/symbol-helpers';
+} from './schema-compiler/symbol-helpers.js';
 
 describe('symbol-helpers', () => {
   describe('pushImportSymbols', () => {

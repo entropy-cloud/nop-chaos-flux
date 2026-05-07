@@ -4,8 +4,8 @@ import type {
   HostContractContext,
   FluxValueShape,
 } from '@nop-chaos/flux-core';
-import type { SchemaCompilerDiagnosticsContext } from './diagnostics';
-import { appendJsonPointer, createSchemaCompilerDiagnosticsContext } from './diagnostics';
+import type { SchemaCompilerDiagnosticsContext } from './diagnostics.js';
+import { appendJsonPointer, createSchemaCompilerDiagnosticsContext } from './diagnostics.js';
 
 function createSilentDiagnosticsContext(): SchemaCompilerDiagnosticsContext {
   return createSchemaCompilerDiagnosticsContext({ diagnostics: { enabled: false } }, 'validate');

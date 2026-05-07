@@ -7,7 +7,7 @@ import {
   drawerRenderer,
   formRenderer,
   noop,
-} from './schema-compiler-prop-coverage.test-support';
+} from './schema-compiler-prop-coverage.test-support.js';
 
 describe('schema property coverage - dialog', () => {
   const textRenderer: RendererDefinition = {

@@ -13,7 +13,7 @@ import {
   treeRenderer,
   variantFieldRenderer,
   noop,
-} from './schema-compiler-prop-coverage.test-support';
+} from './schema-compiler-prop-coverage.test-support.js';
 
 describe('schema property coverage - recurse', () => {
   const compiler = createCompiler(recurseRenderer);

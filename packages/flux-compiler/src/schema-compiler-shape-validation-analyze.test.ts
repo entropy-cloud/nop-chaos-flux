@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { makeCompiler } from './schema-compiler-shape-validation-test-utils';
+import { makeCompiler } from './schema-compiler-shape-validation-test-utils.js';
 
 describe('analyzeSchemaInput validation', () => {
   it('reports invalid root (non-object, non-array)', () => {

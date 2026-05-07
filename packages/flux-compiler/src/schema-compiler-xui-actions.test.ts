@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RendererDefinition, TemplateNode } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
-import { createSchemaCompiler } from './index';
+import { createSchemaCompiler } from './index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 const containerRenderer: RendererDefinition = {

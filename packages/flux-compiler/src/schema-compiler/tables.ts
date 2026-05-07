@@ -4,7 +4,7 @@ import type {
   CompileSchemaOptions,
   SchemaInput,
 } from '@nop-chaos/flux-core';
-import { extractNestedSchemaRegions } from './regions';
+import { extractNestedSchemaRegions } from './regions.js';
 
 export const TABLE_COLUMN_REGION_FIELDS = [
   { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },

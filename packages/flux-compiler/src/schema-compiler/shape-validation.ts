@@ -9,27 +9,27 @@ import {
   appendJsonPointer,
   schemaPathToJsonPointer,
   type SchemaCompilerDiagnosticsContext,
-} from './diagnostics';
-import { classifyField } from './fields';
+} from './diagnostics.js';
+import { classifyField } from './fields.js';
 import {
   emitSchemaDiagnostic,
   validateActionShape,
   validateApiSchemaShape,
   validateDependsOnRoots,
   validateSourceShape,
-} from './shape-validation-rules';
+} from './shape-validation-rules.js';
 import {
   applyWrapComponentPlugins,
   getAcceptedSchemaKeys,
   getSchemaNamespace,
   hasClosedPropModel,
   isNamespacedSchemaKey,
-} from './shape-validation-utils';
-export { applyWrapComponentPlugins, isNamespacedSchemaKey } from './shape-validation-utils';
+} from './shape-validation-utils.js';
+export { applyWrapComponentPlugins, isNamespacedSchemaKey } from './shape-validation-utils.js';
 import {
   createHostActionValidationContext,
   type HostActionValidationContext,
-} from './host-action-validation';
+} from './host-action-validation.js';
 
 function findNamespaceValidator(diagnostics: SchemaCompilerDiagnosticsContext, namespace: string) {
   return diagnostics.validation.namespaceValidators.find(

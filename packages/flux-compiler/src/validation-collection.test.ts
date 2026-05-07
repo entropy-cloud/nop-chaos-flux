@@ -6,8 +6,8 @@ import type {
 } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaCompiler } from './index';
-import { collectValidationModel } from './schema-compiler/validation-collection';
+import { createSchemaCompiler } from './index.js';
+import { collectValidationModel } from './schema-compiler/validation-collection.js';
 
 const formRenderer: RendererDefinition = {
   type: 'form',

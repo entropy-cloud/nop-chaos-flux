@@ -10,7 +10,7 @@ import {
   parseNamespacedAction,
   validateHostAction,
   validateSchema,
-} from './index';
+} from './index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 const strictTextRenderer: RendererDefinition = {

@@ -12,8 +12,8 @@ import {
   formRenderer,
   inputRenderer,
   createTestCompiler,
-} from './schema-compiler-registry-fixtures';
-import { createSchemaCompiler } from './index';
+} from './schema-compiler-registry-fixtures.js';
+import { createSchemaCompiler } from './index.js';
 
 type CompiledNode = TemplateNode & {
   propsProgram: { kind: 'static'; value: Record<string, unknown> };

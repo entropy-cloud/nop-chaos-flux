@@ -1,7 +1,7 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaCompiler } from './index';
+import { createSchemaCompiler } from './index.js';
 
 export function createCompiler(...definitions: RendererDefinition[]) {
   return createSchemaCompiler({

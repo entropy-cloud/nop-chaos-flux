@@ -5,7 +5,7 @@ import type {
   ReactionSchema,
 } from '@nop-chaos/flux-core';
 import { normalizeRootPath } from '@nop-chaos/flux-core';
-import { compileActions } from './action-compiler';
+import { compileActions } from './action-compiler.js';
 
 export interface ReactionCompilerOptions extends ExpressionCompileOptions {
   basePath?: string;

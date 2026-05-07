@@ -13,7 +13,7 @@ import {
   mergeValidationRules,
   normalizeValidationTriggers,
   normalizeValidationVisibilityTriggers,
-} from '../validation-lowering';
+} from '../validation-lowering.js';
 
 function poolValidationBehavior(
   pool: Map<string, CompiledValidationBehavior>,

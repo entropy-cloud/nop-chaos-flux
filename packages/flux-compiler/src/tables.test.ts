@@ -5,7 +5,7 @@ import type {
   SchemaInput,
   TemplateNode,
 } from '@nop-chaos/flux-core';
-import { DEEP_FIELD_NORMALIZERS } from './schema-compiler/tables';
+import { DEEP_FIELD_NORMALIZERS } from './schema-compiler/tables.js';
 
 function createMockCompileSchema(): (
   input: SchemaInput,

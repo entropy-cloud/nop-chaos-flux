@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { compileDataSource, isDataSourceFullyStatic } from './source-compiler';
+import { compileDataSource, isDataSourceFullyStatic } from './source-compiler.js';
 import type { CompiledRuntimeValue, DataSourceSchema } from '@nop-chaos/flux-core';
 
 function getStaticValue<T>(compiled: CompiledRuntimeValue<T> | undefined): T | undefined {

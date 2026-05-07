@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
-import { textRenderer } from './schema-compiler-registry-fixtures';
+import { textRenderer } from './schema-compiler-registry-fixtures.js';
 
 describe('createSchemaCompiler', () => {
   it('fails fast on duplicate initial renderer definitions', () => {

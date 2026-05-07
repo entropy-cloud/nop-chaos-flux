@@ -5,7 +5,7 @@ import type {
   RendererHostContract,
 } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
-import { validateSchema } from './index';
+import { validateSchema } from './index.js';
 
 const automaticHostManifest: HostCapabilityProjectionManifest = {
   family: 'designer',

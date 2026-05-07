@@ -1,6 +1,6 @@
 import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaCompiler } from './index';
+import { createSchemaCompiler } from './index.js';
 
 export const tableRenderer: RendererDefinition = {
   type: 'table',

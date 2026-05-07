@@ -3,7 +3,7 @@ import type { RendererDefinition } from '@nop-chaos/flux-core';
 import {
   importHostRenderer,
   createTestCompiler,
-} from './schema-compiler-registry-fixtures';
+} from './schema-compiler-registry-fixtures.js';
 
 describe('createSchemaCompiler', () => {
   it('preserves xui:imports on compiled schema for runtime registration', () => {
