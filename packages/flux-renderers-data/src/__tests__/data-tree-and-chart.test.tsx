@@ -385,4 +385,49 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
       expect(screen.getByText('Child')).toBeTruthy();
     });
   });
+
+  it('publishes aria-expanded on the actual focus target in expandOnClickNode mode', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-expand-on-click-a11y"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tree',
+              data: '${nodes}',
+              initiallyExpanded: false,
+              expandOnClickNode: true,
+            },
+          ],
+        }}
+        data={{
+          nodes: [
+            {
+              id: 'parent',
+              label: 'Parent',
+              children: [{ id: 'child', label: 'Child', children: [] }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const parentNode = await screen.findByRole('treeitem', { name: 'Parent' });
+    expect(parentNode.getAttribute('aria-expanded')).toBe('false');
+
+    parentNode.focus();
+    expect(document.activeElement).toBe(parentNode);
+
+    fireEvent.keyDown(parentNode, { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(parentNode.getAttribute('aria-expanded')).toBe('true');
+      expect(screen.getByText('Child')).toBeTruthy();
+    });
+  });
 });

@@ -1,6 +1,7 @@
+import { mergeConfig } from 'vitest/config';
 import { createSharedVitestConfig } from '../../vitest.shared';
 
-export default createSharedVitestConfig({
+const sharedConfig = createSharedVitestConfig({
   environment: 'jsdom',
   coverage: {
     provider: 'v8',
@@ -13,5 +14,11 @@ export default createSharedVitestConfig({
       lines: 80,
       statements: 80,
     },
+  },
+});
+
+export default mergeConfig(sharedConfig, {
+  test: {
+    maxWorkers: 1,
   },
 });

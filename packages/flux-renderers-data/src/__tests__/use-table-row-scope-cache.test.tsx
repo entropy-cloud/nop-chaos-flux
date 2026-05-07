@@ -1,10 +1,11 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, render, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import {
   __getTableRowScopeCacheSizeForTests,
   __hasTableRowScopeCacheForTests,
+  __resetTableRowScopeCachesForTests,
   useTableRowScopeCache,
 } from '../table-renderer/use-table-row-scope-cache';
 
@@ -92,6 +93,11 @@ function HookHarness(props: {
 
   return null;
 }
+
+afterEach(() => {
+  cleanup();
+  __resetTableRowScopeCachesForTests();
+});
 
 describe('useTableRowScopeCache', () => {
   it('starts with no registered module cache state', () => {

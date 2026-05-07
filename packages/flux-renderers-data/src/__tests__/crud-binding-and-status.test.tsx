@@ -50,6 +50,7 @@ describe('CRUD binding and status', () => {
             {
               type: 'crud',
               id: 'selection-crud',
+              selection: {},
               selectionOwnership: 'scope',
               selectionStatePath: 'crudSelection.keys',
               source: [
@@ -73,8 +74,8 @@ describe('CRUD binding and status', () => {
     );
 
     expect(screen.getByText('Selected: 0')).toBeTruthy();
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    fireEvent.click(checkboxes[1] as HTMLInputElement);
+    const checkboxes = document.querySelectorAll('[data-slot="checkbox"]');
+    fireEvent.click(checkboxes[1] as HTMLElement);
     await waitFor(() => expect(screen.getByText('Selected: 1')).toBeTruthy());
   });
 

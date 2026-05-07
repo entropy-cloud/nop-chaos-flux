@@ -26,6 +26,10 @@ export function __hasTableRowScopeCacheForTests(cacheKey: string) {
   return tableRowScopeCaches.has(cacheKey);
 }
 
+export function __resetTableRowScopeCachesForTests() {
+  tableRowScopeCaches.clear();
+}
+
 function createRowScopeCacheState(): RowScopeCacheState {
   return {
     scopes: new Map<string, ScopeRef>(),
@@ -110,6 +114,8 @@ export function useTableRowScopeCache(
   );
 
   useLayoutEffect(() => {
+    tableRowScopeCaches.set(cacheKey, cacheState);
+
     return () => {
       if (tableRowScopeCaches.get(cacheKey) === cacheState) {
         rowScopeCache.clear();

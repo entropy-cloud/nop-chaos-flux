@@ -8,6 +8,7 @@ import {
   formulaCompiler,
   nodeInstanceProbeRenderer,
   rowRecordNameProbeRenderer,
+  resolvedNameProbeRenderer,
   registerProbeNamespace,
   rowScopeIdProbeRenderer,
 } from '../test-support';
@@ -541,6 +542,40 @@ describe('dataRendererDefinitions table behavior', () => {
     const selects = screen.getAllByRole('combobox');
     expect(selects[0].textContent).toContain('APAC');
     expect(selects[1].textContent).toContain('EMEA');
+  });
+
+  it('preserves raw slot field names for table cell render props', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer([resolvedNameProbeRenderer]);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/table-resolved-field-name"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              rowKey: 'id',
+              columns: [
+                {
+                  label: 'Probe',
+                  name: 'tags',
+                  cell: {
+                    type: 'resolved-name-probe',
+                    name: '$slot.record.tags',
+                  },
+                },
+              ],
+              source: [{ id: 1, tags: ['alpha'] }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect((await screen.findByTestId('resolved-name-probe')).textContent).toBe('$slot.record.tags');
   });
 
   it('does not bind form controls in cells via bare fieldName (isolated scope)', async () => {

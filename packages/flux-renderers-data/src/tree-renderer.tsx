@@ -89,9 +89,10 @@ function TreeNodeRenderer(props: {
         bindings: { node, index, depth, key: nodeKey, parentNode },
       })
     : null;
+  const interactiveNode = hasChildren && expandOnClickNode;
 
   return (
-    <div data-slot="tree-node" data-depth={depth} data-node-key={nodeKey} role="treeitem" aria-expanded={hasChildren ? open : undefined}>
+    <div data-slot="tree-node" data-depth={depth} data-node-key={nodeKey} role={interactiveNode ? undefined : 'treeitem'} aria-expanded={interactiveNode ? undefined : hasChildren ? open : undefined}>
       <Collapsible open={open} onOpenChange={setOpen}>
         <div className="flex items-center gap-2" style={{ paddingInlineStart: `${depth * 16 + 8}px` }}>
           {hasChildren ? (
@@ -112,15 +113,16 @@ function TreeNodeRenderer(props: {
 
           <div
             className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted"
-            role={hasChildren && expandOnClickNode ? 'button' : undefined}
-            tabIndex={hasChildren && expandOnClickNode ? 0 : undefined}
+            role={interactiveNode ? 'treeitem' : undefined}
+            aria-expanded={interactiveNode ? open : undefined}
+            tabIndex={interactiveNode ? 0 : undefined}
             onClick={() => {
-              if (hasChildren && expandOnClickNode) {
+              if (interactiveNode) {
                 setOpen((previous) => !previous);
               }
             }}
             onKeyDown={(e) => {
-              if (hasChildren && expandOnClickNode && (e.key === 'Enter' || e.key === ' ')) {
+              if (interactiveNode && (e.key === 'Enter' || e.key === ' ')) {
                 e.preventDefault();
                 setOpen((previous) => !previous);
               }

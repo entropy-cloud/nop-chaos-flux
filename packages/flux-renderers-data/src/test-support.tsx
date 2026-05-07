@@ -70,6 +70,15 @@ export const rowRecordNameProbeRenderer: RendererDefinition = {
   component: RowRecordNameProbeRenderer,
 };
 
+function ResolvedNameProbeRenderer(props: RendererComponentProps) {
+  return <span data-testid="resolved-name-probe">{String(props.props.name ?? '')}</span>;
+}
+
+export const resolvedNameProbeRenderer: RendererDefinition = {
+  type: 'resolved-name-probe',
+  component: ResolvedNameProbeRenderer,
+};
+
 function DispatchProbeRenderer(props: RendererComponentProps) {
   return (
     <Button
