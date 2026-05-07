@@ -1,4 +1,4 @@
-import { Profiler, startTransition, useMemo, useRef, useState } from 'react';
+import { memo, Profiler, startTransition, useCallback, useMemo, useRef, useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { ExecutableApiRequest, RendererEnv } from '@nop-chaos/flux-core';
@@ -34,6 +34,44 @@ registerDataRenderers(registry);
 
 const SchemaRenderer = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();
+
+interface PerformanceSchemaStageProps {
+  mode: PerformanceMode;
+  schema: ReturnType<typeof createPerformanceSchema>;
+  data: Record<string, unknown>;
+  env: RendererEnv;
+  onProfilerCommit: (actualDuration: number) => void;
+}
+
+const PerformanceSchemaStage = memo(function PerformanceSchemaStage({
+  mode,
+  schema,
+  data,
+  env,
+  onProfilerCommit,
+}: PerformanceSchemaStageProps) {
+  const handleProfilerRender = (
+    _id: string,
+    _phase: 'mount' | 'update' | 'nested-update',
+    actualDuration: number,
+  ) => {
+    onProfilerCommit(actualDuration);
+  };
+
+  return (
+    <Profiler id="performance-table-page" onRender={handleProfilerRender}>
+      <SchemaRenderer
+        key={mode}
+        schemaUrl={`playground://pages/performance-table/${mode}`}
+        schema={schema}
+        data={data}
+        env={env}
+        registry={registry}
+        formulaCompiler={formulaCompiler}
+      />
+    </Profiler>
+  );
+});
 
 export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
   const [mode, setMode] = useState<PerformanceMode>('table-only');
@@ -75,14 +113,13 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
     [initialRows, perfRows],
   );
 
-  const handleProfilerRender = (
-    _id: string,
-    _phase: 'mount' | 'update' | 'nested-update',
-    actualDuration: number,
-  ) => {
-    const next = recordProfilerCommit(metricsRef.current, actualDuration, Date.now());
-    metricsRef.current = next;
-  };
+  const handleProfilerCommit = useCallback((actualDuration: number) => {
+    setMetrics((current) => {
+      const next = recordProfilerCommit(current, actualDuration, Date.now());
+      metricsRef.current = next;
+      return next;
+    });
+  }, []);
 
   async function runHostBatch(label: string, steps: number) {
     const before = metricsRef.current;
@@ -262,17 +299,13 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
           </div>
         </div>
         <div className="mt-8 p-6 rounded-[20px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)] overflow-x-auto">
-          <Profiler id="performance-table-page" onRender={handleProfilerRender}>
-            <SchemaRenderer
-              key={mode}
-              schemaUrl={`playground://pages/performance-table/${mode}`}
-              schema={schema}
-              data={data}
-              env={env}
-              registry={registry}
-              formulaCompiler={formulaCompiler}
-            />
-          </Profiler>
+          <PerformanceSchemaStage
+            mode={mode}
+            schema={schema}
+            data={data}
+            env={env}
+            onProfilerCommit={handleProfilerCommit}
+          />
         </div>
       </section>
     </main>

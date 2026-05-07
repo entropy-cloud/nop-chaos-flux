@@ -49,6 +49,15 @@ test.describe('Performance Table Page', () => {
     await expect(page.getByText('Host row mutation benchmark: 20 updates')).toBeVisible({
       timeout: 60_000,
     });
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const cards = Array.from(document.querySelectorAll('.text-lg.font-semibold'));
+          const commitsCard = cards[3]?.textContent?.trim() ?? '0';
+          return Number.parseInt(commitsCard, 10);
+        }),
+      )
+      .toBeGreaterThan(0);
     await expect(page.getByText(/Scheduling \+ settle:/)).toBeVisible({ timeout: 60_000 });
     await expect(page.getByText(/Commit count:/)).toBeVisible({ timeout: 60_000 });
     await expect(page.getByText(/Total commit duration:/)).toBeVisible({ timeout: 60_000 });
