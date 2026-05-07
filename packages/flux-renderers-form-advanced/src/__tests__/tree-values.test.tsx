@@ -10,7 +10,7 @@ import {
   env,
   formStateProbeRenderer,
   submitCalls,
-} from '../../../flux-renderers-form/src/test-support';
+} from '@nop-chaos/flux-renderers-form/test-support';
 
 describe('tree controls - value handling and form integration', () => {
   it('submits input-tree values through the shared form field path', async () => {

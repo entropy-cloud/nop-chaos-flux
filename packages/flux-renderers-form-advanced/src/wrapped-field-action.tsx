@@ -65,6 +65,21 @@ export function WrappedFieldAction(props: WrappedFieldActionProps) {
     ...rest
   } = props;
 
+  const invokePrimaryAction = (
+    e: React.MouseEvent<HTMLSpanElement> | React.KeyboardEvent<HTMLSpanElement>,
+  ) => {
+    onPress?.(e);
+
+    if ('button' in e) {
+      onClick?.(e);
+      return;
+    }
+
+    if (onClick) {
+      onClick(e as unknown as React.MouseEvent<HTMLSpanElement>);
+    }
+  };
+
   const handleClick = (e: React.MouseEvent<HTMLSpanElement>) => {
     if (disabled) {
       e.preventDefault();
@@ -73,8 +88,7 @@ export function WrappedFieldAction(props: WrappedFieldActionProps) {
     }
 
     e.stopPropagation();
-    onClick?.(e);
-    onPress?.(e);
+    invokePrimaryAction(e);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
@@ -87,7 +101,7 @@ export function WrappedFieldAction(props: WrappedFieldActionProps) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       e.stopPropagation();
-      onPress?.(e);
+      invokePrimaryAction(e);
     }
   };
 

@@ -6,7 +6,7 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index';
-import { env, formStateProbeRenderer } from '../../../flux-renderers-form/src/test-support';
+import { env, formStateProbeRenderer } from '@nop-chaos/flux-renderers-form/test-support';
 
 const allFormDefs = [
   ...basicRendererDefinitions,

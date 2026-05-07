@@ -9,7 +9,7 @@ import {
   env,
   formStateProbeRenderer,
   scopeStateProbeRenderer,
-} from '../../../flux-renderers-form/src/test-support';
+} from '@nop-chaos/flux-renderers-form/test-support';
 import { formAdvancedRendererDefinitions } from '../index';
 
 const allDefs = [

@@ -222,6 +222,24 @@ describe('ConditionItem', () => {
     expect(onRemove).toHaveBeenCalledTimes(1);
   });
 
+  it('calls onRemove when remove action is activated with Enter or Space', () => {
+    const onRemove = vi.fn();
+    render(
+      <ConditionItem
+        value={makeItem()}
+        fields={testFields}
+        onChange={() => {}}
+        onRemove={onRemove}
+      />,
+    );
+
+    const removeBtn = screen.getByRole('button', { name: /remove/i });
+    fireEvent.keyDown(removeBtn, { key: 'Enter' });
+    fireEvent.keyDown(removeBtn, { key: ' ' });
+
+    expect(onRemove).toHaveBeenCalledTimes(2);
+  });
+
   it('hides remove button when disabled', () => {
     const { container } = render(
       <ConditionItem

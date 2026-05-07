@@ -16,6 +16,7 @@ import { WrappedFieldAction } from './wrapped-field-action';
 
 export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const name = String(props.props.name ?? '');
+  const required = Boolean(props.props.required);
   const {
     currentForm,
     scope,
@@ -23,7 +24,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
     presentation,
   } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
+    required,
   });
   const value = Array.isArray(boundValue) ? boundValue.map((item) => String(item)) : [];
   const labelText = resolveFieldLabelText(props, name);
@@ -65,7 +66,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
           ? currentValue.map((item) => String(item))
           : [];
 
-        if (currentTags.length === 0) {
+        if (required && currentTags.length === 0) {
           return [
             {
               path: name,
@@ -78,7 +79,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
         return [];
       },
     }).unregister;
-  }, [currentForm, currentValidationScope, labelText, modelGeneration, name, scope]);
+  }, [currentForm, currentValidationScope, labelText, modelGeneration, name, required, scope]);
 
   return (
     <div

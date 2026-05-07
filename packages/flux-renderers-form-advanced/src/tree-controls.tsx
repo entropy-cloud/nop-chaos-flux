@@ -175,7 +175,12 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const searchLabel = `${t('flux.common.search')} ${String((props.props.label ?? name) || 'tree')}`;
 
   return (
-    <div data-slot="input-tree-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
+    <div
+      className={props.meta.className}
+      data-slot="input-tree-control"
+      data-testid={props.meta.testid}
+      data-cid={props.meta.cid}
+    >
       <div data-slot="input-tree-options">
         <TreeOptionList
           options={options}
@@ -223,7 +228,12 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const searchLabel = `${t('flux.common.search')} ${fieldLabel || 'tree'}`;
 
   return (
-    <div data-slot="tree-select-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
+    <div
+      className={props.meta.className}
+      data-slot="tree-select-control"
+      data-testid={props.meta.testid}
+      data-cid={props.meta.cid}
+    >
       <Popover>
         <div className="flex items-center gap-2" data-slot="tree-select-trigger-row">
           <PopoverTrigger

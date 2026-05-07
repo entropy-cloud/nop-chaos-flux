@@ -64,4 +64,36 @@ describe('advanced widget root className contract', () => {
     expect(container.querySelector('.nop-key-value.custom-key-value')).toBeTruthy();
     expect(container.querySelector('.nop-array-editor.custom-array-editor')).toBeTruthy();
   });
+
+  it('merges schema className into input-tree and tree-select roots', () => {
+    cleanup();
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://advanced/widget-classname#tree-controls"
+        schema={{
+          type: 'form',
+          data: { treeValue: [], departmentId: '' },
+          body: [
+            {
+              type: 'input-tree',
+              name: 'treeValue',
+              className: 'custom-input-tree',
+              options: [{ label: 'Root', value: 'root' }],
+            },
+            {
+              type: 'tree-select',
+              name: 'departmentId',
+              className: 'custom-tree-select',
+              options: [{ label: 'Engineering', value: 'eng' }],
+            },
+          ],
+        } as any}
+        env={env as any}
+        formulaCompiler={createFormulaCompiler()}
+      />, 
+    );
+
+    expect(container.querySelector('[data-slot="input-tree-control"].custom-input-tree')).toBeTruthy();
+    expect(container.querySelector('[data-slot="tree-select-control"].custom-tree-select')).toBeTruthy();
+  });
 });

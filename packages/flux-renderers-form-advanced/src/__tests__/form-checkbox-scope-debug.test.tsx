@@ -11,7 +11,7 @@ import {
   formStateProbeRenderer,
   scopeStateProbeRenderer,
   submitCalls,
-} from '../../../flux-renderers-form/src/test-support';
+} from '@nop-chaos/flux-renderers-form/test-support';
 import { allFormDefs } from './tree-checkbox-fields-test-helpers';
 
 describe('checkbox-group values and scope-debug', () => {

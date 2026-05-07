@@ -12,7 +12,7 @@ import {
   selectOption,
   sharedFormulaCompiler,
   submitCalls,
-} from '../../../flux-renderers-form/src/test-support';
+} from '@nop-chaos/flux-renderers-form/test-support';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 

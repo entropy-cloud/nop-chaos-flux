@@ -243,6 +243,40 @@ describe('array-field renderer (scalar)', () => {
     fireEvent.click(screen.getByText('Tags').closest('.nop-field')!);
     expect(screen.getAllByText('Remove').length).toBe(1);
   });
+
+  it('removes an item when the wrapped remove action is activated from the keyboard', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#keyboard-remove"
+        schema={{
+          type: 'form',
+          data: {
+            tags: ['alpha', 'beta'],
+          },
+          body: [
+            {
+              type: 'array-field',
+              name: 'tags',
+              itemKind: 'scalar',
+              label: 'Tags',
+              item: [{ type: 'input-text', name: 'value', label: 'Tag' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getAllByText('Remove').length).toBe(2));
+    const removeAction = screen.getAllByRole('button', { name: 'Remove' })[0];
+    fireEvent.keyDown(removeAction, { key: 'Enter' });
+
+    await waitFor(() => expect(screen.getAllByText('Remove').length).toBe(1));
+  });
 });
 
 describe('array-field renderer (object itemKind)', () => {

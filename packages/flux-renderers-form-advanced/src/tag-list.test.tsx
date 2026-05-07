@@ -2,6 +2,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
+import { dataRendererDefinitions } from '@nop-chaos/flux-renderers-data';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { describe, expect, it } from 'vitest';
 import { formAdvancedRendererDefinitions } from './index';
@@ -131,5 +132,95 @@ describe('tag-list renderer', () => {
     fireEvent.click(field!);
 
     expect(redTag.closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('toggles tags with keyboard activation through the same business path as click', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      ...formAdvancedRendererDefinitions,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/tag-list.test.tsx#keyboard"
+        schema={{
+          type: 'page',
+          data: {},
+          body: [
+            {
+              type: 'tag-list',
+              name: 'tags',
+              tags: ['red'],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const redTag = await screen.findByText('red');
+    const action = redTag.closest('[role="button"]');
+
+    expect(action?.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.keyDown(action!, { key: 'Enter' });
+    await waitFor(() => expect(action?.getAttribute('aria-pressed')).toBe('true'));
+    fireEvent.keyDown(action!, { key: ' ' });
+    await waitFor(() => expect(action?.getAttribute('aria-pressed')).toBe('false'));
+  });
+
+  it('does not show required validation for non-required tag-list cells in page tables', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      ...formAdvancedRendererDefinitions,
+      ...dataRendererDefinitions,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/tag-list.test.tsx#4"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              rowKey: 'id',
+              source: [
+                { id: 1, tags: ['alpha'] },
+                { id: 2, tags: ['alpha'] },
+              ],
+              columns: [
+                {
+                  label: 'Tags',
+                  name: 'tags',
+                  cell: {
+                    type: 'tag-list',
+                    name: '$slot.record.tags',
+                    label: 'Tags',
+                    tags: ['alpha'],
+                  },
+                },
+              ],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const tagButtons = await screen.findAllByText('alpha');
+    expect(tagButtons[0].closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(tagButtons[0]);
+
+    await waitFor(() => {
+      expect(tagButtons[0].closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('false');
+    });
+    expect(screen.queryByText('Tags requires at least one tag')).toBeNull();
+    expect(tagButtons[1].closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('true');
   });
 });
