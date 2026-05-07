@@ -4,9 +4,7 @@ test.describe.configure({ mode: 'serial' });
 
 async function openPerformanceTable(page: import('@playwright/test').Page) {
   await page.goto('/#/performance-table', { waitUntil: 'commit' });
-  await expect(
-    page.getByRole('heading', { name: 'Table Performance Playground', level: 1 }),
-  ).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByText('Performance Table Playground')).toBeVisible({ timeout: 45_000 });
   await expect(page.getByRole('button', { name: 'Run 20 Host Mutations' })).toBeVisible();
 }
 
@@ -170,5 +168,17 @@ test.describe('Performance Table Page', () => {
     expect(lastRow!.profile).toContain('1000');
     expect(lastRow!.switchChecked).toBe('true');
     expect(lastRow!.checkboxChecked).toBe('false');
+  });
+
+  test('keeps tag-list validation local to the edited row', async ({ page }) => {
+    test.setTimeout(120_000);
+    await openPerformanceTable(page);
+
+    const firstTagButton = page.getByRole('button', { name: 'tag-1' }).first();
+    await expect(firstTagButton).toBeVisible();
+
+    await firstTagButton.click();
+
+    await expect(page.getByText('requires at least one tag')).toHaveCount(0);
   });
 });

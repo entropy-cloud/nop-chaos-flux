@@ -115,7 +115,7 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
         case 'flux-basic':
           return <FluxBasicPage debuggerController={debuggerController} onBack={goHome} />;
         case 'flow-designer':
-          return <LazyFlowDesignerPageWithRegistration onBack={goHome} />;
+          return <LazyFlowDesignerPageWithRegistration debuggerController={debuggerController} onBack={goHome} />;
         case 'dingtalk-flow-demo':
           return <LazyDingTalkFlowDemoWithRegistration onBack={goHome} />;
         case 'report-designer':

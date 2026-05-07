@@ -104,6 +104,8 @@ host scope 向下投影一套 canonical contract，不再把 compatibility alias
 - `designer`、`spreadsheet`、`selectionTarget`、`reportDocument`、`workbook`、`activeSheet`、`activeCell`、`activeRange`、`inspector`、`inspectorPanels`、`meta` 属于 host scope 的 core projection contract。
 - `runtime`、`canUndo`、`canRedo`、`documentName`、`fieldSources`、`fieldCount`、`preview` 属于明确保留的 derived convenience projections。
 - 旧 `target` / `selection` / `inspectorBody` 不再作为 canonical contract 记录；如仍有兼容读面，应视为 runtime residual，而不是文档基线。
+- `workbook` / `spreadsheet.workbook` 必须与 `reportDocument.document.spreadsheet` 指向同一条 canonical workbook baseline；save/export/host projection 不支持各自读取不同 spreadsheet snapshot。
+- `runtime.dirty` 是对外发布给 `statusPath` 和 host scope 的聚合 dirty；初次挂载时内部 spreadsheet clone 不能被误发布成外部 dirty 变更。
 
 ## 8. 事件、动作与组件句柄能力
 

@@ -168,3 +168,9 @@ tree node scope = parent lexical visibility + { node, index, depth, optional key
 - `tree` 做通用树 UI renderer
 - `input-tree` / `tree-select` 留给后续 form renderer
 - `loop + recurse` 保持纯结构原语，不替代 `tree`
+
+## 13. `expandOnClickNode` 可访问性基线
+
+- 当 `expandOnClickNode: true` 且节点存在子节点时，真实可聚焦、可交互的节点元素同时承担展开/收起交互与 `aria-expanded` 状态发布。
+- 不允许把焦点放在内层交互目标上、却把 `aria-expanded` 挂在外层非焦点元素上。
+- 无子节点时不发布 `aria-expanded`。

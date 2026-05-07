@@ -1,7 +1,7 @@
 # 219 Table Row Scope Publication And Invalidation Closure Plan
 
-> Plan Status: in_progress
-> Last Reviewed: 2026-05-06
+> Plan Status: completed
+> Last Reviewed: 2026-05-07
 > Source: `docs/architecture/dependency-tracking.md`, `docs/architecture/table-row-identity-and-scope-performance.md`, `docs/plans/107-collection-renderer-scalability-plan.md`, live code in `packages/flux-renderers-data/src/table-renderer.tsx`, `packages/flux-renderers-data/src/table-renderer/use-table-row-scope-cache.ts`, and `packages/flux-react/src/render-nodes.tsx`
 > Related: `docs/plans/107-collection-renderer-scalability-plan.md`, `docs/plans/184-reactive-hot-path-precision-and-notification-scaling-plan.md`
 
@@ -53,78 +53,83 @@
 
 ### Phase 1 - Table Row Publication Contract
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/table-renderer/use-table-row-scope-cache.ts`, `packages/flux-renderers-data/src/table-renderer.tsx`, focused tests, owner docs
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Move row-scope cache mutation, row-scope publication, and stale-row eviction out of render phase into an owner-controlled reconciliation step that satisfies the existing table row owner doc rule.
-- [ ] Replace the current per-root `merge()` sync in `useTableRowScopeCache()` with a single minimal row-payload publication path that emits only the changed row-local roots for that row reconciliation.
-- [ ] Keep `rowKey`-addressed scope reuse and preserve no-op behavior when both `record` and `index` are stable for an existing row.
-- [ ] Add explicit cache cleanup on unmount / owner-key turnover so the module-level row cache does not leak stale table entries.
-- [ ] Add a small helper or explicit local contract for row-scope payload diffing/publication so the table owner baseline is readable in code rather than hidden inside ad hoc `if` branches.
-- [ ] Add focused unit coverage using `ScopeRef.store.getLastChange()` or a row-scope spy/fake proving row payload publication emits `['record']`, `['index']`, or `['index', 'record']` as appropriate and emits nothing for unchanged rows.
-- [ ] Add focused cleanup coverage proving the row-scope cache entry is removed when the owning table unmounts or its owner key changes.
+- [x] Move row-scope cache mutation, row-scope publication, and stale-row eviction out of render phase into an owner-controlled reconciliation step that satisfies the existing table row owner doc rule.
+- [x] Replace the current per-root `merge()` sync in `useTableRowScopeCache()` with a single minimal row-payload publication path that emits only the changed row-local roots for that row reconciliation.
+- [x] Keep `rowKey`-addressed scope reuse and preserve no-op behavior when both `record` and `index` are stable for an existing row.
+- [x] Add explicit cache cleanup on unmount / owner-key turnover so the module-level row cache does not leak stale table entries.
+- [x] Add a small helper or explicit local contract for row-scope payload diffing/publication so the table owner baseline is readable in code rather than hidden inside ad hoc `if` branches.
+- [x] Add focused unit coverage using `ScopeRef.store.getLastChange()` or a row-scope spy/fake proving row payload publication emits `['record']`, `['index']`, or `['index', 'record']` as appropriate and emits nothing for unchanged rows.
+- [x] Add focused cleanup coverage proving the row-scope cache entry is removed when the owning table unmounts or its owner key changes.
 
 Exit Criteria:
 
-- [ ] Table row owner no longer mutates external row-scope cache state or publishes row-scope updates as a render-phase side effect in the supported path.
-- [ ] Table row owner publishes one minimal change-set per affected row reconciliation instead of multiple sequential root merges in the supported path.
-- [ ] Unchanged rows keep their existing scope and do not republish row-local roots.
-- [ ] Module-level row cache entries are cleaned up when the owning table instance unmounts or its owner key changes.
-- [ ] Focused tests lock both the changed-root publication contract and the row-scope cache cleanup contract.
-- [ ] `docs/architecture/table-row-identity-and-scope-performance.md` is updated to the final supported row owner baseline.
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] Table row owner no longer mutates external row-scope cache state or publishes row-scope updates as a render-phase side effect in the supported path.
+- [x] Table row owner publishes one minimal change-set per affected row reconciliation instead of multiple sequential root merges in the supported path.
+- [x] Unchanged rows keep their existing scope and do not republish row-local roots.
+- [x] Module-level row cache entries are cleaned up when the owning table instance unmounts or its owner key changes.
+- [x] Focused tests lock both the changed-root publication contract and the row-scope cache cleanup contract.
+- [x] `docs/architecture/table-row-identity-and-scope-performance.md` is updated to the final supported row owner baseline.
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 2 - Table Behavior Proof And Owner-Doc Closure
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/table-renderer.tsx`, `packages/flux-renderers-data/src/__tests__/data-table.test.tsx`, `docs/architecture/dependency-tracking.md`, `docs/architecture/table-row-identity-and-scope-performance.md`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Add integration-style proof that a rerender with the same `rowKey` reuses the same row scope while row-local consumers observe updated `record` content from the reused scope.
-- [ ] Add explicit wording to owner docs that table already owns a supported row-local translation slice, while generic collection-owner translation for loop/list/tree remains out of scope.
-- [ ] Re-audit the inconsistent sections in `dependency-tracking.md` (`Gap 4` vs later normative collection/row rules) and rewrite them to describe the final table-only baseline plus remaining generic gap honestly.
+- [x] Add integration-style proof that a rerender with the same `rowKey` reuses the same row scope while row-local consumers observe updated `record` content from the reused scope.
+- [x] Add explicit wording to owner docs that table already owns a supported row-local translation slice, while generic collection-owner translation for loop/list/tree remains out of scope.
+- [x] Re-audit the inconsistent sections in `dependency-tracking.md` (`Gap 4` vs later normative collection/row rules) and rewrite them to describe the final table-only baseline plus remaining generic gap honestly.
 
 Exit Criteria:
 
-- [ ] Focused integration tests prove stable row-scope reuse plus updated row-local bindings under reused scopes.
-- [ ] `docs/architecture/dependency-tracking.md` and `docs/architecture/table-row-identity-and-scope-performance.md` describe the final live table baseline without claiming generic collection closure.
-- [ ] No in-scope owner ambiguity remains between plan 107 and this plan.
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] Focused integration tests prove stable row-scope reuse plus updated row-local bindings under reused scopes.
+- [x] `docs/architecture/dependency-tracking.md` and `docs/architecture/table-row-identity-and-scope-performance.md` describe the final live table baseline without claiming generic collection closure.
+- [x] No in-scope owner ambiguity remains between plan 107 and this plan.
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 3 - Verification And Independent Closure Audit
 
-Status: planned
+Status: completed
 Targets: in-scope package/tests/docs, this plan
 
 - Item Types: `Proof | Decision`
 
-- [ ] Run focused `@nop-chaos/flux-renderers-data` tests covering row scope reuse/publication behavior.
-- [ ] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after the code and doc changes land.
-- [ ] Perform an independent closure audit and revise the plan if the audit finds scope dishonesty or remaining in-scope contract drift.
+- [x] Run focused `@nop-chaos/flux-renderers-data` tests covering row scope reuse/publication behavior.
+- [x] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after the code and doc changes land.
+- [x] Perform an independent closure audit and revise the plan if the audit finds scope dishonesty or remaining in-scope contract drift.
 
 Exit Criteria:
 
-- [ ] Focused verification is recorded for row publication and reuse behavior.
-- [ ] Workspace verification passes.
-- [ ] Independent closure audit confirms the plan closes the table-owned slice honestly without overclaiming generic collection translation.
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] Focused verification is recorded for row publication and reuse behavior.
+- [x] Workspace verification passes.
+- [x] Independent closure audit confirms the plan closes the table-owned slice honestly without overclaiming generic collection translation.
+- [x] `docs/logs/` 对应日期条目已更新
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复
-- [ ] 所有 in-scope confirmed contract drifts 已收敛
-- [ ] 行为/契约结果已达成
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed live defects 已修复
+- [x] 所有 in-scope confirmed contract drifts 已收敛
+- [x] 行为/契约结果已达成
+- [x] 必要 focused verification 已完成
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Closure Note
+
+- Final independent closure audit on 2026-05-07 confirmed the table-owned slice closes honestly: row-scope reconciliation/publication no longer runs in render, unchanged rows do not republish, owner-key turnover/unmount cleanup is covered, and owner docs now describe the supported table-only baseline without overclaiming generic collection translation.
+- Final verification recorded for closure: `pnpm --filter @nop-chaos/flux-renderers-data typecheck`, `pnpm --filter @nop-chaos/flux-renderers-data build`, `pnpm --filter @nop-chaos/flux-renderers-data lint`, `pnpm --filter @nop-chaos/flux-renderers-data test`, `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
 
 ## Deferred But Adjudicated
 

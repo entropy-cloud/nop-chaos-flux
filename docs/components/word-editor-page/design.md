@@ -105,6 +105,8 @@ host scope 向下投影四个只读字段：
 
 - `document` 与 `runtime`/`selection` 存在时效差异：`runtime.dirty=true` 时 `document` 可能仍为上一次 autosave 时的内容。
 - `runtime` 中 `datasetCount`/`chartCount`/`codeCount` 不从 editor-store selector 内读取，而是由独立订阅聚合，避免跨 store 热路径污染。
+- 若存在 recovered persisted state，则 `document` 应先发布 recovered persisted snapshot，而不是继续停留在 schema `initialDocument`。
+- `datasets` 的 schema 输入只作为首次 seed；一旦存在 recovered persisted datasets，remount 后 host projection 继续发布 persisted datasets，而不是被 schema `datasets` 重置。
 
 ## 8. 事件、动作与组件句柄能力
 

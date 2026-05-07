@@ -130,7 +130,7 @@ Flux compiles that schema into executable values, instantiates a form runtime, r
 - `Compilation`: Flux classifies values, expressions, templates, and renderer metadata before hot-path rendering
 - `Runtime guarantees`: data scope, action scope, validation, and side effects keep distinct runtime boundaries
 
-For semantic-owner surfaces, Flux also keeps a small set of owner-aware built-in actions. For example, `submitForm` acts on the current form runtime, and `closeDialog` closes the nearest active dialog by default. Explicit instance targeting such as `component:submit` remains available for cases where a trigger needs to address a component outside the local owner context.
+For semantic-owner surfaces, Flux also keeps a small set of owner-aware built-in actions. For example, `submitForm` acts on the current form runtime, and `closeSurface` closes the nearest active surface by default. `closeDialog` remains a compatibility alias for dialog-shaped surfaces. Explicit instance targeting such as `component:submit` remains available for cases where a trigger needs to address a component outside the local owner context.
 
 The same execution model scales from simple forms to tables, dialogs, and designer workbenches.
 

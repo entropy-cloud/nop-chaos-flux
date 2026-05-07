@@ -42,6 +42,7 @@
 - 工具项的 `action` 应映射到命名空间动作，例如 `report-designer:save`、`spreadsheet:undo`。
 - 这里选择 `action` 而非 `onClick: ActionSchema`，是因为 `ToolbarItem` 不是标准 renderer 子节点，而是内部固定 toolbar 的轻量命令描述。
 - 工具栏本体无需专用组件句柄。
+- 默认 report toolbar 项必须直接使用 canonical namespaced action；toolbar renderer 不再对已带命名空间的 action 追加第二层 `report-designer:` 前缀。
 
 ## 9. 数据源、表达式、导入能力接入点
 

@@ -406,19 +406,21 @@ export const META_FIELDS = new Set(['id', 'className', 'visible', 'hidden', 'dis
 
 ## Recommended Channel Mapping
 
-| Concern                   | Author-Facing Field                         | Normalized Channel               | Notes                        |
-| ------------------------- | ------------------------------------------- | -------------------------------- | ---------------------------- |
-| Editable binding path     | `name`                                      | `props.name`                     | 唯一双向绑定入口             |
-| Field read-only semantics | `readOnly`                                  | `props.readOnly`                 | 业务编辑语义                 |
-| Field required semantics  | `required`                                  | `props.required`                 | 字段级业务语义               |
-| Outer-frame label         | `label`                                     | `props.label` or `regions.label` | 由 renderer metadata 决定    |
-| Title-like content        | `title`                                     | `props.title` or `regions.title` | 不应默认为全局 meta          |
-| Semantic display content  | `text`, `data`, `options`, `items`          | `props.*`                        | 表达式直接写在普通字段上     |
-| Node disabled state       | `disabled`                                  | `meta.disabled`                  | runtime control state        |
-| Node visibility           | `visible`, `hidden`                         | `meta.*`                         | runtime control state        |
-| Node class/test identity  | `className`, `testid`, `id`                 | `meta.*`                         | 外层 wrapper / observability |
-| Child schema fragments    | `body`, `item`, `header`, `footer`, `label` | `regions.*`                      | 由 field metadata 定义       |
-| Declarative events        | `onClick`, `onSubmit`, `onChange`           | `events.*`                       | 保留 declarative action 语义 |
+| Concern                   | Author-Facing Field                | Normalized Channel               | Notes                        |
+| ------------------------- | ---------------------------------- | -------------------------------- | ---------------------------- |
+| Editable binding path     | `name`                             | `props.name`                     | 唯一双向绑定入口             |
+| Field read-only semantics | `readOnly`                         | `props.readOnly`                 | 业务编辑语义                 |
+| Field required semantics  | `required`                         | `props.required`                 | 字段级业务语义               |
+| Outer-frame label         | `label`                            | `props.label` or `regions.label` | 由 renderer metadata 决定    |
+| Title-like content        | `title`                            | `props.title` or `regions.title` | 不应默认为全局 meta          |
+| Semantic display content  | `text`, `data`, `options`, `items` | `props.*`                        | 表达式直接写在普通字段上     |
+| Node disabled state       | `disabled`                         | `meta.disabled`                  | runtime control state        |
+| Node visibility           | `visible`, `hidden`                | `meta.*`                         | runtime control state        |
+| Node class/test identity  | `className`, `testid`, `id`        | `meta.*`                         | 外层 wrapper / observability |
+
+对于 `input-text`、`textarea`、`input-number`、`input-tree`、`tree-select` 这类 field renderer，当前 live baseline 额外要求：`meta.className` 必须落在用户实际可命中的 control root，而不是只保留在更外层的 field chrome 上。
+| Child schema fragments | `body`, `item`, `header`, `footer`, `label` | `regions.*` | 由 field metadata 定义 |
+| Declarative events | `onClick`, `onSubmit`, `onChange` | `events.*` | 保留 declarative action 语义 |
 
 ## Authoring Examples
 

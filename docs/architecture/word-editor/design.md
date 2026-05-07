@@ -150,6 +150,8 @@ Save and autosave truth rules:
 - async save completion must not recreate local UI state after unmount; save-success banners and timers are renderer-local affordances only while the page is still mounted
 - in-repo live renderer call sites use the canonical `flux.wordEditor.*` i18n namespace; legacy unprefixed forms are not the current source baseline
 - document/dataset persistence helpers are browser-optional: in SSR or non-browser environments they must return explicit safe fallbacks (`false`, `null`, `[]`) instead of touching `localStorage`
+- mount-time recovery is persisted-first: when recovered saved state exists, host projection `document` should hydrate from that recovered persisted snapshot instead of continuing to expose schema `initialDocument`
+- `datasets` are also persisted-first on remount: schema `datasets` seed the initial store only when no recovered dataset state exists, and must not overwrite later persisted user edits on every mount
 
 ### With nop-entropy Backend
 

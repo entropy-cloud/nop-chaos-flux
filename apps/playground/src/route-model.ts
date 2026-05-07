@@ -170,6 +170,13 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Password input with masked characters.',
   },
   {
+    id: 'input-number',
+    title: 'Input Number',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description: 'Numeric input with min/max, precision, stepper, and prefix/suffix support.',
+  },
+  {
     id: 'textarea',
     title: 'Textarea',
     category: 'form',

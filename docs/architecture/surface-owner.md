@@ -213,6 +213,7 @@ Current live implementation note:
 
 - 上面的 `statusPath` 规则已经是 live baseline。
 - declarative surface close / unmount 与 action-opened surface close 现在都会把同一路径写回 closed summary，而不是清成 `undefined`。
+- runtime teardown 也必须兑现同一条 close lifecycle：`runtime.dispose()` 需要驱动 `SurfaceRuntime` 释放已打开 entry、清理 active/status publication、并释放 surface validation owner，而不是只清 page scope 树却把 `surfaceRuntime.store` 留在已打开状态
 
 局部读取规则：
 

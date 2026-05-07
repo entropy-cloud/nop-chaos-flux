@@ -49,3 +49,4 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/42-crud-selection-always-on-table-body-empty-fix.md`
 - `docs/bugs/43-flow-designer-node-edge-text-empty-expression-pre-evaluation-fix.md`
 - `docs/bugs/44-performance-table-full-stress-root-array-form-hang-fix.md`
+- `docs/bugs/45-tag-list-non-required-runtime-validation-fix.md`

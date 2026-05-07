@@ -1,0 +1,131 @@
+# 224 Validation Integrity Plan
+
+> Plan Status: planned
+> Last Reviewed: 2026-05-07
+> Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,08-validation.md}`
+> Related: `docs/plans/{168-validation-and-built-in-form-targeting-semantics-convergence-plan.md,223-reactive-and-async-follow-up-closure-plan.md,230-renderer-slot-and-type-contract-cleanup-plan.md}`
+
+## Purpose
+
+收口 `full-8` 维度 08 仍保留的 validation-owner consistency defects。完成态要求：surface owner activation、hidden descendant async invalidation、external-error lifecycle、projected writes、以及 retained subtree/dependency/hint/child-snapshot semantics 在 live code、focused proof、owner docs 中一致。
+
+## Current Baseline
+
+- 维度 08 保留了 P1 defects：surface owner activation、hidden descendant async invalidation、array `externalErrors` remap、projected writes prefix、`applyChanges` clear external errors、ordinary validation overwrite/remove external errors。
+- 同一维度还保留了 P2 residuals：dependent revalidation one-layer、no-model success semantics、runtime registration hidden policy、submit child-contract snapshot、`hiddenFields` refresh、`clearValueWhenHidden` descendants。`FieldFrame` hint/aria drift 由 `230` 作为 renderer/field contract residual 显式 owning。
+- `168` 已关闭 earlier validation semantic work；本计划只拥有 `full-8` 仍保留的 distinct residuals。
+
+## Goals
+
+- 修复 validation owner activation 与 external-error lifecycle drift。
+- 修复 retained subtree/dependency/hint/child snapshot residuals。
+- 用 focused validation proof 固定 final baseline。
+
+## Non-Goals
+
+- 不接管 renderer contract / slot modeling / type cleanup；这些由 `230` owning。
+- 不重开 `168` 已关闭的 earlier validation baseline。
+- 不把本计划扩大成 generic validation architecture rewrite。
+
+## Scope
+
+### In Scope
+
+- `packages/flux-runtime/src/{surface-runtime.ts,form-runtime-owner.ts,form-runtime-field-ops.ts,form-runtime-array.ts,form-runtime-validation.ts,form-runtime-subtree.ts,projected-validation-runtime.ts}`
+- directly affected validation helpers/tests/docs including `docs/architecture/form-validation.md`
+
+### Out Of Scope
+
+- renderer/meta/readOnly/slot/type cleanup owned by `230`
+- runtime ownership/reactive precision owned by `223`
+- async/lifecycle/error integrity owned by `229`
+
+## Execution Plan
+
+### Workstream 1 - Repair Validation Owner And External Error Integrity
+
+Status: planned
+Targets: validation owner/runtime files, related tests/docs
+
+- Item Types: `Fix | Proof | Decision`
+
+- [ ] [Fix] Repair surface validation owner activation for action-opened surfaces.
+- [ ] [Fix] Invalidate hidden descendant in-flight async validation correctly.
+- [ ] [Fix] Remap/clear/preserve `externalErrors` honestly across array mutations, projected writes, `applyChanges`, and ordinary validation overlay.
+- [ ] [Proof] Add focused validation proof for owner activation, async invalidation, external-error lifecycle, and projected writes.
+
+Exit Criteria:
+
+- [ ] The retained validation-owner and external-error defects are closed on the supported paths.
+- [ ] Focused tests cover the landed validation semantics.
+- [ ] `docs/architecture/form-validation.md` and any directly affected references are updated if the stable baseline changed; otherwise `No owner-doc update required` is explicit.
+- [ ] `docs/logs/` 对应日期条目已更新。
+
+### Workstream 2 - Align Retained Subtree And Change-Revalidation Residuals
+
+Status: planned
+Targets: subtree/change/hint/child-snapshot validation paths, related tests/docs
+
+- Item Types: `Fix | Proof | Decision`
+
+- [ ] [Fix] Address the retained dependency-closure, no-model, hiddenFields refresh, runtime-registration hidden-policy, child snapshot, and descendant clear-on-hide residuals that remain in the supported validation path.
+- [ ] [Fix] Keep changed/subtree targeting semantics honest for the retained `full-8` residuals without reopening already-closed earlier baselines.
+- [ ] [Proof] Add focused proof for the repaired subtree/change/hint/child-snapshot behavior.
+
+Exit Criteria:
+
+- [ ] The retained subtree/change/hint/child-snapshot defects are closed on the supported paths.
+- [ ] Focused tests prove the final validation targeting baseline.
+- [ ] Affected owner docs are updated if the stable baseline changed; otherwise `No owner-doc update required` is explicit.
+- [ ] `docs/logs/` 对应日期条目已更新。
+
+### Workstream 3 - Verification And Closure Audit
+
+Status: planned
+Targets: in-scope runtime/tests/docs, this plan
+
+- Item Types: `Proof | Decision`
+
+- [ ] Run focused validation verification after the fixes land.
+- [ ] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
+- [ ] Perform an independent closure audit and fix any remaining in-scope ambiguity before closing the plan.
+
+Exit Criteria:
+
+- [ ] Focused verification is recorded for both retained validation families.
+- [ ] Workspace verification passes.
+- [ ] Independent closure audit confirms no remaining plan-owned blocker.
+- [ ] `docs/logs/` 对应日期条目已更新。
+
+## Closure Gates
+
+- [ ] All in-scope retained validation defects are fixed.
+- [ ] Focused verification exists for each landed validation family.
+- [ ] No in-scope retained defect is silently deferred or downgraded.
+- [ ] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
+- [ ] Independent closure audit confirms no remaining in-scope blocker.
+- [ ] `pnpm typecheck`
+- [ ] `pnpm build`
+- [ ] `pnpm lint`
+- [ ] `pnpm test`
+
+## Validation Checklist
+
+- [ ] `168` carve-out remains explicit.
+- [ ] External-error lifecycle is fixed with proof, not only by wording changes.
+- [ ] Focused tests cover both validation families.
+- [ ] `FieldFrame` hint/aria residual remains explicitly carved to `230` rather than silently dropped.
+- [ ] No retained `full-8` item from dimension 08 is left without an owner decision.
+
+## Closure
+
+Status Note: pending execution.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: pending
+- Evidence: pending
+
+Follow-up:
+
+- Pending execution.

@@ -2,6 +2,26 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { FlowDesignerPage } from './flow-designer-page';
 
+const mockDebuggerController = {
+  id: 'test-debugger',
+  getSnapshot: () => ({
+    enabled: true,
+    panelOpen: false,
+    paused: false,
+    events: [],
+    filters: [],
+    activeTab: 'timeline' as const,
+    position: { x: 24, y: 24 },
+  }),
+  subscribe: () => () => undefined,
+  decorateEnv: (env: unknown) => env,
+  plugin: {},
+  setRuntime: () => undefined,
+  setComponentRegistry: () => undefined,
+  setActionScope: () => undefined,
+  onActionError: () => undefined,
+};
+
 vi.mock('@nop-chaos/flux-formula', () => ({
   createFormulaCompiler: () => ({
     hasExpression: () => false,
@@ -53,37 +73,47 @@ describe('FlowDesignerPage', () => {
   });
 
   it('renders without crashing', () => {
-    render(<FlowDesignerPage onBack={() => undefined} />);
+    render(
+      <FlowDesignerPage debuggerController={mockDebuggerController as any} onBack={() => undefined} />,
+    );
     expect(screen.getByTestId('designer-page-mock')).toBeTruthy();
   });
 
   it('renders default workflow example in graph mode', () => {
-    render(<FlowDesignerPage onBack={() => undefined} />);
+    render(
+      <FlowDesignerPage debuggerController={mockDebuggerController as any} onBack={() => undefined} />,
+    );
     expect(screen.getByTestId('designer-page-mock').dataset.mode).toBe('graph');
   });
 
   it('renders example selector tabs', () => {
-    render(<FlowDesignerPage onBack={() => undefined} />);
+    render(
+      <FlowDesignerPage debuggerController={mockDebuggerController as any} onBack={() => undefined} />,
+    );
     expect(screen.getByText('工作流')).toBeTruthy();
     expect(screen.getByText('钉钉审批流')).toBeTruthy();
     expect(screen.getByText('Action 编排')).toBeTruthy();
   });
 
   it('switches to dingtalk example on tab click', () => {
-    render(<FlowDesignerPage onBack={() => undefined} />);
+    render(
+      <FlowDesignerPage debuggerController={mockDebuggerController as any} onBack={() => undefined} />,
+    );
     fireEvent.click(screen.getByText('钉钉审批流'));
     expect(screen.getByTestId('designer-page-mock').dataset.mode).toBe('tree');
   });
 
   it('switches to action-flow example on tab click', () => {
-    render(<FlowDesignerPage onBack={() => undefined} />);
+    render(
+      <FlowDesignerPage debuggerController={mockDebuggerController as any} onBack={() => undefined} />,
+    );
     fireEvent.click(screen.getByText('Action 编排'));
     expect(screen.getByTestId('designer-page-mock').dataset.mode).toBe('tree');
   });
 
   it('navigates back when onBack is called', () => {
     const onBack = vi.fn();
-    render(<FlowDesignerPage onBack={onBack} />);
+    render(<FlowDesignerPage debuggerController={mockDebuggerController as any} onBack={onBack} />);
     expect(onBack).not.toHaveBeenCalled();
   });
 });

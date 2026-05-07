@@ -813,6 +813,8 @@ Rules:
 1. it validates only paths owned by the current owner
 2. it does not recurse into child owners, even when `reason` is `submit` or `commit`
 3. parent-to-child recursive submit coordination belongs to explicit submit orchestration through `ChildValidationContract`, not to implicit `validateSubtree()` traversal
+4. it must not treat `compiledModel === null` as an ordinary clean-success path; when no executable compiled model is attached, the result must stay distinguishable from "validated cleanly"
+5. descendant subtree targeting must not pull ancestor runtime registrations into the target set just because the requested path is nested under that registration root
 
 ### `validateAll(reason)`
 
@@ -838,6 +840,7 @@ Rules:
 2. passing paths outside the current owner is an error and must be rejected, not silently filtered
 3. its atomic publish guarantee covers only the current owner's value writes, field validation state, and scope summary state
 4. cross-owner coordination must be modeled as explicit parent/child orchestration rather than one `applyChangesAndRevalidate(...)` call spanning multiple owners
+5. for `reason: 'change'`, the changed path itself remains part of the supported revalidation baseline; owners must not revalidate only dependents while skipping the directly changed path
 
 ## Large Inline Tables And Aggregate Rules
 

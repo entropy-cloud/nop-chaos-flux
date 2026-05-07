@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 import {
   createSchemaRenderer,
   createDefaultRegistry,
@@ -36,10 +37,11 @@ const EXAMPLES: Record<ExampleKey, { label: string; schema: unknown }> = {
 };
 
 interface FlowDesignerPageProps {
+  debuggerController: NopDebuggerController;
   onBack: () => void;
 }
 
-export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
+export function FlowDesignerPage({ debuggerController, onBack }: FlowDesignerPageProps) {
   const [activeExample, setActiveExample] = useState<ExampleKey>('workflow');
 
   const actionScope = useMemo(() => {
@@ -61,6 +63,8 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
   }, [onBack]);
 
   const schema = EXAMPLES[activeExample].schema;
+  const plugins = useMemo(() => [debuggerController.plugin], [debuggerController]);
+  const decoratedEnv = useMemo(() => debuggerController.decorateEnv(env), [debuggerController]);
 
   return (
     <div className="relative h-screen flex flex-col">
@@ -83,9 +87,16 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
           schemaUrl={`playground://pages/flow-designer/${activeExample}`}
           schema={schema as any}
           registry={registry}
-          env={env}
+          env={decoratedEnv}
           formulaCompiler={formulaCompiler}
           actionScope={actionScope}
+          plugins={plugins}
+          onRuntimeChange={(runtime) => debuggerController.setRuntime(runtime)}
+          onComponentRegistryChange={(componentRegistry) =>
+            debuggerController.setComponentRegistry(componentRegistry)
+          }
+          onActionScopeChange={(nextActionScope) => debuggerController.setActionScope(nextActionScope)}
+          onActionError={debuggerController.onActionError}
         />
       </div>
     </div>

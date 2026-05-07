@@ -188,6 +188,7 @@ Recommended rules:
 - `inspectByElement()` climbs to the nearest inspectable owner marker rather than requiring the clicked descendant itself to carry `data-cid`
 - `inspectByCid()` returns the live node inspect payload and may include `instancePath`
 - DOM presence is supplemental metadata for tag/class correlation, not the primary truth source for mounted state
+- when DOM correlation is needed, lookup must first narrow to the mounted runtime root (for example `[data-runtime-id="..."]`) before resolving `[data-cid="..."]`; `cid` is only runtime-local, so page-global DOM queries are not a supported inspect path on multi-runtime pages
 
 ### Mounted-State Truth Source
 

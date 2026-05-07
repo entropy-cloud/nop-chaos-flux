@@ -340,6 +340,8 @@ This split matches actual ownership and change frequency better than either "eve
 - `props` contains the node's business-facing runtime values such as `label`, `options`, `placeholder`, `name`, or `items`
 - `meta` contains node control state and outer-frame information such as `visible`, `hidden`, `disabled`, `className`, `testid`, or `cid`
 
+For field-like widget renderers, `props.meta.className` must land on the canonical control root that consumers actually target for styling. It must not be silently dropped or left only on an unrelated outer frame when the supported override surface is the widget root itself.
+
 Quick rule:
 
 - if the concrete component needs it as a normal input, it is usually in `props`

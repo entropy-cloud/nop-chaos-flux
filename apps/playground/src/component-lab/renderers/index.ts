@@ -18,6 +18,7 @@ export { FormLabPage } from './form-lab-page';
 export { InputTextLabPage } from './input-text-lab-page';
 export { InputEmailLabPage } from './input-email-lab-page';
 export { InputPasswordLabPage } from './input-password-lab-page';
+export { InputNumberLabPage } from './input-number-lab-page';
 export { TextareaLabPage } from './textarea-lab-page';
 export { SelectLabPage } from './select-lab-page';
 export { CheckboxLabPage } from './checkbox-lab-page';
