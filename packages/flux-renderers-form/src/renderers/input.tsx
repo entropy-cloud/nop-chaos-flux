@@ -58,6 +58,7 @@ export function createInputRenderer(inputType: string) {
         aria-required={props.props.required ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}
         placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
+        className={props.meta.className}
         onFocus={handlers.onFocus}
         onChange={(event) => handlers.onChange(event.target.value)}
         onBlur={handlers.onBlur}
@@ -212,6 +213,7 @@ function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
       aria-required={props.props.required ? true : undefined}
       aria-invalid={presentation.showError ? true : undefined}
       placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
+      className={props.meta.className}
       onFocus={handlers.onFocus}
       onChange={(event) => handlers.onChange(event.target.value)}
       onBlur={handlers.onBlur}
@@ -455,7 +457,7 @@ function InputNumberRenderer(props: RendererComponentProps<InputNumberSchema>) {
   }
 
   return (
-    <div className={cn('nop-input-number')} data-slot="field-control" data-testid={props.meta.testid}>
+    <div className={cn('nop-input-number', props.meta.className)} data-slot="field-control" data-testid={props.meta.testid}>
       <div className="relative flex items-center">
         {prefix ? (
           <span data-slot="prefix" className="pointer-events-none absolute left-3 text-sm text-muted-foreground">

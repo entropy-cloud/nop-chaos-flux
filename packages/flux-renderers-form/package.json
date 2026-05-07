@@ -12,6 +12,9 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./form-renderers.css": {
+      "default": "./dist/form-renderers.css"
     }
   },
   "dependencies": {
@@ -26,7 +29,7 @@
     "react": "^19.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node -e \"fs.cpSync('src/form-renderers.css','dist/form-renderers.css')\"",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
