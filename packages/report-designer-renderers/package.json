@@ -12,6 +12,9 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./report-field-panel.css": {
+      "default": "./dist/report-field-panel.css"
     }
   },
   "dependencies": {
@@ -30,7 +33,7 @@
     "@testing-library/react": "^16.3.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node -e \"fs.cpSync('src/report-field-panel.css','dist/report-field-panel.css')\"",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"

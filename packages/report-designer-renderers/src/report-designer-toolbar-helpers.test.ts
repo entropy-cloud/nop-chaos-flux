@@ -117,39 +117,39 @@ describe('evalTextTemplate', () => {
 
 describe('toCommand', () => {
   it('maps report-designer:undo', () => {
-    expect(toCommand('report-designer:undo')).toEqual({ type: 'report-designer:undo' });
+    expect(toCommand('report-designer:undo')).toEqual({ action: 'report-designer:undo' });
   });
 
   it('maps report-designer:redo', () => {
-    expect(toCommand('report-designer:redo')).toEqual({ type: 'report-designer:redo' });
+    expect(toCommand('report-designer:redo')).toEqual({ action: 'report-designer:redo' });
   });
 
   it('maps report-designer:preview with inline mode', () => {
     expect(toCommand('report-designer:preview')).toEqual({
-      type: 'report-designer:preview',
+      action: 'report-designer:preview',
       mode: 'inline',
     });
   });
 
   it('maps report-designer:stopPreview to the canonical stop command', () => {
     expect(toCommand('report-designer:stopPreview')).toEqual({
-      type: 'report-designer:stopPreview',
+      action: 'report-designer:stopPreview',
     });
   });
 
   it('maps report-designer:save', () => {
-    expect(toCommand('report-designer:save')).toEqual({ type: 'report-designer:save' });
+    expect(toCommand('report-designer:save')).toEqual({ action: 'report-designer:save' });
   });
 
   it('maps report-designer:openInspector', () => {
     expect(toCommand('report-designer:openInspector')).toEqual({
-      type: 'report-designer:openInspector',
+      action: 'report-designer:openInspector',
     });
   });
 
   it('maps report-designer:closeInspector', () => {
     expect(toCommand('report-designer:closeInspector')).toEqual({
-      type: 'report-designer:closeInspector',
+      action: 'report-designer:closeInspector',
     });
   });
 

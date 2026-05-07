@@ -1,3 +1,4 @@
+import type { ActionSchema } from '@nop-chaos/flux-core';
 import type { ToolbarItem } from './schemas.js';
 export type { ToolbarItem };
 
@@ -78,22 +79,22 @@ export function evalTextTemplate(
   });
 }
 
-export function toCommand(action: string | undefined): Record<string, unknown> | null {
+export function toCommand(action: string | undefined): ActionSchema | null {
   switch (action) {
     case 'report-designer:undo':
-      return { type: 'report-designer:undo' };
+      return { action: 'report-designer:undo' };
     case 'report-designer:redo':
-      return { type: 'report-designer:redo' };
+      return { action: 'report-designer:redo' };
     case 'report-designer:preview':
-      return { type: 'report-designer:preview', mode: 'inline' };
+      return { action: 'report-designer:preview', mode: 'inline' };
     case 'report-designer:stopPreview':
-      return { type: 'report-designer:stopPreview' };
+      return { action: 'report-designer:stopPreview' };
     case 'report-designer:save':
-      return { type: 'report-designer:save' };
+      return { action: 'report-designer:save' };
     case 'report-designer:openInspector':
-      return { type: 'report-designer:openInspector' };
+      return { action: 'report-designer:openInspector' };
     case 'report-designer:closeInspector':
-      return { type: 'report-designer:closeInspector' };
+      return { action: 'report-designer:closeInspector' };
     default:
       return null;
   }

@@ -26,10 +26,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
   function handleButtonClick(item: ToolbarItem) {
     const command = toCommand(item.action);
     if (!command) return;
-    void props.helpers.dispatch({
-      action: 'report-designer:' + (command.type as string),
-      ...command,
-    });
+    void props.helpers.dispatch(command);
   }
 
   return (
@@ -42,6 +39,10 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
       {items.map((item, index) => {
+        const visible = item.visible === undefined ? true : evalBooleanExpr(item.visible, snapshot);
+        if (!visible) {
+          return null;
+        }
         switch (item.type) {
           case 'divider':
             return <span key={item.id ?? `divider-${index}`} className="w-px h-[18px] bg-border" />;

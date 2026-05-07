@@ -116,14 +116,35 @@ export function ReportDesignerPageRenderer(
     spreadsheetCore.getSnapshot,
     spreadsheetCore.getSnapshot,
   );
-  const didSyncSpreadsheetRef = useRef(false);
+  const syncingSpreadsheetFromReportRef = useRef(false);
+  const lastSyncedSpreadsheetRef = useRef(spreadsheetSnapshot.document);
+  const lastAppliedReportSpreadsheetRef = useRef(snapshot.document.spreadsheet);
 
   useEffect(() => {
-    if (!didSyncSpreadsheetRef.current) {
-      didSyncSpreadsheetRef.current = true;
+    if (snapshot.document.spreadsheet === lastAppliedReportSpreadsheetRef.current) {
       return;
     }
 
+    lastAppliedReportSpreadsheetRef.current = snapshot.document.spreadsheet;
+    if (snapshot.document.spreadsheet === lastSyncedSpreadsheetRef.current) {
+      return;
+    }
+
+    syncingSpreadsheetFromReportRef.current = true;
+    spreadsheetCore.replaceDocument(snapshot.document.spreadsheet);
+    lastSyncedSpreadsheetRef.current = snapshot.document.spreadsheet;
+    syncingSpreadsheetFromReportRef.current = false;
+  }, [snapshot.document.spreadsheet, spreadsheetCore]);
+
+  useEffect(() => {
+    if (syncingSpreadsheetFromReportRef.current) {
+      return;
+    }
+    if (spreadsheetSnapshot.document === lastSyncedSpreadsheetRef.current) {
+      return;
+    }
+
+    lastSyncedSpreadsheetRef.current = spreadsheetSnapshot.document;
     core.syncSpreadsheetDocument(spreadsheetSnapshot.document);
   }, [core, spreadsheetSnapshot.document]);
 

@@ -89,4 +89,10 @@ describe('report-toolbar renderer', () => {
 
     expect(screen.getByRole('switch', { name: 'Preview mode' })).toBeTruthy();
   });
+
+  it('hides default items when visible expression resolves false', () => {
+    renderToolbarInPage({});
+
+    expect(screen.queryByText('Stop')).toBeNull();
+  });
 });
