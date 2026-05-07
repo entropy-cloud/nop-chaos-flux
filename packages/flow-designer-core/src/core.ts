@@ -6,6 +6,7 @@ import type {
   NormalizedDesignerConfig,
   DesignerSnapshot,
   DesignerEvent,
+  TreeDocument,
 } from './types';
 import type { DesignerCore } from './designer-core-types';
 import { cloneDocument } from './core/clone';
@@ -54,6 +55,9 @@ export function createDesignerCore(
 ): DesignerCore {
   let doc = cloneDocument(initialDoc);
   const normalizedConfig = normalizeConfig(config);
+  let treeOwner:
+    | { getTreeDocument: () => TreeDocument; setTreeDocument: (document: TreeDocument) => void }
+    | undefined;
   const listeners = new Set<(event: DesignerEvent) => void>();
 
   let historyState: DesignerHistoryState = createHistoryState(doc, 0);
@@ -113,7 +117,13 @@ export function createDesignerCore(
   }
 
   function pushHistory() {
-    historyState = pushHistoryEntry(historyState, doc, docRevision, maxHistorySize);
+    historyState = pushHistoryEntry(
+      historyState,
+      doc,
+      docRevision,
+      maxHistorySize,
+      treeOwner?.getTreeDocument(),
+    );
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
   }
 
@@ -301,6 +311,9 @@ export function createDesignerCore(
 
     historyState = result.state;
     replaceDocument(cloneDocument(result.entry.doc), result.entry.revision);
+    if (treeOwner && result.entry.treeDocument) {
+      treeOwner.setTreeDocument(result.entry.treeDocument);
+    }
     resetShellViewportFromDocument(shellState, doc);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
@@ -316,6 +329,9 @@ export function createDesignerCore(
 
     historyState = result.state;
     replaceDocument(cloneDocument(result.entry.doc), result.entry.revision);
+    if (treeOwner && result.entry.treeDocument) {
+      treeOwner.setTreeDocument(result.entry.treeDocument);
+    }
     resetShellViewportFromDocument(shellState, doc);
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
@@ -359,8 +375,22 @@ export function createDesignerCore(
     shellControls.setViewport(newViewport);
   }
 
-  function replaceDocumentFromHost(nextDoc: GraphDocument): void {
+  function replaceDocumentFromHost(nextDoc: GraphDocument, treeDocument?: TreeDocument): void {
+    if (treeOwner && treeDocument) {
+      treeOwner.setTreeDocument(treeDocument);
+    }
     shellControls.replaceDocumentFromHost(nextDoc);
+  }
+
+  function setTreeOwner(
+    getTreeDocument: () => TreeDocument,
+    setTreeDocument: (document: TreeDocument) => void,
+  ): void {
+    const hadTreeOwner = Boolean(treeOwner);
+    treeOwner = { getTreeDocument, setTreeDocument };
+    if (!hadTreeOwner) {
+      historyState = createHistoryState(doc, docRevision, treeOwner.getTreeDocument());
+    }
   }
 
   function save(): void {
@@ -485,6 +515,7 @@ export function createDesignerCore(
     setInspectorCollapsed,
     setViewport,
     replaceDocument: replaceDocumentFromHost,
+    setTreeOwner,
     save,
     restore,
     exportDocument,

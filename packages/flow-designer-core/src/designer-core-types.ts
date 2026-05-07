@@ -5,6 +5,7 @@ import type {
   NormalizedDesignerConfig,
   DesignerSnapshot,
   DesignerEvent,
+  TreeDocument,
 } from './types';
 
 export interface DesignerCore {
@@ -70,7 +71,8 @@ export interface DesignerCore {
   setInspectorCollapsed(collapsed: boolean): void;
 
   setViewport(viewport: { x: number; y: number; zoom: number }): void;
-  replaceDocument(document: GraphDocument): void;
+  replaceDocument(document: GraphDocument, treeDocument?: TreeDocument): void;
+  setTreeOwner(getTreeDocument: () => TreeDocument, setTreeDocument: (document: TreeDocument) => void): void;
 
   save(): void;
   restore(): void;

@@ -1,9 +1,14 @@
-import type { GraphDocument } from '../types';
+import type { GraphDocument, TreeDocument } from '../types';
 import { cloneDocument } from './clone';
+
+function cloneTreeDocument(tree: TreeDocument | undefined): TreeDocument | undefined {
+  return tree ? (JSON.parse(JSON.stringify(tree)) as TreeDocument) : undefined;
+}
 
 export interface HistoryEntry {
   doc: GraphDocument;
   revision: number;
+  treeDocument?: TreeDocument;
 }
 
 export interface DesignerHistoryState {
@@ -11,9 +16,13 @@ export interface DesignerHistoryState {
   historyIndex: number;
 }
 
-export function createHistoryState(doc: GraphDocument, revision: number): DesignerHistoryState {
+export function createHistoryState(
+  doc: GraphDocument,
+  revision: number,
+  treeDocument?: TreeDocument,
+): DesignerHistoryState {
   return {
-    history: [{ doc: cloneDocument(doc), revision }],
+    history: [{ doc: cloneDocument(doc), revision, treeDocument: cloneTreeDocument(treeDocument) }],
     historyIndex: 0,
   };
 }
@@ -31,6 +40,7 @@ export function pushHistoryEntry(
   doc: GraphDocument,
   revision: number,
   maxHistorySize: number,
+  treeDocument?: TreeDocument,
 ): DesignerHistoryState {
   let history = state.history;
   let historyIndex = state.historyIndex;
@@ -39,7 +49,10 @@ export function pushHistoryEntry(
     history = history.slice(0, historyIndex + 1);
   }
 
-  history = [...history, { doc: cloneDocument(doc), revision }];
+  history = [
+    ...history,
+    { doc: cloneDocument(doc), revision, treeDocument: cloneTreeDocument(treeDocument) },
+  ];
   if (history.length > maxHistorySize) {
     history = history.slice(1);
   } else {
