@@ -27,20 +27,12 @@ export function collectSubtreePaths(sharedState: SubtreeCollectionState, path: s
   for (const entry of sharedState.runtimeFieldRegistrations.values()) {
     const registrationPath = entry.registration.path;
 
-    if (
-      registrationPath === path ||
-      registrationPath.startsWith(`${path}.`) ||
-      path.startsWith(`${registrationPath}.`)
-    ) {
+    if (registrationPath === path || registrationPath.startsWith(`${path}.`)) {
       paths.add(registrationPath);
     }
 
     for (const childPath of entry.registration.childPaths ?? []) {
-      if (
-        childPath === path ||
-        childPath.startsWith(`${path}.`) ||
-        path.startsWith(`${childPath}.`)
-      ) {
+      if (childPath === path || childPath.startsWith(`${path}.`)) {
         paths.add(childPath);
       }
     }

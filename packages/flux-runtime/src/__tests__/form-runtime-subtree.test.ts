@@ -89,12 +89,12 @@ describe('collectSubtreePaths', () => {
     expect(paths.sort()).toEqual(['form.field1', 'form.field1.subfield']);
   });
 
-  it('includes paths where registration is a prefix of the target', () => {
+  it('does not include ancestor registration paths when targeting a descendant subtree', () => {
     const validation = createValidationModel({}, []);
     const state = createSharedState(validation, [createRegistration('form', ['form.a', 'form.b'])]);
     const paths = collectSubtreePaths(state, 'form.a');
-    expect(paths).toContain('form');
     expect(paths).toContain('form.a');
+    expect(paths).not.toContain('form');
   });
 
   it('includes childPaths from registrations', () => {

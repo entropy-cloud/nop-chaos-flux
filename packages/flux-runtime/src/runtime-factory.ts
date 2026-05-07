@@ -474,10 +474,7 @@ export function createRendererRuntime(input: {
       }
 
       for (const surfaceRuntime of ownedSurfaceRuntimes) {
-        for (const surface of surfaceRuntime.store.getState().entries) {
-          sourceRegistryRef.current?.disposeScopeTree(surface.scope.id);
-          reactionRegistryRef.current?.disposeScopeTree(surface.scope.id);
-        }
+        surfaceRuntime.dispose();
       }
 
       for (const validationScope of ownedValidationScopes) {

@@ -9,7 +9,9 @@ import type {
 
 type ArrayMutationState = FormRuntimeStoreScopeState &
   FormRuntimeInitialStateSlice &
-  FormRuntimeValidationRunState;
+  FormRuntimeValidationRunState & {
+    hiddenFields: Set<string>;
+  };
 
 export function remapValidationRunState(
   sharedState: FormRuntimeValidationRunState,
@@ -92,6 +94,28 @@ export function remapInitialFieldState(
 
   sharedState.initialFieldState.initialValues = nextInitialValues;
   sharedState.initialFieldState.dirty = nextDirty;
+}
+
+export function remapHiddenFields(
+  hiddenFields: Set<string>,
+  arrayPath: string,
+  transformIndex: (index: number) => number | undefined,
+) {
+  const nextHiddenFields = new Set<string>();
+
+  for (const path of hiddenFields) {
+    const nextPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
+
+    if (nextPath) {
+      nextHiddenFields.add(nextPath);
+    }
+  }
+
+  hiddenFields.clear();
+
+  for (const path of nextHiddenFields) {
+    hiddenFields.add(path);
+  }
 }
 
 export function remapArrayFieldState(
@@ -191,5 +215,6 @@ export function executeArrayMutation(ctx: {
     ctx.cancelValidationDebounce,
   );
   remapInitialFieldState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform);
+  remapHiddenFields(ctx.sharedState.hiddenFields, ctx.arrayPath, ctx.indexTransform);
   void ctx.revalidateDependents(ctx.arrayPath, 'change');
 }

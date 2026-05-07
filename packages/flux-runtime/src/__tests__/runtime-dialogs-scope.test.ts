@@ -622,4 +622,46 @@ describe('createRendererRuntime', () => {
     expect(drawerState.scope.get('mode')).toBe('preview');
     expect(drawerState.scope.get('pageOnly')).toBe('root');
   });
+
+  it('disposes open surface entries during runtime teardown', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    await runtime.dispatch(
+      {
+        action: 'openDialog',
+        args: {
+          title: 'Dispose dialog',
+          statusPath: 'dialogStatus',
+          body: [{ type: 'text', text: 'Body' }],
+        },
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime,
+      },
+    );
+
+    expect(surfaceRuntime.store.getState().entries).toHaveLength(1);
+
+    runtime.dispose();
+
+    expect(surfaceRuntime.store.getState().entries).toHaveLength(0);
+    expect(page.scope.get('dialogStatus')).toEqual({
+      id: expect.any(String),
+      kind: 'dialog',
+      open: false,
+      active: false,
+      opening: false,
+      closing: false,
+    });
+  });
 });

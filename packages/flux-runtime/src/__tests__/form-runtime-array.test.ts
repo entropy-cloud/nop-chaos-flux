@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   remapValidationRunState,
   remapInitialFieldState,
+  remapHiddenFields,
   remapArrayFieldState,
   replaceManagedArrayValue,
   executeArrayMutation,
@@ -158,6 +159,16 @@ describe('remapInitialFieldState', () => {
     };
     remapInitialFieldState(sharedState as FormRuntimeInitialStateSlice, 'items', (i) => i);
     expect(sharedState.initialFieldState.dirty['items.0.x']).toBeUndefined();
+  });
+});
+
+describe('remapHiddenFields', () => {
+  it('remaps hidden fields under the mutated array path', () => {
+    const hiddenFields = new Set(['items.0.name', 'items.2.name', 'other']);
+
+    remapHiddenFields(hiddenFields, 'items', (index) => (index < 1 ? index : index > 1 ? index - 1 : undefined));
+
+    expect(Array.from(hiddenFields).sort()).toEqual(['items.0.name', 'items.1.name', 'other']);
   });
 });
 
@@ -351,5 +362,26 @@ describe('executeArrayMutation', () => {
       revalidateDependents: revalidate,
     });
     expect(revalidate).toHaveBeenCalledWith('items', 'change');
+  });
+
+  it('remaps hidden fields when array indices shift', () => {
+    const shared = createMutationState({ items: ['a', 'b', 'c'] });
+    shared.hiddenFields.add('items.1.name');
+    shared.hiddenFields.add('items.2.name');
+
+    executeArrayMutation({
+      sharedState: shared,
+      scope: shared.scope,
+      formId: 'test-form',
+      setLastChange: vi.fn(),
+      getArrayValue: (path) => shared.store.getState().values[path],
+      arrayPath: 'items',
+      arrayOperation: (arr) => [...arr.slice(0, 1), ...arr.slice(2)],
+      indexTransform: (i) => (i < 1 ? i : i > 1 ? i - 1 : undefined),
+      cancelValidationDebounce: vi.fn(),
+      revalidateDependents: vi.fn(),
+    });
+
+    expect(Array.from(shared.hiddenFields)).toEqual(['items.1.name']);
   });
 });

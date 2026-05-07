@@ -98,6 +98,22 @@ export function createManagedSurfaceRuntime(
     }
   }
 
+  function disposeEntry(entry: SurfaceEntry | undefined) {
+    if (!entry) {
+      return;
+    }
+
+    if (entry.controlledOpen === false) {
+      store.setUncontrolledOpen(entry.id, false);
+    }
+    clearSurfaceStatus(entry);
+    entry.validationOwner?.dispose();
+    if (entry.validationOwner) {
+      input.releaseValidationOwner?.(entry.validationOwner);
+    }
+    disposeOwnedScope(entry.scope.id);
+  }
+
   return {
     store,
     open({ kind, surface, scope, surfaceId, options }) {
@@ -161,29 +177,18 @@ export function createManagedSurfaceRuntime(
     },
     close(surfaceId) {
       const removed = store.remove(surfaceId);
-      if (removed && removed.controlledOpen === false) {
-        store.setUncontrolledOpen(removed.id, false);
-      }
-      clearSurfaceStatus(removed);
-      removed?.validationOwner?.dispose();
-      if (removed?.validationOwner) {
-        input.releaseValidationOwner?.(removed.validationOwner);
-      }
-      disposeOwnedScope(removed?.scope.id);
+      disposeEntry(removed);
       republishActiveStatuses();
     },
     closeTop() {
       const removed = store.remove();
-      if (removed && removed.controlledOpen === false) {
-        store.setUncontrolledOpen(removed.id, false);
-      }
-      clearSurfaceStatus(removed);
-      removed?.validationOwner?.dispose();
-      if (removed?.validationOwner) {
-        input.releaseValidationOwner?.(removed.validationOwner);
-      }
-      disposeOwnedScope(removed?.scope.id);
+      disposeEntry(removed);
       republishActiveStatuses();
+    },
+    dispose() {
+      while (store.getState().entries.length > 0) {
+        disposeEntry(store.remove());
+      }
     },
   };
 }

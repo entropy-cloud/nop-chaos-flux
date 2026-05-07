@@ -226,6 +226,18 @@ export function buildFormOwnerRuntime(input: {
     });
     input.sharedState.store.batchUpdate({ values: nextValues });
 
+    const changedPathResults = new Map<string, ValidationError[]>();
+
+    if (reason === 'change') {
+      for (const path of changedPaths) {
+        const result = await input.getThisForm().validateField(path, reason);
+
+        if (!result.ok) {
+          changedPathResults.set(path, result.errors);
+        }
+      }
+    }
+
     for (const path of changedPaths) {
       await revalidateDependents(path, reason);
     }
@@ -235,7 +247,18 @@ export function buildFormOwnerRuntime(input: {
       const fieldErrors: Record<string, ValidationError[]> = {};
       const errors: ValidationError[] = [];
 
+       for (const [path, pathErrors] of changedPathResults.entries()) {
+        if (pathErrors.length > 0) {
+          fieldErrors[path] = pathErrors;
+          errors.push(...pathErrors);
+        }
+      }
+
       for (const [path, fs] of Object.entries(fieldStates)) {
+        if (changedPathResults.has(path)) {
+          continue;
+        }
+
         if (fs.errors && fs.errors.length > 0) {
           fieldErrors[path] = fs.errors;
           errors.push(...fs.errors);
@@ -408,9 +431,27 @@ export function buildFormOwnerRuntime(input: {
 
     if (!currentValidation) {
       return {
-        ok: true,
-        errors: [],
-        fieldErrors: {},
+        ok: false,
+        errors: [
+          {
+            path,
+            ownerPath: path,
+            rule: 'required' as const,
+            message: `Validation model is not available for subtree "${path}".`,
+            sourceKind: 'form' as const,
+          },
+        ],
+        fieldErrors: {
+          [path]: [
+            {
+              path,
+              ownerPath: path,
+              rule: 'required' as const,
+              message: `Validation model is not available for subtree "${path}".`,
+              sourceKind: 'form' as const,
+            },
+          ],
+        },
       } as FormValidationResult;
     }
 

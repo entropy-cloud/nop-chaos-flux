@@ -86,6 +86,48 @@ describe('applyChangesAndRevalidate deferred-aggregate policy', () => {
     expect(form.store.getState().fieldStates.contacts?.errors).toBeUndefined();
   });
 
+  it('validates the changed path itself on change revalidation', async () => {
+    const form = createManagedFormRuntime({
+      id: 'email-form',
+      initialValues: { email: 'alice@example.com' },
+      parentScope: createStubScope(),
+      validation: {
+        nodes: {
+          '': {
+            path: '',
+            kind: 'form',
+            rules: [],
+            children: ['email'],
+          },
+          email: {
+            path: 'email',
+            kind: 'field',
+            controlType: 'input-text',
+            label: 'Email',
+            behavior: { triggers: ['change'], showErrorOn: ['touched', 'submit'] },
+            rules: [{ id: 'email#0:email', rule: { kind: 'email' }, dependencyPaths: [] }],
+            children: [],
+            parent: '',
+          },
+        },
+        order: ['email'],
+        behavior: { triggers: ['change'], showErrorOn: ['touched', 'submit'] },
+        dependents: {},
+      } as any,
+      executeValidationRule: async () => undefined,
+      validateRule: realValidateRule,
+    });
+
+    const result = await form.applyChangesAndRevalidate({
+      writes: { email: 'not-an-email' },
+      changedPaths: ['email'],
+      reason: 'change',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors.email?.[0]?.rule).toBe('email');
+  });
+
   it('triggers full validateForm when reason is blur — uniqueBy aggregate error is published', async () => {
     const form = createUniqueByForm();
 
