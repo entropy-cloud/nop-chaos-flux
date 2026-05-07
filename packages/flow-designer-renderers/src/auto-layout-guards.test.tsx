@@ -3,9 +3,9 @@
 import React from 'react';
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFormulaCompiler } from '../../flux-formula/src/index';
-import { createSchemaRenderer } from '../../flux-react/src/index';
-import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
 
 const testState: {
   layoutResolvers: Array<(positions: Map<string, { x: number; y: number }>) => void>;

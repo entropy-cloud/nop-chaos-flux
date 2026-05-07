@@ -272,6 +272,61 @@ describe('DesignerPageRenderer basic rendering', () => {
     expect(root).toBeTruthy();
   });
 
+  it('passes meta.disabled through designer-field control variants', () => {
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+    ]);
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/index-designer-field-disabled"
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: createTestConfig(),
+          inspector: [
+            {
+              type: 'designer-field',
+              name: 'title',
+              label: 'Title',
+              fieldType: 'text',
+              disabled: true,
+            },
+            {
+              type: 'designer-field',
+              name: 'description',
+              label: 'Description',
+              fieldType: 'textarea',
+              disabled: true,
+            },
+            {
+              type: 'designer-field',
+              name: 'count',
+              label: 'Count',
+              fieldType: 'number',
+              disabled: true,
+            },
+          ],
+        }}
+        env={createRendererEnv() as RendererEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(view.container.querySelector('input[type="text"]')).toBeDisabled();
+    expect(view.container.querySelector('textarea')).toBeDisabled();
+    expect(view.container.querySelector('input[type="number"]')).toBeDisabled();
+  });
+
   it('renders the designer page with xyflow canvas', () => {
     const SchemaRenderer = createSchemaRenderer([
       ...basicTestRendererDefinitions,

@@ -16,10 +16,13 @@
     "./unstable": {
       "types": "./dist/unstable.d.ts",
       "default": "./dist/unstable.js"
+    },
+    "./designer-theme.css": {
+      "default": "./dist/designer-theme.css"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node -e \"fs.cpSync('src/designer-theme.css','dist/designer-theme.css')\"",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"

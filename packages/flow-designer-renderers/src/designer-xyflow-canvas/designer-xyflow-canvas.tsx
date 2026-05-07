@@ -156,8 +156,8 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   );
 
   const snapshotNodes = useMemo(
-    () => createXyflowNodes(props.snapshot, props.nodeTypeSizeMap),
-    [props.snapshot, props.nodeTypeSizeMap],
+    () => createXyflowNodes(props.snapshot, props.nodeTypeSizeMap, props.documentMode),
+    [props.snapshot, props.nodeTypeSizeMap, props.documentMode],
   );
   const snapshotEdges = useMemo(
     () => createXyflowEdges(props.snapshot, props.documentMode),

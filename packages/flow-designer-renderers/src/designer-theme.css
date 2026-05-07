@@ -92,3 +92,8 @@
   background: var(--fd-edge-actions-bg);
   box-shadow: var(--fd-edge-actions-shadow);
 }
+
+.fd-tree-node-shell {
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+}

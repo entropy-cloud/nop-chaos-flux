@@ -47,6 +47,7 @@ import { DefaultInspector } from './designer-inspector';
 import { DesignerToolbarContent } from './designer-toolbar';
 import { useDesignerAutoLayout } from './use-designer-auto-layout';
 import { useDesignerShortcuts } from './use-designer-shortcuts';
+import { emitTreeLayoutDebugSnapshot } from './tree-layout-debug';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -166,6 +167,7 @@ function DesignerPageBody({
 }: DesignerPageBodyProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const snapshot = useDesignerSnapshot(core);
+  const env = useRendererEnv();
   const statusPath =
     typeof readDesignerResolvedProp<string>(props, 'statusPath') === 'string'
       ? readDesignerResolvedProp<string>(props, 'statusPath')
@@ -173,6 +175,13 @@ function DesignerPageBody({
   const { layoutBusy, handleAutoLayout } = useDesignerAutoLayout(core, config);
 
   const isTreeMode = config.documentMode === 'tree';
+
+  useEffect(() => {
+    if (!isTreeMode) {
+      return;
+    }
+    emitTreeLayoutDebugSnapshot(env, snapshot);
+  }, [env, isTreeMode, snapshot]);
   const onPlusButtonClick = useCallback(
     (
       sourceId: string,
@@ -235,7 +244,7 @@ function DesignerPageBody({
   }, [creatingNode]);
 
   const handleConfirmCreateDialog = useCallback(async () => {
-    if (!pendingCreateDialog) {
+    if (!pendingCreateDialog || creatingNode) {
       return;
     }
 
@@ -255,7 +264,7 @@ function DesignerPageBody({
     } finally {
       setCreatingNode(false);
     }
-  }, [actionScope, designerScope, dispatch, pendingCreateDialog, props.helpers]);
+  }, [actionScope, creatingNode, designerScope, dispatch, pendingCreateDialog, props.helpers]);
 
   const ctxValue = useMemo<DesignerContextValue>(
     () =>

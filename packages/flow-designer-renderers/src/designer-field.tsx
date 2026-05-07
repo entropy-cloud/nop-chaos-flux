@@ -20,6 +20,7 @@ export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFiel
   const name = schemaProps.name as string;
   const fieldType = schemaProps.fieldType as string | undefined;
   const options = schemaProps.options as Array<{ label: string; value: string }> | undefined;
+  const disabled = props.meta.disabled === true;
   const { dispatch } = useDesignerContext();
   const activeNode = useDesignerSnapshotSelector((s) => s.activeNode);
   const activeEdge = useDesignerSnapshotSelector((s) => s.activeEdge);
@@ -50,16 +51,18 @@ export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFiel
         <Textarea
           className="min-h-[110px] resize-y"
           value={String(value)}
+          disabled={disabled}
           onChange={(e) => handleChange(e.target.value)}
         />
       ) : fieldType === 'select' && options ? (
         <Select
           value={String(value)}
+          disabled={disabled}
           onValueChange={(nextValue) => {
             if (nextValue != null) handleChange(nextValue);
           }}
         >
-          <SelectTrigger>
+          <SelectTrigger disabled={disabled}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -71,9 +74,19 @@ export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFiel
           </SelectContent>
         </Select>
       ) : fieldType === 'number' ? (
-        <Input type="number" value={String(value)} onChange={(e) => handleChange(e.target.value)} />
+        <Input
+          type="number"
+          value={String(value)}
+          disabled={disabled}
+          onChange={(e) => handleChange(e.target.value)}
+        />
       ) : (
-        <Input type="text" value={String(value)} onChange={(e) => handleChange(e.target.value)} />
+        <Input
+          type="text"
+          value={String(value)}
+          disabled={disabled}
+          onChange={(e) => handleChange(e.target.value)}
+        />
       )}
     </div>
   );

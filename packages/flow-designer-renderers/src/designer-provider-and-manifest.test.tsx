@@ -267,5 +267,7 @@ describe('flow-designer manifest', () => {
     const activeEdgeFields = (fields.activeEdge.schema as any).anyOf[1].fields;
     expect(activeEdgeFields.sourcePort).toBeTruthy();
     expect(activeEdgeFields.targetPort).toBeTruthy();
+    expect((fields.runtime.schema as any).fields.gridEnabled).toBeTruthy();
+    expect((fields.runtime.schema as any).fields.gridVisible).toBeUndefined();
   });
 });

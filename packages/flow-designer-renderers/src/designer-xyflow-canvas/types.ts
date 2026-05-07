@@ -4,6 +4,7 @@ export interface DesignerFlowNodeData extends Record<string, unknown> {
   label: string;
   typeLabel: string;
   typeId: string;
+  __fdTreeMode?: boolean;
   __fdBranchFocused?: boolean;
 }
 

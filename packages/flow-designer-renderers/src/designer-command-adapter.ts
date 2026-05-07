@@ -55,12 +55,16 @@ export function createDesignerCommandAdapter(
   core: DesignerCore,
   treeOwner?: TreeCommandOwner,
 ): DesignerCommandAdapter {
+  if (treeOwner) {
+    core.setTreeOwner(treeOwner.getTreeDocument, treeOwner.setTreeDocument);
+  }
+
   function applyTreeDocument(nextTree: TreeDocument): void {
     if (!treeOwner) {
       return;
     }
     treeOwner.setTreeDocument(nextTree);
-    core.replaceDocument(projectTreeDocumentToGraph(nextTree, core.getConfig()));
+    core.replaceDocument(projectTreeDocumentToGraph(nextTree, core.getConfig()), nextTree);
   }
 
   function execute(command: DesignerCommand): DesignerCommandResult {

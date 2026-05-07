@@ -4,12 +4,12 @@ import {
   layoutStructuredTree,
   projectTree,
   normalizeConfig,
-} from '../../flow-designer-core/src/index';
+} from '@nop-chaos/flow-designer-core';
 import type {
   DesignerConfig,
   GraphDocument,
   TreeDocument,
-} from '../../flow-designer-core/src/index';
+} from '@nop-chaos/flow-designer-core';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
 
 function createTestDesignerConfig(): DesignerConfig {
@@ -653,5 +653,39 @@ describe('insertChainNode in tree mode', () => {
     expect(result.ok).toBe(true);
     expect(ownedTree.root.child?.branches?.map((branch) => branch.id)).toEqual(['b1', 'b3']);
     expect(ownedTree.root.child?.branches?.map((branch) => branch.data.priority)).toEqual([1, 2]);
+  });
+
+  it('keeps owner tree undo and redo coherent with the projected graph', () => {
+    const config = createDingFlowConfig();
+    let ownedTree = structuredClone(createSimpleTreeDocument());
+    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
+    const adapter = createDesignerCommandAdapter(core, {
+      getTreeDocument: () => ownedTree,
+      setTreeDocument: (next) => {
+        ownedTree = next;
+      },
+      config,
+    });
+
+    const inserted = adapter.execute({
+      type: 'insertChainNode',
+      sourceId: 'n1',
+      nodeType: 'dt-approval',
+      data: { label: 'Undoable approver' },
+    });
+
+    expect(inserted.ok).toBe(true);
+    expect(ownedTree.root.child?.data.label).toBe('Undoable approver');
+    expect(core.getSnapshot().doc.nodes).toHaveLength(4);
+
+    adapter.execute({ type: 'undo' });
+
+    expect(ownedTree.root.child?.id).toBe('n2');
+    expect(core.getSnapshot().doc.nodes).toHaveLength(3);
+
+    adapter.execute({ type: 'redo' });
+
+    expect(ownedTree.root.child?.data.label).toBe('Undoable approver');
+    expect(core.getSnapshot().doc.nodes).toHaveLength(4);
   });
 });

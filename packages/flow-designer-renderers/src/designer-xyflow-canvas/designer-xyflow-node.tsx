@@ -8,9 +8,10 @@ import { useNodeTypeConfig, useDesignerContext } from '../designer-context';
 import { renderPorts } from './render-ports';
 import type { DesignerFlowNodeData } from './types';
 import { DesignerIcon } from '../designer-icon';
-import { Button, cn } from '@nop-chaos/ui';
+import { Badge, Button, Card, CardContent, CardHeader, cn } from '@nop-chaos/ui';
 import { DingFlowPlusButton } from '../dingflow';
 import type { TreeNodeTypeConfig } from '@nop-chaos/flow-designer-core';
+import { resolveNodeTypeAccent, resolveNodeTypeMeta } from '../designer-node-appearance';
 
 function isSchemaInput(value: unknown): value is SchemaInput {
   return isSchema(value);
@@ -53,14 +54,26 @@ export function DesignerXyflowNode(props: NodeProps) {
 
   const treeNodeType = nodeType as TreeNodeTypeConfig | undefined;
   const showPlusButton = onPlusButtonClick && !treeNodeType?.tree?.isTerminal;
+  const isTreeMode = data.__fdTreeMode === true;
+  const typeMeta = resolveNodeTypeMeta(data.typeId, nodeType);
+  const accent = resolveNodeTypeAccent(data.typeId, nodeType) ?? 'hsl(var(--primary))';
+
+  const isDeletable = useMemo(() => {
+    if (!isTreeMode) return true;
+    if (treeNodeType?.tree?.isTerminal) return false;
+    return true;
+  }, [isTreeMode, treeNodeType]);
 
   const actionScope = useMemo(
     () => ({
       onEdit: () => dispatch({ type: 'selectNode', nodeId: props.id }),
       onDuplicate: () => dispatch({ type: 'duplicateNode', nodeId: props.id }),
-      onDelete: () => dispatch({ type: 'deleteNode', nodeId: props.id }),
+      onDelete: () => {
+        if (!isDeletable) return;
+        dispatch({ type: 'deleteNode', nodeId: props.id });
+      },
     }),
-    [dispatch, props.id],
+    [dispatch, props.id, isDeletable],
   );
 
   function showToolbarNow() {
@@ -93,8 +106,13 @@ export function DesignerXyflowNode(props: NodeProps) {
     if (!nodeType?.appearance) return undefined;
     const { appearance } = nodeType;
     const s: React.CSSProperties = {};
-    if (appearance.minWidth !== undefined) s.minWidth = appearance.minWidth;
-    if (appearance.minHeight !== undefined) s.minHeight = appearance.minHeight;
+    if (isTreeMode) {
+      if (appearance.minWidth !== undefined) s.width = appearance.minWidth;
+      if (appearance.minHeight !== undefined) s.height = appearance.minHeight;
+    } else {
+      if (appearance.minWidth !== undefined) s.minWidth = appearance.minWidth;
+      if (appearance.minHeight !== undefined) s.minHeight = appearance.minHeight;
+    }
     if (appearance.borderRadius !== undefined) s.borderRadius = appearance.borderRadius;
     if (appearance.borderWidth !== undefined) s.borderWidth = appearance.borderWidth;
     if (props.selected && appearance.borderColorSelected) {
@@ -106,7 +124,7 @@ export function DesignerXyflowNode(props: NodeProps) {
       s.boxShadow = '0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent)';
     }
     return Object.keys(s).length > 0 ? s : undefined;
-  }, [nodeType, props.selected, data.__fdBranchFocused]);
+  }, [nodeType, props.selected, data.__fdBranchFocused, isTreeMode]);
 
   if (!nodeType?.body || !isSchemaInput(nodeType.body)) {
     return (
@@ -117,12 +135,32 @@ export function DesignerXyflowNode(props: NodeProps) {
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
       >
-        {renderPorts(nodeType?.ports)}
+        {renderPorts(nodeType?.ports, isTreeMode)}
         <strong>{data.label}</strong>
         <small>{data.typeLabel}</small>
       </div>
     );
   }
+
+  const treeSummary = (() => {
+    const raw = props.data as Record<string, unknown>;
+    const summaryParts: string[] = [];
+    const branchType = raw.branchType;
+    const action = raw.action;
+    const mode = raw.mode;
+    const when = raw.when;
+    const timeout = raw.timeout;
+    const examineMode = raw.examineMode;
+
+    if (typeof action === 'string' && action.length > 0) summaryParts.push(action);
+    if (typeof branchType === 'string' && branchType.length > 0) summaryParts.push(branchType);
+    if (typeof mode === 'string' && mode.length > 0) summaryParts.push(mode);
+    if (typeof examineMode === 'string' && examineMode.length > 0) summaryParts.push(`mode:${examineMode}`);
+    if (typeof timeout === 'number' || typeof timeout === 'string') summaryParts.push(`timeout:${timeout}`);
+    if (typeof when === 'string' && when.trim().length > 0) summaryParts.push('conditional');
+
+    return summaryParts.slice(0, 3);
+  })();
 
   return (
     <>
@@ -134,13 +172,66 @@ export function DesignerXyflowNode(props: NodeProps) {
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
       >
-        {renderPorts(nodeType.ports)}
-        <ClassAliasesContext.Provider value={config.classAliases}>
-          <RenderNodes
-            input={nodeType.body}
-            options={{ bindings: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
-          />
-        </ClassAliasesContext.Provider>
+        {renderPorts(nodeType.ports, isTreeMode)}
+        {isTreeMode ? (
+          treeNodeType?.tree?.isTerminal ? (
+            <div className="flex flex-col items-center justify-center w-full h-full">
+              <div
+                className="w-3 h-3 rounded-full bg-muted-foreground/40"
+                style={{ borderColor: accent }}
+              />
+              <div className="text-[11px] text-muted-foreground/60 mt-1 truncate max-w-full text-center">
+                {data.label}
+              </div>
+            </div>
+          ) : (
+            <Card
+              className="fd-tree-node-shell border shadow-sm overflow-hidden w-full h-full"
+              style={{
+                borderColor: accent,
+                boxShadow: data.__fdBranchFocused
+                  ? `0 0 0 3px color-mix(in srgb, ${accent} 20%, transparent)`
+                  : undefined,
+              }}
+              data-tree-node-type={data.typeId}
+            >
+              <CardHeader className="px-3 py-1.5 gap-1" style={{ background: `color-mix(in srgb, ${accent} 12%, white)` }}>
+                <div className="flex items-center gap-2 min-w-0">
+                  {typeMeta.icon ? <DesignerIcon icon={typeMeta.icon} className="shrink-0" /> : null}
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground truncate">
+                      {typeMeta.label}
+                    </div>
+                    <div className="text-sm font-semibold truncate">{data.label}</div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-3 py-1 flex flex-col gap-0.5">
+                {treeSummary.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {treeSummary.map((item) => (
+                      <Badge key={item} variant="secondary" className="text-[10px] font-medium">
+                        {item}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null}
+                {Array.isArray((props.data as Record<string, unknown>).branches) ? (
+                  <div className="text-[11px] text-muted-foreground">
+                    {`${((props.data as Record<string, unknown>).branches as unknown[]).length} branch${((props.data as Record<string, unknown>).branches as unknown[]).length === 1 ? '' : 'es'}`}
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          )
+        ) : (
+          <ClassAliasesContext.Provider value={config.classAliases}>
+            <RenderNodes
+              input={nodeType.body}
+              options={{ bindings: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
+            />
+          </ClassAliasesContext.Provider>
+        )}
         {showPlusButton && (
           <DingFlowPlusButton
             onClick={(e) => onPlusButtonClick!(props.id, e.clientX, e.clientY, 'node')}
@@ -192,6 +283,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                 >
                   <DesignerIcon icon="copy" />
                 </Button>
+                {isDeletable && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -202,6 +294,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                 >
                   <DesignerIcon icon="trash-2" />
                 </Button>
+                )}
               </div>
             )}
           </div>

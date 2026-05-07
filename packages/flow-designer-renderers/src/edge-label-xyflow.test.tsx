@@ -3,11 +3,13 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { createFormulaCompiler } from '../../flux-formula/src/index';
-import { createSchemaRenderer } from '../../flux-react/src/index';
-import type { RendererDefinition } from '../../flux-core/src/index';
-import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
+import { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import { DesignerContext } from './designer-context';
+import { createDesignerCommandAdapter } from './designer-command-adapter';
 
 afterEach(() => cleanup());
 

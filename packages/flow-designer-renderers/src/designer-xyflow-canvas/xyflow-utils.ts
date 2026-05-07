@@ -44,29 +44,37 @@ function resolveNodeSize(
 export function createXyflowNodes(
   snapshot: DesignerSnapshot,
   nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>,
+  documentMode?: 'graph' | 'tree',
 ): Node[] {
   const branchFocusedNodeId = snapshot.activeBranch?.childId;
-  return snapshot.doc.nodes.map((node) => ({
-    ...(() => {
-      const resolved = resolveNodeSize(node, nodeTypeSizeMap?.get(node.type));
-      return {
-        width: resolved.width,
-        height: resolved.height,
-        measured: { width: resolved.width, height: resolved.height },
-      };
-    })(),
-    id: node.id,
-    type: 'designerNode',
-    position: { ...node.position },
-    selected: snapshot.selection.activeNodeId === node.id,
-    data: {
-      ...(node.data ?? {}),
-      label: String(node.data.label ?? node.id),
-      typeLabel: node.type,
-      typeId: node.type,
-      __fdBranchFocused: branchFocusedNodeId === node.id,
-    } satisfies DesignerFlowNodeData,
-  }));
+  const isTreeMode = documentMode === 'tree';
+  return snapshot.doc.nodes.map((node) => {
+    const resolved = resolveNodeSize(node, nodeTypeSizeMap?.get(node.type));
+    return {
+      ...(isTreeMode
+        ? {
+            width: resolved.width,
+            height: resolved.height,
+          }
+        : {
+            width: resolved.width,
+            height: resolved.height,
+            measured: { width: resolved.width, height: resolved.height },
+          }),
+      id: node.id,
+      type: 'designerNode',
+      position: { ...node.position },
+      selected: snapshot.selection.activeNodeId === node.id,
+      data: {
+        ...(node.data ?? {}),
+        label: String(node.data.label ?? node.id),
+        typeLabel: node.type,
+        typeId: node.type,
+        __fdTreeMode: isTreeMode,
+        __fdBranchFocused: branchFocusedNodeId === node.id,
+      } satisfies DesignerFlowNodeData,
+    };
+  });
 }
 
 export function createXyflowEdges(
@@ -80,8 +88,8 @@ export function createXyflowEdges(
     type: edgeType,
     source: edge.source,
     target: edge.target,
-    sourceHandle: edge.sourcePort,
-    targetHandle: edge.targetPort,
+    sourceHandle: documentMode === 'tree' ? 'tree-out' : edge.sourcePort,
+    targetHandle: documentMode === 'tree' ? 'tree-in' : edge.targetPort,
     label: String(edge.data.label ?? edge.id),
     data: {
       ...(edge.data ?? {}),

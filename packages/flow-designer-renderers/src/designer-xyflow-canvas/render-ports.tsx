@@ -6,7 +6,30 @@ import { POSITION_MAP } from './types';
 
 const defaultHandleClass = '!w-3 !h-3 !rounded-full !bg-primary !border-2 !border-white';
 
-export function renderPorts(ports: PortConfig[] | undefined) {
+export function renderPorts(ports: PortConfig[] | undefined, treeMode = false) {
+  if (treeMode) {
+    return (
+      <>
+        <Handle
+          id="tree-in"
+          type="target"
+          position={Position.Top}
+          className={cn(defaultHandleClass, '!-top-1.5 !left-1/2 !-translate-x-1/2')}
+          data-testid="designer-handle-target-tree-in"
+          data-handle-id="tree-in"
+        />
+        <Handle
+          id="tree-out"
+          type="source"
+          position={Position.Bottom}
+          className={cn(defaultHandleClass, '!-bottom-1.5 !left-1/2 !-translate-x-1/2')}
+          data-testid="designer-handle-source-tree-out"
+          data-handle-id="tree-out"
+        />
+      </>
+    );
+  }
+
   if (!ports || ports.length === 0) {
     return (
       <>

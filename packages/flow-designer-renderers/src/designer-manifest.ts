@@ -129,7 +129,7 @@ const designerProjection: HostProjectionContract = {
           isDirty: { kind: 'boolean' },
           canUndo: { kind: 'boolean' },
           canRedo: { kind: 'boolean' },
-          gridVisible: { kind: 'boolean' },
+          gridEnabled: { kind: 'boolean' },
           paletteCollapsed: { kind: 'boolean' },
           inspectorCollapsed: { kind: 'boolean' },
         },

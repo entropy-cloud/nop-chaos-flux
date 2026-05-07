@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 
-import { createFormulaCompiler } from '../../flux-formula/src/index';
-import { createSchemaRenderer } from '../../flux-react/src/index';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';
+import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
 
 beforeEach(async () => {
   resetFluxI18n();

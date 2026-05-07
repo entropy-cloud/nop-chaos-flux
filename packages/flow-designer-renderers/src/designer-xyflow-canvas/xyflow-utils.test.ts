@@ -75,7 +75,7 @@ function createSnapshot(): DesignerSnapshot {
 
 describe('xyflow branch focus mapping', () => {
   it('marks the active branch child node as branch-focused', () => {
-    const nodes = createXyflowNodes(createSnapshot());
+    const nodes = createXyflowNodes(createSnapshot(), undefined, 'tree');
 
     expect(nodes.find((node) => node.id === 'branch-node')?.data.__fdBranchFocused).toBe(true);
     expect(nodes.find((node) => node.id === 'owner')?.data.__fdBranchFocused).toBe(false);
@@ -86,5 +86,12 @@ describe('xyflow branch focus mapping', () => {
 
     expect(edges.find((edge) => edge.id === 'e1')?.data.__fdBranchFocused).toBe(true);
     expect(edges.find((edge) => edge.id === 'e2')?.data.__fdBranchFocused).toBe(true);
+  });
+
+  it('uses fixed tree handles in tree mode', () => {
+    const edges = createXyflowEdges(createSnapshot(), 'tree');
+
+    expect(edges[0]?.sourceHandle).toBe('tree-out');
+    expect(edges[0]?.targetHandle).toBe('tree-in');
   });
 });
