@@ -1,3 +1,4 @@
+import '@nop-chaos/spreadsheet-renderers/canvas-styles.css';
 import {
   registerRendererDefinitions,
   type RendererDefinition,

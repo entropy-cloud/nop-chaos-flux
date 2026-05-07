@@ -3,10 +3,10 @@ import { mergeProps } from '@base-ui/react/merge-props';
 import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-import { cn } from '../../lib/utils';
-import { Skeleton } from './skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
-import { useSidebar } from './sidebar-context';
+import { cn } from '../../lib/utils.js';
+import { Skeleton } from './skeleton.js';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip.js';
+import { useSidebar } from './sidebar-context.js';
 
 export function SidebarMenu({ className, ...props }: React.ComponentProps<'ul'>) {
   return (

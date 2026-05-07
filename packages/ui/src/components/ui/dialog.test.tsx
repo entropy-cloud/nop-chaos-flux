@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from './dialog';
+} from './dialog.js';
 
 describe('Dialog', () => {
   it('renders content with title and description when open', () => {

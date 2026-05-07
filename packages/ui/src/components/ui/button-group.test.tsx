@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { Button } from './button';
-import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from './button-group';
+import { Button } from './button.js';
+import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from './button-group.js';
 
 describe('ButtonGroup', () => {
   it('renders a stable group role and orientation contract', () => {

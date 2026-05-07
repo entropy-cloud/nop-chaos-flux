@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs.js';
 
 describe('Tabs', () => {
   it('renders vertical tabs with orientation-aware list and trigger classes', () => {

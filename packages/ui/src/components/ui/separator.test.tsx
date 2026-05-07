@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { Separator } from './separator';
+import { Separator } from './separator.js';
 
 describe('Separator', () => {
   it('renders with separator role and data-slot', () => {

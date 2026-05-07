@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { cn } from '../../lib/utils';
-import { getTableRowClassName, type TableRowVariant } from './table-row-class-name';
+import { cn } from '../../lib/utils.js';
+import { getTableRowClassName, type TableRowVariant } from './table-row-class-name.js';
 
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
   return (

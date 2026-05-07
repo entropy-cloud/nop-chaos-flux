@@ -11,9 +11,9 @@ import {
   getNodeAnomalies,
   getRecentFailures,
   matchesEventQuery,
-} from './diagnostics';
-import { normalizeRedactionOptions } from './redaction';
-import type { NopDebugEvent, NopDebuggerSnapshot } from './types';
+} from './diagnostics.js';
+import { normalizeRedactionOptions } from './redaction.js';
+import type { NopDebugEvent, NopDebuggerSnapshot } from './types.js';
 
 function createEvent(overrides: Partial<NopDebugEvent>): NopDebugEvent {
   return {

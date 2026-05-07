@@ -3,7 +3,7 @@ import { ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, ScrollArea, cn } from '@nop-chaos/ui';
-import type { IElement, TitleLevel } from '@nop-chaos/word-editor-core';
+import type { TitleLevel, WordEditorElement } from '@nop-chaos/word-editor-core';
 
 interface OutlinePanelProps {
   bridge: CanvasEditorBridge | null;
@@ -27,7 +27,7 @@ const TITLE_LEVEL_ORDER: Record<TitleLevel, number> = {
   sixth: 6,
 };
 
-function extractHeadings(elements: IElement[]): HeadingItem[] {
+function extractHeadings(elements: WordEditorElement[]): HeadingItem[] {
   const headings: HeadingItem[] = [];
 
   for (const element of elements) {

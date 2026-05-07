@@ -12,7 +12,7 @@ import type {
   NopInteractionTraceQuery,
   NopNodeDiagnostics,
   NopNodeDiagnosticsOptions,
-} from './types';
+} from './types.js';
 
 export {
   getLatestFailedRequest,
@@ -20,7 +20,7 @@ export {
   getNodeAnomalies,
   getRecentFailures,
   buildSessionExport,
-} from './diagnostics-failures';
+} from './diagnostics-failures.js';
 
 const EMPTY_PINNED_ERRORS: NopDebuggerPinnedErrors = { earliest: [], latest: [] };
 

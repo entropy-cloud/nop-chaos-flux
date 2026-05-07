@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, KeyboardEvent } from 'react';
 import { Button, Input } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { DEFAULT_FILTERS } from '../diagnostics';
-import type { NopDebugEvent, NopDebuggerFilterKind, NopDebuggerSnapshot } from '../types';
-import type { ErrorGroup } from './event-groups';
-import { JsonViewer } from './json-viewer';
+import { DEFAULT_FILTERS } from '../diagnostics.js';
+import type { NopDebugEvent, NopDebuggerFilterKind, NopDebuggerSnapshot } from '../types.js';
+import type { ErrorGroup } from './event-groups.js';
+import { JsonViewer } from './json-viewer.js';
 
 const VIRTUALIZE_AFTER = 60;
 const VIRTUAL_ROW_HEIGHT = 96;

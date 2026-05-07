@@ -3,8 +3,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { NopDebuggerPanel } from './panel';
-import { createSnapshot, createController } from './panel.test';
+import { NopDebuggerPanel } from './panel.js';
+import { createSnapshot, createController } from './panel.test.js';
 
 beforeEach(async () => {
   resetFluxI18n();

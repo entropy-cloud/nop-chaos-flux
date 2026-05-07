@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createNopDebugger } from './index';
+import { createNopDebugger } from './index.js';
 
 describe('controller inspector — advanced data', () => {
   beforeEach(() => {

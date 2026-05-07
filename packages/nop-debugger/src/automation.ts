@@ -31,7 +31,7 @@ import type {
   NopNodeValueExplanationQuery,
   NopWaitForEventOptions,
   InstallNopDebuggerWindowFlagOptions,
-} from './types';
+} from './types.js';
 
 export function createAutomationApi(input: {
   controllerId: string;

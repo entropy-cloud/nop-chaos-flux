@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
 import { stringify } from 'yaml';
-import { Tabs, TabsList, TabsTrigger } from './tabs';
-import { cn } from '../../lib/utils';
+import { Tabs, TabsList, TabsTrigger } from './tabs.js';
+import { cn } from '../../lib/utils.js';
 
 type JsonViewerProps = {
   data: Record<string, unknown> | unknown[];

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { t } from '@nop-chaos/flux-i18n';
 
-import { cn } from '../../lib/utils';
-import { Button } from './button';
+import { cn } from '../../lib/utils.js';
+import { Button } from './button.js';
 import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react';
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {

@@ -1,8 +1,8 @@
-export type * from './types';
-export { NopDebuggerPanel } from './panel';
+export type * from './types.js';
+export { NopDebuggerPanel } from './panel.js';
 export {
   createNopDebugger,
   createNopDiagnosticReport,
   getNopDebuggerAutomationApi,
   installNopDebuggerWindowFlag,
-} from './controller';
+} from './controller.js';

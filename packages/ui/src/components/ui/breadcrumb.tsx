@@ -3,7 +3,7 @@ import { mergeProps } from '@base-ui/react/merge-props';
 import { useRender } from '@base-ui/react/use-render';
 import { t } from '@nop-chaos/flux-i18n';
 
-import { cn } from '../../lib/utils';
+import { cn } from '../../lib/utils.js';
 import { ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react';
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<'nav'>) {

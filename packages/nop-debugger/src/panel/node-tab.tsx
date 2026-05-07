@@ -1,8 +1,8 @@
 import type { ChangeEvent, KeyboardEvent } from 'react';
 import { Button, Input } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { NopComponentInspectResult, NopComponentTreeItem, NopNodeDiagnostics } from '../types';
-import { JsonViewer } from './json-viewer';
+import type { NopComponentInspectResult, NopComponentTreeItem, NopNodeDiagnostics } from '../types.js';
+import { JsonViewer } from './json-viewer.js';
 
 function formatClock(timestamp: number) {
   return new Date(timestamp).toLocaleTimeString([], {

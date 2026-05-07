@@ -1,7 +1,7 @@
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { MergedRequest } from './event-groups';
-import { JsonViewer } from './json-viewer';
+import type { MergedRequest } from './event-groups.js';
+import { JsonViewer } from './json-viewer.js';
 
 function formatClock(timestamp: number) {
   return new Date(timestamp).toLocaleTimeString([], {

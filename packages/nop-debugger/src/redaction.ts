@@ -1,4 +1,4 @@
-import type { NopDebuggerRedactionMatchContext, NopDebuggerRedactionOptions } from './types';
+import type { NopDebuggerRedactionMatchContext, NopDebuggerRedactionOptions } from './types.js';
 
 const DEFAULT_REDACT_KEYS = [
   'token',

@@ -7,7 +7,7 @@ import type {
 import type {
   NopDebugEventNetworkSummary,
   NopDebuggerWindowConfig,
-} from './types';
+} from './types.js';
 
 const DEFAULT_POSITION = { x: 24, y: 24 };
 

@@ -19,9 +19,9 @@ import {
   normalizeCompiledRoot,
   summarizeApi,
   summarizeValueShape,
-} from './controller-helpers';
-import { redactData, type NormalizedRedactionOptions } from './redaction';
-import type { NopDebuggerStore } from './store';
+} from './controller-helpers.js';
+import { redactData, type NormalizedRedactionOptions } from './redaction.js';
+import type { NopDebuggerStore } from './store.js';
 
 function isAbortLikeError(error: unknown): boolean {
   if (!error || typeof error !== 'object') {

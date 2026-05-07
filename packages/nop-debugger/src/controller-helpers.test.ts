@@ -16,7 +16,7 @@ import {
   readWindowConfig,
   summarizeApi,
   summarizeValueShape,
-} from './controller-helpers';
+} from './controller-helpers.js';
 
 const windowStub = {} as Window & typeof globalThis;
 

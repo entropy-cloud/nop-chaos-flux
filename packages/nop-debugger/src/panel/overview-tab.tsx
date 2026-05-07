@@ -1,5 +1,5 @@
 import { t } from '@nop-chaos/flux-i18n';
-import type { NopDebuggerOverview, NopInteractionTrace } from '../types';
+import type { NopDebuggerOverview, NopInteractionTrace } from '../types.js';
 
 function formatClock(timestamp: number) {
   return new Date(timestamp).toLocaleTimeString([], {

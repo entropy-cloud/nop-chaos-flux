@@ -3,7 +3,7 @@ import type {
   NopComponentInspectResult,
   NopComponentTreeItem,
   NopDebuggerController,
-} from '../types';
+} from '../types.js';
 
 function findMountedElement(cid: number) {
   if (typeof document === 'undefined') {

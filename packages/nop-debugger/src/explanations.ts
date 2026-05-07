@@ -1,6 +1,6 @@
-import { redactData } from './redaction';
-import type { NormalizedRedactionOptions } from './redaction';
-export { explainNodeAsync, explainNodeFailure } from './explanations-failure-async';
+import { redactData } from './redaction.js';
+import type { NormalizedRedactionOptions } from './redaction.js';
+export { explainNodeAsync, explainNodeFailure } from './explanations-failure-async.js';
 import type { ScopeSnapshot } from '@nop-chaos/flux-core';
 import type {
   NopComponentInspectResult,
@@ -10,7 +10,7 @@ import type {
   NopNodeMetaExplanationQuery,
   NopNodeValueExplanation,
   NopNodeValueExplanationQuery,
-} from './types';
+} from './types.js';
 
 const MAX_EVIDENCE = 6;
 const MAX_DEPENDENCY_PATHS = 6;

@@ -20,7 +20,7 @@ import type {
   NopNodeMetaExplanationQuery,
   NopNodeValueExplanation,
   NopNodeValueExplanationQuery,
-} from './types-explanations';
+} from './types-explanations.js';
 
 export type {
   NopDebuggerExplanation,
@@ -35,7 +35,7 @@ export type {
   NopNodeMetaExplanationQuery,
   NopNodeValueExplanation,
   NopNodeValueExplanationQuery,
-} from './types-explanations';
+} from './types-explanations.js';
 
 export type NopDebuggerTab = 'overview' | 'timeline' | 'network' | 'node';
 

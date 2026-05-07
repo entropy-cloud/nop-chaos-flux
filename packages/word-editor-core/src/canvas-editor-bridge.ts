@@ -1,6 +1,6 @@
 import Editor from '@hufe921/canvas-editor';
 import { PaperDirection } from '@hufe921/canvas-editor';
-import type { IEditorData, IEditorResult, IRangeStyle } from '@hufe921/canvas-editor';
+import type { WordEditorData, WordEditorRangeStyle, WordEditorResult } from './canvas-editor-types.js';
 import type { PaperSettings } from './paper-settings.js';
 import type { TemplateExpr } from './template-expr.js';
 import { exprToUrl, buildElExpression } from './template-expr.js';
@@ -9,12 +9,12 @@ import type { DocCode } from './code-model.js';
 
 export interface CanvasEditorBridgeOptions {
   onContentChange?: () => void;
-  onRangeStyleChange?: (payload: IRangeStyle) => void;
+  onRangeStyleChange?: (payload: WordEditorRangeStyle) => void;
   onPageSizeChange?: (payload: number) => void;
   onPageScaleChange?: (payload: number) => void;
 }
 
-export type { IRangeStyle };
+export type { WordEditorRangeStyle };
 
 export class CanvasEditorBridge {
   private instance: Editor | null = null;
@@ -34,7 +34,7 @@ export class CanvasEditorBridge {
 
   mount(
     container: HTMLDivElement,
-    data: IEditorData,
+    data: WordEditorData,
     options?: CanvasEditorBridgeOptions,
     paperSettings?: PaperSettings,
   ): void {
@@ -89,11 +89,11 @@ export class CanvasEditorBridge {
     }
   }
 
-  getValue(): IEditorResult | null {
+  getValue(): WordEditorResult | null {
     return this.instance?.command.getValue() ?? null;
   }
 
-  setValue(data: IEditorData): void {
+  setValue(data: WordEditorData): void {
     this.instance?.command.executeSetValue(data);
   }
 

@@ -1,5 +1,5 @@
-import { DEFAULT_FILTERS } from './diagnostics';
-import type { NopDebugEvent, NopDebuggerSnapshot, NopDebuggerTab } from './types';
+import { DEFAULT_FILTERS } from './diagnostics.js';
+import type { NopDebugEvent, NopDebuggerSnapshot, NopDebuggerTab } from './types.js';
 
 export interface NopDebuggerStore {
   getSnapshot(): NopDebuggerSnapshot;

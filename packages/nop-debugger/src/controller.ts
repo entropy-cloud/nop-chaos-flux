@@ -7,19 +7,19 @@ import type {
   RendererRuntime,
 } from '@nop-chaos/flux-core';
 import { setStrictValidationGlobal } from '@nop-chaos/flux-core';
-import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
+import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters.js';
 import {
   createAutomationApi,
   getNopDebuggerAutomationApi as getAutomationApi,
   installNopDebuggerWindowFlag,
   registerAutomationApi,
-} from './automation';
+} from './automation.js';
 import {
   buildGetComponentTree,
   buildInspectByCid,
   buildInspectByElement,
   buildEvaluateNodeExpression,
-} from './controller-component-inspector';
+} from './controller-component-inspector.js';
 import {
   createRequestInstanceIdFactory,
   createSessionId,
@@ -30,7 +30,7 @@ import {
   persistPanelOpen,
   persistPosition,
   readWindowConfig,
-} from './controller-helpers';
+} from './controller-helpers.js';
 import {
   applyEventQuery,
   buildInteractionTrace,
@@ -42,15 +42,15 @@ import {
   getLatestFailedRequest,
   getNodeAnomalies,
   getRecentFailures,
-} from './diagnostics';
+} from './diagnostics.js';
 import {
   explainNodeAsync,
   explainNodeFailure,
   explainNodeMeta,
   explainNodeValue,
-} from './explanations';
-import { normalizeRedactionOptions } from './redaction';
-import { createDebuggerStore } from './store';
+} from './explanations.js';
+import { normalizeRedactionOptions } from './redaction.js';
+import { createDebuggerStore } from './store.js';
 import type {
   NopDebugEvent,
   NopDebugEventQuery,
@@ -64,7 +64,7 @@ import type {
   NopInteractionTraceQuery,
   NopNodeDiagnosticsOptions,
   NopWaitForEventOptions,
-} from './types';
+} from './types.js';
 
 function appendActionScopeSnapshotEvent(args: {
   store: ReturnType<typeof createDebuggerStore>;

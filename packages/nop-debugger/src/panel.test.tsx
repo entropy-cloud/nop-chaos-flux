@@ -3,15 +3,15 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { NopDebuggerPanel } from './panel';
-import type { NopComponentTreeItem } from './types';
+import { NopDebuggerPanel } from './panel.js';
+import type { NopComponentTreeItem } from './types.js';
 import type {
   NopDebuggerController,
   NopDebuggerOverview,
   NopDebuggerSnapshot,
   NopDiagnosticReport,
   NopInteractionTrace,
-} from './types';
+} from './types.js';
 
 function createValueExplanation() {
   return {

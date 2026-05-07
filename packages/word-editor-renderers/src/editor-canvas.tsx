@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import type { IEditorData } from '@nop-chaos/word-editor-core';
+import type { WordEditorData } from '@nop-chaos/word-editor-core';
 import type { EditorStoreApi } from '@nop-chaos/word-editor-core';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import { createSavedDocumentData, DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core';
@@ -81,7 +81,7 @@ export function EditorCanvas({
             paperSettings: null,
           })
         : null);
-    let editorData: IEditorData;
+    let editorData: WordEditorData;
     let paperSettings: PaperSettings;
 
     if (documentSource) {

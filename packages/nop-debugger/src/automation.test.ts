@@ -5,7 +5,7 @@ import {
   getNopDebuggerAutomationApi,
   installNopDebuggerWindowFlag,
   registerAutomationApi,
-} from './automation';
+} from './automation.js';
 import type {
   NopDebugEvent,
   NopDebuggerFilterKind,
@@ -19,7 +19,7 @@ import type {
   NopInteractionTrace,
   NopNodeDiagnostics,
   NopNodeValueExplanation,
-} from './types';
+} from './types.js';
 
 const windowStub = {} as Window & typeof globalThis;
 

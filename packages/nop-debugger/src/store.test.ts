@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createDebuggerStore } from './store';
-import type { NopDebugEvent, NopDebuggerFilterKind } from './types';
+import { createDebuggerStore } from './store.js';
+import type { NopDebugEvent, NopDebuggerFilterKind } from './types.js';
 
 describe('createDebuggerStore', () => {
   it('appends bounded events and notifies subscribers', async () => {

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import '@nop-chaos/spreadsheet-renderers/canvas-styles.css';
 import { cellAddress, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 import {
   SheetTabBar,

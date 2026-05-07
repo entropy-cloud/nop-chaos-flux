@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { Input } from './input';
+import { Input } from './input.js';
 
 describe('Input', () => {
   it('renders with textbox role and data-slot', () => {

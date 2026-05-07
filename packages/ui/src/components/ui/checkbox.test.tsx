@@ -1,7 +1,7 @@
 import React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { Checkbox } from './checkbox';
+import { Checkbox } from './checkbox.js';
 
 afterEach(cleanup);
 

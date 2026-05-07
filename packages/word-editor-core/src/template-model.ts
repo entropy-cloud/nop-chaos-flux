@@ -1,11 +1,11 @@
-import type { IElement } from '@hufe921/canvas-editor';
+import type { WordEditorElement } from './canvas-editor-types.js';
 import type { DocChart } from './chart-model.js';
 import type { DocCode } from './code-model.js';
 
 export interface DocumentData {
-  header: IElement[];
-  main: IElement[];
-  footer: IElement[];
+  header: WordEditorElement[];
+  main: WordEditorElement[];
+  footer: WordEditorElement[];
 }
 
 export interface WordDocument extends DocumentData {

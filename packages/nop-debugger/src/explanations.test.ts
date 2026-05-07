@@ -4,9 +4,9 @@ import {
   explainNodeFailure,
   explainNodeMeta,
   explainNodeValue,
-} from './explanations';
-import { normalizeRedactionOptions } from './redaction';
-import type { NopComponentInspectResult, NopDebugEvent } from './types';
+} from './explanations.js';
+import { normalizeRedactionOptions } from './redaction.js';
+import type { NopComponentInspectResult, NopDebugEvent } from './types.js';
 
 function createInspectResult(
   overrides: Partial<NopComponentInspectResult> = {},

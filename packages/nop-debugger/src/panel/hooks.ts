@@ -5,7 +5,7 @@ import {
   useSyncExternalStore,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import type { NopDebuggerController } from '../types';
+import type { NopDebuggerController } from '../types.js';
 
 type PointerCaptureTarget = HTMLElement & {
   setPointerCapture?: (pointerId: number) => void;

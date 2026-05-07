@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { Field, FieldContent, FieldDescription, FieldError, FieldLabel, FieldTitle } from './field';
+import { Field, FieldContent, FieldDescription, FieldError, FieldLabel, FieldTitle } from './field.js';
 
 describe('Field', () => {
   it('renders the group role and orientation contract', () => {

@@ -1,4 +1,4 @@
-import type { NopDebugEvent, NopInteractionTrace } from '../types';
+import type { NopDebugEvent, NopInteractionTrace } from '../types.js';
 
 export type MergedRequest = {
   key: string;

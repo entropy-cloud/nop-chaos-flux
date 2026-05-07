@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { Switch } from './switch';
+import { Switch } from './switch.js';
 
 describe('Switch', () => {
   it('renders with switch role and data-slot', () => {

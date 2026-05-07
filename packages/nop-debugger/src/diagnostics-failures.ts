@@ -7,15 +7,15 @@ import type {
   NopDebuggerSnapshot,
   NopNodeAnomalySummary,
   NopNodeDiagnosticsOptions,
-} from './types';
-import type { NormalizedRedactionOptions } from './redaction';
-import { redactData } from './redaction';
+} from './types.js';
+import type { NormalizedRedactionOptions } from './redaction.js';
+import { redactData } from './redaction.js';
 import {
   applyEventQuery,
   buildInteractionTrace,
   buildNodeDiagnostics,
   buildOverview,
-} from './diagnostics';
+} from './diagnostics.js';
 
 const EMPTY_PINNED_ERRORS: NopDebuggerPinnedErrors = { earliest: [], latest: [] };
 

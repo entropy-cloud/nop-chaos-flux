@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { AlignLeftIcon, AlignCenterIcon, AlignRightIcon } from 'lucide-react';
-import { Button } from '../ui/button';
-import { cn } from '../../lib/utils';
+import { Button } from '../ui/button.js';
+import { cn } from '../../lib/utils.js';
 
 interface AlignmentControlsProps {
   onAlign: (align: 'left' | 'center' | 'right') => void;

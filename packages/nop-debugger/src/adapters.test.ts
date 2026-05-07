@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ApiSchema, RendererEnv } from '@nop-chaos/flux-core';
-import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
-import { normalizeRedactionOptions } from './redaction';
-import { createDebuggerStore } from './store';
-import { createRequestInstanceIdFactory } from './controller-helpers';
-import type { NopDebugEvent } from './types';
+import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters.js';
+import { normalizeRedactionOptions } from './redaction.js';
+import { createDebuggerStore } from './store.js';
+import { createRequestInstanceIdFactory } from './controller-helpers.js';
+import type { NopDebugEvent } from './types.js';
 
 function createStore() {
   return createDebuggerStore({

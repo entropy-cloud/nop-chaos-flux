@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { NativeSelect, NativeSelectOption } from './native-select';
+import { NativeSelect, NativeSelectOption } from './native-select.js';
 
 describe('NativeSelect', () => {
   it('renders wrapper, select, and icon slots', () => {

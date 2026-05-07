@@ -1,6 +1,6 @@
 import type { AsyncOwnerDebugSnapshot } from '@nop-chaos/flux-core';
-import { buildInteractionTrace } from './diagnostics';
-import { getLatestFailedAction } from './diagnostics-failures';
+import { buildInteractionTrace } from './diagnostics.js';
+import { getLatestFailedAction } from './diagnostics-failures.js';
 import type {
   NopComponentInspectResult,
   NopDebugEvent,
@@ -9,7 +9,7 @@ import type {
   NopNodeAsyncExplanationQuery,
   NopNodeFailureExplanation,
   NopNodeFailureExplanationQuery,
-} from './types';
+} from './types.js';
 
 const MAX_EVIDENCE = 6;
 const MAX_ASYNC_OWNERS = 4;

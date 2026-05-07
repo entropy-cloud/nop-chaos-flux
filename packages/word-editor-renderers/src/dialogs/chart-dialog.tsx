@@ -3,11 +3,6 @@ import type { DocChart, ChartType } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
   Checkbox,
   Dialog,
   DialogBody,
@@ -21,6 +16,13 @@ import {
   NativeSelectOption,
   ScrollArea,
 } from '@nop-chaos/ui';
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@nop-chaos/ui/chart';
 import * as RechartsPrimitive from 'recharts';
 
 interface ChartDialogProps {

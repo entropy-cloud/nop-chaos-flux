@@ -1,7 +1,24 @@
 export type { WordEditorHostStatusSummary } from './host-status.js';
+export {
+  RowFlex,
+  TitleLevel,
+  ListType,
+  ListStyle,
+  PageMode,
+  PaperDirection,
+} from './canvas-editor-types.js';
+export type {
+  WordEditorCatalog,
+  WordEditorCatalogItem,
+  WordEditorData,
+  WordEditorElement,
+  WordEditorRangeStyle,
+  WordEditorResult,
+  WordEditorWatermark,
+} from './canvas-editor-types.js';
 
 export { CanvasEditorBridge } from './canvas-editor-bridge.js';
-export type { CanvasEditorBridgeOptions, IRangeStyle } from './canvas-editor-bridge.js';
+export type { CanvasEditorBridgeOptions } from './canvas-editor-bridge.js';
 export { createEditorStore } from './editor-store.js';
 export type { EditorStoreApi, EditorSelectionState, EditorState } from './editor-store.js';
 export { createDatasetStore } from './dataset-store.js';
@@ -67,20 +84,3 @@ export { createDocChart, validateDocChart } from './chart-model.js';
 export type { ChartType, DocChart } from './chart-model.js';
 export { createDocCode, validateDocCode } from './code-model.js';
 export type { CodeType, DocCode } from './code-model.js';
-
-export {
-  RowFlex,
-  TitleLevel,
-  ListType,
-  ListStyle,
-  PageMode,
-  PaperDirection,
-} from '@hufe921/canvas-editor';
-export type {
-  IWatermark,
-  IEditorData,
-  IEditorResult,
-  IElement,
-  ICatalog,
-  ICatalogItem,
-} from '@hufe921/canvas-editor';

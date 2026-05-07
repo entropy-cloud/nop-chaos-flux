@@ -10,7 +10,7 @@ import type {
   NopComponentInspectResult,
   NopComponentTreeItem,
   NopExpressionEvaluationResult,
-} from './types';
+} from './types.js';
 
 function pickRecord(source: Record<string, unknown> | undefined, keys: readonly string[]) {
   if (!source) {

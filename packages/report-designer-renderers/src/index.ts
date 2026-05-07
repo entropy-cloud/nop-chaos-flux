@@ -43,5 +43,7 @@ export {
   useReportDesignerHostScope,
 } from './host-data.js';
 
+export type { ReportInspectorShellSchema } from './types.js';
+
 export { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
 export type { ReportSpreadsheetCanvasProps } from './report-spreadsheet-canvas.js';

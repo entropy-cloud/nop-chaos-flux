@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeRedactionOptions, redactData } from './redaction';
+import { normalizeRedactionOptions, redactData } from './redaction.js';
 
 describe('redaction helpers', () => {
   it('normalizes defaults and can disable redaction', () => {

@@ -3,13 +3,13 @@ import { mergeProps } from '@base-ui/react/merge-props';
 import { useRender } from '@base-ui/react/use-render';
 import { t } from '@nop-chaos/flux-i18n';
 
-import { cn } from '../../lib/utils';
-import { Button } from './button';
-import { Input } from './input';
-import { Separator } from './separator';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './sheet';
+import { cn } from '../../lib/utils.js';
+import { Button } from './button.js';
+import { Input } from './input.js';
+import { Separator } from './separator.js';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './sheet.js';
 import { PanelLeftIcon } from 'lucide-react';
-import { useSidebar, SIDEBAR_WIDTH_MOBILE } from './sidebar-context';
+import { useSidebar, SIDEBAR_WIDTH_MOBILE } from './sidebar-context.js';
 
 export function Sidebar({
   side = 'left',

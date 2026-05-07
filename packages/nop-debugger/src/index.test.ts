@@ -4,7 +4,7 @@ import {
   createNopDebugger,
   getNopDebuggerAutomationApi,
   installNopDebuggerWindowFlag,
-} from './index';
+} from './index.js';
 
 const windowStub = {} as Window & typeof globalThis;
 

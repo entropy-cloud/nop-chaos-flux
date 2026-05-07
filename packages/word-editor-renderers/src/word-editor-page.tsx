@@ -1,45 +1,21 @@
-import { useMemo, useEffect, useRef, useState, useCallback } from 'react';
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { ArrowLeft, Save, FileText, Database, Columns, Type } from 'lucide-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { shallowEqual } from '@nop-chaos/flux-core';
-import type { WordEditorHostStatusSummary } from '@nop-chaos/word-editor-core';
 import {
   hasRendererSlotContent,
-  resolveRendererSlotContent,
-  useCurrentActionScope,
-  useHostScope,
-  useNamespaceRegistration,
-  useRendererEnv,
-  useStatusPathPublication,
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import {
-  CanvasEditorBridge,
-  createDatasetStore,
-  createEditorStore,
-  createSavedDocumentData,
-  loadRecoveredState,
-} from '@nop-chaos/word-editor-core';
-import type {
-  DatasetSourceType,
-  DataColumnInput,
-  Dataset,
-  DocChart,
-  DocCode,
-  SavedDocumentData,
-  WordDocument,
-} from '@nop-chaos/word-editor-core';
 import { Button, cn, Tabs, TabsList, TabsTrigger, TabsContent } from '@nop-chaos/ui';
 import { EditorCanvas } from './editor-canvas.js';
-import { createWordEditorActionProvider } from './word-editor-action-provider.js';
 import { RibbonToolbar } from './toolbar/ribbon-toolbar.js';
 import { OutlinePanel } from './panels/outline-panel.js';
 import { DatasetPanel } from './panels/dataset-panel.js';
 import { FieldList } from './panels/field-list.js';
 import { DatasetDialog } from './dialogs/dataset-dialog.js';
 import { useWordEditorShortcuts } from './hooks/use-word-editor-shortcuts.js';
+import { useWordEditorState } from './hooks/use-word-editor-state.js';
+import { useWordEditorSave } from './hooks/use-word-editor-save.js';
+import { useWordEditorActions } from './hooks/use-word-editor-actions.js';
 import type { WordEditorPageSchema } from './types.js';
 
 function asReactNode(value: unknown): React.ReactNode {
@@ -47,348 +23,59 @@ function asReactNode(value: unknown): React.ReactNode {
 }
 
 export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchema>) {
-  const initialDocument = props.props.initialDocument as WordDocument | undefined;
-  const initialDatasets = props.props.datasets as Dataset[] | undefined;
-  const recoveredState = useMemo(
-    () => loadRecoveredState(initialDatasets),
-    [initialDatasets],
-  );
-  const bridge = useMemo(() => new CanvasEditorBridge(), []);
-  const editorStore = useMemo(() => createEditorStore(), []);
-  const datasetStore = useMemo(() => createDatasetStore(), []);
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mountedRef = useRef(true);
-  const isSavingRef = useRef(false);
-  const saveAbortRef = useRef<AbortController | null>(null);
-  const [activePanel, setActivePanel] = useState<'datasets' | 'fields'>('datasets');
-  const [datasetDialogOpen, setDatasetDialogOpen] = useState(false);
-  const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null);
-  const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
-  const [charts, setCharts] = useState<DocChart[]>(
-    () => (props.props.initialCharts as DocChart[] | undefined) ?? [],
-  );
-  const [codes, setCodes] = useState<DocCode[]>(
-    () => (props.props.initialCodes as DocCode[] | undefined) ?? [],
-  );
-  const [savedDocument, setSavedDocument] = useState<SavedDocumentData | null>(() => {
-    return recoveredState.document ??
-      (initialDocument
-        ? createSavedDocumentData({ data: initialDocument, paperSettings: null })
-        : null);
+  const {
+    actionProvider,
+    actionScope,
+    activePanel,
+    bridge,
+    charts,
+    codes,
+    datasetDialogOpen,
+    datasetStore,
+    editingDataset,
+    editingDatasetId,
+    editorStore,
+    env,
+    hostScope,
+    initialDocument,
+    isDirty,
+    leftCollapsed,
+    mountedRef,
+    recoveredState,
+    rightCollapsed,
+    rootRef,
+    setActivePanel,
+    setCharts,
+    setCodes,
+    setDatasetDialogOpen,
+    setEditingDatasetId,
+    setLeftCollapsed,
+    setRightCollapsed,
+    setSavedDocument,
+    titleContent,
+    wordCount,
+  } = useWordEditorState(props);
+
+  const { handleSave, saveMessage } = useWordEditorSave({
+    actionProvider,
+    env,
+    mountedRef,
   });
-  const updateSavedDocumentExtras = useCallback(
-    (extras: { charts: DocChart[]; codes: DocCode[] }) => {
-      setSavedDocument((current) => {
-        if (!current) {
-          return current;
-        }
 
-        return {
-          ...current,
-          data: {
-            ...current.data,
-            charts: extras.charts,
-            codes: extras.codes,
-          },
-        };
-      });
-    },
-    [],
-  );
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-      saveAbortRef.current?.abort();
-      if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current);
-    };
-  }, []);
-  const titleContent = resolveRendererSlotContent(props, 'title');
-  const actionScope = useCurrentActionScope();
-
-  const isDirty = useSyncExternalStoreWithSelector(
-    editorStore.subscribe,
-    editorStore.getState,
-    editorStore.getState,
-    (state) => state.isDirty,
-  );
-
-  const wordCount = useSyncExternalStoreWithSelector(
-    editorStore.subscribe,
-    editorStore.getState,
-    editorStore.getState,
-    (state) => state.wordCount,
-  );
-
-  const selection = useSyncExternalStoreWithSelector(
-    editorStore.subscribe,
-    editorStore.getState,
-    editorStore.getState,
-    (state) => state.selection,
-  );
-
-  const editorRuntime = useSyncExternalStoreWithSelector(
-    editorStore.subscribe,
-    editorStore.getState,
-    editorStore.getState,
-    (state) => ({
-      ready: state.isReady,
-      dirty: state.isDirty,
-      wordCount: state.wordCount,
-      canUndo: state.selection.undo,
-      canRedo: state.selection.redo,
-      currentPage: state.currentPage,
-      totalPages: state.totalPages,
-      scale: state.scale,
-    }),
-    shallowEqual,
-  );
-
-  const datasets = useSyncExternalStoreWithSelector(
-    datasetStore.subscribe,
-    datasetStore.getState,
-    datasetStore.getState,
-    (state) => state.datasets,
-  );
-
-  const runtimeHostSummary = useMemo(
-    () => ({
-      ready: editorRuntime.ready,
-      dirty: editorRuntime.dirty,
-      wordCount: editorRuntime.wordCount,
-      canUndo: editorRuntime.canUndo,
-      canRedo: editorRuntime.canRedo,
-      currentPage: editorRuntime.currentPage,
-      totalPages: editorRuntime.totalPages,
-      scale: editorRuntime.scale,
-      datasetCount: datasets.length,
-      chartCount: charts.length,
-      codeCount: codes.length,
-    }),
-    [charts.length, codes.length, datasets.length, editorRuntime],
-  );
-
-  const hostScopeData = useMemo(
-    () => ({
-      document: savedDocument?.data ?? {
-        header: [],
-        main: [],
-        footer: [],
-        charts,
-        codes,
-      },
-      datasets,
-      runtime: runtimeHostSummary,
-      selection,
-    }),
-    [charts, codes, datasets, runtimeHostSummary, savedDocument?.data, selection],
-  );
-
-  const hostScope = useHostScope(hostScopeData, props.path, 'word-editor');
-  const env = useRendererEnv();
-
-  const actionProvider = useMemo(
-    () =>
-      createWordEditorActionProvider({
-        bridge,
-        editorStore,
-        datasetStore,
-        getCharts: () => charts,
-        setCharts,
-        getCodes: () => codes,
-        setCodes,
-        saveEvent: props.events.onSave,
-        onDocumentSaved: updateSavedDocumentExtras,
-      }),
-    [
-      bridge,
-      charts,
-      codes,
-      datasetStore,
-      editorStore,
-      props.events.onSave,
-      updateSavedDocumentExtras,
-    ],
-  );
-
-  useNamespaceRegistration(actionScope, 'word-editor', actionProvider);
-
-  useEffect(() => {
-    if (recoveredState.datasets.length > 0) {
-      datasetStore.load(recoveredState.datasets);
-    }
-  }, [datasetStore, recoveredState.datasets]);
-
-  const handleSave = useCallback(async () => {
-    if (isSavingRef.current) {
-      return;
-    }
-
-    isSavingRef.current = true;
-    saveAbortRef.current?.abort();
-    const controller = new AbortController();
-    saveAbortRef.current = controller;
-    try {
-      const result = await actionProvider.invoke('save', undefined, { signal: controller.signal } as any);
-      if (!mountedRef.current) {
-        return;
-      }
-
-      if (result.ok) {
-        setSaveMessage(t('flux.wordEditor.saved'));
-        if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current);
-        saveMessageTimerRef.current = setTimeout(() => {
-          if (mountedRef.current) {
-            setSaveMessage(null);
-          }
-        }, 2000);
-        return;
-      }
-
-      env.notify?.(
-        'warning',
-        result.error instanceof Error && result.error.message
-          ? result.error.message
-          : t('flux.reportDesigner.saveFailed'),
-      );
-    } catch (error) {
-      if (!mountedRef.current) {
-        return;
-      }
-
-       if (
-        controller.signal.aborted ||
-        (error instanceof Error && error.name === 'AbortError') ||
-        ((error as { name?: string } | null | undefined)?.name === 'AbortError')
-      ) {
-        return;
-      }
-
-      env.notify?.(
-        'warning',
-        error instanceof Error && error.message ? error.message : t('flux.reportDesigner.saveFailed'),
-      );
-    } finally {
-      if (saveAbortRef.current === controller) {
-        saveAbortRef.current = null;
-      }
-      isSavingRef.current = false;
-    }
-  }, [actionProvider, env]);
+  const actions = useWordEditorActions({
+    bridge,
+    datasetStore,
+    editingDatasetId,
+    setDatasetDialogOpen,
+    setEditingDatasetId,
+    setCharts,
+    setCodes,
+    onBack: props.events.onBack as
+      | ((event: React.MouseEvent<HTMLButtonElement>) => unknown)
+      | undefined,
+  });
 
   useWordEditorShortcuts({ bridge, onSave: handleSave, scopeRef: rootRef });
-
-  const handleBack = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-    void props.events.onBack?.(event);
-  }, [props.events]);
-
-  const handleAddDataset = () => {
-    setEditingDatasetId(null);
-    setDatasetDialogOpen(true);
-  };
-
-  const handleEditDataset = (datasetId: string) => {
-    setEditingDatasetId(datasetId);
-    setDatasetDialogOpen(true);
-  };
-
-  const handleSaveDataset = useCallback(
-    (data: {
-      name: string;
-      description: string;
-      type: DatasetSourceType;
-      columns: DataColumnInput[];
-    }) => {
-      const datasetData: Omit<Dataset, 'id'> = {
-        name: data.name,
-        description: data.description,
-        type: data.type,
-        columns: data.columns.map((col) => ({
-          name: col.name ?? '',
-          label: col.label ?? '',
-          description: col.description,
-          type: (col.type as DatasetSourceType) ?? 'static',
-        })),
-      };
-      if (editingDatasetId) {
-        datasetStore.update(editingDatasetId, datasetData);
-      } else {
-        datasetStore.add(datasetData);
-      }
-      setDatasetDialogOpen(false);
-      setEditingDatasetId(null);
-    },
-    [editingDatasetId, datasetStore],
-  );
-
-  const handleFieldClick = useCallback(
-    (datasetName: string, columnName: string) => {
-      bridge.insertFieldExpression(datasetName, columnName);
-    },
-    [bridge],
-  );
-
-  const handleInsertExpr = useCallback(
-    (expr: string) => {
-      bridge.insertTemplateExpression({
-        kind: 'el',
-        expr: expr.replace(/^\$\{/, '').replace(/\}$/, ''),
-      });
-    },
-    [bridge],
-  );
-
-  const handleInsertTag = useCallback(
-    (tagName: string) => {
-      bridge.insertTemplateExpression({
-        kind: 'tag-open',
-        expr: '',
-        tagName,
-      });
-    },
-    [bridge],
-  );
-
-  const handleChartSave = useCallback(
-    (_chart: DocChart) => {
-      bridge.insertChart(_chart);
-      setCharts((current) => [...current, _chart]);
-    },
-    [bridge],
-  );
-
-  const handleCodeSave = useCallback(
-    (_code: DocCode) => {
-      bridge.insertCode(_code);
-      setCodes((current) => [...current, _code]);
-    },
-    [bridge],
-  );
-
-  const statusPath =
-    typeof props.props.statusPath === 'string' ? props.props.statusPath : undefined;
-
-  useStatusPathPublication<WordEditorHostStatusSummary>(
-    props.node.scope.parent ?? props.node.scope,
-    statusPath,
-    {
-      kind: 'word-editor',
-      dirty: editorRuntime.dirty,
-      busy: false,
-      canUndo: editorRuntime.canUndo,
-      canRedo: editorRuntime.canRedo,
-      wordCount: editorRuntime.wordCount,
-      datasetCount: datasets.length,
-      chartCount: charts.length,
-      codeCount: codes.length,
-    },
-  );
-
-  const editingDataset = editingDatasetId
-    ? datasets.find((ds) => ds.id === editingDatasetId)
-    : null;
 
   const headerSlot = (
     <div className="flex flex-col">
@@ -398,7 +85,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
               type="button"
               variant="outline"
               size="icon-sm"
-              onClick={handleBack}
+              onClick={actions.handleBack}
               title={t('flux.wordEditor.back')}
               aria-label={t('flux.wordEditor.back')}
             >
@@ -441,10 +128,10 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         <RibbonToolbar
           bridge={bridge}
           store={editorStore}
-          onInsertExpr={handleInsertExpr}
-          onInsertTag={handleInsertTag}
-          onChartSave={handleChartSave}
-          onCodeSave={handleCodeSave}
+          onInsertExpr={actions.handleInsertExpr}
+          onInsertTag={actions.handleInsertTag}
+          onChartSave={actions.handleChartSave}
+          onCodeSave={actions.handleCodeSave}
         />
       )}
     </div>
@@ -476,11 +163,11 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         {activePanel === 'datasets' ? (
           <DatasetPanel
             store={datasetStore}
-            onAddDataset={handleAddDataset}
-            onEditDataset={handleEditDataset}
+            onAddDataset={actions.handleAddDataset}
+            onEditDataset={actions.handleEditDataset}
           />
         ) : (
-          <FieldList store={datasetStore} onFieldClick={handleFieldClick} />
+          <FieldList store={datasetStore} onFieldClick={actions.handleFieldClick} />
         )}
       </TabsContent>
     </Tabs>
@@ -488,16 +175,16 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
 
   const canvasSlot = (
     <div className="flex flex-col h-full min-h-0 overflow-auto bg-[var(--nop-playground-stage-bg)]">
-      <EditorCanvas
-        editorStore={editorStore}
-        bridge={bridge}
-        initialDocument={initialDocument}
-        recoveredDocument={recoveredState.document}
-        charts={charts}
-        codes={codes}
-        onAutosave={setSavedDocument}
-      />
-    </div>
+        <EditorCanvas
+          editorStore={editorStore}
+          bridge={bridge}
+          initialDocument={initialDocument}
+          recoveredDocument={recoveredState.document}
+          charts={charts}
+          codes={codes}
+          onAutosave={setSavedDocument}
+        />
+      </div>
   );
 
   const leftPanelSlot = props.regions.leftPanel
@@ -511,11 +198,11 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
 
   const rightPanelSlot = props.regions.rightPanel ? (
     asReactNode(
-      props.helpers.render(props.regions.rightPanel.templateNode, {
-        scope: hostScope,
-        actionScope,
-      }),
-    )
+        props.helpers.render(props.regions.rightPanel.templateNode, {
+          scope: hostScope,
+          actionScope,
+        }),
+      )
   ) : (
     <OutlinePanel bridge={bridge} />
   );
@@ -550,7 +237,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
               setDatasetDialogOpen(false);
               setEditingDatasetId(null);
             }}
-            onSave={handleSaveDataset}
+            onSave={actions.handleSaveDataset}
             initialData={
               editingDataset
                 ? {

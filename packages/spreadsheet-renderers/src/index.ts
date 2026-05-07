@@ -1,5 +1,3 @@
-import './canvas-styles.css';
-
 export type { SpreadsheetHostSnapshot, SpreadsheetBridge } from './bridge.js';
 
 export { deriveHostSnapshot, createSpreadsheetBridge } from './bridge.js';
@@ -34,3 +32,10 @@ export type {
   SpreadsheetInteractionsReturn,
 } from './use-spreadsheet-interactions.js';
 export { useSpreadsheetInteractions } from './use-spreadsheet-interactions.js';
+
+export {
+  SPREADSHEET_MANIFEST_V1,
+  resolveSpreadsheetManifest,
+  spreadsheetHostContract,
+  SPREADSHEET_CAPABILITY_PUBLICATION,
+} from './spreadsheet-manifest.js';

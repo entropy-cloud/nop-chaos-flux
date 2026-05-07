@@ -3,22 +3,22 @@ import type { MouseEvent } from 'react';
 import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
 import { Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } from './types';
-import { buildOverview } from './diagnostics';
-import { loadPersistedSearchHistory, persistSearchHistory } from './controller-helpers';
-import { formatTraceSummary, groupErrors, mergeNetworkRequests } from './panel/event-groups';
+import type { NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } from './types.js';
+import { buildOverview } from './diagnostics.js';
+import { loadPersistedSearchHistory, persistSearchHistory } from './controller-helpers.js';
+import { formatTraceSummary, groupErrors, mergeNetworkRequests } from './panel/event-groups.js';
 import {
   useDebuggerSnapshot,
   useDraggablePosition,
   useLauncherDrag,
   useResizablePanel,
-} from './panel/hooks';
-import { NetworkTab } from './panel/network-tab';
-import { NodeTab } from './panel/node-tab';
-import { OverviewTab } from './panel/overview-tab';
-import { useInjectDebuggerStyles } from './panel/styles';
-import { TimelineTab } from './panel/timeline-tab';
-import { useInspectMode } from './panel/use-inspect-mode';
+} from './panel/hooks.js';
+import { NetworkTab } from './panel/network-tab.js';
+import { NodeTab } from './panel/node-tab.js';
+import { OverviewTab } from './panel/overview-tab.js';
+import { useInjectDebuggerStyles } from './panel/styles.js';
+import { TimelineTab } from './panel/timeline-tab.js';
+import { useInspectMode } from './panel/use-inspect-mode.js';
 
 function getFilterLabels(): Record<NopDebuggerFilterKind, string> {
   return {
@@ -49,7 +49,7 @@ function parseRegexLiteral(input: string): RegExp | null {
   }
 }
 
-function matchesRegex(event: import('./types').NopDebugEvent, regex: RegExp): boolean {
+function matchesRegex(event: import('./types.js').NopDebugEvent, regex: RegExp): boolean {
   return [
     event.summary,
     event.detail,
@@ -60,7 +60,7 @@ function matchesRegex(event: import('./types').NopDebugEvent, regex: RegExp): bo
   ].some((value) => value != null && regex.test(value));
 }
 
-function matchesSearchQuery(event: import('./types').NopDebugEvent, rawQuery: string): boolean {
+function matchesSearchQuery(event: import('./types.js').NopDebugEvent, rawQuery: string): boolean {
   const query = rawQuery.trim();
   if (!query) {
     return true;
