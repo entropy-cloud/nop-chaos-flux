@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRuntime } from '../index';
-import { env } from './test-fixtures';
+import { createRendererRuntime } from '../index.js';
+import { env } from './test-fixtures.js';
 
 describe('createRendererRuntime host projection scope', () => {
   it('replaces projected host snapshots instead of merging stale keys', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createFormStore } from '../form-store';
+import { createFormStore } from '../form-store.js';
 
 describe('createFormStore subscribeToPaths', () => {
   it('notifies only listeners whose paths overlap the changed value paths', () => {

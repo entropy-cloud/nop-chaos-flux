@@ -1,5 +1,5 @@
 import { getIn, parsePath, type ScopeRef } from '@nop-chaos/flux-core';
-import { createProjectedScopeStore } from './projected-scope-store';
+import { createProjectedScopeStore } from './projected-scope-store.js';
 
 export function publishOwnerStatus<TSummary>(
   scope: ScopeRef | undefined,

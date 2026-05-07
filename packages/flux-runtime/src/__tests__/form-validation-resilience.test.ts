@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CompiledFormValidationModel, CompiledValidationNode } from '@nop-chaos/flux-core';
 import { buildCompiledFormValidationModel } from '@nop-chaos/flux-core';
-import { createManagedFormRuntime } from '../form-runtime';
-import { createScopeRef, createScopeStore } from '../scope';
+import { createManagedFormRuntime } from '../form-runtime.js';
+import { createScopeRef, createScopeStore } from '../scope.js';
 
 function makeNode(path: string, required = false): CompiledValidationNode {
   const rules = required

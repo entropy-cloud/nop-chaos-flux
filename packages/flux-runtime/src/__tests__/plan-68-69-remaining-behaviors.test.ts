@@ -6,10 +6,10 @@ import type {
   CompiledValidationNode,
 } from '@nop-chaos/flux-core';
 import { buildCompiledFormValidationModel } from '@nop-chaos/flux-core';
-import { createManagedFormRuntime } from '../form-runtime';
-import { isOwnerCompatible } from '../form-runtime-lifecycle';
-import { createScopeRef, createScopeStore } from '../scope';
-import { validateRule as realValidateRule } from '../validation-runtime';
+import { createManagedFormRuntime } from '../form-runtime.js';
+import { isOwnerCompatible } from '../form-runtime-lifecycle.js';
+import { createScopeRef, createScopeStore } from '../scope.js';
+import { validateRule as realValidateRule } from '../validation-runtime.js';
 
 function makeMockChildContract(
   childOwnerId: string,

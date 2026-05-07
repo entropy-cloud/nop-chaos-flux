@@ -5,8 +5,8 @@ import type {
   RuntimeFieldRegistration,
 } from '@nop-chaos/flux-core';
 import { getCompiledValidationField, setIn } from '@nop-chaos/flux-core';
-import { findRuntimeRegistration } from './form-runtime-registration';
-import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+import { findRuntimeRegistration } from './form-runtime-registration.js';
+import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
 export interface FieldValuePatchResult {
   nextValues: Record<string, unknown>;

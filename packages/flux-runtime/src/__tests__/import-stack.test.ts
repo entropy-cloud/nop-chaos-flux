@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createImportStack } from '../import-stack';
+import { createImportStack } from '../import-stack.js';
 import type {
   ActionScope,
   ImportedLibraryModule,
@@ -9,7 +9,7 @@ import type {
   RendererRuntime,
   XuiImportSpec,
 } from '@nop-chaos/flux-core';
-import { createScopeRef } from '../scope';
+import { createScopeRef } from '../scope.js';
 
 function createMockModule(mod?: Partial<ImportedLibraryModule>): ImportedLibraryModule {
   return {

@@ -4,9 +4,9 @@ import type {
   CompiledValidationRule,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import { createScopeRef, createScopeStore } from '../scope';
-import { createBuiltInValidationRegistry } from './registry';
-import type { SyncValidationRule } from './validators';
+import { createScopeRef, createScopeStore } from '../scope.js';
+import { createBuiltInValidationRegistry } from './registry.js';
+import type { SyncValidationRule } from './validators.js';
 
 function createField(path: string, controlType = 'input-text'): CompiledFormValidationField {
   return {

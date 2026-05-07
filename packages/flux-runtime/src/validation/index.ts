@@ -1,17 +1,17 @@
-export { createValidationError, normalizeRuntimeValidationErrors } from './errors';
-export { buildValidationMessage } from './message';
-export { collectValidationDependencyPaths } from './rules';
+export { createValidationError, normalizeRuntimeValidationErrors } from './errors.js';
+export { buildValidationMessage } from './message.js';
+export { collectValidationDependencyPaths } from './rules.js';
 export {
   createBuiltInValidationRegistry,
   createValidationRegistry,
   registerBuiltInValidators,
-} from './registry';
-export type { ValidationRegistry } from './registry';
-export { builtInValidators, isEmptyValue } from './validators';
+} from './registry.js';
+export type { ValidationRegistry } from './registry.js';
+export { builtInValidators, isEmptyValue } from './validators.js';
 export type {
   AsyncValidationRule,
   SyncValidationContext,
   SyncValidationRule,
   SyncValidationRuleKind,
   SyncValidator,
-} from './validators';
+} from './validators.js';

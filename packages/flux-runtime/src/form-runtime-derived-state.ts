@@ -1,7 +1,7 @@
 import { getCompiledValidationTraversalOrder, getIn, type FieldState } from '@nop-chaos/flux-core';
 import type { FormRuntime } from '@nop-chaos/flux-core';
-import type { ArrayMutationContext } from './form-runtime-array-ops';
-import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+import type { ArrayMutationContext } from './form-runtime-array-ops.js';
+import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
 export function computeCanSubmitState(args: {
   ownerRuntime: Pick<FormRuntime, 'getScopeState'>;

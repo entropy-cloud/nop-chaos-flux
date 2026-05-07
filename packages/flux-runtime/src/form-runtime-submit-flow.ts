@@ -4,9 +4,9 @@ import type {
   ActionResult,
   ValidationReason,
 } from '@nop-chaos/flux-core';
-import { buildSubmitTouchedState, classifySubmitResult } from './form-runtime-submit';
-import { isAbortError } from './error-utils';
-import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+import { buildSubmitTouchedState, classifySubmitResult } from './form-runtime-submit.js';
+import { isAbortError } from './error-utils.js';
+import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
 export interface FormOwnerRuntimeForSubmit {
   supersedeLowerPriorityWork(): void;

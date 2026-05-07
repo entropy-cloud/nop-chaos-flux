@@ -9,7 +9,7 @@ import {
 import type {
   FormRuntimeRegistrationState,
   FormRuntimeValidationState,
-} from './form-runtime-types';
+} from './form-runtime-types.js';
 
 type SubtreeCollectionState = FormRuntimeRegistrationState &
   Pick<FormRuntimeValidationState, 'inputValue'>;

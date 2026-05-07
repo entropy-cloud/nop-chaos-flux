@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAsyncGovernanceStore } from '../async-data/async-governance';
-import { createFormStore } from '../form-store';
-import { createScopeRef } from '../scope';
-import { disposeOwnerState, refreshCompiledModelState } from '../form-runtime-owner-lifecycle';
+import { createAsyncGovernanceStore } from '../async-data/async-governance.js';
+import { createFormStore } from '../form-store.js';
+import { createScopeRef } from '../scope.js';
+import { disposeOwnerState, refreshCompiledModelState } from '../form-runtime-owner-lifecycle.js';
 import type {
   ManagedFormRuntimeSharedState,
   CreateManagedFormRuntimeInput,
-} from '../form-runtime-types';
+} from '../form-runtime-types.js';
 import type { ValidationError } from '@nop-chaos/flux-core';
 
 function createSharedState(

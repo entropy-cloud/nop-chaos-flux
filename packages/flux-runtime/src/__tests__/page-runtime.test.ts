@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createManagedPageRuntime } from '../page-runtime';
-import { createPageStore } from '../form-store';
+import { createManagedPageRuntime } from '../page-runtime.js';
+import { createPageStore } from '../form-store.js';
 import type { ValidationScopeRuntime } from '@nop-chaos/flux-core';
-import { createScopeRef } from '../scope';
+import { createScopeRef } from '../scope.js';
 
 describe('createManagedPageRuntime', () => {
   it('creates runtime with default empty data', () => {

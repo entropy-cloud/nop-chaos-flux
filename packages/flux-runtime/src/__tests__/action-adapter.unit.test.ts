@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ComponentActionInvocation, NamespacedActionInvocation } from '@nop-chaos/flux-core';
-import { createActionRuntimeAdapter } from '../action-adapter';
-import { createActionScope } from '../action-scope';
-import { createScopeRef } from '../scope';
+import { createActionRuntimeAdapter } from '../action-adapter.js';
+import { createActionScope } from '../action-scope.js';
+import { createScopeRef } from '../scope.js';
 
 function createAdapter() {
   return createActionRuntimeAdapter({

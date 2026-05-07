@@ -1,10 +1,10 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import type { CompiledDataSource, RendererRuntime, ScopeRef } from '@nop-chaos/flux-core';
-import { createRuntimeSourceRegistry } from '../async-data/source-registry';
+import { createRuntimeSourceRegistry } from '../async-data/source-registry.js';
 import {
   __getSourceCascadeDepthForTests,
   __setSourceCascadeDepthForTests,
-} from '../async-data/source-registry';
+} from '../async-data/source-registry.js';
 
 afterEach(() => {
   vi.restoreAllMocks();

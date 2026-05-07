@@ -5,7 +5,7 @@ import type {
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { validationErrorsEqual } from '@nop-chaos/flux-core';
-import { createReadonlyScopeBinding } from './status-owner';
+import { createReadonlyScopeBinding } from './status-owner.js';
 
 export function hasPendingValidationWork(
   state: FormStoreState,

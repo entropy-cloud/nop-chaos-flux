@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createApiCacheStore, generateCacheKey } from './api-cache';
+import { createApiCacheStore, generateCacheKey } from './api-cache.js';
 
 const LONG_TTL = 60_000;
 

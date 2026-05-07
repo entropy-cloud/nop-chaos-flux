@@ -11,8 +11,8 @@ import type {
   RendererRuntime,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import type { ApiRequestExecutor } from './async-data/request-runtime';
-import { executeRuntimeAjaxAction } from './runtime-action-helpers';
+import type { ApiRequestExecutor } from './async-data/request-runtime.js';
+import { executeRuntimeAjaxAction } from './runtime-action-helpers.js';
 
 export interface ActionAdapterInput {
   getEnv: () => RendererEnv;

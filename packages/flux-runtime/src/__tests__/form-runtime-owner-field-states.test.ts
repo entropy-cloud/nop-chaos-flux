@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeFieldStateErrors } from '../form-runtime-owner-field-states';
+import { mergeFieldStateErrors } from '../form-runtime-owner-field-states.js';
 
 describe('mergeFieldStateErrors', () => {
   it('preserves non-error field state while replacing error payloads', () => {

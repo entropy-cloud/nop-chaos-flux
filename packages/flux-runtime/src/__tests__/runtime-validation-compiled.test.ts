@@ -15,8 +15,8 @@ import {
   buildCompiledFormValidationModel,
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRuntime } from '../index';
-import { formRenderer, inputRenderer, env, compiledRule } from './test-fixtures';
+import { createRendererRuntime } from '../index.js';
+import { formRenderer, inputRenderer, env, compiledRule } from './test-fixtures.js';
 
 describe('createRendererRuntime', () => {
   it('compiles validation nodes with array metadata', () => {

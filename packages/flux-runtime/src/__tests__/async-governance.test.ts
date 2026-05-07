@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createAsyncGovernanceStore } from '../async-data/async-governance';
+import { createAsyncGovernanceStore } from '../async-data/async-governance.js';
 
 describe('createAsyncGovernanceStore', () => {
   it('tracks current runs, cancellation, stale settles, and sorted snapshots', () => {

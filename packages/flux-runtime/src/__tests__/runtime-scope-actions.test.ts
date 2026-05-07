@@ -6,8 +6,8 @@ import {
   createComponentHandleRegistry,
   createFormComponentHandle,
   createRendererRuntime,
-} from '../index';
-import { textRenderer, env } from './test-fixtures';
+} from '../index.js';
+import { textRenderer, env } from './test-fixtures.js';
 
 describe('createRendererRuntime', () => {
   it('updates page scope through setValue action', async () => {

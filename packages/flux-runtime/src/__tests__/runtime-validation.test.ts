@@ -5,8 +5,8 @@ import {
   type RendererEnv,
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRuntime } from '../index';
-import { textRenderer, env, compiledRule } from './test-fixtures';
+import { createRendererRuntime } from '../index.js';
+import { textRenderer, env, compiledRule } from './test-fixtures.js';
 
 describe('createRendererRuntime', () => {
   it('blocks form submit when async validation fails', async () => {

@@ -1,11 +1,11 @@
 import type { FieldState, ScopeRef } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
-import { remapFieldStates, transformArrayIndexedPath } from './form-path-state';
+import { remapFieldStates, transformArrayIndexedPath } from './form-path-state.js';
 import type {
   FormRuntimeInitialStateSlice,
   FormRuntimeStoreScopeState,
   FormRuntimeValidationRunState,
-} from './form-runtime-types';
+} from './form-runtime-types.js';
 
 type ArrayMutationState = FormRuntimeStoreScopeState &
   FormRuntimeInitialStateSlice &

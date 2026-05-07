@@ -6,8 +6,8 @@ import {
   type RendererPlugin,
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRuntime } from '../index';
-import { textRenderer, env } from './test-fixtures';
+import { createRendererRuntime } from '../index.js';
+import { textRenderer, env } from './test-fixtures.js';
 
 describe('createRendererRuntime', () => {
   it('uses the latest env fetcher without recreating runtime state', async () => {

@@ -6,17 +6,17 @@ import {
   remapArrayFieldState,
   replaceManagedArrayValue,
   executeArrayMutation,
-} from '../form-runtime-array';
-import { createFormStore } from '../form-store';
-import { createScopeRef } from '../scope';
-import { createAsyncGovernanceStore } from '../async-data/async-governance';
+} from '../form-runtime-array.js';
+import { createFormStore } from '../form-store.js';
+import { createScopeRef } from '../scope.js';
+import { createAsyncGovernanceStore } from '../async-data/async-governance.js';
 import type { FieldState } from '@nop-chaos/flux-core';
 import type {
   FormRuntimeValidationRunState,
   FormRuntimeInitialStateSlice,
   ManagedFormRuntimeSharedState,
   PendingValidationDebounce,
-} from '../form-runtime-types';
+} from '../form-runtime-types.js';
 
 describe('remapValidationRunState', () => {
   it('remaps validation run paths under array', () => {

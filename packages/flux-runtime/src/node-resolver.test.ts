@@ -8,7 +8,7 @@ import {
   type ScopeRef,
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createComponentHandleRegistry, createRendererRuntime } from './index';
+import { createComponentHandleRegistry, createRendererRuntime } from './index.js';
 
 const defaultResolvedMeta: ResolvedNodeMeta = {
   visible: true,

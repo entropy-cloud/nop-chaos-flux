@@ -1,13 +1,13 @@
 import { reportRuntimeHostIssue, type DataSourceController } from '@nop-chaos/flux-core';
-import { createInitialDataSourceState } from './data-source-state';
-import { abortActiveControllers } from './api-data-source-controller-helpers';
+import { createInitialDataSourceState } from './data-source-state.js';
+import { abortActiveControllers } from './api-data-source-controller-helpers.js';
 import {
   createApiDataSourceControllerMutableState,
   publishControllerData,
   updateControllerState,
-} from './api-data-source-controller-state';
-import { createApiDataSourceRequestRunner } from './api-data-source-controller-runtime';
-import type { CreateApiDataSourceControllerInput } from './api-data-source-controller-types';
+} from './api-data-source-controller-state.js';
+import { createApiDataSourceRequestRunner } from './api-data-source-controller-runtime.js';
+import type { CreateApiDataSourceControllerInput } from './api-data-source-controller-types.js';
 
 export function createDataSourceController(
   input: CreateApiDataSourceControllerInput,

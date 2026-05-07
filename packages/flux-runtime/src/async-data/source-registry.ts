@@ -11,17 +11,17 @@ import { normalizeRootPaths } from '@nop-chaos/flux-core';
 
 const MAX_SOURCE_CASCADE_DEPTH = 100;
 let sourceCascadeDepth = 0;
-import type { ApiCacheStore } from './api-cache';
+import type { ApiCacheStore } from './api-cache.js';
 import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import {
   createDataSourceController,
   createFormulaDataSourceController,
-} from './data-source-runtime';
+} from './data-source-runtime.js';
 import {
   createRootDependencySet,
   filterScopeChangeByIgnoredRoots,
   scopeChangeHitsDependencies,
-} from '../scope-change';
+} from '../scope-change.js';
 
 interface RuntimeSourceEntry {
   id: string;

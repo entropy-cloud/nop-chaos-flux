@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { vi } from 'vitest';
 import type { ApiSchema, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
-import { createScopeRef, createScopeStore } from '../scope';
+import { createScopeRef, createScopeStore } from '../scope.js';
 import {
   createApiRequestExecutor,
   executeApiSchema,
@@ -10,7 +10,7 @@ import {
   finalizeApiRequest,
   prepareApiData,
   prepareApiRequestForExecution,
-} from '../async-data/request-runtime';
+} from '../async-data/request-runtime.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 function createTestScope(data: Record<string, any>): ScopeRef {

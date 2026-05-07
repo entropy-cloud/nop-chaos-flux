@@ -6,10 +6,10 @@ import {
   type SchemaCompiler,
   type XuiImportSpec,
 } from '@nop-chaos/flux-core';
-import { createScopeRef } from '../scope';
-import { createProjectedScopeStore } from '../projected-scope-store';
-import { createModuleCache, createRendererRuntime } from '../index';
-import { textRenderer, env } from './test-fixtures';
+import { createScopeRef } from '../scope.js';
+import { createProjectedScopeStore } from '../projected-scope-store.js';
+import { createModuleCache, createRendererRuntime } from '../index.js';
+import { textRenderer, env } from './test-fixtures.js';
 
 describe('createProjectedScopeStore', () => {
   it('caches projected snapshots and returns no store when the scope has no store', () => {

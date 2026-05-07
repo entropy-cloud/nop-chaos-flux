@@ -3,7 +3,7 @@ import {
   createRootDependencySet,
   filterScopeChangeByIgnoredRoots,
   scopeChangeHitsDependencies,
-} from '../scope-change';
+} from '../scope-change.js';
 
 describe('scopeChangeHitsDependencies', () => {
   it('matches child-path changes against root dependencies', () => {

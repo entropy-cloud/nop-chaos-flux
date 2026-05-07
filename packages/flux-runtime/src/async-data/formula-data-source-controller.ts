@@ -15,12 +15,12 @@ import {
   deriveDataSourceState,
   toNextDataSourceState,
   writeStatusToScope,
-} from './data-source-state';
+} from './data-source-state.js';
 import {
   applyResultMapping,
   collectRuntimeDependencies,
   writeDataToScope,
-} from './data-source-runtime-utils';
+} from './data-source-runtime-utils.js';
 
 export function createFormulaDataSourceController(input: {
   runtime: RendererRuntime;

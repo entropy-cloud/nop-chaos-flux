@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createManagedFormRuntime } from '../form-runtime';
-import { validateRule as realValidateRule } from '../validation-runtime';
+import { createManagedFormRuntime } from '../form-runtime.js';
+import { validateRule as realValidateRule } from '../validation-runtime.js';
 
 function createStubScope() {
   return {

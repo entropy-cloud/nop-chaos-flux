@@ -1,6 +1,6 @@
 import type { FieldState } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
-import type { FormRuntimeRegistrationState, RegisteredFieldEntry } from './form-runtime-types';
+import type { FormRuntimeRegistrationState, RegisteredFieldEntry } from './form-runtime-types.js';
 
 export function findRuntimeRegistration(
   sharedState: FormRuntimeRegistrationState,

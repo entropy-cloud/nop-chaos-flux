@@ -9,8 +9,8 @@ import type {
   ScopeDependencySet,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import type { ApiCacheStore } from './api-cache';
-import type { ApiConfigRuntimeState } from './data-source-runtime-utils';
+import type { ApiCacheStore } from './api-cache.js';
+import type { ApiConfigRuntimeState } from './data-source-runtime-utils.js';
 
 export interface CreateApiDataSourceControllerInput {
   runtime: RendererRuntime;

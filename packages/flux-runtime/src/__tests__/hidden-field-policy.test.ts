@@ -6,11 +6,11 @@ import {
   getCompiledValidationField,
   resolveHiddenFieldPolicy,
 } from '@nop-chaos/flux-core';
-import { createRendererRuntime } from '../index';
+import { createRendererRuntime } from '../index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createManagedFormRuntime } from '../form-runtime';
-import { createScopeRef, createScopeStore } from '../scope';
-import { env } from './test-fixtures';
+import { createManagedFormRuntime } from '../form-runtime.js';
+import { createScopeRef, createScopeStore } from '../scope.js';
+import { env } from './test-fixtures.js';
 
 function makeNode(
   path: string,

@@ -10,11 +10,11 @@ import {
   type ScopeDependencySet,
   type ScopeRef,
 } from '@nop-chaos/flux-core';
-import { isAbortError } from '../error-utils';
+import { isAbortError } from '../error-utils.js';
 
 let globalCascadeDepth = 0;
 const MAX_GLOBAL_CASCADE_DEPTH = 200;
-import { createRootDependencySet, scopeChangeHitsDependencies } from '../scope-change';
+import { createRootDependencySet, scopeChangeHitsDependencies } from '../scope-change.js';
 import {
   createReactionOwnerId,
   createRunHandle,
@@ -23,7 +23,7 @@ import {
   normalizeActionArray,
   reportReactionFireLimit,
   type OwnedReactionRegistration,
-} from './reaction-runtime-helpers';
+} from './reaction-runtime-helpers.js';
 
 export interface ReactionRegistration {
   id: string;

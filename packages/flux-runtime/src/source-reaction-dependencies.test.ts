@@ -6,7 +6,7 @@ import {
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { compileDataSource, compileReaction } from '@nop-chaos/flux-compiler';
-import { createRendererRuntime } from './index';
+import { createRendererRuntime } from './index.js';
 
 const textRenderer: RendererDefinition = {
   type: 'text',

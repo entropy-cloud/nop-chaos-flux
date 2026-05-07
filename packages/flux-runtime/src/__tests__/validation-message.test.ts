@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import type { CompiledFormValidationField } from '@nop-chaos/flux-core';
 import { setMessageFormatter } from '@nop-chaos/flux-core';
-import { buildValidationMessage } from '../validation/message';
+import { buildValidationMessage } from '../validation/message.js';
 
 function makeField(
   overrides: Partial<CompiledFormValidationField> = {},

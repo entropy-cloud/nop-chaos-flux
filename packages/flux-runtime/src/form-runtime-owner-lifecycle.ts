@@ -1,7 +1,7 @@
-import { computeRefreshErrorRetention } from './form-runtime-lifecycle';
-import { cancelAllValidationDebounces } from './form-runtime-validation';
+import { computeRefreshErrorRetention } from './form-runtime-lifecycle.js';
+import { cancelAllValidationDebounces } from './form-runtime-validation.js';
 import type { FieldState, FormRuntime, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
-import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
 function clearValidationAsyncOwners(sharedState: ManagedFormRuntimeSharedState) {
   for (const path of sharedState.validationRuns.keys()) {

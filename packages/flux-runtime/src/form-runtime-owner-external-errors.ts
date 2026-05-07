@@ -4,7 +4,7 @@ import type {
   FormRuntime,
   ValidationError,
 } from '@nop-chaos/flux-core';
-import type { ExternalErrorEntry, ManagedFormRuntimeSharedState } from './form-runtime-types';
+import type { ExternalErrorEntry, ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
 export function rebuildStoreErrorsFromExternal(
   sharedState: ManagedFormRuntimeSharedState,

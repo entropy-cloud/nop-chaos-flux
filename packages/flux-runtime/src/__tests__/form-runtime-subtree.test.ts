@@ -3,7 +3,7 @@ import {
   collectSubtreePaths,
   collectSubtreeNodePaths,
   collectSubtreeValidationTargets,
-} from '../form-runtime-subtree';
+} from '../form-runtime-subtree.js';
 import type { CompiledFormValidationModel, RuntimeFieldRegistration } from '@nop-chaos/flux-core';
 
 type SubtreeCollectionState = Parameters<typeof collectSubtreePaths>[0];

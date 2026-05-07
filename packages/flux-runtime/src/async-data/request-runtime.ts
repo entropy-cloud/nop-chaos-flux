@@ -12,10 +12,10 @@ import type {
 } from '@nop-chaos/flux-core';
 import { isPlainObject } from '@nop-chaos/flux-core';
 import { withRetry, type RetryResult } from '@nop-chaos/flux-action-core';
-import { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor';
-import { stableStringify } from './api-cache';
+import { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor.js';
+import { stableStringify } from './api-cache.js';
 
-export { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor';
+export { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor.js';
 
 export interface ApiRequestExecutor {
   <T>(

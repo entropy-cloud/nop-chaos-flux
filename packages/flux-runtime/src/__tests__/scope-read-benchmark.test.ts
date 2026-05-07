@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createScopeRef, createScopeStore } from '../scope';
+import { createScopeRef, createScopeStore } from '../scope.js';
 
 const performanceApi = globalThis.performance;
 const processEnv = (

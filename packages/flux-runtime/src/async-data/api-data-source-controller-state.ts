@@ -9,13 +9,13 @@ import {
   deriveDataSourceState,
   structuralShareData,
   writeStatusToScope,
-} from './data-source-state';
-import { createApiConfigRuntimeState, writeDataToScope } from './data-source-runtime-utils';
-import { toStopConditionErrorState } from './api-data-source-controller-helpers';
+} from './data-source-state.js';
+import { createApiConfigRuntimeState, writeDataToScope } from './data-source-runtime-utils.js';
+import { toStopConditionErrorState } from './api-data-source-controller-helpers.js';
 import type {
   ApiDataSourceControllerMutableState,
   CreateApiDataSourceControllerInput,
-} from './api-data-source-controller-types';
+} from './api-data-source-controller-types.js';
 
 export function createApiDataSourceControllerMutableState(
   input: CreateApiDataSourceControllerInput,

@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRendererRegistry, type RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { compileReaction } from '@nop-chaos/flux-compiler';
-import { createRendererRuntime } from '../index';
+import { createRendererRuntime } from '../index.js';
 import {
   __getGlobalCascadeDepthForTests,
   __setGlobalCascadeDepthForTests,
-} from '../async-data/reaction-runtime';
+} from '../async-data/reaction-runtime.js';
 
 const textRenderer = {
   type: 'text' as const,

@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { executeSetValues } from '../form-runtime-values';
-import { createFormStore } from '../form-store';
-import { createScopeRef } from '../scope';
-import { createAsyncGovernanceStore } from '../async-data/async-governance';
+import { executeSetValues } from '../form-runtime-values.js';
+import { createFormStore } from '../form-store.js';
+import { createScopeRef } from '../scope.js';
+import { createAsyncGovernanceStore } from '../async-data/async-governance.js';
 import type {
   ManagedFormRuntimeSharedState,
   CreateManagedFormRuntimeInput,
-} from '../form-runtime-types';
+} from '../form-runtime-types.js';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 
 function createStubScope(): ScopeRef {

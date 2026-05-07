@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { computeRefreshErrorRetention } from '../form-runtime-lifecycle';
-import { executeFormSubmit } from '../form-runtime-submit-flow';
+import { computeRefreshErrorRetention } from '../form-runtime-lifecycle.js';
+import { executeFormSubmit } from '../form-runtime-submit-flow.js';
 
 function createStoreState(overrides: Record<string, any> = {}) {
   return {

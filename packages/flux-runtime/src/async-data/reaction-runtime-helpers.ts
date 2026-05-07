@@ -13,8 +13,8 @@ import type {
   RuntimeValueState,
   ScopeDependencySet,
 } from '@nop-chaos/flux-core';
-import { collectRuntimeDependencies } from '../node-runtime';
-import { createRootDependencySet } from '../scope-change';
+import { collectRuntimeDependencies } from '../node-runtime.js';
+import { createRootDependencySet } from '../scope-change.js';
 
 export const MAX_CASCADE_DEPTH = 100;
 

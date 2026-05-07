@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createComponentHandleRegistry } from '../component-handle-registry';
-import { createScopeRef } from '../scope';
+import { createComponentHandleRegistry } from '../component-handle-registry.js';
+import { createScopeRef } from '../scope.js';
 
 function createHandle(overrides: Record<string, unknown> = {}) {
   return {

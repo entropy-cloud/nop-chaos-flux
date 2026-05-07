@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { publishOwnerStatus, createReadonlyScopeBinding } from '../status-owner';
-import { createScopeRef } from '../scope';
+import { publishOwnerStatus, createReadonlyScopeBinding } from '../status-owner.js';
+import { createScopeRef } from '../scope.js';
 
 describe('publishOwnerStatus', () => {
   it('does nothing when scope is undefined', () => {

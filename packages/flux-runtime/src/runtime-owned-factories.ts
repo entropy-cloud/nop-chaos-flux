@@ -10,13 +10,13 @@ import type {
   SurfaceRuntime,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
-import type { ValidationRegistry } from './validation';
-import { createManagedFormRuntime } from './form-runtime';
-import { createFormStore } from './form-store';
-import { createManagedPageRuntime } from './page-runtime';
-import { createManagedSurfaceRuntime } from './surface-runtime';
-import { executeRuntimeValidationRule } from './runtime-action-helpers';
-import { validateRule } from './validation-runtime';
+import type { ValidationRegistry } from './validation/index.js';
+import { createManagedFormRuntime } from './form-runtime.js';
+import { createFormStore } from './form-store.js';
+import { createManagedPageRuntime } from './page-runtime.js';
+import { createManagedSurfaceRuntime } from './surface-runtime.js';
+import { executeRuntimeValidationRule } from './runtime-action-helpers.js';
+import { validateRule } from './validation-runtime.js';
 
 function createValidationStoreView(
   store: import('@nop-chaos/flux-core').FormStoreApi,

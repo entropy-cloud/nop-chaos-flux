@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createScopeRef, createScopeStore } from '../scope';
+import { createScopeRef, createScopeStore } from '../scope.js';
 
 describe('readVisible() scope stability', () => {
   it('child readVisible includes parent scope values via prototype chain', () => {

@@ -10,17 +10,17 @@ import type {
   RendererEnv,
   RendererRuntime,
 } from '@nop-chaos/flux-core';
-import type { ValidationRegistry } from '../validation';
-import { createScopeRef } from '../scope';
+import type { ValidationRegistry } from '../validation/index.js';
+import { createScopeRef } from '../scope.js';
 import {
   buildFormStatusSummary,
   createFormScopeWithBinding,
   createInitialFormScopeChange,
   validationErrorsEqual,
-} from '../form-runtime-status';
-import { validateRule } from '../validation-runtime';
-import { createImportManager } from '../imports';
-import { createActionScope } from '../action-scope';
+} from '../form-runtime-status.js';
+import { validateRule } from '../validation-runtime.js';
+import { createImportManager } from '../imports.js';
+import { createActionScope } from '../action-scope.js';
 
 describe('form runtime status helpers', () => {
   it('builds form status summaries from aggregate field state flags', () => {

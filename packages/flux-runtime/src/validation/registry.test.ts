@@ -3,7 +3,7 @@ import {
   createBuiltInValidationRegistry,
   createValidationRegistry,
   registerBuiltInValidators,
-} from './registry';
+} from './registry.js';
 
 describe('validation registry', () => {
   it('registers and resolves built-in validators', () => {

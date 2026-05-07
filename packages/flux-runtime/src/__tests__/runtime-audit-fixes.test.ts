@@ -7,9 +7,9 @@ import {
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { compileReaction } from '@nop-chaos/flux-compiler';
-import { createManagedFormRuntime } from '../form-runtime';
-import { createRendererRuntime } from '../index';
-import { env, textRenderer } from './test-fixtures';
+import { createManagedFormRuntime } from '../form-runtime.js';
+import { createRendererRuntime } from '../index.js';
+import { env, textRenderer } from './test-fixtures.js';
 
 const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 

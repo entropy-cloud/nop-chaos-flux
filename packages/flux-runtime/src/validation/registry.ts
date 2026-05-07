@@ -1,5 +1,5 @@
-import type { SyncValidationRuleKind, SyncValidator } from './validators';
-import { builtInValidators } from './validators';
+import type { SyncValidationRuleKind, SyncValidator } from './validators.js';
+import { builtInValidators } from './validators.js';
 
 export interface ValidationRegistry {
   get(ruleKind: SyncValidationRuleKind): SyncValidator | undefined;

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRuntime } from '../index';
-import { textRenderer, pageRenderer, env } from './test-fixtures';
+import { createRendererRuntime } from '../index.js';
+import { textRenderer, pageRenderer, env } from './test-fixtures.js';
 
 describe('createRendererRuntime', () => {
   it('opens and closes dialogs through openDialog actions', async () => {

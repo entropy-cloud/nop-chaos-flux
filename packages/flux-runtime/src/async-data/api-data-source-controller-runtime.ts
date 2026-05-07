@@ -1,25 +1,25 @@
 import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
-import { resolveCacheKey } from './api-cache';
-import { applyResultMapping, evaluateCompiledApiConfig } from './data-source-runtime-utils';
+import { resolveCacheKey } from './api-cache.js';
+import { applyResultMapping, evaluateCompiledApiConfig } from './data-source-runtime-utils.js';
 import {
   toActiveRequestState,
   toErrorDataSourceState,
   toIdleFetchState,
   toSuccessDataSourceState,
-} from './api-data-source-controller-helpers';
+} from './api-data-source-controller-helpers.js';
 import {
   evaluateControllerStopCondition,
   hasActiveControllerRequest,
   publishControllerData,
   settleControllerRunIfNeeded,
   updateControllerState,
-} from './api-data-source-controller-state';
-import { isAbortError } from '../error-utils';
-import { executeApiSchema, prepareApiRequestForExecution } from './request-runtime';
+} from './api-data-source-controller-state.js';
+import { isAbortError } from '../error-utils.js';
+import { executeApiSchema, prepareApiRequestForExecution } from './request-runtime.js';
 import type {
   ApiDataSourceControllerMutableState,
   CreateApiDataSourceControllerInput,
-} from './api-data-source-controller-types';
+} from './api-data-source-controller-types.js';
 
 export function createApiDataSourceRequestRunner(
   input: CreateApiDataSourceControllerInput,

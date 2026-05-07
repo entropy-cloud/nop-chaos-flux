@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ValidationRule } from '@nop-chaos/flux-core';
-import { collectValidationDependencyPaths } from '../validation/rules';
+import { collectValidationDependencyPaths } from '../validation/rules.js';
 
 describe('collectValidationDependencyPaths', () => {
   it('returns path for equalsField', () => {

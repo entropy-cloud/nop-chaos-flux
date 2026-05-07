@@ -1,5 +1,5 @@
 import type { DataSourceState } from '@nop-chaos/flux-core';
-import { nextFailureCount, structuralShareData, toNextDataSourceState } from './data-source-state';
+import { nextFailureCount, structuralShareData, toNextDataSourceState } from './data-source-state.js';
 
 export function toSuccessDataSourceState(
   current: DataSourceState,

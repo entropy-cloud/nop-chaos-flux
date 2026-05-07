@@ -7,8 +7,8 @@ import type {
 } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createActionScope, createRendererRuntime } from '../index';
-import { textRenderer, env } from './test-fixtures';
+import { createActionScope, createRendererRuntime } from '../index.js';
+import { textRenderer, env } from './test-fixtures.js';
 
 describe('createRendererRuntime', () => {
   it('stops chained actions on ajax failure by default', async () => {

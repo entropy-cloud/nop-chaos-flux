@@ -18,10 +18,10 @@ import {
   isAbortError,
   resolveRequestControl,
 } from '@nop-chaos/flux-action-core';
-import { executeApiSchema } from './async-data/request-runtime';
-import { createValidationError } from './validation';
-import type { ApiRequestExecutor } from './async-data/request-runtime';
-import type { RuntimeEvalHelpers } from './runtime-eval-helpers';
+import { executeApiSchema } from './async-data/request-runtime.js';
+import { createValidationError } from './validation/index.js';
+import type { ApiRequestExecutor } from './async-data/request-runtime.js';
+import type { RuntimeEvalHelpers } from './runtime-eval-helpers.js';
 
 export async function executeRuntimeValidationRule(
   compiledRule: CompiledValidationRule,

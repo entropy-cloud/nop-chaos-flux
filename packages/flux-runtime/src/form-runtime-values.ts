@@ -1,7 +1,7 @@
 import type { FieldState, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
-import { cancelValidationDebounce } from './form-runtime-validation';
-import { applyFieldValuePatch } from './form-runtime-field-ops';
-import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+import { cancelValidationDebounce } from './form-runtime-validation.js';
+import { applyFieldValuePatch } from './form-runtime-field-ops.js';
+import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
 export interface SetValuesContext {
   sharedState: ManagedFormRuntimeSharedState;

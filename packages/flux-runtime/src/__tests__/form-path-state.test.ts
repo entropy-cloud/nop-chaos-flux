@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ValidationError } from '@nop-chaos/flux-core';
-import { remapErrorState, transformArrayIndexedPath } from '../form-path-state';
+import { remapErrorState, transformArrayIndexedPath } from '../form-path-state.js';
 
 describe('transformArrayIndexedPath', () => {
   it('remaps indexed paths under the target array', () => {

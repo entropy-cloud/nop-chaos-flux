@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createFormStore } from '../form-store';
-import { createScopeRef } from '../scope';
-import { findRuntimeRegistration, syncRegisteredFieldValue } from '../form-runtime-registration';
-import type { FormRuntimeRegistrationState, RegisteredFieldEntry } from '../form-runtime-types';
+import { createFormStore } from '../form-store.js';
+import { createScopeRef } from '../scope.js';
+import { findRuntimeRegistration, syncRegisteredFieldValue } from '../form-runtime-registration.js';
+import type { FormRuntimeRegistrationState, RegisteredFieldEntry } from '../form-runtime-types.js';
 
 function createRegistrationEntry(
   path: string,

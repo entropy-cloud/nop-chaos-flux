@@ -6,8 +6,8 @@ import {
   createComponentHandleRegistry,
   createFormComponentHandle,
   createRendererRuntime,
-} from '../index';
-import { textRenderer, env } from './test-fixtures';
+} from '../index.js';
+import { textRenderer, env } from './test-fixtures.js';
 
 describe('createRendererRuntime', () => {
   it('retries failed actions until one succeeds', async () => {

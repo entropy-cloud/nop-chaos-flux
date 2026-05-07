@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRuntime } from '../index';
-import { textRenderer, env } from './test-fixtures';
+import { createRendererRuntime } from '../index.js';
+import { textRenderer, env } from './test-fixtures.js';
 
 describe('createRendererRuntime', () => {
   it('updates multiple form values through setValues action with bounded commits', async () => {

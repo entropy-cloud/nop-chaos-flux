@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createRendererRegistry, type ApiSchema, type RendererEnv } from '@nop-chaos/flux-core';
 import { compileApiConfig } from '@nop-chaos/flux-compiler';
-import { createRendererRuntime } from '../index';
+import { createRendererRuntime } from '../index.js';
 
 describe('createDataSourceController', () => {
   it('stops polling once stopWhen becomes true', async () => {

@@ -9,10 +9,10 @@ import type {
   SurfaceRuntime,
   ValidationRule,
 } from '@nop-chaos/flux-core';
-import { executeRuntimeAjaxAction, executeRuntimeValidationRule } from '../runtime-action-helpers';
-import { createRuntimeOwnedFactories } from '../runtime-owned-factories';
-import { createFormComponentHandle } from '../form-component-handle';
-import { createScopeRef } from '../scope';
+import { executeRuntimeAjaxAction, executeRuntimeValidationRule } from '../runtime-action-helpers.js';
+import { createRuntimeOwnedFactories } from '../runtime-owned-factories.js';
+import { createFormComponentHandle } from '../form-component-handle.js';
+import { createScopeRef } from '../scope.js';
 
 describe('executeRuntimeValidationRule', () => {
   const compiledRule = {

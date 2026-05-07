@@ -1,6 +1,6 @@
 import { getCompiledValidationTraversalOrder, getIn } from '@nop-chaos/flux-core';
 import type { CompiledFormValidationModel } from '@nop-chaos/flux-core';
-import type { InitialFieldState } from './form-runtime-types';
+import type { InitialFieldState } from './form-runtime-types.js';
 
 export function buildInitialFieldState(
   values: Record<string, any>,

@@ -4,7 +4,7 @@ import type {
   ScopeRef,
   ValidationError,
 } from '@nop-chaos/flux-core';
-import { createBuiltInValidationRegistry, type ValidationRegistry } from './validation';
+import { createBuiltInValidationRegistry, type ValidationRegistry } from './validation/index.js';
 
 let builtInValidationRegistry: ValidationRegistry | undefined;
 

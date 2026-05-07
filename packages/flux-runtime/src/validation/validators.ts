@@ -6,8 +6,8 @@ import type {
   ValidationRule,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { createValidationError } from './errors';
-import { buildValidationMessage } from './message';
+import { createValidationError } from './errors.js';
+import { buildValidationMessage } from './message.js';
 
 export type AsyncValidationRule = Extract<ValidationRule, { kind: 'async' }>;
 export type SyncValidationRule = Exclude<ValidationRule, AsyncValidationRule>;

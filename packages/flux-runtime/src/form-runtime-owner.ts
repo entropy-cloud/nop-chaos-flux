@@ -20,16 +20,16 @@ import {
   clearExternalErrorsForPath,
   rebuildStoreErrorsFromExternal,
   storeOwnedExternalErrors,
-} from './form-runtime-owner-external-errors';
-import { mergeFieldStateErrors } from './form-runtime-owner-field-states';
-import { disposeOwnerState, refreshCompiledModelState } from './form-runtime-owner-lifecycle';
-import { collectSubtreeValidationTargets } from './form-runtime-subtree';
+} from './form-runtime-owner-external-errors.js';
+import { mergeFieldStateErrors } from './form-runtime-owner-field-states.js';
+import { disposeOwnerState, refreshCompiledModelState } from './form-runtime-owner-lifecycle.js';
+import { collectSubtreeValidationTargets } from './form-runtime-subtree.js';
 import {
   cancelValidationDebounce,
   validatePath,
   validateSubtreeByNode,
-} from './form-runtime-validation';
-import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+} from './form-runtime-validation.js';
+import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
 export function buildFormOwnerRuntime(input: {
   sharedState: ManagedFormRuntimeSharedState;

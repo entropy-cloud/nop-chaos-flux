@@ -7,9 +7,9 @@ import {
   swapArrayValue,
 } from '@nop-chaos/flux-core';
 import type { ScopeRef } from '@nop-chaos/flux-core';
-import { executeArrayMutation } from './form-runtime-array';
-import { cancelValidationDebounce } from './form-runtime-validation';
-import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
+import { executeArrayMutation } from './form-runtime-array.js';
+import { cancelValidationDebounce } from './form-runtime-validation.js';
+import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
 export interface ArrayMutationContext {
   sharedState: ManagedFormRuntimeSharedState;

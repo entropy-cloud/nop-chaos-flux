@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ScopeRef } from '@nop-chaos/flux-core';
-import { createScopeRef, createScopeStore } from '../scope';
+import { createScopeRef, createScopeStore } from '../scope.js';
 
 function createTestScope(data: Record<string, any>): ScopeRef {
   return createScopeRef({

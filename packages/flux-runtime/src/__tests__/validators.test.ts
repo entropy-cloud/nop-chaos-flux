@@ -5,12 +5,12 @@ import type {
   ScopeRef,
   ValidationRule,
 } from '@nop-chaos/flux-core';
-import { builtInValidators, isEmptyValue } from '../validation/validators';
+import { builtInValidators, isEmptyValue } from '../validation/validators.js';
 import type {
   SyncValidationContext,
   SyncValidationRule,
   SyncValidationRuleKind,
-} from '../validation/validators';
+} from '../validation/validators.js';
 
 function makeField(overrides?: Partial<CompiledFormValidationField>): CompiledFormValidationField {
   return {

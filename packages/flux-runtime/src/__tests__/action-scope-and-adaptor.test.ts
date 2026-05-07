@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createActionScope, isNamespacedAction } from '../action-scope';
+import { createActionScope, isNamespacedAction } from '../action-scope.js';
 import {
   applyRequestAdaptor,
   applyResponseAdaptor,
   createAdaptorScopeView,
   getCachedAdaptorExpression,
-} from '../async-data/request-runtime-adaptor';
-import { createScopeRef } from '../scope';
+} from '../async-data/request-runtime-adaptor.js';
+import { createScopeRef } from '../scope.js';
 import type { ApiSchema } from '@nop-chaos/flux-core';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 

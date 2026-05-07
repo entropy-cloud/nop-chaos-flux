@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import type { ScopeRef, ValidationError } from '@nop-chaos/flux-core';
-import { createManagedFormRuntime } from '../form-runtime';
+import { createManagedFormRuntime } from '../form-runtime.js';
 
 function createStubScope(): ScopeRef {
   return {

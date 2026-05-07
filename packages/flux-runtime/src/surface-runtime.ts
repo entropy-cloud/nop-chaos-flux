@@ -6,8 +6,8 @@ import type {
   SurfaceStoreApi,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
-import { publishOwnerStatus } from './status-owner';
-import { createSurfaceStore } from './form-store';
+import { publishOwnerStatus } from './status-owner.js';
+import { createSurfaceStore } from './form-store.js';
 
 export function createManagedSurfaceRuntime(
   input: {

@@ -12,12 +12,12 @@ import {
   hasCompiledValidationNodes,
   validationErrorsEqual,
 } from '@nop-chaos/flux-core';
-import { findRuntimeRegistration, syncRegisteredFieldValue } from './form-runtime-registration';
-import { collectSubtreeNodePaths, collectSubtreePaths } from './form-runtime-subtree';
-import type { FormRuntimeValidationState } from './form-runtime-types';
+import { findRuntimeRegistration, syncRegisteredFieldValue } from './form-runtime-registration.js';
+import { collectSubtreeNodePaths, collectSubtreePaths } from './form-runtime-subtree.js';
+import type { FormRuntimeValidationState } from './form-runtime-types.js';
 import { scheduleDebounce } from '@nop-chaos/flux-core';
-import { normalizeRuntimeValidationErrors } from './validation';
-import { isPathHiddenByOwner } from './form-runtime-field-ops';
+import { normalizeRuntimeValidationErrors } from './validation/index.js';
+import { isPathHiddenByOwner } from './form-runtime-field-ops.js';
 
 function shouldValidateHiddenRuntimeRegistration(
   sharedState: FormRuntimeValidationState,

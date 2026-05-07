@@ -16,34 +16,34 @@ import {
   getCompiledValidationTraversalOrder,
   getCompiledValidationNode,
 } from '@nop-chaos/flux-core';
-import { createFormStore } from './form-store';
-import { createAsyncGovernanceStore } from './async-data/async-governance';
-import { buildFormOwnerRuntime } from './form-runtime-owner';
+import { createFormStore } from './form-store.js';
+import { createAsyncGovernanceStore } from './async-data/async-governance.js';
+import { buildFormOwnerRuntime } from './form-runtime-owner.js';
 import {
   buildArrayMutationContext,
   computeCanSubmitState,
   createAllTouchedComputer,
-} from './form-runtime-derived-state';
-import { buildInitialFieldState } from './form-runtime-state';
-import { createInitialFormScopeChange, createFormScopeWithBinding } from './form-runtime-status';
-import { mergeFieldStateErrors } from './form-runtime-owner-field-states';
+} from './form-runtime-derived-state.js';
+import { buildInitialFieldState } from './form-runtime-state.js';
+import { createInitialFormScopeChange, createFormScopeWithBinding } from './form-runtime-status.js';
+import { mergeFieldStateErrors } from './form-runtime-owner-field-states.js';
 import {
   cancelAllValidationDebounces,
   cancelValidationDebounce,
   validatePath,
-} from './form-runtime-validation';
+} from './form-runtime-validation.js';
 import type {
   CreateManagedFormRuntimeInput,
   ManagedFormRuntimeSharedState,
-} from './form-runtime-types';
+} from './form-runtime-types.js';
 import {
   applyFieldValuePatch,
   notifyFieldHidden,
   registerField,
   updateFieldRegistration,
-} from './form-runtime-field-ops';
-import { executeFormSubmit } from './form-runtime-submit-flow';
-import { executeSetValues } from './form-runtime-values';
+} from './form-runtime-field-ops.js';
+import { executeFormSubmit } from './form-runtime-submit-flow.js';
+import { executeSetValues } from './form-runtime-values.js';
 import {
   appendValueOp,
   prependValueOp,
@@ -53,8 +53,8 @@ import {
   swapValueOp,
   replaceValueOp,
   type ArrayMutationContext,
-} from './form-runtime-array-ops';
-import { createScopeRef, toRecord } from './scope';
+} from './form-runtime-array-ops.js';
+import { createScopeRef, toRecord } from './scope.js';
 
 export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInput): FormRuntime {
   const store = inputValue.existingStore ?? createFormStore(inputValue.initialValues ?? {});
@@ -71,7 +71,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   >();
   const runtimeFieldRegistrations = new Map<
     string,
-    import('./form-runtime-types').RegisteredFieldEntry
+    import('./form-runtime-types.js').RegisteredFieldEntry
   >();
   const pathToRegistrationId = new Map<string, string>();
   const childPathToRegistrationId = new Map<string, string>();
