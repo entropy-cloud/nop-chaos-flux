@@ -274,6 +274,7 @@ export const detailFieldRendererDefinition: RendererDefinition<DetailFieldSchema
   component: DetailFieldRenderer,
   wrap: true,
   fields: [
+    { key: 'name', kind: 'prop' },
     { key: 'viewer', kind: 'region', regionKey: 'viewer' },
     { key: 'content', kind: 'region', regionKey: 'content' },
     formLabelFieldRule,

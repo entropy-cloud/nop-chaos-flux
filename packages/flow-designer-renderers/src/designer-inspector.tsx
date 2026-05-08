@@ -23,10 +23,10 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
   const { dispatch } = useDesignerContext();
   const activeNode = useDesignerSnapshotSelector((snapshot) => snapshot.activeNode);
   const activeEdge = useDesignerSnapshotSelector((snapshot) => snapshot.activeEdge);
-  const doc = useDesignerSnapshotSelector((snapshot) => snapshot.doc);
+  const docName = useDesignerSnapshotSelector((snapshot) => snapshot.doc.name);
+  const nodeCount = useDesignerSnapshotSelector((snapshot) => snapshot.doc.nodes.length);
+  const edgeCount = useDesignerSnapshotSelector((snapshot) => snapshot.doc.edges.length);
   const activeBranch = useDesignerSnapshotSelector((snapshot) => snapshot.activeBranch);
-  const nodeCount = doc.nodes.length;
-  const edgeCount = doc.edges.length;
 
   const activeNodeTypeConfig = useNodeTypeConfig(activeNode?.type ?? '');
   const activeInspectorSchema = activeNodeTypeConfig?.inspector?.body;
@@ -311,7 +311,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
           <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">
             {t('flux.flowDesigner.inspector.flowInfo')}
           </div>
-          <div className="mt-2 font-medium text-foreground">{doc.name}</div>
+          <div className="mt-2 font-medium text-foreground">{docName}</div>
           <div className="flex flex-wrap items-center gap-2 mt-3 text-sm text-muted-foreground">
             <Badge variant="success">{t('flux.flowDesigner.inspector.enabled')}</Badge>
             <span>{t('flux.flowDesigner.inspector.nodeCount', { count: nodeCount })}</span>

@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { shallowEqual } from '@nop-chaos/flux-core';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
 import { DesignerIcon } from './designer-icon.js';
@@ -116,7 +117,7 @@ export function DesignerToolbarContent(props: {
     paletteCollapsed: state.paletteCollapsed,
     inspectorCollapsed: state.inspectorCollapsed,
     doc: state.doc,
-  }));
+  }), shallowEqual);
   const actionScope = useCurrentActionScope();
   const runtime = useRendererRuntime();
   const scope = useRenderScope();

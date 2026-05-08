@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support.js';
 
@@ -125,7 +125,7 @@ describe('variant-field FieldFrame attribute forwarding', () => {
     expect(container?.getAttribute('data-label-align')).toBe('top');
   });
 
-  it('forwards hint to FieldFrame and renders hint text', async () => {
+  it('forwards hint to FieldFrame and renders hint text on focus', async () => {
     cleanup();
     const SchemaRenderer = createFormSchemaRenderer();
 
@@ -160,9 +160,19 @@ describe('variant-field FieldFrame attribute forwarding', () => {
 
     await waitFor(() => expect(screen.getByText('Payload')).toBeTruthy());
 
+    expect(document.querySelector('[data-slot="field-hint"]')).toBeNull();
+
+    const input = document.querySelector('input');
+    expect(input).toBeTruthy();
+
+    fireEvent.focus(input as HTMLInputElement);
+
     const hintEl = document.querySelector('[data-slot="field-hint"]');
     expect(hintEl).toBeTruthy();
     expect(hintEl?.textContent).toBe('This is a hint');
+
+    fireEvent.blur(input as HTMLInputElement);
+    expect(document.querySelector('[data-slot="field-hint"]')).toBeNull();
   });
 
   it('forwards description to FieldFrame and renders description text', async () => {

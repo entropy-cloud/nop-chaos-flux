@@ -1,5 +1,6 @@
 import React from 'react';
 import type {
+  ActionSchema,
   BaseSchema,
   RendererComponentProps,
   RendererDefinition,
@@ -113,8 +114,8 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const usesWorkingValue = Boolean(schemaProps.transformInAction || schemaProps.transformOutAction);
 
   const runAdaptationAction = React.useCallback(
-    (actionSchema: ObjectFieldSchema['transformInAction']) =>
-      props.helpers.dispatch(actionSchema as any, {
+    (actionSchema: ActionSchema | ActionSchema[]) =>
+      props.helpers.dispatch(actionSchema, {
         scope: parentScope,
         form: parentForm ?? undefined,
         page: undefined,

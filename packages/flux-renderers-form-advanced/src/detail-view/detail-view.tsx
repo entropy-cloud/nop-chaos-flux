@@ -377,6 +377,7 @@ export const detailViewRendererDefinition: RendererDefinition<DetailViewSchema> 
   type: 'detail-view',
   component: DetailViewRenderer,
   fields: [
+    { key: 'name', kind: 'prop' },
     { key: 'viewer', kind: 'region', regionKey: 'viewer' },
     { key: 'content', kind: 'region', regionKey: 'content' },
     formLabelFieldRule,
