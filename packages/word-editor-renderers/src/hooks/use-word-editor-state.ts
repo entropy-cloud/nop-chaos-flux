@@ -28,6 +28,27 @@ import type {
 import { createWordEditorActionProvider } from '../word-editor-action-provider.js';
 import type { WordEditorPageSchema } from '../types.js';
 
+declare global {
+  interface Window {
+    __NOP_WORD_EDITOR_PROBE__?: {
+      getState(): {
+        document: WordDocument | null;
+        datasets: Dataset[];
+        runtime: {
+          ready: boolean;
+          dirty: boolean;
+          wordCount: number;
+          canUndo: boolean;
+          canRedo: boolean;
+          currentPage: number;
+          totalPages: number;
+          scale: number;
+        };
+      };
+    };
+  }
+}
+
 export function useWordEditorState(props: RendererComponentProps<WordEditorPageSchema>) {
   const initialDocument = props.props.initialDocument as WordDocument | undefined;
   const initialDatasets = props.props.datasets as Dataset[] | undefined;
@@ -219,6 +240,26 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
   const editingDataset = editingDatasetId
     ? datasets.find((ds) => ds.id === editingDatasetId)
     : null;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.__NOP_WORD_EDITOR_PROBE__ = {
+      getState() {
+        return {
+          document: savedDocument?.data ?? null,
+          datasets: datasetStore.getAll(),
+          runtime: editorRuntime,
+        };
+      },
+    };
+
+    return () => {
+      delete window.__NOP_WORD_EDITOR_PROBE__;
+    };
+  }, [datasetStore, editorRuntime, savedDocument]);
 
   return {
     bridge,

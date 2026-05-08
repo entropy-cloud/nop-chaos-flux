@@ -203,7 +203,7 @@ function renderWordEditor(input?: {
   registerWordEditorRenderers(registry);
   const SchemaRenderer = createSchemaRenderer();
 
-  render(
+  return render(
     <SchemaRenderer
       schemaUrl="test://word-editor/page"
       schema={defineWordEditorPageSchema({
@@ -559,6 +559,43 @@ describe('WordEditorPage host scope', () => {
     await waitFor(() => {
       expect(screen.getByTestId('document-value-probe').textContent).toBe('persisted-main');
     });
+  });
+
+  it('registers a window probe with recovered document state and removes it on unmount', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+    const recoveredDocument: SavedDocumentData = {
+      data: {
+        header: [],
+        main: [{ value: 'persisted-main' }],
+        footer: [],
+        charts: [],
+        codes: [],
+      },
+      paperSettings: {
+        width: 595,
+        height: 842,
+        direction: 'vertical',
+        margins: [100, 120, 100, 120],
+      },
+      savedAt: '2026-05-07T00:00:00.000Z',
+    };
+    mockedCore.loadRecoveredStateMock.mockReturnValueOnce({
+      document: recoveredDocument,
+      datasets: [],
+    });
+
+    const view = renderWordEditor();
+
+    await waitFor(() => {
+      expect(window.__NOP_WORD_EDITOR_PROBE__?.getState().document?.main?.[0]?.value).toBe(
+        'persisted-main',
+      );
+    });
+
+    view.unmount();
+    expect(window.__NOP_WORD_EDITOR_PROBE__).toBeUndefined();
   });
 
   it('keeps persisted datasets instead of overwriting them with schema datasets on mount', async () => {

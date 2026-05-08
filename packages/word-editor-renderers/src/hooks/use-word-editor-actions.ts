@@ -6,6 +6,7 @@ import type {
   DataColumnInput,
 } from '@nop-chaos/word-editor-core';
 import type { Dataset, DocChart, DocCode } from '@nop-chaos/word-editor-core';
+import { saveDatasets } from '@nop-chaos/word-editor-core';
 
 interface UseWordEditorActionsParams {
   bridge: CanvasEditorBridge;
@@ -68,6 +69,7 @@ export function useWordEditorActions({
       } else {
         datasetStore.add(datasetData);
       }
+      saveDatasets(datasetStore.getAll());
       setDatasetDialogOpen(false);
       setEditingDatasetId(null);
     },

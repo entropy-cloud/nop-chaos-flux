@@ -20,6 +20,7 @@ const mockedCore = vi.hoisted(() => ({
 const mockState: {
   shortcutOptions: { onSave?: () => void } | undefined;
   lastEditorCanvasProps: any;
+  lastDatasetDialogProps: any;
   datasetState: {
     datasets: Array<{ id: string; name: string }>;
     selectedDatasetId: string | null;
@@ -27,6 +28,7 @@ const mockState: {
 } = {
   shortcutOptions: undefined,
   lastEditorCanvasProps: undefined,
+  lastDatasetDialogProps: undefined,
   datasetState: {
     datasets: [],
     selectedDatasetId: null,
@@ -92,7 +94,20 @@ const datasetStore = {
     for (const listener of datasetListeners) listener();
     return next;
   }),
-  update: vi.fn(),
+  update: vi.fn((id: string, updates: { name?: string }) => {
+    const current = mockState.datasetState.datasets.find((dataset) => dataset.id === id);
+    if (!current) {
+      return null;
+    }
+
+    const next = { ...current, ...updates };
+    mockState.datasetState = {
+      ...mockState.datasetState,
+      datasets: mockState.datasetState.datasets.map((dataset) => (dataset.id === id ? next : dataset)),
+    };
+    for (const listener of datasetListeners) listener();
+    return next;
+  }),
 };
 
 function resetMockStores() {
@@ -111,6 +126,7 @@ function resetMockStores() {
   datasetStore.add.mockClear();
   datasetStore.update.mockClear();
   mockState.lastEditorCanvasProps = undefined;
+  mockState.lastDatasetDialogProps = undefined;
 }
 
 vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
@@ -170,7 +186,10 @@ vi.mock('../panels/field-list.js', () => ({
 }));
 
 vi.mock('../dialogs/dataset-dialog.js', () => ({
-  DatasetDialog: () => <div data-testid="dataset-dialog" />,
+  DatasetDialog: (props: any) => {
+    mockState.lastDatasetDialogProps = props;
+    return <div data-testid="dataset-dialog" />;
+  },
 }));
 
 vi.mock('../hooks/use-word-editor-shortcuts.js', () => ({
@@ -251,6 +270,32 @@ describe('WordEditorPage actions and events', () => {
       expect(mockedCore.saveDocumentMock).toHaveBeenCalledTimes(1);
       expect(mockedCore.saveDatasetsMock).toHaveBeenCalledTimes(1);
       expect(editorStore.setDirty).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('persists datasets immediately after creating one from the dialog flow', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    renderWordEditor();
+
+    expect(screen.getByTestId('dataset-dialog')).toBeTruthy();
+    expect(mockState.lastDatasetDialogProps).toBeTruthy();
+
+    mockState.lastDatasetDialogProps.onSave({
+      name: 'Orders',
+      description: 'Order dataset',
+      type: 'static',
+      columns: [],
+    });
+
+    await waitFor(() => {
+      expect(datasetStore.add).toHaveBeenCalledTimes(1);
+      expect(mockedCore.saveDatasetsMock).toHaveBeenCalledTimes(1);
+      expect(mockedCore.saveDatasetsMock).toHaveBeenCalledWith([
+        expect.objectContaining({ name: 'Orders', description: 'Order dataset', type: 'static' }),
+      ]);
     });
   });
 
