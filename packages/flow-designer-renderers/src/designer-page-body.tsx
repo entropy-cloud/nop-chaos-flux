@@ -208,20 +208,18 @@ export function DesignerPageBody({
 
   useDesignerShortcuts({ core, rootRef, dispatch });
 
-  const toolbarSlot = props.regions.toolbar
-    ? props.helpers.render(props.regions.toolbar.templateNode, {
-        scope: designerScope,
-        actionScope,
-      })
-    : undefined;
+  const toolbarSlot = props.regions.toolbar?.render({
+    scope: designerScope,
+    actionScope,
+  });
   const inspectorSlot = props.regions.inspector
-    ? props.helpers.render(props.regions.inspector.templateNode, {
+    ? props.regions.inspector.render({
         scope: designerScope,
         actionScope,
       })
     : ((props.props as Record<string, unknown>).inspector as React.ReactNode);
   const dialogsSlot = props.regions.dialogs
-    ? props.helpers.render(props.regions.dialogs.templateNode, {
+    ? props.regions.dialogs.render({
         scope: designerScope,
         actionScope,
       })

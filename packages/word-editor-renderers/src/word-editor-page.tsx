@@ -119,7 +119,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       </div>
       {props.regions.toolbar ? (
         asReactNode(
-          props.helpers.render(props.regions.toolbar.templateNode, {
+          props.regions.toolbar.render({
             scope: hostScope,
             actionScope,
           }),
@@ -189,7 +189,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
 
   const leftPanelSlot = props.regions.leftPanel
     ? asReactNode(
-        props.helpers.render(props.regions.leftPanel.templateNode, {
+        props.regions.leftPanel.render({
           scope: hostScope,
           actionScope,
         }),
@@ -198,7 +198,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
 
   const rightPanelSlot = props.regions.rightPanel ? (
     asReactNode(
-        props.helpers.render(props.regions.rightPanel.templateNode, {
+        props.regions.rightPanel.render({
           scope: hostScope,
           actionScope,
         }),

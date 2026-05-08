@@ -6,9 +6,9 @@ import { asReactNode } from './utils.js';
 export function FragmentRenderer(props: RendererComponentProps<FragmentSchema>) {
   return (
     <>
-      {props.regions.body?.templateNode
+      {props.regions.body
         ? asReactNode(
-            props.helpers.render(props.regions.body.templateNode, {
+            props.regions.body.render({
               bindings: props.props.data as Record<string, unknown> | undefined,
               isolate: props.props.isolate === true,
               pathSuffix: 'body',

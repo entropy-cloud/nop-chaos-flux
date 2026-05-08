@@ -323,19 +323,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     tableEmpty,
   ]);
   const tableEvents = useMemo<RendererComponentProps<TableSchema>['events']>(
-    () => ({
-      onRowClick: normalizedSchema.onRowClick
-        ? (event, ctx) => props.helpers.dispatch(normalizedSchema.onRowClick!, { ...ctx, event })
-        : undefined,
-      onRefresh: normalizedSchema.onRefresh
-        ? (event, ctx) => props.helpers.dispatch(normalizedSchema.onRefresh!, { ...ctx, event })
-        : undefined,
-      onSelectionChange: undefined,
-      onPageChange: undefined,
-      onSortChange: undefined,
-      onFilterChange: undefined,
-    }),
-    [normalizedSchema.onRefresh, normalizedSchema.onRowClick, props.helpers],
+    () => props.events as unknown as RendererComponentProps<TableSchema>['events'],
+    [props.events],
   );
   const tableRendererProps = useMemo<RendererComponentProps<TableSchema>>(
     () =>
@@ -343,11 +332,12 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         id: `${props.id}-table`,
         path: `${props.path}.table`,
         schema: tableSchema,
-        templateNode: props.templateNode as RendererComponentProps<TableSchema>['templateNode'],
+        templateNode:
+          props.templateNode as unknown as RendererComponentProps<TableSchema>['templateNode'],
         node: {
           ...props.node,
           scope: crudScope,
-        } as RendererComponentProps<TableSchema>['node'],
+        } as unknown as RendererComponentProps<TableSchema>['node'],
         props: tableSchema,
         meta: {
           ...props.meta,

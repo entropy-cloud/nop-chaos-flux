@@ -99,19 +99,19 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   const spreadsheetScope = useHostScope(spreadsheetScopeData, props.path, 'spreadsheet');
 
   const toolbarContent = props.regions.toolbar
-    ? props.helpers.render(props.regions.toolbar.templateNode, {
+    ? props.regions.toolbar.render({
         scope: spreadsheetScope,
         actionScope,
       })
     : undefined;
   const bodyContent = props.regions.body
-    ? props.helpers.render(props.regions.body.templateNode, {
+    ? props.regions.body.render({
         scope: spreadsheetScope,
         actionScope,
       })
     : undefined;
   const dialogsContent = props.regions.dialogs
-    ? props.helpers.render(props.regions.dialogs.templateNode, {
+    ? props.regions.dialogs.render({
         scope: spreadsheetScope,
         actionScope,
       })

@@ -1,6 +1,5 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useCurrentNodeMeta } from '@nop-chaos/flux-react';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DesignerPageSchema } from './schemas.js';
@@ -25,8 +24,7 @@ function readDesignerResolvedProp<T>(
 }
 
 export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>) {
-  const meta = useCurrentNodeMeta();
-  const config = (meta.templateNode.schema as DesignerPageSchema).config as DesignerConfig | undefined;
+  const config = readDesignerResolvedProp<DesignerConfig>(props, 'config');
 
   if (!config) {
     return <div>{t('flux.flowDesigner.configRequired')}</div>;

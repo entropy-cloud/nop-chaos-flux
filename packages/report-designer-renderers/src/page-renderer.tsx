@@ -162,7 +162,7 @@ export function ReportDesignerPageRenderer(
   const toolbarContent = toolbarSchema
     ? props.helpers.render(toolbarSchema, { scope: reportDesignerScope, actionScope })
     : props.regions.toolbar
-      ? props.helpers.render(props.regions.toolbar.templateNode, {
+      ? props.regions.toolbar.render({
           scope: reportDesignerScope,
           actionScope,
         })
@@ -170,7 +170,7 @@ export function ReportDesignerPageRenderer(
   const fieldPanelContent = fieldPanelSchema
     ? props.helpers.render(fieldPanelSchema, { scope: reportDesignerScope, actionScope })
     : props.regions.fieldPanel
-      ? props.helpers.render(props.regions.fieldPanel.templateNode, {
+      ? props.regions.fieldPanel.render({
           scope: reportDesignerScope,
           actionScope,
         })
@@ -178,19 +178,19 @@ export function ReportDesignerPageRenderer(
   const inspectorContent = inspectorSchema
     ? props.helpers.render(inspectorSchema, { scope: reportDesignerScope, actionScope })
     : props.regions.inspector
-      ? props.helpers.render(props.regions.inspector.templateNode, {
+      ? props.regions.inspector.render({
           scope: reportDesignerScope,
           actionScope,
         })
       : undefined;
   const dialogsContent = props.regions.dialogs
-    ? props.helpers.render(props.regions.dialogs.templateNode, {
+    ? props.regions.dialogs.render({
         scope: reportDesignerScope,
         actionScope,
       })
     : undefined;
   const bodyContent = props.regions.body
-    ? props.helpers.render(props.regions.body.templateNode, {
+    ? props.regions.body.render({
         scope: reportDesignerScope,
         actionScope,
       })
