@@ -1,6 +1,13 @@
 import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
+import type {
+  ActionResult,
+  ApiSchema,
+  CompiledActionNode,
+  DynamicRuntimeValue,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 import { resolveCacheKey } from './api-cache.js';
-import { applyResultMapping, evaluateCompiledApiConfig } from './data-source-runtime-utils.js';
+import { applyResultMapping, collectRuntimeDependencies } from './data-source-runtime-utils.js';
 import {
   toActiveRequestState,
   toErrorDataSourceState,
@@ -15,11 +22,79 @@ import {
   updateControllerState,
 } from './api-data-source-controller-state.js';
 import { isAbortError } from '../error-utils.js';
-import { executeApiSchema, prepareApiRequestForExecution } from './request-runtime.js';
+import { prepareApiRequestForExecution } from './request-runtime.js';
 import type {
   ApiDataSourceControllerMutableState,
   CreateApiDataSourceControllerInput,
 } from './api-data-source-controller-types.js';
+
+function toDispatchError(result: ActionResult): unknown {
+  if (result.error) {
+    return result.error;
+  }
+
+  if (result.cancelled || result.timedOut) {
+    return Object.assign(new Error('Data source action was cancelled'), { name: 'AbortError' });
+  }
+
+  return new Error('Data source action failed');
+}
+
+async function executeDataSourceAction(
+  input: CreateApiDataSourceControllerInput,
+  scope: ScopeRef,
+  signal: AbortSignal,
+): Promise<ActionResult> {
+  const result = await input.dispatch(input.action, {
+    runtime: input.runtime,
+    scope,
+    signal,
+  });
+
+  if (!result.ok || result.cancelled || result.timedOut) {
+    throw toDispatchError(result);
+  }
+
+  return result;
+}
+
+function evaluateSingleAjaxAction(input: CreateApiDataSourceControllerInput, scope: ScopeRef) {
+  const action = input.action;
+  if (!action || Array.isArray(action) || !('nodes' in action) || !Array.isArray(action.nodes)) {
+    return undefined;
+  }
+
+  const nodes = action.nodes as CompiledActionNode[];
+  const node = nodes[0];
+  if (nodes.length !== 1 || !node || node.action !== 'ajax') {
+    return undefined;
+  }
+
+  const args = node.payload.args;
+  if (!args) {
+    return undefined;
+  }
+
+  if (args.isStatic) {
+    return {
+      api: args.value as ApiSchema,
+      dependencies: undefined,
+    };
+  }
+
+  const state = (args as DynamicRuntimeValue<Record<string, unknown>>).createState();
+  const result = input.runtime.expressionCompiler.evaluateWithState(
+    args as DynamicRuntimeValue<Record<string, unknown>>,
+    scope,
+    input.runtime.env,
+    state,
+  );
+
+  return {
+    api: result.value as ApiSchema,
+    dependencies: collectRuntimeDependencies(state),
+  };
+}
 
 export function createApiDataSourceRequestRunner(
   input: CreateApiDataSourceControllerInput,
@@ -102,20 +177,19 @@ export function createApiDataSourceRequestRunner(
           pathSuffix: 'data-source-request',
         },
       );
-      const trackedApi = evaluateCompiledApiConfig({
-        compiledApi: input.compiledApi,
-        scope: input.scope,
-        runtime: input.runtime,
-        state: mutable.apiConfigState,
-      });
-      input.onDependenciesChange?.(trackedApi.dependencies);
-      const preparedRequest = prepareApiRequestForExecution(
-        trackedApi.resolvedApi,
-        requestScope,
-        input.runtime.env,
-        input.runtime.expressionCompiler,
-      );
-      const cacheKey = resolveCacheKey(preparedRequest.request, input.control);
+      const ajaxAction = evaluateSingleAjaxAction(input, requestScope);
+      input.onDependenciesChange?.(ajaxAction?.dependencies);
+      const preparedRequest = ajaxAction
+        ? prepareApiRequestForExecution(
+            ajaxAction.api,
+            requestScope,
+            input.runtime.env,
+            input.runtime.expressionCompiler,
+          )
+        : undefined;
+      const cacheKey = preparedRequest
+        ? resolveCacheKey(preparedRequest.request, input.control)
+        : null;
 
       if (cacheKey) {
         const cached = input.apiCache.get<unknown>(cacheKey);
@@ -171,23 +245,7 @@ export function createApiDataSourceRequestRunner(
         }
       }
 
-      const response = await executeApiSchema(
-        trackedApi.resolvedApi,
-        requestScope,
-        input.runtime.env,
-        input.runtime.expressionCompiler,
-        {
-          signal: activeController.signal,
-          evaluate: input.runtime.evaluate,
-          preparedRequest,
-          executor: (adaptedApi) =>
-            input.executeApiRequest('data-source', adaptedApi, requestScope, {
-              signal: activeController.signal,
-              control: input.control,
-            }),
-          control: input.control,
-        },
-      );
+      const response = await executeDataSourceAction(input, requestScope, activeController.signal);
 
       if (mutable.stopped || activeController.signal.aborted) {
         if (run && input.asyncGovernance) {

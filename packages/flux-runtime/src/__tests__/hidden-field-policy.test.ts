@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { CompiledFormValidationModel, CompiledValidationNode } from '@nop-chaos/flux-core';
+import type { CompiledFormValidationModel, CompiledValidationNode, ValidationError } from '@nop-chaos/flux-core';
 import {
   buildCompiledFormValidationModel,
   createRendererRegistry,
@@ -212,6 +212,57 @@ describe('hidden field validation participation', () => {
     expect(result.errors).toEqual([
       expect.objectContaining({ path: 'tags', rule: 'required' }),
     ]);
+  });
+
+  it('runtime-registered hidden fields honor per-registration hiddenFieldPolicy overrides', async () => {
+    const model = makeFormModel({ sentinel: makeNode('sentinel') }, { validateWhenHidden: false });
+    const { runtime } = makeRuntime(model, { tags: [] });
+
+    runtime.registerField({
+      path: 'tags',
+      hiddenFieldPolicy: { validateWhenHidden: true },
+      getValue() {
+        return runtime.scope.get('tags');
+      },
+      validate() {
+        const currentTags = runtime.scope.get('tags');
+        return Array.isArray(currentTags) && currentTags.length === 0
+          ? [{ path: 'tags', message: 'Required', rule: 'required' }]
+          : [];
+      },
+    });
+
+    runtime.notifyFieldHidden('tags', true);
+    const result = await runtime.validateField('tags');
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toEqual([
+      expect.objectContaining({ path: 'tags', rule: 'required' }),
+    ]);
+  });
+
+  it('runtime-registered hidden fields can opt out even when form defaultHiddenFieldPolicy enables validation', async () => {
+    const model = makeFormModel({ sentinel: makeNode('sentinel') }, { validateWhenHidden: true });
+    const { runtime } = makeRuntime(model, { tags: [] });
+
+    const validate = vi.fn<() => ValidationError[]>(() => [
+      { path: 'tags', message: 'Required', rule: 'required' },
+    ]);
+    runtime.registerField({
+      path: 'tags',
+      hiddenFieldPolicy: { validateWhenHidden: false },
+      getValue() {
+        return runtime.scope.get('tags');
+      },
+      validate,
+    });
+
+    runtime.notifyFieldHidden('tags', true);
+    const result = await runtime.validateField('tags');
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+    expect(validate).not.toHaveBeenCalled();
   });
 
   it('validateForm skips hidden fields with default policy', async () => {

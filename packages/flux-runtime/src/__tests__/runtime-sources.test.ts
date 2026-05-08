@@ -69,6 +69,53 @@ describe('createRendererRuntime', () => {
     second.dispose();
   });
 
+  it('executes ajax data-source producers through action dispatch', async () => {
+    const onActionStart = vi.fn();
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiSchema) => ({
+      ok: true,
+      status: 200,
+      data: { value: api.url } as T,
+    });
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        monitor: { onActionStart },
+        fetcher: fetcherImpl,
+      },
+      expressionCompiler,
+    });
+    const page = runtime.createPageRuntime({});
+
+    const registration = runtime.registerDataSource({
+      id: 'action-routed-source',
+      scope: page.scope,
+      compiledSource: compileDataSource(
+        'action-routed-source',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/action-routed' },
+          name: 'payload',
+        },
+        expressionCompiler,
+      ),
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ value: '/api/action-routed' });
+    });
+
+    expect(onActionStart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionType: 'ajax',
+        interactionId: expect.any(String),
+      }),
+    );
+
+    registration.dispose();
+  });
+
   it('disposes registered data sources and aborts their active requests', async () => {
     let capturedSignal: AbortSignal | undefined;
     let releaseRequest: (() => void) | undefined;

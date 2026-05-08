@@ -3,6 +3,9 @@ import { executeSetValues } from '../form-runtime-values.js';
 import { createFormStore } from '../form-store.js';
 import { createScopeRef } from '../scope.js';
 import { createAsyncGovernanceStore } from '../async-data/async-governance.js';
+import { createManagedFormRuntime } from '../form-runtime.js';
+import { buildCompiledFormValidationModel } from '@nop-chaos/flux-core';
+import type { CompiledValidationNode } from '@nop-chaos/flux-core';
 import type {
   ManagedFormRuntimeSharedState,
   CreateManagedFormRuntimeInput,
@@ -28,6 +31,30 @@ function createStubScope(): ScopeRef {
     readVisible: () => ({}),
     materializeVisible: () => ({}),
     merge: () => {},
+  };
+}
+
+function makeValidationNode(
+  path: string,
+  dependencyPaths: string[] = [],
+): CompiledValidationNode {
+  return {
+    path,
+    kind: 'field',
+    controlType: 'input-text',
+    rules:
+      dependencyPaths.length > 0
+        ? [
+            {
+              id: `${path}#0:required`,
+              rule: { kind: 'required' as const },
+              dependencyPaths,
+            },
+          ]
+        : [],
+    behavior: { triggers: ['change'], showErrorOn: ['submit'] },
+    children: [],
+    parent: '',
   };
 }
 
@@ -263,5 +290,68 @@ describe('executeSetValues', () => {
     );
     expect(resolved).toBe(true);
     expect(sharedState.pendingValidationDebounces.has('x')).toBe(false);
+  });
+
+  it('revalidates the full owner-local dependent closure instead of only one layer', async () => {
+    const parentScope = createStubScope();
+    const validation = buildCompiledFormValidationModel({
+      behavior: { triggers: ['change'], showErrorOn: ['submit'] },
+      nodes: {
+        '': { path: '', kind: 'form', rules: [], children: ['a', 'b', 'c'] },
+        a: makeValidationNode('a'),
+        b: makeValidationNode('b', ['a']),
+        c: makeValidationNode('c', ['b']),
+      },
+      rootPath: '',
+    })!;
+    const validateField = vi.fn().mockResolvedValue({ ok: true, errors: [] });
+    const runtime = createManagedFormRuntime({
+      id: 'closure-form',
+      initialValues: { a: 1, b: 2, c: 3 },
+      parentScope,
+      validation,
+      validateRule: vi.fn().mockReturnValue(undefined),
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+    runtime.validateField = validateField as typeof runtime.validateField;
+
+    runtime.setValue('a', 10);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(validateField).toHaveBeenCalledWith('b', 'system');
+    expect(validateField).toHaveBeenCalledWith('c', 'system');
+  });
+
+  it('revalidates dependent closure cycle-safely', async () => {
+    const parentScope = createStubScope();
+    const validation = buildCompiledFormValidationModel({
+      behavior: { triggers: ['change'], showErrorOn: ['submit'] },
+      nodes: {
+        '': { path: '', kind: 'form', rules: [], children: ['a', 'b', 'c'] },
+        a: makeValidationNode('a', ['c']),
+        b: makeValidationNode('b', ['a']),
+        c: makeValidationNode('c', ['b']),
+      },
+      rootPath: '',
+    })!;
+    const validateField = vi.fn().mockResolvedValue({ ok: true, errors: [] });
+    const runtime = createManagedFormRuntime({
+      id: 'cycle-form',
+      initialValues: { a: 1, b: 2, c: 3 },
+      parentScope,
+      validation,
+      validateRule: vi.fn().mockReturnValue(undefined),
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+    runtime.validateField = validateField as typeof runtime.validateField;
+
+    runtime.setValue('a', 10);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(validateField).toHaveBeenCalledTimes(2);
+    expect(validateField).toHaveBeenNthCalledWith(1, 'b', 'system');
+    expect(validateField).toHaveBeenNthCalledWith(2, 'c', 'system');
   });
 });

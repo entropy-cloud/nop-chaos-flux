@@ -94,7 +94,26 @@ export function buildFormOwnerRuntime(input: {
   }
 
   async function revalidateDependents(path: string, reason: ValidationReason = 'system') {
-    const dependentPaths = getCompiledValidationDependents(input.getCurrentValidation(), path);
+    const model = input.getCurrentValidation();
+    const queue = [...getCompiledValidationDependents(model, path)];
+    const dependentPaths: string[] = [];
+    const visited = new Set<string>([path]);
+
+    while (queue.length > 0) {
+      const dependentPath = queue.shift();
+      if (!dependentPath || visited.has(dependentPath)) {
+        continue;
+      }
+
+      visited.add(dependentPath);
+      dependentPaths.push(dependentPath);
+
+      for (const nestedDependent of getCompiledValidationDependents(model, dependentPath)) {
+        if (!visited.has(nestedDependent)) {
+          queue.push(nestedDependent);
+        }
+      }
+    }
 
     for (const dependentPath of dependentPaths) {
       if (dependentPath === path) {

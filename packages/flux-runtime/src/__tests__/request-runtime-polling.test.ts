@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createRendererRegistry, type ApiSchema, type RendererEnv } from '@nop-chaos/flux-core';
-import { compileApiConfig } from '@nop-chaos/flux-compiler';
+import { compileAction } from '@nop-chaos/flux-compiler';
 import { createRendererRuntime } from '../index.js';
 
 describe('createDataSourceController', () => {
@@ -23,7 +23,10 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
-      compiledApi: compileApiConfig({ url: '/api/job' }, runtime.expressionCompiler),
+      action: compileAction(
+        { action: 'ajax', args: { url: '/api/job' } },
+        runtime.expressionCompiler,
+      ),
       scope: page.scope,
       targetPath: 'job',
       interval: 10,
@@ -62,7 +65,10 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
-      compiledApi: compileApiConfig({ url: '/api/job' }, runtime.expressionCompiler),
+      action: compileAction(
+        { action: 'ajax', args: { url: '/api/job' } },
+        runtime.expressionCompiler,
+      ),
       scope: page.scope,
       targetPath: 'job',
       interval: 10,
@@ -109,7 +115,10 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
-      compiledApi: compileApiConfig({ url: '/api/slow' }, runtime.expressionCompiler),
+      action: compileAction(
+        { action: 'ajax', args: { url: '/api/slow' } },
+        runtime.expressionCompiler,
+      ),
       scope: page.scope,
       targetPath: 'payload',
     });
@@ -139,7 +148,10 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
-      compiledApi: compileApiConfig({ url: '/api/cache' }, runtime.expressionCompiler),
+      action: compileAction(
+        { action: 'ajax', args: { url: '/api/cache' } },
+        runtime.expressionCompiler,
+      ),
       scope: page.scope,
       targetPath: 'payload',
       control: { cacheTTL: 60_000, cacheKey: 'shared-cache' },
@@ -176,14 +188,17 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({ page: 1 });
     const first = runtime.createDataSourceController({
-      compiledApi: compileApiConfig({ url: '/api/cache?page=1' }, runtime.expressionCompiler),
+      action: compileAction(
+        { action: 'ajax', args: { url: '/api/cache?page=1' } },
+        runtime.expressionCompiler,
+      ),
       scope: page.scope,
       targetPath: 'payload',
       control: { cacheTTL: 60_000 },
     } as any);
     const second = runtime.createDataSourceController({
-      compiledApi: compileApiConfig(
-        { url: '/api/cache', params: { page: 1 } },
+      action: compileAction(
+        { action: 'ajax', args: { url: '/api/cache', params: { page: 1 } } },
         runtime.expressionCompiler,
       ),
       scope: page.scope,

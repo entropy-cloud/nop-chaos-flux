@@ -10,7 +10,7 @@ import {
   structuralShareData,
   writeStatusToScope,
 } from './data-source-state.js';
-import { createApiConfigRuntimeState, writeDataToScope } from './data-source-runtime-utils.js';
+import { writeDataToScope } from './data-source-runtime-utils.js';
 import { toStopConditionErrorState } from './api-data-source-controller-helpers.js';
 import type {
   ApiDataSourceControllerMutableState,
@@ -31,7 +31,6 @@ export function createApiDataSourceControllerMutableState(
     nextRequestSequence: 0,
     latestSettledRequestSequence: 0,
     state: createInitialDataSourceState(input.initialData),
-    apiConfigState: createApiConfigRuntimeState(input.compiledApi, input.runtime),
     refreshDedup: input.control?.dedup ?? 'cancel-previous',
     asyncOwnerId: input.ownerId,
   };

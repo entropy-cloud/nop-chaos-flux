@@ -32,7 +32,11 @@ import { createActionScope } from './action-scope.js';
 import { createApiCacheStore } from './async-data/api-cache.js';
 import { createAsyncGovernanceStore } from './async-data/async-governance.js';
 import { createComponentHandleRegistry } from './component-handle-registry.js';
-import { createDataSourceController, createSourceExecutor } from './async-data/data-source-runtime.js';
+import {
+  createDataSourceController,
+  createSourceExecutor,
+  createSourceObserver,
+} from './async-data/data-source-runtime.js';
 import { createImportManager } from './imports.js';
 import { createImportStack } from './import-stack.js';
 import { createHostProjectionScope } from './runtime-host-projection-scope.js';
@@ -386,6 +390,9 @@ export function createRendererRuntime(input: {
 
       return executeSourceRef.current(inputValue.source, inputValue.scope, inputValue.ctx);
     },
+    createSourceObserver() {
+      return createSourceObserver(runtime);
+    },
     createPageRuntime: runtimeOwnedFactories.createPageRuntime,
     createValidationScopeRuntime: runtimeOwnedFactories.createValidationScopeRuntime,
     createSurfaceRuntime: runtimeOwnedFactories.createSurfaceRuntime,
@@ -394,9 +401,8 @@ export function createRendererRuntime(input: {
         runtime,
         apiCache,
         asyncGovernance,
-        executeApiRequest: (actionType, api, scope, options) =>
-          executeApiRequest(actionType, api, scope, undefined, options),
         ...inputValue,
+        dispatch: (action, ctx) => runtime.dispatch(action, ctx),
       });
     },
     registerDataSource(inputValue: {
@@ -567,8 +573,6 @@ export function createRendererRuntime(input: {
     runtime,
     apiCache,
     asyncGovernance,
-    executeApiRequest: (actionType, api, scope, options) =>
-      executeApiRequest(actionType, api, scope, undefined, options),
   });
   reactionRegistryRef.current = createRuntimeReactionRegistry();
 

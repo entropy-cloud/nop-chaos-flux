@@ -92,15 +92,6 @@ export function createRuntimeSourceRegistry(input: {
   runtime: RendererRuntime;
   apiCache: ApiCacheStore;
   asyncGovernance?: AsyncGovernanceStore;
-  executeApiRequest: <T>(
-    actionType: string,
-    api: import('@nop-chaos/flux-core').ExecutableApiRequest,
-    scope: ScopeRef,
-    options?: {
-      signal?: AbortSignal;
-      control?: import('@nop-chaos/flux-core').OperationControlConfig;
-    },
-  ) => Promise<{ ok: boolean; status: number; data: T }>;
 }): RuntimeSourceRegistry {
   const scopeEntries = new Map<string, Map<string, RuntimeSourceEntry>>();
   const nameIndex = new Map<string, RuntimeSourceEntry>();
@@ -143,8 +134,8 @@ export function createRuntimeSourceRegistry(input: {
           runtime: input.runtime,
           apiCache: input.apiCache,
           asyncGovernance: input.asyncGovernance,
-          executeApiRequest: input.executeApiRequest,
-          compiledApi: compiled.api!,
+          action: compiled.action!,
+          dispatch: input.runtime.dispatch,
           scope: args.scope,
           ownerId: `data-source:${ownerScopeId}:${args.id}`,
           targetPath,

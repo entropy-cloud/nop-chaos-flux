@@ -1,30 +1,26 @@
 import type {
+  ActionContext,
+  ActionResult,
+  ActionSchema,
   AsyncGovernanceStore,
-  CompiledApiConfig,
+  CompiledActionProgram,
   CompiledRuntimeValue,
   DataSourceState,
-  ExecutableApiRequest,
   OperationControlConfig,
   RendererRuntime,
   ScopeDependencySet,
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import type { ApiCacheStore } from './api-cache.js';
-import type { ApiConfigRuntimeState } from './data-source-runtime-utils.js';
 
 export interface CreateApiDataSourceControllerInput {
   runtime: RendererRuntime;
   apiCache: ApiCacheStore;
-  executeApiRequest: <T>(
-    actionType: string,
-    api: ExecutableApiRequest,
-    scope: ScopeRef,
-    options?: {
-      signal?: AbortSignal;
-      control?: OperationControlConfig;
-    },
-  ) => Promise<{ ok: boolean; status: number; data: T }>;
-  compiledApi: CompiledApiConfig;
+  action: ActionSchema | ActionSchema[] | CompiledActionProgram;
+  dispatch: (
+    action: ActionSchema | ActionSchema[] | CompiledActionProgram,
+    ctx: ActionContext,
+  ) => Promise<ActionResult>;
   scope: ScopeRef;
   ownerId?: string;
   asyncGovernance?: AsyncGovernanceStore;
@@ -53,7 +49,6 @@ export interface ApiDataSourceControllerMutableState {
   nextRequestSequence: number;
   latestSettledRequestSequence: number;
   state: DataSourceState;
-  apiConfigState: ApiConfigRuntimeState;
   refreshDedup: NonNullable<OperationControlConfig['dedup']>;
   asyncOwnerId: string | undefined;
 }

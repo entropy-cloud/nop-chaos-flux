@@ -22,7 +22,12 @@ import { overlayFieldErrorsWithExternal } from './form-runtime-owner-external-er
 
 function shouldValidateHiddenRuntimeRegistration(
   sharedState: FormRuntimeValidationState,
+  registration?: RuntimeFieldRegistration,
 ): boolean {
+  if (registration?.hiddenFieldPolicy?.validateWhenHidden != null) {
+    return registration.hiddenFieldPolicy.validateWhenHidden === true;
+  }
+
   return sharedState.inputValue.validation?.defaultHiddenFieldPolicy?.validateWhenHidden === true;
 }
 
@@ -455,7 +460,7 @@ export async function validatePath(
 
   if (!field && runtimeRegistration) {
     const isHidden = isPathHidden(sharedState, path);
-    if (isHidden && !shouldValidateHiddenRuntimeRegistration(sharedState)) {
+    if (isHidden && !shouldValidateHiddenRuntimeRegistration(sharedState, runtimeRegistration)) {
       commitPathValidationState({ sharedState, path, errors: [] });
       return createValidationResult([]);
     }

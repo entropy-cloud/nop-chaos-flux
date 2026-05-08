@@ -276,6 +276,42 @@ describe('createRendererRuntime', () => {
     expect(page.scope.get('settled')).toBe('boom');
   });
 
+  it('preserves failure-class onSettled results as settledError without replacing the primary result', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'settled-failed' } as T }),
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ status: 'idle' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'setValue',
+        args: {
+          path: 'status',
+          value: 'done',
+        },
+        onSettled: {
+          action: 'ajax',
+          args: { url: '/api/fail', method: 'get' },
+        },
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+      },
+    );
+
+    expect(result).toMatchObject({ ok: true, data: 'done' });
+    expect(result.settledError).toBeInstanceOf(Error);
+    expect((result.settledError as Error).message).toBe('settled-failed');
+    expect(page.scope.get('status')).toBe('done');
+  });
+
   it('does not run then actions for failure-class results even when continueOnError is enabled', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
