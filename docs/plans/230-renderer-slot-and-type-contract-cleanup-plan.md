@@ -11,7 +11,7 @@
 
 ## Current Baseline
 
-- 维度 09 保留了 renderer contract drift：`props.meta.className/testid/cid` 传递缺口、raw `props.schema` fallback、`readOnly` 不阻止写入、advanced controls 未向 field controller 传递 `readOnly`。
+- 维度 09 的一部分 renderer contract drift 已在 live code 收敛：`props.meta.className/testid/cid` 传递缺口与 retained raw `props.schema` fallback 已修复，shared field controller 现在会在 `readOnly` 时阻止写入，and the retained advanced controls now forward `readOnly` into that contract. 当前仍保留的 renderer-contract residual 主要是 `FieldFrame` hint/aria association drift，以及少量 owner-specific action/slot/channel residuals。
 - 维度 11 保留了 `input-number` stepper raw `<button>`。
 - 维度 12 保留了 table expandable / tabs / tree / variant-field deep region extraction 缺口、private helper `regions`、raw `templateNode` render、schema action fields 与 metadata/event channel 不一致。
 - 维度 08 中与 renderer/field contract 直接相连的 `FieldFrame` hint/aria drift 也由本计划 owning：`field-frame.tsx` 在 error presence 与 showError/hint association 上仍有 retained residual。
@@ -65,14 +65,14 @@ Targets: owned renderer files, related tests/docs
 
 - [x] [Fix] Restore `props.meta.className/testid/cid` pass-through for the retained form and advanced controls.
 - [x] [Fix] Remove retained raw `props.schema` runtime fallbacks from condition-builder, code-editor, variant, array/object, and designer helper patterns where the audit confirmed them.
-- [ ] [Fix] Make `readOnly` actually block writes on the owned form/advanced control paths, including field-controller propagation.
+- [x] [Fix] Make `readOnly` actually block writes on the owned form/advanced control paths, including field-controller propagation.
 - [ ] [Fix] Repair the retained `FieldFrame` hint/aria association drift so hint/description wiring follows the supported visibility/error baseline.
 - [x] [Fix] Replace `input-number` raw stepper buttons with `@nop-chaos/ui` `Button` or an equivalent ui-owned primitive.
-- [ ] [Proof] Add focused renderer-contract tests for meta pass-through, readOnly blocking, and input-number UI ownership.
+- [x] [Proof] Add focused renderer-contract tests for meta pass-through, readOnly blocking, and input-number UI ownership.
 
 Exit Criteria:
 
-- [ ] The retained renderer meta/raw-schema/readOnly defects are closed.
+- [x] The retained renderer meta/raw-schema/readOnly defects are closed.
 - [ ] The retained `FieldFrame` hint/aria association drift is closed.
 - [x] `input-number` no longer uses raw stepper buttons on the supported path.
 - [ ] Focused tests prove the final renderer contract baseline.
@@ -151,19 +151,19 @@ Exit Criteria:
 ## Validation Checklist
 
 - [x] `212` and `224` carve-outs remain explicit.
-- [ ] Renderer contract fixes route through standard `props.meta` / `readOnly` / `regions` channels.
+- [x] Renderer contract fixes route through standard `props.meta` / `readOnly` / `regions` channels.
 - [x] Tabs and other retained deep-region owners are explicitly in scope.
 - [ ] No retained `full-8` item from dimensions 09/11/12/13 is left without an owner decision.
 
 ## Closure
 
-Status Note: the plan now includes live renderer-contract and slot-model progress: owner pages and fragment rendering use `region.render(...)` instead of raw `templateNode` replay, `designer-page` dropped a retained raw-schema config read, and condition-builder picker mode now honors root meta passthrough. The plan still remains open because `FieldFrame`, remaining readOnly propagation/contract proofs, deep-region extraction residuals, and the rest of the low-priority type-cleanup set are not yet fully closed.
+Status Note: the plan now includes additional live renderer-contract progress: shared `useFormFieldController(...)` write paths block `readOnly` mutations, and the retained advanced controls now pass `readOnly` through to the shared presentation/interaction contract. Owner pages and fragment rendering also use `region.render(...)` instead of raw `templateNode` replay, `designer-page` dropped a retained raw-schema config read, and condition-builder picker mode honors root meta passthrough. The plan still remains open because `FieldFrame`, deep-region extraction/action-channel residuals, and the rest of the low-priority type-cleanup set are not yet fully closed.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1fa140f1cffevDG2I4iShJZFF5`)
-- Evidence: live repo now also contains slot/model cleanup in `packages/{flow-designer-renderers,report-designer-renderers,word-editor-renderers,spreadsheet-renderers,flux-renderers-basic}/src/**`, renderer-contract cleanup in `packages/flow-designer-renderers/src/designer-page.tsx` and `packages/flux-renderers-form-advanced/src/condition-builder/condition-builder.tsx`, related focused tests across all touched packages, and green workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`; however, the remaining renderer-contract and type-cleanup residuals still prevent closure.
+- Evidence: live repo now also contains shared readOnly write-blocking in `packages/flux-renderers-form/src/field-utils/field-handlers.tsx`, readOnly propagation repairs in `packages/flux-renderers-form-advanced/src/{condition-builder/condition-builder.tsx,key-value.tsx,array-editor.tsx,tree-controls.tsx,tag-list.tsx}`, related focused proofs in `packages/flux-renderers-form/src/__tests__/field-utils.unit.test.tsx` and `packages/flux-renderers-form-advanced/src/{tag-list.test.tsx,condition-builder/condition-builder-renderer.test.tsx,__tests__/tree-values.test.tsx}`, plus green workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`; however, the remaining `FieldFrame`, slot/deep-region, and low-priority type-cleanup residuals still prevent closure.
 
 Follow-up:
 
-- Finish the remaining `FieldFrame` / readOnly / deep-region extraction / action-channel work, then re-audit the low-priority type-cleanup set before closing.
+- Finish the remaining `FieldFrame` / deep-region extraction / action-channel work, then re-audit the low-priority type-cleanup set before closing.
