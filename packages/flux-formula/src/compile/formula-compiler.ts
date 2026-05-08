@@ -217,10 +217,13 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
 
                 return evaluated == null ? '' : String(evaluated);
               } catch (segmentError) {
-                createExpressionMonitorReporter(env, source)(segmentError, {
+                const wrappedError = new Error(`Template evaluation failed for: ${source}`, {
+                  cause: segmentError,
+                });
+                createExpressionMonitorReporter(env, source)(wrappedError, {
                   source: 'formula-compiler-template',
                 });
-                return `[error]`;
+                throw wrappedError;
               }
             })
             .join('');

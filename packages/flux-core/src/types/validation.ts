@@ -84,6 +84,7 @@ export interface CompiledValidationRule {
   precompiled?: {
     regex?: RegExp;
     error?: string;
+    safe?: boolean;
   };
 }
 

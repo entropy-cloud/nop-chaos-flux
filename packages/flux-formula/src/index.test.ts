@@ -414,17 +414,17 @@ describe('createExpressionCompiler', () => {
     );
   });
 
-  it('returns error marker in template when segment evaluation fails', () => {
+  it('throws when template segment evaluation fails instead of returning false-success text', () => {
     const onError = vi.fn();
     const compiler = createFormulaCompiler();
     const template = compiler.compileTemplate('Hello ${user.name.first}!');
 
-    const result = template.exec(createScope({ user: null }), {
-      ...env,
-      monitor: { onError },
-    });
-
-    expect(result).toBe('Hello [error]!');
+    expect(() =>
+      template.exec(createScope({ user: null }), {
+        ...env,
+        monitor: { onError },
+      }),
+    ).toThrow('Template evaluation failed');
     expect(onError).toHaveBeenCalled();
   });
 });

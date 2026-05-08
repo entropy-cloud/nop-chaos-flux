@@ -5,6 +5,7 @@ export const enUS: Resource = {
     common: {
       loading: 'Loading...',
       error: 'Error',
+      chart: 'Chart',
       close: 'Close',
       cancel: 'Cancel',
       confirm: 'Confirm',
@@ -125,6 +126,7 @@ export const enUS: Resource = {
         'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
     },
     carousel: {
+      label: 'Carousel',
       previous: 'Previous slide',
       next: 'Next slide',
     },

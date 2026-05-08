@@ -56,10 +56,16 @@ async function runParallelActions(
     ),
   );
 
+  const representativeFailure = results.find((result) => classifyActionResult(result) === 'failure');
+  const representativeError =
+    representativeFailure?.error ??
+    (representativeFailure ? new Error('Parallel action failed') : undefined);
+
   return finishAction(ctx, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
     ok: results.every((result) => classifyActionResult(result) !== 'failure'),
     data: results,
     results,
+    error: representativeError,
   });
 }
 

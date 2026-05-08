@@ -82,6 +82,7 @@ export interface FormStoreApi {
   subscribeToPath(path: string, listener: () => void): () => void;
   subscribeToPaths(paths: readonly string[], listener: () => void): () => void;
   subscribeToSubmitting(listener: () => void): () => void;
+  subscribeToModelGeneration?(listener: () => void): () => void;
   getPathState(path: string): FormPathState;
   getFieldState(path: string): FieldState | undefined;
   setFieldState(path: string, state: Partial<FieldState>): void;
@@ -103,6 +104,7 @@ export interface ValidationStoreApi {
   subscribeToPath(path: string, listener: () => void): () => void;
   subscribeToPaths(paths: readonly string[], listener: () => void): () => void;
   subscribeToSubmitting(listener: () => void): () => void;
+  subscribeToModelGeneration?(listener: () => void): () => void;
   getPathState(path: string): FormPathState;
   getFieldState(path: string): FieldState | undefined;
 }
@@ -244,6 +246,7 @@ export interface SurfaceRuntime {
     options?: {
       actionScope?: ActionScope;
       componentRegistry?: ComponentHandleRegistry;
+      validationPlan?: CompiledFormValidationModel;
       ownerTemplateNode?: TemplateNode;
       ownerNodeInstance?: NodeInstance;
       title?: RenderNodeInput | string;
@@ -317,6 +320,7 @@ export interface ValidationScopeRuntime {
   readonly rootPath: string;
   readonly lifecycleState: ValidationOwnerLifecycleState;
   readonly modelGeneration: number;
+  subscribeToModelGeneration?(listener: () => void): () => void;
   readonly store?: ValidationStoreApi;
   readonly scope?: ScopeRef;
   readonly validation?: CompiledFormValidationModel;
@@ -389,6 +393,7 @@ export interface FormRuntime extends ValidationScopeRuntime {
   getDependents(path: string): string[];
   findByPrefix(prefix: string): string[];
   getChildren(path: string): string[];
+  subscribeToModelGeneration?(listener: () => void): () => void;
 }
 
 export interface PageRuntime {

@@ -5,6 +5,7 @@ export const zhCN: Resource = {
     common: {
       loading: '加载中...',
       error: '错误',
+      chart: '图表',
       close: '关闭',
       cancel: '取消',
       confirm: '确认',
@@ -124,6 +125,7 @@ export const zhCN: Resource = {
       deleteDescription: '确定要删除 "{{name}}" 吗？此操作无法撤销。',
     },
     carousel: {
+      label: '轮播图',
       previous: '上一张',
       next: '下一张',
     },

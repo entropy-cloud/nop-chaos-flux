@@ -116,7 +116,7 @@ describe('value-adapter', () => {
     });
   });
 
-  it('falls back to raw and working values when action dispatch fails', async () => {
+  it('surfaces honest errors when transform actions fail', async () => {
     const dispatch = vi.fn(async () => ({
       ok: false,
       error: 'boom',
@@ -130,7 +130,7 @@ describe('value-adapter', () => {
 
     await expect(
       adapter.in('raw', { name: 'profile', readOnly: false, scope, form: null }),
-    ).resolves.toBe('raw');
+    ).rejects.toThrow('[flux] transformIn failed: boom');
     await expect(
       adapter.out('working', {
         name: 'profile',
@@ -139,7 +139,7 @@ describe('value-adapter', () => {
         scope,
         form: null,
       }),
-    ).resolves.toBe('working');
+    ).rejects.toThrow('[flux] transformOut failed: boom');
     await expect(
       adapter.validate?.('working', {
         name: 'profile',

@@ -107,6 +107,22 @@ function getActionResultValue(result: ActionResult, fallback: unknown) {
   return result.data !== undefined ? result.data : fallback;
 }
 
+function toActionFailureMessage(
+  phase: 'transformIn' | 'transformOut',
+  resultOrError: ActionResult | unknown,
+): string {
+  if (
+    typeof resultOrError === 'object' &&
+    resultOrError !== null &&
+    'ok' in resultOrError &&
+    (resultOrError as ActionResult).ok === false
+  ) {
+    return `[flux] ${phase} failed: ${String((resultOrError as ActionResult).error ?? 'Unknown adapter error')}`;
+  }
+
+  return `[flux] ${phase} failed: ${String(resultOrError ?? 'Unknown adapter error')}`;
+}
+
 function resolveDispatch(ctx: AdapterActionContext, dispatch?: AdapterDispatch) {
   return dispatch ?? ctx.dispatch;
 }
@@ -232,27 +248,22 @@ export function actionAdapter(
         return value;
       }
 
-      try {
-        const result = await runAction(
-          transformInAction,
-          {
-            value,
-            readOnly: ctx.readOnly,
-            ...(ctx.name !== undefined ? { name: ctx.name } : {}),
-          },
-          ctx,
-          dispatch,
-        );
+      const result = await runAction(
+        transformInAction,
+        {
+          value,
+          readOnly: ctx.readOnly,
+          ...(ctx.name !== undefined ? { name: ctx.name } : {}),
+        },
+        ctx,
+        dispatch,
+      );
 
-        if (!result?.ok) {
-          return value;
-        }
-
-        return getActionResultValue(result, value);
-      } catch (error) {
-        console.warn('[flux] actionAdapter.in error:', error);
-        return value;
+      if (!result?.ok) {
+        throw new Error(toActionFailureMessage('transformIn', result));
       }
+
+      return getActionResultValue(result, value);
     },
 
     async out(value, ctx) {
@@ -260,28 +271,23 @@ export function actionAdapter(
         return value;
       }
 
-      try {
-        const result = await runAction(
-          transformOutAction,
-          {
-            value,
-            originalValue: ctx.originalValue,
-            readOnly: ctx.readOnly,
-            ...(ctx.name !== undefined ? { name: ctx.name } : {}),
-          },
-          ctx,
-          dispatch,
-        );
+      const result = await runAction(
+        transformOutAction,
+        {
+          value,
+          originalValue: ctx.originalValue,
+          readOnly: ctx.readOnly,
+          ...(ctx.name !== undefined ? { name: ctx.name } : {}),
+        },
+        ctx,
+        dispatch,
+      );
 
-        if (!result?.ok) {
-          return value;
-        }
-
-        return getActionResultValue(result, value);
-      } catch (error) {
-        console.warn('[flux] actionAdapter.out error:', error);
-        return value;
+      if (!result?.ok) {
+        throw new Error(toActionFailureMessage('transformOut', result));
       }
+
+      return getActionResultValue(result, value);
     },
 
     async validate(value, ctx) {
