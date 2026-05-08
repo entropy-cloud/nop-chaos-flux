@@ -337,6 +337,8 @@ export const enUS: Resource = {
       noPanels: 'No inspector panels available.',
       expandFieldPanel: 'Expand field panel',
       expandInspector: 'Expand inspector',
+      insert: 'Insert',
+      insertFieldToSelection: 'Insert field {{field}} into the current selection',
     },
     wordEditor: {
       title: 'Word Editor',
@@ -404,7 +406,7 @@ export const enUS: Resource = {
       replace: 'Replace',
     },
     codeEditor: {
-      apiRequestFailed: 'API request failed',
+      actionRequestFailed: 'Action request failed',
       unknownResolverError: 'Unknown resolver error',
       execute: 'Execute',
       executing: 'Executing...',

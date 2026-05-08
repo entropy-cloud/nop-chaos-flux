@@ -336,6 +336,8 @@ export const zhCN: Resource = {
       noPanels: '无可用的检查器面板。',
       expandFieldPanel: '展开字段面板',
       expandInspector: '展开检查器',
+      insert: '插入',
+      insertFieldToSelection: '将字段 {{field}} 插入到当前选择',
     },
     wordEditor: {
       title: 'Word 编辑器',
@@ -403,7 +405,7 @@ export const zhCN: Resource = {
       replace: '替换',
     },
     codeEditor: {
-      apiRequestFailed: 'API 请求失败',
+      actionRequestFailed: 'Action 请求失败',
       unknownResolverError: '未知解析错误',
       execute: '执行',
       executing: '执行中...',
