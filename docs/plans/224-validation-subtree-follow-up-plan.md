@@ -89,13 +89,13 @@ Targets: in-scope runtime/tests/docs, this plan
 - Item Types: `Proof | Decision`
 
 - [x] Run focused validation verification after the fixes land.
-- [ ] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
-- [ ] Perform an independent closure audit and fix any remaining in-scope ambiguity before closing the plan.
+- [x] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
+- [x] Perform an independent closure audit and fix any remaining in-scope ambiguity before closing the plan.
 
 Exit Criteria:
 
 - [x] Focused verification is recorded for the landed validation slices.
-- [ ] Workspace verification passes.
+- [x] Workspace verification passes.
 - [ ] Independent closure audit confirms no remaining plan-owned blocker.
 - [x] `docs/logs/` 对应日期条目已更新。
 
@@ -108,8 +108,8 @@ Exit Criteria:
 - [ ] Independent closure audit confirms no remaining in-scope blocker.
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Validation Checklist
 
@@ -121,13 +121,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Workstream 1 landed and part of Workstream 2 landed, but the plan still owns retained dependency-closure, no-model success semantics, and runtime-registration hidden-policy decisions plus final closure audit.
+Status Note: Workstream 1 landed and additional validation-subtree fixes now include no-model subtree success handling, runtime child-path validation surfacing, and summary-gate submit triggering, but the plan still owns retained dependency-closure and runtime-registration hidden-policy decisions plus final closure audit.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: implementation-session self-audit only; focused validation regressions passed, workspace `pnpm typecheck` and `pnpm build` passed, while workspace `pnpm lint` and `pnpm test` are currently blocked by unrelated failures in `packages/spreadsheet-core` and `packages/flow-designer-renderers`
+- Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1fa140f1cffevDG2I4iShJZFF5`)
+- Evidence: focused validation regressions and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` now pass; the independent closure audit still found remaining plan-owned semantic work in dependency-closure / runtime-registration hidden-policy coverage, so the plan remains partially completed.
 
 Follow-up:
 
-- Remaining plan-owned work: close the retained dependency-closure, no-model success, and runtime-registration hidden-policy residuals, then rerun full workspace verification and independent closure audit.
+- Remaining plan-owned work: close the retained dependency-closure and runtime-registration hidden-policy residuals, then rerun closure audit.

@@ -1,7 +1,7 @@
 # 223 Runtime Ownership And Reactive Precision Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-07
+> Plan Status: partially completed
+> Last Reviewed: 2026-05-08
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,04-state-ownership.md,05-reactive-precision.md}`
 > Related: `docs/plans/{211-runtime-state-reactivity-and-safety-closure-plan.md,220-cross-boundary-state-and-host-contract-closure-plan.md,224-validation-subtree-follow-up-plan.md,229-async-lifecycle-and-error-integrity-plan.md}`
 
@@ -52,92 +52,92 @@
 
 ### Workstream 1 - Repair Owner State And Controlled Contract Integrity
 
-Status: planned
+Status: in progress
 Targets: surface/crud/table/flow/object-field/dynamic-renderer state-owner surfaces, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Repair retained surface lifecycle and close/onClose parity gaps without reopening `220`'s teardown cleanup baseline.
-- [ ] [Fix] Align CRUD/Table sort/filter shape, ownership semantics, and controlled behavior so `controlled` does not silently fall back to local state.
-- [ ] [Fix] Stop Flow host replace from publishing history/dirty as user-edit mutations, while keeping `220`'s tree undo/redo correctness carve-out explicit.
+- [x] [Fix] Repair retained surface lifecycle and close/onClose parity gaps without reopening `220`'s teardown cleanup baseline.
+- [x] [Fix] Align CRUD/Table sort/filter shape, ownership semantics, and controlled behavior so `controlled` does not silently fall back to local state.
+- [x] [Fix] Stop Flow host replace from publishing history/dirty as user-edit mutations, while keeping `220`'s tree undo/redo correctness carve-out explicit.
 - [ ] [Fix] Stop stale async `transformOut` and stale dynamic schema windows from overwriting or displaying superseded owner state.
-- [ ] [Proof] Add focused tests for the repaired owner/controlled/state lifecycle paths.
+- [x] [Proof] Add focused tests for the repaired owner/controlled/state lifecycle paths.
 
 Exit Criteria:
 
 - [ ] The retained owner-state defects no longer reproduce on the supported paths.
-- [ ] `controlled` table/CRUD behavior is honest and test-covered.
-- [ ] Flow host replace no longer marks history/dirty as if the user edited the document.
+- [x] `controlled` table/CRUD behavior is honest and test-covered.
+- [x] Flow host replace no longer marks history/dirty as if the user edited the document.
 - [ ] Focused proof exists for surface, CRUD/Table, Flow, object-field, and dynamic-renderer owner-state repairs.
-- [ ] Affected owner docs are updated if the supported state contract changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] Affected owner docs are updated if the supported state contract changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 2 - Narrow Retained Reactive Subscriptions
 
-Status: planned
+Status: in progress
 Targets: `flux-react` hooks, retained host-shell consumers, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Add path-aware or dependency-aware subscription behavior for the retained scope-selector hooks.
-- [ ] [Fix] Provide a narrower subscription channel for form model generation and `useDataSourceStatus`-style status readers.
+- [x] [Fix] Add path-aware or dependency-aware subscription behavior for the retained scope-selector hooks.
+- [x] [Fix] Provide a narrower subscription channel for form model generation and `useDataSourceStatus`-style status readers.
 - [ ] [Fix] Narrow the retained flow/report/spreadsheet/debugger host snapshot consumers and fix selector identity churn where the audit confirmed it.
-- [ ] [Proof] Add focused proof for the repaired subscription precision paths.
+- [x] [Proof] Add focused proof for the repaired subscription precision paths.
 
 Exit Criteria:
 
 - [ ] The retained wide-subscription paths identified by `full-8` no longer depend on full-scope/full-store reads in the supported path.
 - [ ] Focused tests prove the narrowed subscriptions preserve supported behavior.
-- [ ] Affected owner docs are updated if the stable reactive baseline changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] Affected owner docs are updated if the stable reactive baseline changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 3 - Verification And Closure Audit
 
-Status: planned
+Status: in progress
 Targets: in-scope packages/tests/docs, this plan
 
 - Item Types: `Proof | Decision`
 
-- [ ] Run focused verification for owner-state and reactive-precision workstreams.
-- [ ] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
-- [ ] Perform an independent closure audit and fix any remaining in-scope ambiguity before closing the plan.
+- [x] Run focused verification for owner-state and reactive-precision workstreams.
+- [x] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
+- [x] Perform an independent closure audit and fix any remaining in-scope ambiguity before closing the plan.
 
 Exit Criteria:
 
-- [ ] Focused verification is recorded for both retained families.
-- [ ] Workspace verification passes.
+- [x] Focused verification is recorded for both retained families.
+- [x] Workspace verification passes.
 - [ ] Independent closure audit confirms no remaining plan-owned blocker.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
 - [ ] All in-scope retained owner-state defects are fixed.
 - [ ] All in-scope retained reactive-precision defects are fixed.
-- [ ] Focused verification exists for each landed family.
-- [ ] No in-scope retained defect is silently deferred or downgraded.
-- [ ] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
+- [x] Focused verification exists for each landed family.
+- [x] No in-scope retained defect is silently deferred or downgraded.
+- [x] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
 - [ ] Independent closure audit confirms no remaining in-scope blocker.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Validation Checklist
 
-- [ ] `211` and `220` carve-outs remain explicit and honest.
+- [x] `211` and `220` carve-outs remain explicit and honest.
 - [ ] Focused tests cover all owned owner-state/reactive families.
-- [ ] The Flow host-replace slice is clearly distinguished from `220`'s tree history coherence fix.
-- [ ] No `full-8` retained item from dimensions 04/05 is left without an owner decision.
+- [x] The Flow host-replace slice is clearly distinguished from `220`'s tree history coherence fix.
+- [x] No `full-8` retained item from dimensions 04/05 is left without an owner decision.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: substantial owner-state and reactive narrowing work landed, and workspace verification is now green, but the plan still lacks enough closure evidence for every retained host-snapshot/reactive slice and for the final stale-owner-state family grouped under this plan.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1fa140f1cffevDG2I4iShJZFF5`)
+- Evidence: live code and `docs/logs/2026/05-08.md` confirm landed work for path-scoped subscriptions, narrower form-generation/data-source status subscriptions, controlled table/filter behavior, surface close/onClose parity, and Flow host-replace dirty/history repair, but the independent audit could not yet confirm every in-scope retained host-consumer/reactive slice well enough for completion.
 
 Follow-up:
 
-- Pending execution.
+- Close the remaining stale-owner-state / retained host-consumer audit gaps, then rerun closure audit.

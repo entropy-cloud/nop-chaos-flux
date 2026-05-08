@@ -1,7 +1,7 @@
 # 229 Async, Lifecycle, And Error Integrity Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-07
+> Plan Status: partially completed
+> Last Reviewed: 2026-05-08
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,06-async-safety.md,07-lifecycle.md,19-error-propagation.md}`
 > Related: `docs/plans/{211-runtime-state-reactivity-and-safety-closure-plan.md,220-cross-boundary-state-and-host-contract-closure-plan.md,223-reactive-and-async-follow-up-closure-plan.md,224-validation-subtree-follow-up-plan.md}`
 
@@ -53,90 +53,90 @@
 
 ### Workstream 1 - Close Retained Async And Lifecycle Gaps
 
-Status: planned
+Status: completed
 Targets: Flow, table quick-edit, report field-source, local runtime/registry disposal surfaces
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Add synchronous operation-level guards for Flow create confirm and table quick-edit save.
-- [ ] [Fix] Add `AbortSignal` support or an explicit stale-drop contract for report field-source refresh.
-- [ ] [Fix] Dispose locally owned `FormRuntime` and node/root registries on unmount without reopening `220`'s runtime teardown closure.
-- [ ] [Proof] Add focused tests for the retained async guards and local disposal behavior.
+- [x] [Fix] Add synchronous operation-level guards for Flow create confirm and table quick-edit save.
+- [x] [Fix] Add `AbortSignal` support or an explicit stale-drop contract for report field-source refresh.
+- [x] [Fix] Dispose locally owned `FormRuntime` and node/root registries on unmount without reopening `220`'s runtime teardown closure.
+- [x] [Proof] Add focused tests for the retained async guards and local disposal behavior.
 
 Exit Criteria:
 
-- [ ] The retained async and local lifecycle defects are closed on the supported paths.
-- [ ] Focused tests cover the landed guards and disposal behavior.
-- [ ] Affected owner docs are updated if the stable baseline changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] The retained async and local lifecycle defects are closed on the supported paths.
+- [x] Focused tests cover the landed guards and disposal behavior.
+- [x] Affected owner docs are updated if the stable baseline changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 2 - Restore Error-Fidelity Integrity
 
-Status: planned
+Status: in progress
 Targets: runtime/code-editor/formula/compiler error surfaces, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Propagate `ActionResult.ok === false` consistently for reaction dispatch and async validation helpers.
+- [x] [Fix] Propagate `ActionResult.ok === false` consistently for reaction dispatch and async validation helpers.
 - [ ] [Fix] Preserve or surface representative errors for retained `onSettled`, aggregate/parallel, submit-form registry resolution, and code-editor resolver paths.
-- [ ] [Fix] Remove retained false-success error handling from `compileTemplate` and align compile diagnostics behavior for the owned continue-on-error residual.
+- [x] [Fix] Remove retained false-success error handling from `compileTemplate` and align compile diagnostics behavior for the owned continue-on-error residual.
 - [ ] [Proof] Add focused tests for the final error-fidelity baseline.
 
 Exit Criteria:
 
 - [ ] The retained error-fidelity defects are closed on the supported paths.
-- [ ] `ok:false` is not silently reported as success on the owned paths.
+- [x] `ok:false` is not silently reported as success on the owned paths.
 - [ ] Focused tests cover the landed failure propagation behavior.
-- [ ] Affected owner docs are updated if the stable error contract changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] Affected owner docs are updated if the stable error contract changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 3 - Verification And Closure Audit
 
-Status: planned
+Status: in progress
 Targets: in-scope packages/tests/docs, this plan
 
 - Item Types: `Proof | Decision`
 
-- [ ] Run focused verification for async/lifecycle and error-fidelity workstreams.
-- [ ] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
-- [ ] Perform an independent closure audit and fix any remaining in-scope ambiguity before closing the plan.
+- [x] Run focused verification for async/lifecycle and error-fidelity workstreams.
+- [x] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
+- [x] Perform an independent closure audit and fix any remaining in-scope ambiguity before closing the plan.
 
 Exit Criteria:
 
 - [ ] Focused verification is recorded for both retained families.
-- [ ] Workspace verification passes.
+- [x] Workspace verification passes.
 - [ ] Independent closure audit confirms no remaining plan-owned blocker.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
-- [ ] All in-scope retained async and lifecycle defects are fixed.
+- [x] All in-scope retained async and lifecycle defects are fixed.
 - [ ] All in-scope retained error-fidelity defects are fixed.
 - [ ] Focused verification exists for each landed family.
-- [ ] No in-scope retained defect is silently deferred or downgraded.
-- [ ] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
+- [x] No in-scope retained defect is silently deferred or downgraded.
+- [x] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
 - [ ] Independent closure audit confirms no remaining in-scope blocker.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Validation Checklist
 
-- [ ] `211`, `220`, `223`, and `224` carve-outs remain explicit.
+- [x] `211`, `220`, `223`, and `224` carve-outs remain explicit.
 - [ ] Error-fidelity fixes preserve representative error information instead of replacing it with weaker placeholders.
 - [ ] Focused tests cover both async/lifecycle and error-fidelity families.
-- [ ] No retained `full-8` item from dimensions 06/07/19 is left without an owner decision.
+- [x] No retained `full-8` item from dimensions 06/07/19 is left without an owner decision.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: the async/lifecycle slice is landed and verified, and major error-fidelity fixes are also in place, but the plan still needs final closure evidence for the representative-error family before it can close.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1fa140f1cffevDG2I4iShJZFF5`)
+- Evidence: `docs/logs/2026/05-08.md` and live code confirm the same-tick Flow/table guards, report field-source `AbortSignal`, local registry disposal, `ok:false` fidelity, template false-success removal, unknown-renderer diagnostics, and code-editor resolver error preservation; workspace verification is green, but the independent audit could not yet confirm the full representative-error family strongly enough for completion.
 
 Follow-up:
 
-- Pending execution.
+- Close the remaining representative-error / aggregate-failure fidelity gap, then rerun closure audit.

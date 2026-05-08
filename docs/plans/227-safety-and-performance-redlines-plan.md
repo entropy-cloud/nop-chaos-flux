@@ -1,7 +1,7 @@
 # 227 Safety And Performance Redlines Plan
 
-> Plan Status: in progress
-> Last Reviewed: 2026-05-07
+> Plan Status: partially completed
+> Last Reviewed: 2026-05-08
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,15-security-performance.md}`
 > Related: `docs/plans/{193-expression-evaluator-security-hardening-plan.md,214-report-designer-performance-hot-path-closure-plan.md,221-deep-audit-2026-05-07-confirmed-defect-remediation-plan.md}`
 
@@ -88,51 +88,51 @@ Exit Criteria:
 
 ### Workstream 3 - Verification And Closure Audit
 
-Status: planned
+Status: in progress
 Targets: in-scope packages/tests/docs, this plan
 
 - Item Types: `Proof | Decision`
 
-- [ ] Run focused verification for safety and performance redline fixes.
-- [ ] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
-- [ ] Perform an independent closure audit and fix any remaining in-scope redline ambiguity before closing the plan.
+- [x] Run focused verification for safety and performance redline fixes.
+- [x] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
+- [x] Perform an independent closure audit and fix any remaining in-scope redline ambiguity before closing the plan.
 
 Exit Criteria:
 
-- [ ] Focused verification is recorded for both retained redline families.
-- [ ] Workspace verification passes.
+- [x] Focused verification is recorded for both retained redline families.
+- [x] Workspace verification passes.
 - [ ] Independent closure audit confirms no remaining plan-owned blocker.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
-- [ ] All in-scope retained safety redlines are fixed.
-- [ ] All in-scope retained performance redlines are fixed.
-- [ ] Focused verification exists for each landed family.
-- [ ] No in-scope retained defect is silently deferred or downgraded.
-- [ ] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
+- [x] All in-scope retained safety redlines are fixed.
+- [x] All in-scope retained performance redlines are fixed.
+- [x] Focused verification exists for each landed family.
+- [x] No in-scope retained defect is silently deferred or downgraded.
+- [x] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
 - [ ] Independent closure audit confirms no remaining in-scope blocker.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Validation Checklist
 
-- [ ] `193` and `214` carve-outs remain explicit.
-- [ ] Safety fixes fail closed or surface errors honestly; they are not merely hidden.
-- [ ] Performance fixes are backed by focused proof, not by optimistic comments alone.
-- [ ] No retained `full-8` item from dimension 15 is left without an owner decision.
+- [x] `193` and `214` carve-outs remain explicit.
+- [x] Safety fixes fail closed or surface errors honestly; they are not merely hidden.
+- [x] Performance fixes are backed by focused proof, not by optimistic comments alone.
+- [x] No retained `full-8` item from dimension 15 is left without an owner decision.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: the redline fixes and their focused proofs are landed, and workspace verification is green, but the fresh closure audit did not yet find enough explicit per-family closure evidence to mark the plan completed without another targeted re-audit.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1fa140f1cffevDG2I4iShJZFF5`)
+- Evidence: live code and `docs/logs/2026/05-08.md` confirm landed fail-closed/bounded-cost fixes across value adaptation, chart style sanitization, regex validation, API-cache guards, spreadsheet batch/search, and flow tree layout, plus green workspace verification; the independent audit still recommended keeping the plan open until the final closure proof is re-audited directly against each retained family.
 
 Follow-up:
 
-- Pending execution.
+- Run one more targeted closure pass that re-links each retained dimension-15 item to its focused proof, then rerun closure audit.

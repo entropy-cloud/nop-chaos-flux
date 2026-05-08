@@ -94,13 +94,13 @@ Targets: in-scope renderers/tests/docs, this plan
 - Item Types: `Proof | Decision`
 
 - [x] Run focused accessibility verification for the repaired keyboard and label paths.
-- [ ] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
-- [ ] Perform an independent closure audit and fix any remaining in-scope accessibility ambiguity before closing the plan.
+- [x] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
+- [x] Perform an independent closure audit and fix any remaining in-scope accessibility ambiguity before closing the plan.
 
 Exit Criteria:
 
 - [x] Focused verification is recorded for keyboard and label/status families.
-- [ ] Workspace verification passes.
+- [x] Workspace verification passes.
 - [ ] Independent closure audit confirms no remaining plan-owned blocker.
 - [x] `docs/logs/` 对应日期条目已更新。
 
@@ -111,26 +111,26 @@ Exit Criteria:
 - [x] No in-scope retained defect is silently deferred or downgraded.
 - [x] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
 - [ ] Independent closure audit confirms no remaining in-scope blocker.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Validation Checklist
 
-- [ ] `212` and `195` carve-outs remain explicit.
+- [x] `212` and `195` carve-outs remain explicit.
 - [x] Keyboard fixes use real interactive semantics, not only visual focus changes.
 - [x] Programmatic labels/status associations are test-covered on the retained paths.
 - [x] No retained `full-8` item from dimension 20 is left without an owner decision.
 
 ## Closure
 
-Status Note: retained P2 label/association work landed with focused proofs; retained P1 keyboard work landed for table/chart/spreadsheet/flow inspector, while the report-designer non-drag alternative remains blocked by missing renderer-to-command plumbing.
+Status Note: retained P2 label/association work landed with focused proofs, and retained P1 keyboard work landed for table/chart/spreadsheet/flow inspector. The remaining report-designer non-drag field insertion path still lacks the renderer-to-command plumbing needed for closure, so the plan stays partially completed.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent audit
-- Evidence: focused Vitest proof landed on 2026-05-08; workspace verification and independent audit still pending.
+- Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1fa140f1cffevDG2I4iShJZFF5`)
+- Evidence: focused Vitest proof and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green; the independent audit confirmed the live report-designer field panel/canvas path is still drag-only, so the plan cannot close yet without a successor-backed scope change or implementation.
 
 Follow-up:
 

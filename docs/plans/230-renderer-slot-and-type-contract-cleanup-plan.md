@@ -1,7 +1,7 @@
 # 230 Renderer, Slot, And Type Contract Cleanup Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-07
+> Plan Status: partially completed
+> Last Reviewed: 2026-05-08
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,09-renderer-contract.md,11-ui-components.md,12-field-slot.md,13-type-safety.md}`
 > Related: `docs/plans/{212-renderer-workbench-contract-and-accessibility-closure-plan.md,224-validation-subtree-follow-up-plan.md}`
 
@@ -58,49 +58,49 @@
 
 ### Workstream 1 - Restore Renderer Contract Integrity
 
-Status: planned
+Status: in progress
 Targets: owned renderer files, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Restore `props.meta.className/testid/cid` pass-through for the retained form and advanced controls.
-- [ ] [Fix] Remove retained raw `props.schema` runtime fallbacks from condition-builder, code-editor, variant, array/object, and designer helper patterns where the audit confirmed them.
+- [x] [Fix] Restore `props.meta.className/testid/cid` pass-through for the retained form and advanced controls.
+- [x] [Fix] Remove retained raw `props.schema` runtime fallbacks from condition-builder, code-editor, variant, array/object, and designer helper patterns where the audit confirmed them.
 - [ ] [Fix] Make `readOnly` actually block writes on the owned form/advanced control paths, including field-controller propagation.
 - [ ] [Fix] Repair the retained `FieldFrame` hint/aria association drift so hint/description wiring follows the supported visibility/error baseline.
-- [ ] [Fix] Replace `input-number` raw stepper buttons with `@nop-chaos/ui` `Button` or an equivalent ui-owned primitive.
+- [x] [Fix] Replace `input-number` raw stepper buttons with `@nop-chaos/ui` `Button` or an equivalent ui-owned primitive.
 - [ ] [Proof] Add focused renderer-contract tests for meta pass-through, readOnly blocking, and input-number UI ownership.
 
 Exit Criteria:
 
 - [ ] The retained renderer meta/raw-schema/readOnly defects are closed.
 - [ ] The retained `FieldFrame` hint/aria association drift is closed.
-- [ ] `input-number` no longer uses raw stepper buttons on the supported path.
+- [x] `input-number` no longer uses raw stepper buttons on the supported path.
 - [ ] Focused tests prove the final renderer contract baseline.
-- [ ] `docs/architecture/{renderer-runtime.md,field-binding-and-renderer-contract.md}` are updated if the stable baseline changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] `docs/architecture/{renderer-runtime.md,field-binding-and-renderer-contract.md}` are updated if the stable baseline changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 2 - Align Slot Modeling And Region Rendering
 
-Status: planned
+Status: in progress
 Targets: table/tabs/tree/variant/detail/domain slot surfaces, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
 - [ ] [Fix] Extend deep region extraction/validation for table expandable, tabs, tree, and variant-field.
-- [ ] [Fix] Remove private helper `regions` and raw `templateNode` rendering paths where retained by the audit.
+- [x] [Fix] Remove private helper `regions` and raw `templateNode` rendering paths where retained by the audit.
 - [ ] [Fix] Align schema action fields with metadata/event channels on the retained detail/domain/table paths.
-- [ ] [Proof] Add focused proof for deep-slot extraction, `region.render()` usage, and schema action/metadata alignment.
+- [x] [Proof] Add focused proof for deep-slot extraction, `region.render()` usage, and schema action/metadata alignment.
 
 Exit Criteria:
 
 - [ ] The retained field-slot and deep-region defects are closed on the supported paths.
 - [ ] Focused tests prove the final slot/region baseline.
-- [ ] Affected owner docs are updated if the stable slot-model baseline changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] Affected owner docs are updated if the stable slot-model baseline changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 3 - Close Low-Priority Type Cleanup Set
 
-Status: planned
+Status: in progress
 Targets: owned low-priority `any` / type-escape surfaces, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
@@ -118,21 +118,21 @@ Exit Criteria:
 
 ### Workstream 4 - Verification And Closure Audit
 
-Status: planned
+Status: in progress
 Targets: in-scope packages/tests/docs, this plan
 
 - Item Types: `Proof | Decision`
 
-- [ ] Run focused renderer-contract, slot-model, and type-cleanup verification after the fixes land.
-- [ ] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
-- [ ] Perform an independent closure audit and fix any remaining in-scope ambiguity before closing the plan.
+- [x] Run focused renderer-contract, slot-model, and type-cleanup verification after the fixes land.
+- [x] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all changes land.
+- [x] Perform an independent closure audit and fix any remaining in-scope ambiguity before closing the plan.
 
 Exit Criteria:
 
 - [ ] Focused verification is recorded for all three retained families.
-- [ ] Workspace verification passes.
+- [x] Workspace verification passes.
 - [ ] Independent closure audit confirms no remaining plan-owned blocker.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
@@ -140,30 +140,30 @@ Exit Criteria:
 - [ ] All in-scope retained field-slot defects are fixed.
 - [ ] The retained low-priority type cleanup set has explicit landed or adjudicated outcomes.
 - [ ] Focused verification exists for each landed family.
-- [ ] No in-scope retained defect is silently deferred or downgraded.
-- [ ] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
+- [x] No in-scope retained defect is silently deferred or downgraded.
+- [x] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
 - [ ] Independent closure audit confirms no remaining in-scope blocker.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Validation Checklist
 
-- [ ] `212` and `224` carve-outs remain explicit.
+- [x] `212` and `224` carve-outs remain explicit.
 - [ ] Renderer contract fixes route through standard `props.meta` / `readOnly` / `regions` channels.
-- [ ] Tabs and other retained deep-region owners are explicitly in scope.
+- [x] Tabs and other retained deep-region owners are explicitly in scope.
 - [ ] No retained `full-8` item from dimensions 09/11/12/13 is left without an owner decision.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: the plan now includes live renderer-contract and slot-model progress: owner pages and fragment rendering use `region.render(...)` instead of raw `templateNode` replay, `designer-page` dropped a retained raw-schema config read, and condition-builder picker mode now honors root meta passthrough. The plan still remains open because `FieldFrame`, remaining readOnly propagation/contract proofs, deep-region extraction residuals, and the rest of the low-priority type-cleanup set are not yet fully closed.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1fa140f1cffevDG2I4iShJZFF5`)
+- Evidence: live repo now also contains slot/model cleanup in `packages/{flow-designer-renderers,report-designer-renderers,word-editor-renderers,spreadsheet-renderers,flux-renderers-basic}/src/**`, renderer-contract cleanup in `packages/flow-designer-renderers/src/designer-page.tsx` and `packages/flux-renderers-form-advanced/src/condition-builder/condition-builder.tsx`, related focused tests across all touched packages, and green workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`; however, the remaining renderer-contract and type-cleanup residuals still prevent closure.
 
 Follow-up:
 
-- Pending execution.
+- Finish the remaining `FieldFrame` / readOnly / deep-region extraction / action-channel work, then re-audit the low-priority type-cleanup set before closing.
