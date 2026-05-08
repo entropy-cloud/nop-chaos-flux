@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>PDF Export SVG/Mermaid Test</title>
+<script src="assets/js/html2pdf.bundle.min.js"></script>
+<script src="assets/js/mermaid.min.js"></script>
+<style>
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #f4f6f9; padding: 20px; }
+  .test-slide {
+    background: white; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 40px 50px; margin: 20px auto; max-width: 1000px;
+    aspect-ratio: 16/12; overflow: hidden; page-break-after: always;
+    page-break-inside: avoid; box-sizing: border-box;
+  }
+  h2 { font-size: 1.8rem; border-bottom: 3px solid #2563eb; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+  .mermaid-container {
+    background: #f8fafc; padding: 1rem; border-radius: 8px;
+    border: 1px solid #e5e7eb; margin: 1rem 0; overflow: auto;
+  }
+  .mermaid { display: flex; justify-content: center; width: 100%; }
+  .controls { position: fixed; top: 10px; right: 10px; z-index: 100; }
+  .controls button {
+    background: #2563eb; color: white; border: none; padding: 10px 18px;
+    border-radius: 8px; cursor: pointer; margin-left: 8px; font-size: 1rem;
+  }
+  .controls button:hover { background: #1e40af; }
+  #status { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; z-index: 100; display: none; }
+  .pdf-page-container { width: 100%; height: auto; background: white; color: black; }
+  .pdf-slide {
+    position: relative !important; opacity: 1 !important; visibility: visible !important;
+    transform: none !important; height: auto !important; width: 100%;
+    background: white; border: 1px solid #eee; padding: 40px 50px;
+    box-shadow: none; margin-bottom: 0; overflow: hidden;
+    page-break-after: always; break-inside: avoid; aspect-ratio: 16/12;
+  }
+  .pdf-slide:last-of-type { page-break-after: avoid; }
+  .pdf-slide, .pdf-slide * { animation: none !important; opacity: 1 !important; }
+  @media print {
+    body { background: #fff !important; }
+    .controls { display: none !important; }
+    svg * { animation-play-state: paused !important; }
+  }
+  .case-label { color: #6b7280; font-size: 0.85rem; margin-bottom: 0.5rem; font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="status"></div>
+<div class="controls">
+  <button onclick="exportPDF()">Export PDF</button>
+</div>
+
+<div id="slides">
+
+  <!-- Case 1: Inline SVG with explicit width/height + viewBox -->
+  <div class="test-slide">
+    <h2>Case 1: SVG with width/height attributes + viewBox</h2>
+    <p class="case-label">Should render correctly in PDF</p>
+    <svg width="800" height="300" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;height:auto;">
+      <defs>
+        <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="800" height="300" rx="12" fill="#f8fafc" stroke="#e5e7eb"/>
+      <rect x="50" y="50" width="180" height="80" rx="10" fill="url(#g1)"/>
+      <text x="140" y="95" text-anchor="middle" fill="white" font-size="16" font-weight="600">Module A</text>
+      <rect x="570" y="50" width="180" height="80" rx="10" fill="#f59e0b"/>
+      <text x="660" y="95" text-anchor="middle" fill="white" font-size="16" font-weight="600">Module B</text>
+      <line x1="230" y1="90" x2="570" y2="90" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/>
+      <defs><marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+      </marker></defs>
+      <rect x="250" y="160" width="300" height="60" rx="8" fill="#eff6ff" stroke="#2563eb"/>
+      <text x="400" y="195" text-anchor="middle" fill="#1e40af" font-size="14">Data Flow Pipeline</text>
+    </svg>
+  </div>
+
+  <!-- Case 2: Inline SVG with viewBox only (NO width/height) -->
+  <div class="test-slide">
+    <h2>Case 2: SVG with viewBox only (NO width/height attrs)</h2>
+    <p class="case-label">Likely BROKEN in PDF — html2canvas reads baseVal.value = 0</p>
+    <svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;height:auto;">
+      <rect x="0" y="0" width="800" height="300" rx="12" fill="#f0fdf4" stroke="#bbf7d0"/>
+      <circle cx="200" cy="150" r="80" fill="#059669" opacity="0.8"/>
+      <text x="200" y="155" text-anchor="middle" fill="white" font-size="18" font-weight="600">Green</text>
+      <circle cx="600" cy="150" r="80" fill="#2563eb" opacity="0.8"/>
+      <text x="600" y="155" text-anchor="middle" fill="white" font-size="18" font-weight="600">Blue</text>
+    </svg>
+  </div>
+
+  <!-- Case 3: Mermaid diagram -->
+  <div class="test-slide">
+    <h2>Case 3: Mermaid Diagram</h2>
+    <p class="case-label">Mermaid renders SVG on load — check if width/height are present</p>
+    <div class="mermaid-container">
+      <div class="mermaid">
+flowchart LR
+    A[Source Code] --> B[AST Parser]
+    B --> C[Transformer]
+    C --> D[Code Generator]
+    D --> E[Output]
+    style A fill:#2563eb,color:#fff
+    style E fill:#059669,color:#fff
+      </div>
+    </div>
+  </div>
+
+  <!-- Case 4: SVG with width="100%" height="100%" style -->
+  <div class="test-slide">
+    <h2>Case 4: SVG with width="100%" height="100%"</h2>
+    <p class="case-label">Percentage width/height — baseVal may be 0</p>
+    <svg width="600" height="250" viewBox="0 0 600 250" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="600" height="250" rx="10" fill="#fef3c7" stroke="#f59e0b"/>
+      <text x="300" y="130" text-anchor="middle" fill="#92400e" font-size="24" font-weight="700">Warning Box</text>
+    </svg>
+  </div>
+
+  <!-- Case 5: SVG with explicit pixel width/height, no style -->
+  <div class="test-slide">
+    <h2>Case 5: SVG with explicit px width/height, no inline style</h2>
+    <p class="case-label">Should work — explicit numeric attributes</p>
+    <svg width="600" height="250" viewBox="0 0 600 250" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="600" height="250" rx="10" fill="#fee2e2" stroke="#dc2626"/>
+      <text x="300" y="130" text-anchor="middle" fill="#991b1b" font-size="24" font-weight="700">Danger Box</text>
+    </svg>
+  </div>
+
+</div>
+
+<script>
+mermaid.initialize({
+  startOnLoad: true, theme: 'default', securityLevel: 'loose',
+  fontFamily: 'Inter, -apple-system, sans-serif',
+  flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis' }
+});
+
+function showStatus(msg) {
+  var s = document.getElementById('status');
+  s.textContent = msg;
+  s.style.display = 'block';
+}
+function hideStatus() {
+  document.getElementById('status').style.display = 'none';
+}
+
+function fixSvgForPdf(container) {
+  var svgs = container.querySelectorAll('svg');
+  var fixes = 0;
+  svgs.forEach(function(svg) {
+    var vb = svg.getAttribute('viewBox');
+    var w = svg.getAttribute('width');
+    var h = svg.getAttribute('height');
+
+    var needsFix = false;
+    var newW, newH;
+
+    if (vb) {
+      var parts = vb.split(/[\s,]+/).map(Number);
+      if (parts.length === 4 && !isNaN(parts[2]) && !isNaN(parts[3])) {
+        newW = parts[2];
+        newH = parts[3];
+      }
+    }
+
+    if (!w || w === '100%' || w === 'auto' || (svg.width && svg.width.baseVal && svg.width.baseVal.unitType !== 1)) {
+      if (newW) { svg.setAttribute('width', newW); needsFix = true; }
+    }
+    if (!h || h === '100%' || h === 'auto' || (svg.height && svg.height.baseVal && svg.height.baseVal.unitType !== 1)) {
+      if (newH) { svg.setAttribute('height', newH); needsFix = true; }
+    }
+
+    if (needsFix) {
+      svg.style.width = '';
+      svg.style.height = '';
+      fixes++;
+      console.log('Fixed SVG:', { oldW: w, oldH: h, newW: newW, newH: newH, viewBox: vb });
+    }
+  });
+  return fixes;
+}
+
+function prepareForPdf() {
+  var pdfContainer = document.createElement('div');
+  pdfContainer.className = 'pdf-page-container';
+  var slides = document.querySelectorAll('.test-slide');
+  slides.forEach(function(slide) {
+    var clone = slide.cloneNode(true);
+    clone.classList.add('pdf-slide');
+    pdfContainer.appendChild(clone);
+  });
+
+  var fixes = fixSvgForPdf(pdfContainer);
+  console.log('Fixed ' + fixes + ' SVGs before PDF export');
+
+  document.body.appendChild(pdfContainer);
+  return pdfContainer;
+}
+
+function exportPDF() {
+  showStatus('Preparing PDF...');
+  var pdfContainer = prepareForPdf();
+
+  showStatus('Rendering to canvas...');
+
+  var options = {
+    margin: 0,
+    filename: 'test-pdf-svg.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true, letterRendering: true, backgroundColor: '#ffffff' },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' },
+    pagebreak: { mode: ['css'] }
+  };
+
+  html2pdf().set(options).from(pdfContainer).save().then(function() {
+    document.body.removeChild(pdfContainer);
+    showStatus('PDF exported successfully!');
+    setTimeout(hideStatus, 3000);
+  }).catch(function(err) {
+    document.body.removeChild(pdfContainer);
+    showStatus('PDF export failed: ' + err.message);
+    console.error('PDF export failed:', err);
+  });
+}
+
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    console.log('=== SVG Analysis ===');
+    document.querySelectorAll('.test-slide svg').forEach(function(svg, i) {
+      var w = svg.getAttribute('width');
+      var h = svg.getAttribute('height');
+      var vb = svg.getAttribute('viewBox');
+      var bw = svg.width ? svg.width.baseVal : null;
+      var bh = svg.height ? svg.height.baseVal : null;
+      console.log('SVG ' + i + ':', {
+        attrWidth: w, attrHeight: h, viewBox: vb,
+        baseValWidth: bw ? bw.value : 'N/A',
+        baseValHeight: bh ? bh.value : 'N/A',
+        computedWidth: svg.getBoundingClientRect().width,
+        computedHeight: svg.getBoundingClientRect().height,
+        style: svg.getAttribute('style')
+      });
+    });
+  }, 2000);
+});
+</script>
+</body>
+</html>
