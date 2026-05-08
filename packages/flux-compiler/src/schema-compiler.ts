@@ -77,30 +77,42 @@ export function createSchemaCompiler(input: {
     const compileSingleNode = createCompileSingleNode(expressionCompiler, compileSchemaToTemplateNodes);
 
     if (Array.isArray(canonicalPrepared)) {
-      const compiled = canonicalPrepared.map((item, index) => {
-        const path = options.basePath ? `${options.basePath}[${index}]` : `$[${index}]`;
-        const renderer = input.registry.get(item.type);
+      const compiled = canonicalPrepared
+        .map((item, index) => {
+          const path = options.basePath ? `${options.basePath}[${index}]` : `$[${index}]`;
+          const renderer = input.registry.get(item.type);
 
-        if (!renderer) {
-          throw new Error(`Renderer not found for type: ${item.type}`);
-        }
+          if (!renderer) {
+            if (diagnostics.enabled && diagnostics.continueOnError) {
+              diagnostics.emit({
+                code: 'unknown-renderer-type',
+                message: `Renderer not found for type: ${item.type}`,
+                path,
+                source: 'core',
+              });
+              return undefined;
+            }
 
-        const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
+            throw new Error(`Renderer not found for type: ${item.type}`);
+          }
 
-        return compileSingleNode(
-          item,
-          {
-            path,
-            parentPath: options.parentPath,
-            schemaUrl: options.schemaUrl,
-            symbolTable,
-            preparedImports: options.preparedImports,
-            renderer: wrappedRenderer,
-          },
-          diagnostics,
-          depth,
-        );
-      });
+          const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
+
+          return compileSingleNode(
+            item,
+            {
+              path,
+              parentPath: options.parentPath,
+              schemaUrl: options.schemaUrl,
+              symbolTable,
+              preparedImports: options.preparedImports,
+              renderer: wrappedRenderer,
+            },
+            diagnostics,
+            depth,
+          );
+        })
+        .filter((node): node is TemplateNode => node != null);
 
       const nodes = enrichTemplateNodeIds(compiled, cidState);
       const template: CompiledTemplate = applyAfterCompilePlugins({
@@ -116,6 +128,16 @@ export function createSchemaCompiler(input: {
     const renderer = input.registry.get(canonicalPrepared.type);
 
     if (!renderer) {
+      if (diagnostics.enabled && diagnostics.continueOnError) {
+        diagnostics.emit({
+          code: 'unknown-renderer-type',
+          message: `Renderer not found for type: ${canonicalPrepared.type}`,
+          path,
+          source: 'core',
+        });
+        return [];
+      }
+
       throw new Error(`Renderer not found for type: ${canonicalPrepared.type}`);
     }
 

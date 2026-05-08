@@ -692,4 +692,34 @@ describe('host action validation', () => {
       ).toEqual([]);
     });
   });
+
+  it('continues compile diagnostics for unknown renderers when continueOnError is enabled', () => {
+    const compiler = createCompiler(openRenderer);
+    const diagnostics: Array<{ code: string; message: string; path: string }> = [];
+
+    const compiled = compiler.compile(
+      [
+        { type: 'open-renderer', label: 'Known' },
+        { type: 'missing-renderer' },
+      ],
+      {
+        diagnostics: {
+          enabled: true,
+          continueOnError: true,
+          reporter: (issue) => diagnostics.push(issue),
+        },
+      },
+    );
+
+    expect(Array.isArray(compiled.root) ? compiled.root : [compiled.root]).toHaveLength(1);
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'unknown-renderer-type',
+          path: '$[1]',
+          message: 'Renderer not found for type: missing-renderer',
+        }),
+      ]),
+    );
+  });
 });

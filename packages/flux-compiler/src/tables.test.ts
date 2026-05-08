@@ -124,6 +124,31 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
     });
   });
 
+  describe('crud.columns', () => {
+    it('extracts operation buttons into parameterized regions', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS.crud.columns;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      const columns = [
+        {
+          type: 'operation',
+          label: 'Actions',
+          buttons: [{ type: 'button', label: 'Inspect' }],
+        },
+      ];
+
+      const result = normalize({ value: columns, path: '$.columns', regions, compileSchema }) as Array<
+        Record<string, unknown>
+      >;
+
+      expect(result[0]?.buttons).toBeUndefined();
+      expect(result[0]?.buttonsRegionKey).toBe('columns.0.buttons');
+      expect(regions['columns.0.buttons']).toBeDefined();
+      expect(regions['columns.0.buttons']?.params).toEqual(['record', 'index']);
+    });
+  });
+
   describe('tabs.items', () => {
     it('returns value unchanged when value is not an array', () => {
       const normalize = DEEP_FIELD_NORMALIZERS.tabs.items;

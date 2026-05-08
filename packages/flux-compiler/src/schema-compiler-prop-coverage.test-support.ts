@@ -246,15 +246,14 @@ export const variantFieldRenderer: RendererDefinition = {
   component: noop,
   fields: [
     { key: 'label', kind: 'value-or-region', regionKey: 'label' },
-    { key: 'content', kind: 'region', regionKey: 'content' },
-    { key: 'variants', kind: 'ignored' },
-    { key: 'selector', kind: 'ignored' },
-    { key: 'selectorMode', kind: 'ignored' },
-    { key: 'defaultVariant', kind: 'ignored' },
-    { key: 'detectVariantAction', kind: 'ignored' },
-    { key: 'transformInAction', kind: 'ignored' },
-    { key: 'transformOutAction', kind: 'ignored' },
-    { key: 'validateValueAction', kind: 'ignored' },
+    { key: 'variants', kind: 'prop' },
+    { key: 'selector', kind: 'prop' },
+    { key: 'selectorMode', kind: 'prop' },
+    { key: 'defaultVariant', kind: 'prop' },
+    { key: 'detectVariantAction', kind: 'prop' },
+    { key: 'transformInAction', kind: 'prop' },
+    { key: 'transformOutAction', kind: 'prop' },
+    { key: 'validateValueAction', kind: 'prop' },
   ],
 };
 

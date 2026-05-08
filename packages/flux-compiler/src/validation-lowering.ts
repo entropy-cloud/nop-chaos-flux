@@ -207,17 +207,28 @@ export function compileValidationRules(
   }));
 }
 
+function isSafeValidationPattern(patternValue: string): boolean {
+  return !/(\([^)]*[+*][^)]*\)[+*])|(\.\*)|(\.\+)|(\[[^\]]*\][+*]\+?)/.test(patternValue);
+}
+
 function compilePatternPrecompiled(
   patternValue: string,
   path: string,
   _index: number,
-): { regex?: RegExp; error?: string } {
+): { regex?: RegExp; error?: string; safe?: boolean } {
+  if (!isSafeValidationPattern(patternValue)) {
+    return {
+      error: 'Pattern uses unsupported backtracking-prone constructs',
+      safe: false,
+    };
+  }
+
   try {
-    return { regex: new RegExp(patternValue) };
+    return { regex: new RegExp(patternValue), safe: true };
   } catch (err) {
     console.warn(
       `[flux-compiler] Invalid regex pattern at ${path}: /${patternValue}/ — ${err instanceof Error ? err.message : err}`,
     );
-    return { error: err instanceof Error ? err.message : String(err) };
+    return { error: err instanceof Error ? err.message : String(err), safe: false };
   }
 }

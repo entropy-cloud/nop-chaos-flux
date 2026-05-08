@@ -35,6 +35,11 @@ export const TABS_ITEM_REGION_FIELDS = [
   { key: 'toolbar', regionKeySuffix: 'toolbar', compiledKey: 'toolbarRegionKey' },
 ] as const;
 
+export const VARIANT_ITEM_REGION_FIELDS = [
+  { key: 'content', regionKeySuffix: 'content', compiledKey: 'contentRegionKey' },
+  { key: 'viewer', regionKeySuffix: 'viewer', compiledKey: 'viewerRegionKey' },
+] as const;
+
 export type DeepFieldNormalizer = (input: {
   value: unknown;
   path: string;
@@ -103,8 +108,68 @@ function normalizeTabsItems(
   });
 }
 
+function normalizeVariantItems(
+  value: unknown,
+  path: string,
+  regions: Record<string, TemplateRegion>,
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+  ) => TemplateNode | TemplateNode[],
+) {
+  if (!Array.isArray(value)) {
+    return value;
+  }
+
+  return value.map((item, index) => {
+    if (!item || typeof item !== 'object') {
+      return item;
+    }
+
+    return extractNestedSchemaRegions({
+      candidate: item as Record<string, unknown>,
+      itemRegionPath: `${path}.variants[${index}]`,
+      itemRegionKeyPrefix: `variants.${index}`,
+      rules: VARIANT_ITEM_REGION_FIELDS,
+      regions,
+      compileSchema,
+    }).value;
+  });
+}
+
+function normalizeTableExpandable(
+  value: unknown,
+  path: string,
+  regions: Record<string, TemplateRegion>,
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+  ) => TemplateNode | TemplateNode[],
+) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return value;
+  }
+
+  return extractNestedSchemaRegions({
+    candidate: value as Record<string, unknown>,
+    itemRegionPath: `${path}.expandable`,
+    itemRegionKeyPrefix: 'expandable',
+    rules: [{ key: 'expandedRow', regionKeySuffix: 'expandedRow', compiledKey: 'expandedRowRegionKey' }],
+    regions,
+    compileSchema,
+  }).value;
+}
+
 export const DEEP_FIELD_NORMALIZERS: Record<string, Record<string, DeepFieldNormalizer>> = {
   table: {
+    columns(input) {
+      return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
+    },
+    expandable(input) {
+      return normalizeTableExpandable(input.value, input.path, input.regions, input.compileSchema);
+    },
+  },
+  crud: {
     columns(input) {
       return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
     },
@@ -112,6 +177,11 @@ export const DEEP_FIELD_NORMALIZERS: Record<string, Record<string, DeepFieldNorm
   tabs: {
     items(input) {
       return normalizeTabsItems(input.value, input.path, input.regions, input.compileSchema);
+    },
+  },
+  'variant-field': {
+    variants(input) {
+      return normalizeVariantItems(input.value, input.path, input.regions, input.compileSchema);
     },
   },
 };
