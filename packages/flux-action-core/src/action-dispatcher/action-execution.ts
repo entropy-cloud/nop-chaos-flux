@@ -363,7 +363,7 @@ async function dispatch(
       const settledEventType = resultClass === 'failure' ? 'actionSettledError' : 'actionSettled';
 
       try {
-        await dispatch(
+        const settledResult = await dispatch(
           ctx,
           {
             nodes: normalizedAction.onSettled,
@@ -386,6 +386,13 @@ async function dispatch(
             evaluationBindings: branchBindings,
           },
         );
+
+        if (classifyActionResult(settledResult) === 'failure') {
+          previous = {
+            ...previous,
+            settledError: settledResult.error,
+          };
+        }
       } catch (error) {
         ctx.onActionError?.(error, currentActionCtx);
 
