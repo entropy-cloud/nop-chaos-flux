@@ -126,14 +126,32 @@ function normalizeVariantItems(
       return item;
     }
 
-    return extractNestedSchemaRegions({
+    const normalized = extractNestedSchemaRegions({
       candidate: item as Record<string, unknown>,
       itemRegionPath: `${path}.variants[${index}]`,
       itemRegionKeyPrefix: `variants.${index}`,
       rules: VARIANT_ITEM_REGION_FIELDS,
       regions,
       compileSchema,
-    }).value;
+    }).value as Record<string, unknown>;
+
+    const match = normalized.match as { kind?: unknown; when?: unknown } | undefined;
+    if (!match || typeof match !== 'object' || Array.isArray(match)) {
+      return normalized;
+    }
+
+    if (match.kind !== 'expression' || typeof match.when !== 'string') {
+      return normalized;
+    }
+
+    return {
+      ...normalized,
+      match: {
+        ...match,
+        // Preserve expression match source for runtime variant detection.
+        when: { __nopPreserveLiteral: true, value: match.when },
+      },
+    };
   });
 }
 

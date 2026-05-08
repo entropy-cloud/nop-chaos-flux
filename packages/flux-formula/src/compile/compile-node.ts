@@ -32,6 +32,17 @@ function compileNode<T>(
   formulaCompiler: FormulaCompiler,
   options?: ExpressionCompileOptions,
 ): CompiledValueNode<T> {
+  if (
+    isPlainObject(input) &&
+    (input as Record<string, unknown>).__nopPreserveLiteral === true &&
+    'value' in (input as Record<string, unknown>)
+  ) {
+    return {
+      kind: 'static-node',
+      value: (input as Record<string, unknown>).value as T,
+    } as StaticValueNode<T>;
+  }
+
   if (typeof input === 'string') {
     if (!formulaCompiler.hasExpression(input)) {
       return {
