@@ -2,25 +2,27 @@
 
 ## 引言
 
-`Flux` 是一个基于 `Final Execution Schema` 的前端运行时：结构在进入运行时之前已完成组装，运行时本身只做求值、依赖追踪、资源生命周期、响应调度和效果权限控制。运行时核心由七个封闭原语定义，所有上层能力（表单、页面、动作组合、API 调度……）均派生自这组原语，不再增加。
+`Flux` 是一个基于 `Final Execution Schema` 的前端运行时：结构在进入运行时之前已完成组装，运行时本身只做值求值（含内建依赖追踪）、资源生命周期、响应调度和效果权限控制。运行时核心由七个封闭原语定义，所有上层能力（表单、页面、动作组合、API 调度……）均派生自这组原语，不再增加。
 
 ## 七个原语
 
-| 原语              | 回答的问题                         | 职责                                                               |
-| ----------------- | ---------------------------------- | ------------------------------------------------------------------ |
-| `Template`        | 编译后的程序结构是什么？           | 不可变结构模板、`Region` 组合、生命周期锚定、渲染器选择            |
-| `ScopeRef`        | 此处可见哪些数据？                 | 词法查找、自身作用域写入、遮蔽、作用域内所有权                     |
-| `Value`           | 此处的值如何读取或派生？           | 基于 `ScopeRef` 的字面量、表达式、模板、数组和对象求值             |
-| `Resource`        | 运行时是否拥有此处的值生产和发布？ | 生命周期拥有的值生产、发布一个 `Logical Value`、状态/刷新/失效语义 |
-| `Reaction`        | 被监听的变化是否触发后续响应？     | 基于 `Value` 结果的 watch/effect 行为                              |
-| `Capability`      | 谁有权执行某个效果？               | 内建的、显式实例目标的和词法命名空间的效果分发                     |
-| `Host Projection` | 此处可见哪些只读宿主快照？         | 将宿主拥有的只读快照数据引入 schema 可见作用域                     |
+| 原语              | 回答的问题                         | 职责                                                                                                     |
+| ----------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `Template`        | 编译后的程序结构是什么？           | 不可变结构模板、`Region` 组合、生命周期锚定、渲染器选择；`RendererDefinition` 提供比类型系统更严格的校验 |
+| `ScopeRef`        | 此处可见哪些数据？                 | 嵌套数据域，统一管理所有运行时状态；词法查找、自身作用域写入、遮蔽、作用域内所有权                       |
+| `Value`           | 此处的值如何读取或派生？           | 通过 name 定位 scope 值；`${expr}` 表达式求值和复杂对象构造（含嵌套）；响应式依赖跟踪；name 绑定的值约束 |
+| `Resource`        | 运行时是否拥有此处的值生产和发布？ | 拥有生命周期的值生产者：将远程 API 或公式映射为 scope 上的命名值；附带动态 status 管理                   |
+| `Reaction`        | 值变化是否触发后续动作？           | Value 变化 → Action 系统的桥；基于依赖的 watch，条件满足时通过 Capability 派发动作                       |
+| `Capability`      | 谁有权执行某个效果？               | 进入 Action 系统的控制权；ActionSchema 是具体 action 的建模，Capability 负责派发、权限和目标定位         |
+| `Host Projection` | 此处可见哪些只读宿主快照？         | 将宿主拥有的只读快照数据引入 schema 可见作用域；复杂宿主对象的集成方案                                   |
 
 原语补充说明：
 
 - `Template` 是唯一的结构原语，编译时产出不可变模板，运行时永不修改。一个 `Template` 可多次实例化，每次产生独立的运行时状态。当前主要由 `CompiledTemplate` 和 `TemplateNode` 承载。
-- `ScopeRef` 是数据环境，不是行为注册表。
-- `Value`、`Resource` 和 `Reaction` 是三个独立类别，不得坍缩为一个通用绑定概念。
+- `ScopeRef` 是嵌套数据域，界面由数据渲染。不是行为注册表。
+- `Value` 是 Flux 的通用求值层。name 是值在 scope 中的定位方式，也是值约束（validation）的绑定锚点。任何 schema 字段中的 `${...}` 都经过统一的编译路径，覆盖节点属性、meta 控制、action 守卫和参数、data-source 配置、API 参数等。验证规则参数（`required`、`min`、`max`、`pattern` 等）同样走这条编译路径，支持动态表达式和依赖跟踪。静态值零开销折叠。响应式依赖跟踪是 Value 的内建能力：求值时自动收集依赖，依赖变化时重新求值。验证规则的执行编排（字段参与、级联策略、生命周期）属于领域运行时，不是原语层面的关注点。
+- `Resource` 是"拥有生命周期的值生产者，通过写 scope 发布其产出"。远程调用是 action Resource 的一种值来源，formula Resource 则通过表达式求值生产值。两者共享发布管道和依赖追踪。
+- `Reaction` 是 Value 变化到 Action 派发的桥梁。
 - `Capability` 是唯一对作者可见的效果权限路径。
 - `Host Projection` 是只读快照数据，不是宿主桥接对象或可变会话容器。
 
@@ -63,6 +65,7 @@
 9. 保持 `Semantic Lifecycle Entry` 由语义节点（如表单、页面、对话框、语义宿主）拥有，而非将完整的业务管道分散到 UI 触发器中。
 10. 保持 `Resource` 发布围绕 `name` 作为身份标识和默认发布路径收敛，`mergeToScope: true` 作为唯一收窄的特殊发布扩展，`statusPath` 作为只读状态摘要。
 11. 保持宿主边界严格：通过只读 `Host Projection` 读取，通过 `Capability` 写入，bridge/controller/protocol 对象保持宿主私有。
+12. 保持验证规则参数编译统一走 `Value` 的编译路径，验证执行编排属于领域运行时，不扩展原语集。
 
 ## 契约分层规则
 
@@ -86,12 +89,12 @@
 
 基于 `Flux` 构建的平台可理解为四层：
 
-| 层次                     | 职责                                                                                            |
-| ------------------------ | ----------------------------------------------------------------------------------------------- |
-| `Authoring Model`        | 源码位置、别名、编辑器元数据、往返保真度、编辑结构                                              |
-| Loader / 组装层          | 继承展开、策略裁剪、`i18n`、静态默认值、最终 schema 组装                                        |
-| `Flux` `Execution Model` | 值求值、依赖追踪、`Resource` 生命周期、`Reaction` 调度、`Capability` 解析、Host Projection 消费 |
-| 宿主和领域运行时         | 领域核心、桥接器、协作引擎、会话模型、工作台 Shell、特殊宿主协议                                |
+| 层次                     | 职责                                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `Authoring Model`        | 源码位置、别名、编辑器元数据、往返保真度、编辑结构                                                      |
+| Loader / 组装层          | 继承展开、策略裁剪、`i18n`、静态默认值、最终 schema 组装                                                |
+| `Flux` `Execution Model` | 值求值（含内建依赖追踪）、`Resource` 生命周期、`Reaction` 调度、`Capability` 解析、Host Projection 消费 |
+| 宿主和领域运行时         | 领域核心、桥接器、协作引擎、会话模型、工作台 Shell、特殊宿主协议                                        |
 
 `Flux` 是平台的执行核心，而非整个平台。
 
@@ -116,6 +119,8 @@
 | JSON/XML 编写 schema                             | `Authoring Model`                    | 不属于 Execution Model 分类体系              |
 | `Final Execution Schema`                         | 进入 `Flux` `Execution Model` 的边界 | 已组装的执行契约，不是原语                   |
 | 表达式和模板插值                                 | `Flux` `Execution Model`             | `Value` 的 `Primitive-Owned Surface`         |
+| 验证规则参数（required/min/max/pattern 等）      | `Flux` `Execution Model`             | `Value` 的 `Primitive-Owned Surface`         |
+| 验证执行编排（字段参与、级联、生命周期）         | `Flux` `Execution Model`             | 领域运行时（`Derived Runtime System`）       |
 | `Action Algebra`                                 | `Flux` `Execution Model`             | `Capability` 之上的 `Derived Runtime System` |
 | `ApiSchema`                                      | `Flux` `Execution Model`             | `ajax` 动作的内部传输描述符                  |
 | `Operation Control`                              | `Flux` `Execution Model`             | `Derived Runtime System`                     |
@@ -178,8 +183,7 @@
 
 `Flux` 仍负责以下运行时工作：
 
-- `Value` 求值
-- 依赖收集与定向失效
+- `Value` 求值（含内建依赖追踪）
 - `Resource` 生命周期与发布
 - `Reaction` 调度
 - `Capability` 解析与分发
@@ -196,26 +200,7 @@
 
 ## 封闭原语集
 
-`Flux` 核心恰好包含七个原语。
-
-| 原语              | 回答的问题                         | 职责                                                               |
-| ----------------- | ---------------------------------- | ------------------------------------------------------------------ |
-| `Template`        | 编译后的程序结构是什么？           | 不可变结构模板、`Region` 组合、生命周期锚定、渲染器选择            |
-| `ScopeRef`        | 此处可见哪些数据？                 | 词法查找、自身作用域写入、遮蔽、作用域内所有权                     |
-| `Value`           | 此处的值如何读取或派生？           | 基于 `ScopeRef` 的字面量、表达式、模板、数组和对象求值             |
-| `Resource`        | 运行时是否拥有此处的值生产和发布？ | 生命周期拥有的值生产、发布一个 `Logical Value`、状态/刷新/失效语义 |
-| `Reaction`        | 被监听的变化是否触发后续响应？     | 基于 `Value` 结果的 watch/effect 行为                              |
-| `Capability`      | 谁有权执行某个效果？               | 内建的、显式实例目标的和词法命名空间的效果分发                     |
-| `Host Projection` | 此处可见哪些只读宿主快照？         | 将宿主拥有的只读快照数据引入 schema 可见作用域                     |
-
-### 原语补充说明
-
-- `Template` 是唯一的结构原语。它是编译时产物：编译器产出不可变结构模板，运行时永不修改它。一个 `Template` 可被多次实例化，每次产生独立的活跃运行时状态。
-- 在当前实现中，`Template` 主要由 `CompiledTemplate` 和 `TemplateNode` 承载；只要保留相同的结构契约，其他执行包载体也是允许的。
-- `ScopeRef` 是数据环境，不是行为注册表。
-- `Value`、`Resource` 和 `Reaction` 是不同的类别，不得坍缩为一个通用绑定概念。
-- `Capability` 是唯一对作者可见的效果权限路径。
-- `Host Projection` 是只读快照数据，不是宿主桥接对象或可变会话容器。
+`Flux` 核心恰好包含七个原语。原语定义和补充说明见"七个原语"节。
 
 ## 原语如何组合
 
@@ -226,15 +211,15 @@
 1. `Template` 锚定结构、渲染器所有权和词法边界。它编译一次，运行时实例化零次或多次。
 2. `ScopeRef` 定义每个边界处可见的词法数据。
 3. `Host Projection` 可以将只读宿主快照字段引入该可见作用域。
-4. `Value` 从 `ScopeRef` 读取，求值过程中可能收集依赖。
+4. `Value` 通过 name 或 `${expr}` 从 `ScopeRef` 读取和构造值，求值时自动收集依赖，name 同时绑定值约束。
 5. `Resource` 使用运行时拥有的生命周期将一个 `Logical Value` 发布回作用域。
 6. `Reaction` 监视 `Value` 结果，当依赖命中时将可能的后续响应排入队列。
 7. `Capability` 是这些后续响应跨越到效果层面的唯一路径。
 8. 效果仅通过作用域写入、`Resource` 定向、组件定向或宿主快照替换重新进入 `Flux`。
 
-### 共享依赖基线
+### 依赖传播
 
-`Value`、`Resource` 和 `Reaction` 共享同一个依赖模型，但依赖命中后的后果各不相同：
+依赖跟踪是 `Value` 的内建设计语义。`Value`、`Resource` 和 `Reaction` 都使用这一机制，但依赖命中后的后果各不相同：
 
 | 原语       | 依赖命中后的后果                                         |
 | ---------- | -------------------------------------------------------- |
@@ -299,13 +284,13 @@
 
 以下系统是重要的，但它们从原语集派生而来，而非被提升为原语：
 
-| 系统                                             | 角色                                                          | 主要文档                                                                                      |
-| ------------------------------------------------ | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `Action Algebra`                                 | 组合、分支、聚合和分类 `Capability` 分发                      | `docs/architecture/action-algebra-formal-spec.md`                                             |
-| `Operation Control`                              | 位于传输层之上、消费策略之下的共享超时/取消/重试/去重基础设施 | `docs/architecture/api-data-source.md`                                                        |
-| `Semantic Lifecycle Entry`                       | 节点拥有的业务入口，如表单提交、页面进入或对话框确认          | `docs/architecture/form-validation.md`                                                        |
-| `FormRuntime` / `PageRuntime` / `SurfaceRuntime` | 基于原语集构建的领域化执行表面                                | `docs/architecture/flux-core.md`                                                              |
-| 调试器运行时和复杂宿主接线                       | 检查、工具链和宿主协议层                                      | `docs/architecture/debugger-runtime.md`、`docs/architecture/complex-control-host-protocol.md` |
+| 系统                                             | 角色                                                                       | 主要文档                                                                                      |
+| ------------------------------------------------ | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `Action Algebra`                                 | 组合、分支、聚合和分类 `Capability` 分发                                   | `docs/architecture/action-algebra-formal-spec.md`                                             |
+| `Operation Control`                              | 位于传输层之上、消费策略之下的共享超时/取消/重试/去重基础设施              | `docs/architecture/api-data-source.md`                                                        |
+| `Semantic Lifecycle Entry`                       | 节点拥有的语义入口点，如表单提交、页面进入、对话框打开或宿主特定的语义激活 | `docs/architecture/flux-design-principles.md`                                                 |
+| `FormRuntime` / `PageRuntime` / `SurfaceRuntime` | 基于原语集构建的领域化执行表面                                             | `docs/architecture/flux-core.md`、`docs/architecture/form-validation.md`                      |
+| 调试器运行时和复杂宿主接线                       | 检查、工具链和宿主协议层                                                   | `docs/architecture/debugger-runtime.md`、`docs/architecture/complex-control-host-protocol.md` |
 
 这些系统可以演进，而不会增加原语数量。
 
@@ -343,14 +328,14 @@
 2. `Authoring Model` 和 `Execution Model` 保持分离。
 3. `Template` 拥有结构和生命周期锚定。它在运行时不可变。
 4. `ScopeRef` 是数据环境，不是行为注册表。
-5. `Value`、`Resource` 和 `Reaction` 保持独立。
+5. `Value`、`Resource` 和 `Reaction` 是不同的语义类别，不得坍缩为一个通用绑定概念。
 6. 一个 `Resource` 发布一个权威的 `Logical Value`。
 7. `Reaction` 用于被监听的后续响应，不用于值派生。
 8. `Resource` 和 `Reaction` 的所有权遵循 `Lexical Ownership`。
 9. `Host Projection` 是只读快照数据。
 10. `Schema` 仅通过 `Capability` 产生可见效果。
 11. `Capability` 是权限原语；`Action Algebra` 是其上层的派生控制流。
-12. 依赖追踪是一等执行基线，依赖变化不直接分发任意动作。
+12. 依赖跟踪是 `Value` 原语的内建设计语义；依赖变化不直接分发任意动作。
 13. 新的领域复杂度不会自动创建新原语。
 14. `ApiSchema` 是 `ajax` 动作使用的内部传输描述符；所有运行时执行都通过动作分发进行。`Operation Control` 始终是共享的执行控制层。
 15. `Semantic Lifecycle Entry` 在存在拥有者语义节点边界时，属于该节点。
