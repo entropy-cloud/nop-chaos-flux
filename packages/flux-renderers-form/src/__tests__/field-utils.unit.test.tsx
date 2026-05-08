@@ -585,4 +585,24 @@ describe('async adapter.out stale-result guard', () => {
     expect(updateFn).toHaveBeenCalledWith('status', 'SLOW_RESOLVED');
     expect(updateFn).not.toHaveBeenCalledWith('status', 'FAST_STALE');
   });
+
+  it('blocks onChange writes when useFormFieldController is readOnly', () => {
+    cleanup();
+    const updateFn = vi.fn();
+    const scope = makeScope({ update: updateFn });
+
+    function Probe() {
+      const ctrl = useFormFieldController('status', { readOnly: true });
+      return (
+        <button type="button" data-testid="probe" onClick={() => ctrl.handlers.onChange('blocked')}>
+          probe
+        </button>
+      );
+    }
+
+    render(wrapInContexts(scope, <Probe />));
+    fireEvent.click(screen.getByTestId('probe'));
+
+    expect(updateFn).not.toHaveBeenCalled();
+  });
 });

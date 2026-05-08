@@ -64,8 +64,9 @@ export function createFieldHandlers(args: {
   currentForm: FormRuntime | undefined;
   currentValidationScope: ValidationScopeRuntime | undefined;
   setValue: (value: unknown) => void | Promise<void>;
+  readOnly?: boolean;
 }) {
-  const { name, currentForm, currentValidationScope, setValue } = args;
+  const { name, currentForm, currentValidationScope, setValue, readOnly } = args;
   const validationOwnerWithFieldState = currentValidationScope as Partial<FormRuntime> | undefined;
 
   return {
@@ -78,6 +79,10 @@ export function createFieldHandlers(args: {
       validationOwnerWithFieldState?.visitField?.(name);
     },
     onChange(nextValue: unknown) {
+      if (readOnly) {
+        return;
+      }
+
       if (currentForm) {
         void (async () => {
           await setValue(nextValue);
@@ -162,6 +167,7 @@ export function useFieldHandlers(args: {
         name,
         currentForm,
         currentValidationScope,
+        readOnly: adapterContext?.readOnly,
         setValue(nextValue) {
           const convertedValue = adapter
             ? adapter.out(nextValue, adapterContext ?? { name, readOnly: false })
