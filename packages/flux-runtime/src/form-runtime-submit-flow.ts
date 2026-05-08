@@ -175,6 +175,12 @@ export async function executeFormSubmit(
     }
 
     const childValidationPromises: Promise<import('@nop-chaos/flux-core').ValidationResult>[] = [];
+    const summaryGatePromises: Array<
+      Promise<{
+        childOwnerId: string;
+        result: import('@nop-chaos/flux-core').ValidationResult;
+      }>
+    > = [];
     const summaryGateBlockers: string[] = [];
     for (const contract of childContractsSnapshot) {
       if (contract.mode === 'recurse-submit') {
@@ -183,7 +189,15 @@ export async function executeFormSubmit(
         const childState = contract.getState();
         if (!childState.ready || childState.validating || !childState.valid) {
           summaryGateBlockers.push(contract.childOwnerId);
+          continue;
         }
+
+        summaryGatePromises.push(
+          contract.triggerValidation().then((result) => ({
+            childOwnerId: contract.childOwnerId,
+            result,
+          })),
+        );
       }
     }
 
@@ -197,6 +211,23 @@ export async function executeFormSubmit(
       return lifecycleHandlers?.onValidateError
         ? await lifecycleHandlers.onValidateError(summaryGateFailure, options)
         : summaryGateFailure;
+    }
+
+    if (summaryGatePromises.length > 0) {
+      const summaryGateResults = await Promise.all(summaryGatePromises);
+      const failingChildren = summaryGateResults.filter(({ result }) => !result.ok);
+      if (failingChildren.length > 0) {
+        const childErrors = failingChildren.flatMap(({ result }) => result.errors);
+        const childValidationFailure = {
+          ok: false,
+          error: childErrors,
+          data: {},
+        } as const;
+
+        return lifecycleHandlers?.onValidateError
+          ? await lifecycleHandlers.onValidateError(childValidationFailure, options)
+          : childValidationFailure;
+      }
     }
 
     if (childValidationPromises.length > 0) {

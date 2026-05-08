@@ -449,28 +449,31 @@ export function buildFormOwnerRuntime(input: {
     const currentValidation = input.getCurrentValidation();
 
     if (!currentValidation) {
+      const targetPaths = collectSubtreeValidationTargets(input.sharedState, path);
+      if (targetPaths.length === 0) {
+        return {
+          ok: true,
+          errors: [],
+          fieldErrors: {},
+        } as FormValidationResult;
+      }
+
+      const errors: ValidationError[] = [];
+      const fieldErrors: Record<string, ValidationError[]> = {};
+
+      for (const targetPath of targetPaths) {
+        const result = await validatePath(input.sharedState, targetPath, reason);
+
+        if (!result.ok) {
+          fieldErrors[targetPath] = result.errors;
+          errors.push(...result.errors);
+        }
+      }
+
       return {
-        ok: false,
-        errors: [
-          {
-            path,
-            ownerPath: path,
-            rule: 'required' as const,
-            message: `Validation model is not available for subtree "${path}".`,
-            sourceKind: 'form' as const,
-          },
-        ],
-        fieldErrors: {
-          [path]: [
-            {
-              path,
-              ownerPath: path,
-              rule: 'required' as const,
-              message: `Validation model is not available for subtree "${path}".`,
-              sourceKind: 'form' as const,
-            },
-          ],
-        },
+        ok: errors.length === 0,
+        errors,
+        fieldErrors,
       } as FormValidationResult;
     }
 

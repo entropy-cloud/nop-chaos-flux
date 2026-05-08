@@ -208,20 +208,23 @@ async function validateRuntimeRegistrationChild(
   return createValidationResult(nextErrors);
 }
 
-async function collectRuntimeRegistrationChildErrors(
-  registration: RuntimeFieldRegistration | undefined,
-  runtimeTarget: { childPath: string | undefined },
+async function collectRuntimeRegistrationChildErrorsForPath(
+  sharedState: FormRuntimeValidationState,
   path: string,
-) {
-  if (!registration || !runtimeTarget.childPath || !registration.validateChild) {
+  runtimeRegistration: RuntimeFieldRegistration | undefined,
+  runtimeTarget: ReturnType<typeof findRuntimeRegistration>,
+): Promise<ValidationError[]> {
+  if (!runtimeRegistration || !runtimeTarget.childPath) {
     return [];
   }
 
-  return normalizeRuntimeValidationErrors(
-    await registration.validateChild(runtimeTarget.childPath),
-    registration,
-    path,
-    runtimeTarget.childPath,
+  return (
+    normalizeRuntimeValidationErrors(
+      await runtimeRegistration.validateChild?.(runtimeTarget.childPath),
+      runtimeRegistration,
+      path,
+      runtimeTarget.childPath,
+    ) ?? []
   );
 }
 
@@ -324,10 +327,11 @@ async function validateCompiledField(
       }
     }
 
-    const runtimeChildErrors = await collectRuntimeRegistrationChildErrors(
+    const runtimeChildErrors = await collectRuntimeRegistrationChildErrorsForPath(
+      sharedState,
+      path,
       runtimeRegistration,
       runtimeTarget,
-      path,
     );
 
     if (runtimeChildErrors.length > 0) {

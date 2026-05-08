@@ -254,6 +254,7 @@ describe('executeFormSubmit', () => {
   it('allows submit when summary-gate child is ready and valid', async () => {
     const submitAction = vi.fn().mockResolvedValue({ ok: true, data: {} });
     const validState = { ready: true, validating: false, valid: true, hasErrors: false };
+    const triggerValidation = vi.fn().mockResolvedValue({ ok: true, errors: [] });
     const setup = createSubmitInput({
       sharedState: {
         store: createSubmitInput().store,
@@ -267,6 +268,7 @@ describe('executeFormSubmit', () => {
               active: true,
               childOwnerId: 'detail-1',
               getState: () => validState,
+              triggerValidation,
             },
           ],
         ]),
@@ -279,6 +281,7 @@ describe('executeFormSubmit', () => {
     await expect(executeFormSubmit(setup.input)).resolves.toMatchObject({
       ok: true,
     });
+    expect(triggerValidation).toHaveBeenCalledTimes(1);
     expect(submitAction).toHaveBeenCalledTimes(1);
   });
 

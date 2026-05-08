@@ -142,4 +142,57 @@ describe('owner registration containment contracts', () => {
     ]);
     expect(result.fieldErrors.external).toBeUndefined();
   });
+
+  it('surfaces runtime child validation errors for compiled array parents at child paths', async () => {
+    const parentStore = createScopeStore({ tags: ['alpha', ''] });
+    const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      initialValues: { tags: ['alpha', ''] },
+      parentScope,
+      validation: makeFormModel(
+        {
+          tags: {
+            path: 'tags',
+            kind: 'array',
+            controlType: 'array-field',
+            rules: [],
+            behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+            children: [],
+            parent: '',
+          },
+        },
+        { rootPath: '' },
+      ),
+      validateRule: vi.fn().mockReturnValue(undefined),
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const handle = runtime.registerField({
+      path: 'tags',
+      childPaths: ['tags.0', 'tags.1'],
+      getValue() {
+        return runtime.scope.get('tags');
+      },
+      validateChild(childPath) {
+        const value = runtime.scope.get(childPath);
+        if (typeof value === 'string' && value.trim().length > 0) {
+          return [];
+        }
+
+        return [{ path: childPath, rule: 'required', message: 'Tag is required' }];
+      },
+    });
+
+    expect(handle.accepted).toBe(true);
+
+    const result = await runtime.validateForm('submit');
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors['tags.1']).toMatchObject([
+      expect.objectContaining({ path: 'tags.1', message: 'Tag is required' }),
+    ]);
+    expect(runtime.getFieldState('tags.1').errors).toMatchObject([
+      expect.objectContaining({ path: 'tags.1', message: 'Tag is required' }),
+    ]);
+  });
 });
