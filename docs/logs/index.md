@@ -61,6 +61,10 @@ When adding a new log entry for today:
 
 ## Index (Reverse Chronological)
 
+### 2026-05
+
+- [05-08](2026/05-08.md) — Plan 222 boundary closure work, hotspot splits, chart test mock realignment, and final verification rerun
+
 ### 2026-04
 
 - [04-17](2026/04-17.md) — spreadsheet bridge snapshot caching fix for report designer render-loop regression

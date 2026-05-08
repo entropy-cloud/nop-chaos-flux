@@ -109,7 +109,7 @@ CSS 通过属性选择器响应：
 
 所有 class 定义在 `packages/spreadsheet-renderers/src/canvas-styles.css`，共 6 组：
 
-1. **Grid 结构**：`ss-grid`、`ss-row`、`ss-col-header`、`ss-row-header`、`ss-header-corner`
+1. **Grid 结构**：`ss-grid`、`ss-row`、`ss-col-header`、`ss-row-header`、`ss-header-corner`，以及 package-owned `data-slot="spreadsheet-*"` shell/header selectors 用于把 CSS scope 锚定在 spreadsheet canvas surface 内
 2. **Cell 基线**：`ss-cell`（默认 Excel 样式）
 3. **字体修饰**：`ss-bold`、`ss-italic`、`ss-underline`、`ss-strike`
 4. **对齐**：`ss-align-left`、`ss-align-center`、`ss-align-right`、`ss-valign-top`、`ss-valign-middle`、`ss-valign-bottom`
@@ -196,7 +196,7 @@ CSS 文件通过 `@nop-chaos/spreadsheet-renderers` 包入口 side-effect import
 
 ## 7. 与项目整体样式体系的关系
 
-- **不冲突**：`ss-*` class 只在 spreadsheet canvas 内部使用，不会泄漏到外壳
+- **不冲突**：`ss-*` class 与 package-owned `data-slot="spreadsheet-*"` selectors 只在 spreadsheet canvas surface 内部使用，不会泄漏到外壳
 - **不替代**：外壳（toolbar、sidebar、inspector、dialog）仍然使用 shadcn/ui + Tailwind
 - **不违反 Renderer Styling Contract**：canvas renderer 外壳已改用 `data-slot="spreadsheet-page-body"` 等结构 marker，`ss-*` 仍然只用于 canvas 内部的渲染细节
 - **与 data-\* 模式一致**：交互状态用 `data-cell-*` 属性，与 `data-field-*`、`data-state` 同一模式

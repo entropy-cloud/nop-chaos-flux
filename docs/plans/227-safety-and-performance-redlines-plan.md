@@ -1,6 +1,6 @@
 # 227 Safety And Performance Redlines Plan
 
-> Plan Status: planned
+> Plan Status: in progress
 > Last Reviewed: 2026-05-07
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,15-security-performance.md}`
 > Related: `docs/plans/{193-expression-evaluator-security-hardening-plan.md,214-report-designer-performance-hot-path-closure-plan.md,221-deep-audit-2026-05-07-confirmed-defect-remediation-plan.md}`
@@ -49,42 +49,42 @@
 
 ### Workstream 1 - Fail Closed On Retained Safety Redlines
 
-Status: planned
+Status: completed
 Targets: value adapter, chart style, validation regex, api-cache guards, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Replace value-adapter transform failure fail-open behavior with an honest error or fail-closed contract.
-- [ ] [Fix] Validate chart style identifiers/color values so the retained CSS injection path is closed.
-- [ ] [Fix] Add cycle/depth/size guards to `stableStringify`.
-- [ ] [Fix] Close validation regex fail-open / ReDoS exposure with safe regex handling or explicit diagnostics.
-- [ ] [Proof] Add focused proof for the retained safety redlines.
+- [x] [Fix] Replace value-adapter transform failure fail-open behavior with an honest error or fail-closed contract.
+- [x] [Fix] Validate chart style identifiers/color values so the retained CSS injection path is closed.
+- [x] [Fix] Add cycle/depth/size guards to `stableStringify`.
+- [x] [Fix] Close validation regex fail-open / ReDoS exposure with safe regex handling or explicit diagnostics.
+- [x] [Proof] Add focused proof for the retained safety redlines.
 
 Exit Criteria:
 
-- [ ] The retained safety redlines no longer reproduce on the supported paths.
-- [ ] Focused tests prove the final fail-closed/guarded baseline.
-- [ ] Affected owner docs are updated if the stable safety contract changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] The retained safety redlines no longer reproduce on the supported paths.
+- [x] Focused tests prove the final fail-closed/guarded baseline.
+- [x] Affected owner docs are updated if the stable safety contract changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 2 - Bound Retained Performance Hot Paths
 
-Status: planned
+Status: completed
 Targets: spreadsheet batch/search operations, flow tree layout, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Replace the retained repeated-clone spreadsheet batch path with a bounded-cost batch update strategy.
-- [ ] [Fix] Add safe handling for spreadsheet find regex and empty query behavior.
-- [ ] [Fix] Remove the retained avoidable high-cost paths in flow tree layout.
-- [ ] [Proof] Add focused performance-oriented proof or benchmark-style regression checks for the repaired hot paths.
+- [x] [Fix] Replace the retained repeated-clone spreadsheet batch path with a bounded-cost batch update strategy.
+- [x] [Fix] Add safe handling for spreadsheet find regex and empty query behavior.
+- [x] [Fix] Remove the retained avoidable high-cost paths in flow tree layout.
+- [x] [Proof] Add focused performance-oriented proof or benchmark-style regression checks for the repaired hot paths.
 
 Exit Criteria:
 
-- [ ] The retained spreadsheet and flow hot-path defects are closed.
-- [ ] Focused proof demonstrates the repaired bounded-cost behavior.
-- [ ] Affected owner docs are updated if the stable performance contract changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] The retained spreadsheet and flow hot-path defects are closed.
+- [x] Focused proof demonstrates the repaired bounded-cost behavior.
+- [x] Affected owner docs are updated if the stable performance contract changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 3 - Verification And Closure Audit
 

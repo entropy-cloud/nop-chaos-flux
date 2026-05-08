@@ -1,7 +1,7 @@
 # 228 Styling And CSS Surface Cleanup Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-07
+> Plan Status: completed
+> Last Reviewed: 2026-05-08
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,10-styling.md}`
 > Related: `docs/plans/{221-deep-audit-2026-05-07-confirmed-defect-remediation-plan.md,224-validation-subtree-follow-up-plan.md}`
 
@@ -46,87 +46,87 @@
 
 ### Workstream 1 - Reduce Package CSS Global Leakage
 
-Status: planned
+Status: completed
 Targets: spreadsheet/report/word/code/form/flow package CSS surfaces, related docs/tests
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Reduce retained spreadsheet CSS namespace/theme leakage to a clear package-owned styling surface.
-- [ ] [Fix] Reduce retained word/code/form/flow package CSS globals and hardcoded widget values where the audit confirmed them as active cleanup items.
-- [ ] [Fix] Keep report field panel package CSS self-styled widget behavior, but narrow any retained scope leakage to stable package-owned selectors.
-- [ ] [Proof] Add focused proof for the final CSS boundary where practical.
+- [x] [Fix] Reduce retained spreadsheet CSS namespace/theme leakage to a clear package-owned styling surface.
+- [x] [Fix] Reduce retained word/code/form/flow package CSS globals and hardcoded widget values where the audit confirmed them as active cleanup items.
+- [x] [Fix] Keep report field panel package CSS self-styled widget behavior, but narrow any retained scope leakage to stable package-owned selectors.
+- [x] [Proof] Add focused proof for the final CSS boundary where practical.
 
 Exit Criteria:
 
-- [ ] The retained package CSS leakage defects are closed on the supported paths.
-- [ ] Focused proof or equivalent auditable verification exists for the repaired styling surfaces.
-- [ ] Affected owner docs are updated if the stable styling boundary changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] The retained package CSS leakage defects are closed on the supported paths.
+- [x] Focused proof or equivalent auditable verification exists for the repaired styling surfaces.
+- [x] Affected owner docs are updated if the stable styling boundary changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 2 - Consolidate Fallback UI And Shell Styling
 
-Status: planned
+Status: completed
 Targets: core fallback UI, debugger, and workbench shell styling surfaces, related docs/tests
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Migrate retained core fallback UI styling toward class/token-based ownership.
-- [ ] [Fix] Consolidate retained debugger inline styles and WorkbenchShell hardcoded layout into clearer owned styling primitives.
-- [ ] [Decision] Record which shell/widget defaults remain intentionally package-owned and why they are not renderer-layout violations.
+- [x] [Fix] Migrate retained core fallback UI styling toward class/token-based ownership.
+- [x] [Fix] Consolidate retained debugger inline styles and WorkbenchShell hardcoded layout into clearer owned styling primitives.
+- [x] [Decision] Record which shell/widget defaults remain intentionally package-owned and why they are not renderer-layout violations.
 
 Exit Criteria:
 
-- [ ] The retained fallback UI and shell styling defects are closed on the supported paths.
-- [ ] The final styling ownership is explicit about what remains package-owned widget/shell design.
-- [ ] Affected owner docs are updated if the stable styling baseline changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] The retained fallback UI and shell styling defects are closed on the supported paths.
+- [x] The final styling ownership is explicit about what remains package-owned widget/shell design.
+- [x] Affected owner docs are updated if the stable styling baseline changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 3 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: in-scope styling surfaces/docs, this plan
 
 - Item Types: `Proof | Decision`
 
-- [ ] Run focused verification for the repaired styling surfaces.
-- [ ] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all code/doc changes land.
-- [ ] Perform an independent closure audit and fix any remaining in-scope styling ambiguity before closing the plan.
+- [x] Run focused verification for the repaired styling surfaces.
+- [x] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all code/doc changes land.
+- [x] Perform an independent closure audit and fix any remaining in-scope styling ambiguity before closing the plan.
 
 Exit Criteria:
 
-- [ ] Focused verification is recorded for package CSS and fallback/shell styling families.
-- [ ] Workspace verification passes.
-- [ ] Independent closure audit confirms no remaining plan-owned blocker.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] Focused verification is recorded for package CSS and fallback/shell styling families.
+- [x] Workspace verification passes.
+- [x] Independent closure audit confirms no remaining plan-owned blocker.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
-- [ ] All in-scope retained styling/CSS surface defects from `full-8` are closed.
-- [ ] Focused verification exists for each landed styling family.
-- [ ] No in-scope retained defect is silently deferred or downgraded.
-- [ ] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
-- [ ] Independent closure audit confirms no remaining in-scope blocker.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All in-scope retained styling/CSS surface defects from `full-8` are closed.
+- [x] Focused verification exists for each landed styling family.
+- [x] No in-scope retained defect is silently deferred or downgraded.
+- [x] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
+- [x] Independent closure audit confirms no remaining in-scope blocker.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Validation Checklist
 
-- [ ] `221` and `224` carve-outs remain explicit.
-- [ ] Styling cleanup does not reclassify the rejected `container/flex` semantic prop pattern as a defect.
-- [ ] Package-owned widget/shell styling that remains is documented honestly.
-- [ ] No retained `full-8` item from dimension 10 is left without an owner decision.
+- [x] `221` and `224` carve-outs remain explicit.
+- [x] Styling cleanup does not reclassify the rejected `container/flex` semantic prop pattern as a defect.
+- [x] Package-owned widget/shell styling that remains is documented honestly.
+- [x] No retained `full-8` item from dimension 10 is left without an owner decision.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: Plan-owned fallback UI, workbench shell, debugger, spreadsheet selector scope, and narrow code-editor theme cleanup are landed and verified against the live repository baseline.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: OpenCode fresh closure pass
+- Evidence: live re-audit of `packages/flux-react/src/{node-error-boundary.tsx,default-spacing.css,workbench/workbench-shell.tsx}`, `packages/word-editor-renderers/src/word-editor-page.tsx`, `packages/nop-debugger/src/panel/{node-tab.tsx,styles-css.ts}`, `packages/spreadsheet-renderers/src/{spreadsheet-grid.tsx,canvas-styles.css}`, `packages/flux-code-editor/src/code-editor-styles.css`, focused tests, and workspace verification.
 
 Follow-up:
 
-- Pending execution.
+- no remaining plan-owned work.

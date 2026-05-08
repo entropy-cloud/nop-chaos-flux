@@ -1,7 +1,7 @@
 # 222 Module Boundary And Owner Boundary Successor Plan
 
-> Plan Status: in progress
-> Last Reviewed: 2026-05-07
+> Plan Status: partially completed
+> Last Reviewed: 2026-05-08
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,02-module-responsibility.md}`
 > Related: `docs/plans/{185-large-file-hotspot-split-plan.md,220-cross-boundary-state-and-host-contract-closure-plan.md,221-deep-audit-2026-05-07-confirmed-defect-remediation-plan.md}`
 
@@ -52,7 +52,7 @@
 
 ### Workstream 1 - Freeze Carve-Outs And Target Boundaries
 
-Status: completed
+Status: in progress
 Targets: in-scope hotspot files, this plan, affected refactoring docs only if needed
 
 - Item Types: `Decision | Proof`
@@ -154,13 +154,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Workstreams 1-4 landed. Module boundaries were narrowed by moving spreadsheet CSS ownership out of the root barrel, introducing package-owned word-editor type aliases instead of direct third-party re-exports, adding optional headless `initFluxI18n({ react: false })` support, and splitting the retained hotspot files into thin orchestrators plus focused helpers. The plan remains open only because full workspace `pnpm test` still reports 10 pre-existing `flux-renderers-form-advanced` `detail-view` failures and an independent closure audit has not yet been recorded.
+Status Note: Workstreams 1-3 landed and Workstream 4 verification has been rerun on the final code. Module boundaries were narrowed by moving spreadsheet CSS ownership out of the root barrel, introducing package-owned word-editor type aliases instead of direct third-party re-exports, adding optional headless `initFluxI18n({ react: false })` support, and splitting the retained hotspot files into thin orchestrators plus focused helpers. During final verification a `flux-renderers-data` chart test regression surfaced because the test still mocked `@nop-chaos/ui` instead of `@nop-chaos/ui/chart`; that targeted test gap was fixed. The plan remains open only because full workspace `pnpm test` still reports the 10 pre-existing `flux-renderers-form-advanced` `detail-view` failures and an independent closure audit has not yet been recorded.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: pending
-- Evidence: pending independent closure audit; implementation verification completed with green `pnpm typecheck`, `pnpm build`, and `pnpm lint`.
+- Evidence: implementation verification completed with green `pnpm typecheck`, `pnpm build`, and `pnpm lint`; final `pnpm test` rerun now fails only in the known pre-existing `flux-renderers-form-advanced` `detail-view` suites after fixing the `flux-renderers-data` chart mock to follow the `@nop-chaos/ui/chart` subpath split. Independent closure audit still pending.
 
 Follow-up:
 
-- Record independent closure audit after re-checking the retained pre-existing `flux-renderers-form-advanced` failures against live baseline.
+- Record independent closure audit after re-checking the retained pre-existing `flux-renderers-form-advanced` failures against live baseline and deciding whether plan closure can tolerate the non-plan-owned workspace test red bar.

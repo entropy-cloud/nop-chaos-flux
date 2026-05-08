@@ -21,6 +21,7 @@ Current live baseline note:
 - the shared owner-validation substrate in live code is still the managed `FormRuntime` implementation
 - `ValidationScopeRuntime` is the exported owner contract used by page/root and surface-family non-form owners
 - declarative `dialog` / `drawer` now use the same surface-root validation-owner path as action-opened surfaces because both register through shared `SurfaceRuntime`
+- `pattern` rules no longer silently skip invalid or unsupported regexes; compiler/runtime now surface them as explicit configuration errors so validation remains fail-closed on the supported path
 
 This means:
 
@@ -532,6 +533,9 @@ Rules:
 Current implementation note:
 
 - live code now routes this owner-local external-error rebuild through shared field-state merge helpers instead of duplicating the same merge/rebuild sequence in both `form-runtime.ts` and `form-runtime-owner.ts`
+- ordinary owner validation now reapplies the current external-error overlay on the validated path instead of dropping external errors when rule execution rewrites stored field errors
+- array mutations remap owner-local external errors together with field state, hidden-field participation, and validation-run bookkeeping
+- `applyChangesAndRevalidate(...)` now clears matching owner-local external errors for written paths using the same clear semantics as direct value writes
 
 ## Compile-Time Collection
 
@@ -765,6 +769,12 @@ Current live participation baseline:
 - hidden-field participation is published through the nearest `ValidationScopeRuntime` via `notifyFieldHidden(...)`
 - forms and non-form validation owners therefore use the same supported hidden-participation contract
 - hiding a parent path excludes descendant compiled fields from active validation participation, and owner cleanup clears stale descendant errors when that subtree transitions to hidden
+- hiding a parent path also invalidates descendant in-flight async validation work so stale async completions cannot republish into the hidden subtree
+- `clearValueWhenHidden` now cascades across descendant compiled fields inside the hidden subtree rather than only clearing the exact path passed to `notifyFieldHidden(...)`
+
+Refresh baseline note:
+
+- `refreshCompiledModel(...)` clears owner-local `hiddenFields` participation bookkeeping together with validation runs, async controllers, and stale runtime registrations so the next model generation recomputes hidden participation from live publication events
 
 Branch inactivity follows the same principle:
 
@@ -1055,7 +1065,7 @@ Rules:
 Current live implementation note:
 
 - active detail child owners currently use `summary-gate` so the parent submit path blocks on child readiness/validity while the detail session is open
-- the parent still iterates the current child-contract map directly; lifecycle-aware submit snapshots and broader automatic orchestration remain future work outside the supported family set
+- one submit attempt now snapshots the currently active child contract set before child gating and recurse-submit execution; broader lifecycle-aware waiting for child-owner refresh remains future work outside the supported family set
 
 Commit propagation is also owner-local.
 
