@@ -129,7 +129,7 @@
 
 ### Phase 1 - Shared UI/Layout Utility Ownership Cleanup
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/resolve-gap.ts`, `packages/flux-renderers-basic/src/utils.ts`, `packages/flux-renderers-basic/src/{container.tsx,flex.tsx}`, tests, and any other direct local consumers
 
 - Item Types: `Fix | Proof`
@@ -148,7 +148,7 @@ Exit Criteria:
 
 ### Phase 2 - Core Contract Utility Convergence
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/component-handle-registry.ts`, `packages/nop-debugger/src/controller-helpers.ts`, `packages/nop-debugger/src/types.ts`, `packages/nop-debugger/src/adapters.ts`, `packages/flux-action-core/src/action-core.ts`, `packages/flux-runtime/src/error-utils.ts`, `packages/report-designer-core/src/core-dispatch.ts`, and `packages/flux-core/src/runtime-inspection.ts`
 
 - Item Types: `Fix | Decision | Proof`

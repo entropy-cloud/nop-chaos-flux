@@ -5,8 +5,8 @@
 This document defines:
 
 - `ApiSchema` as the declarative HTTP request contract
-- `SourceSchema` as the anonymous action-based value producer form
-- `DataSourceSchema` as the named and scheduled source form in Flux
+- `SourceSchema` as the anonymous source carrier for runtime-managed value production
+- `DataSourceSchema` as the named source-owner form in Flux
 - `ReactionSchema` as the declarative side-effect watcher model paired with sources
 
 `data-source` should not be treated as a special visual component category. It is a non-rendering named source declaration that publishes a derived value into the current scope.
@@ -14,11 +14,12 @@ This document defines:
 Under this model:
 
 - plain `${...}` expressions remain the preferred synchronous derived-value form
-- `type: 'source'` is the anonymous execution-backed value form for field-local consumption
-- `type: 'data-source'` is the named and scheduled source form when publication, refresh, or reuse semantics are needed
-- request-backed and invoke-backed producers should follow the same model rather than introducing parallel abstractions
+- `type: 'source'` is the anonymous source form used when a value channel needs runtime-managed production without named publication
+- `type: 'data-source'` is the named source-owner form when publication, refresh, polling, or reuse semantics are needed
+- source-enabled props (`allowSource`) are field-level entry points into that same anonymous source model rather than a third abstraction
+- formula-backed and action-backed producers should follow the same source model rather than introducing parallel abstractions
 
-This keeps Flux aligned with its role as a final DSL runtime: schema declares derived values, runtime owns source lifecycle, and React only hosts the execution boundary.
+This keeps Flux aligned with its role as a final DSL runtime: schema declares derived values, runtime owns source lifecycle, and React only hosts mount/subscription wiring rather than a second source semantic model.
 
 `reaction` is the companion abstraction for imperative consequences. A source derives values. A reaction watches derived or raw values and dispatches actions when those values change.
 
@@ -193,10 +194,11 @@ Example:
 
 `ApiSchema` 描述一次 HTTP 请求的 url / method / headers / params / adaptors，这一职责不变。变化在于：`ApiSchema` 不再作为 schema 上的 authoring 属性或 runtime 的独立执行入口，而是成为 `ajax` action 的**内部传输描述类型**。
 
-两层关系：
+三层关系：
 
-1. **Action dispatch（运行时唯一执行路径）**：所有远程调用（form submit、data-source、async validation、reaction）统一走 `runtime.dispatch(...)` → `ActionRuntimeAdapter`。schema 中直接写 `{ action: "ajax", args: { url, method, ... } }`
-2. **ApiSchema（ajax action 内部）**：`ajax` action 的实现内部将 `args` 构造为 `ApiSchema` 格式，再走 `executeApiSchema(...)` → fetcher。这是 action 实现细节，不是 schema 层可见的概念
+1. **Action invocation（远程 effect 权限入口）**：作者可见的远程调用统一表达为 action，通常是 `{ action: "ajax", args: { url, method, ... } }`，最终进入 `runtime.dispatch(...)` → `ActionRuntimeAdapter`。这适用于 form submit、async validation、reaction actions、anonymous `source`，也适用于 `data-source` 的远程 producer 执行体。
+2. **Resource / owner orchestration（值生产者生命周期）**：`data-source` 作为 `Resource` 仍然拥有 refresh、polling、dedup、stale/drop、status、publish-to-scope 和 scope disposal。它调度何时请求、如何接收结果、如何发布值，不被简化为一次普通 action run。
+3. **ApiSchema（ajax action 内部）**：`ajax` action 的实现内部将 `args` 构造为 `ApiSchema` 格式，再走 `executeApiSchema(...)` → fetcher。这是 action 实现细节，不是 schema 层可见的概念。
 
 被删除的内容：
 
@@ -206,11 +208,11 @@ Example:
 
 选择这个方向的原因：
 
-- **统一执行路径**：提交、校验、数据源、事件处理所有远程调用最终都走 `runtime.dispatch(...)` → `ActionRuntimeAdapter` 这一条链路。拦截、日志、重试、幂等、超时只需要在一层实现
-- **统一扩展模型**：用户注册一个自定义 action 后，校验、提交、数据源都可以复用，不需要分别为校验写 plugin、为提交写 hook
+- **统一远程 effect 入口**：提交、校验、数据源 producer、事件处理中的远程调用最终都走 action invocation / `ActionRuntimeAdapter` 这一条权限链路。拦截、日志、重试、幂等、超时可以在共享边界实现
+- **统一扩展模型**：用户注册一个自定义 action 后，校验、提交、数据源 producer 都可以复用，不需要分别为校验写 plugin、为提交写 hook
 - **本地/远程校验无差别**：`{ action: "customCheck" }` 内部是 JS 函数还是 HTTP 调用，对消费者透明
 - **测试统一**：mock action dispatch 即可覆盖所有场景
-- **概念模型更简单**：用户只需要理解 action 是所有行为的统一入口，不需要同时理解 `api` 和 `action` 两套写法
+- **概念模型更简单**：用户只需要理解 action 是 schema-authored command/effect 的统一入口，不需要同时理解 `api` 和 `action` 两套写法；但 `data-source` 仍是值生产 owner，不是普通 action 别名
 
 `ApiSchema` 作为 `ajax` action 内部的传输描述类型继续存在，定义 HTTP 请求的 url / method / headers / params / adaptors，但只被 `ajax` action 实现消费。
 
@@ -247,7 +249,7 @@ The required flow is:
 
 Current baseline note:
 
-- `executeApiSchema(...)` now owns the main request convergence path used by ajax actions, form submit, validation, and data-source execution
+- `executeApiSchema(...)` now owns the main request convergence path behind ajax action invocation, including form submit, validation, reaction/source action bodies, and data-source producer requests
 - `data-source` now preserves top-level schema `retry` through compile-time `CompiledOperationControl.retry` into runtime source execution, so source-backed ajax refresh uses the same retry/backoff contract as request-backed actions
 - callers may still pass declarative request objects; `executeApiSchema(...)` evaluates those values in scope before canonical request preparation so request execution semantics stay unified across actions, forms, validation, and data-sources
 - request preparation is split into explicit helpers, but the runtime now converges those helpers into one canonical executable request shape before fetch
@@ -259,10 +261,10 @@ Current baseline note:
 - current `DataSourceSchema` baseline now supports both action-backed (via `action: "ajax"`) and `formula` producers under the same runtime-owned registration path
 - formula `data-source` uses `name` as the normative publication path for both api and formula producers
 - current formula-source baseline publishes on mount and explicit refresh using the shared runtime registry, but it does not yet implement the full dependency-indexed lazy invalidation model described below
-- current `DataSourceController` baseline now exposes `DataSourceState` via `getState()` with legacy status fields such as `started`, `status`, `fetchStatus`, `stale`, `data`, `error`, `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`, and now also includes additive convenience fields such as `hasData`, `hasError`, `isInitialLoading`, `isRefreshing`, and `inFlightCount`; api sources drive fetch lifecycle while formula sources publish the same public contract with synchronous semantics
+- current `DataSourceController` baseline now exposes `DataSourceState` via `getState()` with legacy status fields such as `started`, `status`, `fetchStatus`, `stale`, `data`, `error`, `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`, and now also includes additive convenience fields such as `hasData`, `hasError`, `isInitialLoading`, `isRefreshing`, and `inFlightCount`; action-backed remote sources drive fetch lifecycle while formula sources publish the same public contract with synchronous semantics
 - current runtime baseline now also exposes explicit source refresh by id at the runtime boundary; refresh remains scope-scoped first, so duplicate source ids in different scopes do not collapse into one page-global namespace
 - current `refreshSource` targets a registered source id through `targetId`; source refresh is built-in runtime-entry targeting rather than component-handle targeting
-- current source runtime now has a dependency-aware invalidation baseline: formula sources automatically recompute and api sources automatically refresh when changed scope paths hit the dependencies collected from formula evaluation or request-config evaluation
+- current source runtime now has a dependency-aware invalidation baseline: formula sources automatically recompute and action-backed remote sources automatically refresh when changed scope paths hit the dependencies collected from formula evaluation or request-config evaluation
 - current invalidation also includes a self-target loop guard so a source does not immediately retrigger itself from writes to its own published `name` binding
 - current action/runtime integration includes a built-in `refreshSource` action that targets a registered source id through `targetId` and delegates to the runtime-owned source registry refresh semantics; this is runtime-entry targeting, not component-handle dispatch
 
@@ -272,7 +274,12 @@ Current convergence baseline:
 
 - `ActionRuntimeAdapter` is now the unified runtime invocation boundary for built-in, `component:<method>`, and namespaced actions.
 - `reaction.actions` already reuses that boundary indirectly because reaction execution dispatches actions through `runtime.dispatch(...)`, and `flux-action-core` then routes final built-in/component/namespace invocation through `ActionRuntimeAdapter`.
-- `type: 'source'` already reuses that same boundary for action-backed and api-backed execution bodies through `createSourceExecutor(...)->executeAction(...) -> runtime.dispatch(...) -> ActionRuntimeAdapter`.
+- action-backed `type: 'source'` bodies already reuse that same boundary through `createSourceExecutor(...)->executeAction(...) -> runtime.dispatch(...) -> ActionRuntimeAdapter`.
+- Architecture target: action-backed remote `data-source` producer requests should also enter the same ajax action / `ActionRuntimeAdapter` invocation boundary; the source controller remains the owner of scheduling and publication around that invocation.
+
+Current implementation note:
+
+- live `api-data-source-controller-runtime.ts` still calls the shared request substrate (`executeApiSchema(...)` / `executeApiRequest(...)`) directly for producer refreshes. This preserves request convergence, but is a remaining implementation gap relative to the stricter adapter-entry target from `docs/plans/139-unified-action-dispatch-for-submit-validation-and-data-access.md`.
 
 Important distinction:
 
@@ -281,7 +288,7 @@ Important distinction:
 
 Normative rule:
 
-- If a source/reaction concern is "execute this schema-authored action body", it should reuse `runtime.dispatch(...)` and therefore `ActionRuntimeAdapter`.
+- If a source/reaction concern is "execute this schema-authored action body" or "perform this remote producer request", it should reuse `runtime.dispatch(...)` / ajax action invocation and therefore `ActionRuntimeAdapter`.
 - If a concern is owner lifecycle orchestration (`data-source` refresh scheduling, request status state, polling loop, stale/drop semantics, scope-tree disposal), it remains in runtime-owned source/reaction controllers and should not be forced into `ActionRuntimeAdapter`.
 
 This means the current architecture already has one unified action invocation boundary, but it intentionally does not collapse all runtime owner semantics into the adapter.
@@ -294,9 +301,10 @@ After the current convergence work, the remaining seams should be read in three 
 
 - built-in / component / namespaced actions
 - `reaction.actions`
-- action-backed/api-backed `source` execution bodies
+- action-backed remote `source` execution bodies
+- target-state action-backed remote `data-source` producer requests
 
-These all reach runtime through `runtime.dispatch(...)` and the unified `ActionRuntimeAdapter` boundary.
+These should all reach runtime through `runtime.dispatch(...)` and the unified `ActionRuntimeAdapter` boundary. Live code has this for actions, reactions, and anonymous sources; action-backed remote `data-source` refresh still needs the remaining adapter-entry cleanup while preserving owner-local lifecycle semantics.
 
 2. Intentionally owner-local
 
@@ -339,11 +347,16 @@ However, env decoration is not a full replacement for runtime boundary design:
 
 ## SourceSchema
 
-`type: 'source'` is the anonymous execution-backed value form.
+`type: 'source'` is the anonymous source carrier.
 
-It is used when a field needs a runtime-managed dynamic value but does not need named publication into scope.
+It is used when a field or local value channel needs runtime-managed value production but does not need named publication into scope.
 
-`source` is modeled as an action-shaped execution descriptor whose result is consumed as a value rather than only as an effect.
+It is the unnamed counterpart to `data-source`:
+
+- it may be formula-backed or action-backed
+- when action-backed remote work is needed, the producer should normally be `action: "ajax"` with `args` carrying the `ApiSchema`-shaped transport fields
+- its result is consumed as a value rather than published as a named scope binding
+- field metadata such as `allowSource` decides which renderer props may accept this carrier shape
 
 ## Linked Data Projection Into Form Owners
 
@@ -462,7 +475,7 @@ For form controls, `name` identifies the field's stored owner-local value. Using
 Directionally:
 
 ```typescript
-interface SourceSchema extends ActionSchema {
+interface SourceSchema extends SourceActionSchema {
   type: 'source';
 }
 ```
@@ -522,22 +535,33 @@ interface BaseDataSourceSchema extends BaseSchema {
   mergeToScope?: boolean;
   resultMapping?: Record<string, SchemaValue>;
   statusPath?: string;
+  dependsOn?: string[];
   initialData?: SchemaValue;
   mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
   mergeKey?: string;
 }
 
-interface DataSourceSchema extends BaseDataSourceSchema, ActionSchema {
+interface FormulaDataSourceSchema extends BaseDataSourceSchema, ActionShapeFields {
+  formula: SchemaValue;
+  action?: never;
+}
+
+interface ActionDataSourceSchema extends BaseDataSourceSchema, SourceActionSchema {
+  action: string;
+  args?: Record<string, SchemaValue>;
   interval?: number;
   stopWhen?: string;
   silent?: boolean;
 }
+
+type DataSourceSchema = FormulaDataSourceSchema | ActionDataSourceSchema;
 ```
 
 Rules:
 
-- `data-source` extends source-style action execution with named publication and scheduling controls
-- `action`, `args`, `control`, `then`, `onError`, and `parallel` follow the same execution semantics used by action-backed sources
+- `data-source` extends the same producer contract used by anonymous `source`, but adds named publication and owner lifecycle controls
+- producer body is either `formula` or `action`/`args`; remote transport is normally expressed as `action: "ajax"`
+- action-backed producers reuse the same execution semantics used by action-backed anonymous sources
 - `resultMapping`, when present, maps the fetched/produced payload into a target object shape before named publication or `mergeToScope`
 - `name` is the normative author-visible identity and default publication path
 - `mergeToScope: true` is the only narrowed special publish extension beyond the named publication path
@@ -546,7 +570,7 @@ Rules:
 
 ### Refresh Dedup Semantics
 
-For API-backed `data-source`, dependency invalidation, explicit `refreshSource`, and direct controller `refresh()` may all trigger a refresh while an earlier request is still in flight.
+For action-backed remote `data-source`, dependency invalidation, explicit `refreshSource`, and direct controller `refresh()` may all trigger a refresh while an earlier request is still in flight.
 
 Normative rule:
 
@@ -570,7 +594,7 @@ Lifecycle rule:
 
 Current async-governance baseline:
 
-- API-backed `data-source` now also participates in a shared owner-level async governance substrate separate from request execution control
+- action-backed remote `data-source` now also participates in a shared owner-level async governance substrate separate from request execution control
 - each refresh gets a runtime-owned `runId`, `cause`, start/settle timestamps, and settle outcome metadata
 - request abort still happens through source/request control, but late-settling old runs are additionally blocked by an owner-level publish gate
 - in `parallel` mode, multiple requests may remain in flight, but only the current authoritative run may publish value/status updates; older late-settled runs are recorded as `stale-dropped`
@@ -621,7 +645,7 @@ Current runtime compatibility note:
 - current runtime now publishes `data-source` values through `name` first and accepts `name` in `refreshSource` / source-registry lookup
 - legacy `id` targeting and legacy `dataPath` publication overrides remain supported as compatibility paths during convergence
 - anonymous formula-backed resources may still fall back to runtime `id`; new schema should not rely on that compatibility path
-- current runtime now applies `resultMapping` before normal publication for both api-backed and formula-backed `data-source` values
+- current runtime now applies `resultMapping` before normal publication for both action-backed and formula-backed `data-source` values
 
 `initialData` seeds the source target before the first real evaluation or fetch begins.
 
@@ -629,13 +653,22 @@ When `statusPath` is present, the source may additionally publish a readonly sum
 
 ### Producer Kinds
 
-#### Api source
+#### Formula source
 
-An action-backed request source is an asynchronous derived value.
+A formula source is a synchronous derived value producer.
 
-- input: current scope plus `ApiSchema` or another action-backed producer
-- producer: runtime-managed action execution consumed as a value
-- output: adapted response value written to the explicit published binding path
+- input: current scope plus a formula expression
+- producer: runtime value evaluation with dependency tracking
+- output: current derived value, either consumed locally (`source`) or published by name (`data-source`)
+- mental model: computed value owned by runtime rather than by React component state
+
+#### Action-backed source
+
+An action-backed source is an execution-backed derived value.
+
+- input: current scope plus an `ActionSchema`-shaped producer body
+- producer: runtime-managed action invocation consumed as a value; remote producer requests target the `ajax` action / `ActionRuntimeAdapter` path
+- output: resolved action result consumed locally (`source`) or written to the explicit published binding path (`data-source`)
 - mental model: async computed/source ref
 
 Its semantics should be:
@@ -644,7 +677,7 @@ Its semantics should be:
 - dependency changes invalidate the source and trigger refresh according to source policy
 - runtime owns loading, error, cache, dedup, abort, and polling behavior
 
-`interval` and `stopWhen` remain API-source-specific controls.
+`interval` and `stopWhen` remain `data-source` owner controls for action-backed producers.
 
 ### Dependency Tracking And Invalidation
 
@@ -669,9 +702,9 @@ When an upstream root changes:
 
 - dependent sources are marked dirty
 - formula sources recompute according to the synchronous-before-reaction rule above when possible, otherwise lazily on next consumption or explicit refresh
-- API sources invalidate and refresh according to source policy
+- action-backed remote sources invalidate and refresh according to source policy
 
-For API-backed sources, "source policy" here includes refresh dedup behavior:
+For action-backed remote sources, "source policy" here includes refresh dedup behavior:
 
 - `cancel-previous` means the latest invalidation supersedes the current request
 - `ignore-new` means repeated invalidations collapse into the already-running request
@@ -688,10 +721,11 @@ The runtime goal is targeted invalidation, not eager full-tree re-evaluation.
 Required boundary:
 
 - `DataSourceRenderer` remains a `null` renderer
-- React only wires lifecycle
+- React only wires lifecycle and subscriptions
 - runtime owns source registration, source invalidation, request control, polling, abort, and cache coordination
+- React-side helpers for source-enabled props must stay thin host wiring over that same runtime-owned source substrate rather than becoming a second controller family
 
-The intended end state is a runtime-local source registry where formula and API producers share the same conceptual lifecycle model.
+The intended end state is a runtime-local source registry where formula and action-backed producers share the same conceptual lifecycle model.
 
 More precisely:
 
@@ -736,11 +770,12 @@ This preserves the existing design rule that data lookup remains on `ScopeRef`, 
 The source abstraction is responsible for value production, not for built-in loading or error chrome.
 
 - formula sources usually expose only a current value
-- API sources also have runtime status such as loading / error / stale
+- action-backed remote sources also have runtime status such as loading / error / stale
 - UI should choose how to observe and present those states rather than forcing a built-in widget into the source abstraction
 - if schema needs author-visible source status, the preferred cross-runtime contract is explicit `statusPath`
 - `statusPath` is readonly runtime summary data, not a second authoritative business value
 - narrower subsystems may still project additional summary values, but they must not replace the core `statusPath` contract with implicit hidden sibling paths
+- for anonymous `source` consumed through `allowSource`, the equivalent narrow UI-facing state may be surfaced through the companion prop named by `sourceStateKey`
 
 Contract layering rule for `statusPath`:
 
@@ -796,7 +831,7 @@ Once those controls are resolved, request execution owns the actual retry/backof
 }
 ```
 
-#### API-backed source with explicit binding
+#### Action-backed remote source with explicit binding
 
 ```json
 {
@@ -820,7 +855,7 @@ Once those controls are resolved, request execution owns the actual retry/backof
 }
 ```
 
-#### Polling API-backed source
+#### Polling action-backed remote source
 
 ```json
 {
@@ -954,7 +989,7 @@ This means a reaction can watch:
 
 - raw scope fields
 - formula-backed sources
-- API-backed sources
+- action-backed remote sources
 
 Current baseline note:
 
@@ -1027,17 +1062,17 @@ Its purpose is to model data-driven side effects that are awkward or impossible 
 
 Current code already implements part of this model:
 
-- API-backed `data-source` orchestration lives in `@nop-chaos/flux-runtime`
+- action-backed remote `data-source` orchestration lives in `@nop-chaos/flux-runtime`
 - `DataSourceRenderer` is already a `null` renderer that only wires lifecycle
 - request execution, cache reads/writes, polling timers, stop-condition evaluation, and abort lifecycle are runtime-owned
-- formula-backed and api-backed `data-source` values are unified under the same scope-scoped runtime source registry, with runtime-owned registration, replacement, refresh, and disposal
+- formula-backed and action-backed `data-source` values are unified under the same scope-scoped runtime source registry, with runtime-owned registration, replacement, refresh, and disposal
 - explicit `dependsOn` roots are wired on both `data-source` and `reaction`; when absent, runtime still falls back to runtime-collected dependency roots from formula/request evaluation
 - `resultMapping`, `statusPath`, named publication, `mergeToScope`, and runtime debug snapshots are all part of the current baseline and covered by focused runtime tests
 
 Remaining compatibility-oriented gaps:
 
 - anonymous formula-backed sources may still fall back to runtime `id` for compatibility; new schema should not rely on that path
-- unnamed API-backed sources do not implicitly publish or merge when `name` is absent
+- unnamed action-backed sources do not implicitly publish or merge when `name` is absent
 - `mergeToScope` remains the only narrowed compatibility-style publish extension beyond the named publication path and should not be expanded into a parallel main contract
 - dependency invalidation is already root-normalized, but runtime fallback still exists when `dependsOn` is absent
 - richer debugger integration and advanced loop-depth diagnostics for `reaction` are still incomplete beyond the current debug snapshot plus bounded-fire safety rail

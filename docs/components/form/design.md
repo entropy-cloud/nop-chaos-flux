@@ -284,7 +284,7 @@ fieldset + flex 组合实现复杂的表单分组：
 
 1. **Error**（最高优先级）— 验证失败时显示
 2. **Hint**（次高）— 控件聚焦时显示的引导文字
-3. **Description**（最低）— 始终可见的说明文字
+3. **Description**（最低）— hint 未显示时的兜底说明文字
 
 此外还有两种独立于优先级系统的提示：
 
@@ -309,13 +309,13 @@ interface FieldRemarkSchema {
 }
 ```
 
-| 字段          | 类型                | 渲染位置                                  | 显示条件                        | 对应 AMIS                       |
-| ------------- | ------------------- | ----------------------------------------- | ------------------------------- | ------------------------------- |
-| `description` | `string`            | 控件下方 `data-slot="field-description"`  | 无 error 且无 hint 时始终显示   | `FormItem.description` / `desc` |
-| `hint`        | `string`            | 控件下方 `data-slot="field-hint"`         | 无 error 且控件聚焦时显示       | `FormItem.hint`                 |
-| `remark`      | `FieldRemarkSchema` | 控件右侧 `data-slot="field-remark"`       | 始终可见（图标+tooltip）        | `FormItem.remark`               |
-| `labelRemark` | `FieldRemarkSchema` | 标签右侧 `data-slot="field-label-remark"` | 始终可见（图标+tooltip）        | `FormItem.labelRemark`          |
-| error         | 自动                | 控件下方 `data-slot="field-error"`        | 验证失败且满足 showErrorOn 条件 | `FormItem.errors` (自动)        |
+| 字段          | 类型                | 渲染位置                                  | 显示条件                          | 对应 AMIS                       |
+| ------------- | ------------------- | ----------------------------------------- | --------------------------------- | ------------------------------- |
+| `description` | `string`            | 控件下方 `data-slot="field-description"`  | 无 error 且当前未显示 hint 时显示 | `FormItem.description` / `desc` |
+| `hint`        | `string`            | 控件下方 `data-slot="field-hint"`         | 无 error 且控件聚焦时显示         | `FormItem.hint`                 |
+| `remark`      | `FieldRemarkSchema` | 控件右侧 `data-slot="field-remark"`       | 始终可见（图标+tooltip）          | `FormItem.remark`               |
+| `labelRemark` | `FieldRemarkSchema` | 标签右侧 `data-slot="field-label-remark"` | 始终可见（图标+tooltip）          | `FormItem.labelRemark`          |
+| error         | 自动                | 控件下方 `data-slot="field-error"`        | 验证失败且满足 showErrorOn 条件   | `FormItem.errors` (自动)        |
 
 ### 14.3 字段分类
 

@@ -14,7 +14,7 @@
   - `useCodeMirror` hook
   - `code-editor` renderer 注册
   - expression / sql / json / javascript / typescript / html / css / plaintext 模式
-  - source-ref 变量/函数/表结构解析
+  - 变量/函数/表结构的内联值、scope 引用，以及 authoring 层匿名 `SourceSchema` 输入
   - change/focus/blur 事件接入 Flux 事件系统
   - SQL format / snippets / variable panel / execution preview
 
@@ -89,9 +89,10 @@ interface CodeEditorSchema extends BaseSchema {
 
 ## 9. 数据源、表达式、导入能力接入点
 
-- expression 模式支持变量源、函数源的内联配置或 `scope/api` source-ref。
-- SQL 模式支持表结构、变量面板、执行预览等配置。
-- `code-editor` 只消费这些配置，不拥有平台级导入/bridge/session 协议。
+- expression 模式支持变量源、函数源的内联配置、`scope` 引用，authoring 层也允许在这些深层配置位置直接写匿名 `SourceSchema`。
+- SQL 模式支持表结构、变量面板、执行预览等配置；其中动态表结构/变量同样允许在 authoring 层直接写匿名 `SourceSchema`，而不是 code-editor 私有 `loadAction` 包层。
+- 这些 nested source 由框架在 renderer 之前统一解析并回填到原始 props 路径。`code-editor` renderer 最终只接收 resolved arrays / plain config，不感知 source lifecycle、loading transport 或私有中转字段。
+- `code-editor` 不拥有平台级导入/bridge/session 协议。
 
 ## 10. 样式与 DOM marker 约定
 
@@ -123,7 +124,7 @@ packages/flux-code-editor/src/
 - `CodeEditorSchema` 类型定义
 - `useCodeMirror` hook
 - `code-editor-renderer.tsx` 接入 `language`、`mode`、`placeholder`、`lineNumbers`、`folding`、`autoHeight`、`editorTheme`
-- 4 个 source resolver hooks：变量、函数、表结构、SQL 变量
+- 4 个 resolver hooks：变量、函数、表结构、SQL 变量；它们只消费 inline values 或 `scope` 引用。nested anonymous `SourceSchema` 的解析由 `flux-react` 在 renderer 前统一完成，而不是由 code-editor renderer/hook 自己处理 remote/source transport
 - change/focus/blur 事件与 Flux 表单/事件系统对齐
 - SQL 增强：format、snippets、variablePanel、execution preview
 

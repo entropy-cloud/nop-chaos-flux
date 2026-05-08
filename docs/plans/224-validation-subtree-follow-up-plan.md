@@ -1,6 +1,6 @@
 # 224 Validation Integrity Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-08
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,08-validation.md}`
 > Related: `docs/plans/{168-validation-and-built-in-form-targeting-semantics-convergence-plan.md,223-reactive-and-async-follow-up-closure-plan.md,230-renderer-slot-and-type-contract-cleanup-plan.md}`
@@ -63,27 +63,27 @@ Exit Criteria:
 
 ### Workstream 2 - Align Retained Subtree And Change-Revalidation Residuals
 
-Status: in progress
+Status: completed
 Targets: subtree/change/hint/child-snapshot validation paths, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
 - [x] [Fix] Address the retained `hiddenFields` refresh, child snapshot, and descendant clear-on-hide residuals that remain in the supported validation path.
-- [ ] [Fix] Address the retained dependency-closure, no-model, and runtime-registration hidden-policy residuals that remain in the supported validation path.
-- [ ] [Fix] Keep changed/subtree targeting semantics honest for the retained `full-8` residuals without reopening already-closed earlier baselines.
+- [x] [Fix] Address the retained dependency-closure, no-model, and runtime-registration hidden-policy residuals that remain in the supported validation path.
+- [x] [Fix] Keep changed/subtree targeting semantics honest for the retained `full-8` residuals without reopening already-closed earlier baselines.
 - [x] [Proof] Add focused proof for the repaired `hiddenFields` refresh, child snapshot, and descendant clear-on-hide behavior.
-- [ ] [Proof] Add focused proof for the remaining subtree/change residuals after the retained dependency/no-model/hidden-policy work lands.
+- [x] [Proof] Add focused proof for the remaining subtree/change residuals after the retained dependency/no-model/hidden-policy work lands.
 
 Exit Criteria:
 
-- [ ] The retained subtree/change/hint/child-snapshot defects are closed on the supported paths.
-- [ ] Focused tests prove the final validation targeting baseline.
+- [x] The retained subtree/change/hint/child-snapshot defects are closed on the supported paths.
+- [x] Focused tests prove the final validation targeting baseline.
 - [x] Affected owner docs are updated if the stable baseline changed; otherwise `No owner-doc update required` is explicit.
 - [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 3 - Verification And Closure Audit
 
-Status: in progress
+Status: completed
 Targets: in-scope runtime/tests/docs, this plan
 
 - Item Types: `Proof | Decision`
@@ -96,16 +96,16 @@ Exit Criteria:
 
 - [x] Focused verification is recorded for the landed validation slices.
 - [x] Workspace verification passes.
-- [ ] Independent closure audit confirms no remaining plan-owned blocker.
+- [x] Independent closure audit confirms no remaining plan-owned blocker.
 - [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
-- [ ] All in-scope retained validation defects are fixed.
+- [x] All in-scope retained validation defects are fixed.
 - [x] Focused verification exists for each landed validation family.
 - [x] No in-scope retained defect is silently deferred or downgraded.
 - [x] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
-- [ ] Independent closure audit confirms no remaining in-scope blocker.
+- [x] Independent closure audit confirms no remaining in-scope blocker.
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -115,19 +115,19 @@ Exit Criteria:
 
 - [x] `168` carve-out remains explicit.
 - [x] External-error lifecycle is fixed with proof, not only by wording changes.
-- [ ] Focused tests cover both validation families.
+- [x] Focused tests cover both validation families.
 - [x] `FieldFrame` hint/aria residual remains explicitly carved to `230` rather than silently dropped.
 - [x] No retained `full-8` item from dimension 08 is left without an owner decision.
 
 ## Closure
 
-Status Note: Workstream 1 landed and additional validation-subtree fixes now include no-model subtree success handling, runtime child-path validation surfacing, and summary-gate submit triggering, but the plan still owns retained dependency-closure and runtime-registration hidden-policy decisions plus final closure audit.
+Status Note: the final retained validation semantics are now closed in live code: owner-driven dependent revalidation expands through the full cycle-safe owner-local closure, runtime-only registrations can override hidden participation through `hiddenFieldPolicy`, focused regressions cover both validation families, and the fresh independent closure audit found no remaining plan-owned blocker.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1fa140f1cffevDG2I4iShJZFF5`)
-- Evidence: focused validation regressions and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` now pass; the independent closure audit still found remaining plan-owned semantic work in dependency-closure / runtime-registration hidden-policy coverage, so the plan remains partially completed.
+- Evidence: focused validation regressions and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass; the latest independent re-audit (`ses_1f9989882ffe2AWwOCQcoCR1ra`) confirmed the former dependency-closure and runtime-registration hidden-policy gaps are now fixed in `packages/flux-runtime/src/{form-runtime-owner.ts,form-runtime-validation.ts}` with focused proof in `src/__tests__/{form-runtime-values.test.ts,hidden-field-policy.test.ts}` and no remaining plan-owned blocker.
 
 Follow-up:
 
-- Remaining plan-owned work: close the retained dependency-closure and runtime-registration hidden-policy residuals, then rerun closure audit.
+- no remaining plan-owned work

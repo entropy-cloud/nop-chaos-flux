@@ -214,10 +214,11 @@ Exit Criteria:
 
 ### Phase 6 - Enhanced ActionMonitor (Effect Observability)
 
-Status: cancelled
+Status: completed
 Targets: `packages/flux-core/src/types/actions.ts`, `packages/flux-core/src/types/renderer-api.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/action-trace.ts`
 
 本 phase 在执行中被识别为超出原 owner scope 的观测性扩张项。action precompile 与 args-unification 已可独立收口，因此该扩张被移出当前计划，不再阻塞 closure。
+以下小节仅保留为历史设计草案，不再作为本计划的活动 checklist。
 
 #### 6.1 ActionTrace 树结构
 
@@ -343,38 +344,38 @@ interface RendererMonitor {
 
 #### 6.4 Runtime Integration
 
-- [ ] 在 `action-runtime.ts` 中集成 `ActionTraceCollector`
-- [ ] 在 action dispatch 入口创建 trace context
-- [ ] 在 `then`/`onError`/`onSettled`/`parallel` 分支中传递 parent trace context
-- [ ] 在 action 执行前记录 `resolvedArgs`（求值后的参数）
-- [ ] 在 action 执行后更新 trace result 和 timing
-- [ ] 为 `interactionId` 相同的 action 链构建完整 trace tree
+- 在 `action-runtime.ts` 中集成 `ActionTraceCollector`
+- 在 action dispatch 入口创建 trace context
+- 在 `then`/`onError`/`onSettled`/`parallel` 分支中传递 parent trace context
+- 在 action 执行前记录 `resolvedArgs`（求值后的参数）
+- 在 action 执行后更新 trace result 和 timing
+- 为 `interactionId` 相同的 action 链构建完整 trace tree
 
 #### 6.5 DevTools Integration
 
-- [ ] 提供 `getActionTraceCollector()` API 供 DevTools 使用
-- [ ] 支持 trace tree 可视化（action 执行树）
-- [ ] 支持检查每步的 `resolvedArgs`（解析后的参数值）
-- [ ] 支持按 `interactionId` 过滤和分组
-- [ ] 支持导出 trace 用于问题诊断
+- 提供 `getActionTraceCollector()` API 供 DevTools 使用
+- 支持 trace tree 可视化（action 执行树）
+- 支持检查每步的 `resolvedArgs`（解析后的参数值）
+- 支持按 `interactionId` 过滤和分组
+- 支持导出 trace 用于问题诊断
 
 #### 6.6 Tasks
 
-- [ ] 定义 `ActionTrace`、`ActionTraceCollector`、`ActionTraceContext` 类型
-- [ ] 实现 `createActionTraceCollector()` 工厂函数
-- [ ] 在 `action-runtime.ts` 中集成 trace 收集
-- [ ] 在 `evaluateActionArgs` 后记录 `resolvedArgs`
-- [ ] 为 branch dispatch 传递 `branchType` 和 `parentTraceId`
-- [ ] 扩展 `RendererMonitor` 接口
-- [ ] 为 `nop-debugger` 提供 trace tree 查询 API
-- [ ] 添加 trace 相关 tests
+- 定义 `ActionTrace`、`ActionTraceCollector`、`ActionTraceContext` 类型
+- 实现 `createActionTraceCollector()` 工厂函数
+- 在 `action-runtime.ts` 中集成 trace 收集
+- 在 `evaluateActionArgs` 后记录 `resolvedArgs`
+- 为 branch dispatch 传递 `branchType` 和 `parentTraceId`
+- 扩展 `RendererMonitor` 接口
+- 为 `nop-debugger` 提供 trace tree 查询 API
+- 添加 trace 相关 tests
 
 Exit Criteria:
 
-- [ ] 每次 action dispatch 产出完整的 `ActionTrace`，包括 `resolvedArgs`
-- [ ] `then`/`onError`/`parallel` 分支正确关联为 trace tree
-- [ ] DevTools 可以查询和展示 action trace tree
-- [ ] trace 收集对正常执行性能影响可忽略（< 1% overhead）
+- 每次 action dispatch 产出完整的 `ActionTrace`，包括 `resolvedArgs`
+- `then`/`onError`/`parallel` 分支正确关联为 trace tree
+- DevTools 可以查询和展示 action trace tree
+- trace 收集对正常执行性能影响可忽略（< 1% overhead）
 
 ### Phase 7 - Validation And Closure Prep
 

@@ -113,6 +113,8 @@ Renderer field metadata should evolve to express field semantics more precisely.
 
 Field metadata may also opt specific value fields into anonymous source execution when the field is a value channel that can safely consume `type: 'source'`.
 
+This is a renderer-field contract over the shared source runtime model, not a React-only convenience feature and not a third source abstraction beside `source` and `data-source`.
+
 Recommended opt-in flag:
 
 - `allowSource?: boolean`
@@ -124,6 +126,7 @@ Meaning:
 - unmarked `prop` or `value-or-region` fields keep their existing plain-value or region semantics
 - this avoids global object-shape guessing and preserves the design rule that renderer metadata owns field interpretation
 - when `sourceStateKey` is present, runtime also injects one companion prop carrying transient execution state for that source-enabled field
+- this companion state is the anonymous-source analogue of `data-source.statusPath`: a narrow UI-facing summary over the same runtime-owned source substrate
 
 Recommended transient state shape:
 
@@ -171,6 +174,7 @@ Recommended behavior by field semantic:
   - compile through the normal value-tree compiler
   - if the field also sets `allowSource`, runtime may execute `type: 'source'` carriers for that prop before the renderer receives `props`
   - if `sourceStateKey` is also present, runtime injects a transient state prop alongside the resolved value prop
+  - this does not create renderer-owned source lifecycle; execution, invalidation, and async governance stay runtime-owned
 - `region`
   - require schema or schema array input
   - compile recursively into a `TemplateRegion`

@@ -189,7 +189,7 @@ const unsubscribe = scope.store?.subscribe((change) => {
 
 For formula sources, `collectRuntimeDependencies(runtimeState)` is called after each evaluation and replaces the stored dependency set only when the schema does not declare explicit `dependsOn` roots.
 
-For API sources, `trackApiRequestDependencies()` re-evaluates the API schema on each request, collects which lexical roots were read, and updates the stored dependency set only when the schema does not declare explicit `dependsOn` roots.
+For action-backed remote sources, `trackApiRequestDependencies()` re-evaluates the ajax request config on each request, collects which lexical roots were read, and updates the stored dependency set only when the schema does not declare explicit `dependsOn` roots.
 
 ### 1.8 Reaction Invalidation
 
@@ -421,11 +421,11 @@ Source targets: `packages/flux-runtime/src/async-data/source-registry.ts`, `pack
 Source invalidation rules under the target model:
 
 - formula sources use explicit roots when declared, otherwise runtime-collected roots
-- API sources use explicit roots when declared, otherwise roots collected from evaluated request configuration
+- action-backed remote sources use explicit roots when declared, otherwise roots collected from evaluated request configuration
 - self-writes to the source's own published binding must be filtered out before dependency matching
 - after that filter, any remaining root hit may invalidate or refresh according to source policy
 
-Formula and API sources still share the same dependency substrate. The difference remains producer behavior, not dependency semantics.
+Formula and action-backed remote sources still share the same dependency substrate. The difference remains producer behavior, not dependency semantics.
 
 ### 3.6 Reaction Invalidation
 

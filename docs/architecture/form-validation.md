@@ -317,6 +317,7 @@ Therefore:
 
 1. runtime registration may enrich an existing owner
 2. runtime registration may not create a brand-new owner at an unclassified boundary
+3. runtime-only registrations may publish their own `hiddenFieldPolicy` override; when omitted, they inherit the owner model's default hidden participation policy
 
 ### Inference From Data Scope Ownership
 

@@ -78,7 +78,7 @@
 
 ### Phase 1 - Evaluator Escape Paths
 
-Status: planned
+Status: completed
 Targets: `packages/flux-formula/src/evaluator.ts`
 
 - Item Types: `Fix | Decision | Proof`
@@ -101,7 +101,7 @@ Exit Criteria:
 
 ### Phase 2 - Pollution Barriers Outside Evaluator
 
-Status: planned
+Status: completed
 Targets: `packages/flux-formula/src/builtins.ts`, `packages/flux-runtime/src/scope.ts`, `packages/flux-core/src/utils/path.ts`
 
 - Item Types: `Fix | Proof`

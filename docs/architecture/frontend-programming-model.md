@@ -6,24 +6,24 @@
 
 ## 七个原语
 
-| 原语              | 回答的问题                         | 职责                                                                                                     |
-| ----------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `Template`        | 编译后的程序结构是什么？           | 不可变结构模板、`Region` 组合、生命周期锚定、渲染器选择；`RendererDefinition` 提供比类型系统更严格的校验 |
-| `ScopeRef`        | 此处可见哪些数据？                 | 嵌套数据域，统一管理所有运行时状态；词法查找、自身作用域写入、遮蔽、作用域内所有权                       |
-| `Value`           | 此处的值如何读取或派生？           | 通过 name 定位 scope 值；`${expr}` 表达式求值和复杂对象构造（含嵌套）；响应式依赖跟踪；name 绑定的值约束 |
-| `Resource`        | 运行时是否拥有此处的值生产和发布？ | 拥有生命周期的值生产者：将远程 API 或公式映射为 scope 上的命名值；附带动态 status 管理                   |
-| `Reaction`        | 值变化是否触发后续动作？           | Value 变化 → Action 系统的桥；基于依赖的 watch，条件满足时通过 Capability 派发动作                       |
-| `Capability`      | 谁有权执行某个效果？               | 进入 Action 系统的控制权；ActionSchema 是具体 action 的建模，Capability 负责派发、权限和目标定位         |
-| `Host Projection` | 此处可见哪些只读宿主快照？         | 将宿主拥有的只读快照数据引入 schema 可见作用域；复杂宿主对象的集成方案                                   |
+| 原语              | 回答的问题                         | 职责                                                                                                                               |
+| ----------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `Template`        | 编译后的程序结构是什么？           | 不可变结构模板、`Region` 组合、生命周期锚定、渲染器选择；`RendererDefinition` 提供比类型系统更严格的校验                           |
+| `ScopeRef`        | 此处可见哪些数据？                 | 嵌套词法数据环境；路径查找、自身作用域写入、遮蔽、可见快照；不承载 validation/source/reaction/action sidecar 状态                  |
+| `Value`           | 此处的值如何读取或派生？           | literal / `${expr}` / template / array / object 的统一求值和依赖跟踪；`name` / field path 是常见绑定锚点，不是写入或校验执行 owner |
+| `Resource`        | 运行时是否拥有此处的值生产和发布？ | 拥有生命周期的值生产者：将 action-backed source 或 formula 映射为 scope 上的命名值；附带动态 status 管理                           |
+| `Reaction`        | 值变化是否触发后续动作？           | 被监听 Value 变化到 Action 系统的桥；基于依赖的 watch，条件满足时通过 Capability 派发动作                                          |
+| `Capability`      | 谁有权执行某个效果？               | 进入 schema-authored command/effect 系统的控制权；ActionSchema 是具体 action 的建模，Capability 负责派发、权限和目标定位           |
+| `Host Projection` | 此处可见哪些只读宿主快照？         | 将宿主拥有的只读快照数据引入 schema 可见作用域；复杂宿主对象的集成方案                                                             |
 
 原语补充说明：
 
 - `Template` 是唯一的结构原语，编译时产出不可变模板，运行时永不修改。一个 `Template` 可多次实例化，每次产生独立的运行时状态。当前主要由 `CompiledTemplate` 和 `TemplateNode` 承载。
-- `ScopeRef` 是嵌套数据域，界面由数据渲染。不是行为注册表。
-- `Value` 是 Flux 的通用求值层。name 是值在 scope 中的定位方式，也是值约束（validation）的绑定锚点。任何 schema 字段中的 `${...}` 都经过统一的编译路径，覆盖节点属性、meta 控制、action 守卫和参数、data-source 配置、API 参数等。验证规则参数（`required`、`min`、`max`、`pattern` 等）同样走这条编译路径，支持动态表达式和依赖跟踪。静态值零开销折叠。响应式依赖跟踪是 Value 的内建能力：求值时自动收集依赖，依赖变化时重新求值。验证规则的执行编排（字段参与、级联策略、生命周期）属于领域运行时，不是原语层面的关注点。
-- `Resource` 是"拥有生命周期的值生产者，通过写 scope 发布其产出"。远程调用是 action Resource 的一种值来源，formula Resource 则通过表达式求值生产值。两者共享发布管道和依赖追踪。
-- `Reaction` 是 Value 变化到 Action 派发的桥梁。
-- `Capability` 是唯一对作者可见的效果权限路径。
+- `ScopeRef` 是嵌套词法数据域，界面由数据渲染。它只负责数据可见性和当前作用域写入，不统一管理所有运行时状态，也不是行为注册表。
+- `Value` 是 Flux 的通用求值层。任何 schema 字段中可表达为 literal / `${...}` / template / array / object 的部分都应经过统一的编译路径，覆盖节点属性、meta 控制、action 守卫和参数、data-source 配置、API 参数等。`name` / field path 是 editable field、Resource 发布和 validation 绑定的常见锚点，但 Value 本身只负责读取、构造、派生和依赖收集，不拥有写入生命周期、validation 状态或 action 触发。验证规则中可表达为值的部分不引入新原语；当前代码中的 validation 主要通过 `CompiledFormValidationModel` 持有 rule literals、field paths 和 dependency paths。静态值零开销折叠。响应式依赖跟踪是 Value 的内建能力：求值时自动收集依赖，依赖变化时重新求值。
+- `Resource` 是"拥有生命周期的值生产者，通过写 scope 发布其产出"。远程 producer 请求应作为 `ajax` action invocation 进入 Action/Capability / `ActionRuntimeAdapter` 边界取得值，formula Resource 通过表达式求值生产值；但 Resource 自身仍拥有刷新、轮询、stale/drop、status 和 publish-to-scope 生命周期，不等同于一次普通 action dispatch。
+- `Reaction` 是被监听 Value 变化到 Action 派发的桥梁，不用于值派生，也不用于 validation 依赖重校验。
+- `Capability` 是 schema-authored command/effect 的权限路径。字段编辑、owner-local 写入和 Resource 发布属于值修改/发布侧；只有当 schema 显式声明 `setValue`、`submitForm`、`ajax` 等 action 时，它们才进入 Capability / Action Algebra。
 - `Host Projection` 是只读快照数据，不是宿主桥接对象或可变会话容器。
 
 ## 阅读须知
@@ -65,7 +65,7 @@
 9. 保持 `Semantic Lifecycle Entry` 由语义节点（如表单、页面、对话框、语义宿主）拥有，而非将完整的业务管道分散到 UI 触发器中。
 10. 保持 `Resource` 发布围绕 `name` 作为身份标识和默认发布路径收敛，`mergeToScope: true` 作为唯一收窄的特殊发布扩展，`statusPath` 作为只读状态摘要。
 11. 保持宿主边界严格：通过只读 `Host Projection` 读取，通过 `Capability` 写入，bridge/controller/protocol 对象保持宿主私有。
-12. 保持验证规则参数编译统一走 `Value` 的编译路径，验证执行编排属于领域运行时，不扩展原语集。
+12. 保持 validation 拆成 value axis 与 owner axis：字段值读取、field path 绑定和可求值规则参数不引入新原语；编译后的验证图、字段参与、错误状态、级联和生命周期属于领域运行时，不扩展原语集。
 
 ## 契约分层规则
 
@@ -119,8 +119,9 @@
 | JSON/XML 编写 schema                             | `Authoring Model`                    | 不属于 Execution Model 分类体系              |
 | `Final Execution Schema`                         | 进入 `Flux` `Execution Model` 的边界 | 已组装的执行契约，不是原语                   |
 | 表达式和模板插值                                 | `Flux` `Execution Model`             | `Value` 的 `Primitive-Owned Surface`         |
-| 验证规则参数（required/min/max/pattern 等）      | `Flux` `Execution Model`             | `Value` 的 `Primitive-Owned Surface`         |
-| 验证执行编排（字段参与、级联、生命周期）         | `Flux` `Execution Model`             | 领域运行时（`Derived Runtime System`）       |
+| 字段 `name` / field path 绑定和可求值规则参数    | `Flux` `Execution Model`             | `Value` 表面，被 validation owner 消费       |
+| 验证图、规则执行、字段参与、级联、生命周期       | `Flux` `Execution Model`             | 领域运行时（`Derived Runtime System`）       |
+| 用户编辑、`FormRuntime.setValue`、`scope.update` | `Flux` `Execution Model`             | owner-local 值写入路径，不等同于 action 触发 |
 | `Action Algebra`                                 | `Flux` `Execution Model`             | `Capability` 之上的 `Derived Runtime System` |
 | `ApiSchema`                                      | `Flux` `Execution Model`             | `ajax` 动作的内部传输描述符                  |
 | `Operation Control`                              | `Flux` `Execution Model`             | `Derived Runtime System`                     |
@@ -147,6 +148,22 @@
 - `data-source` = `Resource` 声明，不是片段组装
 
 `visible` 和 `when` 不是同义词。`dynamic-renderer` 不是第二个 `Resource` 表面。
+
+### 值修改与动作触发
+
+值的修改侧和动作触发侧必须分开建模。
+
+| 轴线               | 典型入口                                                                        | 语义                                                                                |
+| ------------------ | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 值读取 / 派生      | `Value`、`${expr}`、field `name` 读取                                           | 从 `ScopeRef` 可见数据中读取、构造或派生结果                                        |
+| owner-local 值写入 | 用户编辑字段、`FormRuntime.setValue`、`PageStore.updateData`、`ScopeRef.update` | 修改当前数据 owner 的值，并发布 store/scope change                                  |
+| 生产者发布         | `Resource` / `data-source`                                                      | 运行时拥有生产生命周期，并将权威结果发布到命名绑定                                  |
+| 命令 / 效果触发    | `ActionSchema`、`Capability`、`Action Algebra`                                  | 执行 schema-authored command，例如 `ajax`、`setValue`、`submitForm`、导航或宿主命令 |
+| watch 到效果       | `Reaction`                                                                      | 监听一个 Value 随时间变化，并在条件满足时派发 action                                |
+
+同一次 scope/store 变化可能来自字段编辑、Resource 发布、`setValue` action、宿主快照替换或 owner 内部生命周期。变化本身只说明值已经改变，不说明它是 action，也不会自动触发任意 action。依赖命中只会驱动对应订阅者重新求值、刷新 Resource、运行 Reaction 的 watch 判断，或让 validation owner 执行 owner-local 依赖重校验。
+
+`setValue` action 只是一个 Capability-backed 入口，最终仍落到 owner-local 值写入路径。它不能反过来定义所有值修改语义。
 
 ## `Final Execution Schema` 边界
 
@@ -206,16 +223,34 @@
 
 七个原语不是独立的功能特性，它们共同构成一个执行模型。
 
+### Validation 与原语
+
+Validation 不是第八个原语，也不能只归入 `Value`。
+
+| 关注点                                                   | 归属                                                                                         |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| 字段当前值的读取                                         | `Value` 通过 `name` / field path 从当前 owner 的 `ScopeRef` 读取                             |
+| 静态或可求值的规则参数                                   | 可表达为值的部分复用 `Value` 编译/求值模型；不形成独立 validation primitive                  |
+| 规则图、遍历顺序、依赖反查                               | `CompiledFormValidationModel`，属于 validation owner 的派生运行时结构                        |
+| 字段参与、hidden policy、runtime registration            | `ValidationScopeRuntime` / `FormRuntime` 等 owner runtime                                    |
+| 错误、validating、touched、dirty、visited、submit gating | owner-local store/state，不属于 `ScopeRef` 数据环境                                          |
+| equals/requiredWhen 等依赖字段重校验                     | validation owner 的 dependents 图，不是 `Reaction`                                           |
+| async validation 的远程或自定义检查                      | 规则执行体可以通过 `Capability` 派发 action，但结果回写 validation state，而不是任意动作编排 |
+| 表单提交和 validate-error 分支                           | 表单节点拥有的 `Semantic Lifecycle Entry`，可在验证后进入 `Action Algebra`                   |
+
+因此，validation 的准确模型是：`Value` 提供值轴，`Data Domain Owner` / `ValidationScopeRuntime` 提供 owner 轴，`Capability` 只在 async rule 或 submit lifecycle 需要执行命令时参与。
+
 ### 执行循环
 
 1. `Template` 锚定结构、渲染器所有权和词法边界。它编译一次，运行时实例化零次或多次。
 2. `ScopeRef` 定义每个边界处可见的词法数据。
 3. `Host Projection` 可以将只读宿主快照字段引入该可见作用域。
-4. `Value` 通过 name 或 `${expr}` 从 `ScopeRef` 读取和构造值，求值时自动收集依赖，name 同时绑定值约束。
-5. `Resource` 使用运行时拥有的生命周期将一个 `Logical Value` 发布回作用域。
-6. `Reaction` 监视 `Value` 结果，当依赖命中时将可能的后续响应排入队列。
-7. `Capability` 是这些后续响应跨越到效果层面的唯一路径。
-8. 效果仅通过作用域写入、`Resource` 定向、组件定向或宿主快照替换重新进入 `Flux`。
+4. `Value` 通过 `name` / field path 或 `${expr}` 从 `ScopeRef` 读取和构造值，求值时自动收集依赖。
+5. owner-local 写入路径可以更新当前 owner 数据；这属于数据 owner 的写入语义，不等同于 action 触发。
+6. `Resource` 使用运行时拥有的生命周期将一个 `Logical Value` 发布回作用域。
+7. `Reaction` 监视 `Value` 结果，当依赖命中时将可能的后续响应排入队列。
+8. `Capability` 是 schema-authored command/effect 跨越到效果层面的权限路径。
+9. 效果结果可以通过 owner-local 写入、`Resource` 发布、组件实例定向或宿主快照替换重新进入 `Flux` 的数据侧。
 
 ### 依赖传播
 
@@ -228,6 +263,8 @@
 | `Reaction` | 重新评估被监视的值，然后才决定是否通过 `Capability` 分发 |
 
 仅依赖变化本身不会直接分发任意动作。从数据流跨越到效果层面，仍需通过 `Reaction` 或 `Semantic Lifecycle Entry`。
+
+Validation 依赖是独立的 owner-local 系统。当前代码通过 `CompiledFormValidationModel.dependents` 和 `FormRuntime` / `ValidationScopeRuntime` 的重校验流程处理字段间依赖，不使用 `ScopeDependencySet`、`scopeChangeHitsDependencies` 或 `Reaction` 作为 validation 级联机制。
 
 ### 运行图景
 
@@ -256,6 +293,7 @@
 - 基于已编译 `Template` 的结构和生命周期
 - 基于 `ScopeRef` 的 `Value` 求值
 - 通过 `Resource` 进行的运行时拥有的发布
+- 通过 data owner / validation owner 派生系统进行的 owner-local 值写入、状态维护和校验协调
 - 通过 `Reaction` 进行的被监听后续响应分发
 - 通过 `Capability` 进行的效果权限控制
 - 通过 `Host Projection` 引入的只读宿主快照
@@ -284,13 +322,13 @@
 
 以下系统是重要的，但它们从原语集派生而来，而非被提升为原语：
 
-| 系统                                             | 角色                                                                       | 主要文档                                                                                      |
-| ------------------------------------------------ | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `Action Algebra`                                 | 组合、分支、聚合和分类 `Capability` 分发                                   | `docs/architecture/action-algebra-formal-spec.md`                                             |
-| `Operation Control`                              | 位于传输层之上、消费策略之下的共享超时/取消/重试/去重基础设施              | `docs/architecture/api-data-source.md`                                                        |
-| `Semantic Lifecycle Entry`                       | 节点拥有的语义入口点，如表单提交、页面进入、对话框打开或宿主特定的语义激活 | `docs/architecture/flux-design-principles.md`                                                 |
-| `FormRuntime` / `PageRuntime` / `SurfaceRuntime` | 基于原语集构建的领域化执行表面                                             | `docs/architecture/flux-core.md`、`docs/architecture/form-validation.md`                      |
-| 调试器运行时和复杂宿主接线                       | 检查、工具链和宿主协议层                                                   | `docs/architecture/debugger-runtime.md`、`docs/architecture/complex-control-host-protocol.md` |
+| 系统                                             | 角色                                                                                 | 主要文档                                                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `Action Algebra`                                 | 组合、分支、聚合和分类 `Capability` 分发                                             | `docs/architecture/action-algebra-formal-spec.md`                                             |
+| `Operation Control`                              | 位于传输层之上、消费策略之下的共享超时/取消/重试/去重基础设施                        | `docs/architecture/api-data-source.md`                                                        |
+| `Semantic Lifecycle Entry`                       | 节点拥有的语义入口点，如表单提交、页面进入、对话框打开或宿主特定的语义激活           | `docs/architecture/flux-design-principles.md`                                                 |
+| `FormRuntime` / `PageRuntime` / `SurfaceRuntime` | 基于原语集构建的领域化执行表面；其中 validation/data owner 语义由更窄 owner 文档定义 | `docs/architecture/flux-core.md`、`docs/architecture/form-validation.md`                      |
+| 调试器运行时和复杂宿主接线                       | 检查、工具链和宿主协议层                                                             | `docs/architecture/debugger-runtime.md`、`docs/architecture/complex-control-host-protocol.md` |
 
 这些系统可以演进，而不会增加原语数量。
 
@@ -333,13 +371,15 @@
 7. `Reaction` 用于被监听的后续响应，不用于值派生。
 8. `Resource` 和 `Reaction` 的所有权遵循 `Lexical Ownership`。
 9. `Host Projection` 是只读快照数据。
-10. `Schema` 仅通过 `Capability` 产生可见效果。
-11. `Capability` 是权限原语；`Action Algebra` 是其上层的派生控制流。
-12. 依赖跟踪是 `Value` 原语的内建设计语义；依赖变化不直接分发任意动作。
-13. 新的领域复杂度不会自动创建新原语。
-14. `ApiSchema` 是 `ajax` 动作使用的内部传输描述符；所有运行时执行都通过动作分发进行。`Operation Control` 始终是共享的执行控制层。
-15. `Semantic Lifecycle Entry` 在存在拥有者语义节点边界时，属于该节点。
-16. 宿主集成遵循只读 `Host Projection` 加 `Capability` 写入边界。
+10. Schema-authored command/effect 仅通过 `Capability` 产生可见效果。
+11. 值修改和 action 触发是不同轴线；`setValue` action 是进入 owner-local 写入路径的一个 Capability-backed 入口，不定义所有值写入。
+12. `Capability` 是权限原语；`Action Algebra` 是其上层的派生控制流。
+13. 依赖跟踪是 `Value` 原语的内建设计语义；依赖变化不直接分发任意动作。
+14. Validation 依赖重校验属于 validation owner 的派生系统，不是 `Reaction`。
+15. 新的领域复杂度不会自动创建新原语。
+16. `ApiSchema` 是 `ajax` 动作使用的内部传输描述符；所有 schema-authored command 执行都通过动作分发进行。`Operation Control` 始终是共享的执行控制层。
+17. `Semantic Lifecycle Entry` 在存在拥有者语义节点边界时，属于该节点。
+18. 宿主集成遵循只读 `Host Projection` 加 `Capability` 写入边界。
 
 ## 相关文档
 
@@ -355,3 +395,4 @@
 | `source`、`data-source`、`Resource` 和 `Reaction` 的 Schema 细节 | `docs/architecture/api-data-source.md`               |
 | 宿主快照和可编辑宿主协议细节                                     | `docs/architecture/complex-control-host-protocol.md` |
 | 表单拥有的生命周期和校验行为                                     | `docs/architecture/form-validation.md`               |
+| 数据 owner、validation 和 staged/live 编辑边界                   | `docs/architecture/data-domain-owner.md`             |

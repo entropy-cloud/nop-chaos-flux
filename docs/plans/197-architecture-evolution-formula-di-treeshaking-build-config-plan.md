@@ -85,7 +85,7 @@
 
 ### Phase 1 - Formula Registry Isolation
 
-Status: planned
+Status: completed
 Targets: `packages/flux-formula/src/registry.ts`, `packages/flux-formula/src/compile/formula-compiler.ts`, `packages/flux-formula/src/evaluator.ts`, `packages/flux-runtime/src/runtime-factory.ts`
 
 - Item Types: `Fix | Decision | Proof`
@@ -104,7 +104,7 @@ Exit Criteria:
 
 ### Phase 2 - Build Config Baseline Cleanup
 
-Status: planned
+Status: completed
 Targets: 根 `package.json`, 根 `tsconfig.json`, `tsconfig.base.json`, package-level `tsconfig.json`, `docs/architecture/frontend-baseline.md`
 
 - Item Types: `Fix | Decision | Proof`

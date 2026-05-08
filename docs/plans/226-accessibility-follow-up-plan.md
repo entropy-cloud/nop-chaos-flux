@@ -1,6 +1,6 @@
 # 226 Accessibility Keyboard And Label Integrity Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-08
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,20-accessibility.md}`
 > Related: `docs/plans/{195-accessibility-compliance-remediation-plan.md,212-renderer-workbench-contract-and-accessibility-closure-plan.md,221-deep-audit-2026-05-07-confirmed-defect-remediation-plan.md}`
@@ -11,7 +11,7 @@
 
 ## Current Baseline
 
-- 维度 20 的 P1 retained set 包括：table row click mouse-only、TreeRenderer/tree-controls keyboard model 不完整、condition-builder selected badge delete mouse-only 且 between inputs 无名、chart clickable div 无 keyboard/name、spreadsheet corner/column headers mouse-only、flow inspector branch card clickable div、word editor dialog form controls 缺程序化 labels、report designer drag/drop workflow 无 keyboard alternative。
+- 维度 20 的 P1 retained set 原包括：table row click mouse-only、TreeRenderer/tree-controls keyboard model 不完整、condition-builder selected badge delete mouse-only 且 between inputs 无名、chart clickable div 无 keyboard/name、spreadsheet corner/column headers mouse-only、flow inspector branch card clickable div、word editor dialog form controls 缺程序化 labels、report designer drag/drop workflow 无 keyboard alternative；当前 live baseline 已为这些 retained keyboard/label defects 补齐 supported path。
 - 维度 20 还保留了 P2/P3 label/association residuals：pagination select label、ArrayEditor/KeyValue `aria-describedby` / `aria-errormessage`、checkbox-group source error live association、table loading status text、spreadsheet find/cell labels、debugger JSON toggles labels、carousel accessible name。
 - `212` 已关闭 earlier workbench/accessibility families；`WrappedFieldAction` 与 CodeEditor toolbar “无键盘”在 `full-8` 中被明确驳回，本计划不重开。
 - `195` 已经建立 tree renderer 的基础 ARIA semantics；本计划只拥有 `full-8` 新保留的 keyboard/label residuals。
@@ -52,18 +52,18 @@
 
 ### Workstream 1 - Add Keyboard Equivalents For Retained Mouse-Only Paths
 
-Status: partially completed
+Status: completed
 Targets: table/tree/chart/spreadsheet/flow/report paths, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
 - [x] [Fix] Add supported keyboard activation/focus behavior for retained mouse-only table row, chart, spreadsheet header, and flow inspector paths.
-- [ ] [Fix] Add a supported keyboard alternative for the retained report designer drag/drop field workflow.
+- [x] [Fix] Add a supported keyboard alternative for the retained report designer drag/drop field workflow.
 - [x] [Proof] Add focused DOM/a11y tests for the repaired keyboard paths.
 
 Exit Criteria:
 
-- [ ] The retained mouse-only or drag-only P1 paths have supported keyboard equivalents.
+- [x] The retained mouse-only or drag-only P1 paths have supported keyboard equivalents.
 - [x] Focused tests prove the final keyboard/focus behavior.
 - [x] No owner-doc update required; the stable baseline is a DOM-semantic repair inside existing widget contracts.
 - [x] `docs/logs/` 对应日期条目已更新。
@@ -88,7 +88,7 @@ Exit Criteria:
 
 ### Workstream 3 - Verification And Closure Audit
 
-Status: in progress
+Status: completed
 Targets: in-scope renderers/tests/docs, this plan
 
 - Item Types: `Proof | Decision`
@@ -101,16 +101,16 @@ Exit Criteria:
 
 - [x] Focused verification is recorded for keyboard and label/status families.
 - [x] Workspace verification passes.
-- [ ] Independent closure audit confirms no remaining plan-owned blocker.
+- [x] Independent closure audit confirms no remaining plan-owned blocker.
 - [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
-- [ ] All in-scope retained accessibility defects from `full-8` are closed.
+- [x] All in-scope retained accessibility defects from `full-8` are closed.
 - [x] Focused verification exists for keyboard and label/status families.
 - [x] No in-scope retained defect is silently deferred or downgraded.
 - [x] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
-- [ ] Independent closure audit confirms no remaining in-scope blocker.
+- [x] Independent closure audit confirms no remaining in-scope blocker.
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -125,22 +125,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: retained P2 label/association work landed with focused proofs, and retained P1 keyboard work landed for table/chart/spreadsheet/flow inspector. The remaining report-designer non-drag field insertion path still lacks the renderer-to-command plumbing needed for closure, so the plan stays partially completed.
+Status Note: retained P2 label/association work and the final retained P1 keyboard path are now closed in live code. `report-field-panel` exposes a real button-based insertion path for the current selection, wired through the published `report-designer:dropFieldToTarget` capability with focused renderer tests, and the fresh independent closure audit found no remaining in-scope blocker.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1fa140f1cffevDG2I4iShJZFF5`)
-- Evidence: focused Vitest proof and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green; the independent audit confirmed the live report-designer field panel/canvas path is still drag-only, so the plan cannot close yet without a successor-backed scope change or implementation.
+- Evidence: focused Vitest proof and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green; the latest independent re-audit (`ses_1f9989877ffeU5NSN36IbZlAeo`) confirmed `packages/report-designer-renderers/src/field-panel-renderer.tsx` now implements the report-designer keyboard alternative with proof in `src/field-panel-renderer.test.tsx`, leaving no remaining plan-owned blocker.
 
 Follow-up:
 
-- Successor needed for retained report-designer keyboard insertion path if closure requires a non-drag alternative.
-
-## Deferred But Adjudicated
-
-### Report Designer Non-Drag Field Insertion
-
-- Classification: `out-of-scope improvement`
-- Why Not Blocking Closure: the live renderer field panel only starts drag state and the live canvas only consumes drop state; there is no existing field-panel command path that can invoke `report-designer:dropFieldToTarget` against the current selection without first extending renderer/host plumbing.
-- Successor Required: `yes`
-- Successor Path: `docs/plans/226-accessibility-follow-up-plan.md` closure successor or dedicated report-designer follow-up
+- no remaining plan-owned work

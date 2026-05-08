@@ -83,7 +83,7 @@
 
 ### Phase 1 - Field Chrome Accessibility
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/field-frame.tsx`, `packages/flux-renderers-form/src/renderers/shared/error.tsx`, `packages/flux-renderers-form/src/renderers/shared/label.tsx`, `packages/flux-renderers-form/src/renderers/input.tsx`
 
 - Item Types: `Fix | Proof`
@@ -102,7 +102,7 @@ Exit Criteria:
 
 ### Phase 2 - Composite Control Accessibility
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/condition-builder/`, `packages/flux-renderers-form-advanced/src/composite-field/array-field.tsx`, `packages/flux-renderers-form-advanced/src/array-editor.tsx`, `packages/flux-renderers-form-advanced/src/key-value.tsx`
 
 - Item Types: `Fix | Proof`
@@ -123,7 +123,7 @@ Exit Criteria:
 
 ### Phase 3 - Data Renderer Accessibility
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/tree-renderer.tsx`, `packages/flux-renderers-data/src/table-renderer/table-header-row.tsx`, `packages/flux-renderers-data/src/table-renderer/table-loading-overlay.tsx`
 
 - Item Types: `Fix | Proof`

@@ -1,6 +1,6 @@
 # 227 Safety And Performance Redlines Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-08
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,15-security-performance.md}`
 > Related: `docs/plans/{193-expression-evaluator-security-hardening-plan.md,214-report-designer-performance-hot-path-closure-plan.md,221-deep-audit-2026-05-07-confirmed-defect-remediation-plan.md}`
@@ -88,7 +88,7 @@ Exit Criteria:
 
 ### Workstream 3 - Verification And Closure Audit
 
-Status: in progress
+Status: completed
 Targets: in-scope packages/tests/docs, this plan
 
 - Item Types: `Proof | Decision`
@@ -101,7 +101,7 @@ Exit Criteria:
 
 - [x] Focused verification is recorded for both retained redline families.
 - [x] Workspace verification passes.
-- [ ] Independent closure audit confirms no remaining plan-owned blocker.
+- [x] Independent closure audit confirms no remaining plan-owned blocker.
 - [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
@@ -111,7 +111,7 @@ Exit Criteria:
 - [x] Focused verification exists for each landed family.
 - [x] No in-scope retained defect is silently deferred or downgraded.
 - [x] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
-- [ ] Independent closure audit confirms no remaining in-scope blocker.
+- [x] Independent closure audit confirms no remaining in-scope blocker.
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -126,13 +126,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: the redline fixes and their focused proofs are landed, and workspace verification is green, but the fresh closure audit did not yet find enough explicit per-family closure evidence to mark the plan completed without another targeted re-audit.
+Status Note: the retained redline fixes, their focused proofs, owner-doc decisions, and workspace verification are all now green. The final independent closure audit confirms no remaining plan-owned blocker, so this plan is complete.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1fa140f1cffevDG2I4iShJZFF5`)
-- Evidence: live code and `docs/logs/2026/05-08.md` confirm landed fail-closed/bounded-cost fixes across value adaptation, chart style sanitization, regex validation, API-cache guards, spreadsheet batch/search, and flow tree layout, plus green workspace verification; the independent audit still recommended keeping the plan open until the final closure proof is re-audited directly against each retained family.
+- Reviewer / Agent: independent general-agent closure audits (`ses_1f933bba7ffexQUFrxhY3HDpxU`, `ses_1f9299a90ffeL6vhqAkq4MCyYP`)
+- Evidence: the earlier audit narrowed the only remaining blocker to missing focused proof for the bounded-cost spreadsheet batch-write path; that proof now lands in `packages/spreadsheet-core/src/__tests__/batch-cell-operations.test.ts`, and the final re-audit confirmed every retained dimension-15 redline now has landed code, focused proof, owner-doc decision, and green workspace verification evidence.
 
 Follow-up:
 
-- Run one more targeted closure pass that re-links each retained dimension-15 item to its focused proof, then rerun closure audit.
+- None.

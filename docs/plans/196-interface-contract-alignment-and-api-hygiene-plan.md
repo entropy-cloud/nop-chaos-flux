@@ -78,7 +78,7 @@
 
 ### Phase 1 - Hook And Interface Drift
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/renderer-hooks.ts`, `packages/flux-react/src/hooks.ts`, `docs/references/renderer-interfaces.md`
 
 - Item Types: `Fix | Proof | Decision`
@@ -96,7 +96,7 @@ Exit Criteria:
 
 ### Phase 2 - Action And Request API Hygiene
 
-Status: planned
+Status: completed
 Targets: `packages/flux-action-core/src/action-dispatcher/action-execution.ts`, `packages/flux-action-core/src/action-dispatcher/action-runners.ts`, `packages/flux-runtime/src/async-data/request-runtime.ts`, `docs/architecture/action-scope-and-imports.md`
 
 - Item Types: `Fix | Proof`
@@ -117,7 +117,7 @@ Exit Criteria:
 
 ### Phase 3 - Public Surface And Schema Typing Hygiene
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/src/index.ts`, `packages/flux-runtime/src/index.ts`, `packages/flux-core/src/workbench/types.ts`, `packages/flux-core/src/types/schema.ts`, `packages/flux-renderers-basic/src/schemas.ts`
 
 - Item Types: `Fix | Proof | Decision`

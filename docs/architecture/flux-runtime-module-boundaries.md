@@ -225,7 +225,7 @@ Note:
   - request execution (`executeApiSchema`)
   - adaptor application
   - request cancellation plumbing
-  - consumed by: ajax actions, form submit, async validation, data-source
+  - shared request substrate behind ajax actions, form submit actions, async validation actions, and data-source producer requests
 - `packages/flux-runtime/src/async-data/request-runtime-adaptor.ts`
   - request/response adaptor shaping shared by request execution paths
 - `packages/flux-runtime/src/async-data/api-cache.ts`
@@ -234,7 +234,9 @@ Note:
   - runtime-local async run governance shared by data-source, reaction, and async validation paths
   - internal substrate only; not evidence of a separate request/data package owner
 - `packages/flux-runtime/src/async-data/source-executor.ts`
-  - source execution orchestration (evaluating source expressions, managing source lifecycle)
+  - anonymous source execution body orchestration
+  - shared runtime substrate for source-enabled props; React host helpers should call into this path rather than own a separate source semantic model
+  - evaluates formula sources directly and routes action-backed source bodies through action dispatch
 - `packages/flux-runtime/src/async-data/data-source-state.ts`
   - data source state types and utilities
 - `packages/flux-runtime/src/async-data/data-source-runtime-utils.ts`
@@ -257,16 +259,15 @@ Note:
 ### Source and reaction runtime (`flux-runtime`)
 
 - `packages/flux-runtime/src/async-data/data-source-runtime.ts`
-  - api-backed source execution
-  - source status publication and result mapping application
-  - request dependency tracking for runtime-owned sources
-  - runtime normalization of `SourceSchema` top-level `api` into action-dispatch input
-  - uses `executeAction` port to consume action-core dispatcher
+  - barrel for formula-backed and action-backed data-source controllers plus anonymous source execution
+  - does not own a second action executor
 - `packages/flux-runtime/src/async-data/source-registry.ts`
   - scope-scoped source registration and replacement
   - source invalidation/refresh routing
   - source debug snapshot ownership
   - migrated from `let disposed = false` to `AbortController` for async cancellation
+- action-backed remote data-source controllers own refresh/poll/status/publication lifecycle; their remote producer requests should target the ajax action / `ActionRuntimeAdapter` path while preserving owner-local orchestration
+- source-enabled prop helpers in `flux-react` are host wiring over these runtime-owned source modules, not an ownership boundary of their own
 - `packages/flux-runtime/src/async-data/reaction-runtime.ts`
   - scope-scoped reaction registration and replacement
   - reaction scheduling / loop guard behavior

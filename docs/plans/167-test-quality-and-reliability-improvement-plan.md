@@ -125,7 +125,7 @@ Exit Criteria:
 
 ### Phase 4 - Increase test-support Adoption (P1)
 
-Status: cancelled
+Status: completed
 Targets: `packages/flux-react/src/test-support-runtime.tsx`, `packages/flux-react/src/test-support-core.tsx`, `packages/flow-designer-renderers/src/test-support.tsx`, 多个测试文件
 
 - [x] 审查结论：test-support uplift 属于非阻塞治理优化，不再作为本计划 closure 必需项

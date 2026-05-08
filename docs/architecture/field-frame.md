@@ -54,7 +54,7 @@ Multiple hint types with priority:
 
 1. **Error** - validation failure (highest priority, shown when `showError` is true)
 2. **Hint** - focus-time guidance (shown when control is focused and no error)
-3. **Description** - always-visible helper text (shown when no error and no hint)
+3. **Description** - fallback helper text (shown when no error and the hint is not currently visible)
 
 **Remark** and **LabelRemark** are independent icon tooltips that are always visible and do **not** participate in the error/hint/description priority chain.
 
@@ -121,7 +121,7 @@ Key props:
 | `label`              | `ReactNode?`                          | Resolved field label content. In the common path this already comes from normalized `props.label` / `regions.label` via `NodeFrameWrapper`.   |
 | `required`           | `boolean?`                            | Explicit required override. The final required marker may also come from compiled validation rules such as `requiredWhen` / `requiredUnless`. |
 | `hint`               | `ReactNode?`                          | Hint text shown when no error is present and the control is focused.                                                                          |
-| `description`        | `ReactNode?`                          | Description text shown when no error and no hint are present.                                                                                 |
+| `description`        | `ReactNode?`                          | Fallback helper text shown when no error is present and the hint is not currently visible.                                                    |
 | `remark`             | `FieldRemarkProps?`                   | Icon tooltip rendered next to the control. Always visible, independent of error/hint/description priority.                                    |
 | `labelRemark`        | `FieldRemarkProps?`                   | Icon tooltip rendered next to the label. Always visible, independent of error/hint/description priority.                                      |
 | `layout`             | `'default' \| 'checkbox' \| 'radio'?` | Layout mode. `checkbox`/`radio` render a `<fieldset>` + `<legend>` wrapper; `default` renders `<label>` + `<span>`.                           |
@@ -148,6 +148,7 @@ When `name` is provided, FieldFrame manages validation state internally:
 5. **Behavior fallback**: `validationBehavior` prop → field behavior → form behavior → default (`{ triggers: ['blur'], showErrorOn: ['touched', 'submit'] }`)
 6. **Conditional required tracking**: FieldFrame subscribes to `form.values` only when the field's compiled validation rules include `requiredWhen` or `requiredUnless`; `isFieldEffectivelyRequired(...)` then decides the final marker without broad-subscribing every field to all value changes
 7. **Error visibility**: `shouldShowFieldError(behavior, state)` checks whether any trigger in `showErrorOn` matches the current field state
+8. **Hint visibility and ARIA wiring**: hint content is only rendered while the real control is focused; when hint is hidden, `description` becomes the fallback helper surface and `aria-describedby` switches between `error`, `hint`, and `description` ids so the live accessibility chain matches the visible helper text
 
 This means renderers do **not** need to manually manage outer `error`/`showError` chrome. In the common path they expose normalized field props, opt into `wrap: true`, and the wrapper layer passes `name` into `FieldFrame`.
 
@@ -255,9 +256,9 @@ export function FieldFrame(props: FieldFrameProps) {
         <span data-slot="field-error">{error.message}</span>
       ) : fieldState.validating ? (
         <span data-slot="field-hint">Validating...</span>
-      ) : !error && hint ? (
+      ) : focused && !error && hint ? (
         <span data-slot="field-hint">{hint}</span>
-      ) : !error && !hint && description ? (
+      ) : !error && description ? (
         <span data-slot="field-description">{description}</span>
       ) : null}
     </Tag>
@@ -370,7 +371,7 @@ This keeps the radio-group renderer focused on rendering the control body while 
 | `data-slot="field-control"`     | Control wrapper                                 |
 | `data-slot="field-error"`       | Error message                                   |
 | `data-slot="field-hint"`        | Hint/focus message or "Validating..." indicator |
-| `data-slot="field-description"` | Description text                                |
+| `data-slot="field-description"` | Fallback helper text when hint is not visible   |
 
 ### Data Attributes (State)
 
@@ -394,7 +395,7 @@ FieldFrame corresponds to AMIS's `FormItem` / `FormItemWrap` — the per-field c
 | Required indicator            | Yes                                    | Yes                                                                           |
 | Error message                 | Yes                                    | Yes                                                                           |
 | Hint (focus)                  | Yes                                    | Yes                                                                           |
-| Description                   | Yes                                    | Yes                                                                           |
+| Description fallback          | Yes                                    | Yes                                                                           |
 | Remark (icon tooltip)         | Yes                                    | Yes                                                                           |
 | LabelRemark (label tooltip)   | Yes                                    | Yes                                                                           |
 | Layout modes                  | 5 modes (in FormItem)                  | CSS-based; form-level `mode`/`labelAlign`/`labelWidth` propagated via context |

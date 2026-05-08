@@ -68,7 +68,7 @@
 
 ### Phase 1 - Workbench Reactivity And Scope Stability
 
-Status: planned
+Status: completed
 Targets: `packages/report-designer-renderers/src/`, `packages/flux-react/src/workbench/`, composite scope visibility code
 
 - Item Types: `Fix | Proof`
@@ -85,7 +85,7 @@ Exit Criteria:
 
 ### Phase 2 - Renderer Contract And FieldFrame Ownership
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/node-frame-wrapper.tsx`, affected wrapped field renderers, `packages/word-editor-renderers/src/word-editor-page.tsx`
 
 - Item Types: `Fix | Proof`
@@ -104,7 +104,7 @@ Exit Criteria:
 
 ### Phase 3 - Report Field Panel Style Contract And Workbench I18n
 
-Status: planned
+Status: completed
 Targets: `packages/report-designer-renderers/src/report-field-panel.css`, `packages/report-designer-renderers/src/report-field-panel.tsx`, registered renderer path, representative workbench shell files
 
 - Item Types: `Fix | Proof`

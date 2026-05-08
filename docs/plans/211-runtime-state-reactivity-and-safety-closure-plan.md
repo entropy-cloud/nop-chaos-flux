@@ -66,7 +66,7 @@
 
 ### Phase 1 - Close State-Source And Reactive-Precision Defects
 
-Status: in progress
+Status: completed
 Targets: `use-surface-renderer.ts`, flow-designer shell files, `use-code-editor-binding.ts`, `detail-field.tsx`, `key-value.tsx`, `array-editor.tsx`, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
@@ -87,7 +87,7 @@ Exit Criteria:
 
 ### Phase 2 - Remove Render-Phase Side Effects And Validation Participation Drift
 
-Status: in progress
+Status: completed
 Targets: `node-renderer.tsx`, `form-runtime-validation.ts`, `form-runtime-field-ops.ts`, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`

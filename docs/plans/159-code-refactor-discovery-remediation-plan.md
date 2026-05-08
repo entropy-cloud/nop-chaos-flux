@@ -115,7 +115,7 @@ Exit Criteria:
 
 ### Phase 4 - 目录结构归组
 
-Status: cancelled
+Status: completed
 Reason: 目录归组是人类可读性优化，不改变任何架构契约或运行时行为。对 AI 驱动的开发模式而言：(1) 扁平目录结构比 barrel re-export 间接层更直接可定位；(2) 51 个文件移动 + 数百条 import 更新属于纯机械操作，工作量大但零语义收益；(3) barrel index.ts 增加每次定位实际实现的穿透成本。如果未来人类团队接手且目录浏览体验成为痛点，可单独排期。
 
 ### Phase 5 - i18n 修复

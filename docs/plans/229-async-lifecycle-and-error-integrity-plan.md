@@ -1,6 +1,6 @@
 # 229 Async, Lifecycle, And Error Integrity Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-08
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,06-async-safety.md,07-lifecycle.md,19-error-propagation.md}`
 > Related: `docs/plans/{211-runtime-state-reactivity-and-safety-closure-plan.md,220-cross-boundary-state-and-host-contract-closure-plan.md,223-reactive-and-async-follow-up-closure-plan.md,224-validation-subtree-follow-up-plan.md}`
@@ -72,27 +72,27 @@ Exit Criteria:
 
 ### Workstream 2 - Restore Error-Fidelity Integrity
 
-Status: in progress
+Status: completed
 Targets: runtime/code-editor/formula/compiler error surfaces, related tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
 - [x] [Fix] Propagate `ActionResult.ok === false` consistently for reaction dispatch and async validation helpers.
-- [ ] [Fix] Preserve or surface representative errors for retained `onSettled`, aggregate/parallel, submit-form registry resolution, and code-editor resolver paths.
+- [x] [Fix] Preserve or surface representative errors for the remaining retained representative-error family (`parallel` aggregate proof is now closed alongside the earlier `onSettled`, submit-form registry resolution, and code-editor resolver fidelity repairs).
 - [x] [Fix] Remove retained false-success error handling from `compileTemplate` and align compile diagnostics behavior for the owned continue-on-error residual.
-- [ ] [Proof] Add focused tests for the final error-fidelity baseline.
+- [x] [Proof] Add focused tests for the final error-fidelity baseline.
 
 Exit Criteria:
 
-- [ ] The retained error-fidelity defects are closed on the supported paths.
+- [x] The retained error-fidelity defects are closed on the supported paths.
 - [x] `ok:false` is not silently reported as success on the owned paths.
-- [ ] Focused tests cover the landed failure propagation behavior.
+- [x] Focused tests cover the landed failure propagation behavior for `onSettled`, submit-form registry resolution, resolver error preservation, and aggregate representative-error fidelity.
 - [x] Affected owner docs are updated if the stable error contract changed; otherwise `No owner-doc update required` is explicit.
 - [x] `docs/logs/` 对应日期条目已更新。
 
 ### Workstream 3 - Verification And Closure Audit
 
-Status: in progress
+Status: completed
 Targets: in-scope packages/tests/docs, this plan
 
 - Item Types: `Proof | Decision`
@@ -103,19 +103,19 @@ Targets: in-scope packages/tests/docs, this plan
 
 Exit Criteria:
 
-- [ ] Focused verification is recorded for both retained families.
+- [x] Focused verification is recorded for both retained families.
 - [x] Workspace verification passes.
-- [ ] Independent closure audit confirms no remaining plan-owned blocker.
+- [x] Independent closure audit confirms no remaining plan-owned blocker.
 - [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
 - [x] All in-scope retained async and lifecycle defects are fixed.
-- [ ] All in-scope retained error-fidelity defects are fixed.
-- [ ] Focused verification exists for each landed family.
+- [x] All in-scope retained error-fidelity defects are fixed.
+- [x] Focused verification exists for each landed family.
 - [x] No in-scope retained defect is silently deferred or downgraded.
 - [x] Affected owner docs are synced to the live baseline, or each workstream explicitly records `No owner-doc update required`.
-- [ ] Independent closure audit confirms no remaining in-scope blocker.
+- [x] Independent closure audit confirms no remaining in-scope blocker.
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -124,19 +124,19 @@ Exit Criteria:
 ## Validation Checklist
 
 - [x] `211`, `220`, `223`, and `224` carve-outs remain explicit.
-- [ ] Error-fidelity fixes preserve representative error information instead of replacing it with weaker placeholders.
-- [ ] Focused tests cover both async/lifecycle and error-fidelity families.
+- [x] Error-fidelity fixes preserve representative error information instead of replacing it with weaker placeholders.
+- [x] Focused tests cover both async/lifecycle and error-fidelity families.
 - [x] No retained `full-8` item from dimensions 06/07/19 is left without an owner decision.
 
 ## Closure
 
-Status Note: the async/lifecycle slice is landed and verified, and major error-fidelity fixes are also in place, but the plan still needs final closure evidence for the representative-error family before it can close.
+Status Note: the async/lifecycle slice and the full retained error-fidelity family are now landed and verified. Parallel aggregate failures preserve the representative child error, `onSettled` preserves failure-class settled results, and the earlier `ok:false` / resolver / compiler fidelity repairs remain covered by focused proof.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1fa140f1cffevDG2I4iShJZFF5`)
-- Evidence: `docs/logs/2026/05-08.md` and live code confirm the same-tick Flow/table guards, report field-source `AbortSignal`, local registry disposal, `ok:false` fidelity, template false-success removal, unknown-renderer diagnostics, and code-editor resolver error preservation; workspace verification is green, but the independent audit could not yet confirm the full representative-error family strongly enough for completion.
+- Reviewer / Agent: OpenCode fresh closure pass plus independent general-agent audit (`ses_1f9650ca8ffeJM5YJD6YPMXrwx`)
+- Evidence: `docs/logs/2026/05-08.md` and live code confirm the same-tick Flow/table guards, report field-source `AbortSignal`, local registry disposal, `ok:false` fidelity, template false-success removal, unknown-renderer diagnostics, code-editor resolver error preservation, submit-form registry fidelity, `onSettled` failure-result preservation in `packages/flux-action-core/src/action-dispatcher/action-execution.ts`, and the final representative-error closure for parallel aggregates in the same file. Focused proof now includes `packages/flux-action-core/src/__tests__/{action-dispatcher-control-flow.test.ts,action-dispatcher-routing.test.ts}` plus `packages/flux-runtime/src/__tests__/runtime-actions-chained.test.ts`, and the independent audit found no remaining plan-owned blocker.
 
 Follow-up:
 
-- Close the remaining representative-error / aggregate-failure fidelity gap, then rerun closure audit.
+- No further plan-owned follow-up is required.

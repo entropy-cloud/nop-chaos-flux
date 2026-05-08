@@ -52,7 +52,7 @@
 
 ### Workstream 1 - Freeze Carve-Outs And Target Boundaries
 
-Status: in progress
+Status: completed
 Targets: in-scope hotspot files, this plan, affected refactoring docs only if needed
 
 - Item Types: `Decision | Proof`

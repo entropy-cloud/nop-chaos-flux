@@ -74,6 +74,7 @@ interface RuntimeFieldRegistration {
   path: string;
   getValue(): unknown;
   childPaths?: string[];
+  hiddenFieldPolicy?: HiddenFieldPolicy;
   syncValue?(): unknown;
   onRemove?(): void;
   validateChild?(path: string): Promise<ValidationError[]> | ValidationError[];
@@ -314,7 +315,7 @@ interface ValidationScopeRuntime {
   registerField(registration: RuntimeFieldRegistration): FieldRegistrationHandle;
   updateFieldRegistration(
     registrationId: string,
-    patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths'>>,
+    patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths' | 'hiddenFieldPolicy'>>,
   ): void;
   notifyFieldHidden(path: string, hidden: boolean): void;
 

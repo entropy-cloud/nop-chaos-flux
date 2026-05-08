@@ -145,6 +145,7 @@ Practical ownership split:
 - owner renderers such as `form` create descendant runtime boundaries
 - `@nop-chaos/flux-core` owns only the host-neutral callable contract shape for renderer definitions and fragment helpers
 - `@nop-chaos/flux-react` owns the React-specialized aliases for `RendererDefinition`, `RenderRegionHandle`, `RendererHelpers`, and `SchemaRendererComponent`, plus the active React hook surface exported from `packages/flux-react/src/hooks.ts`
+- source lifecycle semantics remain runtime-owned even when React helpers expose source-enabled props; React host code should mount, subscribe, and dispose, but must not invent a parallel source-controller model
 
 ## NodeRenderer Responsibilities
 
@@ -199,6 +200,7 @@ interface RendererComponentProps<
 Meaning:
 
 - `schema` is the declared source shape
+- `props` may already include values resolved from `allowSource` fields, with any narrow loading/error summary exposed through the companion prop named by `sourceStateKey`
 - `templateNode` is the immutable structural definition produced at compile time; `templateNode.component` carries the resolved `RendererDefinition` directly
 - `node` is the live runtime `NodeInstance` for this mounted node; `node.cid` is the unique live mounted-node id used by DOM/debugger/registry lookup
 - `props` is the resolved runtime prop object for the current render

@@ -58,7 +58,7 @@
 
 ### Phase 1 - Active Doc Broken Refs
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/debugger-runtime.md`, `docs/architecture/frontend-baseline.md`, `docs/architecture/performance-design-requirements.md`, `docs/architecture/report-designer/design.md`, `docs/architecture/word-editor/design.md`, `docs/components/word-editor-page/design.md`
 
 - Item Types: `Fix | Proof`
@@ -73,7 +73,7 @@ Exit Criteria:
 
 ### Phase 2 - Verification And Test-Gap Closure
 
-Status: planned
+Status: completed
 Targets: `packages/spreadsheet-renderers/src/use-spreadsheet-interactions.ts`, adversarial 14 相关测试 owner
 
 - Item Types: `Fix | Proof | Decision`

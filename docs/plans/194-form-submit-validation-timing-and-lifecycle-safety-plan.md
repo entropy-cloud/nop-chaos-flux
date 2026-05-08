@@ -81,7 +81,7 @@
 
 ### Phase 1 - Submit Cleanup And Failure Propagation
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/form-runtime-submit-flow.ts`, `packages/flux-runtime/src/form-runtime-owner.ts`
 
 - Item Types: `Fix | Decision | Proof`
@@ -101,7 +101,7 @@ Exit Criteria:
 
 ### Phase 2 - Abort Completeness And Validation Owner Semantics
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/form-runtime-owner-lifecycle.ts`, `packages/flux-runtime/src/form-runtime-validation.ts`, `packages/flux-renderers-basic/src/use-surface-renderer.ts`, `packages/flux-react/src/field-frame.tsx`, `packages/flux-react/src/hooks.ts`
 
 - Item Types: `Fix | Proof`

@@ -72,7 +72,7 @@
 
 ### Workstream 1 - Residual Runtime And Compiler Defects
 
-Status: planned
+Status: completed
 Targets: `packages/flux-formula/src/evaluate.ts`, `packages/flux-runtime/src/scope-change.ts`, `packages/flux-runtime/src/action-adapter.ts`, `packages/flux-action-core/src/action-dispatcher/action-execution.ts`, `packages/flux-runtime/src/component-handle-registry.ts`, `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-runtime/src/async-data/source-registry.ts`, `packages/flux-runtime/src/async-data/reaction-runtime.ts`, `packages/flux-action-core/src/operation-control.ts`
 
 - Item Types: `Fix | Proof`
@@ -97,7 +97,7 @@ Exit Criteria:
 
 ### Workstream 2 - Owner Map Verification
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/2026-05-04-deep-audit-full/`, `docs/analysis/2026-05-04-adversarial-review*.md`, `docs/plans/193-199`
 
 - Item Types: `Decision | Proof`
