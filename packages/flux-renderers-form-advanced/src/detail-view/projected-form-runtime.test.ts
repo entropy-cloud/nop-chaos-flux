@@ -169,6 +169,64 @@ describe('projected form runtime helpers', () => {
     expect(parentForm.removeValue).toHaveBeenCalledWith('profile.items', 0);
   });
 
+  it('prefixes writes as well as changedPaths for projected applyChangesAndRevalidate', async () => {
+    const parentForm = {
+      applyChangesAndRevalidate: vi.fn().mockResolvedValue({ ok: true, errors: [], fieldErrors: {} }),
+      applyExternalErrors: vi.fn(),
+      store: { id: 'parent-store' },
+      validation: { id: 'validation' },
+      lifecycleState: 'active',
+      modelGeneration: 1,
+      scopeId: 'scope-id',
+      rootPath: 'profile',
+      canSubmit: true,
+      allTouched: false,
+      isPathOwned: vi.fn(() => true),
+      getFieldState: vi.fn(),
+      validateAt: vi.fn(),
+      validateField: vi.fn(),
+      validateAll: vi.fn(),
+      getField: vi.fn(),
+      getDependents: vi.fn(),
+      findByPrefix: vi.fn(),
+      getChildren: vi.fn(),
+      getError: vi.fn(),
+      isValidating: vi.fn(),
+      isTouched: vi.fn(),
+      isDirty: vi.fn(),
+      isVisited: vi.fn(),
+      touchField: vi.fn(),
+      visitField: vi.fn(),
+      clearErrors: vi.fn(),
+      setValue: vi.fn(),
+      setValues: vi.fn(),
+      registerField: vi.fn(() => ({ unregister: vi.fn() })),
+      notifyFieldHidden: vi.fn(),
+      validateSubtree: vi.fn(),
+      refreshCompiledModel: vi.fn(),
+      dispose: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
+    } as any;
+
+    const projectedForm = createProjectedFormRuntime(parentForm, {
+      store: { id: 'projected-store' } as any,
+      prefixPath: (path) => (path ? `profile.${path}` : 'profile'),
+    });
+
+    await projectedForm.applyChangesAndRevalidate({
+      writes: { name: 'Bob' },
+      changedPaths: ['name'],
+      reason: 'change',
+    });
+
+    expect(parentForm.applyChangesAndRevalidate).toHaveBeenCalledWith({
+      writes: { 'profile.name': 'Bob' },
+      changedPaths: ['profile.name'],
+      reason: 'change',
+    });
+  });
+
   it('projects validation metadata into the owner-local subtree', () => {
     const parentValidation = {
       behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },

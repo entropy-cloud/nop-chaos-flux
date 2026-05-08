@@ -7,6 +7,7 @@ import { Badge } from '@nop-chaos/ui';
 import type { ConditionField, ConditionSelectField } from './types.js';
 
 interface ValueInputProps {
+  inputIdPrefix?: string;
   field: ConditionField;
   op: string;
   value: unknown;
@@ -14,7 +15,7 @@ interface ValueInputProps {
   disabled?: boolean;
 }
 
-export function ValueInput({ field, op, value, onChange, disabled }: ValueInputProps) {
+export function ValueInput({ inputIdPrefix, field, op, value, onChange, disabled }: ValueInputProps) {
   if (!op) return null;
   if (op === 'is_empty' || op === 'is_not_empty') return null;
 
@@ -26,6 +27,7 @@ export function ValueInput({ field, op, value, onChange, disabled }: ValueInputP
     case 'text':
       return (
         <TextInput
+          inputId={inputIdPrefix}
           value={value}
           onChange={onChange}
           disabled={disabled}
@@ -33,24 +35,26 @@ export function ValueInput({ field, op, value, onChange, disabled }: ValueInputP
         />
       );
     case 'number':
-      return <NumberInput value={value} onChange={onChange} disabled={disabled} />;
+      return <NumberInput inputId={inputIdPrefix} value={value} onChange={onChange} disabled={disabled} />;
     case 'select':
       return (
-        <SelectInput field={field} op={op} value={value} onChange={onChange} disabled={disabled} />
+        <SelectInput inputId={inputIdPrefix} field={field} op={op} value={value} onChange={onChange} disabled={disabled} />
       );
     case 'boolean':
-      return <BooleanInput field={field} value={value} onChange={onChange} disabled={disabled} />;
+      return <BooleanInput inputId={inputIdPrefix} field={field} value={value} onChange={onChange} disabled={disabled} />;
     default:
-      return <TextInput value={value} onChange={onChange} disabled={disabled} />;
+      return <TextInput inputId={inputIdPrefix} value={value} onChange={onChange} disabled={disabled} />;
   }
 }
 
 function TextInput({
+  inputId,
   value,
   onChange,
   disabled,
   placeholder,
 }: {
+  inputId?: string;
   value: unknown;
   onChange: (v: unknown) => void;
   disabled?: boolean;
@@ -58,6 +62,7 @@ function TextInput({
 }) {
   return (
     <Input
+      id={inputId}
       type="text"
       value={value == null ? '' : String(value)}
       aria-label={t('conditionBuilder.valueLabel')}
@@ -70,16 +75,19 @@ function TextInput({
 }
 
 function NumberInput({
+  inputId,
   value,
   onChange,
   disabled,
 }: {
+  inputId?: string;
   value: unknown;
   onChange: (v: unknown) => void;
   disabled?: boolean;
 }) {
   return (
     <Input
+      id={inputId}
       type="number"
       value={value == null ? '' : String(value)}
       aria-label={t('conditionBuilder.valueLabel')}
@@ -95,12 +103,14 @@ function NumberInput({
 }
 
 function SelectInput({
+  inputId,
   field,
   op,
   value,
   onChange,
   disabled,
 }: {
+  inputId?: string;
   field: ConditionSelectField;
   op: string;
   value: unknown;
@@ -112,8 +122,9 @@ function SelectInput({
 
   if (isMulti) {
     return (
-      <MultiSelectInput
-        options={options}
+        <MultiSelectInput
+          inputIdPrefix={inputId}
+          options={options}
         value={value}
         onChange={onChange}
         disabled={disabled}
@@ -126,6 +137,7 @@ function SelectInput({
   return (
     <Select value={stringValue} onValueChange={(v) => onChange(v)} disabled={disabled}>
       <SelectTrigger
+        id={inputId}
         size="sm"
         className="h-7 text-xs min-w-[100px]"
         aria-label={t('conditionBuilder.valueLabel')}
@@ -144,12 +156,14 @@ function SelectInput({
 }
 
 function MultiSelectInput({
+  inputIdPrefix,
   options,
   value,
   onChange,
   disabled,
   placeholder,
 }: {
+  inputIdPrefix?: string;
   options: Array<{ label: string; value: unknown }>;
   value: unknown;
   onChange: (v: unknown) => void;
@@ -175,7 +189,20 @@ function MultiSelectInput({
               key={v}
               variant="secondary"
               className="text-[10px] px-1.5 py-0 cursor-pointer"
+              role="button"
+              tabIndex={disabled ? -1 : 0}
+              aria-label={`Remove value ${opt?.label ?? v}`}
               onClick={() => !disabled && toggle(v)}
+              onKeyDown={(event) => {
+                if (disabled) {
+                  return;
+                }
+
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  toggle(v);
+                }
+              }}
             >
               {opt?.label ?? v} ×
             </Badge>
@@ -188,6 +215,7 @@ function MultiSelectInput({
       )}
       <div className="relative">
         <NativeSelect
+          id={inputIdPrefix ? `${inputIdPrefix}-select` : undefined}
           className="absolute inset-0 w-full opacity-0"
           aria-label={t('conditionBuilder.valueLabel')}
           disabled={disabled}
@@ -216,11 +244,13 @@ function MultiSelectInput({
 }
 
 function BooleanInput({
+  inputId,
   field,
   value,
   onChange,
   disabled,
 }: {
+  inputId?: string;
   value: unknown;
   onChange: (v: unknown) => void;
   disabled?: boolean;
@@ -233,6 +263,7 @@ function BooleanInput({
   return (
     <Select value={stringValue} onValueChange={(v) => onChange(v === 'true')} disabled={disabled}>
       <SelectTrigger
+        id={inputId}
         size="sm"
         className="h-7 text-xs min-w-[80px]"
         aria-label={t('conditionBuilder.valueLabel')}
@@ -248,11 +279,13 @@ function BooleanInput({
 }
 
 function BetweenInput({
+  inputIdPrefix,
   field,
   value,
   onChange,
   disabled,
 }: {
+  inputIdPrefix?: string;
   field: ConditionField;
   value: unknown;
   onChange: (v: unknown) => void;
@@ -263,6 +296,8 @@ function BetweenInput({
   return (
     <div className="flex items-center gap-1">
       <BetweenFieldInput
+        inputId={inputIdPrefix ? `${inputIdPrefix}-start` : undefined}
+        ariaLabel={t('conditionBuilder.valueLabel')}
         field={field}
         value={arr[0]}
         disabled={disabled}
@@ -278,6 +313,8 @@ function BetweenInput({
       />
       <span className="text-muted-foreground text-xs select-none">~</span>
       <BetweenFieldInput
+        inputId={inputIdPrefix ? `${inputIdPrefix}-end` : undefined}
+        ariaLabel={t('conditionBuilder.valueLabel')}
         field={field}
         value={arr[1]}
         disabled={disabled}
@@ -296,11 +333,15 @@ function BetweenInput({
 }
 
 function BetweenFieldInput({
+  inputId,
+  ariaLabel,
   field,
   value,
   onChange,
   disabled,
 }: {
+  inputId?: string;
+  ariaLabel?: string;
   field: ConditionField;
   value: unknown;
   onChange: (v: unknown) => void;
@@ -309,7 +350,9 @@ function BetweenFieldInput({
   if (field.type === 'number') {
     return (
       <Input
+        id={inputId}
         type="number"
+        aria-label={ariaLabel}
         value={value == null ? '' : String(value)}
         placeholder={t('conditionBuilder.numberPlaceholder')}
         disabled={disabled}
@@ -323,7 +366,9 @@ function BetweenFieldInput({
   }
   return (
     <Input
+      id={inputId}
       type="text"
+      aria-label={ariaLabel}
       value={value == null ? '' : String(value)}
       placeholder={t('conditionBuilder.valuePlaceholder')}
       disabled={disabled}

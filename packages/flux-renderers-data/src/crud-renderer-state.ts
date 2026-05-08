@@ -235,6 +235,7 @@ export function useCrudRuntimeState(args: {
       } satisfies CrudQueryState;
     },
     (a, b) => a.refreshCount === b.refreshCount && shallowEqualRecords(a.values, b.values),
+    { paths: [ownerStatePath, queryStatePath] },
   );
 
   const paginationState = useScopeSelector(
@@ -244,6 +245,7 @@ export function useCrudRuntimeState(args: {
       return normalizePagination(pagination ?? owner.pagination, fallbackPageSize);
     },
     (a, b) => a.currentPage === b.currentPage && a.pageSize === b.pageSize,
+    { paths: [ownerStatePath, paginationStatePath] },
   );
 
   const sortState = useScopeSelector(
@@ -253,13 +255,14 @@ export function useCrudRuntimeState(args: {
       return normalizeSort(sort ?? owner.sort);
     },
     (a, b) => a.field === b.field && a.order === b.order,
+    { paths: [ownerStatePath, sortStatePath] },
   );
 
   const filterState = useScopeSelector((scopeData) => {
     const owner = toRecord(getIn(scopeData, ownerStatePath));
     const filters = getIn(scopeData, filterStatePath);
     return toRecord(filters ?? owner.filters);
-  }, shallowEqualRecords);
+  }, shallowEqualRecords, { paths: [ownerStatePath, filterStatePath] });
 
   const selectedRowKeys = useScopeSelector(
     (scopeData) => {
@@ -268,6 +271,7 @@ export function useCrudRuntimeState(args: {
       return toStringArray(selection ?? owner.selection);
     },
     (a, b) => a.length === b.length && a.every((value, index) => value === b[index]),
+    { paths: [ownerStatePath, selectionStatePath] },
   );
 
   useEffect(() => {

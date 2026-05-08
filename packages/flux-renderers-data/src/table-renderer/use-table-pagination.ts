@@ -26,6 +26,7 @@ export function useTablePagination(
         ? (getIn(scopeData, paginationStatePath) as Record<string, unknown> | undefined)
         : undefined,
     shallowEqual,
+    { paths: paginationStatePath ? [paginationStatePath] : undefined },
   );
 
   const currentPage =

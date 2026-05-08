@@ -129,7 +129,12 @@ describe('input renderer source state branches', () => {
       />,
     );
 
-    expect(screen.getByText('Failed to load options.')).toBeTruthy();
+    const error = screen.getByText('Failed to load options.');
+    expect(error).toBeTruthy();
+    expect(error.getAttribute('role')).toBe('alert');
+    expect(document.querySelector('[data-slot="checkbox-group-wrapper"]')?.getAttribute('aria-describedby')).toBe(
+      'tags-source-error',
+    );
   });
 
   it('removes checkbox-group values when an already-selected option is unchecked', async () => {

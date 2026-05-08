@@ -3,13 +3,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { ConditionOperatorInfo } from './operators.js';
 
 interface OperatorSelectProps {
+  triggerId?: string;
   operators: ConditionOperatorInfo[];
   value: string | undefined;
   onChange: (op: string) => void;
   disabled?: boolean;
 }
 
-export function OperatorSelect({ operators, value, onChange, disabled }: OperatorSelectProps) {
+export function OperatorSelect({ triggerId, operators, value, onChange, disabled }: OperatorSelectProps) {
   if (operators.length === 0) return null;
   if (operators.length === 1) {
     return (
@@ -28,6 +29,7 @@ export function OperatorSelect({ operators, value, onChange, disabled }: Operato
       disabled={disabled}
     >
       <SelectTrigger
+        id={triggerId}
         size="sm"
         className="h-7 text-xs min-w-[80px] max-w-[120px]"
         aria-label={t('conditionBuilder.operatorLabel')}

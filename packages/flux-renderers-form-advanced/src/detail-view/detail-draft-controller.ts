@@ -1,12 +1,13 @@
 import React from 'react';
 import type {
+  ActionSchema,
   ChildValidationMode,
   FormRuntime,
   RendererComponentProps,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
 
-type BaseNodeInstance = RendererComponentProps<any>['node'];
+type BaseNodeInstance = RendererComponentProps['node'];
 
 export interface AsyncSequencer {
   nextToken(): number;
@@ -69,8 +70,8 @@ export function useDetailAdaptationAction(input: {
   const { helpers, parentScope, parentForm, node } = input;
 
   return React.useCallback(
-    (actionSchema: unknown) =>
-      helpers.dispatch(actionSchema as any, {
+    (actionSchema: ActionSchema | ActionSchema[]) =>
+      helpers.dispatch(actionSchema, {
         scope: parentScope,
         form: parentForm ?? undefined,
         page: undefined,

@@ -95,6 +95,7 @@ export interface TableSchema extends BaseSchema {
   expandable?: {
     expandedRowKeys?: string[];
     expandRowByClick?: boolean;
+    expandedRow?: SchemaInput;
     expandedRowRegionKey?: string;
   };
   quickSaveAction?: ActionSchema;

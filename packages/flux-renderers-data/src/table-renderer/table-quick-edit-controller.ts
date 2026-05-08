@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ActionSchema, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import type { TableSchema } from '../schemas.js';
 
@@ -30,6 +30,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saveError, setSaveError] = useState<unknown>(undefined);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     const nextValue = toOptionalDraftValue(record, field);
@@ -85,10 +86,11 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
   );
 
   const runSave = useCallback(async () => {
-    if (!saveAction || !dirty || saving) {
+    if (!saveAction || !dirty || savingRef.current) {
       return;
     }
 
+    savingRef.current = true;
     setSaving(true);
     setSaveError(undefined);
     try {
@@ -104,9 +106,10 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
       setSaveError(error);
       onSaveError?.(error);
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
-  }, [dirty, draftValue, field, helpers, onSaveError, record, rowScope, saveAction, saving]);
+  }, [dirty, draftValue, field, helpers, onSaveError, record, rowScope, saveAction]);
 
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {

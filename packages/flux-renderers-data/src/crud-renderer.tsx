@@ -12,6 +12,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import { Button, Separator, cn } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema.js';
 import { normalizeCrudSchema } from './crud-schema.js';
+import { TableRenderer } from './table-renderer.js';
 import {
   applyQueryToRows,
   DEFAULT_PAGE_SIZE,
@@ -24,6 +25,7 @@ import {
   type InternalTableHandle,
 } from './crud-renderer-state.js';
 import { CrudToolbarBlocks, normalizeToolbarBlocks } from './crud-renderer-toolbar.js';
+import type { TableSchema } from './schemas.js';
 import {
   createCrudOwnerPaths,
   useCrudQueryBridge,
@@ -251,7 +253,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const hasListActions = hasRendererSlotContent(asReactNode(listActionsContent));
   const hasFooterToolbar = hasRendererSlotContent(asReactNode(footerToolbarContent));
 
-  const tableSchema = useMemo<BaseSchema>(() => {
+  const tableSchema = useMemo<TableSchema>(() => {
     const base: Record<string, unknown> = {
       type: 'table',
       id: `${props.id}-table`,
@@ -298,7 +300,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       base.responsive = normalizedSchema.responsive;
     }
 
-    return base as BaseSchema;
+    return base as TableSchema;
   }, [
     filterStatePath,
     filteredRows,
@@ -320,6 +322,45 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     sortStatePath,
     tableEmpty,
   ]);
+  const tableEvents = useMemo<RendererComponentProps<TableSchema>['events']>(
+    () => ({
+      onRowClick: normalizedSchema.onRowClick
+        ? (event, ctx) => props.helpers.dispatch(normalizedSchema.onRowClick!, { ...ctx, event })
+        : undefined,
+      onRefresh: normalizedSchema.onRefresh
+        ? (event, ctx) => props.helpers.dispatch(normalizedSchema.onRefresh!, { ...ctx, event })
+        : undefined,
+      onSelectionChange: undefined,
+      onPageChange: undefined,
+      onSortChange: undefined,
+      onFilterChange: undefined,
+    }),
+    [normalizedSchema.onRefresh, normalizedSchema.onRowClick, props.helpers],
+  );
+  const tableRendererProps = useMemo<RendererComponentProps<TableSchema>>(
+    () =>
+      ({
+        id: `${props.id}-table`,
+        path: `${props.path}.table`,
+        schema: tableSchema,
+        templateNode: props.templateNode as RendererComponentProps<TableSchema>['templateNode'],
+        node: {
+          ...props.node,
+          scope: crudScope,
+        } as RendererComponentProps<TableSchema>['node'],
+        props: tableSchema,
+        meta: {
+          ...props.meta,
+          cid: undefined,
+          className: undefined,
+          testid: undefined,
+        },
+        regions: props.regions as RendererComponentProps<TableSchema>['regions'],
+        events: tableEvents,
+        helpers: props.helpers,
+      }) satisfies RendererComponentProps<TableSchema>,
+    [crudScope, props.helpers, props.id, props.meta, props.node, props.path, props.regions, props.templateNode, tableEvents, tableSchema],
+  );
 
   const queryFormSchema = useMemo<BaseSchema | null>(() => {
     const queryForm = normalizedSchema.queryForm;
@@ -406,7 +447,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       ) : null}
 
       <div className="nop-crud-table" data-slot="crud-table">
-        {asReactNode(props.helpers.render(tableSchema, { pathSuffix: 'table', scope: crudScope }))}
+        <TableRenderer {...tableRendererProps} />
       </div>
 
       {hasFooterToolbar || footerBlocks.length > 0 ? (

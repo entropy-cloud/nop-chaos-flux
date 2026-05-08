@@ -53,6 +53,7 @@ export function ConditionItem({
   draggable,
   dragHandleProps,
 }: ConditionItemProps) {
+  const itemId = value.id;
   const resolvedField = useMemo(
     () => findField(fields, value.left.field),
     [fields, value.left.field],
@@ -119,6 +120,7 @@ export function ConditionItem({
       )}
 
       <FieldSelect
+        inputId={`${itemId}-field`}
         fields={fields}
         value={value.left.field}
         onChange={handleFieldChange}
@@ -129,6 +131,7 @@ export function ConditionItem({
       />
 
       <OperatorSelect
+        triggerId={`${itemId}-operator`}
         operators={operators}
         value={value.op}
         onChange={handleOpChange}
@@ -136,6 +139,7 @@ export function ConditionItem({
       />
 
       <ValueInput
+        inputIdPrefix={`${itemId}-value`}
         field={resolvedField ?? { name: '', label: '', type: 'text' }}
         op={value.op}
         value={value.right}

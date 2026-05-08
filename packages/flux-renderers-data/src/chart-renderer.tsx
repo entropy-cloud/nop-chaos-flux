@@ -115,6 +115,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   }, [source, series]);
 
   const chartHeight = typeof height === 'number' ? `${height}px` : height || '400px';
+  const chartAccessibleName = title?.trim() || t('flux.common.chart');
 
   const handleResize = useCallback(() => {
     void chartRef.current;
@@ -266,7 +267,20 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           data-slot="chart-canvas"
           ref={chartRef}
           style={{ width: '100%', height: '100%' }}
+          role={props.events.onClick ? 'button' : undefined}
+          tabIndex={props.events.onClick ? 0 : undefined}
+          aria-label={chartAccessibleName}
           onClick={(event) => void props.events.onClick?.(event, {})}
+          onKeyDown={
+            props.events.onClick
+              ? (event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    void props.events.onClick?.(event, {});
+                  }
+                }
+              : undefined
+          }
           onMouseEnter={(event) => void props.events.onHover?.(event, {})}
         >
           {loading ? (

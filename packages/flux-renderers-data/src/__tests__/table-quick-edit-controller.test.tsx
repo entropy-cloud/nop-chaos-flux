@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -194,6 +196,41 @@ describe('useTableQuickEditController', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('save-error').textContent).toBe('save failed');
+    });
+  });
+
+  it('guards duplicate same-tick save calls before React state updates flush', async () => {
+    cleanup();
+    let resolveSave: (() => void) | undefined;
+    const dispatch = vi.fn<() => Promise<{ ok: boolean }>>(
+      () =>
+        new Promise<{ ok: boolean }>((resolve) => {
+          resolveSave = () => resolve({ ok: true });
+        }),
+    );
+
+    render(
+      <ControllerHarness
+        field="name"
+        record={{ name: 'Alice' }}
+        rowScope={createRowScope({ name: 'Alice' })}
+        helpers={createHelpers(dispatch)}
+        saveAction={{ action: 'save' }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'change' }));
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalledTimes(1);
+    });
+
+    resolveSave?.();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('dirty').textContent).toBe('false');
     });
   });
 });

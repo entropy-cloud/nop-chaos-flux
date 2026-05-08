@@ -79,6 +79,9 @@ vi.mock('@nop-chaos/flux-react', () => ({
 
 vi.mock('@nop-chaos/ui', () => ({
   cn: (...values: Array<string | undefined>) => values.filter(Boolean).join(' '),
+}));
+
+vi.mock('@nop-chaos/ui/chart', () => ({
   ChartContainer: createMockComponent('ChartContainer'),
   ChartTooltip: createMockComponent('ChartTooltip'),
   ChartTooltipContent: createMockComponent('ChartTooltipContent'),
@@ -154,11 +157,29 @@ describe('ChartRenderer', () => {
     const canvas = document.querySelector('[data-slot="chart-canvas"]') as HTMLElement;
     expect(canvas).toBeTruthy();
     expect(screen.getByText(/Loading|加载中/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Chart' })).toBeTruthy();
 
     fireEvent.click(canvas);
+    fireEvent.keyDown(canvas, { key: 'Enter' });
+    fireEvent.keyDown(canvas, { key: ' ' });
     fireEvent.mouseEnter(canvas);
-    expect(onClick).toHaveBeenCalled();
+    expect(onClick).toHaveBeenCalledTimes(3);
     expect(onHover).toHaveBeenCalled();
+  });
+
+  it('uses the chart title as the canvas accessible name when present', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            title: 'Revenue chart',
+            source: [{ label: 'Jan', value: 3 }],
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByLabelText('Revenue chart')).toBeTruthy();
   });
 
   it('registers a chart handle and supports the resize capability', () => {

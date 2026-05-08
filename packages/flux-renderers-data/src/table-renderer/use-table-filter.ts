@@ -15,23 +15,32 @@ export function useTableFilter(
     typeof schemaProps.filterStatePath === 'string' ? schemaProps.filterStatePath : undefined;
   const [localFilterState, setLocalFilterState] = useState<FilterState>({});
 
+  const toFilterState = useCallback((value: unknown): FilterState => {
+    const record = value as
+      | Record<string, { filters?: string[]; keyword?: string } | undefined>
+      | undefined;
+    const next: FilterState = {};
+    Object.entries(record ?? {}).forEach(([key, entry]) => {
+      next[key] = {
+        values: new Set(Array.isArray(entry?.filters) ? entry.filters : []),
+        keyword: typeof entry?.keyword === 'string' ? entry.keyword : undefined,
+      };
+    });
+    return next;
+  }, []);
+
+  const controlledFilterState = useMemo(
+    () => toFilterState((schemaProps as Record<string, unknown>).filters),
+    [schemaProps, toFilterState],
+  );
+
   const scopeFilterState = useScopeSelector(
     (scopeData) => {
       if (filterOwnership !== 'scope' || !filterStatePath) {
         return undefined;
       }
 
-      const value = getIn(scopeData, filterStatePath) as
-        | Record<string, { filters?: string[]; keyword?: string } | undefined>
-        | undefined;
-      const next: FilterState = {};
-      Object.entries(value ?? {}).forEach(([key, entry]) => {
-        next[key] = {
-          values: new Set(Array.isArray(entry?.filters) ? entry.filters : []),
-          keyword: typeof entry?.keyword === 'string' ? entry.keyword : undefined,
-        };
-      });
-      return next;
+      return toFilterState(getIn(scopeData, filterStatePath));
     },
     (a, b) => {
       if (a === b) return true;
@@ -50,11 +59,17 @@ export function useTableFilter(
         return true;
       });
     },
+    { paths: filterStatePath ? [filterStatePath] : undefined },
   );
 
   const filterState = useMemo(
-    () => (filterOwnership === 'scope' ? (scopeFilterState ?? {}) : localFilterState),
-    [filterOwnership, localFilterState, scopeFilterState],
+    () =>
+      filterOwnership === 'controlled'
+        ? controlledFilterState
+        : filterOwnership === 'scope'
+          ? (scopeFilterState ?? {})
+          : localFilterState,
+    [controlledFilterState, filterOwnership, localFilterState, scopeFilterState],
   );
 
   const handleFilter = useCallback(

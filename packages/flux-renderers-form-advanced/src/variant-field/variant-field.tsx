@@ -56,11 +56,11 @@ function asReactNode(value: unknown): React.ReactNode {
 }
 
 type BaseNodeInstance = RendererComponentProps['node'];
-type VariantSchemaInput = VariantFieldSchema['variants'][number]['content'];
 
-function toRenderInput(input: VariantSchemaInput | null | undefined) {
-  return input;
-}
+type VariantResolvedOption = VariantOption & {
+  contentRegionKey?: string;
+  viewerRegionKey?: string;
+};
 
 function injectDetectVariantArgs(
   actionSchema: ActionSchema | ActionSchema[],
@@ -84,8 +84,8 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const name = String(schemaProps.name ?? '');
   const readOnly = Boolean(schemaProps.readOnly);
   const variants = React.useMemo(
-    () => ((props.schema as VariantFieldSchema).variants ?? []) as VariantOption[],
-    [props.schema],
+    () => ((schemaProps.variants ?? []) as VariantResolvedOption[]),
+    [schemaProps.variants],
   );
   const selectorMode =
     (schemaProps.selector as { mode?: string } | undefined)?.mode ??
@@ -293,8 +293,14 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     [handleVariantSwitch],
   );
 
-  const activeContent = activeOption?.content ?? null;
-  const activeViewer = activeOption?.viewer ?? activeContent;
+  const activeContentRegion =
+    typeof activeOption?.contentRegionKey === 'string'
+      ? props.regions[activeOption.contentRegionKey]
+      : undefined;
+  const activeViewerRegion =
+    typeof activeOption?.viewerRegionKey === 'string'
+      ? props.regions[activeOption.viewerRegionKey]
+      : undefined;
 
   const variantScope = React.useMemo(
     () => createVariantScope(parentScope, name, activeKey, readOnly),
@@ -329,11 +335,11 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
               ))}
             </SelectContent>
           </Select>
-          <FormContext.Provider value={variantForm}>
-            <ScopeContext.Provider value={variantScope}>
-              {asReactNode(props.helpers.render(toRenderInput(activeContent)))}
-            </ScopeContext.Provider>
-          </FormContext.Provider>
+              <FormContext.Provider value={variantForm}>
+                <ScopeContext.Provider value={variantScope}>
+                  {asReactNode(activeContentRegion?.render())}
+                </ScopeContext.Provider>
+              </FormContext.Provider>
         </div>
       );
     }
@@ -358,7 +364,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
               {v.key === activeKey ? (
                 <FormContext.Provider value={variantForm}>
                   <ScopeContext.Provider value={variantScope}>
-                    {asReactNode(props.helpers.render(toRenderInput(activeContent)))}
+                    {asReactNode(activeContentRegion?.render())}
                   </ScopeContext.Provider>
                 </FormContext.Provider>
               ) : null}
@@ -373,13 +379,13 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     if (!readOnly && !effectiveDisabled) return null;
 
     return (
-      <div data-slot="variant-field-readonly-body">
-        <FormContext.Provider value={variantForm}>
-          <ScopeContext.Provider value={variantScope}>
-            {asReactNode(props.helpers.render(toRenderInput(activeViewer)))}
-          </ScopeContext.Provider>
-        </FormContext.Provider>
-      </div>
+        <div data-slot="variant-field-readonly-body">
+          <FormContext.Provider value={variantForm}>
+            <ScopeContext.Provider value={variantScope}>
+              {asReactNode((activeViewerRegion ?? activeContentRegion)?.render())}
+            </ScopeContext.Provider>
+          </FormContext.Provider>
+        </div>
     );
   };
 
@@ -398,14 +404,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       ? toFieldRemarkProps(schemaProps.labelRemark as Parameters<typeof toFieldRemarkProps>[0])
       : undefined;
 
-  const frameWrapMode = resolveVariantFrameWrap(
-    (props.schema as VariantFieldSchema).frameWrap as
-      | boolean
-      | 'label'
-      | 'group'
-      | 'none'
-      | undefined,
-  );
+  const frameWrapMode = resolveVariantFrameWrap(schemaProps.frameWrap);
 
   const body = (
     <div data-slot="variant-field-body" data-active-variant={activeKey}>
@@ -457,8 +456,7 @@ export const variantFieldRendererDefinition: RendererDefinition<VariantFieldSche
   component: VariantFieldRenderer,
   fields: [
     formLabelFieldRule,
-    { key: 'content', kind: 'region', regionKey: 'content' },
-    { key: 'variants', kind: 'ignored' },
+    { key: 'variants', kind: 'prop' },
     { key: 'selector', kind: 'prop' },
     { key: 'selectorMode', kind: 'prop' },
     { key: 'defaultVariant', kind: 'prop' },

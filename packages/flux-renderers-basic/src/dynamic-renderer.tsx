@@ -17,41 +17,56 @@ function isBaseSchemaLike(value: unknown): value is BaseSchema {
 }
 
 type DynamicRendererState = {
+  loadAction?: DynamicRendererSchema['loadAction'];
   loading: boolean;
   error: unknown;
   schema: BaseSchema | null;
 };
 
-export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSchema>) {
-  const loadAction = props.props.loadAction;
-  const [state, setState] = useState<DynamicRendererState>({
-    loading: true,
+function createDynamicRendererState(loadAction?: DynamicRendererSchema['loadAction']): DynamicRendererState {
+  return {
+    loadAction,
+    loading: Boolean(loadAction),
     error: loadAction ? undefined : 'loadAction is required',
     schema: null,
-  });
+  };
+}
+
+export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSchema>) {
+  const loadAction = props.props.loadAction;
+  const dispatch = props.helpers.dispatch;
+  const [state, setState] = useState<DynamicRendererState>(() => createDynamicRendererState(loadAction));
+  const visibleState = state.loadAction === loadAction ? state : createDynamicRendererState(loadAction);
 
   useEffect(() => {
-    if (!loadAction) return;
+    if (!loadAction) {
+      return;
+    }
 
     const controller = new AbortController();
 
     const loadSchema = async () => {
       try {
-        const result = await props.helpers.dispatch(loadAction, {
+        const result = await dispatch(loadAction, {
           signal: controller.signal,
         });
 
         if (controller.signal.aborted) return;
 
         if (!isBaseSchemaLike(result.data)) {
-          setState({ loading: false, error: 'Invalid schema received from action', schema: null });
+          setState({
+            loadAction,
+            loading: false,
+            error: 'Invalid schema received from action',
+            schema: null,
+          });
           return;
         }
 
-        setState({ loading: false, error: undefined, schema: result.data });
+        setState({ loadAction, loading: false, error: undefined, schema: result.data });
       } catch (err) {
         if (controller.signal.aborted) return;
-        setState({ loading: false, error: err, schema: null });
+        setState({ loadAction, loading: false, error: err, schema: null });
       }
     };
 
@@ -60,9 +75,9 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     return () => {
       controller.abort();
     };
-  }, [loadAction, props.helpers]);
+  }, [dispatch, loadAction]);
 
-  if (state.error) {
+   if (visibleState.error) {
     return (
       <div
         className={cn('nop-dynamic-renderer', props.meta.className)}
@@ -71,19 +86,19 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
         data-cid={props.meta.cid || undefined}
       >
         {t('flux.dynamicRenderer.error')}
-        {state.error instanceof Error ? state.error.message : String(state.error)}
+        {visibleState.error instanceof Error ? visibleState.error.message : String(visibleState.error)}
       </div>
     );
   }
 
-  if (state.schema) {
+  if (visibleState.schema) {
     return (
       <div
         className={cn('nop-dynamic-renderer', props.meta.className)}
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}
       >
-        {asReactNode(props.helpers.render(state.schema))}
+        {asReactNode(props.helpers.render(visibleState.schema))}
       </div>
     );
   }

@@ -48,7 +48,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     areValuesEqual: groupValuesEqual,
   });
 
-  const schemaProps = useSchemaProps(props);
+  const schemaProps = useSchemaProps(props) as ConditionBuilderSchema;
   const operatorsOverride = schemaProps.operators;
   const fields = (schemaProps.fields ?? []) as ConditionField[];
 
@@ -98,7 +98,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
       <PickerModeContent
         value={effectiveValue}
         fields={fields}
-        schema={props.schema}
+          schema={schemaProps}
         operatorsOverride={operatorsOverride}
         onChange={syncValue}
         disabled={presentation.effectiveDisabled || presentation.fieldState.submitting}
@@ -110,7 +110,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     <div className={cn('nop-condition-builder', props.meta.className)}>
       <ConditionGroup
         value={effectiveValue}
-        schema={props.schema}
+        schema={schemaProps}
         fields={fields}
         operatorsOverride={operatorsOverride}
         onChange={syncValue}

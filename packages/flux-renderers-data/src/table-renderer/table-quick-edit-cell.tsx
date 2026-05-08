@@ -61,22 +61,19 @@ export interface TableQuickEditCellProps {
   rowScope: ScopeRef;
   record: Record<string, unknown>;
   helpers: RendererComponentProps<TableSchema>['helpers'];
+  regions: RendererComponentProps<TableSchema>['regions'];
   quickSaveAction?: ActionSchema;
   quickSaveItemAction?: ActionSchema;
 }
 
 export function TableQuickEditCell(props: TableQuickEditCellProps) {
-  const { column, rowScope, record, helpers, quickSaveAction, quickSaveItemAction } = props;
+  const { column, rowScope, record, helpers, regions, quickSaveAction, quickSaveItemAction } = props;
   const env = useRendererEnv();
   const config = useMemo(() => resolveTableQuickEditConfig(column), [column]);
   const field = column.name;
   const containerRef = useRef<HTMLDivElement>(null);
   const quickEditBodyRegion =
-    typeof column.quickEditBodyRegionKey === 'string'
-      ? (helpers as RendererComponentProps<TableSchema>['helpers'] & {
-          regions?: Record<string, { render: (options?: unknown) => unknown }>;
-        }).regions?.[column.quickEditBodyRegionKey]
-      : undefined;
+    typeof column.quickEditBodyRegionKey === 'string' ? regions[column.quickEditBodyRegionKey] : undefined;
   const hasCustomBody = config?.body !== undefined || Boolean(quickEditBodyRegion);
 
   const saveAction = quickSaveItemAction ?? quickSaveAction;

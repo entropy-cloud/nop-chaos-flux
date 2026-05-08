@@ -126,6 +126,9 @@ export function createProjectedValidationRuntime(
     get modelGeneration() {
       return parentOwner.modelGeneration;
     },
+    subscribeToModelGeneration(listener) {
+      return parentOwner.subscribeToModelGeneration?.(listener) ?? (() => undefined);
+    },
     get store() {
       return parentOwner.store;
     },
@@ -147,6 +150,9 @@ export function createProjectedValidationRuntime(
     applyChangesAndRevalidate(input) {
       return parentOwner.applyChangesAndRevalidate({
         ...input,
+        writes: Object.fromEntries(
+          Object.entries(input.writes).map(([path, value]) => [options.prefixPath(path), value]),
+        ),
         changedPaths: input.changedPaths?.map((path) => options.prefixPath(path)),
       });
     },

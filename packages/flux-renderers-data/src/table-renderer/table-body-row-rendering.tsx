@@ -91,19 +91,36 @@ export function renderDataRow(
   isStriped: boolean,
 ) {
   const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
+  const isRowInteractive = Boolean(parentProps.events.onRowClick) || expandRowByClick;
+
+  const handleRowActivate = (event: React.SyntheticEvent) => {
+    if (parentProps.events.onRowClick) {
+      void parentProps.events.onRowClick?.(event, { scope: rowScope });
+      return;
+    }
+
+    if (expandRowByClick) {
+      onToggleExpand(rowKey);
+    }
+  };
 
   return (
     <TableRow
       data-slot="table-row"
-      data-interactive={Boolean(parentProps.events.onRowClick) || undefined}
+      data-interactive={isRowInteractive || undefined}
       data-expanded={isExpanded || undefined}
       data-striped={isStriped && isEven ? true : undefined}
-      onClick={
-        parentProps.events.onRowClick
-          ? (event) => void parentProps.events.onRowClick?.(event, { scope: rowScope })
-          : expandRowByClick
-            ? () => onToggleExpand(rowKey)
-            : undefined
+      tabIndex={isRowInteractive ? 0 : undefined}
+      onClick={isRowInteractive ? handleRowActivate : undefined}
+      onKeyDown={
+        isRowInteractive
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleRowActivate(event);
+              }
+            }
+          : undefined
       }
     >
       {showExpandColumn ? (
@@ -197,6 +214,7 @@ export function renderDataRow(
                         {asReactNode(
                           helpers.render(button, {
                             scope: rowScope,
+                            bindings: { record: entry.record, index: entry.sourceIndex },
                             instancePath: rowInstancePath,
                             pathSuffix: `buttons.${buttonIndex}`,
                           }),
@@ -251,6 +269,7 @@ export function renderDataRow(
                 rowScope={rowScope}
                 record={entry.record}
                 helpers={helpers}
+                regions={parentProps.regions}
                 quickSaveAction={schemaProps.quickSaveAction}
                 quickSaveItemAction={schemaProps.quickSaveItemAction}
               />
@@ -356,8 +375,11 @@ export function renderExpandedRow(
         ) : null}
         {regionKey && parentProps.regions[regionKey]
           ? asReactNode(
-              helpers.render(parentProps.regions[regionKey].templateNode, {
-                scope: rowScope,
+              parentProps.regions[regionKey].render({
+                bindings: {
+                  record: rowScope.get('record'),
+                  index: rowScope.get('index'),
+                },
                 instancePath: rowInstancePath,
                 pathSuffix: `expanded.${item.rowKey}`,
               }),

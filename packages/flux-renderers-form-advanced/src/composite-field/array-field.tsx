@@ -159,8 +159,8 @@ function ArrayItem(props: {
   );
 }
 
-function getScalarItemFieldSchema(schema: ArrayFieldSchema): BaseSchema | undefined {
-  const item = Array.isArray(schema.item) ? schema.item[0] : schema.item;
+function getScalarItemFieldSchema(itemSchema: ArrayFieldSchema['item'] | undefined): BaseSchema | undefined {
+  const item = Array.isArray(itemSchema) ? itemSchema[0] : itemSchema;
 
   if (!item || Array.isArray(item) || typeof item !== 'object') {
     return undefined;
@@ -257,8 +257,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       itemRepeatedTemplateId,
     ],
   );
-  const scalarItemField =
-    itemKind === 'scalar' ? getScalarItemFieldSchema(props.schema as ArrayFieldSchema) : undefined;
+  const scalarItemField = itemKind === 'scalar' ? getScalarItemFieldSchema(props.props.item) : undefined;
   const scalarChildPaths = React.useMemo(
     () => (itemKind === 'scalar' && name ? items.map((_, index) => `${name}.${index}.value`) : []),
     [itemKind, items, name],
@@ -369,7 +368,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
 
   return (
     <div
-      className={cn('nop-array-field')}
+      className={cn('nop-array-field', props.meta.className)}
       data-slot="field-control"
       data-testid={props.meta.testid}
       data-cid={props.meta.cid}

@@ -6,9 +6,10 @@ export function FieldHint(props: {
   errorMessage?: string;
   validating?: boolean;
   showError?: boolean;
+  id?: string;
 }) {
   if (props.errorMessage && props.showError) {
-    return <FieldError>{props.errorMessage}</FieldError>;
+    return <FieldError id={props.id}>{props.errorMessage}</FieldError>;
   }
 
   if (props.validating) {

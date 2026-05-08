@@ -395,7 +395,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
   return (
     <div
-      className={cn('nop-object-field')}
+      className={cn('nop-object-field', props.meta.className)}
       data-slot="field-control"
       data-testid={props.meta.testid}
       data-cid={props.meta.cid}

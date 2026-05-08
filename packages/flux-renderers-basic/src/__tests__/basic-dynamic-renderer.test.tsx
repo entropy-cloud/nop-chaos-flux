@@ -126,4 +126,57 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
     );
     cleanup();
   });
+
+  it('clears stale loaded schema while a new load is in flight', async () => {
+    const pendingResolves: Array<
+      (value: { ok: boolean; status: number; data: { type: string; text: string } }) => void
+    > = [];
+    const fetcher = vi.fn(
+      async () =>
+        new Promise((resolve) => {
+          pendingResolves.push(resolve);
+        }),
+    ) as RendererEnv['fetcher'];
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const schema = (url: string) => ({
+      type: 'page',
+      body: [
+        {
+          type: 'dynamic-renderer',
+          loadAction: { action: 'ajax', args: { url } },
+          body: { type: 'text', text: 'Loading...' },
+        },
+      ],
+    });
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer"
+        schema={schema('/api/first')}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+    pendingResolves.shift()?.({ ok: true, status: 200, data: { type: 'text', text: 'First schema' } });
+    await waitFor(() => expect(screen.getByText('First schema')).toBeTruthy());
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer"
+        schema={schema('/api/second')}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Loading...')).toBeTruthy());
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
+    expect(screen.queryByText('First schema')).toBeNull();
+
+    pendingResolves.shift()?.({ ok: true, status: 200, data: { type: 'text', text: 'Second schema' } });
+    await waitFor(() => expect(screen.getByText('Second schema')).toBeTruthy());
+    cleanup();
+  });
 });

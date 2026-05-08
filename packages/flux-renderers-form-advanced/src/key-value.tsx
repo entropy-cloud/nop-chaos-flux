@@ -45,6 +45,10 @@ function KeyValueRow(props: {
   const { pair, index, name, currentForm, childBehavior, onSync, onRemove, pairs, disabled, removeButtonRef } = props;
   const keyPath = `${name}.${index}.key`;
   const valuePath = `${name}.${index}.value`;
+  const keyInputId = `${name || 'key-value'}-${pair.id}-key`;
+  const valueInputId = `${name || 'key-value'}-${pair.id}-value`;
+  const keyErrorId = `${keyInputId}-error`;
+  const valueErrorId = `${valueInputId}-error`;
   const keyFieldState = useCompositeChildFieldState(keyPath);
   const valueFieldState = useCompositeChildFieldState(valuePath);
   const keyUi = getChildFieldUiState({
@@ -66,12 +70,15 @@ function KeyValueRow(props: {
         data-child-field-invalid={keyUi['data-child-field-invalid']}
       >
         <Input
+          id={keyInputId}
           type="text"
           value={pair.key}
           disabled={disabled}
           placeholder="Key"
           aria-label={`Key ${index + 1}`}
           aria-invalid={keyUi.showError ? true : undefined}
+          aria-describedby={keyUi.showError ? keyErrorId : undefined}
+          aria-errormessage={keyUi.showError ? keyErrorId : undefined}
           onFocus={() => {
             if (currentForm && name) {
               currentForm.visitField(name);
@@ -103,7 +110,7 @@ function KeyValueRow(props: {
             }
           }}
         />
-        <FieldHint errorMessage={keyUi.error?.message} showError={keyUi.showError} />
+        <FieldHint errorMessage={keyUi.error?.message} showError={keyUi.showError} id={keyErrorId} />
       </div>
       <div
         className={valueUi.className}
@@ -113,12 +120,15 @@ function KeyValueRow(props: {
         data-child-field-invalid={valueUi['data-child-field-invalid']}
       >
         <Input
+          id={valueInputId}
           type="text"
           value={pair.value}
           disabled={disabled}
           placeholder="Value"
           aria-label={`Value ${index + 1}`}
           aria-invalid={valueUi.showError ? true : undefined}
+          aria-describedby={valueUi.showError ? valueErrorId : undefined}
+          aria-errormessage={valueUi.showError ? valueErrorId : undefined}
           onFocus={() => {
             if (currentForm && name) {
               currentForm.visitField(name);
@@ -150,7 +160,7 @@ function KeyValueRow(props: {
             }
           }}
         />
-        <FieldHint errorMessage={valueUi.error?.message} showError={valueUi.showError} />
+        <FieldHint errorMessage={valueUi.error?.message} showError={valueUi.showError} id={valueErrorId} />
       </div>
       <Button
         ref={removeButtonRef}

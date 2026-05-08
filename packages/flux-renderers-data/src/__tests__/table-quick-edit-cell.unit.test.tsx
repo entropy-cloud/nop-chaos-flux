@@ -44,12 +44,14 @@ function wrapWithProviders(ui: React.ReactNode, rowScope: any) {
 
 function renderCell(overrides: Record<string, unknown> = {}) {
   const helpers = (overrides.helpers as any) ?? createHelpers();
+  const regions = (overrides.regions as any) ?? helpers.regions ?? {};
   const rowScope = createRowScope({ name: 'Alice' });
   const props = {
     column: { name: 'name', label: 'Name', quickEdit: true },
     rowScope,
     record: { name: 'Alice' },
     helpers,
+    regions,
     quickSaveAction: { action: 'save' },
     ...overrides,
   } as any;
@@ -125,6 +127,7 @@ describe('TableQuickEditCell', () => {
           rowScope={rowScope}
           record={{ name: 'Bob' }}
           helpers={helpers}
+          regions={{}}
           quickSaveAction={undefined}
         />,
         rowScope,

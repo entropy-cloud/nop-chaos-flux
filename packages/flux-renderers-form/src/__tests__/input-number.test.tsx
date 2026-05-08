@@ -335,8 +335,8 @@ describe('input-number renderer', () => {
 
     const input = getNumberInput();
     expect(input.disabled).toBe(true);
-    expect(screen.getByLabelText('Decrease').getAttribute('aria-disabled')).toBe('true');
-    expect(screen.getByLabelText('Increase').getAttribute('aria-disabled')).toBe('true');
+    expect((screen.getByLabelText('Decrease') as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByLabelText('Increase') as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('shows placeholder when value is empty', () => {

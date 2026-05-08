@@ -23,7 +23,10 @@ function makeTableProps(overrides: Record<string, unknown> = {}) {
       ),
     },
     regions: {
-      expanded: { templateNode: { type: 'text' } },
+      expanded: {
+        templateNode: { type: 'text' },
+        render: vi.fn((_options) => React.createElement('span', { 'data-testid': 'expanded-region' })),
+      },
     },
     events: {},
     node: { instancePath: [{ repeatedTemplateId: 'page-body', instanceKey: 'root' }] },

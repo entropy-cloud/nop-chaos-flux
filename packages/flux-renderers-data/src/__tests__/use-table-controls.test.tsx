@@ -608,6 +608,34 @@ describe('useTableSort', () => {
       direction: null,
     });
   });
+
+  it('treats controlled sort ownership as read-only input', () => {
+    let api: any;
+
+    render(
+      <SortProbe
+        schemaProps={{
+          sortOwnership: 'controlled',
+          sort: { column: 'email', direction: 'desc' },
+        }}
+        onSortChange={vi.fn()}
+        columns={[{ name: 'email', sortable: true }]}
+        helpers={createHelpers()}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    expect(api.sortState).toEqual({ column: 'email', direction: 'desc' });
+
+    act(() => {
+      api.handleSort('email');
+    });
+
+    expect(api.sortState).toEqual({ column: 'email', direction: 'desc' });
+    expect(renderScopeUpdate).not.toHaveBeenCalled();
+  });
 });
 
 describe('useTableFilter', () => {
@@ -688,6 +716,37 @@ describe('useTableFilter', () => {
     expect(renderScopeUpdate).toHaveBeenCalledWith('tableState.filters', {
       role: { filters: ['admin'], keyword: undefined },
     });
+  });
+
+  it('treats controlled filter ownership as read-only input', () => {
+    let api: any;
+
+    render(
+      <FilterProbe
+        schemaProps={{
+          filterOwnership: 'controlled',
+          filters: {
+            role: { filters: ['admin'], keyword: 'adm' },
+          },
+        }}
+        onFilterChange={vi.fn()}
+        helpers={createHelpers()}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    expect(Array.from(api.filterState.role.values)).toEqual(['admin']);
+    expect(api.filterState.role.keyword).toBe('adm');
+
+    act(() => {
+      api.clearFilters('role');
+    });
+
+    expect(Array.from(api.filterState.role.values)).toEqual(['admin']);
+    expect(api.filterState.role.keyword).toBe('adm');
+    expect(renderScopeUpdate).not.toHaveBeenCalled();
   });
 });
 

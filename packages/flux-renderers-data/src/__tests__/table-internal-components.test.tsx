@@ -49,10 +49,16 @@ describe('table internal components', () => {
     const { rerender } = render(<TableLoadingOverlay loadingContent="Loading rows" />);
     expect(document.querySelector('[data-slot="table-loading-overlay"]')).toBeTruthy();
     expect(screen.getByText('Loading rows')).toBeTruthy();
+    expect(document.querySelector('[data-slot="table-loading-overlay"]')?.textContent).toContain(
+      'Loading rows',
+    );
 
     rerender(<TableLoadingOverlay loadingContent={null} />);
     expect(document.querySelector('[data-slot="table-loading-overlay"]')).toBeTruthy();
     expect(screen.queryByText('Loading rows')).toBeNull();
+    expect(document.querySelector('[data-slot="table-loading-overlay"]')?.textContent).toContain(
+      'Loading',
+    );
   });
 
   it('renders simple pagination and triggers navigation handlers', () => {
@@ -83,6 +89,7 @@ describe('table internal components', () => {
     expect(onPageChange).toHaveBeenCalledWith(3);
     expect(onPageSizeChange).toHaveBeenCalledWith(20);
     expect(screen.getByText('11-20 of 25')).toBeTruthy();
+    expect(screen.getByRole('combobox', { name: /Rows per page/i })).toBeTruthy();
   });
 
   it('renders long pagination with ellipsis and disabled edges', () => {
@@ -176,6 +183,50 @@ describe('table internal components', () => {
     expect(document.querySelector('[data-slot="table-expanded-row"]')).toBeTruthy();
     fireEvent.click(screen.getByLabelText('Collapse'));
     expect(onToggleExpand).toHaveBeenCalledWith('1');
+  });
+
+  it('supports keyboard activation for interactive rows', () => {
+    const onRowClick = vi.fn();
+    const rowScopeCache = new Map<string, any>([['1', makeRowScope({ name: 'Alice' }, 0)]]);
+    const processedData = [{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } }];
+
+    render(
+      <table>
+        <TableBodyRows
+          props={makeTableProps({ events: { onRowClick } })}
+          columns={[{ label: 'Name', name: 'name' } as any]}
+          responsiveHiddenColumns={[]}
+          processedData={processedData as any}
+          rowScopeCache={rowScopeCache}
+          rowRepeatedTemplateId="row"
+          expandedRowKeys={new Set()}
+          selectedRowKeys={new Set()}
+          columnCount={1}
+          isStriped={false}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
+          emptyContent={null}
+          showExpandColumn={false}
+          expandRowByClick={false}
+          onToggleExpand={() => {}}
+          onSelectRow={() => {}}
+          virtualEnabled={false}
+        />
+      </table>,
+    );
+
+    const row = document.querySelector('[data-slot="table-row"]') as HTMLElement;
+    expect(row.tabIndex).toBe(0);
+
+    fireEvent.keyDown(row, { key: 'Enter' });
+    fireEvent.keyDown(row, { key: ' ' });
+
+    expect(onRowClick).toHaveBeenCalledTimes(2);
   });
 
   it('renders data rows with checkbox selection cells and correct field values', () => {

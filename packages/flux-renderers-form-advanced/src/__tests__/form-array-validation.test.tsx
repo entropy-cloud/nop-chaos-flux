@@ -233,6 +233,77 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     });
   });
 
+  it('associates array-editor child errors with the input', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#array-a11y"
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            reviewers: [{ id: 'reviewer-1', value: '' }],
+          },
+          body: [
+            {
+              type: 'array-editor',
+              name: 'reviewers',
+              label: 'Reviewers',
+              itemLabel: 'Reviewer',
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Reviewer 1');
+    fireEvent.focus(input);
+    fireEvent.blur(input);
+
+    const error = await screen.findByText('Reviewer 1 is required');
+    expect(input.getAttribute('aria-describedby')).toBe(error.id);
+    expect(input.getAttribute('aria-errormessage')).toBe(error.id);
+  });
+
+  it('associates key-value child errors with the matching inputs', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#keyvalue-a11y"
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          data: {
+            metadata: [{ id: 'pair-1', key: '', value: 'prod' }],
+          },
+          body: [
+            {
+              type: 'key-value',
+              name: 'metadata',
+              label: 'Metadata',
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const keyInput = screen.getByPlaceholderText('Key');
+    fireEvent.focus(keyInput);
+    fireEvent.blur(keyInput);
+
+    const error = await screen.findByText('Entry 1 key is required');
+    expect(keyInput.getAttribute('aria-describedby')).toBe(error.id);
+    expect(keyInput.getAttribute('aria-errormessage')).toBe(error.id);
+  });
+
   it('supports aggregate allOrNone validation in the UI', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);

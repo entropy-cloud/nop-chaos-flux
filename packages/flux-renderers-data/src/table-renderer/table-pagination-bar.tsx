@@ -49,6 +49,7 @@ export function TablePaginationBar({
   onPageSizeChange,
 }: TablePaginationBarProps) {
   const [winStart, winEnd] = computeWindowRange(currentPage, totalPages);
+  const pageSizeLabelId = 'table-pagination-page-size-label';
 
   return (
     <div
@@ -56,12 +57,15 @@ export function TablePaginationBar({
       className="flex flex-col sm:flex-row items-center justify-between gap-4"
     >
       <div className="flex items-center gap-2 whitespace-nowrap">
-        <span className="text-sm text-muted-foreground">{t('flux.pagination.rowsPerPage')}</span>
+        <span id={pageSizeLabelId} className="text-sm text-muted-foreground">
+          {t('flux.pagination.rowsPerPage')}
+        </span>
         <NativeSelect
           value={String(pageSize)}
           onChange={(event) => onPageSizeChange(Number(event.target.value))}
           size="sm"
           className="min-w-16"
+          aria-labelledby={pageSizeLabelId}
         >
           {pageSizeOptions?.map((size) => (
             <NativeSelectOption key={size} value={String(size)}>

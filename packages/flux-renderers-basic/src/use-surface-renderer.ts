@@ -1,5 +1,6 @@
 import React from 'react';
 import type {
+  ActionSchema,
   ActionScope,
   ComponentHandleRegistry,
   RendererComponentProps,
@@ -75,6 +76,17 @@ export function useSurfaceRenderer(
     effectiveOpen ? resolvedData : undefined,
   );
   const lastOpenRef = React.useRef(effectiveOpen);
+  const closeHandledRef = React.useRef(false);
+  const fallbackOnOpen = (props.schema as { onOpen?: ActionSchema }).onOpen;
+  const fallbackOnClose = (props.schema as { onClose?: ActionSchema }).onClose;
+  const eventHandlers = React.useMemo(
+    () => ({
+    onOpen: events.onOpen ?? (fallbackOnOpen ? () => helpers.dispatch(fallbackOnOpen) : undefined),
+    onClose:
+      events.onClose ?? (fallbackOnClose ? () => helpers.dispatch(fallbackOnClose) : undefined),
+    }),
+    [events.onClose, events.onOpen, fallbackOnClose, fallbackOnOpen, helpers],
+  );
 
   React.useEffect(() => {
     if (!surfaceRuntime || controlledOpen !== undefined) {
@@ -115,27 +127,54 @@ export function useSurfaceRenderer(
       ),
     [id, kind, node.scope, openRevision, openingData, runtime],
   );
+  const cleanupRef = React.useRef({
+    surfaceRuntime,
+    id,
+    kind,
+    statusPath,
+    declarativeScope,
+  });
+
+  React.useEffect(() => {
+    cleanupRef.current = {
+      surfaceRuntime,
+      id,
+      kind,
+      statusPath,
+      declarativeScope,
+    };
+  }, [declarativeScope, id, kind, statusPath, surfaceRuntime]);
 
   const dispatchMetadata = readDispatchMetadata(helpers.dispatch);
   const actionScope = dispatchMetadata.actionScope;
   const componentRegistry = dispatchMetadata.componentRegistry;
-  const surfacePayload = React.useMemo(
-    () => ({
-      ...resolvedProps,
-      __handleOpenChange: (nextOpen: boolean) => {
-        if (controlledOpen === undefined) {
-          surfaceRuntime?.store.setUncontrolledOpen(id, nextOpen);
-        }
+  const handleSurfaceOpenChange = React.useCallback(
+    (nextOpen: boolean) => {
+      if (controlledOpen === undefined) {
+        surfaceRuntime?.store.setUncontrolledOpen(id, nextOpen);
+      }
 
-        if (!nextOpen) {
-          void events.onClose?.();
+      if (!nextOpen) {
+        if (closeHandledRef.current) {
           return;
         }
 
-        void events.onOpen?.();
-      },
+        closeHandledRef.current = true;
+        void eventHandlers.onClose?.();
+        return;
+      }
+
+      closeHandledRef.current = false;
+      void eventHandlers.onOpen?.();
+    },
+    [controlledOpen, eventHandlers, id, surfaceRuntime],
+  );
+  const surfacePayload = React.useMemo(
+    () => ({
+      ...resolvedProps,
+      __handleOpenChange: handleSurfaceOpenChange,
     }),
-    [controlledOpen, events, id, resolvedProps, surfaceRuntime],
+    [handleSurfaceOpenChange, resolvedProps],
   );
   const meta = React.useMemo(
     () => ({
@@ -169,8 +208,8 @@ export function useSurfaceRenderer(
       meta,
       regionHandles: regions,
       controlledOpen: controlledOpen !== undefined,
-      onOpen: () => events.onOpen?.(),
-      onClose: () => events.onClose?.(),
+      onOpen: () => eventHandlers.onOpen?.(),
+      onClose: () => eventHandlers.onClose?.(),
     };
 
     const existing = surfaceRuntime.store.getState().entries.find((candidate) => candidate.id === id);
@@ -228,7 +267,7 @@ export function useSurfaceRenderer(
     componentRegistry,
     controlledOpen,
     declarativeScope,
-    events,
+    eventHandlers,
     id,
     kind,
     meta,
@@ -248,6 +287,7 @@ export function useSurfaceRenderer(
 
     if (effectiveOpen) {
       closedPublishedRef.current = false;
+      closeHandledRef.current = false;
       openSurface();
       return;
     }
@@ -266,6 +306,11 @@ export function useSurfaceRenderer(
       return;
     }
 
+    if (!closeHandledRef.current) {
+      closeHandledRef.current = true;
+      void existing.onClose?.();
+    }
+
     surfaceRuntime.close(id);
     if (!closedPublishedRef.current) {
       surfaceRuntime.publishClosed({
@@ -280,18 +325,26 @@ export function useSurfaceRenderer(
 
   React.useEffect(() => {
     return () => {
-      surfaceRuntime?.close(id);
+      const current = cleanupRef.current;
+      const existing = current.surfaceRuntime?.store
+        .getState()
+        .entries.find((candidate) => candidate.id === current.id);
+      if (existing && !closeHandledRef.current) {
+        closeHandledRef.current = true;
+        void existing.onClose?.();
+      }
+      current.surfaceRuntime?.close(current.id);
       if (!closedPublishedRef.current) {
-        surfaceRuntime?.publishClosed({
-          surfaceId: id,
-          kind,
-          scope: declarativeScope,
-          statusPath,
+        current.surfaceRuntime?.publishClosed({
+          surfaceId: current.id,
+          kind: current.kind,
+          scope: current.declarativeScope,
+          statusPath: current.statusPath,
         });
         closedPublishedRef.current = true;
       }
     };
-  }, [declarativeScope, id, kind, statusPath, surfaceRuntime]);
+  }, []);
 
   const lastEntriesRef = React.useRef<SurfaceEntry[] | undefined>(undefined);
   const lastSummaryRef = React.useRef<SurfaceStatusSummary | undefined>(undefined);

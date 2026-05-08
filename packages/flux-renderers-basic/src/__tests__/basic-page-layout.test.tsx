@@ -1,6 +1,7 @@
 /* eslint-disable max-lines */
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 describe('basicRendererDefinitions page and layout behavior', () => {
@@ -274,7 +275,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
     await waitFor(() => expect(screen.getByText('true')).toBeTruthy());
 
-    fireEvent.click(document.querySelector('[data-slot="dialog-close"]') as Element);
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button'));
     await waitFor(() => expect(screen.getByText('false')).toBeTruthy());
     cleanup();
   });
@@ -305,7 +306,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
     await waitFor(() => expect(screen.getByText('true')).toBeTruthy());
 
-    fireEvent.click(document.querySelector('[data-slot="dialog-close"]') as Element);
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button'));
 
     await waitFor(() => {
       expect(screen.getByText('false')).toBeTruthy();
@@ -402,7 +403,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               defaultOpen: true,
               body: [{ type: 'text', text: 'Drawer body' }],
             },
-            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' },
+            { type: 'text', text: '${ui?.dialogStatus?.active}:${ui?.drawerStatus?.active}' },
           ],
         }}
         env={env}
@@ -436,7 +437,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               defaultOpen: true,
               body: [{ type: 'text', text: 'Drawer body' }],
             },
-            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' },
+            { type: 'text', text: '${ui?.dialogStatus?.active}:${ui?.drawerStatus?.active}' },
           ],
         }}
         env={env}
@@ -466,7 +467,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               open: false,
               body: [{ type: 'text', text: 'Drawer body' }],
             },
-            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' },
+            { type: 'text', text: '${ui?.dialogStatus?.active}:${ui?.drawerStatus?.active}' },
           ],
         }}
         env={env}
@@ -707,6 +708,43 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
     await waitFor(() => expect(screen.getByRole('dialog')).toBeTruthy());
     expect(screen.getByText('Dialog body')).toBeTruthy();
+  });
+
+  it('calls declarative dialog onClose once when closed from the local close control', async () => {
+    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: null })) as RendererEnv['fetcher'];
+    const SchemaRenderer = createBasicSchemaRenderer();
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dialog',
+              title: 'Dialog title',
+              defaultOpen: true,
+              onClose: {
+                action: 'ajax',
+                args: { url: '/close-once' },
+              },
+              body: [{ type: 'text', text: 'Dialog body' }],
+            },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeTruthy());
+
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button'));
+
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+    view.unmount();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    cleanup();
   });
 
   it('renders page header and footer through normalized regions', () => {

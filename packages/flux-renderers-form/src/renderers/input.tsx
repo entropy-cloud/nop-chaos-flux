@@ -9,6 +9,7 @@ import {
 import type { SourceTransientState } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import {
+  Button,
   Checkbox,
   cn,
   Input,
@@ -24,6 +25,7 @@ import {
   Switch,
   Textarea,
 } from '@nop-chaos/ui';
+import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import { formLabelFieldRule, useFormFieldController } from '../field-utils.js';
 import type {
   CheckboxGroupSchema,
@@ -344,6 +346,7 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = optionsSourceState?.loading === true;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
+  const errorId = name ? `${name}-source-error` : undefined;
 
   return (
     <div
@@ -351,6 +354,7 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
       data-slot="checkbox-group-wrapper"
       role="group"
       aria-required={props.props.required ? true : undefined}
+      aria-describedby={errorMessage ? errorId : undefined}
     >
       {loading ? (
         <span data-slot="checkbox-group-loading">
@@ -370,6 +374,8 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
               disabled={loading || presentation.effectiveDisabled}
               aria-invalid={presentation.showError ? true : undefined}
               aria-label={option.label}
+              aria-describedby={errorMessage ? errorId : undefined}
+              aria-errormessage={errorMessage ? errorId : undefined}
               onFocus={handlers.onFocus}
               onCheckedChange={(nextChecked) => {
                 const checkedValue = Boolean(nextChecked);
@@ -386,7 +392,11 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
           </Label>
         );
       })}
-      {errorMessage ? <span data-slot="checkbox-group-error">{errorMessage}</span> : null}
+      {errorMessage ? (
+        <span id={errorId} data-slot="checkbox-group-error" role="alert">
+          {errorMessage}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -438,6 +448,10 @@ function InputNumberRenderer(props: RendererComponentProps<InputNumberSchema>) {
   }
 
   function handleStep(direction: 1 | -1) {
+    if (!presentation.interactive) {
+      return;
+    }
+
     const current = numericValue ?? 0;
     let next = current + direction * step;
     next = clamp(next, min, max);
@@ -457,7 +471,12 @@ function InputNumberRenderer(props: RendererComponentProps<InputNumberSchema>) {
   }
 
   return (
-    <div className={cn('nop-input-number', props.meta.className)} data-slot="field-control" data-testid={props.meta.testid}>
+    <div
+      className={cn('nop-input-number', props.meta.className)}
+      data-slot="field-control"
+      data-testid={props.meta.testid}
+      data-cid={props.meta.cid}
+    >
       <div className="relative flex items-center">
         {prefix ? (
           <span data-slot="prefix" className="pointer-events-none absolute left-3 text-sm text-muted-foreground">
@@ -501,30 +520,32 @@ function InputNumberRenderer(props: RendererComponentProps<InputNumberSchema>) {
         ) : null}
         {showStepper ? (
           <span data-slot="stepper" className="absolute right-1 flex flex-col">
-            <button
+            <Button
               type="button"
               data-slot="stepper-increase"
               aria-label="Increase"
-              aria-disabled={presentation.effectiveDisabled ? 'true' : undefined}
-              className="flex h-4 w-6 items-center justify-center rounded-sm text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-              disabled={presentation.effectiveDisabled}
+              variant="ghost"
+              size="icon-xs"
+              className="h-4 w-6 rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+              disabled={!presentation.interactive}
               onClick={() => handleStep(1)}
               tabIndex={-1}
             >
-              ▲
-            </button>
-            <button
+              <ChevronUpIcon className="size-3" />
+            </Button>
+            <Button
               type="button"
               data-slot="stepper-decrease"
               aria-label="Decrease"
-              aria-disabled={presentation.effectiveDisabled ? 'true' : undefined}
-              className="flex h-4 w-6 items-center justify-center rounded-sm text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-              disabled={presentation.effectiveDisabled}
+              variant="ghost"
+              size="icon-xs"
+              className="h-4 w-6 rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+              disabled={!presentation.interactive}
               onClick={() => handleStep(-1)}
               tabIndex={-1}
             >
-              ▼
-            </button>
+              <ChevronDownIcon className="size-3" />
+            </Button>
           </span>
         ) : null}
       </div>

@@ -2,6 +2,7 @@ import type {
   BaseSchema,
   DynamicRendererSchema,
   SchemaInput,
+  SchemaObject,
   SchemaValue,
 } from '@nop-chaos/flux-core';
 
@@ -48,7 +49,7 @@ export interface DrawerSchema extends BaseSchema {
   showMask?: boolean;
 }
 
-export interface TabsItemSchema {
+export interface TabsItemSchema extends SchemaObject {
   key?: string | number;
   value?: string | number;
   title?: string;
@@ -73,7 +74,7 @@ export type TabsMode =
 
 export interface TabsSchema extends BaseSchema {
   type: 'tabs';
-  items?: Array<Record<string, any>>;
+  items?: TabsItemSchema[];
   value?: string | number;
   defaultValue?: string | number;
   valueOwnership?: 'local' | 'controlled' | 'scope';

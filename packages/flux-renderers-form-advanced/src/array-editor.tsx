@@ -45,6 +45,8 @@ function ArrayEditorRow(props: {
   const { item, index, name, currentForm, childBehavior, onSync, items, itemLabel, disabled, inputRef, onBeforeRemove } =
     props;
   const itemPath = `${name}.${index}.value`;
+  const inputId = `${name || 'array-editor'}-${item.id}-value`;
+  const errorId = `${inputId}-error`;
   const itemFieldState = useCompositeChildFieldState(itemPath);
   const itemUi = getChildFieldUiState({
     behavior: childBehavior,
@@ -62,12 +64,15 @@ function ArrayEditorRow(props: {
       >
         <Input
           ref={inputRef}
+          id={inputId}
           type="text"
           value={item.value}
           disabled={disabled}
           placeholder={itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}
           aria-label={itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}
           aria-invalid={itemUi.showError ? true : undefined}
+          aria-describedby={itemUi.showError ? errorId : undefined}
+          aria-errormessage={itemUi.showError ? errorId : undefined}
           onFocus={() => {
             if (currentForm && name) {
               currentForm.visitField(name);
@@ -99,7 +104,7 @@ function ArrayEditorRow(props: {
             }
           }}
         />
-        <FieldHint errorMessage={itemUi.error?.message} showError={itemUi.showError} />
+        <FieldHint errorMessage={itemUi.error?.message} showError={itemUi.showError} id={errorId} />
       </div>
       <Button
         type="button"

@@ -4,17 +4,41 @@ import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import type { SortState } from './types.js';
 
+function toSortDirection(value: unknown): SortState['direction'] {
+  return value === 'asc' || value === 'desc' ? value : null;
+}
+
 export function useTableSort(
   schemaProps: TableSchema,
   onSortChange: RendererComponentProps<TableSchema>['events']['onSortChange'],
   columns: NonNullable<TableSchema['columns']>,
   helpers: RendererComponentProps<TableSchema>['helpers'],
 ) {
+  const controlledSortInput = schemaProps as TableSchema & {
+    sortColumn?: unknown;
+    sortDirection?: unknown;
+    sort?: {
+      column?: unknown;
+      direction?: unknown;
+    };
+  };
   const renderScope = useRenderScope();
   const sortOwnership = schemaProps.sortOwnership ?? 'local';
   const sortStatePath =
     typeof schemaProps.sortStatePath === 'string' ? schemaProps.sortStatePath : undefined;
   const [localSortState, setLocalSortState] = useState<SortState>({ column: '', direction: null });
+  const controlledSortState = useMemo(
+    () => ({
+      column:
+        typeof controlledSortInput.sortColumn === 'string'
+          ? controlledSortInput.sortColumn
+          : typeof controlledSortInput.sort?.column === 'string'
+            ? controlledSortInput.sort.column
+            : '',
+      direction: toSortDirection(controlledSortInput.sortDirection ?? controlledSortInput.sort?.direction),
+    }),
+    [controlledSortInput],
+  );
 
   const scopeSortState = useScopeSelector(
     (scopeData) => {
@@ -30,14 +54,17 @@ export function useTableSort(
       } satisfies SortState;
     },
     (a, b) => a?.column === b?.column && a?.direction === b?.direction,
+    { paths: sortStatePath ? [sortStatePath] : undefined },
   );
 
   const sortState = useMemo(
     () =>
-      sortOwnership === 'scope'
+      sortOwnership === 'controlled'
+        ? controlledSortState
+        : sortOwnership === 'scope'
         ? (scopeSortState ?? { column: '', direction: null })
         : localSortState,
-    [localSortState, scopeSortState, sortOwnership],
+    [controlledSortState, localSortState, scopeSortState, sortOwnership],
   );
 
   const handleSort = useCallback(
@@ -62,7 +89,7 @@ export function useTableSort(
       startTransition(() => {
         if (sortOwnership === 'scope' && sortStatePath) {
           renderScope.update(sortStatePath, newState);
-        } else {
+        } else if (sortOwnership === 'local') {
           setLocalSortState(newState);
         }
       });

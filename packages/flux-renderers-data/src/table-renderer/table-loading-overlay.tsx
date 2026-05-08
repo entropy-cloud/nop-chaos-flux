@@ -6,6 +6,8 @@ interface TableLoadingOverlayProps {
 }
 
 export function TableLoadingOverlay({ loadingContent }: TableLoadingOverlayProps) {
+  const statusText = hasRendererSlotContent(loadingContent) ? loadingContent : 'Loading';
+
   return (
     <div
       data-slot="table-loading-overlay"
@@ -15,9 +17,7 @@ export function TableLoadingOverlay({ loadingContent }: TableLoadingOverlayProps
     >
       <div className="flex flex-col items-center gap-2">
         <Spinner className="size-6" />
-        {hasRendererSlotContent(loadingContent) ? (
-          <span className="text-sm text-muted-foreground">{loadingContent}</span>
-        ) : null}
+        <span className="text-sm text-muted-foreground">{statusText}</span>
       </div>
     </div>
   );

@@ -299,7 +299,10 @@ describe('table row rendering helpers', () => {
       helpers: { render: helperRender },
       regions: {
         cell: { render: vi.fn(() => <span data-testid="cell-region">Cell region</span>) },
-        expanded: { templateNode: { type: 'text' } },
+        expanded: {
+          templateNode: { type: 'text' },
+          render: vi.fn((_options) => <span data-testid="helper-expanded.r1">Helper</span>),
+        },
       },
     });
     const rowScope = makeRowScope({ name: 'Alice', email: 'alice@example.com' }, 0);

@@ -11,6 +11,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import type { ConditionField, ConditionFieldGroup } from './types.js';
 
 interface FieldSelectProps {
+  inputId?: string;
   fields: ConditionField[];
   value: string | undefined;
   onChange: (fieldName: string) => void;
@@ -51,6 +52,7 @@ function buildItems(
 }
 
 export function FieldSelect({
+  inputId,
   fields,
   value,
   onChange,
@@ -76,6 +78,7 @@ export function FieldSelect({
       disabled={disabled}
     >
       <ComboboxInput
+        id={inputId}
         className="h-7 text-xs min-w-[100px] max-w-[160px]"
         placeholder={selectedItem?.label ?? t('conditionBuilder.selectField')}
         aria-label={t('conditionBuilder.fieldLabel')}

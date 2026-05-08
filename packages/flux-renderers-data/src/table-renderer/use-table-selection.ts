@@ -38,6 +38,7 @@ export function useTableSelection(
       }
       return true;
     },
+    { paths: selectionStatePath ? [selectionStatePath] : undefined },
   );
 
   const selectedRowKeys = useMemo(

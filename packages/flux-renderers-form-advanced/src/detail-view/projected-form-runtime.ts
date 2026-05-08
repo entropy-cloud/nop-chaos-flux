@@ -160,6 +160,9 @@ export function createProjectedFormStore(
     subscribeToSubmitting(listener) {
       return parentStore.subscribeToSubmitting(listener);
     },
+    subscribeToModelGeneration(listener) {
+      return parentStore.subscribeToModelGeneration?.(listener) ?? (() => undefined);
+    },
     getPathState(relativePath) {
       return parentStore.getPathState(binding.toAbsolute(relativePath));
     },
@@ -214,6 +217,9 @@ export function createProjectedFormRuntime(
     get rootPath() {
       return getProjectedValidation()?.rootPath ?? parentForm.rootPath;
     },
+    subscribeToModelGeneration(listener) {
+      return parentForm.subscribeToModelGeneration?.(listener) ?? (() => undefined);
+    },
     get canSubmit() {
       return parentForm.canSubmit;
     },
@@ -231,6 +237,15 @@ export function createProjectedFormRuntime(
     },
     validateField(path, reason) {
       return parentForm.validateField(options.prefixPath(path), reason);
+    },
+    applyChangesAndRevalidate(input) {
+      return parentForm.applyChangesAndRevalidate({
+        ...input,
+        writes: Object.fromEntries(
+          Object.entries(input.writes).map(([path, value]) => [options.prefixPath(path), value]),
+        ),
+        changedPaths: input.changedPaths?.map((path) => options.prefixPath(path)),
+      });
     },
     getField(path) {
       return parentForm.getField(options.prefixPath(path));

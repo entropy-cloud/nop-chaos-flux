@@ -74,6 +74,11 @@ export function useCrudVisibleColumnNames(args: {
     (a, b) =>
       areStringArraysEqual(a?.toggledColumns, b?.toggledColumns) &&
       areStringArraysEqual(a?.orderedColumns, b?.orderedColumns),
+    {
+      paths: [toggledColumnsStatePath, orderedColumnsStatePath].filter(
+        (path): path is string => typeof path === 'string' && path.length > 0,
+      ),
+    },
   );
 
   return useMemo(() => {
