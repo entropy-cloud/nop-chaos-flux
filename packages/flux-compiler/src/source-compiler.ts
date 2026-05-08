@@ -1,7 +1,6 @@
 import type {
   ActionDataSourceSchema,
-  ApiSchema,
-  CompiledApiConfig,
+  ActionSchema,
   CompiledDataSource,
   CompiledOperationControl,
   CompiledRuntimeValue,
@@ -9,31 +8,10 @@ import type {
   ExpressionCompiler,
   ExpressionCompileOptions,
 } from '@nop-chaos/flux-core';
+import { compileActions } from './action-compiler.js';
 
 export interface SourceCompilerOptions extends ExpressionCompileOptions {
   basePath?: string;
-}
-
-export function compileApiConfig(
-  api: ApiSchema,
-  compiler: ExpressionCompiler,
-  options?: ExpressionCompileOptions,
-): CompiledApiConfig {
-  return {
-    url: compiler.compileValue<string>(api.url, options),
-    method:
-      api.method !== undefined ? compiler.compileValue<string>(api.method, options) : undefined,
-    data: api.data !== undefined ? compiler.compileValue<unknown>(api.data, options) : undefined,
-    params:
-      api.params !== undefined ? compiler.compileValue<unknown>(api.params, options) : undefined,
-    headers:
-      api.headers !== undefined
-        ? compiler.compileValue<Record<string, string>>(api.headers, options)
-        : undefined,
-    includeScope: api.includeScope,
-    responseAdaptor: api.responseAdaptor,
-    requestAdaptor: api.requestAdaptor,
-  };
 }
 
 function compileOperationControl(schema: DataSourceSchema): CompiledOperationControl | undefined {
@@ -88,16 +66,10 @@ export function compileDataSource(
 
   if (isActionSource) {
     const actionSchema = schema as ActionDataSourceSchema;
-    const actionArgs = actionSchema.args;
-
-    if (actionArgs && actionSchema.action === 'ajax' && 'url' in actionArgs) {
-      compiled.api = compileApiConfig(actionArgs as unknown as ApiSchema, compiler, {
-        ...options,
-        sourcePath: `${basePath}.args`,
-      });
-    }
-
-    compiled.action = actionSchema.action;
+    compiled.action = compileActions(actionSchema as ActionSchema, compiler, {
+      ...options,
+      basePath,
+    });
 
     if (actionSchema.interval !== undefined) {
       compiled.interval = compiler.compileValue<number>(actionSchema.interval, {
@@ -126,10 +98,6 @@ export function compileDataSource(
       ...options,
       sourcePath: `${basePath}.formula`,
     });
-  }
-
-  if ((schema as { action?: string }).action !== undefined) {
-    compiled.action = (schema as { action: string }).action;
   }
 
   if (schema.mergeToScope !== undefined) {
@@ -204,20 +172,8 @@ export function isDataSourceFullyStatic(compiled: CompiledDataSource): boolean {
     }
   }
 
-  if (compiled.api) {
-    const apiFields: (CompiledRuntimeValue<unknown> | undefined)[] = [
-      compiled.api.url,
-      compiled.api.method,
-      compiled.api.data,
-      compiled.api.params,
-      compiled.api.headers,
-    ];
-
-    for (const field of apiFields) {
-      if (field !== undefined && !field.isStatic) {
-        return false;
-      }
-    }
+  if (compiled.action && !compiled.action.isFullyStatic) {
+    return false;
   }
 
   return true;

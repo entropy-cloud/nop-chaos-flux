@@ -346,7 +346,7 @@ export interface ValidationScopeRuntime {
   registerField(registration: RuntimeFieldRegistration): FieldRegistrationHandle;
   updateFieldRegistration(
     registrationId: string,
-    patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths'>>,
+    patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths' | 'hiddenFieldPolicy'>>,
   ): void;
   notifyFieldHidden(path: string, hidden: boolean): void;
   touchField?(path: string): void;

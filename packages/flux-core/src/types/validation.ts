@@ -57,6 +57,7 @@ export interface RuntimeFieldRegistration {
   path: string;
   getValue(): unknown;
   childPaths?: string[];
+  hiddenFieldPolicy?: HiddenFieldPolicy;
   syncValue?(): unknown;
   onRemove?(): void;
   validateChild?(path: string): Promise<ValidationError[]> | ValidationError[];

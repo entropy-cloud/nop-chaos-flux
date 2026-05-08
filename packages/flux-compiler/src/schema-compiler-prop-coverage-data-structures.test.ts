@@ -256,6 +256,36 @@ describe('schema property coverage - detail-field', () => {
       viewer: { type: 'text', text: 'viewer content' },
     });
     expect(root.regions.viewer).toBeDefined();
+    expect(root.propsProgram.value.name).toBe('detail');
+  });
+});
+
+describe('schema property coverage - detail-view', () => {
+  const detailViewRenderer: RendererDefinition = {
+    type: 'detail-view',
+    component: noop,
+    fields: [
+      { key: 'name', kind: 'prop' },
+      { key: 'viewer', kind: 'region', regionKey: 'viewer' },
+      { key: 'content', kind: 'region', regionKey: 'content' },
+    ],
+  };
+  const textRenderer: RendererDefinition = {
+    type: 'text',
+    component: noop,
+    fields: [{ key: 'text', kind: 'prop' }],
+  };
+  const compiler = createCompiler(detailViewRenderer, textRenderer);
+
+  it('delivers detail-view name through normalized props', () => {
+    const root = compileNode(compiler, {
+      type: 'detail-view',
+      name: 'settings.profile',
+      viewer: { type: 'text', text: 'viewer content' },
+    });
+
+    expect(root.regions.viewer).toBeDefined();
+    expect(root.propsProgram.value.name).toBe('settings.profile');
   });
 });
 

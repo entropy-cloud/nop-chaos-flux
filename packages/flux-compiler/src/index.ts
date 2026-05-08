@@ -1,7 +1,6 @@
 export { createSchemaCompiler, validateSchema } from './schema-compiler.js';
 export { compileAction, compileActions, type ActionCompilerOptions } from './action-compiler.js';
 export {
-  compileApiConfig,
   compileDataSource,
   isDataSourceFullyStatic,
   type SourceCompilerOptions,

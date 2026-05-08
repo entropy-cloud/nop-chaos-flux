@@ -271,23 +271,6 @@ export interface ExpressionCompiler {
 }
 
 /**
- * Compiled API configuration - all expressions pre-compiled.
- * Used in data sources with API requests.
- *
- * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
- */
-export interface CompiledApiConfig {
-  url: CompiledRuntimeValue<string>;
-  method?: CompiledRuntimeValue<string>;
-  data?: CompiledRuntimeValue<unknown>;
-  params?: CompiledRuntimeValue<unknown>;
-  headers?: CompiledRuntimeValue<Record<string, string>>;
-  includeScope?: '*' | readonly string[];
-  responseAdaptor?: string;
-  requestAdaptor?: string;
-}
-
-/**
  * Compiled operation control configuration.
  * Controls request dedup, throttle, cache behavior.
  */
@@ -317,14 +300,11 @@ export interface CompiledDataSource {
   /** Compiled target path for storing results in scope */
   targetPath?: CompiledRuntimeValue<string>;
 
-  /** Compiled API configuration derived from action args (when kind === 'action' and action is ajax-like) */
-  api?: CompiledApiConfig;
-
   /** Formula source expression (when kind === 'formula') */
   formula?: CompiledRuntimeValue<unknown>;
 
-  /** Action to execute (alternative to api/formula) */
-  action?: string;
+  /** Compiled action producer (when kind === 'action') */
+  action?: CompiledActionProgram;
 
   /** Whether to merge result directly to scope (vs. at targetPath) */
   mergeToScope?: CompiledRuntimeValue<boolean>;

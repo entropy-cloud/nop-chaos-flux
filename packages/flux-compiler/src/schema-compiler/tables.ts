@@ -30,9 +30,27 @@ export const TABLE_COLUMN_REGION_FIELDS = [
 ] as const;
 
 export const TABS_ITEM_REGION_FIELDS = [
-  { key: 'title', regionKeySuffix: 'title', compiledKey: 'titleRegionKey' },
-  { key: 'body', regionKeySuffix: 'body', compiledKey: 'bodyRegionKey' },
-  { key: 'toolbar', regionKeySuffix: 'toolbar', compiledKey: 'toolbarRegionKey' },
+  {
+    key: 'title',
+    regionKeySuffix: 'title',
+    compiledKey: 'titleRegionKey',
+    params: ['item', 'index', 'key'] as readonly string[],
+    isolate: true,
+  },
+  {
+    key: 'body',
+    regionKeySuffix: 'body',
+    compiledKey: 'bodyRegionKey',
+    params: ['item', 'index', 'key'] as readonly string[],
+    isolate: true,
+  },
+  {
+    key: 'toolbar',
+    regionKeySuffix: 'toolbar',
+    compiledKey: 'toolbarRegionKey',
+    params: ['item', 'index', 'key'] as readonly string[],
+    isolate: true,
+  },
 ] as const;
 
 export const VARIANT_ITEM_REGION_FIELDS = [

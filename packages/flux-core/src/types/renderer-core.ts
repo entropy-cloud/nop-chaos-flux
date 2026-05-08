@@ -7,7 +7,6 @@ import type {
 } from './actions.js';
 import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance.js';
 import type {
-  CompiledApiConfig,
   CompiledDataSource,
   CompiledReaction,
   CompiledRuntimeValue,
@@ -140,6 +139,33 @@ export interface SourceDebugEntry {
 
 export interface SourceRegistryDebugSnapshot {
   sources: SourceDebugEntry[];
+}
+
+export interface SourceTransientState {
+  loading: boolean;
+  error: unknown;
+  status: 'idle' | 'loading' | 'ready' | 'error';
+}
+
+export interface AnonymousSourceEntry {
+  key: string;
+  source: SourceSchema;
+  stateKey?: string;
+}
+
+export interface SourceObserverSnapshot {
+  value: Readonly<Record<string, unknown>>;
+}
+
+export interface SourceObserver {
+  getSnapshot(): SourceObserverSnapshot;
+  subscribe(listener: () => void): () => void;
+  run(input: {
+    scope: ScopeRef;
+    entries: readonly AnonymousSourceEntry[];
+    baseValue?: Readonly<Record<string, unknown>>;
+  }): void;
+  dispose(): void;
 }
 
 export type RendererEventHandler = (
@@ -331,6 +357,7 @@ export interface RendererRuntime {
     scope: ScopeRef;
     ctx?: Partial<ActionContext>;
   }): Promise<ActionResult>;
+  createSourceObserver(): SourceObserver;
   createPageRuntime(data?: Record<string, any>): PageRuntime;
   createValidationScopeRuntime(input: {
     id?: string;
@@ -343,7 +370,7 @@ export interface RendererRuntime {
     disposeScope?: (scopeId: string) => void;
   }): import('./runtime.js').SurfaceRuntime;
   createDataSourceController(input: {
-    compiledApi: CompiledApiConfig;
+    action: ActionSchema | ActionSchema[] | CompiledActionProgram;
     scope: ScopeRef;
     targetPath?: string;
     interval?: number;

@@ -194,6 +194,8 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
 
       expect(regions['items.0.title']).toBeDefined();
       expect(regions['items.0.title']?.key).toBe('items.0.title');
+      expect(regions['items.0.title']?.params).toEqual(['item', 'index', 'key']);
+      expect(regions['items.0.title']?.isolate).toBe(true);
     });
 
     it('extracts tab body schema into regions', () => {
@@ -206,6 +208,8 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       normalize({ value: items, path: '$', regions, compileSchema });
 
       expect(regions['items.0.body']).toBeDefined();
+      expect(regions['items.0.body']?.params).toEqual(['item', 'index', 'key']);
+      expect(regions['items.0.body']?.isolate).toBe(true);
     });
 
     it('extracts tab toolbar schema into regions', () => {
@@ -218,6 +222,8 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       normalize({ value: items, path: '$', regions, compileSchema });
 
       expect(regions['items.0.toolbar']).toBeDefined();
+      expect(regions['items.0.toolbar']?.params).toEqual(['item', 'index', 'key']);
+      expect(regions['items.0.toolbar']?.isolate).toBe(true);
     });
 
     it('handles mixed items with and without schema regions', () => {

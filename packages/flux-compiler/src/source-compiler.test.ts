@@ -31,11 +31,13 @@ describe('compileDataSource', () => {
       expect(compiled.targetPath).toBeDefined();
       expect(compiled.targetPath?.isStatic).toBe(true);
       expect(getStaticValue(compiled.targetPath)).toBe('users');
-      expect(compiled.api).toBeDefined();
-      expect(compiled.api?.url.isStatic).toBe(true);
-      expect(getStaticValue(compiled.api?.url)).toBe('/api/users');
-      expect(compiled.api?.method?.isStatic).toBe(true);
-      expect(getStaticValue(compiled.api?.method)).toBe('GET');
+      expect(compiled.action).toBeDefined();
+      expect(compiled.action?.nodes[0]).toMatchObject({ action: 'ajax' });
+      expect(compiled.action?.nodes[0].payload.args?.isStatic).toBe(true);
+      expect(getStaticValue(compiled.action?.nodes[0].payload.args)).toEqual({
+        url: '/api/users',
+        method: 'GET',
+      });
     });
 
     it('compiles action data source with expression in url', () => {
@@ -49,7 +51,8 @@ describe('compileDataSource', () => {
 
       const compiled = compileDataSource('ds-2', schema, expressionCompiler);
 
-      expect(compiled.api?.url.isStatic).toBe(false);
+      expect(compiled.action?.isFullyStatic).toBe(false);
+      expect(compiled.action?.nodes[0].payload.args?.isStatic).toBe(false);
     });
 
     it('compiles action data source with interval and stopWhen', () => {
