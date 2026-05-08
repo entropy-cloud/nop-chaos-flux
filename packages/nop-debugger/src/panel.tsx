@@ -20,6 +20,55 @@ import { useInjectDebuggerStyles } from './panel/styles.js';
 import { TimelineTab } from './panel/timeline-tab.js';
 import { useInspectMode } from './panel/use-inspect-mode.js';
 
+function equalFilters(
+  a: NopDebuggerFilterKind[],
+  b: NopDebuggerFilterKind[],
+) {
+  if (a === b) {
+    return true;
+  }
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function equalChromeState(
+  a: {
+    enabled: boolean;
+    panelOpen: boolean;
+    minimized: boolean;
+    paused: boolean;
+    strictMode: boolean;
+    activeTab: NopDebuggerTab;
+    position: { x: number; y: number };
+  },
+  b: {
+    enabled: boolean;
+    panelOpen: boolean;
+    minimized: boolean;
+    paused: boolean;
+    strictMode: boolean;
+    activeTab: NopDebuggerTab;
+    position: { x: number; y: number };
+  },
+) {
+  return (
+    a.enabled === b.enabled &&
+    a.panelOpen === b.panelOpen &&
+    a.minimized === b.minimized &&
+    a.paused === b.paused &&
+    a.strictMode === b.strictMode &&
+    a.activeTab === b.activeTab &&
+    a.position === b.position
+  );
+}
+
 function getFilterLabels(): Record<NopDebuggerFilterKind, string> {
   return {
     render: t('flux.debugger.renderEvents'),
@@ -97,14 +146,32 @@ function matchesSearchQuery(event: import('./types.js').NopDebugEvent, rawQuery:
 
 export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const filterLabels = useMemo(() => getFilterLabels(), []);
-  const snapshot = useDebuggerSnapshot(props.controller);
+  const chrome = useDebuggerSnapshot(
+    props.controller,
+    (snapshot) => ({
+      enabled: snapshot.enabled,
+      panelOpen: snapshot.panelOpen,
+      minimized: snapshot.minimized,
+      paused: snapshot.paused,
+      strictMode: snapshot.strictMode,
+      activeTab: snapshot.activeTab,
+      position: snapshot.position,
+    }),
+    equalChromeState,
+  );
+  const events = useDebuggerSnapshot(props.controller, (snapshot) => snapshot.events);
+  const filters = useDebuggerSnapshot(
+    props.controller,
+    (snapshot) => snapshot.filters,
+    equalFilters,
+  );
   const handlePanelTap = useMemo(
-    () => (snapshot.minimized ? () => props.controller.unminimize() : undefined),
-    [props.controller, snapshot.minimized],
+    () => (chrome.minimized ? () => props.controller.unminimize() : undefined),
+    [props.controller, chrome.minimized],
   );
   const { position, bind: dragBind } = useDraggablePosition(
     props.controller,
-    snapshot.position,
+    chrome.position,
     handlePanelTap,
   );
   const { width: panelWidth, bind: resizeBind } = useResizablePanel();
@@ -113,8 +180,8 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     bind: launcherBind,
     wasDraggedRef,
     consumeSuppressedClick,
-  } = useLauncherDrag(props.controller, snapshot.position);
-  useInjectDebuggerStyles(snapshot.enabled);
+  } = useLauncherDrag(props.controller, chrome.position);
+  useInjectDebuggerStyles(chrome.enabled);
 
   const [searchHistory, setSearchHistory] = useState<string[]>(() =>
     loadPersistedSearchHistory(props.controller.id),
@@ -141,7 +208,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     scanComponentTree,
   } = useInspectMode({
     controller: props.controller,
-    activeTab: snapshot.activeTab,
+    activeTab: chrome.activeTab,
     setNodeIdInput,
     setFormTab,
     setEvalResult,
@@ -159,8 +226,8 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   };
 
   const filteredEvents = useMemo(
-    () => snapshot.events.filter((event) => snapshot.filters.includes(event.group)),
-    [snapshot.events, snapshot.filters],
+    () => events.filter((event) => filters.includes(event.group)),
+    [events, filters],
   );
 
   const searchedEvents = useMemo(() => {
@@ -175,16 +242,16 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
 
   const mergedRequests = useMemo(() => mergeNetworkRequests(networkEvents), [networkEvents]);
 
-  const errorGroups = useMemo(() => groupErrors(snapshot.events), [snapshot.events]);
+  const errorGroups = useMemo(() => groupErrors(events), [events]);
 
-  const overview = useMemo(() => buildOverview(snapshot.events), [snapshot.events]);
+  const overview = useMemo(() => buildOverview(events), [events]);
   const latestTrace = useMemo(() => {
-    void snapshot.events;
+    void events;
     return props.controller.createDiagnosticReport({
       eventLimit: 20,
       includeLatestInteractionTrace: true,
     }).latestInteractionTrace;
-  }, [props.controller, snapshot.events]);
+  }, [props.controller, events]);
   const latestTraceSummary = useMemo(() => formatTraceSummary(latestTrace), [latestTrace]);
 
   const nodeDiagnostics = useMemo(() => {
@@ -228,11 +295,11 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     setSearchText(query);
   };
 
-  if (!snapshot.enabled) {
+  if (!chrome.enabled) {
     return null;
   }
 
-  if (!snapshot.panelOpen) {
+  if (!chrome.panelOpen) {
     return (
       <Button
         type="button"
@@ -257,14 +324,14 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           <Bug size={14} />
         </span>
         <span className="ndbg-launcher-label">
-          {errorCount > 0 ? `${errorCount} err` : `${snapshot.events.length}`}
+           {errorCount > 0 ? `${errorCount} err` : `${events.length}`}
         </span>
         {errorCount > 0 ? <span className="ndbg-launcher-badge">{badgeDisplay}</span> : null}
       </Button>
     );
   }
 
-  if (snapshot.minimized) {
+  if (chrome.minimized) {
     return (
       <div
         className="nop-debugger nop-theme-root ndbg-minimized"
@@ -278,7 +345,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         {errorCount > 0 ? (
           <span className="ndbg-minimized-error-badge">{badgeDisplay}</span>
         ) : (
-          <span className="ndbg-minimized-badge">{snapshot.events.length}</span>
+           <span className="ndbg-minimized-badge">{events.length}</span>
         )}
       </div>
     );
@@ -307,11 +374,11 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             variant="ghost"
             size="icon-sm"
             className="ndbg-icon-button"
-            onClick={() => (snapshot.paused ? props.controller.resume() : props.controller.pause())}
-            data-tooltip={snapshot.paused ? 'Resume' : 'Pause'}
-            aria-label={snapshot.paused ? 'Resume' : 'Pause'}
+            onClick={() => (chrome.paused ? props.controller.resume() : props.controller.pause())}
+            data-tooltip={chrome.paused ? 'Resume' : 'Pause'}
+            aria-label={chrome.paused ? 'Resume' : 'Pause'}
           >
-            {snapshot.paused ? <Play size={14} /> : <Pause size={14} />}
+            {chrome.paused ? <Play size={14} /> : <Pause size={14} />}
           </Button>
           <Button
             type="button"
@@ -330,7 +397,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             size="icon-sm"
             className="ndbg-icon-button"
             onClick={() => {
-              if (!snapshot.panelOpen) {
+              if (!chrome.panelOpen) {
                 props.controller.show();
               }
               setInspectMode(!inspectMode);
@@ -364,7 +431,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             variant="ghost"
             size="sm"
             className="ndbg-tab"
-            data-active={snapshot.activeTab === tab ? '' : undefined}
+            data-active={chrome.activeTab === tab ? '' : undefined}
             onClick={() => props.controller.setActiveTab(tab)}
           >
             {tab}
@@ -372,19 +439,19 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         ))}
       </div>
 
-      {snapshot.activeTab === 'overview' ? (
+      {chrome.activeTab === 'overview' ? (
         <OverviewTab
           overview={overview}
-          paused={snapshot.paused}
-          strictMode={snapshot.strictMode}
+          paused={chrome.paused}
+          strictMode={chrome.strictMode}
           latestTrace={latestTrace}
           latestTraceSummary={latestTraceSummary}
         />
       ) : null}
 
-      {snapshot.activeTab === 'timeline' ? (
+      {chrome.activeTab === 'timeline' ? (
         <TimelineTab
-          snapshot={snapshot}
+          filters={filters}
           searchText={searchText}
           setSearchText={handleSearchTextChange}
           submitSearch={handleSearchSubmit}
@@ -403,7 +470,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         />
       ) : null}
 
-      {snapshot.activeTab === 'network' ? (
+      {chrome.activeTab === 'network' ? (
         <NetworkTab
           mergedRequests={mergedRequests}
           networkExpandedKey={networkExpandedKey}
@@ -411,7 +478,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         />
       ) : null}
 
-      {snapshot.activeTab === 'node' ? (
+      {chrome.activeTab === 'node' ? (
         <NodeTab
           componentTree={componentTree}
           scanComponentTree={scanComponentTree}

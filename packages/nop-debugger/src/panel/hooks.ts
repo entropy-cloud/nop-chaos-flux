@@ -2,10 +2,11 @@ import {
   useEffect,
   useRef,
   useState,
-  useSyncExternalStore,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type { NopDebuggerController } from '../types.js';
+import type { NopDebuggerSnapshot } from '../types.js';
 
 type PointerCaptureTarget = HTMLElement & {
   setPointerCapture?: (pointerId: number) => void;
@@ -38,8 +39,19 @@ function releasePointerCaptureSafely(target: HTMLElement, pointerId: number) {
   }
 }
 
-export function useDebuggerSnapshot(controller: NopDebuggerController) {
-  return useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
+export function useDebuggerSnapshot<T = NopDebuggerSnapshot>(
+  controller: NopDebuggerController,
+  selector?: (snapshot: NopDebuggerSnapshot) => T,
+  equalityFn: (a: T, b: T) => boolean = Object.is,
+) {
+  const select = selector ?? ((snapshot: NopDebuggerSnapshot) => snapshot as T);
+  return useSyncExternalStoreWithSelector(
+    controller.subscribe,
+    controller.getSnapshot,
+    controller.getSnapshot,
+    select,
+    equalityFn,
+  );
 }
 
 export function useDraggablePosition(

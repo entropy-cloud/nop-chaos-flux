@@ -18,7 +18,8 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "lucide-react": "^1.7.0",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "use-sync-external-store": "^1.6.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

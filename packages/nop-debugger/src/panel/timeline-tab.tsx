@@ -3,7 +3,7 @@ import type { ChangeEvent, KeyboardEvent } from 'react';
 import { Button, Input } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { DEFAULT_FILTERS } from '../diagnostics.js';
-import type { NopDebugEvent, NopDebuggerFilterKind, NopDebuggerSnapshot } from '../types.js';
+import type { NopDebugEvent, NopDebuggerFilterKind } from '../types.js';
 import type { ErrorGroup } from './event-groups.js';
 import { JsonViewer } from './json-viewer.js';
 
@@ -54,7 +54,7 @@ function formatClock(timestamp: number) {
 }
 
 export function TimelineTab(props: {
-  snapshot: NopDebuggerSnapshot;
+  filters: NopDebuggerFilterKind[];
   searchText: string;
   setSearchText(value: string): void;
   submitSearch(): void;
@@ -72,7 +72,7 @@ export function TimelineTab(props: {
   setExpandedId(value: number | null): void;
 }) {
   const {
-    snapshot,
+    filters,
     searchText,
     setSearchText,
     submitSearch,
@@ -114,7 +114,7 @@ export function TimelineTab(props: {
     return () => window.removeEventListener('resize', measure);
   }, [virtualizationEnabled]);
 
-  const resetKey = `${activeTimelineEvents.length}:${errorsOnly ? 'errors' : 'all'}:${searchText}:${snapshot.filters.join(',')}`;
+  const resetKey = `${activeTimelineEvents.length}:${errorsOnly ? 'errors' : 'all'}:${searchText}:${filters.join(',')}`;
 
   useEffect(() => {
     if (virtualListRef.current) {
@@ -237,7 +237,7 @@ export function TimelineTab(props: {
         </Button>
         {!errorsOnly &&
           DEFAULT_FILTERS.map((filter) => {
-            const active = snapshot.filters.includes(filter);
+            const active = filters.includes(filter);
             return (
               <Button
                 key={filter}
