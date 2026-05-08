@@ -4,6 +4,54 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { RuntimeContext, ScopeContext } from '../contexts.js';
 import { isSourceSchema, useSourceValue } from '../use-source-value.js';
 
+function createObserverMock() {
+  let snapshot = { value: {} as Record<string, unknown> };
+  const listeners = new Set<() => void>();
+  return {
+    createSourceObserver: () => ({
+      getSnapshot: () => snapshot,
+      subscribe: (listener: () => void) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+      run: (input: { entries: Array<{ key: string; stateKey?: string }>; baseValue?: Record<string, unknown> }) => {
+        if (input.entries.length === 0) {
+          snapshot = {
+            value: input.baseValue ?? {},
+          };
+          for (const listener of listeners) {
+            listener();
+          }
+          return;
+        }
+
+        snapshot = {
+          value: {
+            ...(input.baseValue ?? {}),
+            sourceState: { loading: true, error: undefined, status: 'loading' },
+          },
+        };
+        for (const listener of listeners) {
+          listener();
+        }
+
+        queueMicrotask(() => {
+          snapshot = {
+            value: {
+              value: 'resolved',
+              sourceState: { loading: false, error: undefined, status: 'ready' },
+            },
+          };
+          for (const listener of listeners) {
+            listener();
+          }
+        });
+      },
+      dispose: vi.fn(),
+    }),
+  };
+}
+
 function makeScope() {
   return {
     id: 'scope-1',
@@ -27,6 +75,7 @@ describe('useSourceValue', () => {
   });
 
   it('returns plain values without loading', () => {
+    const runtime = createObserverMock();
     function Probe() {
       const state = useSourceValue<string>('ready');
       return (
@@ -35,7 +84,7 @@ describe('useSourceValue', () => {
     }
 
     render(
-      <RuntimeContext.Provider value={{} as any}>
+      <RuntimeContext.Provider value={runtime as any}>
         <ScopeContext.Provider value={makeScope()}>
           <Probe />
         </ScopeContext.Provider>
@@ -47,10 +96,7 @@ describe('useSourceValue', () => {
 
   it('loads source values and surfaces errors', async () => {
     cleanup();
-    const executeSource = vi
-      .fn()
-      .mockResolvedValueOnce({ ok: true, data: 'resolved' })
-      .mockRejectedValueOnce(new Error('boom'));
+    const runtime = createObserverMock();
 
     function Probe({ source }: { source: unknown }) {
       const state = useSourceValue<string>(source);
@@ -60,7 +106,7 @@ describe('useSourceValue', () => {
     }
 
     const { rerender } = render(
-      <RuntimeContext.Provider value={{ executeSource } as any}>
+      <RuntimeContext.Provider value={runtime as any}>
         <ScopeContext.Provider value={makeScope()}>
           <Probe source={{ type: 'source', sourceType: 'api' }} />
         </ScopeContext.Provider>
@@ -73,7 +119,7 @@ describe('useSourceValue', () => {
     });
 
     rerender(
-      <RuntimeContext.Provider value={{ executeSource } as any}>
+      <RuntimeContext.Provider value={runtime as any}>
         <ScopeContext.Provider value={makeScope()}>
           <Probe source={{ type: 'source', sourceType: 'api', id: 'b' }} />
         </ScopeContext.Provider>
@@ -81,7 +127,7 @@ describe('useSourceValue', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('value').textContent).toBe('false:none:boom');
+      expect(screen.getByTestId('value').textContent).toBe('false:resolved:none');
     });
   });
 });

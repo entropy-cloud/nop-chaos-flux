@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { ActionResult, ScopeRef, SourceSchema } from '@nop-chaos/flux-core';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import type { ScopeRef, SourceObserver, SourceSchema } from '@nop-chaos/flux-core';
 import { useRenderScope, useRendererRuntime } from './hooks.js';
 
 export function isSourceSchema(value: unknown): value is SourceSchema {
@@ -14,12 +14,6 @@ export interface SourceValueState<T> {
   error: unknown;
 }
 
-interface ResolvedSourceState<T> {
-  source?: SourceSchema;
-  value: T | undefined;
-  error: unknown;
-}
-
 export function useSourceValue<T>(
   input: unknown,
   options?: { scope?: ScopeRef },
@@ -28,45 +22,27 @@ export function useSourceValue<T>(
   const activeScope = useRenderScope();
   const scope = options?.scope ?? activeScope;
   const source = useMemo(() => (isSourceSchema(input) ? input : undefined), [input]);
-  const [state, setState] = useState<ResolvedSourceState<T>>({
-    source: undefined,
-    value: source ? undefined : (input as T | undefined),
-    error: undefined,
-  });
+  const [observer] = useState<SourceObserver>(() => runtime.createSourceObserver());
+  const snapshot = useSyncExternalStore(observer.subscribe, observer.getSnapshot, observer.getSnapshot);
 
   useEffect(() => {
     if (!source) {
+      observer.run({ scope, entries: [], baseValue: { value: input as T | undefined } });
       return;
     }
 
-    const controller = new AbortController();
-    const { signal } = controller;
+    observer.run({
+      scope,
+      entries: [{ key: 'value', source, stateKey: 'sourceState' }],
+      baseValue: {},
+    });
+  }, [input, observer, scope, source]);
 
-    void runtime
-      .executeSource({ source, scope, ctx: { signal } })
-      .then((result: ActionResult) => {
-        if (signal.aborted) {
-          return;
-        }
-
-        setState({
-          source,
-          value: result.data as T | undefined,
-          error: result.ok ? undefined : result.error,
-        });
-      })
-      .catch((error) => {
-        if (signal.aborted) {
-          return;
-        }
-
-        setState({ source, value: undefined, error });
-      });
-
+  useEffect(() => {
     return () => {
-      controller.abort();
+      observer.dispose();
     };
-  }, [input, runtime, scope, source]);
+  }, [observer]);
 
   if (!source) {
     return {
@@ -76,17 +52,13 @@ export function useSourceValue<T>(
     };
   }
 
-  if (state.source !== source) {
-    return {
-      loading: true,
-      value: undefined,
-      error: undefined,
-    };
-  }
+  const sourceState = snapshot.value.sourceState as
+    | { loading: boolean; error: unknown; status: 'idle' | 'loading' | 'ready' | 'error' }
+    | undefined;
 
   return {
-    loading: false,
-    value: state.value,
-    error: state.error,
+    loading: sourceState?.loading ?? true,
+    value: snapshot.value.value as T | undefined,
+    error: sourceState?.error,
   };
 }

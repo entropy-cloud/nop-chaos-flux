@@ -129,7 +129,7 @@ describe('FieldFrame', () => {
     const { container } = render(
       <FormContext.Provider value={form}>
         <FieldFrame name="email" label="Email" required hint="Helpful hint">
-          content
+          <input aria-label="Email input" />
         </FieldFrame>
       </FormContext.Provider>,
     );
@@ -142,12 +142,12 @@ describe('FieldFrame', () => {
     expect(field?.hasAttribute('data-field-invalid')).toBe(false);
     expect(container.querySelector('[data-slot="field-label"]')?.textContent).toContain('Email');
     expect(container.querySelector('[data-slot="field-required"]')?.textContent).toBe('*');
-    expect(container.querySelector('[data-slot="field-control"]')?.textContent).toContain(
-      'content',
-    );
-    expect(container.querySelector('[data-slot="field-hint"]')?.textContent).toContain(
-      'Helpful hint',
-    );
+    expect(container.querySelector('[data-slot="field-control"] input[aria-label="Email input"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="field-hint"]')).toBeNull();
+
+    fireEvent.focus(screen.getByLabelText('Email input'));
+
+    expect(container.querySelector('[data-slot="field-hint"]')?.textContent).toContain('Helpful hint');
     expect(container.querySelector('[data-slot="field-error"]')).toBeNull();
   });
 

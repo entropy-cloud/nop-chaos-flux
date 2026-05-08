@@ -1,22 +1,21 @@
-import type {
-  ActionResult,
-  RendererRuntime,
-  ScopeRef,
-  SourceSchema,
-  TemplateNode,
-} from '@nop-chaos/flux-core';
-import { shallowEqual } from '@nop-chaos/flux-core';
+import type { RendererRuntime, ScopeRef, SourceObserver, TemplateNode } from '@nop-chaos/flux-core';
+import { setIn, shallowEqual, type SourceTransientState } from '@nop-chaos/flux-core';
 import { isSourceSchema } from './use-source-value.js';
 
-export interface SourceTransientState {
-  loading: boolean;
-  error: unknown;
-  status: 'idle' | 'loading' | 'ready' | 'error';
+function sameInputs(left: readonly unknown[], right: readonly unknown[]) {
+  return left.length === right.length && left.every((value, index) => Object.is(value, right[index]));
 }
 
-interface SourceEntry {
-  key: string;
-  source: SourceSchema;
+function buildLoadingPatch(
+  entries: ReadonlyArray<{ key: string; stateKey?: string }>,
+): Record<string, SourceTransientState> {
+  return Object.fromEntries(
+    entries.flatMap((entry) =>
+      entry.stateKey
+        ? [[entry.stateKey, { loading: true, error: undefined, status: 'loading' } satisfies SourceTransientState]]
+        : [],
+    ),
+  );
 }
 
 interface ControllerSnapshot {
@@ -24,23 +23,108 @@ interface ControllerSnapshot {
   value: Readonly<Record<string, unknown>>;
 }
 
-function buildLoadingPatch(
-  entries: readonly SourceEntry[],
-  sourceStatePropKeys: Readonly<Record<string, string>>,
-): Record<string, SourceTransientState> {
-  return Object.fromEntries(
-    entries.flatMap((entry) => {
-      const stateKey = sourceStatePropKeys[entry.key];
-      if (!stateKey) return [];
-      return [[stateKey, { loading: true, error: undefined, status: 'loading' as const }]];
-    }),
-  );
+interface ResolvedSourceEntry {
+  key: string;
+  source: import('@nop-chaos/flux-core').SourceSchema;
+  stateKey?: string;
+  targetPath: string;
 }
 
-function sameInputs(left: readonly unknown[], right: readonly unknown[]) {
-  return (
-    left.length === right.length && left.every((value, index) => Object.is(value, right[index]))
-  );
+function createSyntheticSourceKey(path: string) {
+  return `__source:${path}`;
+}
+
+function collectNestedSourceEntries(
+  value: unknown,
+  path: string,
+  entries: ResolvedSourceEntry[],
+) {
+  if (isSourceSchema(value)) {
+    entries.push({
+      key: createSyntheticSourceKey(path),
+      source: value,
+      targetPath: path,
+    });
+    return;
+  }
+
+  if (!value || typeof value !== 'object') {
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index += 1) {
+      collectNestedSourceEntries(value[index], `${path}.${index}`, entries);
+    }
+    return;
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    collectNestedSourceEntries(child, `${path}.${key}`, entries);
+  }
+}
+
+function collectSourceEntries(
+  propsValue: Readonly<Record<string, unknown>>,
+  sourcePropKeys: readonly string[],
+  sourceStatePropKeys: Readonly<Record<string, string>>,
+): ResolvedSourceEntry[] {
+  const entries: ResolvedSourceEntry[] = sourcePropKeys.flatMap((key) => {
+    const source = propsValue[key];
+    if (!isSourceSchema(source)) {
+      return [];
+    }
+    return [
+      {
+        key,
+        source,
+        stateKey: sourceStatePropKeys[key],
+        targetPath: key,
+      },
+    ];
+  });
+
+  const topLevelSourceKeys = new Set(entries.map((entry) => entry.key));
+  for (const [key, value] of Object.entries(propsValue)) {
+    if (topLevelSourceKeys.has(key)) {
+      continue;
+    }
+    collectNestedSourceEntries(value, key, entries);
+  }
+
+  return entries;
+}
+
+function sanitizeSourceInputs(
+  propsValue: Readonly<Record<string, unknown>>,
+  entries: readonly ResolvedSourceEntry[],
+): Readonly<Record<string, unknown>> {
+  let nextValue = propsValue;
+  for (const entry of entries) {
+    nextValue = setIn(nextValue, entry.targetPath, undefined);
+  }
+  return nextValue;
+}
+
+function materializeResolvedSources(
+  value: Readonly<Record<string, unknown>>,
+  entries: readonly ResolvedSourceEntry[],
+): Readonly<Record<string, unknown>> {
+  let nextValue = value;
+  let cleanedValue: Record<string, unknown> | undefined;
+
+  for (const entry of entries) {
+    if (entry.key in nextValue) {
+      nextValue = setIn(nextValue, entry.targetPath, nextValue[entry.key]);
+    }
+    if (entry.key !== entry.targetPath && entry.key in nextValue) {
+      cleanedValue ??= { ...nextValue };
+      delete cleanedValue[entry.key];
+      nextValue = cleanedValue;
+    }
+  }
+
+  return nextValue;
 }
 
 export interface NodeSourcePropController {
@@ -56,117 +140,70 @@ export function createNodeSourcePropController(
 ): NodeSourcePropController {
   const sourcePropKeys = node.sourcePropKeys;
   const sourceStatePropKeys = node.sourceStatePropKeys;
+  const observer: SourceObserver = runtime.createSourceObserver();
+  let currentEntries: readonly ResolvedSourceEntry[] = [];
 
   let currentSnapshot: ControllerSnapshot = {
     sourceInputs: [],
-    value: {},
+    value: observer.getSnapshot().value,
   };
-  const listeners = new Set<() => void>();
-  let currentController: AbortController | undefined;
 
-  function notify() {
-    for (const listener of listeners) {
-      listener();
+  function updateSnapshot(nextSnapshot: ControllerSnapshot) {
+    if (
+      sameInputs(currentSnapshot.sourceInputs, nextSnapshot.sourceInputs) &&
+      shallowEqual(currentSnapshot.value, nextSnapshot.value)
+    ) {
+      return false;
     }
+    currentSnapshot = nextSnapshot;
+    return true;
   }
 
   function run(propsValue: Readonly<Record<string, unknown>>, scope: ScopeRef) {
-    const sourceEntries = sourcePropKeys
-      .map((key) => ({ key, source: propsValue[key] }))
-      .filter((entry): entry is SourceEntry => isSourceSchema(entry.source));
+    const sourceEntries = collectSourceEntries(propsValue, sourcePropKeys, sourceStatePropKeys);
+    currentEntries = sourceEntries;
+    const sourceInputs = sourceEntries.map((entry) => entry.source);
+    const baseValue = sanitizeSourceInputs(propsValue, sourceEntries);
+    const loadingValue = materializeResolvedSources(
+      sourceEntries.length > 0 ? { ...baseValue, ...buildLoadingPatch(sourceEntries) } : baseValue,
+      sourceEntries,
+    );
+    updateSnapshot({
+      sourceInputs,
+      value: loadingValue,
+    });
 
-    const sourceInputs = sourcePropKeys.map((key) => propsValue[key]);
-
-    if (sourceEntries.length === 0) {
-      currentController?.abort();
-      currentController = undefined;
-      const next = { sourceInputs, value: propsValue };
-      if (
-        !sameInputs(currentSnapshot.sourceInputs, sourceInputs) ||
-        !shallowEqual(currentSnapshot.value, propsValue)
-      ) {
-        currentSnapshot = next;
-        notify();
-      }
-      return;
-    }
-
-    currentController?.abort();
-    const controller = new AbortController();
-    currentController = controller;
-
-    const loadingPatch = buildLoadingPatch(sourceEntries, sourceStatePropKeys);
-    const loadingValue = { ...propsValue, ...loadingPatch };
-    currentSnapshot = { sourceInputs, value: loadingValue };
-    notify();
-
-    void Promise.allSettled(
-      sourceEntries.map(async (entry) => {
-        const result: ActionResult = await runtime.executeSource({
-          source: entry.source,
-          scope,
-          ctx: { signal: controller.signal },
-        });
-        return [entry, result] as const;
-      }),
-    ).then((settled) => {
-      if (controller.signal.aborted) return;
-
-      const valuePatch: Record<string, unknown> = {};
-      const transientPatch: Record<string, SourceTransientState> = {};
-
-      for (const result of settled) {
-        if (result.status === 'fulfilled') {
-          const [entry, actionResult] = result.value;
-          valuePatch[entry.key] = actionResult.ok ? actionResult.data : undefined;
-          const stateKey = sourceStatePropKeys[entry.key];
-          if (stateKey) {
-            transientPatch[stateKey] = {
-              loading: false,
-              error: actionResult.ok ? undefined : actionResult.error,
-              status: actionResult.ok ? 'ready' : 'error',
-            };
-          }
-        } else {
-          const error = result.reason;
-          for (const entry of sourceEntries) {
-            if (!(entry.key in valuePatch)) {
-              valuePatch[entry.key] = undefined;
-            }
-            const stateKey = sourceStatePropKeys[entry.key];
-            if (stateKey && !(stateKey in transientPatch)) {
-              transientPatch[stateKey] = { loading: false, error, status: 'error' };
-            }
-          }
-        }
-      }
-
-      const nextValue = { ...propsValue, ...valuePatch, ...transientPatch };
-      const next: ControllerSnapshot = { sourceInputs, value: nextValue };
-
-      if (
-        !sameInputs(currentSnapshot.sourceInputs, sourceInputs) ||
-        !shallowEqual(currentSnapshot.value, nextValue)
-      ) {
-        currentSnapshot = next;
-        notify();
-      }
+    observer.run({
+      scope,
+      entries: sourceEntries,
+      baseValue,
     });
   }
 
   function dispose() {
-    currentController?.abort();
-    currentController = undefined;
-    listeners.clear();
+    observer.dispose();
   }
 
   return {
-    getSnapshot: () => currentSnapshot,
+    getSnapshot: () => {
+      const resolvedValue = materializeResolvedSources(observer.getSnapshot().value, currentEntries);
+      updateSnapshot({
+        sourceInputs: currentSnapshot.sourceInputs,
+        value: resolvedValue,
+      });
+      return currentSnapshot;
+    },
     subscribe(listener) {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
+      return observer.subscribe(() => {
+        const resolvedValue = materializeResolvedSources(observer.getSnapshot().value, currentEntries);
+        const changed = updateSnapshot({
+          sourceInputs: currentSnapshot.sourceInputs,
+          value: resolvedValue,
+        });
+        if (changed) {
+          listener();
+        }
+      });
     },
     run,
     dispose,

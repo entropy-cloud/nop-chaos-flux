@@ -1,6 +1,42 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createNodeSourcePropController } from '../node-source-prop-controller.js';
 
+function createObserverMock() {
+  let snapshot = { value: {} as Record<string, unknown> };
+  const listeners = new Set<() => void>();
+  return {
+    observer: {
+      getSnapshot: vi.fn(() => snapshot),
+      subscribe: vi.fn((listener: () => void) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      }),
+      run: vi.fn((input: { baseValue?: Record<string, unknown>; entries: Array<{ key: string; stateKey?: string }> }) => {
+        snapshot = {
+          value:
+            input.entries.length === 0
+              ? (input.baseValue ?? {})
+              : {
+                  ...(input.baseValue ?? {}),
+                  ...Object.fromEntries(input.entries.map((entry) => [entry.key, 'resolved'])),
+                  ...Object.fromEntries(
+                    input.entries.flatMap((entry) =>
+                      entry.stateKey
+                        ? [[entry.stateKey, { loading: false, error: undefined, status: 'ready' }]]
+                        : [],
+                    ),
+                  ),
+                },
+        };
+        for (const listener of listeners) {
+          listener();
+        }
+      }),
+      dispose: vi.fn(),
+    },
+  };
+}
+
 function createScope() {
   return {
     id: 'scope-1',
@@ -16,17 +52,6 @@ function createScope() {
   } as any;
 }
 
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-
-  return { promise, resolve, reject };
-}
-
 async function flushAsync() {
   await Promise.resolve();
   await Promise.resolve();
@@ -34,12 +59,13 @@ async function flushAsync() {
 
 describe('createNodeSourcePropController', () => {
   it('publishes plain props when no source inputs are present', () => {
+    const { observer } = createObserverMock();
     const controller = createNodeSourcePropController(
       {
         sourcePropKeys: ['value'],
         sourceStatePropKeys: { value: 'valueState' },
       } as any,
-      { executeSource: vi.fn() } as any,
+      { createSourceObserver: () => observer } as any,
     );
     const listener = vi.fn();
 
@@ -47,24 +73,28 @@ describe('createNodeSourcePropController', () => {
     controller.run({ value: 'ready' }, createScope());
 
     expect(controller.getSnapshot()).toEqual({
-      sourceInputs: ['ready'],
+      sourceInputs: [],
       value: { value: 'ready' },
     });
-    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledTimes(0);
+    expect(observer.run).toHaveBeenCalledWith({
+      scope: expect.any(Object),
+      entries: [],
+      baseValue: { value: 'ready' },
+    });
 
     controller.run({ value: 'ready' }, createScope());
-    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledTimes(0);
   });
 
-  it('marks source props as loading and resolves them into ready values', async () => {
-    const request = deferred<{ ok: true; data: string }>();
-    const executeSource = vi.fn().mockImplementation(() => request.promise);
+  it('delegates source props to the runtime-owned observer', async () => {
+    const { observer } = createObserverMock();
     const controller = createNodeSourcePropController(
       {
         sourcePropKeys: ['items', 'plain'],
         sourceStatePropKeys: { items: 'itemsState' },
       } as any,
-      { executeSource } as any,
+      { createSourceObserver: () => observer } as any,
     );
     const listener = vi.fn();
     const scope = createScope();
@@ -72,119 +102,89 @@ describe('createNodeSourcePropController', () => {
     controller.subscribe(listener);
     controller.run({ items: { type: 'source', sourceType: 'api' }, plain: 'keep' }, scope);
 
-    expect(controller.getSnapshot()).toEqual({
-      sourceInputs: [{ type: 'source', sourceType: 'api' }, 'keep'],
-      value: {
-        items: { type: 'source', sourceType: 'api' },
-        plain: 'keep',
-        itemsState: { loading: true, error: undefined, status: 'loading' },
-      },
+    expect(observer.run).toHaveBeenCalledWith({
+      scope,
+      entries: [
+        {
+          key: 'items',
+          source: { type: 'source', sourceType: 'api' },
+          stateKey: 'itemsState',
+          targetPath: 'items',
+        },
+      ],
+      baseValue: { items: undefined, plain: 'keep' },
     });
-
-    request.resolve({ ok: true, data: 'resolved' });
     await flushAsync();
 
-    expect(executeSource).toHaveBeenCalledWith({
-      source: { type: 'source', sourceType: 'api' },
-      scope,
-      ctx: { signal: expect.any(AbortSignal) },
-    });
     expect(controller.getSnapshot()).toEqual({
-      sourceInputs: [{ type: 'source', sourceType: 'api' }, 'keep'],
+      sourceInputs: [{ type: 'source', sourceType: 'api' }],
       value: {
         items: 'resolved',
         plain: 'keep',
         itemsState: { loading: false, error: undefined, status: 'ready' },
       },
     });
-    expect(listener).toHaveBeenCalledTimes(2);
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it('records action errors and rejected source execution failures', async () => {
-    const actionResultController = createNodeSourcePropController(
+  it('resolves nested source schemas back into their original prop paths', async () => {
+    const { observer } = createObserverMock();
+    const controller = createNodeSourcePropController(
       {
-        sourcePropKeys: ['items'],
-        sourceStatePropKeys: { items: 'itemsState' },
+        sourcePropKeys: [],
+        sourceStatePropKeys: {},
       } as any,
-      {
-        executeSource: vi.fn().mockResolvedValue({ ok: false, error: new Error('bad-request') }),
-      } as any,
+      { createSourceObserver: () => observer } as any,
     );
 
-    actionResultController.run({ items: { type: 'source', sourceType: 'api' } }, createScope());
-    await flushAsync();
-
-    const actionErrorState = actionResultController.getSnapshot().value as Record<string, any>;
-    expect(actionErrorState.items).toBeUndefined();
-    expect(actionErrorState.itemsState.loading).toBe(false);
-    expect(actionErrorState.itemsState.status).toBe('error');
-    expect(actionErrorState.itemsState.error).toBeInstanceOf(Error);
-    expect(actionErrorState.itemsState.error.message).toBe('bad-request');
-
-    const rejected = deferred<never>();
-    const rejectionController = createNodeSourcePropController(
+    controller.run(
       {
-        sourcePropKeys: ['items'],
-        sourceStatePropKeys: { items: 'itemsState' },
-      } as any,
-      { executeSource: vi.fn().mockImplementation(() => rejected.promise) } as any,
+        expressionConfig: {
+          variables: { type: 'source', formula: [] },
+        },
+      },
+      createScope(),
     );
 
-    rejectionController.run({ items: { type: 'source', sourceType: 'api' } }, createScope());
-    rejected.reject(new Error('network-down'));
-    await rejected.promise.catch(() => undefined);
+    expect(observer.run).toHaveBeenCalledWith({
+      scope: expect.any(Object),
+      entries: [
+        {
+          key: '__source:expressionConfig.variables',
+          source: { type: 'source', formula: [] },
+          targetPath: 'expressionConfig.variables',
+        },
+      ],
+      baseValue: {
+        expressionConfig: {
+          variables: undefined,
+        },
+      },
+    });
+
     await flushAsync();
 
-    const rejectedState = rejectionController.getSnapshot().value as Record<string, any>;
-    expect(rejectedState.itemsState.loading).toBe(false);
-    expect(rejectedState.itemsState.status).toBe('error');
-    expect(rejectedState.itemsState.error).toBeInstanceOf(Error);
-    expect(rejectedState.itemsState.error.message).toBe('network-down');
+    expect(controller.getSnapshot()).toEqual({
+      sourceInputs: [{ type: 'source', formula: [] }],
+      value: {
+        expressionConfig: {
+          variables: 'resolved',
+        },
+      },
+    });
   });
 
-  it('aborts stale requests and stops notifying after unsubscribe or dispose', async () => {
-    const first = deferred<{ ok: true; data: string }>();
-    const second = deferred<{ ok: true; data: string }>();
-    const executeSource = vi
-      .fn()
-      .mockImplementationOnce(() => first.promise)
-      .mockImplementationOnce(() => second.promise);
+  it('disposes the runtime-owned observer', async () => {
+    const { observer } = createObserverMock();
     const controller = createNodeSourcePropController(
       {
         sourcePropKeys: ['items'],
         sourceStatePropKeys: { items: 'itemsState' },
       } as any,
-      { executeSource } as any,
+      { createSourceObserver: () => observer } as any,
     );
-    const listener = vi.fn();
-    const unsubscribe = controller.subscribe(listener);
-    const scope = createScope();
-
-    controller.run({ items: { type: 'source', sourceType: 'api', id: 'first' } }, scope);
-    const firstSignal = executeSource.mock.calls[0][0].ctx.signal as AbortSignal;
-
-    controller.run({ items: { type: 'source', sourceType: 'api', id: 'second' } }, scope);
-    const secondSignal = executeSource.mock.calls[1][0].ctx.signal as AbortSignal;
-
-    expect(firstSignal.aborted).toBe(true);
-    expect(secondSignal.aborted).toBe(false);
-
-    first.resolve({ ok: true, data: 'stale' });
-    await flushAsync();
-    expect((controller.getSnapshot().value as Record<string, any>).items).toEqual({
-      type: 'source',
-      sourceType: 'api',
-      id: 'second',
-    });
-
-    unsubscribe();
-    second.resolve({ ok: true, data: 'fresh' });
-    await flushAsync();
-
-    expect((controller.getSnapshot().value as Record<string, any>).items).toBe('fresh');
-    expect(listener).toHaveBeenCalledTimes(2);
 
     controller.dispose();
-    expect(secondSignal.aborted).toBe(true);
+    expect(observer.dispose).toHaveBeenCalledTimes(1);
   });
 });

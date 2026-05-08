@@ -4,7 +4,7 @@ import { useRendererRuntime } from './hooks.js';
 import { isSourceSchema } from './use-source-value.js';
 import { createNodeSourcePropController } from './node-source-prop-controller.js';
 
-export type { SourceTransientState } from './node-source-prop-controller.js';
+export type { SourceTransientState } from '@nop-chaos/flux-core';
 
 export function useNodeSourceProps(
   node: TemplateNode,
@@ -14,7 +14,29 @@ export function useNodeSourceProps(
   const runtime = useRendererRuntime();
   const sourcePropKeys = node.sourcePropKeys;
   const hasSourceProps = useMemo(
-    () => sourcePropKeys.some((key) => isSourceSchema(propsValue[key])),
+    () => {
+      if (sourcePropKeys.some((key) => isSourceSchema(propsValue[key]))) {
+        return true;
+      }
+
+      const stack: unknown[] = Object.values(propsValue);
+      while (stack.length > 0) {
+        const current = stack.pop();
+        if (!current || typeof current !== 'object') {
+          continue;
+        }
+        if (isSourceSchema(current)) {
+          return true;
+        }
+        if (Array.isArray(current)) {
+          stack.push(...current);
+          continue;
+        }
+        stack.push(...Object.values(current as Record<string, unknown>));
+      }
+
+      return false;
+    },
     [propsValue, sourcePropKeys],
   );
 

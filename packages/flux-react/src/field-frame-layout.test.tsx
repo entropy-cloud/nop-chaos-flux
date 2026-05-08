@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import type { CompiledFormValidationModel } from '@nop-chaos/flux-core';
 import { FormContext, FormLayoutContext, ValidationContext } from './contexts.js';
 import { FieldFrame } from './field-frame.js';
@@ -140,16 +140,30 @@ describe('FieldFrame — hint, description, remark, labelRemark', () => {
     );
   });
 
-  it('renders hint when no error (even if description is present)', () => {
+  it('renders hint on focus and falls back to description when blurred', () => {
     const { container } = render(
       <FormContext.Provider value={createMockForm()}>
         <FieldFrame name="f1" label="Name" hint="Focus hint" description="Always text">
-          input
+          <input aria-label="Name input" />
         </FieldFrame>
       </FormContext.Provider>,
     );
+
+    const input = container.querySelector('input');
+    expect(container.querySelector('[data-slot="field-hint"]')).toBeNull();
+    expect(container.querySelector('[data-slot="field-description"]')?.textContent).toBe(
+      'Always text',
+    );
+
+    fireEvent.focus(input!);
     expect(container.querySelector('[data-slot="field-hint"]')?.textContent).toBe('Focus hint');
     expect(container.querySelector('[data-slot="field-description"]')).toBeNull();
+
+    fireEvent.blur(input!);
+    expect(container.querySelector('[data-slot="field-hint"]')).toBeNull();
+    expect(container.querySelector('[data-slot="field-description"]')?.textContent).toBe(
+      'Always text',
+    );
   });
 
   it('renders error instead of hint and description when validation fails', () => {
@@ -445,7 +459,7 @@ describe('FieldFrame — ARIA attributes', () => {
       validation: { behavior: { triggers: ['blur'], showErrorOn: ['touched'] } },
     });
 
-    render(
+    const view = render(
       <FormContext.Provider value={form}>
         <FieldFrame name="f1" label="Name">
           <input aria-label="Name input" />
@@ -453,12 +467,35 @@ describe('FieldFrame — ARIA attributes', () => {
       </FormContext.Provider>,
     );
 
-    const input = document.querySelector('input[aria-label="Name input"]');
+    const input = view.container.querySelector('input[aria-label="Name input"]');
+    expect(input).toBeTruthy();
     expect(input?.getAttribute('id')).toBe('f1-control');
     expect(input?.getAttribute('aria-describedby')).toBe('f1-error');
     expect(input?.getAttribute('aria-errormessage')).toBe('f1-error');
     expect(input?.getAttribute('aria-invalid')).toBe('true');
-    const wrapper = document.querySelector('[data-slot="field-control"]');
+    const wrapper = (input as HTMLInputElement)
+      .closest('.nop-field')
+      ?.querySelector('[data-slot="field-control"]');
     expect(wrapper?.getAttribute('id')).toBeNull();
+  });
+
+  it('switches aria-describedby between description and hint based on focus visibility', () => {
+    const view = render(
+      <FormContext.Provider value={createMockForm()}>
+        <FieldFrame name="f1" label="Name" hint="Focus hint" description="Always text">
+          <input aria-label="Name input" />
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+
+    const input = view.container.querySelector('input[aria-label="Name input"]');
+    expect(input).toBeTruthy();
+    expect(input?.getAttribute('aria-describedby')).toBe('f1-description');
+
+    fireEvent.focus(input as HTMLInputElement);
+    expect(input?.getAttribute('aria-describedby')).toBe('f1-hint');
+
+    fireEvent.blur(input as HTMLInputElement);
+    expect(input?.getAttribute('aria-describedby')).toBe('f1-description');
   });
 });

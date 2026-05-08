@@ -1,4 +1,4 @@
-import { cloneElement, isValidElement, type ReactNode } from 'react';
+import { cloneElement, isValidElement, useState, type ReactNode } from 'react';
 import {
   useAggregateError,
   useCurrentForm,
@@ -157,6 +157,7 @@ export function FieldFrame(props: FieldFrameProps) {
       submitAttempted: fieldState.submitAttempted,
     }),
   );
+  const [focused, setFocused] = useState(false);
 
   const isGroup = layout === 'checkbox' || layout === 'radio';
   const Tag = isGroup ? 'fieldset' : (rootTag ?? 'label');
@@ -164,8 +165,11 @@ export function FieldFrame(props: FieldFrameProps) {
   const effectiveRequired = Boolean(required) || Boolean(currentForm ? dynamicRequired : nonFormDynamicRequired);
   const errorId = name ? `${name}-error` : undefined;
   const controlId = name ? `${name}-control` : undefined;
-  const hintId = name && !showError && hint ? `${name}-hint` : undefined;
-  const descriptionId = name && !showError && !hint && description ? `${name}-description` : undefined;
+  const showValidating = !showError && fieldState.validating;
+  const showHint = !showError && !showValidating && Boolean(hint) && focused;
+  const showDescription = !showError && !showValidating && !showHint && Boolean(description);
+  const hintId = name && (showValidating || showHint) ? `${name}-hint` : undefined;
+  const descriptionId = name && showDescription ? `${name}-description` : undefined;
   const describedBy = mergeDescribedBy(showError ? errorId : undefined, hintId, descriptionId);
   const childProps = isValidElement(children)
     ? (children.props as {
@@ -173,6 +177,8 @@ export function FieldFrame(props: FieldFrameProps) {
         'aria-describedby'?: string;
         'aria-errormessage'?: string;
         'aria-invalid'?: boolean;
+        onFocus?: (event: unknown) => void;
+        onBlur?: (event: unknown) => void;
       })
     : undefined;
   const child = isValidElement(children)
@@ -182,6 +188,14 @@ export function FieldFrame(props: FieldFrameProps) {
           'aria-describedby': mergeDescribedBy(childProps?.['aria-describedby'], describedBy),
           'aria-errormessage': showError ? errorId : undefined,
           'aria-invalid': (childProps?.['aria-invalid'] ?? showError) || undefined,
+          onFocus: (event: unknown) => {
+            setFocused(true);
+            childProps?.onFocus?.(event);
+          },
+          onBlur: (event: unknown) => {
+            setFocused(false);
+            childProps?.onBlur?.(event);
+          },
         } as Record<string, unknown> ),
       })
     : children;
@@ -246,13 +260,13 @@ export function FieldFrame(props: FieldFrameProps) {
 
         {showError && error ? (
           <span data-slot="field-error" id={errorId} role="alert" aria-live="assertive">{error.message}</span>
-        ) : fieldState.validating ? (
-          <span data-slot="field-hint">{t('flux.common.validating')}</span>
-        ) : hint ? (
+        ) : showValidating ? (
+          <span data-slot="field-hint" id={hintId}>{t('flux.common.validating')}</span>
+        ) : showHint ? (
           <span data-slot="field-hint" id={hintId}>
             {hint}
           </span>
-        ) : !hint && description ? (
+        ) : showDescription ? (
           <span data-slot="field-description" id={descriptionId}>
             {description}
           </span>
