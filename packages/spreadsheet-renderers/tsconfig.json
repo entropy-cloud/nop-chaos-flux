@@ -4,5 +4,5 @@
     "noEmit": true,
     "strict": true
   },
-  "include": ["src", "../../types/style-imports.d.ts"]
+  "include": ["src", "../../types/**/*.d.ts"]
 }
