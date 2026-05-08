@@ -137,6 +137,13 @@ export function evaluateControllerStopCondition(
   try {
     return input.runtime.evaluate<boolean>(input.stopWhen, input.scope) ?? false;
   } catch (error) {
+    if (
+      error instanceof Error &&
+      error.cause instanceof Error &&
+      error.cause.message === 'Cannot access member of null or undefined'
+    ) {
+      return false;
+    }
     updateControllerState(input, mutable, (current) => toStopConditionErrorState(current, error));
     if (!input.silent) {
       reportRuntimeHostIssue({

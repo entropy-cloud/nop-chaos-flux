@@ -106,15 +106,17 @@ async function runSingleAction(
       });
     }
 
-    const parallelResult = await runParallelActions(
-      ctx,
-      processedAction,
-      activeCtx,
-      startedAt,
-      actionPayload,
-    );
-    if (parallelResult) {
-      return parallelResult;
+    if (processedAction.parallel && processedAction.parallel.length > 0) {
+      const parallelResult = await runParallelActions(
+        ctx,
+        processedAction,
+        activeCtx,
+        startedAt,
+        actionPayload,
+      );
+      if (parallelResult) {
+        return parallelResult;
+      }
     }
 
     const builtInResult = await runBuiltInAction(

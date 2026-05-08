@@ -2,7 +2,7 @@ import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import type {
   ActionResult,
   ApiSchema,
-  CompiledActionNode,
+  CompiledRuntimeValue,
   DynamicRuntimeValue,
   ScopeRef,
 } from '@nop-chaos/flux-core';
@@ -40,6 +40,10 @@ function toDispatchError(result: ActionResult): unknown {
   return new Error('Data source action failed');
 }
 
+function isCompiledApiArgs(value: unknown): value is CompiledRuntimeValue<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null && 'isStatic' in value;
+}
+
 async function executeDataSourceAction(
   input: CreateApiDataSourceControllerInput,
   scope: ScopeRef,
@@ -64,14 +68,26 @@ function evaluateSingleAjaxAction(input: CreateApiDataSourceControllerInput, sco
     return undefined;
   }
 
-  const nodes = action.nodes as CompiledActionNode[];
+  const nodes = action.nodes;
   const node = nodes[0];
-  if (nodes.length !== 1 || !node || node.action !== 'ajax') {
+  if (
+    nodes.length !== 1 ||
+    !node ||
+    typeof node !== 'object' ||
+    !('action' in node) ||
+    !('payload' in node) ||
+    node.action !== 'ajax'
+  ) {
     return undefined;
   }
 
-  const args = node.payload.args;
-  if (!args) {
+  const payload = node.payload;
+  if (!payload || typeof payload !== 'object' || !('args' in payload)) {
+    return undefined;
+  }
+
+  const args = payload.args;
+  if (!isCompiledApiArgs(args)) {
     return undefined;
   }
 
@@ -115,6 +131,11 @@ export function createApiDataSourceRequestRunner(
 
   async function runRequest(): Promise<void> {
     if (mutable.stopped) {
+      return;
+    }
+
+    if (evaluateControllerStopCondition(input, mutable)) {
+      options.stop();
       return;
     }
 
@@ -368,8 +389,9 @@ export function createApiDataSourceRequestRunner(
 
       if (
         !mutable.stopped &&
+        mutable.activeRequestCount > 0 &&
         (mutable.state.inFlightCount !== mutable.activeRequestCount ||
-          mutable.state.fetchStatus !== (mutable.activeRequestCount > 0 ? 'fetching' : 'idle'))
+          mutable.state.fetchStatus !== 'fetching')
       ) {
         updateControllerState(input, mutable, (current) =>
           toActiveRequestState(current, mutable.activeRequestCount),
