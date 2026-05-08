@@ -13,7 +13,7 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
   const currentForm = useCurrentForm();
   const currentValidationScope = useCurrentValidationScope();
   const hasName = name.length > 0;
-  const readOnly = Boolean(props.props.readOnly) || Boolean(props.meta.disabled);
+  const readOnly = Boolean(props.props.readOnly) || Boolean(props.meta?.disabled);
 
   const formValue = useCurrentFormState(
     (state) => (hasName ? getIn(state.values, name) : undefined),
