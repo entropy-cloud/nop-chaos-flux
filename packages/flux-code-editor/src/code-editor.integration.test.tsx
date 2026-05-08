@@ -277,6 +277,43 @@ describe('code-editor integration', () => {
     consoleError.mockRestore();
   });
 
+  it('accepts anonymous SourceSchema for expression variables without crashing', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    renderCodeEditorSchema({
+      type: 'page',
+      body: [
+        {
+          type: 'form',
+          name: 'testForm',
+          body: [
+            {
+              type: 'code-editor',
+              name: 'expressionRemote',
+              label: 'Expression Remote',
+              language: 'expression',
+              mode: 'expression',
+              autoHeight: true,
+              expressionConfig: {
+                variables: {
+                  type: 'source',
+                  formula: [
+                    { label: 'Current User', value: 'user.name', type: 'string' },
+                    { label: 'Tenant', value: 'tenantId', type: 'string' },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(document.querySelector('.cm-editor')).toBeTruthy();
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
   it('does not open the snippet trigger when the wrapped field shell is clicked', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 

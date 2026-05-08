@@ -77,9 +77,9 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
 
   const { value, handleChange, handleFocus, handleBlur } = useCodeEditorBinding(props, name);
 
-  const resolvedVariables = useResolvedVariables(expressionConfig, scope, props.helpers.dispatch);
-  const resolvedFunctions = useResolvedFunctions(expressionConfig, props.helpers.dispatch);
-  const resolvedTables = useResolvedTables(sqlConfig, scope, props.helpers.dispatch);
+  const resolvedVariables = useResolvedVariables(expressionConfig, scope);
+  const resolvedFunctions = useResolvedFunctions(expressionConfig);
+  const resolvedTables = useResolvedTables(sqlConfig, scope);
 
   const completionConfig = useMemo(() => {
     if (language === 'expression' && expressionConfig) {
@@ -169,7 +169,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
     handleClearResult,
   } = useSQLEditorState(props, sqlConfig, view);
 
-  const sqlVariables = useResolvedSQLVariables(sqlConfig, scope, props.helpers.dispatch);
+  const sqlVariables = useResolvedSQLVariables(sqlConfig, scope);
   const formatConfig = resolveFormatConfig(sqlConfig);
   const hasSQLToolbar =
     language === 'sql' &&

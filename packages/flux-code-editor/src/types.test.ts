@@ -17,12 +17,12 @@ import type {
   TableSchema,
   ExpressionEditorConfig,
   SQLEditorConfig,
+  SQLEditorAuthoringConfig,
 } from './types.js';
 
 describe('type guards', () => {
   it('isVariableSourceRef returns true for source refs', () => {
     expect(isVariableSourceRef({ source: 'scope', scopePath: 'vars' })).toBe(true);
-    expect(isVariableSourceRef({ source: 'api', api: { url: '/api' } as any })).toBe(true);
     expect(isVariableSourceRef([{ label: 'x', value: 'x' }])).toBe(false);
     expect(isVariableSourceRef(undefined)).toBe(false);
     expect(isVariableSourceRef(null)).toBe(false);
@@ -34,7 +34,7 @@ describe('type guards', () => {
   });
 
   it('isSQLSchemaSourceRef returns true for source refs', () => {
-    expect(isSQLSchemaSourceRef({ source: 'api', api: { url: '/api/schema' } as any })).toBe(true);
+    expect(isSQLSchemaSourceRef({ source: 'scope', scopePath: 'schema' })).toBe(true);
     expect(isSQLSchemaSourceRef([{ name: 'users', columns: [] }])).toBe(false);
   });
 
@@ -99,11 +99,12 @@ describe('resolveTables', () => {
   });
 
   it('returns empty for source ref', () => {
-    const config: SQLEditorConfig = {
-      tables: { source: 'api', api: { url: '/api/schema' } as any },
+    const config: SQLEditorAuthoringConfig = {
+      tables: { source: 'scope', scopePath: 'schema' },
     };
-    expect(resolveTables(config)).toEqual([]);
+    expect(resolveTables(config as SQLEditorConfig)).toEqual([]);
   });
+
 });
 
 describe('defaults', () => {

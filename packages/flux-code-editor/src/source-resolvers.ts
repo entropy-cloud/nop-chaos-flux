@@ -1,7 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import type { ScopeRef, ApiSchema, ActionSchema, ActionResult } from '@nop-chaos/flux-core';
-import type { RendererHelpers } from '@nop-chaos/flux-core';
-import { t } from '@nop-chaos/flux-i18n';
+import { useMemo } from 'react';
+import type { ScopeRef } from '@nop-chaos/flux-core';
 import {
   isVariableSourceRef,
   isFuncSourceRef,
@@ -27,115 +25,14 @@ function getDataAtPath(data: unknown, path: string | undefined): unknown {
   return current;
 }
 
-interface AsyncResolverState<T> {
-  items: T[];
-  error: Error | null;
-  loading: boolean;
-}
-
-/**
- * Shared async resolver helper for API-backed source resolution.
- * Handles abort, error reporting, and data extraction in one place.
- *
- * Note: Loading state is set via a microtask (queueMicrotask) to comply
- * with React 19's strict rule against synchronous setState in effects.
- */
-function useAsyncApiResolver<T>(
-  api: ApiSchema | undefined,
-  path: string | undefined,
-  dispatch: RendererHelpers['dispatch'],
-): { items: T[]; error: Error | null; loading: boolean } {
-  const [state, setState] = useState<AsyncResolverState<T>>({
-    items: [],
-    error: null,
-    loading: false,
-  });
-
-  // Memoize config to create stable dependency - includes all values needed in effect
-  const config = useMemo(() => {
-    if (!api) return null;
-    return { api, path };
-  }, [api, path]);
-
-  useEffect(() => {
-    if (!config) {
-      // Reset state when config becomes null - use microtask to avoid synchronous setState
-      queueMicrotask(() => {
-        setState((prev) => {
-          if (prev.loading || prev.items.length > 0 || prev.error) {
-            return { items: [], error: null, loading: false };
-          }
-          return prev;
-        });
-      });
-      return;
-    }
-
-    const { api: currentApi, path: currentPath } = config;
-    const controller = new AbortController();
-    const { signal } = controller;
-
-    // Use microtask to set loading state - complies with React 19 effect rules
-    queueMicrotask(() => {
-      if (signal.aborted) return;
-      setState((prev) => ({ ...prev, loading: true, error: null }));
-    });
-
-    const action = { action: 'ajax', args: currentApi } as ActionSchema;
-    dispatch(action, { signal })
-      .then((result: ActionResult) => {
-        if (signal.aborted) return;
-        if (result.ok && result.data != null) {
-          const extracted = getDataAtPath(result.data, currentPath);
-          setState({
-            items: Array.isArray(extracted) ? (extracted as T[]) : [],
-            error: null,
-            loading: false,
-          });
-        } else if (!result.ok) {
-          const error =
-            result.error instanceof Error
-              ? result.error
-              : new Error(
-                  typeof result.error === 'string'
-                    ? result.error
-                    : t('flux.codeEditor.apiRequestFailed'),
-                );
-          setState({
-            items: [],
-            error,
-            loading: false,
-          });
-        }
-      })
-      .catch((err: unknown) => {
-        if (signal.aborted) return;
-        const error =
-          err instanceof Error ? err : new Error(t('flux.codeEditor.unknownResolverError'));
-        console.warn('[source-resolvers] API request failed:', error.message);
-        setState({
-          items: [],
-          error,
-          loading: false,
-        });
-      });
-
-    return () => {
-      controller.abort();
-    };
-  }, [config, dispatch]);
-
-  return state;
-}
 
 export function useResolvedVariables(
   config: ExpressionEditorConfig | undefined,
   scope: ScopeRef,
-  dispatch: RendererHelpers['dispatch'],
 ): VariableItem[] {
   const raw = config?.variables;
 
-  const syncResolved = useMemo<VariableItem[] | null>(() => {
+  return useMemo<VariableItem[]>(() => {
     if (!raw) return [];
     if (!isVariableSourceRef(raw)) return raw;
     if (raw.source === 'scope') {
@@ -143,49 +40,29 @@ export function useResolvedVariables(
       const items = getDataAtPath(data, resolveSourceRefPath(raw));
       return Array.isArray(items) ? (items as VariableItem[]) : [];
     }
-    return null;
+    return [];
   }, [raw, scope]);
-
-  const apiConfig = raw && isVariableSourceRef(raw) && raw.source === 'api' ? raw : null;
-  const { items: apiResolved } = useAsyncApiResolver<VariableItem>(
-    apiConfig?.api,
-    apiConfig ? resolveSourceRefPath(apiConfig) : undefined,
-    dispatch,
-  );
-
-  return syncResolved !== null ? syncResolved : apiResolved;
 }
 
 export function useResolvedFunctions(
   config: ExpressionEditorConfig | undefined,
-  dispatch: RendererHelpers['dispatch'],
 ): FuncGroup[] {
   const raw = config?.functions;
 
-  const syncResolved = useMemo<FuncGroup[] | null>(() => {
+  return useMemo<FuncGroup[]>(() => {
     if (!raw) return [];
     if (!isFuncSourceRef(raw)) return raw;
-    return null;
+    return [];
   }, [raw]);
-
-  const apiConfig = raw && isFuncSourceRef(raw) && raw.source === 'api' ? raw : null;
-  const { items: apiResolved } = useAsyncApiResolver<FuncGroup>(
-    apiConfig?.api,
-    apiConfig ? resolveSourceRefPath(apiConfig) : undefined,
-    dispatch,
-  );
-
-  return syncResolved !== null ? syncResolved : apiResolved;
 }
 
 export function useResolvedTables(
   config: SQLEditorConfig | undefined,
   scope: ScopeRef,
-  dispatch: RendererHelpers['dispatch'],
 ): TableSchema[] {
   const raw = config?.tables;
 
-  const syncResolved = useMemo<TableSchema[] | null>(() => {
+  return useMemo<TableSchema[]>(() => {
     if (!raw) return [];
     if (!isSQLSchemaSourceRef(raw)) return raw;
     if (raw.source === 'scope') {
@@ -193,27 +70,17 @@ export function useResolvedTables(
       const items = getDataAtPath(data, resolveSourceRefPath(raw));
       return Array.isArray(items) ? (items as TableSchema[]) : [];
     }
-    return null;
+    return [];
   }, [raw, scope]);
-
-  const apiConfig = raw && isSQLSchemaSourceRef(raw) && raw.source === 'api' ? raw : null;
-  const { items: apiResolved } = useAsyncApiResolver<TableSchema>(
-    apiConfig?.api,
-    apiConfig ? resolveSourceRefPath(apiConfig) : undefined,
-    dispatch,
-  );
-
-  return syncResolved !== null ? syncResolved : apiResolved;
 }
 
 export function useResolvedSQLVariables(
   config: SQLEditorConfig | undefined,
   scope: ScopeRef,
-  dispatch: RendererHelpers['dispatch'],
 ): VariableItem[] {
   const raw = config?.variablePanel?.variables;
 
-  const syncResolved = useMemo<VariableItem[] | null>(() => {
+  return useMemo<VariableItem[]>(() => {
     if (!raw) return [];
     if (!isVariableSourceRef(raw)) return raw;
     if (raw.source === 'scope') {
@@ -221,15 +88,6 @@ export function useResolvedSQLVariables(
       const items = getDataAtPath(data, resolveSourceRefPath(raw));
       return Array.isArray(items) ? (items as VariableItem[]) : [];
     }
-    return null;
+    return [];
   }, [raw, scope]);
-
-  const apiConfig = raw && isVariableSourceRef(raw) && raw.source === 'api' ? raw : null;
-  const { items: apiResolved } = useAsyncApiResolver<VariableItem>(
-    apiConfig?.api,
-    apiConfig ? resolveSourceRefPath(apiConfig) : undefined,
-    dispatch,
-  );
-
-  return syncResolved !== null ? syncResolved : apiResolved;
 }

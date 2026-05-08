@@ -1,4 +1,4 @@
-import type { ActionSchema, ApiSchema, BaseSchema, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+import type { ActionSchema, BaseSchema, SchemaObject, SchemaValue, SourceSchema } from '@nop-chaos/flux-core';
 
 export type EditorLanguage =
   | 'expression'
@@ -31,6 +31,14 @@ export interface CodeEditorSchema extends BaseSchema {
   onChange?: ActionSchema | ActionSchema[];
   onFocus?: ActionSchema | ActionSchema[];
   onBlur?: ActionSchema | ActionSchema[];
+}
+
+export interface ExpressionEditorAuthoringConfig extends SchemaObject {
+  variables?: VariableItem[] | VariableSourceRef | SourceSchema;
+  functions?: FuncGroup[] | FuncSourceRef | SourceSchema;
+  showFriendlyNames?: boolean;
+  lint?: boolean | ExpressionLintConfig;
+  showFunctionDocs?: boolean;
 }
 
 export interface ExpressionEditorConfig extends SchemaObject {
@@ -71,16 +79,14 @@ export interface FuncParam extends SchemaObject {
 }
 
 export type VariableSourceRef = SchemaObject & {
-  source: 'scope' | 'api';
+  source: 'scope';
   scopePath?: string;
-  api?: ApiSchema;
   path?: string;
 };
 
 export type FuncSourceRef = SchemaObject & {
-  source: 'builtin' | 'api';
+  source: 'builtin';
   builtinSet?: string[];
-  api?: ApiSchema;
   path?: string;
 };
 
@@ -120,9 +126,15 @@ export interface VariablePanelConfig extends SchemaObject {
   insertTemplate?: string;
 }
 
+export interface VariablePanelAuthoringConfig extends SchemaObject {
+  enabled: boolean;
+  variables?: VariableItem[] | VariableSourceRef | SourceSchema;
+  insertTemplate?: string;
+}
+
 export interface SQLExecutionConfig extends SchemaObject {
   enabled: boolean;
-  onExecute?: string | ApiSchema;
+  executeAction?: ActionSchema;
   resultPath?: string;
   params?: Record<string, string>;
   showPreview?: boolean;
@@ -137,6 +149,17 @@ export interface SQLEditorConfig extends SchemaObject {
   execution?: SQLExecutionConfig;
   snippets?: CodeSnippetTemplate[];
   variablePanel?: VariablePanelConfig;
+}
+
+export interface SQLEditorAuthoringConfig extends SchemaObject {
+  tables?: TableSchema[] | SQLSchemaSourceRef | SourceSchema;
+  dialect?: SQLDialect;
+  keywords?: boolean;
+  uppercaseKeywords?: boolean;
+  format?: boolean | SQLFormatConfig;
+  execution?: SQLExecutionConfig;
+  snippets?: CodeSnippetTemplate[];
+  variablePanel?: VariablePanelAuthoringConfig;
 }
 
 export type SQLDialect = 'standard' | 'mysql' | 'postgresql' | 'sqlite' | 'mssql';
@@ -157,9 +180,8 @@ export interface ColumnSchema extends SchemaObject {
 }
 
 export type SQLSchemaSourceRef = SchemaObject & {
-  source: 'scope' | 'api';
+  source: 'scope';
   scopePath?: string;
-  api?: ApiSchema;
   path?: string;
 };
 

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { ActionResult, ActionSchema, ApiSchema, SchemaValue } from '@nop-chaos/flux-core';
+import type { ActionResult, ActionSchema, SchemaValue } from '@nop-chaos/flux-core';
 import type { EditorView } from '@codemirror/view';
 import { formatSQL } from '../extensions/sql/format.js';
 import type { SQLResultState } from '../sql-result-panel.js';
@@ -79,6 +79,17 @@ function buildExecutionParams(
     : undefined;
 }
 
+function mergeExecutionData(action: ActionSchema, sql: string, params?: Record<string, SchemaValue>) {
+  return {
+    ...action,
+    args: {
+      ...(action.args ?? {}),
+      sql,
+      ...(params ?? {}),
+    },
+  } satisfies ActionSchema;
+}
+
 function mapExecutionResult(result: ActionResult, resultPath: string | undefined): SQLResultState {
   if (!result.ok || result.data == null) {
     return {
@@ -154,35 +165,12 @@ export function useSQLEditorState(
 
     try {
       const sqlText = view.state.doc.toString();
-      const onExecute = sqlConfig.execution.onExecute;
+      const executeAction = sqlConfig.execution.executeAction;
       const executionParams = buildExecutionParams(props, sqlConfig.execution.params);
 
       let result: ActionResult;
-      if (typeof onExecute === 'string') {
-        const action: ActionSchema = {
-          action: onExecute,
-          args: {
-            sql: sqlText,
-            ...(executionParams ?? {}),
-          },
-        };
-        result = await props.helpers.dispatch(action);
-      } else if (onExecute && typeof onExecute === 'object') {
-        const action: ActionSchema = {
-          action: 'ajax',
-          args: {
-            ...(onExecute as ApiSchema),
-            params: {
-              ...(((onExecute as ApiSchema).params as Record<string, SchemaValue> | undefined) ??
-                {}),
-              ...(executionParams ?? {}),
-            },
-            data: {
-              ...(((onExecute as ApiSchema).data as Record<string, unknown> | undefined) ?? {}),
-              sql: sqlText,
-            },
-          },
-        };
+      if (executeAction) {
+        const action = mergeExecutionData(executeAction, sqlText, executionParams);
         result = await props.helpers.dispatch(action);
       } else {
         const action: ActionSchema = {
