@@ -1,9 +1,13 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '../schema-renderer.js';
-import { useRenderScope } from '../hooks.js';
+import { FormContext, ScopeContext } from '../contexts.js';
+import { useCurrentFormModelGeneration, useOwnScopeSelector, useRenderScope, useScopeSelector } from '../hooks.js';
+import { createRendererRuntime } from '../test-support.js';
 import {
+  createExpressionCompiler,
   createFormulaCompiler,
   env,
   formRenderer,
@@ -180,5 +184,126 @@ describe('createSchemaRenderer scope and reactivity', () => {
     await waitFor(() => {
       expect(screen.getByText('Hello, Alice')).toBeTruthy();
     });
+  });
+
+  it('narrows useScopeSelector subscriptions to declared paths', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const scope = runtime.createChildScope(page.scope, { watched: 'alpha', ignored: 0 }, { scopeKey: 'probe' });
+    const store = scope.store!;
+    let renders = 0;
+
+    function Probe() {
+      const watched = useScopeSelector(
+        (data: { watched?: string }) => data.watched ?? '',
+        Object.is,
+        { paths: ['watched'] },
+      );
+      React.useEffect(() => {
+        renders += 1;
+      });
+      return <span data-testid="watched-value">{watched}</span>;
+    }
+
+    render(
+      <ScopeContext.Provider value={scope}>
+        <Probe />
+      </ScopeContext.Provider>,
+    );
+
+    expect(screen.getByTestId('watched-value').textContent).toBe('alpha');
+    await waitFor(() => expect(renders).toBe(1));
+
+    store.setSnapshot({ watched: 'alpha', ignored: 1 }, { paths: ['ignored'], kind: 'update' });
+    await Promise.resolve();
+    expect(renders).toBe(1);
+
+    store.setSnapshot({ watched: 'beta', ignored: 1 }, { paths: ['watched'], kind: 'update' });
+    await waitFor(() => expect(screen.getByTestId('watched-value').textContent).toBe('beta'));
+    expect(renders).toBe(2);
+  });
+
+  it('keeps useOwnScopeSelector isolated from parent-scope churn', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const parentScope = runtime.createChildScope(page.scope, { shared: 'parent-a' }, { scopeKey: 'parent' });
+    const childScope = runtime.createChildScope(parentScope, { child: 'child-a' }, { scopeKey: 'child' });
+    const parentStore = parentScope.store!;
+    const childStore = childScope.store!;
+    let renders = 0;
+
+    function Probe() {
+      const child = useOwnScopeSelector((data: { child?: string }) => data.child ?? '');
+      React.useEffect(() => {
+        renders += 1;
+      });
+      return <span data-testid="own-scope-value">{child}</span>;
+    }
+
+    render(
+      <ScopeContext.Provider value={childScope}>
+        <Probe />
+      </ScopeContext.Provider>,
+    );
+
+    expect(screen.getByTestId('own-scope-value').textContent).toBe('child-a');
+    await waitFor(() => expect(renders).toBe(1));
+
+    parentStore.setSnapshot({ shared: 'parent-b' }, { paths: ['shared'], kind: 'update' });
+    await Promise.resolve();
+    expect(renders).toBe(1);
+
+    childStore.setSnapshot({ child: 'child-b' }, { paths: ['child'], kind: 'update' });
+    await waitFor(() => expect(screen.getByTestId('own-scope-value').textContent).toBe('child-b'));
+    expect(renders).toBe(2);
+  });
+
+  it('subscribes useCurrentFormModelGeneration to the dedicated generation channel', async () => {
+    let notifyGeneration: (() => void) | undefined;
+    const subscribeToModelGeneration = (listener: () => void) => {
+      notifyGeneration = listener;
+      return () => {
+        notifyGeneration = undefined;
+      };
+    };
+    const form = {
+      modelGeneration: 1,
+      store: {
+        subscribe: () => () => undefined,
+      },
+      subscribeToModelGeneration,
+    } as any;
+    let renders = 0;
+
+    function Probe() {
+      const generation = useCurrentFormModelGeneration();
+      React.useEffect(() => {
+        renders += 1;
+      });
+      return <span data-testid="generation">{String(generation)}</span>;
+    }
+
+    render(
+      <FormContext.Provider value={form}>
+        <Probe />
+      </FormContext.Provider>,
+    );
+
+    expect(screen.getByTestId('generation').textContent).toBe('1');
+    await waitFor(() => expect(renders).toBe(1));
+
+    form.modelGeneration = 2;
+    notifyGeneration?.();
+
+    await waitFor(() => expect(screen.getByTestId('generation').textContent).toBe('2'));
+    expect(renders).toBe(2);
   });
 });

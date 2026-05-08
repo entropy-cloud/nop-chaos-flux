@@ -218,12 +218,34 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       () => props.actionScope ?? runtime.createActionScope({ id: 'root-action-scope' }),
       [props.actionScope, runtime],
     );
+    const ownsRootActionScope = props.actionScope == null;
     const rootComponentRegistry = useMemo(
       () =>
         props.componentRegistry ??
         runtime.createComponentHandleRegistry({ id: 'root-component-registry' }),
       [props.componentRegistry, runtime],
     );
+    const ownsRootComponentRegistry = props.componentRegistry == null;
+
+    useEffect(() => {
+      return () => {
+        if (ownsRootComponentRegistry) {
+          rootComponentRegistry.dispose?.();
+        }
+      };
+    }, [ownsRootComponentRegistry, rootComponentRegistry]);
+
+    useEffect(() => {
+      return () => {
+        if (!ownsRootActionScope) {
+          return;
+        }
+
+        for (const namespace of rootActionScope.listNamespaces()) {
+          rootActionScope.unregisterNamespace(namespace);
+        }
+      };
+    }, [ownsRootActionScope, rootActionScope]);
 
     useEffect(() => {
       onRuntimeChange?.(runtime);

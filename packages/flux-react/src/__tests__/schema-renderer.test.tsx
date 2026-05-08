@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -252,5 +254,27 @@ describe('SchemaRenderer debug data gating', () => {
     registry.setDebugEnabled?.(true);
 
     await waitFor(() => expect(setHandleDebugDataSpy).toHaveBeenCalled());
+  });
+
+  it('disposes owned root component registries on unmount', async () => {
+    const onComponentRegistryChange = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([textRenderer]);
+    const { unmount } = render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'text', text: 'Registry dispose' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        onComponentRegistryChange={onComponentRegistryChange}
+      />,
+    );
+
+    await waitFor(() => expect(onComponentRegistryChange).toHaveBeenCalledTimes(1));
+    const registry = onComponentRegistryChange.mock.calls[0][0];
+    const disposeSpy = vi.spyOn(registry, 'dispose');
+
+    unmount();
+
+    await waitFor(() => expect(disposeSpy).toHaveBeenCalledTimes(1));
   });
 });

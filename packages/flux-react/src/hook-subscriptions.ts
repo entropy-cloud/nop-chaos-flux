@@ -2,9 +2,40 @@ import type {
   FormFieldStateSnapshot,
   FormStoreApi,
   FormStoreState,
+  ScopeChange,
+  ScopeDependencySet,
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { EMPTY_FORM_STORE_STATE } from './form-state.js';
+import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
+
+function createRootDependencySet(paths: readonly string[] | undefined): ScopeDependencySet | undefined {
+  if (!paths || paths.length === 0) {
+    return undefined;
+  }
+
+  const normalized = Array.from(
+    new Set(
+      paths
+        .map((path) => path.trim())
+        .filter((path) => path.length > 0)
+        .map((path) => path.replace(/\[(\d+)\]/g, '.$1'))
+        .map((path) => path.split('.').filter(Boolean)[0] ?? '*'),
+    ),
+  ).sort();
+
+  if (normalized.length === 0) {
+    return undefined;
+  }
+
+  const wildcard = normalized.includes('*');
+
+  return {
+    paths: wildcard ? ['*'] : normalized,
+    wildcard,
+    broadAccess: wildcard,
+  };
+}
 
 export function shallowEqualFormFieldState(
   a: FormFieldStateSnapshot,
@@ -144,5 +175,42 @@ export function createScopeOwnSubscribe(scope: ScopeRef) {
       previousSnapshot = nextSnapshot;
       listener();
     });
+  };
+}
+
+export function createScopeSubscribe(scope: ScopeRef, paths?: readonly string[]) {
+  return (listener: () => void) => {
+    const subscribe = scope.store?.subscribe;
+
+    if (!subscribe) {
+      return emptyUnsubscribe;
+    }
+
+    const dependencies = createRootDependencySet(paths);
+
+    return subscribe((change: ScopeChange) => {
+      if (dependencies && !scopeChangeHitsDependencies(change, dependencies)) {
+        return;
+      }
+
+      listener();
+    });
+  };
+}
+
+export function createFormModelGenerationSubscribe(
+  form:
+    | {
+        subscribeToModelGeneration?: (listener: () => void) => () => void;
+        store?: Pick<FormStoreApi, 'subscribe'>;
+      }
+    | undefined,
+) {
+  return (listener: () => void) => {
+    if (typeof form?.subscribeToModelGeneration === 'function') {
+      return form.subscribeToModelGeneration(listener);
+    }
+
+    return form?.store?.subscribe(listener) ?? emptyUnsubscribe;
   };
 }

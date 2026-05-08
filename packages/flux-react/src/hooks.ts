@@ -28,6 +28,8 @@ import {
 import { getIn } from '@nop-chaos/flux-core';
 import { createHelpers } from './helpers.js';
 import {
+  createFormModelGenerationSubscribe,
+  createScopeSubscribe,
   createScopeOwnSubscribe,
   emptyUnsubscribe,
 } from './hook-subscriptions.js';
@@ -94,21 +96,21 @@ export function useRendererEnv() {
 export function useScopeSelector<T, S = Record<string, unknown>>(
   selector: (scopeData: S) => T,
   equalityFn: (a: T, b: T) => boolean = Object.is,
-  options?: { enabled?: boolean; fallback?: T },
+  options?: { enabled?: boolean; fallback?: T; paths?: readonly string[] },
 ): T {
   const scope = useRenderScope();
-  const store = scope.store;
   const enabled = options?.enabled !== false;
+  const paths = options?.paths;
   const subscribe = useMemo(
-    () => (enabled ? (store?.subscribe ?? (() => emptyUnsubscribe)) : () => emptyUnsubscribe),
-    [enabled, store],
+    () => (enabled ? createScopeSubscribe(scope, paths) : () => emptyUnsubscribe),
+    [enabled, paths, scope],
   );
   const getSnapshot = useMemo(
     () =>
       enabled
-        ? () => (store?.getSnapshot() ?? scope.readVisible()) as unknown as S
+        ? () => (scope.store?.getSnapshot() ?? scope.readVisible()) as unknown as S
         : () => undefined as unknown as S,
-    [enabled, store, scope],
+    [enabled, scope],
   );
   const fallbackSelector = useCallback(() => options?.fallback as T, [options?.fallback]);
 
@@ -151,7 +153,7 @@ export function useDataSourceStatus(
       return getIn(scopeData, path) as DataSourceStatusSummary | undefined;
     },
     Object.is,
-    { enabled: options?.enabled !== false, fallback: undefined },
+    { enabled: options?.enabled !== false, fallback: undefined, paths: path ? [path] : undefined },
   );
 }
 
@@ -208,7 +210,7 @@ export function useRenderFragment() {
 
 export function useCurrentFormModelGeneration(): number {
   const form = useCurrentForm();
-  const subscribe = useMemo(() => form?.store.subscribe ?? (() => () => undefined), [form]);
+  const subscribe = useMemo(() => createFormModelGenerationSubscribe(form), [form]);
   const getSnapshot = useMemo(() => () => form?.modelGeneration ?? 0, [form]);
 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, (n) => n, Object.is);

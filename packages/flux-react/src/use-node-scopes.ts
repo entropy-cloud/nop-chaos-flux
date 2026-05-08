@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { ActionScope, ComponentHandleRegistry, RendererRuntime } from '@nop-chaos/flux-core';
 
 function createNodeOwnedActionScope(
@@ -55,6 +55,12 @@ export function useNodeScopes(
   const activeActionScope = input.actionScopePolicy === 'new' ? nodeActionScope : actionScope;
   const activeComponentRegistry =
     input.componentRegistryPolicy === 'new' ? nodeComponentRegistry : componentRegistry;
+
+  useEffect(() => {
+    return () => {
+      nodeComponentRegistry?.dispose?.();
+    };
+  }, [nodeComponentRegistry]);
 
   return { activeActionScope, activeComponentRegistry };
 }

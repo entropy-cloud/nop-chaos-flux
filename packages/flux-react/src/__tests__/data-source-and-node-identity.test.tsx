@@ -1,6 +1,7 @@
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { compileDataSource } from '@nop-chaos/flux-compiler';
 import {
   useDataSourceStatus,
@@ -8,6 +9,7 @@ import {
   useRendererRuntime,
   useScopeSelector,
 } from '../hooks.js';
+import { ScopeContext } from '../contexts.js';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import {
   cidProbeRenderer,
@@ -135,6 +137,41 @@ describe('createSchemaRenderer data sources and node identity', () => {
       isRefreshing: false,
       inFlightCount: 0,
     });
+  });
+
+  it('narrows useDataSourceStatus to its status path', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const scope = runtime.createChildScope(page.scope, { userStatus: { ready: false }, other: 0 }, { scopeKey: 'status' });
+    let renders = 0;
+    function StatusProbeNarrow() {
+      const status = useDataSourceStatus('userStatus');
+      React.useEffect(() => {
+        renders += 1;
+      });
+      return <span data-testid="narrow-status">{status?.ready ? 'ready' : 'idle'}</span>;
+    }
+
+    render(
+      <ScopeContext.Provider value={scope}>
+        <StatusProbeNarrow />
+      </ScopeContext.Provider>,
+    );
+
+    expect(screen.getByTestId('narrow-status').textContent).toBe('idle');
+    await waitFor(() => expect(renders).toBe(1));
+
+    scope.update('other', 1);
+    await Promise.resolve();
+    expect(renders).toBe(1);
+
+    scope.update('userStatus', { ready: true });
+    await waitFor(() => expect(screen.getByTestId('narrow-status').textContent).toBe('ready'));
+    expect(renders).toBe(2);
   });
 
   it('rerenders sibling consumers after a renderer registers an api data source', async () => {

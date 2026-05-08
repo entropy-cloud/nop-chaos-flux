@@ -1,4 +1,4 @@
-import type { SchemaRendererProps } from '@nop-chaos/flux-core';
+import type { ExecutableApiRequest, SchemaRendererProps } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { ensureRendererComponent } from './auto-renderer.js';
 import type { RendererDefinition } from './react-contracts.js';
@@ -13,7 +13,7 @@ export function createDefaultRegistry(definitions: RendererDefinition[] = []) {
 
 export function createDefaultEnv(input?: Partial<SchemaRendererProps['env']>) {
   return {
-    fetcher: async function <T>(api: any) {
+    fetcher: async function <T>(api: ExecutableApiRequest) {
       if (typeof api.url === 'string' && api.url.startsWith('/api/')) {
         return {
           ok: true,

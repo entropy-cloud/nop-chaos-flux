@@ -6,6 +6,7 @@ import { Button, cn } from '@nop-chaos/ui';
 export interface WorkbenchShellProps {
   className?: string;
   style?: CSSProperties;
+  density?: 'default' | 'flush';
   header?: ReactNode;
   leftPanel?: ReactNode;
   leftCollapsed?: boolean;
@@ -26,6 +27,7 @@ const PANEL_CARD = 'min-h-0 overflow-hidden rounded-xl border border-border shad
 export function WorkbenchShell({
   className,
   style,
+  density = 'default',
   header,
   leftPanel,
   leftCollapsed = false,
@@ -61,7 +63,8 @@ export function WorkbenchShell({
   return (
     <div
       className={cn(
-        'nop-workbench grid grid-rows-[auto_minmax(0,1fr)] h-full min-h-0 gap-3 p-6',
+        'nop-workbench grid grid-rows-[auto_minmax(0,1fr)] h-full min-h-0 gap-3',
+        density === 'default' ? 'p-6' : 'p-0',
         className,
       )}
       style={style}

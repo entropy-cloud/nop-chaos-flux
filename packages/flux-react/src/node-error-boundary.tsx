@@ -1,7 +1,7 @@
 import { Component } from 'react';
 import type { ReactNode } from 'react';
 import { AlertCircleIcon } from 'lucide-react';
-import { Button } from '@nop-chaos/ui';
+import { Alert, AlertAction, AlertDescription, Button, cn } from '@nop-chaos/ui';
 
 interface NodeErrorBoundaryProps {
   children: ReactNode;
@@ -36,39 +36,27 @@ function SchemaRootFallback(props: {
   mode: 'loading' | 'error';
   onRetry?: () => void;
 }) {
+  const destructive = props.mode === 'error';
+
   return (
-    <div
+    <Alert
       data-slot={props.mode === 'loading' ? 'schema-root-status' : 'schema-root-error'}
       role={props.mode === 'loading' ? 'status' : 'alert'}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        padding: '0.75rem',
-        fontSize: '0.875rem',
-        lineHeight: '1.25rem',
-        borderRadius: '0.375rem',
-        border:
-          props.mode === 'loading'
-            ? '1px solid var(--border, #d4d4d8)'
-            : '1px solid var(--destructive, #b53b2c)',
-        color:
-          props.mode === 'loading'
-            ? 'var(--foreground, inherit)'
-            : 'var(--destructive, #b53b2c)',
-        backgroundColor: 'var(--background, transparent)',
-      }}
+      variant={destructive ? 'destructive' : 'default'}
+      className={cn('nop-schema-root-fallback', !destructive && 'nop-schema-root-fallback--status')}
     >
-      {props.mode === 'error' ? (
-        <AlertCircleIcon style={{ width: '1rem', height: '1rem', flexShrink: 0 }} />
-      ) : null}
-      <span style={{ flex: 1, minWidth: 0 }}>{props.message}</span>
+      {destructive ? <AlertCircleIcon className="size-4 shrink-0" /> : null}
+      <AlertDescription className="nop-schema-root-fallback__message">
+        {props.message}
+      </AlertDescription>
       {props.onRetry ? (
-        <Button type="button" variant="ghost" size="sm" onClick={props.onRetry}>
-          retry
-        </Button>
+        <AlertAction>
+          <Button type="button" variant="ghost" size="sm" onClick={props.onRetry}>
+            retry
+          </Button>
+        </AlertAction>
       ) : null}
-    </div>
+    </Alert>
   );
 }
 
@@ -143,55 +131,32 @@ export class NodeErrorBoundary extends Component<NodeErrorBoundaryProps, NodeErr
   render() {
     if (this.state.hasError) {
       const nodeId = this.props.nodeId ?? 'unknown';
-       const message =
-        renderErrorMessage(this.state.error, 'Render error');
+      const message =
+         renderErrorMessage(this.state.error, 'Render error');
 
       return (
-        <div
+        <Alert
           data-slot="node-error"
           role="alert"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-            padding: '0.25rem 0.5rem',
-            fontSize: '0.75rem',
-            lineHeight: '1rem',
-            color: 'var(--destructive, #b53b2c)',
-            border: '1px dashed var(--destructive, #b53b2c)',
-            borderRadius: '0.25rem',
-            backgroundColor: 'var(--nop-surface, transparent)',
-          }}
+          variant="destructive"
+          className="nop-node-error"
         >
-          <AlertCircleIcon style={{ width: '0.875rem', height: '0.875rem', flexShrink: 0 }} />
-          <span
-            style={{
-              flex: 1,
-              minWidth: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
+          <AlertCircleIcon className="size-3.5 shrink-0" />
+          <AlertDescription className="nop-node-error__message">
             {nodeId}: {message || 'Render error'}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={this.handleRetry}
-            style={{
-              padding: '0 0.25rem',
-              fontSize: '0.6875rem',
-              lineHeight: '1rem',
-              color: 'inherit',
-              opacity: 0.7,
-              flexShrink: 0,
-            }}
-          >
-            retry
-          </Button>
-        </div>
+          </AlertDescription>
+          <AlertAction>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={this.handleRetry}
+              className="nop-node-error__retry"
+            >
+              retry
+            </Button>
+          </AlertAction>
+        </Alert>
       );
     }
     return this.props.children;

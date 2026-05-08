@@ -142,4 +142,47 @@
     font-size: 11px;
     color: hsl(var(--muted-foreground));
   }
+
+  .nop-schema-root-fallback {
+    align-items: center;
+  }
+
+  .nop-schema-root-fallback--status {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  .nop-schema-root-fallback__message {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .nop-node-error {
+    width: fit-content;
+    max-width: 100%;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    border-style: dashed;
+    border-radius: var(--radius-sm);
+    background: var(--nop-surface, transparent);
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .nop-node-error__message {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nop-node-error__retry {
+    flex-shrink: 0;
+    padding-inline: 0.25rem;
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    color: inherit;
+    opacity: 0.7;
+  }
 }

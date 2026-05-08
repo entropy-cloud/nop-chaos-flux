@@ -164,8 +164,8 @@ export function FieldFrame(props: FieldFrameProps) {
   const effectiveRequired = Boolean(required) || Boolean(currentForm ? dynamicRequired : nonFormDynamicRequired);
   const errorId = name ? `${name}-error` : undefined;
   const controlId = name ? `${name}-control` : undefined;
-  const hintId = name && !error && hint ? `${name}-hint` : undefined;
-  const descriptionId = name && !error && !hint && description ? `${name}-description` : undefined;
+  const hintId = name && !showError && hint ? `${name}-hint` : undefined;
+  const descriptionId = name && !showError && !hint && description ? `${name}-description` : undefined;
   const describedBy = mergeDescribedBy(showError ? errorId : undefined, hintId, descriptionId);
   const childProps = isValidElement(children)
     ? (children.props as {
@@ -244,18 +244,18 @@ export function FieldFrame(props: FieldFrameProps) {
         ) : null}
       </div>
 
-      {error && showError ? (
-        <span data-slot="field-error" id={errorId} role="alert" aria-live="assertive">{error.message}</span>
-      ) : fieldState.validating ? (
-        <span data-slot="field-hint">{t('flux.common.validating')}</span>
-      ) : !error && hint ? (
-        <span data-slot="field-hint" id={hintId}>
-          {hint}
-        </span>
-      ) : !error && !hint && description ? (
-        <span data-slot="field-description" id={descriptionId}>
-          {description}
-        </span>
+        {showError && error ? (
+          <span data-slot="field-error" id={errorId} role="alert" aria-live="assertive">{error.message}</span>
+        ) : fieldState.validating ? (
+          <span data-slot="field-hint">{t('flux.common.validating')}</span>
+        ) : hint ? (
+          <span data-slot="field-hint" id={hintId}>
+            {hint}
+          </span>
+        ) : !hint && description ? (
+          <span data-slot="field-description" id={descriptionId}>
+            {description}
+          </span>
       ) : null}
     </Tag>
   );
