@@ -8,6 +8,7 @@ async function ensureDir(dir: string) {
   await mkdir(dir, { recursive: true });
 }
 
+// This is a manual asset-generation helper, not part of the supported CI gate baseline.
 test.describe.skip('README screenshots', () => {
   test('captures playground home screenshot', async ({ page }) => {
     await page.goto('/');

@@ -102,6 +102,23 @@ const schema = {
         },
         {
           type: 'code-editor',
+          name: 'expressionRemote',
+          label: 'Expression Editor (remote source)',
+          language: 'expression',
+          mode: 'expression',
+          autoHeight: true,
+          expressionConfig: {
+            variables: {
+              type: 'source',
+              formula: [
+                { label: 'Current User', value: 'user.name', type: 'string' },
+                { label: 'Current Tenant', value: 'tenantId', type: 'string' },
+              ],
+            },
+          },
+        },
+        {
+          type: 'code-editor',
           name: 'sql',
           label: 'SQL Editor',
           language: 'sql',
@@ -210,10 +227,13 @@ const schema = {
             },
             execution: {
               enabled: true,
-              onExecute: {
-                url: '/api/report/execSql',
-                method: 'POST',
-                data: { tplSql: '${value}' },
+              executeAction: {
+                action: 'ajax',
+                args: {
+                  url: '/api/report/execSql',
+                  method: 'POST',
+                  data: { tplSql: '${value}' },
+                },
               },
               resultPath: 'responseData',
               showPreview: true,

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+// This measurement page mutates one shared host/runtime and is intentionally serialized.
 test.describe.configure({ mode: 'serial' });
 
 async function openPerformanceTable(page: import('@playwright/test').Page) {

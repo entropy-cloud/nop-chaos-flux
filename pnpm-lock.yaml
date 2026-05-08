@@ -619,6 +619,9 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.4
+      use-sync-external-store:
+        specifier: ^1.6.0
+        version: 1.6.0(react@19.2.4)
 
   packages/report-designer-core:
     dependencies:
@@ -664,6 +667,9 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.4
+      use-sync-external-store:
+        specifier: ^1.6.0
+        version: 1.6.0(react@19.2.4)
     devDependencies:
       '@testing-library/react':
         specifier: ^16.3.0
@@ -704,9 +710,15 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.4
+      use-sync-external-store:
+        specifier: ^1.6.0
+        version: 1.6.0(react@19.2.4)
 
   packages/tailwind-preset:
     dependencies:
+      tailwindcss:
+        specifier: ^4.1.4
+        version: 4.2.2
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.2.2)

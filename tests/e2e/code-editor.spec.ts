@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
+// The Monaco-backed page is intentionally serialized to avoid cross-test editor startup churn.
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(60000);
 

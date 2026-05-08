@@ -52,11 +52,13 @@ export default defineConfig({
   reporter: 'list',
   use: {
     baseURL: baseUrl,
-    trace: 'on-first-retry',
+    // Keep trace capture honest under the current retries=0 baseline.
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
   projects: [
     {
+      // The supported workspace gate currently targets Chromium only.
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+// This route-heavy spec shares one cold-started designer host and stays serial intentionally.
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(60_000);
 

@@ -1,30 +1,26 @@
 import { expect, test } from '@playwright/test';
 
+// This suite mutates one localStorage-backed word-editor state surface and stays serial intentionally.
+test.describe.configure({ mode: 'serial' });
+test.setTimeout(60_000);
+
 async function openWordEditor(page: import('@playwright/test').Page) {
-  await page.goto('/');
+  await page.goto('/#/word-editor', { waitUntil: 'commit' });
+  await page.evaluate(() => {
+    localStorage.removeItem('nop-word-editor-document');
+    localStorage.removeItem('nop-word-editor-datasets');
+  });
+  await page.reload({ waitUntil: 'commit' });
+  await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 45000 });
+  await expect(page.getByRole('tab', { name: '数据集' })).toBeVisible({ timeout: 15000 });
+}
 
-  const signInButton = page.getByRole('button', { name: 'Sign in' });
-  if (await signInButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await signInButton.click();
-
-    if (await signInButton.isVisible({ timeout: 1500 }).catch(() => false)) {
-      await page.getByRole('textbox', { name: 'Username' }).fill('admin');
-      await page.getByRole('textbox', { name: 'Password' }).fill('123456');
-      await signInButton.click();
-    }
-
-    if (await signInButton.isVisible({ timeout: 1500 }).catch(() => false)) {
-      await page.getByRole('textbox', { name: 'Username' }).fill('nop');
-      await page.getByRole('textbox', { name: 'Password' }).fill('123');
-      await signInButton.click();
-    }
-  }
-
-  await expect(signInButton).toHaveCount(0, { timeout: 10000 });
-
-  await page.getByRole('button', { name: 'Word Editor' }).click();
-
-  await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 15000 });
+async function openDatasetDialog(page: import('@playwright/test').Page) {
+  await page.getByRole('tab', { name: '数据集' }).click();
+  const addDatasetButton = page.getByRole('button', { name: /Add Dataset|添加数据集/ }).first();
+  await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
+  await addDatasetButton.click();
+  await expect(page.getByText('Create Dataset')).toBeVisible();
 }
 
 test.describe('Dataset Sidebar Panel', () => {
@@ -38,25 +34,21 @@ test.describe('Dataset Sidebar Panel', () => {
   test('clicking Add Dataset opens DatasetDialog in create mode', async ({ page }) => {
     await openWordEditor(page);
 
-    const addDatasetButton = page.getByTitle('Add Dataset');
-    await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
-    await addDatasetButton.click();
-
-    await expect(page.getByText('Create Dataset')).toBeVisible();
+    await openDatasetDialog(page);
   });
 
   test('filling dataset name and saving creates the dataset', async ({ page }) => {
     await openWordEditor(page);
 
-    const addDatasetButton = page.getByTitle('Add Dataset');
-    await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
-    await addDatasetButton.click();
-
-    await expect(page.getByText('Create Dataset')).toBeVisible();
+    await openDatasetDialog(page);
 
     await page.getByPlaceholder('Enter dataset name').fill('TestDataset');
     await page.getByRole('button', { name: '保存' }).click();
 
+    await expect(page.getByText('TestDataset')).toBeVisible();
+
+    await page.reload({ waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('TestDataset')).toBeVisible();
   });
 
@@ -74,9 +66,7 @@ test.describe('Dataset Sidebar Panel', () => {
   test('clicking a dataset opens the dialog in edit mode', async ({ page }) => {
     await openWordEditor(page);
 
-    const addDatasetButton = page.getByTitle('Add Dataset');
-    await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
-    await addDatasetButton.click();
+    await openDatasetDialog(page);
 
     await page.getByPlaceholder('Enter dataset name').fill('EditTarget');
     await page.getByRole('button', { name: '保存' }).click();
