@@ -312,6 +312,11 @@ export function createProjectedFormRuntime(
     validateSubtree(path, reason) {
       return parentForm.validateSubtree(options.prefixPath(path), reason);
     },
+    validateAll(reason) {
+      return options.ownerRootPath
+        ? parentForm.validateSubtree(options.ownerRootPath, reason)
+        : parentForm.validateForm(reason);
+    },
   };
 
   if (options.supportsArrayMutations) {

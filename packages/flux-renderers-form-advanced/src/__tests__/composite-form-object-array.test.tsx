@@ -2,8 +2,10 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { FormRuntime } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentForm } from '@nop-chaos/flux-react';
 import {
   allRenderers,
   baseEnv,
@@ -27,6 +29,23 @@ const scopeSelectorProbeRenderer: RendererDefinition = {
   type: 'scope-selector-probe',
   component: () => <ScopeSelectorProbeRenderer />,
 };
+
+function createSchemaRendererWithFormProbe(onForm: (form: FormRuntime | undefined) => void) {
+  function FormHandleProbe() {
+    const form = useCurrentForm();
+    React.useLayoutEffect(() => {
+      onForm(form);
+    }, [form]);
+    return null;
+  }
+
+  const formHandleProbeRenderer: RendererDefinition = {
+    type: 'form-handle-probe',
+    component: FormHandleProbe,
+  };
+
+  return createSchemaRenderer([...allRenderers, scopeSelectorProbeRenderer, formHandleProbeRenderer]);
+}
 
 describe('composite form - object-field validation', () => {
   it('blocks submit when required child field is empty', async () => {
@@ -227,7 +246,10 @@ describe('composite form - array-field add/remove', () => {
   it('blocks submit when required array items have empty values', async () => {
     cleanup();
     const submitValues: Record<string, unknown>[] = [];
-    const SchemaRenderer = createSchemaRenderer(allRenderers);
+    let capturedForm: FormRuntime | undefined;
+    const SchemaRenderer = createSchemaRendererWithFormProbe((form) => {
+      capturedForm = form;
+    });
 
     render(
       <SchemaRenderer
@@ -244,6 +266,7 @@ describe('composite form - array-field add/remove', () => {
               label: 'Tags',
               item: [{ type: 'input-text', name: 'value', label: 'Tag', required: true }],
             },
+            { type: 'form-handle-probe' },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
@@ -264,6 +287,7 @@ describe('composite form - array-field add/remove', () => {
 
     await waitFor(() => expect(screen.getByText('Submit')).toBeTruthy());
 
+    expect(capturedForm).toBeDefined();
     fireEvent.click(screen.getByText('Submit'));
 
     await waitFor(() => {

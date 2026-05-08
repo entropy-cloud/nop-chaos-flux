@@ -9,6 +9,10 @@ export function createVariantFormProxy(parentForm: FormRuntime, prefix: string):
       return path;
     }
 
+    if (path === 'value') {
+      return prefix;
+    }
+
     return path ? `${prefix}.${path}` : prefix;
   }
 
@@ -16,10 +20,11 @@ export function createVariantFormProxy(parentForm: FormRuntime, prefix: string):
     parentForm,
     ownerRootPath: prefix,
     prefixPath,
+    scalarValueAlias: 'value',
     projectValues(state) {
       const subValue = prefix ? getIn(state.values, prefix) : state.values;
       return (
-        subValue !== undefined ? subValue : null
+        subValue !== undefined && subValue !== null ? subValue : { value: null }
       ) as FormStoreApi['getState'] extends () => infer T
         ? T extends { values: infer V }
           ? V
@@ -44,9 +49,25 @@ export function createVariantScope(
     getValue: () => parentScope.get(name),
     setValue: (value) => parentScope.update(name, value),
     getExtraPayload: () => ({ variant: activeVariant }),
-    getNestedValue: (path) => parentScope.get(name ? `${name}.${path}` : path),
-    hasNestedValue: (path) => parentScope.has(name ? `${name}.${path}` : path),
-    setNestedValue: (path, value) => parentScope.update(name ? `${name}.${path}` : path, value),
+    getNestedValue: (path) => {
+      if (path === 'value') {
+        return parentScope.get(name);
+      }
+      return parentScope.get(name ? `${name}.${path}` : path);
+    },
+    hasNestedValue: (path) => {
+      if (path === 'value') {
+        return parentScope.has(name);
+      }
+      return parentScope.has(name ? `${name}.${path}` : path);
+    },
+    setNestedValue: (path, value) => {
+      if (path === 'value') {
+        parentScope.update(name, value);
+        return;
+      }
+      parentScope.update(name ? `${name}.${path}` : path, value);
+    },
     setAdditionalPath: (path, value) => parentScope.update(path, value),
     merge(data) {
       if (data && typeof data === 'object' && 'value' in (data as Record<string, unknown>)) {

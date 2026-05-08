@@ -268,4 +268,41 @@ describe('condition-builder renderer integration', () => {
       children: [],
     });
   });
+
+  it('applies root meta attributes in picker mode', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allDefs);
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#6"
+        schema={
+          {
+            type: 'form',
+            data: {
+              filters: { id: 'root', conjunction: 'and', children: [] },
+            },
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                embed: false,
+                className: 'custom-picker-root',
+                testid: 'picker-root',
+                fields: [{ name: 'status', label: 'Status', type: 'text' }],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const root = view.container.querySelector('.nop-condition-builder.custom-picker-root');
+    expect(root).toBeTruthy();
+    expect(root?.getAttribute('data-testid')).toBe('picker-root');
+    expect(root?.getAttribute('data-cid')).toBeTruthy();
+  });
 });

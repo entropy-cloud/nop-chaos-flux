@@ -3,10 +3,12 @@ import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import {
   useCurrentForm,
+  useCurrentFormState,
   useRendererRuntime,
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
+import { getIn } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DetailViewSchema } from '../composite-field/composite-schemas.js';
@@ -54,6 +56,12 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   );
   const validationMessage = t('flux.common.detailDraftValidationError');
   const effectiveDisabled = Boolean(props.meta.disabled);
+
+  const formProjectedValue = useCurrentFormState(
+    (state) => (scopePath ? getIn(state.values, scopePath) : state.values),
+    Object.is,
+    { enabled: Boolean(parentForm), path: scopePath || undefined },
+  );
 
   const scopeProjectedValue = useScopeSelector(
     (data) => (scopePath ? (data as Record<string, unknown>)[scopePath] : undefined),
@@ -110,8 +118,8 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       return staticData;
     }
 
-    return scopeProjectedValue;
-  }, [scopeProjectedValue, staticData]);
+    return parentForm ? formProjectedValue : scopeProjectedValue;
+  }, [formProjectedValue, parentForm, scopeProjectedValue, staticData]);
 
   const runAdaptationAction = useDetailAdaptationAction({
     helpers: props.helpers,

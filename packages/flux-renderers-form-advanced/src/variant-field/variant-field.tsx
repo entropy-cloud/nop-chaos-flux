@@ -62,6 +62,44 @@ type VariantResolvedOption = VariantOption & {
   viewerRegionKey?: string;
 };
 
+function collectNamedChildPaths(input: VariantOption['content']): string[] {
+  const nodes = Array.isArray(input) ? input : [input];
+  const names = new Set<string>();
+
+  for (const node of nodes) {
+    if (!node || typeof node !== 'object' || Array.isArray(node)) {
+      continue;
+    }
+
+    const candidateName = (node as { name?: unknown }).name;
+    if (typeof candidateName === 'string' && candidateName.length > 0) {
+      names.add(candidateName);
+    }
+  }
+
+  return Array.from(names);
+}
+
+function collectNamedChildPathsFromTemplateNode(
+  templateNode:
+    | import('@nop-chaos/flux-core').TemplateNode
+    | readonly import('@nop-chaos/flux-core').TemplateNode[]
+    | null
+    | undefined,
+): string[] {
+  const nodes = Array.isArray(templateNode) ? templateNode : templateNode ? [templateNode] : [];
+  const names = new Set<string>();
+
+  for (const node of nodes) {
+    const candidateName = (node.schema as { name?: unknown }).name;
+    if (typeof candidateName === 'string' && candidateName.length > 0) {
+      names.add(candidateName);
+    }
+  }
+
+  return Array.from(names);
+}
+
 function injectDetectVariantArgs(
   actionSchema: ActionSchema | ActionSchema[],
   payload: { value: unknown; variants: string[] },
@@ -311,6 +349,76 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     () => (parentForm ? createVariantFormProxy(parentForm, name) : undefined),
     [parentForm, name],
   );
+
+  const hiddenVariantChildPaths = React.useMemo(
+    () =>
+      variants
+        .filter((variant) => variant.key !== activeKey)
+        .flatMap((variant) => {
+          const region =
+            typeof variant.contentRegionKey === 'string'
+              ? props.regions[variant.contentRegionKey]
+              : undefined;
+
+          return collectNamedChildPathsFromTemplateNode(region?.templateNode).length > 0
+            ? collectNamedChildPathsFromTemplateNode(region?.templateNode)
+            : collectNamedChildPaths(variant.content);
+        }),
+    [activeKey, props.regions, variants],
+  );
+
+  React.useLayoutEffect(() => {
+    if (!parentForm || !name) {
+      return;
+    }
+
+    for (const hiddenPath of hiddenVariantChildPaths) {
+      parentForm.notifyFieldHidden(`${name}.${hiddenPath}`, true);
+    }
+
+    return () => {
+      for (const hiddenPath of hiddenVariantChildPaths) {
+        parentForm.notifyFieldHidden(`${name}.${hiddenPath}`, false);
+      }
+    };
+  }, [hiddenVariantChildPaths, name, parentForm]);
+
+  React.useEffect(() => {
+    if (!parentForm || !variantForm || !name) {
+      return;
+    }
+
+    const childOwnerId = `${parentForm.id}:${name}:variant-field`;
+
+    parentForm.registerChildContract({
+      childOwnerId,
+      mode: 'recurse-submit',
+      active: true,
+      unregister() {
+        parentForm.unregisterChildContract(childOwnerId);
+      },
+      getState() {
+        const state = variantForm.getScopeState();
+        return {
+          ready: state.ready,
+          validating: state.validating,
+          valid: state.valid,
+          hasErrors: state.hasErrors,
+        };
+      },
+      async triggerValidation() {
+        const result = await variantForm.validateAll('submit');
+        return {
+          ok: result.ok,
+          errors: result.errors,
+        };
+      },
+    });
+
+    return () => {
+      parentForm.unregisterChildContract(childOwnerId);
+    };
+  }, [name, parentForm, variantForm]);
 
   const renderSelector = () => {
     if (readOnly || effectiveDisabled) return null;

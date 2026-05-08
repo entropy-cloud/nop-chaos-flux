@@ -72,14 +72,14 @@ describe('detail value adaptation helpers', () => {
         { rawValue: 'raw', name: 'field', readOnly: false },
         runner,
       ),
-    ).resolves.toBe('raw');
+    ).rejects.toThrow('[flux] transformIn failed: boom');
     await expect(
       runTransformOut(
         { action: 'demo:out' },
         { workingValue: 'working', originalValue: 'raw', name: 'field', readOnly: false },
         runner,
       ),
-    ).resolves.toBe('working');
+    ).rejects.toThrow('[flux] transformOut failed: boom');
     await expect(
       runValidate(
         { action: 'demo:validate' },

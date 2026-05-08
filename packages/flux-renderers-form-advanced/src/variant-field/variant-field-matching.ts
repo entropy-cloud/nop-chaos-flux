@@ -1,6 +1,23 @@
 import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import type { VariantOption } from '../composite-field/composite-schemas.js';
 
+function unwrapPreservedMatchWhen(input: unknown): string | undefined {
+  if (typeof input === 'string') {
+    return input;
+  }
+
+  if (!input || typeof input !== 'object') {
+    return undefined;
+  }
+
+  const candidate = input as { __nopPreserveLiteral?: unknown; value?: unknown };
+  if (candidate.__nopPreserveLiteral !== true || typeof candidate.value !== 'string') {
+    return undefined;
+  }
+
+  return candidate.value;
+}
+
 export function matchesVariant(
   option: VariantOption,
   value: unknown,
@@ -37,7 +54,12 @@ export function matchesVariant(
       return false;
     }
 
-    return Boolean(evaluate<boolean>(match.when, createScope({ value })));
+    const whenSource = unwrapPreservedMatchWhen(match.when);
+    if (!whenSource) {
+      return false;
+    }
+
+    return Boolean(evaluate<boolean>(whenSource, createScope({ value })));
   }
   return false;
 }
