@@ -16,6 +16,7 @@ type CarouselProps = {
   plugins?: CarouselPlugin;
   orientation?: 'horizontal' | 'vertical';
   setApi?: (api: CarouselApi) => void;
+  label?: string;
 };
 
 type CarouselContextProps = {
@@ -44,6 +45,7 @@ function Carousel({
   opts,
   setApi,
   plugins,
+  label,
   className,
   children,
   ...props
@@ -122,6 +124,7 @@ function Carousel({
         className={cn('relative', className)}
         role="region"
         aria-roledescription="carousel"
+        aria-label={label ?? t('flux.carousel.label')}
         data-slot="carousel"
         {...props}
       >

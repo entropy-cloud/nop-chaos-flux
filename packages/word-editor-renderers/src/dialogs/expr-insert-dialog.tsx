@@ -73,6 +73,8 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
     'c:out',
   ];
   const currentTagDef = findTagDefinition(selectedTag, 'tag-open');
+  const expressionInputId = 'expr-insert-expression';
+  const tagNameInputId = 'expr-insert-tag-name';
 
   return (
     <Dialog
@@ -108,6 +110,8 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
             <TabsContent value={exprType} className="mb-4">
               {exprType === 'el' ? (
                 <Textarea
+                  id={expressionInputId}
+                  aria-label={t('flux.wordEditor.elExpression')}
                   value={expression}
                   onChange={(e) => setExpression(e.target.value)}
                   placeholder="${entity.fieldName}"
@@ -116,8 +120,9 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
               ) : (
                 <div className="space-y-3">
                   <div>
-                    <Label>{t('flux.wordEditor.tagName')}</Label>
+                    <Label htmlFor={tagNameInputId}>{t('flux.wordEditor.tagName')}</Label>
                     <NativeSelect
+                      id={tagNameInputId}
                       value={selectedTag}
                       onChange={(e) => {
                         setSelectedTag(e.target.value);
@@ -137,8 +142,9 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
                     <div className="space-y-2">
                       {Object.entries(currentTagDef.defaultAttrs).map(([attrName]) => (
                         <div key={attrName}>
-                          <Label>{attrName}</Label>
+                          <Label htmlFor={`expr-insert-attr-${attrName}`}>{attrName}</Label>
                           <Input
+                            id={`expr-insert-attr-${attrName}`}
                             value={tagAttrs[attrName] || ''}
                             onChange={(e) =>
                               setTagAttrs((prev) => ({ ...prev, [attrName]: e.target.value }))

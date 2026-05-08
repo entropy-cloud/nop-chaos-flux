@@ -6,9 +6,23 @@ import type {
   CellStyle,
 } from '../types.js';
 import { cellAddress, normalizeRange } from '../types.js';
-import { ensureSheetCells, setCell, updateCellStyle } from './document-access.js';
+import { ensureSheetCells, setCells, updateCellStyle, updateCells } from './document-access.js';
 
 export type CellTarget = SpreadsheetCellRef | SpreadsheetRange;
+
+function replaceSheet(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  nextSheet: import('../types.js').WorksheetDocument,
+): SpreadsheetDocument {
+  return {
+    ...doc,
+    workbook: {
+      ...doc.workbook,
+      sheets: doc.workbook.sheets.map((sheetDoc) => (sheetDoc.id === sheetId ? nextSheet : sheetDoc)),
+    },
+  };
+}
 
 export function applySetCellValue(
   doc: SpreadsheetDocument,
@@ -75,27 +89,25 @@ export function applySetCellStyle(
   if ('startRow' in target) {
     const range = normalizeRange(target as SpreadsheetRange);
     const { doc: updated, sheet } = ensureSheetCells(doc, range.sheetId);
-    let newSheet = sheet;
+    const entries: Array<{ row: number; col: number; cell: CellDocument }> = [];
     for (let row = range.startRow; row <= range.endRow; row++) {
       for (let col = range.startCol; col <= range.endCol; col++) {
         const key = cellAddress(row, col);
-        const existing = newSheet.cells?.[key];
-        newSheet = setCell(newSheet, row, col, {
+        const existing = sheet.cells?.[key];
+        entries.push({
+          row,
+          col,
+          cell: {
           ...(existing ?? { address: key, row, col }),
           styleId,
           address: key,
           row,
           col,
+          },
         });
       }
     }
-    const workbook = {
-      ...updated.workbook,
-      sheets: updated.workbook.sheets.map((sheetDoc) =>
-        sheetDoc.id === range.sheetId ? newSheet : sheetDoc,
-      ),
-    };
-    return { ...updated, workbook };
+    return replaceSheet(updated, range.sheetId, setCells(sheet, entries));
   }
 
   const cell = target as SpreadsheetCellRef;
@@ -127,19 +139,27 @@ export function applyCellStyleChange(
   if ('startRow' in target) {
     const range = normalizeRange(target as SpreadsheetRange);
     const { doc: updated, sheet } = ensureSheetCells(doc, range.sheetId);
-    let newSheet = sheet;
+    const entries: Array<{
+      row: number;
+      col: number;
+      update: (existing: CellDocument | undefined) => CellDocument;
+    }> = [];
     for (let row = range.startRow; row <= range.endRow; row++) {
       for (let col = range.startCol; col <= range.endCol; col++) {
-        newSheet = updateCellStyle(newSheet, row, col, stylePatch);
+        entries.push({
+          row,
+          col,
+          update(existing) {
+            const key = cellAddress(row, col);
+            return {
+              ...(existing ?? { address: key, row, col }),
+              style: { ...(existing?.style ?? {}), ...stylePatch },
+            };
+          },
+        });
       }
     }
-    const workbook = {
-      ...updated.workbook,
-      sheets: updated.workbook.sheets.map((sheetDoc) =>
-        sheetDoc.id === range.sheetId ? newSheet : sheetDoc,
-      ),
-    };
-    return { ...updated, workbook };
+    return replaceSheet(updated, range.sheetId, updateCells(sheet, entries));
   }
 
   const cell = target as SpreadsheetCellRef;
@@ -242,11 +262,11 @@ export function applyFillSeries(
 ): SpreadsheetDocument {
   const normalized = normalizeRange(range);
   const { doc: updated, sheet } = ensureSheetCells(doc, normalized.sheetId);
-  let newSheet = sheet;
+  const entries: Array<{ row: number; col: number; cell: CellDocument }> = [];
 
   if (direction === 'down') {
     for (let col = normalized.startCol; col <= normalized.endCol; col++) {
-      const sourceCell = newSheet.cells?.[cellAddress(normalized.startRow, col)];
+      const sourceCell = sheet.cells?.[cellAddress(normalized.startRow, col)];
       if (!sourceCell) {
         continue;
       }
@@ -254,20 +274,24 @@ export function applyFillSeries(
         const step = row - normalized.startRow;
         const newValue = incrementSeriesValue(sourceCell.value, step);
         const key = cellAddress(row, col);
-        const existing = newSheet.cells?.[key];
-        newSheet = setCell(newSheet, row, col, {
+        const existing = sheet.cells?.[key];
+        entries.push({
+          row,
+          col,
+          cell: {
           ...(existing ?? { address: key, row, col }),
           value: newValue,
           style: sourceCell.style,
           address: key,
           row,
           col,
+          },
         });
       }
     }
   } else {
     for (let row = normalized.startRow; row <= normalized.endRow; row++) {
-      const sourceCell = newSheet.cells?.[cellAddress(row, normalized.startCol)];
+      const sourceCell = sheet.cells?.[cellAddress(row, normalized.startCol)];
       if (!sourceCell) {
         continue;
       }
@@ -275,26 +299,24 @@ export function applyFillSeries(
         const step = col - normalized.startCol;
         const newValue = incrementSeriesValue(sourceCell.value, step);
         const key = cellAddress(row, col);
-        const existing = newSheet.cells?.[key];
-        newSheet = setCell(newSheet, row, col, {
+        const existing = sheet.cells?.[key];
+        entries.push({
+          row,
+          col,
+          cell: {
           ...(existing ?? { address: key, row, col }),
           value: newValue,
           style: sourceCell.style,
           address: key,
           row,
           col,
+          },
         });
       }
     }
   }
 
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === normalized.sheetId ? newSheet : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, normalized.sheetId, setCells(sheet, entries));
 }
 
 export function applyFillDown(
@@ -303,28 +325,26 @@ export function applyFillDown(
 ): SpreadsheetDocument {
   const normalized = normalizeRange(range);
   const { doc: updated, sheet } = ensureSheetCells(doc, normalized.sheetId);
-  let newSheet = sheet;
+  const entries: Array<{ row: number; col: number; cell: CellDocument }> = [];
   for (let col = normalized.startCol; col <= normalized.endCol; col++) {
-    const sourceCell = newSheet.cells?.[cellAddress(normalized.startRow, col)];
+    const sourceCell = sheet.cells?.[cellAddress(normalized.startRow, col)];
     if (!sourceCell) {
       continue;
     }
     for (let row = normalized.startRow + 1; row <= normalized.endRow; row++) {
-      newSheet = setCell(newSheet, row, col, {
+      entries.push({
+        row,
+        col,
+        cell: {
         ...sourceCell,
         address: cellAddress(row, col),
         row,
         col,
+        },
       });
     }
   }
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === normalized.sheetId ? newSheet : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, normalized.sheetId, setCells(sheet, entries));
 }
 
 export function applyFillRight(
@@ -333,28 +353,26 @@ export function applyFillRight(
 ): SpreadsheetDocument {
   const normalized = normalizeRange(range);
   const { doc: updated, sheet } = ensureSheetCells(doc, normalized.sheetId);
-  let newSheet = sheet;
+  const entries: Array<{ row: number; col: number; cell: CellDocument }> = [];
   for (let row = normalized.startRow; row <= normalized.endRow; row++) {
-    const sourceCell = newSheet.cells?.[cellAddress(row, normalized.startCol)];
+    const sourceCell = sheet.cells?.[cellAddress(row, normalized.startCol)];
     if (!sourceCell) {
       continue;
     }
     for (let col = normalized.startCol + 1; col <= normalized.endCol; col++) {
-      newSheet = setCell(newSheet, row, col, {
+      entries.push({
+        row,
+        col,
+        cell: {
         ...sourceCell,
         address: cellAddress(row, col),
         row,
         col,
+        },
       });
     }
   }
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === normalized.sheetId ? newSheet : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, normalized.sheetId, setCells(sheet, entries));
 }
 
 export function applyAddComment(

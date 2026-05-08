@@ -36,6 +36,7 @@ interface DatasetDialogProps {
 }
 
 export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDialogProps) {
+  const dialogIdPrefix = initialData ? 'edit-dataset-dialog' : 'create-dataset-dialog';
   const nextColumnKeyRef = useRef(initialData?.columns?.length ?? 0);
   const [name, setName] = useState(() => initialData?.name ?? '');
   const [description, setDescription] = useState(() => initialData?.description ?? '');
@@ -104,10 +105,11 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
           <ScrollArea className="flex-1">
             <div className="p-1 space-y-4">
               <div>
-                <Label>
+                <Label htmlFor={`${dialogIdPrefix}-name`}>
                   {t('flux.wordEditor.name')} <span className="text-destructive">*</span>
                 </Label>
                 <Input
+                  id={`${dialogIdPrefix}-name`}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter dataset name"
@@ -116,8 +118,9 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
               </div>
 
               <div>
-                <Label>{t('flux.wordEditor.description')}</Label>
+                <Label htmlFor={`${dialogIdPrefix}-description`}>{t('flux.wordEditor.description')}</Label>
                 <Textarea
+                  id={`${dialogIdPrefix}-description`}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={2}
@@ -127,8 +130,9 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
               </div>
 
               <div>
-                <Label>{t('flux.wordEditor.type')}</Label>
+                <Label htmlFor={`${dialogIdPrefix}-type`}>{t('flux.wordEditor.type')}</Label>
                 <NativeSelect
+                  id={`${dialogIdPrefix}-type`}
                   value={type}
                   onChange={(e) => setType(e.target.value as DatasetSourceType)}
                   className="w-full"
@@ -171,11 +175,12 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                         >
                           <div className="flex-1 grid grid-cols-2 gap-2">
                             <div>
-                              <Label className="text-[10px]">
+                              <Label className="text-[10px]" htmlFor={`${dialogIdPrefix}-${columnKey}-name`}>
                                 {t('flux.wordEditor.name')}{' '}
                                 <span className="text-destructive">*</span>
                               </Label>
                               <Input
+                                id={`${dialogIdPrefix}-${columnKey}-name`}
                                 value={column.name || ''}
                                 onChange={(e) => handleColumnChange(index, 'name', e.target.value)}
                                 placeholder="Column name"
@@ -183,8 +188,11 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                               />
                             </div>
                             <div>
-                              <Label className="text-[10px]">{t('flux.wordEditor.label')}</Label>
+                              <Label className="text-[10px]" htmlFor={`${dialogIdPrefix}-${columnKey}-label`}>
+                                {t('flux.wordEditor.label')}
+                              </Label>
                               <Input
+                                id={`${dialogIdPrefix}-${columnKey}-label`}
                                 value={column.label || ''}
                                 onChange={(e) => handleColumnChange(index, 'label', e.target.value)}
                                 placeholder="Column label"
@@ -192,8 +200,11 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                               />
                             </div>
                             <div>
-                              <Label className="text-[10px]">{t('flux.wordEditor.type')}</Label>
+                              <Label className="text-[10px]" htmlFor={`${dialogIdPrefix}-${columnKey}-type`}>
+                                {t('flux.wordEditor.type')}
+                              </Label>
                               <NativeSelect
+                                id={`${dialogIdPrefix}-${columnKey}-type`}
                                 value={column.type || 'static'}
                                 onChange={(e) => handleColumnChange(index, 'type', e.target.value)}
                                 size="xs"
@@ -210,10 +221,11 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                               </NativeSelect>
                             </div>
                             <div>
-                              <Label className="text-[10px]">
+                              <Label className="text-[10px]" htmlFor={`${dialogIdPrefix}-${columnKey}-description`}>
                                 {t('flux.wordEditor.description')}
                               </Label>
                               <Input
+                                id={`${dialogIdPrefix}-${columnKey}-description`}
                                 value={column.description || ''}
                                 onChange={(e) =>
                                   handleColumnChange(index, 'description', e.target.value)
@@ -229,6 +241,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                             size="icon-xs"
                             onClick={() => handleRemoveColumn(index)}
                             title="Remove column"
+                            aria-label={`Remove column ${index + 1}`}
                             className="mt-5 text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="w-4 h-4" />

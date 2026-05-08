@@ -3,6 +3,24 @@ import { cellAddress } from '../types.js';
 import type { FindResult } from '../commands.js';
 import { ensureSheetCells } from './document-access.js';
 
+const UNSAFE_REGEX_PATTERN = /(\([^)]*[+*][^)]*\)[+*])|(\.\*)|(\.\+)|(\[[^\]]*\][+*]\+?)/;
+
+function hasSearchQuery(query: string) {
+  return query.length > 0;
+}
+
+function createSearchRegex(query: string, matchCase?: boolean) {
+  if (!hasSearchQuery(query) || UNSAFE_REGEX_PATTERN.test(query)) {
+    return null;
+  }
+
+  try {
+    return new RegExp(query, matchCase ? '' : 'i');
+  } catch {
+    return null;
+  }
+}
+
 export function findInDocument(
   doc: SpreadsheetDocument,
   sheetId: string | undefined,
@@ -11,6 +29,10 @@ export function findInDocument(
   fromRow?: number,
   fromCol?: number,
 ): FindResult | null {
+  if (!hasSearchQuery(query)) {
+    return null;
+  }
+
   const sheets = sheetId
     ? doc.workbook.sheets.filter((sheet) => sheet.id === sheetId)
     : doc.workbook.sheets;
@@ -26,16 +48,16 @@ export function findInDocument(
       let matchEnd = 0;
 
       if (options.useRegex) {
-        try {
-          const regex = new RegExp(query, options.matchCase ? '' : 'i');
-          const match = value.match(regex);
-          if (match) {
-            matches = true;
-            matchStart = match.index ?? 0;
-            matchEnd = matchStart + match[0].length;
-          }
-        } catch {
+        const regex = createSearchRegex(query, options.matchCase);
+        if (!regex) {
           continue;
+        }
+
+        const match = value.match(regex);
+        if (match) {
+          matches = true;
+          matchStart = match.index ?? 0;
+          matchEnd = matchStart + match[0].length;
         }
       } else if (options.matchWholeCell) {
         const compareValue = options.matchCase ? value : value.toLowerCase();
@@ -86,6 +108,10 @@ export function replaceInDocument(
   replacement: string,
   options: { matchCase?: boolean; matchWholeCell?: boolean },
 ): SpreadsheetDocument {
+  if (!hasSearchQuery(query)) {
+    return doc;
+  }
+
   const { doc: updated, sheet } = ensureSheetCells(doc, cell.sheetId);
   const key = cellAddress(cell.row, cell.col);
   const existing = sheet.cells?.[key];
@@ -123,6 +149,10 @@ export function replaceAllInDocument(
   options: { matchCase?: boolean; matchWholeCell?: boolean; searchScope?: 'sheet' | 'workbook' },
   sheetId?: string,
 ): { doc: SpreadsheetDocument; count: number } {
+  if (!hasSearchQuery(query)) {
+    return { doc, count: 0 };
+  }
+
   let count = 0;
   const sheets =
     options.searchScope === 'workbook' || !sheetId

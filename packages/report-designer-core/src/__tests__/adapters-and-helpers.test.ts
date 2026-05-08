@@ -130,6 +130,7 @@ describe('importTemplate / exportTemplate commands', () => {
       expect.objectContaining({
         document: expect.objectContaining({ name: 'Imported' }),
       }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
     expect(core.getSnapshot().inspector.loading).toBe(false);
     expect(core.getSnapshot().inspector.error).toBeUndefined();

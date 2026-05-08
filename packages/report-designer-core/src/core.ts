@@ -339,6 +339,7 @@ export function createReportDesignerCore(
       selectedFieldSourceIds,
       staticFieldSourceTemplates,
       getSnapshot: () => buildSnapshot(store.getState()),
+      signal,
     })
       .then((fieldSources) => {
         if (signal.aborted || disposed) {

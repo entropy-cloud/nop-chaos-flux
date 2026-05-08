@@ -38,12 +38,17 @@ export async function loadFieldSources(args: {
   selectedFieldSourceIds: Set<string>;
   staticFieldSourceTemplates: FieldSourceSnapshot[];
   getSnapshot(): ReportDesignerRuntimeSnapshot;
+  signal?: AbortSignal;
 }): Promise<FieldSourceSnapshot[]> {
   const staticSources = args.staticFieldSourceTemplates.map(cloneFieldSourceSnapshot);
   const dynamicSources: FieldSourceSnapshot[] = [];
   let adapterContext: ReturnType<typeof createAdapterContext> | undefined;
 
   for (const fieldSource of args.config.fieldSources ?? []) {
+    if (args.signal?.aborted) {
+      return [];
+    }
+
     if (!fieldSource.provider || !args.selectedFieldSourceIds.has(fieldSource.id)) {
       continue;
     }
@@ -57,7 +62,12 @@ export async function loadFieldSources(args: {
       designer: args.getSnapshot(),
       profile: args.profile,
     });
-    const loaded = await provider.load(adapterContext);
+    const loaded = await provider.load(adapterContext, { signal: args.signal });
+
+    if (args.signal?.aborted) {
+      return [];
+    }
+
     dynamicSources.push(...loaded);
   }
 

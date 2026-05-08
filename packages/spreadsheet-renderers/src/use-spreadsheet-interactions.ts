@@ -37,6 +37,8 @@ export type {
   StyleToolType,
 } from './spreadsheet-interactions/index.js';
 
+type SpreadsheetCell = SpreadsheetInteractionsReturn['currentCell'];
+
 export interface SpreadsheetInteractionsConfig {
   bridge: SpreadsheetBridge;
   sheetId: string;
@@ -303,7 +305,7 @@ export function useSpreadsheetInteractions(
     setCellValue,
   });
 
-  const currentCell = selectionCell
+  const currentCell: SpreadsheetCell = selectionCell
     ? snapshot.activeSheet?.cells?.[cellAddress(selectionCell.row, selectionCell.col)]
     : undefined;
 
@@ -383,7 +385,7 @@ export function useSpreadsheetInteractions(
     handleAddComment,
     handleDeleteComment,
     hasComment,
-    currentCell: currentCell as any,
+    currentCell,
     dropTargetCell,
     setDropTargetCell,
     dropTargetCellRef,

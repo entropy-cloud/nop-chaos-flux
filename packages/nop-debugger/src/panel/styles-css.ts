@@ -135,6 +135,23 @@ export const DEBUGGER_STYLES = `
   overflow: auto;
 }
 
+.ndbg-row {
+  display: flex;
+  gap: 8px;
+}
+
+.ndbg-row--tight {
+  gap: 4px;
+}
+
+.ndbg-row--between {
+  justify-content: space-between;
+}
+
+.ndbg-row--center {
+  align-items: center;
+}
+
 .ndbg-list--virtual {
   position: relative;
   max-height: 420px;
@@ -173,6 +190,10 @@ export const DEBUGGER_STYLES = `
 
 .ndbg-metric-card strong {
   font-size: 20px;
+}
+
+.ndbg-metric-card--spaced {
+  margin-bottom: 8px;
 }
 
 .ndbg-metric-card[data-error] strong {
@@ -337,6 +358,8 @@ export const DEBUGGER_STYLES = `
 .ndbg-tree-item { padding: 4px 8px; border-radius: 4px; cursor: pointer; }
 .ndbg-tree-item:hover { background: var(--nop-debugger-chip-active-bg); }
 .ndbg-tree-item.selected { background: var(--nop-debugger-overlay-selected-bg); outline: 1px solid var(--nop-debugger-overlay-selected-outline); }
+.ndbg-tree-item-id { font-size: 11px; color: var(--nop-debugger-muted-text); }
+.ndbg-tree-item-label { font-size: 12px; }
 .ndbg-resize-handle {
   position: absolute; left: 0; top: 22px; bottom: 22px; width: 6px;
   cursor: ew-resize; border-radius: 3px 0 0 3px; z-index: 2;

@@ -19,7 +19,13 @@ export function ReportInspectorShellRenderer(
   props: RendererComponentProps<ReportInspectorShellSchema>,
 ) {
   const titleContent = resolveRendererSlotContent(props, 'title');
-  const scopeData = useOwnScopeSelector((data: Record<string, unknown>) => data);
+  const scopeData = useOwnScopeSelector(
+    (data: Record<string, unknown>) => ({
+      selectionTarget: data.selectionTarget,
+      inspector: data.inspector,
+    }),
+    (a, b) => a.selectionTarget === b.selectionTarget && a.inspector === b.inspector,
+  );
   const target = scopeData.selectionTarget as ReportSelectionTarget | undefined;
   const inspector = scopeData.inspector as ReportDesignerRuntimeSnapshot['inspector'] | undefined;
   const inspectorErrorLabel = inspector?.error != null ? String(inspector.error) : undefined;

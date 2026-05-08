@@ -12,6 +12,28 @@ const THEMES = { light: '', dark: '.dark' } as const;
 const INITIAL_DIMENSION = { width: 320, height: 200 } as const;
 type TooltipNameType = number | string;
 
+const SAFE_CSS_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+const SAFE_CHART_ID = /^[A-Za-z0-9_-]+$/;
+const SAFE_COLOR_VALUE =
+  /^(#[0-9a-fA-F]{3,8}|(?:rgb|rgba|hsl|hsla|oklch|oklab|lab|lch|color-mix)\([^;{}<>]*\)|var\(--[A-Za-z0-9_-]+\)|[A-Za-z]+)$/;
+
+function sanitizeChartId(value: string) {
+  return SAFE_CHART_ID.test(value) ? value : value.replace(/[^A-Za-z0-9_-]/g, '');
+}
+
+function sanitizeConfigKey(value: string) {
+  return SAFE_CSS_IDENTIFIER.test(value) ? value : null;
+}
+
+function sanitizeColorValue(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return SAFE_COLOR_VALUE.test(trimmed) ? trimmed : null;
+}
+
 export type ChartConfig = Record<
   string,
   {
@@ -55,7 +77,7 @@ function ChartContainer({
   };
 }) {
   const uniqueId = React.useId();
-  const chartId = `chart-${id ?? uniqueId.replace(/:/g, '')}`;
+  const chartId = sanitizeChartId(`chart-${id ?? uniqueId.replace(/:/g, '')}`);
   const contextValue = React.useMemo(() => ({ config }), [config]);
 
   return (
@@ -79,7 +101,12 @@ function ChartContainer({
 }
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(([, config]) => config.theme ?? config.color);
+  const colorConfig = Object.entries(config)
+    .map(([key, itemConfig]) => ({ key: sanitizeConfigKey(key), itemConfig }))
+    .filter(
+      (entry): entry is { key: string; itemConfig: ChartConfig[string] } =>
+        Boolean(entry.key) && Boolean(entry.itemConfig.theme ?? entry.itemConfig.color),
+    );
 
   if (!colorConfig.length) {
     return null;
@@ -91,12 +118,15 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart="${sanitizeChartId(id)}"] {
 ${colorConfig
-  .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ?? itemConfig.color;
+  .map(({ key, itemConfig }) => {
+    const color = sanitizeColorValue(
+      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ?? itemConfig.color,
+    );
     return color ? `  --color-${key}: ${color};` : null;
   })
+  .filter((entry): entry is string => Boolean(entry))
   .join('\n')}
 }
 `,

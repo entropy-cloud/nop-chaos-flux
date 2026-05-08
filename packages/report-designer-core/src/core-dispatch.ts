@@ -321,7 +321,15 @@ export async function dispatchReportDesignerCommand(
       }
 
       default:
-        return { ok: false, changed: false, error: `Unknown command: ${(command as any).type}` };
+        return {
+          ok: false,
+          changed: false,
+          error: `Unknown command: ${
+            typeof (command as { type?: unknown }).type === 'string'
+              ? (command as { type: string }).type
+              : 'unknown'
+          }`,
+        };
     }
   } catch (err) {
     return { ok: false, changed: false, error: err };

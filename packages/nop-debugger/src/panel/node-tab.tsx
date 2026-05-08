@@ -56,7 +56,7 @@ export function NodeTab(props: {
   return (
     <>
       <div className="ndbg-tree-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="ndbg-row ndbg-row--between ndbg-row--center">
           <span className="ndbg-metric-label">
             {t('flux.debugger.components')} ({componentTree.length})
           </span>
@@ -89,7 +89,7 @@ export function NodeTab(props: {
                   ✕
                 </Button>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="ndbg-row ndbg-row--center">
                 <strong>#{inspectData.cid}</strong>
                 {inspectData.tagName ? (
                   <span className="ndbg-inspect-tag">&lt;{inspectData.tagName}&gt;</span>
@@ -127,7 +127,7 @@ export function NodeTab(props: {
             {inspectData.formState ? (
               <div className="ndbg-inspect-section">
                 <span className="ndbg-inspect-section-title">{t('flux.debugger.formState')}</span>
-                <div style={{ display: 'flex', gap: 4 }}>
+                <div className="ndbg-row ndbg-row--tight">
                   {(['values', 'errors', 'meta'] as const).map((tab) => (
                     <Button
                       key={tab}
@@ -200,8 +200,8 @@ export function NodeTab(props: {
             ) : null}
           </div>
         ) : selectedElement ? (
-          <article className="ndbg-metric-card" style={{ marginBottom: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <article className="ndbg-metric-card ndbg-metric-card--spaced">
+            <div className="ndbg-row ndbg-row--between ndbg-row--center">
               <span className="ndbg-metric-label">{t('flux.debugger.selectedElement')}</span>
               <Button
                 type="button"
@@ -238,10 +238,10 @@ export function NodeTab(props: {
                   onClick={() => inspectTreeItem(item)}
                   style={{ paddingLeft: `${item.depth * 16 + 8}px` }}
                 >
-                  <span style={{ fontSize: '11px', color: 'var(--nop-debugger-muted-text)' }}>
+                  <span className="ndbg-tree-item-id">
                     #{item.cid}
                   </span>{' '}
-                  <span style={{ fontSize: '12px' }}>{item.label || 'element'}</span>
+                  <span className="ndbg-tree-item-label">{item.label || 'element'}</span>
                 </div>
               );
             })}

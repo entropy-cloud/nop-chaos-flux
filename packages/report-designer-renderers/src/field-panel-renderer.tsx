@@ -13,7 +13,13 @@ import type { ReportFieldPanelSchema } from './types.js';
 
 export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFieldPanelSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
-  const scopeData = useOwnScopeSelector((data: Record<string, unknown>) => data);
+  const scopeData = useOwnScopeSelector(
+    (data: Record<string, unknown>) => ({
+      fieldSources: data.fieldSources,
+      designer: data.designer,
+    }),
+    (a, b) => a.fieldSources === b.fieldSources && a.designer === b.designer,
+  );
 
   const schemaFieldSources = props.props['fieldSources'] as FieldSourceSnapshot[] | undefined;
   const scopeFieldSources = Array.isArray(scopeData.fieldSources)

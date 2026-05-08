@@ -406,7 +406,7 @@ describe('spreadsheet context menu operations', () => {
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
-    const columnHeaders = container.querySelectorAll('th.col-header');
+    const columnHeaders = container.querySelectorAll('th[data-slot="spreadsheet-column-header"]');
     const firstHeader = columnHeaders[0] as HTMLElement | undefined;
     const secondHeader = columnHeaders[1] as HTMLElement | undefined;
 
@@ -468,7 +468,7 @@ describe('spreadsheet context menu operations', () => {
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
-    const columnHeaders = container.querySelectorAll('th.col-header');
+    const columnHeaders = container.querySelectorAll('th[data-slot="spreadsheet-column-header"]');
     const secondHeader = columnHeaders[1] as HTMLElement | undefined;
     const thirdHeader = columnHeaders[2] as HTMLElement | undefined;
 
@@ -656,7 +656,7 @@ describe('spreadsheet context menu operations', () => {
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
-    const corner = container.querySelector('th.header-corner') as HTMLElement | null;
+    const corner = container.querySelector('th[data-slot="spreadsheet-corner-header"]') as HTMLElement | null;
     expect(corner).toBeTruthy();
 
     fireEvent.click(corner!);

@@ -55,9 +55,15 @@ function JsonNode(props: {
     const hasMore = data.length > 50;
     return (
       <div>
-        <span className="ndbg-json-toggle" onClick={() => setCollapsed((value) => !value)}>
+        <button
+          type="button"
+          className="ndbg-json-toggle"
+          aria-expanded={!collapsed}
+          aria-label={`${collapsed ? 'Expand' : 'Collapse'} JSON array`}
+          onClick={() => setCollapsed((value) => !value)}
+        >
           {collapsed ? `▶ Array(${data.length})` : `▼ Array(${data.length})`}
-        </span>
+        </button>
         {!collapsed && (
           <div style={{ paddingLeft: 12 }}>
             {displayItems.map((item, index) => {
@@ -94,9 +100,15 @@ function JsonNode(props: {
     }
     return (
       <div>
-        <span className="ndbg-json-toggle" onClick={() => setCollapsed((value) => !value)}>
+        <button
+          type="button"
+          className="ndbg-json-toggle"
+          aria-expanded={!collapsed}
+          aria-label={`${collapsed ? 'Expand' : 'Collapse'} JSON object`}
+          onClick={() => setCollapsed((value) => !value)}
+        >
           {collapsed ? `▶ Object{${entries.length}}` : `▼ Object{${entries.length}}`}
-        </span>
+        </button>
         {!collapsed && (
           <div style={{ paddingLeft: 12 }}>
             {entries.map(([key, value]) => (

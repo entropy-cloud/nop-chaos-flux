@@ -57,6 +57,22 @@ export function setCells(
   return { ...sheet, cells };
 }
 
+export function updateCells(
+  sheet: WorksheetDocument,
+  entries: ReadonlyArray<{
+    row: number;
+    col: number;
+    update: (existing: CellDocument | undefined) => CellDocument;
+  }>,
+): WorksheetDocument {
+  const cells = { ...sheet.cells };
+  for (const entry of entries) {
+    const key = cellAddress(entry.row, entry.col);
+    cells[key] = entry.update(cells[key]);
+  }
+  return { ...sheet, cells };
+}
+
 export function updateCellStyle(
   sheet: WorksheetDocument,
   row: number,

@@ -218,7 +218,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
       <WorkbenchShell
-        style={{ padding: 0 }}
+        density="flush"
         header={headerSlot}
         leftPanel={leftPanelSlot}
         leftCollapsed={leftCollapsed}

@@ -119,6 +119,7 @@ export function SpreadsheetGrid({
   const activeSheetId = snapshot.activeSheet?.id ?? '';
   const selectedRange = getSelectedRange();
   const selectionAnchorCell = useMemo(() => getAnchorCellFromSelection(selection), [selection]);
+  const selectedCellAddress = selectedCell ? cellAddress(selectedCell.row, selectedCell.col) : null;
   const selectedRowInfo = useMemo(() => getSelectedAxisInfo(selection, 'row'), [selection]);
   const selectedColumnInfo = useMemo(() => getSelectedAxisInfo(selection, 'column'), [selection]);
   const canUseRowStructureActions =
@@ -273,6 +274,7 @@ export function SpreadsheetGrid({
     return (
       <td
         key={c}
+        id={`spreadsheet-cell-${addr}`}
         className={cellStyle.className}
         style={style}
         tabIndex={isSelected ? 0 : -1}
@@ -381,12 +383,16 @@ export function SpreadsheetGrid({
     <ContextMenu>
       <ContextMenuTrigger
         ref={scrollRef}
-        className="spreadsheet-grid"
+        className="ss-grid-shell"
+        data-slot="spreadsheet-grid"
         data-fill-dragging={fillHandleState.isFilling || undefined}
         style={{ overflow: 'auto', position: 'relative' }}
         tabIndex={0}
         role="grid"
         aria-label="Spreadsheet grid"
+        aria-activedescendant={
+          selectedCellAddress ? `spreadsheet-cell-${selectedCellAddress}` : undefined
+        }
         onScroll={handleScroll}
         onKeyDown={(event) => {
           if (editingCell) {
@@ -450,9 +456,18 @@ export function SpreadsheetGrid({
             <thead>
               <tr>
                 <th
-                  className="row-header header-corner"
+                  className="ss-row-header ss-header-corner"
+                  data-slot="spreadsheet-corner-header"
                   style={{ width: ROW_HEADER_WIDTH }}
+                  tabIndex={0}
+                  aria-label="Select entire sheet"
                   onClick={onSelectAll}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      onSelectAll();
+                    }
+                  }}
                   onContextMenu={() => {
                     if (selection.kind !== 'sheet') {
                       onSelectAll();
@@ -464,7 +479,10 @@ export function SpreadsheetGrid({
                   <th
                     key={c}
                     style={{ width: columnWidths[c] ?? DEFAULT_COL_WIDTH }}
-                    className="col-header"
+                    className="ss-col-header"
+                    data-slot="spreadsheet-column-header"
+                    tabIndex={0}
+                    aria-label={`Select column ${cellAddress(0, c).replace(/[0-9]/g, '')}`}
                     data-col-header-active={
                       selection.kind === 'column' && selection.columns?.includes(c)
                         ? true
@@ -472,15 +490,22 @@ export function SpreadsheetGrid({
                     }
                     data-col-filtered={filteredColumnSet.has(c) || undefined}
                     onClick={(event) => onSelectColumn(c, event.shiftKey)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        onSelectColumn(c, event.shiftKey);
+                      }
+                    }}
                     onContextMenu={() => {
                       if (selection.kind !== 'column' || !selection.columns?.includes(c)) {
                         onSelectColumn(c);
                       }
                     }}
-                  >
+                    >
                     {cellAddress(0, c).replace(/[0-9]/g, '')}
                     <div
-                      className="col-resize-handle"
+                      className="ss-col-resize-handle"
+                      data-slot="spreadsheet-column-resize-handle"
                       onMouseDown={(e) => onColumnResizeStart(c, e)}
                     />
                   </th>
@@ -508,7 +533,8 @@ export function SpreadsheetGrid({
                   className={frozen && r < (frozen.row ?? 0) ? 'frozen-row' : ''}
                 >
                   <td
-                    className="row-header"
+                    className="ss-row-header"
+                    data-slot="spreadsheet-row-header"
                     data-row-header-active={
                       selection.kind === 'row' && selection.rows?.includes(r) ? true : undefined
                     }
@@ -521,12 +547,14 @@ export function SpreadsheetGrid({
                     <button
                       type="button"
                       className="ss-row-header-button"
+                      aria-label={`Select row ${r + 1}`}
                       onClick={(event) => onSelectRow(r, event.shiftKey)}
                     >
                       {r + 1}
                     </button>
                     <div
-                      className="row-resize-handle"
+                      className="ss-row-resize-handle"
+                      data-slot="spreadsheet-row-resize-handle"
                       onMouseDown={(e) => onRowResizeStart(r, e)}
                     />
                   </td>

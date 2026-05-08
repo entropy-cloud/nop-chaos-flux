@@ -367,6 +367,20 @@ describe('find/replace', () => {
     expect(result.data).toMatchObject({ address: 'B1' });
   });
 
+  it('should not find empty query or unsafe regex query', async () => {
+    const empty = await core.dispatch({
+      type: 'spreadsheet:find',
+      options: { query: '' },
+    });
+    expect(empty.ok).toBe(false);
+
+    const unsafeRegex = await core.dispatch({
+      type: 'spreadsheet:find',
+      options: { query: '(a+)+$', useRegex: true },
+    });
+    expect(unsafeRegex.ok).toBe(false);
+  });
+
   it('should replace text', async () => {
     await core.dispatch({
       type: 'spreadsheet:replace',
@@ -391,6 +405,19 @@ describe('find/replace', () => {
     const cells = core.getSnapshot().document.workbook.sheets[0].cells;
     expect(cells?.['A1']?.value).toBe('Hello universe');
     expect(cells?.['A2']?.value).toBe('hello universe');
+  });
+
+  it('should ignore empty replace-all query', async () => {
+    const before = core.getSnapshot().document;
+    const result = await core.dispatch({
+      type: 'spreadsheet:replaceAll',
+      options: { query: '' },
+      replacement: 'noop',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ count: 0 });
+    expect(core.getSnapshot().document).toEqual(before);
   });
 });
 

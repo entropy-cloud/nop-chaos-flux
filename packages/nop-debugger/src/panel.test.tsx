@@ -369,7 +369,7 @@ describe('NopDebuggerPanel', () => {
 
     fireEvent.click(screen.getByText('user-form'));
 
-    expect(treeItem?.className).toBe('ndbg-tree-item selected');
+    expect(treeItem?.classList.contains('selected')).toBe(true);
   });
 
   it('opens launcher on click without drag', () => {
@@ -411,6 +411,32 @@ describe('NopDebuggerPanel', () => {
     render(<NopDebuggerPanel controller={controller} />);
 
     expect(screen.getByText('Action completed')).toBeTruthy();
+  });
+
+  it('exposes accessible labels on JSON expand toggles', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'node';
+    const controller = createController(snapshot);
+    controller.getComponentTree = () => [
+      {
+        cid: 41,
+        type: 'form',
+        label: 'user-form',
+        depth: 0,
+        mounted: true,
+      },
+    ];
+    controller.inspectByCid = vi.fn(() => ({
+      cid: 41,
+      mounted: true,
+      formState: { values: { user: 'alice' }, errors: {}, touched: {}, dirty: {}, visited: {}, submitting: false },
+    } as any));
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    fireEvent.click(screen.getByText('user-form'));
+
+    expect(screen.getByRole('button', { name: /Collapse JSON object/i })).toBeTruthy();
   });
 
   it('shows error badge on launcher when errors exist', () => {

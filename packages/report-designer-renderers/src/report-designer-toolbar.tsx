@@ -14,10 +14,25 @@ import type { ToolbarItem } from './report-designer-toolbar-helpers.js';
 
 export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolbarSchema>) {
   const itemsOverride = props.props.itemsOverride as ToolbarItem[] | undefined;
-  const snapshot = useOwnScopeSelector((data: Record<string, unknown>) => data) as Record<
-    string,
-    unknown
-  >;
+  const snapshot = useOwnScopeSelector(
+    (data: Record<string, unknown>) => ({
+      documentName: data.documentName,
+      dirty: data.dirty,
+      canUndo: data.canUndo,
+      canRedo: data.canRedo,
+      selectionTarget: data.selectionTarget,
+      runtime: data.runtime,
+      reportStatus: data.reportStatus,
+    }),
+    (a, b) =>
+      a.documentName === b.documentName &&
+      a.dirty === b.dirty &&
+      a.canUndo === b.canUndo &&
+      a.canRedo === b.canRedo &&
+      a.selectionTarget === b.selectionTarget &&
+      a.runtime === b.runtime &&
+      a.reportStatus === b.reportStatus,
+  ) as Record<string, unknown>;
   const items = useMemo(
     () => mergeToolbarItems(DEFAULT_TOOLBAR_ITEMS, itemsOverride),
     [itemsOverride],

@@ -7,20 +7,24 @@ export function SpreadsheetCellEditor(props: SpreadsheetToolbarProps) {
     return null;
   }
 
+  const cellValueInputId = `spreadsheet-cell-value-${props.cellAddress}`;
+  const commentInputId = `spreadsheet-cell-comment-${props.cellAddress}`;
+
   return (
     <div className="cell-editor">
-      <Label>
-        {props.cellAddress}:
-        <Input
-          size="sm"
-          value={props.cellValue}
-          onChange={(e) => props.onCellValueChange(e.target.value)}
-          placeholder="Enter cell value"
-        />
-      </Label>
+      <Label htmlFor={cellValueInputId}>{props.cellAddress}</Label>
+      <Input
+        id={cellValueInputId}
+        size="sm"
+        value={props.cellValue}
+        onChange={(e) => props.onCellValueChange(e.target.value)}
+        placeholder="Enter cell value"
+      />
       {props.showCommentInput ? (
         <div className="comment-editor">
+          <Label htmlFor={commentInputId}>{t('flux.spreadsheet.comment')}</Label>
           <Input
+            id={commentInputId}
             size="sm"
             value={props.commentText}
             onChange={(e) => props.onCommentTextChange(e.target.value)}

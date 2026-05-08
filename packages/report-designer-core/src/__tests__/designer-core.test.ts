@@ -520,12 +520,16 @@ describe('createReportDesignerCore', () => {
 
   it('aborts stale selection refreshes and dispose aborts in-flight work', async () => {
     const resolvers: Array<(value: any) => void> = [];
+    const observedSignals: AbortSignal[] = [];
 
     const fieldSourceProvider = {
       id: 'async-provider',
       load: vi.fn().mockImplementation(
-        () =>
+        (_context, options?: { signal?: AbortSignal }) =>
           new Promise((resolve) => {
+            if (options?.signal) {
+              observedSignals.push(options.signal);
+            }
             resolvers.push(resolve);
           }),
       ),
@@ -546,6 +550,7 @@ describe('createReportDesignerCore', () => {
     const second = asyncCore.setSelectionTarget({ kind: 'sheet', sheetId });
 
     expect(resolvers.length).toBe(1);
+    expect(observedSignals[0]?.aborted).toBe(false);
 
     resolvers[0]?.([{ id: 'initial', label: 'Initial', groups: [] }]);
     await Promise.allSettled([first]);
@@ -586,6 +591,42 @@ describe('createReportDesignerCore', () => {
 
     await expect(refreshPromise).resolves.toEqual([{ id: 'remote', label: 'Remote', groups: [] }]);
     expect(fieldSourceProvider.load).toHaveBeenCalledTimes(1);
+  });
+
+  it('aborts an explicit in-flight field-source refresh on dispose', async () => {
+    let observedSignal: AbortSignal | undefined;
+
+    const fieldSourceProvider: FieldSourceProvider = {
+      id: 'async-provider',
+      load: vi.fn(
+        async (_context, options) =>
+          await new Promise<FieldSourceSnapshot[]>((_resolve, reject) => {
+            observedSignal = options?.signal;
+            options?.signal?.addEventListener('abort', () => {
+              reject(new DOMException('Aborted', 'AbortError'));
+            });
+          }),
+      ),
+    };
+
+    const asyncCore = createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        fieldSources: [{ id: 'remote', label: 'Remote', provider: 'async-provider', groups: [] }],
+      },
+      adapters: {
+        fieldSources: new Map([[fieldSourceProvider.id, fieldSourceProvider]]),
+      },
+    });
+
+    const refreshPromise = asyncCore.refreshFieldSources();
+    await Promise.resolve();
+
+    asyncCore.dispose();
+
+    expect(observedSignal?.aborted).toBe(true);
+    await expect(refreshPromise).resolves.toEqual([]);
   });
 
   it('reports startup refreshDerivedState failures through onError', async () => {

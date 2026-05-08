@@ -29,6 +29,7 @@ interface CodeDialogProps {
 }
 
 export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogProps) {
+  const dialogIdPrefix = initialData ? 'edit-code-dialog' : 'create-code-dialog';
   const [codeName, setCodeName] = useState(() => initialData?.codeName ?? '');
   const [codeType, setCodeType] = useState<'barcode' | 'qrcode'>(
     () => initialData?.codeType ?? 'barcode',
@@ -67,10 +68,11 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
 
         <DialogBody>
           <div>
-            <Label>
+            <Label htmlFor={`${dialogIdPrefix}-name`}>
               {t('flux.wordEditor.codeName')} <span className="text-destructive">*</span>
             </Label>
             <Input
+              id={`${dialogIdPrefix}-name`}
               value={codeName}
               onChange={(e) => setCodeName(e.target.value)}
               placeholder="Enter code name"
@@ -79,8 +81,9 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           </div>
 
           <div>
-            <Label>{t('flux.wordEditor.codeType')}</Label>
+            <Label htmlFor={`${dialogIdPrefix}-type`}>{t('flux.wordEditor.codeType')}</Label>
             <NativeSelect
+              id={`${dialogIdPrefix}-type`}
               value={codeType}
               onChange={(e) => setCodeType(e.target.value as 'barcode' | 'qrcode')}
               className="w-full"
@@ -93,8 +96,9 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           </div>
 
           <div>
-            <Label>{t('flux.wordEditor.datasetId')}</Label>
+            <Label htmlFor={`${dialogIdPrefix}-dataset-id`}>{t('flux.wordEditor.datasetId')}</Label>
             <Input
+              id={`${dialogIdPrefix}-dataset-id`}
               value={datasetId}
               onChange={(e) => setDatasetId(e.target.value)}
               placeholder="Enter dataset ID"
@@ -103,10 +107,11 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           </div>
 
           <div>
-            <Label>
+            <Label htmlFor={`${dialogIdPrefix}-value-field`}>
               {t('flux.wordEditor.valueField')} <span className="text-destructive">*</span>
             </Label>
             <Input
+              id={`${dialogIdPrefix}-value-field`}
               value={valueField}
               onChange={(e) => setValueField(e.target.value)}
               placeholder="Enter value field"

@@ -68,7 +68,7 @@ describe('SpreadsheetToolbar', () => {
     await setupI18n();
     render(<SpreadsheetToolbar {...createProps({ frozen: true })} />);
 
-    expect(screen.getByText('A1')).toBeTruthy();
+    expect(screen.getByLabelText('A1')).toBeTruthy();
     expect(screen.getByText('Frozen')).toBeTruthy();
   });
 

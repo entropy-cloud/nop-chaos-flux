@@ -48,6 +48,7 @@ const chartConfig = {
 } as const;
 
 export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogProps) {
+  const dialogIdPrefix = initialData ? 'edit-chart-dialog' : 'create-chart-dialog';
   const [chartName, setChartName] = useState(() => initialData?.chartName ?? '');
   const [chartType, setChartType] = useState<ChartType>(() => initialData?.chartType ?? 'bar');
   const [datasetId, setDatasetId] = useState(() => initialData?.datasetId ?? '');
@@ -166,10 +167,11 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
           <ScrollArea className="flex-1">
             <div className="p-1 space-y-4">
               <div>
-                <Label>
+                <Label htmlFor={`${dialogIdPrefix}-name`}>
                   {t('flux.wordEditor.chartName')} <span className="text-destructive">*</span>
                 </Label>
                 <Input
+                  id={`${dialogIdPrefix}-name`}
                   value={chartName}
                   onChange={(e) => setChartName(e.target.value)}
                   placeholder="Enter chart name"
@@ -178,8 +180,9 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
               </div>
 
               <div>
-                <Label>{t('flux.wordEditor.chartType')}</Label>
+                <Label htmlFor={`${dialogIdPrefix}-type`}>{t('flux.wordEditor.chartType')}</Label>
                 <NativeSelect
+                  id={`${dialogIdPrefix}-type`}
                   value={chartType}
                   onChange={(e) => setChartType(e.target.value as ChartType)}
                   className="w-full"
@@ -203,8 +206,9 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
               </div>
 
               <div>
-                <Label>{t('flux.wordEditor.datasetId')}</Label>
+                <Label htmlFor={`${dialogIdPrefix}-dataset-id`}>{t('flux.wordEditor.datasetId')}</Label>
                 <Input
+                  id={`${dialogIdPrefix}-dataset-id`}
                   value={datasetId}
                   onChange={(e) => setDatasetId(e.target.value)}
                   placeholder="Select dataset (e.g., dataset1)"
@@ -213,8 +217,9 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
               </div>
 
               <div>
-                <Label>{t('flux.wordEditor.categoryField')}</Label>
+                <Label htmlFor={`${dialogIdPrefix}-category-field`}>{t('flux.wordEditor.categoryField')}</Label>
                 <Input
+                  id={`${dialogIdPrefix}-category-field`}
                   value={categoryField}
                   onChange={(e) => setCategoryField(e.target.value)}
                   placeholder="Category field name (e.g., category)"
@@ -223,8 +228,9 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
               </div>
 
               <div>
-                <Label>{t('flux.wordEditor.valueFields')}</Label>
+                <Label htmlFor={`${dialogIdPrefix}-value-fields`}>{t('flux.wordEditor.valueFields')}</Label>
                 <Input
+                  id={`${dialogIdPrefix}-value-fields`}
                   value={valueField}
                   onChange={(e) => setValueField(e.target.value)}
                   placeholder="Comma-separated values (e.g., value1, value2)"
@@ -233,8 +239,9 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
               </div>
 
               <div>
-                <Label>{t('flux.wordEditor.seriesField')}</Label>
+                <Label htmlFor={`${dialogIdPrefix}-series-field`}>{t('flux.wordEditor.seriesField')}</Label>
                 <Input
+                  id={`${dialogIdPrefix}-series-field`}
                   value={seriesField}
                   onChange={(e) => setSeriesField(e.target.value)}
                   placeholder="Comma-separated series (e.g., series1, series2)"

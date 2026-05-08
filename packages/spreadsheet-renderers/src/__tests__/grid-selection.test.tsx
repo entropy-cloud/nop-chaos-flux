@@ -96,11 +96,34 @@ describe('spreadsheet grid selection', () => {
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
-    const columnHeaders = container.querySelectorAll('th.col-header');
+    const columnHeaders = container.querySelectorAll('th[data-slot="spreadsheet-column-header"]');
     const secondHeader = columnHeaders[1] as HTMLElement | undefined;
 
     expect(secondHeader).toBeTruthy();
     fireEvent.click(secondHeader!);
+
+    await waitFor(() => {
+      expect(core.getSnapshot().selection.kind).toBe('column');
+      expect(core.getSnapshot().selection.columns).toEqual([1]);
+    });
+  });
+
+  it('supports keyboard selection on the corner and column headers', async () => {
+    const documentModel = createEmptyDocument('header-keyboard-selection');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const cornerHeader = screen.getByLabelText('Select entire sheet');
+    fireEvent.keyDown(cornerHeader, { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(core.getSnapshot().selection.kind).toBe('sheet');
+    });
+
+    const columnHeader = screen.getByLabelText('Select column B');
+    fireEvent.keyDown(columnHeader, { key: ' ' });
 
     await waitFor(() => {
       expect(core.getSnapshot().selection.kind).toBe('column');
@@ -115,7 +138,7 @@ describe('spreadsheet grid selection', () => {
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
-    const columnHeaders = container.querySelectorAll('th.col-header');
+    const columnHeaders = container.querySelectorAll('th[data-slot="spreadsheet-column-header"]');
     const secondHeader = columnHeaders[1] as HTMLElement | undefined;
     const fourthHeader = columnHeaders[3] as HTMLElement | undefined;
 

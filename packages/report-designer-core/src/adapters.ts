@@ -20,6 +20,7 @@ export interface FieldSourceProvider {
   id: string;
   load(
     context: ReportDesignerAdapterContext,
+    options?: { signal?: AbortSignal },
   ): Promise<FieldSourceSnapshot[]> | FieldSourceSnapshot[];
 }
 
