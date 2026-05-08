@@ -35,6 +35,19 @@ function resolveTabsOrientation(
   return fallback ?? 'horizontal';
 }
 
+function createTabRegionOptions(item: TabsItemSchema, index: number) {
+  const value = getItemValue(item, index);
+  return {
+    bindings: {
+      item,
+      index,
+      key: value,
+    },
+    pathSuffix: `items.${index}`,
+    scopeKey: `tabs:item:${value}`,
+  };
+}
+
 export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
   const schemaProps = useSchemaProps(props);
@@ -122,10 +135,11 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     <TabsList variant={schemaProps.variant ?? variant}>
       {items.map((item, index) => {
         const value = getItemValue(item, index);
+        const regionOptions = createTabRegionOptions(item, index);
         const titleRegion =
           typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
         const titleContent =
-          asReactNode(titleRegion?.render()) ?? item.title ?? item.label ?? value;
+          asReactNode(titleRegion?.render(regionOptions)) ?? item.title ?? item.label ?? value;
         return (
           <TabsTrigger key={value} value={value} disabled={Boolean(item.disabled)}>
             {titleContent}
@@ -139,6 +153,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     <>
       {items.map((item, index) => {
         const value = getItemValue(item, index);
+        const regionOptions = createTabRegionOptions(item, index);
         const bodyRegion =
           typeof item.bodyRegionKey === 'string' ? props.regions[item.bodyRegionKey] : undefined;
         const toolbarRegion =
@@ -153,9 +168,11 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
             className={cn(schemaProps.contentClassName)}
           >
             {toolbarRegion ? (
-              <div data-slot="tabs-item-toolbar">{asReactNode(toolbarRegion.render())}</div>
+              <div data-slot="tabs-item-toolbar">
+                {asReactNode(toolbarRegion.render(regionOptions))}
+              </div>
             ) : null}
-            {bodyRegion ? asReactNode(bodyRegion.render()) : null}
+            {bodyRegion ? asReactNode(bodyRegion.render(regionOptions)) : null}
           </TabsContent>
         );
       })}
