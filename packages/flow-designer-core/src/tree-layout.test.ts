@@ -147,6 +147,32 @@ describe('layoutTreeWithElk', () => {
     expect(continuationCenterX).toBe(Math.round((leftCenterX + rightCenterX) / 2));
   });
 
+  it('keeps long merge chains ordered after the adjacency-map layout pass', () => {
+    const nodes: GraphNode[] = [
+      { id: 'root', type: 'task', position: { x: 0, y: 0 }, data: {} },
+      { id: 'left', type: 'task', position: { x: 0, y: 0 }, data: {} },
+      { id: 'right', type: 'task', position: { x: 0, y: 0 }, data: {} },
+      { id: 'merge-1', type: 'task', position: { x: 0, y: 0 }, data: {} },
+      { id: 'merge-2', type: 'task', position: { x: 0, y: 0 }, data: {} },
+      { id: 'end', type: 'task', position: { x: 0, y: 0 }, data: {} },
+    ];
+    const edges: GraphEdge[] = [
+      { id: 'e1', type: 'default', source: 'root', target: 'left', data: {} },
+      { id: 'e2', type: 'default', source: 'root', target: 'right', data: {} },
+      { id: 'e3', type: 'merge', source: 'left', target: 'merge-1', data: {} },
+      { id: 'e4', type: 'merge', source: 'right', target: 'merge-1', data: {} },
+      { id: 'e5', type: 'default', source: 'merge-1', target: 'merge-2', data: {} },
+      { id: 'e6', type: 'default', source: 'merge-2', target: 'end', data: {} },
+    ];
+
+    const result = simpleTreeLayout(nodes, edges, tbConfig);
+    const positions = new Map(result.map((node) => [node.id, node.position]));
+
+    expect(positions.get('merge-1')!.y).toBeGreaterThan(positions.get('left')!.y);
+    expect(positions.get('merge-2')!.y).toBeGreaterThan(positions.get('merge-1')!.y);
+    expect(positions.get('end')!.y).toBeGreaterThan(positions.get('merge-2')!.y);
+  });
+
   it('layouts condition branches as nested tree columns with continuation below the group', () => {
     const tree: TreeDocument = {
       id: 'condition-tree',

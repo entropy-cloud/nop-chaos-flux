@@ -72,6 +72,7 @@ export interface DesignerCore {
 
   setViewport(viewport: { x: number; y: number; zoom: number }): void;
   replaceDocument(document: GraphDocument, treeDocument?: TreeDocument): void;
+  replaceDocumentFromHost(document: GraphDocument, treeDocument?: TreeDocument): void;
   setTreeOwner(getTreeDocument: () => TreeDocument, setTreeDocument: (document: TreeDocument) => void): void;
 
   save(): void;

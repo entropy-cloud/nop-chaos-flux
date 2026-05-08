@@ -282,9 +282,24 @@ export function simpleTreeLayout(
 
   const incomingCount = new Map<string, number>();
   const outgoingCount = new Map<string, number>();
+  const incomingByTarget = new Map<string, GraphEdge[]>();
+  const outgoingBySource = new Map<string, GraphEdge[]>();
   for (const edge of edges) {
     outgoingCount.set(edge.source, (outgoingCount.get(edge.source) ?? 0) + 1);
     incomingCount.set(edge.target, (incomingCount.get(edge.target) ?? 0) + 1);
+    const incoming = incomingByTarget.get(edge.target);
+    if (incoming) {
+      incoming.push(edge);
+    } else {
+      incomingByTarget.set(edge.target, [edge]);
+    }
+
+    const outgoing = outgoingBySource.get(edge.source);
+    if (outgoing) {
+      outgoing.push(edge);
+    } else {
+      outgoingBySource.set(edge.source, [edge]);
+    }
   }
 
   const structuralEdges = edges.filter((edge) => {
@@ -308,8 +323,8 @@ export function simpleTreeLayout(
   const visited = new Set<string>();
 
   const queue = roots.map((root) => root.id);
-  while (queue.length > 0) {
-    const id = queue.shift();
+  for (let queueIndex = 0; queueIndex < queue.length; queueIndex += 1) {
+    const id = queue[queueIndex];
     if (!id || visited.has(id)) {
       continue;
     }
@@ -337,18 +352,13 @@ export function simpleTreeLayout(
     depthOf.set(root.id, 0);
   }
 
-  for (let iteration = 0; iteration < nodes.length; iteration += 1) {
-    let changed = false;
-    for (const edge of edges) {
-      const nextDepth = (depthOf.get(edge.source) ?? 0) + 1;
+  for (const id of orderedNodeIds) {
+    const baseDepth = depthOf.get(id) ?? 0;
+    for (const edge of outgoingBySource.get(id) ?? []) {
+      const nextDepth = baseDepth + 1;
       if (nextDepth > (depthOf.get(edge.target) ?? 0)) {
         depthOf.set(edge.target, nextDepth);
-        changed = true;
       }
-    }
-
-    if (!changed) {
-      break;
     }
   }
 
@@ -409,7 +419,7 @@ export function simpleTreeLayout(
   }
 
   for (const targetId of mergeTargets) {
-    const incomingEdges = edges.filter((edge) => edge.target === targetId);
+    const incomingEdges = incomingByTarget.get(targetId) ?? [];
     if (incomingEdges.length === 0) {
       continue;
     }

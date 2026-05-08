@@ -231,7 +231,7 @@ export function renderDesignerSchema(args: {
   designerScope: ScopeRef;
   actionScope: ActionScope | undefined;
 }) {
-  return args.helpers.render(args.schema as any, {
+  return args.helpers.render(args.schema, {
     scope: args.designerScope,
     actionScope: args.actionScope,
   });

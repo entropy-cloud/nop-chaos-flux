@@ -9,11 +9,11 @@
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  background-color: #fff;
+  background-color: var(--nop-code-editor-surface, hsl(var(--background)));
 }
 
 .nop-code-editor[data-fullscreen][data-theme='dark'] {
-  background-color: #1e1e1e;
+  background-color: var(--nop-code-editor-dark-surface, #1e1e1e);
 }
 
 [data-slot='code-editor-toolbar'] {
@@ -252,11 +252,11 @@
 
 [data-slot='code-editor-result-panel'][data-state='error'] {
   padding: 8px 12px;
-  color: #c00;
+  color: hsl(var(--destructive));
 }
 
 .nop-code-editor[data-theme='dark'] [data-slot='code-editor-result-panel'][data-state='error'] {
-  color: #f66;
+  color: color-mix(in srgb, hsl(var(--destructive)) 70%, white);
 }
 
 [data-slot='code-editor-result-panel'][data-state='success'] {

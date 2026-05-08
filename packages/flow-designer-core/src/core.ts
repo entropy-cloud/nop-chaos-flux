@@ -116,6 +116,16 @@ export function createDesignerCore(
     docRevision = revision;
   }
 
+  function replaceHistoryBaseline(nextDoc: GraphDocument) {
+    historyState = createHistoryState(nextDoc, docRevision, treeOwner?.getTreeDocument());
+    emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
+  }
+
+  function markHostDocumentSaved(nextDoc: GraphDocument) {
+    savedDoc = cloneDocument(nextDoc);
+    savedRevision = docRevision;
+  }
+
   function pushHistory() {
     historyState = pushHistoryEntry(
       historyState,
@@ -210,6 +220,8 @@ export function createDesignerCore(
     getDocument,
     setDocument,
     pushHistory,
+    replaceHistory: replaceHistoryBaseline,
+    markHostDocumentSaved,
     emit,
     updateDirtyState,
     shellState,
@@ -382,6 +394,24 @@ export function createDesignerCore(
     shellControls.replaceDocumentFromHost(nextDoc);
   }
 
+  function replaceDocumentWithHistory(nextDoc: GraphDocument, treeDocument?: TreeDocument): void {
+    if (!setDocument(cloneDocument(nextDoc))) {
+      return;
+    }
+
+    if (treeOwner && treeDocument) {
+      treeOwner.setTreeDocument(treeDocument);
+    }
+
+    if (transactionStack.length === 0) {
+      pushHistory();
+    }
+    resetShellViewportFromDocument(shellState, doc);
+    emit({ type: 'documentChanged', doc });
+    emit({ type: 'viewportChanged', viewport: shellState.viewport });
+    updateDirtyState();
+  }
+
   function setTreeOwner(
     getTreeDocument: () => TreeDocument,
     setTreeDocument: (document: TreeDocument) => void,
@@ -514,7 +544,8 @@ export function createDesignerCore(
     toggleInspector,
     setInspectorCollapsed,
     setViewport,
-    replaceDocument: replaceDocumentFromHost,
+    replaceDocument: replaceDocumentWithHistory,
+    replaceDocumentFromHost,
     setTreeOwner,
     save,
     restore,

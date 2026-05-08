@@ -175,7 +175,7 @@ describe('createDesignerCore - graph operations', () => {
   it('replaces the full document through the shared core host path', () => {
     const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
 
-    core.replaceDocument({
+    core.replaceDocumentFromHost({
       id: 'doc-2',
       kind: 'flow',
       name: 'Replaced',
@@ -195,7 +195,8 @@ describe('createDesignerCore - graph operations', () => {
     expect(core.getSnapshot().doc.name).toBe('Replaced');
     expect(core.getSnapshot().doc.nodes).toHaveLength(1);
     expect(core.getSnapshot().viewport).toEqual({ x: 4.2, y: 5.5, zoom: 1.25 });
-    expect(core.getSnapshot().isDirty).toBe(true);
+    expect(core.getSnapshot().isDirty).toBe(false);
+    expect(core.getSnapshot().canUndo).toBe(false);
   });
 
   it('rejects duplicate edges when allowMultiEdge is false', () => {

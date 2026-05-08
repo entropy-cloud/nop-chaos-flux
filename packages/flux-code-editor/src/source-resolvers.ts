@@ -93,26 +93,29 @@ function useAsyncApiResolver<T>(
             loading: false,
           });
         } else if (!result.ok) {
-          const errorMessage =
+          const error =
             result.error instanceof Error
-              ? result.error.message
-              : typeof result.error === 'string'
-                ? result.error
-                : t('flux.codeEditor.apiRequestFailed');
+              ? result.error
+              : new Error(
+                  typeof result.error === 'string'
+                    ? result.error
+                    : t('flux.codeEditor.apiRequestFailed'),
+                );
           setState({
             items: [],
-            error: new Error(errorMessage),
+            error,
             loading: false,
           });
         }
       })
       .catch((err: unknown) => {
         if (signal.aborted) return;
-        const errorMessage = err instanceof Error ? err.message : t('flux.codeEditor.unknownResolverError');
-        console.warn('[source-resolvers] API request failed:', errorMessage);
+        const error =
+          err instanceof Error ? err : new Error(t('flux.codeEditor.unknownResolverError'));
+        console.warn('[source-resolvers] API request failed:', error.message);
         setState({
           items: [],
-          error: new Error(errorMessage),
+          error,
           loading: false,
         });
       });

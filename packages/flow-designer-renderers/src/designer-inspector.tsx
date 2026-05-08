@@ -127,9 +127,18 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                   'rounded-lg border p-3 cursor-pointer',
                   isFocused ? 'border-primary bg-primary/5' : 'border-border/70',
                 )}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isFocused}
                 onClick={() =>
                   dispatch({ type: 'selectBranch', nodeId: activeNode.id, branchId: branch.id })
                 }
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    dispatch({ type: 'selectBranch', nodeId: activeNode.id, branchId: branch.id });
+                  }
+                }}
               >
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <div>

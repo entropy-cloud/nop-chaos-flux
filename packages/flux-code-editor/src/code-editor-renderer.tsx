@@ -59,7 +59,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
 
   const language = (props.props.language as EditorLanguage) ?? 'plaintext';
   const mode = props.props.mode as EditorMode | undefined;
-  const readOnly = Boolean(props.props.readOnly ?? props.meta.disabled);
+  const readOnly = Boolean(props.props.readOnly) || Boolean(props.meta.disabled);
   const placeholder = props.props.placeholder as string | undefined;
   const editorTheme = (props.props.editorTheme as 'light' | 'dark') ?? 'light';
   const lineNumbers =
@@ -70,7 +70,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   const allowFullscreen = (props.props.allowFullscreen as boolean | undefined) ?? false;
   const expressionConfig = props.props.expressionConfig as ExpressionEditorConfig | undefined;
   const sqlConfig = props.props.sqlConfig as SQLEditorConfig | undefined;
-  const name = String(props.props.name ?? props.schema.name ?? '');
+  const name = String(props.props.name ?? '');
   const labelContent = resolveRendererSlotContent(props, 'label');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const toggleFullscreen = useCallback(() => setIsFullscreen((value) => !value), []);
@@ -184,6 +184,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
       data-theme={editorTheme}
       data-fullscreen={isFullscreen || undefined}
       data-has-toolbar={showToolbar || undefined}
+      data-readonly={readOnly || undefined}
       style={!isFullscreen ? containerStyle : undefined}
     >
       {isFullscreen && allowFullscreen ? (
@@ -246,6 +247,9 @@ export const codeEditorRendererDefinition: RendererDefinition = {
   validation: {
     kind: 'field',
     valueKind: 'scalar',
+    getFieldPath(schema: CodeEditorSchema) {
+      return typeof schema.name === 'string' ? schema.name : undefined;
+    },
     collectRules(schema: CodeEditorSchema) {
       const rules: Array<{ kind: 'required'; message?: string }> = [];
       if (schema.required) {

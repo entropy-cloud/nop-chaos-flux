@@ -1,4 +1,4 @@
-import type { ActionSchema, ApiSchema, BaseSchema } from '@nop-chaos/flux-core';
+import type { ActionSchema, ApiSchema, BaseSchema, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
 
 export type EditorLanguage =
   | 'expression'
@@ -24,30 +24,16 @@ export interface CodeEditorSchema extends BaseSchema {
   folding?: boolean;
   autoHeight?: boolean;
   allowFullscreen?: boolean;
-  /**
-   * Expression editor configuration. Typed as `any` because `ExpressionEditorConfig`
-   * contains nested object types that don't satisfy `SchemaValue` index signature.
-   * Runtime validation is performed by `isVariableSourceRef` and `isFuncSourceRef`.
-   */
-  expressionConfig?: any;
-  /**
-   * SQL editor configuration. Typed as `any` because `SQLEditorConfig`
-   * contains nested object types that don't satisfy `SchemaValue` index signature.
-   * Runtime validation is performed by `isSQLSchemaSourceRef`.
-   */
-  sqlConfig?: any;
+  expressionConfig?: ExpressionEditorConfig;
+  sqlConfig?: SQLEditorConfig;
   editorTheme?: 'light' | 'dark';
-  /**
-   * Editor options passed to CodeMirror. Typed as `any` because the options
-   * structure is defined by CodeMirror and varies by extension.
-   */
-  options?: any;
+  options?: Record<string, SchemaValue>;
   onChange?: ActionSchema | ActionSchema[];
   onFocus?: ActionSchema | ActionSchema[];
   onBlur?: ActionSchema | ActionSchema[];
 }
 
-export interface ExpressionEditorConfig {
+export interface ExpressionEditorConfig extends SchemaObject {
   variables?: VariableItem[] | VariableSourceRef;
   functions?: FuncGroup[] | FuncSourceRef;
   showFriendlyNames?: boolean;
@@ -55,7 +41,7 @@ export interface ExpressionEditorConfig {
   showFunctionDocs?: boolean;
 }
 
-export interface VariableItem {
+export interface VariableItem extends SchemaObject {
   label: string;
   value: string;
   type?: string;
@@ -64,12 +50,12 @@ export interface VariableItem {
   tags?: string[];
 }
 
-export interface FuncGroup {
+export interface FuncGroup extends SchemaObject {
   groupName: string;
   items: FuncItem[];
 }
 
-export interface FuncItem {
+export interface FuncItem extends SchemaObject {
   name: string;
   description?: string;
   example?: string;
@@ -77,42 +63,42 @@ export interface FuncItem {
   params?: FuncParam[];
 }
 
-export interface FuncParam {
+export interface FuncParam extends SchemaObject {
   name: string;
   type?: string;
   description?: string;
   required?: boolean;
 }
 
-export type VariableSourceRef = {
+export type VariableSourceRef = SchemaObject & {
   source: 'scope' | 'api';
   scopePath?: string;
   api?: ApiSchema;
   path?: string;
 };
 
-export type FuncSourceRef = {
+export type FuncSourceRef = SchemaObject & {
   source: 'builtin' | 'api';
   builtinSet?: string[];
   api?: ApiSchema;
   path?: string;
 };
 
-export interface ExpressionLintConfig {
+export interface ExpressionLintConfig extends SchemaObject {
   enabled: boolean;
   showOnEdit?: boolean;
   debounceMs?: number;
   customRules?: ExpressionLintRule[];
 }
 
-export interface ExpressionLintRule {
+export interface ExpressionLintRule extends SchemaObject {
   name: string;
   message: string;
   severity: 'error' | 'warning' | 'info';
   validate: string;
 }
 
-export interface SQLFormatConfig {
+export interface SQLFormatConfig extends SchemaObject {
   enabled: boolean;
   language?: 'sql' | 'mysql' | 'postgresql' | 'mariadb' | 'tsql' | 'plsql';
   tabWidth?: number;
@@ -121,20 +107,20 @@ export interface SQLFormatConfig {
   logicalOperatorNewline?: 'before' | 'after';
 }
 
-export interface CodeSnippetTemplate {
+export interface CodeSnippetTemplate extends SchemaObject {
   name: string;
   template: string;
   description?: string;
   icon?: string;
 }
 
-export interface VariablePanelConfig {
+export interface VariablePanelConfig extends SchemaObject {
   enabled: boolean;
   variables?: VariableItem[] | VariableSourceRef;
   insertTemplate?: string;
 }
 
-export interface SQLExecutionConfig {
+export interface SQLExecutionConfig extends SchemaObject {
   enabled: boolean;
   onExecute?: string | ApiSchema;
   resultPath?: string;
@@ -142,7 +128,7 @@ export interface SQLExecutionConfig {
   showPreview?: boolean;
 }
 
-export interface SQLEditorConfig {
+export interface SQLEditorConfig extends SchemaObject {
   tables?: TableSchema[] | SQLSchemaSourceRef;
   dialect?: SQLDialect;
   keywords?: boolean;
@@ -155,14 +141,14 @@ export interface SQLEditorConfig {
 
 export type SQLDialect = 'standard' | 'mysql' | 'postgresql' | 'sqlite' | 'mssql';
 
-export interface TableSchema {
+export interface TableSchema extends SchemaObject {
   name: string;
   alias?: string;
   description?: string;
   columns: ColumnSchema[];
 }
 
-export interface ColumnSchema {
+export interface ColumnSchema extends SchemaObject {
   name: string;
   type: string;
   description?: string;
@@ -170,7 +156,7 @@ export interface ColumnSchema {
   defaultValue?: string;
 }
 
-export type SQLSchemaSourceRef = {
+export type SQLSchemaSourceRef = SchemaObject & {
   source: 'scope' | 'api';
   scopePath?: string;
   api?: ApiSchema;

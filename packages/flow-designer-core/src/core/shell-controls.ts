@@ -11,6 +11,8 @@ export function createShellControls(args: {
   getDocument: () => GraphDocument;
   setDocument: (nextDoc: GraphDocument) => boolean;
   pushHistory: () => void;
+  replaceHistory: (nextDoc: GraphDocument) => void;
+  markHostDocumentSaved: (nextDoc: GraphDocument) => void;
   emit: (event: DesignerEvent) => void;
   updateDirtyState: () => void;
   shellState: DesignerShellState;
@@ -106,10 +108,9 @@ export function createShellControls(args: {
   function replaceDocumentFromHost(nextDoc: GraphDocument) {
     const cloned = cloneDocument(nextDoc);
     args.setDocument(cloned);
+    args.replaceHistory(cloned);
+    args.markHostDocumentSaved(cloned);
     resetShellViewportFromDocument(args.shellState, args.getDocument());
-    if (args.getTransactionDepth() === 0) {
-      args.pushHistory();
-    }
     args.emit({ type: 'documentChanged', doc: args.getDocument() });
     args.emit({ type: 'viewportChanged', viewport: args.shellState.viewport });
     args.updateDirtyState();

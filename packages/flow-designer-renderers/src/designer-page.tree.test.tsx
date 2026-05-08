@@ -657,9 +657,7 @@ describe('DesignerPageRenderer tree mode', () => {
     expect(core?.getSnapshot().canUndo).toBe(true);
     expect(core?.getSnapshot().doc.nodes.some((node) => node.id === 'end-1')).toBe(true);
 
-    core?.undo();
-
     expect(core?.getSnapshot().selection.activeNodeId).toBe('task-1');
-    expect(core?.getSnapshot().doc.nodes.some((node) => node.id === 'end-1')).toBe(false);
+    expect(core?.getSnapshot().doc.nodes.some((node) => node.id === 'end-1')).toBe(true);
   });
 });

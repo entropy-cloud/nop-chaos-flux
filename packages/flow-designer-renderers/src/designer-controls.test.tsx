@@ -327,6 +327,16 @@ describe('flow designer controls', () => {
       branchId: 'b2',
     });
 
+    const branchButton = screen.getByRole('button', { name: /分支 3/ });
+    expect(branchButton.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.keyDown(branchButton, { key: 'Enter' });
+    fireEvent.keyDown(branchButton, { key: ' ' });
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({
+      type: 'selectBranch',
+      nodeId: 'node-1',
+      branchId: 'b3',
+    });
+
     mockState.snapshot = createSnapshot({
       selection: {
         selectedNodeIds: ['node-1'],
