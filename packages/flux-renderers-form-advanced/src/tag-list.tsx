@@ -25,6 +25,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   } = useFormFieldController(name, {
     disabled: props.meta.disabled,
     required,
+    readOnly: Boolean(props.props.readOnly),
   });
   const value = Array.isArray(boundValue) ? boundValue.map((item) => String(item)) : [];
   const labelText = resolveFieldLabelText(props, name);
@@ -92,21 +93,25 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
         const active = value.includes(tag);
 
         return (
-          <WrappedFieldAction
-            key={tag}
-            variant={active ? 'secondary' : 'outline'}
-            size="sm"
-            disabled={presentation.effectiveDisabled}
-              onFocus={() => {
-                if (currentForm && name) {
-                  currentForm.visitField(name);
+            <WrappedFieldAction
+              key={tag}
+              variant={active ? 'secondary' : 'outline'}
+              size="sm"
+              disabled={presentation.effectiveDisabled || presentation.readOnly}
+                onFocus={() => {
+                  if (currentForm && name) {
+                    currentForm.visitField(name);
                 } else if (currentValidationScope && name) {
                   currentValidationScope.visitField?.(name);
                 }
               }}
-            aria-pressed={active}
-            onClick={() => {
-              const nextValue = active ? value.filter((item) => item !== tag) : [...value, tag];
+              aria-pressed={active}
+              onClick={() => {
+                if (presentation.readOnly) {
+                  return;
+                }
+
+                const nextValue = active ? value.filter((item) => item !== tag) : [...value, tag];
 
               if (currentForm) {
                 if (!currentForm.isTouched(name)) {

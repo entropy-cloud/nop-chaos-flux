@@ -45,6 +45,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   const { currentForm, value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
+    readOnly: Boolean(props.props.readOnly),
     areValuesEqual: groupValuesEqual,
   });
 

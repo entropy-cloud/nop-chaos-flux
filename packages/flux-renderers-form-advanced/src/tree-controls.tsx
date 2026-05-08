@@ -38,7 +38,7 @@ function TreeOptionNode(props: {
 
   return (
     <div data-slot="tree-option-node" data-depth={props.option.depth}>
-      <div
+        <div
         className={cn(
           'flex w-full items-center rounded-md py-1.5 pr-2 text-sm',
           props.disabled ? 'opacity-50' : 'cursor-pointer',
@@ -51,8 +51,8 @@ function TreeOptionNode(props: {
         aria-selected={checked}
         aria-disabled={props.disabled || undefined}
         tabIndex={props.disabled ? -1 : 0}
-        onClick={handleSelect}
-        onKeyDown={handleKeyDown}
+        onClick={props.disabled ? undefined : handleSelect}
+        onKeyDown={props.disabled ? undefined : handleKeyDown}
       >
         <Button
           type="button"
@@ -164,6 +164,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const { value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
+    readOnly: Boolean(props.props.readOnly),
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -211,6 +212,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const { value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
+    readOnly: Boolean(props.props.readOnly),
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -242,7 +244,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
                   type="button"
                   variant="outline"
                   aria-label={fieldLabel}
-                  disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
+                  disabled={presentation.effectiveDisabled || presentation.readOnly || optionsSourceState?.loading === true}
                 >
                 <span
                   data-slot="tree-select-value"
@@ -262,10 +264,10 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
                 variant="ghost"
                 size="icon-xs"
                 aria-label={t('flux.common.clear')}
-                disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
+                disabled={presentation.effectiveDisabled || presentation.readOnly || optionsSourceState?.loading === true}
+               onClick={(event) => {
+                 event.preventDefault();
+                 event.stopPropagation();
                 handlers.onChange(multiple ? [] : '');
               }}
             >

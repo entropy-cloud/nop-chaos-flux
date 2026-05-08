@@ -39,11 +39,24 @@ function ArrayEditorRow(props: {
   items: ArrayEditorItem[];
   itemLabel?: string;
   disabled?: boolean;
+  readOnly?: boolean;
   inputRef?: React.Ref<HTMLInputElement>;
   onBeforeRemove?(index: number): void;
 }) {
-  const { item, index, name, currentForm, childBehavior, onSync, items, itemLabel, disabled, inputRef, onBeforeRemove } =
-    props;
+  const {
+    item,
+    index,
+    name,
+    currentForm,
+    childBehavior,
+    onSync,
+    items,
+    itemLabel,
+    disabled,
+    readOnly,
+    inputRef,
+    onBeforeRemove,
+  } = props;
   const itemPath = `${name}.${index}.value`;
   const inputId = `${name || 'array-editor'}-${item.id}-value`;
   const errorId = `${inputId}-error`;
@@ -80,6 +93,10 @@ function ArrayEditorRow(props: {
             }
           }}
           onChange={(event) => {
+            if (readOnly) {
+              return;
+            }
+
             const nextItems = items.map((candidate, candidateIndex) =>
               candidateIndex === index ? { ...candidate, value: event.target.value } : candidate,
             );
@@ -113,6 +130,10 @@ function ArrayEditorRow(props: {
         disabled={disabled}
         aria-label={`${t('flux.form.remove')} ${itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}`}
         onClick={() => {
+          if (readOnly) {
+            return;
+          }
+
           onBeforeRemove?.(index);
           const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
 
@@ -163,6 +184,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
+    readOnly: Boolean(props.props.readOnly),
   });
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const itemsRef = React.useRef<ArrayEditorItem[]>([]);
@@ -313,7 +335,8 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             onSync={syncItems}
             items={items}
             itemLabel={props.props.itemLabel ? String(props.props.itemLabel) : undefined}
-            disabled={presentation.effectiveDisabled}
+            disabled={presentation.effectiveDisabled || presentation.readOnly}
+            readOnly={presentation.readOnly}
             inputRef={(el) => {
               if (el) {
                 inputRefs.current.set(item.id, el);
@@ -332,8 +355,12 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
         type="button"
         variant="outline"
         size="sm"
-        disabled={presentation.effectiveDisabled}
+        disabled={presentation.effectiveDisabled || presentation.readOnly}
         onClick={() => {
+          if (presentation.readOnly) {
+            return;
+          }
+
           const nextItem = { id: createNextCompositeItemId(items, 'item-'), value: '' };
           const nextItems = [...items, nextItem];
           itemsRef.current = nextItems;

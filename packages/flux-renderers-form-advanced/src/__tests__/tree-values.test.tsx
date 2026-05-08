@@ -234,4 +234,55 @@ describe('tree controls - value handling and form integration', () => {
       );
     });
   });
+
+  it('does not mutate tree-select value when rendered readOnly', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/tree-values.test.tsx#readonly"
+        schema={
+          {
+            type: 'form',
+            data: {
+              departmentId: 'eng',
+            },
+            body: [
+              {
+                type: 'tree-select',
+                name: 'departmentId',
+                label: 'Department',
+                readOnly: true,
+                options: [
+                  {
+                    label: 'Engineering',
+                    value: 'eng',
+                    children: [{ label: 'Platform', value: 'platform' }],
+                  },
+                ],
+              },
+              {
+                type: 'form-state-probe',
+                name: 'departmentId',
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const trigger = screen.getByRole('button', { name: /Department/ });
+    expect(trigger.getAttribute('disabled')).not.toBeNull();
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('form-state:departmentId').textContent ?? 'null')).toBe(
+        'eng',
+      );
+    });
+    expect(screen.queryByText('Platform')).toBeNull();
+  });
 });

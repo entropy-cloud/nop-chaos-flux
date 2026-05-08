@@ -305,4 +305,48 @@ describe('condition-builder renderer integration', () => {
     expect(root?.getAttribute('data-testid')).toBe('picker-root');
     expect(root?.getAttribute('data-cid')).toBeTruthy();
   });
+
+  it('does not mutate form state when rendered readOnly', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allDefs);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#readonly"
+        schema={
+          {
+            type: 'form',
+            data: {
+              filters: { id: 'root', conjunction: 'and', children: [] },
+            },
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                readOnly: true,
+                fields: [{ name: 'status', label: 'Status', type: 'text' }],
+              },
+              {
+                type: 'form-state-probe',
+                name: 'filters',
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByText('Add condition'));
+
+    await waitFor(() => {
+      expect(
+        JSON.parse(screen.getByTestId('form-state:filters').textContent ?? 'null'),
+      ).toMatchObject({
+        children: [],
+      });
+    });
+  });
 });

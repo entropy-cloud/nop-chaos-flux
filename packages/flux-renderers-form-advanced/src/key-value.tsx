@@ -40,9 +40,22 @@ function KeyValueRow(props: {
   onRemove: (index: number) => void;
   pairs: KeyValuePair[];
   disabled?: boolean;
+  readOnly?: boolean;
   removeButtonRef?: (button: HTMLButtonElement | null) => void;
 }) {
-  const { pair, index, name, currentForm, childBehavior, onSync, onRemove, pairs, disabled, removeButtonRef } = props;
+  const {
+    pair,
+    index,
+    name,
+    currentForm,
+    childBehavior,
+    onSync,
+    onRemove,
+    pairs,
+    disabled,
+    readOnly,
+    removeButtonRef,
+  } = props;
   const keyPath = `${name}.${index}.key`;
   const valuePath = `${name}.${index}.value`;
   const keyInputId = `${name || 'key-value'}-${pair.id}-key`;
@@ -86,6 +99,10 @@ function KeyValueRow(props: {
             }
           }}
           onChange={(event) => {
+            if (readOnly) {
+              return;
+            }
+
             const nextPairs = pairs.map((candidate, candidateIndex) =>
               candidateIndex === index ? { ...candidate, key: event.target.value } : candidate,
             );
@@ -136,6 +153,10 @@ function KeyValueRow(props: {
             }
           }}
           onChange={(event) => {
+            if (readOnly) {
+              return;
+            }
+
             const nextPairs = pairs.map((candidate, candidateIndex) =>
               candidateIndex === index ? { ...candidate, value: event.target.value } : candidate,
             );
@@ -208,6 +229,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
+    readOnly: Boolean(props.props.readOnly),
   });
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const pairsRef = React.useRef<KeyValuePair[]>([]);
@@ -381,7 +403,8 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             onSync={syncField}
             onRemove={handleRemove}
             pairs={pairs}
-            disabled={presentation.effectiveDisabled}
+            disabled={presentation.effectiveDisabled || presentation.readOnly}
+            readOnly={presentation.readOnly}
             removeButtonRef={(button) => {
               removeButtonRefs.current[index] = button;
             }}
@@ -392,8 +415,12 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
         type="button"
         variant="outline"
         size="sm"
-        disabled={presentation.effectiveDisabled}
+        disabled={presentation.effectiveDisabled || presentation.readOnly}
         onClick={() => {
+          if (presentation.readOnly) {
+            return;
+          }
+
           const nextEntry = { id: createNextCompositeItemId(pairs, 'pair-'), key: '', value: '' };
           const nextPairs = [...pairs, nextEntry];
           pairsRef.current = nextPairs;

@@ -223,4 +223,45 @@ describe('tag-list renderer', () => {
     expect(screen.queryByText('Tags requires at least one tag')).toBeNull();
     expect(tagButtons[1].closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('true');
   });
+
+  it('does not mutate value when rendered readOnly', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      ...formAdvancedRendererDefinitions,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/tag-list.test.tsx#readonly"
+        schema={{
+          type: 'form',
+          data: {
+            tags: ['red'],
+          },
+          body: [
+            {
+              type: 'tag-list',
+              name: 'tags',
+              readOnly: true,
+              tags: ['red', 'blue'],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const redTag = await screen.findByText('red');
+    const action = redTag.closest('[role="button"]');
+
+    expect(action?.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(redTag);
+
+    await waitFor(() => {
+      expect(action?.getAttribute('aria-pressed')).toBe('true');
+    });
+  });
 });
