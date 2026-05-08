@@ -233,6 +233,32 @@ export function registerReaction(input: {
         return;
       }
 
+      if (!dispatchResult.ok) {
+        const error =
+          dispatchResult.error instanceof Error
+            ? dispatchResult.error
+            : new Error(
+                dispatchResult.error == null
+                  ? `Reaction ${input.id} returned ok:false`
+                  : String(dispatchResult.error),
+              );
+
+        input.runtime.env.monitor?.onError?.({
+          phase: 'action',
+          error,
+          details: {
+            reason: 'reaction-run-failed',
+            reactionId: input.id,
+            scopeId: input.scope.id,
+            changedPaths: changePaths,
+          },
+        });
+        if (run && input.asyncGovernance) {
+          input.asyncGovernance.settleRun(run, { outcome: 'failed', error });
+        }
+        return;
+      }
+
       fireCount += 1;
 
       if (onceSource && fireCount >= 1) {

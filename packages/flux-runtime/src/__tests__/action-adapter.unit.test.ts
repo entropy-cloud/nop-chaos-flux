@@ -113,6 +113,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
         options: expect.objectContaining({
           actionScope: { id: 'dialog-action-scope' },
           componentRegistry: { id: 'dialog-component-registry' },
+          validationPlan: undefined,
         }),
       }),
     );
@@ -166,7 +167,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
       ),
     ).resolves.toEqual({ ok: true, data: { drawerId: 'drawer-1' } });
     expect(createSurfaceScope).toHaveBeenCalledWith('drawer', openDrawerCtx, { recordId: 2 });
-
+  
     await expect(
       adapter.invokeBuiltInAction(
         createBuiltInInvocation('showToast', { level: 'warning', message: 'Heads up' }),
@@ -517,6 +518,24 @@ describe('formId targeting in built-in actions', () => {
 
     expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
     expect(form.submit).not.toHaveBeenCalled();
+  });
+
+  it('submitForm preserves registry resolve error causes', async () => {
+    const adapter = createAdapter();
+    const resolveError = new Error('registry broke');
+
+    const result = await adapter.invokeBuiltInAction(
+      createBuiltInInvocation('submitForm', undefined, { formId: 'missing-form' }),
+      createCtx({
+        componentRegistry: {
+          resolve: vi.fn(() => {
+            throw resolveError;
+          }),
+        },
+      }),
+    );
+
+    expect(result).toMatchObject({ ok: false, error: resolveError });
   });
 
   it('submitForm returns error when formId is provided but no component registry', async () => {

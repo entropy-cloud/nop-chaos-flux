@@ -154,6 +154,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     hiddenFields: new Set(),
     lifecycleState: inputValue.initialLifecycleState ?? 'active',
     modelGeneration: 1,
+    modelGenerationListeners: new Set(),
     lifecycleWaiters: new Set(),
     externalErrors: new Map(),
     childContracts: new Map(),
@@ -211,6 +212,13 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
     get rootPath() {
       return currentValidation?.rootPath ?? '';
+    },
+
+    subscribeToModelGeneration(listener) {
+      sharedState.modelGenerationListeners.add(listener);
+      return () => {
+        sharedState.modelGenerationListeners.delete(listener);
+      };
     },
 
     get canSubmit() {

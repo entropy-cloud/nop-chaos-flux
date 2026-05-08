@@ -27,6 +27,7 @@ function createValidationStoreView(
     subscribeToPath: (path, listener) => store.subscribeToPath(path, listener),
     subscribeToPaths: (paths, listener) => store.subscribeToPaths(paths, listener),
     subscribeToSubmitting: (listener) => store.subscribeToSubmitting(listener),
+    subscribeToModelGeneration: (listener) => store.subscribeToModelGeneration?.(listener) ?? (() => undefined),
     getPathState: (path) => store.getPathState(path),
     getFieldState: (path) => store.getFieldState(path),
   };
@@ -48,6 +49,8 @@ function createManagedValidationScopeRuntime(formRuntime: FormRuntime): Validati
     get modelGeneration() {
       return formRuntime.modelGeneration;
     },
+    subscribeToModelGeneration: (listener) =>
+      formRuntime.subscribeToModelGeneration?.(listener) ?? (() => undefined),
     get store() {
       return storeView;
     },

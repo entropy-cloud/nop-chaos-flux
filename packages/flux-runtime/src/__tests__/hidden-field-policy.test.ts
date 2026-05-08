@@ -329,6 +329,64 @@ describe('hidden field validation participation', () => {
 
     expect(runtime.getError('parent.child')).toBeUndefined();
   });
+
+  it('notifyFieldHidden cancels descendant in-flight async validation for hidden parent paths', async () => {
+    let resolveValidation: ((value: unknown) => void) | undefined;
+    const model = makeFormModel({
+      parent: {
+        path: 'parent',
+        kind: 'object',
+        rules: [],
+        behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+        children: ['parent.child'],
+        parent: '',
+      },
+      'parent.child': {
+        path: 'parent.child',
+        kind: 'field',
+        controlType: 'input-text',
+        rules: [
+          {
+            id: 'parent.child#0:async',
+            rule: { kind: 'async', action: { action: 'ajax' } },
+            dependencyPaths: [],
+          },
+        ],
+        behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+        children: [],
+        parent: 'parent',
+      },
+    } as Record<string, CompiledValidationNode>);
+    const parentStore = createScopeStore({ parent: { child: '' } });
+    const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      initialValues: { parent: { child: '' } },
+      parentScope,
+      validation: model,
+      validateRule: vi.fn().mockReturnValue(undefined),
+      executeValidationRule: vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveValidation = resolve;
+          }),
+      ),
+    });
+
+    const validationPromise = runtime.validateField('parent.child');
+
+    await vi.waitFor(() => {
+      expect(resolveValidation).toBeTypeOf('function');
+    });
+    expect(runtime.isValidating('parent.child')).toBe(true);
+
+    runtime.notifyFieldHidden('parent', true);
+    resolveValidation?.({ path: 'parent.child', message: 'late error', rule: 'async' });
+
+    await expect(validationPromise).resolves.toMatchObject({ ok: true, errors: [] });
+    expect(runtime.isValidating('parent.child')).toBe(false);
+    expect(runtime.getError('parent.child')).toBeUndefined();
+  });
 });
 
 describe('clearValueWhenHidden behavior', () => {
@@ -372,6 +430,28 @@ describe('clearValueWhenHidden behavior', () => {
     runtime.notifyFieldHidden('notes', false);
 
     expect(runtime.scope.get('notes')).toBeUndefined();
+  });
+
+  it('cascades descendant clearValueWhenHidden policies when a parent path becomes hidden', () => {
+    const model = makeFormModel({
+      parent: {
+        path: 'parent',
+        kind: 'object',
+        rules: [],
+        behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+        children: ['parent.child'],
+        parent: '',
+      },
+      'parent.child': makeNode('parent.child', {
+        parent: 'parent',
+        hiddenFieldPolicy: { clearValueWhenHidden: true },
+      }),
+    });
+    const { runtime } = makeRuntime(model, { parent: { child: 'value' } });
+
+    runtime.notifyFieldHidden('parent', true);
+
+    expect(runtime.scope.get('parent.child')).toBeUndefined();
   });
 });
 

@@ -191,6 +191,35 @@ describe('executeFormSubmit', () => {
     expect(submitAction).not.toHaveBeenCalled();
   });
 
+  it('snapshots active child contracts once per submit attempt', async () => {
+    const childValidation = vi.fn().mockImplementation(async () => {
+      setup.input.sharedState.childContracts.clear();
+      return { ok: true, errors: [] };
+    });
+    const secondChildValidation = vi.fn().mockResolvedValue({ ok: true, errors: [] });
+    const submitAction = vi.fn().mockResolvedValue({ ok: true, data: {} });
+    const setup = createSubmitInput({
+      sharedState: {
+        store: createSubmitInput().store,
+        lifecycleState: 'active',
+        runtimeFieldRegistrations: new Map(),
+        childContracts: new Map([
+          ['child-1', { mode: 'recurse-submit', active: true, triggerValidation: childValidation }],
+          ['child-2', { mode: 'recurse-submit', active: true, triggerValidation: secondChildValidation }],
+        ]),
+      },
+      input: {
+        getLifecycleHandlers: () => ({ submitAction }),
+      },
+    });
+
+    await expect(executeFormSubmit(setup.input)).resolves.toMatchObject({ ok: true });
+
+    expect(childValidation).toHaveBeenCalledTimes(1);
+    expect(secondChildValidation).toHaveBeenCalledTimes(1);
+    expect(submitAction).toHaveBeenCalledTimes(1);
+  });
+
   it('blocks submit when summary-gate child is not ready or not valid', async () => {
     const submitAction = vi.fn();
     const notReadyState = { ready: false, validating: false, valid: true, hasErrors: false };

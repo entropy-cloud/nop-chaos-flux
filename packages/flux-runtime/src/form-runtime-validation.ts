@@ -18,6 +18,7 @@ import type { FormRuntimeValidationState } from './form-runtime-types.js';
 import { scheduleDebounce } from '@nop-chaos/flux-core';
 import { normalizeRuntimeValidationErrors } from './validation/index.js';
 import { isPathHiddenByOwner } from './form-runtime-field-ops.js';
+import { overlayFieldErrorsWithExternal } from './form-runtime-owner-external-errors.js';
 
 function shouldValidateHiddenRuntimeRegistration(
   sharedState: FormRuntimeValidationState,
@@ -167,12 +168,13 @@ async function validateRuntimeRegistrationRoot(
   ) {
     return createValidationResult([]);
   }
+  const nextErrors = overlayFieldErrorsWithExternal(sharedState, path, runtimeErrors);
   commitPathValidationState({
     sharedState,
     path,
-    errors: runtimeErrors,
+    errors: nextErrors,
   });
-  return createValidationResult(runtimeErrors);
+  return createValidationResult(nextErrors);
 }
 
 async function validateRuntimeRegistrationChild(
@@ -197,12 +199,13 @@ async function validateRuntimeRegistrationChild(
   ) {
     return createValidationResult([]);
   }
+  const nextErrors = overlayFieldErrorsWithExternal(sharedState, childPath, runtimeErrors);
   commitPathValidationState({
     sharedState,
     path: childPath,
-    errors: runtimeErrors,
+    errors: nextErrors,
   });
-  return createValidationResult(runtimeErrors);
+  return createValidationResult(nextErrors);
 }
 
 async function collectRuntimeRegistrationChildErrors(
@@ -237,9 +240,9 @@ async function validateCompiledField(
   sharedState.validationAbortControllers.get(path)?.abort();
   sharedState.validationAbortControllers.delete(path);
   const value = syncedRuntimeValue ?? sharedState.scope.get(path);
-  const errors: ValidationError[] = [];
-  const hasAsyncRules = field.rules.some((compiledRule) => compiledRule.rule.kind === 'async');
-  let finalErrors = errors;
+    const errors: ValidationError[] = [];
+    const hasAsyncRules = field.rules.some((compiledRule) => compiledRule.rule.kind === 'async');
+    let finalErrors: ValidationError[] = [];
   const validationRun = hasAsyncRules
     ? sharedState.validationAsyncGovernance.beginRun({
         ownerKind: 'validation',
@@ -354,17 +357,17 @@ async function validateCompiledField(
       return createValidationResult([]);
     }
 
-    finalErrors = errors;
+    finalErrors = overlayFieldErrorsWithExternal(sharedState, path, errors);
 
     if (!hasAsyncRules) {
-      setPathErrors(sharedState, path, errors);
+      setPathErrors(sharedState, path, finalErrors);
     }
 
     if (validationRun) {
       sharedState.validationAsyncGovernance.settleRun(validationRun, { outcome: 'succeeded' });
     }
 
-    return createValidationResult(errors);
+    return createValidationResult(finalErrors);
   } catch (error) {
     if (error === VALIDATION_CANCELLED) {
       if (validationRun) {

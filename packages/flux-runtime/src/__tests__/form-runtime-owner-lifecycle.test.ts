@@ -31,6 +31,7 @@ function createSharedState(
     hiddenFields: new Set(),
     lifecycleState: 'active',
     modelGeneration: 1,
+    modelGenerationListeners: new Set(),
     lifecycleWaiters: new Set(),
     externalErrors: new Map(),
     childContracts: new Map(),
@@ -75,6 +76,7 @@ describe('refreshCompiledModelState', () => {
     });
 
     sharedState.validationRuns.set('name', 1);
+    sharedState.hiddenFields.add('name');
     sharedState.pendingValidationDebounces.set('name', {
       timer: setTimeout(() => undefined, 10_000),
       resolve: resolved,
@@ -128,6 +130,7 @@ describe('refreshCompiledModelState', () => {
     expect(sharedState.inputValue.validation).toBe(newModel);
     expect(sharedState.modelGeneration).toBe(2);
     expect(sharedState.validationRuns.size).toBe(0);
+    expect(sharedState.hiddenFields.size).toBe(0);
     expect(sharedState.pendingValidationDebounces.size).toBe(0);
     expect(sharedState.validationAbortControllers.size).toBe(0);
     expect(resolved).toHaveBeenCalledWith(false);

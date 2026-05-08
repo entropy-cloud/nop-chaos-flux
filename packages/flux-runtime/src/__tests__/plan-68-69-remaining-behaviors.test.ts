@@ -241,6 +241,40 @@ describe('applyExternalErrors - sourceId-scoped clear-on-write', () => {
     expect(snapshot.hasErrors).toBe(false);
     expect(runtime.getFieldState('foreign.path').errors).toHaveLength(0);
   });
+
+  it('preserves external errors during ordinary validation overlay and clears them on applyChanges writes', async () => {
+    const { runtime } = makeRuntime(
+      makeFormModel({ email: makeNode('email', { required: true }) }),
+      { email: '' },
+    );
+
+    runtime.applyExternalErrors({
+      sourceId: 'server',
+      errors: [{ path: 'email', rule: 'email', message: 'Already taken' }],
+    });
+
+    const beforeWrite = await runtime.validateField('email', 'blur');
+    expect(beforeWrite.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ sourceKind: 'external', message: 'Already taken' }),
+        expect.objectContaining({ rule: 'required' }),
+      ]),
+    );
+    expect(runtime.getFieldState('email').errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ sourceKind: 'external', message: 'Already taken' }),
+        expect.objectContaining({ rule: 'required' }),
+      ]),
+    );
+
+    await runtime.applyChangesAndRevalidate({
+      writes: { email: 'next@example.com' },
+      changedPaths: ['email'],
+      reason: 'change',
+    });
+
+    expect(runtime.getFieldState('email').errors).toEqual([]);
+  });
 });
 
 describe('submit supersession', () => {

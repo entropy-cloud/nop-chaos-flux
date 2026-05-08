@@ -340,7 +340,7 @@ describe('pattern', () => {
     expect(builtInValidators.pattern(ctx as any)).toBeDefined();
   });
 
-  it('skips validation when precompiled has error (invalid regex)', () => {
+  it('surfaces invalid precompiled pattern configuration as an honest validation error', () => {
     const compiledRule: CompiledValidationRule = {
       id: 'field#0:pattern',
       rule: { kind: 'pattern', value: '[' },
@@ -354,7 +354,31 @@ describe('pattern', () => {
       scope: makeScope(),
       rule: compiledRule.rule as any,
     };
-    expect(builtInValidators.pattern(ctx as any)).toBeUndefined();
+    expect(builtInValidators.pattern(ctx as any)).toMatchObject({
+      rule: 'pattern',
+      sourceKind: 'runtime-registration',
+      message: 'Invalid validation pattern: Invalid regular expression',
+    });
+  });
+
+  it('surfaces unsupported backtracking-prone patterns as configuration errors', () => {
+    const compiledRule: CompiledValidationRule = {
+      id: 'field#0:pattern',
+      rule: { kind: 'pattern', value: '(a+)+$' },
+      dependencyPaths: [],
+      precompiled: { error: 'Pattern uses unsupported backtracking-prone constructs', safe: false },
+    };
+    const ctx: SyncValidationContext = {
+      compiledRule,
+      value: 'aaaa',
+      field: makeField(),
+      scope: makeScope(),
+      rule: compiledRule.rule as any,
+    };
+    expect(builtInValidators.pattern(ctx as any)).toMatchObject({
+      rule: 'pattern',
+      message: 'Invalid validation pattern: Pattern uses unsupported backtracking-prone constructs',
+    });
   });
 });
 

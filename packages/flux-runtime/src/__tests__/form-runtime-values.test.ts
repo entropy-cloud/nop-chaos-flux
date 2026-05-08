@@ -73,6 +73,7 @@ function createSharedState(initialValues: Record<string, any> = {}) {
     lifecycleState: 'active',
     lifecycleWaiters: new Set(),
     modelGeneration: 1,
+    modelGenerationListeners: new Set(),
     externalErrors: new Map(),
     childContracts: new Map(),
   };

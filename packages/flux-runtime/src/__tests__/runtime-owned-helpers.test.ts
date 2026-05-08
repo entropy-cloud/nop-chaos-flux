@@ -103,6 +103,14 @@ describe('executeRuntimeValidationRule', () => {
       }),
     ).resolves.toBeUndefined();
   });
+
+  it('rethrows non-cancelled ok:false results from async validation actions', async () => {
+    await expect(
+      executeRuntimeValidationRule(compiledRule, rule, field, scope, undefined, {
+        dispatch: vi.fn().mockResolvedValue({ ok: false, error: new Error('validation action failed') }),
+      }),
+    ).rejects.toThrow('validation action failed');
+  });
 });
 
 describe('executeRuntimeAjaxAction', () => {

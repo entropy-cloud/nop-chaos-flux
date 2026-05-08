@@ -12,6 +12,10 @@ import { buildValidationMessage } from './message.js';
 export type AsyncValidationRule = Extract<ValidationRule, { kind: 'async' }>;
 export type SyncValidationRule = Exclude<ValidationRule, AsyncValidationRule>;
 export type SyncValidationRuleKind = SyncValidationRule['kind'];
+export type SyncValidationRuleFor<K extends SyncValidationRuleKind> = Extract<
+  SyncValidationRule,
+  { kind: K }
+>;
 
 export interface SyncValidationContext<R extends SyncValidationRule = SyncValidationRule> {
   compiledRule: CompiledValidationRule;
@@ -24,6 +28,10 @@ export interface SyncValidationContext<R extends SyncValidationRule = SyncValida
 export type SyncValidator<R extends SyncValidationRule = SyncValidationRule> = (
   input: SyncValidationContext<R>,
 ) => ValidationError | undefined;
+
+type SyncValidatorMap = {
+  [K in SyncValidationRuleKind]: SyncValidator<SyncValidationRuleFor<K>>;
+};
 
 export function isEmptyValue(value: unknown): boolean {
   return value == null || value === '' || (Array.isArray(value) && value.length === 0);
@@ -104,7 +112,14 @@ function createBuiltInError(
   );
 }
 
-export const builtInValidators: Record<SyncValidationRuleKind, SyncValidator<any>> = {
+function createPatternConfigurationError(input: SyncValidationContext, message: string) {
+  return createBuiltInError(input, {
+    message,
+    sourceKind: 'runtime-registration',
+  });
+}
+
+export const builtInValidators: SyncValidatorMap = {
   required(input) {
     return isEmptyValue(input.value) ? createBuiltInError(input) : undefined;
   },
@@ -158,7 +173,9 @@ export const builtInValidators: Record<SyncValidationRuleKind, SyncValidator<any
   },
   pattern(input) {
     const precompiled = input.compiledRule.precompiled;
-    if (precompiled?.error) return undefined;
+    if (precompiled?.error) {
+      return createPatternConfigurationError(input, `Invalid validation pattern: ${precompiled.error}`);
+    }
     const regex = precompiled?.regex ?? new RegExp(input.rule.value);
     return typeof input.value === 'string' && input.value !== '' && !regex.test(input.value)
       ? createBuiltInError(input)

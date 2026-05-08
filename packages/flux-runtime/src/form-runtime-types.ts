@@ -98,13 +98,16 @@ export interface FormRuntimeValidationOwnerState {
   hiddenFields: Set<string>;
   lifecycleState: ValidationOwnerLifecycleState;
   modelGeneration: number;
+  modelGenerationListeners: Set<() => void>;
   lifecycleWaiters: Set<() => void>;
 }
 
 export type FormRuntimeValidationState = FormRuntimeCoreState &
   FormRuntimeRegistrationIndexState &
   FormRuntimeValidationRunState &
-  FormRuntimeValidationOwnerState;
+  FormRuntimeValidationOwnerState &
+  FormRuntimeExternalErrorState &
+  FormRuntimeChildContractState;
 
 export interface FormRuntimeExternalErrorState {
   externalErrors: Map<string, ExternalErrorEntry>;

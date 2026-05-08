@@ -22,6 +22,12 @@ function resolveLifecycleWaiters(sharedState: ManagedFormRuntimeSharedState) {
   }
 }
 
+function notifyModelGenerationListeners(sharedState: ManagedFormRuntimeSharedState) {
+  for (const listener of sharedState.modelGenerationListeners) {
+    listener();
+  }
+}
+
 export function refreshCompiledModelState(args: {
   sharedState: ManagedFormRuntimeSharedState;
   getCurrentValidation: () => FormRuntime['validation'];
@@ -36,6 +42,7 @@ export function refreshCompiledModelState(args: {
 
   args.sharedState.lifecycleState = 'refreshing';
   args.sharedState.modelGeneration += 1;
+  notifyModelGenerationListeners(args.sharedState);
 
   const oldModel = args.getCurrentValidation();
   args.setCurrentValidation(args.newModel);
@@ -44,6 +51,7 @@ export function refreshCompiledModelState(args: {
   cancelAllValidationDebounces(args.sharedState);
   clearValidationAsyncOwners(args.sharedState);
   args.sharedState.validationRuns.clear();
+  args.sharedState.hiddenFields.clear();
   for (const controller of args.sharedState.validationAbortControllers.values()) {
     controller.abort();
   }

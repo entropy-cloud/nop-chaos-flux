@@ -254,6 +254,39 @@ describe('registerReaction dispose race with scheduled microtask', () => {
     }
   });
 
+  it('marks reaction runs as failed when dispatch returns non-cancelled ok:false', async () => {
+    const runtime = createRuntime();
+    const page = runtime.createPageRuntime({ count: 0 });
+
+    const registration = runtime.registerReaction({
+      id: 'failed-reaction-result',
+      scope: page.scope,
+      compiledReaction: compileReaction(
+        'failed-reaction-result',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          actions: { action: 'custom:noop' },
+        },
+        expressionCompiler,
+      ),
+      dispatch: vi.fn().mockResolvedValue({ ok: false, error: new Error('reaction failed') }),
+    });
+
+    try {
+      page.scope.update('count', 1);
+
+      await vi.waitFor(() => {
+        const reaction = runtime
+          .getReactionDebugSnapshot?.()
+          .reactions.find((entry) => entry.id === 'failed-reaction-result');
+        expect(reaction?.async?.recentRuns.some((run) => run.outcome === 'failed')).toBe(true);
+      });
+    } finally {
+      registration.dispose();
+    }
+  });
+
   it('does not underflow the global cascade counter when the limit is exceeded', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     __setGlobalCascadeDepthForTests(200);

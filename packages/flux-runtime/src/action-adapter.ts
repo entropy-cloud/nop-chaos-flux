@@ -11,6 +11,7 @@ import type {
   RendererRuntime,
   ScopeRef,
 } from '@nop-chaos/flux-core';
+import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import type { ApiRequestExecutor } from './async-data/request-runtime.js';
 import { executeRuntimeAjaxAction } from './runtime-action-helpers.js';
 
@@ -31,6 +32,25 @@ export interface ActionAdapterInput {
 
 export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRuntimeAdapter {
   const { getEnv, expressionCompiler, evaluate, executeApiRequest, runtime } = input;
+
+  function resolveSurfaceValidationPlan(surface: Record<string, unknown>) {
+    const body = surface.body;
+
+    if (!isSchema(body) && !isSchemaArray(body)) {
+      return undefined;
+    }
+
+    try {
+      const compiled = runtime.compile({
+        type: 'page',
+        body,
+      });
+      const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+      return root?.validationPlan;
+    } catch {
+      return undefined;
+    }
+  }
 
   function resolveFormTarget(
     formId: string | undefined,
@@ -150,10 +170,13 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               handle = ctx.componentRegistry.resolve({
                 componentId: invocation.targeting.formId,
               });
-            } catch {
+            } catch (error) {
               return {
                 ok: false,
-                error: new Error(`Form not found: ${invocation.targeting.formId}`),
+                error:
+                  error instanceof Error
+                    ? error
+                    : new Error(`Form not found: ${invocation.targeting.formId}`),
               };
             }
 
@@ -202,6 +225,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             options: {
               actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
               componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
+              validationPlan: resolveSurfaceValidationPlan(invocation.args ?? {}),
               ownerNodeInstance: ctx.nodeInstance,
             },
           });
@@ -251,6 +275,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             options: {
               actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
               componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
+              validationPlan: resolveSurfaceValidationPlan(invocation.args ?? {}),
               ownerNodeInstance: ctx.nodeInstance,
             },
           });

@@ -14,6 +14,8 @@ export interface ApiCacheStore {
 }
 
 const MAX_ENTRIES = 200;
+const MAX_STRINGIFY_DEPTH = 12;
+const MAX_STRINGIFY_NODES = 2000;
 
 interface LRUNode {
   key: string;
@@ -23,18 +25,55 @@ interface LRUNode {
   next: LRUNode | null;
 }
 
-export function stableStringify(value: unknown): string {
+function stableStringifyInternal(
+  value: unknown,
+  seen: WeakSet<object>,
+  depth: number,
+  budget: { remaining: number },
+): string {
+  budget.remaining -= 1;
+  if (budget.remaining < 0) {
+    return '"[MaxNodesExceeded]"';
+  }
+
   if (value === null || typeof value !== 'object') {
     return JSON.stringify(value);
   }
 
+  if (depth >= MAX_STRINGIFY_DEPTH) {
+    return '"[MaxDepthExceeded]"';
+  }
+
+  if (seen.has(value)) {
+    return '"[Circular]"';
+  }
+
+  seen.add(value);
+
   if (Array.isArray(value)) {
-    return `[${value.map((entry) => stableStringify(entry)).join(',')}]`;
+    const result = `[${value
+      .map((entry) => stableStringifyInternal(entry, seen, depth + 1, budget))
+      .join(',')}]`;
+    seen.delete(value);
+    return result;
   }
 
   const record = value as Record<string, unknown>;
   const keys = Object.keys(record).sort();
-  return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`).join(',')}}`;
+  const result = `{${keys
+    .map(
+      (key) =>
+        `${JSON.stringify(key)}:${stableStringifyInternal(record[key], seen, depth + 1, budget)}`,
+    )
+    .join(',')}}`;
+  seen.delete(value);
+  return result;
+}
+
+export function stableStringify(value: unknown): string {
+  return stableStringifyInternal(value, new WeakSet<object>(), 0, {
+    remaining: MAX_STRINGIFY_NODES,
+  });
 }
 
 export function createApiCacheStore(): ApiCacheStore {

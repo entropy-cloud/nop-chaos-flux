@@ -290,6 +290,84 @@ function clearHiddenSubtreeFieldStates(
   }
 }
 
+function invalidateHiddenSubtreeValidation(
+  sharedState: ManagedFormRuntimeSharedState,
+  path: string,
+) {
+  const affectedPaths = new Set<string>([path]);
+
+  for (const fieldPath of sharedState.validationRuns.keys()) {
+    if (fieldPath === path || fieldPath.startsWith(`${path}.`)) {
+      affectedPaths.add(fieldPath);
+    }
+  }
+
+  for (const fieldPath of sharedState.pendingValidationDebounces.keys()) {
+    if (fieldPath === path || fieldPath.startsWith(`${path}.`)) {
+      affectedPaths.add(fieldPath);
+    }
+  }
+
+  for (const fieldPath of sharedState.validationAbortControllers.keys()) {
+    if (fieldPath === path || fieldPath.startsWith(`${path}.`)) {
+      affectedPaths.add(fieldPath);
+    }
+  }
+
+  for (const fieldPath of affectedPaths) {
+    sharedState.validationRuns.set(fieldPath, (sharedState.validationRuns.get(fieldPath) ?? 0) + 1);
+
+    const pending = sharedState.pendingValidationDebounces.get(fieldPath);
+    if (pending) {
+      clearTimeout(pending.timer);
+      pending.resolve(false);
+      sharedState.pendingValidationDebounces.delete(fieldPath);
+    }
+
+    const controller = sharedState.validationAbortControllers.get(fieldPath);
+    if (controller) {
+      controller.abort();
+      sharedState.validationAbortControllers.delete(fieldPath);
+      sharedState.validationAsyncGovernance.invalidateCurrentRun(
+        `validation:${sharedState.scope.id}:${fieldPath}`,
+      );
+    }
+  }
+}
+
+function collectClearValueWhenHiddenPaths(
+  currentValidation: CompiledFormValidationModel | undefined,
+  path: string,
+): string[] {
+  if (!currentValidation?.nodes) {
+    return [];
+  }
+
+  const selected: string[] = [];
+  const subtreePaths = Object.keys(currentValidation.nodes)
+    .filter((candidate) => candidate === path || candidate.startsWith(`${path}.`))
+    .sort((left, right) => left.length - right.length);
+
+  for (const candidatePath of subtreePaths) {
+    const field = getCompiledValidationField(currentValidation, candidatePath);
+    if (!field?.hiddenFieldPolicy.clearValueWhenHidden) {
+      continue;
+    }
+
+    if (
+      selected.some(
+        (selectedPath) => candidatePath !== selectedPath && candidatePath.startsWith(`${selectedPath}.`),
+      )
+    ) {
+      continue;
+    }
+
+    selected.push(candidatePath);
+  }
+
+  return selected;
+}
+
 export function notifyFieldHidden(
   sharedState: ManagedFormRuntimeSharedState,
   path: string,
@@ -304,20 +382,12 @@ export function notifyFieldHidden(
   }
 
   if (hidden) {
-    sharedState.validationRuns.set(path, (sharedState.validationRuns.get(path) ?? 0) + 1);
-    const pending = sharedState.pendingValidationDebounces.get(path);
-    if (pending) {
-      clearTimeout(pending.timer);
-      pending.resolve(false);
-      sharedState.pendingValidationDebounces.delete(path);
-    }
+    invalidateHiddenSubtreeValidation(sharedState, path);
     sharedState.hiddenFields.add(path);
     clearHiddenSubtreeFieldStates(sharedState, path, currentValidation);
 
-    const field = getCompiledValidationField(currentValidation, path);
-
-    if (field?.hiddenFieldPolicy.clearValueWhenHidden) {
-      setValue(path, undefined);
+    for (const clearPath of collectClearValueWhenHiddenPaths(currentValidation, path)) {
+      setValue(clearPath, undefined);
     }
   } else {
     sharedState.hiddenFields.delete(path);

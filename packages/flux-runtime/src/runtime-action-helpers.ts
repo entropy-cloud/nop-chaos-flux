@@ -43,6 +43,16 @@ export async function executeRuntimeValidationRule(
       return undefined;
     }
 
+    if (result.ok === false) {
+      throw result.error instanceof Error
+        ? result.error
+        : new Error(
+            result.error == null
+              ? `${field.label ?? field.path} failed async validation`
+              : String(result.error),
+          );
+    }
+
     const adaptedData = result.data;
 
     if (adaptedData && typeof adaptedData === 'object') {

@@ -118,7 +118,7 @@ export function createManagedSurfaceRuntime(
     store,
     open({ kind, surface, scope, surfaceId, options }) {
       const resolvedSurfaceId = surfaceId ?? createSurfaceId(scope, kind);
-      const ownerValidationPlan = options?.ownerTemplateNode?.validationPlan;
+      const ownerValidationPlan = options?.validationPlan ?? options?.ownerTemplateNode?.validationPlan;
       const validationOwner = input.createValidationOwner?.({
         id: `${resolvedSurfaceId}-validation`,
         parentScope: scope,

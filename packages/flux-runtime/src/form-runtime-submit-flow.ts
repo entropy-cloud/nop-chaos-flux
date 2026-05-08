@@ -121,6 +121,9 @@ export async function executeFormSubmit(
 
   try {
     const currentValidation = getCurrentValidation();
+    const childContractsSnapshot = Array.from(sharedState.childContracts.values()).filter(
+      (contract) => contract.active,
+    );
     const currentTouched = extractTouchedPaths(store.getState().fieldStates);
     const nextTouched = buildSubmitTouchedState({
       touched: currentTouched,
@@ -173,9 +176,7 @@ export async function executeFormSubmit(
 
     const childValidationPromises: Promise<import('@nop-chaos/flux-core').ValidationResult>[] = [];
     const summaryGateBlockers: string[] = [];
-    for (const contract of sharedState.childContracts.values()) {
-      if (!contract.active) continue;
-
+    for (const contract of childContractsSnapshot) {
       if (contract.mode === 'recurse-submit') {
         childValidationPromises.push(contract.triggerValidation());
       } else if (contract.mode === 'summary-gate') {

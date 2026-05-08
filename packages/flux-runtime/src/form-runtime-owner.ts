@@ -226,6 +226,25 @@ export function buildFormOwnerRuntime(input: {
     });
     input.sharedState.store.batchUpdate({ values: nextValues });
 
+    let externalErrorsChanged = false;
+    for (const path of new Set([...Object.keys(writes), ...changedPaths])) {
+      if (clearExternalErrorsForPath({ name: path, sharedState: input.sharedState, getThisForm: input.getThisForm })) {
+        externalErrorsChanged = true;
+      }
+    }
+
+    if (externalErrorsChanged) {
+      const currentFieldStates = input.sharedState.store.getState().fieldStates;
+      const nextErrors = rebuildStoreErrorsFromExternal(input.sharedState, currentFieldStates);
+      const nextFieldStates = mergeFieldStateErrors({ currentFieldStates, nextErrors });
+      input.setLastChange({
+        paths: [],
+        sourceScopeId: input.formId,
+        kind: 'update',
+      });
+      input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
+    }
+
     const changedPathResults = new Map<string, ValidationError[]>();
 
     if (reason === 'change') {

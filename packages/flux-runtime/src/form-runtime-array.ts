@@ -1,16 +1,19 @@
 import type { FieldState, ScopeRef } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
 import { remapFieldStates, transformArrayIndexedPath } from './form-path-state.js';
+import { remapExternalErrors } from './form-runtime-owner-external-errors.js';
 import type {
   FormRuntimeInitialStateSlice,
   FormRuntimeStoreScopeState,
   FormRuntimeValidationRunState,
 } from './form-runtime-types.js';
+import type { ExternalErrorEntry } from './form-runtime-types.js';
 
 type ArrayMutationState = FormRuntimeStoreScopeState &
   FormRuntimeInitialStateSlice &
   FormRuntimeValidationRunState & {
     hiddenFields: Set<string>;
+    externalErrors: Map<string, ExternalErrorEntry>;
   };
 
 export function remapValidationRunState(
@@ -216,5 +219,6 @@ export function executeArrayMutation(ctx: {
   );
   remapInitialFieldState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform);
   remapHiddenFields(ctx.sharedState.hiddenFields, ctx.arrayPath, ctx.indexTransform);
+  remapExternalErrors(ctx.sharedState.externalErrors, ctx.arrayPath, ctx.indexTransform);
   void ctx.revalidateDependents(ctx.arrayPath, 'change');
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createApiCacheStore, generateCacheKey } from './api-cache.js';
+import { createApiCacheStore, generateCacheKey, stableStringify } from './api-cache.js';
 
 const LONG_TTL = 60_000;
 
@@ -180,6 +180,32 @@ describe('createApiCacheStore', () => {
       });
 
       expect(keyA).toBe(keyB);
+    });
+
+    it('guards circular and deep cache key payloads with bounded sentinels', () => {
+      const cyclic: Record<string, unknown> = { name: 'root' };
+      cyclic.self = cyclic;
+
+      expect(stableStringify(cyclic)).toContain('[Circular]');
+
+      const deep = {
+        value: {
+          value: {
+            value: {
+              value: {
+                value: { value: { value: { value: { value: { value: { value: { value: { value: 'x' } } } } } } } },
+              },
+            },
+          },
+        },
+      };
+      expect(stableStringify(deep)).toContain('[MaxDepthExceeded]');
+    });
+
+    it('caps traversal cost for oversized payloads', () => {
+      const huge = Array.from({ length: 2505 }, (_, index) => ({ index }));
+
+      expect(stableStringify(huge)).toContain('[MaxNodesExceeded]');
     });
   });
 });

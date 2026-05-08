@@ -231,6 +231,56 @@ describe('createRendererRuntime', () => {
     expect(dialogState.validationOwner?.scopeId).toBe(`${dialogState.id}-validation`);
   });
 
+  it('activates action-opened surface validation owners when the opened body compiles a validation plan', async () => {
+    const fieldProbeRenderer: RendererDefinition = {
+      type: 'field-probe',
+      component: () => null,
+      validation: {
+        kind: 'field',
+        valueKind: 'scalar',
+        getFieldPath(schema) {
+          return typeof schema.name === 'string' ? schema.name : undefined;
+        },
+        collectRules() {
+          return [{ kind: 'required' as const }];
+        },
+      },
+    };
+    const registry = createRendererRegistry([pageRenderer, textRenderer, fieldProbeRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    const result = await runtime.dispatch(
+      {
+        action: 'openDialog',
+        args: {
+          title: 'Validation dialog',
+          body: [{ type: 'field-probe', name: 'email' }],
+        },
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime,
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    const dialogState = surfaceRuntime.store.getState().entries[0];
+    expect(dialogState.validationOwner?.getScopeState()).toMatchObject({
+      lifecycleState: 'active',
+      ready: true,
+    });
+    expect(dialogState.validationOwner?.validation?.nodes).toBeDefined();
+    expect(dialogState.validationOwner?.validation?.nodes?.email).toBeDefined();
+  });
+
   it('applies dialog data as the child-scope init patch', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({

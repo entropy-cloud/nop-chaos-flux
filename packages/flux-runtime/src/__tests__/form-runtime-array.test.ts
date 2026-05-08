@@ -7,6 +7,7 @@ import {
   replaceManagedArrayValue,
   executeArrayMutation,
 } from '../form-runtime-array.js';
+import { remapExternalErrors } from '../form-runtime-owner-external-errors.js';
 import { createFormStore } from '../form-store.js';
 import { createScopeRef } from '../scope.js';
 import { createAsyncGovernanceStore } from '../async-data/async-governance.js';
@@ -172,6 +173,29 @@ describe('remapHiddenFields', () => {
   });
 });
 
+describe('remapExternalErrors', () => {
+  it('remaps external errors under the mutated array path', () => {
+    const externalErrors = new Map([
+      [
+        'server',
+        {
+          sourceId: 'server',
+          errors: [
+            { path: 'items.1.name', message: 'taken', rule: 'required' },
+            { path: 'other', message: 'keep', rule: 'required' },
+          ],
+        },
+      ],
+    ]);
+
+    remapExternalErrors(externalErrors as any, 'items', (index) => (index < 1 ? index : index > 1 ? index - 1 : undefined));
+
+    expect(externalErrors.get('server')?.errors).toEqual([
+      { path: 'other', message: 'keep', rule: 'required' },
+    ]);
+  });
+});
+
 describe('remapArrayFieldState', () => {
   it('remaps field states using transform', () => {
     const fieldStates: Record<string, FieldState> = {
@@ -286,6 +310,8 @@ describe('executeArrayMutation', () => {
       hiddenFields: new Set(),
       lifecycleState: 'active' as const,
       modelGeneration: 1,
+      modelGenerationListeners: new Set(),
+      lifecycleWaiters: new Set(),
       externalErrors: new Map(),
       childContracts: new Map(),
     } as ManagedFormRuntimeSharedState;
@@ -383,5 +409,33 @@ describe('executeArrayMutation', () => {
     });
 
     expect(Array.from(shared.hiddenFields)).toEqual(['items.1.name']);
+  });
+
+  it('remaps external errors when array indices shift', () => {
+    const shared = createMutationState({ items: ['a', 'b', 'c'] });
+    shared.externalErrors.set('server', {
+      sourceId: 'server',
+      errors: [
+        { path: 'items.1.name', message: 'bad', rule: 'required' },
+        { path: 'items.2.name', message: 'bad2', rule: 'required' },
+      ],
+    });
+
+    executeArrayMutation({
+      sharedState: shared,
+      scope: shared.scope,
+      formId: 'test-form',
+      setLastChange: vi.fn(),
+      getArrayValue: (path) => shared.store.getState().values[path],
+      arrayPath: 'items',
+      arrayOperation: (arr) => [...arr.slice(0, 1), ...arr.slice(2)],
+      indexTransform: (i) => (i < 1 ? i : i > 1 ? i - 1 : undefined),
+      cancelValidationDebounce: vi.fn(),
+      revalidateDependents: vi.fn(),
+    });
+
+    expect(shared.externalErrors.get('server')?.errors).toEqual([
+      { path: 'items.1.name', message: 'bad2', rule: 'required' },
+    ]);
   });
 });

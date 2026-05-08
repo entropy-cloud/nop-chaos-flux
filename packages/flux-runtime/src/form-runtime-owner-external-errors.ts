@@ -4,6 +4,7 @@ import type {
   FormRuntime,
   ValidationError,
 } from '@nop-chaos/flux-core';
+import { transformArrayIndexedPath } from './form-path-state.js';
 import type { ExternalErrorEntry, ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
 export function rebuildStoreErrorsFromExternal(
@@ -31,6 +32,40 @@ export function rebuildStoreErrorsFromExternal(
   }
 
   return next;
+}
+
+export function getExternalErrorsForPath(
+  sharedState: ManagedFormRuntimeSharedState,
+  path: string,
+): ValidationError[] {
+  const next: ValidationError[] = [];
+
+  for (const entry of sharedState.externalErrors.values()) {
+    for (const error of entry.errors) {
+      if (error.path !== path) {
+        continue;
+      }
+
+      next.push({ ...error, sourceKind: 'external' });
+    }
+  }
+
+  return next;
+}
+
+export function overlayFieldErrorsWithExternal(
+  sharedState: ManagedFormRuntimeSharedState,
+  path: string,
+  errors: ValidationError[],
+): ValidationError[] {
+  const externalErrors = getExternalErrorsForPath(sharedState, path);
+
+  if (externalErrors.length === 0) {
+    return errors.filter((error) => error.sourceKind !== 'external');
+  }
+
+  const nonExternalErrors = errors.filter((error) => error.sourceKind !== 'external');
+  return [...nonExternalErrors, ...externalErrors];
 }
 
 export function clearExternalErrorsForPath(args: {
@@ -82,6 +117,43 @@ export function storeOwnedExternalErrors(args: {
     args.sharedState.externalErrors.set(sourceId, {
       sourceId,
       errors: [...existing.errors, ...ownedErrors],
+    });
+  }
+}
+
+export function remapExternalErrors(
+  externalErrors: Map<string, ExternalErrorEntry>,
+  arrayPath: string,
+  transformIndex: (index: number) => number | undefined,
+) {
+  for (const [sourceId, entry] of Array.from(externalErrors.entries())) {
+    const nextErrors: ValidationError[] = [];
+
+    for (const error of entry.errors) {
+      const nextPath = transformArrayIndexedPath(error.path, arrayPath, transformIndex);
+
+      if (!nextPath) {
+        continue;
+      }
+
+      nextErrors.push({
+        ...error,
+        path: nextPath,
+        ownerPath:
+          typeof error.ownerPath === 'string'
+            ? transformArrayIndexedPath(error.ownerPath, arrayPath, transformIndex) ?? error.ownerPath
+            : error.ownerPath,
+      });
+    }
+
+    if (nextErrors.length === 0) {
+      externalErrors.delete(sourceId);
+      continue;
+    }
+
+    externalErrors.set(sourceId, {
+      sourceId,
+      errors: nextErrors,
     });
   }
 }
