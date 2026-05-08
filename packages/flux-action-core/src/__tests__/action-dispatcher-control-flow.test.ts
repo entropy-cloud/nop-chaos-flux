@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { CompiledRuntimeValue } from '@nop-chaos/flux-core';
 import {
   createActionCtx,
   createMockAdapter,
+  createMockEnv,
   createTestDispatcher,
   makeCompiledProgram,
   staticCompiled,
@@ -258,6 +259,88 @@ describe('action-dispatcher control flow', () => {
     expect(order).toContain('setValue');
     expect(order).toContain('showToast');
     expect(order[order.length - 1]).toBe('setValue');
+  });
+
+  it('preserves settled-branch failure as settledError without replacing the primary result', async () => {
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: async (invocation) => {
+        if (invocation.action === 'showToast') {
+          return { ok: false, error: new Error('settled failed') };
+        }
+
+        return { ok: true, data: 'primary success' };
+      },
+    });
+    const env = createMockEnv();
+    const { dispatcher, runtime } = createTestDispatcher({ adapter, env });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'setValue',
+          payload: { args: staticCompiled({ path: 'x', value: 1 }) },
+          targeting: {},
+          control: {},
+          source: { action: 'setValue', args: { path: 'x', value: 1 } },
+          onSettled: [
+            {
+              action: 'showToast',
+              payload: { args: staticCompiled({ message: 'cleanup' }) },
+              targeting: {},
+              control: {},
+              source: { action: 'showToast', args: { message: 'cleanup' } },
+            },
+          ],
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(result).toMatchObject({ ok: true, data: 'primary success' });
+    expect(result.settledError).toBeInstanceOf(Error);
+    expect((result.settledError as Error).message).toBe('settled failed');
+    expect(env.notify).not.toHaveBeenCalled();
+  });
+
+  it('captures normalized thrown onSettled errors as settledError without notifying', async () => {
+    const thrownError = new Error('settled threw');
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: vi.fn(async (invocation) => {
+        if (invocation.action === 'showToast') {
+          throw thrownError;
+        }
+
+        return { ok: true };
+      }),
+    });
+    const env = createMockEnv();
+    const { dispatcher, runtime } = createTestDispatcher({ adapter, env });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'setValue',
+          payload: { args: staticCompiled({ path: 'x', value: 1 }) },
+          targeting: {},
+          control: {},
+          source: { action: 'setValue', args: { path: 'x', value: 1 } },
+          onSettled: [
+            {
+              action: 'showToast',
+              payload: { args: staticCompiled({ message: 'cleanup' }) },
+              targeting: {},
+              control: {},
+              source: { action: 'showToast', args: { message: 'cleanup' } },
+            },
+          ],
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.settledError).toBe(thrownError);
+    expect(env.notify).not.toHaveBeenCalled();
   });
 
   it('skips action when when-condition evaluates to false', async () => {

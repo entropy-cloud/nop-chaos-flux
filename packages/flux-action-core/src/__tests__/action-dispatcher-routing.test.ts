@@ -148,6 +148,51 @@ describe('action-dispatcher routing', () => {
     expect(result.results).toHaveLength(2);
   });
 
+  it('returns the representative failure error for parallel action failures', async () => {
+    const representativeError = new Error('toast failed');
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: async (invocation) =>
+        invocation.action === 'showToast'
+          ? { ok: false, error: representativeError }
+          : { ok: true, data: invocation.action },
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: '__parallel__',
+          payload: {},
+          targeting: {},
+          control: {},
+          source: { action: '__parallel__' },
+          parallel: [
+            {
+              action: 'setValue',
+              payload: { args: staticCompiled({ path: 'a', value: 1 }) },
+              targeting: {},
+              control: {},
+              source: { action: 'setValue', args: { path: 'a', value: 1 } },
+            },
+            {
+              action: 'showToast',
+              payload: { args: staticCompiled({ message: 'hi' }) },
+              targeting: {},
+              control: {},
+              source: { action: 'showToast', args: { message: 'hi' } },
+            },
+          ],
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.results).toHaveLength(2);
+    expect(result.error).toBe(representativeError);
+    expect(result.results?.[1]?.error).toBe(representativeError);
+  });
+
   it('returns unsupported action error for unknown action types', async () => {
     const adapter = createMockAdapter();
     const { dispatcher, runtime } = createTestDispatcher({ adapter });
