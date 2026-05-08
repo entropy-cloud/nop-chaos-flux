@@ -1,13 +1,29 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { describe, expect, it, afterEach } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { describe, expect, it, afterEach, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
 import { registerReportDesignerRenderers } from './index.js';
+import { ReportFieldPanelRenderer } from './field-panel-renderer.js';
 import './report-field-panel.css';
+
+let mockScopeData: Record<string, unknown> = {};
+let mockActionScope: { resolve: (action: string) => unknown } | undefined;
+let mockRuntime: Record<string, unknown> = {};
+
+vi.mock('@nop-chaos/flux-react', async () => {
+  const actual = await vi.importActual<typeof import('@nop-chaos/flux-react')>('@nop-chaos/flux-react');
+  return {
+    ...actual,
+    useCurrentActionScope: () => mockActionScope,
+    useOwnScopeSelector: (selector: (data: Record<string, unknown>) => unknown) =>
+      selector(mockScopeData),
+    useRendererRuntime: () => mockRuntime,
+  };
+});
 
 const env: RendererEnv = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
@@ -46,12 +62,16 @@ const sampleFieldSources: FieldSourceSnapshot[] = [
 
 afterEach(() => {
   cleanup();
+  mockScopeData = {};
+  mockActionScope = undefined;
+  mockRuntime = {};
 });
 
 function renderFieldPanel(
   schemaOverrides: Record<string, unknown> = {},
   scopeData: Record<string, unknown> = {},
 ) {
+  mockScopeData = scopeData;
   const registry = createDefaultRegistry();
   registerReportDesignerRenderers(registry);
   const SchemaRenderer = createSchemaRenderer();
@@ -158,6 +178,112 @@ describe('ReportFieldPanelRenderer', () => {
     const userNameItem = screen.getByText('User Name').closest('li');
     expect(userNameItem?.getAttribute('data-field-id')).toBe('field-1');
     expect(userNameItem?.getAttribute('data-field-source-id')).toBe('source-1');
+  });
+
+  it('disables keyboard insertion when there is no current selection target', () => {
+    renderFieldPanel({ fieldSources: sampleFieldSources });
+
+    const buttons = screen.getAllByRole('button', { name: /当前选择|current selection/i });
+    for (const button of buttons) {
+      expect((button as HTMLButtonElement).disabled).toBe(true);
+    }
+  });
+
+  it('hides keyboard insertion controls when keyboardInsertEnabled is false', () => {
+    renderFieldPanel({ fieldSources: sampleFieldSources, keyboardInsertEnabled: false });
+
+    expect(screen.queryByRole('button', { name: /当前选择|current selection/i })).toBeNull();
+  });
+
+  it('dispatches field insertion to the current selection target', async () => {
+    const invoke = vi.fn().mockResolvedValue({ ok: true });
+    const createScope = vi.fn(() => ({ id: 'field-scope' }));
+    const resolved = {
+      method: 'dropFieldToTarget',
+      provider: { invoke },
+    };
+    const resolve = vi.fn((action: string) =>
+      action === 'report-designer:dropFieldToTarget' ? resolved : undefined,
+    );
+    mockActionScope = { resolve };
+    mockRuntime = { runtimeId: 'test-runtime' };
+    mockScopeData = {
+      selectionTarget: {
+        kind: 'cell',
+        cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+      },
+    };
+
+    render(
+      <ReportFieldPanelRenderer
+        {...({
+          id: 'field-panel',
+          path: 'page.body.0',
+          schema: { type: 'report-field-panel' },
+          templateNode: { validationOwnerPlan: undefined },
+          node: { scope: {} },
+          props: {
+            type: 'report-field-panel',
+            fieldSources: sampleFieldSources,
+            keyboardInsertEnabled: true,
+          },
+          meta: {},
+          regions: {},
+          events: {},
+          helpers: {
+            createScope,
+          },
+        } as any)}
+      />,
+    );
+
+    const insertButton = screen.getByRole('button', {
+      name: '将字段 User Name 插入到当前选择',
+    });
+    expect((insertButton as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(insertButton);
+
+    await waitFor(() => {
+      expect(resolve).toHaveBeenCalledWith('report-designer:dropFieldToTarget');
+      expect(createScope).toHaveBeenCalledWith(
+        {
+          field: {
+            sourceId: 'source-1',
+            fieldId: 'field-1',
+            label: 'User Name',
+            data: expect.objectContaining({ id: 'field-1', label: 'User Name' }),
+          },
+          target: {
+            kind: 'cell',
+            cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+          },
+        },
+        {
+          scopeKey: 'report-field-panel:source-1:field-1',
+          pathSuffix: 'fieldPanel.source-1.field-1',
+        },
+      );
+      expect(invoke).toHaveBeenCalledWith(
+        'dropFieldToTarget',
+        {
+          field: {
+            sourceId: 'source-1',
+            fieldId: 'field-1',
+            label: 'User Name',
+            data: expect.objectContaining({ id: 'field-1', label: 'User Name' }),
+          },
+          target: {
+            kind: 'cell',
+            cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+          },
+        },
+        {
+          runtime: mockRuntime,
+          scope: { id: 'field-scope' },
+          actionScope: mockActionScope,
+        },
+      );
+    });
   });
 
   it('ships package-owned field panel styling markers', () => {

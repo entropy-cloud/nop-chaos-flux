@@ -26,6 +26,7 @@ export interface ReportFieldPanelSchema extends BaseSchema {
   emptyLabel?: string;
   showFieldSourceHeader?: boolean;
   dragEnabled?: boolean;
+  keyboardInsertEnabled?: boolean;
 }
 
 export interface ReportInspectorSchema extends BaseSchema {

@@ -33,14 +33,15 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'report-field-panel',
     component: ReportFieldPanelRenderer,
-    fields: [
-      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
-      { key: 'fieldSources', kind: 'prop' },
-      { key: 'emptyLabel', kind: 'prop' },
-      { key: 'showFieldSourceHeader', kind: 'prop' },
-      { key: 'dragEnabled', kind: 'prop' },
-    ],
-  },
+      fields: [
+        { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+        { key: 'fieldSources', kind: 'prop' },
+        { key: 'emptyLabel', kind: 'prop' },
+        { key: 'showFieldSourceHeader', kind: 'prop' },
+        { key: 'dragEnabled', kind: 'prop' },
+        { key: 'keyboardInsertEnabled', kind: 'prop' },
+      ],
+    },
   {
     type: 'report-designer-page',
     component: ReportDesignerPageRenderer,
