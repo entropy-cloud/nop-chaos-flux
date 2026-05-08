@@ -171,7 +171,7 @@ export function selectCurrentFormFieldPresentation(
     selectCurrentFormErrors(state, {
       path: input.path,
       ownerPath: input.path,
-      sourceKinds: ['array', 'object', 'form', 'runtime-registration'],
+      sourceKinds: ['array', 'object', 'form', 'runtime-registration', 'external'],
     })[0] ?? fieldState.error;
   const field = getCompiledValidationField(input.validation, input.path);
   const showErrorOn = resolveShowErrorTriggers(field?.behavior ?? input.validation?.behavior);

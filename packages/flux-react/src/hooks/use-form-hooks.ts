@@ -271,7 +271,11 @@ export function useFieldError(path: string): ValidationError | undefined {
       const fieldState = state.fieldStates[path];
       const errors = fieldState?.errors;
       return errors?.find(
-        (e) => !e.sourceKind || e.sourceKind === 'field' || e.sourceKind === 'runtime-registration',
+        (e) =>
+          !e.sourceKind ||
+          e.sourceKind === 'field' ||
+          e.sourceKind === 'runtime-registration' ||
+          e.sourceKind === 'external',
       );
     },
     [path],
@@ -297,7 +301,11 @@ export function useAggregateError(
   options?: { enabled?: boolean },
 ): ValidationError | undefined {
   return useCurrentFormError(
-    { path, ownerPath: path, sourceKinds: ['array', 'object', 'form', 'runtime-registration'] },
+    {
+      path,
+      ownerPath: path,
+      sourceKinds: ['array', 'object', 'form', 'runtime-registration', 'external'],
+    },
     options,
   );
 }
