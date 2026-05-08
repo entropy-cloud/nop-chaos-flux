@@ -42,7 +42,6 @@ describe('createRuntimeSourceRegistry', () => {
         has: vi.fn(),
       },
       asyncGovernance: undefined,
-      executeApiRequest: vi.fn(),
     });
 
     const registration = registry.registerDataSource({
@@ -92,7 +91,6 @@ describe('createRuntimeSourceRegistry', () => {
         has: vi.fn(),
       },
       asyncGovernance: undefined,
-      executeApiRequest: vi.fn(),
     });
 
     const registration = registry.registerDataSource({
@@ -152,7 +150,6 @@ describe('createRuntimeSourceRegistry', () => {
         has: vi.fn(),
       },
       asyncGovernance: undefined,
-      executeApiRequest: vi.fn(),
     });
 
     const registration = registry.registerDataSource({
