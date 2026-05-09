@@ -111,6 +111,52 @@ describe('owner validation lifecycle contracts', () => {
     expect(validateRule).toHaveBeenCalledTimes(1);
   });
 
+  it('defers validateAll while lifecycle is bootstrapping until the owner becomes active', async () => {
+    const model = makeFormModel({ name: makeNode('name', { required: true }) });
+    const validateRule = vi.fn().mockReturnValue(undefined);
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      parentScope: createStubScope({ name: '' }),
+      initialValues: { name: '' },
+      validation: model,
+      initialLifecycleState: 'bootstrapping',
+      validateRule,
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const validationPromise = runtime.validateAll('submit');
+    await Promise.resolve();
+    expect(validateRule).not.toHaveBeenCalled();
+
+    runtime.refreshCompiledModel(model);
+
+    await expect(validationPromise).resolves.toMatchObject({ ok: true, errors: [] });
+    expect(validateRule).toHaveBeenCalledTimes(1);
+  });
+
+  it('defers validateSubtree while lifecycle is bootstrapping until the owner becomes active', async () => {
+    const model = makeFormModel({ profile: makeNode('profile'), 'profile.name': makeNode('profile.name', { required: true }) });
+    const validateRule = vi.fn().mockReturnValue(undefined);
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      parentScope: createStubScope({ profile: { name: '' } }),
+      initialValues: { profile: { name: '' } },
+      validation: model,
+      initialLifecycleState: 'bootstrapping',
+      validateRule,
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const validationPromise = runtime.validateSubtree('profile', 'commit');
+    await Promise.resolve();
+    expect(validateRule).not.toHaveBeenCalled();
+
+    runtime.refreshCompiledModel(model);
+
+    await expect(validationPromise).resolves.toMatchObject({ ok: true, errors: [] });
+    expect(validateRule).toHaveBeenCalledTimes(1);
+  });
+
   it('treats scheduled debounced async validation as owner-level pending work', async () => {
     vi.useFakeTimers();
 

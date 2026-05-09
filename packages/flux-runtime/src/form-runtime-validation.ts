@@ -42,7 +42,7 @@ function isLifecycleTransitional(state: FormRuntimeValidationState): boolean {
   return state.lifecycleState === 'bootstrapping' || state.lifecycleState === 'refreshing';
 }
 
-async function waitForActiveLifecycle(sharedState: FormRuntimeValidationState): Promise<boolean> {
+export async function waitForActiveLifecycle(sharedState: FormRuntimeValidationState): Promise<boolean> {
   if (sharedState.lifecycleState === 'disposed') {
     return false;
   }

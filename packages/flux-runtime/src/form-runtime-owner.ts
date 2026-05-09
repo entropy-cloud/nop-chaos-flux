@@ -28,6 +28,7 @@ import {
   cancelValidationDebounce,
   validatePath,
   validateSubtreeByNode,
+  waitForActiveLifecycle,
 } from './form-runtime-validation.js';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
@@ -312,6 +313,17 @@ export function buildFormOwnerRuntime(input: {
   async function validateForm(reason?: ValidationReason) {
     const currentValidation = input.getCurrentValidation();
 
+    if (!currentValidation) {
+      const lifecycleActive = await waitForActiveLifecycle(input.sharedState);
+      if (!lifecycleActive) {
+        return {
+          ok: true,
+          errors: [],
+          fieldErrors: {},
+        } as FormValidationResult;
+      }
+    }
+
     if (!currentValidation && input.sharedState.runtimeFieldRegistrations.size === 0) {
       return {
         ok: true,
@@ -468,6 +480,15 @@ export function buildFormOwnerRuntime(input: {
     const currentValidation = input.getCurrentValidation();
 
     if (!currentValidation) {
+      const lifecycleActive = await waitForActiveLifecycle(input.sharedState);
+      if (!lifecycleActive) {
+        return {
+          ok: true,
+          errors: [],
+          fieldErrors: {},
+        } as FormValidationResult;
+      }
+
       const targetPaths = collectSubtreeValidationTargets(input.sharedState, path);
       if (targetPaths.length === 0) {
         return {

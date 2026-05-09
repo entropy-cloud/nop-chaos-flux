@@ -18,6 +18,7 @@ export function createManagedSurfaceRuntime(
       parentScope?: ScopeRef;
       scopePath?: string;
       initialValues?: Record<string, any>;
+      existingScope?: ScopeRef;
       validation?: CompiledFormValidationModel;
       initialLifecycleState?: import('@nop-chaos/flux-core').ValidationOwnerLifecycleState;
     }) => ValidationScopeRuntime;
@@ -124,6 +125,7 @@ export function createManagedSurfaceRuntime(
         parentScope: scope,
         scopePath: scope.path,
         initialValues: scope.readOwn(),
+        existingScope: scope,
         validation: ownerValidationPlan,
         initialLifecycleState: ownerValidationPlan ? 'active' : 'bootstrapping',
       });

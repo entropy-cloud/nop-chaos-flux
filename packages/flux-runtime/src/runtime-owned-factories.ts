@@ -96,6 +96,7 @@ export function createRuntimeOwnedFactories(input: {
     validation?: CompiledFormValidationModel;
     initialValues?: Record<string, any>;
     existingStore?: import('@nop-chaos/flux-core').FormStoreApi;
+    existingScope?: ScopeRef;
     initialLifecycleState?: import('@nop-chaos/flux-core').ValidationOwnerLifecycleState;
   }) => ValidationScopeRuntime;
   dispatchAction: (
@@ -220,6 +221,7 @@ export function createRuntimeOwnedFactories(input: {
     validation?: CompiledFormValidationModel;
     initialValues?: Record<string, any>;
     existingStore?: import('@nop-chaos/flux-core').FormStoreApi;
+    existingScope?: ScopeRef;
     initialLifecycleState?: import('@nop-chaos/flux-core').ValidationOwnerLifecycleState;
   }): ValidationScopeRuntime {
     const formRuntime = createManagedFormRuntime({
@@ -228,6 +230,7 @@ export function createRuntimeOwnedFactories(input: {
       validation: inputValue.validation,
       initialValues: inputValue.initialValues,
       existingStore: inputValue.existingStore,
+      existingScope: inputValue.existingScope,
       scopePath: inputValue.scopePath,
       scopeBinding: 'none',
       initialLifecycleState: inputValue.initialLifecycleState,

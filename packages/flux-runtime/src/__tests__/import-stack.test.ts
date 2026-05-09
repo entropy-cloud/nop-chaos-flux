@@ -195,6 +195,41 @@ describe('createImportStack', () => {
       expect(actionScope.listNamespaces()).toContain('myNs');
     });
 
+    it('rolls back already-registered namespaces when a later import fails', async () => {
+      const { moduleCache, scope } = createStackSetup();
+      const actionScope = createMockActionScope();
+      const stack = createImportStack({
+        moduleCache,
+        getLoader: () => ({
+          load: async (spec: XuiImportSpec) => {
+            if (spec.as === 'bad') {
+              throw new Error('loader boom');
+            }
+            return createMockModule();
+          },
+        }),
+        getRuntime: createMockRuntime,
+        getEnv: createMockEnv,
+      });
+
+      await expect(
+        stack.push({
+          ownerNodeId: 'node-1',
+          imports: [
+            { from: 'lib-a', as: 'good' },
+            { from: 'lib-b', as: 'bad' },
+          ],
+          actionScope,
+          scope,
+          schemaUrl: '/schema.json',
+        }),
+      ).rejects.toThrow('Imported namespace bad failed to load: loader boom');
+
+      expect(actionScope.listNamespaces()).not.toContain('good');
+      expect(stack.frames).toHaveLength(0);
+      expect(stack.resolveAlias('good')).toBeUndefined();
+    });
+
     it('resolves import URLs via env.resolveImportUrl', async () => {
       const { moduleCache, scope } = createStackSetup();
       const resolveImportUrl = vi.fn((_schemaUrl: string, from: string) => `resolved:${from}`);
@@ -415,6 +450,54 @@ describe('createImportStack', () => {
           scope,
         }),
       ).toThrow('Duplicate import alias in the same node boundary: dup');
+    });
+
+    it('rolls back prepared namespaces when a later prepared import fails', () => {
+      const { stack, moduleCache, scope } = createStackSetup();
+      const actionScope = createMockActionScope();
+
+      moduleCache.set(
+        '{"from":"lib-a","options":null}',
+        createMockModule({
+          createNamespace: vi.fn(() => ({
+            kind: 'import' as const,
+            invoke: async () => ({ ok: true }),
+          })),
+        }),
+      );
+      moduleCache.set(
+        '{"from":"lib-b","options":null}',
+        createMockModule({
+          createNamespace: vi.fn(async () => ({
+            kind: 'import' as const,
+            invoke: async () => ({ ok: true }),
+          })),
+        }),
+      );
+
+      expect(() =>
+        stack.installPrepared({
+          ownerNodeId: 'node-1',
+          actionScope,
+          imports: [
+            {
+              schemaUrl: '/schema.json',
+              spec: { from: 'lib-a', as: 'good' },
+              resolvedSpec: { from: 'lib-a', as: 'good' },
+            } satisfies PreparedImportSpec,
+            {
+              schemaUrl: '/schema.json',
+              spec: { from: 'lib-b', as: 'bad' },
+              resolvedSpec: { from: 'lib-b', as: 'bad' },
+            } satisfies PreparedImportSpec,
+          ],
+          scope,
+        }),
+      ).toThrow('Prepared import bad must install synchronously at render time');
+
+      expect(actionScope.listNamespaces()).not.toContain('good');
+      expect(stack.frames).toHaveLength(0);
+      expect(stack.resolveAlias('good')).toBeUndefined();
     });
   });
 

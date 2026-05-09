@@ -148,6 +148,16 @@ type InternalImportFrame = ImportFrame & {
   controllerMap: Map<string, AbortController>;
 };
 
+function rollbackPartialFrameInstall(frame: Pick<InternalImportFrame, 'releaseMap' | 'controllerMap'>) {
+  for (const [key, release] of frame.releaseMap.entries()) {
+    frame.controllerMap.get(key)?.abort();
+    release();
+  }
+
+  frame.releaseMap.clear();
+  frame.controllerMap.clear();
+}
+
 export function createImportStack(input: {
   moduleCache: ModuleCache;
   getLoader: () => import('@nop-chaos/flux-core').ImportedLibraryLoader | undefined;
@@ -212,84 +222,89 @@ export function createImportStack(input: {
     const releaseMap = new Map<string, () => void>();
     const controllerMap = new Map<string, AbortController>();
 
-    for (const spec of imports) {
-      if (Object.prototype.hasOwnProperty.call(entries, spec.as)) {
-        const error = createImportError(
-          `Duplicate import alias in the same node boundary: ${spec.as}`,
-        );
-        notifyImportFailure(error, spec);
-        throw error;
-      }
-
-      if (args.actionScope?.listNamespaces().includes(spec.as)) {
-        const parentFrame = args.parentFrameId ? framesById.get(args.parentFrameId) : undefined;
-        const inherited = parentFrame
-          ? buildFrameBindings(parentFrame, framesById)[`$${spec.as}`]
-          : undefined;
-        const inheritedProvider = args.parentFrameId
-          ? resolveAlias(spec.as, args.parentFrameId)?.actionProvider
-          : undefined;
-
-        if (!inherited && !inheritedProvider) {
-          const error = createImportError(`Namespace collision for import alias: ${spec.as}`);
+    try {
+      for (const spec of imports) {
+        if (Object.prototype.hasOwnProperty.call(entries, spec.as)) {
+          const error = createImportError(
+            `Duplicate import alias in the same node boundary: ${spec.as}`,
+          );
           notifyImportFailure(error, spec);
           throw error;
         }
-      }
 
-      const controller = new AbortController();
-      controllerMap.set(createFrameEntryKey(spec), controller);
-      let wrappedProvider: ActionNamespaceProvider;
-      let expressionHelpers: Readonly<Record<string, unknown>> | undefined;
+        if (args.actionScope?.listNamespaces().includes(spec.as)) {
+          const parentFrame = args.parentFrameId ? framesById.get(args.parentFrameId) : undefined;
+          const inherited = parentFrame
+            ? buildFrameBindings(parentFrame, framesById)[`$${spec.as}`]
+            : undefined;
+          const inheritedProvider = args.parentFrameId
+            ? resolveAlias(spec.as, args.parentFrameId)?.actionProvider
+            : undefined;
 
-      try {
-        const module = await loadModule({
-          moduleCache: input.moduleCache,
-          getLoader: input.getLoader,
+          if (!inherited && !inheritedProvider) {
+            const error = createImportError(`Namespace collision for import alias: ${spec.as}`);
+            notifyImportFailure(error, spec);
+            throw error;
+          }
+        }
+
+        const controller = new AbortController();
+        controllerMap.set(createFrameEntryKey(spec), controller);
+        let wrappedProvider: ActionNamespaceProvider;
+        let expressionHelpers: Readonly<Record<string, unknown>> | undefined;
+
+        try {
+          const module = await loadModule({
+            moduleCache: input.moduleCache,
+            getLoader: input.getLoader,
+            spec,
+            signal: controller.signal,
+          });
+          const context: ImportedNamespaceContext = {
+            runtime: input.getRuntime(),
+            env: input.getEnv(),
+            actionScope:
+              args.actionScope ??
+              input.getRuntime().createActionScope({ id: `${frameId}:${spec.as}:action-scope` }),
+            componentRegistry: args.componentRegistry,
+            scope: args.scope,
+            spec,
+            nodeInstance: args.nodeInstance,
+          };
+          const provider = await module.createNamespace(context);
+          expressionHelpers = module.createExpressionHelpers
+            ? await module.createExpressionHelpers(context)
+            : undefined;
+          wrappedProvider = {
+            ...provider,
+            kind: provider.kind ?? 'import',
+          };
+        } catch (error) {
+          const wrappedError = createImportError(
+            `Imported namespace ${spec.as} failed to load: ${toErrorMessage(error)}`,
+            error,
+          );
+          notifyImportFailure(wrappedError, spec);
+          throw wrappedError;
+        }
+
+        if (args.actionScope) {
+          releaseMap.set(
+            createFrameEntryKey(spec),
+            args.actionScope.registerNamespace(spec.as, wrappedProvider),
+          );
+        }
+
+        entries[spec.as] = {
+          alias: spec.as,
           spec,
-          signal: controller.signal,
-        });
-        const context: ImportedNamespaceContext = {
-          runtime: input.getRuntime(),
-          env: input.getEnv(),
-          actionScope:
-            args.actionScope ??
-            input.getRuntime().createActionScope({ id: `${frameId}:${spec.as}:action-scope` }),
-          componentRegistry: args.componentRegistry,
-          scope: args.scope,
-          spec,
-          nodeInstance: args.nodeInstance,
+          actionProvider: wrappedProvider,
+          expressionHelpers: expressionHelpers ?? undefined,
         };
-        const provider = await module.createNamespace(context);
-        expressionHelpers = module.createExpressionHelpers
-          ? await module.createExpressionHelpers(context)
-          : undefined;
-        wrappedProvider = {
-          ...provider,
-          kind: provider.kind ?? 'import',
-        };
-      } catch (error) {
-        const wrappedError = createImportError(
-          `Imported namespace ${spec.as} failed to load: ${toErrorMessage(error)}`,
-          error,
-        );
-        notifyImportFailure(wrappedError, spec);
-        throw wrappedError;
       }
-
-      if (args.actionScope) {
-        releaseMap.set(
-          createFrameEntryKey(spec),
-          args.actionScope.registerNamespace(spec.as, wrappedProvider),
-        );
-      }
-
-      entries[spec.as] = {
-        alias: spec.as,
-        spec,
-        actionProvider: wrappedProvider,
-        expressionHelpers: expressionHelpers ?? undefined,
-      };
+    } catch (error) {
+      rollbackPartialFrameInstall({ releaseMap, controllerMap });
+      throw error;
     }
 
     const frame: InternalImportFrame = {
@@ -327,85 +342,90 @@ export function createImportStack(input: {
     const releaseMap = new Map<string, () => void>();
     const controllerMap = new Map<string, AbortController>();
 
-    for (const prepared of imports) {
-      if (Object.prototype.hasOwnProperty.call(entries, prepared.spec.as)) {
-        const error = createImportError(
-          `Duplicate import alias in the same node boundary: ${prepared.spec.as}`,
-        );
-        notifyImportFailure(error, prepared.spec);
-        throw error;
-      }
-
-      if (args.actionScope?.listNamespaces().includes(prepared.spec.as)) {
-        const inherited = args.parentFrame
-          ? buildFrameBindings(args.parentFrame, framesById)[`$${prepared.spec.as}`]
-          : undefined;
-        const inheritedProvider = args.parentFrame
-          ? resolveAlias(prepared.spec.as, args.parentFrame.id)?.actionProvider
-          : undefined;
-
-        if (!inherited && !inheritedProvider) {
+    try {
+      for (const prepared of imports) {
+        if (Object.prototype.hasOwnProperty.call(entries, prepared.spec.as)) {
           const error = createImportError(
-            `Namespace collision for import alias: ${prepared.spec.as}`,
+            `Duplicate import alias in the same node boundary: ${prepared.spec.as}`,
           );
           notifyImportFailure(error, prepared.spec);
           throw error;
         }
+
+        if (args.actionScope?.listNamespaces().includes(prepared.spec.as)) {
+          const inherited = args.parentFrame
+            ? buildFrameBindings(args.parentFrame, framesById)[`$${prepared.spec.as}`]
+            : undefined;
+          const inheritedProvider = args.parentFrame
+            ? resolveAlias(prepared.spec.as, args.parentFrame.id)?.actionProvider
+            : undefined;
+
+          if (!inherited && !inheritedProvider) {
+            const error = createImportError(
+              `Namespace collision for import alias: ${prepared.spec.as}`,
+            );
+            notifyImportFailure(error, prepared.spec);
+            throw error;
+          }
+        }
+
+        const module = input.moduleCache.get(createModuleKey(prepared.resolvedSpec));
+        if (!module) {
+          const error = createImportError(
+            `Prepared import missing cached module for ${prepared.spec.as}`,
+          );
+          notifyImportFailure(error, prepared.spec);
+          throw error;
+        }
+
+        const context: ImportedNamespaceContext = {
+          runtime: input.getRuntime(),
+          env: input.getEnv(),
+          actionScope:
+            args.actionScope ??
+            input
+              .getRuntime()
+              .createActionScope({ id: `${frameId}:${prepared.spec.as}:action-scope` }),
+          componentRegistry: args.componentRegistry,
+          scope: args.scope,
+          spec: prepared.resolvedSpec,
+          nodeInstance: args.nodeInstance,
+        };
+
+        const providerResult = module.createNamespace(context);
+        const helpersResult = module.createExpressionHelpers?.(context);
+
+        if (providerResult instanceof Promise || helpersResult instanceof Promise) {
+          const error = createImportError(
+            `Prepared import ${prepared.spec.as} must install synchronously at render time.`,
+          );
+          notifyImportFailure(error, prepared.spec);
+          throw error;
+        }
+
+        const wrappedProvider: ActionNamespaceProvider = {
+          ...providerResult,
+          kind: providerResult.kind ?? 'import',
+        };
+
+        if (args.actionScope) {
+          releaseMap.set(
+            buildPreparedFrameEntryKey(prepared),
+            args.actionScope.registerNamespace(prepared.spec.as, wrappedProvider),
+          );
+        }
+
+        entries[prepared.spec.as] = {
+          alias: prepared.spec.as,
+          spec: prepared.resolvedSpec,
+          actionProvider: wrappedProvider,
+          expressionHelpers: helpersResult ?? undefined,
+          staticMeta: prepared.staticMeta,
+        };
       }
-
-      const module = input.moduleCache.get(createModuleKey(prepared.resolvedSpec));
-      if (!module) {
-        const error = createImportError(
-          `Prepared import missing cached module for ${prepared.spec.as}`,
-        );
-        notifyImportFailure(error, prepared.spec);
-        throw error;
-      }
-
-      const context: ImportedNamespaceContext = {
-        runtime: input.getRuntime(),
-        env: input.getEnv(),
-        actionScope:
-          args.actionScope ??
-          input
-            .getRuntime()
-            .createActionScope({ id: `${frameId}:${prepared.spec.as}:action-scope` }),
-        componentRegistry: args.componentRegistry,
-        scope: args.scope,
-        spec: prepared.resolvedSpec,
-        nodeInstance: args.nodeInstance,
-      };
-
-      const providerResult = module.createNamespace(context);
-      const helpersResult = module.createExpressionHelpers?.(context);
-
-      if (providerResult instanceof Promise || helpersResult instanceof Promise) {
-        const error = createImportError(
-          `Prepared import ${prepared.spec.as} must install synchronously at render time.`,
-        );
-        notifyImportFailure(error, prepared.spec);
-        throw error;
-      }
-
-      const wrappedProvider: ActionNamespaceProvider = {
-        ...providerResult,
-        kind: providerResult.kind ?? 'import',
-      };
-
-      if (args.actionScope) {
-        releaseMap.set(
-          buildPreparedFrameEntryKey(prepared),
-          args.actionScope.registerNamespace(prepared.spec.as, wrappedProvider),
-        );
-      }
-
-      entries[prepared.spec.as] = {
-        alias: prepared.spec.as,
-        spec: prepared.resolvedSpec,
-        actionProvider: wrappedProvider,
-        expressionHelpers: helpersResult ?? undefined,
-        staticMeta: prepared.staticMeta,
-      };
+    } catch (error) {
+      rollbackPartialFrameInstall({ releaseMap, controllerMap });
+      throw error;
     }
 
     const frame: InternalImportFrame = {
@@ -431,13 +451,7 @@ export function createImportStack(input: {
       return;
     }
 
-    for (const [key, release] of frame.releaseMap.entries()) {
-      frame.controllerMap.get(key)?.abort();
-      release();
-    }
-
-    frame.releaseMap.clear();
-    frame.controllerMap.clear();
+    rollbackPartialFrameInstall(frame);
     framesById.delete(frameId);
     const index = orderedFrames.findIndex((candidate) => candidate.id === frameId);
     if (index >= 0) {
