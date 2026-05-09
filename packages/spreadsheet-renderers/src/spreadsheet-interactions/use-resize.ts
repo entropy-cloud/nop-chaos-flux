@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
 
 export interface ResizeState {
   isResizing: boolean;
@@ -8,7 +9,24 @@ export interface ResizeState {
   startSize: number;
 }
 
-export function useResize() {
+function isAbortLike(error: unknown): boolean {
+  return (
+    (error instanceof Error && error.name === 'AbortError') ||
+    ((error as { name?: string } | null | undefined)?.name === 'AbortError')
+  );
+}
+
+function formatFailureMessage(prefix: string, error: unknown): string {
+  return error instanceof Error && error.message ? `${prefix}: ${error.message}` : prefix;
+}
+
+export function useResize(input: {
+  bridge: SpreadsheetBridge;
+  snapshot: SpreadsheetHostSnapshot;
+  sheetId: string;
+  onLog?: (msg: string) => void;
+}) {
+  const { bridge, snapshot, sheetId, onLog } = input;
   const [resizeState, setResizeState] = useState<ResizeState>({
     isResizing: false,
     type: 'column',
@@ -16,8 +34,34 @@ export function useResize() {
     startPos: 0,
     startSize: 0,
   });
-  const [columnWidths, setColumnWidths] = useState<Record<number, number>>({});
-  const [rowHeights, setRowHeights] = useState<Record<number, number>>({});
+  const [columnWidthPreview, setColumnWidthPreview] = useState<Record<number, number>>({});
+  const [rowHeightPreview, setRowHeightPreview] = useState<Record<number, number>>({});
+
+  const columnWidths = useMemo(() => {
+    const widths: Record<number, number> = {};
+
+    for (const [key, column] of Object.entries(snapshot.activeSheet?.columns ?? {})) {
+      const index = Number(key);
+      if (!Number.isNaN(index) && typeof column?.width === 'number') {
+        widths[index] = column.width;
+      }
+    }
+
+    return { ...widths, ...columnWidthPreview };
+  }, [columnWidthPreview, snapshot.activeSheet?.columns]);
+
+  const rowHeights = useMemo(() => {
+    const heights: Record<number, number> = {};
+
+    for (const [key, row] of Object.entries(snapshot.activeSheet?.rows ?? {})) {
+      const index = Number(key);
+      if (!Number.isNaN(index) && typeof row?.height === 'number') {
+        heights[index] = row.height;
+      }
+    }
+
+    return { ...heights, ...rowHeightPreview };
+  }, [rowHeightPreview, snapshot.activeSheet?.rows]);
 
   const handleColumnResizeStart = useCallback(
     (col: number, e: React.MouseEvent) => {
@@ -50,8 +94,43 @@ export function useResize() {
   );
 
   const endResize = useCallback(() => {
+    const current = resizeState;
     setResizeState((prev) => ({ ...prev, isResizing: false }));
-  }, []);
+
+    if (current.index < 0) {
+      return;
+    }
+
+    const nextSize =
+      current.type === 'column'
+        ? columnWidthPreview[current.index] ?? columnWidths[current.index] ?? current.startSize
+        : rowHeightPreview[current.index] ?? rowHeights[current.index] ?? current.startSize;
+
+    const command =
+      current.type === 'column'
+        ? { type: 'spreadsheet:resizeColumn' as const, sheetId, col: current.index, width: nextSize }
+        : { type: 'spreadsheet:resizeRow' as const, sheetId, row: current.index, height: nextSize };
+
+    if (current.type === 'column') {
+      setColumnWidthPreview((prev) => {
+        const next = { ...prev };
+        delete next[current.index];
+        return next;
+      });
+    } else {
+      setRowHeightPreview((prev) => {
+        const next = { ...prev };
+        delete next[current.index];
+        return next;
+      });
+    }
+
+    void bridge.dispatch(command).catch((error) => {
+      if (!isAbortLike(error)) {
+        onLog?.(formatFailureMessage('Resize failed', error));
+      }
+    });
+  }, [bridge, columnWidthPreview, columnWidths, onLog, resizeState, rowHeightPreview, rowHeights, sheetId]);
 
   useEffect(() => {
     if (!resizeState.isResizing) return;
@@ -64,11 +143,11 @@ export function useResize() {
           if (resizeState.type === 'column') {
             const delta = clientPos - resizeState.startPos;
             const newWidth = Math.max(30, resizeState.startSize + delta);
-            setColumnWidths((prev) => ({ ...prev, [resizeState.index]: newWidth }));
+            setColumnWidthPreview((prev) => ({ ...prev, [resizeState.index]: newWidth }));
           } else {
             const delta = clientPos - resizeState.startPos;
             const newHeight = Math.max(16, resizeState.startSize + delta);
-            setRowHeights((prev) => ({ ...prev, [resizeState.index]: newHeight }));
+            setRowHeightPreview((prev) => ({ ...prev, [resizeState.index]: newHeight }));
           }
         });
       }

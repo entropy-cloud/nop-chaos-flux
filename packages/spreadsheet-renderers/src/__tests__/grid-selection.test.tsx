@@ -234,6 +234,66 @@ describe('spreadsheet grid selection', () => {
     });
   });
 
+  it('commits column resize to spreadsheet core state on mouseup', async () => {
+    const documentModel = createEmptyDocument('column-resize-commit');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const handle = container.querySelector(
+      '[data-slot="spreadsheet-column-resize-handle"]',
+    ) as HTMLElement | null;
+    expect(handle).toBeTruthy();
+
+    fireEvent.mouseDown(handle!, { clientX: 100, button: 0 });
+    fireEvent.mouseMove(window, { clientX: 150, buttons: 1 });
+
+    await waitFor(() => {
+      const header = screen.getByLabelText('Select column A');
+      expect((header as HTMLElement).style.width).toBe('130px');
+    });
+
+    fireEvent.mouseUp(window);
+
+    await waitFor(() => {
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      expect(activeSheet?.columns?.['0']?.width).toBe(130);
+    });
+  });
+
+  it('commits row resize to spreadsheet core state on mouseup', async () => {
+    const documentModel = createEmptyDocument('row-resize-commit');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const handle = container.querySelector(
+      '[data-slot="spreadsheet-row-resize-handle"]',
+    ) as HTMLElement | null;
+    expect(handle).toBeTruthy();
+
+    fireEvent.mouseDown(handle!, { clientY: 100, button: 0 });
+    fireEvent.mouseMove(window, { clientY: 120, buttons: 1 });
+
+    await waitFor(() => {
+      const firstRow = container.querySelector('tbody tr') as HTMLElement | null;
+      expect(firstRow?.style.height).toBe('44px');
+    });
+
+    fireEvent.mouseUp(window);
+
+    await waitFor(() => {
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      expect(activeSheet?.rows?.['0']?.height).toBe(44);
+    });
+  });
+
   it('resyncs toolbar draft cell values from the selected live cell', async () => {
     const documentModel = createEmptyDocument('toolbar-cell-value-sync');
     const core = createSpreadsheetCore({ document: documentModel });

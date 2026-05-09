@@ -203,7 +203,7 @@ export function useSpreadsheetInteractions(
     handleColumnResizeStart,
     handleRowResizeStart,
     endResize,
-  } = useResize();
+  } = useResize({ bridge, snapshot, sheetId, onLog });
 
   const handleMouseUp = useCallback(() => {
     selectionMouseUp(resizeState.isResizing, endResize, getSelectedRange);
