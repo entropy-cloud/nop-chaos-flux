@@ -184,8 +184,16 @@ export function useDetailChildValidationContract(input: {
   childOwnerId: string;
   mode?: ChildValidationMode;
   active: boolean;
+  blocked?: boolean;
 }) {
-  const { parentValidationOwner, draftForm, childOwnerId, mode = 'summary-gate', active } = input;
+  const {
+    parentValidationOwner,
+    draftForm,
+    childOwnerId,
+    mode = 'summary-gate',
+    active,
+    blocked = false,
+  } = input;
 
   React.useEffect(() => {
     if (!parentValidationOwner || !draftForm || !active) {
@@ -195,7 +203,7 @@ export function useDetailChildValidationContract(input: {
     parentValidationOwner.registerChildContract({
       childOwnerId,
       mode,
-      active: true,
+      active: !blocked,
       unregister() {
         parentValidationOwner.unregisterChildContract(childOwnerId);
       },
@@ -220,5 +228,5 @@ export function useDetailChildValidationContract(input: {
     return () => {
       parentValidationOwner.unregisterChildContract(childOwnerId);
     };
-  }, [active, childOwnerId, draftForm, mode, parentValidationOwner]);
+  }, [active, blocked, childOwnerId, draftForm, mode, parentValidationOwner]);
 }

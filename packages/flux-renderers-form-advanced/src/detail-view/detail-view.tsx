@@ -8,7 +8,7 @@ import {
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import { getIn } from '@nop-chaos/flux-core';
+import { getIn, setIn } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DetailViewSchema } from '../composite-field/composite-schemas.js';
@@ -111,6 +111,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     childOwnerId,
     mode: props.templateNode.validationOwnerPlan?.childContractMode,
     active: open,
+    blocked: confirming,
   });
 
   const currentValue = React.useMemo(() => {
@@ -128,7 +129,81 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     node: props.node,
   });
 
-async function handleOpen() {
+  function hasUsableParentValidationOwner() {
+    if (!parentValidationOwner) {
+      return false;
+    }
+
+    if (parentValidationOwner.validation) {
+      return true;
+    }
+
+    if (parentValidationOwner.lifecycleState === 'active') {
+      return true;
+    }
+
+    return (
+      parentValidationOwner.lifecycleState == null &&
+      typeof parentValidationOwner.validateSubtree === 'function' &&
+      typeof parentValidationOwner.validateAll === 'function'
+    );
+  }
+
+  function buildDraftValuesFromCommitResult(
+    draftValues: Record<string, unknown>,
+    currentDraftValues: Record<string, unknown>,
+  ): Record<string, unknown> {
+    if ('patch' in draftValues && Array.isArray(draftValues.patch)) {
+      return (draftValues.patch as Array<{ path: string; value: unknown }>).reduce<Record<string, unknown>>(
+        (acc, patch) => setIn(acc, patch.path, patch.value) as Record<string, unknown>,
+        { ...currentDraftValues },
+      );
+    }
+
+    if (
+      'updates' in draftValues &&
+      typeof draftValues.updates === 'object' &&
+      draftValues.updates !== null
+    ) {
+      return {
+        ...currentDraftValues,
+        ...(draftValues.updates as Record<string, unknown>),
+      };
+    }
+
+    const commitValue = Object.prototype.hasOwnProperty.call(draftValues, '__value')
+      ? draftValues.__value
+      : draftValues;
+
+    if (Object.prototype.hasOwnProperty.call(currentDraftValues, '__value')) {
+      return { __value: commitValue };
+    }
+
+    return typeof commitValue === 'object' && commitValue !== null
+      ? { ...(commitValue as Record<string, unknown>) }
+      : { __value: commitValue };
+  }
+
+  async function validateCommittedDraftLocally(
+    draftValues: Record<string, unknown>,
+  ): Promise<boolean> {
+    if (!draftForm) {
+      return true;
+    }
+
+    const currentDraftValues = readDetailDraftValues(draftForm).draftValues ?? {};
+    draftForm.setValues(buildDraftValuesFromCommitResult(draftValues, currentDraftValues));
+    const result = await draftForm.validateAll('commit');
+
+    if (!result.ok) {
+      setDraftErrorSafe(result.errors[0]?.message ?? validationMessage);
+      return false;
+    }
+
+    return true;
+  }
+
+  async function handleOpen() {
     if (effectiveDisabled) return;
 
     const openToken = openSequencer.nextToken();
@@ -160,13 +235,19 @@ async function handleOpen() {
   }
 
   async function settleParentValidation(): Promise<boolean> {
-    if (!parentForm) {
+    const result = parentForm
+      ? scopePath
+        ? await parentForm.validateSubtree(scopePath)
+        : await parentForm.validateAll('commit')
+      : hasUsableParentValidationOwner()
+        ? scopePath
+          ? await parentValidationOwner!.validateSubtree(scopePath, 'commit')
+          : await parentValidationOwner!.validateAll('commit')
+        : undefined;
+
+    if (!result) {
       return true;
     }
-
-    const result = scopePath
-      ? await parentForm.validateSubtree(scopePath)
-      : await parentForm.validateAll('commit');
 
     if (!result.ok) {
       setDraftErrorSafe(result.errors[0]?.message ?? validationMessage);
@@ -181,7 +262,7 @@ async function handleOpen() {
       ? draftValues.__value
       : draftValues;
 
-    if (scopePath) {
+      if (scopePath) {
       if ('patch' in draftValues && Array.isArray(draftValues.patch)) {
         const patches = draftValues.patch as Array<{ path: string; value: unknown }>;
         for (const p of patches) {
@@ -212,9 +293,11 @@ async function handleOpen() {
         }
       }
 
-      if (parentForm) {
+      if (parentForm || hasUsableParentValidationOwner()) {
         return await settleParentValidation();
       }
+
+      return await validateCommittedDraftLocally(draftValues);
     } else {
       const updates =
         draftValues.updates !== undefined
@@ -228,6 +311,11 @@ async function handleOpen() {
         return await settleParentValidation();
       } else {
         parentScope.merge(updates as Record<string, unknown>);
+        if (hasUsableParentValidationOwner()) {
+          return await settleParentValidation();
+        }
+
+        return await validateCommittedDraftLocally(draftValues);
       }
     }
 

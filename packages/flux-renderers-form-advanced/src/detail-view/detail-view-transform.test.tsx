@@ -422,4 +422,59 @@ describe('detail-view renderer transform behavior', () => {
     expect(screen.getByTestId('viewer-name').textContent).toBe('Original');
     expect(screen.getByTestId('viewer-status').textContent).toBe('draft');
   });
+
+  it('keeps page-scope detail-view open when async transformOut commits an invalid final value', async () => {
+    cleanup();
+    let resolveCommit: ((value: { ok: true; data: { updates: { title: string } } }) => void) | undefined;
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async (_method: string) =>
+            await new Promise<{ ok: true; data: { updates: { title: string } } }>((resolve) => {
+              resolveCommit = resolve;
+            }),
+        }),
+      })),
+    };
+    const SchemaRenderer = createPageSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-transform.test.tsx#7"
+        schema={{
+          type: 'page',
+          data: { summary: { title: 'Original' } },
+          body: [
+            {
+              type: 'detail-view',
+              scopePath: 'summary',
+              triggerLabel: 'Edit Summary',
+              surface: { mode: 'dialog', title: 'Edit Summary' },
+              'xui:imports': [{ from: 'detail-view-lib', as: 'detailViewLib' }],
+              transformOutAction: { action: 'detailViewLib:toUpdates' },
+              content: [{ type: 'input-text', name: 'title', label: 'Title', required: true }],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Summary')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Summary'));
+    await waitFor(() => expect(screen.getByLabelText('Title')).toBeTruthy());
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Draft' } });
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => expect(resolveCommit).toBeTypeOf('function'));
+    resolveCommit?.({ ok: true, data: { updates: { title: '' } } });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Title')).toBeTruthy();
+      expect(screen.getByText(/required/i)).toBeTruthy();
+    });
+  });
 });

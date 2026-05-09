@@ -2,9 +2,25 @@ import type {
   CompiledFormValidationModel,
   FieldRegistrationHandle,
   RuntimeFieldRegistration,
+  ScopeRef,
+  ScopeStore,
+  ValidationStoreApi,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
-import { buildCompiledFormValidationModel, createPathBinding } from '@nop-chaos/flux-core';
+import { buildCompiledFormValidationModel, createPathBinding, getIn } from '@nop-chaos/flux-core';
+
+type LiveValidationScopeRuntime = ValidationScopeRuntime & {
+  store: ValidationStoreApi;
+  scope: ScopeRef;
+};
+
+function assertLiveValidationScopeRuntime(
+  owner: ValidationScopeRuntime,
+): asserts owner is LiveValidationScopeRuntime {
+  if (!owner.store || !owner.scope) {
+    throw new Error('Projected validation runtime requires a live validation owner with store and scope');
+  }
+}
 
 interface CreateProjectedValidationRuntimeOptions {
   ownerRootPath?: string;
@@ -85,11 +101,134 @@ function projectValidationModel(
   };
 }
 
+function createProjectedValidationStore(
+  parentOwner: LiveValidationScopeRuntime,
+  options: Pick<CreateProjectedValidationRuntimeOptions, 'ownerRootPath' | 'scalarValueAlias'>,
+) {
+  const binding = createPathBinding({
+    ownerRootPath: options.ownerRootPath ?? '',
+    scalarValueAlias: options.scalarValueAlias,
+  });
+  let lastParentState: ReturnType<ValidationStoreApi['getState']> | undefined;
+  let lastProjectedState: ReturnType<ValidationStoreApi['getState']> | undefined;
+
+  function projectState(state: ReturnType<ValidationStoreApi['getState']>) {
+    if (state === lastParentState && lastProjectedState !== undefined) {
+      return lastProjectedState;
+    }
+
+    const projected = {
+      ...state,
+      values: options.ownerRootPath
+        ? ((getIn(state.values, options.ownerRootPath) ?? {}) as Record<string, unknown>)
+        : state.values,
+      fieldStates: Object.fromEntries(
+        Object.entries(state.fieldStates).flatMap(([path, fieldState]) => {
+          const relativePath = binding.toRelative(path);
+          return relativePath === undefined ? [] : [[relativePath, fieldState]];
+        }),
+      ),
+    };
+
+    lastParentState = state;
+    lastProjectedState = projected;
+    return projected;
+  }
+
+  return {
+    getState() {
+      return projectState(parentOwner.store.getState());
+    },
+    subscribe(listener: () => void) {
+      return parentOwner.store.subscribe(listener);
+    },
+    subscribeToPath(path: string, listener: () => void) {
+      return parentOwner.store.subscribeToPath(binding.toAbsolute(path), listener);
+    },
+    subscribeToPaths(paths: readonly string[], listener: () => void) {
+      return parentOwner.store.subscribeToPaths(paths.map((path) => binding.toAbsolute(path)), listener);
+    },
+    subscribeToSubmitting(listener: () => void) {
+      return parentOwner.store.subscribeToSubmitting(listener);
+    },
+    subscribeToModelGeneration(listener: () => void) {
+      return parentOwner.store.subscribeToModelGeneration?.(listener) ?? (() => undefined);
+    },
+    getPathState(path: string) {
+      return parentOwner.store.getPathState(binding.toAbsolute(path));
+    },
+    getFieldState(path: string) {
+      return parentOwner.store.getFieldState(binding.toAbsolute(path));
+    },
+  };
+}
+
+function createProjectedValidationScope(
+  parentScope: ScopeRef,
+  options: Pick<CreateProjectedValidationRuntimeOptions, 'ownerRootPath' | 'scalarValueAlias'>,
+  projectedStore: ValidationStoreApi,
+): ScopeRef {
+  const binding = createPathBinding({
+    ownerRootPath: options.ownerRootPath ?? '',
+    scalarValueAlias: options.scalarValueAlias,
+  });
+  const store: ScopeStore<Record<string, any>> = {
+    getSnapshot() {
+      return projectedStore.getState().values as Record<string, any>;
+    },
+    getLastChange() {
+      return parentScope.store?.getLastChange();
+    },
+    setSnapshot(next, change) {
+      parentScope.store?.setSnapshot(next, change);
+    },
+    subscribe(listener) {
+      return parentScope.store?.subscribe(listener) ?? (() => undefined);
+    },
+  };
+
+  return {
+    id: parentScope.id,
+    path: options.ownerRootPath ? binding.toRelative(options.ownerRootPath) ?? parentScope.path : parentScope.path,
+    parent: parentScope.parent,
+    store,
+    get value() {
+      return projectedStore.getState().values as Record<string, any>;
+    },
+    get(path: string) {
+      return parentScope.get(binding.toAbsolute(path));
+    },
+    has(path: string) {
+      return parentScope.has(binding.toAbsolute(path));
+    },
+    readOwn() {
+      return projectedStore.getState().values as Record<string, any>;
+    },
+    readVisible() {
+      return projectedStore.getState().values as Record<string, any>;
+    },
+    materializeVisible() {
+      return projectedStore.getState().values as Record<string, any>;
+    },
+    update(path: string, value: unknown) {
+      parentScope.update(binding.toAbsolute(path), value);
+    },
+    merge(data: Record<string, unknown>) {
+      for (const [key, value] of Object.entries(data)) {
+        parentScope.update(binding.toAbsolute(key), value);
+      }
+    },
+  };
+}
+
 export function createProjectedValidationRuntime(
   parentOwner: ValidationScopeRuntime,
   options: CreateProjectedValidationRuntimeOptions,
-): ValidationScopeRuntime {
+): LiveValidationScopeRuntime {
+  assertLiveValidationScopeRuntime(parentOwner);
   const mapChildPath = options.mapChildPath ?? options.prefixPath;
+  const projectedStore = createProjectedValidationStore(parentOwner, options);
+  const projectedScope = createProjectedValidationScope(parentOwner.scope, options, projectedStore);
   let lastParentValidation: CompiledFormValidationModel | undefined;
   let lastProjectedValidation: CompiledFormValidationModel | undefined;
 
@@ -113,7 +252,7 @@ export function createProjectedValidationRuntime(
     };
   }
 
-  const proxy: ValidationScopeRuntime = {
+  const proxy: LiveValidationScopeRuntime = {
     get scopeId() {
       return parentOwner.scopeId;
     },
@@ -130,10 +269,10 @@ export function createProjectedValidationRuntime(
       return parentOwner.subscribeToModelGeneration?.(listener) ?? (() => undefined);
     },
     get store() {
-      return parentOwner.store;
+      return projectedStore;
     },
     get scope() {
-      return parentOwner.scope;
+      return projectedScope;
     },
     get validation() {
       return getProjectedValidation();

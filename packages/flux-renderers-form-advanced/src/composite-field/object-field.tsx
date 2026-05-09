@@ -54,6 +54,29 @@ function isPromiseLike<T>(value: T | Promise<T>): value is Promise<T> {
   return typeof value === 'object' && value !== null && 'then' in value;
 }
 
+async function revalidateProjectedOwner(
+  owner:
+    | Pick<NonNullable<ReturnType<typeof useCurrentValidationScope>>, 'validateSubtree'>
+    | undefined,
+  path: string,
+): Promise<void> {
+  if (!owner || !path) {
+    return;
+  }
+
+  await owner.validateSubtree(path, 'commit');
+}
+
+export async function applyNonFormObjectFieldCommit(input: {
+  name: string;
+  committedValue: unknown;
+  parentScope: Pick<ScopeRef, 'update'>;
+  parentValidationOwner?: Pick<NonNullable<ReturnType<typeof useCurrentValidationScope>>, 'validateSubtree'>;
+}): Promise<void> {
+  input.parentScope.update(input.name, input.committedValue);
+  await revalidateProjectedOwner(input.parentValidationOwner, input.name);
+}
+
 function createObjectFieldChildScope(
   parentScope: ScopeRef,
   name: string,
@@ -251,7 +274,12 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
                 return;
               }
 
-              parentScope.update(name, resolvedCommittedValue);
+              void applyNonFormObjectFieldCommit({
+                name,
+                committedValue: resolvedCommittedValue,
+                parentScope,
+                parentValidationOwner,
+              });
             })
             .catch((error: unknown) => {
               if (!isTransformOutSequenceCurrent(transformOutOwner, sequence)) {
@@ -275,7 +303,12 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
           return;
         }
 
-        parentScope.update(name, committedValue);
+        void applyNonFormObjectFieldCommit({
+          name,
+          committedValue,
+          parentScope,
+          parentValidationOwner,
+        });
         return;
       }
 
@@ -300,6 +333,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
       name,
       parentForm,
       parentScope,
+      parentValidationOwner,
       pendingTransformOutOwner,
       projectedValue,
       props.meta.disabled,

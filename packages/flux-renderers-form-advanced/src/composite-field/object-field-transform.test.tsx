@@ -251,4 +251,5 @@ describe('object-field transform actions', () => {
       profile: { firstName: 'CAROL', lastName: 'Smith' },
     });
   });
+
 });

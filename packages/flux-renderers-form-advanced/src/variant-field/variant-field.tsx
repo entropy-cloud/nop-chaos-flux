@@ -11,12 +11,13 @@ import { actionAdapter, getIn } from '@nop-chaos/flux-core';
 import {
   FieldFrame,
   useCurrentForm,
+  useCurrentValidationScope,
   useRenderScope,
   useScopeSelector,
   useCurrentFormState,
   toFieldRemarkProps,
 } from '@nop-chaos/flux-react';
-import { FormContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
+import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ import {
   resolveInitialVariant,
 } from './variant-field-matching.js';
 import { createVariantFormProxy, createVariantScope } from './variant-field-runtime.js';
+import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime.js';
 
 function resolveVariantFrameWrap(
   frameWrap: boolean | 'label' | 'group' | 'none' | undefined,
@@ -117,6 +119,7 @@ function injectDetectVariantArgs(
 
 export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldSchema>) {
   const parentForm = useCurrentForm();
+  const parentValidationOwner = useCurrentValidationScope();
   const parentScope = useRenderScope();
   const schemaProps = props.props;
   const name = String(schemaProps.name ?? '');
@@ -349,6 +352,23 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     () => (parentForm ? createVariantFormProxy(parentForm, name) : undefined),
     [parentForm, name],
   );
+  const variantValidationOwner = React.useMemo(() => {
+    if (parentForm || !parentValidationOwner || !name) {
+      return parentValidationOwner;
+    }
+
+    return createProjectedValidationRuntime(parentValidationOwner, {
+      ownerRootPath: name,
+      scalarValueAlias: 'value',
+      prefixPath(path) {
+        if (!path || path === 'value') {
+          return name;
+        }
+
+        return path.startsWith('value.') ? `${name}.${path.slice('value.'.length)}` : `${name}.${path}`;
+      },
+    });
+  }, [name, parentForm, parentValidationOwner]);
 
   const hiddenVariantChildPaths = React.useMemo(
     () =>
@@ -368,37 +388,42 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   );
 
   React.useLayoutEffect(() => {
-    if (!parentForm || !name) {
+    const owner = parentForm ?? parentValidationOwner;
+
+    if (!owner || !name) {
       return;
     }
 
     for (const hiddenPath of hiddenVariantChildPaths) {
-      parentForm.notifyFieldHidden(`${name}.${hiddenPath}`, true);
+      owner.notifyFieldHidden(`${name}.${hiddenPath}`, true);
     }
 
     return () => {
       for (const hiddenPath of hiddenVariantChildPaths) {
-        parentForm.notifyFieldHidden(`${name}.${hiddenPath}`, false);
+        owner.notifyFieldHidden(`${name}.${hiddenPath}`, false);
       }
     };
-  }, [hiddenVariantChildPaths, name, parentForm]);
+  }, [hiddenVariantChildPaths, name, parentForm, parentValidationOwner]);
 
   React.useEffect(() => {
-    if (!parentForm || !variantForm || !name) {
+    const owner = parentForm ?? parentValidationOwner;
+    const childOwner = parentForm ? variantForm : variantValidationOwner;
+
+    if (!owner || !childOwner || !name) {
       return;
     }
 
-    const childOwnerId = `${parentForm.id}:${name}:variant-field`;
+    const childOwnerId = `${owner.scopeId}:${name}:variant-field`;
 
-    parentForm.registerChildContract({
+    owner.registerChildContract({
       childOwnerId,
       mode: 'recurse-submit',
       active: true,
       unregister() {
-        parentForm.unregisterChildContract(childOwnerId);
+        owner.unregisterChildContract(childOwnerId);
       },
       getState() {
-        const state = variantForm.getScopeState();
+        const state = childOwner.getScopeState();
         return {
           ready: state.ready,
           validating: state.validating,
@@ -407,7 +432,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
         };
       },
       async triggerValidation() {
-        const result = await variantForm.validateAll('submit');
+        const result = await childOwner.validateAll('submit');
         return {
           ok: result.ok,
           errors: result.errors,
@@ -416,9 +441,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     });
 
     return () => {
-      parentForm.unregisterChildContract(childOwnerId);
+      owner.unregisterChildContract(childOwnerId);
     };
-  }, [name, parentForm, variantForm]);
+  }, [name, parentForm, parentValidationOwner, variantForm, variantValidationOwner]);
 
   const renderSelector = () => {
     if (readOnly || effectiveDisabled) return null;
@@ -445,7 +470,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
           </Select>
               <FormContext.Provider value={variantForm}>
                 <ScopeContext.Provider value={variantScope}>
-                  {asReactNode(activeContentRegion?.render())}
+                  <ValidationContext.Provider value={variantValidationOwner}>
+                    {asReactNode(activeContentRegion?.render())}
+                  </ValidationContext.Provider>
                 </ScopeContext.Provider>
               </FormContext.Provider>
         </div>
@@ -472,7 +499,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
               {v.key === activeKey ? (
                 <FormContext.Provider value={variantForm}>
                   <ScopeContext.Provider value={variantScope}>
-                    {asReactNode(activeContentRegion?.render())}
+                    <ValidationContext.Provider value={variantValidationOwner}>
+                      {asReactNode(activeContentRegion?.render())}
+                    </ValidationContext.Provider>
                   </ScopeContext.Provider>
                 </FormContext.Provider>
               ) : null}
@@ -490,7 +519,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
         <div data-slot="variant-field-readonly-body">
           <FormContext.Provider value={variantForm}>
             <ScopeContext.Provider value={variantScope}>
-              {asReactNode((activeViewerRegion ?? activeContentRegion)?.render())}
+              <ValidationContext.Provider value={variantValidationOwner}>
+                {asReactNode((activeViewerRegion ?? activeContentRegion)?.render())}
+              </ValidationContext.Provider>
             </ScopeContext.Provider>
           </FormContext.Provider>
         </div>

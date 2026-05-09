@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { FormStoreState, ScopeRef, ValidationStoreApi, ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { createProjectedFormRuntime, createProjectedFormStore } from './projected-form-runtime.js';
+import { createProjectedValidationRuntime } from './projected-validation-runtime.js';
 
 describe('projected form runtime helpers', () => {
   it('projects store values, caches repeated parent state, and prefixes store paths', () => {
@@ -357,5 +359,101 @@ describe('projected form runtime helpers', () => {
       'profile.firstName': 'Alice',
       'profile.lastName': 'Smith',
     });
+  });
+
+  it('re-bases projected validation store and scope to relative child paths', () => {
+    const parentState: FormStoreState = {
+      values: { profile: { name: 'Alice' }, other: 'value' },
+      fieldStates: { 'profile.name': { touched: true }, other: { touched: true } },
+      submitting: false,
+      submitAttempted: false,
+    };
+
+    const parentStore: ValidationStoreApi = {
+      getState: vi.fn(() => parentState),
+      subscribe: vi.fn(() => () => undefined),
+      subscribeToPath: vi.fn(() => () => undefined),
+      subscribeToPaths: vi.fn(() => () => undefined),
+      subscribeToSubmitting: vi.fn(() => () => undefined),
+      getPathState: vi.fn(),
+      getFieldState: vi.fn(),
+    };
+
+    const parentScope: ScopeRef = {
+      id: 'parent-scope',
+      path: '$page',
+      parent: undefined,
+      store: {
+        getSnapshot: () => ({ profile: { name: 'Alice' }, other: 'value' }),
+        getLastChange: () => ({ paths: ['profile.name'], sourceScopeId: 'parent', kind: 'update' as const }),
+        setSnapshot: vi.fn(),
+        subscribe: vi.fn(() => () => undefined),
+      },
+      get value() {
+        return { profile: { name: 'Alice' }, other: 'value' };
+      },
+      get: vi.fn((path: string) => (path === 'profile.name' ? 'Alice' : undefined)),
+      has: vi.fn((path: string) => path === 'profile.name'),
+      readOwn: vi.fn(() => ({ profile: { name: 'Alice' } })),
+      readVisible: vi.fn(() => ({ profile: { name: 'Alice' }, other: 'value' })),
+      materializeVisible: vi.fn(() => ({ profile: { name: 'Alice' }, other: 'value' })),
+      update: vi.fn(),
+      merge: vi.fn(),
+    };
+
+    const parentOwner: ValidationScopeRuntime & { store: ValidationStoreApi; scope: ScopeRef } = {
+      store: parentStore,
+      scope: parentScope,
+      validation: undefined,
+      lifecycleState: 'active',
+      modelGeneration: 1,
+      scopeId: 'parent-owner',
+      rootPath: 'profile',
+      subscribeToModelGeneration: vi.fn(() => () => undefined),
+      validateAt: vi.fn(),
+      validateSubtree: vi.fn(),
+      validateAll: vi.fn(),
+      applyChangesAndRevalidate: vi.fn(),
+      applyExternalErrors: vi.fn(),
+      getFieldState: vi.fn(),
+      getScopeState: vi.fn(),
+      getAsyncOwnerDebugSnapshot: vi.fn(),
+      getScopeRootErrors: vi.fn(),
+      isPathOwned: vi.fn(() => true),
+      registerField: vi.fn(() => ({ unregister: vi.fn(), accepted: true, registrationId: 'r1' })),
+      updateFieldRegistration: vi.fn(),
+      notifyFieldHidden: vi.fn(),
+      touchField: vi.fn(),
+      visitField: vi.fn(),
+      refreshCompiledModel: vi.fn(),
+      dispose: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
+    };
+
+    const projectedOwner = createProjectedValidationRuntime(parentOwner, {
+      ownerRootPath: 'profile',
+      prefixPath: (path) => (path ? `profile.${path}` : 'profile'),
+    });
+
+    expect(projectedOwner.store.getState().values).toEqual({ name: 'Alice' });
+    expect(projectedOwner.store.getState().fieldStates).toEqual({ name: { touched: true } });
+
+    projectedOwner.store.getFieldState('name');
+    projectedOwner.store.getPathState('name');
+    projectedOwner.store.subscribeToPath('name', vi.fn());
+    projectedOwner.store.subscribeToPaths(['name'], vi.fn());
+
+    expect(parentStore.getFieldState).toHaveBeenCalledWith('profile.name');
+    expect(parentStore.getPathState).toHaveBeenCalledWith('profile.name');
+    expect(parentStore.subscribeToPath).toHaveBeenCalledWith('profile.name', expect.any(Function));
+    expect(parentStore.subscribeToPaths).toHaveBeenCalledWith(['profile.name'], expect.any(Function));
+
+    expect(projectedOwner.scope.get('name')).toBe('Alice');
+    expect(projectedOwner.scope.has('name')).toBe(true);
+    expect(projectedOwner.scope.readOwn()).toEqual({ name: 'Alice' });
+
+    projectedOwner.scope.update('name', 'Bob');
+    expect(parentScope.update).toHaveBeenCalledWith('profile.name', 'Bob');
   });
 });
