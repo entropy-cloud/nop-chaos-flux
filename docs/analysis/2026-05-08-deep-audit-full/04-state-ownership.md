@@ -56,3 +56,15 @@
 ## 深挖第 2 轮追加
 
 未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度04-01] 保留：live code 仍在 `C:\can\nop\nop-chaos-flux\packages\spreadsheet-renderers\src\spreadsheet-interactions\use-resize.ts:19-20,56-72` 用 React local state 保存 `columnWidths` / `rowHeights`，`spreadsheet-grid.tsx:198-199,271,481,532` 又只消费这些 local 尺寸；同时 core 在 `spreadsheet-core\src\types.ts:73-83` 与 `command-handlers\sheet-handlers.ts:113-124` 已有 row/column 尺寸字段和 resize 命令，且文档要求 worksheet document / selection / history 归 spreadsheet core、写操作走 `spreadsheet:*` action，因此 P1 的单一事实来源违约成立。
+
+需子项复核：P0/P1：[维度04-01]；跨包边界：[维度04-01]；文档-代码违约：[维度04-01]；不确定项：无。
+
+## 子项复核结论
+
+- [维度04-01] 保留：spreadsheet resize 仍用 renderer-local `columnWidths`/`rowHeights` 驱动 grid，而 core document 已有 row/column size 字段与 resize commands，拖拽结果未提交 canonical core owner，最终 P1 单一事实来源违约成立。
+
+最终进入汇总：[维度04-01] P1。

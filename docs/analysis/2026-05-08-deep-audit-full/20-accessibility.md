@@ -321,3 +321,33 @@
 ## 深挖第 4 轮追加
 
 未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度20-01] 保留：live code 中 RadioGroup source error 仅渲染 `role="alert"`，未生成 id 也未通过 `aria-describedby` / `aria-errormessage` 关联到 `RadioGroup`。
+- [维度20-02] 保留：input-tree / tree-select 的 source error 仍是独立 alert，`role="tree"` 与 tree-select 触发按钮均未关联错误文本。
+- [维度20-03] 保留：ConditionBuilder 多选新增的真实可聚焦 `NativeSelect` 使用 `opacity-0`，外层可见 Badge 没有 `focus-within` 或等价焦点指示。
+- [维度20-04] 保留：CheckboxRenderer 已计算 required，但实际 `Checkbox` 仅有 `aria-invalid` / `aria-label`，未传递 `aria-required`。
+- [维度20-05] 保留：ConditionBuilder picker 模式实际焦点目标是 Popover 触发 `Button`，字段错误/必填/描述关联只会落在外层容器，按钮未继承。
+- [维度20-06] 保留：tree-select 触发 `Button` 没有 `aria-invalid`、错误描述或 required 状态关联，字段状态停留在外层结构。
+- [维度20-07] 保留：WrappedFieldAction 是自定义 `span role="button"`，主动 `outline-none` 且未提供 `focus-visible` 替代样式；reopened 裁定允许报告键盘/焦点 bug。
+- [维度20-08] 保留：TagList 支持 required 校验，但实际可聚焦 toggle 按钮只设置 `aria-pressed`，未与字段 required/invalid/error 状态建立关系。
+- [维度20-09] 保留：SwitchRenderer 已把 required 传给字段 controller，但实际 `Switch` 没有 `aria-required` 或等价描述关联。
+- [维度20-10] 保留：嵌套 ConditionBuilder 分组删除控件的可访问名称仍主要来自可见文本 `×`，`title` 不能可靠替代明确 `aria-label`。
+
+需子项复核：无；本轮均为 P2 且 live code 可直接确认，可按“字段状态/错误未关联实际焦点目标”和“焦点可见性/可访问名称”两类批量复核。
+
+## 子项复核结论
+
+- [维度20-01] 保留：live code 中 radio-group source error 仍只有独立 `role="alert"`，未用稳定 id 关联到 `RadioGroup`。
+- [维度20-02] 保留：input-tree 的 `role="tree"` 与 tree-select 触发按钮仍未关联 source error alert。
+- [维度20-03] 保留：ConditionBuilder 多选新增 `NativeSelect` 仍为 `opacity-0` 可聚焦控件，外层 Badge 无 `focus-within` 焦点反馈。
+- [维度20-04] 保留：CheckboxRenderer 仍未把 required 状态传递到实际 `Checkbox`。
+- [维度20-05] 保留：picker 模式字段状态仍落在非聚焦外层结构，实际 Popover 触发按钮未继承错误/必填关联。
+- [维度20-06] 保留：tree-select 触发 `Button` 仍缺少 `aria-invalid`、错误描述和 required 状态关联。
+- [维度20-07] 保留：WrappedFieldAction 仍是 `span role="button"` 且 `outline-none` 后无等价 `focus-visible` 样式；该项属于 reopened 文档允许报告的焦点 bug。
+- [维度20-08] 保留：TagList 的可聚焦 toggle 仍只暴露 `aria-pressed`，未关联字段 required/invalid/error 状态。
+- [维度20-09] 保留：SwitchRenderer 仍未把 required 状态传递到实际 `Switch` 或等价描述。
+- [维度20-10] 保留：嵌套分组删除控件仍只有可见文本 `×` 与 `title`，缺少可靠的显式 `aria-label`。
+
+最终进入汇总：维度20-01 至 维度20-10。

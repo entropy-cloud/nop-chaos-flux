@@ -520,3 +520,36 @@
 - **历史模式对应**: 对应 runtime action 综合测试桶拆分模式。
 - **参考文档**: `docs/skills/deep-audit-prompts.md:678-697`, `docs/references/deep-audit-calibration-patterns.md:38-43`
 - **复核状态**: 未复核
+
+第 5 轮上限已达，深挖结束。
+
+## 维度复核结论
+
+- [维度02-01] 保留：`pnpm check:oversized-code-files` 当前仍失败，4 个测试文件分别为 779/751/726/718 行，且 grep 显示覆盖 pagination/selection/sort/filter、submit/init/scope、diagnostics/strict/host-action、dialog/drawer/surface 等多职责簇。
+- [维度02-02] 保留：`input.tsx` 当前 636 行，仍同时包含 input/select/textarea/checkbox/switch/radio/checkbox-group/input-number renderer 与 definitions 注册，非纯 orchestrator。
+- [维度02-03] 保留：`variant-field.tsx` 当前 589 行，live code 仍包含 variant detection、transform action、hidden child paths、child contract、FieldFrame shell 等多职责。
+- [维度02-04] 降级：`index.tsx` 当前 120 行且确实内联 renderer definitions/propContracts，但文档“root entry keeps stable schema/manifest registration surface”并不明确禁止 definitions 暴露在入口，故不按 P1 文档-代码违约保留，仅作为入口纯度 P2。
+- [维度02-05] 保留：`designer-core.test.ts` 当前 694 行，单个 `describe('createReportDesignerCore')` 覆盖 metadata/history、preview 并发、codec、inspector、field-source 生命周期，距硬阈值 6 行。
+- [维度02-06] 保留：`designer-command-adapter.test.ts` 当前 692 行，前段 graph adapter，后段 tree-mode fixture/owner mutation/undo-redo，距硬阈值 8 行。
+- [维度02-07] 保留：`context-menu-operations.test.tsx` 当前 678 行，单文件覆盖 clear/fill/structure/merge/freeze/sort/filter/disabled state 多个 spreadsheet operation。
+- [维度02-08] 保留：`designer-page.tree.test.tsx` 当前 664 行，tree rendering、graph regression、runtime props、render-phase warning、core continuity 仍混在同一文件。
+- [维度02-09] 保留：`array-field.tsx` 当前 573 行，仍包含 item identity、ArrayItem scope/form/validation provider、scalar validation publication、child contract、add/remove 与 shell。
+- [维度02-10] 保留：`core-basics.test.ts` 当前 654 行，describe 分组覆盖 core init/selection/cell value/formula/style/merge/resize/hide/sheet/filter/sort 多个 command family。
+- [维度02-11] 保留：`word-editor-page-host-scope.test.tsx` 当前 644 行，host scope 外还测试 recovery、window probe、shell marker、renderer manifest metadata。
+- [维度02-12] 保留：`data-table.test.tsx` 当前 615 行，单个 table behavior describe 覆盖 row scope、regions/style marker、instancePath、cell form binding 等 contract 面。
+- [维度02-13] 保留：`action-adapter.unit.test.ts` 当前 611 行，built-in/component/namespaced/formId targeting 分组仍在同一 action adapter 测试桶。
+- [维度02-14] 保留：`field-utils.unit.test.tsx` 当前 609 行，纯 helper、field handlers、hidden policy hook、controller adapter、subscription precision 混合存在。
+- [维度02-15] 保留：`controller-inspect-advanced.test.ts` 当前 628 行，inspectByCid、DOM scope、component tree、explainNode、formState 多个 debugger 能力共用单文件。
+- [维度02-16] 保留：`request-runtime.test.ts` 当前 586 行，scope/url/data/adaptor shaping 与 async executor dedup/retry 仍混在同一测试文件。
+- [维度02-17] 保留：`runtime-scope-actions.test.ts` 当前 556 行，runtime plugin ordering、scope actions、component registry、action-scope debug 仍在单个 createRendererRuntime 桶中。
+- [维度02-18] 保留：`hidden-field-policy.test.ts` 当前 554 行，policy resolution、compiled model lookup、runtime validation participation、clearValueWhenHidden、validation-scope owner 混合。
+- [维度02-19] 保留：`runtime-actions-monitor.test.ts` 当前 562 行，retry/debounce/refreshSource/API monitor/delegated metadata 仍混在单个 runtime action monitor 测试文件。
+
+需子项复核：P0/P1：[维度02-01]；跨包边界：无；文档-代码违约/不确定项：[维度02-04]；不确定项：[维度02-04]。
+
+## 子项复核结论
+
+- [维度02-01] 保留：live `pnpm check:oversized-code-files` 仍因 4 个 >700 行测试文件失败，且这些文件覆盖多个独立行为簇，命中硬性文件边界规则，最终 P1。
+- [维度02-04] 降级：`flow-designer-renderers/src/index.tsx` 确实内联 renderer definitions/propContracts，但 owner 文档只说 root 保留 stable schema/manifest registration surface，并未明确禁止 definitions 位于入口，最终降为 P2 入口纯度/膨胀风险而非 P1 文档违约。
+
+最终进入汇总：[维度02-01] P1；[维度02-04] P2。

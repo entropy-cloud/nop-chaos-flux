@@ -52,3 +52,15 @@
 ## 深挖第 2 轮追加
 
 未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度18-01] 保留：live code 中 `array-editor.tsx`、`key-value.tsx` 仍在 validation contributor 里拼接英文 required 错误；`flux-runtime` 与 `flux-i18n` 已有共享 validation message formatter 和双语 `flux.validation.*` 资源，确属用户可见的复合字段校验文案分叉。原发现引用的 locale 行号偏早，但不影响结论。
+
+需子项复核：[维度18-01]
+
+## 子项复核结论
+
+- [维度18-01] 保留：`array-editor` 与 `key-value` 的 validation contributor 仍拼接英文 required 错误，绕过已有双语 i18n/validation 文案通道，属于用户可见分叉。
+
+最终进入汇总：18-01。

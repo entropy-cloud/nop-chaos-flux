@@ -265,3 +265,55 @@
 - **历史模式对应**: repeated id lookup/copy in loop，且已有 batch API 未被热路径使用。
 - **参考文档**: `docs/architecture/performance-design-requirements.md`, `docs/architecture/flow-designer/design.md`
 - **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度15-08] SQL completion 每次补全解析别名时按 FROM/JOIN 次数重复线性扫描 tables
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-code-editor\src\extensions\sql\completion.ts`
+- **行号范围**: `83-99`
+- **证据片段**:
+  ```ts
+  const fromPattern = /\bFROM\s+(\w+)(?:\s+(?:AS\s+)?(\w+))?/gi;
+  let match: RegExpExecArray | null;
+  while ((match = fromPattern.exec(sql)) !== null) {
+    const tableName = match[1];
+    const alias = match[2];
+    const table = tables.find((t) => t.name.toLowerCase() === tableName.toLowerCase());
+    if (table && alias) {
+      aliasMap.set(alias, table);
+    }
+  }
+  ```
+- **严重程度**: P2
+- **类别**: 性能
+- **安全/性能规则编号**: P2
+- **现状**: `parseTableAliases` 在 CodeMirror completion 路径中对 SQL 文本中的每个 `FROM` / `JOIN` 命中都执行 `tables.find(...)`，而 `sqlCompletionSource` 每次补全触发都会重新调用该解析函数。
+- **风险**: 当数据集 schema 表数量和 SQL 中 JOIN/子查询数量增长时，补全热路径会退化为 O(aliasCount × tables)，并叠加每次键入/补全触发的 CodeMirror 调用频率，造成编辑器输入和补全延迟。
+- **建议**: 在 `sqlCompletionSource(tables)` 闭包创建时预构建 `tableByLowerName: Map<string, TableSchema>`，`parseTableAliases` 改为 O(1) 查表；同时避免循环内重复 `toLowerCase()` 扫描整个表列表。
+- **为什么值得现在做**: 修复点局部且不改变补全语义；SQL editor 是交互式输入热路径，预索引成本低，符合已有 table/tree/condition-builder 性能问题的同类整改模式。
+- **误报排除**: 这不是测试代码或小数组风格问题；`tables` 来自外部 dataset/schema，规模不由 completion 模块限定，且该路径随用户输入频繁执行。它不同于既有 15-01 到 15-07 中已覆盖的 table、condition-builder、checkbox、tree、spreadsheet regex、flow designer 问题。
+- **历史模式对应**: repeated id/name lookup inside interaction loop，应按性能要求在循环前预索引。
+- **参考文档**: `docs/architecture/performance-design-requirements.md`; `docs/references/deep-audit-calibration-patterns.md`
+- **复核状态**: 未复核
+
+第 5 轮上限已达，深挖结束。
+
+## 维度复核结论
+
+- [维度15-01] 保留：live code 仍在 `orderedColumns.map` 内重复 `columns.findIndex`、`orderedColumns.indexOf`、`visibleColumns.includes`，宽表 column settings O(n²) 热路径成立。
+- [维度15-02] 降级：`resolveSurfaceValidationPlan` 裸 `catch` 后返回 `undefined` 且无 monitor/diagnostic 成立；但将其定性为安全 fail-closed P1 证据不足，更适合降级为 P2 观察性/验证初始化降级风险。
+- [维度15-03] 保留：ConditionBuilder 多选渲染仍存在 `selected.map` 内 `options.find` 与 `options.filter` 内 `selected.includes`，外部 options 增长时 O(selected × options) 成立。
+- [维度15-04] 保留：CheckboxGroup 仍在 `options.map` 内对 `selectedValues.some` 扫描，基础表单控件大枚举场景 O(options × selected) 成立。
+- [维度15-05] 保留：TreeSelect/InputTree 每次 render 重建 tree meta，且节点 checked/trigger label 路径对多选值重复 `some` 扫描；P2 性能问题成立，但 P7/P9 不是主证据。
+- [维度15-06] 保留：Spreadsheet regex 查找仍在每个 cell 循环内调用 `createSearchRegex` 并 `new RegExp`，违反 compile once / execute many，P2 成立。
+- [维度15-07] 保留：Flow Designer 批量 position changes 仍逐节点调用 `moveNode`，链路内多次 `find/findIndex` 与数组复制；已有 batch 能力未用于该热路径，P2 成立。
+- [维度15-08] 保留：SQL completion 仍在每个 FROM/JOIN 命中中 `tables.find`，且补全每次触发重新解析，O(aliasCount × tables) 热路径成立。
+
+需子项复核：维度15-02。
+
+## 子项复核结论
+
+- [维度15-02] 保留：live `resolveSurfaceValidationPlan` 仍在 compile 失败时 `catch { return undefined; }`，随后 Dialog/Drawer 继续打开并降级为无 `validationPlan`，违反 fail-closed 与可观察性要求。
+
+最终进入汇总：15-02 保留。

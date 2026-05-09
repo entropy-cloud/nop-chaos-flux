@@ -654,3 +654,41 @@
 - **历史模式对应**: producer-side root-only change payload 限制 consumer-side path-aware subscription。
 - **参考文档**: `docs/architecture/performance-design-requirements.md` P7；`docs/architecture/api-data-source.md`; `docs/architecture/renderer-runtime.md`
 - **复核状态**: 未复核
+
+第 5 轮上限已达，深挖结束。
+
+## 维度复核结论
+
+- [维度05-01] 保留：`packages/flux-react/src/hook-subscriptions.ts` 仍把 `paths` 截断为第一段，而 `scopeChangeHitsDependencies()` 已支持深路径 overlap。
+- [维度05-02] 保留：`useBoundFieldValue()` 的非 form `useScopeSelector` 仍未传 `paths`，单字段读取会订阅整 scope。
+- [维度05-03] 保留：`useTableVisibleColumns()` 两个 column settings selector 仍只给 selector/equality，未声明 `toggledStatePath` / `orderedStatePath`。
+- [维度05-04] 保留：`useOwnedAxisValue()` 注释声称 specific path subscription，但实现仍未给 `useScopeSelector` 第三参。
+- [维度05-05] 保留：`object-field`、`array-field`、`variant-field` 的 non-form scope fallback 仍按整 scope 订阅，且 form 存在时未禁用无效 scope 订阅。
+- [维度05-06] 保留：`useScopeSelector` 仍以 `paths` 引用作为 `useMemo` 依赖，CRUD 等 inline `paths: [...]` 调用会造成订阅函数 churn。
+- [维度05-07] 保留：`useCodeEditorBinding()` 的 scope fallback 仍 `enabled: hasName` 且无 `paths`，form 内也会建立 scope 订阅。
+- [维度05-08] 保留：`DetailView` / `DetailField` 的 scope selector 仍缺少 path options，`DetailField` form 场景也未禁用 fallback。
+- [维度05-09] 保留：`ArrayEditor` / `KeyValue` 的 `scopeExternalValue` 仍只按 `enabled` 控制，未传当前 `name` 的 paths。
+- [维度05-10] 保留：`PageRenderer` 只读 `refreshTick`，但 `useScopeSelector` 未声明 `['refreshTick']`。
+- [维度05-11] 保留：`FieldFrame` 每次调用 `getDynamicRequiredDependencyPaths()` 返回新数组，而 form hooks 仍按 `paths` 引用依赖重建 subscribe。
+- [维度05-12] 保留：`createFormErrorSubscribe()` 对 path error hook 额外订阅 `subscribeToSubmitting()`，`FieldFrame` 的 aggregate error 会被全局 submitting 唤醒。
+- [维度05-13] 保留：`useHostScope()` 调 `scope.replace(scopeData)`，runtime `replace()` 仍只发布 changed root keys。
+- [维度05-14] 保留：`useOwnScopeSelector()` API 仍无 `{ paths }`，底层 `createScopeOwnSubscribe()` 只能按 own snapshot 全量变化唤醒。
+- [维度05-15] 保留：`DialogView` / `DrawerView` 仍无条件调用 `useSurfaceScopeSnapshot(scope)`，未传 paths 时 selector 返回整 visible scope。
+- [维度05-16] 保留：`SchemaRenderer` 后续 `props.data` 同步仍固定发布 `paths: ['*']`。
+- [维度05-17] 保留：`createFragmentScopeChange()` 仍只比较并发布 changed root keys，fragment deep-path 依赖会退化到 root 粒度。
+- [维度05-18] 保留：`useFieldPresentation()` 的 non-form required selector 仍只订阅 `{ path: name }`，但 `isFieldEffectivelyRequired()` 会读取 requiredWhen/requiredUnless 依赖路径。
+- [维度05-19] 保留：`scope.merge()` 仍只发布 top-level keys，`writeDataToScope(... mergeToScope)` 会继承该 root-only change payload。
+
+需子项复核：P0/P1：无；跨包边界：无；文档-代码违约：维度05-01、05-04、05-13、05-16、05-17、05-19；不确定项：维度05-15（surface chrome 是否需要外层 broad subscription 需 owner 确认）。
+
+## 子项复核结论
+
+- [维度05-01] 保留：live code 仍将 `paths` 截断为 root key，导致 deep-path 订阅声明无法按当前性能文档的 changed-path 精度生效。
+- [维度05-04] 保留：`useOwnedAxisValue()` 注释声称订阅具体 `statePath`，但实现仍未向 `useScopeSelector` 传入 `paths`/`enabled`。
+- [维度05-13] 保留：`useHostScope()` 仍通过 `scope.replace(scopeData)` 更新 host projection，而 runtime `replace()` 只发布 changed root paths。
+- [维度05-16] 保留：`SchemaRenderer` 后续外部 `data` 替换仍固定发布 `paths: ['*']`，会抹平下游 path-aware 订阅精度。
+- [维度05-17] 保留：`createFragmentScopeChange()` 仍只比较并发布 changed root keys，fragment 内 deep-path 依赖会被同 root sibling 更新唤醒。
+- [维度05-19] 保留：`scope.merge()` 仍只发布 top-level keys，`mergeToScope` 深层局部刷新会退化为 root 粒度。
+- [维度05-15] 保留：`DialogView`/`DrawerView` 仍无条件订阅整个 surface scope 且订阅值未被精确消费，surface body 局部更新会唤醒外层 chrome。
+
+最终进入汇总：05-01、05-04、05-13、05-16、05-17、05-19、05-15。

@@ -91,3 +91,17 @@
 ## 深挖第 3 轮追加
 
 未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度17-01] 降级：live code 确实仍使用 `not_equal` 等 snake_case operator id，且 playground 示例将其作为 `operators.labels` key 暴露；但这些 key 属于动态 operator id 字典/条件 DSL token，不完全等同普通 schema 属性 key，当前风险主要是命名收敛与未来校验特判，建议由 P2 降为 P3。
+- [维度17-02] 保留：active `flux-json-conventions.md` 仍推荐 Button `variant: primary/danger`，而 live basic Button schema/definition/UI 体系使用 `default/destructive/outline/...`，同时 report/flow toolbar 仍保留 `primary/danger`，同一按钮变体 authoring vocabulary 已形成真实双词汇。
+- [维度17-03] 保留：`docs/components/button/example.json` 仍使用 `size: "md"`，但 live `ButtonSchema` 与 renderer definition 均不包含 `md`，且 button design 要求复用 UI Button 的 `size`，属于 active 示例与 live schema 的低风险术语残留。
+
+需子项复核：维度17-02。
+
+## 子项复核结论
+
+- [维度17-02] 保留：active `flux-json-conventions.md` 仍推荐 Button `primary/danger`，但 live basic Button schema 使用 `default/destructive/outline/...`，且 report/flow toolbar 仍保留旧词汇，双词汇成立。
+
+最终进入汇总：17-02。

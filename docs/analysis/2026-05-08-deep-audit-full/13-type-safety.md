@@ -35,3 +35,16 @@
 - `ScopeRef` / `ScopeStore` / form values 中的 `Record<string, any>`: 动态 scope 与表单值边界。
 - `CompiledRuntimeValue<T>` 的若干 `as unknown as`: 当前 `ExpressionCompiler.compileValue<T>` 已有泛型能力，代码可未来清理，但未形成公开 API 不可读或运行时错误证据，不作为第 1 轮 finding。
 - 测试、e2e、test-support 中大量 `as any`: 主要用于 mock、坏输入注入、第三方组件替身和断言内部状态，不作为生产类型安全缺陷。
+
+未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度13-零发现] 保留：已按阶段二规则回到 live code 复查生产代码中的 explicit `any`、`@ts-ignore/@ts-expect-error/@ts-nocheck`、`as unknown as` 多重断言与公开 API 类型边界；未发现越过维度13举证门槛的真实类型安全缺陷。现有命中主要落在低代码动态边界、scope/form values、公式/host 注入、异构 renderer/action/schema 桥接、测试支撑或局部 React/event 类型适配；未发现 TS suppress 注释，也未发现内部已有精确类型却对外危险暴露 `any` 且造成可证运行时风险的案例。
+- 需子项复核：无。
+
+## 子项复核结论
+
+- [维度13-零发现] 保留：零发现结论已由独立复核确认，无需额外子项复核。
+
+最终进入汇总：无。

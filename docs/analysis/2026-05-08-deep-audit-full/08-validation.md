@@ -654,3 +654,36 @@
 - **历史模式对应**: async value adaptation 写回与 validation trigger 分离，完成写回后缺少 owner-local revalidation。
 - **参考文档**: `docs/architecture/form-validation.md`, `docs/architecture/value-adaptation-and-detail-field.md`, `docs/references/form-validation-execution-details.md`
 - **复核状态**: 未复核
+
+第 5 轮上限已达，深挖结束。
+
+## 维度复核结论
+
+- [维度08-01] 保留：live code 仍在 surface owner 创建时仅传 `initialValues: scope.readOwn()`，未传共享 store；非 form 字段写入 render scope 后触发 owner validation，而验证从 validation owner 自有 scope 取值，值源不一致成立。
+- [维度08-02] 保留：`validatePath` 有 transitional lifecycle wait，但 `validateForm`/`validateSubtree` 仍可在 `currentValidation` 为空且无 target 时返回 `{ ok: true }`，与 null model 不应等同 clean success 的契约不一致。
+- [维度08-03] 保留：`createProjectedValidationRuntime` 的 `validateAt/getFieldState` 做 prefix，但 `store`/`scope` 直接暴露 parent；field presentation hooks 仍按相对 `name` 订阅 store，展示路径漂移成立。
+- [维度08-04] 保留：projected validation runtime 仍将 `validateAll()` 与 `getScopeState()` 直接委托父 owner-wide；同文件相邻 projected form runtime 已对子树收窄，语义不一致成立。
+- [维度08-05] 保留：`code-editor` 与 `tag-list` 仍硬编码 change/blur/click 后 validation，未复用 `shouldValidateOnOwner()`；compiled triggers 被绕过成立。
+- [维度08-06] 保留：`variant-field` 只提供 `FormContext`/`ScopeContext`，未导入或提供 `ValidationContext`；隐藏分支通知也仅走 `parentForm.notifyFieldHidden`，非 form owner 路径缺失成立。
+- [维度08-07] 保留：scalar `array-field` 的运行时 item registration 与 child contract 仍以 `parentForm` 为前置条件；compiler 又通过 `getChildFieldPathPrefix() { return false; }` 不收集 item 子路径，非 form owner 漏检风险成立。
+- [维度08-08] 保留：pattern precompile 仍只写入 `precompiled.error/safe:false` 或 `console.warn`，未接入 schema diagnostics；runtime fail-closed 存在但 schema validator 层时机分裂成立。
+- [维度08-09] 保留：`detail-view` 已注册 `parentValidationOwner` child contract，但 commit 后父级重校验只在 `parentForm` 存在时执行；非 form 父 owner 只更新 scope 后返回成功。
+- [维度08-10] 保留：`array-editor` / `key-value` 仍直接突变 `registrationRef.current.childPaths`，未调用 `updateFieldRegistration`；runtime childPath 索引只在 register/update API 中维护，索引陈旧成立。
+- [维度08-11] 保留：`refreshCompiledModelState` 清空 runtime registrations；`useCurrentFormModelGeneration()` 仍只订阅 current form，`tag-list` 在 non-form owner 下 generation 不变，刷新后不重注册成立。
+- [维度08-12] 保留：`detail-field` 已注册 generic parent validation owner contract，但 `handleConfirm` 入口仍 `!parentForm` 直接 return，非 form owner 下 confirm 生命周期不可完成成立。
+- [维度08-13] 保留：`object-field` 非 form async `transformOutAction` resolved 后仍只 `parentScope.update(...)`，未走 validation owner write/revalidate；触发验证先于最终写回且完成后无重校验成立。
+
+需子项复核：维度08-01、维度08-02、维度08-06、维度08-09、维度08-11、维度08-12、维度08-13。
+
+## 子项复核结论
+
+- [维度08-01] 保留：surface-root validation owner 仍以 `scope.readOwn()` 快照初始化且未共享 render scope store，非 form 字段写入后验证读取旧值的双事实源成立。
+- [维度08-02] 保留：`validateForm`/`validateSubtree` 仍缺少 transitional lifecycle guard，可在 null model/无 target 时返回 clean success。
+- [维度08-06] 保留：`variant-field` 非 form 路径仍只投影 `ScopeContext`/form proxy，未提供 projected `ValidationContext`，隐藏分支通知也仅走 `parentForm`。
+- [维度08-09] 保留：`detail-view` 非 form 父 owner commit 后仍只更新 `parentScope`，不会触发父 validation owner 的 commit/subtree revalidation。
+- [维度08-11] 保留：generic validation owner refresh 会清空 runtime registrations，但 `useCurrentFormModelGeneration()` 仍只订阅 form，`tag-list` 非 form owner 下不会随 generation 重注册。
+- [维度08-12] 保留：`detail-field` 已注册 generic parent child contract，但 `handleConfirm` 仍被 `!parentForm` 直接拦截，非 form confirm 生命周期不可完成。
+- [维度08-13] 保留：`object-field` 非 form async `transformOutAction` resolve 后仍只 `parentScope.update(...)`，最终写回后无 validation owner revalidation。
+- [维度08-03] 保留：live code 仍只在 `validateAt/getFieldState` 做 prefix，`store/scope` 直接暴露 parent，而 field presentation hooks 在非 form 下通过未投影 store 按相对 `name` 订阅，子字段展示路径漂移成立。
+
+最终进入汇总：08-01、08-02、08-03、08-06、08-09、08-11、08-12、08-13。

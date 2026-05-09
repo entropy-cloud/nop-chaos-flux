@@ -245,3 +245,21 @@
 ## 深挖第 3 轮追加
 
 未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度06-01] 保留：live code 中 `runSingleActionWithRetry()` 调用 `withRetry()` 仍未传入 `actionCtx.signal`，`withRetry()` 的 abort 检查因此不会生效；retry delay/后续 attempt 可在父级取消后继续。P1 成立。
+- [维度06-05] 保留：spreadsheet 快捷键直接调用 Promise handler，右键菜单使用 `void actions.handle...()` 且无 `.catch()`；各 handler `await bridge.dispatch()` 后未检查 `SpreadsheetCommandResult.ok`，失败反馈与并发入口保护缺失仍成立。P2 成立。
+- [维度06-06] 降级：toolbar 确实 `void props.helpers.dispatch(command)` 且不检查 `ActionResult.ok`，但当前默认 `save` 只是导出文档而非远程持久化，且 action dispatcher 通常会把失败包装成 `ok:false` 而非直接 rejection；“保存失败导致数据可信度风险”表述偏重。建议降为 P3/P2 边界观察项。
+- [维度06-02] 保留：field panel 的 `onClick` 仍 `void handleKeyboardInsert(...)`，内部 `await resolved.provider.invoke(...)` 后不检查 `ActionResult.ok`，也没有 pending guard；provider 若 reject 也无兜底。P2 成立。
+- [维度06-03] 保留：`useFieldDrop()` 的回调契约仍是 `(target) => void`，调用方传入 async callback 后 Promise 被丢弃；两个 dispatch 的 `ok:false` 均未检查，drop target 先清空，半成功/静默失败风险成立。P2 成立。
+- [维度06-04] 保留：`handleEditSave()` 仍在 dispatch 前清空编辑态和草稿，且不检查 `SpreadsheetCommandResult.ok`；DOM handler 调用 Promise 无 `.catch()`。但 Enter 后 blur 的第二次触发因 ref 已清空大概率 no-op，重复写入并发部分应收窄。P2 成立。
+
+需子项复核：[维度06-01]；[维度06-06]。
+
+## 子项复核结论
+
+- [维度06-01] 保留：`runSingleActionWithRetry()` 调用 `withRetry()` 仍未传入 `actionCtx.signal`，父级取消无法停止 retry delay/后续 attempt。
+- [维度06-06] 降级：toolbar 确实 `void dispatch` 且不检查 `ActionResult.ok`，但默认 save 只是本地导出、preview core 已有请求 owner guard，原“保存失败数据可信度”风险表述偏重。
+
+最终进入汇总：06-01；06-06 降级为 P3/P2 边界观察项，不作为 P2 主修复项。

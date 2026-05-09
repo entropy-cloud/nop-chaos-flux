@@ -305,3 +305,27 @@
 ## 深挖第 4 轮追加
 
 未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度09-01] 保留：live `tabs.tsx:197-207` 仍以 `props.events.onChange?.(null, ...)` 触发；`normalizeActionEvent` 对 falsy event 返回 `undefined`，与非 DOM 语义事件需有 `type` 的契约不符。
+- [维度09-02] 保留：live table pagination/sort/filter/selection/handle 多处仍以 `null` 调用公开事件，只经 scope 旁路传业务值；事件载荷缺少 `type` 的结论成立。
+- [维度09-03] 保留：live code-editor binding 仍为 `onChange?.({ value })`、`onFocus?.()`、`onBlur?.()`，且未 `void` 消化返回 Promise；事件缺少可归一化 `type`。
+- [维度09-04] 保留：live surface open/close 主路径仍调用 `eventHandlers.onClose?.()` / `onOpen?.()` 空载荷；这不是已裁定的 surface 双状态旧问题，而是独立事件 payload residual。
+- [维度09-05] 保留：live CRUD `onQuerySubmit?.(undefined, ...)`、`onQueryReset?.(undefined, ...)`、`onRefresh?.(undefined, ...)` 仍存在；`ActionContext.event` 会为空。
+- [维度09-06] 保留：live compiler 对 `expandedRow` 抽取仍未声明 `params`，而 renderer 渲染时传入 `record/index` bindings；运行时会平铺 bindings 而非发布 `$slot`，与 table cell/buttons 参数化合同不一致。
+- [维度09-07] 保留：live `DesignerPageRenderer` 的 `!config`、`!document` fallback 仍返回裸 `<div>`，未复用已有 `getRootMetaProps` 透传 `data-testid/data-cid`。
+- [维度09-08] 保留：live `FormRenderer` 对 `submitAction/initAction/onSubmitSuccess/onSubmitError/onValidateError` 仍传 `undefined` 作为 event；这些字段在 definition 中是 renderer event，缺少语义 payload。
+- [维度09-09] 保留：live `TreeNodeRenderer` 的参数化 `node` region 只传 bindings，未传 per-node `instancePath`；递归子节点也未携带/追加实例路径，重复 region 身份合同缺失成立。
+
+需子项复核：维度09-01、维度09-02、维度09-04、维度09-08、维度09-09。
+
+## 子项复核结论
+
+- [维度09-01] 保留：`TabsRenderer` 仍以 `onChange?.(null, ...)` 触发事件，缺少可归一化的语义 event payload。
+- [维度09-02] 保留：table pagination/sort/filter/selection 等公开控制事件仍多处传 `null`，业务值只走 scope 旁路。
+- [维度09-04] 保留：surface `onOpen`/`onClose` 主路径仍空载荷触发，属于 surface 事件 payload residual 而非旧 surface 双状态问题。
+- [维度09-08] 保留：`FormRenderer` 的 submit/init/success/error/validateError lifecycle event 仍传 `undefined`，`ActionContext.event` 为空。
+- [维度09-09] 保留：`TreeRenderer` 参数化 `node` region 仍只传 bindings，未传 per-node `instancePath`。
+
+最终进入汇总：09-01、09-02、09-04、09-08、09-09。

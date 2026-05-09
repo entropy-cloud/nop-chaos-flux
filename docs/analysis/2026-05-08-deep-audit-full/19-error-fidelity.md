@@ -482,3 +482,64 @@
 - **历史模式对应**: debug/monitor summary 将结构化错误重新压扁为 message，造成诊断出口降级。
 - **参考文档**: `docs/architecture/flux-runtime-module-boundaries.md`; `docs/architecture/action-scope-and-imports.md`
 - **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度19-15] VariantField detectVariantAction 返回 ok:false 时静默回退并丢失失败原因
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\variant-field\variant-field.tsx`
+- **行号范围**: `198-218`
+- **证据片段**:
+  ```tsx
+  const result = await props.helpers.dispatch(
+    injectDetectVariantArgs(schemaProps.detectVariantAction, {
+      value: currentValue,
+      variants: variants.map((variant) => variant.key),
+    }),
+    {
+  ```
+  ```tsx
+  if (!result.ok) {
+    setDetectedKey(undefined);
+    return;
+  }
+  ```
+- **严重程度**: P2
+- **类别**: ok:false 上下文丢失 / 错误吞没
+- **影响**: `detectVariantAction` 是复杂 union-like 值识别的扩展点；当 action 返回 `{ ok:false, error }` 时，当前代码只清空 `detectedKey` 并继续走 `defaultVariant`/首个 variant 回退路径，既不记录 `result.error`，也不向字段错误或调试通道暴露失败原因。用户可能看到错误的 variant UI 被选中并继续编辑，原始检测失败、取消、超时、attempts/failureCount 等上下文全部丢失。
+- **修复建议**: 对 `!result.ok` 分支保留完整 `ActionResult`：至少 `console.warn`/runtime monitor 上报 `result.error` 与 action context；更好是引入 variant-field 局部错误态或外部 field error，阻止无诊断回退。若设计允许回退，也应显式记录“detect failed, fallback used”及原始 cause。
+- **为什么值得现在做**: `variant-field` 当前文档已把 `detectVariantAction` 列为 live baseline 能力，且它服务于低代码作者难以静态匹配的多态值；静默回退会把真实检测失败伪装成合法默认 variant，后续排查成本高。
+- **误报排除**: 这不是已知“superseded completion 静默丢弃”的 latest-request-wins 设计；这里的 request 仍是当前 request，只是标准 ActionResult 失败被无诊断消费。也不同于 [维度19-03] createDialog submitAction 空失败和 [维度19-11] quick edit 保存成功误判，本项位于 variant 检测扩展点。
+- **历史模式对应**: non-throw ActionResult failure 未保留；失败路径静默回退为默认状态。
+- **参考文档**: `docs/architecture/variant-field.md`; `docs/architecture/action-scope-and-imports.md`; `docs/architecture/renderer-runtime.md`
+- **复核状态**: 未复核
+
+第 5 轮上限已达，深挖结束。
+
+## 维度复核结论
+
+- [维度19-01] 保留：live code 仍在复合事务中缺少异常路径 rollback/finally，事务栈泄漏风险成立，维持 P1。
+- [维度19-02] 保留：`ActionResult.error` 被重新包装为普通 `Error` 且无 `cause`，原始错误对象丢失成立。
+- [维度19-03] 保留：`confirmCreateDialog` 对 `ok:false` 仅返回空失败，调用方也未记录/展示失败原因，成立。
+- [维度19-04] 保留：`resolveSurfaceValidationPlan` 裸 `catch` 返回 `undefined`，会静默丢失验证计划诊断，成立。
+- [维度19-05] 保留：`onSubmitError` 抛错会覆盖原始 submit 失败，并可能再次进入错误处理器，成立。
+- [维度19-06] 保留：非抛出型 retry 失败未写入 `lastFailureReason`，最终 HTTP 错误也未携带完整响应上下文，成立。
+- [维度19-07] 保留：Flow Designer lifecycle hook 异常被 `String(err)` 化且类型层只允许 string，原始 Error 丢失成立。
+- [维度19-08] 保留：formula data source `beginRun` 后失败路径无法 settle 对应 run，async governance 状态泄漏成立。
+- [维度19-09] 保留：reaction 在 when/dispatch 前提前推进 `previousValue`，失败后同值变化不再重试风险成立。
+- [维度19-10] 保留：action-backed data source 将失败 `ActionResult` 压缩为单个 Error，完整结果上下文丢失成立。
+- [维度19-11] 保留：Table quick edit 未检查 dispatch 返回的 `ok:false`，会进入保存成功路径，维持 P1。
+- [维度19-12] 保留：component/namespace action 抛错绕过 enriched `finishAction`，monitor 目标/provider 上下文丢失成立。
+- [维度19-13] 保留：host capability union 最终失败只输出泛化诊断，分支级错误上下文被硬编码 silent 探测吞掉，成立。
+- [维度19-14] 保留：async governance debug summary 仅保留 Error name/message，cause 与结构化 metadata 出口截断成立，维持 P3。
+- [维度19-15] 保留：VariantField 对当前 `detectVariantAction` 的 `ok:false` 静默清空检测结果并回退，失败原因丢失成立。
+- 需子项复核：维度19-01、维度19-11；建议补充复核维度19-04、维度19-09的设计意图边界。
+
+## 子项复核结论
+
+- [维度19-01] 保留：Flow Designer 多步插入事务仍在 `beginTransaction()` 后缺少异常路径 `rollback`/`finally`，抛错会留下悬挂事务风险。
+- [维度19-04] 保留：Dialog/Drawer 的 `resolveSurfaceValidationPlan` 仍裸 `catch` 返回 `undefined`，编译失败会静默降级为无验证计划。
+- [维度19-09] 保留：reaction 仍在 `when`/dispatch 成功前推进 `previousValue` 与 `initialized`，失败后同值变化会被当作未变化而不重试。
+- [维度19-11] 保留：Table quick edit 仍未检查 `helpers.dispatch(saveAction)` 返回的 `ActionResult.ok`，`ok:false` 会进入保存成功路径。
+
+最终进入汇总：19-01、19-04、19-09、19-11。

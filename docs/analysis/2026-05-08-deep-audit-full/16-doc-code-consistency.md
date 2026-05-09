@@ -450,3 +450,30 @@
 ## 深挖第 4 轮追加
 
 未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度16-01] 保留：`docs/index.md` 表格仍被未转义 `|` 破坏，authoritative routing table 实际列数失真。
+- [维度16-02] 驳回：live Plan 232 已为允许枚举 `completed`，原 `in_progress` 线索已不成立。
+- [维度16-03] 保留：`renderer-runtime.md` Current Hooks 仍遗漏 root public export 的 `useCurrentValidationValues`、`useFormLayout`、`useStrictMode`。
+- [维度16-04] 保留：`schema-file-validator.md` 当前基线段落仍使用已过时的 `CompiledSchemaNode` 术语。
+- [维度16-05] 保留：`flux-runtime-module-boundaries.md` 仍指向不存在的 `packages/flux-runtime/src/index.test.ts`。
+- [维度16-06] 保留：`canvas-adapters.md` Code Anchor 仍使用与 live git 路径不匹配的大小写文件名。
+- [维度16-07] 保留：`performance-design-requirements.md` P7 仍链接已移入 `docs/archive/plans/` 的旧计划路径。
+- [维度16-08] 保留：Plan 132 仍使用 guide 不允许的 `completed (core scope)` 状态值。
+- [维度16-09] 驳回：live Plan 233 已同步为 `completed`，Phase/checklist 与代码迁移状态也已更新，原 planned/半迁移漂移不再成立。
+- [维度16-10] 保留：`static-analysis.md` 仍把 `computeStaticAnalysis()` 归属到顶层 `schema-compiler.ts`，live 定义在 `schema-compiler/static-analysis.ts`。
+- [维度16-11] 保留：AGENTS operational routing 仍把 `future contract draft` 的 `contracts.md` 作为常规 Report/Spreadsheet follow-up，确有 draft-doc precedence 风险。
+- [维度16-12] 保留：`frontend-baseline.md` root scripts/tooling baseline 仍遗漏当前 `pnpm check` 聚合、e2e 与多项关键 check 脚本。
+
+需子项复核：维度16-01、16-03、16-05、16-08、16-11；其余保留项可按 active doc anchor/tooling baseline 漂移模式批量复核。
+
+## 子项复核结论
+
+- [维度16-01] 保留：live `docs/index.md` 表格仍因未转义 `|` 被拆成错误列数，authoritative routing baseline 实际损坏。
+- [维度16-03] 保留：`renderer-runtime.md` Current Hooks 仍遗漏 root public export 的 `useCurrentValidationValues`、`useFormLayout`、`useStrictMode`。
+- [维度16-05] 保留：`flux-runtime-module-boundaries.md` 仍要求更新不存在的 `packages/flux-runtime/src/index.test.ts`，而 live 测试已在 `src/__tests__/` 与 `validation/*.test.ts`。
+- [维度16-08] 保留：Plan 132 顶部仍使用 guide 枚举不允许的 `completed (core scope)` 状态值。
+- [维度16-11] 保留：AGENTS 仍把自声明 `future contract draft` 的 `contracts.md` 放入 Report/Spreadsheet 常规 operational follow-up，存在 draft-doc precedence 误导风险。
+
+最终进入汇总：16-01、16-03、16-05、16-08、16-11。

@@ -154,3 +154,17 @@
 ## 深挖第 2 轮追加
 
 未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度03-01] 保留：live `packages/report-designer-renderers/src/index.ts` 仍未导出 `createReportDesignerActionProvider`，但 `page-renderer.tsx` 已通过该 provider 注册 `report-designer` namespace，且 `docs/architecture/report-designer/api.md` 虽为 target/reference 也明确列出该导出，维持 P2 过渡期公开面收敛项。
+- [维度03-02] 保留：live `createSpreadsheetActionProvider().listMethods()` 仍固定返回 `[]`，而同包公开 `SPREADSHEET_MANIFEST_V1.capabilities.methods` 声明了 `setActiveSheet`、`setSelection` 等方法；`ActionScope.getDebugSnapshot()` 与调试/检查路径会读取 `listMethods`，构成同一 live public introspection 面的 P2 漂移。
+- [维度03-03] 保留：live `createReportDesignerActionProvider().listMethods()` 仍固定返回 `[]`，而公开 `REPORT_DESIGNER_MANIFEST_V1.capabilities.methods` 声明了 `dropFieldToTarget`、`updateMeta`、`preview` 等方法；该 provider 已在 `page-renderer.tsx` 注册为 live host namespace，维持 P2。
+
+需子项复核：文档-代码违约：[维度03-01]（target/reference 文档参与但不是唯一证据）；不确定项：无；P0/P1：无；跨包边界：无。
+
+## 子项复核结论
+
+- [维度03-01] 保留：`report-designer-renderers` root 仍未导出 live `createReportDesignerActionProvider`，而同包已公开 manifest/hostContract 且 page renderer 已实际注册该 namespace provider，最终按 P2 公开面收敛项保留。
+
+最终进入汇总：[维度03-01] P2。

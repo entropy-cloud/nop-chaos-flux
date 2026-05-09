@@ -526,3 +526,73 @@
 - **历史模式对应**: 诊断型 E2E 以宽泛阈值代替稳定产品契约。
 - **参考文档**: `docs/skills/deep-audit-prompts.md:1466-1471`, `AGENTS.md` Test Execution Strategy
 - **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度14-18] `code-editor.integration.test.tsx` 多个 `console.error` mock 依赖用例末尾恢复，失败路径会污染后续集成测试
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-code-editor\src\code-editor.integration.test.tsx`
+- **行号范围**: `18-20`, `43-48`, `96-98`
+- **证据片段**:
+
+  ```tsx
+  afterEach(() => {
+    cleanup();
+  });
+
+  describe('code-editor integration', () => {
+    it('renders expression editor with expressionConfig without crashing', () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+  ```
+
+  ```tsx
+      expect(screen.getByText('Expression Editor')).toBeTruthy();
+      expect(consoleError).not.toHaveBeenCalled();
+      consoleError.mockRestore();
+    });
+  ```
+
+- **严重程度**: P2
+- **类别**: 隔离性 / mock清理
+- **现状**: 该文件 8 个用例都在用例内部 `vi.spyOn(console, 'error').mockImplementation(...)`，但文件级 `afterEach` 只执行 `cleanup()`，mock 恢复依赖每个测试成功走到末尾的 `consoleError.mockRestore()`。
+- **风险**: 一旦 render、断言或 React/CodeMirror 初始化在中途抛错，`console.error` 会继续保持 mocked 状态，后续用例可能无法暴露真实 React error、初始化错误或 warning，形成级联假阴性。
+- **建议**: 将 `afterEach` 改为同时执行 `vi.restoreAllMocks()`，或用 `try/finally` 包裹每个 console spy；优先采用文件级统一恢复以覆盖所有失败路径。
+- **为什么值得现在做**: Code Editor 集成测试本身用 `console.error` 作为“不崩溃”信号，mock 清理不可靠会直接削弱这类断言的可信度，修复成本很低。
+- **误报排除**: 这不是重复报告 fake timer 清理问题；本项是独立的 console mock 污染路径。Vitest shared config 当前未启用自动 `restoreMocks`，文件级 `afterEach` 也没有恢复 mock，因此失败路径确实存在。
+- **历史模式对应**: mock/setup 清理只放在成功路径尾部，导致失败后污染同文件后续测试。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1458-1461`, `AGENTS.md:172-175`
+- **复核状态**: 未复核
+
+第 5 轮上限已达，深挖结束。
+
+## 维度复核结论
+
+- [维度14-01] 保留：live oversized 基线确认 779 行，超过 >700 硬阈值并阻断检查。
+- [维度14-02] 保留：live oversized 基线确认 751 行，超过 >700 硬阈值并阻断检查。
+- [维度14-03] 保留：live oversized 基线确认 726 行，超过 >700 硬阈值并阻断检查。
+- [维度14-04] 保留：live oversized 基线确认 718 行，超过 >700 硬阈值并阻断检查。
+- [维度14-05] 保留：默认 Playwright `testDir` 仍包含 `debug-collapsible*.spec.ts`，其中存在仅日志/诊断、无产品断言用例。
+- [维度14-06] 保留：Table Component Lab E2E 仍只做可见性/read 检查，未覆盖排序、过滤/搜索交互。
+- [维度14-07] 保留：`flow-designer-css-diag.spec.ts` 默认运行，仍有只打印 CSS/DOM 诊断而无断言的用例。
+- [维度14-08] 保留：`operation-control.test.ts` fake timers 仍依赖成功路径末尾恢复，无 `afterEach`/`finally` 兜底。
+- [维度14-09] 保留：SQL 执行 E2E 仍接受 loading/error 为通过，未覆盖成功结果、payload、参数/resultPath 映射。
+- [维度14-10] 保留：`operation-control-timeout-retry.test.ts` fake timers 同样缺少失败路径清理兜底。
+- [维度14-11] 保留：`code-editor.spec.ts` 默认集合仍包含纯截图产物用例，无断言或 snapshot 对比。
+- [维度14-12] 保留：诊断 dump 用例仍在默认 E2E 中，仅断言存在节点文本；已是 P3 观察项。
+- [维度14-13] 降级：固定 `waitForTimeout(300)` 确实存在，但当前用例有明确交互断言，缺少已发生 flake 证据，建议降为 P3。
+- [维度14-14] 保留：`source-resolvers.ts` scope-driven hooks 无对应测试，现有 `types.test.ts` 只覆盖静态解析 fallback。
+- [维度14-15] 保留：`request-runtime-polling.test.ts` fake timers 仍依赖成功路径末尾恢复，无统一清理。
+- [维度14-16] 保留：CRUD diagnostic E2E 默认运行，包含固定 sleep 与大量 dump；虽有断言，但测试形态仍应改造。
+- [维度14-17] 保留：默认 E2E 以诊断 dump 和宽泛 gap 阈值替代明确布局契约；已是 P3 观察项。
+- [维度14-18] 保留：`code-editor.integration.test.tsx` console mock 依赖用例末尾恢复，shared Vitest config 未启用自动 `restoreMocks`。
+
+需子项复核：维度14-01、14-02、14-03、14-04。
+
+## 子项复核结论
+
+- [维度14-01] 保留：live `use-table-controls.test.tsx` 为 778 行且覆盖 pagination/selection/sort/filter/expand 多个 controller，超过 >700 硬阈值并具备跨域聚合证据。
+- [维度14-02] 保留：live `form-submit-actions.test.tsx` 为 750 行，仍同时覆盖 submit/init/validation/surface scope 等行为轴，超过 >700 硬阈值。
+- [维度14-03] 保留：live `schema-compiler-diagnostics.test.ts` 为 725 行，仍聚合 diagnostics、symbol table、host action、namespace validation 等 compiler 子域，超过 >700 硬阈值。
+- [维度14-04] 保留：live `runtime-dialogs-scope.test.ts` 为 717 行，仍覆盖 dialog/drawer/surface teardown/scope publication 等 runtime surface 行为，超过 >700 硬阈值。
+
+最终进入汇总：14-01、14-02、14-03、14-04 全部保留。

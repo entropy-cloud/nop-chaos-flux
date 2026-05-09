@@ -181,6 +181,26 @@
 
 未发现新的问题。深挖结束。
 
+## 维度复核结论
+
+- [维度12-01] 保留：live `designer-field` metadata 仍声明 `label` 为 `value-or-region`，但组件只读 `props.props.label` 字符串，未消费 `regions.label`，region label 会静默丢失。
+- [维度12-02] 保留：live `code-editor` 已解析 `labelContent`，但 fullscreen header 仍用 `String(labelContent ?? '')`，会破坏 ReactNode/region slot 输出。
+- [维度12-03] 保留：live `form.body/actions` metadata 为 `region`，compiler 接受单 schema 或数组；validator 仍强制数组，诊断路径与编译契约不一致。
+- [维度12-04] 保留：basic `page/dialog/drawer.title` metadata 仍为 `value-or-region`，public schema typing 仍限为 `string`，类型层窄于 live runtime 能力。
+- [维度12-05] 保留：`spreadsheet-page.title` metadata 与组件均支持 slot，但 `SpreadsheetPageSchemaInput.title` 仍为 `string`，公开 typing 漂移成立。
+- [维度12-06] 保留：`report-designer-page.title` metadata 与组件均支持 slot，但 `ReportDesignerPageSchemaInput.title` 仍为 `string`，公开 typing 漂移成立。
+- [维度12-07] 保留：`word-editor-page.title` metadata 与组件状态 hook/渲染路径均支持 slot，但 `WordEditorPageSchemaInput.title` 仍为 `string`，公开 typing 漂移成立。
+- 需子项复核：无高风险逐项复核；[维度12-04]~[维度12-07] 可按同型 public schema typing 漂移批量子项复核。
+
+## 子项复核结论
+
+- [维度12-04] 保留：basic `page/dialog/drawer.title` metadata 仍为 `value-or-region`，但 public schema typing 仍限为 `string`。
+- [维度12-05] 保留：`spreadsheet-page.title` metadata 支持 slot，`SpreadsheetPageSchemaInput.title` 仍为 `string`。
+- [维度12-06] 保留：`report-designer-page.title` metadata 支持 slot，`ReportDesignerPageSchemaInput.title` 仍为 `string`。
+- [维度12-07] 保留：`word-editor-page.title` metadata 支持 slot，`WordEditorPageSchemaInput.title` 仍为 `string`。
+
+最终进入汇总：12-04、12-05、12-06、12-07。
+
 ### [维度12-06] `report-designer-page` public schema typing 仍把 value-or-region `title` 限死为字符串
 
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\report-designer-renderers\src\renderers.tsx:86-98`, `C:\can\nop\nop-chaos-flux\packages\report-designer-renderers\src\types.ts:21-40`

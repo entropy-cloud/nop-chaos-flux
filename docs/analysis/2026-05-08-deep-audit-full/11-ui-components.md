@@ -69,3 +69,16 @@
 ## 深挖第 2 轮追加
 
 未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度11-01] 保留：live code 仍在 `JsonViewer` 两处使用原生 `<button>`；`@nop-chaos/ui` 已提供 `Button`，且 `nop-debugger` 已依赖并使用共享 UI 组件。按校准规则不升高严重度，保留为 P3。
+- [维度11-02] 保留：`ToolbarButton` 仍以 `<span role="button">` 复制按钮语义、键盘处理和样式；多数调用并非必须使用非 button host，且 `Button` 已支持所需尺寸。保留为 P3，`PopoverTrigger nativeButton={false}` 场景可作为迁移时的局部例外处理。
+- 需子项复核：无。
+
+## 子项复核结论
+
+- [维度11-01] 保留：维度复核已回到 live code 确认，低风险 P3 原生按钮替换项无需额外子项复核。
+- [维度11-02] 保留：维度复核已区分 `wrapped-field-action` 历史例外，低风险 P3 平行 span-button 实现无需额外子项复核。
+
+最终进入汇总：11-01、11-02。

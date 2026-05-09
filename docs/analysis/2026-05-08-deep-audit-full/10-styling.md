@@ -268,3 +268,92 @@
 - **历史模式对应**: high-performance canvas CSS exception 被外壳 UI 样式复用，导致 owner boundary/theme token 漂移。
 - **参考文档**: `docs/architecture/styling-system.md`, `docs/architecture/theme-compatibility.md`, `docs/architecture/report-designer/design.md`
 - **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度10-11] report-field-panel 包级 CSS 使用裸 `data-slot` 选择器，未限定 report designer 根作用域
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\report-designer-renderers\src\report-field-panel.css:1-8`, `C:\can\nop\nop-chaos-flux\packages\report-designer-renderers\src\report-field-panel.tsx:1`
+- **行号范围**: `report-field-panel.css:1-70`, `report-field-panel.tsx:1`
+- **证据片段**:
+
+  ```css
+  [data-slot='report-field-panel-shell'] {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  [data-slot='report-field-panel-stack'] {
+  ```
+
+- **严重程度**: P2
+- **违规类别**: selector scope / marker / 主题
+- **现状**: `report-field-panel.css` 由组件 side-effect import 引入，但所有规则直接以裸 `[data-slot='report-field-panel-*']` 开头，未限定在 `.nop-report-designer` / `.nop-report-inspector` 或专用 root marker 下。
+- **风险**: 包级样式会全局命中任意同名 `data-slot`，把 Report Designer 字段面板的 display、gap、padding、border、background 等规则泄漏到其他宿主或渲染器 DOM；这与“root marker + internal data-slot”的 selector scope 契约不一致。
+- **建议**: 将规则收口为 `.nop-report-designer [data-slot='report-field-panel-*']`，或为字段面板补充稳定 root marker 后改为 root-scoped slot selector；保留 CSS 变量 fallback，但避免裸 slot 作为全局入口。
+- **为什么值得现在做**: 这是和前几轮发现的 code-editor / default-spacing / form-renderers 裸 slot selector 同类但不同 owner 的残留，修复面小，可避免 Report Designer 样式继续扩散为全局协议。
+- **误报排除**: 不是反对 Report Designer 作为复杂 widget 拥有内部视觉样式；问题只在 package stylesheet 未用 root marker 限定作用域，直接命中全局 `data-slot`。
+- **历史模式对应**: package-owned CSS 裸 `data-slot` selector 泄漏到跨包同名 slot 的重复收口模式。
+- **参考文档**: `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`, `docs/architecture/theme-compatibility.md`
+- **复核状态**: 未复核
+
+### [维度10-12] Flow Designer `createDialog.body` 渲染未继承 `config.classAliases`
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flow-designer-renderers\src\designer-page-body.tsx:354-362`, `C:\can\nop\nop-chaos-flux\packages\flow-designer-renderers\src\designer-xyflow-canvas\designer-xyflow-node.tsx:228-233`
+- **行号范围**: `designer-page-body.tsx:354-362`, `designer-xyflow-node.tsx:228-233`
+- **证据片段**:
+  ```tsx
+  <ClassAliasesContext.Provider value={config.classAliases}>
+    <RenderNodes
+      input={nodeType.body}
+      options={{ bindings: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
+    />
+  </ClassAliasesContext.Provider>
+  ...
+  props.helpers.render(pendingCreateDialog.nodeType.createDialog.body, {
+    scope: designerScope,
+  ```
+- **严重程度**: P2
+- **违规类别**: classAlias
+- **现状**: Flow Designer 节点 `body` 已显式用 `ClassAliasesContext.Provider value={config.classAliases}` 发布 alias scope，但同属 `NodeTypeConfig` 的 `createDialog.body` 直接通过 `props.helpers.render(...)` 渲染，未包裹同一份 `config.classAliases`。
+- **风险**: 配置作者在 `nodeTypes[].createDialog.body` 中使用 `className: "stack-sm"` 或自定义 alias 时不会按 Flow Designer 配置展开；同一 node type 的画布节点可用 alias，而创建弹窗表单不可用，形成样式 authoring surface 不一致。
+- **建议**: 在 `createDialog.body` 渲染处与 node body / quickActions 一样包裹 `ClassAliasesContext.Provider value={config.classAliases}`，并补充 create dialog body classAliases 继承回归测试。
+- **为什么值得现在做**: `createDialog.body` 是当前 live renderer 消费的标准 Flux schema 片段，修复只需补齐 provider，能避免配置作者在弹窗 schema 中回退到重复 Tailwind 长字符串。
+- **误报排除**: 不是要求 Flow Designer 所有内置 chrome 类都走 alias；本条仅针对用户配置提供的 Flux schema 片段。已有 node body 对照实现证明该类嵌套 schema 应继承 `config.classAliases`。
+- **历史模式对应**: renderer-local nested schema 渲染遗漏 classAliases provider，导致同一配置作用域内 alias 行为不一致。
+- **参考文档**: `docs/architecture/styling-system.md`, `docs/architecture/theme-compatibility.md`, `docs/architecture/flow-designer/design.md`
+- **复核状态**: 未复核
+
+第 5 轮上限已达，深挖结束。
+
+## 维度复核结论
+
+- [维度10-01] 保留：live `node-error-boundary.tsx` 与 `default-spacing.css` 仍存在 `nop-schema-root-fallback--status`、`nop-schema-root-fallback__message`、`nop-node-error__message`、`nop-node-error__retry`，确属 BEM 状态/内部区域 hook 残留。
+- [维度10-02] 保留：live `crud-renderer.tsx` 仍在内部区域同时使用 `nop-crud-query/toolbar/table/footer` 与 `data-slot="crud-*"`，违反 root marker only + internal data-slot 方向；P3 合理。
+- [维度10-03] 保留：live form input renderers 仍使用 `nop-*-wrapper` 表达 wrapper/内部结构，并已有重复 `data-slot`；P3 合理。
+- [维度10-04] 保留：live `code-editor-styles.css` 仍大量裸 `[data-slot='code-editor-*']`，且多处 `rgba/#999/#333` 等固定色；selector scope 与主题 token 风险成立。
+- [维度10-05] 保留：live `default-spacing.css` 仍有裸 `[data-slot='tabs-content']`、`[data-slot='field-label']`、`[data-slot='field-error']` 等，会跨出 Flux root marker 作用域；P2 合理。
+- [维度10-06] 保留：live `NodeRendererResolved` 只解析 `baseMeta.className`，page/container/tabs 等 slot `*ClassName` 仍直接 `cn(...)` 输出，per-slot class alias 缺口成立。
+- [维度10-07] 保留：live `form-renderers.css` 由包入口 side-effect import，所有规则仍以裸 form `data-slot` 开头；全局 slot selector 泄漏成立。
+- [维度10-08] 保留：live edge body `RenderNodes` 未包裹 `ClassAliasesContext.Provider`，而 node body/quickActions 已包裹；Flow Designer edge body alias scope 不一致成立。
+- [维度10-09] 保留：live palette 仍按 node type id 映射 `fd-palette-appearance-*`，CSS 写死渐变色，未优先使用 `nodeTypes[].appearance`/主题 token；配置外观漂移成立。
+- [维度10-10] 保留：live `canvas-styles.css` 仍混有 `.rd-toolbar`、`.bg-btn` 等 toolbar 外壳样式和固定色，`spreadsheet-toolbar.tsx` 仍使用 `.rd-toolbar`；超出 canvas hybrid CSS 边界成立。
+- [维度10-11] 降级：裸 `data-slot` selector 在 `report-field-panel.css` 仍存在，但 live `ReportFieldPanelRenderer` 根节点已有 `.nop-report-designer` 且 `data-slot="report-field-panel-shell"`，影响可通过作用域化 CSS 低成本收敛；保留为 P3 scope cleanup 更合适。
+- [维度10-12] 保留：live `designer-page-body.tsx` 的 `createDialog.body` 仍直接 `props.helpers.render(...)`，未继承 `config.classAliases`；与 node body 对照不一致成立。
+
+需子项复核：维度10-04、维度10-05、维度10-06、维度10-08、维度10-09、维度10-10、维度10-12；维度10-11建议子项复核确认是否维持降级。
+
+## 子项复核结论
+
+- [维度10-04] 保留：live `code-editor-styles.css` 仍存在未限定 `.nop-code-editor` 的裸 `data-slot` 选择器，并包含多处固定 light/dark 色值，selector scope 与主题 token 风险成立。
+- [维度10-05] 保留：live `default-spacing.css` 仍有裸 `[data-slot='tabs-content']` 等全局规则，确会跨出 Flux root marker 作用域命中同名 shadcn/ui slot。
+- [维度10-06] 保留：live `NodeRendererResolved` 只解析 `meta.className` 的 alias，page/container/tabs 等 per-slot `*ClassName` 仍直接输出，slot alias 契约缺口成立。
+- [维度10-08] 保留：live edge body `RenderNodes` 未包裹 `ClassAliasesContext.Provider`，而 node body 已包裹，同一 Flow Designer 配置下 edge body alias scope 不一致成立。
+- [维度10-09] 保留：live palette 仍按 node type id 映射固定 `fd-palette-appearance-*` 渐变色，未优先读取 `nodeTypes[].appearance`/主题 token，配置视觉漂移成立。
+- [维度10-10] 保留：live spreadsheet `canvas-styles.css` 仍混入 `.rd-toolbar`/`.bg-btn` 等 toolbar 外壳样式与固定色，超出 canvas hybrid CSS 例外边界。
+- [维度10-12] 保留：live `createDialog.body` 仍通过 `props.helpers.render(...)` 直接渲染，未继承 `config.classAliases`，与 node body 的 alias scope 不一致。
+- [维度10-11] 降级：裸 `data-slot` CSS 确实存在，但 live 字段面板根节点已带 `.nop-report-designer` 且使用 token fallback，风险主要是低成本 selector scope cleanup，维持 P3 更合适。
+
+最终进入汇总：10-04、10-05、10-06、10-08、10-09、10-10、10-12 保留；10-11 降级进入低优先级 scope cleanup。

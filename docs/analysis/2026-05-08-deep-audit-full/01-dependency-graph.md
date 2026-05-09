@@ -592,3 +592,26 @@
 ## 深挖第 5 轮追加
 
 未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度01-01] 保留：`packages/flux-react/package.json` 仍把 `@nop-chaos/flux-compiler` 放在生产 `dependencies`，当前源码命中仅在 `src/test-support-runtime.tsx` 与测试文件，且 build exclude 覆盖这些路径，维持 P3 manifest hygiene。
+- [维度01-02] 保留：`flux-renderers-basic` 仍声明生产 `@nop-chaos/flux-formula`，当前源码仅 `src/test-support.tsx` 引用且被 build exclude 排除，维持 P3。
+- [维度01-03] 保留：`flux-renderers-form-advanced` 的 `flux-formula` 与 `flux-renderers-basic` 当前命中均为测试/test-support 路径，生产源码确有 `flux-renderers-form` 引用但不影响本条，维持 P3。
+- [维度01-04] 保留：`flux-renderers-form` 的 `flux-formula` 与 `flux-renderers-basic` 仍只在测试目录或测试支撑文件中引用，manifest 仍放生产依赖，维持 P3。
+- [维度01-05] 保留：`flux-renderers-data` 的 `flux-formula` 与 `flux-renderers-form` 仍只在 `test-support.tsx` / `schema-validator.test.ts` 命中，build exclude 覆盖，维持 P3。
+- [维度01-06] 保留：`flow-designer-renderers` 的 `flux-formula` / `flux-runtime` 当前仅测试与 `index-test-support.tsx` 命中，生产 manifest 仍偏宽，维持 P3。
+- [维度01-07] 保留：`spreadsheet-renderers` 的 `flux-formula` / `flux-runtime` 当前仅 `src/__tests__/schema-integration.test.tsx` 引用，build exclude 覆盖，维持 P3。
+- [维度01-08] 保留：`report-designer-renderers` 的 `flux-formula` / `flux-runtime` 当前仅测试文件引用，manifest 仍列为生产依赖，维持 P3。
+- [维度01-09] 保留：`flow-designer-core` 仍声明 `@nop-chaos/flux-formula`，但 `src` 下未发现对应 import，维持 P3 未使用依赖清理项。
+- [维度01-10] 降级：`@nop-chaos/flux-renderers-form/test-support` 确未在 `flux-renderers-form/package.json` exports 中声明且被 advanced 测试多处导入，但该路径同时被 `tsconfig.base.json` 与 `vite.workspace-alias.ts` 显式作为测试/源码别名支撑，且 packages 为 private，降为 P3 测试边界一致性问题而非 P2 发布边界缺陷。
+- [维度01-11] 保留：`flux-renderers-form-advanced/src/tag-list.test.tsx` 仍直接导入 `@nop-chaos/flux-renderers-data`，而该包 manifest 未在 dependencies/devDependencies/peerDependencies 声明该内部依赖，维持 P2 未声明测试依赖。
+
+需子项复核：P0/P1：无；跨包边界：维度01-10、维度01-11；文档-代码违约：无；不确定项：无。
+
+## 子项复核结论
+
+- [维度01-10] 降级：`@nop-chaos/flux-renderers-form/test-support` 确属未导出的测试子路径且被 advanced 测试复用，但当前 private workspace 明确通过 `tsconfig.base.json` 与 `vite.workspace-alias.ts` 支撑该测试 alias，最终按 P3 测试边界一致性保留而非 P2 发布边界缺陷。
+- [维度01-11] 保留：`flux-renderers-form-advanced/src/tag-list.test.tsx` 仍直接导入 `@nop-chaos/flux-renderers-data`，而该包 manifest 未在 dependencies/devDependencies/peerDependencies 声明，属于可导致包隔离测试失败的 P2 未声明测试依赖。
+
+最终进入汇总：[维度01-10] P3；[维度01-11] P2。

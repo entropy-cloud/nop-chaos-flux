@@ -300,3 +300,24 @@
 ## 深挖第 5 轮追加
 
 未发现新的问题。深挖结束。
+
+## 维度复核结论
+
+- [维度07-01] 保留：live code 仍由 `useNodeSourceProps`/`NodeSourcePropController` 在 React hook/controller 中创建 observer、驱动 `run` 并 `dispose`；与当前 source lifecycle runtime-owned 文档目标和计划 231 Phase 2 residual 对齐，维持 P2。
+- [维度07-02] 保留：`useSourceValue` 当前仍在 React hook 内持有 `SourceObserver`，由 effect 直接 `observer.run(...)`/cleanup `dispose()`；与 07-01 同族且计划 231 明确列为待收敛项，维持 P2。
+- [维度07-03] 保留：`executeApiRequest` 对父 `AbortSignal` 添加 `{ once: true }` listener 后，请求 settle 的 `finally` 未移除未触发 listener；长生命周期 signal 复用时闭包可累积，维持 P2。
+- [维度07-04] 保留：runtime 确实追踪 `ownedActionScopes`，但 `ActionScope` 无 scope-level dispose，`runtime.dispose()` 仅通过 import stack 释放 import frame，未兜底遍历释放普通 namespace provider；node-owned action scope 也无对应 cleanup，维持 P2。
+- [维度07-05] 保留：`ImportStack.installPrepared/push` 在循环内逐项注册 namespace，但 frame 只有全部成功后才进入 tracking；后续 import 失败会留下前序已注册 provider，无 rollback，维持 P1。
+- [维度07-06] 保留：`RenderNodes` 仍在 `useMemo`/render 期间写入模块级 runtime cache，并依赖 commit 后 effect cleanup；pre-commit abort 时 cache entry 无清理路径，维持 P2。
+
+需子项复核：维度07-05 必须逐项复核；维度07-01、07-02、07-04、07-06 建议在进入修复计划前按同族 lifecycle ownership 批量复核。
+
+## 子项复核结论
+
+- [维度07-05] 保留：`ImportStack.push()`/`installPrepared()` 仍在 frame commit 前逐项注册 namespace，后续 import 失败时没有 rollback 已注册 provider。
+- [维度07-01] 保留：`useNodeSourceProps()`/`NodeSourcePropController` 仍由 React hook/controller 直接拥有 anonymous source run/snapshot/dispose 语义。
+- [维度07-02] 保留：导出的 `useSourceValue()` 仍在 React hook 内创建 `SourceObserver` 并由 effect 驱动 `run()`/`dispose()`。
+- [维度07-04] 保留：runtime 仍追踪 `ownedActionScopes` 但 `ActionScope` 没有 scope-level dispose，runtime/node owner lifecycle 缺少 namespace provider 兜底释放。
+- [维度07-06] 保留：`RenderNodes` 仍在 render/useMemo 阶段写入模块级 fragment scope cache，pre-commit abort 时 effect cleanup 不会安装。
+
+最终进入汇总：07-05、07-01、07-02、07-04、07-06。
