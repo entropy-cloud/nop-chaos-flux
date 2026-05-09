@@ -330,7 +330,7 @@ export function analyzeSchemaInput(
 
   if (Array.isArray(inputValue)) {
     inputValue.forEach((entry, index) => {
-      analyzeSchemaInput(entry, `${path}[${index}]`, registry, plugins, diagnostics);
+      analyzeSchemaInput(entry, `${path}[${index}]`, registry, plugins, diagnostics, traversalState);
     });
     return;
   }

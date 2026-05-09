@@ -75,6 +75,7 @@ export function createCompileSingleNode(
     const path = options.path;
     const fieldInspection = inspectSchemaNodeFields(schema, renderer, path, diagnostics, false);
     const metaProgram = buildMetaProgram(schema, renderer, expressionCompiler);
+    const structuralWhen = metaProgram.when;
     const propSource: Record<string, unknown> = {};
     const sourcePropKeys = new Set<string>();
     const sourceStatePropKeys: Record<string, string> = {};
@@ -112,6 +113,23 @@ export function createCompileSingleNode(
     if (xuiActionNames.length > 0) {
       symbolTable = pushNamedActionSymbols(symbolTable, xuiActionNames, `${path}:xui-actions`);
     }
+
+    const rawStructuralItemData =
+      schema.type === 'loop' || schema.type === 'recurse'
+        ? ((schema as { itemData?: Record<string, unknown> }).itemData ?? undefined)
+        : undefined;
+
+    const structuralItemData =
+      rawStructuralItemData !== undefined
+        ? expressionCompiler.compileValue(
+            rawStructuralItemData,
+            {
+              symbolTable,
+              sourcePath: `${path}.itemData`,
+              reportDiagnostic: (issue) => diagnostics.emit(issue),
+            },
+          )
+        : undefined;
 
     for (const key of Object.keys(schema)) {
       if (fieldInspection.skippedPropKeys.has(key) || isNamespacedSchemaKey(key)) {
@@ -174,6 +192,11 @@ export function createCompileSingleNode(
               ),
           })
         : value;
+
+      if ((schema.type === 'loop' || schema.type === 'recurse') && key === 'itemData') {
+        delete propSource[key];
+        continue;
+      }
 
       if (rule.allowSource) {
         sourcePropKeys.add(key);
@@ -335,6 +358,8 @@ export function createCompileSingleNode(
       component: renderer,
       propsProgram,
       metaProgram,
+      structuralWhen,
+      structuralItemData,
       eventPlans,
       lifecycleActions,
       regions,

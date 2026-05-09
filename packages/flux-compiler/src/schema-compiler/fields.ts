@@ -64,6 +64,7 @@ export function buildMetaProgram(
       case 'id':
       case 'className':
       case 'frameClassName':
+      case 'when':
       case 'visible':
       case 'hidden':
       case 'disabled':

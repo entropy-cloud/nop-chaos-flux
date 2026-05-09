@@ -96,6 +96,29 @@ describe('automatic host contract validation from renderer definitions', () => {
     expect(diagnostics.filter((issue) => issue.source === 'host-contract')).toEqual([]);
   });
 
+  it('keeps host action diagnostics for array-valued capable regions', () => {
+    const diagnostics = validateSchema({
+      schema: {
+        type: 'designer-page',
+        toolbar: [
+          {
+            type: 'toolbar-button',
+            onClick: { action: 'designer:unknownMethod' },
+          },
+        ],
+      },
+      registry: createRendererRegistry([automaticHostOwnerRenderer, automaticHostButtonRenderer]),
+    });
+
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'unknown-host-capability-method',
+        path: '/toolbar/0/onClick/action',
+        source: 'host-contract',
+      }),
+    ]);
+  });
+
   it('reports unsupported xui:version selectors on host owners', () => {
     const diagnostics = validateSchema({
       schema: {

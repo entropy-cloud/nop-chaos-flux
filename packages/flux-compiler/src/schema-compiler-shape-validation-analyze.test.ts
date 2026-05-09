@@ -104,6 +104,40 @@ describe('analyzeSchemaInput validation', () => {
     );
   });
 
+  it('reports invalid dynamic-renderer loadAction shape through renderer validation', () => {
+    const renderer: RendererDefinition = {
+      type: 'dynamic-renderer',
+      component: () => null,
+      fields: [{ key: 'loadAction', kind: 'prop' }],
+      schemaValidator({ schema, emit }) {
+        const loadAction = schema.loadAction;
+        if (!loadAction || typeof loadAction !== 'object' || Array.isArray(loadAction)) {
+          emit({
+            code: 'invalid-action-shape',
+            path: '/loadAction',
+            message: 'Action entries must be objects.',
+          });
+        }
+      },
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(
+      compiler.validate?.({
+        type: 'dynamic-renderer',
+        loadAction: 'bad-action',
+      } as any),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-action-shape',
+          path: '/loadAction',
+          message: 'Action entries must be objects.',
+        }),
+      ]),
+    );
+  });
+
   it('reports non-array parallel in action', () => {
     const renderer: RendererDefinition = {
       type: 'button',
