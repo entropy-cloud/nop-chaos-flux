@@ -48,6 +48,12 @@ function mergeDependencySets(
   };
 }
 
+const WILDCARD_DEPENDENCIES: ScopeDependencySet = {
+  paths: ['*'],
+  wildcard: true,
+  broadAccess: true,
+};
+
 function evaluateCompiledValue<T>(
   compiler: ExpressionCompiler,
   value: CompiledRuntimeValue<T> | undefined,
@@ -151,6 +157,10 @@ export function createNodeRuntime(input: {
         env,
         state?.meta.frameClassName,
       ),
+      when: Boolean(
+        evaluateCompiledValue(input.expressionCompiler, meta.when, scope, env, state?.meta.when) ??
+          true,
+      ),
       visible: Boolean(
         evaluateCompiledValue(
           input.expressionCompiler,
@@ -231,7 +241,10 @@ export function createNodeRuntime(input: {
 
     if (state) {
       state.resolvedProps = result.value;
-      state.propsDependencies = collectRuntimeDependencies(state.props);
+      state.propsDependencies = mergeDependencySets([
+        collectRuntimeDependencies(state.props),
+        node.structuralItemData?.kind === 'dynamic' ? WILDCARD_DEPENDENCIES : undefined,
+      ]);
       if (!result.reusedReference) {
         state._lastPropsResult = result;
       }

@@ -29,6 +29,10 @@ export function createFormComponentHandle(form: FormRuntime): ComponentHandle {
                 payload && 'interactionId' in payload
                   ? String(payload.interactionId ?? '') || undefined
                   : undefined,
+              signal:
+                payload && 'signal' in payload && payload.signal instanceof AbortSignal
+                  ? payload.signal
+                  : undefined,
             });
           case 'validate': {
             const result = await form.validateForm();

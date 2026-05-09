@@ -19,7 +19,7 @@ export function createComponentHandleRegistry(input: {
   const handles = new Set<ComponentHandle>();
   const handlesByCid = new Map<number, ComponentHandle>();
   const debugDataByCid = new Map<number, ComponentHandleDebugData>();
-  const handlesById = new Map<string, ComponentHandle>();
+  const handlesById = new Map<string, Set<ComponentHandle>>();
   const handlesByName = new Map<string, Set<ComponentHandle>>();
   const nameIndex = new Map<string, Set<number>>();
   const childRegistries = new Set<ComponentHandleRegistry>();
@@ -163,7 +163,9 @@ export function createComponentHandleRegistry(input: {
     }
 
     if (handle.id) {
-      handlesById.set(handle.id, handle);
+      const existingById = handlesById.get(handle.id) ?? new Set<ComponentHandle>();
+      existingById.add(handle);
+      handlesById.set(handle.id, existingById);
     }
 
     if (handle.name) {
@@ -182,8 +184,12 @@ export function createComponentHandleRegistry(input: {
       handlesByCid.delete(handle._cid);
     }
 
-    if (handle.id && handlesById.get(handle.id) === handle) {
-      handlesById.delete(handle.id);
+    if (handle.id) {
+      const indexedById = handlesById.get(handle.id);
+      indexedById?.delete(handle);
+      if (indexedById && indexedById.size === 0) {
+        handlesById.delete(handle.id);
+      }
     }
 
     if (handle.name) {
@@ -217,14 +223,24 @@ export function createComponentHandleRegistry(input: {
     }
 
     if (target.componentId) {
-      const byId = handlesById.get(target.componentId);
+      const byId = Array.from(handlesById.get(target.componentId) ?? []).filter(
+        (handle) => handle._mounted !== false,
+      );
 
-      if (byId) {
-        if (target.componentName && byId.name && byId.name !== target.componentName) {
+      if (byId.length === 1) {
+        if (target.componentName && byId[0].name && byId[0].name !== target.componentName) {
           return undefined;
         }
 
-        return byId;
+        return byId[0];
+      }
+
+      if (byId.length > 1) {
+        const err = new Error(`Ambiguous component target: ${target.componentId}`) as Error & {
+          _ambiguous?: boolean;
+        };
+        err._ambiguous = true;
+        throw err;
       }
 
       for (const child of childRegistries) {
@@ -289,15 +305,6 @@ export function createComponentHandleRegistry(input: {
         handle._cid = nextCid;
       }
       handle._mounted = true;
-
-      if (handle.id) {
-        const existingById = handlesById.get(handle.id);
-
-        if (existingById && existingById !== handle) {
-          handles.delete(existingById);
-          unindexHandle(existingById);
-        }
-      }
 
       handles.add(handle);
       indexHandle(handle);

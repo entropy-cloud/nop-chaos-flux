@@ -181,6 +181,54 @@ describe('createRendererRuntime', () => {
     }
   });
 
+  it('preserves abort signal when component:submit resolves through a form component handle', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
+    const controller = new AbortController();
+    let capturedSignal: AbortSignal | undefined;
+    const form = runtime.createFormRuntime({
+      id: 'submit-signal-form',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page,
+      lifecycle: {
+        submitAction: async (options) => {
+          capturedSignal = options?.signal;
+          return { ok: true, data: { submitted: true } };
+        },
+      },
+    });
+
+    const unregister = componentRegistry.register(createFormComponentHandle(form));
+
+    try {
+      const result = await runtime.dispatch(
+        {
+          action: 'component:submit',
+          componentId: 'submit-signal-form',
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+          componentRegistry,
+          signal: controller.signal,
+        },
+      );
+
+      expect(result).toMatchObject({ ok: true, data: { submitted: true } });
+      expect(capturedSignal).toBe(controller.signal);
+    } finally {
+      unregister();
+    }
+  });
+
   it('fails component action when componentId and componentName target different handles', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({

@@ -39,7 +39,23 @@ export function createDataSourceController(
     }, input.interval);
   }
 
+  function activateController(publishInitialData: boolean): void {
+    mutable.started = true;
+    mutable.stopped = false;
+
+    if (publishInitialData && input.initialData !== undefined) {
+      publishControllerData(input, mutable, input.initialData);
+    }
+
+    updateControllerState(input, mutable, (current) => ({
+      ...current,
+      started: true,
+      status: typeof current.data === 'undefined' ? 'idle' : current.status,
+    }));
+  }
+
   function stop(): void {
+    mutable.started = false;
     mutable.stopped = true;
 
     if (mutable.pollTimer) {
@@ -52,6 +68,7 @@ export function createDataSourceController(
     mutable.activeRequestCount = 0;
     updateControllerState(input, mutable, (current) => ({
       ...current,
+      started: false,
       inFlightCount: 0,
       fetchStatus: 'idle',
     }));
@@ -64,18 +81,7 @@ export function createDataSourceController(
       return;
     }
 
-    mutable.started = true;
-    mutable.stopped = false;
-
-    if (input.initialData !== undefined) {
-      publishControllerData(input, mutable, input.initialData);
-    }
-
-    updateControllerState(input, mutable, (current) => ({
-      ...current,
-      started: mutable.started,
-      status: typeof current.data === 'undefined' ? 'idle' : current.status,
-    }));
+    activateController(true);
 
     void runRequest().catch(reportRunRequestError);
 
@@ -91,9 +97,18 @@ export function createDataSourceController(
     start,
     stop,
     refresh() {
+      if (!mutable.started || mutable.stopped) {
+        activateController(false);
+
+        if (input.interval && input.interval > 0) {
+          schedulePoll();
+        }
+      }
+
       return runRequest();
     },
     reset() {
+      mutable.started = false;
       mutable.stopped = true;
 
       if (mutable.pollTimer) {

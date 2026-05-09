@@ -312,6 +312,7 @@ export function createRendererRuntime(input: {
       return { preparedImports: new Map(preparedEntries) };
     },
     evaluate,
+    evaluateCompiled,
     allocateMountedCid() {
       nextMountedCid += 1;
       return nextMountedCid;

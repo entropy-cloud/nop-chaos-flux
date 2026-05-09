@@ -133,6 +133,79 @@ describe('createDataSourceController', () => {
     releaseRequest?.();
   });
 
+  it('can restart after stop and refresh after reset without leaving a fake started+stopped state', async () => {
+    const fetcher = vi
+      .fn(async () => ({
+        ok: true,
+        status: 200,
+        data: { run: 1 },
+      }))
+      .mockResolvedValueOnce({ ok: true, status: 200, data: { run: 1 } })
+      .mockResolvedValueOnce({ ok: true, status: 200, data: { run: 2 } })
+      .mockResolvedValueOnce({ ok: true, status: 200, data: { run: 3 } });
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env: {
+        fetcher,
+        notify: vi.fn(),
+      } as RendererEnv,
+    });
+    const page = runtime.createPageRuntime({});
+    const controller = runtime.createDataSourceController({
+      action: compileAction(
+        { action: 'ajax', args: { url: '/api/restartable' } },
+        runtime.expressionCompiler,
+      ),
+      scope: page.scope,
+      targetPath: 'payload',
+    });
+
+    controller.start();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ run: 1 });
+    });
+
+    controller.stop();
+    expect(controller.getState()).toMatchObject({
+      started: false,
+      fetchStatus: 'idle',
+      inFlightCount: 0,
+    });
+
+    controller.start();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ run: 2 });
+    });
+
+    controller.reset();
+    expect(controller.getState()).toMatchObject({
+      started: false,
+      status: 'idle',
+      fetchStatus: 'idle',
+      inFlightCount: 0,
+      hasData: false,
+    });
+    expect(page.scope.get('payload')).toBeUndefined();
+
+    await controller.refresh();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ run: 3 });
+    });
+
+    expect(controller.getState()).toMatchObject({
+      started: true,
+      status: 'success',
+      fetchStatus: 'idle',
+      inFlightCount: 0,
+      hasData: true,
+    });
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    controller.stop();
+  });
+
   it('reuses runtime-local cache across controller refreshes', async () => {
     const fetcher = vi.fn(async () => ({
       ok: true,

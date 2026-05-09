@@ -394,7 +394,14 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         }
       }
 
-      const result = await handle.capabilities.invoke(invocation.method, invocation.payload, ctx);
+      const payloadWithSignal =
+        ctx.signal && invocation.payload && typeof invocation.payload === 'object'
+          ? { ...invocation.payload, signal: ctx.signal }
+          : ctx.signal
+            ? { signal: ctx.signal }
+            : invocation.payload;
+
+      const result = await handle.capabilities.invoke(invocation.method, payloadWithSignal, ctx);
       const baseResult =
         result && typeof result === 'object' && 'ok' in (result as object)
           ? (result as ActionResult)

@@ -207,6 +207,7 @@ export function registerReaction(input: {
 
       const dispatchResult = await input.helpers.dispatch(normalizeActionArray(actionsSource), {
         scope: input.scope,
+        signal: abortController.signal,
         event: {
           type: 'reaction',
           value: nextValue,

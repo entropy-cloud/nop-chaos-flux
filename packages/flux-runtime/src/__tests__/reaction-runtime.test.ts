@@ -254,6 +254,47 @@ describe('registerReaction dispose race with scheduled microtask', () => {
     }
   });
 
+  it('forwards an abort signal into dispatched reaction actions and aborts it on dispose', async () => {
+    const runtime = createRuntime();
+    const page = runtime.createPageRuntime({ count: 0 });
+    let capturedSignal: AbortSignal | undefined;
+    let releaseDispatch: (() => void) | undefined;
+
+    const registration = runtime.registerReaction({
+      id: 'reaction-abort-signal',
+      scope: page.scope,
+      compiledReaction: compileReaction(
+        'reaction-abort-signal',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          actions: { action: 'custom:noop' },
+        },
+        expressionCompiler,
+      ),
+      dispatch: vi.fn(async (_action, ctx) => {
+        capturedSignal = ctx?.signal;
+        await new Promise<void>((resolve) => {
+          releaseDispatch = resolve;
+        });
+        return { ok: true };
+      }),
+    });
+
+    page.scope.update('count', 1);
+
+    await vi.waitFor(() => {
+      expect(capturedSignal).toBeDefined();
+    });
+
+    expect(capturedSignal?.aborted).toBe(false);
+
+    registration.dispose();
+
+    expect(capturedSignal?.aborted).toBe(true);
+    releaseDispatch?.();
+  });
+
   it('marks reaction runs as failed when dispatch returns non-cancelled ok:false', async () => {
     const runtime = createRuntime();
     const page = runtime.createPageRuntime({ count: 0 });

@@ -15,7 +15,7 @@ function createHandle(overrides: Record<string, unknown> = {}) {
 }
 
 describe('createComponentHandleRegistry', () => {
-  it('registers, replaces, unregisters, and resolves handles by id/name/cid', () => {
+  it('registers, keeps distinct ids visible by cid, and resolves handles by id/name/cid', () => {
     const registry = createComponentHandleRegistry({ id: 'root-registry' });
     const first = createHandle({ id: 'form-1', name: 'profile', _cid: 1 });
     const second = createHandle({ id: 'form-1', name: 'profile-new', _cid: 2 });
@@ -26,8 +26,11 @@ describe('createComponentHandleRegistry', () => {
     expect(registry.resolve({ _targetCid: 1 })).toBe(first);
 
     registry.register(second);
-    expect(registry.resolve({ _targetCid: 1 })).toBeUndefined();
-    expect(registry.resolve({ componentId: 'form-1' })).toBe(second);
+    expect(registry.resolve({ _targetCid: 1 })).toBe(first);
+    expect(registry.resolve({ _targetCid: 2 })).toBe(second);
+    expect(() => registry.resolve({ componentId: 'form-1' })).toThrow(
+      'Ambiguous component target: form-1',
+    );
 
     registry.register(named);
     expect(registry.resolve({ componentName: 'search' })).toBe(named);
@@ -61,6 +64,21 @@ describe('createComponentHandleRegistry', () => {
     expect(() => child.resolve({ componentName: 'duplicate' })).toThrow(
       'Ambiguous component target: duplicate',
     );
+  });
+
+  it('treats duplicate component ids as ambiguous instead of silently replacing old handles', () => {
+    const registry = createComponentHandleRegistry({ id: 'root-registry' });
+    const first = createHandle({ id: 'dup-id', _cid: 1 });
+    const second = createHandle({ id: 'dup-id', _cid: 2 });
+
+    registry.register(first);
+    registry.register(second);
+
+    expect(() => registry.resolve({ componentId: 'dup-id' })).toThrow(
+      'Ambiguous component target: dup-id',
+    );
+    expect(registry.resolve({ _targetCid: 1 })).toBe(first);
+    expect(registry.resolve({ _targetCid: 2 })).toBe(second);
   });
 
   it('propagates debug mode, stores debug data, and inspects resolved and missing cids', () => {

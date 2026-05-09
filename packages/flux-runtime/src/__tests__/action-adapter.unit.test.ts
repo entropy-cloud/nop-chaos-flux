@@ -502,6 +502,39 @@ describe('formId targeting in built-in actions', () => {
     expect(form.submit).not.toHaveBeenCalled();
   });
 
+  it('submitForm forwards abort signal when formId resolves through component registry', async () => {
+    const adapter = createAdapter();
+    const controller = new AbortController();
+    const remoteHandle = {
+      capabilities: {
+        invoke: vi.fn().mockResolvedValue({ ok: true, data: { submitted: true } }),
+      },
+    };
+
+    const result = await adapter.invokeBuiltInAction(
+      {
+        ...createBuiltInInvocation('submitForm', undefined, { formId: 'remote-form' }),
+        signal: controller.signal,
+      },
+      createCtx({
+        interactionId: 'submit-remote',
+        componentRegistry: {
+          resolve: vi.fn().mockReturnValue(remoteHandle),
+        },
+      }),
+    );
+
+    expect(result).toMatchObject({ ok: true, data: { submitted: true } });
+    expect(remoteHandle.capabilities.invoke).toHaveBeenCalledWith(
+      'submit',
+      {
+        interactionId: 'submit-remote',
+        signal: controller.signal,
+      },
+      expect.any(Object),
+    );
+  });
+
   it('submitForm returns error when formId does not resolve', async () => {
     const adapter = createAdapter();
     const form = { id: 'form-1', submit: vi.fn() };
