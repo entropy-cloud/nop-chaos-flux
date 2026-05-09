@@ -14,22 +14,24 @@ export interface ToolbarButtonProps {
 }
 
 export function ToolbarButton(props: ToolbarButtonProps) {
+  const button = (
+    <Button
+      variant={props.variant ?? 'ghost'}
+      size="icon-sm"
+      onClick={props.onClick}
+      disabled={props.disabled}
+      className={props.className}
+      data-toolbar-active={props.active || undefined}
+      aria-label={t(props.label)}
+      title={t(props.label)}
+    >
+      {props.children ?? props.icon}
+    </Button>
+  );
+
   return (
     <Tooltip>
-      <TooltipTrigger>
-        <Button
-          variant={props.variant ?? 'ghost'}
-          size="icon-sm"
-          onClick={props.onClick}
-          disabled={props.disabled}
-          className={props.className}
-          data-toolbar-active={props.active || undefined}
-          aria-label={t(props.label)}
-          title={t(props.label)}
-        >
-          {props.children ?? props.icon}
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger render={button} />
       <TooltipContent>{t(props.label)}</TooltipContent>
     </Tooltip>
   );

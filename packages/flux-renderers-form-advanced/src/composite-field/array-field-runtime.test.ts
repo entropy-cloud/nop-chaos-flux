@@ -165,14 +165,16 @@ describe('createItemScope (object)', () => {
     const parent = createMockScope({ contacts: [{ name: 'Alice' }] });
     const scope = createItemScope(parent, 'contacts', 0, 'object', false, 'id-0');
     scope.merge({ name: 'Bob' });
-    expect(parent.merge).toHaveBeenCalledWith({ name: 'Bob' });
+    expect(parent.update).toHaveBeenCalledWith('contacts.0.name', 'Bob');
+    expect(parent.merge).not.toHaveBeenCalled();
   });
 
   it('delegates replace to parent', () => {
     const parent = createMockScope({ contacts: [{ name: 'Alice' }] });
     const scope = createItemScope(parent, 'contacts', 0, 'object', false, 'id-0');
     scope.replace!({ name: 'Bob' });
-    expect(parent.replace).toHaveBeenCalledWith({ name: 'Bob' });
+    expect(parent.update).toHaveBeenCalledWith('contacts.0', { name: 'Bob' });
+    expect(parent.replace).not.toHaveBeenCalled();
   });
 });
 

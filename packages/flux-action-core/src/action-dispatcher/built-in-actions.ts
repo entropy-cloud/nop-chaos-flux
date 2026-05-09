@@ -69,7 +69,7 @@ export async function runBuiltInAction(
       invocation = {
         action: 'setValues',
         args: {
-          path: action.targeting.targetId,
+          path: payload.path,
           values: payload.values,
         },
         targeting: action.targeting,

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { SpreadsheetToolbar, type SpreadsheetToolbarProps } from './spreadsheet-toolbar.js';
 
@@ -104,18 +104,16 @@ describe('SpreadsheetToolbar', () => {
     const props = createProps();
     const { container } = render(<SpreadsheetToolbar {...props} />);
 
-    const boldButton = container.querySelector('svg.lucide-bold')?.closest('[data-slot="button"]');
-    const searchButton = container
-      .querySelector('svg.lucide-search')
-      ?.closest('[data-slot="button"]');
+    const boldButton = within(container).getByRole('button', { name: 'Bold Ctrl+B' });
+    const searchButton = within(container).getByRole('button', { name: 'Find & Replace Ctrl+F' });
 
     expect(boldButton).toBeTruthy();
     expect(searchButton).toBeTruthy();
 
-    fireEvent.click(boldButton as Element);
-    fireEvent.click(searchButton as Element);
+    fireEvent.click(boldButton);
+    fireEvent.click(searchButton);
 
-    expect(props.onStyleTool).toHaveBeenCalled();
+    expect(props.onStyleTool).toHaveBeenCalledWith('bold');
     expect(props.onToggleFindReplace).toHaveBeenCalled();
   });
 

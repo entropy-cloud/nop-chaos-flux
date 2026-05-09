@@ -32,11 +32,14 @@ export function createItemScope(
     setAdditionalPath: (path, value) => parentScope.update(`${itemPrefix}.${path}`, value),
     merge(data) {
       if (data && typeof data === 'object') {
-        parentScope.merge(toRecord(data));
+        const record = toRecord(data);
+        for (const [key, value] of Object.entries(record)) {
+          parentScope.update(`${itemPrefix}.${key}`, value);
+        }
       }
     },
     replace(data) {
-      parentScope.replace?.(data as Record<string, unknown>);
+      parentScope.update(itemPrefix, data);
     },
   });
 }
