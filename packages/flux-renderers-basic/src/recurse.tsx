@@ -25,6 +25,11 @@ interface RecurseProviderProps {
   loopContext: StructuralLoopRenderContext;
   bindings: StructuralLoopBindings;
   itemData: Record<string, unknown> | undefined;
+  evaluateItemData?: (
+    item: unknown,
+    index: number,
+    itemKey: string,
+  ) => Record<string, unknown> | undefined;
   keyBy: unknown;
   instancePath: readonly InstanceFrame[];
   depth: number;
@@ -37,17 +42,19 @@ function RecurseProvider(props: RecurseProviderProps) {
       ...props.loopContext,
       bindings: props.bindings,
       itemData: props.itemData,
+      evaluateItemData: props.evaluateItemData,
       keyBy: props.keyBy,
       instancePath: props.instancePath,
       depth: props.depth,
     }),
     [
-      props.loopContext,
-      props.bindings,
-      props.itemData,
-      props.keyBy,
-      props.instancePath,
-      props.depth,
+        props.loopContext,
+        props.bindings,
+        props.itemData,
+        props.evaluateItemData,
+        props.keyBy,
+        props.instancePath,
+        props.depth,
     ],
   );
 
@@ -79,8 +86,19 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
     return null;
   }
 
-  const itemData =
-    (props.props.itemData as Record<string, unknown> | undefined) ?? loopContext.itemData;
+  const itemDataProgram = props.templateNode.structuralItemData;
+  const itemData = itemDataProgram ? undefined : loopContext.itemData;
+  const evaluateItemData = itemDataProgram
+    ? (item: unknown, index: number, itemKey: string) => {
+        const bindingsScope = props.helpers.createScope({
+          [bindings.itemName]: item,
+          [bindings.indexName]: index,
+          ...(bindings.keyName ? { [bindings.keyName]: itemKey } : {}),
+        });
+
+        return props.helpers.evaluateCompiled(itemDataProgram, bindingsScope);
+      }
+    : loopContext.evaluateItemData;
   const keyBy = props.props.keyBy ?? loopContext.keyBy;
   const maxDepth = typeof props.props.maxDepth === 'number' ? props.props.maxDepth : undefined;
 
@@ -91,6 +109,7 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
         hasBody: true,
         bindings,
         itemData,
+        evaluateItemData,
         keyBy,
         ownerId: props.id,
         parentInstancePath: loopContext.instancePath,
@@ -103,6 +122,7 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
             loopContext={loopContext}
             bindings={bindings}
             itemData={itemData}
+            evaluateItemData={evaluateItemData}
             keyBy={keyBy}
             instancePath={instancePath}
             depth={depth}

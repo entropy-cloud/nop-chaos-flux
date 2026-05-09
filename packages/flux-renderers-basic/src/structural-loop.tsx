@@ -8,6 +8,11 @@ export interface StructuralLoopRenderOptions {
   hasEmpty?: boolean;
   bindings: StructuralLoopBindings;
   itemData?: Record<string, unknown>;
+  evaluateItemData?: (
+    item: unknown,
+    index: number,
+    itemKey: string,
+  ) => Record<string, unknown> | undefined;
   keyBy?: unknown;
   ownerId: string;
   parentInstancePath?: readonly InstanceFrame[];
@@ -96,7 +101,19 @@ export function buildSlotBindings(input: {
   }
 
   if (input.itemData) {
-    Object.assign(slotBindings, input.itemData);
+    for (const [key, value] of Object.entries(input.itemData)) {
+      if (
+        key === '$slot' ||
+        key === '$parent' ||
+        key === input.bindings.itemName ||
+        key === input.bindings.indexName ||
+        (input.bindings.keyName && key === input.bindings.keyName)
+      ) {
+        continue;
+      }
+
+      slotBindings[key] = value;
+    }
   }
 
   return slotBindings;
@@ -129,7 +146,7 @@ export function renderStructuralLoop(options: StructuralLoopRenderOptions): Reac
       index,
       itemKey,
       bindings: options.bindings,
-      itemData: options.itemData,
+      itemData: options.evaluateItemData?.(item, index, itemKey) ?? options.itemData,
     });
     const instancePath = [
       ...(options.parentInstancePath ?? []),

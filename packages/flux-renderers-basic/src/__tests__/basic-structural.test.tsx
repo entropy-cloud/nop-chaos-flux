@@ -111,6 +111,53 @@ describe('basicRendererDefinitions structural rendering', () => {
     cleanup();
   });
 
+  it('evaluates loop itemData in item scope and preserves reserved bindings', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer([scopeProbeRenderer]);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/structural"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'loop',
+              items: '${users}',
+              itemData: {
+                label: '${item.name + ":" + index}',
+                item: 'shadowed-item',
+                index: 999,
+                $parent: 'shadowed-parent',
+              },
+              body: [
+                {
+                  type: 'scope-probe',
+                  testid: 'loop-itemdata-probe',
+                  value: '${$slot.label + "|" + $slot.item.name + "|" + $slot.index + "|" + (($slot.$parent === undefined) ? "true" : "false")}',
+                },
+              ],
+            },
+          ],
+        }}
+        data={{ users: [{ name: 'Alice' }, { name: 'Bob' }] }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      const texts = screen
+        .getAllByTestId('loop-itemdata-probe')
+        .map((node) => node.textContent ?? '');
+      expect(texts).toContain(
+        '[{"repeatedTemplateId":"loop:_.body_0_","instanceKey":"Alice"}]|Alice:0|Alice|0|true',
+      );
+      expect(texts).toContain(
+        '[{"repeatedTemplateId":"loop:_.body_0_","instanceKey":"Bob"}]|Bob:1|Bob|1|true',
+      );
+    });
+    cleanup();
+  });
+
   it('reuses the nearest loop body for recurse', async () => {
     const SchemaRenderer = createBasicSchemaRenderer([scopeProbeRenderer]);
     render(

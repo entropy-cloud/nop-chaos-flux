@@ -236,6 +236,41 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'advanced',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: DynamicRenderer,
+    schemaValidator({ schema, emit }) {
+      const loadAction = schema.loadAction;
+      if (loadAction === undefined) {
+        return;
+      }
+
+      if (!loadAction || typeof loadAction !== 'object' || Array.isArray(loadAction)) {
+        emit({
+          code: 'invalid-action-shape',
+          path: '/loadAction',
+          message: 'Action entries must be objects.',
+        });
+        return;
+      }
+
+      const action = loadAction as Record<string, unknown>;
+      if (typeof action.action !== 'string' || action.action.length === 0) {
+        emit({
+          code: 'invalid-action-shape',
+          path: '/loadAction/action',
+          message: 'Action objects require a non-empty action field.',
+        });
+      }
+
+      if (
+        action.args !== undefined &&
+        (!action.args || typeof action.args !== 'object' || Array.isArray(action.args))
+      ) {
+        emit({
+          code: 'invalid-action-shape',
+          path: '/loadAction/args',
+          message: 'Action args must be an object when provided.',
+        });
+      }
+    },
     fields: [
       { key: 'loadAction', kind: 'prop' },
       { key: 'body', kind: 'region', regionKey: 'body' },

@@ -8,9 +8,13 @@ import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { asReactNode } from './utils.js';
 
+function isActionResult(value: unknown): value is { ok?: unknown; data?: unknown; error?: unknown } {
+  return value != null && typeof value === 'object' && ('ok' in value || 'data' in value || 'error' in value);
+}
+
 function isBaseSchemaLike(value: unknown): value is BaseSchema {
   return (
-    Boolean(value) &&
+    value != null &&
     typeof value === 'object' &&
     typeof (value as { type?: unknown }).type === 'string'
   );
@@ -53,7 +57,19 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
         if (controller.signal.aborted) return;
 
-        if (!isBaseSchemaLike(result.data)) {
+        if (!result.ok) {
+          setState({
+            loadAction,
+            loading: false,
+            error: result.error ?? new Error('dynamic-renderer loadAction failed'),
+            schema: null,
+          });
+          return;
+        }
+
+        const nextSchema = isActionResult(result.data) ? result.data.data : result.data;
+
+        if (!isBaseSchemaLike(nextSchema)) {
           setState({
             loadAction,
             loading: false,
@@ -63,7 +79,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
           return;
         }
 
-        setState({ loadAction, loading: false, error: undefined, schema: result.data });
+        setState({ loadAction, loading: false, error: undefined, schema: nextSchema });
       } catch (err) {
         if (controller.signal.aborted) return;
         setState({ loadAction, loading: false, error: err, schema: null });
@@ -77,7 +93,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     };
   }, [dispatch, loadAction]);
 
-   if (visibleState.error) {
+  if (visibleState.error) {
     return (
       <div
         className={cn('nop-dynamic-renderer', props.meta.className)}

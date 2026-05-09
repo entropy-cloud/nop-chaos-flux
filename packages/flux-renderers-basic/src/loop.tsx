@@ -18,6 +18,11 @@ import { asReactNode } from './utils.js';
 interface LoopProviderProps {
   bindings: StructuralLoopBindings;
   itemData: Record<string, unknown> | undefined;
+  evaluateItemData?: (
+    item: unknown,
+    index: number,
+    itemKey: string,
+  ) => Record<string, unknown> | undefined;
   keyBy: unknown;
   instancePath: readonly InstanceFrame[];
   depth: number;
@@ -33,6 +38,7 @@ function LoopProvider(props: LoopProviderProps) {
     () => ({
       bindings: props.bindings,
       itemData: props.itemData,
+      evaluateItemData: props.evaluateItemData,
       keyBy: props.keyBy,
       instancePath: props.instancePath,
       depth: props.depth,
@@ -41,6 +47,7 @@ function LoopProvider(props: LoopProviderProps) {
     [
       props.bindings,
       props.itemData,
+      props.evaluateItemData,
       props.keyBy,
       props.instancePath,
       props.depth,
@@ -58,7 +65,7 @@ function LoopProvider(props: LoopProviderProps) {
 export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
   const parentInstancePath = useRenderInstancePath();
   const items = props.props.items;
-  const itemData = props.props.itemData as Record<string, unknown> | undefined;
+  const itemDataProgram = props.templateNode.structuralItemData;
   const schemaProps = props.props as LoopSchema;
   const itemName = schemaProps.itemName;
   const indexName = schemaProps.indexName;
@@ -76,7 +83,19 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
         hasBody: Boolean(props.regions.body?.templateNode),
         hasEmpty: Boolean(props.regions.empty?.templateNode),
         bindings,
-        itemData,
+        evaluateItemData(item, index, itemKey) {
+          if (!itemDataProgram) {
+            return undefined;
+          }
+
+          const bindingsScope = props.helpers.createScope({
+            [bindings.itemName]: item,
+            [bindings.indexName]: index,
+            ...(bindings.keyName ? { [bindings.keyName]: itemKey } : {}),
+          });
+
+          return props.helpers.evaluateCompiled(itemDataProgram, bindingsScope);
+        },
         keyBy: props.props.keyBy,
         ownerId: props.id,
         parentInstancePath,
@@ -86,7 +105,20 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
           <LoopProvider
             key={itemKey}
             bindings={bindings}
-            itemData={itemData}
+            itemData={undefined}
+            evaluateItemData={(item, index, key) => {
+              if (!itemDataProgram) {
+                return undefined;
+              }
+
+              const bindingsScope = props.helpers.createScope({
+                [bindings.itemName]: item,
+                [bindings.indexName]: index,
+                ...(bindings.keyName ? { [bindings.keyName]: key } : {}),
+              });
+
+              return props.helpers.evaluateCompiled(itemDataProgram, bindingsScope);
+            }}
             keyBy={props.props.keyBy}
             instancePath={instancePath}
             depth={depth}

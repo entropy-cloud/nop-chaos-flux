@@ -67,7 +67,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
     cleanup();
   });
 
-  it('shows error message when action returns no valid schema', async () => {
+  it('shows request error when loadAction fails', async () => {
     const fetcher = vi.fn(async () => ({
       ok: false,
       status: 500,
@@ -91,9 +91,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    await waitFor(() =>
-      expect(screen.getByText('Error: Invalid schema received from action')).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByText('Error: Request failed with status 500')).toBeTruthy());
     cleanup();
   });
 
