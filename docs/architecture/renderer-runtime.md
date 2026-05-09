@@ -214,7 +214,7 @@ Meaning:
 - `helpers` exposes stable imperative runtime helpers
 - `templateNode.lifecycleActions` carries compiled `onMount` / `onUnmount` actions when the schema declares them
 - `templateNode.structuralWhen` is the compiled structural-activation guard for node-local `when`; React/runtime code owns executing this guard before renderer render and lifecycle/effect participation
-- `templateNode.structuralItemData` is the compiled repeated-scope binding payload used by `loop` / `recurse`; it does not travel through ordinary `propsProgram` because it must be evaluated per item against the repeated child scope instead of once in the parent scope
+- `templateNode.structuralFields` is a generic `Record<string, CompiledRuntimeValue>` holding fields declared with `lazyEval: true` on `SchemaFieldRule`. The compiler compiles these fields into this record instead of `propsProgram`, and each renderer evaluates them at a time and scope of its choosing via `helpers.evaluateCompiled()`. Currently used by `loop` / `recurse` `itemData`, but any renderer can declare lazy-eval fields.
 
 `RendererHelpers` also expose two evaluation channels:
 
