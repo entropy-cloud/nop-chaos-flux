@@ -280,30 +280,34 @@ export function createDesignerCommandAdapter(
         const downstreamId = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
 
         core.beginTransaction('insert-chain-node');
-
-        const newNode = core.addNode(
-          command.nodeType,
-          { x: sourceNode.position.x, y: sourceNode.position.y + 100 },
-          command.data,
-        );
-        if (!newNode) {
-          core.rollbackTransaction();
-          return createFailure(core, 'Unable to add node.', 'constraint');
-        }
-
-        if (downstreamId) {
-          for (const edge of outgoingEdges) {
-            core.deleteEdge(edge.id);
+        try {
+          const newNode = core.addNode(
+            command.nodeType,
+            { x: sourceNode.position.x, y: sourceNode.position.y + 100 },
+            command.data,
+          );
+          if (!newNode) {
+            core.rollbackTransaction();
+            return createFailure(core, 'Unable to add node.', 'constraint');
           }
-          core.addEdge(command.sourceId, newNode.id);
-          core.addEdge(newNode.id, downstreamId);
-        } else {
-          core.addEdge(command.sourceId, newNode.id);
-        }
 
-        relayoutAfterTreeMutation(core);
-        core.commitTransaction();
-        return createSuccess(core, { data: newNode });
+          if (downstreamId) {
+            for (const edge of outgoingEdges) {
+              core.deleteEdge(edge.id);
+            }
+            core.addEdge(command.sourceId, newNode.id);
+            core.addEdge(newNode.id, downstreamId);
+          } else {
+            core.addEdge(command.sourceId, newNode.id);
+          }
+
+          relayoutAfterTreeMutation(core);
+          core.commitTransaction();
+          return createSuccess(core, { data: newNode });
+        } catch (error) {
+          core.rollbackTransaction();
+          throw error;
+        }
       }
       case 'insertChainNodeAtMerge': {
         if (treeOwner?.config.documentMode === 'tree') {
@@ -329,25 +333,29 @@ export function createDesignerCommandAdapter(
         const incomingEdges = doc.edges.filter((e) => e.target === command.targetId);
 
         core.beginTransaction('insert-at-merge');
+        try {
+          const newNode = core.addNode(
+            command.nodeType,
+            { x: targetNode.position.x, y: targetNode.position.y },
+            command.data,
+          );
+          if (!newNode) {
+            core.rollbackTransaction();
+            return createFailure(core, 'Unable to add node.', 'constraint');
+          }
 
-        const newNode = core.addNode(
-          command.nodeType,
-          { x: targetNode.position.x, y: targetNode.position.y },
-          command.data,
-        );
-        if (!newNode) {
+          for (const edge of incomingEdges) {
+            core.reconnectEdge(edge.id, edge.source, newNode.id);
+          }
+          core.addEdge(newNode.id, command.targetId);
+
+          relayoutAfterTreeMutation(core);
+          core.commitTransaction();
+          return createSuccess(core, { data: newNode });
+        } catch (error) {
           core.rollbackTransaction();
-          return createFailure(core, 'Unable to add node.', 'constraint');
+          throw error;
         }
-
-        for (const edge of incomingEdges) {
-          core.reconnectEdge(edge.id, edge.source, newNode.id);
-        }
-        core.addEdge(newNode.id, command.targetId);
-
-        relayoutAfterTreeMutation(core);
-        core.commitTransaction();
-        return createSuccess(core, { data: newNode });
       }
       case 'insertBranchPair': {
         if (treeOwner?.config.documentMode === 'tree') {
@@ -374,46 +382,50 @@ export function createDesignerCommandAdapter(
         const downstreamId = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
 
         core.beginTransaction('insert-branch-pair');
+        try {
+          const existingBranchCount = outgoingEdges.length;
 
-        const existingBranchCount = outgoingEdges.length;
-
-        const leftNode = core.addNode(
-          command.condNodeType,
-          { x: sourceNode.position.x - 130, y: sourceNode.position.y + 100 },
-          { ...(command.condData ?? {}), priority: existingBranchCount + 1 },
-        );
-        if (!leftNode) {
-          core.rollbackTransaction();
-          return createFailure(core, 'Unable to create left branch node.', 'constraint');
-        }
-
-        const rightNode = core.addNode(
-          command.condNodeType,
-          { x: sourceNode.position.x + 130, y: sourceNode.position.y + 100 },
-          { ...(command.condData ?? {}), priority: existingBranchCount + 2 },
-        );
-        if (!rightNode) {
-          core.rollbackTransaction();
-          return createFailure(core, 'Unable to create right branch node.', 'constraint');
-        }
-
-        if (downstreamId) {
-          for (const edge of outgoingEdges) {
-            core.deleteEdge(edge.id);
+          const leftNode = core.addNode(
+            command.condNodeType,
+            { x: sourceNode.position.x - 130, y: sourceNode.position.y + 100 },
+            { ...(command.condData ?? {}), priority: existingBranchCount + 1 },
+          );
+          if (!leftNode) {
+            core.rollbackTransaction();
+            return createFailure(core, 'Unable to create left branch node.', 'constraint');
           }
+
+          const rightNode = core.addNode(
+            command.condNodeType,
+            { x: sourceNode.position.x + 130, y: sourceNode.position.y + 100 },
+            { ...(command.condData ?? {}), priority: existingBranchCount + 2 },
+          );
+          if (!rightNode) {
+            core.rollbackTransaction();
+            return createFailure(core, 'Unable to create right branch node.', 'constraint');
+          }
+
+          if (downstreamId) {
+            for (const edge of outgoingEdges) {
+              core.deleteEdge(edge.id);
+            }
+          }
+
+          core.addEdge(command.sourceId, leftNode.id, { leg: 'near-target' });
+          core.addEdge(command.sourceId, rightNode.id, { leg: 'near-target' });
+
+          if (downstreamId) {
+            core.addEdge(leftNode.id, downstreamId, { leg: 'near-source' });
+            core.addEdge(rightNode.id, downstreamId, { leg: 'near-source' });
+          }
+
+          relayoutAfterTreeMutation(core);
+          core.commitTransaction();
+          return createSuccess(core);
+        } catch (error) {
+          core.rollbackTransaction();
+          throw error;
         }
-
-        core.addEdge(command.sourceId, leftNode.id, { leg: 'near-target' });
-        core.addEdge(command.sourceId, rightNode.id, { leg: 'near-target' });
-
-        if (downstreamId) {
-          core.addEdge(leftNode.id, downstreamId, { leg: 'near-source' });
-          core.addEdge(rightNode.id, downstreamId, { leg: 'near-source' });
-        }
-
-        relayoutAfterTreeMutation(core);
-        core.commitTransaction();
-        return createSuccess(core);
       }
       default:
         return createFailure(
