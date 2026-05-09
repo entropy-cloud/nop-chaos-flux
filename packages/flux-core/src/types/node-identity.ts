@@ -131,7 +131,7 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
   metaProgram: NodeMetaProgram;
   structuralWhen?: CompiledRuntimeValue<boolean | unknown>;
-  structuralItemData?: CompiledRuntimeValue<Record<string, unknown>>;
+  structuralFields?: Readonly<Record<string, CompiledRuntimeValue<unknown>>>;
   eventPlans: Readonly<Record<string, CompiledActionProgram>>;
   lifecycleActions?: Readonly<{
     onMount?: CompiledActionProgram;

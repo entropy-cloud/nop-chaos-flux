@@ -80,6 +80,15 @@ export interface SchemaFieldRule {
    * Defaults to false (inherits parent scope).
    */
   isolate?: boolean;
+  /**
+   * When true, the field is compiled into `TemplateNode.structuralFields`
+   * instead of `propsProgram`. The renderer is responsible for evaluating
+   * the compiled value in a custom scope (e.g. per loop item) using
+   * `helpers.evaluateCompiled()`. Only valid when kind is 'prop'.
+   * When combined with `params`, the compiler includes those symbols in
+   * the compilation context so expressions can reference them.
+   */
+  lazyEval?: boolean;
 }
 
 export type RequestDedupStrategy = 'cancel-previous' | 'parallel' | 'ignore-new';
