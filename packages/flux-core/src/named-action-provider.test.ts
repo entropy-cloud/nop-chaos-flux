@@ -37,10 +37,13 @@ describe('createNamedActionProvider', () => {
     const executeProgram = vi.fn(async () => ({ ok: true, data: 'result' }) as ActionResult);
     const provider = createNamedActionProvider({ myAction: program }, undefined, executeProgram);
 
-    const result = await provider.invoke('myAction', {}, {} as ActionContext);
+    const result = await provider.invoke('myAction', { foo: 'bar' }, {} as ActionContext);
 
     expect(result.ok).toBe(true);
-    expect(executeProgram).toHaveBeenCalledWith(program, expect.anything());
+    expect(executeProgram).toHaveBeenCalledWith(
+      program,
+      expect.objectContaining({ evaluationBindings: { foo: 'bar' } }),
+    );
   });
 
   it('returns error for unknown method when no parent scope', async () => {

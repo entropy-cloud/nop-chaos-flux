@@ -95,6 +95,7 @@ export type NodeMetaProgram = {
   id?: CompiledRuntimeValue<string | undefined>;
   className?: CompiledRuntimeValue<string | undefined>;
   frameClassName?: CompiledRuntimeValue<string | undefined>;
+  when?: CompiledRuntimeValue<boolean | unknown>;
   visible?: CompiledRuntimeValue<boolean | unknown>;
   hidden?: CompiledRuntimeValue<boolean | unknown>;
   disabled?: CompiledRuntimeValue<boolean | undefined>;
@@ -129,6 +130,8 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   component: import('./renderer-core.js').RendererDefinition<S>;
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
   metaProgram: NodeMetaProgram;
+  structuralWhen?: CompiledRuntimeValue<boolean | unknown>;
+  structuralItemData?: CompiledRuntimeValue<Record<string, unknown>>;
   eventPlans: Readonly<Record<string, CompiledActionProgram>>;
   lifecycleActions?: Readonly<{
     onMount?: CompiledActionProgram;

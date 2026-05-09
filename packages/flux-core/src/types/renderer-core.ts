@@ -87,6 +87,7 @@ type BivariantCallback<Args extends readonly unknown[], Result> = {
 export interface RendererHelpers {
   render: (input: RenderNodeInput, options?: RenderFragmentOptions) => RendererRenderOutput;
   evaluate: <T = unknown>(target: unknown, scope?: ScopeRef) => T;
+  evaluateCompiled: <T = unknown>(target: CompiledRuntimeValue<T>, scope?: ScopeRef) => T;
   createScope: (patch?: object, options?: CreateScopeOptions) => ScopeRef;
   dispatch: (
     action: ActionSchema | ActionSchema[] | CompiledActionProgram,
@@ -303,6 +304,7 @@ export interface RendererRuntime {
     preparedImports: ReadonlyMap<string, PreparedImportSpec>;
   }>;
   evaluate<T = unknown>(target: unknown, scope: ScopeRef): T;
+  evaluateCompiled<T = unknown>(target: CompiledRuntimeValue<T>, scope: ScopeRef): T;
   allocateMountedCid(): number;
   resolveTarget(
     target: ComponentTarget,

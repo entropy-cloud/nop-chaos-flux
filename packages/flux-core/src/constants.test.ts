@@ -14,6 +14,10 @@ describe('META_FIELDS', () => {
     expect(META_FIELDS.has('className')).toBe(true);
   });
 
+  it('contains when', () => {
+    expect(META_FIELDS.has('when')).toBe(true);
+  });
+
   it('contains visible', () => {
     expect(META_FIELDS.has('visible')).toBe(true);
   });
@@ -34,8 +38,8 @@ describe('META_FIELDS', () => {
     expect(META_FIELDS.has('frameClassName')).toBe(true);
   });
 
-  it('has exactly 7 fields', () => {
-    expect(META_FIELDS.size).toBe(7);
+  it('has exactly 8 fields', () => {
+    expect(META_FIELDS.size).toBe(8);
   });
 
   it('does not contain arbitrary strings', () => {

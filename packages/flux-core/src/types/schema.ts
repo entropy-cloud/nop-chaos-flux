@@ -25,6 +25,7 @@ export interface BaseSchema extends SchemaObject {
   className?: string;
   frameClassName?: string;
   classAliases?: Record<string, string>;
+  when?: boolean | string;
   visible?: boolean | string;
   hidden?: boolean | string;
   disabled?: boolean | string;

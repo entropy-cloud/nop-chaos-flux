@@ -1,4 +1,13 @@
-export const META_FIELDS = new Set(['id', 'className', 'frameClassName', 'visible', 'hidden', 'disabled', 'testid']);
+export const META_FIELDS = new Set([
+  'id',
+  'className',
+  'frameClassName',
+  'when',
+  'visible',
+  'hidden',
+  'disabled',
+  'testid',
+]);
 
 export const BUILT_IN_ACTION_NAMES = new Set([
   'setValue',

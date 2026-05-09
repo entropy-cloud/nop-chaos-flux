@@ -54,6 +54,11 @@ export interface StructuralLoopRenderContext {
   keyBy?: unknown;
   instancePath?: readonly InstanceFrame[];
   depth: number;
+  evaluateItemData?: (
+    item: unknown,
+    index: number,
+    itemKey: string,
+  ) => Record<string, unknown> | undefined;
   renderBody(
     slotBindings: Record<string, unknown>,
     instancePath: readonly InstanceFrame[],

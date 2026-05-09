@@ -24,6 +24,7 @@ export interface ResolvedNodeMeta {
   id?: string;
   className?: string;
   frameClassName?: string;
+  when?: boolean;
   visible: boolean;
   hidden: boolean;
   disabled: boolean;

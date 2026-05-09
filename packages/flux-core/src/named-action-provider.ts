@@ -16,7 +16,10 @@ export function createNamedActionProvider(
     async invoke(method, payload, ctx) {
       const program = plans[method];
       if (program) {
-        return executeProgram(program, ctx);
+        return executeProgram(program, {
+          ...ctx,
+          evaluationBindings: payload,
+        });
       }
 
       const parentResolved = parentActionScope?.resolve(`${XUI_ACTIONS_NAMESPACE}:${method}`);

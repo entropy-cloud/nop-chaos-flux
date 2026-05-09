@@ -47,7 +47,7 @@ export interface ActionShapeFields extends SchemaObject {
   timeout?: number;
   retry?: OperationControlConfig['retry'];
   debounce?: number;
-  when?: string;
+  when?: boolean | string;
   parallel?: ActionSchema[];
   continueOnError?: boolean;
   then?: ActionSchema | ActionSchema[];
