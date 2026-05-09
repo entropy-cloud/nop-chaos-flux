@@ -210,8 +210,10 @@ export function useRenderFragment() {
 
 export function useCurrentFormModelGeneration(): number {
   const form = useCurrentForm();
-  const subscribe = useMemo(() => createFormModelGenerationSubscribe(form), [form]);
-  const getSnapshot = useMemo(() => () => form?.modelGeneration ?? 0, [form]);
+  const validationScope = useCurrentValidationScope();
+  const owner = form ?? validationScope;
+  const subscribe = useMemo(() => createFormModelGenerationSubscribe(owner), [owner]);
+  const getSnapshot = useMemo(() => () => owner?.modelGeneration ?? 0, [owner]);
 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, (n) => n, Object.is);
 }

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '../schema-renderer.js';
-import { FormContext, ScopeContext } from '../contexts.js';
+import { FormContext, ScopeContext, ValidationContext } from '../contexts.js';
 import { useCurrentFormModelGeneration, useOwnScopeSelector, useRenderScope, useScopeSelector } from '../hooks.js';
 import { createRendererRuntime } from '../test-support.js';
 import {
@@ -305,5 +305,39 @@ describe('createSchemaRenderer scope and reactivity', () => {
 
     await waitFor(() => expect(screen.getByTestId('generation').textContent).toBe('2'));
     expect(renders).toBe(2);
+  });
+
+  it('subscribes useCurrentFormModelGeneration to validation owners outside forms', async () => {
+    let notifyGeneration: (() => void) | undefined;
+    const owner = {
+      modelGeneration: 4,
+      store: {
+        subscribe: () => () => undefined,
+      },
+      subscribeToModelGeneration(listener: () => void) {
+        notifyGeneration = listener;
+        return () => {
+          notifyGeneration = undefined;
+        };
+      },
+    } as any;
+
+    function Probe() {
+      const generation = useCurrentFormModelGeneration();
+      return <span data-testid="generation-owner">{String(generation)}</span>;
+    }
+
+    render(
+      <ValidationContext.Provider value={owner}>
+        <Probe />
+      </ValidationContext.Provider>,
+    );
+
+    expect(screen.getByTestId('generation-owner').textContent).toBe('4');
+
+    owner.modelGeneration = 5;
+    notifyGeneration?.();
+
+    await waitFor(() => expect(screen.getByTestId('generation-owner').textContent).toBe('5'));
   });
 });
