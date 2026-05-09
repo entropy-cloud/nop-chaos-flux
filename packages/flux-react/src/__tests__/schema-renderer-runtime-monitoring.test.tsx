@@ -39,6 +39,34 @@ describe('createSchemaRenderer lifecycle and monitoring behavior', () => {
     await waitFor(() => expect(onActionStart.mock.calls.length).toBeGreaterThan(1));
   });
 
+  it('does not dispatch lifecycle actions for nodes gated off by when', async () => {
+    const onActionStart = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer]);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'text',
+              text: 'Hidden lifecycle child',
+              when: false,
+              onMount: { action: 'probe:lifecycle', args: { stage: 'mounted' } },
+            },
+          ],
+        }}
+        env={{ ...env, monitor: { onActionStart } }}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.queryByText('Hidden lifecycle child')).toBeNull());
+    expect(onActionStart).not.toHaveBeenCalledWith(
+      expect.objectContaining({ actionType: 'probe:lifecycle' }),
+    );
+  });
+
   it('supports wrapComponent plugins in the renderer pipeline', () => {
     const wrapped = vi.fn();
     const plugin = {

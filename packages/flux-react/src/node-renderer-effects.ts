@@ -20,7 +20,11 @@ export function useRenderMonitor(input: {
       return;
     }
 
-    if (!input.resolvedMeta.visible || input.resolvedMeta.hidden) {
+    if (
+      input.resolvedMeta.when === false ||
+      !input.resolvedMeta.visible ||
+      input.resolvedMeta.hidden
+    ) {
       startedAtRef.current = undefined;
       return;
     }
@@ -53,6 +57,7 @@ export function useRenderMonitor(input: {
     input.templateNode.id,
     input.templateNode.templatePath,
     input.templateNode.rendererType,
+    input.resolvedMeta.when,
     input.resolvedMeta.visible,
     input.resolvedMeta.hidden,
   ]);
@@ -67,6 +72,7 @@ export function useNodeLifecycleActions(input: {
     | undefined;
   helpers: RendererHelpers;
   nodeInstance: NodeInstance;
+  enabled?: boolean;
 }) {
   const latestHelpersRef = useRef(input.helpers);
   const latestLifecycleActionsRef = useRef(input.lifecycleActions);
@@ -77,6 +83,10 @@ export function useNodeLifecycleActions(input: {
   });
 
   useEffect(() => {
+    if (input.enabled === false) {
+      return;
+    }
+
     const lifecycleActions = latestLifecycleActionsRef.current;
 
     if (lifecycleActions?.onMount) {
@@ -94,5 +104,5 @@ export function useNodeLifecycleActions(input: {
         });
       }
     };
-  }, [input.nodeInstance]);
+  }, [input.enabled, input.nodeInstance]);
 }

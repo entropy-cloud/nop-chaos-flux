@@ -155,6 +155,9 @@ export function createHelpers(input: {
     evaluate(target, scope) {
       return input.runtime.evaluate(target, scope ?? input.scope);
     },
+    evaluateCompiled(target, scope) {
+      return input.runtime.evaluateCompiled(target, scope ?? input.scope);
+    },
     createScope(patch, options) {
       return input.runtime.createChildScope(input.scope, patch, options);
     },

@@ -296,6 +296,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     lifecycleActions: lifecycleActionsValue,
     helpers,
     nodeInstance,
+    enabled: finalResolvedMeta.when !== false && finalResolvedMeta.visible && !finalResolvedMeta.hidden,
   });
 
   const fieldName = typeof props.node.schema.name === 'string' ? props.node.schema.name : undefined;
@@ -314,7 +315,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     };
   }, [hiddenOwner, fieldName, isFieldHidden]);
 
-  if (!finalResolvedMeta.visible || finalResolvedMeta.hidden) {
+  if (finalResolvedMeta.when === false || !finalResolvedMeta.visible || finalResolvedMeta.hidden) {
     return null;
   }
 
