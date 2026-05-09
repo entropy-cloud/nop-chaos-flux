@@ -249,28 +249,45 @@ async function runSingleActionWithRetry(
   }
 
   const retry = getRetryControl(action.control?.retry);
-  const {
-    result: lastResult,
-    attempts,
-    failureCount,
-    lastFailureReason,
-  } = await withRetry(
-    () => runSingleActionWithTimeout(ctx, action, actionCtx),
-    {
-      times: retry?.times ?? 0,
-      delay: retry?.delay ?? 0,
-      strategy: retry?.strategy ?? 'fixed',
-      maxDelay: retry?.maxDelay,
-    },
-    (result) => Boolean(result.ok || result.skipped || result.cancelled || result.timedOut),
-  );
+  try {
+    const {
+      result: lastResult,
+      attempts,
+      failureCount,
+      lastFailureReason,
+    } = await withRetry(
+      () => runSingleActionWithTimeout(ctx, action, actionCtx),
+      {
+        times: retry?.times ?? 0,
+        delay: retry?.delay ?? 0,
+        strategy: retry?.strategy ?? 'fixed',
+        maxDelay: retry?.maxDelay,
+        signal: actionCtx.signal,
+      },
+      (result) => Boolean(result.ok || result.skipped || result.cancelled || result.timedOut),
+    );
 
-  return {
-    ...(lastResult ?? { ok: false, error: new Error('Action failed without result') }),
-    attempts,
-    failureCount,
-    error: lastResult?.error ?? lastFailureReason,
-  };
+    return {
+      ...(lastResult ?? { ok: false, error: new Error('Action failed without result') }),
+      attempts,
+      failureCount,
+      error: lastResult?.error ?? lastFailureReason,
+    };
+  } catch (error) {
+    if (isAbortError(error)) {
+      const errorWithRetry = error as { attempts?: unknown; failureCount?: unknown };
+      return {
+        ...createCancelledResult(error),
+        attempts: typeof errorWithRetry.attempts === 'number' ? errorWithRetry.attempts : undefined,
+        failureCount:
+          typeof errorWithRetry.failureCount === 'number'
+            ? errorWithRetry.failureCount
+            : undefined,
+      };
+    }
+
+    throw error;
+  }
 }
 
 function runSingleActionWithTimeout(

@@ -371,4 +371,47 @@ describe('action-dispatcher control flow', () => {
     expect(result.skipped).toBe(true);
     expect(adapter.invokeBuiltInAction).not.toHaveBeenCalled();
   });
+
+  it('stops retrying when the parent action signal aborts during retry delay', async () => {
+    vi.useFakeTimers();
+    try {
+      const controller = new AbortController();
+      const adapter = createMockAdapter({
+        invokeBuiltInAction: vi.fn(async () => ({ ok: false, error: new Error('retry me') })),
+      });
+      const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+      const dispatchPromise = dispatcher.dispatch(
+        makeCompiledProgram([
+          {
+            action: 'setValue',
+            payload: { args: staticCompiled({ path: 'x', value: 1 }) },
+            targeting: {},
+            control: { retry: { times: 3, delay: 100 } },
+            source: {
+              action: 'setValue',
+              args: { path: 'x', value: 1 },
+              retry: { times: 3, delay: 100 },
+            },
+          },
+        ]),
+        createActionCtx({ runtime, signal: controller.signal }),
+      );
+
+      await Promise.resolve();
+      expect(adapter.invokeBuiltInAction).toHaveBeenCalledTimes(1);
+
+      controller.abort(new Error('parent aborted'));
+      await vi.runAllTimersAsync();
+
+      const result = await dispatchPromise;
+
+      expect(result.ok).toBe(false);
+      expect(result.cancelled).toBe(true);
+      expect(result.error).toBeInstanceOf(Error);
+      expect(adapter.invokeBuiltInAction).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
