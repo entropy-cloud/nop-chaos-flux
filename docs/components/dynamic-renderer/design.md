@@ -7,7 +7,7 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前实现已经落位为高级 renderer，并要求 `schemaApi` 作为动态 schema 入口，同时支持 `body` region。
+- 当前实现已经落位为高级 renderer，并要求 `loadAction` 作为动态 schema 入口，同时支持 `body` region。
 - 文档应明确收敛：它只解决“运行时拿到最终 schema 片段再渲染”的场景，不负责宏模板展开或复杂数据投影。
 
 ## 3. Flux 中的 renderer/type 定义
@@ -19,13 +19,13 @@
 
 ## 4. schema 设计
 
-- 当前已落地的最小字段是 `schemaApi` 和可选 `body`。
-- `schemaApi` 负责获取最终 schema，`body` 用作宿主级补充内容或静态包裹区。
+- 当前已落地的最小字段是 `loadAction` 和可选 `body`。
+- `loadAction` 负责获取最终 schema，`body` 用作宿主级补充内容或静态包裹区。
 - `fallback`、`empty`、`errorMode`、`onError` 可以作为后续增强，但不应写成当前正式契约。
 
 ## 5. 字段分类
 
-- `schemaApi`: `value`
+- `loadAction`: `event`
 - `body`: `region`
 - `fallback`、`empty`: 仅作为潜在后续扩展
 
@@ -37,12 +37,15 @@
 ## 7. 运行期状态归属
 
 - 编译后的 fragment 归当前 owner node 的 compile context 管理。
-- 加载态、错误态和最终 schema 值可由 `local` 或 `controlled` 模式承接，但必须显式而不是隐式缓存。
+- 加载态、错误态和最终 schema 值由 `dynamic-renderer` 自身持有；它们不是通用 render-boundary 的兜底责任。
+- `loadAction` 结果必须先通过 action-shape validation；返回值必须是可编译的最终 schema，最小要求是 `{ type: string }` 形状。
+- `loadAction` 执行失败或返回非法 schema 时，组件进入 renderer-owned error state，并在 `nop-dynamic-renderer` 壳内发布错误文本；不得伪装成普通 render-boundary 崩溃。
+- 当新的 `loadAction` 输入替换旧值时，旧 schema 不再继续显示为当前成功状态；可见状态应与最新 `loadAction` 对齐。
 
 ## 8. 事件、动作与组件句柄能力
 
 - 可以提供 `component:refresh` 之类的重新解析能力，但不应暴露底层 compiler 私有对象。
-- 错误处理优先走 `onError` 或 runtime notify。
+- 当前稳定基线里，错误处理优先走 renderer-owned diagnostic surface；`onError` / notify 仍可作为后续增强，而不是现有 contract。
 
 ## 9. 数据源、表达式、导入能力接入点
 

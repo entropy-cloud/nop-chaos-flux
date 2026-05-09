@@ -11,6 +11,7 @@
 - `recurse` 只能出现在某个 `loop.body` 的词法子树内。
 - `recurse` 命中最近的 enclosing `loop`。
 - `recurse` 默认继承该 loop 的 `itemName`、`indexName`、`keyName`、`keyBy`、`itemData`。
+- 当 `recurse` 自己声明 `itemData` 时，该覆盖值也必须走编译后结构字段，并在当前递归 item scope 下逐项求值，而不是在父 scope 预求值。
 - `recurse` 不引入全局模板注册表或命名模板引用。
 
 ## 3. 为什么需要 `recurse`

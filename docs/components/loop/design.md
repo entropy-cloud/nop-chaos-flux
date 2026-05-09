@@ -170,6 +170,13 @@ loop item scope = parent lexical visibility + { item, index, optional key, ...it
 - parent lexical scope
 - 当前 item-local roots，例如 `item`、`index`、optional `key`
 
+实现约束：
+
+- `itemData` 不能作为普通 resolved prop 在父 scope 预求值
+- compiler 应把它保存在编译后结构字段中，runtime/renderer 只在当前 repeated item scope 下求值
+- 注入结果进入当前 `loop.body` 的 `$slot` frame，而不是平铺成新的顶层 lexical binding
+- schema-authored `itemData` 不得覆盖保留结构绑定：当前 item/index/key 别名以及 `$parent`
+
 示例：
 
 ```json
@@ -182,7 +189,7 @@ loop item scope = parent lexical visibility + { item, index, optional key, ...it
   },
   "body": {
     "type": "text",
-    "text": "${displayName}"
+    "text": "${$slot.displayName}"
   }
 }
 ```

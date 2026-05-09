@@ -53,6 +53,7 @@ The runtime baseline carries this one step further for compiled node resolution:
 - scope subscriptions carry `ScopeChange.paths`
 - `NodeRenderer` only re-runs `resolveNodeMeta()` / `resolveNodeProps()` when the incoming changed paths intersect the node's last dependency set
 - wildcard or broad-access reads remain conservatively invalidated on any scope change
+- compile-time-owned structural fields that intentionally execute outside ordinary `propsProgram` resolution still have to participate in that invalidation contract; the current live baseline keeps node-level `when` on compiled structural fields and treats dynamic structural `loop` / `recurse` `itemData` conservatively as props invalidation inputs so repeated subtrees rerender when their parent lexical inputs change
 - runtime owners must expose explicit teardown for long-lived resources; the current `RendererRuntime` surface includes `dispose()` to stop owned data sources, reactions, imported namespace registrations, and in-flight requests when a host unmounts or replaces a runtime instance
 
 ### Compile once, execute many times
@@ -212,6 +213,13 @@ Meaning:
 - `events` is the map of runtime event handlers derived from declarative event fields
 - `helpers` exposes stable imperative runtime helpers
 - `templateNode.lifecycleActions` carries compiled `onMount` / `onUnmount` actions when the schema declares them
+- `templateNode.structuralWhen` is the compiled structural-activation guard for node-local `when`; React/runtime code owns executing this guard before renderer render and lifecycle/effect participation
+- `templateNode.structuralItemData` is the compiled repeated-scope binding payload used by `loop` / `recurse`; it does not travel through ordinary `propsProgram` because it must be evaluated per item against the repeated child scope instead of once in the parent scope
+
+`RendererHelpers` also expose two evaluation channels:
+
+- `helpers.evaluate(target, scope?)` for schema-authored ad hoc values that still need compile+evaluate behavior at the helper boundary
+- `helpers.evaluateCompiled(compiled, scope?)` for renderer paths that must execute an already-compiled runtime value from `TemplateNode` without falling back to runtime recompilation
 
 ## Renderer-Level Static Metadata
 

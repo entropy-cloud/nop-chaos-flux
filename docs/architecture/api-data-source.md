@@ -599,6 +599,8 @@ Current async-governance baseline:
 - request abort still happens through source/request control, but late-settling old runs are additionally blocked by an owner-level publish gate
 - in `parallel` mode, multiple requests may remain in flight, but only the current authoritative run may publish value/status updates; older late-settled runs are recorded as `stale-dropped`
 - additive async diagnostics are exposed through source debug snapshots and `statusPath` summary metadata without changing the main author-visible publication contract
+- stopped or reset controllers do not remain in a fake `started + stopped` state: `stop()` clears `started`, `reset()` returns the controller to the initial idle/not-started baseline, and a later `start()` or direct `refresh()` re-activates the controller under the same restartable contract
+- reaction-triggered action dispatch and form-targeted submit through component handles now preserve `AbortSignal` end to end, so dispose / parent cancellation can abort both direct current-form submit and indirect `component:submit` / `submitForm(formId)` execution paths
 
 Design intent:
 
