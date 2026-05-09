@@ -2,6 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ActionSchema, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import type { TableSchema } from '../schemas.js';
 
+function isExplicitActionFailure(result: unknown): result is { ok: false; error?: unknown } {
+  return (
+    typeof result === 'object' && result !== null && 'ok' in result && (result as { ok?: unknown }).ok === false
+  );
+}
+
 function toDraftValue(record: Record<string, unknown>, field: string) {
   const value = record[field];
   return value == null ? '' : String(value);
@@ -94,7 +100,10 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     setSaving(true);
     setSaveError(undefined);
     try {
-      await helpers.dispatch(saveAction, { scope: rowScope });
+      const result = await helpers.dispatch(saveAction, { scope: rowScope });
+      if (isExplicitActionFailure(result)) {
+        throw result.error ?? new Error('Save action returned ok=false');
+      }
       const nextSavedValue = field
         ? toOptionalDraftValue((rowScope.get('record') as Record<string, unknown>) ?? record, field)
         : draftValue;

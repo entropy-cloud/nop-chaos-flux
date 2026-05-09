@@ -199,6 +199,33 @@ describe('useTableQuickEditController', () => {
     });
   });
 
+  it('treats resolved ok=false results as save failures', async () => {
+    cleanup();
+    const dispatch = vi.fn<() => Promise<{ ok: boolean; error: Error }>>(async () => ({
+      ok: false,
+      error: new Error('save rejected'),
+    }));
+
+    render(
+      <ControllerHarness
+        field="name"
+        record={{ name: 'Alice' }}
+        rowScope={createRowScope({ name: 'Alice' })}
+        helpers={createHelpers(dispatch as any)}
+        saveAction={{ action: 'save' }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'change' }));
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('save-error').textContent).toBe('save rejected');
+      expect(screen.getByTestId('dirty').textContent).toBe('true');
+      expect(screen.getByTestId('draft').textContent).toBe('Alicia');
+    });
+  });
+
   it('guards duplicate same-tick save calls before React state updates flush', async () => {
     cleanup();
     let resolveSave: (() => void) | undefined;
