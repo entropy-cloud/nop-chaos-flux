@@ -86,7 +86,9 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
     return null;
   }
 
-  const itemDataProgram = props.templateNode.structuralItemData;
+  const itemDataProgram = props.templateNode.structuralFields?.itemData as
+    | import('@nop-chaos/flux-core').CompiledRuntimeValue<Record<string, unknown>>
+    | undefined;
   const itemData = itemDataProgram ? undefined : loopContext.itemData;
   const evaluateItemData = itemDataProgram
     ? (item: unknown, index: number, itemKey: string) => {

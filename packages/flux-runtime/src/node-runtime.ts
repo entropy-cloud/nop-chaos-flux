@@ -243,7 +243,9 @@ export function createNodeRuntime(input: {
       state.resolvedProps = result.value;
       state.propsDependencies = mergeDependencySets([
         collectRuntimeDependencies(state.props),
-        node.structuralItemData?.kind === 'dynamic' ? WILDCARD_DEPENDENCIES : undefined,
+        ...Object.values(node.structuralFields ?? {}).map((f) =>
+          f.kind === 'dynamic' ? WILDCARD_DEPENDENCIES : undefined,
+        ),
       ]);
       if (!result.reusedReference) {
         state._lastPropsResult = result;

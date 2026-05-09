@@ -65,7 +65,9 @@ function LoopProvider(props: LoopProviderProps) {
 export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
   const parentInstancePath = useRenderInstancePath();
   const items = props.props.items;
-  const itemDataProgram = props.templateNode.structuralItemData;
+  const itemDataProgram = props.templateNode.structuralFields?.itemData as
+    | import('@nop-chaos/flux-core').CompiledRuntimeValue<Record<string, unknown>>
+    | undefined;
   const schemaProps = props.props as LoopSchema;
   const itemName = schemaProps.itemName;
   const indexName = schemaProps.indexName;
