@@ -32,7 +32,7 @@ Always run `typecheck`, `build`, and `lint` after making **CODE** changes. Run t
 
 **NEVER** diagnose UI failures via screenshots. Use programmatic inspection: `page.evaluate()`, `page.locator().innerHTML()`, `getComputedStyle()`.
 
-Whenever e2e tests and unit tests both pass completely (full green), you MUST record this in the daily dev log at `docs/logs/{year}/{month}-{day}.md` with test counts/package summary, and then commit the log entry. This provides reliable "known-good" baselines for future debugging.
+Whenever e2e tests and unit tests both pass completely (full green), you MUST record this in the daily dev log at `docs/logs/{year}/{month}-{day}.md` with test counts/package summary, and then commit all current changes. This provides reliable "known-good" baselines for future debugging.
 
 ---
 
