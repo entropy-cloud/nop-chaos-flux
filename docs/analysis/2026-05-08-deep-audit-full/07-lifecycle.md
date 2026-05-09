@@ -172,3 +172,131 @@
 - **历史模式对应**: 与“React 层注册/cleanup 抢 runtime ownership”同族，但这里是 runtime 已经接管创建和追踪后，缺少 owner-level dispose 兜底，类似此前 data-source/source/reaction 生命周期从 React effect 收敛到 runtime 后仍需补齐 listener/provider cleanup 的残留。
 - **参考文档**: `C:\can\nop\nop-chaos-flux\docs\architecture\renderer-runtime.md:57`, `C:\can\nop\nop-chaos-flux\docs\architecture\renderer-runtime.md:831-843`, `C:\can\nop\nop-chaos-flux\docs\references\reopened-design-decisions-and-audit-adjudications.md:50-60`
 - **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度07-05] `ImportStack.installPrepared/push` 在多 import 边界部分安装失败时缺少 rollback，已注册 namespace provider 会滞留
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\import-stack.ts:379-423`; `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\import-stack.ts:427-440`
+- **行号范围**: `379-423`, `427-440`
+- **证据片段**:
+
+  ```ts
+  const providerResult = module.createNamespace(context);
+  const helpersResult = module.createExpressionHelpers?.(context);
+
+  if (providerResult instanceof Promise || helpersResult instanceof Promise) {
+    const error = createImportError(
+      `Prepared import ${prepared.spec.as} must install synchronously at render time.`,
+    );
+    notifyImportFailure(error, prepared.spec);
+    throw error;
+  }
+  ```
+
+  ```ts
+  if (args.actionScope) {
+    releaseMap.set(
+      buildPreparedFrameEntryKey(prepared),
+      args.actionScope.registerNamespace(prepared.spec.as, wrappedProvider),
+    );
+  }
+
+  entries[prepared.spec.as] = {
+  ```
+
+  ```ts
+  const frame: InternalImportFrame = {
+    id: frameId,
+    ownerNodeId: args.ownerNodeId,
+    parentFrameId: args.parentFrame?.id,
+    parentFrame: args.parentFrame,
+    actionScope: args.actionScope,
+    entries,
+    releaseMap,
+    controllerMap,
+  };
+
+  framesById.set(frameId, frame);
+  ```
+
+- **严重程度**: P1
+- **effect 职责**: import-owned namespace provider 的安装与释放；由 `NodeRenderer` layout effect 触发，但实际生命周期资源属于 runtime/import stack。
+- **应归属层级**: runtime 层。`ImportStack` 既然集中注册 provider 并维护 `releaseMap`，也应在 frame 安装失败时集中 rollback。
+- **现状**: `installPrepared()` / `push()` 在循环内逐个 `registerNamespace()`，但 frame 只有在整个循环完成后才写入 `framesById`。如果第 N 个 import 的 `createNamespace()`、`createExpressionHelpers()`、同步性检查、缺失 module、alias collision 等路径抛错，前面已注册的 namespace release 函数只存在于局部 `releaseMap`，不会进入 `pop()`，也不会被 layout-effect cleanup 释放。
+- **风险**: 一个失败的 `xui:imports` 边界可能把部分 namespace provider 留在 `ActionScope` 中；后续 sibling/descendant action 解析会看到本应安装失败的 provider，provider 持有的 bridge/store/外部资源也会泄漏。该问题跨过 React 错误边界，因为失败发生在 runtime 安装过程中，React cleanup 没有 frame id 可 pop。
+- **建议**: 在 `push()` / `installPrepared()` 中对 frame 构建过程加 rollback：一旦循环中任何步骤失败，遍历当前 `releaseMap` 调用 release，abort/clear `controllerMap`，然后再 rethrow；或先构造完整 provider，再一次性 commit 注册。为 prepared 与 async push 两条路径共享同一 rollback helper。
+- **为什么值得现在做**: import namespace 是 action capability 边界；部分安装失败会直接污染 action resolution，比单纯内存泄漏更容易产生错误行为。
+- **误报排除**: 这不是 reopened 裁定中的 `NodeRenderer` prepared-import render-phase side effect 旧问题；当前安装已在 layout effect 中执行。本项是 runtime import stack 对“部分安装失败”缺少 provider rollback 的新 residual。也不同于 `[维度07-04]` 的 runtime.dispose 未释放 ActionScope provider；这里即使 runtime 最终可 dispose，失败 frame 在当下已没有可追踪 frame 记录可供正常 cleanup。
+- **历史模式对应**: runtime lifecycle resource 安装过程中缺少失败 rollback，导致部分注册资源脱离 owner tracking。
+- **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/architecture/action-scope-and-imports.md`, `docs/references/reopened-design-decisions-and-audit-adjudications.md`
+- **复核状态**: 未复核
+
+### [维度07-06] `RenderNodes` 在 render/useMemo 阶段写入模块级 fragment scope cache，pre-commit abort 时 cleanup 不会运行
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-react\src\render-nodes.tsx:93-104`; `C:\can\nop\nop-chaos-flux\packages\flux-react\src\render-nodes.tsx:244-294`
+- **行号范围**: `93-104`, `244-294`
+- **证据片段**:
+
+  ```ts
+  const fragmentScopeCacheByRuntime = new WeakMap<
+    RendererRuntime,
+    Map<string, FragmentScopeCacheEntry>
+  >();
+
+  function getFragmentScopeCache(runtime: RendererRuntime): Map<string, FragmentScopeCacheEntry> {
+    let cache = fragmentScopeCacheByRuntime.get(runtime);
+
+    if (!cache) {
+      cache = new Map();
+      fragmentScopeCacheByRuntime.set(runtime, cache);
+  ```
+
+  ```ts
+  const fragmentScope = useMemo(() => {
+    if (!shouldUseFragmentScope || !fragmentBindings) {
+      return undefined;
+    }
+
+    const fragmentScopeCache = getFragmentScopeCache(runtime);
+    const cachedFragmentScope = fragmentScopeCache.get(fragmentScopeCacheKey);
+  ```
+
+  ```ts
+    const scope = runtime.createChildScope(currentScope, fragmentBindings, {
+      isolate,
+      pathSuffix,
+      scopeKey,
+      source: 'fragment',
+    });
+
+    fragmentScopeCache.set(fragmentScopeCacheKey, {
+      scope,
+      parent: currentScope,
+      runtime,
+      isolate,
+  ```
+
+  ```ts
+  useEffect(() => {
+    return () => {
+      getFragmentScopeCache(runtime).delete(fragmentScopeCacheKey);
+    };
+  }, [fragmentScopeCacheKey, runtime]);
+  ```
+
+- **严重程度**: P2
+- **effect 职责**: fragment child scope 的 cache 注册与卸载清理。
+- **应归属层级**: React 层可以创建 fragment render scope，但持久 cache 写入/释放必须 commit-safe；runtime-owned scope 资源也需要明确生命周期边界。
+- **现状**: `RenderNodes` 在 `useMemo` 计算期间调用 `getFragmentScopeCache(runtime)` 并 `fragmentScopeCache.set(...)`，这是 render 阶段对模块级 WeakMap/Map 的外部写入；对应删除只在 `useEffect` cleanup 中发生。如果 React concurrent render、错误恢复、Suspense/throw 等导致本次 render 未 commit，cleanup effect 不会安装，已写入的 cache entry 会挂在 runtime 对应的 Map 下。
+- **风险**: 被放弃的 render 会遗留 fragment scope/cache entry，直到整个 runtime 释放；高频动态 fragment、列表/表格 region 或错误重试场景下会积累 stale ScopeRef/store 闭包。更重要的是它重新引入了“render 阶段修改外部运行时结构”的模式，靠近历史 `RenderNodes` render-phase `setSnapshot()` bug 的问题边界。
+- **建议**: 避免在 render/useMemo 中写模块级 cache。可将 cache 改为组件实例本地 ref/state（未 commit 的实例随 React 丢弃而 GC），或拆成 render 阶段纯创建 + layout/effect commit 注册，并在替换/卸载时显式释放旧 scope 相关 runtime 资源。若必须保留 runtime 级 cache，应提供 commit-safe acquire/release API，保证未 commit render 不会持久登记。
+- **为什么值得现在做**: `RenderNodes` 是所有 fragment/region 渲染的共享入口；这里的 render-phase 外部写入会被普通 renderer 的 `regions.render({ bindings })` 放大。
+- **误报排除**: 这不是已裁定的 `NodeRenderer` prepared-import render-phase side effect；也不是已修的旧 `RenderNodes` render 阶段 `store.setSnapshot()`。本项没有在 render 中写 scope 数据，但仍在 render/useMemo 中修改模块级生命周期 cache，且 cleanup 依赖 commit 后 effect，属于新的 pre-commit cleanup 缺口。
+- **历史模式对应**: render phase external mutation + commit-only cleanup 的 lifecycle hazard。
+- **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/references/reopened-design-decisions-and-audit-adjudications.md`
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+未发现新的问题。深挖结束。

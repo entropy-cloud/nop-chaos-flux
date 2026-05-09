@@ -87,3 +87,7 @@
 - **历史模式对应**: 对应已发生过的 Button `variant` / `size` vocabulary 收敛残留模式；本条不是重报已收口代码，而是 active example 未跟随 live schema 的 residual。
 - **参考文档**: `docs/components/button/design.md`; `docs/references/flux-json-conventions.md`; `packages/flux-renderers-basic/src/schemas.ts`
 - **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+未发现新的问题。深挖结束。

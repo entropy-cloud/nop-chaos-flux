@@ -177,6 +177,10 @@
 - **参考文档**: `docs/architecture/field-metadata-slot-modeling.md`
 - **复核状态**: 未复核
 
+## 深挖第 3 轮追加
+
+未发现新的问题。深挖结束。
+
 ### [维度12-06] `report-designer-page` public schema typing 仍把 value-or-region `title` 限死为字符串
 
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\report-designer-renderers\src\renderers.tsx:86-98`, `C:\can\nop\nop-chaos-flux\packages\report-designer-renderers\src\types.ts:21-40`

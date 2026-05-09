@@ -174,3 +174,150 @@
 - **历史模式对应**: 表单字段 label/error/required association residual；与基础 input/select 已落到实际控件的模式不一致。
 - **参考文档**: `docs/skills/deep-audit-prompts.md` 维度 20；`docs/architecture/renderer-runtime.md`
 - **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+### [维度20-07] WrappedFieldAction 自定义 role=button 移除了浏览器焦点轮廓但没有提供替代 focus-visible 样式
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\wrapped-field-action.tsx:21-22,108-116`
+- **行号范围**: 21-22, 108-116
+- **证据片段**:
+  ```tsx
+  const baseClass =
+    'group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg border font-medium transition-all outline-none select-none';
+  ...
+  return (
+    <span
+      {...rest}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled ? 'true' : undefined}
+      className={getWrappedFieldActionClasses(variant, size, className, disabled)}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+  ```
+- **严重程度**: P2
+- **WCAG 准则**: 2.4.7 Focus Visible / 2.1.1 Keyboard / 4.1.2 Name, Role, Value
+- **现状**: `WrappedFieldAction` 用 `span role="button"` 实现键盘可聚焦控件，并通过 `outline-none` 移除默认焦点轮廓，但基础样式没有 `focus-visible:ring-*`、`focus-visible:border-*` 或等价可见焦点反馈。
+- **影响**: condition-builder、tag-list、array-field 等高级表单中的新增、删除、切换类操作可以 Tab 到达并用键盘触发，但键盘用户无法可靠看到当前焦点位置。
+- **修复建议**: 优先改用 `@nop-chaos/ui` 的 `Button`；如必须保留 `span role="button"`，在 `WrappedFieldAction` 基础类中补齐与 `Button` 一致的 `focus-visible` ring/border 样式。
+- **为什么值得现在做**: 这是共享封装，一处修复可覆盖多个高级表单组件的键盘焦点可见性。
+- **误报排除**: 这不是要求替换所有 raw HTML；当前控件明确被做成可聚焦交互控件，并主动移除了默认 outline，却没有等价替代焦点样式。
+- **历史模式对应**: keyboard/focus management residual；不是 plan 226 已收口的单个 condition-builder 删除控件问题。
+- **参考文档**: `docs/skills/deep-audit-prompts.md` 维度20；`packages/ui/src/index.ts`
+- **复核状态**: 未复核
+
+### [维度20-08] TagList 的 required/invalid/error 状态停留在非聚焦容器，未关联到实际 toggle 按钮
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\tag-list.tsx:70-76,85-109`
+- **行号范围**: 70-76, 85-109
+- **证据片段**:
+
+  ```tsx
+  if (required && currentTags.length === 0) {
+    return [
+      {
+        path: name,
+        rule: 'required',
+        message: `${labelText} requires at least one tag`,
+      },
+    ];
+  }
+  ```
+
+  ```tsx
+  <div
+    className={cn('nop-tag-list', 'flex flex-wrap gap-2.5', props.meta.className)}
+    data-slot="field-control"
+    data-testid={props.meta.testid}
+    data-cid={props.meta.cid}
+  >
+    {tags.map((tag) => {
+      const active = value.includes(tag);
+
+      return (
+        <WrappedFieldAction
+          key={tag}
+          variant={active ? 'secondary' : 'outline'}
+          size="sm"
+          disabled={presentation.effectiveDisabled || presentation.readOnly}
+  ```
+
+- **严重程度**: P2
+- **WCAG 准则**: 1.3.1 Info and Relationships / 3.3.1 Error Identification / 3.3.2 Labels or Instructions / 4.1.2 Name, Role, Value
+- **现状**: `tag-list` 支持 required 校验，但实际可聚焦的是每个 `WrappedFieldAction` toggle；这些按钮只设置 `aria-pressed`，没有接收字段级 `aria-required`、`aria-invalid`、`aria-describedby` / `aria-errormessage`。
+- **影响**: 字段验证失败或必填时，读屏用户聚焦某个 tag toggle 只能听到按钮状态，无法从焦点上下文获知整个 tag-list 字段必填或当前错误原因。
+- **修复建议**: 为 tag-list 建立 `role="group"`/稳定 label 和错误描述关系，并将错误/required 状态通过 group 或每个实际 focus target 的 `aria-describedby` 明确关联；必要时让 `WrappedFieldAction` 支持透传字段状态。
+- **为什么值得现在做**: 该组件已有 runtime required 校验，补齐程序化状态关联能直接闭环当前字段语义。
+- **误报排除**: 这不是要求所有视觉 tag 都有额外 ARIA；问题只针对已经可聚焦、可切换、参与字段校验的真实交互按钮。
+- **历史模式对应**: “字段状态存在但未关联到实际焦点目标” residual；不同于已报告的 condition-builder picker/tree-select。
+- **参考文档**: `docs/skills/deep-audit-prompts.md` 维度20；`docs/architecture/renderer-runtime.md`
+- **复核状态**: 未复核
+
+### [维度20-09] SwitchRenderer 的 required 状态没有传递到实际 switch 控件
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form\src\renderers\input.tsx:255-277`
+- **行号范围**: 255-277
+- **证据片段**:
+  ```tsx
+  function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
+    const name = String(props.props.name ?? '');
+    const { value, handlers, presentation } = useFormFieldController(name, {
+      adapter: booleanValueAdapter,
+      disabled: props.meta.disabled,
+      required: Boolean(props.props.required),
+      readOnly: Boolean(props.props.readOnly),
+    });
+  ...
+      <Switch
+        id={name ? `${name}-control` : undefined}
+        checked={checked}
+        disabled={presentation.effectiveDisabled}
+        aria-invalid={presentation.showError ? true : undefined}
+        aria-label={String(props.props.label ?? name)}
+  ```
+- **严重程度**: P2
+- **WCAG 准则**: 1.3.1 Info and Relationships / 3.3.2 Labels or Instructions / 4.1.2 Name, Role, Value
+- **现状**: `SwitchRenderer` 将 `required` 传入字段 controller/validation，但实际可聚焦 `Switch` 只设置了 `aria-invalid` 和 `aria-label`，没有 `aria-required` 或等价 required 描述。
+- **影响**: schema 声明 switch 必填时，读屏用户聚焦 switch 本身无法获知该字段是必填项，只能依赖外层非焦点 FieldFrame 的视觉 required marker。
+- **修复建议**: 与 input/select/radio/checkbox-group 的模式一致，把 required 状态传递到实际 `Switch`，或通过 `aria-describedby` 关联稳定 required 说明。
+- **为什么值得现在做**: 同文件基础控件大多已经传递 required，switch 是同类遗漏，修复范围小。
+- **误报排除**: 这不是重复 checkbox required；当前证据是 switch 独立 renderer 中同样计算 required 但未落到实际 switch 控件。
+- **历史模式对应**: 表单 required/state association residual。
+- **参考文档**: `docs/skills/deep-audit-prompts.md` 维度20；`docs/architecture/renderer-runtime.md`
+- **复核状态**: 未复核
+
+### [维度20-10] ConditionBuilder 嵌套分组删除按钮的可访问名称退化为“×”
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\condition-builder\condition-group.tsx:252-260`
+- **行号范围**: 252-260
+- **证据片段**:
+  ```tsx
+  {
+    depth > 0 && onRemove && (
+      <WrappedFieldAction
+        variant="outline"
+        size="icon-xs"
+        className="absolute -right-2 -top-2 z-10 rounded-full text-muted-foreground hover:text-destructive hover:border-destructive shadow-sm"
+        onClick={onRemove}
+        title={removeGroupLabel}
+      >
+        ×
+      </WrappedFieldAction>
+    );
+  }
+  ```
+- **严重程度**: P2
+- **WCAG 准则**: 2.4.6 Headings and Labels / 3.3.2 Labels or Instructions / 4.1.2 Name, Role, Value
+- **现状**: 嵌套 condition group 的删除控件是 `WrappedFieldAction`，可访问名称来自可见文本 `×`；`title={removeGroupLabel}` 不能可靠替代按钮名称，且存在文本内容时通常不会成为主要 accessible name。
+- **影响**: 读屏用户聚焦该控件时可能只听到 “× button” 或类似符号名称，无法判断这是删除分组操作，尤其在多个嵌套条件组中风险更高。
+- **修复建议**: 为该控件显式传入 `aria-label={removeGroupLabel}`，并保留 `×` 作为视觉内容；如改用 `Button`，同样提供明确 `aria-label`。
+- **为什么值得现在做**: 修复局部且不会改变交互模型，可以直接提升 condition-builder 嵌套分组的可理解性。
+- **误报排除**: 这不是 condition-builder 已收口的 between label 或 selected badge 删除问题；当前问题是 nested group remove 的 accessible name 只剩符号。
+- **历史模式对应**: 自定义图标/符号按钮缺少明确 accessible name。
+- **参考文档**: `docs/skills/deep-audit-prompts.md` 维度20；`packages/ui/src/index.ts`
+- **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+未发现新的问题。深挖结束。

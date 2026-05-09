@@ -274,3 +274,179 @@
 - **历史模式对应**: 对应 plan guide 中 “Plan Status / slice Status / Closure Gates 文本一致性” 高频漂移模式。
 - **参考文档**: `docs/plans/00-plan-authoring-and-execution-guide.md:83-90`, `docs/plans/00-plan-authoring-and-execution-guide.md:316-329`
 - **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+### [维度16-09] Plan 233 仍标 `planned`，但 live working tree 已部分落地其 Phase 1/2 类型与 renderer 定义变更
+
+- **文档路径**: `C:\can\nop\nop-chaos-flux\docs\plans\233-lazy-eval-field-rule-plan.md:3-19`, `:52-66`, `:68-83`
+- **代码路径**: `C:\can\nop\nop-chaos-flux\packages\flux-core\src\types\node-identity.ts:122-135`, `C:\can\nop\nop-chaos-flux\packages\flux-core\src\types\schema.ts:84-89`, `C:\can\nop\nop-chaos-flux\packages\flux-renderers-basic\src\basic-renderer-definitions.ts:76-84`, `C:\can\nop\nop-chaos-flux\packages\flux-compiler\src\schema-compiler\node-compiler.ts:354-363`
+- **行号范围**: `233-lazy-eval-field-rule-plan.md:3-19,52-83`; `node-identity.ts:122-135`; `schema.ts:84-89`; `basic-renderer-definitions.ts:76-84`; `node-compiler.ts:354-363`
+- **证据片段**:
+  ```md
+  3: > Plan Status: planned
+  ...
+  14: - `SchemaFieldRule` already has `allowSource`, `params`, `isolate` as declaration-driven mechanisms for different compilation strategies.
+  15: - `itemData` is declared as `{ key: 'itemData', kind: 'prop' }` in loop/recurse renderer definitions.
+  17: - The compiled result is stored on `TemplateNode.structuralItemData` as a single typed field.
+  ```
+  ```md
+  59: - [ ] Add `lazyEval?: boolean` property to `SchemaFieldRule` in `schema.ts`
+  60: - [ ] Rename `TemplateNode.structuralItemData` to `structuralFields` with type `Record<string, CompiledRuntimeValue<unknown>>` in `node-identity.ts`
+  ...
+  76: - [ ] Change loop and recurse renderer field definitions from `{ key: 'itemData', kind: 'prop' }` to `{ key: 'itemData', kind: 'prop', lazyEval: true }`
+  ```
+  ```ts
+  133:   structuralWhen?: CompiledRuntimeValue<boolean | unknown>;
+  134:   structuralFields?: Readonly<Record<string, CompiledRuntimeValue<unknown>>>;
+  ```
+  ```ts
+  84:    * When true, the field is compiled into `TemplateNode.structuralFields`
+  89:   lazyEval?: boolean;
+  ```
+  ```ts
+  82:       { key: 'itemData', kind: 'prop', lazyEval: true },
+  ```
+  ```ts
+  359:       propsProgram,
+  360:       metaProgram,
+  361:       structuralWhen,
+  362:       structuralItemData,
+  363:       eventPlans,
+  ```
+- **严重程度**: P2
+- **漂移类型**: 计划状态失真 / plan baseline 与 live code 漂移
+- **文档描述**: Plan 233 仍是 `planned`，并把 `lazyEval`、`structuralFields`、renderer field 更新列为未完成事项；Current Baseline 也仍说 `structuralItemData` 是当前存储字段。
+- **代码现状**: working tree 中 `SchemaFieldRule.lazyEval`、`TemplateNode.structuralFields`、loop/recurse `itemData lazyEval` 已经出现；同时 compiler / runtime / renderer consumer 仍有 `structuralItemData` 引用，说明计划已进入部分落地而非 planned baseline。
+- **风险**: 后续执行者按计划会重复处理已落地项，或忽略当前半迁移状态；更重要的是 checklist 未同步会掩盖 “type surface 已改、compiler/consumer 未完全改” 的真实剩余工作。
+- **建议**: 将 Plan 233 状态改为 `in progress`，立即勾选或重写已落地 items，并把 Current Baseline 改成当前半迁移事实；剩余项保留为明确待修复 checklist。
+- **为什么值得现在做**: 这是当前 active plan 与 live working tree 的直接漂移；不及时同步会影响正在执行的 plan 233 后续判断。
+- **误报排除**: 这不是 archive plan；文件位于 active `docs/plans/` 且 `Last Reviewed: 2026-05-09`。plan guide 明确要求执行后同步 slice/checklist，不能让 `planned` 掩盖已发生的 live repo 变更。
+- **历史模式对应**: plan status/checklist 未随 live partial implementation 更新，属于 plan guide closure/audit 高频漂移。
+- **参考文档**: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/references/maintenance-checklist.md`
+- **复核状态**: 未复核
+
+### [维度16-10] `static-analysis.md` 把 `computeStaticAnalysis()` 归属到错误文件
+
+- **文档路径**: `C:\can\nop\nop-chaos-flux\docs\architecture\static-analysis.md:103-108`
+- **代码路径**: `C:\can\nop\nop-chaos-flux\packages\flux-compiler\src\schema-compiler.ts:25-30`, `C:\can\nop\nop-chaos-flux\packages\flux-compiler\src\schema-compiler\static-analysis.ts:51-110`
+- **行号范围**: `static-analysis.md:103-108`; `schema-compiler.ts:25-30`; `static-analysis.ts:51-110`
+- **证据片段**:
+  ```md
+  103: ## Related Files
+  105: - `packages/flux-core/src/types/renderer-core.ts` - `RendererDefinition.staticCapable`
+  106: - `packages/flux-core/src/types/node-identity.ts` - `StaticAnalysisResult`, `TemplateNode.staticAnalysis`
+  107: - `packages/flux-compiler/src/schema-compiler.ts` - `computeStaticAnalysis()`
+  108: - `packages/flux-compiler/src/schema-compiler-static-analysis.test.ts` - Unit tests
+  ```
+  ```ts
+  25: import {
+  26:   createSchemaCompilerDiagnosticsContext,
+  27: } from './schema-compiler/diagnostics.js';
+  28: import { createBaseCompileSymbolTable } from './compile-symbol-table.js';
+  29: import { createCompileSingleNode } from './schema-compiler/node-compiler.js';
+  30: import { createValidateSchemaInput } from './schema-compiler/validation-compiler.js';
+  ```
+  ```ts
+  51: export function computeStaticAnalysis(
+  52:   node: TemplateNode,
+  53:   schema: BaseSchema,
+  54: ): StaticAnalysisResult {
+  ...
+  110:   return { isStaticContent: true, dependencies: [] };
+  ```
+- **严重程度**: P3
+- **漂移类型**: 路径/符号归属失真
+- **文档描述**: Related Files 指向 `packages/flux-compiler/src/schema-compiler.ts` 作为 `computeStaticAnalysis()` 所在文件。
+- **代码现状**: `computeStaticAnalysis()` 实际定义在 `packages/flux-compiler/src/schema-compiler/static-analysis.ts`；顶层 `schema-compiler.ts` 只是 compiler assembly，不包含该函数。
+- **风险**: 维护者或 agent 按 active architecture doc 定位 static analysis owner 时会读错文件，尤其 Plan 233 等正在修改 `static-analysis.ts` 相邻 compiler 逻辑时容易漏掉真实 owner 模块。
+- **建议**: 将 Related Files 第 107 行改为 `packages/flux-compiler/src/schema-compiler/static-analysis.ts`，必要时保留 `schema-compiler.ts` 作为 compile entry/assembly anchor。
+- **为什么值得现在做**: 修复是一行 active doc anchor 更新，可避免后续 compiler/static-analysis 修改读错 owner 文件。
+- **误报排除**: 不是历史计划或日志断链；`static-analysis.md` 是 active architecture doc，且该段明确是当前 Related Files。
+- **历史模式对应**: active architecture doc 的 code anchor/path drift。
+- **参考文档**: `docs/references/maintenance-checklist.md`, `docs/architecture/static-analysis.md`
+- **复核状态**: 未复核
+
+### [维度16-11] AGENTS 的 Report/Spreadsheet 路由把 future draft 当成常规 operational follow-up
+
+- **文档路径**: `C:\can\nop\nop-chaos-flux\AGENTS.md:63-77`
+- **代码路径**: `C:\can\nop\nop-chaos-flux\docs\architecture\report-designer\contracts.md:1-13`, `C:\can\nop\nop-chaos-flux\docs\index.md:64-66`
+- **行号范围**: `AGENTS.md:63-77`; `contracts.md:1-13`; `docs/index.md:64-66`
+- **证据片段**:
+  ```md
+  70: | Work on Flow Designer canvas, nodes, edges, or interactions | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/collaboration.md`, `docs/architecture/flow-designer/canvas-adapters.md` |
+  71: | Work on Report Designer or Spreadsheet Editor | `docs/architecture/report-designer/design.md` | `docs/architecture/report-designer/contracts.md` |
+  ```
+  ```md
+  1: # Report Designer Contract Draft
+  3: > Status: future contract draft
+  5: 本文档把 `docs/architecture/report-designer/design.md`、`docs/architecture/report-designer/config-schema.md` 和 `docs/architecture/report-designer/api.md` 中的抽象设计，收敛为更接近未来 TypeScript 实现的接口草案。
+  7: 它不是当前代码镜像，而是 future contract draft。
+  13: 当前 live renderer contract 不由本文件拥有；单 renderer contract 仍以 `docs/components/report-designer-page/design.md` 和 live code 为准。
+  ```
+  ```md
+  64: | 了解基于 SchemaRenderer 的报表设计器与 spreadsheet editor 规划架构 | `docs/architecture/report-designer/README.md` | `docs/architecture/report-designer/design.md`, `docs/architecture/report-designer/config-schema.md` |
+  65: | Design or update the `report-designer-page` renderer contract | `docs/components/report-designer-page/design.md` | `docs/architecture/report-designer/README.md`, `docs/architecture/report-designer/design.md` |
+  66: | Design or update the `spreadsheet-page` renderer contract | `docs/components/spreadsheet-page/design.md` | `docs/architecture/report-designer/README.md`, `docs/architecture/report-designer/design.md` |
+  ```
+- **严重程度**: P2
+- **漂移类型**: AGENTS routing / draft-doc precedence 漂移
+- **文档描述**: AGENTS 把 Report Designer / Spreadsheet Editor 的 then-read 直接指向 `contracts.md`。
+- **代码现状**: `contracts.md` 自声明为 `future contract draft`，且明确不是当前代码镜像、不拥有 live renderer contract；`docs/index.md` 对同类任务没有把该 draft 放入常规 follow-up，而是路由到 README/design/config-schema 或具体 component design。
+- **风险**: agent 执行 Report/Spreadsheet 代码任务时可能把 future draft 接口当作当前约束，产生误报或按未来接口改 live code；这正命中 calibration pattern “Draft Docs Used As If They Were Current Contracts”。
+- **建议**: 将 AGENTS 该行 then-read 改为 `docs/architecture/report-designer/README.md`, `design.md`, `config-schema.md`，仅在“review future package/API target”时再显式附加 `contracts.md`。
+- **为什么值得现在做**: AGENTS 是 agent 入口路由，错误路由会被每次 Report/Spreadsheet 任务重复放大。
+- **误报排除**: 不是要求删除 future draft；问题是 operational routing 未标注 draft 性质，和 `docs/index.md` 的 authoritative routing subset 不一致。
+- **历史模式对应**: draft/future doc 被当作 active operational contract 的高误报源，需在 routing 层隔离。
+- **参考文档**: `docs/index.md`, `docs/references/deep-audit-calibration-patterns.md`, `docs/architecture/report-designer/contracts.md`
+- **复核状态**: 未复核
+
+### [维度16-12] `frontend-baseline.md` 的 root scripts 清单遗漏当前 `check` / e2e / src-artifact 等关键脚本
+
+- **文档路径**: `C:\can\nop\nop-chaos-flux\docs\architecture\frontend-baseline.md:29-38`, `:107-125`
+- **代码路径**: `C:\can\nop\nop-chaos-flux\package.json:5-45`
+- **行号范围**: `frontend-baseline.md:29-38,107-125`; `package.json:5-45`
+- **证据片段**:
+  ```md
+  29: Root scripts in `package.json`:
+  31: - `pnpm dev`
+  32: - `pnpm build`
+  33: - `pnpm typecheck`
+  34: - `pnpm test`
+  35: - `pnpm lint`
+  36: - `pnpm analyze`
+  37: - `pnpm check:react19`
+  ```
+  ```json
+  5:   "scripts": {
+  6:     "dev": "turbo run dev --filter=@nop-chaos/flux-playground",
+  8:     "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:audit-suspects",
+  20:     "test": "turbo run test --concurrency=2",
+  21:     "test:e2e": "playwright test",
+  23:     "check:react19": "node scripts/check-react19-legacy-apis.mjs",
+  24:     "check:oversized-code-files": "node scripts/check-oversized-code-files.mjs",
+  25:     "check:active-doc-code-anchors": "node scripts/check-active-doc-code-anchors.mjs",
+  28:     "check:src-artifacts": "node scripts/verify-no-src-artifacts.mjs",
+  ```
+  ```md
+  117: Additional audit-oriented tooling now tracked at the root:
+  119: - `pnpm audit:deps` - dependency-cruiser baseline for circulars and cross-package internal source imports
+  120: - `pnpm audit:knip` - repo-wide unused file/export/dependency scan baseline
+  123: - `pnpm audit:mutants` - Stryker mutation-test entry point for the current `flux-runtime/src/validation` pilot using an isolated Vitest config
+  124: - `pnpm audit:semgrep` - local Semgrep rule entry point when the host Python environment supports Semgrep installation
+  ```
+- **严重程度**: P3
+- **漂移类型**: tooling baseline 文档漂移
+- **文档描述**: `frontend-baseline.md` 以 “Root scripts in package.json” 列出 root scripts，并单列 audit tooling。
+- **代码现状**: root `package.json` 已有聚合 `pnpm check` 以及多个强制/半强制检查脚本（active doc anchors、src artifacts、oversized files、package CSS exports、i18n keys、workspace manifest deps、audit suspects）和 e2e 脚本，但 baseline 文档没有同步。
+- **风险**: 维护 workspace/tooling baseline 时，读者会低估当前 fail-fast 检查面，尤其 `check:active-doc-code-anchors` 已进入 `check`/`lint` 但 active baseline 没有提到，会削弱文档维护与 CI 预期的一致性。
+- **建议**: 更新 Root scripts 与 Tooling/Quality Gates 段落，至少补充 `pnpm check` 及其关键组成项，并明确哪些是常规 verification、哪些是 audit-only。
+- **为什么值得现在做**: root script/check 面是开发验证入口，文档滞后会影响 agent 和开发者选择正确命令。
+- **误报排除**: 这不是要求列出每个 npm 脚本的审美问题；`frontend-baseline.md` 是 workspace/tooling baseline owner doc，maintenance-checklist 明确 root script / tooling baseline 变化应 review 该文档。
+- **历史模式对应**: tooling baseline active doc 与 root package script surface 漂移。
+- **参考文档**: `docs/references/maintenance-checklist.md`, `docs/architecture/frontend-baseline.md`
+- **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+未发现新的问题。深挖结束。

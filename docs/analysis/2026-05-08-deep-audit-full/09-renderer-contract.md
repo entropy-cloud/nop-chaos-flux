@@ -228,3 +228,80 @@
 - **历史模式对应**: 对应 renderer meta passthrough residual；不命中 calibration pattern 8 的本地 UI 状态豁免。
 - **参考文档**: `docs/architecture/renderer-runtime.md:177-214`, `docs/skills/deep-audit-prompts.md:1120-1121`
 - **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+### [维度09-08] FormRenderer 的表单生命周期事件以 `undefined` 触发，缺少语义 event payload
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form\src\renderers\form.tsx:202-211`, `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form\src\renderers\form-definition.ts:110-130`
+- **行号范围**: 202-211；110-130
+- **证据片段**:
+  ```tsx
+  ownedForm.setLifecycleHandlers({
+    submitAction: submitAction
+      ? (options) =>
+          submitAction(undefined, {
+            scope: lifecycleScope,
+            form: ownedForm,
+            interactionId: options?.interactionId,
+            signal: options?.signal,
+          })
+      : undefined,
+  ```
+  ```ts
+  eventContracts: {
+    initAction: {
+      displayName: 'Init',
+      description: 'Runs after the form runtime is created.',
+    },
+    submitAction: {
+      displayName: 'Submit',
+      description: 'Primary submit pipeline for the form.',
+    },
+  ```
+- **严重程度**: P2
+- **契约条款**: `RendererComponentProps.events` 是 declarative event handler 通道；`docs/architecture/renderer-runtime.md` 要求非 DOM 语义 payload 也应携带有意义的 `type` 字段。
+- **现状**: `FormRenderer` 将 `initAction`、`submitAction`、`onSubmitSuccess`、`onSubmitError`、`onValidateError` 均作为 renderer event 注册，但触发时第一个参数传 `undefined`，只通过第二参数传 scope/form/result。
+- **风险**: 表单提交、初始化、成功、失败、校验失败这些核心事件在 `ActionContext.event` 中不可区分；调试器、自动化、imported namespace provider 或 action 链只能依赖旁路上下文推断事件语义。
+- **建议**: 为表单生命周期事件传入结构化语义 payload，例如 `{ type: 'formSubmit' }`、`{ type: 'formInit' }`、`{ type: 'formSubmitSuccess', result }`、`{ type: 'formValidateError', error }`，同时保留现有 scope/form/result 上下文。
+- **为什么值得现在做**: form lifecycle event 是核心业务 action 入口，补齐 payload 可以与 tabs/table/CRUD 等事件合同一起收敛。
+- **误报排除**: 这不是重复报告已保存的 tabs/table/code-editor/surface/CRUD 事件载荷问题；本条聚焦独立的 form renderer lifecycle event channel。它也不是普通内部 callback，因为 `form-definition.ts` 明确把这些字段声明为 renderer `eventContracts` 和 `kind: 'event'`。
+- **历史模式对应**: renderer event channel 以 scope 旁路替代 `ActionContext.event` 的同族 residual。
+- **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/references/renderer-interfaces.md`
+- **复核状态**: 未复核
+
+### [维度09-09] TreeRenderer 的参数化 node region 未传递 per-node `instancePath`
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-data\src\tree-renderer.tsx:86-90`, `C:\can\nop\nop-chaos-flux\packages\flux-renderers-data\src\data-renderer-definitions.ts:65-70`
+- **行号范围**: 86-90；65-70
+- **证据片段**:
+  ```tsx
+  const label = getIn(node, labelField);
+  const nodeContent = owner.regions.node
+    ? owner.regions.node.render({
+        bindings: { node, index, depth, key: nodeKey, parentNode },
+      })
+    : null;
+  ```
+  ```ts
+  {
+    key: 'node',
+    kind: 'region',
+    params: ['node', 'index', 'depth', 'key', 'parentNode'],
+    isolate: false,
+  },
+  ```
+- **严重程度**: P2
+- **契约条款**: `docs/architecture/renderer-runtime.md` 的 region rendering 规则要求 repeated renderers 优先使用显式 `instancePath` 与稳定 key 派生 bindings；`instancePath` 是重复子树实例身份合同。
+- **现状**: `tree` 的 `node` region 已声明为参数化 region，并在每个树节点渲染时传入 node/index/depth/key，但没有把 `nodeKey`/depth 派生出的 `instancePath` 传给 `regions.node.render()`。
+- **风险**: 自定义 tree node region 中挂载的子 renderer 无法获得 per-tree-node 的重复实例身份；调试、组件 handle 定位、节点实例路径、重复节点内生命周期和 action 归属都可能退化为同一结构节点身份。
+- **建议**: 在 `TreeNodeRenderer` 中构造稳定 `InstanceFrame[]`，例如基于父路径 + `{ repeatedTemplateId: 'tree.node:<owner id>', instanceKey: nodeKey }`，并传入 `owner.regions.node.render({ bindings, instancePath })`；递归子节点继续追加路径。
+- **为什么值得现在做**: tree node region 是递归重复渲染路径，修复可以避免后续在节点级 action、调试器和生命周期定位上引入更难排查的身份漂移。
+- **误报排除**: 这不是要求普通 region 必须传 `instancePath`；`tree.node` 明确在递归/重复数据结构中按节点多次渲染，且已经声明 `params`，因此属于重复 region 身份遗漏。也不重复已保存的 `expandedRow` params 缺失问题：本条是 params 已存在但实例身份未传递。
+- **历史模式对应**: repeated region 已有 scoped params 但缺少 instance identity 的 renderer contract residual。
+- **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/architecture/scoped-render-slots.md`
+- **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+未发现新的问题。深挖结束。

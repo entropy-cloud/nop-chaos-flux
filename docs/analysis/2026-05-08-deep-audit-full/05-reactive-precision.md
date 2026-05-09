@@ -427,3 +427,230 @@
 - **历史模式对应**: “per-path subscription API 已存在，但上游 change payload 没有携带足够路径信息”的 reactive precision 盲区。
 - **参考文档**: `docs/architecture/performance-design-requirements.md` lines 28-33；`docs/architecture/renderer-runtime.md` lines 44-55。
 - **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度05-14] `useOwnScopeSelector` 缺少 path options，report-designer 多个自有 scope selector 只能按全 own-scope 广播唤醒
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-react\src\hooks.ts:126-140`；示例调用点 `C:\can\nop\nop-chaos-flux\packages\report-designer-renderers\src\report-designer-toolbar.tsx:17-35`
+- **行号范围**: 126-140；17-35
+- **证据片段**:
+  ```ts
+  export function useOwnScopeSelector<T, S = Record<string, unknown>>(
+    selector: (scopeData: S) => T,
+    equalityFn: (a: T, b: T) => boolean = Object.is,
+  ): T {
+    const scope = useRenderScope();
+    const subscribe = useMemo(() => createScopeOwnSubscribe(scope), [scope]);
+    const getSnapshot = useCallback(() => scope.readOwn() as unknown as S, [scope]);
+  ```
+  ```tsx
+  const snapshot = useOwnScopeSelector(
+    (data: Record<string, unknown>) => ({
+      documentName: data.documentName,
+      dirty: data.dirty,
+      canUndo: data.canUndo,
+      canRedo: data.canRedo,
+      selectionTarget: data.selectionTarget,
+      runtime: data.runtime,
+      reportStatus: data.reportStatus,
+    }),
+  ```
+- **严重程度**: P2
+- **订阅位置**: `useOwnScopeSelector()` 及其 report-designer toolbar / field panel / inspector shell / inspector 调用点。
+- **订阅范围**: hook 只能订阅当前 scope 的所有 own snapshot 变化；调用点实际只读取少数 top-level key。
+- **实际需要**: `useOwnScopeSelector` 应提供与 `useScopeSelector` 对齐的 `{ paths }` / `{ enabled }` 选项，调用点按 `documentName`、`dirty`、`selectionTarget`、`inspector` 等精确路径订阅。
+- **重渲染频率**: report designer host scope 中任意 own key 更新都会唤醒这些 selector；`useSyncExternalStoreWithSelector` 的 equality 可避免部分 commit，但 listener wake-up 与 selector 计算仍按全 scope 发生。
+- **风险**: designer/report 这类高交互 host 中，局部 selection、runtime、inspector、fieldSources 更新会互相唤醒不相关面板，削弱 split context / selector-style reads 的收益。
+- **建议**: 扩展 `useOwnScopeSelector(selector, equalityFn, options?: { enabled?: boolean; fallback?: T; paths?: readonly string[] })`，底层复用 scope change dependency 过滤；迁移 report-designer 调用点声明实际读取路径。
+- **为什么值得现在做**: own-scope 是 host renderer 读取自身状态的常用入口；不提供 paths 会让 host 面板无法受益于 path-aware scope change。
+- **误报排除**: 不是重复既有 `useScopeSelector` path options 缺失；这里是独立 hook `useOwnScopeSelector` 的 API 表面没有 path options，导致使用 own-scope 的 host 面板无法表达窄订阅。
+- **历史模式对应**: selector API 表面缺少 dependency paths，导致调用点只能 broad subscribe。
+- **参考文档**: `docs/architecture/performance-design-requirements.md` P7；`docs/architecture/renderer-runtime.md`
+- **复核状态**: 未复核
+
+### [维度05-15] `DialogView` / `DrawerView` 无条件订阅整个 surface scope，surface 内任意数据变化会重渲染外层 chrome
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-react\src\dialog-host.tsx:79-116`；底层 hook `C:\can\nop\nop-chaos-flux\packages\flux-react\src\dialog-host-surface.tsx:50-72`
+- **行号范围**: 79-116；50-72
+- **证据片段**:
+  ```tsx
+  function DialogView(props: {
+    surface: SurfaceEntry;
+    surfaceRuntime: SurfaceRuntime;
+    modalContainer?: string;
+  }) {
+    useSurfaceScopeSnapshot(props.surface.scope);
+  ```
+  ```ts
+  export function useSurfaceScopeSnapshot(scope: ScopeRef, paths?: string[]) {
+    useSyncExternalStoreWithSelector(
+      scope.store?.subscribe ?? (() => () => undefined),
+      () => scope.readVisible(),
+      () => scope.readVisible(),
+      (state: unknown) => {
+        if (!paths || paths.length === 0) {
+          return state;
+        }
+  ```
+- **严重程度**: P2
+- **订阅位置**: `DialogView` / `DrawerView` 调用 `useSurfaceScopeSnapshot(props.surface.scope)`。
+- **订阅范围**: 未传 `paths` 时 selector 返回完整 `scope.readVisible()`，因此 surface scope 任意路径变化都会唤醒整个 dialog/drawer view。
+- **实际需要**: 外层 surface chrome 只应订阅 title/actions/body 所需的明确路径；多数 body 内部 reactivity 应由子树 `NodeRenderer` / field hooks 自行订阅，不应让 host shell全量跟随。
+- **重渲染频率**: dialog 表单输入、draft 状态、validation 状态或 surface-local 数据更新时，外层 `DialogContent`、header/footer renderSurfaceNode 也会被唤醒。
+- **风险**: 表单型弹层中每次字段更新都可能重渲染 dialog/drawer 外层结构，造成嵌套 surface、复杂 header/actions 或重 body 时额外成本。
+- **建议**: 明确 `useSurfaceScopeSnapshot` 的用途；若只是保持 surface scope reactive，应改为只订阅 surface chrome 真正依赖的 paths，或移除外层 broad subscription，让 body 子树通过自身 selector 更新。
+- **为什么值得现在做**: surface host 是所有 dialog/drawer 的共享外壳，去掉 broad subscription 能防止局部字段输入向上唤醒 chrome。
+- **误报排除**: 不是重复 page / field / table 的 `useScopeSelector` 调用点漏传 paths；这里是 surface host 专用 hook 已支持 paths，但 live 调用点传空导致 full-scope subscription。
+- **历史模式对应**: host shell broad subscribe surface scope，导致 body 局部变更向外层冒泡。
+- **参考文档**: `docs/architecture/performance-design-requirements.md` P7；`docs/architecture/renderer-runtime.md`
+- **复核状态**: 未复核
+
+### [维度05-16] `SchemaRenderer` 外部 `data` 替换固定发布 `paths: ['*']`，root data 局部变更会全树失去 path 精度
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-react\src\schema-renderer.tsx:174-188`
+- **行号范围**: 174-188
+- **证据片段**:
+
+  ```tsx
+  useEffect(() => {
+    if (!initialDataAppliedRef.current) {
+      initialDataAppliedRef.current = true;
+      return;
+    }
+
+    const currentData = page.store.getState().data;
+
+    if (currentData !== pageData) {
+      page.scope.store?.setSnapshot(pageData, {
+        paths: ['*'],
+        sourceScopeId: page.scope.id,
+        kind: 'replace',
+      });
+    }
+  }, [page, pageData]);
+  ```
+
+- **严重程度**: P2
+- **订阅位置**: root `SchemaRenderer` 对 `props.data` 后续变化的 page scope producer。
+- **订阅范围**: 任意外部 `data` 引用变化都以 wildcard `*` 发布，所有 `NodeRenderer` dependency set 与 `useScopeSelector(..., { paths })` 都会被保守命中。
+- **实际需要**: 对 `currentData` 与 `pageData` 至少计算 changed root paths；更理想是复用统一 deep-path diff 或允许 host 传入 changed paths。
+- **重渲染频率**: 嵌入宿主以不可变方式更新 root data 时，即使只改 `query.keyword` 或 `user.name`，整棵 page scope 上所有 path-aware subscriber 都会收到 wildcard invalidation。
+- **风险**: consumer 侧即使补齐 path options，也会被 root producer 的 `*` change payload抹平；大型页面的外部数据刷新会退化为全树重算。
+- **建议**: 将 `paths: ['*']` 改为基于前后数据的 changed-path payload；无法可靠 diff 时才使用 `*` fallback，并在测试中覆盖 sibling path 不唤醒。
+- **为什么值得现在做**: 这是 root producer 粒度问题，修复能放大所有下游 path-aware selector 的收益。
+- **误报排除**: 不是重复既有 host projection `useHostScope.replace()` 只发 root paths；这里是 root `SchemaRenderer` 的 `props.data` 同步路径，粒度更粗到 wildcard，影响普通嵌入页面。
+- **历史模式对应**: producer-side change payload 过粗，使 consumer-side path 精度失效。
+- **参考文档**: `docs/architecture/performance-design-requirements.md` P7；`docs/architecture/renderer-runtime.md`
+- **复核状态**: 未复核
+
+### [维度05-17] fragment bindings 更新只发布 changed root，slot/fragment 内 deep-path 依赖会被同 root sibling 更新唤醒
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-react\src\fragment-scope.ts:3-31`；使用点 `C:\can\nop\nop-chaos-flux\packages\flux-react\src\render-nodes.tsx:296-313`
+- **行号范围**: 3-31；296-313
+- **证据片段**:
+
+  ```ts
+  export function createFragmentScopeChange(
+    previous: Record<string, unknown>,
+    next: Record<string, unknown>,
+  ): ScopeChange | undefined {
+    const changedRoots = new Set<string>();
+
+    for (const key of Object.keys(previous)) {
+      if (!Object.prototype.hasOwnProperty.call(next, key) || !Object.is(previous[key], next[key])) {
+        changedRoots.add(key);
+      }
+    }
+  ```
+
+  ```tsx
+  const change = createFragmentScopeChange(currentOwnSnapshot, fragmentBindings);
+
+  if (!change) {
+    return;
+  }
+
+  fragmentScope.store.setSnapshot(fragmentBindings, change);
+  ```
+
+- **严重程度**: P2
+- **订阅位置**: `RenderNodes` 对 `render({ bindings })` 创建/复用的 fragment scope 更新。
+- **订阅范围**: producer 只发布 `record`、`item`、`$slot` 等 root key；fragment 内如果只依赖 `record.name`，`record.age` 变化也会命中同一个 root。
+- **实际需要**: 对 fragment bindings 的对象值做 deep changed-path diff，或允许调用方在 render options 中携带 changed paths；保留 root fallback 仅用于无法安全 diff 的动态对象。
+- **重渲染频率**: table/list/detail 等 repeated fragment 每次 row/item binding 局部字段变化时，同 root 下所有 deep-path selector 与 node dependency 都会被保守唤醒。
+- **风险**: repeated regions 是低代码渲染热路径；bindings producer 粗粒度会让后续 NodeRenderer 的 path dependency tracking 在 fragment 子树内退化为 root 粒度。
+- **建议**: 扩展 `createFragmentScopeChange` 为 deep diff，并复用 runtime scope path normalization；为 `record.name` / `record.age` sibling 更新添加 focused regression test。
+- **为什么值得现在做**: fragment/repeated regions 是表格、列表、slot 的核心渲染路径；producer 粒度修复收益跨多个 renderer。
+- **误报排除**: 不是重复 host projection replace 粗粒度；这里发生在 React fragment/region render path，影响 `render({ bindings })` 创建的局部 scope。
+- **历史模式对应**: fragment producer 只发 root changed paths，导致 deep dependency tracking 退化。
+- **参考文档**: `docs/architecture/performance-design-requirements.md` P7；`docs/architecture/renderer-runtime.md`, `docs/architecture/scoped-render-slots.md`
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度05-18] `useFieldPresentation` 的 non-form required 计算只订阅字段自身路径，动态 required 依赖变更不会唤醒
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form\src\field-utils\field-presentation.tsx:59-65`
+- **行号范围**: 59-65
+- **证据片段**:
+  ```tsx
+  const ownerEffectiveRequired = useCurrentValidationValues(
+    (values) =>
+      Boolean(options?.required) ||
+      isFieldEffectivelyRequired(
+        currentValidationScope?.validation,
+        name,
+        values as Record<string, any>,
+      ),
+    Object.is,
+    { enabled: !currentForm, path: name },
+  );
+  ```
+- **严重程度**: P2
+- **订阅位置**: `useFieldPresentation()` 的 `ownerEffectiveRequired = useCurrentValidationValues(...)`。
+- **订阅范围**: non-form 场景只订阅 `path: name`，但 selector 内的 `isFieldEffectivelyRequired(...)` 会读取 validation model 中 `requiredWhen` / `requiredUnless` 指向的其他字段路径。
+- **实际需要**: 订阅动态 required 规则的依赖路径，而不是字段自身路径；至少应与 `FieldFrame` 的 `getDynamicRequiredDependencyPaths(validationField)` 逻辑对齐。
+- **重渲染频率**: 当前不是 broad wake-up，而是相反的 path options 过窄/错误：控制字段变化时不会唤醒该字段 presentation，导致 required 状态滞后。
+- **现状**: `FieldFrame` 已有动态 required dependency paths 订阅路径，但 `useFieldPresentation` 的 non-form presentation 分支仍只按 `name` 订阅。
+- **风险**: 非 form validation owner 下，字段 required 展示可能不会随依赖字段变化更新；后续开发者会误以为传了 `path` 就满足 P7，但实际依赖路径不完整。
+- **建议**: 在 `useFieldPresentation` 中读取当前字段 validationField，计算 dynamic required dependency paths，并在 non-form `useCurrentValidationValues` 中传 `{ paths: dynamicRequiredDependencyPaths }`；无动态规则时再退化为无需订阅或字段自身路径。
+- **为什么值得现在做**: required presentation 是表单字段 chrome 的核心状态；错误的窄订阅会造成可见状态滞后，比 broad subscription 更隐蔽。
+- **误报排除**: 这不是重复 `[维度05-11] FieldFrame dynamic required paths identity churn`；本发现是另一个 hook 的订阅路径语义错误，已有 `path` 但订错了依赖源。
+- **历史模式对应**: selector dependencies 声明与实际读取路径不一致，导致 path-aware subscription 漏唤醒。
+- **参考文档**: `docs/architecture/performance-design-requirements.md` P7；`docs/architecture/renderer-runtime.md`; `docs/architecture/form-validation.md`
+- **复核状态**: 未复核
+
+### [维度05-19] `scope.merge()` producer 只发布 root keys，data source `mergeToScope` 的深路径变更会退化为 root 粒度
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\scope.ts:424-430`；使用点 `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\async-data\data-source-runtime-utils.ts:136-138`
+- **行号范围**: 424-430；136-138
+- **证据片段**:
+  ```ts
+  ownStore.setSnapshot(
+    { ...current, ...sanitized },
+    {
+      paths: keys,
+      sourceScopeId: input.id,
+      kind: 'merge',
+    },
+  );
+  ```
+  ```ts
+  if (mergeToScope && isRecord(data)) {
+    scope.merge(data);
+  }
+  ```
+- **严重程度**: P2
+- **订阅位置**: `createScopeRef().merge()` producer；由 async data source 的 `mergeToScope` 直接调用。
+- **订阅范围**: producer 对 merge payload 只发布 top-level `keys`，例如 `{ user: { profile: ... } }` 只发布 `user`，不会携带 `user.profile.name` 级别 changed paths。
+- **实际需要**: 对 merge 前后的同 root 对象计算 deep changed paths，或允许 data source/merge caller 传入精确 changed-path payload；无法 diff 时才保留 root fallback。
+- **重渲染频率**: data source 局部刷新某个 root object 的深层字段时，同 root 下所有 deep-path subscriber / NodeRenderer dependency 都会被唤醒。
+- **现状**: consumer 侧即使使用 `useScopeSelector(..., { paths: ['user.profile.name'] })`，遇到 `scope.merge({ user: nextUser })` 时仍会被 `user` root change 命中。
+- **风险**: `mergeToScope` 是数据源写入 scope 的通用入口；大型 payload 局部刷新会抵消 per-path subscription 收益，并让动态表达式/renderer props 在同 root sibling 变化时重复解析。
+- **建议**: 为 `scope.merge` 增加 deep-path diff；或者新增可携带 `ScopeChange.paths` 的 merge API，让 async data source 在知道增量路径时透传。
+- **为什么值得现在做**: 这是 runtime scope 通用写入口，修复能提升所有 data-source mergeToScope 场景的 path precision。
+- **误报排除**: 这不是重复 `[维度05-13] host projection replace()`、`[维度05-16] SchemaRenderer data wildcard` 或 `[维度05-17] fragment bindings root diff`；本发现定位在通用 `scope.merge()` producer 及 data source `mergeToScope` live 使用点。
+- **历史模式对应**: producer-side root-only change payload 限制 consumer-side path-aware subscription。
+- **参考文档**: `docs/architecture/performance-design-requirements.md` P7；`docs/architecture/api-data-source.md`; `docs/architecture/renderer-runtime.md`
+- **复核状态**: 未复核

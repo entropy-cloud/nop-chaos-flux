@@ -269,3 +269,260 @@
 - **历史模式对应**: Component/E2E smoke/read 检查替代真实用户行为断言的覆盖缺口。
 - **参考文档**: `docs/skills/deep-audit-prompts.md:1450-1452`, `docs/skills/deep-audit-prompts.md:1466-1469`, `AGENTS.md` Bug Fix Test Coverage Rule
 - **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+### [维度14-10] `operation-control-timeout-retry.test.ts` fake timer 仍依赖用例末尾恢复，失败路径会污染后续 retry/abort 测试
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-action-core\src\__tests__\operation-control-timeout-retry.test.ts:1-7`, `25-31`, `129-153`
+- **行号范围**: `1-7`, `25-31`, `129-153`
+- **证据片段**:
+
+  ```ts
+  import { describe, expect, it, vi } from 'vitest';
+  import { withTimeout, withRetry, createAbortScope } from '../operation-control.js';
+
+  describe('withTimeout edge cases', () => {
+    it('ignores second resolve after timeout', async () => {
+      vi.useFakeTimers();
+  ```
+
+- **严重程度**: P2
+- **类别**: 隔离性 / mock清理
+- **现状**: 该文件多个用例调用 `vi.useFakeTimers()`，但文件级只从 `vitest` 导入 `describe/expect/it/vi`，没有 `afterEach(() => vi.useRealTimers())` 兜底；恢复依赖用例尾部的 `vi.useRealTimers()`。
+- **风险**: 如果 `withTimeout` 或 `withRetry` 的断言、Promise reject、`advanceTimersByTimeAsync` 中途失败，后续 retry metadata、abort scope 用例会继续运行在 fake timers 下，导致级联失败或错误定位。
+- **建议**: 与 `debounce.test.ts` 一样加文件级 `afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); })`，或为每个 fake timer 用例使用 `try/finally`。
+- **为什么值得现在做**: `withTimeout` / `withRetry` 是 action 控制流核心，timer 污染会让同一文件后续 async 控制测试产生连锁假失败。
+- **误报排除**: 这不是重复报告已覆盖的 `operation-control.test.ts`；本项位于另一个同包测试文件，且同样缺少统一 timer cleanup。
+- **历史模式对应**: 时间控制类测试缺少统一清理，导致后续测试受前序失败污染。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1458-1461`, `AGENTS.md` State Management and Testing
+- **复核状态**: 未复核
+
+### [维度14-11] Code Editor E2E 默认集合包含纯截图用例，没有任何产品断言
+
+- **文件**: `C:\can\nop\nop-chaos-flux\tests\e2e\code-editor.spec.ts:325-331`
+- **行号范围**: `325-331`
+- **证据片段**:
+
+  ```ts
+  test('captures code editor page screenshot', async ({ page }, testInfo) => {
+    await openCodeEditor(page);
+
+    const shotsDir = join(testInfo.outputDir, 'screenshots');
+    await mkdir(shotsDir, { recursive: true });
+    await page.screenshot({ path: join(shotsDir, 'code-editor-page.png'), fullPage: true });
+  });
+  ```
+
+- **严重程度**: P2
+- **类别**: E2E assertion quality / 默认集合质量
+- **现状**: `code-editor.spec.ts` 属于默认 `tests/e2e` spec 集合，但末尾测试只打开页面并截图，没有 `expect` 断言，也没有对 screenshot 做 snapshot/visual comparison。
+- **风险**: 默认 e2e gate 会运行一个无行为保护的 artifact 生成脚本；页面只要能打开就通过，实际 Code Editor UI 回归不会被该用例捕获，还会增加 CI 输出噪声。
+- **建议**: 若需要截图资产，改为 skipped/manual helper；若保留在默认 e2e，应增加明确产品断言或视觉 snapshot 断言。
+- **为什么值得现在做**: 默认 E2E 集合已经是 CI gate；清理无断言截图用例能提升测试信噪比并减少无保护耗时。
+- **误报排除**: 已有 `readme-flux-basic-screenshot.spec.ts` 使用 `test.describe.skip` 明确排除手工截图；本项未 skip，属于 live 默认 gate residual，不重复已有 debug-collapsible / flow-designer-css-diag 发现。
+- **历史模式对应**: 调试/资产生成脚本沉淀进默认 E2E gate。
+- **参考文档**: `AGENTS.md` Test Execution Strategy, `docs/skills/deep-audit-prompts.md:1466-1471`
+- **复核状态**: 未复核
+
+### [维度14-12] `flow-designer-label-text.spec.ts` 保留诊断 dump 用例，只断言存在节点文本而不验证文本契约
+
+- **文件**: `C:\can\nop\nop-chaos-flux\tests\e2e\flow-designer-label-text.spec.ts:29-48`
+- **行号范围**: `29-48`
+- **证据片段**:
+
+  ```ts
+  test.describe('Flow designer node and edge text rendering', () => {
+    test('diagnoses node and edge rendering by dumping actual DOM', async ({
+      page,
+    }) => {
+      await openFlowDesigner(page);
+
+      const startNodeTexts = await page.evaluate(() => {
+  ```
+
+- **严重程度**: P3
+- **类别**: E2E assertion quality / 可读性
+- **现状**: 该用例命名为 `diagnoses...dumping actual DOM`，主体 `console.log` dump `.nop-text` 列表，最终只断言 `startNodeTexts.length > 0`，没有验证具体 title/subtitle/edge label 契约。
+- **风险**: Flow Designer 文本解析可能退化为错误文本、空白附近的无意义节点、或 class 结构变化，该诊断用例仍可能通过；默认 e2e 输出也会混入调试日志。
+- **建议**: 删除该诊断用例，或改造成明确行为断言，例如直接断言 start/task/condition 节点 title 与 subtitle 的预期文本。
+- **为什么值得现在做**: 同文件已有更具体断言，清理这个诊断用例可以降低噪声而不牺牲有效覆盖。
+- **误报排除**: 同文件后续已有更明确的 task/condition/edge 文本断言；本项不是说整个文件无覆盖，而是指出第一个诊断用例在默认 gate 中信噪比低。
+- **历史模式对应**: 诊断 dump 用例保留在默认 E2E 中，形成弱断言噪声。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1466-1471`, `AGENTS.md` Test Execution Strategy
+- **复核状态**: 未复核
+
+### [维度14-13] Flow Designer minimap E2E 使用固定 `waitForTimeout(300)` 等待 viewport 更新，存在异步 flake 风险
+
+- **文件**: `C:\can\nop\nop-chaos-flux\tests\e2e\flow-designer-minimap-pan.spec.ts:54-68`, `86-99`, `117-125`
+- **行号范围**: `54-68`, `86-99`, `117-125`
+- **证据片段**:
+
+  ```ts
+  await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.8, { steps: 10 });
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+
+  const dragTransform = await getViewport();
+  ```
+
+- **严重程度**: P2
+- **类别**: 隔离性 / E2E assertion quality
+- **现状**: minimap drag/click/wheel 三个用例都在交互后固定等待 300ms，再读取 `.react-flow__viewport` transform。
+- **风险**: 在慢 CI、ReactFlow animation、浏览器调度抖动下，300ms 可能不足或过长；不足会导致间歇性失败，过长会累积拖慢默认 e2e。
+- **建议**: 用 `expect.poll(getViewport)` 或 locator/state 条件等待 transform 发生预期变化，避免固定 sleep。
+- **为什么值得现在做**: 这是真实产品交互测试，稳定等待能减少 flake 并提升 CI gate 可信度。
+- **误报排除**: 这不是调试 spec；该文件是产品交互测试，问题在于等待策略会削弱测试稳定性。
+- **历史模式对应**: E2E 中固定 sleep 替代状态条件等待，导致异步交互 flake。
+- **参考文档**: `AGENTS.md` Test Execution Strategy, `docs/skills/deep-audit-prompts.md:1458-1471`
+- **复核状态**: 未复核
+
+### [维度14-14] Code Editor scope source resolver hooks 缺少测试，现有测试只覆盖静态类型解析而未覆盖 runtime scope 读取
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-code-editor\src\source-resolvers.ts:59-93`; `C:\can\nop\nop-chaos-flux\packages\flux-code-editor\src\types.test.ts:93-108`
+- **行号范围**: `source-resolvers.ts:59-93`, `types.test.ts:93-108`
+- **证据片段**:
+
+  ```ts
+  export function useResolvedTables(
+    config: SQLEditorConfig | undefined,
+    scope: ScopeRef,
+  ): TableSchema[] {
+    const raw = config?.tables;
+
+    return useMemo<TableSchema[]>(() => {
+      if (!raw) return [];
+      if (!isSQLSchemaSourceRef(raw)) return raw;
+  ```
+
+- **严重程度**: P2
+- **类别**: 覆盖缺口
+- **现状**: `source-resolvers.ts` 中 `useResolvedVariables`、`useResolvedTables`、`useResolvedSQLVariables` 负责从 `ScopeRef` 的 `get/readVisible` 读取变量、表结构和 SQL variable panel 数据；现有 `types.test.ts` 对 source ref 的断言是“静态 resolver 返回空”，没有覆盖这些 hook 的 runtime scope 读取、`scopePath + path/dataPath` 组合、非数组 fallback。
+- **风险**: Code Editor 的变量面板、SQL schema completion、SQL variable panel 可能在 scope 数据路径变更时失效，但现有测试只会证明 authoring source ref 在静态 resolver 中返回空，无法捕获真实 runtime 解析回归。
+- **建议**: 为 `source-resolvers.ts` 增加 hook/unit 测试：mock `ScopeRef.get/readVisible`，覆盖 inline config、`source: 'scope'`、`scopePath`、`path/dataPath`、非数组返回值与 config 更新。
+- **为什么值得现在做**: Code Editor 的 completion/variable 面板依赖这些 resolver，补测试能覆盖用户可见但当前未保护的 runtime 配置路径。
+- **误报排除**: 这不是重复报告 SQL execute 路径缺少成功断言；本项聚焦 Code Editor 的 scope-driven variable/table source resolver，属于不同 runtime 配置入口。
+- **历史模式对应**: 静态类型测试覆盖了 authoring shape，但 runtime scope resolver 真实路径缺少 focused regression。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1450-1452`, `AGENTS.md` Bug Fix Test Coverage Rule
+- **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度14-15] `request-runtime-polling.test.ts` fake timer 依赖用例尾部恢复，失败路径会污染后续 polling/cache 测试
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\__tests__\request-runtime-polling.test.ts:1-91`
+- **行号范围**: `1-8`, `42-49`, `88-91`
+- **证据片段**:
+
+  ```ts
+  import { describe, expect, it, vi } from 'vitest';
+
+  describe('createDataSourceController', () => {
+    it('stops polling once stopWhen becomes true', async () => {
+      vi.useFakeTimers();
+  ```
+
+  ```ts
+      await vi.advanceTimersByTimeAsync(50);
+      expect(callCount).toBe(2);
+      controller.stop();
+      vi.useRealTimers();
+    });
+
+    it('stops polling and surfaces an error when stopWhen evaluation throws', async () => {
+      vi.useFakeTimers();
+  ```
+
+- **严重程度**: P2
+- **类别**: 隔离性 / mock清理
+- **现状**: 该 runtime polling 测试文件使用 `vi.useFakeTimers()`，但文件级没有 `afterEach(() => vi.useRealTimers())` 或 `try/finally`；恢复依赖测试末尾手动调用。
+- **风险**: 一旦 polling/stopWhen 断言、timer advancement 或 controller cleanup 中途失败，后续 `aborts the active request`、restart/cache 相关用例会在 fake timers 环境中运行，导致级联失败或错误定位。
+- **建议**: 引入文件级 `afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); })`，或将每个 fake timer 用例包裹在 `try/finally` 中。
+- **为什么值得现在做**: polling/cache 是 runtime async substrate 测试，timer 污染会直接削弱异步回归定位可靠性。
+- **误报排除**: 不是重复报告已覆盖的 `flux-action-core` timer 测试；这是 `flux-runtime` 的独立 polling/cache 测试文件，且当前导入中没有 `afterEach`，恢复确实只在成功路径尾部执行。
+- **历史模式对应**: fake timer setup 缺少统一 cleanup，失败后污染同文件后续测试。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1458-1461`, `AGENTS.md` State Management and Testing
+- **复核状态**: 未复核
+
+### [维度14-16] `crud-table-body-diag.spec.ts` 诊断型 CRUD E2E 仍在默认集合中运行并使用固定 sleep
+
+- **文件**: `C:\can\nop\nop-chaos-flux\tests\e2e\component-lab\crud-table-body-diag.spec.ts:4-111`
+- **行号范围**: `4-23`, `44-49`, `95-110`
+- **证据片段**:
+
+  ```ts
+  test.describe('crud table body diagnostic', () => {
+    test('diagnoses basic CRUD shell table body rendering', async ({ page }) => {
+      const consoleErrors = [];
+      const pageErrors = [];
+  ```
+
+  ```ts
+  await expect(stage).toBeVisible({ timeout: 30_000 });
+
+  await page.waitForTimeout(2000);
+  ```
+
+  ```ts
+      console.log('=== CRUD TABLE BODY DIAGNOSIS ===');
+      console.log(JSON.stringify(diagnosis, null, 2));
+
+      if (consoleErrors.length > 0) {
+        console.log('=== CONSOLE MESSAGES ===');
+  ```
+
+- **严重程度**: P2
+- **类别**: E2E assertion quality / 默认集合质量 / 隔离性
+- **现状**: 默认 `tests/e2e` 集合中存在命名为 diagnostic/diagnoses 的 CRUD spec，主体包含两段固定 `waitForTimeout(2000/3000)`、大量 DOM/console dump。虽然末尾有基本断言，但测试主要形态仍是排障探针。
+- **风险**: CI E2E 会为诊断 sleep 和日志付出稳定性/耗时成本；若 CRUD table 渲染异步变慢或变快，固定等待既可能 flake，也会拖慢默认 gate。
+- **建议**: 将其改名/改写为明确的 CRUD 行为测试，使用 locator 条件等待 `bodyRowCount` 或 `dataRows(stage)` 达到预期；纯诊断 dump 移出默认 `.spec.ts`。
+- **为什么值得现在做**: 默认 e2e gate 已纳入 CI，清理诊断 sleep 能提高信噪比和稳定性。
+- **误报排除**: 不是重复报告 `debug-collapsible*`、`flow-designer-css-diag` 或 Table lab 排序缺口；这是 Component Lab CRUD 路径下独立的默认诊断 spec。
+- **历史模式对应**: diagnostic E2E 沉淀为默认测试，并用固定 sleep 替代条件等待。
+- **参考文档**: `AGENTS.md` Test Execution Strategy, `docs/skills/deep-audit-prompts.md:1466-1471`
+- **复核状态**: 未复核
+
+### [维度14-17] `node-title-subtitle-gap.spec.ts` 以诊断 dump 和宽泛样式阈值替代稳定文本/布局契约
+
+- **文件**: `C:\can\nop\nop-chaos-flux\tests\e2e\node-title-subtitle-gap.spec.ts:28-156`
+- **行号范围**: `28-36`, `138-156`
+- **证据片段**:
+
+  ```ts
+  test('diagnoses title-subtitle gap by inspecting actual DOM and computed styles', async ({
+    page,
+  }) => {
+    await openFlowDesigner(page);
+    await page.locator('[data-testid="rf__node-task-1"]').first().click();
+
+    const diag = await page.evaluate(() => {
+  ```
+
+  ```ts
+  console.log('=== TITLE-SUBTITLE GAP DIAGNOSTICS ===');
+  console.log(JSON.stringify(diag, null, 2));
+
+  expect(diag).not.toHaveProperty('error');
+
+  const d = diag as any;
+  ```
+
+  ```ts
+  expect(typeof d.gap).toBe('number');
+  expect(d.gap).toBeGreaterThanOrEqual(0);
+
+  expect(d.gap).toBeLessThan(48);
+  ```
+
+- **严重程度**: P3
+- **类别**: E2E assertion quality / 可读性
+- **现状**: 该默认 E2E 以 “diagnoses” 命名，输出完整 DOM/computed-style 诊断信息，最终只验证 gap 是非负且小于 48px，没有绑定到明确的产品布局契约或稳定 selector contract。
+- **风险**: Flow Designer inspector 的标题/副标题布局可能发生视觉退化但仍小于宽泛阈值；同时默认 E2E 日志会混入诊断 dump，降低失败信噪比。
+- **建议**: 改为明确断言标题、副标题元素和语义布局 contract，例如固定 data-slot/role、具体文本、可接受的 spacing token 或 class contract；诊断 dump 仅在失败时输出或移到手动诊断脚本。
+- **为什么值得现在做**: 该 spec 位于默认 E2E 集合，弱阈值和诊断输出会持续影响 gate 信噪比。
+- **误报排除**: 不重复报告 `flow-designer-label-text.spec.ts` 的 DOM dump 用例；本项是另一个独立 spec，问题聚焦标题-副标题间距测试的弱契约和默认诊断输出。
+- **历史模式对应**: 诊断型 E2E 以宽泛阈值代替稳定产品契约。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1466-1471`, `AGENTS.md` Test Execution Strategy
+- **复核状态**: 未复核

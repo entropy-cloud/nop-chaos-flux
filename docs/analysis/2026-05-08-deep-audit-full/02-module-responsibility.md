@@ -342,3 +342,181 @@
 - **历史模式对应**: 对应 `[维度02-01] use-table-controls.test.tsx` 的 table 行为簇拆分模式，但这是不同文件和不同 contract 面。
 - **参考文档**: `docs/skills/deep-audit-prompts.md:678-697`, `docs/references/deep-audit-calibration-patterns.md:38-43`
 - **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度02-13] `action-adapter.unit.test.ts` 将 built-in、component、namespace 与 formId targeting 全塞进单个 action adapter 测试桶
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\__tests__\action-adapter.unit.test.ts:43-610`
+- **行号范围**: 文件总行数 611；证据覆盖 direct built-in branches、component action、namespaced action、formId targeting 多个行为簇。
+- **证据片段**:
+  ```ts
+  describe('createActionRuntimeAdapter direct branches', () => {
+    it('covers dialog, drawer, toast, submit, refresh, and unsupported built-in action branches', async () => {
+  ...
+    it('fails component actions when registry is missing, resolve throws, or no handle exists', async () => {
+  ...
+    it('fails namespaced actions without action scope or missing handlers and forwards resolved handlers', async () => {
+  ...
+  describe('formId targeting in built-in actions', () => {
+  ```
+- **严重程度**: P2
+- **现状**: 该文件已达 611 行，处于 500-700 需评估拆分区间。它不是单一 action adapter 分支测试，而是同时覆盖 built-in surface/toast/refresh/ajax、component registry resolution、namespaced action scope、formId setValue/setValues/submitForm targeting。
+- **风险**: action runtime adapter 是活跃核心边界，后续新增 built-in action、component targeting 或 namespace 行为时会继续追加到同一文件，形成第二个 runtime action 综合桶，并降低失败定位效率。
+- **建议**: 按行为 owner 拆分为 `action-adapter-builtins.test.ts`、`action-adapter-component-actions.test.ts`、`action-adapter-namespaced-actions.test.ts`、`action-adapter-form-targeting.test.ts`。
+- **为什么值得现在做**: 拆分点沿现有 describe/it 责任线即可完成，不需要改生产代码；可阻止该文件继续向 700 行硬阈值膨胀。
+- **误报排除**: 不是单纯 Large File Pressure；证据显示同一文件跨越四类 action dispatch contract，而不是单一 orchestrator 或单一 fixtures。
+- **历史模式对应**: 对应已覆盖的 runtime 综合测试桶拆分模式，但这是尚未报告的 action adapter 单元测试盲区。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:678-697`, `docs/references/deep-audit-calibration-patterns.md:38-43`
+- **复核状态**: 未复核
+
+### [维度02-14] `field-utils.unit.test.tsx` 同时测试纯 helper、字段 handler、隐藏字段策略、controller adapter 与订阅精度
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form\src\__tests__\field-utils.unit.test.tsx:46-608`
+- **行号范围**: 文件总行数 609。
+- **证据片段**:
+  ```tsx
+  describe('field-utils unit helpers', () => {
+  ...
+  describe('createFieldHandlers', () => {
+  ...
+  describe('useHiddenFieldPolicy', () => {
+  ...
+  describe('useFormFieldController adapter behavior', () => {
+  ...
+  describe('useFieldPresentation subscription precision', () => {
+  ```
+- **严重程度**: P2
+- **现状**: 该文件 609 行，混合了纯函数 validation/presentation helper、事件 handler 行为、hidden owner 通知、`useFormFieldController` adapter.in/out 异步竞态，以及 subscription precision 回归。
+- **风险**: `field-utils` 是表单 renderer 的共享底层工具，后续 validation、hidden policy、adapter、订阅精度任一方向的回归测试都会进入同一文件，容易把不同 owner 的变更审查耦合在一起。
+- **建议**: 拆分为 `field-utils-validation.test.tsx`、`field-handlers.test.tsx`、`hidden-field-policy-hook.test.tsx`、`form-field-controller-adapter.test.tsx`、`field-presentation-subscription.test.tsx`。
+- **为什么值得现在做**: 文件已经超过 500 行且边界非常清晰；拆分可以降低 form renderer 共享工具的回归测试冲突面。
+- **误报排除**: 不是因为 609 行本身报告；该文件同时包含纯 helper 单测和 React hook/订阅精度测试，测试层级与职责边界已经混杂。
+- **历史模式对应**: 对应综合测试桶按 owner 行为簇拆分的模式，尤其接近已报告的 form submit / validation 类测试桶膨胀。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:678-697`, `docs/references/deep-audit-calibration-patterns.md:38-43`
+- **复核状态**: 未复核
+
+### [维度02-15] `controller-inspect-advanced.test.ts` 将 debugger inspector 的 authoring contract、DOM scope、component tree、解释器与 formState 混成单文件
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\nop-debugger\src\controller-inspect-advanced.test.ts:5-627`
+- **行号范围**: 文件总行数 628。
+- **证据片段**:
+  ```ts
+  describe('controller inspector — advanced data', () => {
+    it('inspectByCid exposes resolved authoring contract from runtime registry when renderer metadata is available', () => {
+  ...
+    it('getComponentTree scopes DOM metadata lookup to the active runtime root', () => {
+  ...
+    it('explains value source, meta causality, failure, and async owners with bounded machine-oriented results', () => {
+  ...
+    it('fills formState from handle capabilities.store', () => {
+  ```
+- **严重程度**: P2
+- **现状**: 该文件 628 行，名义上是 advanced inspector data，但实际覆盖 authoring contract resolution、runtime-root scoped DOM lookup、component tree projection、node state/debug data fallback、value/meta/failure/async explanation、formState extraction。
+- **风险**: debugger controller 的 inspect、tree、explain、form state 能力会继续演进；继续放在同一 advanced 测试桶中，会让不同 debugger 子系统的 fixture 和断言互相堆叠，接近 700 行硬阈值。
+- **建议**: 拆分为 `controller-inspect-authoring-contract.test.ts`、`controller-inspect-dom-scope.test.ts`、`controller-component-tree.test.ts`、`controller-explain-node.test.ts`、`controller-inspect-form-state.test.ts`。
+- **为什么值得现在做**: 当前已超过 500 行且责任边界与测试名称明显不匹配；按能力拆分能防止 debugger 新能力继续追加到 “advanced data” 桶。
+- **误报排除**: 不是仅因大文件报告；该文件已经横跨 inspectByCid、getComponentTree、explainNode\*、formState 多个公开调试能力。
+- **历史模式对应**: 对应测试综合桶拆分模式；这是 nop-debugger 包中尚未覆盖的同类二次膨胀风险。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:678-697`, `docs/references/deep-audit-calibration-patterns.md:38-43`
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度02-16] `request-runtime.test.ts` 同时覆盖纯请求 shaping helper 与异步 executor 去重/重试语义
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\__tests__\request-runtime.test.ts:33-585`
+- **行号范围**: 文件总行数 586；证据覆盖 pure helper 与 executor async behavior 两类职责。
+- **证据片段**:
+  ```ts
+  describe('extractScopeData', () => {
+    it('returns empty object when includeScope is undefined', () => {
+  ...
+  describe('prepareApiRequestForExecution', () => {
+  ...
+  describe('createApiRequestExecutor', () => {
+    it('treats different params as distinct requests', async () => {
+  ```
+- **严重程度**: P2
+- **现状**: 文件超过 500 行评估阈值，且把 scope 提取、URL 参数序列化、request adaptor/finalize shaping、executor dedup/retry 行为放在同一个测试文件。
+- **风险**: request runtime 是 ajax、submit、data-source 等多路径共享底座；继续追加 case 会让纯 helper 断言和异步并发语义共享同一大文件，增加定位失败与 review 成本。
+- **建议**: 拆为 `request-runtime-scope-data.test.ts`、`request-runtime-url-params.test.ts`、`request-runtime-adaptor.test.ts`、`request-runtime-executor.test.ts`。
+- **为什么值得现在做**: 当前已进入 500-700 WARN 区间，拆分边界沿现有 `describe` 即可完成。
+- **误报排除**: 不是单纯大文件压力；该文件同时覆盖无副作用 pure shaping 与异步 executor 状态/去重行为，职责层级明确不同。
+- **历史模式对应**: 对应已覆盖的 runtime 综合测试桶按 owner 行为簇拆分模式。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:678-697`, `docs/references/deep-audit-calibration-patterns.md:38-43`
+- **复核状态**: 未复核
+
+### [维度02-17] `runtime-scope-actions.test.ts` 将插件排序、scope action、component registry 与 action scope debug 混成单个 runtime 测试桶
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\__tests__\runtime-scope-actions.test.ts:12-555`
+- **行号范围**: 文件总行数 556。
+- **证据片段**:
+  ```ts
+  describe('createRendererRuntime', () => {
+    it('updates page scope through setValue action', async () => {
+  ...
+    it('runs plugins by ascending priority and preserves declaration order on ties', () => {
+  ...
+    it('exposes component registry debug helpers through the public contract', () => {
+  ...
+    it('resolves namespaced actions through parent action scopes', async () => {
+  ```
+- **严重程度**: P2
+- **现状**: 文件超过 500 行，且同一顶层 `createRendererRuntime` 桶中混合 runtime plugin ordering、page scope setValue/setValues、component handle dispatch/ambiguity/debug、namespaced action scope resolution/debug。
+- **风险**: 后续 runtime plugin、component targeting 或 action-scope debug 变更都会继续进入同一文件，导致不同 runtime boundary 的 fixture 和断言互相堆叠。
+- **建议**: 拆为 `runtime-scope-actions.test.ts`、`runtime-plugin-ordering.test.ts`、`runtime-component-actions.test.ts`、`runtime-action-scope.test.ts`。
+- **为什么值得现在做**: 已超过 500 行且职责边界清晰，拆分能避免 runtime action 测试继续二次膨胀。
+- **误报排除**: 不是合理 orchestrator 测试；插件排序、组件句柄注册、命名空间 action scope 是不同 runtime 子模块边界。
+- **历史模式对应**: 对应 runtime 综合测试桶拆分模式，区别于已报告的 `action-adapter.unit.test.ts`，这是另一条 runtime scope/action 入口。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:678-697`, `docs/references/deep-audit-calibration-patterns.md:38-43`
+- **复核状态**: 未复核
+
+### [维度02-18] `hidden-field-policy.test.ts` 同时测试 policy helper、compiler model resolution、runtime validation 与清值生命周期
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\__tests__\hidden-field-policy.test.ts:79-553`
+- **行号范围**: 文件总行数 554。
+- **证据片段**:
+  ```ts
+  describe('resolveHiddenFieldPolicy', () => {
+  ...
+  describe('getCompiledValidationField hiddenFieldPolicy resolution', () => {
+  ...
+  describe('hidden field validation participation', () => {
+  ...
+  describe('clearValueWhenHidden behavior', () => {
+  ```
+- **严重程度**: P2
+- **现状**: 文件超过 500 行，并将纯 policy resolution、compiled validation model lookup、runtime hidden validation participation、async cancellation、clearValueWhenHidden、validation-scope owner 行为放在同一测试桶。
+- **风险**: hidden field policy 横跨 compiler metadata 与 runtime validation；继续混放会让 form validation 修复难以判断应改 helper、compiled model 还是 runtime owner。
+- **建议**: 拆为 `hidden-field-policy-resolution.test.ts`、`hidden-field-validation-participation.test.ts`、`hidden-field-clear-value.test.ts`、`hidden-field-validation-scope-owner.test.ts`。
+- **为什么值得现在做**: 文件已进入 WARN 区间，且正处于表单验证核心边界，拆分可降低后续验证规则变更的回归成本。
+- **误报排除**: 不是单纯大文件；证据显示 pure helper、compiled metadata 与 runtime lifecycle 三类职责混杂。
+- **历史模式对应**: 对应 form validation / runtime owner 测试按职责拆分的模式。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:678-697`, `docs/references/deep-audit-calibration-patterns.md:38-43`
+- **复核状态**: 未复核
+
+### [维度02-19] `runtime-actions-monitor.test.ts` 将 retry/debounce 控制、refreshSource、API monitor 与 delegated metadata 混在单文件
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\__tests__\runtime-actions-monitor.test.ts:12-561`
+- **行号范围**: 文件总行数 562。
+- **证据片段**:
+  ```ts
+  describe('createRendererRuntime', () => {
+    it('retries failed actions until one succeeds', async () => {
+  ...
+    it('returns a failure result when refreshSource cannot resolve a source id', async () => {
+  ...
+    it('debounces matching actions and cancels superseded executions', async () => {
+  ...
+    it('emits delegated action monitor metadata for component and namespace dispatch', async () => {
+  ```
+- **严重程度**: P2
+- **现状**: 文件超过 500 行，并把 action retry、debounce cancellation、refreshSource failure、ajax API monitor、params canonicalization monitor、component/namespace delegated monitor 元数据放在一个测试文件。
+- **风险**: action control 与 monitor instrumentation 会继续各自扩展；混放会使控制流语义和观测性契约互相耦合，后续回归定位困难。
+- **建议**: 拆为 `runtime-action-retry.test.ts`、`runtime-action-debounce.test.ts`、`runtime-refresh-source-action.test.ts`、`runtime-action-monitor.test.ts`、`runtime-delegated-action-monitor.test.ts`。
+- **为什么值得现在做**: 已进入 500-700 WARN 区间，且拆分点沿现有 case 族即可完成。
+- **误报排除**: 不是重复 `action-adapter.unit.test.ts`；此文件覆盖 monitor/operation-control 集成面，且混入 refreshSource 与 delegated metadata。
+- **历史模式对应**: 对应 runtime action 综合测试桶拆分模式。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:678-697`, `docs/references/deep-audit-calibration-patterns.md:38-43`
+- **复核状态**: 未复核

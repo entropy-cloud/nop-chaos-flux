@@ -549,3 +549,46 @@
 - **历史模式对应**: 对应 `deep-audit-calibration-patterns.md` 的 “Unwired Or Non-Barrel Code Treated As Dead Code” 与 “Evolving Intermediate State” 附近模式；这里不报告死代码，而报告 live test import 与 manifest exports 不一致的包边界缺陷。
 - **参考文档**: `docs/skills/deep-audit-prompts.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/references/deep-audit-calibration-patterns.md`, `docs/references/reopened-design-decisions-and-audit-adjudications.md`
 - **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度01-11] `flux-renderers-form-advanced` 测试使用 `flux-renderers-data` 但 manifest 未声明依赖
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\tag-list.test.tsx:3-10`, `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\tag-list.test.tsx:174-181`, `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\package.json:35-37`
+- **行号范围**: `tag-list.test.tsx:3-10`, `tag-list.test.tsx:174-181`, `package.json:35-37`
+- **证据片段**:
+  ```tsx
+  import { createSchemaRenderer } from '@nop-chaos/flux-react';
+  import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
+  import { dataRendererDefinitions } from '@nop-chaos/flux-renderers-data';
+  import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
+  import { describe, expect, it } from 'vitest';
+  import { formAdvancedRendererDefinitions } from './index.js';
+  import { baseEnv, formulaCompiler } from './test-support.js';
+  ```
+  ```tsx
+  const SchemaRenderer = createSchemaRenderer([
+    ...basicRendererDefinitions,
+    ...formRendererDefinitions,
+    ...formAdvancedRendererDefinitions,
+    ...dataRendererDefinitions,
+  ]);
+  ```
+  ```json
+  "devDependencies": {
+    "@nop-chaos/flux-runtime": "workspace:*"
+  }
+  ```
+- **严重程度**: P2
+- **现状**: `flux-renderers-form-advanced` 的测试文件直接导入并使用 `@nop-chaos/flux-renderers-data`，但该包既不在 `dependencies`，也不在 `devDependencies` / `peerDependencies` 中声明。当前能解析主要依赖根 workspace / TS path / Vite alias 的宽松环境。
+- **风险**: 这是实际未声明内部依赖。若按包级 filter、隔离安装、发布包边界或更严格的依赖检查运行测试，该测试会因为缺少显式依赖而失败；同时也让 renderer 包之间的测试组合依赖无法从 manifest 依赖图中被准确追踪。
+- **建议**: 若该测试确实需要 data renderer 的 `table` 场景，把 `@nop-chaos/flux-renderers-data` 加入 `flux-renderers-form-advanced` 的 `devDependencies`；若只是构造表格宿主场景，也可改用本包/公开测试 helper 避免跨 renderer 测试依赖。
+- **为什么值得现在做**: 这是 manifest 声明缺失，不是低风险生产依赖偏宽；未来严格 workspace manifest check 或包隔离测试会直接失败。
+- **误报排除**: 这不是重复报告已有 `[维度01-03]` 的“生产依赖偏宽”问题；相反，本条是当前 manifest 完全缺少一个 live test import 所需的内部依赖。也不是把跨 renderer 复用本身判为违规，问题仅在依赖未声明。
+- **历史模式对应**: workspace manifest 与实际 import surface 不一致，属于包边界硬缺口。
+- **参考文档**: `docs/architecture/flux-runtime-module-boundaries.md`, `AGENTS.md`, `docs/references/deep-audit-calibration-patterns.md`
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+未发现新的问题。深挖结束。
