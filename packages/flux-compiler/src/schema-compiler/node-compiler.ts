@@ -114,22 +114,33 @@ export function createCompileSingleNode(
       symbolTable = pushNamedActionSymbols(symbolTable, xuiActionNames, `${path}:xui-actions`);
     }
 
-    const rawStructuralItemData =
-      schema.type === 'loop' || schema.type === 'recurse'
-        ? ((schema as { itemData?: Record<string, unknown> }).itemData ?? undefined)
-        : undefined;
+    const lazyEvalRules =
+      renderer.fields?.filter((f) => f.lazyEval) ?? [];
+    const lazyEvalKeys = new Set(lazyEvalRules.map((f) => f.key));
 
-    const structuralItemData =
-      rawStructuralItemData !== undefined
-        ? expressionCompiler.compileValue(
-            rawStructuralItemData,
-            {
-              symbolTable,
-              sourcePath: `${path}.itemData`,
-              reportDiagnostic: (issue) => diagnostics.emit(issue),
-            },
-          )
-        : undefined;
+    const structuralFields: Record<string, import('@nop-chaos/flux-core').CompiledRuntimeValue<unknown>> = {};
+    for (const rule of lazyEvalRules) {
+      const rawValue = (schema as Record<string, unknown>)[rule.key];
+      if (rawValue === undefined) continue;
+
+      const params = rule.params;
+      const lazySymbolTable =
+        params?.length
+          ? symbolTable.push({
+              id: `${path}.${rule.key}:lazy-eval`,
+              kind: 'region',
+              symbols: Object.fromEntries(
+                params.map((p) => [p, { name: p, kind: 'ambient' as const }]),
+              ),
+            })
+          : symbolTable;
+
+      structuralFields[rule.key] = expressionCompiler.compileValue(rawValue, {
+        symbolTable: lazySymbolTable,
+        sourcePath: `${path}.${rule.key}`,
+        reportDiagnostic: (issue) => diagnostics.emit(issue),
+      });
+    }
 
     for (const key of Object.keys(schema)) {
       if (fieldInspection.skippedPropKeys.has(key) || isNamespacedSchemaKey(key)) {
@@ -193,7 +204,7 @@ export function createCompileSingleNode(
           })
         : value;
 
-      if ((schema.type === 'loop' || schema.type === 'recurse') && key === 'itemData') {
+      if (lazyEvalKeys.has(key)) {
         delete propSource[key];
         continue;
       }
@@ -359,7 +370,7 @@ export function createCompileSingleNode(
       propsProgram,
       metaProgram,
       structuralWhen,
-      structuralItemData,
+      structuralFields: Object.keys(structuralFields).length > 0 ? structuralFields : undefined,
       eventPlans,
       lifecycleActions,
       regions,

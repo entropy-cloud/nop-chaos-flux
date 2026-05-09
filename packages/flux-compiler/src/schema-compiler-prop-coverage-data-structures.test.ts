@@ -46,8 +46,8 @@ describe('schema property coverage - recurse', () => {
       maxDepth: 3,
     });
     expect(root.propsProgram.value.itemData).toBeUndefined();
-    expect(root.structuralItemData?.kind).toBe('static');
-    expect(root.structuralItemData && 'value' in root.structuralItemData ? root.structuralItemData.value : undefined).toEqual({ extra: true });
+    expect(root.structuralFields?.itemData?.kind).toBe('static');
+    expect(root.structuralFields?.itemData && 'value' in root.structuralFields.itemData ? root.structuralFields.itemData.value : undefined).toEqual({ extra: true });
   });
 
   it('compiles recurse with keyBy', () => {
@@ -302,8 +302,8 @@ describe('schema property coverage - loop', () => {
       body: [],
     });
     expect(root.propsProgram.value.itemData).toBeUndefined();
-    expect(root.structuralItemData?.kind).toBe('static');
-    expect(root.structuralItemData && 'value' in root.structuralItemData ? root.structuralItemData.value : undefined).toEqual({ extra: true });
+    expect(root.structuralFields?.itemData?.kind).toBe('static');
+    expect(root.structuralFields?.itemData && 'value' in root.structuralFields.itemData ? root.structuralFields.itemData.value : undefined).toEqual({ extra: true });
   });
 });
 
