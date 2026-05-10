@@ -169,7 +169,7 @@ export function generateCacheKey(api: ExecutableApiRequest): string {
   const method = api.method ?? 'get';
   const url = api.url;
 
-  const dataStr = api.data ? stableStringify(api.data) : '';
+  const dataStr = api.data !== undefined ? stableStringify(api.data) : '';
 
   return `${method}:${url}:${dataStr}`;
 }
