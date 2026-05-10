@@ -304,6 +304,8 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       const nextPairs = pairs.filter((_, candidateIndex) => candidateIndex !== index);
       const nextFocusIndex = Math.min(index, nextPairs.length - 1);
 
+      pairsRef.current = nextPairs;
+
       if (currentForm && name) {
         currentForm.removeValue(name, index);
         void currentForm.validateSubtree(name);

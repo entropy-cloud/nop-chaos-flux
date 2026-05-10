@@ -97,9 +97,8 @@ describe('composite editor hidden ids', () => {
       expect(
         JSON.parse(screen.getByTestId('form-state:metadata').textContent ?? 'null'),
       ).toMatchObject([
-        { id: 'pair-1', key: 'env', value: 'prod' },
         { id: 'pair-3', key: 'region', value: 'us-east' },
-        { id: 'pair-4', key: '', value: '' },
+        { id: 'pair-2', key: '', value: '' },
       ]);
     });
   });

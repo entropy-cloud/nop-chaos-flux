@@ -449,7 +449,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     });
   });
 
-  it('preserves remaining key-value entries after removing a middle row', async () => {
+  it('removes the middle key-value row and preserves the remaining entries', async () => {
     submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
@@ -512,7 +512,6 @@ describe('formRendererDefinitions - array and key-value validation', () => {
         JSON.parse(screen.getByTestId('form-state:metadata').textContent ?? 'null'),
       ).toMatchObject([
         { key: 'env', value: 'prod' },
-        { key: 'tier', value: 'gold' },
         { key: 'region', value: 'us-east' },
       ]);
     });
@@ -524,11 +523,10 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     });
 
     expect(screen.queryByText('Metadata requires at least one entry')).toBeNull();
-    expect(submitCalls[0].metadata).toHaveLength(3);
+    expect(submitCalls[0].metadata).toHaveLength(2);
     expect(submitCalls[0]).toMatchObject({
       metadata: [
         { key: 'env', value: 'prod' },
-        { key: 'tier', value: 'gold' },
         { key: 'region', value: 'us-east' },
       ],
     });
