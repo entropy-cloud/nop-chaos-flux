@@ -108,6 +108,21 @@ describe('spreadsheet grid selection', () => {
     });
   });
 
+  it('keeps column headers in table-cell layout', () => {
+    const documentModel = createEmptyDocument('column-header-layout');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstHeader = container.querySelector(
+      'th[data-slot="spreadsheet-column-header"]',
+    ) as HTMLElement | null;
+
+    expect(firstHeader).toBeTruthy();
+    expect(window.getComputedStyle(firstHeader!).display).toBe('table-cell');
+  });
+
   it('supports keyboard selection on the corner and column headers', async () => {
     const documentModel = createEmptyDocument('header-keyboard-selection');
     const core = createSpreadsheetCore({ document: documentModel });

@@ -56,6 +56,17 @@
   background: white;
 }
 
+[data-slot='spreadsheet-grid'].ss-grid-shell thead,
+[data-slot='spreadsheet-grid'].ss-grid-shell tbody,
+[data-slot='spreadsheet-grid'].ss-grid-shell tr,
+[data-slot='spreadsheet-grid'].ss-grid-shell th,
+[data-slot='spreadsheet-grid'].ss-grid-shell td {
+  margin: 0;
+  padding: 0;
+  border-spacing: 0;
+  box-sizing: border-box;
+}
+
 .ss-col-header,
 [data-slot='spreadsheet-column-header'] {
   position: sticky;
@@ -373,9 +384,6 @@
 }
 
 .ss-col-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   height: 22px;
   min-width: 36px;
   padding: 0 4px;
@@ -385,13 +393,9 @@
   font-size: 10pt;
   font-weight: 600;
   color: #595959;
-  flex-shrink: 0;
 }
 
 .ss-row-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 36px;
   min-width: 36px;
   height: 22px;
@@ -402,20 +406,15 @@
   font-size: 10pt;
   font-weight: 600;
   color: #595959;
-  flex-shrink: 0;
 }
 
 .ss-header-corner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 36px;
   min-width: 36px;
   height: 22px;
   background-color: #f8f9fa;
   border-bottom: 1px solid #c6c6c6;
   border-right: 1px solid #c6c6c6;
-  flex-shrink: 0;
 }
 
 .ss-cell {
