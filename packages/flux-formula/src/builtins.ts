@@ -149,6 +149,7 @@ export function installBuiltins(registry: FormulaRegistry): void {
       (value) => customEquals(value, item) || Object.is(value, item),
     );
   });
+  registry.registerFunction('ISARRAY', (input: unknown) => Array.isArray(input));
   registry.registerFunction('CONCAT', (...arrays: unknown[]) =>
     arrays.flatMap((value) => (Array.isArray(value) ? value : [value])),
   );
