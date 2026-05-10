@@ -148,6 +148,18 @@ export function createNodeSourcePropController(
     value: observer.getSnapshot().value,
   };
 
+  let cachedObserverSnapshot: unknown;
+  let cachedMaterializedValue: Readonly<Record<string, unknown>> | undefined;
+
+  function resolveMaterializedValue(): Readonly<Record<string, unknown>> {
+    const observerSnapshot = observer.getSnapshot();
+    if (observerSnapshot !== cachedObserverSnapshot) {
+      cachedObserverSnapshot = observerSnapshot;
+      cachedMaterializedValue = materializeResolvedSources(observerSnapshot.value, currentEntries);
+    }
+    return cachedMaterializedValue ?? {};
+  }
+
   function updateSnapshot(nextSnapshot: ControllerSnapshot) {
     if (
       sameInputs(currentSnapshot.sourceInputs, nextSnapshot.sourceInputs) &&
@@ -162,6 +174,8 @@ export function createNodeSourcePropController(
   function run(propsValue: Readonly<Record<string, unknown>>, scope: ScopeRef) {
     const sourceEntries = collectSourceEntries(propsValue, sourcePropKeys, sourceStatePropKeys);
     currentEntries = sourceEntries;
+    cachedObserverSnapshot = undefined;
+    cachedMaterializedValue = undefined;
     const sourceInputs = sourceEntries.map((entry) => entry.source);
     const baseValue = sanitizeSourceInputs(propsValue, sourceEntries);
     const loadingValue = materializeResolvedSources(
@@ -186,7 +200,7 @@ export function createNodeSourcePropController(
 
   return {
     getSnapshot: () => {
-      const resolvedValue = materializeResolvedSources(observer.getSnapshot().value, currentEntries);
+      const resolvedValue = resolveMaterializedValue();
       updateSnapshot({
         sourceInputs: currentSnapshot.sourceInputs,
         value: resolvedValue,
@@ -195,7 +209,7 @@ export function createNodeSourcePropController(
     },
     subscribe(listener) {
       return observer.subscribe(() => {
-        const resolvedValue = materializeResolvedSources(observer.getSnapshot().value, currentEntries);
+        const resolvedValue = resolveMaterializedValue();
         const changed = updateSnapshot({
           sourceInputs: currentSnapshot.sourceInputs,
           value: resolvedValue,
