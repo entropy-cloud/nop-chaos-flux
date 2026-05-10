@@ -1,7 +1,12 @@
 import { memo, Profiler, startTransition, useCallback, useMemo, useRef, useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
-import type { ExecutableApiRequest, RendererEnv } from '@nop-chaos/flux-core';
+import { createSchemaRenderer, createDefaultRegistry, useCurrentPage, useRenderScope } from '@nop-chaos/flux-react';
+import type {
+  ExecutableApiRequest,
+  RendererComponentProps,
+  RendererDefinition,
+  RendererEnv,
+} from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
@@ -26,11 +31,62 @@ interface PerformanceTablePageProps {
   onBack: () => void;
 }
 
+function PerfPingButtonRenderer(props: RendererComponentProps<any>) {
+  const page = useCurrentPage();
+  const scope = useRenderScope();
+
+  const handleClick = useCallback(() => {
+    const record = props.helpers.evaluate('${$slot.record}', scope) as
+      | { id?: string; status?: string }
+      | undefined;
+    const id = typeof record?.id === 'string' ? record.id : '';
+    const status = typeof record?.status === 'string' ? record.status : '';
+
+    void props.helpers.dispatch(
+      {
+        action: 'setValue',
+        args: {
+          path: 'perfState.lastAction',
+          value: `ping:${id}:${status}`,
+        },
+      },
+      { scope: page?.scope ?? scope },
+    );
+  }, [page?.scope, props.helpers, scope]);
+
+  return (
+    <Button
+      variant="default"
+      size="sm"
+      className={props.meta.className}
+      type="button"
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
+      onClick={handleClick}
+      disabled={props.meta.disabled}
+    >
+      {String(props.props.label ?? 'Ping')}
+    </Button>
+  );
+}
+
+const perfPingButtonRendererDefinition: RendererDefinition = {
+  type: 'perf-ping-button',
+  displayName: 'Performance Ping Button',
+  category: 'basic',
+  component: PerfPingButtonRenderer,
+  fields: [
+    { key: 'label', kind: 'prop' },
+    { key: 'size', kind: 'prop' },
+  ],
+};
+
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
 registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
+registry.register(perfPingButtonRendererDefinition);
 
 const SchemaRenderer = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();

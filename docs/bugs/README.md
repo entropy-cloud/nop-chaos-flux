@@ -62,3 +62,4 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/44-flow-designer-tree-merge-layering-layout-fix.md`
 - `docs/bugs/45-tag-list-non-required-runtime-validation-fix.md`
 - `docs/bugs/46-debugger-strictmode-owned-component-registry-dispose-fix.md`
+- `docs/bugs/47-performance-table-row-action-page-scope-writeback-fix.md`

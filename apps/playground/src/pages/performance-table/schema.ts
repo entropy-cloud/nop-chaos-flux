@@ -127,16 +127,9 @@ const TABLE_COLUMNS: ColumnDef[] = [
     label: 'Actions',
     buttons: [
       {
-        type: 'button',
+        type: 'perf-ping-button',
         label: 'Ping',
         size: 'sm',
-        onClick: {
-          action: 'setValue',
-          args: {
-            path: 'perfState.lastAction',
-            value: 'ping:${$slot.record.id}:${$slot.record.status}',
-          },
-        },
       },
     ],
   },
@@ -272,7 +265,8 @@ const STRESS_SCENARIOS: SchemaInput[] = [
       { type: 'text', text: 'Total active rows: ${perfRows.filter(row => row.active).length}' },
       {
         type: 'text',
-        text: 'Average score: ${Math.round(perfRows.reduce((sum, row) => sum + row.score, 0) / perfRows.length)}',
+        text:
+          'Average score: ${INT((perfRows.reduce((sum, row) => sum + row.score, 0) / perfRows.length) + 0.5)}',
       },
       {
         type: 'text',
@@ -350,7 +344,8 @@ const FULL_STRESS_SCENARIOS: SchemaInput[] = [
       },
       {
         type: 'text',
-        text: 'Selected keys: ${perfState.selectedKeys ? perfState.selectedKeys.join(", ") : "none"}',
+        text:
+          'Selected keys: ${perfState.selectedKeys && perfState.selectedKeys.length ? perfState.selectedKeys.join(", ") : "none"}',
       },
       { type: 'text', text: 'Current page size: ${perfState.pagination.pageSize}' },
       { type: 'text', text: 'Last action: ${perfState.lastAction || "none"}' },
