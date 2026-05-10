@@ -216,7 +216,7 @@ Review:
 Examples:
 
 - changes to `ContainerSchema` semantic props (`direction`, `gap`, `align`, etc.)
-- changes to semantic prop â†’ Tailwind class mapping
+- changes to semantic prop → Tailwind class mapping
 - adding or modifying `classAliases` mechanism
 - changes to className resolution or merging behavior
 

@@ -58,18 +58,15 @@ async function seedFluxBasicExplanationFixture(page: import('@playwright/test').
   await page.getByLabel('Search Users').fill('alice');
   await page.getByLabel('Role').click();
   await page.getByRole('option', { name: 'Admin' }).click();
+  await page.evaluate(() => {
+    const api = (window as unknown as { __NOP_DEBUGGER_API__?: { clear(): void } }).__NOP_DEBUGGER_API__;
+    api?.clear();
+  });
+
   await page.getByRole('button', { name: 'Search Directory' }).click();
+  await page.waitForTimeout(450);
   await page.getByRole('button', { name: 'Search Directory' }).click();
-  await expect
-    .poll(() =>
-      page.evaluate(() => {
-        const button = Array.from(document.querySelectorAll('button')).find((node) =>
-          node.textContent?.includes('Search Directory'),
-        ) as HTMLButtonElement | undefined;
-        return button?.disabled ?? false;
-      }),
-    )
-    .toBe(false);
+  await page.waitForTimeout(2200);
 
   const cids = await page.evaluate(() => {
     const labels = Array.from(document.querySelectorAll('[data-slot="field-label"]'));
@@ -246,6 +243,7 @@ test.describe('Nop Debugger', () => {
         const api = (
           window as unknown as {
             __NOP_DEBUGGER_API__?: {
+              inspectByCid(cid: number): any;
               explainNodeValue(query: { cid: number; field?: string }): any;
               explainNodeMeta(query: { cid: number; field: string }): any;
               explainNodeFailure(query?: { cid?: number }): any;
@@ -258,8 +256,18 @@ test.describe('Nop Debugger', () => {
           return { available: false };
         }
 
+        const startedAt = Date.now();
+        while (Date.now() - startedAt < 5000) {
+          const inspect = api.inspectByCid(adminCodeCid);
+          if (inspect?.metaSummary?.visible === true) {
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+
         return {
           available: true,
+          inspect: api.inspectByCid(adminCodeCid),
           value: api.explainNodeValue({ cid: usernameCid, field: 'username' }),
           meta: api.explainNodeMeta({ cid: adminCodeCid, field: 'visible' }),
           failure: api.explainNodeFailure({ cid: searchButtonCid }),
@@ -278,6 +286,12 @@ test.describe('Nop Debugger', () => {
     });
     expect(['current-scope', 'form-state', 'unknown']).toContain(result.value.data.valueSource);
     expect(typeof result.value.answer).toBe('string');
+    expect(result.inspect).toMatchObject({
+      cid: adminCodeCid,
+      metaSummary: {
+        visible: true,
+      },
+    });
     expect(result.meta).toMatchObject({
       kind: 'meta',
       data: {

@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import type {
   ComponentHandleRegistry,
   FormRuntime,
@@ -8,6 +7,8 @@ import type {
   ResolvedNodeProps,
   ScopeRef,
 } from '@nop-chaos/flux-core';
+
+let nextDebugEntryId = 1;
 
 function readMetaRule(schema: Record<string, unknown>, key: 'visible' | 'hidden' | 'disabled') {
   const value = schema[key];
@@ -23,16 +24,12 @@ export function useNodeDebugData(
   resolvedPropsValue: ResolvedNodeProps['value'],
   currentForm?: FormRuntime,
 ): void {
-  const debugEnabled = useSyncExternalStore(
-    (listener) => activeComponentRegistry?.subscribeDebugEnabled?.(listener) ?? (() => undefined),
-    () => activeComponentRegistry?.debugEnabled ?? false,
-    () => activeComponentRegistry?.debugEnabled ?? false,
-  );
-
   useEffect(() => {
-    if (!activeComponentRegistry || typeof cid !== 'number' || !debugEnabled) {
+    if (!activeComponentRegistry || typeof cid !== 'number') {
       return;
     }
+
+    const debugEntryId = nextDebugEntryId++;
 
     const schema = nodeInstance.templateNode.schema as Record<string, unknown>;
     const fieldName =
@@ -42,33 +39,59 @@ export function useNodeDebugData(
           ? schema.name
           : undefined;
 
-    activeComponentRegistry.setHandleDebugData?.(cid, {
-      nodeId: nodeInstance.templateNode.id,
-      path: nodeInstance.templateNode.templatePath,
-      rendererType: nodeInstance.templateNode.rendererType,
-      nodeInstance,
-      scope: activeScope,
-      resolvedMeta,
-      resolvedProps: resolvedPropsValue,
-      sourceHints: {
-        fieldName,
-        formValue: fieldName ? currentForm?.store.getState().values?.[fieldName] : undefined,
-        scopeValue: fieldName ? activeScope.readVisible?.()?.[fieldName] : undefined,
-        metaRules: {
-          visible: readMetaRule(schema, 'visible'),
-          hidden: readMetaRule(schema, 'hidden'),
-          disabled: readMetaRule(schema, 'disabled'),
+    const publish = () => {
+      if (!activeComponentRegistry.debugEnabled) {
+        return;
+      }
+
+      activeComponentRegistry.setHandleDebugData?.(cid, {
+        debugEntryId,
+        nodeId: nodeInstance.templateNode.id,
+        path: nodeInstance.templateNode.templatePath,
+        rendererType: nodeInstance.templateNode.rendererType,
+        nodeInstance,
+        scope: activeScope,
+        resolvedMeta,
+        resolvedProps: resolvedPropsValue,
+        sourceHints: {
+          fieldName,
+          formValue: fieldName ? currentForm?.store.getState().values?.[fieldName] : undefined,
+          scopeValue: fieldName ? activeScope.readVisible?.()?.[fieldName] : undefined,
+          metaRules: {
+            visible: readMetaRule(schema, 'visible'),
+            hidden: readMetaRule(schema, 'hidden'),
+            disabled: readMetaRule(schema, 'disabled'),
+          },
         },
-      },
-      updatedAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    };
+
+    const clearIfOwned = () => {
+      const currentDebugData = activeComponentRegistry.getHandleDebugData?.(cid) as
+        | { debugEntryId?: number }
+        | undefined;
+      if (currentDebugData?.debugEntryId === debugEntryId) {
+        activeComponentRegistry.setHandleDebugData?.(cid, undefined);
+      }
+    };
+
+    publish();
+    const unsubscribe = activeComponentRegistry.subscribeDebugEnabled?.(() => {
+      if (activeComponentRegistry.debugEnabled) {
+        publish();
+        return;
+      }
+
+      clearIfOwned();
     });
 
     return () => {
-      activeComponentRegistry.setHandleDebugData?.(cid, undefined);
+      unsubscribe?.();
+      clearIfOwned();
     };
   }, [
     activeComponentRegistry,
-    debugEnabled,
     cid,
     nodeInstance,
     activeScope,

@@ -3,14 +3,14 @@
 ## Problem
 
 - `array-editor` and `key-value` renderers showed stale values after `form.reset()` or external `form.setValue()` calls
-- user edits an array item, then triggers a reset action â€” the input still shows the edited value instead of the reset value
-- stable reproduction: edit â†’ reset â†’ UI unchanged
+- user edits an array item, then triggers a reset action — the input still shows the edited value instead of the reset value
+- stable reproduction: edit → reset → UI unchanged
 
 ## Root Cause
 
 - both renderers use `useState` initialized once on mount from scope data (`packages/flux-renderers-form/src/renderers/array-editor.tsx:126`, `key-value.tsx:182`)
 - no subscription or effect synced external store changes back to local React state
-- `syncItems`/`syncField` only wrote local â†’ store direction; the reverse path did not exist
+- `syncItems`/`syncField` only wrote local → store direction; the reverse path did not exist
 - `form.reset()` updated the Zustand store but the local `useState` was never re-read
 
 ## Fix

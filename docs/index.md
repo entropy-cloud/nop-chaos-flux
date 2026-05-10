@@ -191,6 +191,7 @@ Example behavior is best cross-checked with:
 - start architecture navigation from `docs/architecture/README.md`; use `docs/references/architecture-doc-status-matrix.md` for role/owner/placement decisions
 - `docs/components/` - per-component design inputs; each component keeps its own directory with schema, capability, and implementation notes
 - `docs/references/` - stable lookup material such as terminology, interface maps, maintenance guidance, and source-specific reference notes; useful, but secondary to architecture docs
+- `docs/lessons/` - numbered detailed development lessons, including both wrong turns and good practices; use when the lasting value is the engineering path and decision rule, not only the final bug fix or architecture truth
 - `docs/amis-types/` - AMIS component TypeScript type definitions extracted from amis@6.13.0, useful for understanding upstream AMIS schema structure
 - `docs/examples/` - small representative schemas and usage notes
 - `docs/analysis/` - comparative, investigatory, or decision-oriented reports; primarily for conclusions and tradeoff records, not the active contract

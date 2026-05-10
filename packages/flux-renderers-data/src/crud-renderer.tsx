@@ -110,6 +110,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   );
   const internalTableRef = useRef<InternalTableHandle>({});
   const queryStatePath = ownerPaths.queryStatePath;
+  const queryDraftStatePath = `${queryStatePath}.$draft`;
   const paginationStatePath = ownerPaths.paginationStatePath;
   const sortStatePath = ownerPaths.sortStatePath;
   const filterStatePath = ownerPaths.filterStatePath;
@@ -195,6 +196,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     queryFormId,
     scope,
     queryStatePath,
+    queryDraftStatePath,
     paginationStatePath,
     queryState,
     paginationState,
@@ -358,13 +360,14 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       return null;
     }
 
-    const base: Record<string, unknown> = {
-      type: 'form',
-      id: queryFormId,
-      data: queryState.values,
-      body: queryForm.body,
-      mode: queryForm.layout === 'horizontal' ? 'horizontal' : 'normal',
-    };
+      const base: Record<string, unknown> = {
+        type: 'form',
+        id: queryFormId,
+        data: queryState.values,
+        valuesPath: queryDraftStatePath,
+        body: queryForm.body,
+        mode: queryForm.layout === 'horizontal' ? 'horizontal' : 'normal',
+      };
 
     if (queryForm.actions !== undefined) {
       base.actions = queryForm.actions;
@@ -375,7 +378,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     }
 
     return base as BaseSchema;
-  }, [normalizedSchema.queryForm, queryFormId, queryState.values]);
+  }, [normalizedSchema.queryForm, queryDraftStatePath, queryFormId, queryState.values]);
 
   const handleToolbarPageChange = useCallback(
     (page: number) => {

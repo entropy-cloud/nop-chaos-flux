@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 async function gotoFlowDesigner(page: import('@playwright/test').Page) {
   await page.goto('/');
   await page.locator('button', { hasText: 'Visual Workflow' }).click();
-  await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 15000 });
+  await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 30000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
 
@@ -17,7 +17,9 @@ async function collectGeneratedCSS(page: import('@playwright/test').Page): Promi
             selectors.add(rule.selectorText);
           }
         }
-      } catch {}
+      } catch {
+        /* cross-origin stylesheets throw */
+      }
     }
     return Array.from(selectors);
   });

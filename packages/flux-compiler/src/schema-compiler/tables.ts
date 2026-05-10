@@ -190,7 +190,15 @@ function normalizeTableExpandable(
     candidate: value as Record<string, unknown>,
     itemRegionPath: `${path}.expandable`,
     itemRegionKeyPrefix: 'expandable',
-    rules: [{ key: 'expandedRow', regionKeySuffix: 'expandedRow', compiledKey: 'expandedRowRegionKey' }],
+    rules: [
+      {
+        key: 'expandedRow',
+        regionKeySuffix: 'expandedRow',
+        compiledKey: 'expandedRowRegionKey',
+        params: ['record', 'index'] as readonly string[],
+        isolate: true,
+      },
+    ],
     regions,
     compileSchema,
   }).value;

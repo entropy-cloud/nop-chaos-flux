@@ -624,4 +624,87 @@ describe('controller inspector — advanced data', () => {
     });
     expect(result?.scopeData).toMatchObject({ username: 'Alice' });
   });
+
+  it('explains button-triggered request aborts from the node interaction trace', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-failure-trace-fallback', enabled: true });
+    const div = document.createElement('button');
+    div.setAttribute('data-cid', '610');
+    document.body.appendChild(div);
+
+    ctrl.setComponentRegistry({
+      id: 'reg-1',
+      inspectCid: (cid: number) =>
+        cid === 610
+          ? {
+              kind: 'resolved',
+              payload: {
+                cid: 610,
+                instancePath: [],
+                state: {
+                  mounted: true,
+                },
+              },
+            }
+          : { kind: 'notFound' },
+      getHandleByCid: () => ({
+        id: 'button-610',
+        name: 'searchButton',
+        type: 'button',
+        _cid: 610,
+        _mounted: true,
+      }),
+      getHandleDebugData: () => ({
+        nodeId: 'search-button',
+        path: 'body.0.actions.0',
+        resolvedMeta: { visible: true },
+        resolvedProps: { label: 'Search Directory' },
+        nodeInstance: {
+          state: {
+            mounted: true,
+          },
+        },
+      }),
+    } as never);
+
+    const snapshot = ctrl.getSnapshot();
+    snapshot.events.unshift(
+      {
+        id: 12,
+        sessionId: snapshot.events[0]?.sessionId ?? 'session',
+        timestamp: 120,
+        kind: 'api:abort',
+        group: 'api',
+        level: 'error',
+        source: 'fetcher',
+        summary: 'POST /api/search aborted',
+        nodeId: 'search-form',
+        path: 'body.0',
+        requestInstanceId: 'req-search-1',
+        interactionId: 'interaction-search-1',
+      },
+      {
+        id: 11,
+        sessionId: snapshot.events[0]?.sessionId ?? 'session',
+        timestamp: 110,
+        kind: 'action:start',
+        group: 'action',
+        level: 'info',
+        source: 'dispatch',
+        summary: 'button click dispatched ajax action',
+        nodeId: 'search-button',
+        path: 'body.0.actions.0',
+        actionType: 'ajax',
+        requestInstanceId: 'req-search-1',
+        interactionId: 'interaction-search-1',
+      },
+    );
+
+    expect(ctrl.explainNodeFailure({ cid: 610 })).toMatchObject({
+      kind: 'failure',
+      data: {
+        failureType: 'request-aborted',
+        relatedEventIds: [12, 11],
+      },
+    });
+  });
 });

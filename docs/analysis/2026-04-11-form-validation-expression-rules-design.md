@@ -1,27 +1,27 @@
-﻿# Flux Form Validation è®¾è®¡æ–¹æ¡ˆ
+# Flux Form Validation 设计方案
 
-> ç±»åž‹: è®¾è®¡åˆ†æžæ–‡æ¡£
-> çŠ¶æ€: å¯æ‰§è¡Œæ–¹æ¡ˆ
-> æ—¥æœŸ: 2026-04-11
-> å–ä»£: `form-validation-expression-rules-design.md`ï¼ˆæ—§ç‰ˆï¼Œå·²åºŸå¼ƒï¼‰
-> å…³è”: `docs/architecture/form-validation.md`, `docs/analysis/2026-04-11-form-validation-owner-redesign-draft.md`
+> 类型: 设计分析文档
+> 状态: 可执行方案
+> 日期: 2026-04-11
+> 取代: `form-validation-expression-rules-design.md`（旧版，已废弃）
+> 关联: `docs/architecture/form-validation.md`, `docs/analysis/2026-04-11-form-validation-owner-redesign-draft.md`
 
 ---
 
-## 1. é—®é¢˜çš„çœŸå®žæ ¹æº
+## 1. 问题的真实根源
 
-åœ¨è®¨è®ºå¦‚ä½•è®¾è®¡ä¹‹å‰ï¼Œå¿…é¡»å…ˆæ¾„æ¸…ä¸¤ä¸ªç»å¸¸è¢«æ··æ·†çš„é—®é¢˜ï¼š
+在讨论如何设计之前，必须先澄清两个经常被混淆的问题：
 
-### 1.1 Field çŠ¶æ€æ¨¡åž‹ä¸Ž Validation æ¨¡åž‹æ˜¯ä¸¤ä»¶äº‹
+### 1.1 Field 状态模型与 Validation 模型是两件事
 
-è¿™æ˜¯ç›®å‰æ‰€æœ‰æ–‡æ¡£ï¼ˆåŒ…æ‹¬æ—§ç‰ˆåˆ†æžå’Œ owner-redesign-draftï¼‰éƒ½æ²¡æœ‰æ˜Žç¡®åŒºåˆ†çš„é—®é¢˜ã€‚
+这是目前所有文档（包括旧版分析和 owner-redesign-draft）都没有明确区分的问题。
 
-**FormFieldRegistryï¼ˆå­—æ®µçŠ¶æ€ï¼‰** å›žç­”ï¼šè¿™ä¸ªå­—æ®µå½“å‰æ˜¯å¦å­˜åœ¨ï¼Ÿæ˜¯å¦å¯è§ï¼Ÿæ˜¯å¦è¢«ç”¨æˆ·è§¦ç¢°è¿‡ï¼Ÿ
+**FormFieldRegistry（字段状态）** 回答：这个字段当前是否存在？是否可见？是否被用户触碰过？
 
 ```ts
 interface FieldRegistration {
   path: string;
-  visible: boolean; // æ¥è‡ª schema visible/hidden è¡¨è¾¾å¼çš„æ±‚å€¼ç»“æžœ
+  visible: boolean; // 来自 schema visible/hidden 表达式的求值结果
   disabled: boolean;
   touched: boolean;
   dirty: boolean;
@@ -29,18 +29,18 @@ interface FieldRegistration {
 }
 ```
 
-**ValidationModelï¼ˆè§„åˆ™å®šä¹‰ï¼‰** å›žç­”ï¼šå¯¹äºŽè¿™ä¸ªè·¯å¾„ï¼Œæœ‰å“ªäº›è§„åˆ™éœ€è¦æ‰§è¡Œï¼Ÿ
+**ValidationModel（规则定义）** 回答：对于这个路径，有哪些规则需要执行？
 
 ```ts
 interface CompiledFieldValidation {
   path: string;
-  ruleTemplates: CompiledRuleTemplate[]; // ç¼–è¯‘æœŸäº§ç‰©
+  ruleTemplates: CompiledRuleTemplate[]; // 编译期产物
   behavior: ValidationBehavior;
   hiddenFieldPolicy: HiddenFieldPolicy;
 }
 ```
 
-**ValidationStateï¼ˆéªŒè¯ç»“æžœï¼‰** å›žç­”ï¼šè¿™ä¸ªè·¯å¾„å½“å‰çš„éªŒè¯çŠ¶æ€æ˜¯ä»€ä¹ˆï¼Ÿ
+**ValidationState（验证结果）** 回答：这个路径当前的验证状态是什么？
 
 ```ts
 interface FieldValidationState {
@@ -50,46 +50,46 @@ interface FieldValidationState {
 }
 ```
 
-ä¸‰è€…ç‹¬ç«‹ç»´æŠ¤ï¼Œåœ¨ FormRuntime ä¸­åä½œã€‚**AMIS çš„ `FormItemStore` å°†è¿™ä¸‰è€…æ··åœ¨ä¸€èµ·**ï¼Œå¯¼è‡´å­—æ®µçš„ mount/unmount ç”Ÿå‘½å‘¨æœŸä¸ŽéªŒè¯é€»è¾‘æ­»æ­»è€¦åˆï¼Œè¿™æ­£æ˜¯ AMIS æ–¹æ¡ˆçš„æ ¹æœ¬å±€é™ã€‚
+三者独立维护，在 FormRuntime 中协作。**AMIS 的 `FormItemStore` 将这三者混在一起**，导致字段的 mount/unmount 生命周期与验证逻辑死死耦合，这正是 AMIS 方案的根本局限。
 
-### 1.2 "å“ªäº›å­—æ®µå½“å‰å‚ä¸ŽéªŒè¯"çš„ä¸¤ä¸ªæ¥æº
+### 1.2 "哪些字段当前参与验证"的两个来源
 
-`owner-redesign-draft.md` æå‡ºäº† Active Validation Instance Graph çš„æ¦‚å¿µï¼Œå¹¶è®¾è®¡äº† `refreshActiveInstanceGraph()` è¿™ä¸ªå…¥å£ï¼Œè®© owner è‡ªè¡Œè®¡ç®—å½“å‰æ¿€æ´»çš„å­—æ®µé›†åˆã€‚è¿™åœ¨ phase 1 å¼•å…¥ä¼šå¸¦æ¥ä¸å¿…è¦çš„å¤æ‚åº¦ï¼šéœ€è¦åœ¨ owner å†…éƒ¨è¿½è¸ª if-branch çŠ¶æ€ã€variant æ¿€æ´»çŠ¶æ€ã€array item æ•°é‡ã€‚
+`owner-redesign-draft.md` 提出了 Active Validation Instance Graph 的概念，并设计了 `refreshActiveInstanceGraph()` 这个入口，让 owner 自行计算当前激活的字段集合。这在 phase 1 引入会带来不必要的复杂度：需要在 owner 内部追踪 if-branch 状态、variant 激活状态、array item 数量。
 
-**å¯¹äºŽ leaf field rendererï¼ˆinput-textã€select ç­‰ï¼‰ï¼Œå½“å‰å®žä¾‹çš„å‚ä¸ŽçŠ¶æ€æ¥è‡ª FormFieldRegistryã€‚**
+**对于 leaf field renderer（input-text、select 等），当前实例的参与状态来自 FormFieldRegistry。**
 
-æ¯ä¸ª field renderer åœ¨ mount æ—¶å‘ registry æ³¨å†Œè‡ªå·±ï¼Œunmount æ—¶æ³¨é”€ã€‚è¿™æ„å‘³ç€ï¼š
+每个 field renderer 在 mount 时向 registry 注册自己，unmount 时注销。这意味着：
 
-- `if` åˆ†æ”¯åˆ‡æ¢ â†’ React å¸è½½å¤±æ´»åˆ†æ”¯çš„ renderer â†’ è‡ªåŠ¨ä»Ž registry æ¶ˆå¤±
-- array item æ–°å¢ž â†’ React æŒ‚è½½æ–° item çš„ renderer â†’ è‡ªåŠ¨è¿›å…¥ registry
-- array item åˆ é™¤ â†’ React å¸è½½è¯¥ item çš„ renderer â†’ è‡ªåŠ¨ä»Ž registry æ¶ˆå¤±
-- `variant-field` åˆ‡æ¢ â†’ æ—§ branch å¸è½½ï¼Œæ–° branch æŒ‚è½½ â†’ registry è‡ªåŠ¨æ›´æ–°
+- `if` 分支切换 → React 卸载失活分支的 renderer → 自动从 registry 消失
+- array item 新增 → React 挂载新 item 的 renderer → 自动进入 registry
+- array item 删除 → React 卸载该 item 的 renderer → 自动从 registry 消失
+- `variant-field` 切换 → 旧 branch 卸载，新 branch 挂载 → registry 自动更新
 
-React reconciler å·²ç»åœ¨ç»´æŠ¤"å½“å‰æŒ‚è½½äº†ä»€ä¹ˆ"è¿™ä¸ªä¿¡æ¯ï¼Œå¯¹ leaf field ä¸éœ€è¦ owner å†ç‹¬ç«‹è®¡ç®—ä¸€æ¬¡ã€‚
+React reconciler 已经在维护"当前挂载了什么"这个信息，对 leaf field 不需要 owner 再独立计算一次。
 
-**ä½† registry ä¸æ˜¯ validation å‚ä¸Žä¿¡æ¯çš„å”¯ä¸€æ¥æºã€‚** ä»¥ä¸‹èŠ‚ç‚¹æ²¡æœ‰å¯¹åº” rendererï¼Œä¸ä¼šå‡ºçŽ°åœ¨ registry ä¸­ï¼Œä½†ä»ç„¶éœ€è¦å‚ä¸Ž validationï¼š
+**但 registry 不是 validation 参与信息的唯一来源。** 以下节点没有对应 renderer，不会出现在 registry 中，但仍然需要参与 validation：
 
-- `object`/`array` aggregate nodeï¼ˆå¦‚ `contacts` çš„ `uniqueBy` è§„åˆ™ï¼‰
-- `variant-root` / `branch` ç­‰ç»“æž„èŠ‚ç‚¹
-- repeated item template çš„æ¨¡æ¿çº§è¾¹ç•Œ
+- `object`/`array` aggregate node（如 `contacts` 的 `uniqueBy` 规则）
+- `variant-root` / `branch` 等结构节点
+- repeated item template 的模板级边界
 
-å› æ­¤æ›´å‡†ç¡®çš„è¡¨è¿°æ˜¯ï¼š
+因此更准确的表述是：
 
-- **compiled field tree** å®šä¹‰"å“ªäº› validation ç»“æž„å¯èƒ½å­˜åœ¨"
-- **FormFieldRegistry** æŠ¥å‘Š"å½“å‰å“ªäº› leaf field instance å·² mount/participate"
-- ä¸¤è€…åä½œï¼Œä¸æ˜¯æ›¿ä»£å…³ç³»ï¼š`validateForm()` ä»¥ compiled traversal order ä¸ºä¸»åºï¼Œå†ä¸Ž registry äº¤å‰è¿‡æ»¤ leaf å‚ä¸ŽçŠ¶æ€
+- **compiled field tree** 定义"哪些 validation 结构可能存在"
+- **FormFieldRegistry** 报告"当前哪些 leaf field instance 已 mount/participate"
+- 两者协作，不是替代关系：`validateForm()` 以 compiled traversal order 为主序，再与 registry 交叉过滤 leaf 参与状态
 
-è¿™æ˜¯å¯¹ AMIS åŠ¨æ€æ³¨å†Œæ¨¡å¼çš„æ­£ç¡®å€Ÿé‰´ï¼šå€Ÿé‰´å®ƒè®© React mount/unmount é©±åŠ¨ leaf field å‚ä¸ŽçŠ¶æ€è¿™ä¸ªæ­£ç¡®ç›´è§‰ï¼Œä½†**æŠŠå­—æ®µçŠ¶æ€æ³¨å†Œå’ŒéªŒè¯è§„åˆ™ä¸¥æ ¼åˆ†å¼€**ï¼Œä¸é‡è¹ˆ FormItemStore å¤§æ‚çƒ©çš„è¦†è¾™ï¼Œä¹Ÿä¸æŠŠ registry å‡çº§ä¸º aggregate/variant/template ç»“æž„çš„å”¯ä¸€æ¥æºã€‚
+这是对 AMIS 动态注册模式的正确借鉴：借鉴它让 React mount/unmount 驱动 leaf field 参与状态这个正确直觉，但**把字段状态注册和验证规则严格分开**，不重蹈 FormItemStore 大杂烩的覆辙，也不把 registry 升级为 aggregate/variant/template 结构的唯一来源。
 
 ---
 
-## 2. å½“å‰å®žçŽ°çš„å®žé™…ç¼ºå£
+## 2. 当前实现的实际缺口
 
-é€šè¿‡å¯¹ä»£ç çš„ç›´æŽ¥å®¡æŸ¥ï¼ˆä¸æ˜¯è®¾è®¡æ–‡æ¡£è‡ªè¿°ï¼‰ï¼Œå½“å‰å®žçŽ°çš„çœŸå®žé—®é¢˜æ˜¯ï¼š
+通过对代码的直接审查（不是设计文档自述），当前实现的真实问题是：
 
-### ç¼ºå£ Aï¼šè§„åˆ™å‚æ•°æ˜¯é™æ€å­—é¢é‡
+### 缺口 A：规则参数是静态字面量
 
-`rules.ts:collectSchemaValidationRules()` åªå¤„ç†å­—é¢é‡ï¼š
+`rules.ts:collectSchemaValidationRules()` 只处理字面量：
 
 ```ts
 if (typeof ruleSource.minLength === 'number') {
@@ -97,114 +97,114 @@ if (typeof ruleSource.minLength === 'number') {
 }
 ```
 
-æ— æ³•å¤„ç† `"minLength": "${policy.minLen}"` è¿™ç±»ä½Žä»£ç å¸¸è§å†™æ³•ã€‚
+无法处理 `"minLength": "${policy.minLen}"` 这类低代码常见写法。
 
-`required` åŒæ ·åªæ”¯æŒé™æ€ booleanï¼Œæ— æ³•è¡¨è¾¾ `"required": "${role === 'admin'}"` ã€‚
+`required` 同样只支持静态 boolean，无法表达 `"required": "${role === 'admin'}"` 。
 
-### ç¼ºå£ Bï¼š`isFieldEffectivelyRequired()` ä¸ŽéªŒè¯å™¨é€»è¾‘é‡å¤ä¸”ä¸åŒæ­¥
+### 缺口 B：`isFieldEffectivelyRequired()` 与验证器逻辑重复且不同步
 
-`form-state.ts:isFieldEffectivelyRequired()` ç‹¬ç«‹å®žçŽ°äº†å¯¹ `required`/`requiredWhen`/`requiredUnless` çš„åˆ¤æ–­ï¼Œä½¿ç”¨ `getIn(values, rule.path)` ç›´æŽ¥è¯»å€¼ã€‚
+`form-state.ts:isFieldEffectivelyRequired()` 独立实现了对 `required`/`requiredWhen`/`requiredUnless` 的判断，使用 `getIn(values, rule.path)` 直接读值。
 
-è¿™ä¸Ž validator æ‰§è¡Œæ—¶é€šè¿‡ `scope.get(rule.path)` è¯»å€¼æ˜¯ä¸¤å¥—é€»è¾‘ã€‚å½“è§„åˆ™å˜æˆè¡¨è¾¾å¼åŒ–ä¹‹åŽï¼Œè¿™ä¸¤å¤„ä¼šæ›´åŠ éš¾ä»¥åŒæ­¥ã€‚
+这与 validator 执行时通过 `scope.get(rule.path)` 读值是两套逻辑。当规则变成表达式化之后，这两处会更加难以同步。
 
-### ç¼ºå£ Cï¼š`notifyFieldHidden` å·²å®žçŽ°ä½†ä¾èµ–æ‰‹å·¥è°ƒç”¨
+### 缺口 C：`notifyFieldHidden` 已实现但依赖手工调用
 
-`form-runtime.ts:notifyFieldHidden()` å®žçŽ°æ˜¯å®Œæ•´çš„ï¼Œä½†éœ€è¦ renderer ä¸»åŠ¨è°ƒç”¨ã€‚å®žé™…ä¸Šï¼Œ**hidden çŠ¶æ€çš„æ¥æºå·²ç»æ˜¯ scope è¡¨è¾¾å¼æ±‚å€¼ç»“æžœ**ï¼ˆ`visible`/`hidden` å­—æ®µï¼‰ï¼Œåªæ˜¯æ²¡æœ‰æŠŠè¿™ä¸ªä¿¡æ¯ç»Ÿä¸€è·¯ç”±åˆ° registryã€‚
+`form-runtime.ts:notifyFieldHidden()` 实现是完整的，但需要 renderer 主动调用。实际上，**hidden 状态的来源已经是 scope 表达式求值结果**（`visible`/`hidden` 字段），只是没有把这个信息统一路由到 registry。
 
-### ç¼ºå£ Dï¼š`validateForm()` éåŽ†çš„æ˜¯ compiled graph å…¨é›†
+### 缺口 D：`validateForm()` 遍历的是 compiled graph 全集
 
-`form-runtime.ts:validateForm()` è°ƒç”¨ `getCompiledValidationTraversalOrder()` éåŽ†ç¼–è¯‘æœŸæ‰€æœ‰èŠ‚ç‚¹ã€‚è¿™æ„å‘³ç€ï¼š
+`form-runtime.ts:validateForm()` 调用 `getCompiledValidationTraversalOrder()` 遍历编译期所有节点。这意味着：
 
-- `if` åˆ†æ”¯ä¸­çš„å­—æ®µæ— è®ºå½“å‰æ˜¯å¦æ¿€æ´»éƒ½ä¼šè¢«éªŒè¯ï¼ˆä¾èµ– `notifyFieldHidden` æ¥è·³è¿‡ï¼Œè€Œä¸æ˜¯ä»Žæ¥æºä¸ŠæŽ’é™¤ï¼‰
-- array item çš„è·¯å¾„åœ¨ compiled graph ä¸­ä¸å­˜åœ¨ï¼ˆå› ä¸ºæ˜¯æ¨¡æ¿ï¼Œä¸æ˜¯å…·ä½“ indexed pathï¼‰ï¼Œåªèƒ½èµ° `runtimeFieldRegistrations`
+- `if` 分支中的字段无论当前是否激活都会被验证（依赖 `notifyFieldHidden` 来跳过，而不是从来源上排除）
+- array item 的路径在 compiled graph 中不存在（因为是模板，不是具体 indexed path），只能走 `runtimeFieldRegistrations`
 
-ä¹Ÿå°±æ˜¯è¯´ï¼šå½“å‰ `validateForm()` å®žé™…ä¸Šå·²ç»åœ¨ä¾èµ– registryï¼ˆ`runtimeFieldRegistrations`ï¼‰æ¥å¤„ç†åŠ¨æ€å­—æ®µï¼Œåªæ˜¯è¿™ä¸ªä¾èµ–ä¸é€æ˜Žã€ä¸ç»Ÿä¸€ã€‚
-
----
-
-## 3. æŽ¨èçš„åˆ†å±‚æž¶æž„
-
-```
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  Layer 0: Rule Engineï¼ˆçº¯å‡½æ•°å±‚ï¼‰                             â”‚
-â”‚  è¾“å…¥: value + EffectiveRule[]                                â”‚
-â”‚  è¾“å‡º: ValidationError[]                                      â”‚
-â”‚  å®Œå…¨æ— çŠ¶æ€ï¼Œé›¶å‰¯ä½œç”¨ï¼Œç‹¬ç«‹å¯æµ‹è¯•                              â”‚
-â”‚  çŽ°æœ‰ä»£ç : validators.ts ä¸­çš„ builtInValidators              â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-         â†‘ è°ƒç”¨
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  Layer 1: ValidationEngineï¼ˆè§„åˆ™ç‰©åŒ–ä¸Žæ‰§è¡Œï¼‰                  â”‚
-â”‚  è¾“å…¥: CompiledRuleTemplate + ScopeRef                        â”‚
-â”‚  èŒè´£: materialize template â†’ EffectiveRule â†’ è°ƒç”¨ Layer 0   â”‚
-â”‚  æŒæœ‰: errors map, validating map, async run registry        â”‚
-â”‚  ä¸æŒæœ‰: å­—æ®µçŠ¶æ€ï¼ˆtouched/dirty ç­‰ï¼‰ï¼Œä¸æŒæœ‰å€¼              â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-         â†‘ æŸ¥è¯¢"å“ªäº›å­—æ®µå­˜åœ¨"
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  Layer 2: FormFieldRegistryï¼ˆå­—æ®µçŠ¶æ€æ³¨å†Œè¡¨ï¼‰                 â”‚
-â”‚  ç”± React renderer mount/unmount é©±åŠ¨                         â”‚
-â”‚  æŒæœ‰: path â†’ { visible, disabled, touched, dirty, visited } â”‚
-â”‚  "æ´»è·ƒå­—æ®µé›†åˆ" = å½“å‰å·²æ³¨å†Œçš„ paths                         â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-         â†‘ ç¼–æŽ’
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  Layer 3: FormRuntimeï¼ˆUX ç¼–æŽ’å±‚ï¼‰                            â”‚
-â”‚  æŒæœ‰: ValidationEngine + FormFieldRegistry + store          â”‚
-â”‚  èŒè´£: trigger policy, showErrorOn, submit gate              â”‚
-â”‚  API: validateField / validateSubtree / validateForm         â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-```
-
-### å½“å‰å®žçŽ°çš„æ˜ å°„
-
-| å½“å‰ä»£ç                                          | æ–°åˆ†å±‚å½’å±ž           | éœ€è¦å˜åŒ–                |
-| -------------------------------------------------- | ------------------------- | ------------------------- |
-| `validators.ts builtInValidators`                  | Layer 0                   | æ—                        |
-| `form-runtime-validation.ts validateCompiledField` | Layer 1                   | å¢žåŠ  materialize æ­¥éª¤ |
-| `form-runtime.ts hiddenFields: Set<string>`        | Layer 2 çš„ä¸€éƒ¨åˆ†      | æ‰©å±•ä¸ºå®Œæ•´ registry  |
-| `form-runtime.ts runtimeFieldRegistrations`        | Layer 2 + Layer 1 overlap | åˆ†èŒè´£                  |
-| `form-runtime.ts FormRuntime`                      | Layer 3                   | æ— å¤§ç»“æž„å˜åŒ–         |
+也就是说：当前 `validateForm()` 实际上已经在依赖 registry（`runtimeFieldRegistrations`）来处理动态字段，只是这个依赖不透明、不统一。
 
 ---
 
-## 4. è¡¨è¾¾å¼åŒ–è§„åˆ™æ¨¡æ¿ï¼ˆæ ¸å¿ƒæ–°å¢žï¼‰
+## 3. 推荐的分层架构
 
-### 4.1 `CompiledRuleTemplate` ç±»åž‹
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Layer 0: Rule Engine（纯函数层）                             │
+│  输入: value + EffectiveRule[]                                │
+│  输出: ValidationError[]                                      │
+│  完全无状态，零副作用，独立可测试                              │
+│  现有代码: validators.ts 中的 builtInValidators              │
+└──────────────────────────────────────────────────────────────┘
+         ↑ 调用
+┌──────────────────────────────────────────────────────────────┐
+│  Layer 1: ValidationEngine（规则物化与执行）                  │
+│  输入: CompiledRuleTemplate + ScopeRef                        │
+│  职责: materialize template → EffectiveRule → 调用 Layer 0   │
+│  持有: errors map, validating map, async run registry        │
+│  不持有: 字段状态（touched/dirty 等），不持有值              │
+└──────────────────────────────────────────────────────────────┘
+         ↑ 查询"哪些字段存在"
+┌──────────────────────────────────────────────────────────────┐
+│  Layer 2: FormFieldRegistry（字段状态注册表）                 │
+│  由 React renderer mount/unmount 驱动                         │
+│  持有: path → { visible, disabled, touched, dirty, visited } │
+│  "活跃字段集合" = 当前已注册的 paths                         │
+└──────────────────────────────────────────────────────────────┘
+         ↑ 编排
+┌──────────────────────────────────────────────────────────────┐
+│  Layer 3: FormRuntime（UX 编排层）                            │
+│  持有: ValidationEngine + FormFieldRegistry + store          │
+│  职责: trigger policy, showErrorOn, submit gate              │
+│  API: validateField / validateSubtree / validateForm         │
+└──────────────────────────────────────────────────────────────┘
+```
 
-çŽ°æœ‰ `CompiledValidationRule` å°†è¢«æ‰©å±•ï¼ˆå‘ä¸‹å…¼å®¹ï¼Œä¸æ›¿æ¢ï¼‰ï¼š
+### 当前实现的映射
+
+| 当前代码                                           | 新分层归属                | 需要变化              |
+| -------------------------------------------------- | ------------------------- | --------------------- |
+| `validators.ts builtInValidators`                  | Layer 0                   | 无                    |
+| `form-runtime-validation.ts validateCompiledField` | Layer 1                   | 增加 materialize 步骤 |
+| `form-runtime.ts hiddenFields: Set<string>`        | Layer 2 的一部分          | 扩展为完整 registry   |
+| `form-runtime.ts runtimeFieldRegistrations`        | Layer 2 + Layer 1 overlap | 分职责                |
+| `form-runtime.ts FormRuntime`                      | Layer 3                   | 无大结构变化          |
+
+---
+
+## 4. 表达式化规则模板（核心新增）
+
+### 4.1 `CompiledRuleTemplate` 类型
+
+现有 `CompiledValidationRule` 将被扩展（向下兼容，不替换）：
 
 ```ts
-// çŽ°æœ‰ç±»åž‹ä¿æŒä¸å˜ï¼Œä½œä¸ºé™æ€è§„åˆ™çš„å¿«é€Ÿè·¯å¾„
+// 现有类型保持不变，作为静态规则的快速路径
 interface CompiledValidationRule {
   id: string;
-  rule: ValidationRule; // é™æ€å­—é¢é‡
+  rule: ValidationRule; // 静态字面量
   dependencyPaths: string[];
   precompiled?: { regex?: RegExp };
 }
 
-// æ–°å¢žï¼šæ”¯æŒè¡¨è¾¾å¼åŒ–å‚æ•°çš„è§„åˆ™æ¨¡æ¿
+// 新增：支持表达式化参数的规则模板
 interface CompiledRuleTemplate {
   id: string;
   kind: ValidationRuleKind;
 
-  // è§„åˆ™å¼€å…³ï¼šundefined = å§‹ç»ˆæ¿€æ´»ï¼›static true = å§‹ç»ˆæ¿€æ´»ï¼ˆä¼˜åŒ–è·¯å¾„ï¼‰
-  // static false = ç¼–è¯‘æœŸå‰ªæžï¼ˆä¸äº§å‡ºæ­¤ templateï¼‰
+  // 规则开关：undefined = 始终激活；static true = 始终激活（优化路径）
+  // static false = 编译期剪枝（不产出此 template）
   when?: CompiledRuntimeValue<boolean>;
 
-  // è§„åˆ™å‚æ•°ï¼šæ¯ä¸ªå‚æ•°å¯ä»¥æ˜¯é™æ€å€¼æˆ–å·²ç¼–è¯‘çš„è¡¨è¾¾å¼
+  // 规则参数：每个参数可以是静态值或已编译的表达式
   args: RuleTemplateArgs;
 
-  // é”™è¯¯æ¶ˆæ¯ï¼šå¯ä»¥æ˜¯é™æ€å­—ç¬¦ä¸²æˆ–è¡¨è¾¾å¼
+  // 错误消息：可以是静态字符串或表达式
   message?: CompiledRuntimeValue<string> | string;
 
-  // æ‰€æœ‰ä¾èµ–è·¯å¾„ï¼ˆé™æ€ relational deps + è¡¨è¾¾å¼ä¸­æå–çš„ depsï¼‰
+  // 所有依赖路径（静态 relational deps + 表达式中提取的 deps）
   dependencyPaths: string[];
 
   precompiled?: { regex?: RegExp };
 }
 
-// å„è§„åˆ™çš„å‚æ•°ç±»åž‹
+// 各规则的参数类型
 type RuleTemplateArgs =
   | { kind: 'required' }
   | { kind: 'minLength'; value: CompiledRuntimeValue<number> | number }
@@ -217,19 +217,19 @@ type RuleTemplateArgs =
   | { kind: 'notEqualsField'; path: string }
   | { kind: 'requiredWhen'; path: string; equals: CompiledRuntimeValue<unknown> | unknown }
   | { kind: 'requiredUnless'; path: string; equals: CompiledRuntimeValue<unknown> | unknown };
-// ... å…¶ä½™ aggregate rules åŒç†
+// ... 其余 aggregate rules 同理
 ```
 
-### 4.2 ç‰©åŒ–ï¼ˆMaterializationï¼‰
+### 4.2 物化（Materialization）
 
-éªŒè¯æ‰§è¡Œå‰å°† template è½¬æ¢ä¸ºæœ¬æ¬¡æ‰§è¡Œçš„ effective ruleï¼š
+验证执行前将 template 转换为本次执行的 effective rule：
 
 ```ts
 interface EffectiveValidationRule {
   id: string;
   kind: ValidationRuleKind;
-  args: Record<string, unknown>; // å·²å¯¹æ‰€æœ‰è¡¨è¾¾å¼æ±‚å€¼
-  message?: string; // å·²å¯¹æ¶ˆæ¯è¡¨è¾¾å¼æ±‚å€¼
+  args: Record<string, unknown>; // 已对所有表达式求值
+  message?: string; // 已对消息表达式求值
 }
 
 function materializeRuleTemplate(
@@ -237,21 +237,21 @@ function materializeRuleTemplate(
   scope: ScopeRef,
   env: RendererEnv,
 ): EffectiveValidationRule | null {
-  // 1. æ±‚å€¼ whenï¼ˆå¦‚æžœæ˜¯è¡¨è¾¾å¼ï¼‰
+  // 1. 求值 when（如果是表达式）
   if (template.when != null) {
     const active = isCompiledRuntimeValue(template.when)
       ? evaluateCompiledValue(template.when, scope, env)
       : template.when;
-    if (!active) return null; // è§„åˆ™å½“å‰æœªæ¿€æ´»ï¼Œè·³è¿‡
+    if (!active) return null; // 规则当前未激活，跳过
   }
 
-  // 2. æ±‚å€¼ args ä¸­çš„è¡¨è¾¾å¼å‚æ•°
+  // 2. 求值 args 中的表达式参数
   const args: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(template.args)) {
     args[key] = isCompiledRuntimeValue(val) ? evaluateCompiledValue(val, scope, env) : val;
   }
 
-  // 3. æ±‚å€¼ message
+  // 3. 求值 message
   const message =
     template.message == null
       ? undefined
@@ -263,20 +263,20 @@ function materializeRuleTemplate(
 }
 ```
 
-### 4.3 ç¼–è¯‘æœŸå¤„ç†ï¼ˆ`collectSchemaValidationRules` çš„å˜æ›´ï¼‰
+### 4.3 编译期处理（`collectSchemaValidationRules` 的变更）
 
 ```ts
-// çŽ°åœ¨ï¼ˆé™æ€ï¼‰
+// 现在（静态）
 if (typeof ruleSource.minLength === 'number') {
   rules.push({ kind: 'minLength', value: ruleSource.minLength });
 }
 
-// æ”¹ä¸ºï¼ˆæ”¯æŒè¡¨è¾¾å¼ï¼‰
+// 改为（支持表达式）
 if (ruleSource.minLength != null) {
   const compiled = compiler.compileValue(ruleSource.minLength);
-  // é™æ€ false â†’ ç¼–è¯‘æœŸå‰ªæž
+  // 静态 false → 编译期剪枝
   if (compiled.kind === 'static' && compiled.value === false) return;
-  // é™æ€ true/number â†’ å†…è”ï¼Œæ— è¿è¡Œæ—¶ evaluate å¼€é”€
+  // 静态 true/number → 内联，无运行时 evaluate 开销
   if (compiled.kind === 'static') {
     templates.push({ kind: 'minLength', args: { value: compiled.value },
                      when: undefined, dependencyPaths: [], ... });
@@ -286,88 +286,88 @@ if (ruleSource.minLength != null) {
   }
 }
 
-// required ç‰¹æ®Šï¼šå€¼å¯ä»¥æ˜¯ boolean æˆ–æ¡ä»¶è¡¨è¾¾å¼
+// required 特殊：值可以是 boolean 或条件表达式
 if (ruleSource.required != null) {
   const compiled = compiler.compileValue(ruleSource.required);
   if (compiled.kind === 'static') {
-    if (!compiled.value) return;                        // false â†’ å‰ªæž
-    templates.push({ kind: 'required', when: undefined, ... }); // true â†’ æ— æ¡ä»¶
+    if (!compiled.value) return;                        // false → 剪枝
+    templates.push({ kind: 'required', when: undefined, ... }); // true → 无条件
   } else {
-    // "${role === 'admin'}" â†’ when å­—æ®µæŒæœ‰è¯¥è¡¨è¾¾å¼
+    // "${role === 'admin'}" → when 字段持有该表达式
     templates.push({ kind: 'required', when: compiled,
                      dependencyPaths: extractDeps(compiled), ... });
   }
 }
 ```
 
-**å…³é”®ä¼˜åŒ–**ï¼šçº¯é™æ€è§„åˆ™ï¼ˆå½“å‰æ‰€æœ‰è§„åˆ™ï¼‰å®Œå…¨èµ°å¿«é€Ÿè·¯å¾„ï¼Œ`dependencyPaths: []`ï¼Œ`when: undefined`ï¼Œæ‰§è¡Œæ—¶æ— è¡¨è¾¾å¼æ±‚å€¼å¼€é”€ï¼Œä¸ŽçŽ°åœ¨ç­‰ä»·ã€‚åªæœ‰çœŸæ­£å«è¡¨è¾¾å¼çš„è§„åˆ™æ‰èµ° materialize è·¯å¾„ã€‚
+**关键优化**：纯静态规则（当前所有规则）完全走快速路径，`dependencyPaths: []`，`when: undefined`，执行时无表达式求值开销，与现在等价。只有真正含表达式的规则才走 materialize 路径。
 
-### 4.4 ä¾èµ–å›¾æ‰©å±•
+### 4.4 依赖图扩展
 
-ä¾èµ–å›¾éœ€è¦åˆå¹¶ä¸‰ç±»æ¥æºï¼š
+依赖图需要合并三类来源：
 
 ```
-å…¨é‡ dependencyPaths =
-  (1) æ˜¾å¼ relational è·¯å¾„ï¼ˆequalsField / requiredWhen ç­‰ï¼ŒçŽ°æœ‰é€»è¾‘ï¼‰
-+ (2) è§„åˆ™ when/args/message ä¸­è¡¨è¾¾å¼æå–çš„å˜é‡åï¼ˆæ–°å¢žï¼‰
-+ (3) èšåˆèŠ‚ç‚¹çš„ childâ†’parent è‡ªåŠ¨å…³ç³»ï¼ˆæ–°å¢žï¼Œç¼–è¯‘å™¨å»ºç«‹ï¼‰
+全量 dependencyPaths =
+  (1) 显式 relational 路径（equalsField / requiredWhen 等，现有逻辑）
++ (2) 规则 when/args/message 中表达式提取的变量名（新增）
++ (3) 聚合节点的 child→parent 自动关系（新增，编译器建立）
 ```
 
-ç¬¬ä¸‰ç±»çš„ä¾‹å­ï¼š`contacts.0.email` å˜åŒ– â†’ `contacts` çš„ `uniqueBy` è§„åˆ™éœ€è¦é‡éªŒ â†’ ä¾èµ–å›¾ä¸­ `contacts.0.email` â†’ `contacts`ã€‚è¿™ä¸ªå…³ç³»ç”±ç¼–è¯‘å™¨åœ¨åˆ†æž array/object node æ—¶è‡ªåŠ¨å»ºç«‹ï¼Œä¸éœ€è¦ schema ä½œè€…å£°æ˜Žã€‚
+第三类的例子：`contacts.0.email` 变化 → `contacts` 的 `uniqueBy` 规则需要重验 → 依赖图中 `contacts.0.email` → `contacts`。这个关系由编译器在分析 array/object node 时自动建立，不需要 schema 作者声明。
 
 ---
 
-## 5. FormFieldRegistryï¼šç»Ÿä¸€å­—æ®µçŠ¶æ€ç®¡ç†
+## 5. FormFieldRegistry：统一字段状态管理
 
-### 5.1 æŽ¥å£å®šä¹‰
+### 5.1 接口定义
 
 ```ts
 interface FieldRegistration {
   path: string;
-  visible: boolean; // å½“å‰ visible è¡¨è¾¾å¼æ±‚å€¼ç»“æžœ
+  visible: boolean; // 当前 visible 表达式求值结果
   disabled: boolean;
-  // UX çŠ¶æ€ç”± FormRuntime ç®¡ç†ï¼Œä¸åœ¨æ­¤å¤„
+  // UX 状态由 FormRuntime 管理，不在此处
 }
 
 interface FormFieldRegistry {
-  // å­—æ®µ mount æ—¶è°ƒç”¨
-  register(path: string, info: FieldRegistration): () => void; // è¿”å›ž unregister
+  // 字段 mount 时调用
+  register(path: string, info: FieldRegistration): () => void; // 返回 unregister
 
-  // æŸ¥è¯¢å½“å‰å·²æ³¨å†Œï¼ˆå³å½“å‰æŒ‚è½½ï¼‰çš„å­—æ®µè·¯å¾„
+  // 查询当前已注册（即当前挂载）的字段路径
   getRegisteredPaths(): string[];
 
-  // æŸ¥è¯¢æŸè·¯å¾„æ˜¯å¦å½“å‰å·²æ³¨å†Œ
+  // 查询某路径是否当前已注册
   isRegistered(path: string): boolean;
 
-  // æŸ¥è¯¢æŸè·¯å¾„æ˜¯å¦ visibleï¼ˆæ³¨å†Œäº† && visible === trueï¼‰
+  // 查询某路径是否 visible（注册了 && visible === true）
   isVisible(path: string): boolean;
 }
 ```
 
-### 5.2 ä¸ŽçŽ°æœ‰ä»£ç çš„å…³ç³»
+### 5.2 与现有代码的关系
 
-å½“å‰ `form-runtime.ts` æœ‰ä¸¤ä¸ªç›¸å…³ç»“æž„ï¼š
+当前 `form-runtime.ts` 有两个相关结构：
 
-- `hiddenFields: Set<string>` â€” è®°å½•å½“å‰ hidden çš„è·¯å¾„ï¼Œç”± `notifyFieldHidden()` ç»´æŠ¤
-- `runtimeFieldRegistrations: Map<string, RuntimeFieldRegistration>` â€” è®°å½•å¤æ‚æŽ§ä»¶çš„éªŒè¯å›žè°ƒ
+- `hiddenFields: Set<string>` — 记录当前 hidden 的路径，由 `notifyFieldHidden()` 维护
+- `runtimeFieldRegistrations: Map<string, RuntimeFieldRegistration>` — 记录复杂控件的验证回调
 
-`FormFieldRegistry` ç»Ÿä¸€è¿™ä¸¤ä¸ªèŒè´£ä¸­çš„"å­—æ®µå­˜åœ¨æ€§"éƒ¨åˆ†ï¼š
+`FormFieldRegistry` 统一这两个职责中的"字段存在性"部分：
 
 ```
-FormFieldRegistry æ–°èŒè´£:
-  register(path, { visible })  â†  åŽŸ notifyFieldHidden åå‘ç­‰ä»·
-  isVisible(path)              â†  åŽŸ !hiddenFields.has(path) ç­‰ä»·
+FormFieldRegistry 新职责:
+  register(path, { visible })  ←  原 notifyFieldHidden 反向等价
+  isVisible(path)              ←  原 !hiddenFields.has(path) 等价
 
-runtimeFieldRegistrations ä¿ç•™èŒè´£ï¼ˆå¤æ‚æŽ§ä»¶éªŒè¯å›žè°ƒï¼‰:
+runtimeFieldRegistrations 保留职责（复杂控件验证回调）:
   validate?: () => ValidationError[]
   validateChild?: (path) => ValidationError[]
   childPaths?: string[]
 ```
 
-### 5.3 Renderer ä½¿ç”¨æ¨¡å¼
+### 5.3 Renderer 使用模式
 
 ```tsx
-// æ¯ä¸ª field renderer åœ¨ useEffect ä¸­æ³¨å†Œ
+// 每个 field renderer 在 useEffect 中注册
 function InputTextRenderer(props: RendererComponentProps<InputTextSchema>) {
   const form = useCurrentForm();
   const resolvedVisible = props.meta.visible;
@@ -386,15 +386,15 @@ function InputTextRenderer(props: RendererComponentProps<InputTextSchema>) {
 }
 ```
 
-**è¿™ä¸Žå½“å‰ `notifyFieldHidden` çš„è°ƒç”¨æ¨¡å¼åŸºæœ¬ç­‰ä»·**ï¼Œåªæ˜¯æŠŠ"é€šçŸ¥ hidden"æ”¹æˆäº†"æ³¨å†Œ visible çŠ¶æ€"ï¼Œè¯­ä¹‰æ›´æ¸…æ™°ï¼Œä¸”ä¸éœ€è¦ä¸¤ä¸ªåˆ†å¼€çš„è°ƒç”¨ï¼ˆmount æ³¨å†Œ + unmount æ¸…é™¤ï¼‰ã€‚
+**这与当前 `notifyFieldHidden` 的调用模式基本等价**，只是把"通知 hidden"改成了"注册 visible 状态"，语义更清晰，且不需要两个分开的调用（mount 注册 + unmount 清除）。
 
-### 5.4 `validateForm()` çš„ç®€åŒ–
+### 5.4 `validateForm()` 的简化
 
-æœ‰äº† registryï¼Œ`validateForm()` å˜æˆï¼š
+有了 registry，`validateForm()` 变成：
 
 ```ts
 async validateForm() {
-  // 1. éåŽ†é¡ºåºï¼šcompiled graph çš„æ‹“æ‰‘é¡ºåº âˆ© å½“å‰å·²æ³¨å†Œï¼ˆå¯è§ï¼‰å­—æ®µ
+  // 1. 遍历顺序：compiled graph 的拓扑顺序 ∩ 当前已注册（可见）字段
   const compiledOrder = getCompiledValidationTraversalOrder(validation);
   const registered = new Set(registry.getRegisteredPaths());
 
@@ -402,35 +402,35 @@ async validateForm() {
   const fieldErrors: Record<string, ValidationError[]> = {};
 
   for (const path of compiledOrder) {
-    if (!registered.has(path)) continue;   // æœªæŒ‚è½½çš„å­—æ®µè·³è¿‡ï¼ˆif-branch ç­‰ï¼‰
+    if (!registered.has(path)) continue;   // 未挂载的字段跳过（if-branch 等）
     const result = await thisForm.validateField(path);
     if (!result.ok) { /* collect */ }
   }
 
-  // 2. registry ä¸­æœ‰ä½† compiled graph ä¸­æ²¡æœ‰çš„è·¯å¾„ï¼ˆå¤æ‚æŽ§ä»¶åŠ¨æ€æ³¨å†Œï¼‰
+  // 2. registry 中有但 compiled graph 中没有的路径（复杂控件动态注册）
   for (const path of registered) {
-    if (compiledModel.nodes[path]) continue;   // å·²åœ¨ä¸Šé¢å¤„ç†
+    if (compiledModel.nodes[path]) continue;   // 已在上面处理
     const registration = runtimeFieldRegistrations.get(path);
     if (!registration?.validate) continue;
-    // ... æ‰§è¡Œ registration.validate()
+    // ... 执行 registration.validate()
   }
 
   return { ok, errors, fieldErrors };
 }
 ```
 
-**å¯¹æ¯”çŽ°æœ‰å®žçŽ°**ï¼šçŽ°æœ‰ `validateForm()` åˆ†ä¸¤æ®µéåŽ†ï¼ˆcompiled order + registrationsï¼‰ï¼Œä¸”éœ€è¦å¤æ‚çš„é”™è¯¯åˆå¹¶é€»è¾‘ï¼ˆ`preservedErrors` + `mergedErrors`ï¼‰æ¥é¿å… `setErrors` è¦†ç›– registration validate çš„å‰¯ä½œç”¨ã€‚æ–°æ–¹æ¡ˆå› ä¸ºéåŽ†åŸºäºŽ registryï¼ˆå·²çŸ¥å“ªäº›å­—æ®µå½“å‰å­˜åœ¨ï¼‰ï¼Œè¿™ä¸ªåˆå¹¶å¤æ‚åº¦æ¶ˆå¤±äº†ã€‚
+**对比现有实现**：现有 `validateForm()` 分两段遍历（compiled order + registrations），且需要复杂的错误合并逻辑（`preservedErrors` + `mergedErrors`）来避免 `setErrors` 覆盖 registration validate 的副作用。新方案因为遍历基于 registry（已知哪些字段当前存在），这个合并复杂度消失了。
 
 ---
 
-## 6. `isFieldEffectivelyRequired` çš„å•ä¸€æ¥æº
+## 6. `isFieldEffectivelyRequired` 的单一来源
 
-å½“å‰ `form-state.ts` çš„ `isFieldEffectivelyRequired()` ç‹¬ç«‹å®žçŽ°äº† required åˆ¤æ–­ï¼Œç›´æŽ¥è¯» compiled rule çš„é™æ€å€¼ã€‚è¿™åœ¨è§„åˆ™è¡¨è¾¾å¼åŒ–ä¹‹åŽä¼šä¸Ž validator é€»è¾‘ä¸åŒæ­¥ã€‚
+当前 `form-state.ts` 的 `isFieldEffectivelyRequired()` 独立实现了 required 判断，直接读 compiled rule 的静态值。这在规则表达式化之后会与 validator 逻辑不同步。
 
-**è§£å†³æ–¹æ¡ˆ**ï¼šValidationEngine æš´éœ² `materializeField()` æŽ¥å£ï¼Œ`isFieldEffectivelyRequired` æ”¹ä¸ºä»Ž materialize ç»“æžœè¯»å–ã€‚
+**解决方案**：ValidationEngine 暴露 `materializeField()` 接口，`isFieldEffectivelyRequired` 改为从 materialize 结果读取。
 
 ```ts
-// ValidationEngine æ–°å¢žæŽ¥å£
+// ValidationEngine 新增接口
 interface ValidationEngine {
   materializeField(
     path: string,
@@ -442,7 +442,7 @@ interface ValidationEngine {
   };
 }
 
-// form-state.ts isFieldEffectivelyRequired æ”¹ä¸ºï¼š
+// form-state.ts isFieldEffectivelyRequired 改为：
 function isFieldEffectivelyRequired(
   engine: ValidationEngine,
   path: string,
@@ -453,25 +453,25 @@ function isFieldEffectivelyRequired(
 }
 ```
 
-è¿™æ · field chrome çš„æ˜Ÿå·ã€validator çš„ required æ£€æŸ¥ã€`showError` é€»è¾‘éƒ½è¯»åŒä¸€ä»½æ•°æ®ï¼Œä¸ä¼šå‡ºçŽ°"validator è®¤ä¸ºå¿…å¡«ä½†æ˜Ÿå·ä¸äº®"çš„é—®é¢˜ã€‚
+这样 field chrome 的星号、validator 的 required 检查、`showError` 逻辑都读同一份数据，不会出现"validator 认为必填但星号不亮"的问题。
 
 ---
 
-## 7. Draft Ownerï¼ˆè¯šå®žè¯„ä¼°ï¼‰
+## 7. Draft Owner（诚实评估）
 
-`owner-redesign-draft.md` çš„ Draft Owner è®¾è®¡åœ¨æ¦‚å¿µä¸Šæ˜¯æ­£ç¡®çš„ï¼Œä½†åœ¨ä¼˜å…ˆçº§ä¸Šåº”è¯¥æ”¾ä½Žã€‚
+`owner-redesign-draft.md` 的 Draft Owner 设计在概念上是正确的，但在优先级上应该放低。
 
-**ä¸ºä»€ä¹ˆæ”¾ä½Žä¼˜å…ˆçº§**ï¼š
+**为什么放低优先级**：
 
-- Draft Owner è§£å†³çš„æ˜¯ "dialog å†…ç¼–è¾‘ä¸æ±¡æŸ“å¤–å±‚é”™è¯¯" è¿™ä¸ªé—®é¢˜
-- è¿™ä¸ªé—®é¢˜å¯ä»¥ç”¨æ›´ç®€å•çš„æ–¹å¼æš‚æ—¶è§£å†³ï¼šdialog å†…çš„ `form` renderer å¤©ç„¶åˆ›å»ºç‹¬ç«‹ FormRuntimeï¼ˆçŽ°æœ‰è¡Œä¸ºï¼‰ï¼Œcommit åŽé€šçŸ¥å¤–å±‚ revalidate å—å½±å“è·¯å¾„
-- çœŸæ­£éœ€è¦ "subtree draft owner è€ŒéžåµŒå¥— form" çš„åœºæ™¯æ˜¯ `detail-field`ï¼ˆå¯¹è±¡å­—æ®µçš„ inline ç¼–è¾‘å¼¹çª—ï¼‰ï¼Œè¿™æ˜¯ä¸€ä¸ªå…·ä½“ä½†æ¬¡è¦çš„ç‰¹æ€§
+- Draft Owner 解决的是 "dialog 内编辑不污染外层错误" 这个问题
+- 这个问题可以用更简单的方式暂时解决：dialog 内的 `form` renderer 天然创建独立 FormRuntime（现有行为），commit 后通知外层 revalidate 受影响路径
+- 真正需要 "subtree draft owner 而非嵌套 form" 的场景是 `detail-field`（对象字段的 inline 编辑弹窗），这是一个具体但次要的特性
 
-**phase 1 çš„å®žçŽ°ç­–ç•¥ï¼šç›´æŽ¥å¤ç”¨ FormRuntimeï¼Œä¸æ–°å¢žç‹¬ç«‹ public owner API**ï¼š
+**phase 1 的实现策略：直接复用 FormRuntime，不新增独立 public owner API**：
 
 ```ts
-// phase 1ï¼šdraft owner å°±æ˜¯ä¸€ä¸ª FormRuntimeï¼ŒrootPath æŒ‡å‘è¢«ç¼–è¾‘çš„å­æ ‘
-// ä¸éœ€è¦åœ¨ phase 1 é‡ŒæŠ½å‡ºç‹¬ç«‹çš„ ValidationOwner æŽ¥å£
+// phase 1：draft owner 就是一个 FormRuntime，rootPath 指向被编辑的子树
+// 不需要在 phase 1 里抽出独立的 ValidationOwner 接口
 function createDraftOwner(parentForm: FormRuntime, rootPath: string): DraftOwner {
   const draftValue = getIn(parentForm.scope.value, rootPath);
   const draftRuntime = createManagedFormRuntime({
@@ -487,140 +487,140 @@ function createDraftOwner(parentForm: FormRuntime, rootPath: string): DraftOwner
       if (!result.ok) return result;
       const committed = draftRuntime.scope.value;
       parentForm.setValue(rootPath, committed);
-      // é€šçŸ¥ parent é‡éªŒ rootPath ç›¸å…³çš„æ‰€æœ‰ dependents
+      // 通知 parent 重验 rootPath 相关的所有 dependents
       await parentForm.revalidateSubtree(rootPath);
       return result;
     },
     cancel() {
-      // ç›´æŽ¥ä¸¢å¼ƒ draftRuntimeï¼Œä¸å†™å›ž parent
+      // 直接丢弃 draftRuntime，不写回 parent
     },
   };
 }
 ```
 
-è¿™ä¸ªå®žçŽ°èƒ½ç”¨çŽ°æœ‰ FormRuntime ç›´æŽ¥å®Œæˆï¼Œä¸å¼•å…¥æ–°æŠ½è±¡å±‚ã€‚
+这个实现能用现有 FormRuntime 直接完成，不引入新抽象层。
 
-**é•¿æœŸæ–¹å‘ä¿ç•™**ï¼š`detail-field` / `detail-view` / dialog draft editing çš„è¯­ä¹‰ï¼Œæœ¬è´¨ä¸Šæ˜¯ owner boundary é—®é¢˜ã€‚phase 1 çš„"å¤ç”¨ FormRuntime"æ˜¯å®žçŽ°ç­–ç•¥ï¼Œä¸å¦å®š owner æŠ½è±¡æœ¬èº«çš„æ¼”è¿›æ–¹å‘ã€‚phase 3 å¼•å…¥ç‹¬ç«‹ draft owner æ—¶ï¼Œå¯ä»¥åœ¨æ­¤åŸºç¡€ä¸Šæå–å…¬å…±æŽ¥å£ï¼Œè€Œä¸æ˜¯æŽ¨ç¿»çŽ°æœ‰å®žçŽ°ã€‚
-
----
-
-## 8. AMIS åŠ¨æ€æ³¨å†Œçš„æ­£ç¡®å€Ÿé‰´è¾¹ç•Œ
-
-AMIS çš„åŠ¨æ€æ³¨å†Œæœ‰ä¸€ä¸ªæœ¬è´¨ä¼˜åŠ¿ï¼š**"å½“å‰å“ªäº›å­—æ®µå‚ä¸ŽéªŒè¯"ç”± React mount è‡ªåŠ¨ç»´æŠ¤ï¼Œä¸éœ€è¦é¢å¤–é€»è¾‘**ã€‚
-
-è¿™ä¸ªä¼˜åŠ¿æ˜¯çœŸå®žçš„ï¼Œåº”è¯¥å€Ÿé‰´ã€‚ä½† AMIS èµ°è¿‡äº†å¤´ï¼šå®ƒè®©å­—æ®µ mount æˆä¸º **å”¯ä¸€** çš„è§„åˆ™å‘çŽ°æœºåˆ¶ï¼Œå¯¼è‡´ï¼š
-
-1. æ— æ³•è¡¨è¾¾å¼åŒ–è§„åˆ™å‚æ•°ï¼ˆè§„åˆ™åœ¨ mount æ—¶å·²å›ºåŒ–ï¼‰
-2. æ— æ³•åœ¨ React å¤–éƒ¨æµ‹è¯•éªŒè¯é€»è¾‘
-3. è·¨å­—æ®µä¾èµ–å˜åŒ–æ—¶æ²¡æœ‰è‡ªåŠ¨é‡éªŒæœºåˆ¶ï¼ˆéœ€è¦æ¯ä¸ªæŽ§ä»¶æ‰‹å·¥å¤„ç†ï¼‰
-
-**æ­£ç¡®çš„å€Ÿé‰´æ–¹å¼**æ˜¯æœ¬æ–‡ Section 5 çš„ FormFieldRegistry æ–¹æ¡ˆï¼š
-
-|                         | AMIS                             | æœ¬æ–¹æ¡ˆ                       | è¯´æ˜Ž      |
-| ----------------------- | -------------------------------- | ------------------------------- | ----------- |
-| æ´»è·ƒå­—æ®µé›†åˆç»´æŠ¤ | FormItemStore mount/unmount      | FormFieldRegistry mount/unmount | å€Ÿé‰´      |
-| è§„åˆ™å®šä¹‰            | mount æ—¶ä¼ å…¥ config           | ç¼–è¯‘æœŸ CompiledRuleTemplate  | ä¸å€Ÿé‰´    |
-| è§„åˆ™æ‰§è¡Œ            | doValidate(values, value, rules) | materialize â†’ Layer 0         | çº¯åŒ–      |
-| è¡¨è¾¾å¼åŒ–è§„åˆ™       | ä¸æ”¯æŒ                          | CompiledRuntimeValue            | æ–°å¢ž      |
-| è·¨å­—æ®µä¾èµ–          | æ— è‡ªåŠ¨æœºåˆ¶                  | dependents å›¾è‡ªåŠ¨é‡éªŒ       | ä¿ç•™ä¼˜åŠ¿ |
+**长期方向保留**：`detail-field` / `detail-view` / dialog draft editing 的语义，本质上是 owner boundary 问题。phase 1 的"复用 FormRuntime"是实现策略，不否定 owner 抽象本身的演进方向。phase 3 引入独立 draft owner 时，可以在此基础上提取公共接口，而不是推翻现有实现。
 
 ---
 
-## 9. å®žæ–½è·¯å¾„ï¼ˆåˆ†é˜¶æ®µï¼‰
+## 8. AMIS 动态注册的正确借鉴边界
 
-### Phase 1: è¡¨è¾¾å¼åŒ–è§„åˆ™ï¼ˆç‹¬ç«‹å¯äº¤ä»˜ï¼Œä¸ç ´åçŽ°æœ‰ä»£ç ï¼‰
+AMIS 的动态注册有一个本质优势：**"当前哪些字段参与验证"由 React mount 自动维护，不需要额外逻辑**。
 
-**ç›®æ ‡**ï¼šè®© `required`ã€`minLength`ã€`maxLength`ã€`pattern`ã€`message` æ”¯æŒè¡¨è¾¾å¼å­—ç¬¦ä¸²ã€‚
+这个优势是真实的，应该借鉴。但 AMIS 走过了头：它让字段 mount 成为 **唯一** 的规则发现机制，导致：
 
-**å˜æ›´èŒƒå›´**ï¼š
+1. 无法表达式化规则参数（规则在 mount 时已固化）
+2. 无法在 React 外部测试验证逻辑
+3. 跨字段依赖变化时没有自动重验机制（需要每个控件手工处理）
 
-1. `flux-core/src/types/validation.ts`ï¼šæ–°å¢ž `CompiledRuleTemplate` ç±»åž‹ï¼Œ`CompiledValidationRule` ä¿æŒä¸å˜
-2. `flux-runtime/src/validation/rules.ts`ï¼š`collectSchemaValidationRules()` æ–°å¢žé‡è½½ï¼ŒæŽ¥å— `ExpressionCompiler`ï¼Œå¯¹éžçº¯å­—é¢é‡è°ƒç”¨ `compiler.compileValue()`
-3. `flux-runtime/src/form-runtime-validation.ts`ï¼š`validateCompiledField()` åœ¨æ‰§è¡Œå‰å…ˆè°ƒç”¨ `materializeRuleTemplate()`
-4. `flux-core/src/validation-model.ts`ï¼š`buildCompiledValidationDependentMap()` åˆå¹¶ `expressionDependencyPaths`
-5. `flux-react/src/form-state.ts`ï¼š`isFieldEffectivelyRequired()` æ”¹ä¸ºè°ƒç”¨ç»Ÿä¸€ materialize ç»“æžœ
+**正确的借鉴方式**是本文 Section 5 的 FormFieldRegistry 方案：
 
-**å‘ä¸‹å…¼å®¹**ï¼šæ‰€æœ‰çŽ°æœ‰é™æ€è§„åˆ™èµ°å¿«é€Ÿè·¯å¾„ï¼ˆ`when: undefined`ï¼Œé™æ€ argsï¼‰ï¼Œä¸è°ƒç”¨ `evaluateCompiledValue()`ï¼Œä¸ŽçŽ°æœ‰è¡Œä¸ºå®Œå…¨ç­‰ä»·ã€‚
-
-**éªŒæ”¶**ï¼š
-
-- `required: "${role === 'admin'}"` â€” role å˜åŒ–æ—¶ required çŠ¶æ€éšä¹‹æ›´æ–°å¹¶è§¦å‘é‡éªŒ
-- `minLength: "${policy.min}"` â€” policy å˜åŒ–æ—¶è§„åˆ™é˜ˆå€¼è‡ªåŠ¨æ›´æ–°
-- æ‰€æœ‰çŽ°æœ‰é™æ€è§„åˆ™æµ‹è¯•é€šè¿‡
-
-### Phase 2: FormFieldRegistryï¼ˆç»Ÿä¸€æ´»è·ƒå­—æ®µç®¡ç†ï¼‰
-
-**ç›®æ ‡**ï¼š`validateForm()` éåŽ†åŸºäºŽ registryï¼Œæ¶ˆé™¤ compiled order ä¸Ž dynamic registration çš„åŒé‡éåŽ†é€»è¾‘ã€‚
-
-**å˜æ›´èŒƒå›´**ï¼š
-
-1. `flux-runtime/src/form-runtime.ts`ï¼šå°† `hiddenFields: Set<string>` æ‰©å±•ä¸º `FormFieldRegistry`
-2. `notifyFieldHidden()` æ”¹ä¸º `registry.register(path, { visible })`ï¼ˆè¡Œä¸ºç­‰ä»·ï¼‰
-3. `validateForm()` æ”¹ä¸º Section 5.4 çš„ç®€åŒ–ç‰ˆæœ¬
-4. å„ field renderer çš„ `useEffect` ä»Ž `notifyFieldHidden` åˆ‡æ¢åˆ° `registry.register`
-
-**è¿™ä¸ªé˜¶æ®µè§£å†³çš„æ ¸å¿ƒé—®é¢˜**ï¼š`if`/`variant` ä¸­çš„å­—æ®µåœ¨å½“å‰ç‰ˆæœ¬å¯èƒ½è¢«éªŒè¯ï¼ˆå³ä½¿ hiddenï¼‰ï¼Œéœ€è¦æ‰‹å·¥ `notifyFieldHidden` æ¥è·³è¿‡ã€‚Phase 2 åŽï¼ŒæœªæŒ‚è½½çš„å­—æ®µå¤©ç„¶ä¸åœ¨ registry ä¸­ï¼Œ`validateForm()` ä¸ä¼šéåŽ†å®ƒä»¬ã€‚
-
-### Phase 3: Draft Ownerï¼ˆæŒ‰éœ€å®žçŽ°ï¼‰
-
-ä½¿ç”¨ Section 7 æè¿°çš„æ–¹æ¡ˆï¼šç›´æŽ¥å¤ç”¨ `createManagedFormRuntime()`ï¼Œphase 1 ä¸æ–°å¢žç‹¬ç«‹ `ValidationOwner` public APIã€‚å¦‚æžœåŽç»­å‡ºçŽ°å¤šç§ owner ç±»åž‹ï¼Œå†åœ¨æ­¤åŸºç¡€ä¸Šæå–å…¬å…±æŽ¥å£ã€‚
+|                  | AMIS                             | 本方案                          | 说明     |
+| ---------------- | -------------------------------- | ------------------------------- | -------- |
+| 活跃字段集合维护 | FormItemStore mount/unmount      | FormFieldRegistry mount/unmount | 借鉴     |
+| 规则定义         | mount 时传入 config              | 编译期 CompiledRuleTemplate     | 不借鉴   |
+| 规则执行         | doValidate(values, value, rules) | materialize → Layer 0           | 纯化     |
+| 表达式化规则     | 不支持                           | CompiledRuntimeValue            | 新增     |
+| 跨字段依赖       | 无自动机制                       | dependents 图自动重验           | 保留优势 |
 
 ---
 
-## 10. ä¸åšä»€ä¹ˆï¼ˆåŒæ ·é‡è¦ï¼‰
+## 9. 实施路径（分阶段）
 
-**phase 1 ä¸å¼•å…¥ç‹¬ç«‹ `ValidationOwner` public API**ï¼š`FormRuntime` åœ¨ phase 1 ä¸­æ‰¿æ‹… owner çš„è§’è‰²å·²ç»è¶³å¤Ÿã€‚å¼•å…¥æ–°çš„ `ValidationOwner` æŽ¥å£å¹¶è®© `FormRuntime` å®žçŽ°å®ƒï¼Œåœ¨ç¬¬ä¸€ç‰ˆé‡Œåªæ˜¯å¢žåŠ é—´æŽ¥å±‚ï¼Œæ²¡æœ‰å®žè´¨æ”¶ç›Šã€‚ä½†è®¾è®¡ä¸Šä¿ç•™ owner æŠ½è±¡çš„æ¼”è¿›æ–¹å‘â€”â€”å¦‚æžœæœªæ¥å‡ºçŽ°å¤šç§ owner ç±»åž‹ï¼ˆå¦‚ç‹¬ç«‹ draft ownerã€nested form ownerï¼‰ï¼Œé‚£æ—¶å†æå–å…¬å…±æŽ¥å£ï¼Œè€Œä¸æ˜¯çŽ°åœ¨é¢„é˜²æ€§åœ°å»ºå‡ºæ¥ã€‚
+### Phase 1: 表达式化规则（独立可交付，不破坏现有代码）
 
-**phase 1 ä¸å•ç‹¬å®žçŽ°å®Œæ•´ Active Instance Graph**ï¼š`if`/`loop`/`array-field` çš„ leaf field å‚ä¸ŽçŠ¶æ€ç”± React mount é©±åŠ¨çš„ registry éšå¼ç»´æŠ¤ï¼›aggregate/variant-root ç­‰ç»“æž„èŠ‚ç‚¹çš„å‚ä¸ŽçŠ¶æ€æ¥è‡ª compiled field treeã€‚phase 1 ä»¥ä¸¤è€…åä½œä»£æ›¿ç‹¬ç«‹ active instance graph è®¡ç®—ï¼Œphase 3 å¼•å…¥å®Œæ•´ owner ç¼–æŽ’æ—¶å†æŒ‰éœ€è¯„ä¼°ã€‚
+**目标**：让 `required`、`minLength`、`maxLength`、`pattern`、`message` 支持表达式字符串。
 
-**ä¸å¼•å…¥ `OwnerPathMapper`ï¼ˆlocal/absolute åŒè·¯å¾„ï¼‰**ï¼šdraft owner å†…éƒ¨å¯ä»¥ç”¨ `rootPath` åšè·¯å¾„å‰ç¼€è®¡ç®—ï¼Œä¸éœ€è¦æ˜¾å¼ mapper å¯¹è±¡ã€‚
+**变更范围**：
 
-**ä¸æŠŠ loop å’Œ array-field çš„ template å±•å¼€åšæˆç¼–è¯‘æœŸå›¾**ï¼šarray item çš„ indexed è·¯å¾„ï¼ˆ`items.0.name`ï¼‰æ˜¯è¿è¡Œæ—¶æ‰çŸ¥é“çš„ï¼Œè®© renderer mount æ—¶å‘ registry æ³¨å†Œå³å¯ã€‚ç¼–è¯‘æœŸåªä¿å­˜ item template çš„ç»“æž„æè¿°ï¼Œä¸å±•å¼€å…·ä½“ indexed pathsã€‚
+1. `flux-core/src/types/validation.ts`：新增 `CompiledRuleTemplate` 类型，`CompiledValidationRule` 保持不变
+2. `flux-runtime/src/validation/rules.ts`：`collectSchemaValidationRules()` 新增重载，接受 `ExpressionCompiler`，对非纯字面量调用 `compiler.compileValue()`
+3. `flux-runtime/src/form-runtime-validation.ts`：`validateCompiledField()` 在执行前先调用 `materializeRuleTemplate()`
+4. `flux-core/src/validation-model.ts`：`buildCompiledValidationDependentMap()` 合并 `expressionDependencyPaths`
+5. `flux-react/src/form-state.ts`：`isFieldEffectivelyRequired()` 改为调用统一 materialize 结果
 
-**ä¸åˆ é™¤ `runtimeFieldRegistrations` çš„ validate å›žè°ƒ**ï¼šå¤æ‚æŽ§ä»¶ï¼ˆå¦‚å¯Œæ–‡æœ¬ã€æ–‡ä»¶ä¸Šä¼ ã€è‡ªå®šä¹‰ UIï¼‰æ— æ³•ç”¨ rule template è¡¨è¾¾çš„éªŒè¯é€»è¾‘ï¼Œä»éœ€é»‘ç›’ validate å›žè°ƒã€‚è¿™æ˜¯å¿…è¦çš„ escape hatchï¼Œä¸æ˜¯è®¾è®¡ç¼ºé™·ã€‚
+**向下兼容**：所有现有静态规则走快速路径（`when: undefined`，静态 args），不调用 `evaluateCompiledValue()`，与现有行为完全等价。
+
+**验收**：
+
+- `required: "${role === 'admin'}"` — role 变化时 required 状态随之更新并触发重验
+- `minLength: "${policy.min}"` — policy 变化时规则阈值自动更新
+- 所有现有静态规则测试通过
+
+### Phase 2: FormFieldRegistry（统一活跃字段管理）
+
+**目标**：`validateForm()` 遍历基于 registry，消除 compiled order 与 dynamic registration 的双重遍历逻辑。
+
+**变更范围**：
+
+1. `flux-runtime/src/form-runtime.ts`：将 `hiddenFields: Set<string>` 扩展为 `FormFieldRegistry`
+2. `notifyFieldHidden()` 改为 `registry.register(path, { visible })`（行为等价）
+3. `validateForm()` 改为 Section 5.4 的简化版本
+4. 各 field renderer 的 `useEffect` 从 `notifyFieldHidden` 切换到 `registry.register`
+
+**这个阶段解决的核心问题**：`if`/`variant` 中的字段在当前版本可能被验证（即使 hidden），需要手工 `notifyFieldHidden` 来跳过。Phase 2 后，未挂载的字段天然不在 registry 中，`validateForm()` 不会遍历它们。
+
+### Phase 3: Draft Owner（按需实现）
+
+使用 Section 7 描述的方案：直接复用 `createManagedFormRuntime()`，phase 1 不新增独立 `ValidationOwner` public API。如果后续出现多种 owner 类型，再在此基础上提取公共接口。
 
 ---
 
-## 12. Field Tree æ¨¡åž‹
+## 10. 不做什么（同样重要）
 
-è¿™æ˜¯åœ¨ä¸Šä¸€è½®è®¨è®ºä¸­æ˜Žç¡®éœ€è¦è¡¥å……çš„å†…å®¹ã€‚**å½“å‰è®¾è®¡æ–‡æ¡£ï¼ˆåŒ…æ‹¬ owner-redesign-draftï¼‰å’Œä»£ç åº“é‡Œéƒ½æ²¡æœ‰ä¸€ä»½æ¸…æ™°çš„ field tree æ¨¡åž‹å®šä¹‰ã€‚**
+**phase 1 不引入独立 `ValidationOwner` public API**：`FormRuntime` 在 phase 1 中承担 owner 的角色已经足够。引入新的 `ValidationOwner` 接口并让 `FormRuntime` 实现它，在第一版里只是增加间接层，没有实质收益。但设计上保留 owner 抽象的演进方向——如果未来出现多种 owner 类型（如独立 draft owner、nested form owner），那时再提取公共接口，而不是现在预防性地建出来。
 
-### 12.1 ä¸ºä»€ä¹ˆéœ€è¦ Field Tree
+**phase 1 不单独实现完整 Active Instance Graph**：`if`/`loop`/`array-field` 的 leaf field 参与状态由 React mount 驱动的 registry 隐式维护；aggregate/variant-root 等结构节点的参与状态来自 compiled field tree。phase 1 以两者协作代替独立 active instance graph 计算，phase 3 引入完整 owner 编排时再按需评估。
 
-å¦‚æžœåªæœ‰ "flat path â†’ rules" æ˜ å°„ï¼Œå°±å¾ˆéš¾ç¨³å®šè¡¨è¾¾ï¼š
+**不引入 `OwnerPathMapper`（local/absolute 双路径）**：draft owner 内部可以用 `rootPath` 做路径前缀计算，不需要显式 mapper 对象。
 
-- `object-field` / `array-field` çš„çˆ¶å­ç»“æž„è¾¹ç•Œ
-- subtree validation éåŽ†æ—¶çš„æ‹“æ‰‘é¡ºåº
-- aggregate ancestor è‡ªåŠ¨ä¼ æ’­ï¼ˆ`contacts.0.email` å˜åŒ– â†’ `contacts` aggregate éœ€é‡éªŒï¼‰
-- `if`/`variant-field` çš„åˆ†æ”¯ç»“æž„å½’å±ž
-- `loop`/`array-field` çš„ repeated item template è¾¹ç•Œ
-- ç¼–è¯‘æœŸç»„ä»¶æ³¨å†Œé’©å­çš„æŒ‚æŽ¥ç‚¹ï¼ˆç¬¬ 13 èŠ‚ï¼‰
+**不把 loop 和 array-field 的 template 展开做成编译期图**：array item 的 indexed 路径（`items.0.name`）是运行时才知道的，让 renderer mount 时向 registry 注册即可。编译期只保存 item template 的结构描述，不展开具体 indexed paths。
 
-å› æ­¤ï¼Œ**å¯¹å¤–æŸ¥è¯¢ä»ç„¶å¯ä»¥æ˜¯ flat absolute pathï¼Œä½†ç¼–è¯‘äº§ç‰©å†…éƒ¨å¿…é¡»æœ‰ä¸€ä»½ field tree ç»“æž„**ã€‚
+**不删除 `runtimeFieldRegistrations` 的 validate 回调**：复杂控件（如富文本、文件上传、自定义 UI）无法用 rule template 表达的验证逻辑，仍需黑盒 validate 回调。这是必要的 escape hatch，不是设计缺陷。
 
-### 12.2 ä¸‰å±‚æ¨¡åž‹çš„æ˜Žç¡®åˆ†å·¥
+---
 
-è¿™æ˜¯æœ¬æ–‡ Section 1.1 ç»“è®ºçš„ç»“æž„åŒ–å±•å¼€ï¼š
+## 12. Field Tree 模型
+
+这是在上一轮讨论中明确需要补充的内容。**当前设计文档（包括 owner-redesign-draft）和代码库里都没有一份清晰的 field tree 模型定义。**
+
+### 12.1 为什么需要 Field Tree
+
+如果只有 "flat path → rules" 映射，就很难稳定表达：
+
+- `object-field` / `array-field` 的父子结构边界
+- subtree validation 遍历时的拓扑顺序
+- aggregate ancestor 自动传播（`contacts.0.email` 变化 → `contacts` aggregate 需重验）
+- `if`/`variant-field` 的分支结构归属
+- `loop`/`array-field` 的 repeated item template 边界
+- 编译期组件注册钩子的挂接点（第 13 节）
+
+因此，**对外查询仍然可以是 flat absolute path，但编译产物内部必须有一份 field tree 结构**。
+
+### 12.2 三层模型的明确分工
+
+这是本文 Section 1.1 结论的结构化展开：
 
 ```ts
-// Layer Aï¼šç¼–è¯‘æœŸç»“æž„æ¨¡åž‹ï¼ˆæ¥è‡ª schema ç¼–è¯‘ï¼Œimmutable è¿è¡Œæ—¶ï¼‰
+// Layer A：编译期结构模型（来自 schema 编译，immutable 运行时）
 interface CompiledFieldTreeNode {
   path: string;
   kind: 'field' | 'object' | 'array' | 'variant-root' | 'branch' | 'form';
   parent?: string;
-  children: string[]; // ç›´æŽ¥å­èŠ‚ç‚¹ paths
-  ruleTemplates: CompiledRuleTemplate[]; // æœ¬èŠ‚ç‚¹çš„è§„åˆ™æ¨¡æ¿
+  children: string[]; // 直接子节点 paths
+  ruleTemplates: CompiledRuleTemplate[]; // 本节点的规则模板
 }
 
-// Layer Bï¼šè¿è¡Œæ—¶å®žä¾‹çŠ¶æ€ï¼ˆç”± React mount/unmount é©±åŠ¨ï¼‰
+// Layer B：运行时实例状态（由 React mount/unmount 驱动）
 interface FieldRegistrationState {
   path: string;
-  mounted: boolean; // æ˜¯å¦å½“å‰å·²æŒ‚è½½
-  visible: boolean; // å½“å‰ visible è¡¨è¾¾å¼æ±‚å€¼ç»“æžœ
+  mounted: boolean; // 是否当前已挂载
+  visible: boolean; // 当前 visible 表达式求值结果
   disabled: boolean;
 }
 
-// Layer Cï¼šéªŒè¯ç»“æžœçŠ¶æ€ï¼ˆç”± ValidationEngine ç»´æŠ¤ï¼‰
+// Layer C：验证结果状态（由 ValidationEngine 维护）
 interface FieldValidationState {
   path: string;
   errors: ValidationError[];
@@ -628,56 +628,56 @@ interface FieldValidationState {
 }
 ```
 
-ä¸‰å±‚éƒ½ç”¨ flat absolute path ä½œä¸º keyï¼Œä½†è¯­ä¹‰ä¸Š Layer A å½¢æˆä¸€æ£µæ ‘ã€‚
+三层都用 flat absolute path 作为 key，但语义上 Layer A 形成一棵树。
 
-### 12.3 Field Tree ä¸Ž Flat Path çš„å…³ç³»
+### 12.3 Field Tree 与 Flat Path 的关系
 
-è¿™ä¸æ˜¯å›žåˆ°åµŒå¥— runtime graphã€‚æŽ¨èå®žçŽ°ï¼š
+这不是回到嵌套 runtime graph。推荐实现：
 
-- `nodes: Record<string, CompiledFieldTreeNode>` â€” flat mapï¼ŒO(1) æŸ¥è¯¢
-- `parent` / `children` å­—æ®µä¿ç•™æ ‘å…³ç³»ï¼ŒæŒ‰éœ€éåŽ†
-- `validationOrder: string[]` â€” å·²æ‹“æ‰‘æŽ’åºçš„éåŽ†é¡ºåºï¼Œleaf-before-ancestor
+- `nodes: Record<string, CompiledFieldTreeNode>` — flat map，O(1) 查询
+- `parent` / `children` 字段保留树关系，按需遍历
+- `validationOrder: string[]` — 已拓扑排序的遍历顺序，leaf-before-ancestor
 
 ```ts
-// ç¼–è¯‘äº§ç‰©ç»“æž„
+// 编译产物结构
 interface CompiledValidationModel {
   rootPath: string;
   nodes: Record<string, CompiledFieldTreeNode>;
   validationOrder: string[]; // leaf first, aggregate last
-  dependents: Record<string, string[]>; // path â†’ å“ªäº›è·¯å¾„ä¾èµ–å®ƒ
+  dependents: Record<string, string[]>; // path → 哪些路径依赖它
 }
 ```
 
-ä¸Ž `owner-redesign-draft.md` ä¸­çš„ `CompiledValidationPath` ç›¸æ¯”ï¼Œå…³é”®å·®å¼‚æ˜¯å¢žåŠ äº† `kind` æžšä¸¾ä¸­çš„ `variant-root` / `branch`ï¼Œä»¥åŠæŠŠ `ruleTemplates`ï¼ˆè¡¨è¾¾å¼åŒ–ç‰ˆæœ¬ï¼‰ç›´æŽ¥å†…è”åœ¨èŠ‚ç‚¹ä¸­ã€‚
+与 `owner-redesign-draft.md` 中的 `CompiledValidationPath` 相比，关键差异是增加了 `kind` 枚举中的 `variant-root` / `branch`，以及把 `ruleTemplates`（表达式化版本）直接内联在节点中。
 
-### 12.4 å½“å‰å®žçŽ°çš„æ˜ å°„
+### 12.4 当前实现的映射
 
-| å½“å‰ä»£ç                                         | æ–°æ¨¡åž‹å½’å±ž                     | éœ€è¦å˜åŒ–                                                                  |
-| ------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------- |
-| `CompiledValidationNode` in `validation-model.ts` | `CompiledFieldTreeNode`             | å¢žåŠ  `kind`ï¼ˆvariant-root/branchï¼‰ï¼Œ`ruleTemplates` æ›¿ä»£çŽ°æœ‰ rules |
-| `hiddenFields: Set<string>`                       | `FieldRegistrationState.visible`    | æ‰©å±•ä¸ºå®Œæ•´ registryï¼ˆPhase 2ï¼‰                                       |
-| `runtimeFieldRegistrations`                       | ä¸Ž `FieldRegistrationState` å…±å­˜ | ä¿ç•™ validate å›žè°ƒï¼Œåˆ†ç¦»å­˜åœ¨æ€§èŒè´£                                |
-| `ValidationError[]` per path                      | `FieldValidationState`              | çŽ°æœ‰ç»“æž„åŸºæœ¬å¯¹åº”ï¼Œæ— å¤§å˜åŒ–                                      |
+| 当前代码                                          | 新模型归属                       | 需要变化                                                           |
+| ------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------ |
+| `CompiledValidationNode` in `validation-model.ts` | `CompiledFieldTreeNode`          | 增加 `kind`（variant-root/branch），`ruleTemplates` 替代现有 rules |
+| `hiddenFields: Set<string>`                       | `FieldRegistrationState.visible` | 扩展为完整 registry（Phase 2）                                     |
+| `runtimeFieldRegistrations`                       | 与 `FieldRegistrationState` 共存 | 保留 validate 回调，分离存在性职责                                 |
+| `ValidationError[]` per path                      | `FieldValidationState`           | 现有结构基本对应，无大变化                                         |
 
-### 12.5 Variant-Root ä¸Ž Branch èŠ‚ç‚¹çš„ç‰¹æ®Šè¯­ä¹‰
+### 12.5 Variant-Root 与 Branch 节点的特殊语义
 
-`variant-root` å’Œ `branch` èŠ‚ç‚¹ä¸ç›´æŽ¥æŒæœ‰ field valueï¼Œä½†åœ¨ field tree ä¸­å¿…é¡»å­˜åœ¨ï¼ŒåŽŸå› ï¼š
+`variant-root` 和 `branch` 节点不直接持有 field value，但在 field tree 中必须存在，原因：
 
-- subtree validation éåŽ†æ—¶éœ€è¦çŸ¥é“"å“ªäº› children å±žäºŽå½“å‰ active branch"
-- åˆ†æ”¯åˆ‡æ¢æ—¶éœ€è¦çŸ¥é“"å“ªä¸ª branch-root ä¸‹çš„å­æ ‘éœ€è¦æ¸…é™¤ errors/validating"
-- ç¼–è¯‘æœŸä¾èµ–å›¾ä¸­ `if`/`variant` guard expression çš„ä¾èµ–éœ€è¦ç»‘å®šåˆ° branch-root èŠ‚ç‚¹
+- subtree validation 遍历时需要知道"哪些 children 属于当前 active branch"
+- 分支切换时需要知道"哪个 branch-root 下的子树需要清除 errors/validating"
+- 编译期依赖图中 `if`/`variant` guard expression 的依赖需要绑定到 branch-root 节点
 
 ```ts
-// variant-root ç¤ºä¾‹
+// variant-root 示例
 {
   path: 'contactMethod',
   kind: 'variant-root',
   parent: undefined,
   children: ['contactMethod::email', 'contactMethod::phone'],
-  ruleTemplates: []   // variant-root æœ¬èº«é€šå¸¸æ— ç›´æŽ¥è§„åˆ™
+  ruleTemplates: []   // variant-root 本身通常无直接规则
 }
 
-// branch ç¤ºä¾‹
+// branch 示例
 {
   path: 'contactMethod::email',
   kind: 'branch',
@@ -687,52 +687,52 @@ interface CompiledValidationModel {
 }
 ```
 
-Branch path ä½¿ç”¨ `::` åˆ†éš”ç¬¦ï¼ˆéž value pathï¼‰ï¼Œå› ä¸º branch ä¸å¯¹åº” value tree ä¸­çš„ä¸€ä¸ª keyï¼Œåªæ˜¯ç»“æž„åˆ†ç»„ã€‚è¿™ä¸ªè¡¨ç¤ºæ³•ä»…å­˜åœ¨äºŽç¼–è¯‘äº§ç‰©çš„ field tree ä¸­ï¼Œä¸æš´éœ²åˆ° ValidationError æˆ– owner APIã€‚
+Branch path 使用 `::` 分隔符（非 value path），因为 branch 不对应 value tree 中的一个 key，只是结构分组。这个表示法仅存在于编译产物的 field tree 中，不暴露到 ValidationError 或 owner API。
 
 ---
 
 ## 13. Compiler-Integrated Registration Hooks
 
-è¿™æ˜¯ç”¨æˆ·æ˜Žç¡®æå‡ºä½†æ‰€æœ‰æ–‡æ¡£éƒ½æœªè½åœ°çš„ç¬¬äºŒä¸ªå…³é”®ç‚¹ã€‚
+这是用户明确提出但所有文档都未落地的第二个关键点。
 
-### 13.1 ä¸ºä»€ä¹ˆéœ€è¦ç¼–è¯‘æœŸé’©å­
+### 13.1 为什么需要编译期钩子
 
-å¦‚æžœåªæœ‰è¿è¡Œæ—¶ registrationï¼ˆmount æ—¶æ³¨å†Œï¼‰ï¼Œå°±å­˜åœ¨ä»¥ä¸‹é—®é¢˜ï¼š
+如果只有运行时 registration（mount 时注册），就存在以下问题：
 
-- aggregate shapeï¼ˆ`uniqueBy` çš„ key è·¯å¾„ã€`allOrNone` çš„ field åˆ—è¡¨ï¼‰åœ¨ mount å‰æ— æ³•å»ºç«‹
-- subtree validation æ‹“æ‰‘é¡ºåºä¾èµ– mount æ—¶æœºï¼Œæ— æ³•ç¨³å®šé¢„æµ‹
-- `if`/`variant` çš„ guard expression ä¾èµ–æ— æ³•æå‰è¿›å…¥ä¾èµ–å›¾
-- `loop`/`array-field` çš„ item template ç»“æž„åªæœ‰ mount åŽæ‰èƒ½åæŽ¨
+- aggregate shape（`uniqueBy` 的 key 路径、`allOrNone` 的 field 列表）在 mount 前无法建立
+- subtree validation 拓扑顺序依赖 mount 时机，无法稳定预测
+- `if`/`variant` 的 guard expression 依赖无法提前进入依赖图
+- `loop`/`array-field` 的 item template 结构只有 mount 后才能反推
 
-Flux å·²ç»æœ‰ compiler å’Œ renderer definition ä½“ç³»ï¼Œå› æ­¤æ›´è‡ªç„¶çš„æ–¹å‘æ˜¯ï¼š**è®© renderer å£°æ˜Žç¼–è¯‘æœŸ collector hookï¼Œcompiler åœ¨é‡åˆ°æŸä¸ª `type` æ—¶è°ƒç”¨å®ƒï¼Œå‘ field tree / validation graph æ³¨å†Œç»“æž„å’Œè§„åˆ™**ã€‚
+Flux 已经有 compiler 和 renderer definition 体系，因此更自然的方向是：**让 renderer 声明编译期 collector hook，compiler 在遇到某个 `type` 时调用它，向 field tree / validation graph 注册结构和规则**。
 
-### 13.2 æŽ¨èæŽ¥å£å½¢çŠ¶
+### 13.2 推荐接口形状
 
 ```ts
-// æ¯ä¸ª renderer definition å¯ä»¥é€‰æ‹©æ€§åœ°å£°æ˜Žè¿™ä¸ª contribution
+// 每个 renderer definition 可以选择性地声明这个 contribution
 interface ValidationCompileContribution<S extends BaseSchema = BaseSchema> {
-  // è¿™ä¸ªç»„ä»¶åœ¨ field tree ä¸­çš„èŠ‚ç‚¹ç±»åž‹
+  // 这个组件在 field tree 中的节点类型
   kind: 'field' | 'object' | 'array' | 'variant-root' | 'branch' | 'none';
 
-  // æ”¶é›†æœ¬èŠ‚ç‚¹çš„ tree node ä¿¡æ¯ï¼ˆè·¯å¾„ã€ç»“æž„è§’è‰²ï¼‰
+  // 收集本节点的 tree node 信息（路径、结构角色）
   collectNode?(schema: S, ctx: ValidationCompileContext<S>): CompiledFieldTreeNodeInput | undefined;
 
-  // æ”¶é›†æœ¬èŠ‚ç‚¹çš„å­èŠ‚ç‚¹æè¿°
-  // ç”¨äºŽ object-field æ˜¾å¼å£°æ˜Žå­å­—æ®µã€array-field å£°æ˜Ž item template
+  // 收集本节点的子节点描述
+  // 用于 object-field 显式声明子字段、array-field 声明 item template
   collectChildren?(schema: S, ctx: ValidationCompileContext<S>): ValidationChildDescriptor[];
 
-  // æ”¶é›†æœ¬èŠ‚ç‚¹çš„ rule templatesï¼ˆæ”¯æŒè¡¨è¾¾å¼ï¼‰
+  // 收集本节点的 rule templates（支持表达式）
   collectRules?(schema: S, ctx: ValidationCompileContext<S>): CompiledRuleTemplate[];
 
-  // æ”¶é›†æœ¬èŠ‚ç‚¹å¼•å…¥çš„é¢å¤–ä¾èµ–è·¯å¾„
-  // ä¾‹å¦‚ï¼švariant guard expression ä¾èµ–ï¼Œaggregate key-by è·¯å¾„
+  // 收集本节点引入的额外依赖路径
+  // 例如：variant guard expression 依赖，aggregate key-by 路径
   collectDependencies?(schema: S, ctx: ValidationCompileContext<S>): string[];
 }
 
-// ç¼–è¯‘ä¸Šä¸‹æ–‡ï¼Œæä¾› compiler èƒ½åŠ›
+// 编译上下文，提供 compiler 能力
 interface ValidationCompileContext<S extends BaseSchema = BaseSchema> {
   schema: S;
-  path: string; // å½“å‰èŠ‚ç‚¹çš„ç»å¯¹è·¯å¾„
+  path: string; // 当前节点的绝对路径
   parentPath?: string;
   compiler: ExpressionCompiler;
   compileValue<T>(raw: unknown): CompiledRuntimeValue<T>;
@@ -740,103 +740,103 @@ interface ValidationCompileContext<S extends BaseSchema = BaseSchema> {
 }
 ```
 
-### 13.3 Compiler è°ƒç”¨æ—¶åº
+### 13.3 Compiler 调用时序
 
 ```
-schema compiler éåŽ† schema tree
-  â†“
-é‡åˆ° type: "input-text"
-  â†“
-æŸ¥æ‰¾ rendererRegistry.getValidationContribution('input-text')
-  â†“
-è°ƒç”¨ contribution.collectNode(schema, ctx)   â†’ ç”Ÿæˆ CompiledFieldTreeNode
-è°ƒç”¨ contribution.collectRules(schema, ctx)  â†’ ç”Ÿæˆ CompiledRuleTemplate[]
-è°ƒç”¨ contribution.collectDependencies(...)   â†’ è¡¥å…… dependents
-  â†“
-æŒ‚å…¥ CompiledValidationModel.nodes
+schema compiler 遍历 schema tree
+  ↓
+遇到 type: "input-text"
+  ↓
+查找 rendererRegistry.getValidationContribution('input-text')
+  ↓
+调用 contribution.collectNode(schema, ctx)   → 生成 CompiledFieldTreeNode
+调用 contribution.collectRules(schema, ctx)  → 生成 CompiledRuleTemplate[]
+调用 contribution.collectDependencies(...)   → 补充 dependents
+  ↓
+挂入 CompiledValidationModel.nodes
 ```
 
-å¯¹äºŽ `array-field`ï¼š
+对于 `array-field`：
 
 ```
-é‡åˆ° type: "array-field"
-  â†“
+遇到 type: "array-field"
+  ↓
 contribution.collectNode(schema, ctx)
-  â†’ kind: 'array'
-  â†’ path: 'contacts'
-  â†’ children æš‚ç•™ç©ºï¼Œç”± collectChildren å¡«
+  → kind: 'array'
+  → path: 'contacts'
+  → children 暂留空，由 collectChildren 填
 
 contribution.collectChildren(schema, ctx)
-  â†’ è¿”å›ž item template descriptorï¼ˆç›¸å¯¹è·¯å¾„ï¼Œä¸å±•å¼€å…·ä½“ indexed pathï¼‰
-  â†’ ä¾‹å¦‚ï¼š{ templatePath: 'contacts[]', children: ['contacts[].email', ...] }
+  → 返回 item template descriptor（相对路径，不展开具体 indexed path）
+  → 例如：{ templatePath: 'contacts[]', children: ['contacts[].email', ...] }
 
 contribution.collectRules(schema, ctx)
-  â†’ æ”¶é›† minItems / maxItems / uniqueByï¼ˆæ”¯æŒè¡¨è¾¾å¼ï¼‰
+  → 收集 minItems / maxItems / uniqueBy（支持表达式）
 ```
 
-### 13.4 è¿è¡Œæ—¶ Hook ä»ç„¶ä¿ç•™
+### 13.4 运行时 Hook 仍然保留
 
-ç¼–è¯‘æœŸ hook å¹¶ä¸å–ä»£è¿è¡Œæ—¶ registrationï¼š
+编译期 hook 并不取代运行时 registration：
 
-| èŒè´£                                  | ç¼–è¯‘æœŸ hook                      | è¿è¡Œæ—¶ hook             |
-| -------------------------------------- | ----------------------------------- | ------------------------- |
-| ç»“æž„å®šä¹‰ï¼ˆparent/children/kindï¼‰ | âœ“                                 | ä¸é€‚åˆï¼ˆæœª mountï¼‰    |
-| é™æ€è§„åˆ™æ¨¡æ¿                        | âœ“                                 | ä¸é€‚åˆï¼ˆæœªçŸ¥è·¯å¾„ï¼‰ |
-| ä¾èµ–å›¾ï¼ˆguard/aggregateï¼‰          | âœ“                                 | è¡¥å……ï¼ˆåŠ¨æ€è¦†ç›–ï¼‰   |
-| indexed item å®žä¾‹åŒ–                 | ä¸é€‚åˆï¼ˆè¿è¡Œæ—¶æ‰çŸ¥é“æ•°é‡ï¼‰   | âœ“                       |
-| visible/disabled çŠ¶æ€                 | ä¸é€‚åˆï¼ˆè¡¨è¾¾å¼è¿è¡Œæ—¶æ±‚å€¼ï¼‰ | âœ“                       |
-| é»‘ç›’ validate å›žè°ƒ                 | ä¸é€‚åˆ                             | âœ“ï¼ˆescape hatchï¼‰     |
-| dynamic rule overlay                   | ä¸é€‚åˆ                             | âœ“                       |
+| 职责                             | 编译期 hook                | 运行时 hook        |
+| -------------------------------- | -------------------------- | ------------------ |
+| 结构定义（parent/children/kind） | ✓                          | 不适合（未 mount） |
+| 静态规则模板                     | ✓                          | 不适合（未知路径） |
+| 依赖图（guard/aggregate）        | ✓                          | 补充（动态覆盖）   |
+| indexed item 实例化              | 不适合（运行时才知道数量） | ✓                  |
+| visible/disabled 状态            | 不适合（表达式运行时求值） | ✓                  |
+| 黑盒 validate 回调               | 不适合                     | ✓（escape hatch）  |
+| dynamic rule overlay             | 不适合                     | ✓                  |
 
-**ä¸¤è€…åä½œ**ï¼šç¼–è¯‘æœŸ hook å»ºç«‹é™æ€ field tree å’Œ rule templatesï¼›è¿è¡Œæ—¶ hook ç”¨ `FormFieldRegistry.register()` è¡¥å……å½“å‰ mounted çŠ¶æ€å’Œ indexed child pathsã€‚
+**两者协作**：编译期 hook 建立静态 field tree 和 rule templates；运行时 hook 用 `FormFieldRegistry.register()` 补充当前 mounted 状态和 indexed child paths。
 
-### 13.5 ä¸Ž Section 5ï¼ˆFormFieldRegistryï¼‰çš„å…³ç³»
+### 13.5 与 Section 5（FormFieldRegistry）的关系
 
-ç¼–è¯‘æœŸ hook è´Ÿè´£"å“ªäº›è·¯å¾„**å¯èƒ½**å­˜åœ¨"ï¼ˆCompiledFieldTreeNodeï¼‰ï¼Œè¿è¡Œæ—¶ registry è´Ÿè´£"å“ªäº›è·¯å¾„**å½“å‰**å­˜åœ¨"ï¼ˆFieldRegistrationStateï¼‰ã€‚ä¸¤è€…å½¢æˆäº’è¡¥ï¼š
+编译期 hook 负责"哪些路径**可能**存在"（CompiledFieldTreeNode），运行时 registry 负责"哪些路径**当前**存在"（FieldRegistrationState）。两者形成互补：
 
-- validateForm éåŽ†ï¼š`compiledOrder âˆ© registry.getRegisteredPaths()`ï¼ˆSection 5.4ï¼‰
-- ç¼–è¯‘æœŸé’©å­æœªæ³¨å†Œçš„ pathï¼ˆå¦‚é»‘ç›’æŽ§ä»¶ï¼‰ï¼šåªé€šè¿‡ runtime registry å‚ä¸ŽéªŒè¯
-- registry ä¸­å‡ºçŽ°ä½†ç¼–è¯‘æœŸæœªçŸ¥çš„ pathï¼ˆæžç«¯åŠ¨æ€æŽ§ä»¶ï¼‰ï¼šèµ° `runtimeFieldRegistrations.validate()` escape hatch
+- validateForm 遍历：`compiledOrder ∩ registry.getRegisteredPaths()`（Section 5.4）
+- 编译期钩子未注册的 path（如黑盒控件）：只通过 runtime registry 参与验证
+- registry 中出现但编译期未知的 path（极端动态控件）：走 `runtimeFieldRegistrations.validate()` escape hatch
 
 ---
 
-## 15. `validateField` çš„ Closure æ‰©å±•è¯­ä¹‰
+## 15. `validateField` 的 Closure 扩展语义
 
-> è¡¥å……è‡ª `owner-redesign-draft.md` Â§Local Validation Trigger Rulesï¼ŒERD Â§5.4 ä»…å®šä¹‰äº†å…¨é‡éåŽ†ï¼Œæ­¤å¤„è¡¥å……å±€éƒ¨è§¦å‘çš„æ‰©å±•è§„åˆ™ã€‚
+> 补充自 `owner-redesign-draft.md` §Local Validation Trigger Rules，ERD §5.4 仅定义了全量遍历，此处补充局部触发的扩展规则。
 
-### 15.1 é—®é¢˜
+### 15.1 问题
 
-`validateField(path)` ä¸èƒ½åªéªŒè¯ `path` æœ¬èº«ã€‚ä»¥ä¸‹åœºæ™¯è¦æ±‚è‡ªåŠ¨æ‰©å±•éªŒè¯èŒƒå›´ï¼š
+`validateField(path)` 不能只验证 `path` 本身。以下场景要求自动扩展验证范围：
 
-- `contacts.0.email` å˜åŒ– â†’ `contacts` çš„ `uniqueBy` aggregate rule ä¾èµ–è¯¥å€¼ï¼Œå¿…é¡»åŒæ­¥é‡éªŒ
-- `startDate` å˜åŒ– â†’ `endDate` æœ‰è¡¨è¾¾å¼åŒ–è§„åˆ™ `min: "${startDate}"`ï¼Œ`endDate` çš„ required/min çŠ¶æ€å·²å¤±æ•ˆ
-- `role` å˜åŒ– â†’ `permissions` æœ‰ `required: "${role === 'admin'}"` â†’ å¿…é¡»åŒæ­¥é‡éªŒ
+- `contacts.0.email` 变化 → `contacts` 的 `uniqueBy` aggregate rule 依赖该值，必须同步重验
+- `startDate` 变化 → `endDate` 有表达式化规则 `min: "${startDate}"`，`endDate` 的 required/min 状态已失效
+- `role` 变化 → `permissions` 有 `required: "${role === 'admin'}"` → 必须同步重验
 
-å¦‚æžœåªéªŒè¯ç›´æŽ¥è§¦å‘çš„ pathï¼Œä¸Šè¿°åœºæ™¯ä¼šäº§ç”Ÿé”™è¯¯æ˜¾ç¤ºæ»žåŽæˆ–ä¸è§¦å‘çš„é—®é¢˜ã€‚
+如果只验证直接触发的 path，上述场景会产生错误显示滞后或不触发的问题。
 
-### 15.2 Closure è®¡ç®—è§„åˆ™
+### 15.2 Closure 计算规则
 
-`FormRuntime.validateField(path, reason)` åœ¨æ‰§è¡Œå‰å¿…é¡»å…ˆè®¡ç®— **impacted closure**ï¼š
+`FormRuntime.validateField(path, reason)` 在执行前必须先计算 **impacted closure**：
 
 ```ts
 function computeImpactedClosure(
   changedPaths: string[],
-  dependents: Record<string, string[]>, // æ¥è‡ª CompiledValidationModel
-  aggregateAncestors: (path: string) => string[], // å‘ä¸Šæ‰¾ object/array aggregate node
-  overlayDependents: (path: string) => string[], // æ¥è‡ª runtimeFieldRegistrations
+  dependents: Record<string, string[]>, // 来自 CompiledValidationModel
+  aggregateAncestors: (path: string) => string[], // 向上找 object/array aggregate node
+  overlayDependents: (path: string) => string[], // 来自 runtimeFieldRegistrations
 ): Set<string>;
 ```
 
-closure åŒ…å«ï¼š
+closure 包含：
 
-1. **direct paths**ï¼š`changedPaths` æœ¬èº«
-2. **aggregate ancestors**ï¼šæ²¿ field tree å‘ä¸Šï¼Œç›´åˆ°é‡åˆ° `form` root æˆ– owner boundary ä¸ºæ­¢çš„æ‰€æœ‰ `object` / `array` ç±»åž‹ ancestor node
-3. **expression dependents**ï¼š`dependents[path]` ä¸­æ‰€æœ‰å› è¡¨è¾¾å¼ä¾èµ–æ­¤ path çš„å­—æ®µï¼ˆé€’å½’å±•å¼€ä¸€å±‚ï¼Œä¸æ— é™é€’å½’ï¼‰
-4. **dynamic overlay dependents**ï¼šé€šè¿‡ `runtimeFieldRegistrations` å£°æ˜Žäº†ä¾èµ–æ­¤ path çš„å¤æ‚æŽ§ä»¶
+1. **direct paths**：`changedPaths` 本身
+2. **aggregate ancestors**：沿 field tree 向上，直到遇到 `form` root 或 owner boundary 为止的所有 `object` / `array` 类型 ancestor node
+3. **expression dependents**：`dependents[path]` 中所有因表达式依赖此 path 的字段（递归展开一层，不无限递归）
+4. **dynamic overlay dependents**：通过 `runtimeFieldRegistrations` 声明了依赖此 path 的复杂控件
 
-è®¡ç®—å®ŒæˆåŽï¼Œclosure å†…æ‰€æœ‰ **å½“å‰å·²æ³¨å†Œï¼ˆ`registry.isRegistered(path) === true`ï¼‰** çš„ path æ‰è¿›å…¥å®žé™…éªŒè¯ã€‚æœªæŒ‚è½½çš„ path ä¸å‚ä¸Žï¼Œå³ä½¿åœ¨ closure ä¸­ã€‚
+计算完成后，closure 内所有 **当前已注册（`registry.isRegistered(path) === true`）** 的 path 才进入实际验证。未挂载的 path 不参与，即使在 closure 中。
 
-### 15.3 `validateField` ä¼ªä»£ç 
+### 15.3 `validateField` 伪代码
 
 ```ts
 async function validateField(
@@ -864,57 +864,57 @@ async function validateField(
 }
 ```
 
-å…³é”®ç‚¹ï¼š
+关键点：
 
-- `validateField` å¯¹å¤–ä»ä»¥ `path` ä¸ºå‚æ•°ï¼Œè¿”å›žè¯¥ path çš„ç»“æžœ
-- ä½†å†…éƒ¨æ‰©å±•åˆ° closureï¼Œä¿è¯ aggregate å’Œ expression dependent ä¸æ»žåŽ
-- `reason` å½±å“ async debounce ç­–ç•¥ï¼ˆ`change` å¯ debounceï¼Œ`submit` ä¸å¯ï¼‰
+- `validateField` 对外仍以 `path` 为参数，返回该 path 的结果
+- 但内部扩展到 closure，保证 aggregate 和 expression dependent 不滞后
+- `reason` 影响 async debounce 策略（`change` 可 debounce，`submit` 不可）
 
-### 15.4 `validateSubtree` ä¸Ž closure çš„å…³ç³»
+### 15.4 `validateSubtree` 与 closure 的关系
 
-`validateSubtree(path)` å·²ç»æ˜¯"éåŽ† path ä¸‹æ‰€æœ‰ active descendants"ï¼Œä¸éœ€è¦é¢å¤– closure æ‰©å±•ï¼Œä½†ä»éœ€è¦æŠŠ subtree å¤–çš„ aggregate ancestor å’Œ expression dependent çº³å…¥ã€‚
+`validateSubtree(path)` 已经是"遍历 path 下所有 active descendants"，不需要额外 closure 扩展，但仍需要把 subtree 外的 aggregate ancestor 和 expression dependent 纳入。
 
-æŽ¨èï¼š`validateSubtree(path)` åœ¨éåŽ†å®Œ subtree åŽï¼Œå¯¹ `path` æœ¬èº«å†æ‰§è¡Œä¸€æ¬¡ closure æ‰©å±•ï¼ŒæŠŠ subtree å¤–çš„ä¾èµ–æ–¹ä¹Ÿçº³å…¥æœ¬è½®éªŒè¯ã€‚
+推荐：`validateSubtree(path)` 在遍历完 subtree 后，对 `path` 本身再执行一次 closure 扩展，把 subtree 外的依赖方也纳入本轮验证。
 
 ---
 
-## 16. Async Validation Run Ownership æ¨¡åž‹
+## 16. Async Validation Run Ownership 模型
 
-> è¡¥å……è‡ª `owner-redesign-draft.md` Â§Async Validation Semanticsï¼ŒERD Â§9 Phase 1 ä»…æåˆ° debounceï¼Œæ­¤å¤„è¡¥å…… stale run å¤±æ•ˆå’Œ run ownership çš„å®Œæ•´è§„åˆ™ã€‚
+> 补充自 `owner-redesign-draft.md` §Async Validation Semantics，ERD §9 Phase 1 仅提到 debounce，此处补充 stale run 失效和 run ownership 的完整规则。
 
-### 16.1 é—®é¢˜
+### 16.1 问题
 
-å¼‚æ­¥éªŒè¯ï¼ˆå¦‚è¿œç¨‹å”¯ä¸€æ€§æ ¡éªŒï¼‰å­˜åœ¨ä»¥ä¸‹ç«žæ€é—®é¢˜ï¼š
+异步验证（如远程唯一性校验）存在以下竞态问题：
 
-- ç”¨æˆ·å¿«é€Ÿè¾“å…¥è§¦å‘å¤šæ¬¡ async runï¼Œæ—§ run çš„ç»“æžœä¸åº”è¦†ç›–æ–° run
-- å­—æ®µè¢«éšè—æˆ– variant åˆ‡æ¢åŽï¼Œin-flight run çš„ç»“æžœä¸åº”å†™å›ž
-- `submit` è§¦å‘æ—¶ï¼Œæ­£åœ¨ debounce ç­‰å¾…çš„ change run åº”ç«‹å³å–æ¶ˆå¹¶é‡æ–°ä»¥ `submit` reason è¿è¡Œ
+- 用户快速输入触发多次 async run，旧 run 的结果不应覆盖新 run
+- 字段被隐藏或 variant 切换后，in-flight run 的结果不应写回
+- `submit` 触发时，正在 debounce 等待的 change run 应立即取消并重新以 `submit` reason 运行
 
-### 16.2 Run è®°å½•ç»“æž„
+### 16.2 Run 记录结构
 
-`ValidationEngine` å†…éƒ¨ä¸ºæ¯ä¸ª in-flight async run ç»´æŠ¤ï¼š
+`ValidationEngine` 内部为每个 in-flight async run 维护：
 
 ```ts
 interface AsyncValidationRun {
   path: string;
   ruleId: string;
   reason: ValidationReason;
-  runId: string; // æ¯æ¬¡å¯åŠ¨ç”Ÿæˆæ–° UUID
-  ownerEpoch: number; // owner ç»“æž„å˜åŒ–æ—¶é€’å¢žï¼Œç”¨äºŽæ‰¹é‡å¤±æ•ˆ
-  abort(): void; // å–æ¶ˆ in-flight è¯·æ±‚
+  runId: string; // 每次启动生成新 UUID
+  ownerEpoch: number; // owner 结构变化时递增，用于批量失效
+  abort(): void; // 取消 in-flight 请求
 }
 ```
 
-### 16.3 Run å¯åŠ¨è§„åˆ™
+### 16.3 Run 启动规则
 
-å¯åŠ¨æ–° async run æ—¶ï¼š
+启动新 async run 时：
 
-1. ç”Ÿæˆæ–° `runId`
-2. æŸ¥æ‰¾åŒ `path + ruleId` çš„çŽ°æœ‰ runï¼Œè‹¥å­˜åœ¨åˆ™è°ƒç”¨ `abort()` å¹¶ä»Žè®°å½•ä¸­ç§»é™¤
-3. æ³¨å†Œæ–° runï¼Œè®¾ç½®è¯¥ path çš„ `validating: true`
-4. ç­‰å¾…å¼‚æ­¥ç»“æžœ
+1. 生成新 `runId`
+2. 查找同 `path + ruleId` 的现有 run，若存在则调用 `abort()` 并从记录中移除
+3. 注册新 run，设置该 path 的 `validating: true`
+4. 等待异步结果
 
-ç»“æžœè¿”å›žæ—¶ï¼Œå†™å›žå‰å¿…é¡»éªŒè¯ï¼š
+结果返回时，写回前必须验证：
 
 ```ts
 if (
@@ -922,89 +922,89 @@ if (
   !registry.isRegistered(path) ||
   currentRun.ownerEpoch !== owner.currentEpoch
 ) {
-  return; // stale runï¼Œä¸¢å¼ƒç»“æžœ
+  return; // stale run，丢弃结果
 }
 ```
 
-åªæœ‰ä¸‰ä¸ªæ¡ä»¶å…¨éƒ¨æ»¡è¶³ï¼Œæ‰å°†é”™è¯¯å†™å›žå¹¶è®¾ç½® `validating: false`ã€‚
+只有三个条件全部满足，才将错误写回并设置 `validating: false`。
 
-### 16.4 Submit å¯¹ Debounce çš„è¦†ç›–
+### 16.4 Submit 对 Debounce 的覆盖
 
-`validateForm()` åœ¨ `reason === 'submit'` æ—¶ï¼š
+`validateForm()` 在 `reason === 'submit'` 时：
 
-1. å–æ¶ˆæ‰€æœ‰ä»åœ¨ debounce ç­‰å¾…çš„ change/blur run
-2. å¯¹æ‰€æœ‰ active path é‡æ–°ä»¥ `reason: 'submit'` å¯åŠ¨ async runï¼ˆä¸ debounceï¼‰
-3. `await` æ‰€æœ‰ submit-required async run å®ŒæˆåŽæ‰è¿”å›žç»“æžœ
+1. 取消所有仍在 debounce 等待的 change/blur run
+2. 对所有 active path 重新以 `reason: 'submit'` 启动 async run（不 debounce）
+3. `await` 所有 submit-required async run 完成后才返回结果
 
-è¿™ä¿è¯ submit æ—¶çœ‹åˆ°çš„æ˜¯æœ€æ–°è¾“å…¥è§¦å‘çš„éªŒè¯ç»“æžœï¼Œè€Œä¸æ˜¯è¢« debounce å»¶è¿Ÿçš„æ—§ç»“æžœã€‚
+这保证 submit 时看到的是最新输入触发的验证结果，而不是被 debounce 延迟的旧结果。
 
-### 16.5 Path å¤±æ´»æ—¶çš„ Run å¤±æ•ˆ
+### 16.5 Path 失活时的 Run 失效
 
-ä»¥ä¸‹æƒ…å†µå¿…é¡»ç«‹å³å¤±æ•ˆï¼ˆabort + ä¸¢å¼ƒç»“æžœï¼‰ç›¸å…³ path çš„æ‰€æœ‰ in-flight async runï¼š
+以下情况必须立即失效（abort + 丢弃结果）相关 path 的所有 in-flight async run：
 
-| äº‹ä»¶                                              | å—å½±å“èŒƒå›´                               |
-| --------------------------------------------------- | ------------------------------------------- |
-| `registry.unregister(path)`                         | è¯¥ path çš„æ‰€æœ‰ run                      |
-| `if` åˆ†æ”¯åˆ‡æ¢ï¼ˆå¤±æ´»åˆ†æ”¯ renderer unmountï¼‰ | å¤±æ´»åˆ†æ”¯ä¸‹æ‰€æœ‰ path çš„ run          |
-| `variant-field` åˆ‡æ¢                               | æ—§ branch ä¸‹æ‰€æœ‰ path çš„ run           |
-| array row åˆ é™¤                                    | è¯¥ row indexed path ä¸‹æ‰€æœ‰ path çš„ run |
-| draft owner cancel/dispose                          | draft owner å†…æ‰€æœ‰ path çš„ run          |
+| 事件                                       | 受影响范围                             |
+| ------------------------------------------ | -------------------------------------- |
+| `registry.unregister(path)`                | 该 path 的所有 run                     |
+| `if` 分支切换（失活分支 renderer unmount） | 失活分支下所有 path 的 run             |
+| `variant-field` 切换                       | 旧 branch 下所有 path 的 run           |
+| array row 删除                             | 该 row indexed path 下所有 path 的 run |
+| draft owner cancel/dispose                 | draft owner 内所有 path 的 run         |
 
-å®žçŽ°ä¸Šï¼Œ`owner.currentEpoch` åœ¨å‘ç”Ÿ array remove / variant switch / owner dispose ç­‰ç»“æž„å˜åŒ–æ—¶é€’å¢žï¼Œæ‰€æœ‰ pre-epoch run åœ¨ç»“æžœè¿”å›žæ—¶å›  epoch ä¸åŒ¹é…è€Œè¢«ä¸¢å¼ƒï¼Œæ— éœ€é€ä¸€ abortã€‚
+实现上，`owner.currentEpoch` 在发生 array remove / variant switch / owner dispose 等结构变化时递增，所有 pre-epoch run 在结果返回时因 epoch 不匹配而被丢弃，无需逐一 abort。
 
-Phase 1 ä¸åš run çš„ path remapï¼ˆå¦‚ array reorder åŽæŠŠ `items.1` çš„ run é‡æ˜ å°„åˆ° `items.0`ï¼‰ï¼Œç›´æŽ¥ abort å¹¶åœ¨æ–° path ä¸Šé‡æ–°è§¦å‘éªŒè¯ã€‚
+Phase 1 不做 run 的 path remap（如 array reorder 后把 `items.1` 的 run 重映射到 `items.0`），直接 abort 并在新 path 上重新触发验证。
 
 ---
 
-## 17. ç»“æž„å˜åŒ–çš„å‰¯ä½œç”¨æ¸…ç†è¯­ä¹‰
+## 17. 结构变化的副作用清理语义
 
-> è¡¥å……è‡ª `owner-redesign-draft.md` Â§variant-field æ‰§è¡Œæ¨¡åž‹ å’Œ Â§array-field æ‰§è¡Œæ¨¡åž‹ï¼ŒERD å¯¹è¿™ç±»åœºæ™¯çš„çŠ¶æ€æ¸…ç†æè¿°ä¸è¶³ã€‚
+> 补充自 `owner-redesign-draft.md` §variant-field 执行模型 和 §array-field 执行模型，ERD 对这类场景的状态清理描述不足。
 
-### 17.1 é—®é¢˜
+### 17.1 问题
 
-å½“å­—æ®µç»“æž„å‘ç”Ÿå˜åŒ–æ—¶ï¼ˆvariant åˆ‡æ¢ã€array row å¢žåˆ ã€`if` åˆ†æ”¯åˆ‡æ¢ï¼‰ï¼Œå¿…é¡»åŒæ­¥æ¸…ç†ç›¸å…³çŠ¶æ€ï¼Œå¦åˆ™ä¼šå‡ºçŽ°ï¼š
+当字段结构发生变化时（variant 切换、array row 增删、`if` 分支切换），必须同步清理相关状态，否则会出现：
 
-- æ—§ variant branch çš„é”™è¯¯ä¿¡æ¯æ®‹ç•™åœ¨æ–° branch çš„æ˜¾ç¤ºä½ç½®
-- array row åˆ é™¤åŽ indexed path çš„ `validating: true` æ®‹ç•™
-- `if` åˆ†æ”¯åˆ‡æ¢åŽæ—§åˆ†æ”¯å­—æ®µçš„é”™è¯¯å½±å“ submit gate
+- 旧 variant branch 的错误信息残留在新 branch 的显示位置
+- array row 删除后 indexed path 的 `validating: true` 残留
+- `if` 分支切换后旧分支字段的错误影响 submit gate
 
-### 17.2 Variant Switch æ¸…ç†åºåˆ—
+### 17.2 Variant Switch 清理序列
 
-å½“ `variant-field` çš„æ¿€æ´» branch åˆ‡æ¢æ—¶ï¼Œ`FormRuntime` å¿…é¡»æŒ‰ä»¥ä¸‹é¡ºåºæ‰§è¡Œï¼š
+当 `variant-field` 的激活 branch 切换时，`FormRuntime` 必须按以下顺序执行：
 
-1. **å¤±æ´»æ—§ branch**ï¼šä»Ž active path set ä¸­ç§»é™¤æ—§ branch ä¸‹æ‰€æœ‰ pathï¼ˆé€šè¿‡ renderer unmount é©±åŠ¨ registry unregister å®Œæˆï¼‰
-2. **æ¸…ç†æ—§ branch çŠ¶æ€**ï¼š
-   - æ¸…é™¤æ—§ branch æ‰€æœ‰ path çš„ `errors`
-   - æ¸…é™¤æ—§ branch æ‰€æœ‰ path çš„ `validating` çŠ¶æ€
-   - abort æ—§ branch æ‰€æœ‰ in-flight async runï¼ˆÂ§16.5ï¼‰
-   - æ¸…é™¤æ—§ branch æ‰€æœ‰ path çš„ materialization cache
-3. **æ¿€æ´»æ–° branch**ï¼šæ–° branch renderer mount â†’ registry registerï¼ˆè‡ªåŠ¨å®Œæˆï¼‰
-4. **è§¦å‘æ–° branch åˆå§‹éªŒè¯**ï¼š`validateSubtree(variantRoot, 'change')` æˆ–è‡³å°‘éªŒè¯æ–° branch çš„ required/aggregate
+1. **失活旧 branch**：从 active path set 中移除旧 branch 下所有 path（通过 renderer unmount 驱动 registry unregister 完成）
+2. **清理旧 branch 状态**：
+   - 清除旧 branch 所有 path 的 `errors`
+   - 清除旧 branch 所有 path 的 `validating` 状态
+   - abort 旧 branch 所有 in-flight async run（§16.5）
+   - 清除旧 branch 所有 path 的 materialization cache
+3. **激活新 branch**：新 branch renderer mount → registry register（自动完成）
+4. **触发新 branch 初始验证**：`validateSubtree(variantRoot, 'change')` 或至少验证新 branch 的 required/aggregate
 
-é»˜è®¤ç­–ç•¥ï¼š
+默认策略：
 
-- æ—§ branch çš„ **å€¼** å¯ä»¥ä¿ç•™ï¼ˆä¸å¼ºåˆ¶ clearï¼‰ï¼Œä½†æ—§ branch å­—æ®µä¸å‚ä¸Ž submit gate
-- submit æ—¶åªéªŒè¯å½“å‰ active branch
+- 旧 branch 的 **值** 可以保留（不强制 clear），但旧 branch 字段不参与 submit gate
+- submit 时只验证当前 active branch
 
-### 17.3 Array Row åˆ é™¤/æ’å…¥/é‡æŽ’çš„çŠ¶æ€ Remap
+### 17.3 Array Row 删除/插入/重排的状态 Remap
 
-Array row åˆ é™¤åŽï¼Œindexed path å‘ç”Ÿåç§»ï¼ˆå¦‚åˆ é™¤ `items.0` åŽï¼Œ`items.1` å˜ä¸º `items.0`ï¼‰ã€‚æ­¤æ—¶å¿…é¡»å¯¹ä»¥ä¸‹çŠ¶æ€æ‰§è¡Œ index remapï¼š
+Array row 删除后，indexed path 发生偏移（如删除 `items.0` 后，`items.1` 变为 `items.0`）。此时必须对以下状态执行 index remap：
 
-| çŠ¶æ€                           | Remap æ–¹å¼                                |
-| ------------------------------- | ------------------------------------------ |
-| `errors` per path               | æŒ‰æ–° index é‡æ–°æ˜ å°„ key               |
-| `validating` per path           | æŒ‰æ–° index é‡æ–°æ˜ å°„ key               |
-| `touched` / `dirty` / `visited` | æŒ‰æ–° index é‡æ–°æ˜ å°„ key               |
-| `materialization cache`         | å¤±æ•ˆå—å½±å“ index åŠä»¥åŽçš„æ‰€æœ‰ cache |
-| in-flight async run             | **ä¸ remap**ï¼Œç›´æŽ¥ abortï¼ˆÂ§16.5ï¼‰    |
+| 状态                            | Remap 方式                          |
+| ------------------------------- | ----------------------------------- |
+| `errors` per path               | 按新 index 重新映射 key             |
+| `validating` per path           | 按新 index 重新映射 key             |
+| `touched` / `dirty` / `visited` | 按新 index 重新映射 key             |
+| `materialization cache`         | 失效受影响 index 及以后的所有 cache |
+| in-flight async run             | **不 remap**，直接 abort（§16.5）   |
 
-Phase 1 çš„ remap ç­–ç•¥ï¼š
+Phase 1 的 remap 策略：
 
-- delete row `i`ï¼šå°† `i+1..n-1` çš„çŠ¶æ€å…¨éƒ¨å‘å‰ç§»ä¸€ä½ï¼Œ`n-1` çš„çŠ¶æ€æ¸…ç©º
-- insert row at `i`ï¼šå°† `i..n-1` çš„çŠ¶æ€å…¨éƒ¨å‘åŽç§»ä¸€ä½ï¼Œ`i` åˆå§‹åŒ–ä¸ºç©ºçŠ¶æ€
-- reorderï¼ˆswap i/jï¼‰ï¼šäº¤æ¢å¯¹åº” index çš„æ‰€æœ‰çŠ¶æ€ key
+- delete row `i`：将 `i+1..n-1` 的状态全部向前移一位，`n-1` 的状态清空
+- insert row at `i`：将 `i..n-1` 的状态全部向后移一位，`i` 初始化为空状态
+- reorder（swap i/j）：交换对应 index 的所有状态 key
 
-Remap å®ŒæˆåŽï¼Œæ‰§è¡Œï¼š
+Remap 完成后，执行：
 
 ```ts
 applyChangesAndRevalidate({
@@ -1014,33 +1014,33 @@ applyChangesAndRevalidate({
 });
 ```
 
-è§¦å‘ array aggregate ruleï¼ˆ`minItems` / `maxItems` / `uniqueBy`ï¼‰é‡éªŒã€‚
+触发 array aggregate rule（`minItems` / `maxItems` / `uniqueBy`）重验。
 
-### 17.4 `if` åˆ†æ”¯åˆ‡æ¢
+### 17.4 `if` 分支切换
 
-`if` åˆ†æ”¯åˆ‡æ¢ç”± React reconciler è‡ªåŠ¨å¤„ç†ï¼šå¤±æ´»åˆ†æ”¯çš„ renderer unmount â†’ `registry.unregister` â†’ ä»Žæ´»è·ƒå­—æ®µé›†åˆæ¶ˆå¤±ã€‚
+`if` 分支切换由 React reconciler 自动处理：失活分支的 renderer unmount → `registry.unregister` → 从活跃字段集合消失。
 
-`FormRuntime` éœ€è¦ç›‘å¬ registry çš„ unregister äº‹ä»¶ï¼Œåœ¨ path unregister æ—¶ï¼š
+`FormRuntime` 需要监听 registry 的 unregister 事件，在 path unregister 时：
 
-1. æ¸…é™¤è¯¥ path çš„ `errors` / `validating`
-2. abort è¯¥ path çš„ in-flight async run
-3. æ¸…é™¤è¯¥ path çš„ materialization cache
-4. è‹¥è¯¥ path æœ‰ aggregate ancestorï¼Œå°† ancestor åŠ å…¥ä¸‹æ¬¡ closure æ‰©å±•ï¼ˆè§¦å‘ aggregate é‡éªŒï¼‰
+1. 清除该 path 的 `errors` / `validating`
+2. abort 该 path 的 in-flight async run
+3. 清除该 path 的 materialization cache
+4. 若该 path 有 aggregate ancestor，将 ancestor 加入下次 closure 扩展（触发 aggregate 重验）
 
-æ³¨æ„ï¼š`if` åˆ†æ”¯çš„å€¼ clear ç­–ç•¥ï¼ˆ`clearValueWhenHidden`ï¼‰å±žäºŽ FormRuntime UX å±‚å†³ç­–ï¼Œä¸åœ¨æœ¬èŠ‚è®¨è®ºèŒƒå›´ã€‚
+注意：`if` 分支的值 clear 策略（`clearValueWhenHidden`）属于 FormRuntime UX 层决策，不在本节讨论范围。
 
 ---
 
-## 14. æ–‡æ¡£å…³è”
+## 14. 文档关联
 
-| æ–‡æ¡£                                                             | å…³ç³»                                                                                                                                                                                                                                                             |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `docs/architecture/form-validation.md`                             | å½“å‰è§„èŒƒåŸºçº¿ï¼›Phase 1-2 å®ŒæˆåŽéœ€æ›´æ–°                                                                                                                                                                                                                     |
-| `docs/analysis/2026-04-11-form-validation-owner-redesign-draft.md` | æ¦‚å¿µå‚è€ƒï¼›Field Tree Modelï¼ˆÂ§12ï¼‰å’Œ Compiler Hooksï¼ˆÂ§13ï¼‰æ–¹å‘æœ¬æ–‡é‡‡çº³ï¼›closure æ‰©å±•ï¼ˆÂ§15ï¼‰ã€async run ownershipï¼ˆÂ§16ï¼‰ã€ç»“æž„å˜åŒ–æ¸…ç†ï¼ˆÂ§17ï¼‰ä»Žè¯¥æ–‡æ¡£å¸æ”¶ï¼›ValidationOwner æŠ½è±¡å’Œ active instance graph æ–¹å‘æœ¬æ–‡ä¸é‡‡çº³ |
-| `docs/analysis/2026-03-19-form-validation-comparison.md`           | Yup/AMIS å¯¹æ¯”æ‘˜è¦ï¼›æœ¬æ–‡çš„å€Ÿé‰´åˆ¤æ–­ä¸Žä¹‹ä¸€è‡´                                                                                                                                                                                                           |
-| `packages/flux-formula/src/index.ts`                               | `ExpressionCompiler` â€” Phase 1 çš„ `compileValue()` æ¥æºï¼›Section 13 `ValidationCompileContext` ä¸­å¼•ç”¨                                                                                                                                                       |
-| `packages/flux-core/src/types/validation.ts`                       | `CompiledValidationRule` â€” Section 4 ä¸­æ‰©å±•ä¸º `CompiledRuleTemplate`                                                                                                                                                                                         |
-| `packages/flux-core/src/validation-model.ts`                       | `CompiledValidationNode` â€” Section 12 ä¸­æ‰©å±•ä¸º `CompiledFieldTreeNode`                                                                                                                                                                                       |
-| `packages/flux-runtime/src/validation/rules.ts`                    | Phase 1 ä¸»è¦æ”¹åŠ¨ç‚¹ï¼›Section 4.3                                                                                                                                                                                                                               |
-| `packages/flux-runtime/src/form-runtime.ts`                        | Phase 2 ä¸»è¦æ”¹åŠ¨ç‚¹ï¼›Section 5ï¼›Section 15â€“17 çš„ closure/async/remap é€»è¾‘å½’å±žæ­¤æ–‡ä»¶                                                                                                                                                                 |
-| `packages/flux-react/src/form-state.ts`                            | Phase 1 çš„ `isFieldEffectivelyRequired` æ”¹åŠ¨ï¼›Section 6                                                                                                                                                                                                        |
+| 文档                                                               | 关系                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/architecture/form-validation.md`                             | 当前规范基线；Phase 1-2 完成后需更新                                                                                                                                                                                 |
+| `docs/analysis/2026-04-11-form-validation-owner-redesign-draft.md` | 概念参考；Field Tree Model（§12）和 Compiler Hooks（§13）方向本文采纳；closure 扩展（§15）、async run ownership（§16）、结构变化清理（§17）从该文档吸收；ValidationOwner 抽象和 active instance graph 方向本文不采纳 |
+| `docs/analysis/2026-03-19-form-validation-comparison.md`           | Yup/AMIS 对比摘要；本文的借鉴判断与之一致                                                                                                                                                                            |
+| `packages/flux-formula/src/index.ts`                               | `ExpressionCompiler` — Phase 1 的 `compileValue()` 来源；Section 13 `ValidationCompileContext` 中引用                                                                                                                |
+| `packages/flux-core/src/types/validation.ts`                       | `CompiledValidationRule` — Section 4 中扩展为 `CompiledRuleTemplate`                                                                                                                                                 |
+| `packages/flux-core/src/validation-model.ts`                       | `CompiledValidationNode` — Section 12 中扩展为 `CompiledFieldTreeNode`                                                                                                                                               |
+| `packages/flux-runtime/src/validation/rules.ts`                    | Phase 1 主要改动点；Section 4.3                                                                                                                                                                                      |
+| `packages/flux-runtime/src/form-runtime.ts`                        | Phase 2 主要改动点；Section 5；Section 15–17 的 closure/async/remap 逻辑归属此文件                                                                                                                                   |
+| `packages/flux-react/src/form-state.ts`                            | Phase 1 的 `isFieldEffectivelyRequired` 改动；Section 6                                                                                                                                                              |

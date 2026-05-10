@@ -262,8 +262,8 @@ export function buildInspectByCid(
   return (cid: number): NopComponentInspectResult | undefined => {
     const runtime = getRuntime?.();
     if (!componentRegistry) return undefined;
-    const inspected = componentRegistry.inspectCid?.(cid);
     const element = queryRuntimeScopedElement(runtime, cid);
+    const inspected = componentRegistry.inspectCid?.(cid);
     const handle = componentRegistry.getHandleByCid?.(cid);
 
     if (inspected?.kind === 'resolved') {

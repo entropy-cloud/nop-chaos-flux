@@ -88,7 +88,7 @@ The current architecture already has the base pieces for this direction:
 
 - `RendererDefinition.fields` in `packages/flux-core/src/index.ts`
 - `SchemaFieldRule` in `packages/flux-core/src/index.ts`
-- `classifyField()` in `packages/flux-compiler/src/schema-compiler.ts`
+- `classifyField()` in `packages/flux-compiler/src/schema-compiler/fields.ts`
 - `TemplateRegion` in `packages/flux-core/src/index.ts`
 - `RenderRegionHandle` in `packages/flux-core/src/index.ts`
 
@@ -101,11 +101,25 @@ Today the active field rule model already supports:
 - `event`
 - `ignored`
 
-Each `SchemaFieldRule` also supports optional `params?: readonly string[]` (parameter names for scoped slot regions) and `isolate?: boolean` (isolation policy for the region).
+Each `SchemaFieldRule` also supports optional `params?: readonly string[]` (parameter names for scoped slot regions), `isolate?: boolean` (isolation policy for the region), and `lazyEval?: boolean` (deferred evaluation into `structuralFields`).
 
 That means the repository has already moved beyond the older `meta / prop / region / ignored` split.
 
 What is still evolving is not the existence of `value-or-region` itself, but how broadly and formally renderer metadata should describe more advanced field semantics.
+
+Two additional field-level concerns are now part of the design:
+
+- **`lazyEval`**: the field value is compiled into `TemplateNode.structuralFields` instead of `propsProgram`, and the renderer evaluates it at runtime via `helpers.evaluateCompiled()` with a custom scope. This is the correct mechanism for repeated-item data payloads (e.g. `loop.itemData`) where the field has a single fixed set of runtime params.
+- **`compile` (custom compilation function)**: a renderer-provided function that takes over compilation for a specific field. The external compiler passes the raw value and a compilation context; the renderer definition decides which sub-paths to compile, which to leave as raw schema, and how the result is structured. This is the correct mechanism for "schema-within-a-prop" fields where the prop contains nested template schemas that should not be expression-evaluated at the parent scope.
+
+### When to use `lazyEval` vs `compile` vs neither
+
+| Field characteristic                                                                                  | Correct mechanism                 |
+| ----------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Normal value; expressions should be evaluated at parent scope                                         | default `prop` (no special flag)  |
+| Value that should be evaluated later, at a known scope, with a fixed set of params                    | `lazyEval`                        |
+| Value that contains nested template schemas; different sub-paths need different compilation treatment | `compile` (custom function)       |
+| Value that should be passed through entirely unmodified                                               | `compile` returning the raw value |
 
 ## Recommended Field Semantics Model
 
@@ -404,6 +418,63 @@ Example direction:
 - future `list.items` -> nested render-fragment normalizer
 
 This keeps deep extraction scalable when more renderer-owned nested structures appear later.
+
+## Schema-Within-a-Prop: Custom Field Compilation
+
+Some renderer props contain nested template schemas that define their own expression scopes. The canonical example is a designer configuration object where `nodeTypes[].body` and `edgeTypes[].body` are `SchemaInput` values whose expressions (`${label}`, `${condition}`) must be evaluated at node/edge render time, not at the parent page scope.
+
+### Why default `prop` compilation breaks
+
+The default compilation pipeline passes all `prop` fields through `expressionCompiler.compileValue()`, which recursively walks plain objects and evaluates expression strings. When a prop contains nested templates, those template expressions are evaluated in the wrong scope (the parent page scope where the template variables do not exist), producing `undefined` and destroying the template.
+
+### Why `lazyEval` does not solve this
+
+`lazyEval` defers evaluation of the entire field value to a later point, but evaluates it as one unit with one scope. It cannot handle the case where different sub-paths of the same field need different evaluation scopes (e.g. per-node, per-edge). The `params` mechanism assumes a fixed, knowable set of symbols, which does not apply when template variables vary per node type.
+
+### Recommended solution: `compile` function on `SchemaFieldRule`
+
+Add an optional `compile` function to `SchemaFieldRule`. When present, the compiler delegates field-level compilation to the renderer definition instead of using the default `compileValue` path.
+
+The renderer definition knows its own internal structure: which sub-paths are templates, which are ordinary data, and which should be recursively compiled as schema.
+
+Interface:
+
+```ts
+interface SchemaFieldRule {
+  key: string;
+  kind: SchemaFieldKind;
+  // ... existing fields ...
+  compile?: (value: unknown, context: FieldCompileContext) => unknown;
+}
+
+interface FieldCompileContext {
+  expressionCompiler: ExpressionCompiler;
+  symbolTable: SymbolTable;
+  compileValue: (value: unknown, options?: CompileValueOptions) => CompiledRuntimeValue<unknown>;
+  compileSchema: (schema: SchemaInput, options?: CompileSchemaOptions) => TemplateNode;
+  sourcePath: string;
+}
+```
+
+Compiler integration:
+
+- Fields with `compile` are extracted from `propSource` before the global `compileValue` call
+- The `compile` function receives the raw value and a context with the same compilation capabilities the compiler uses internally
+- `compileValue` in the context lets the renderer evaluate expressions in sub-paths that are not templates
+- `compileSchema` in the context lets the renderer compile sub-schemas into `TemplateNode` when needed
+- The result goes directly into the compiled props output
+- If a `compile` function throws, the compiler catches the error and emits a diagnostic rather than crashing compilation
+- The external compiler stays ignorant of the renderer's internal structure
+
+Tradeoffs:
+
+| Approach                                                  | Advantage                                                                                                   | Disadvantage                                                                         |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `skipEval` flag (raw passthrough)                         | Simple; no new concepts                                                                                     | Cannot selectively compile sub-paths; all-or-nothing                                 |
+| `${'$'}{...}` escaping in schema                          | No compiler change needed                                                                                   | Schema-author burden; error-prone; intent unclear                                    |
+| `xui:template` marker in schema                           | Generalizable; fine-grained                                                                                 | New schema concept; pushes renderer knowledge into every schema author               |
+| Renderer reads from `meta.templateNode.schema` at runtime | No compiler change; immediate fix                                                                           | Violates compile-once principle; runtime reads raw schema; fragile under refactoring |
+| **`compile` function on field rule**                      | Renderer owns its structure; selective compilation; no schema-author burden; stays within compiled pipeline | Slightly more complex than `skipEval`; renderer must handle its own compilation      |
 
 ## Recommended Renderer Patterns
 

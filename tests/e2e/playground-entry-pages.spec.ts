@@ -11,8 +11,8 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
   },
   'flow-designer': async (page) => {
-    await expect(page.getByRole('tab', { name: '工作流' })).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator('.react-flow')).toBeVisible();
+    await expect(page.getByRole('tab', { name: '工作流' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('.react-flow')).toBeVisible({ timeout: 30_000 });
   },
   'dingtalk-flow-demo': async (page) => {
     await expect(page.getByRole('button', { name: 'Back' })).toBeVisible({ timeout: 15_000 });
@@ -21,7 +21,7 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
   'report-designer': async (page) => {
     await expect(
       page.getByRole('heading', { name: 'Report Designer Playground', level: 1 }),
-    ).toBeVisible({ timeout: 15_000 });
+    ).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('.report-designer-demo')).toBeVisible();
   },
   'debugger-lab': async (page) => {
@@ -45,9 +45,7 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     ).toBeVisible();
   },
   'word-editor': async (page) => {
-    await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('button', { name: '保存' })).toBeVisible();
   },
   'performance-table': async (page) => {

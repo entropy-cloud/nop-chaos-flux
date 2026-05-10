@@ -45,13 +45,43 @@ export function explainNodeFailure(args: {
   const inspect = query.cid != null ? args.inspectByCid(query.cid) : undefined;
   const nodeId = query.nodeId ?? inspect?.nodeId;
   const path = query.path ?? inspect?.path;
-  const anchor =
+  const directAnchor =
     args.events.find(
       (event) =>
         (event.group === 'error' ||
           (event.group === 'api' && (event.level === 'error' || event.kind === 'api:abort'))) &&
         matchesNodeQuery(event, { nodeId, path }),
     ) ?? (query.inferFromLatest !== false ? getLatestFailedAction(args.events)?.event : undefined);
+
+  const nodeActionAnchor =
+    directAnchor || !inspect
+      ? undefined
+      : args.events.find(
+          (event) =>
+            event.group === 'action' &&
+            matchesNodeQuery(event, { nodeId: inspect.nodeId, path: inspect.path }),
+        );
+
+  const traceAnchor =
+    directAnchor || !inspect
+      ? undefined
+      : buildInteractionTrace(args.events, {
+          inferFromLatest: false,
+          interactionId: nodeActionAnchor?.interactionId,
+          requestInstanceId: nodeActionAnchor?.requestInstanceId,
+          requestKey: nodeActionAnchor?.requestKey,
+          actionType: nodeActionAnchor?.actionType,
+          nodeId: inspect.nodeId,
+          path: inspect.path,
+          mode: 'related',
+          limit: MAX_RELATED_EVENTS,
+        }).matchedEvents.find(
+          (event) =>
+            event.group === 'error' ||
+            (event.group === 'api' && (event.level === 'error' || event.kind === 'api:abort')),
+        );
+
+  const anchor = directAnchor ?? traceAnchor;
 
   if (!anchor) {
     return {

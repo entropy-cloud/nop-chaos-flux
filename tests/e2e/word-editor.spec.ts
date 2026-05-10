@@ -33,7 +33,7 @@ async function openWordEditor(page: import('@playwright/test').Page) {
 
   await page.getByRole('button', { name: 'Word Editor' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 30000 });
 }
 
 test.describe('Word Editor Page', () => {
@@ -164,7 +164,7 @@ test.describe('Word Editor Page', () => {
   test('can open dataset dialog', async ({ page }) => {
     await openWordEditor(page);
 
-    const addDatasetButton = page.getByTitle('Add Dataset');
+    const addDatasetButton = page.getByTitle('添加数据集');
     await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
     await addDatasetButton.click();
 

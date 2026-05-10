@@ -166,12 +166,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${label}",
+                      "text": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "${trigger}",
+                      "text": "${trigger}",
                       "className": "node-subtitle"
                     }
                   ]
@@ -255,12 +255,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${label}",
+                      "text": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "${result}",
+                      "text": "${result}",
                       "className": "node-subtitle"
                     }
                   ]
@@ -342,12 +342,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${label}",
+                      "text": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "${description}",
+                      "text": "${description}",
                       "className": "node-subtitle"
                     }
                   ]
@@ -431,12 +431,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${label}",
+                      "text": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "${expression}",
+                      "text": "${expression}",
                       "className": "node-subtitle"
                     }
                   ]
@@ -509,12 +509,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${label}",
+                      "text": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "${branches} 分支",
+                      "text": "${branches} 分支",
                       "className": "node-subtitle"
                     }
                   ]
@@ -586,12 +586,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${label}",
+                      "text": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "×${limit} / ${interval}",
+                      "text": "×${limit} / ${interval}",
                       "className": "node-subtitle"
                     }
                   ]
@@ -646,7 +646,7 @@
         "label": "默认边",
         "body": {
           "type": "text",
-          "body": "${condition}",
+          "text": "${condition}",
           "className": "text-sm font-medium text-gray-600"
         },
         "appearance": {

@@ -81,8 +81,8 @@ test.describe('Performance Table Page', () => {
     await openPerformanceTable(page);
 
     const firstRow = await page.evaluate(() => {
-      const rows = document.querySelectorAll('table tbody tr');
-      const dataRow = rows[0];
+      const rows = Array.from(document.querySelectorAll('table tbody tr'));
+      const dataRow = rows.find((row) => row.querySelectorAll('td').length > 2);
       if (!dataRow) return null;
       const cells = dataRow.querySelectorAll('td');
       const profile = cells[2]?.textContent?.trim();
@@ -127,14 +127,18 @@ test.describe('Performance Table Page', () => {
     await expect
       .poll(() =>
         page.evaluate(() => {
-          const rows = document.querySelectorAll('table tbody tr');
-          return Array.from(rows).some((row) => row.textContent?.includes('951'));
+          const rows = Array.from(document.querySelectorAll('table tbody tr'));
+          return rows
+            .filter((row) => row.querySelectorAll('td').length > 2)
+            .some((row) => row.textContent?.includes('951'));
         }),
       )
       .toBe(true);
 
     const lastPageFirstRow = await page.evaluate(() => {
-      const rows = document.querySelectorAll('table tbody tr');
+      const rows = Array.from(document.querySelectorAll('table tbody tr')).filter(
+        (row) => row.querySelectorAll('td').length > 2,
+      );
       for (let i = 0; i < rows.length; i++) {
         const cells = rows[i].querySelectorAll('td');
         const profile = cells[2]?.textContent?.trim();
@@ -149,7 +153,9 @@ test.describe('Performance Table Page', () => {
     expect(lastPageFirstRow!.profile).toContain('951');
 
     const lastRow = await page.evaluate(() => {
-      const rows = document.querySelectorAll('table tbody tr');
+      const rows = Array.from(document.querySelectorAll('table tbody tr')).filter(
+        (row) => row.querySelectorAll('td').length > 2,
+      );
       for (let i = rows.length - 1; i >= 0; i--) {
         const cells = rows[i].querySelectorAll('td');
         const profile = cells[2]?.textContent?.trim();

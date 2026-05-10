@@ -164,6 +164,28 @@ Primary architecture anchors:
 - `docs/architecture/word-editor/design.md`
 - `docs/references/audit-rules/owner-bridge-async-state-coherence.md`
 
+### 8) Schema-Within-a-Prop Must Use Renderer-Owned Compilation
+
+Rule:
+
+- When a renderer prop contains nested template schemas (e.g. `nodeType[].body`, `edgeType[].body`), the default `compileValue` pipeline must not evaluate expressions in those nested schemas at the parent scope.
+- The renderer definition must provide a `compile` function on the `SchemaFieldRule` that controls how the field is compiled.
+
+Why:
+
+- `compileValue` recursively evaluates all expression strings in a value tree. When template expressions like `${label}` exist inside a config prop, they are evaluated in the page scope where the variables do not exist, producing `undefined` and destroying the templates.
+- `lazyEval` defers evaluation but still evaluates the entire field as one unit; it cannot handle sub-paths that need different evaluation scopes.
+- Renderer-level workarounds (reading from `meta.templateNode.schema` instead of resolved props) bypass the compilation pipeline and are fragile under refactoring.
+
+Bug evidence:
+
+- `docs/bugs/43-flow-designer-node-edge-text-empty-expression-pre-evaluation-fix.md`
+
+Primary architecture anchors:
+
+- `docs/architecture/field-metadata-slot-modeling.md`
+- `docs/architecture/renderer-runtime.md`
+
 ## Review Checklist
 
 Use this quick checklist in reviews for high-risk changes:
@@ -175,6 +197,7 @@ Use this quick checklist in reviews for high-risk changes:
 - Tailwind scanning config is path-verified in monorepo contexts.
 - Source directories remain artifact-free.
 - Owner snapshots, bridge projections, and persisted/autosaved truth stay semantically aligned.
+- Props containing nested template schemas must not pass through default `compileValue` without a renderer-owned compilation strategy.
 
 ## Related Docs
 

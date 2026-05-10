@@ -23,6 +23,7 @@
     "check:react19": "node scripts/check-react19-legacy-apis.mjs",
     "check:oversized-code-files": "node scripts/check-oversized-code-files.mjs",
     "check:active-doc-code-anchors": "node scripts/check-active-doc-code-anchors.mjs",
+    "check:docs-garbled": "node scripts/check-docs-garbled.mjs",
     "check:package-css-exports": "node scripts/check-package-css-exports.mjs",
     "check:renderer-definition-fields-only": "node scripts/check-renderer-definition-fields-only.mjs",
     "check:src-artifacts": "node scripts/verify-no-src-artifacts.mjs",

@@ -32,8 +32,8 @@
 
 ## Fix
 
-- `DesignerPageRenderer` (`packages/flow-designer-renderers/src/designer-page.tsx:121-123`) now reads `config` from `meta.templateNode.schema` (the original, uncompiled schema) instead of `props.props['config']` (the expression-evaluated version)
-- This bypasses the page-level expression evaluation for `config` entirely, preserving the template expressions for later evaluation at the correct scope (node/edge render time)
+- Final fix path: `designer-page.config` now uses a field-level `compile` hook on `SchemaFieldRule`, so nested template schemas inside config are preserved during compilation while ordinary non-schema config leaves still pass through normal `compileValue` evaluation
+- This keeps the renderer on the compiled-props contract: `DesignerPageRenderer` reads `config` from `props.props['config']`, but the compiler no longer destroys nested template expressions before they reach node/edge render time
 - Also fixed edge/node bindings in `designer-xyflow-edge.tsx` and `designer-xyflow-node.tsx` to spread nested data into top-level scope
 
 ## Tests
@@ -43,12 +43,15 @@
 
 ## Affected Files
 
-- `packages/flow-designer-renderers/src/designer-page.tsx` — config read from uncompiled schema
+- `packages/flux-core/src/types/schema.ts` — field-level `compile` contract for `SchemaFieldRule`
+- `packages/flux-compiler/src/schema-compiler/node-compiler.ts` — compiler integration for field-level `compile`
+- `packages/flow-designer-renderers/src/index.tsx` — `designer-page.config` custom compile strategy
 - `packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-xyflow-node.tsx` — bindings spread
 - `packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-xyflow-edge.tsx` — bindings spread
 
 ## Notes For Future Refactors
 
-- Any prop that contains nested template schemas (not just `config`) must not be passed through `compileValue()` at the parent scope. If a new "schema-within-a-prop" pattern appears, the same fix pattern applies: read from `meta.templateNode.schema` instead of the evaluated props
-- The `classifyField` system in `packages/flux-compiler/src/schema-compiler/fields.ts` could be extended with a `template` field kind that skips expression evaluation, which would be a more general solution than per-renderer workarounds
+- Closure note: this bug's final architectural fix landed under `docs/plans/239-schema-within-prop-custom-field-compilation-plan.md`, which introduced field-level `SchemaFieldRule.compile` so schema-within-a-prop values can preserve nested template schemas while still flowing through compiled props.
+- Any prop that contains nested template schemas (not just `config`) must not be passed through default `compileValue()` at the parent scope without a renderer-owned field-level `compile` strategy
+- The supported fix pattern is now: keep runtime on compiled props and teach the renderer field rule how to preserve nested schemas during compilation; do not fall back to reading `meta.templateNode.schema` at runtime
 - Unit tests alone cannot catch this class of bug because they typically create config objects that bypass the page-level compilation pipeline. E2e or integration-level tests are necessary

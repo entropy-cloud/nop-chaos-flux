@@ -8,8 +8,8 @@
 
 ## Root Cause
 
-- `packages/flux-runtime/src/form-runtime.ts:248` â€” `submit()` started with `store.setSubmitting(true)` but never checked the current `submitting` state
-- `submitting` was a UI flag, not a method gate â€” any number of concurrent calls could proceed
+- `packages/flux-runtime/src/form-runtime.ts:248` — `submit()` started with `store.setSubmitting(true)` but never checked the current `submitting` state
+- `submitting` was a UI flag, not a method gate — any number of concurrent calls could proceed
 - `finally` at line 291 unconditionally reset `submitting=false`, even when other calls were pending
 
 ## Fix
@@ -37,4 +37,4 @@
 - all mutating async methods (`submit`, `validateForm`) that have side effects should have a concurrency guard
 - if a queuing or retry behavior is needed later, replace the early-return with a queue/debounce pattern rather than removing the guard
 - duplicate submit prevention should use the same `cancelled` semantics as other intentionally skipped actions; do not report it as a normal business failure unless product behavior explicitly requires that contract
-- the `submitting` flag must remain consistent with actual request state â€” never set it without a corresponding API call
+- the `submitting` flag must remain consistent with actual request state — never set it without a corresponding API call

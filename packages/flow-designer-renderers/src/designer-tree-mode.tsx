@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import type { DesignerConfig, TreeDocument } from '@nop-chaos/flow-designer-core';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
@@ -28,15 +28,13 @@ export function TreeModeLayoutWrapper(
     setTreeDocument(inputTreeDocument);
   }, [inputTreeDocument]);
 
-  const core = useMemo(
-    () =>
-      createDesignerCore(
-        initialTreeDocument
-          ? computeTreeModeDocument(initialTreeDocument, config)
-          : { id: '', kind: '', name: '', version: '', nodes: [], edges: [] },
-        config,
-      ),
-    [config, initialTreeDocument],
+  const [core] = useState(() =>
+    createDesignerCore(
+      initialTreeDocument
+        ? computeTreeModeDocument(initialTreeDocument, config)
+        : { id: '', kind: '', name: '', version: '', nodes: [], edges: [] },
+      config,
+    ),
   );
   const lastSyncedInputRef = useRef<TreeDocument | undefined>(inputTreeDocument);
 

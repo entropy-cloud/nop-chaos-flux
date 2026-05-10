@@ -34,6 +34,7 @@ export function DesignerXyflowNode(props: NodeProps) {
         typeof dataRecord.config === 'object' && dataRecord.config !== null
           ? (dataRecord.config as Record<string, unknown>)
           : undefined;
+      const description = dataRecord.description;
       return {
         config: configRecord ?? dataRecord,
         node: {
@@ -45,6 +46,18 @@ export function DesignerXyflowNode(props: NodeProps) {
         data: props.data,
         ...dataRecord,
         ...(configRecord ?? {}),
+        trigger:
+          configRecord?.trigger ??
+          (typeof description === 'string' && description.length > 0 ? description : undefined),
+        result:
+          configRecord?.result ??
+          (typeof description === 'string' && description.length > 0 ? description : undefined),
+        expression:
+          configRecord?.expression ??
+          (typeof description === 'string' && description.length > 0 ? description : undefined),
+        branches: configRecord?.branches,
+        limit: configRecord?.limit,
+        interval: configRecord?.interval,
       };
     },
     [props.id, props.data, data.typeId, data.label],

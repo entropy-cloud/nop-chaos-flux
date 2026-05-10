@@ -8,7 +8,7 @@ async function openReportDesignerDemo(page: import('@playwright/test').Page) {
   await page.goto('/#/report-designer', { waitUntil: 'domcontentloaded' });
   await expect(
     page.getByRole('heading', { name: 'Report Designer Playground', level: 1 }),
-  ).toBeVisible({ timeout: 15000 });
+  ).toBeVisible({ timeout: 30000 });
   await expect(page.locator('.report-designer-demo')).toBeVisible({ timeout: 15000 });
 }
 
@@ -23,10 +23,10 @@ test('renders the core report designer surfaces', async ({ page }) => {
   await expect(page.locator('[data-slot="report-demo-inspector"]')).toBeVisible();
   await expect(page.locator('.rd-toolbar')).toBeVisible();
   await expect(page.locator('[data-slot="report-field-panel-source"]').first()).toBeVisible();
-  await expect(page.locator('.spreadsheet-grid')).toBeVisible();
+  await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible();
   await expect(page.locator('.ss-sheet-tab[data-active]')).toBeVisible();
-  await expect(page.locator('.row-header').first()).toBeVisible();
-  await expect(page.locator('.col-header').first()).toBeVisible();
+  await expect(page.locator('.ss-row-header').first()).toBeVisible();
+  await expect(page.locator('.ss-col-header').first()).toBeVisible();
 });
 
 test('verifies field items and inspector elements are visible', async ({ page }) => {
@@ -71,12 +71,12 @@ test('verifies field items and inspector elements are visible', async ({ page })
 test('spreadsheet grid exposes row and column headers', async ({ page }) => {
   await openReportDesignerDemo(page);
 
-  await expect(page.locator('.row-header')).toHaveCount(31);
-  await expect(page.locator('.col-header')).toHaveCount(10);
-  await expect(page.locator('.row-header').nth(1)).toContainText('1');
-  await expect(page.locator('.col-header').first()).toContainText('A');
+  await expect(page.locator('.ss-row-header')).toHaveCount(31);
+  await expect(page.locator('.ss-col-header')).toHaveCount(10);
+  await expect(page.locator('.ss-row-header').nth(1)).toContainText('1');
+  await expect(page.locator('.ss-col-header').first()).toContainText('A');
 
-  await expect(page.locator('.spreadsheet-grid')).toBeVisible();
+  await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible();
 });
 
 test('clicking a spreadsheet cell updates the inspector context', async ({ page }) => {

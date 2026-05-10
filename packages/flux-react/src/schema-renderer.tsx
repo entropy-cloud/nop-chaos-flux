@@ -130,6 +130,8 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     envRef.current = props.env;
     const mountedRef = useRef(false);
     const activeRuntimeRef = useRef<import('@nop-chaos/flux-core').RendererRuntime | null>(null);
+    const activeRootComponentRegistryRef =
+      useRef<import('@nop-chaos/flux-core').ComponentHandleRegistry | null>(null);
     const onActionErrorRef = useRef(props.onActionError);
     onActionErrorRef.current = props.onActionError;
     const runtime = useMemo(() => {
@@ -228,9 +230,20 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const ownsRootComponentRegistry = props.componentRegistry == null;
 
     useEffect(() => {
+      activeRootComponentRegistryRef.current = rootComponentRegistry;
+
       return () => {
         if (ownsRootComponentRegistry) {
-          rootComponentRegistry.dispose?.();
+          const disposedRegistry = rootComponentRegistry;
+
+          queueMicrotask(() => {
+            if (
+              !mountedRef.current ||
+              activeRootComponentRegistryRef.current !== disposedRegistry
+            ) {
+              disposedRegistry.dispose?.();
+            }
+          });
         }
       };
     }, [ownsRootComponentRegistry, rootComponentRegistry]);

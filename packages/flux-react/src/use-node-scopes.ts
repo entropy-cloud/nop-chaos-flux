@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { ActionScope, ComponentHandleRegistry, RendererRuntime } from '@nop-chaos/flux-core';
 
 function createNodeOwnedActionScope(
@@ -36,6 +36,8 @@ export function useNodeScopes(
   activeActionScope: ActionScope | undefined;
   activeComponentRegistry: ComponentHandleRegistry | undefined;
 } {
+  const mountedRef = useRef(false);
+  const activeNodeComponentRegistryRef = useRef<ComponentHandleRegistry | undefined>(undefined);
   const nodeActionScope = useMemo(() => {
     if (input.actionScopePolicy !== 'new') {
       return undefined;
@@ -57,8 +59,27 @@ export function useNodeScopes(
     input.componentRegistryPolicy === 'new' ? nodeComponentRegistry : componentRegistry;
 
   useEffect(() => {
+    mountedRef.current = true;
+
     return () => {
-      nodeComponentRegistry?.dispose?.();
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    activeNodeComponentRegistryRef.current = nodeComponentRegistry;
+
+    return () => {
+      const disposedRegistry = nodeComponentRegistry;
+
+      queueMicrotask(() => {
+        if (
+          !mountedRef.current ||
+          activeNodeComponentRegistryRef.current !== disposedRegistry
+        ) {
+          disposedRegistry?.dispose?.();
+        }
+      });
     };
   }, [nodeComponentRegistry]);
 

@@ -225,7 +225,7 @@ const quickEditCrud = {
         action: 'showToast',
         args: {
           level: 'success',
-          message: 'Saved ${record.name}',
+          message: 'Saved item',
         },
       },
       columns: [

@@ -104,6 +104,7 @@ export function useCrudQueryBridge(args: {
   queryFormId: string;
   scope: ScopeRef | undefined;
   queryStatePath: string;
+  queryDraftStatePath?: string;
   paginationStatePath: string;
   queryState: CrudQueryState;
   paginationState: CrudPaginationState;
@@ -117,6 +118,7 @@ export function useCrudQueryBridge(args: {
     queryFormId,
     scope,
     queryStatePath,
+    queryDraftStatePath,
     paginationStatePath,
     queryState,
     paginationState,
@@ -185,6 +187,7 @@ export function useCrudQueryBridge(args: {
   ]);
 
   const handleQuerySubmit = useCallback(async () => {
+    const draftQuery = queryDraftStatePath ? toRecord(scope?.get?.(queryDraftStatePath)) : {};
     const handle = componentRegistry?.resolve({ componentId: queryFormId });
     if (handle?.capabilities?.hasMethod?.('getValues')) {
       if (handle.capabilities.hasMethod?.('validate')) {
@@ -205,8 +208,8 @@ export function useCrudQueryBridge(args: {
       }
     }
 
-    submitQueryValues(queryState.values);
-  }, [componentRegistry, queryFormId, queryState.values, submitQueryValues]);
+    submitQueryValues(Object.keys(draftQuery).length > 0 ? draftQuery : queryState.values);
+  }, [componentRegistry, queryDraftStatePath, queryFormId, queryState.values, scope, submitQueryValues]);
 
   return {
     handleQuerySubmit,

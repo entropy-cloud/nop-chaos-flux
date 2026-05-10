@@ -7,8 +7,11 @@ import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { Button } from '@nop-chaos/ui';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '../schema-renderer.js';
+import { useCurrentComponentRegistry } from '../hooks.js';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { env, pageRenderer, textRenderer } from '../test-support-core.js';
+import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { createDefaultRegistry } from '../defaults.js';
 
 const openDialogButtonRenderer = {
   type: 'open-dialog-button',
@@ -276,5 +279,168 @@ describe('SchemaRenderer debug data gating', () => {
     unmount();
 
     await waitFor(() => expect(disposeSpy).toHaveBeenCalledTimes(1));
+  });
+
+  it('provides node-owned component registries to descendant regions', async () => {
+    function RegistryProbe() {
+      const componentRegistry = useCurrentComponentRegistry();
+      return <span data-testid="registry-probe">{componentRegistry?.id ?? ''}</span>;
+    }
+
+    const formLikeRenderer = {
+      type: 'form-like',
+      component: (props: any) => <>{props.regions.body?.render()}</>,
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+      componentRegistryPolicy: 'new' as const,
+    };
+    const registryProbeRenderer = {
+      type: 'registry-probe',
+      component: RegistryProbe,
+    };
+    const SchemaRenderer = createSchemaRenderer([
+      formLikeRenderer as never,
+      registryProbeRenderer as never,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'form-like',
+          body: [{ type: 'registry-probe' }],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('registry-probe').textContent).toContain(':component-registry'),
+    );
+    expect(screen.getByTestId('registry-probe').textContent).not.toBe('root-component-registry');
+  });
+
+  it('stores debug data inside child registries created by componentRegistryPolicy=new', async () => {
+    const onComponentRegistryChange = vi.fn();
+    const formLikeRenderer = {
+      type: 'form-like',
+      component: (props: any) => <>{props.regions.body?.render()}</>,
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+      componentRegistryPolicy: 'new' as const,
+    };
+    const SchemaRenderer = createSchemaRenderer([formLikeRenderer as never, textRenderer as never]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'form-like',
+          body: [{ type: 'text', text: 'Nested debug' }],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        onComponentRegistryChange={onComponentRegistryChange}
+      />,
+    );
+
+    await waitFor(() => expect(onComponentRegistryChange).toHaveBeenCalledTimes(1));
+    const rootRegistry = onComponentRegistryChange.mock.calls[0][0];
+    rootRegistry.setDebugEnabled?.(true);
+
+    await waitFor(() => {
+      const rootInspect = rootRegistry.inspectCid?.(2);
+      expect(rootInspect?.kind).toBe('resolved');
+      expect(rootInspect?.payload?.state?.resolvedMeta ?? rootInspect?.payload?.resolvedMeta).toBeTruthy();
+    });
+  });
+
+  it('keeps form subtree inspectable from the root registry', async () => {
+    const onComponentRegistryChange = vi.fn();
+    const registry = createDefaultRegistry();
+    registerFormRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'input-text',
+              name: 'username',
+              label: 'Username',
+            },
+          ],
+        }}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        onComponentRegistryChange={onComponentRegistryChange}
+      />,
+    );
+
+    await waitFor(() => expect(onComponentRegistryChange).toHaveBeenCalledTimes(1));
+    const rootRegistry = onComponentRegistryChange.mock.calls[0][0];
+    rootRegistry.setDebugEnabled?.(true);
+
+    await waitFor(() => {
+      const field = document.querySelector('.nop-field[data-cid]');
+      expect(field).toBeTruthy();
+      const cid = Number(field?.getAttribute('data-cid'));
+      const inspected = rootRegistry.inspectCid?.(cid);
+      expect(inspected?.kind).toBe('resolved');
+      expect(inspected?.payload?.state?.resolvedMeta ?? inspected?.payload?.resolvedMeta).toBeTruthy();
+    });
+  });
+
+  it('keeps form subtree inspectable from the root registry in StrictMode', async () => {
+    const onComponentRegistryChange = vi.fn();
+    const registry = createDefaultRegistry();
+    registerFormRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    render(
+      <React.StrictMode>
+        <SchemaRenderer
+          schemaUrl="test://schema.json"
+          schema={{
+            type: 'form',
+            body: [
+              {
+                type: 'input-text',
+                name: 'username',
+                label: 'Username',
+                visible: '${true}',
+              },
+            ],
+          }}
+          env={env}
+          registry={registry}
+          formulaCompiler={createFormulaCompiler()}
+          onComponentRegistryChange={onComponentRegistryChange}
+        />
+      </React.StrictMode>
+    );
+
+    await waitFor(() => {
+      const registryCalls = onComponentRegistryChange.mock.calls.filter((call) => call[0] != null);
+      expect(registryCalls.length).toBeGreaterThan(1);
+    });
+    const rootRegistry = onComponentRegistryChange.mock.calls
+      .map((call) => call[0])
+      .filter(Boolean)
+      .at(-1);
+    expect(rootRegistry).toBeTruthy();
+    rootRegistry.setDebugEnabled?.(true);
+
+    await waitFor(() => {
+      const field = document.querySelector('.nop-field[data-cid]');
+      expect(field).toBeTruthy();
+      const cid = Number(field?.getAttribute('data-cid'));
+      const inspected = rootRegistry.inspectCid?.(cid);
+      expect(inspected?.kind).toBe('resolved');
+      expect(inspected?.payload?.state?.resolvedMeta ?? inspected?.payload?.resolvedMeta).toBeTruthy();
+    });
   });
 });

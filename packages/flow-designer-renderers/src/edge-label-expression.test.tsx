@@ -203,6 +203,88 @@ describe('Edge label expression rendering', () => {
 });
 
 describe('Node body expression rendering', () => {
+  it('preserves nested schema expressions inside designer-page config during compile', async () => {
+    const SchemaRenderer = createSchemaRenderer([textWithBody, ...flowDesignerRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://designer-config-preserve"
+        schema={{ type: 'designer-page', document: TEST_DOC, config: TEST_CONFIG }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      const designerPage = screen.queryByTestId('designer-page-root')
+        ?? document.querySelector('[data-runtime-id]');
+      expect(designerPage).toBeTruthy();
+    }, { timeout: 3000 });
+
+    const normalized = normalizeConfig(TEST_CONFIG);
+    const nodeType = normalized.nodeTypes.get('start');
+    const edgeType = normalized.edgeTypes.get('default');
+
+    expect(nodeType?.body).toEqual({ type: 'text', body: '${label}' });
+    expect(edgeType?.body).toEqual({ type: 'text', body: '${condition}', className: 'text-sm' });
+  });
+
+  it('still evaluates non-schema config leaves through the custom compile path', async () => {
+    const SchemaRenderer = createSchemaRenderer([textWithBody, ...flowDesignerRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://designer-config-leaf-compile"
+        schema={{
+          type: 'designer-page',
+          document: TEST_DOC,
+          config: '${$scope.config}',
+        }}
+        data={{
+          config: {
+            ...TEST_CONFIG,
+            palette: {
+              groups: [{ id: 'basic', label: '${paletteLabel}', nodeTypes: ['start'] }],
+            },
+            nodeTypes: [
+              {
+                ...TEST_CONFIG.nodeTypes[0],
+                label: '${nodeTypeLabel}',
+              },
+            ],
+          },
+          paletteLabel: 'Basic Nodes',
+          nodeTypeLabel: 'Start Node',
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      const designerPage = screen.queryByTestId('designer-page-root')
+        ?? document.querySelector('[data-runtime-id]');
+      expect(designerPage).toBeTruthy();
+    }, { timeout: 3000 });
+
+    const normalized = normalizeConfig({
+      ...TEST_CONFIG,
+      palette: {
+        groups: [{ id: 'basic', label: 'Basic Nodes', nodeTypes: ['start'] }],
+      },
+      nodeTypes: [
+        {
+          ...TEST_CONFIG.nodeTypes[0],
+          label: 'Start Node',
+        },
+      ],
+    });
+
+    expect(normalized.palette.groups[0]?.label).toBe('Basic Nodes');
+    expect(normalized.nodeTypes.get('start')?.label).toBe('Start Node');
+    expect(normalized.nodeTypes.get('start')?.body).toEqual({ type: 'text', body: '${label}' });
+  });
+
   it('resolves nodeType.body expressions from spread config data', async () => {
     const normalized = normalizeConfig(TEST_CONFIG);
     const nodeType = normalized.nodeTypes.get('start');

@@ -82,9 +82,9 @@ test.describe('data-source renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
     await expect(stage.getByText(/Users loaded via page data: 3/)).toBeVisible({ timeout: 5_000 });
-    await expect(stage.getByText('alice')).toBeVisible();
-    await expect(stage.getByText('bob')).toBeVisible();
-    await expect(stage.getByText('carol')).toBeVisible();
+    await expect(stage.getByText('alice', { exact: true })).toBeVisible();
+    await expect(stage.getByText('bob', { exact: true })).toBeVisible();
+    await expect(stage.getByText('carol', { exact: true })).toBeVisible();
   });
 });
 

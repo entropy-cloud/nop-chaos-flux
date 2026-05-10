@@ -22,6 +22,7 @@ export interface ComponentCapabilities {
 }
 
 export interface ComponentHandleDebugData {
+  debugEntryId?: number;
   nodeId?: string;
   path?: string;
   rendererType?: string;

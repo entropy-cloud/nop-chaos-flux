@@ -170,6 +170,66 @@ describe('createSchemaCompiler', () => {
     expect(node.propsProgram.value.label).toBe('hello');
   });
 
+  it('uses field-level compile when present and leaves other props on default compilation', () => {
+    const customCompileRenderer: RendererDefinition = {
+      type: 'custom-compile-probe',
+      component: () => null,
+      fields: [
+        {
+          key: 'config',
+          kind: 'prop',
+          compile(value, context) {
+            const record = value as Record<string, unknown>;
+            return {
+              staticSchema: record.schema,
+              compiledTitle: context.compileValue(record.title, `${context.sourcePath}.title`),
+            };
+          },
+        },
+        { key: 'title', kind: 'prop' },
+      ],
+    };
+
+    const compiler = createTestCompiler([customCompileRenderer]);
+    const compiled = compiler.compile({
+      type: 'custom-compile-probe',
+      title: '${pageTitle}',
+      config: {
+        schema: { type: 'text', text: '${label}' },
+        title: '${configTitle}',
+      },
+    });
+    const node = compiled.root as TemplateNode;
+
+    expect(node.propsProgram.kind).toBe('dynamic');
+    const propsNode = node.propsProgram.node;
+    expect(propsNode.kind).toBe('object-node');
+
+    if (propsNode.kind !== 'object-node') {
+      throw new Error('Expected object-node props program');
+    }
+
+    const titleNode = propsNode.entries.title;
+    expect(titleNode.kind).toBe('expression-node');
+
+    const configNode = propsNode.entries.config;
+    expect(configNode.kind).toBe('object-node');
+
+    if (configNode.kind !== 'object-node') {
+      throw new Error('Expected object-node config entry');
+    }
+
+    const staticSchemaNode = configNode.entries.staticSchema;
+    expect(staticSchemaNode.kind).toBe('static-node');
+    expect((staticSchemaNode as { value: unknown }).value).toEqual({
+      type: 'text',
+      text: '${label}',
+    });
+
+    const compiledTitleNode = configNode.entries.compiledTitle;
+    expect(compiledTitleNode.kind).toBe('expression-node');
+  });
+
   it('keeps componentId targets selector-based during compile even when the id is unique', () => {
     const compiler = createTestCompiler([pageRenderer, formRenderer, actionButtonRenderer]);
 

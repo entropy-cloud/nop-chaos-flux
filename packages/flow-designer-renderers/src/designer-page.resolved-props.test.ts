@@ -44,4 +44,62 @@ describe('designer-page resolved props contract', () => {
     });
     expect((resolved.value as Record<string, unknown>).statusPath).toBe('designerStatus');
   });
+
+  it('preserves nested schemas in config while resolving ordinary leaves', () => {
+    const registry = createRendererRegistry(flowDesignerRendererDefinitions);
+    const runtime = createRendererRuntime({
+      registry,
+      env: createRendererEnv(),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = runtime.compile({
+      type: 'designer-page',
+      document: '${document}',
+      config: {
+        ...createTestConfig(),
+        palette: {
+          groups: [{ id: 'basic', label: '${paletteLabel}', nodeTypes: ['start'] }],
+        },
+        nodeTypes: [
+          {
+            id: 'start',
+            label: '${nodeTypeLabel}',
+            body: { type: 'text', text: '${label}' },
+          },
+        ],
+        edgeTypes: [
+          {
+            id: 'default',
+            label: 'Default',
+            body: { type: 'text', text: '${condition}' },
+            defaults: {},
+          },
+        ],
+      },
+    });
+    const node = compiled.root as any;
+
+    const page = runtime.createPageRuntime({
+      document: {
+        id: 'doc-runtime-2',
+        kind: 'flow',
+        name: 'Runtime Example',
+        version: '1.0.0',
+        nodes: [],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 },
+      },
+      paletteLabel: 'Basic Nodes',
+      nodeTypeLabel: 'Start Node',
+    });
+
+    const resolved = runtime.resolveNodeProps(node, page.scope);
+    const config = (resolved.value as Record<string, any>).config;
+
+    expect(config.palette.groups[0].label).toBe('Basic Nodes');
+    expect(config.nodeTypes[0].label).toBe('Start Node');
+    expect(config.nodeTypes[0].body).toEqual({ type: 'text', text: '${label}' });
+    expect(config.edgeTypes[0].body).toEqual({ type: 'text', text: '${condition}' });
+  });
 });

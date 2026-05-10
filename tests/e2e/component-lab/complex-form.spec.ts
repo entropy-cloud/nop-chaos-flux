@@ -51,7 +51,7 @@ test.describe('tree-select renderer', () => {
       .locator('[data-slot="tree-select-trigger-row"] [data-slot="popover-trigger"]')
       .first()
       .click();
-    await expect(page.getByPlaceholder('Search tree options')).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByPlaceholder('搜索 Select Team')).toBeVisible({ timeout: 5_000 });
     await page
       .locator('[data-slot="tree-option-node"] [role="treeitem"]')
       .filter({ hasText: 'Platform' })
@@ -293,16 +293,13 @@ test.describe('detail-field renderer', () => {
     await expect(stage).toBeVisible();
     await expect(stage.getByText('Ada Lovelace')).toBeVisible({ timeout: 5_000 });
 
-    const editButton = stage
-      .locator('[data-slot="field-control"] [data-slot="button"]')
-      .filter({ hasText: 'Edit' })
-      .first();
+    const editButton = stage.getByRole('button', { name: '编辑User Profile' }).first();
     await editButton.click({ force: true });
     await expect(page.getByLabel('First Name')).toBeVisible({ timeout: 5_000 });
 
     await page.getByLabel('First Name').fill('Grace');
     await page
-      .getByRole('button', { name: /确认|Confirm|Save/ })
+      .getByRole('button', { name: /确认|Confirm/ })
       .first()
       .click();
 
@@ -337,13 +334,13 @@ test.describe('detail-view renderer', () => {
     await expect(stage).toBeVisible();
     await expect(stage.getByText(/Title:.*Annual Report 2025/)).toBeVisible({ timeout: 5_000 });
 
-    const editButton = stage.getByRole('button', { name: /Edit|Expand/ }).first();
+    const editButton = stage.getByRole('button', { name: '编辑Report Summary' }).first();
     await editButton.click();
     await expect(page.getByLabel('Title')).toBeVisible({ timeout: 5_000 });
 
     await page.getByLabel('Title').fill('Annual Report 2026');
     await page
-      .getByRole('button', { name: /确认|Confirm|Save/ })
+      .getByRole('button', { name: /确认|Confirm/ })
       .first()
       .click();
 

@@ -1,7 +1,8 @@
 import { redactData } from './redaction.js';
 import type { NormalizedRedactionOptions } from './redaction.js';
 export { explainNodeAsync, explainNodeFailure } from './explanations-failure-async.js';
-import type { ScopeSnapshot } from '@nop-chaos/flux-core';
+import { getIn, parsePath, type ScopeSnapshot } from '@nop-chaos/flux-core';
+import { createFormulaCompiler, createScopeDependencyCollector } from '@nop-chaos/flux-formula';
 import type {
   NopComponentInspectResult,
   NopDebuggerEvidenceRef,
@@ -319,6 +320,67 @@ function readMetaField(inspect: NopComponentInspectResult, field: NopNodeMetaExp
   };
 }
 
+function hasPath(data: Record<string, unknown>, path: string) {
+  const segments = parsePath(path);
+  let current: unknown = data;
+
+  for (const segment of segments) {
+    if (current == null || typeof current !== 'object' || !(segment in current)) {
+      return false;
+    }
+
+    current = (current as Record<string, unknown>)[segment];
+  }
+
+  return true;
+}
+
+function evaluateMetaRule(
+  inspect: NopComponentInspectResult,
+  rule: string | undefined,
+): { value: unknown; dependencyPaths: string[]; truncated: boolean } | undefined {
+  const scopeData = inspect.scopeChain?.[0]?.data;
+  if (!rule || !scopeData) {
+    return undefined;
+  }
+
+  try {
+    const compiler = createFormulaCompiler();
+    const compiled = compiler.compileExpression(rule);
+    const { collector, finalize } = createScopeDependencyCollector();
+    const value = compiled.exec(
+      {
+        resolve(path: string) {
+          return getIn(scopeData, path);
+        },
+        has(path: string) {
+          return hasPath(scopeData, path);
+        },
+        materialize() {
+          return scopeData;
+        },
+        collector,
+      },
+      {
+        fetcher: async () => {
+          throw new Error('API calls are not available during expression evaluation.');
+        },
+        notify() {
+          return undefined;
+        },
+      },
+    );
+    const dependencies = finalize();
+    return {
+      value,
+      dependencyPaths: dependencies.wildcard ? ['*'] : [...dependencies.paths],
+      truncated: false,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 export function explainNodeMeta(args: {
   query: NopNodeMetaExplanationQuery;
   inspect: NopComponentInspectResult | undefined;
@@ -348,13 +410,25 @@ export function explainNodeMeta(args: {
 
   const evidenceRefs: NopDebuggerEvidenceRef[] = [];
   const limitations: string[] = [];
-  const resolved = readMetaField(inspect, query.field);
+  const initialResolved = readMetaField(inspect, query.field);
   const nodeStateDebug = getNodeStateDebugData(inspect);
   const sourceHints = getSourceHints(inspect);
-  const dependencyInfo = getDependencyPaths(
-    nodeStateDebug?.metaDependencyPaths,
-    nodeStateDebug?.metaDependencyWildcard,
-  );
+  const metaRule =
+    query.field === 'visible' || query.field === 'hidden' || query.field === 'disabled'
+      ? sourceHints?.metaRules?.[query.field]
+      : undefined;
+  const evaluatedRule = evaluateMetaRule(inspect, metaRule);
+  const resolved =
+    initialResolved.source === 'unknown' && evaluatedRule
+      ? {
+          source: 'resolved-meta' as const,
+          value: evaluatedRule.value,
+        }
+      : initialResolved;
+  const dependencyInfo =
+    nodeStateDebug?.metaDependencyPaths || nodeStateDebug?.metaDependencyWildcard
+      ? getDependencyPaths(nodeStateDebug.metaDependencyPaths, nodeStateDebug.metaDependencyWildcard)
+      : getDependencyPaths(evaluatedRule?.dependencyPaths, false);
   let truncated = dependencyInfo.truncated;
 
   if (resolved.source !== 'unknown') {
@@ -370,11 +444,6 @@ export function explainNodeMeta(args: {
       `The debugger snapshot does not expose ${query.field} in resolved meta or resolved props.`,
     );
   }
-
-  const metaRule =
-    query.field === 'visible' || query.field === 'hidden' || query.field === 'disabled'
-      ? sourceHints?.metaRules?.[query.field]
-      : undefined;
 
   if (metaRule) {
     truncated ||= pushEvidence(evidenceRefs, {

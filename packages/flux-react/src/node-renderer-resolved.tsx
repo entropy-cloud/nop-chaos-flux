@@ -241,6 +241,8 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
             const slotFrame = buildSlotFrame(rawBindings, outerSlotFrame);
             return renderRegionNode(region.node, {
               ...options,
+              actionScope: options?.actionScope ?? activeActionScope,
+              componentRegistry: options?.componentRegistry ?? activeComponentRegistry,
               bindings: { [SLOT_KEY]: slotFrame },
               isolate: options?.isolate ?? regionIsolate,
               ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance,
@@ -249,6 +251,8 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
 
           return renderRegionNode(region.node, {
             ...options,
+            actionScope: options?.actionScope ?? activeActionScope,
+            componentRegistry: options?.componentRegistry ?? activeComponentRegistry,
             ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance,
           });
         }
@@ -264,7 +268,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
         ];
       }),
     );
-  }, [nodeInstance, renderScope, props.node.regions]);
+  }, [activeActionScope, activeComponentRegistry, nodeInstance, renderScope, props.node.regions]);
 
   const componentProps: RendererComponentProps = {
     id: props.node.id,

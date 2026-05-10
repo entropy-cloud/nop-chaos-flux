@@ -1,6 +1,9 @@
 import './designer-theme.css';
 import {
+  isPlainObject,
+  isSchemaInput,
   registerRendererDefinitions,
+  type FieldCompileContext,
   type RendererDefinition,
   type RendererRegistry,
 } from '@nop-chaos/flux-core';
@@ -11,6 +14,37 @@ import {
 } from './designer-page.js';
 import { DesignerFieldRenderer } from './designer-field.js';
 import { designerHostContract } from './designer-manifest.js';
+
+function compileDesignerConfig(value: unknown, context: FieldCompileContext): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item, index) =>
+      compileDesignerConfig(item, { ...context, sourcePath: `${context.sourcePath}.${index}` }),
+    );
+  }
+
+  if (!isPlainObject(value)) {
+    return context.compileValue(value);
+  }
+
+  const record = value as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+
+  for (const [key, child] of Object.entries(record)) {
+    const childPath = `${context.sourcePath}.${key}`;
+
+    if (isSchemaInput(child)) {
+      result[key] = child;
+      continue;
+    }
+
+    result[key] = compileDesignerConfig(child, {
+      ...context,
+      sourcePath: childPath,
+    });
+  }
+
+  return result;
+}
 
 export * from './schemas.js';
 export { createDesignerActionProvider } from './designer-action-provider.js';
@@ -81,7 +115,7 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
       { key: 'statusPath', kind: 'prop' },
       { key: 'document', kind: 'prop' },
       { key: 'treeDocument', kind: 'prop' },
-      { key: 'config', kind: 'prop' },
+      { key: 'config', kind: 'prop', compile: compileDesignerConfig },
       { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
       { key: 'inspector', kind: 'region', regionKey: 'inspector' },
       { key: 'dialogs', kind: 'region', regionKey: 'dialogs' },

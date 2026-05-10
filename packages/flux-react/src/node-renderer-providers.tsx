@@ -105,9 +105,11 @@ export function NodeRendererProviders(
       )}
     >
       <ImportFrameContext.Provider value={props.importFrame}>
-        <ScopeContext.Provider value={props.scope}>
-          {children as React.ReactNode}
-        </ScopeContext.Provider>
+        <ComponentRegistryContext.Provider value={props.componentRegistry}>
+          <ScopeContext.Provider value={props.scope}>
+            {children as React.ReactNode}
+          </ScopeContext.Provider>
+        </ComponentRegistryContext.Provider>
       </ImportFrameContext.Provider>
     </NodeMetaContext.Provider>
   );

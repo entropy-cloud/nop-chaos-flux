@@ -118,6 +118,8 @@ Role summary:
 - `RendererDefinition` is the unified static discovery entry for one renderer `type`; it binds runtime component registration, policy metadata, ordinary renderer authoring metadata, and optional host-boundary metadata without flattening them into one universal envelope
 - `RendererRegistry` is the lookup table for renderer definitions
 - field rules tell the compiler whether a field is `meta`, `prop`, `region`, `value-or-region`, `event`, or `ignored`
+- field rules may carry `lazyEval` (deferred evaluation into `structuralFields`) or `compile` (renderer-owned custom compilation) for advanced field semantics
+- the `compile` function on a field rule lets the renderer definition control how nested template schemas within a prop are compiled, avoiding default `compileValue` recursion into template expressions that belong to a different scope
 
 ### Unified `RendererDefinition` Field Map
 

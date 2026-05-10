@@ -133,6 +133,35 @@ describe('explanation helpers', () => {
     expect(result.evidenceRefs.some((entry) => entry.summary.includes('visible rule'))).toBe(true);
   });
 
+  it('falls back to evaluating meta rules when resolved meta dependencies are absent', () => {
+    const result = explainNodeMeta({
+      query: { cid: 1, field: 'visible' },
+      inspect: createInspectResult({
+        scopeChain: [{ id: 'page', path: '$', label: '$', data: { role: 'admin' } }],
+        debugData: {
+          sourceHints: {
+            metaRules: {
+              visible: '${role === "admin"}',
+            },
+          },
+        },
+      }),
+      redaction: normalizeRedactionOptions(undefined),
+    });
+
+    expect(result).toMatchObject({
+      kind: 'meta',
+      data: {
+        field: 'visible',
+        source: 'resolved-meta',
+        value: true,
+        dependencyPaths: ['role'],
+      },
+      limitations: [],
+    });
+    expect(result.answer).toContain('${role === "admin"}');
+  });
+
   it('bounds failure evidence and related events', () => {
     const events: NopDebugEvent[] = [
       createEvent({

@@ -9,6 +9,8 @@ import { HomePage } from './pages/home-page';
 import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
 import { CodeEditorPage } from './pages/code-editor-page';
+import { FlowDesignerPage } from './pages/flow-designer-page';
+import { DingTalkFlowDemo } from './pages/ding-talk-flow-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { Spinner } from '@nop-chaos/ui';
@@ -34,26 +36,6 @@ registerBasicRenderers(registry);
 registerFormRenderers(registry);
 registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
-
-let flowDesignerRegistered = false;
-async function ensureFlowDesignerRegistered() {
-  if (flowDesignerRegistered) return;
-  const { registerFlowDesignerRenderers } = await import('@nop-chaos/flow-designer-renderers');
-  registerFlowDesignerRenderers(registry);
-  flowDesignerRegistered = true;
-}
-
-const LazyFlowDesignerPageWithRegistration = lazy(async () => {
-  await ensureFlowDesignerRegistered();
-  const { FlowDesignerPage } = await import('./pages/flow-designer-page');
-  return { default: FlowDesignerPage };
-});
-
-const LazyDingTalkFlowDemoWithRegistration = lazy(async () => {
-  await ensureFlowDesignerRegistered();
-  const { DingTalkFlowDemo } = await import('./pages/ding-talk-flow-demo');
-  return { default: DingTalkFlowDemo };
-});
 
 if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefined') {
   window.__NOP_DEBUGGER__ = {
@@ -115,9 +97,9 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
         case 'flux-basic':
           return <FluxBasicPage debuggerController={debuggerController} onBack={goHome} />;
         case 'flow-designer':
-          return <LazyFlowDesignerPageWithRegistration debuggerController={debuggerController} onBack={goHome} />;
+          return <FlowDesignerPage debuggerController={debuggerController} onBack={goHome} />;
         case 'dingtalk-flow-demo':
-          return <LazyDingTalkFlowDemoWithRegistration onBack={goHome} />;
+          return <DingTalkFlowDemo onBack={goHome} />;
         case 'report-designer':
           return <LazyReportDesignerPage onBack={goHome} />;
         case 'debugger-lab':

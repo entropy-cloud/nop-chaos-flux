@@ -235,28 +235,28 @@ const TABLE_SCHEMA: SchemaInput = {
   },
   expandable: {
     expandedRowKeys: ['user-1', 'user-2', 'user-3'],
-    expandedRowRegionKey: 'expanded',
+    expandedRow: {
+      type: 'container',
+      className: 'stack-sm py-3',
+      body: [
+        {
+          type: 'text',
+          text:
+            'Expanded ${$slot.record.username} | tags=${$slot.record.tags.length} | children=${$slot.record.children.length}',
+        },
+        {
+          type: 'loop',
+          items: '${$slot.record.children}',
+          itemName: 'child',
+          body: {
+            type: 'text',
+            text: '${$slot.child.label}: ${$slot.child.value}',
+          },
+        },
+      ],
+    },
   },
   columns: TABLE_COLUMNS,
-  expanded: {
-    type: 'container',
-    className: 'stack-sm py-3',
-    body: [
-      {
-        type: 'text',
-        text: 'Expanded ${username} | tags=${tags.length} | children=${children.length}',
-      },
-      {
-        type: 'loop',
-        items: '${children}',
-        itemName: 'child',
-        body: {
-          type: 'text',
-          text: '${$slot.child.label}: ${$slot.child.value}',
-        },
-      },
-    ],
-  },
 };
 
 const STRESS_SCENARIOS: SchemaInput[] = [

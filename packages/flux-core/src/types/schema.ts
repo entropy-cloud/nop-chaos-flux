@@ -1,4 +1,10 @@
 import type { ActionSchema, ActionShapeFields } from './actions.js';
+import type {
+  CompileSymbolTable,
+  CompiledRuntimeValue,
+  ExpressionCompiler,
+} from './compilation.js';
+import type { CompileSchemaOptions } from './renderer-compiler.js';
 
 export type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
@@ -89,7 +95,22 @@ export interface SchemaFieldRule {
    * the compilation context so expressions can reference them.
    */
   lazyEval?: boolean;
+  /**
+   * Custom field-level compilation hook for props that need renderer-owned
+   * compilation semantics, such as props that contain nested template schemas.
+   */
+  compile?: FieldCompileFn;
 }
+
+export interface FieldCompileContext {
+  expressionCompiler: ExpressionCompiler;
+  symbolTable: CompileSymbolTable;
+  sourcePath: string;
+  compileValue: <T = unknown>(input: T, sourcePath?: string) => CompiledRuntimeValue<T>;
+  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => unknown;
+}
+
+export type FieldCompileFn = (value: unknown, context: FieldCompileContext) => unknown;
 
 export type RequestDedupStrategy = 'cancel-previous' | 'parallel' | 'ignore-new';
 
