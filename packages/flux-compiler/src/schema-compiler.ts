@@ -214,7 +214,20 @@ export function createSchemaCompiler(input: {
         },
         diagnostics,
       ) as BaseSchema;
-      return compileSingleNodeForExternal(canonicalSchema, options, diagnostics, 0);
+
+      const renderer = input.registry.get(canonicalSchema.type);
+      if (!renderer) {
+        throw new Error(`Renderer not found for type: ${canonicalSchema.type}`);
+      }
+
+      const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
+
+      return compileSingleNodeForExternal(
+        canonicalSchema,
+        { ...options, renderer: wrappedRenderer },
+        diagnostics,
+        0,
+      );
     },
     validate(schema, options) {
       return validateSchemaInput(schema, options ?? {});
