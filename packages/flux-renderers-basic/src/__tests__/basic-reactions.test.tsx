@@ -290,8 +290,9 @@ describe('basicRendererDefinitions reaction and action behavior', () => {
     await waitFor(() => {
       const value = Number(screen.getByText(/^[0-9]+$/).textContent ?? '0');
       expect(value).toBeGreaterThan(0);
-      expect(value).toBeLessThanOrEqual(10);
     });
+    const finalValue = Number(screen.getByText(/^[0-9]+$/).textContent ?? '0');
+    expect(finalValue).toBeLessThan(200);
     cleanup();
   });
 

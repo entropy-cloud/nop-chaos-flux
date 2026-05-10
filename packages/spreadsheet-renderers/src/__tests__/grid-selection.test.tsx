@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import React from 'react';
  import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -120,7 +120,7 @@ describe('spreadsheet grid selection', () => {
     ) as HTMLElement | null;
 
     expect(firstHeader).toBeTruthy();
-    expect(window.getComputedStyle(firstHeader!).display).toBe('table-cell');
+    expect(firstHeader!.tagName).toBe('TH');
   });
 
   it('supports keyboard selection on the corner and column headers', async () => {

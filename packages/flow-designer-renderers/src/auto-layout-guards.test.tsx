@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import React from 'react';
 import { fireEvent, render, waitFor, within } from '@testing-library/react';

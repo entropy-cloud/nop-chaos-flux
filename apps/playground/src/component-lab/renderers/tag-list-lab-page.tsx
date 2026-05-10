@@ -14,10 +14,10 @@ const techTags = {
           label: 'Technologies',
           tags: ['react', 'typescript', 'vite', 'vitest', 'zustand'],
         },
+        { type: 'text', text: 'Current tags: ${(tags ?? []).join(", ") || "(none)"}' },
       ],
       actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
     },
-    { type: 'text', text: 'Current tags: ${(tagListForm.tags ?? []).join(", ") || "(none)"}' },
   ],
 };
 
@@ -35,10 +35,10 @@ const emptyStart = {
           label: 'Issue Labels',
           tags: ['bug', 'feature', 'docs', 'help wanted'],
         },
+        { type: 'text', text: '${(labels ?? []).length} label(s) added' },
       ],
       actions: [{ type: 'button', label: 'Apply Labels', onClick: { action: 'submit' } }],
     },
-    { type: 'text', text: '${(labelForm.labels ?? []).length} label(s) added' },
   ],
 };
 

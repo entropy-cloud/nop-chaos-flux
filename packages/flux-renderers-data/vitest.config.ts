@@ -2,7 +2,7 @@ import { mergeConfig } from 'vitest/config';
 import { createSharedVitestConfig } from '../../vitest.shared';
 
 const sharedConfig = createSharedVitestConfig({
-  environment: 'jsdom',
+  environment: 'happy-dom',
   coverage: {
     provider: 'v8',
     reporter: ['text', 'json-summary'],

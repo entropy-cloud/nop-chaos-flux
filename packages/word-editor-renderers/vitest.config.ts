@@ -3,7 +3,7 @@ import { createSharedVitestConfig } from '../../vitest.shared';
 
 export default mergeConfig(
   createSharedVitestConfig({
-    environment: 'jsdom',
+    environment: 'happy-dom',
   }),
   {
     test: {

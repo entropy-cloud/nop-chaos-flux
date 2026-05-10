@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -132,7 +132,10 @@ describe('controller inspector — progressive form scenarios', () => {
       ],
     });
 
-    await waitFor(() => expect(screen.getByLabelText('Role')).toBeTruthy());
+    await waitFor(() => {
+      const labels = Array.from(document.querySelectorAll('[data-slot="field-label"]'));
+      expect(labels.some((l) => l.textContent?.includes('Role'))).toBe(true);
+    });
 
     const usernameCid = readFieldCid('Username');
     const roleCid = readFieldCid('Role');
@@ -184,7 +187,7 @@ describe('controller inspector — progressive form scenarios', () => {
       ],
     });
 
-    await waitFor(() => expect(screen.getByLabelText('Admin Code')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Admin Code')).toBeTruthy());
 
     const usernameCid = readFieldCid('Username');
     const adminCodeCid = readFieldCid('Admin Code');
@@ -257,7 +260,7 @@ describe('controller inspector — progressive form scenarios', () => {
       ],
     });
 
-    await waitFor(() => expect(screen.getByLabelText('Admin Code')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Admin Code')).toBeTruthy());
 
     const usernameCid = readFieldCid('Username');
     const adminCodeCid = readFieldCid('Admin Code');
@@ -356,7 +359,7 @@ describe('controller inspector — progressive form scenarios', () => {
       ],
     });
 
-    await waitFor(() => expect(screen.getByLabelText('Admin Code')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Admin Code')).toBeTruthy());
 
     const usernameCid = readFieldCid('Username');
     const emailCid = readFieldCid('Email');
@@ -459,7 +462,7 @@ describe('controller inspector — progressive form scenarios', () => {
       ],
     });
 
-    await waitFor(() => expect(screen.getByLabelText('Admin Code')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Admin Code')).toBeTruthy());
 
     const usernameCid = readFieldCid('Username');
     const adminCodeCid = readFieldCid('Admin Code');

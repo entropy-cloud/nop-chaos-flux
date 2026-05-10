@@ -40,6 +40,6 @@
     "@testing-library/user-event": "^14.6.1",
     "@nop-chaos/flux-formula": "workspace:*",
     "@types/use-sync-external-store": "^1.5.0",
-    "jsdom": "^29.0.1"
+    "happy-dom": "^15.11.0"
   }
 }

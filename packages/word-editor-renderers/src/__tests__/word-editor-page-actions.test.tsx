@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -372,6 +372,7 @@ describe('WordEditorPage actions and events', () => {
     initFluxI18n();
     resetMockStores();
     const notify = vi.fn();
+    if (!window.confirm) window.confirm = vi.fn(() => true);
     const confirmSpy = vi.spyOn(window, 'confirm');
 
     renderWordEditor({

@@ -45,10 +45,10 @@ const withMinMaxValidation = {
             { label: 'Docker', value: 'docker' },
           ],
         },
+        { type: 'text', text: 'Selected: ${(skills ?? []).join(", ") || "(none)"}' },
       ],
       actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submit' } }],
     },
-    { type: 'text', text: 'Selected: ${(skillsForm.skills ?? []).join(", ") || "(none)"}' },
   ],
 };
 

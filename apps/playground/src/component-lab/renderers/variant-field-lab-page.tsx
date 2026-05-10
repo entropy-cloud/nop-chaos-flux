@@ -13,7 +13,7 @@ const stringOrListVariant = {
           args: {
             path: 'submittedVariantText',
             value:
-              '${Array.isArray(filterValue) ? "LIST => " + ((filterValue ?? []).join(", ") || "(empty)") : "TEXT => " + (filterValue ?? "")}',
+              '${ISARRAY(filterValue) ? "LIST => " + JOIN(filterValue ?? [], ", ") : "TEXT => " + (filterValue ?? "")}',
           },
         },
       ],
@@ -23,7 +23,7 @@ const stringOrListVariant = {
       body: [
         {
           type: 'text',
-          text: 'Current runtime value: ${Array.isArray(filterValue) ? "List editor active" : "String editor active"}',
+          text: 'Current runtime value: ${ISARRAY(filterValue) ? "List editor active" : "String editor active"}',
         },
         {
           type: 'variant-field',
