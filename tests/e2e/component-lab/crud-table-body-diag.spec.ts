@@ -1,15 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { test, expect, filterNoise as _filterNoise } from '../fixtures.js';
 import { ComponentLabHelper, scenarioSlug } from './helpers';
 
 test.describe('crud table body diagnostic', () => {
-  test('diagnoses basic CRUD shell table body rendering', async ({ page }) => {
-    const consoleErrors = [];
-    const pageErrors = [];
-    page.on('console', (msg) => {
-      if (msg.type() === 'error' || msg.type() === 'warning' || msg.text().includes('useTableRowScopeCache')) {
-        consoleErrors.push(`[${msg.type()}] ${msg.text()}`);
-      }
-    });
+  test('diagnoses basic CRUD shell table body rendering', async ({ page, consoleErrors }) => {
+    const pageErrors: string[] = [];
     page.on('pageerror', (err) => pageErrors.push(err.message));
 
     const lab = new ComponentLabHelper(page);

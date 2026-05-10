@@ -1,6 +1,6 @@
-import { expect, test } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { test, expect, filterNoise } from './fixtures.js';
 
 // The Monaco-backed page is intentionally serialized to avoid cross-test editor startup churn.
 test.describe.configure({ mode: 'serial' });
@@ -328,4 +328,12 @@ test('captures code editor page screenshot', async ({ page }, testInfo) => {
   const shotsDir = join(testInfo.outputDir, 'screenshots');
   await mkdir(shotsDir, { recursive: true });
   await page.screenshot({ path: join(shotsDir, 'code-editor-page.png'), fullPage: true });
+});
+
+test('code editor page has zero console errors', async ({ page, consoleErrors }) => {
+  await openCodeEditor(page);
+  await page.waitForTimeout(2000);
+
+  const filtered = filterNoise(consoleErrors);
+  expect(filtered, `Console errors found: ${filtered.join('\n')}`).toEqual([]);
 });

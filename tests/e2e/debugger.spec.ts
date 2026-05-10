@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, filterNoise } from './fixtures.js';
 
 function collectConsoleErrors(page: import('@playwright/test').Page): string[] {
   const errors: string[] = [];
@@ -9,10 +9,6 @@ function collectConsoleErrors(page: import('@playwright/test').Page): string[] {
     errors.push(err.message);
   });
   return errors;
-}
-
-function filterFaviconErrors(errors: string[]): string[] {
-  return errors.filter((e) => !e.includes('favicon'));
 }
 
 async function waitForDebuggerPanel(page: import('@playwright/test').Page) {
@@ -116,7 +112,7 @@ test.describe('Nop Debugger', () => {
     await prepareFreshPage(page);
 
     await expect(getLauncher(page)).toBeVisible();
-    expect(filterFaviconErrors(errors)).toEqual([]);
+    expect(filterNoise(errors)).toEqual([]);
   });
 
   test('clicking launcher opens the full debugger panel', async ({ page }) => {
@@ -138,7 +134,7 @@ test.describe('Nop Debugger', () => {
     });
     expect(tooltips).toEqual(['Pause', 'Clear', 'Pick element', 'Minimize']);
 
-    expect(filterFaviconErrors(errors)).toEqual([]);
+    expect(filterNoise(errors)).toEqual([]);
   });
 
   test('automation API (window.__NOP_DEBUGGER_API__) is available', async ({ page }) => {
@@ -169,7 +165,7 @@ test.describe('Nop Debugger', () => {
     await openFluxBasicPage(page);
 
     await expect(getLauncher(page)).toBeVisible();
-    expect(filterFaviconErrors(errors)).toEqual([]);
+    expect(filterNoise(errors)).toEqual([]);
   });
 
   test('debugger launcher renders on DebuggerLabPage', async ({ page }) => {
@@ -180,7 +176,7 @@ test.describe('Nop Debugger', () => {
       .waitFor({ state: 'visible', timeout: 15000 });
 
     await expect(getLauncher(page)).toBeVisible();
-    expect(filterFaviconErrors(errors)).toEqual([]);
+    expect(filterNoise(errors)).toEqual([]);
   });
 
   test('DebuggerLabPage controls fire events and query diagnostics', async ({ page }) => {
@@ -329,9 +325,9 @@ test.describe('Nop Debugger', () => {
       .waitFor({ state: 'visible', timeout: 15000 });
     const errors3 = [...errors];
 
-    expect(filterFaviconErrors(errors1)).toEqual([]);
-    expect(filterFaviconErrors(errors2)).toEqual([]);
-    expect(filterFaviconErrors(errors3)).toEqual([]);
+    expect(filterNoise(errors1)).toEqual([]);
+    expect(filterNoise(errors2)).toEqual([]);
+    expect(filterNoise(errors3)).toEqual([]);
   });
 
   test('panel open/minimize state persists across reloads', async ({ page }) => {
