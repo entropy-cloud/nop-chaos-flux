@@ -15,6 +15,10 @@
     },
     "./form-renderers.css": {
       "default": "./dist/form-renderers.css"
+    },
+    "./test-support": {
+      "types": "./dist/test-support.d.ts",
+      "default": "./dist/test-support.js"
     }
   },
   "dependencies": {
@@ -22,8 +26,6 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
-    "@nop-chaos/flux-formula": "workspace:*",
-    "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "lucide-react": "^1.7.0",
     "react": "^19.0.0"
@@ -35,6 +37,8 @@
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
   },
   "devDependencies": {
-    "@nop-chaos/flux-compiler": "workspace:*"
+    "@nop-chaos/flux-compiler": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-renderers-basic": "workspace:*"
   }
 }

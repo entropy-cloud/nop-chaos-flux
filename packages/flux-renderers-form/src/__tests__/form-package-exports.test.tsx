@@ -6,6 +6,7 @@ import { FieldError, FieldHelpText, FieldLabel } from '../renderers/shared/index
 import { FieldsetRenderer } from '../renderers/fieldset.js';
 import type { FieldsetSchema } from '../renderers/fieldset.js';
 import { formRendererDefinition, formRendererDefinitions, registerFormRenderers } from '../index.js';
+import * as testSupport from '../test-support.js';
 
 describe('form package exports', () => {
   it('re-exports form definitions and registers them', () => {
@@ -16,6 +17,11 @@ describe('form package exports', () => {
     expect(formRendererDefinition.type).toBe('form');
     expect(registry.get('form')?.type).toBe('form');
     expect(registry.get('fieldset')?.type).toBe('fieldset');
+  });
+
+  it('exports test-support from the package test-support subpath source', () => {
+    expect(testSupport.env).toBeDefined();
+    expect(typeof testSupport.selectOption).toBe('function');
   });
 });
 
