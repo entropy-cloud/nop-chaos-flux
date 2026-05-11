@@ -36,58 +36,47 @@
 - 字段拖拽行为 <-> `XptCellModel` patch 生成规则
 - inspector schema <-> workbook/sheet/cell 级 XPT 属性页
 
-## 1.1 Cell Comment 作为报表配置载体
+## 1.1 Cell Comment 与扩展属性的设计立场
 
-`nop-report` 的核心设计之一是 **利用 Excel 单元格注释（cell comment）承载报表属性配置**。用户在 Excel 中直接设计报表模板，通过单元格注释嵌入 `XptCellModel` 的配置属性。
+### nop-entropy 的 comment-as-config 是什么
 
-### 解析管线
+`nop-entropy` 没有独立的报表设计器 UI，用户直接在 Excel 中设计报表模板。由于 Excel 单元格本身没有"扩展属性"机制，nop-entropy **不得已**借用 cell comment 来承载 `XptCellModel` 的配置属性（`expandType`、`field`、`ds`、`expandExpr` 等）。
 
-`nop-entropy` 中 `ExcelToXptModelTransformer` 负责将 comment 文本转换为结构化 `XptCellModel`:
+其解析管线为:
 
-1. **XLSX 加载阶段**: `ExcelWorkbookParser` 从 `xl/commentsN.xml` 读取注释文本，存入 `ExcelCell.comment`
-2. **模型转换阶段**: `ExcelToXptModelTransformer.parseCellModel()` 遍历所有单元格，若 `comment != null`，调用 `parseCellModelFromComment()` 解析
-3. **文本解析**: `MultiLineConfigParser` 将 comment 文本解析为 `key=value` 键值对，支持三引号 `"""..."""` 和反引号 `` `...` `` 语法
-4. **类型解析**: `DslXNodeToJsonTransformer` 根据 `excel-table.xdef` 中 `XptCellModel` 的属性类型定义，将值转换为正确的类型（表达式、枚举、`CellPosition` 等）
-5. **清空注释**: 解析完成后 `ec.setComment(null)`，确保生成输出中不包含配置注释
+1. `ExcelWorkbookParser` 从 `xl/commentsN.xml` 读取 comment 文本 → `ExcelCell.comment`
+2. `ExcelToXptModelTransformer.parseCellModel()` 遍历有 comment 的单元格
+3. `MultiLineConfigParser` 将 comment 文本解析为 `key=value` 键值对
+4. `DslXNodeToJsonTransformer` 按 `excel-table.xdef` 的类型定义转换值类型
+5. 解析完成后 `ec.setComment(null)` 清空注释
 
-关键源码:
-
-- `nop-entropy/nop-report/nop-report-core/src/main/java/io/nop/report/core/build/ExcelToXptModelTransformer.java`
-- `nop-entropy/nop-format/nop-excel/src/main/java/io/nop/excel/util/MultiLineConfigParser.java`
-
-### Comment 文本格式
+Comment 文本格式为每行一个 `key=value`:
 
 ```
 expandType=r
 field=orderId
 ds=orderList
 expandExpr=`data.filter(x => x.amount > 100)`
-valueExpr=${cell.value + 1}
-rowParent=A3
-formatExpr=${fmt.format(cell.value)}
-styleIdExpr=${cell.amount > 1000 ? 'highlight' : 'normal'}
 ```
 
-每行一个 `key=value` 对，与 `XptCellModel` 的属性名一一对应。
+此外单元格文本还支持简写语法（`*=^dsName!fieldName`、`*=fieldName`、`${...}` 等），由 `XptModelInitializer` 解析。
 
-### 单元格文本的简写语法
+WorkBook/Sheet 级模型存储在独立命名的 sheet 中（`XptWorkbookModel`、`SheetName-XptSheetModel`），通过 `xpt.imp.xml` 定义的 ImportModel 解析。
 
-除 comment 外，`XptModelInitializer` 还支持通过单元格文本本身进行简写配置:
+关键源码:
 
-- `*=^dsName!fieldName` — 行展开单元格，绑定到数据集字段
-- `*=>dsName!fieldName` — 列展开单元格
-- `*=fieldName` — 简单字段绑定
-- `*=fieldName@expandExpr` — 带自定义展开表达式的字段绑定
-- 包含 `${...}` 的文本被解析为 `valueExpr` 的 XPL 模板表达式
+- `nop-entropy/nop-report/nop-report-core/src/main/java/io/nop/report/core/build/ExcelToXptModelTransformer.java`
+- `nop-entropy/nop-format/nop-excel/src/main/java/io/nop/excel/util/MultiLineConfigParser.java`
+- `nop-entropy/nop-report/nop-report-core/src/main/java/io/nop/report/core/build/XptModelInitializer.java`
 
-### 对 Report Designer 的影响
+### Report Designer 的设计立场
 
-本 Report Designer 代替 nop-entropy 中的 Excel 报表设计器，需要：
+本 Report Designer 的定位是**替代** nop-entropy 中基于 Excel 的报表设计方式，提供专用 UI。因此:
 
-1. **导入时**: codec adapter 必须将 XLSX 中 cell comment 解析为 `XptCellModel` 属性，映射到 `cellMeta['nop-report'].model`
-2. **编辑时**: inspector 面板直接读写 `cellMeta` 中的 XPT 属性，不需要经过 comment 文本
-3. **导出时**: codec adapter 将 `cellMeta['nop-report'].model` 的属性序列化为 comment 文本写回 `ExcelCell.comment`，以便后端 `ExcelToXptModelTransformer` 正确解析
-4. **Comment 显示**: 当前 spreadsheet canvas 已支持显示 `cell.comment`，但此 comment 在 nop-report 语境下是**配置数据**而非用户笔记。Inspector 面板应为用户提供结构化编辑界面，而非让用户手动编辑 comment 文本
+1. **不延续 comment-as-config**: 扩展属性直接存储在 `cellMeta['nop-report'].model` 结构化对象中，不借用 comment 文本。Inspector form 是扩展属性的编辑界面，用户不需要接触 `key=value` 文本格式
+2. **Comment 归还给用户**: 单元格注释回归其本来用途——用户备注。Report Designer 不把 comment 用作配置通道
+3. **Codec adapter 负责互操作**: 导入 `.xpt.xlsx` 时，adapter 从 comment 解析配置写入 metadata；导出时，adapter 从 metadata 序列化回 comment 文本，确保与后端 `ExcelToXptModelTransformer` 兼容。这是一个**适配层职责**，不是设计器核心模型
+4. **通用扩展属性机制**: Report Designer 提供通用的 cell metadata 平面，任何 profile 都可以通过 namespaced object 注册自己的扩展属性编辑界面，不限于 nop-report 的 XPT 模型
 
 ### Workbook/Sheet 级模型来源
 
