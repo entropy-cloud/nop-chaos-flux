@@ -36,6 +36,167 @@
 - 字段拖拽行为 <-> `XptCellModel` patch 生成规则
 - inspector schema <-> workbook/sheet/cell 级 XPT 属性页
 
+## 1.1 Cell Comment 作为报表配置载体
+
+`nop-report` 的核心设计之一是 **利用 Excel 单元格注释（cell comment）承载报表属性配置**。用户在 Excel 中直接设计报表模板，通过单元格注释嵌入 `XptCellModel` 的配置属性。
+
+### 解析管线
+
+`nop-entropy` 中 `ExcelToXptModelTransformer` 负责将 comment 文本转换为结构化 `XptCellModel`:
+
+1. **XLSX 加载阶段**: `ExcelWorkbookParser` 从 `xl/commentsN.xml` 读取注释文本，存入 `ExcelCell.comment`
+2. **模型转换阶段**: `ExcelToXptModelTransformer.parseCellModel()` 遍历所有单元格，若 `comment != null`，调用 `parseCellModelFromComment()` 解析
+3. **文本解析**: `MultiLineConfigParser` 将 comment 文本解析为 `key=value` 键值对，支持三引号 `"""..."""` 和反引号 `` `...` `` 语法
+4. **类型解析**: `DslXNodeToJsonTransformer` 根据 `excel-table.xdef` 中 `XptCellModel` 的属性类型定义，将值转换为正确的类型（表达式、枚举、`CellPosition` 等）
+5. **清空注释**: 解析完成后 `ec.setComment(null)`，确保生成输出中不包含配置注释
+
+关键源码:
+
+- `nop-entropy/nop-report/nop-report-core/src/main/java/io/nop/report/core/build/ExcelToXptModelTransformer.java`
+- `nop-entropy/nop-format/nop-excel/src/main/java/io/nop/excel/util/MultiLineConfigParser.java`
+
+### Comment 文本格式
+
+```
+expandType=r
+field=orderId
+ds=orderList
+expandExpr=`data.filter(x => x.amount > 100)`
+valueExpr=${cell.value + 1}
+rowParent=A3
+formatExpr=${fmt.format(cell.value)}
+styleIdExpr=${cell.amount > 1000 ? 'highlight' : 'normal'}
+```
+
+每行一个 `key=value` 对，与 `XptCellModel` 的属性名一一对应。
+
+### 单元格文本的简写语法
+
+除 comment 外，`XptModelInitializer` 还支持通过单元格文本本身进行简写配置:
+
+- `*=^dsName!fieldName` — 行展开单元格，绑定到数据集字段
+- `*=>dsName!fieldName` — 列展开单元格
+- `*=fieldName` — 简单字段绑定
+- `*=fieldName@expandExpr` — 带自定义展开表达式的字段绑定
+- 包含 `${...}` 的文本被解析为 `valueExpr` 的 XPL 模板表达式
+
+### 对 Report Designer 的影响
+
+本 Report Designer 代替 nop-entropy 中的 Excel 报表设计器，需要：
+
+1. **导入时**: codec adapter 必须将 XLSX 中 cell comment 解析为 `XptCellModel` 属性，映射到 `cellMeta['nop-report'].model`
+2. **编辑时**: inspector 面板直接读写 `cellMeta` 中的 XPT 属性，不需要经过 comment 文本
+3. **导出时**: codec adapter 将 `cellMeta['nop-report'].model` 的属性序列化为 comment 文本写回 `ExcelCell.comment`，以便后端 `ExcelToXptModelTransformer` 正确解析
+4. **Comment 显示**: 当前 spreadsheet canvas 已支持显示 `cell.comment`，但此 comment 在 nop-report 语境下是**配置数据**而非用户笔记。Inspector 面板应为用户提供结构化编辑界面，而非让用户手动编辑 comment 文本
+
+### Workbook/Sheet 级模型来源
+
+XPT 模型不仅仅存在于 cell comment 中:
+
+- **Workbook 级模型**: 存储在名为 `XptWorkbookModel` 的独立 sheet 中（通过 `xpt.imp.xml` 定义的 ImportModel 解析）
+- **Sheet 级模型**: 存储在名为 `SheetName-XptSheetModel` 的独立 sheet 中
+- **命名样式**: 在 `XptWorkbookModel` sheet 的 `ext:namedStyles` 字段中定义
+
+这些专用 sheet 在模板加载后被移除，不参与报表生成。codec adapter 需要正确处理这些 sheet 的读取和写入。
+
+## 1.2 样式模型
+
+### nop-entropy 的样式架构
+
+nop-entropy 采用 **workbook 级命名样式注册表 + styleId 引用** 的间接模型:
+
+```
+ExcelWorkbook
+  |-- styles: KeyedList<ExcelStyle>   ← 全局样式注册表，以 id 为键
+  |
+  |-- sheets[0]
+        |-- table.cols[0].styleId → "s1"  ← 列默认样式引用
+        |-- table.rows[0].styleId → "s2"  ← 行默认样式引用
+        |-- table.rows[0].cells[0].styleId → "s3"  ← 单元格样式引用
+```
+
+`ExcelStyle` 的完整属性集（参考 `/nop/schema/excel/style.xdef`）:
+
+| 属性                                                        | 类型                        | 说明                                                                           |
+| ----------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------ |
+| `id`                                                        | `String`                    | 样式唯一标识（注册表键）                                                       |
+| `name`                                                      | `String`                    | 显示名称                                                                       |
+| `font`                                                      | `ExcelFont`                 | 字体（fontName, fontSize, fontColor, bold, italic, strikeout, underlineStyle） |
+| `numberFormat`                                              | `String`                    | 数字格式字符串（如 `"#,##0.00"`）                                              |
+| `horizontalAlign`                                           | `OfficeHorizontalAlignment` | 水平对齐（LEFT / CENTER / RIGHT）                                              |
+| `verticalAlign`                                             | `OfficeVerticalAlignment`   | 垂直对齐（TOP / CENTER / BOTTOM）                                              |
+| `indent`                                                    | `Integer`                   | 缩进                                                                           |
+| `wrapText`                                                  | `boolean`                   | 自动换行                                                                       |
+| `shrinkToFit`                                               | `boolean`                   | 缩小字体填充                                                                   |
+| `rotate`                                                    | `Integer`                   | 旋转角度                                                                       |
+| `locked`                                                    | `Boolean`                   | 锁定（配合 sheet 保护）                                                        |
+| `hidden`                                                    | `Boolean`                   | 隐藏公式                                                                       |
+| `fillFgColor`                                               | `String`                    | 前景填充色                                                                     |
+| `fillBgColor`                                               | `String`                    | 背景填充色                                                                     |
+| `fillPattern`                                               | `String`                    | 填充图案                                                                       |
+| `topBorder` / `bottomBorder` / `leftBorder` / `rightBorder` | `ExcelBorderStyle`          | 四边边框                                                                       |
+| `diagonalLeftBorder` / `diagonalRightBorder`                | `ExcelBorderStyle`          | 对角线边框                                                                     |
+
+样式解析顺序: `cell.styleId` > `row.styleId` > `column.styleId` → 统一在 `ExcelWorkbook.styles` 中查找。
+
+### 动态样式
+
+`XptCellModel` 还提供了 `styleIdExpr`（`IEvalAction`），允许运行时根据数据动态选择样式。例如:
+
+```
+styleIdExpr=${cell.value > 1000 ? 'highlight-red' : 'normal'}
+```
+
+这在报表生成时计算，覆盖静态 `styleId`。
+
+### 当前 spreadsheet-core 的样式现状
+
+当前 `spreadsheet-core` 的 `CellDocument` 使用**内联 `CellStyle` 对象**:
+
+```typescript
+interface CellStyle {
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: string;
+  fontStyle?: string;
+  textDecoration?: string;
+  fontColor?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  borderStyle?: string;
+  borderWidth?: number;
+  borderTop?: BorderLineStyle;
+  borderRight?: BorderLineStyle;
+  borderBottom?: BorderLineStyle;
+  borderLeft?: BorderLineStyle;
+  textAlign?: string;
+  verticalAlign?: string;
+  wrapText?: boolean;
+  textIndent?: number;
+}
+```
+
+每个 `CellDocument` 直接持有完整的样式属性副本，**没有** `styleId` 间接引用机制。
+
+### 差距与对齐计划
+
+| 方面          | 当前状态                        | 目标状态                                                   |
+| ------------- | ------------------------------- | ---------------------------------------------------------- |
+| 样式存储      | 每个单元格内联 `CellStyle` 对象 | `styleId` 引用 + workbook 级 `styles` 注册表               |
+| 样式共享      | 无法共享（每个 cell 独立副本）  | 相同样式的 cell 共享同一个 `styleId`                       |
+| 数字格式      | 不支持                          | `numberFormat` 字段（如 `"#,##0.00"`）                     |
+| 动态样式      | 不支持                          | `styleIdExpr` 运行时计算                                   |
+| 列/行默认样式 | 不支持                          | `ExcelColumnConfig.styleId`、`ExcelRow.styleId`            |
+| XLSX 导出     | 不适用                          | `StylesPart` 构建 `xl/styles.xml`（去重 font/fill/border） |
+| 条件样式      | 不支持                          | `ExcelSheet.conditionalStyles` 范围级条件格式              |
+
+对齐策略建议分阶段:
+
+1. **第一阶段**: 在 `SpreadsheetDocument` 中增加 `workbook.styles` 注册表（`Record<string, CellStyle>`）和 `CellDocument.styleId` 字段；codec adapter 在导入时将 `ExcelStyle` 转为 `CellStyle` 存入注册表；导出时从注册表重建 `ExcelStyle` 列表
+2. **第二阶段**: `cell-style-map.ts` 利用 `styleId` 做 `CellStyleResult` 缓存（同一 `styleId` 只计算一次映射），提升 canvas 渲染性能
+3. **第三阶段**: 支持列/行默认样式继承链（`column.styleId` → `row.styleId` → `cell.styleId`）和 `numberFormat`
+4. **第四阶段**: 通过 inspector 暴露 `styleIdExpr` 动态样式配置
+
 ## 2. Profile 定位
 
 建议 `nop-report` 作为一个外部 profile 注入，而不是写死在 `report-designer-core` 中。

@@ -141,14 +141,14 @@ React 中的用法：
 
 ### 3.5 辅助结构 class
 
-| class                      | 用途         |
-| -------------------------- | ------------ |
-| `ss-col-resize-handle`     | 列宽调整手柄 |
-| `ss-row-resize-handle`     | 行高调整手柄 |
-| `ss-selection-border`      | 选区边框     |
-| `ss-selection-fill-handle` | 填充柄       |
-| `ss-frozen-separator-col`  | 冻结列分隔线 |
-| `ss-frozen-separator-row`  | 冻结行分隔线 |
+| class                     | 用途         |
+| ------------------------- | ------------ |
+| `ss-col-resize-handle`    | 列宽调整手柄 |
+| `ss-row-resize-handle`    | 行高调整手柄 |
+| `ss-selection-border`     | 选区边框     |
+| `ss-fill-handle`          | 填充柄       |
+| `ss-frozen-separator-col` | 冻结列分隔线 |
+| `ss-frozen-separator-row` | 冻结行分隔线 |
 
 ## 4. style-to-class 映射模块
 
@@ -175,7 +175,9 @@ interface CellStyleResult {
 
 ### 5.1 styleId 缓存
 
-`spreadsheet-core` 的 `StyleDefinition` + `styleId` 机制天然支持相同样式的 cell 共享同一个 style 对象。`cell-style-map.ts` 可以基于 `styleId` 缓存 `CellStyleResult`，避免重复计算。
+nop-entropy 的 Excel 模型采用 **workbook 级命名样式注册表 + `styleId` 引用**（见 `docs/architecture/report-designer/nop-report-profile.md` §1.2）。当前 `spreadsheet-core` 使用内联 `CellStyle` 对象，尚未引入 `styleId` 间接引用机制。
+
+待 `SpreadsheetDocument` 增加 `workbook.styles` 注册表和 `CellDocument.styleId` 字段后，`cell-style-map.ts` 可基于 `styleId` 缓存 `CellStyleResult`：相同样式的 cell 共享同一个映射结果，避免重复计算。这同时解决了切换 sheet 时 React 复用 DOM 导致的样式残留问题（当前通过 `<table key={activeSheetId}>` 强制 remount 规避）。
 
 ### 5.2 class 数量最小化
 
