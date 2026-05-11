@@ -309,7 +309,7 @@ function resolveScopePath(scope: ScopeRef | undefined, path: string): unknown {
     return getIn(own[head], rest.join('.'));
   }
 
-  return resolveScopePath(scope.parent, path);
+  return resolveScopePath(scope.isolate ? undefined : scope.parent, path);
 }
 
 function hasScopePath(scope: ScopeRef | undefined, path: string): boolean {
@@ -334,7 +334,7 @@ function hasScopePath(scope: ScopeRef | undefined, path: string): boolean {
     return hasOwnPathValue(own, path);
   }
 
-  return hasScopePath(scope.parent, path);
+  return hasScopePath(scope.isolate ? undefined : scope.parent, path);
 }
 
 export function toRecord(value: unknown): Record<string, any> {
@@ -367,6 +367,7 @@ export function createScopeRef(input: {
     id: input.id,
     path: input.path,
     parent: input.parent,
+    isolate: input.isolate,
     store: exposedStore,
     get value() {
       return readVisible();

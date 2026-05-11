@@ -3,8 +3,8 @@ import { withRetry } from '../operation-control.js';
 import { classifyActionResult, createBranchEvaluationBindings } from '../action-core.js';
 import type { ActionResult } from '@nop-chaos/flux-core';
 
-describe('contract: withRetry failureCount undercount violation', () => {
-  it('failureCount does not count the final failed attempt when shouldStop returns false', async () => {
+describe('contract: withRetry failureCount consistency', () => {
+  it('failureCount counts all failed attempts in soft-fail path', async () => {
     const result = await withRetry(
       async () => ({ ok: false } as ActionResult),
       { times: 2, delay: 0 },
@@ -12,7 +12,7 @@ describe('contract: withRetry failureCount undercount violation', () => {
     );
 
     expect(result.attempts).toBe(3);
-    expect(result.failureCount).toBe(2);
+    expect(result.failureCount).toBe(3);
   });
 
   it('failureCount correctly counts all attempts when fn throws', async () => {
@@ -30,7 +30,7 @@ describe('contract: withRetry failureCount undercount violation', () => {
     }
   });
 
-  it('VIOLATION: failureCount is inconsistent between throw and shouldStop-false paths', async () => {
+  it('failureCount is consistent between throw and shouldStop-false paths', async () => {
     const throwResult = await (async () => {
       try {
         await withRetry(
@@ -53,7 +53,7 @@ describe('contract: withRetry failureCount undercount violation', () => {
     expect(throwResult.attempts).toBe(3);
     expect(throwResult.failureCount).toBe(3);
     expect(softFailResult.attempts).toBe(3);
-    expect(softFailResult.failureCount).toBe(2);
+    expect(softFailResult.failureCount).toBe(3);
   });
 });
 

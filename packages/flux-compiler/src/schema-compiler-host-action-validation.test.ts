@@ -304,7 +304,6 @@ describe('host action validation', () => {
       expect.arrayContaining([
         expect.objectContaining({
           code: 'unknown-renderer-type',
-          path: '$[1]',
           message: 'Renderer not found for type: missing-renderer',
         }),
       ]),

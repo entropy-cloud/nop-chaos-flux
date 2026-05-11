@@ -219,6 +219,8 @@ export async function withRetry<T>(
     }
 
     if (attempts > retryTimes) {
+      failureCount += 1;
+      options.onFailedAttempt?.(failureCount, lastResult);
       break;
     }
 

@@ -8,7 +8,6 @@ import type {
 import { isSchemaInput } from '@nop-chaos/flux-core';
 import { MAX_COMPILE_DEPTH } from '../schema-compiler-helpers.js';
 import { canonicalizeSchemaInput } from './authoring-transform.js';
-import { analyzeSchemaInput } from './shape-validation.js';
 import {
   createSchemaCompilerDiagnosticsContext,
   schemaPathToJsonPointer,
@@ -78,13 +77,6 @@ export function createValidateSchemaInput(
       });
     }
 
-    analyzeSchemaInput(
-      canonicalPrepared,
-      options.basePath ?? '$',
-      registry,
-      plugins,
-      diagnostics,
-    );
     return diagnostics.diagnostics;
   };
 }

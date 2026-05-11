@@ -17,13 +17,13 @@ This file tracks issue categories discovered by exploratory contract testing.
 
 ## Case List
 
-| ID      | Title                                              | Test File                                                                   | Contract Source                                                                                             | Symptom                                                                      | Scope                                           | Status  | Fix / Note                                |
-| ------- | -------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------- | ------- | ----------------------------------------- |
-| ECT-001 | withRetry failureCount 在 soft-fail 路径少计       | `flux-action-core/src/__tests__/contract-retry-and-classification.test.ts`  | `RetryResult.failureCount` public API                                                                       | throw 路径 failureCount=3, soft-fail 路径同参数 failureCount=2               | `withRetry` 所有 shouldStop 返回 false 的调用者 | `open`  | 需确认 failureCount 语义后修复            |
-| ECT-002 | validate() 重复调用 analyzeSchemaInput             | `flux-compiler/src/schema-compiler-contract-exploration.test.ts` (H78, H86) | validate 应每个节点只产生 1 份诊断                                                                          | unknown-renderer-type 重复 2 次; schemaValidator 被调用 2 次                 | 所有使用 validate() 的消费者                    | `open`  | 需重构 validate pipeline                  |
-| ECT-003 | compileNode() 对未知 renderer 抛出不可读 TypeError | `flux-compiler/src/schema-compiler-contract-exploration.test.ts` (H83)      | 公共 API 应提供有意义的错误信息                                                                             | TypeError: Cannot read properties of undefined vs "Renderer not found"       | 直接使用 compileNode 的工具                     | `fixed` | 在 compileNode 中添加 registry.get() 检查 |
-| ECT-004 | isolated scope get()/has() 仍穿透父链              | `flux-runtime/src/__tests__/scope-ownership-edge-cases.test.ts`             | `docs/architecture/scope-ownership-and-isolation.md`: "isolate: true → 当前 child scope 不再沿父链查找数据" | isolate=true 的 scope 调用 get('key') 仍返回父级数据; readVisible() 正确隔离 | 所有使用 isolate:true 的 scope 消费者           | `open`  | get()/has() 路径缺少 isolate 检查         |
-| ECT-005 | generateCacheKey falsy data 碰撞                   | `flux-runtime/src/__tests__/async-data-contracts.test.ts` (C1)              | `generateCacheKey` 公共 API — 不同请求体应产生不同缓存键                                                    | data:0 / data:false / data:"" / data:null 与 data:undefined 产生相同缓存键   | 所有使用缓存且请求体可能为 falsy 值的 API 调用  | `fixed` | 将 truthy 检查改为 undefined 检查         |
+| ID      | Title                                              | Test File                                                                   | Contract Source                                                                                             | Symptom                                                                      | Scope                                           | Status  | Fix / Note                                               |
+| ------- | -------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------- | ------- | -------------------------------------------------------- |
+| ECT-001 | withRetry failureCount 在 soft-fail 路径少计       | `flux-action-core/src/__tests__/contract-retry-and-classification.test.ts`  | `RetryResult.failureCount` public API                                                                       | throw 路径 failureCount=3, soft-fail 路径同参数 failureCount=2               | `withRetry` 所有 shouldStop 返回 false 的调用者 | `fixed` | break 前增加 failureCount += 1                           |
+| ECT-002 | validate() 重复调用 analyzeSchemaInput             | `flux-compiler/src/schema-compiler-contract-exploration.test.ts` (H78, H86) | validate 应每个节点只产生 1 份诊断                                                                          | unknown-renderer-type 重复 2 次; schemaValidator 被调用 2 次                 | 所有使用 validate() 的消费者                    | `fixed` | 移除 compile 路径的重复 emit，保留内部 analyze           |
+| ECT-003 | compileNode() 对未知 renderer 抛出不可读 TypeError | `flux-compiler/src/schema-compiler-contract-exploration.test.ts` (H83)      | 公共 API 应提供有意义的错误信息                                                                             | TypeError: Cannot read properties of undefined vs "Renderer not found"       | 直接使用 compileNode 的工具                     | `fixed` | 在 compileNode 中添加 registry.get() 检查                |
+| ECT-004 | isolated scope get()/has() 仍穿透父链              | `flux-runtime/src/__tests__/scope-ownership-edge-cases.test.ts`             | `docs/architecture/scope-ownership-and-isolation.md`: "isolate: true → 当前 child scope 不再沿父链查找数据" | isolate=true 的 scope 调用 get('key') 仍返回父级数据; readVisible() 正确隔离 | 所有使用 isolate:true 的 scope 消费者           | `fixed` | resolveScopePath/hasScopePath 传入 undefined 替代 parent |
+| ECT-005 | generateCacheKey falsy data 碰撞                   | `flux-runtime/src/__tests__/async-data-contracts.test.ts` (C1)              | `generateCacheKey` 公共 API — 不同请求体应产生不同缓存键                                                    | data:0 / data:false / data:"" / data:null 与 data:undefined 产生相同缓存键   | 所有使用缓存且请求体可能为 falsy 值的 API 调用  | `fixed` | 将 truthy 检查改为 undefined 检查                        |
 
 ## Per-Case Notes
 
@@ -37,10 +37,10 @@ This file tracks issue categories discovered by exploratory contract testing.
 - Actual behavior: throw path: 3; soft-fail path: 2.
 - Root-cause hypothesis: `operation-control.ts:221-223` breaks without incrementing `failureCount` when `attempts > retryTimes` and `shouldStop` returns false.
 - Duplicate key: `withRetry-failureCount-soft-fail-undercount`
-- Status: `open`
-- Fix status: Not yet fixed; simple one-line fix but needs product decision on intended semantics.
+- Status: `fixed`
+- Fix status: Added `failureCount += 1` and `onFailedAttempt` call before `break` in soft-fail path (`operation-control.ts:221-224`).
 - Related files: `packages/flux-action-core/src/operation-control.ts`
-- Notes: Test documents current behavior (passes). If fix is confirmed, change assertion from `toBe(2)` to `toBe(3)`.
+- Notes: Test updated to assert `toBe(3)` for both throw and soft-fail paths.
 
 ### ECT-002. Compiler validate() double analyzeSchemaInput
 
@@ -54,10 +54,10 @@ This file tracks issue categories discovered by exploratory contract testing.
 - Actual behavior: 2x duplication for both.
 - Root-cause hypothesis: `validation-compiler.ts` validate() function's dual invocation of analyze.
 - Duplicate key: `compiler-validate-double-analyze`
-- Status: `open`
-- Fix status: Not yet fixed; moderate complexity requiring understanding of full validation pipeline.
-- Related files: `packages/flux-compiler/src/validation-compiler.ts`, `packages/flux-compiler/src/schema-compiler.ts`
-- Notes: H78 and H86 share the same root cause. Fix should either remove redundant analyze call in validate() or make compile skip internal analysis when in validate mode.
+- Status: `fixed`
+- Fix status: Removed per-node `unknown-renderer-type` emit from `compileSchemaToTemplateNodes` (both array and single-object paths) in `schema-compiler.ts`. Internal `analyzeSchemaInput` already handles this. Removed standalone `analyzeSchemaInput` call from `validation-compiler.ts` `validate()`.
+- Related files: `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-compiler/src/schema-compiler/validation-compiler.ts`
+- Notes: Diagnostic path format changed from schema-path (`$[0]`) to JSON-pointer (`/0/type`) for `validate()` output. Test updated accordingly.
 
 ### ECT-003. compileNode() opaque crash on unknown renderer
 
@@ -84,10 +84,10 @@ This file tracks issue categories discovered by exploratory contract testing.
 - Actual behavior: Only `readVisible()`/`materializeVisible()` respect isolation; `get()`/`has()` still see parent.
 - Root-cause hypothesis: `scope.ts:290-338` `resolveScopePath`/`hasScopePath` don't check `scope.isolate` flag.
 - Duplicate key: `scope-isolate-get-has-parent-leak`
-- Status: `open`
-- Fix status: Not yet fixed. Needs investigation of whether `get()`/`has()` are used by expression evaluation and whether fixing this would break existing behavior.
-- Related files: `packages/flux-runtime/src/scope.ts`
-- Notes: Test documents current behavior (passes as characterization). The fix requires understanding the full call graph of `get()`/`has()` to avoid breaking expression evaluation for non-isolated scopes.
+- Status: `fixed`
+- Fix status: Added `isolate?: boolean` to `ScopeRef` interface in `flux-core/src/types/scope.ts`. `createScopeRef` in `scope.ts` sets it. `resolveScopePath`/`hasScopePath` now pass `undefined` instead of `scope.parent` when `scope.isolate` is true.
+- Related files: `packages/flux-runtime/src/scope.ts`, `packages/flux-core/src/types/scope.ts`
+- Notes: Backwards-compatible (optional field). Tests updated to assert isolation in get()/has().
 
 ### ECT-005. generateCacheKey falsy data collision
 

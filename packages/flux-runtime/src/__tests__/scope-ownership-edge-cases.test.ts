@@ -113,10 +113,10 @@ describe('H2: scope isolation from parent', () => {
     expect(child.materializeVisible()).toEqual({ local: 1 });
   });
 
-  it('CANDIDATE: isolated child get() still resolves parent chain (isolate not respected)', () => {
+  it('FIXED: isolated child get() does not resolve parent chain', () => {
     const parent = createTestScope({ visible: 'yes' });
     const child = createChildScope(parent, { local: 1 }, true);
-    expect(child.get('visible')).toBe('yes');
+    expect(child.get('visible')).toBeUndefined();
   });
 
   it('isolated child store does not subscribe to parent changes', () => {

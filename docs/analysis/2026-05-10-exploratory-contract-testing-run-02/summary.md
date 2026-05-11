@@ -25,16 +25,19 @@
 
 | ID      | Title                                          | Status  | 发现者 |
 | ------- | ---------------------------------------------- | ------- | ------ |
-| ECT-001 | withRetry failureCount soft-fail undercount    | `open`  | B      |
-| ECT-002 | validate() double analyzeSchemaInput           | `open`  | C      |
+| ECT-001 | withRetry failureCount soft-fail undercount    | `fixed` | B      |
+| ECT-002 | validate() double analyzeSchemaInput           | `fixed` | C      |
 | ECT-003 | compileNode() opaque crash on unknown renderer | `fixed` | C      |
-| ECT-004 | isolated scope get()/has() parent leak         | `open`  | F      |
+| ECT-004 | isolated scope get()/has() parent leak         | `fixed` | F      |
 | ECT-005 | generateCacheKey falsy data collision          | `fixed` | H      |
 
 ## 代码修复
 
-1. **ECT-003**: `packages/flux-compiler/src/schema-compiler.ts` — 在 `compileNode` 中添加 `registry.get()` 检查
-2. **ECT-005**: `packages/flux-runtime/src/async-data/api-cache.ts` — 将 truthy 检查改为 undefined 检查
+1. **ECT-001**: `packages/flux-action-core/src/operation-control.ts` — 在 soft-fail break 前增加 `failureCount += 1` 和 `onFailedAttempt` 调用
+2. **ECT-002**: `packages/flux-compiler/src/schema-compiler.ts` + `validation-compiler.ts` — 移除 compile 路径的 per-node unknown-renderer emit，移除 validate() 中重复的 analyzeSchemaInput 调用
+3. **ECT-003**: `packages/flux-compiler/src/schema-compiler.ts` — 在 `compileNode` 中添加 `registry.get()` 检查
+4. **ECT-004**: `packages/flux-runtime/src/scope.ts` + `packages/flux-core/src/types/scope.ts` — ScopeRef 增加 `isolate` 字段，resolveScopePath/hasScopePath 在 isolate=true 时传入 undefined 替代 parent
+5. **ECT-005**: `packages/flux-runtime/src/async-data/api-cache.ts` — 将 truthy 检查改为 undefined 检查
 
 ## 测试文件新增
 

@@ -34,6 +34,7 @@ export interface ScopeRef {
   id: string;
   path: string;
   parent?: ScopeRef;
+  isolate?: boolean;
   store?: ScopeStore;
   readonly value: Record<string, any>;
   get(path: string): unknown;

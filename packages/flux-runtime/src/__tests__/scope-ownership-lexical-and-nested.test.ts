@@ -64,10 +64,10 @@ describe('H10: lexical path resolution across scope chain', () => {
     expect(c.get('deep.nested.key')).toBe('found');
   });
 
-  it('CANDIDATE: isolated child get() still resolves parent (isolate not respected)', () => {
+  it('FIXED: isolated child get() does not resolve parent', () => {
     const parent = createTestScope({ x: 1 });
     const child = createChildScope(parent, {}, true);
-    expect(child.get('x')).toBe(1);
+    expect(child.get('x')).toBeUndefined();
   });
 
   it('isolated child readVisible returns own only', () => {

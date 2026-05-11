@@ -38,7 +38,7 @@ describe('contract: retry with edge cases', () => {
     expect(callCount).toBe(3);
   });
 
-  it('VIOLATION: failureCount undercounts when shouldStop returns false on final attempt', async () => {
+  it('failureCount correctly counts all failed attempts when shouldStop returns false', async () => {
     const adapter = createMockAdapter({
       invokeBuiltInAction: async () => ({ ok: false, error: new Error('always-fail') }),
     });
@@ -59,7 +59,7 @@ describe('contract: retry with edge cases', () => {
 
     expect(result.ok).toBe(false);
     expect(result.attempts).toBe(3);
-    expect(result.failureCount).toBe(2);
+    expect(result.failureCount).toBe(3);
   });
 
   it('retry with times=0 runs once without retrying', async () => {

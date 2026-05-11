@@ -84,12 +84,6 @@ export function createSchemaCompiler(input: {
 
           if (!renderer) {
             if (diagnostics.enabled && diagnostics.continueOnError) {
-              diagnostics.emit({
-                code: 'unknown-renderer-type',
-                message: `Renderer not found for type: ${item.type}`,
-                path,
-                source: 'core',
-              });
               return undefined;
             }
 
@@ -129,12 +123,6 @@ export function createSchemaCompiler(input: {
 
     if (!renderer) {
       if (diagnostics.enabled && diagnostics.continueOnError) {
-        diagnostics.emit({
-          code: 'unknown-renderer-type',
-          message: `Renderer not found for type: ${canonicalPrepared.type}`,
-          path,
-          source: 'core',
-        });
         return [];
       }
 

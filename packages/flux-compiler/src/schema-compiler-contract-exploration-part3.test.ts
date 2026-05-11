@@ -285,11 +285,11 @@ describe('contract exploration: isInsideCapableRegion edge cases', () => {
 });
 
 describe('contract exploration: deep probes and additional candidates', () => {
-  it('H78: CANDIDATE - validate emits duplicate unknown-renderer-type (compile+analyze both emit)', () => {
+  it('H78: FIXED - validate emits exactly one unknown-renderer-type per unknown node', () => {
     const compiler = makeCompiler([textRenderer]);
     const diagnostics = compiler.validate?.([{ type: 'unknown' }]);
     const unknowns = diagnostics?.filter((d) => d.code === 'unknown-renderer-type') ?? [];
-    expect(unknowns.length).toBe(2);
+    expect(unknowns.length).toBe(1);
   });
 
   it('H79: host contract version mismatch produces warning', () => {
@@ -391,7 +391,7 @@ describe('contract exploration: deep probes and additional candidates', () => {
     expect(result!.schema).toEqual({ type: 'text', text: 'hello' });
   });
 
-  it('H86: CANDIDATE - schemaValidator called twice in validate (compile+analyze)', () => {
+  it('H86: FIXED - schemaValidator called exactly once in validate', () => {
     const seen: Array<{ path: string }> = [];
     const validatedRenderer: RendererDefinition = {
       type: 'validated',
@@ -402,7 +402,7 @@ describe('contract exploration: deep probes and additional candidates', () => {
     };
     const compiler = makeCompiler([validatedRenderer]);
     compiler.validate?.({ type: 'validated' });
-    expect(seen).toHaveLength(2);
+    expect(seen).toHaveLength(1);
   });
 
   it('H87: action parallel chain is validated recursively', () => {

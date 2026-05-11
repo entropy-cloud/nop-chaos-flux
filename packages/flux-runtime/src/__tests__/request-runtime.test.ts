@@ -579,7 +579,7 @@ describe('createApiRequestExecutor', () => {
     ).rejects.toMatchObject({
       message: 'server failed',
       attempts: 3,
-      failureCount: 2,
+      failureCount: 3,
     });
   });
 });
