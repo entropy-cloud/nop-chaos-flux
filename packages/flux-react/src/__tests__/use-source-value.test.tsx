@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import type { SourceObserverSnapshot } from '@nop-chaos/flux-core';
 import { RuntimeContext, ScopeContext } from '../contexts.js';
 import { isSourceSchema, useSourceValue } from '../use-source-value.js';
 
@@ -222,7 +223,7 @@ describe('useSourceValue', () => {
 
     const runtime = {
       createSourceObserver: () => {
-        let snapshot = {
+        let snapshot: SourceObserverSnapshot = {
           value: {
             sourceState: { loading: true, error: undefined, status: 'loading' as const },
           },

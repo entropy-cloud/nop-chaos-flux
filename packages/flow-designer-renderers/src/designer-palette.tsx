@@ -81,15 +81,6 @@ export function DesignerPaletteContent(props: {
           <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-border bg-transparent">
             {nodeTypes.length}
           </span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => dispatch({ type: 'togglePalette' })}
-            aria-label={t('flux.flowDesigner.collapsePalette')}
-            data-testid="collapse-palette"
-          >
-            <DesignerIcon icon="chevron-left" />
-          </Button>
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto p-3">

@@ -296,15 +296,6 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
             {t('flux.flowDesigner.inspector.editNodeOrEdge')}
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => dispatch({ type: 'toggleInspector' })}
-          aria-label="Collapse inspector"
-          data-testid="collapse-inspector"
-        >
-          <DesignerIcon icon="chevron-right" />
-        </Button>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto p-4">
         <div className="fd-panel-card rounded-lg border border-border p-4 mb-4">
