@@ -79,22 +79,9 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
   const [datasetDialogOpen, setDatasetDialogOpen] = useState(false);
   const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null);
 
-  const updateSavedDocumentExtras = useCallback(
-    (extras: { charts: DocChart[]; codes: DocCode[] }) => {
-      setSavedDocument((current) => {
-        if (!current) return current;
-        return {
-          ...current,
-          data: {
-            ...current.data,
-            charts: extras.charts,
-            codes: extras.codes,
-          },
-        };
-      });
-    },
-    [],
-  );
+  const handleDocumentSaved = useCallback((saved: SavedDocumentData) => {
+    setSavedDocument(saved);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -197,7 +184,7 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
         getCodes: () => codes,
         setCodes,
         saveEvent: props.events.onSave,
-        onDocumentSaved: updateSavedDocumentExtras,
+        onDocumentSaved: handleDocumentSaved,
       }),
     [
       bridge,
@@ -206,7 +193,7 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
       datasetStore,
       editorStore,
       props.events.onSave,
-      updateSavedDocumentExtras,
+      handleDocumentSaved,
     ],
   );
 

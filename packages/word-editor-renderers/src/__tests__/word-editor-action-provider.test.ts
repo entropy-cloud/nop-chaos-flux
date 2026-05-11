@@ -6,14 +6,32 @@ import type {
   DocChart,
   DocCode,
   EditorStoreApi,
+  SavedDocumentData,
 } from '@nop-chaos/word-editor-core';
 import { createWordEditorActionProvider } from '../word-editor-action-provider.js';
+
+const savedDocument: SavedDocumentData = {
+  data: {
+    header: [],
+    main: [{ value: 'saved' }] as any,
+    footer: [],
+    charts: [mockChart()],
+    codes: [mockCode()],
+  },
+  paperSettings: {
+    width: 595,
+    height: 842,
+    direction: 'vertical',
+    margins: [100, 120, 100, 120],
+  },
+  savedAt: '2026-05-11T00:00:00.000Z',
+};
 
 vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@nop-chaos/word-editor-core')>();
   return {
     ...actual,
-    saveDocument: vi.fn(() => true),
+    saveDocument: vi.fn(() => savedDocument),
     saveDatasets: vi.fn(),
   };
 });
@@ -84,9 +102,6 @@ describe('createWordEditorActionProvider', () => {
 
     expect(result.ok).toBe(true);
     expect(editorStore.setDirty).toHaveBeenCalledWith(false);
-    expect(onDocumentSaved).toHaveBeenCalledWith({
-      charts: [mockChart()],
-      codes: [mockCode()],
-    });
+    expect(onDocumentSaved).toHaveBeenCalledWith(savedDocument);
   });
 });

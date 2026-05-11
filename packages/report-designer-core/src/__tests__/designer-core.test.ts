@@ -221,7 +221,7 @@ describe('createReportDesignerCore', () => {
     expect(exportedSheet.cells?.A1?.value).toBe('synced-cell');
   });
 
-  it('syncSpreadsheetDocument preserves the provided spreadsheet subtree reference', () => {
+  it('syncSpreadsheetDocument seals the provided spreadsheet subtree reference', () => {
     const nextSpreadsheet = cloneStructured(doc.spreadsheet);
     nextSpreadsheet.workbook.sheets[0]!.cells = {
       A1: { value: 'synced-cell', type: 'string' } as any,
@@ -229,7 +229,11 @@ describe('createReportDesignerCore', () => {
 
     core.syncSpreadsheetDocument(nextSpreadsheet);
 
-    expect(core.getSnapshot().document.spreadsheet).toBe(nextSpreadsheet);
+    expect(core.getSnapshot().document.spreadsheet).not.toBe(nextSpreadsheet);
+    nextSpreadsheet.workbook.sheets[0]!.cells!.A1!.value = 'mutated-after-sync';
+    expect(core.getSnapshot().document.spreadsheet.workbook.sheets[0]!.cells?.A1?.value).toBe(
+      'synced-cell',
+    );
   });
 
   it('syncSpreadsheetDocument participates in undo history', async () => {

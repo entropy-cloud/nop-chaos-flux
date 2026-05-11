@@ -69,13 +69,13 @@ export function createSavedDocumentData(input: {
 export function saveDocument(
   bridge: CanvasEditorBridge,
   extras?: { charts?: DocChart[]; codes?: DocCode[] },
-): boolean {
+): SavedDocumentData | null {
   try {
     const storage = getStorage();
-    if (!storage) return false;
+    if (!storage) return null;
 
     const value = bridge.getValue();
-    if (!value) return false;
+    if (!value) return null;
 
     const paperSettings = bridge.getPaperSettings();
 
@@ -91,9 +91,9 @@ export function saveDocument(
     });
 
     storage.setItem(STORAGE_KEY, JSON.stringify(saved));
-    return true;
+    return saved;
   } catch {
-    return false;
+    return null;
   }
 }
 

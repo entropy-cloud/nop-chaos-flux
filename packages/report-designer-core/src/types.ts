@@ -120,6 +120,15 @@ export interface ReportDesignerConfig {
   kind?: string;
   fieldSources?: FieldSourceSnapshot[];
   maxUndoDepth?: number;
+  features?: {
+    fieldPanel?: boolean;
+    inspector?: boolean;
+    preview?: boolean;
+    expressionEditor?: boolean;
+    dragFieldToCell?: boolean;
+    dragFieldToRange?: boolean;
+    customPropertyPanels?: boolean;
+  };
   inspector?: {
     mode?: 'panel' | 'drawer';
     body?: SchemaInput;

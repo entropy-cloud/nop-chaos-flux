@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
@@ -218,9 +218,15 @@ function renderWordEditor(input?: {
   );
 }
 
+const defaultWordEditorConfig = {
+  leftPanel: { generator: 'default' as const },
+  rightPanel: { generator: 'default' as const },
+};
+
 describe('WordEditorPage host scope', () => {
   afterEach(() => {
     vi.useRealTimers();
+    cleanup();
   });
 
   it('updates host scope dataset projection when dataset store changes', async () => {
@@ -240,7 +246,11 @@ describe('WordEditorPage host scope', () => {
     resetMockStores();
 
     renderWordEditor({
-      schema: { type: 'word-editor-page', leftPanel: { type: 'host-dataset-probe' } },
+      schema: {
+        type: 'word-editor-page',
+        config: { leftPanel: { generator: 'default' } },
+        leftPanel: { type: 'host-dataset-probe' },
+      },
       extraRenderers: [HostDatasetProbe],
     });
 
@@ -289,7 +299,11 @@ describe('WordEditorPage host scope', () => {
     resetMockStores();
 
     renderWordEditor({
-      schema: { type: 'word-editor-page', leftPanel: { type: 'runtime-probe' } },
+      schema: {
+        type: 'word-editor-page',
+        config: { leftPanel: { generator: 'default' } },
+        leftPanel: { type: 'runtime-probe' },
+      },
       extraRenderers: [RuntimeProbe],
     });
 
@@ -339,7 +353,11 @@ describe('WordEditorPage host scope', () => {
     resetMockStores();
 
     renderWordEditor({
-      schema: { type: 'word-editor-page', leftPanel: { type: 'document-probe' } },
+      schema: {
+        type: 'word-editor-page',
+        config: { leftPanel: { generator: 'default' } },
+        leftPanel: { type: 'document-probe' },
+      },
       extraRenderers: [DocumentProbe],
     });
 
@@ -373,7 +391,11 @@ describe('WordEditorPage host scope', () => {
     };
 
     renderWordEditor({
-      schema: { type: 'word-editor-page', leftPanel: { type: 'document-count-probe' } },
+      schema: {
+        type: 'word-editor-page',
+        config: { leftPanel: { generator: 'default' } },
+        leftPanel: { type: 'document-count-probe' },
+      },
       extraRenderers: [DocumentProbe],
     });
 
@@ -422,6 +444,7 @@ describe('WordEditorPage host scope', () => {
         schema={defineWordEditorPageSchema({
           type: 'word-editor-page',
           statusPath: 'wordEditorStatus',
+          config: defaultWordEditorConfig,
           toolbar: { type: 'scope-probe' },
           leftPanel: { type: 'scope-probe' },
           rightPanel: { type: 'scope-probe' },
@@ -551,6 +574,7 @@ describe('WordEditorPage host scope', () => {
       schema: {
         type: 'word-editor-page',
         initialDocument: { header: [], main: [{ value: 'schema-seed' }], footer: [] },
+        config: { leftPanel: { generator: 'default' } },
         leftPanel: { type: 'document-value-probe' },
       },
       extraRenderers: [DocumentValueProbe],
@@ -625,6 +649,70 @@ describe('WordEditorPage host scope', () => {
 
     await waitFor(() => {
       expect(datasetStore.load).toHaveBeenCalledWith(persistedDatasets);
+    });
+  });
+
+  it('hides override regions when no panel config resolves that side', () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    const HiddenProbe: RendererDefinition = {
+      type: 'hidden-probe',
+      component: () => <span>Hidden probe</span>,
+    };
+
+    renderWordEditor({
+      schema: {
+        type: 'word-editor-page',
+        leftPanel: { type: 'hidden-probe' },
+        rightPanel: { type: 'hidden-probe' },
+      },
+      extraRenderers: [HiddenProbe],
+    });
+
+    expect(screen.queryByText('Hidden probe')).toBeNull();
+    expect(screen.queryByTestId('left-panel-expanded')).toBeNull();
+    expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
+  });
+
+  it('renders default generators only when config resolves side panels', () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    renderWordEditor({
+      schema: {
+        type: 'word-editor-page',
+        config: { leftPanel: { generator: 'default' }, rightPanel: { generator: 'default' } },
+      },
+    });
+
+    expect(screen.getByTestId('dataset-panel')).toBeTruthy();
+    expect(screen.getByTestId('outline-panel')).toBeTruthy();
+  });
+
+  it('exposes shared collapse controls for expanded workbench sides', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    renderWordEditor({
+      schema: {
+        type: 'word-editor-page',
+        config: defaultWordEditorConfig,
+      },
+    });
+
+    expect(screen.getByTestId('left-panel-expanded')).toBeTruthy();
+    expect(screen.getByTestId('right-panel-expanded')).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId('collapse-left-panel'));
+    fireEvent.click(screen.getByTestId('collapse-right-panel'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('left-panel-collapsed')).toBeTruthy();
+      expect(screen.getByTestId('right-panel-collapsed')).toBeTruthy();
     });
   });
 

@@ -48,7 +48,7 @@ afterEach(() => {
 });
 
 describe('saveDocument', () => {
-  it('returns true and stores data when bridge has value', () => {
+  it('returns saved data and stores it when bridge has value', () => {
     const mockData = {
       data: {
         header: [{ value: 'header' }],
@@ -83,7 +83,7 @@ describe('saveDocument', () => {
       ],
     });
 
-    expect(result).toBe(true);
+    expect(result).not.toBeNull();
     expect(localStorageState.current.setItem).toHaveBeenCalledWith(STORAGE_KEY, expect.any(String));
     const saved = JSON.parse(localStorageState.current.setItem.mock.calls[0][1]) as any;
     expect(saved.data.main).toEqual([{ value: 'main' }]);
@@ -95,13 +95,13 @@ describe('saveDocument', () => {
     expect(saved.savedAt).toBeDefined();
   });
 
-  it('returns false when bridge.getValue() returns null', () => {
+  it('returns null when bridge.getValue() returns null', () => {
     const mockBridge = {
       getValue: vi.fn(() => null),
       getPaperSettings: vi.fn(),
     } as any;
 
-    expect(saveDocument(mockBridge)).toBe(false);
+    expect(saveDocument(mockBridge)).toBeNull();
     expect(localStorageState.current.setItem).not.toHaveBeenCalled();
   });
 
@@ -113,7 +113,7 @@ describe('saveDocument', () => {
     } as any;
 
     const result = saveDocument(mockBridge);
-    expect(result).toBe(true);
+    expect(result).not.toBeNull();
     const saved = JSON.parse(localStorageState.current.setItem.mock.calls[0][1]) as any;
     expect(saved.data.header).toEqual([]);
     expect(saved.data.footer).toEqual([]);

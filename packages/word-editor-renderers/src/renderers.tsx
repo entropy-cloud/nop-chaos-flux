@@ -17,6 +17,12 @@ export const wordEditorRendererDefinitions: RendererDefinition[] = [
     rendererClass: 'domain-host-renderer',
     rendererTraits: ['workbench-shell', 'builder-facing'],
     propContracts: {
+      config: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Config',
+        description: 'Config-driven side-panel contract for the word editor workbench shell.',
+        editorType: 'object',
+      },
       statusPath: {
         shape: { kind: 'string' },
         displayName: 'Status Path',
@@ -62,6 +68,7 @@ export const wordEditorRendererDefinitions: RendererDefinition[] = [
     },
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'config', kind: 'prop' },
       { key: 'statusPath', kind: 'prop' },
       { key: 'onBack', kind: 'event' },
       { key: 'onSave', kind: 'event' },

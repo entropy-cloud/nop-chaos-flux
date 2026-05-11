@@ -406,7 +406,7 @@ export function createReportDesignerCore(
       const currentDocument = store.getState().document;
       const changed = applyDocumentChange({
         ...currentDocument,
-        spreadsheet: nextDocument,
+        spreadsheet: structuredClone(nextDocument),
       });
 
       if (changed) {

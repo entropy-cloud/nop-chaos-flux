@@ -19,8 +19,6 @@
   },
   "dependencies": {
     "@nop-chaos/spreadsheet-core": "workspace:*",
-    "@nop-chaos/flux-formula": "workspace:*",
-    "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
@@ -28,6 +26,10 @@
     "lucide-react": "^1.7.0",
     "react": "^19.0.0",
     "use-sync-external-store": "^1.6.0"
+  },
+  "devDependencies": {
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-runtime": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node -e \"fs.cpSync('src/canvas-styles.css','dist/canvas-styles.css')\"",

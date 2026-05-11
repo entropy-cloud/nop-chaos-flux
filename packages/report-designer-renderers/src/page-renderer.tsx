@@ -121,8 +121,49 @@ export function equalReportSpreadsheetSnapshot(
   );
 }
 
+function serializeSpreadsheetDocument(document: SpreadsheetRuntimeSnapshot['document']): string {
+  return JSON.stringify(document);
+}
+
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
+}
+
+function hasConfiguredFieldPanel(args: {
+  config: ReportDesignerConfig;
+  adapters: Partial<ReportDesignerAdapterRegistry> | undefined;
+  resolvedFieldSources: ReportPageSnapshotSlice['fieldSources'];
+}): boolean {
+  if (args.config.features?.fieldPanel === false) {
+    return false;
+  }
+  if (args.resolvedFieldSources.length > 0) {
+    return true;
+  }
+
+  return (args.config.fieldSources ?? []).some((fieldSource) => {
+    if (!fieldSource.provider) {
+      return true;
+    }
+    return args.adapters?.fieldSources?.has(fieldSource.provider) ?? false;
+  });
+}
+
+function hasConfiguredInspector(config: ReportDesignerConfig): boolean {
+  if (config.features?.inspector === false) {
+    return false;
+  }
+
+  const inspector = config.inspector;
+  if (!inspector) {
+    return false;
+  }
+
+  return Boolean(
+    inspector.body ||
+      (inspector.byTarget && Object.keys(inspector.byTarget).length > 0) ||
+      (inspector.byProfile && Object.keys(inspector.byProfile).length > 0),
+  );
 }
 
 export function ReportDesignerPageRenderer(
@@ -214,34 +255,40 @@ export function ReportDesignerPageRenderer(
     equalReportSpreadsheetSnapshot,
   );
   const syncingSpreadsheetFromReportRef = useRef(false);
-  const lastSyncedSpreadsheetRef = useRef(spreadsheetSnapshot.document);
-  const lastAppliedReportSpreadsheetRef = useRef(snapshot.document.spreadsheet);
+  const lastSyncedSpreadsheetRef = useRef(serializeSpreadsheetDocument(spreadsheetSnapshot.document));
+  const lastAppliedReportSpreadsheetRef = useRef(
+    serializeSpreadsheetDocument(snapshot.document.spreadsheet),
+  );
 
   useEffect(() => {
-    if (snapshot.document.spreadsheet === lastAppliedReportSpreadsheetRef.current) {
+    const nextReportSpreadsheet = serializeSpreadsheetDocument(snapshot.document.spreadsheet);
+
+    if (nextReportSpreadsheet === lastAppliedReportSpreadsheetRef.current) {
       return;
     }
 
-    lastAppliedReportSpreadsheetRef.current = snapshot.document.spreadsheet;
-    if (snapshot.document.spreadsheet === lastSyncedSpreadsheetRef.current) {
+    lastAppliedReportSpreadsheetRef.current = nextReportSpreadsheet;
+    if (nextReportSpreadsheet === lastSyncedSpreadsheetRef.current) {
       return;
     }
 
     syncingSpreadsheetFromReportRef.current = true;
     spreadsheetCore.replaceDocument(snapshot.document.spreadsheet);
-    lastSyncedSpreadsheetRef.current = snapshot.document.spreadsheet;
+    lastSyncedSpreadsheetRef.current = nextReportSpreadsheet;
     syncingSpreadsheetFromReportRef.current = false;
   }, [snapshot.document.spreadsheet, spreadsheetCore]);
 
   useEffect(() => {
+    const nextSpreadsheetDocument = serializeSpreadsheetDocument(spreadsheetSnapshot.document);
+
     if (syncingSpreadsheetFromReportRef.current) {
       return;
     }
-    if (spreadsheetSnapshot.document === lastSyncedSpreadsheetRef.current) {
+    if (nextSpreadsheetDocument === lastSyncedSpreadsheetRef.current) {
       return;
     }
 
-    lastSyncedSpreadsheetRef.current = spreadsheetSnapshot.document;
+    lastSyncedSpreadsheetRef.current = nextSpreadsheetDocument;
     core.syncSpreadsheetDocument(spreadsheetSnapshot.document);
   }, [core, spreadsheetSnapshot.document]);
 
@@ -297,6 +344,12 @@ export function ReportDesignerPageRenderer(
 
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
+  const showFieldPanel = hasConfiguredFieldPanel({
+    config: resolvedDesigner,
+    adapters: resolvedAdapters,
+    resolvedFieldSources: snapshot.fieldSources,
+  });
+  const showInspectorPanel = hasConfiguredInspector(resolvedDesigner);
 
   useStatusPathPublication<ReportDesignerHostStatusSummary>(
     props.node.scope.parent ?? props.node.scope,
@@ -347,13 +400,16 @@ export function ReportDesignerPageRenderer(
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
       header={headerSlot}
       leftPanel={
-        hasRendererSlotContent(asReactNode(fieldPanelContent))
-          ? asReactNode(fieldPanelContent)
-          : renderFallbackFieldPanel(snapshot.fieldSources)
+        showFieldPanel
+          ? hasRendererSlotContent(asReactNode(fieldPanelContent))
+            ? asReactNode(fieldPanelContent)
+            : renderFallbackFieldPanel(snapshot.fieldSources)
+          : undefined
       }
       leftCollapsed={leftCollapsed}
       onLeftToggle={() => setLeftCollapsed((v) => !v)}
       leftLabel={t('flux.reportDesigner.expandFieldPanel')}
+      leftCollapseLabel={t('flux.reportDesigner.collapseFieldPanel')}
       canvas={
         hasRendererSlotContent(asReactNode(bodyContent)) ? (
           asReactNode(bodyContent)
@@ -367,21 +423,24 @@ export function ReportDesignerPageRenderer(
         )
       }
       rightPanel={
-        hasRendererSlotContent(asReactNode(inspectorContent))
-          ? asReactNode(inspectorContent)
-          : asReactNode(
-              props.helpers.render(
-                { type: 'report-inspector-shell' },
-                {
-                  scope: reportDesignerScope,
-                  actionScope,
-                },
-              ),
-            )
+        showInspectorPanel
+          ? hasRendererSlotContent(asReactNode(inspectorContent))
+            ? asReactNode(inspectorContent)
+            : asReactNode(
+                props.helpers.render(
+                  { type: 'report-inspector-shell' },
+                  {
+                    scope: reportDesignerScope,
+                    actionScope,
+                  },
+                ),
+              )
+          : undefined
       }
       rightCollapsed={rightCollapsed}
       onRightToggle={() => setRightCollapsed((v) => !v)}
       rightLabel={t('flux.reportDesigner.expandInspector')}
+      rightCollapseLabel={t('flux.reportDesigner.collapseInspector')}
       dialogs={
         hasRendererSlotContent(asReactNode(dialogsContent))
           ? asReactNode(dialogsContent)

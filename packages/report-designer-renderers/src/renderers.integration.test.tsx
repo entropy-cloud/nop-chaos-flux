@@ -266,14 +266,76 @@ describe('report-designer namespaced actions integration', { timeout: 15000 }, (
     });
   });
 
-  it('renders explicit empty state when no inspector schema exists', async () => {
+  it('hides the inspector side when no inspector schema exists', async () => {
     renderReportDesignerPage({
       config: createRuntimeConfig(),
       inspector: { type: 'report-inspector-shell' },
     });
 
     await waitFor(() => {
-      expect(screen.getByText('No inspector panels available.')).toBeTruthy();
+      expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
+      expect(screen.queryByTestId('right-panel-collapsed')).toBeNull();
+      expect(screen.queryByText('No inspector panels available.')).toBeNull();
+    });
+  });
+
+  it('hides left and right workbench sides when config does not resolve them', async () => {
+    renderReportDesignerPage({
+      config: createRuntimeConfig(),
+      inspector: { type: 'report-inspector-shell' },
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('left-panel-expanded')).toBeNull();
+      expect(screen.queryByTestId('left-panel-collapsed')).toBeNull();
+      expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
+      expect(screen.queryByTestId('right-panel-collapsed')).toBeNull();
+      expect(screen.queryByText('No inspector panels available.')).toBeNull();
+    });
+  });
+
+  it('hides config-defined sides when feature gates disable them', async () => {
+    renderReportDesignerPage({
+      config: createRuntimeConfig({
+        fieldSources: [{ id: 'sales', label: 'Sales', groups: [] }],
+        inspector: {
+          body: { type: 'text', text: 'Inspector body' },
+        },
+        features: {
+          fieldPanel: false,
+          inspector: false,
+        },
+      }),
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('left-panel-expanded')).toBeNull();
+      expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
+      expect(screen.queryByText('Inspector body')).toBeNull();
+    });
+  });
+
+  it('exposes shared collapse controls for expanded workbench sides', async () => {
+    renderReportDesignerPage({
+      config: createRuntimeConfig({
+        fieldSources: [{ id: 'sales', label: 'Sales', groups: [] }],
+        inspector: {
+          body: { type: 'text', text: 'Inspector body' },
+        },
+      }),
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('left-panel-expanded')).toBeTruthy();
+      expect(screen.getByTestId('right-panel-expanded')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId('collapse-left-panel'));
+    fireEvent.click(screen.getByTestId('collapse-right-panel'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('left-panel-collapsed')).toBeTruthy();
+      expect(screen.getByTestId('right-panel-collapsed')).toBeTruthy();
     });
   });
 

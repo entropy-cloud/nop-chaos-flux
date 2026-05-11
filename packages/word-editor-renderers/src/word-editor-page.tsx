@@ -187,25 +187,37 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       </div>
   );
 
-  const leftPanelSlot = props.regions.leftPanel
+  const panelConfig = props.props.config;
+  const showLeftPanel = panelConfig?.leftPanel !== undefined;
+  const showRightPanel = panelConfig?.rightPanel !== undefined;
+  const renderedLeftPanel = props.regions.leftPanel
     ? asReactNode(
         props.regions.leftPanel.render({
           scope: hostScope,
           actionScope,
         }),
       )
-    : defaultLeftPanelSlot;
-
-  const rightPanelSlot = props.regions.rightPanel ? (
-    asReactNode(
+    : undefined;
+  const renderedRightPanel = props.regions.rightPanel
+    ? asReactNode(
         props.regions.rightPanel.render({
           scope: hostScope,
           actionScope,
         }),
       )
-  ) : (
-    <OutlinePanel bridge={bridge} />
-  );
+    : undefined;
+
+  const leftPanelSlot = showLeftPanel
+    ? hasRendererSlotContent(renderedLeftPanel)
+      ? renderedLeftPanel
+      : defaultLeftPanelSlot
+    : undefined;
+
+  const rightPanelSlot = showRightPanel
+    ? hasRendererSlotContent(renderedRightPanel)
+      ? renderedRightPanel
+      : <OutlinePanel bridge={bridge} />
+    : undefined;
 
   return (
     <div
@@ -224,11 +236,13 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         leftCollapsed={leftCollapsed}
         onLeftToggle={() => setLeftCollapsed((v) => !v)}
         leftLabel={t('flux.wordEditor.expandFieldPanel')}
+        leftCollapseLabel={t('flux.wordEditor.collapseFieldPanel')}
         canvas={canvasSlot}
         rightPanel={rightPanelSlot}
         rightCollapsed={rightCollapsed}
         onRightToggle={() => setRightCollapsed((v) => !v)}
         rightLabel={t('flux.wordEditor.expandOutline')}
+        rightCollapseLabel={t('flux.wordEditor.collapseOutline')}
         dialogs={
           <DatasetDialog
             key={`${editingDatasetId ?? 'new'}:${datasetDialogOpen ? 'open' : 'closed'}`}

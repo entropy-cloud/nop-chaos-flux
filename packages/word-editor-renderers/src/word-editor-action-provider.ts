@@ -5,6 +5,7 @@ import type {
   DocChart,
   DocCode,
   EditorStoreApi,
+  SavedDocumentData,
 } from '@nop-chaos/word-editor-core';
 import { saveDatasets, saveDocument } from '@nop-chaos/word-editor-core';
 
@@ -27,7 +28,7 @@ export function createWordEditorActionProvider(input: {
   saveEvent?:
     | ((event?: unknown, ctx?: Partial<ActionContext>) => Promise<ActionResult>)
     | undefined;
-  onDocumentSaved?: (saved: { charts: DocChart[]; codes: DocCode[] }) => void;
+  onDocumentSaved?: (saved: SavedDocumentData) => void;
 }): ActionNamespaceProvider {
   return {
     kind: 'host',
@@ -54,7 +55,7 @@ export function createWordEditorActionProvider(input: {
             }
           }
           input.editorStore.setDirty(false);
-          input.onDocumentSaved?.({ charts, codes });
+          input.onDocumentSaved?.(saved);
           return ok({ saved: true });
         }
         case 'insertField': {

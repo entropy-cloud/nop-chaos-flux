@@ -1,6 +1,15 @@
 import type { ActionSchema, BaseSchema } from '@nop-chaos/flux-core';
 import type { Dataset, DocChart, DocCode, WordDocument } from '@nop-chaos/word-editor-core';
 
+export interface WordEditorPanelConfig {
+  generator?: 'default';
+}
+
+export interface WordEditorConfig {
+  leftPanel?: WordEditorPanelConfig;
+  rightPanel?: WordEditorPanelConfig;
+}
+
 export interface WordEditorPageSchemaInput {
   type: 'word-editor-page';
   id?: string;
@@ -12,6 +21,7 @@ export interface WordEditorPageSchemaInput {
   hidden?: boolean | string;
   disabled?: boolean | string;
   statusPath?: string;
+  config?: WordEditorConfig;
   onBack?: ActionSchema;
   onSave?: ActionSchema;
   initialDocument?: WordDocument;
