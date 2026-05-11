@@ -43,9 +43,19 @@
     inset 0 0 0 1px rgba(59, 130, 246, 0.28);
 }
 
-[data-slot='spreadsheet-grid'].ss-grid-shell[data-fill-dragging] .ss-cell,
-[data-slot='spreadsheet-grid'].ss-grid-shell .ss-fill-handle {
+[data-slot='spreadsheet-grid'].ss-grid-shell[data-fill-dragging] .ss-cell {
   cursor: crosshair;
+}
+
+[data-slot='spreadsheet-grid'].ss-grid-shell .ss-fill-handle {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 7px;
+  height: 7px;
+  background-color: #0f9d58;
+  cursor: crosshair;
+  z-index: 5;
 }
 
 [data-slot='spreadsheet-grid'].ss-grid-shell table {
@@ -603,15 +613,6 @@
   border: 2px solid #0f9d58;
   pointer-events: none;
   z-index: 4;
-}
-
-.ss-selection-fill-handle {
-  position: absolute;
-  width: 7px;
-  height: 7px;
-  background-color: #0f9d58;
-  cursor: crosshair;
-  z-index: 5;
 }
 
 .ss-frozen-separator-col {
