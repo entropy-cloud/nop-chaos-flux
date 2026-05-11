@@ -53,6 +53,13 @@
 - 根节点保留 `nop-select` marker。
 - 视觉层复用 `@nop-chaos/ui` Select 或 NativeSelect，不再引入第二套 mode 命名。
 
+### `NativeSelect` public contract baseline
+
+- `NativeSelect` 属于 `@nop-chaos/ui` 的公开 UI primitive，不应只通过内部文件路径或 synthetic DOM 事件来定义契约。
+- `disabled` 的支持语义以真实原生 `<select disabled>` 交互为准；不要把测试里手工触发 `change` 后 handler 仍被调用视为 supported contract。
+- `value` / `defaultValue` / `onChange` 语义应保持与原生 `<select>` 一致，由上层 renderer 负责把 schema/runtime 值绑定到该公开接口。
+- renderer 或测试如果要证明 disabled 行为，应优先断言真实禁用状态与公开入口行为，而不是把事件系统的可人工触发性写成长期基线。
+
 ## 11. 实现拆分建议
 
 - option 归一化、source state 展示和 field chrome 应分离。

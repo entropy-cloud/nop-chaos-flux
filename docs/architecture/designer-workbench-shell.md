@@ -58,7 +58,7 @@ Required interaction rules:
 
 - left and right rails follow the same visual and interaction model
 - the expand affordance sits on the edge closest to the central work surface
-- the expanded panel should also expose a visible collapse affordance on the edge closest to the central work surface, so users do not need to discover collapse only after a side has already entered the rail state
+- the expanded panel should also expose a visible collapse affordance inside the family panel header on the edge closest to the central work surface, so users do not need to discover collapse only after a side has already entered the rail state
 - the whole collapsed rail is clickable and keyboard-focusable for expand
 - the icon button is still visible as the explicit affordance, but expand must not depend on hitting only that small icon
 - collapsed rails must preserve the same host/action boundary as the expanded panel they stand for

@@ -1,6 +1,6 @@
 # 248 Unit Test Contract Closure Plan
 
-> Plan Status: in_progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-11
 > Source: `docs/analysis/2026-05-11-unit-test-contract-audit-01/{round-01.md,round-02.md,round-03.md,round-05.md}`
 > Related: `docs/plans/{148-test-contract-gap-closure-plan.md,235-workspace-test-hard-gate-closure-plan.md}`
@@ -176,14 +176,14 @@ Exit Criteria:
 
 ### Phase 5 - Workspace Verification And Independent Closure Audit
 
-Status: in_progress
+Status: completed
 Targets: affected packages, this plan, daily log, closure review evidence
 
 - Item Types: `Proof | Decision`
 
 - [x] 运行受影响 package 与 workspace 验证，处理由本计划引入的所有 test/build/lint/typecheck 问题。
-- [ ] 逐条复核 Phase 1-4 的 exit criteria，不把“接口出现”或“测试文件变多”误判为 contract closure。
-- [ ] 启动独立子 agent 做 closure audit，确认没有剩余 plan-owned test gap、错误契约或被静默降级的 live defect / contract drift。
+- [x] 逐条复核 Phase 1-4 的 exit criteria，不把“接口出现”或“测试文件变多”误判为 contract closure。
+- [x] 启动独立子 agent 做 closure audit，确认没有剩余 plan-owned test gap、错误契约或被静默降级的 live defect / contract drift。
 
 Exit Criteria:
 
@@ -191,22 +191,22 @@ Exit Criteria:
 
 - [x] `pnpm typecheck`、`pnpm build`、`pnpm lint`、`pnpm test` 全部通过。
 - [x] 所有新增测试已在 workspace 正式验证链路中运行，而不是只通过单文件或局部未纳入配置的路径。
-- [ ] 独立子 agent closure audit 明确确认无剩余 plan-owned blocker；closure audit 新发现且经裁定为 out-of-scope / non-blocking 的 residual 才允许移交 successor ownership，已在 `Current Baseline` 或 Phase 1-4 明确确认的项不得在此阶段降级移出本计划。
+- [x] 独立子 agent closure audit 明确确认无剩余 plan-owned blocker；closure audit 新发现且经裁定为 out-of-scope / non-blocking 的 residual 才允许移交 successor ownership，已在 `Current Baseline` 或 Phase 1-4 明确确认的项不得在此阶段降级移出本计划。
 - [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] `structuralWhen` disposition 已收口为 live handoff proof 或显式降级/删除的 supported baseline，且不存在只裁定不落地的残留状态。
+- [x] `structuralWhen` disposition 已收口为 live handoff proof 或显式降级/删除的 supported baseline，且不存在只裁定不落地的残留状态。
 - [x] child owner submit-gating、non-form / surface-root owner、submit supersession、dependency-graph consumption 四类 runtime/validation contract gaps 已得到 focused proof。
 - [x] import preload latest-wins、source stale-drop、component registry lookup、nested import boundary 四类 React/capability boundary gaps 已得到 focused proof。
-- [ ] sidebar token cross-package contract、UI public entry boundary、`NativeSelect` disabled/value/onChange contract 三类 shared UI/public API gaps 已得到 focused proof。
-- [ ] 不再存在被现有测试固化的 plan-owned 错误 public contract。
-- [ ] 不再存在只靠 helper/mock/存在性断言维持的 plan-owned 高风险契约空白。
+- [x] sidebar token cross-package contract、UI public entry boundary、`NativeSelect` disabled/value/onChange contract 三类 shared UI/public API gaps 已得到 focused proof。
+- [x] 不再存在被现有测试固化的 plan-owned 错误 public contract。
+- [x] 不再存在只靠 helper/mock/存在性断言维持的 plan-owned 高风险契约空白。
 - [x] 必要 focused verification 已完成。
 - [x] 受影响 owner docs 已同步到 live baseline，或明确写明 `No owner-doc update required`。
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据。
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据。
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -223,12 +223,12 @@ None.
 
 ## Closure
 
-Status Note: Pending. This plan closes only after disputed baselines are adjudicated, the owned runtime/react/UI/public-entry contract tests land, workspace verification is green, and an independent closure audit confirms no plan-owned contract gap remains hidden behind helper coverage, mock coverage, or false public contracts.
+Status Note: Completed. Disputed baselines were adjudicated, the owned runtime/react/UI/public-entry contract tests landed, full workspace verification reran green after the final Phase 2 and Phase 3 proofs, and an independent closure audit confirmed there is no remaining in-scope plan-owned contract gap hidden behind helper coverage, mock coverage, or false public contracts.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: to be filled after implementation, verification, and closure review
+- Reviewer / Agent: `general` subagent `ses_1e9c05e82ffeosEYQIS6VotVlz`
+- Evidence: Independent re-audit first identified the missing `useSourceValue` `React.StrictMode` / unmount stale-drop proof; after `packages/flux-react/src/__tests__/use-source-value.test.tsx` was extended and a final workspace verification reran green, the same audit session reported `no remaining in-scope blocker` and classified the remaining unchecked items as bookkeeping-only closure evidence.
 
 Follow-up:
 

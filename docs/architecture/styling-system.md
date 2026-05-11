@@ -146,6 +146,13 @@ The authoritative list is `packages/ui/src/index.ts`. Current core components:
 - Toaster + toast (from sonner)
 - Toolbar components (UndoRedoControls, ClipboardControls, etc.)
 
+### Shared Token Ownership Baseline
+
+- Repo-level shared UI token defaults belong to `@nop-chaos/theme-tokens`, not to `apps/playground` or other host-private stylesheets.
+- When `@nop-chaos/ui` components consume stable utility families exposed through `@nop-chaos/tailwind-preset`, the backing CSS variables must exist in the public `theme-tokens` stylesheet on the supported path.
+- Current explicit baseline: shared sidebar utilities such as `bg-sidebar`, `text-sidebar-foreground`, and sidebar border/ring mappings depend on `--sidebar*` defaults provided by `packages/theme-tokens/src/styles.css`.
+- Playground or host apps may override these variables for product-specific theming, but those overrides are not the owner of the default cross-package contract.
+
 ### How to add a new shadcn/ui component
 
 1. Copy the shadcn/ui component source into `packages/ui/src/components/ui/<name>.tsx`.
