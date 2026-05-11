@@ -12,13 +12,11 @@ export interface WorkbenchShellProps {
   leftCollapsed?: boolean;
   onLeftToggle?: () => void;
   leftLabel?: string;
-  leftCollapseLabel?: string;
   canvas: ReactNode;
   rightPanel?: ReactNode;
   rightCollapsed?: boolean;
   onRightToggle?: () => void;
   rightLabel?: string;
-  rightCollapseLabel?: string;
   dialogs?: ReactNode;
   'data-testid'?: string;
   'data-cid'?: string;
@@ -37,13 +35,11 @@ export function WorkbenchShell({
   leftCollapsed = false,
   onLeftToggle,
   leftLabel = 'Expand left panel',
-  leftCollapseLabel = 'Collapse left panel',
   canvas,
   rightPanel,
   rightCollapsed = false,
   onRightToggle,
   rightLabel = 'Expand right panel',
-  rightCollapseLabel = 'Collapse right panel',
   dialogs,
   'data-testid': testId,
   'data-cid': cid,
@@ -113,23 +109,10 @@ export function WorkbenchShell({
               </Button>
           ) : (
             <div
-              className={cn(PANEL_CARD, 'relative')}
+              className={cn(PANEL_CARD)}
               data-slot="workbench-left-panel"
               data-testid="left-panel-expanded"
             >
-              {onLeftToggle ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="absolute right-2 top-2 z-10"
-                  onClick={onLeftToggle}
-                  aria-label={leftCollapseLabel}
-                  data-testid="collapse-left-panel"
-                >
-                  <ChevronLeft className="size-4" />
-                </Button>
-              ) : null}
               {leftPanel}
             </div>
           ))}
@@ -160,23 +143,10 @@ export function WorkbenchShell({
               </Button>
           ) : (
             <div
-              className={cn(PANEL_CARD, 'relative')}
+              className={cn(PANEL_CARD)}
               data-slot="workbench-right-panel"
               data-testid="right-panel-expanded"
             >
-              {onRightToggle ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="absolute left-2 top-2 z-10"
-                  onClick={onRightToggle}
-                  aria-label={rightCollapseLabel}
-                  data-testid="collapse-right-panel"
-                >
-                  <ChevronRight className="size-4" />
-                </Button>
-              ) : null}
               {rightPanel}
             </div>
           ))}

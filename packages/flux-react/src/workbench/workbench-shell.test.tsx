@@ -59,30 +59,6 @@ describe('WorkbenchShell', () => {
     expect(screen.getByLabelText('Open right')).toBeTruthy();
   });
 
-  it('renders collapse buttons for expanded side panels and wires them to the same toggles', () => {
-    const onLeftToggle = vi.fn();
-    const onRightToggle = vi.fn();
-    render(
-      <WorkbenchShell
-        leftPanel={<div>Left</div>}
-        onLeftToggle={onLeftToggle}
-        leftCollapseLabel="Collapse left"
-        canvas={<div>Canvas</div>}
-        rightPanel={<div>Right</div>}
-        onRightToggle={onRightToggle}
-        rightCollapseLabel="Collapse right"
-      />,
-    );
-
-    fireEvent.click(screen.getByTestId('collapse-left-panel'));
-    fireEvent.click(screen.getByTestId('collapse-right-panel'));
-
-    expect(onLeftToggle).toHaveBeenCalledTimes(1);
-    expect(onRightToggle).toHaveBeenCalledTimes(1);
-    expect(screen.getByLabelText('Collapse left')).toBeTruthy();
-    expect(screen.getByLabelText('Collapse right')).toBeTruthy();
-  });
-
   it('renders canvas-only layout without side panels', () => {
     render(<WorkbenchShell canvas={<div>Solo</div>} className="extra" />);
     expect(screen.getByText('Solo')).toBeTruthy();
