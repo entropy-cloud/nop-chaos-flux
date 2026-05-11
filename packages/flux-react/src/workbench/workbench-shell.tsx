@@ -12,17 +12,21 @@ export interface WorkbenchShellProps {
   leftCollapsed?: boolean;
   onLeftToggle?: () => void;
   leftLabel?: string;
+  leftCollapseLabel?: string;
   canvas: ReactNode;
   rightPanel?: ReactNode;
   rightCollapsed?: boolean;
   onRightToggle?: () => void;
   rightLabel?: string;
+  rightCollapseLabel?: string;
   dialogs?: ReactNode;
   'data-testid'?: string;
   'data-cid'?: string;
 }
 
 const PANEL_CARD = 'min-h-0 overflow-hidden rounded-xl border border-border shadow-sm';
+const COLLAPSED_RAIL =
+  'h-full w-full rounded-xl border border-border shadow-sm px-1.5 text-muted-foreground hover:text-foreground';
 
 export function WorkbenchShell({
   className,
@@ -33,11 +37,13 @@ export function WorkbenchShell({
   leftCollapsed = false,
   onLeftToggle,
   leftLabel = 'Expand left panel',
+  leftCollapseLabel = 'Collapse left panel',
   canvas,
   rightPanel,
   rightCollapsed = false,
   onRightToggle,
   rightLabel = 'Expand right panel',
+  rightCollapseLabel = 'Collapse right panel',
   dialogs,
   'data-testid': testId,
   'data-cid': cid,
@@ -77,6 +83,7 @@ export function WorkbenchShell({
         </div>
       )}
       <div
+        data-testid="workbench-body"
         className={cn(
           'grid grid-rows-1 gap-3 min-h-0 h-full',
           gridColsClass,
@@ -85,30 +92,44 @@ export function WorkbenchShell({
           hasBoth && 'max-[767px]:grid-cols-1',
           hasBoth && 'max-[767px]:[&>*:first-child]:hidden',
         )}
-      >
-        {hasLeft &&
-          (leftCollapsed ? (
-            <div
-              className={cn(PANEL_CARD, 'flex items-center justify-center')}
-              data-slot="workbench-left-panel"
-              data-testid="left-panel-collapsed"
-            >
+        >
+          {hasLeft &&
+            (leftCollapsed ? (
               <Button
+                type="button"
                 variant="ghost"
-                size="icon-sm"
+                className={cn(COLLAPSED_RAIL, 'justify-end')}
                 onClick={onLeftToggle}
                 aria-label={leftLabel}
-                data-testid="expand-left-panel"
+                data-slot="workbench-left-panel"
+                data-testid="left-panel-collapsed"
               >
-                <ChevronRight className="size-4" />
+                <span
+                  className="inline-flex size-7 items-center justify-center rounded-md border border-border bg-background"
+                  data-testid="expand-left-panel"
+                >
+                  <ChevronRight className="size-4" />
+                </span>
               </Button>
-            </div>
           ) : (
             <div
-              className={cn(PANEL_CARD)}
+              className={cn(PANEL_CARD, 'relative')}
               data-slot="workbench-left-panel"
               data-testid="left-panel-expanded"
             >
+              {onLeftToggle ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="absolute right-2 top-2 z-10"
+                  onClick={onLeftToggle}
+                  aria-label={leftCollapseLabel}
+                  data-testid="collapse-left-panel"
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+              ) : null}
               {leftPanel}
             </div>
           ))}
@@ -121,27 +142,41 @@ export function WorkbenchShell({
         </div>
         {hasRight &&
           (rightCollapsed ? (
-            <div
-              className={cn(PANEL_CARD, 'flex items-center justify-center')}
-              data-slot="workbench-right-panel"
-              data-testid="right-panel-collapsed"
-            >
               <Button
+                type="button"
                 variant="ghost"
-                size="icon-sm"
+                className={cn(COLLAPSED_RAIL, 'justify-start')}
                 onClick={onRightToggle}
                 aria-label={rightLabel}
-                data-testid="expand-right-panel"
+                data-slot="workbench-right-panel"
+                data-testid="right-panel-collapsed"
               >
-                <ChevronLeft className="size-4" />
+                <span
+                  className="inline-flex size-7 items-center justify-center rounded-md border border-border bg-background"
+                  data-testid="expand-right-panel"
+                >
+                  <ChevronLeft className="size-4" />
+                </span>
               </Button>
-            </div>
           ) : (
             <div
-              className={cn(PANEL_CARD)}
+              className={cn(PANEL_CARD, 'relative')}
               data-slot="workbench-right-panel"
               data-testid="right-panel-expanded"
             >
+              {onRightToggle ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="absolute left-2 top-2 z-10"
+                  onClick={onRightToggle}
+                  aria-label={rightCollapseLabel}
+                  data-testid="collapse-right-panel"
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              ) : null}
               {rightPanel}
             </div>
           ))}

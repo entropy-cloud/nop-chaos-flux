@@ -130,4 +130,182 @@ describe('useSourceValue', () => {
       expect(screen.getByTestId('value').textContent).toBe('false:resolved:none');
     });
   });
+
+  it('drops stale source settlements after a newer source input wins', async () => {
+    cleanup();
+    const listeners = new Set<() => void>();
+    let snapshot = { value: {} as Record<string, unknown> };
+    let runId = 0;
+    const settlements = new Map<number, () => void>();
+
+    const runtime = {
+      createSourceObserver: () => ({
+        getSnapshot: () => snapshot,
+        subscribe: (listener: () => void) => {
+          listeners.add(listener);
+          return () => listeners.delete(listener);
+        },
+        run: (input: {
+          entries: Array<{ key: string; stateKey?: string; source?: { id?: string } }>;
+          baseValue?: Record<string, unknown>;
+        }) => {
+          const currentRunId = ++runId;
+          const sourceId = input.entries[0]?.source?.id ?? 'plain';
+          snapshot = {
+            value: {
+              ...(input.baseValue ?? {}),
+              sourceState: { loading: true, error: undefined, status: 'loading' },
+            },
+          };
+          for (const listener of listeners) {
+            listener();
+          }
+
+          settlements.set(currentRunId, () => {
+            if (currentRunId !== runId) {
+              return;
+            }
+
+            snapshot = {
+              value: {
+                value: sourceId,
+                sourceState: { loading: false, error: undefined, status: 'ready' },
+              },
+            };
+            for (const listener of listeners) {
+              listener();
+            }
+          });
+        },
+        dispose: vi.fn(),
+      }),
+    };
+
+    function Probe({ source }: { source: unknown }) {
+      const state = useSourceValue<string>(source);
+      return <span data-testid="value">{`${state.loading}:${state.value ?? 'none'}`}</span>;
+    }
+
+    const { rerender } = render(
+      <RuntimeContext.Provider value={runtime as any}>
+        <ScopeContext.Provider value={makeScope()}>
+          <Probe source={{ type: 'source', sourceType: 'api', id: 'first' }} />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('value').textContent).toBe('true:none'));
+
+    rerender(
+      <RuntimeContext.Provider value={runtime as any}>
+        <ScopeContext.Provider value={makeScope()}>
+          <Probe source={{ type: 'source', sourceType: 'api', id: 'second' }} />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    settlements.get(1)?.();
+    expect(screen.getByTestId('value').textContent).toBe('true:none');
+
+    settlements.get(2)?.();
+    await waitFor(() => expect(screen.getByTestId('value').textContent).toBe('false:second'));
+  });
+
+  it('drops stale settlements across StrictMode remounts and after unmount', async () => {
+    cleanup();
+    const setStateCalls: string[] = [];
+    const observerRecords: Array<{
+      listeners: Set<() => void>;
+      setResolved: (value: string) => void;
+      dispose: ReturnType<typeof vi.fn>;
+    }> = [];
+
+    const runtime = {
+      createSourceObserver: () => {
+        let snapshot = {
+          value: {
+            sourceState: { loading: true, error: undefined, status: 'loading' as const },
+          },
+        };
+        const listeners = new Set<() => void>();
+        const dispose = vi.fn(() => {
+          listeners.clear();
+        });
+        const record = {
+          listeners,
+          setResolved(value: string) {
+            snapshot = {
+              value: {
+                value,
+                sourceState: { loading: false, error: undefined, status: 'ready' as const },
+              },
+            };
+            for (const listener of listeners) {
+              listener();
+            }
+          },
+          dispose,
+        };
+        observerRecords.push(record);
+
+        return {
+          getSnapshot: () => snapshot,
+          subscribe: (listener: () => void) => {
+            listeners.add(listener);
+            return () => listeners.delete(listener);
+          },
+          run: () => undefined,
+          dispose,
+        };
+      },
+    };
+
+    function Probe() {
+      const state = useSourceValue<string>({ type: 'source', sourceType: 'api', id: 'strict' });
+
+      React.useEffect(() => {
+        setStateCalls.push(`${state.loading}:${state.value ?? 'none'}`);
+      }, [state.loading, state.value]);
+
+      return <span data-testid="value">{`${state.loading}:${state.value ?? 'none'}`}</span>;
+    }
+
+    const rendered = render(
+      <React.StrictMode>
+        <RuntimeContext.Provider value={runtime as any}>
+          <ScopeContext.Provider value={makeScope()}>
+            <Probe />
+          </ScopeContext.Provider>
+        </RuntimeContext.Provider>
+      </React.StrictMode>,
+    );
+
+    await waitFor(() => expect(observerRecords.length).toBeGreaterThanOrEqual(2));
+    expect(screen.getByTestId('value').textContent).toBe('true:none');
+
+    await waitFor(() => {
+      expect(observerRecords.filter((record) => record.listeners.size > 0)).toHaveLength(1);
+    });
+
+    const liveObserver = observerRecords.find((record) => record.listeners.size > 0);
+    const staleObservers = observerRecords.filter((record) => record !== liveObserver);
+    expect(liveObserver).toBeTruthy();
+    expect(staleObservers.length).toBeGreaterThan(0);
+
+    for (const [index, observer] of staleObservers.entries()) {
+      observer.setResolved(`stale-${index}`);
+    }
+    expect(screen.getByTestId('value').textContent).toBe('true:none');
+
+    liveObserver?.setResolved('active-mount');
+    await waitFor(() => expect(screen.getByTestId('value').textContent).toBe('false:active-mount'));
+
+    rendered.unmount();
+    const callCountBeforeUnmountSettlement = setStateCalls.length;
+
+    liveObserver?.setResolved('after-unmount');
+
+    expect(setStateCalls).toHaveLength(callCountBeforeUnmountSettlement);
+    expect(liveObserver?.dispose.mock.calls.length ?? 0).toBeGreaterThanOrEqual(1);
+  });
 });

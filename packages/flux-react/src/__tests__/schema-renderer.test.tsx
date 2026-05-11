@@ -3,15 +3,31 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
 import { Button } from '@nop-chaos/ui';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import { useCurrentComponentRegistry } from '../hooks.js';
+import * as fluxRuntime from '@nop-chaos/flux-runtime';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { env, pageRenderer, textRenderer } from '../test-support-core.js';
-import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { createDefaultRegistry } from '../defaults.js';
+
+const inputTextRenderer: RendererDefinition = {
+  type: 'input-text',
+  component: (props: any) => (
+    <label className="nop-field" data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}>
+      <span>{String(props.props.label ?? '')}</span>
+      <input aria-label={String(props.props.label ?? '')} name={String(props.props.name ?? '')} />
+    </label>
+  ),
+};
+
+const formRenderer: RendererDefinition = {
+  type: 'form',
+  component: (props: any) => <form>{props.regions.body?.render?.()}</form>,
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+};
 
 const openDialogButtonRenderer = {
   type: 'open-dialog-button',
@@ -147,6 +163,89 @@ describe('SchemaRenderer import preparation', () => {
       'Import load failed',
     );
     consoleSpy.mockRestore();
+  });
+
+  it('keeps schema import preload on latest-wins when an older prepare settles late', async () => {
+    const originalCreateRendererRuntime = fluxRuntime.createRendererRuntime;
+    const formulaCompiler = createFormulaCompiler();
+    const firstPrepared = new Map([
+      [
+        'first',
+        {
+          schemaUrl: 'test://schema-a.json',
+          spec: { from: 'lib-a', as: 'demo' },
+          resolvedSpec: { from: 'lib-a', as: 'demo' },
+        },
+      ],
+    ]);
+    const secondPrepared = new Map([
+      [
+        'second',
+        {
+          schemaUrl: 'test://schema-b.json',
+          spec: { from: 'lib-b', as: 'demo' },
+          resolvedSpec: { from: 'lib-b', as: 'demo' },
+        },
+      ],
+    ]);
+
+    let resolveFirst: ((value: { preparedImports: typeof firstPrepared }) => void) | undefined;
+    let resolveSecond: ((value: { preparedImports: typeof secondPrepared }) => void) | undefined;
+    const prepareSchema = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = resolve;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSecond = resolve;
+          }),
+      );
+    const createRendererRuntimeSpy = vi
+      .spyOn(fluxRuntime, 'createRendererRuntime')
+      .mockImplementation((input) => {
+        const runtime = originalCreateRendererRuntime(input);
+        runtime.prepareSchema = prepareSchema as typeof runtime.prepareSchema;
+        return runtime;
+      });
+
+    try {
+      const SchemaRenderer = createSchemaRenderer([textRenderer]);
+      const { rerender } = render(
+        <SchemaRenderer
+          schemaUrl="test://schema-a.json"
+          schema={{ type: 'text', text: 'A', 'xui:imports': [{ from: 'lib-a', as: 'demo' }] } as any}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      await waitFor(() => expect(screen.getByText('Preparing schema imports.')).toBeTruthy());
+
+      rerender(
+        <SchemaRenderer
+          schemaUrl="test://schema-b.json"
+          schema={{ type: 'text', text: 'B', 'xui:imports': [{ from: 'lib-b', as: 'demo' }] } as any}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      await waitFor(() => expect(screen.getByText('Preparing schema imports.')).toBeTruthy());
+
+      resolveSecond?.({ preparedImports: secondPrepared });
+      await waitFor(() => expect(screen.getByText('B')).toBeTruthy());
+
+      resolveFirst?.({ preparedImports: firstPrepared });
+      await waitFor(() => expect(screen.getByText('B')).toBeTruthy());
+      expect(screen.queryByText('A')).toBeNull();
+    } finally {
+      createRendererRuntimeSpy.mockRestore();
+    }
   });
 });
 
@@ -357,7 +456,8 @@ describe('SchemaRenderer debug data gating', () => {
   it('keeps form subtree inspectable from the root registry', async () => {
     const onComponentRegistryChange = vi.fn();
     const registry = createDefaultRegistry();
-    registerFormRenderers(registry);
+    registry.register(formRenderer);
+    registry.register(inputTextRenderer);
     const SchemaRenderer = createSchemaRenderer();
 
     render(
@@ -397,7 +497,8 @@ describe('SchemaRenderer debug data gating', () => {
   it('keeps form subtree inspectable from the root registry in StrictMode', async () => {
     const onComponentRegistryChange = vi.fn();
     const registry = createDefaultRegistry();
-    registerFormRenderers(registry);
+    registry.register(formRenderer);
+    registry.register(inputTextRenderer);
     const SchemaRenderer = createSchemaRenderer();
 
     render(

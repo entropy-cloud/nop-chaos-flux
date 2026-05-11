@@ -20,7 +20,6 @@
     "./default-spacing.css": "./dist/default-spacing.css"
   },
   "dependencies": {
-    "@nop-chaos/flux-compiler": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
@@ -31,6 +30,7 @@
     "use-sync-external-store": "^1.6.0"
   },
   "devDependencies": {
+    "@nop-chaos/flux-compiler": "workspace:*",
     "@testing-library/react": "^16.3.0",
     "@types/use-sync-external-store": "^1.5.0"
   },

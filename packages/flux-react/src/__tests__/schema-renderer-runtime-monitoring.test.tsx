@@ -119,6 +119,21 @@ describe('createSchemaRenderer lifecycle and monitoring behavior', () => {
     await waitFor(() => expect(onRenderEnd).toHaveBeenCalled());
   });
 
+  it('consumes templateNode.structuralWhen for render gating instead of relying on meta.when', async () => {
+    const SchemaRenderer = createSchemaRenderer([textRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'text', text: 'Structural when gate', when: false }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.queryByText('Structural when gate')).toBeNull());
+  });
+
   it('projects form errors by owner path and source kind', async () => {
     const SchemaRenderer = createSchemaRenderer([formRenderer, compositeProbeRenderer]);
     render(

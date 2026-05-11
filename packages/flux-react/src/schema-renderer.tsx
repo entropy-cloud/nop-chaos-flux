@@ -294,9 +294,11 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       import('@nop-chaos/flux-core').PreparedImportSpec
     > | null>(hasSchemaImports ? null : EMPTY_PREPARED_IMPORTS);
     const [prepareError, setPrepareError] = useState<unknown>(null);
+    const prepareRequestIdRef = useRef(0);
 
     useEffect(() => {
       const controller = new AbortController();
+      const requestId = ++prepareRequestIdRef.current;
 
       setPreparedImports(hasSchemaImports ? null : EMPTY_PREPARED_IMPORTS);
       setPrepareError(null);
@@ -319,13 +321,13 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
         schemaUrl: props.schemaUrl,
       })
         .then((result) => {
-          if (signal.aborted) {
+          if (signal.aborted || prepareRequestIdRef.current !== requestId) {
             return;
           }
           setPreparedImports(result.preparedImports);
         })
         .catch((error) => {
-          if (signal.aborted) {
+          if (signal.aborted || prepareRequestIdRef.current !== requestId) {
             return;
           }
           if (

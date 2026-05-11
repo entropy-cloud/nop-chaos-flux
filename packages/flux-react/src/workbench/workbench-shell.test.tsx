@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
@@ -30,7 +32,7 @@ describe('WorkbenchShell', () => {
     expect(screen.getByTestId('right-panel-expanded')).toBeTruthy();
   });
 
-  it('renders collapsed left and right toggles', () => {
+  it('expands collapsed rails from the whole rail surface', () => {
     const onLeftToggle = vi.fn();
     const onRightToggle = vi.fn();
     render(
@@ -47,12 +49,38 @@ describe('WorkbenchShell', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('expand-left-panel'));
-    fireEvent.click(screen.getByTestId('expand-right-panel'));
+    fireEvent.click(screen.getByTestId('left-panel-collapsed'));
+    fireEvent.click(screen.getByTestId('right-panel-collapsed'));
     expect(onLeftToggle).toHaveBeenCalled();
     expect(onRightToggle).toHaveBeenCalled();
     expect(screen.getByTestId('left-panel-collapsed')).toBeTruthy();
     expect(screen.getByTestId('right-panel-collapsed')).toBeTruthy();
+    expect(screen.getByLabelText('Open left')).toBeTruthy();
+    expect(screen.getByLabelText('Open right')).toBeTruthy();
+  });
+
+  it('renders collapse buttons for expanded side panels and wires them to the same toggles', () => {
+    const onLeftToggle = vi.fn();
+    const onRightToggle = vi.fn();
+    render(
+      <WorkbenchShell
+        leftPanel={<div>Left</div>}
+        onLeftToggle={onLeftToggle}
+        leftCollapseLabel="Collapse left"
+        canvas={<div>Canvas</div>}
+        rightPanel={<div>Right</div>}
+        onRightToggle={onRightToggle}
+        rightCollapseLabel="Collapse right"
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('collapse-left-panel'));
+    fireEvent.click(screen.getByTestId('collapse-right-panel'));
+
+    expect(onLeftToggle).toHaveBeenCalledTimes(1);
+    expect(onRightToggle).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText('Collapse left')).toBeTruthy();
+    expect(screen.getByLabelText('Collapse right')).toBeTruthy();
   });
 
   it('renders canvas-only layout without side panels', () => {
@@ -62,5 +90,21 @@ describe('WorkbenchShell', () => {
     expect(screen.queryByTestId('left-panel-collapsed')).toBeNull();
     expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
     expect(screen.queryByTestId('right-panel-collapsed')).toBeNull();
+  });
+
+  it('keeps the canvas primary on narrow viewports when both sides exist', () => {
+    render(
+      <WorkbenchShell
+        leftPanel={<div>Left</div>}
+        canvas={<div>Canvas</div>}
+        rightPanel={<div>Right</div>}
+      />,
+    );
+
+    const body = screen.getByTestId('workbench-body');
+    expect(body.className).toContain('max-[1023px]:grid-cols-[15rem_minmax(0,1fr)]');
+    expect(body.className).toContain('max-[1023px]:[&>*:nth-child(3)]:hidden');
+    expect(body.className).toContain('max-[767px]:grid-cols-1');
+    expect(body.className).toContain('max-[767px]:[&>*:first-child]:hidden');
   });
 });

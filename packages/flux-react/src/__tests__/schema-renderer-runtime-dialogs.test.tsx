@@ -1,11 +1,14 @@
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '../index.js';
+import { useCurrentComponentRegistry } from '../hooks.js';
 import {
   buttonRenderer,
   componentHandleProviderRenderer,
   createDispatchCaptureRenderer,
+  dispatchProbeRenderer,
   env,
   formRenderer,
   namespaceProviderRenderer,
@@ -17,6 +20,47 @@ import {
   sharedFormulaCompiler,
   textRenderer,
 } from '../test-support.js';
+
+function ComponentHandleWithIdProvider(props: RendererComponentProps) {
+  const componentRegistry = useCurrentComponentRegistry();
+  const componentId = String(props.props.componentId ?? 'shared-id');
+  const componentName = String(props.props.componentName ?? 'shared');
+  const label = String(props.props.label ?? 'handle');
+
+  React.useEffect(() => {
+    if (!componentRegistry) {
+      return;
+    }
+
+    return componentRegistry.register({
+      id: componentId,
+      name: componentName,
+      type: 'probe',
+      capabilities: {
+        hasMethod(method) {
+          return method === 'ping';
+        },
+        invoke(method, payload) {
+          return {
+            ok: true,
+            data: `${label}:${method}:${String(payload?.value ?? '')}`,
+          };
+        },
+      },
+    });
+  }, [componentRegistry, componentId, componentName, label]);
+
+  return <span data-testid={`component-id-registry-scope-${label}`}>{componentRegistry?.id ?? ''}</span>;
+}
+
+const componentHandleWithIdProviderRenderer: RendererDefinition = {
+  type: 'component-handle-with-id-provider',
+  component: ComponentHandleWithIdProvider,
+};
+
+afterEach(() => {
+  cleanup();
+});
 
 describe('createSchemaRenderer dialog and provider behavior', () => {
   it('reopens dialog with fresh child providers and falls back after close', async () => {
@@ -77,6 +121,235 @@ describe('createSchemaRenderer dialog and provider behavior', () => {
     await waitFor(() => expect(capturedDispatches.length).toBe(1));
     fireEvent.click(document.querySelector('[data-slot="dialog-close"]')!);
     await waitFor(() => expect(screen.queryByText('Dialog provider content')).toBeNull());
+  });
+
+  it('resolves component actions through the mounted child registry before falling back to outer handles', async () => {
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      buttonRenderer,
+      scopedHostRenderer,
+      componentHandleProviderRenderer,
+      dispatchProbeRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'component-handle-provider', componentName: 'shared', label: 'outer-handle' },
+            {
+              type: 'scoped-host',
+              body: [
+                {
+                  type: 'component-handle-provider',
+                  componentName: 'shared',
+                  label: 'inner-handle',
+                },
+                {
+                  type: 'dispatch-probe',
+                  label: 'Ping shared handle',
+                  resultKey: 'component-dispatch-result',
+                  runAction: {
+                    action: 'component:ping',
+                    componentName: 'shared',
+                    args: { value: 'hit' },
+                  },
+                },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Ping shared handle'));
+    await waitFor(() => {
+      expect(screen.getByTestId('component-dispatch-result').textContent).toBe('inner-handle:ping:hit');
+    });
+  });
+
+  it('keeps import alias visibility lexical so child shadowing does not leak to siblings', async () => {
+    const importLoader = {
+      load: vi.fn(async (moduleSpec: { from: string; as: string }) => {
+        const from = moduleSpec.from;
+        return {
+          createNamespace: () => ({
+            kind: 'import' as const,
+            invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
+              ok: true,
+              data: `${from}:${method}:${String(payload?.value ?? '')}`,
+            }),
+          }),
+          createExpressionHelpers: () => ({
+            format: (value: string) => `${from}:${value}`,
+          }),
+        };
+      }),
+    };
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, scopedHostRenderer, textRenderer]);
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          'xui:imports': [{ from: 'parent-lib', as: 'demo' }],
+          body: [
+            { type: 'text', text: 'parent=${$demo.format("root")}' },
+            {
+              type: 'scoped-host',
+              'xui:imports': [{ from: 'child-lib', as: 'demo' }],
+              body: [{ type: 'text', text: 'child=${$demo.format("inner")}' }],
+            },
+            { type: 'text', text: 'sibling=${$demo.format("sibling")}' },
+          ],
+        } as any}
+        env={{ ...env, importLoader }}
+        formulaCompiler={sharedFormulaCompiler}
+      />,
+    );
+
+    expect(await screen.findByText('parent=parent-lib:root')).toBeTruthy();
+    expect(screen.getByText('child=child-lib:inner')).toBeTruthy();
+    expect(screen.getByText('sibling=parent-lib:sibling')).toBeTruthy();
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          'xui:imports': [{ from: 'parent-lib', as: 'demo' }],
+          body: [
+            { type: 'text', text: 'parent=${$demo.format("root")}' },
+            { type: 'text', text: 'sibling=${$demo.format("sibling")}' },
+          ],
+        } as any}
+        env={{ ...env, importLoader }}
+        formulaCompiler={sharedFormulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('child=child-lib:inner')).toBeNull();
+    });
+    expect(await screen.findByText('parent=parent-lib:root')).toBeTruthy();
+    expect(await screen.findByText('sibling=parent-lib:sibling')).toBeTruthy();
+  });
+
+  it('resolves component actions by componentId through mounted child registries', async () => {
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      scopedHostRenderer,
+      componentHandleWithIdProviderRenderer,
+      dispatchProbeRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'component-handle-with-id-provider',
+              componentId: 'outer-id',
+              componentName: 'shared',
+              label: 'outer-handle',
+            },
+            {
+              type: 'scoped-host',
+              body: [
+                {
+                  type: 'component-handle-with-id-provider',
+                  componentId: 'inner-id',
+                  componentName: 'shared',
+                  label: 'inner-handle',
+                },
+                {
+                  type: 'dispatch-probe',
+                  label: 'Ping inner id',
+                  resultKey: 'component-id-dispatch-result',
+                  runAction: {
+                    action: 'component:ping',
+                    componentId: 'inner-id',
+                    args: { value: 'hit' },
+                  },
+                },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Ping inner id'));
+    await waitFor(() => {
+      expect(screen.getByTestId('component-id-dispatch-result').textContent).toBe(
+        'inner-handle:ping:hit',
+      );
+    });
+  });
+
+  it('surfaces ambiguous componentName targets within a mounted child registry', async () => {
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      scopedHostRenderer,
+      componentHandleWithIdProviderRenderer,
+      dispatchProbeRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'scoped-host',
+              body: [
+                {
+                  type: 'component-handle-with-id-provider',
+                  componentId: 'first-id',
+                  componentName: 'shared',
+                  label: 'first-handle',
+                },
+                {
+                  type: 'component-handle-with-id-provider',
+                  componentId: 'second-id',
+                  componentName: 'shared',
+                  label: 'second-handle',
+                },
+                {
+                  type: 'dispatch-probe',
+                  label: 'Ping ambiguous name',
+                  resultKey: 'component-ambiguous-result',
+                  runAction: {
+                    action: 'component:ping',
+                    componentName: 'shared',
+                    args: { value: 'hit' },
+                  },
+                },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Ping ambiguous name'));
+    await waitFor(() => {
+      expect(screen.getByTestId('component-ambiguous-result').textContent).toBe(
+        'Error: Ambiguous component target: shared',
+      );
+    });
   });
 
   it('renders dialog content after dispatching a dialog action', async () => {
