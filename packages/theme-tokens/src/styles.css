@@ -35,6 +35,14 @@
   --chart-3: 142 71% 45%;
   --chart-4: 262 83% 58%;
   --chart-5: 24 95% 53%;
+  --sidebar: hsl(var(--card));
+  --sidebar-foreground: hsl(var(--foreground));
+  --sidebar-primary: hsl(var(--primary));
+  --sidebar-primary-foreground: hsl(var(--primary-foreground));
+  --sidebar-accent: hsl(var(--accent));
+  --sidebar-accent-foreground: hsl(var(--accent-foreground));
+  --sidebar-border: hsl(var(--border));
+  --sidebar-ring: hsl(var(--ring));
 }
 
 :root[data-theme='classic'][data-mode='light'] {

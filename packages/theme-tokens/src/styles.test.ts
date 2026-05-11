@@ -20,6 +20,8 @@ describe('@nop-chaos/theme-tokens styles contract', () => {
     expect(styles).toContain('--radius-sm:');
     expect(styles).toContain('--radius-md:');
     expect(styles).toContain('--shadow-sm:');
+    expect(styles).toContain('--sidebar: hsl(var(--card));');
+    expect(styles).toContain('--sidebar-border: hsl(var(--border));');
     expect(styles).toContain('--primary-foreground:');
     expect(styles).toContain('--background:');
   });

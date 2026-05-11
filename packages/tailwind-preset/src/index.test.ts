@@ -9,6 +9,7 @@ describe('nopTailwindPreset', () => {
   it('exports key semantic color mappings', () => {
     const colors = nopTailwindPreset.theme?.extend?.colors as Record<string, unknown> | undefined;
     const primary = colors?.primary as Record<string, unknown> | undefined;
+    const sidebar = colors?.sidebar as Record<string, unknown> | undefined;
     const destructive = colors?.destructive as Record<string, unknown> | undefined;
 
     expect(colors).toMatchObject({
@@ -23,6 +24,12 @@ describe('nopTailwindPreset', () => {
     expect(primary).toMatchObject({
       DEFAULT: 'hsl(var(--primary))',
       foreground: 'hsl(var(--primary-foreground))',
+    });
+    expect(sidebar).toMatchObject({
+      DEFAULT: 'var(--sidebar)',
+      foreground: 'var(--sidebar-foreground)',
+      border: 'var(--sidebar-border)',
+      ring: 'var(--sidebar-ring)',
     });
     expect(destructive).toMatchObject({
       DEFAULT: 'hsl(var(--danger))',
