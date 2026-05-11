@@ -49,7 +49,7 @@ Reasons:
 
 The production direction is:
 
-- use a modifiable `amis-formula`-based compiler and evaluator
+- use the self-hosted `flux-formula` compiler and evaluator (own parser/evaluator/registry/builtins)
 - execute against `EvalContext`
 - resolve variable access through `resolve(path)` and `has(path)`
 - only materialize whole objects when truly necessary
