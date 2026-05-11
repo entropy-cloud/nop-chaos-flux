@@ -4,6 +4,7 @@ import {
   createSchemaRenderer,
   createDefaultEnv,
   createDefaultRegistry,
+  WorkbenchShell,
 } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
@@ -35,7 +36,9 @@ import {
   buildReportDesignerScopeData,
   registerReportDesignerRenderers,
 } from '@nop-chaos/report-designer-renderers';
-import { Button } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button, cn } from '@nop-chaos/ui';
 
 const fieldSources: FieldSourceSnapshot[] = [
   {
@@ -89,6 +92,12 @@ export function ReportDesignerDemo() {
     label: string;
   } | null>(null);
   const [paletteCollapsed, setPaletteCollapsed] = useState(false);
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
+
+  const fieldCount = useMemo(
+    () => fieldSources.reduce((sum, fs) => sum + fs.groups.reduce((gs, g) => gs + g.fields.length, 0), 0),
+    [],
+  );
 
   const spreadsheetDoc = useMemo(() => createEmptyDocument('demo-spreadsheet'), []);
   const spreadsheetCore = useMemo(
@@ -345,74 +354,78 @@ export function ReportDesignerDemo() {
   );
 
   return (
-    <div className="report-designer-demo">
-      <div data-slot="report-demo-header">
-        <h2>Report Designer Playground</h2>
-        <SpreadsheetToolbar
-          selectedCell={selectedCell}
-          cellAddress={currentCellAddr}
-          cellValue={cellValue}
-          frozen={!!frozen}
-          hasSelection={!!selectedCell}
-          currentCellStyle={currentCell?.style}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          onCopy={handleCopy}
-          onCut={handleCut}
-          onPaste={handlePaste}
-          onClear={handleClear}
-          onStyleTool={handleStyleTool}
-          onMerge={handleMerge}
-          onUnmerge={handleUnmerge}
-          onMergeCenter={handleMergeCenter}
-          onFillDown={handleFillDown}
-          onFillSeries={handleFillSeries}
-          onInsertRow={handleInsertRow}
-          onDeleteRow={handleDeleteRow}
-          onInsertColumn={handleInsertColumn}
-          onDeleteColumn={handleDeleteColumn}
-          onFreeze={handleFreeze}
-          onUnfreeze={handleUnfreeze}
-          onCellValueChange={handleCellValueChange}
-          showFindReplace={showFindReplace}
-          onToggleFindReplace={() => setShowFindReplace((v) => !v)}
-          findQuery={findQuery}
-          onFindQueryChange={setFindQuery}
-          replaceText={replaceText}
-          onReplaceTextChange={setReplaceText}
-          findResults={findResults}
-          onFind={() => {}}
-          onReplace={() => {}}
-          onReplaceAll={() => {}}
-          showCommentInput={showCommentInput}
-          onToggleCommentInput={() => setShowCommentInput((v) => !v)}
-          commentText={commentText}
-          onCommentTextChange={setCommentText}
-          onAddComment={handleAddComment}
-          onDeleteComment={handleDeleteComment}
-          hasComment={hasComment}
-        />
-      </div>
-
-      <div data-slot="report-demo-body">
-        <div
-          data-slot="report-demo-field-panel-shell"
-          data-collapsed={paletteCollapsed || undefined}
-        >
-          <div data-slot="report-demo-panel-toolbar">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              data-slot="report-demo-panel-toggle"
-              aria-label={paletteCollapsed ? 'Expand palette' : 'Collapse palette'}
-              onClick={() => setPaletteCollapsed((value) => !value)}
-            >
-              {paletteCollapsed ? '>' : '<'}
-            </Button>
+    <div className={cn('report-designer-demo h-full')}>
+      <WorkbenchShell
+        density="flush"
+        header={
+          <div data-slot="report-demo-header">
+            <SpreadsheetToolbar
+              selectedCell={selectedCell}
+              cellAddress={currentCellAddr}
+              cellValue={cellValue}
+              frozen={!!frozen}
+              hasSelection={!!selectedCell}
+              currentCellStyle={currentCell?.style}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              onCopy={handleCopy}
+              onCut={handleCut}
+              onPaste={handlePaste}
+              onClear={handleClear}
+              onStyleTool={handleStyleTool}
+              onMerge={handleMerge}
+              onUnmerge={handleUnmerge}
+              onMergeCenter={handleMergeCenter}
+              onFillDown={handleFillDown}
+              onFillSeries={handleFillSeries}
+              onInsertRow={handleInsertRow}
+              onDeleteRow={handleDeleteRow}
+              onInsertColumn={handleInsertColumn}
+              onDeleteColumn={handleDeleteColumn}
+              onFreeze={handleFreeze}
+              onUnfreeze={handleUnfreeze}
+              onCellValueChange={handleCellValueChange}
+              showFindReplace={showFindReplace}
+              onToggleFindReplace={() => setShowFindReplace((v) => !v)}
+              findQuery={findQuery}
+              onFindQueryChange={setFindQuery}
+              replaceText={replaceText}
+              onReplaceTextChange={setReplaceText}
+              findResults={findResults}
+              onFind={() => {}}
+              onReplace={() => {}}
+              onReplaceAll={() => {}}
+              showCommentInput={showCommentInput}
+              onToggleCommentInput={() => setShowCommentInput((v) => !v)}
+              commentText={commentText}
+              onCommentTextChange={setCommentText}
+              onAddComment={handleAddComment}
+              onDeleteComment={handleDeleteComment}
+              hasComment={hasComment}
+            />
           </div>
-          {!paletteCollapsed ? (
-            <div data-slot="report-demo-field-panel">
+        }
+        leftPanel={
+          <div className="flex h-full min-h-0 flex-col text-foreground">
+            <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-foreground">{t('flux.reportDesigner.fieldSources')}</div>
+                <div className="text-sm text-muted-foreground">{fieldCount} {t('flux.reportDesigner.fields')}</div>
+              </div>
+              <div className="shrink-0 self-start">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setPaletteCollapsed(true)}
+                  aria-label={t('flux.reportDesigner.collapseFieldPanel')}
+                  data-testid="collapse-report-field-panel"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto p-3">
               <ReportFieldPanel
                 fieldSources={fieldSources}
                 onFieldDragStart={(sourceId, fieldId, label) =>
@@ -420,86 +433,113 @@ export function ReportDesignerDemo() {
                 }
               />
             </div>
-          ) : null}
-        </div>
-
-        <div
-          ref={gridRef}
-          data-slot="report-demo-canvas"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleFieldDrop}
-          onMouseDown={(e) => {
-            if (editingCellRef.current && (e.target as HTMLElement).tagName !== 'INPUT') {
-              handleEditSave();
-            }
-          }}
-        >
-          <SpreadsheetGrid
-            snapshot={snapshot}
-            bridge={spreadsheetBridge}
-            rows={ROWS}
-            cols={COLS}
-            columnWidths={columnWidths}
-            rowHeights={rowHeights}
-            selectedCell={selectedCell}
-            selection={snapshot.selection}
-            editingCell={editingCell}
-            editValue={editValue}
-            fillHandleState={fillHandleState}
-            isInRange={isInRange}
-            isFillPreview={isFillPreview}
-            getSelectedRange={getSelectedRange}
-            getMergeInfo={getMergeInfo}
-            onCellClick={handleCellClick}
-            onCellDoubleClick={handleCellDoubleClick}
-            onCellMouseDown={handleCellMouseDown}
-            onCellMouseEnter={handleCellMouseEnter}
-            onSelectRow={handleSelectRow}
-            onSelectColumn={handleSelectColumn}
-            onSelectAll={handleSelectAll}
-            onColumnResizeStart={handleColumnResizeStart}
-            onRowResizeStart={handleRowResizeStart}
-            onFillHandleMouseDown={handleFillHandleMouseDown}
-            onFillHandleDoubleClick={handleFillHandleDoubleClick}
-            onEditValueChange={handleEditValueChange}
-            onEditSave={handleEditSave}
-            onEditCancel={handleEditCancel}
-            dropTargetCell={dropTargetCell}
-            draggingField={draggingField}
-            getCellMetadata={getCellMetadata}
-            onFieldDragOver={handleFieldDragOver}
-            onFieldDragLeave={handleFieldDragLeave}
-          />
-
-          <SheetTabBar
-            sheets={snapshot.workbook.sheets}
-            activeSheetId={snapshot.activeSheet?.id ?? ''}
-            onSwitchSheet={(id) =>
-              spreadsheetBridge.dispatch({ type: 'spreadsheet:setActiveSheet', sheetId: id })
-            }
-            onAddSheet={handleAddSheet}
-            onRemoveSheet={handleRemoveSheet}
-            onRenameSheet={handleRenameSheet}
-            canRemoveSheet={snapshot.workbook.sheets.length > 1}
-          />
-        </div>
-
-        <div data-slot="report-demo-inspector">
-          <SchemaRenderer
-            schemaUrl="playground://report-designer/demo-inspector"
-            schema={
-              {
-                type: 'report-inspector-shell',
-                title: 'Inspector',
-              } as any
-            }
-            registry={inspectorRegistry}
-            env={inspectorEnv}
-            formulaCompiler={inspectorFormulaCompiler}
-            data={inspectorScopeData}
-          />
-        </div>
-      </div>
+          </div>
+        }
+        leftCollapsed={paletteCollapsed}
+        onLeftToggle={() => setPaletteCollapsed((v) => !v)}
+        leftLabel={t('flux.reportDesigner.expandFieldPanel')}
+        canvas={
+          <div
+            ref={gridRef}
+            className="flex flex-col h-full min-h-0"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleFieldDrop}
+            onMouseDown={(e) => {
+              if (editingCellRef.current && (e.target as HTMLElement).tagName !== 'INPUT') {
+                handleEditSave();
+              }
+            }}
+          >
+            <SpreadsheetGrid
+                snapshot={snapshot}
+                bridge={spreadsheetBridge}
+                rows={ROWS}
+                cols={COLS}
+                columnWidths={columnWidths}
+                rowHeights={rowHeights}
+                selectedCell={selectedCell}
+                selection={snapshot.selection}
+                editingCell={editingCell}
+                editValue={editValue}
+                fillHandleState={fillHandleState}
+                isInRange={isInRange}
+                isFillPreview={isFillPreview}
+                getSelectedRange={getSelectedRange}
+                getMergeInfo={getMergeInfo}
+                onCellClick={handleCellClick}
+                onCellDoubleClick={handleCellDoubleClick}
+                onCellMouseDown={handleCellMouseDown}
+                onCellMouseEnter={handleCellMouseEnter}
+                onSelectRow={handleSelectRow}
+                onSelectColumn={handleSelectColumn}
+                onSelectAll={handleSelectAll}
+                onColumnResizeStart={handleColumnResizeStart}
+                onRowResizeStart={handleRowResizeStart}
+                onFillHandleMouseDown={handleFillHandleMouseDown}
+                onFillHandleDoubleClick={handleFillHandleDoubleClick}
+                onEditValueChange={handleEditValueChange}
+                onEditSave={handleEditSave}
+                onEditCancel={handleEditCancel}
+                dropTargetCell={dropTargetCell}
+                draggingField={draggingField}
+                getCellMetadata={getCellMetadata}
+                onFieldDragOver={handleFieldDragOver}
+                onFieldDragLeave={handleFieldDragLeave}
+              />
+            <SheetTabBar
+              sheets={snapshot.workbook.sheets}
+              activeSheetId={snapshot.activeSheet?.id ?? ''}
+              onSwitchSheet={(id) =>
+                spreadsheetBridge.dispatch({ type: 'spreadsheet:setActiveSheet', sheetId: id })
+              }
+              onAddSheet={handleAddSheet}
+              onRemoveSheet={handleRemoveSheet}
+              onRenameSheet={handleRenameSheet}
+              canRemoveSheet={snapshot.workbook.sheets.length > 1}
+            />
+          </div>
+        }
+        rightPanel={
+          <div className="flex h-full min-h-0 flex-col text-foreground">
+            <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+              <div className="shrink-0 self-start">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setInspectorCollapsed(true)}
+                  aria-label={t('flux.reportDesigner.collapseInspector')}
+                  data-testid="collapse-report-inspector"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-foreground">{t('flux.reportDesigner.inspectorTitle')}</div>
+                <div className="text-sm text-muted-foreground">{t('flux.reportDesigner.inspectorSubtitle')}</div>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto p-4">
+              <SchemaRenderer
+                schemaUrl="playground://report-designer/demo-inspector"
+                schema={
+                  {
+                    type: 'report-inspector-shell',
+                    title: 'Inspector',
+                  } as any
+                }
+                registry={inspectorRegistry}
+                env={inspectorEnv}
+                formulaCompiler={inspectorFormulaCompiler}
+                data={inspectorScopeData}
+              />
+            </div>
+          </div>
+        }
+        rightCollapsed={inspectorCollapsed}
+        onRightToggle={() => setInspectorCollapsed((v) => !v)}
+        rightLabel={t('flux.reportDesigner.expandInspector')}
+      />
     </div>
   );
 }

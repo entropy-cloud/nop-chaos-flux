@@ -17,10 +17,10 @@ test('renders the core report designer surfaces', async ({ page }) => {
 
   await expect(page.locator('.report-designer-demo')).toBeVisible();
   await expect(page.locator('[data-slot="report-demo-header"]')).toBeVisible();
-  await expect(page.locator('[data-slot="report-demo-body"]')).toBeVisible();
-  await expect(page.locator('[data-slot="report-demo-field-panel"]')).toBeVisible();
-  await expect(page.locator('[data-slot="report-demo-canvas"]')).toBeVisible();
-  await expect(page.locator('[data-slot="report-demo-inspector"]')).toBeVisible();
+  await expect(page.locator('[data-testid="workbench-body"]')).toBeVisible();
+  await expect(page.locator('[data-slot="workbench-left-panel"]')).toBeVisible();
+  await expect(page.locator('[data-slot="workbench-canvas"]')).toBeVisible();
+  await expect(page.locator('[data-slot="workbench-right-panel"]')).toBeVisible();
   await expect(page.locator('.rd-toolbar')).toBeVisible();
   await expect(page.locator('[data-slot="report-field-panel-source"]').first()).toBeVisible();
   await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible();
@@ -62,7 +62,7 @@ test('verifies field items and inspector elements are visible', async ({ page })
   expect(fieldItemStyles.border).toBe('1px');
   expect(parseFloat(fieldItemStyles.borderRadius)).toBeGreaterThanOrEqual(6);
 
-  const inspector = page.locator('[data-slot="report-demo-inspector"]');
+  const inspector = page.locator('[data-slot="workbench-right-panel"]');
   await expect(inspector).toContainText('Inspector');
   await expect(inspector).toContainText('sheet');
   await expect(inspector).toContainText('Sheet selected');
@@ -84,7 +84,7 @@ test('clicking a spreadsheet cell updates the inspector context', async ({ page 
 
   const cells = page.locator('.ss-cell');
   await expect(cells.first()).toBeVisible();
-  const inspector = page.locator('[data-slot="report-demo-inspector"]');
+  const inspector = page.locator('[data-slot="workbench-right-panel"]');
   await expect(inspector).toContainText('Sheet selected');
 
   await cells.nth(5).click();
