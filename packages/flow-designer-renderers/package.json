@@ -30,10 +30,8 @@
   "dependencies": {
     "@nop-chaos/flow-designer-core": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*",
-    "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
-    "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@xyflow/react": "^12.10.2",
     "lucide-react": "^1.7.0",
@@ -41,6 +39,8 @@
     "use-sync-external-store": "^1.6.0"
   },
   "devDependencies": {
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-runtime": "workspace:*",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4"
   }

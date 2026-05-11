@@ -11,18 +11,42 @@ import {
   shouldIncludeInTreeAddMenu,
 } from './designer-node-appearance.js';
 
-const plusButtonHandlerHolder: {
-  current:
-    | ((
-        sourceId: string,
-        clientX: number,
-        clientY: number,
-        sourceKind?: 'node' | 'branch-group' | 'merge',
-      ) => void)
-    | null;
-} = { current: null };
+const plusButtonHandlers = new WeakMap<
+  object,
+  (
+    sourceId: string,
+    clientX: number,
+    clientY: number,
+    sourceKind?: 'node' | 'branch-group' | 'merge',
+  ) => void
+>();
 
-export { plusButtonHandlerHolder };
+export function registerDesignerPlusButtonHandler(
+  owner: object,
+  handler: (
+    sourceId: string,
+    clientX: number,
+    clientY: number,
+    sourceKind?: 'node' | 'branch-group' | 'merge',
+  ) => void,
+) {
+  plusButtonHandlers.set(owner, handler);
+  return () => {
+    if (plusButtonHandlers.get(owner) === handler) {
+      plusButtonHandlers.delete(owner);
+    }
+  };
+}
+
+export function invokeDesignerPlusButtonHandler(
+  owner: object,
+  sourceId: string,
+  clientX: number,
+  clientY: number,
+  sourceKind?: 'node' | 'branch-group' | 'merge',
+) {
+  plusButtonHandlers.get(owner)?.(sourceId, clientX, clientY, sourceKind);
+}
 
 interface PopoverState {
   sourceId: string;
@@ -38,7 +62,7 @@ export function DesignerCanvasContent(props: {
     'data-cid'?: string;
   };
 } = {}) {
-  const { dispatch, config } = useDesignerContext();
+  const { core, dispatch, config } = useDesignerContext();
   const snapshot = useDesignerFullSnapshot();
   const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);
   const [reconnectingEdgeId, setReconnectingEdgeId] = useState<string | null>(null);
@@ -63,14 +87,7 @@ export function DesignerCanvasContent(props: {
     [],
   );
 
-  useEffect(() => {
-    if (config.documentMode === 'tree') {
-      plusButtonHandlerHolder.current = handlePlusButtonClick;
-      return () => {
-        plusButtonHandlerHolder.current = null;
-      };
-    }
-  }, [config.documentMode, handlePlusButtonClick]);
+  useEffect(() => registerDesignerPlusButtonHandler(core, handlePlusButtonClick), [core, handlePlusButtonClick]);
 
   const menuItems = useMemo<DingFlowMenuItem[]>(
     () =>

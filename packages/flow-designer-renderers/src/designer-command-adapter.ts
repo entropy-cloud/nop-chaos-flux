@@ -291,15 +291,24 @@ export function createDesignerCommandAdapter(
             return createFailure(core, 'Unable to add node.', 'constraint');
           }
 
+          const nextEdges = doc.edges.filter((edge) => edge.source !== command.sourceId);
+          nextEdges.push({
+            id: `${command.sourceId}-${newNode.id}`,
+            type: 'default',
+            source: command.sourceId,
+            target: newNode.id,
+            data: {},
+          });
           if (downstreamId) {
-            for (const edge of outgoingEdges) {
-              core.deleteEdge(edge.id);
-            }
-            core.addEdge(command.sourceId, newNode.id);
-            core.addEdge(newNode.id, downstreamId);
-          } else {
-            core.addEdge(command.sourceId, newNode.id);
+            nextEdges.push({
+              id: `${newNode.id}-${downstreamId}`,
+              type: 'default',
+              source: newNode.id,
+              target: downstreamId,
+              data: {},
+            });
           }
+          core.replaceDocument({ ...core.getDocument(), edges: nextEdges });
 
           relayoutAfterTreeMutation(core);
           core.commitTransaction();
@@ -330,8 +339,6 @@ export function createDesignerCommandAdapter(
           return createFailure(core, `Unknown target node: ${command.targetId}`, 'missing-node');
         }
 
-        const incomingEdges = doc.edges.filter((e) => e.target === command.targetId);
-
         core.beginTransaction('insert-at-merge');
         try {
           const newNode = core.addNode(
@@ -344,10 +351,17 @@ export function createDesignerCommandAdapter(
             return createFailure(core, 'Unable to add node.', 'constraint');
           }
 
-          for (const edge of incomingEdges) {
-            core.reconnectEdge(edge.id, edge.source, newNode.id);
-          }
-          core.addEdge(newNode.id, command.targetId);
+          const nextEdges = doc.edges.map((edge) =>
+            edge.target === command.targetId ? { ...edge, target: newNode.id } : edge,
+          );
+          nextEdges.push({
+            id: `${newNode.id}-${command.targetId}`,
+            type: 'default',
+            source: newNode.id,
+            target: command.targetId,
+            data: {},
+          });
+          core.replaceDocument({ ...core.getDocument(), edges: nextEdges });
 
           relayoutAfterTreeMutation(core);
           core.commitTransaction();
@@ -405,19 +419,44 @@ export function createDesignerCommandAdapter(
             return createFailure(core, 'Unable to create right branch node.', 'constraint');
           }
 
+          const nextEdges = doc.edges.filter((edge) => edge.source !== command.sourceId);
+          nextEdges.push(
+            {
+              id: `${command.sourceId}-${leftNode.id}`,
+              type: 'default',
+              source: command.sourceId,
+              target: leftNode.id,
+              data: { leg: 'near-target' },
+            },
+            {
+              id: `${command.sourceId}-${rightNode.id}`,
+              type: 'default',
+              source: command.sourceId,
+              target: rightNode.id,
+              data: { leg: 'near-target' },
+            },
+          );
+
           if (downstreamId) {
-            for (const edge of outgoingEdges) {
-              core.deleteEdge(edge.id);
-            }
+            nextEdges.push(
+              {
+                id: `${leftNode.id}-${downstreamId}`,
+                type: 'default',
+                source: leftNode.id,
+                target: downstreamId,
+                data: { leg: 'near-source' },
+              },
+              {
+                id: `${rightNode.id}-${downstreamId}`,
+                type: 'default',
+                source: rightNode.id,
+                target: downstreamId,
+                data: { leg: 'near-source' },
+              },
+            );
           }
 
-          core.addEdge(command.sourceId, leftNode.id, { leg: 'near-target' });
-          core.addEdge(command.sourceId, rightNode.id, { leg: 'near-target' });
-
-          if (downstreamId) {
-            core.addEdge(leftNode.id, downstreamId, { leg: 'near-source' });
-            core.addEdge(rightNode.id, downstreamId, { leg: 'near-source' });
-          }
+          core.replaceDocument({ ...core.getDocument(), edges: nextEdges });
 
           relayoutAfterTreeMutation(core);
           core.commitTransaction();

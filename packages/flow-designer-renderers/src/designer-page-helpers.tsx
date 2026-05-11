@@ -147,6 +147,7 @@ export function createDesignerContextValue(args: {
   config: DesignerContextValue['config'];
   openCreateDialog: DesignerContextValue['openCreateDialog'];
   onPlusButtonClick: DesignerContextValue['onPlusButtonClick'];
+  reportHostIssue?: DesignerContextValue['reportHostIssue'];
 }): DesignerContextValue {
   return {
     core: args.core,
@@ -155,6 +156,7 @@ export function createDesignerContextValue(args: {
     config: args.config,
     openCreateDialog: args.openCreateDialog,
     onPlusButtonClick: args.onPlusButtonClick,
+    reportHostIssue: args.reportHostIssue,
   };
 }
 

@@ -3,14 +3,27 @@
 import React from 'react';
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import { createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
+import {
+  basicTestRendererDefinitions,
+  createRendererEnv,
+  createTestConfig,
+  formulaCompiler,
+  installFlowDesignerTestHooks,
+} from './index-test-support.js';
+import {
+  invokeDesignerPlusButtonHandler,
+  registerDesignerPlusButtonHandler,
+} from './designer-canvas.js';
 
 const testState: {
   layoutResolvers: Array<(positions: Map<string, { x: number; y: number }>) => void>;
+  rejectNextTreeLayout: boolean;
 } = {
   layoutResolvers: [],
+  rejectNextTreeLayout: false,
 };
 
 vi.mock('@nop-chaos/flow-designer-core', async () => {
@@ -20,6 +33,14 @@ vi.mock('@nop-chaos/flow-designer-core', async () => {
 
   return {
     ...actual,
+    layoutTreeWithElk: vi.fn(async () => {
+      if (testState.rejectNextTreeLayout) {
+        testState.rejectNextTreeLayout = false;
+        throw new Error('ELK failed');
+      }
+
+      return [];
+    }),
     layoutWithElk: vi.fn(
       () =>
         new Promise((resolve) => {
@@ -51,18 +72,28 @@ vi.mock('./canvas-bridge', async () => {
 
 import { flowDesignerRendererDefinitions } from './index.js';
 
+installFlowDesignerTestHooks();
+
+function DesignerStatusProbe() {
+  const status = useScopeSelector(
+    (data: Record<string, unknown>) =>
+      data.designerStatus as { error?: string | null } | undefined,
+  );
+  return <span data-testid="designer-status-error">{status?.error ?? ''}</span>;
+}
+
+const statusProbeRenderer = {
+  type: 'designer-status-probe',
+  component: DesignerStatusProbe,
+} as RendererDefinition;
+
 const SchemaRenderer = createSchemaRenderer([
+  ...basicTestRendererDefinitions,
   ...flowDesignerRendererDefinitions,
-  {
-    type: 'text',
-    component: (props: any) => <span>{String(props.props.text ?? '')}</span>,
-  },
+  statusProbeRenderer,
 ]);
 
-const testEnv = {
-  fetcher: async () => ({ ok: true, status: 200, data: null }),
-  notify: vi.fn(),
-};
+const testEnv = createRendererEnv();
 
 function createTestConfig(): DesignerConfig {
   return {
@@ -88,16 +119,17 @@ function createTestConfig(): DesignerConfig {
 function renderDesignerPage(document: GraphDocument) {
   return render(
     <SchemaRenderer
-      schema={{ type: 'designer-page', document, config: createTestConfig() } as any}
-      env={testEnv as any}
-      formulaCompiler={createFormulaCompiler()}
-    />,
-  );
+        schema={{ type: 'designer-page', document, config: createTestConfig() } as any}
+        env={testEnv as any}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
 }
 
 describe('DesignerPage auto layout guards', () => {
   beforeEach(() => {
     testState.layoutResolvers = [];
+    testState.rejectNextTreeLayout = false;
   });
 
   it('ignores stale auto-layout results after switching documents', async () => {
@@ -137,7 +169,7 @@ describe('DesignerPage auto layout guards', () => {
           } as any
         }
         env={testEnv as any}
-        formulaCompiler={createFormulaCompiler()}
+        formulaCompiler={formulaCompiler}
       />,
     );
 
@@ -210,5 +242,85 @@ describe('DesignerPage auto layout guards', () => {
     });
 
     second.unmount();
+  });
+
+  it('reports initial auto-layout failure through host-visible status', async () => {
+    const notify = vi.fn();
+    const failingEnv = {
+      ...testEnv,
+      notify,
+    };
+
+    testState.rejectNextTreeLayout = true;
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'designer-page',
+              treeDocument: {
+                id: 'doc-3',
+                kind: 'test-tree',
+                name: 'Broken',
+                version: '1.0.0',
+                root: {
+                  id: 'node-1',
+                  type: 'task',
+                  data: { label: 'Task 1' },
+                },
+              },
+              config: {
+                ...createTestConfig(),
+                documentMode: 'tree',
+                treeConfig: {
+                  layout: { direction: 'TB', nodeSpacing: 80, layerSpacing: 120 },
+                  showGatewayNodes: true,
+                  showMergeNodes: true,
+                  autoLayout: true,
+                },
+                statusPath: 'designerStatus',
+              },
+              statusPath: 'designerStatus',
+            },
+            {
+              type: 'designer-status-probe',
+            },
+          ],
+        } as any}
+        env={failingEnv as RendererEnv}
+        formulaCompiler={formulaCompiler}
+        data={{ designerStatus: undefined }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-testid="designer-status-error"]')?.textContent).toBe(
+        'ELK failed',
+      );
+    });
+  });
+
+  it('keeps plus-button handlers isolated per designer instance', () => {
+    const firstOwner = {};
+    const secondOwner = {};
+    const firstHandler = vi.fn();
+    const secondHandler = vi.fn();
+
+    const disposeFirst = registerDesignerPlusButtonHandler(firstOwner, firstHandler);
+    const disposeSecond = registerDesignerPlusButtonHandler(secondOwner, secondHandler);
+
+    invokeDesignerPlusButtonHandler(firstOwner, 'node-1', 10, 20, 'node');
+    expect(firstHandler).toHaveBeenCalledWith('node-1', 10, 20, 'node');
+    expect(secondHandler).not.toHaveBeenCalled();
+
+    disposeFirst();
+    invokeDesignerPlusButtonHandler(secondOwner, 'node-2', 30, 40, 'merge');
+
+    expect(firstHandler).toHaveBeenCalledTimes(1);
+    expect(secondHandler).toHaveBeenCalledWith('node-2', 30, 40, 'merge');
+
+    disposeSecond();
   });
 });

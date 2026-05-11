@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import type { ActionNamespaceProvider, RendererComponentProps } from '@nop-chaos/flux-core';
+import {
+  reportRuntimeHostIssue,
+  type ActionNamespaceProvider,
+  type RendererComponentProps,
+} from '@nop-chaos/flux-core';
 import type { DesignerHostStatusSummary } from '@nop-chaos/flow-designer-core';
 import {
   hasRendererSlotContent,
@@ -39,7 +43,7 @@ import {
   type DesignerCreateDialogState,
 } from './designer-page-helpers.js';
 import { DesignerPaletteContent } from './designer-palette.js';
-import { DesignerCanvasContent, plusButtonHandlerHolder } from './designer-canvas.js';
+import { DesignerCanvasContent, invokeDesignerPlusButtonHandler } from './designer-canvas.js';
 import { DefaultInspector } from './designer-inspector.js';
 import { DesignerToolbarContent } from './designer-toolbar.js';
 import { useDesignerAutoLayout } from './use-designer-auto-layout.js';
@@ -48,6 +52,17 @@ import { emitTreeLayoutDebugSnapshot } from './tree-layout-debug.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
+}
+
+function hasPalettePanel(config: DesignerConfig): boolean {
+  return (config.palette?.groups.length ?? 0) > 0;
+}
+
+function hasInspectorPanel(config: DesignerConfig): boolean {
+  return (
+    config.nodeTypes.some((nodeType) => nodeType.inspector?.body !== undefined) ||
+    (config.edgeTypes ?? []).some((edgeType) => edgeType.inspector?.body !== undefined)
+  );
 }
 
 function readDesignerResolvedProp<T>(
@@ -88,7 +103,7 @@ export function DesignerPageBody({
     typeof readDesignerResolvedProp<string>(props, 'statusPath') === 'string'
       ? readDesignerResolvedProp<string>(props, 'statusPath')
       : undefined;
-  const { layoutBusy, handleAutoLayout } = useDesignerAutoLayout(core, config);
+  const { layoutBusy, layoutError, handleAutoLayout } = useDesignerAutoLayout(core, config);
 
   const isTreeMode = config.documentMode === 'tree';
 
@@ -106,10 +121,10 @@ export function DesignerPageBody({
       sourceKind?: 'node' | 'branch-group' | 'merge',
     ) => {
       if (isTreeMode) {
-        plusButtonHandlerHolder.current?.(sourceId, clientX, clientY, sourceKind);
+        invokeDesignerPlusButtonHandler(core, sourceId, clientX, clientY, sourceKind);
       }
     },
-    [isTreeMode],
+    [core, isTreeMode],
   );
 
   const ctxOnPlusButtonClick = isTreeMode ? onPlusButtonClick : undefined;
@@ -185,6 +200,36 @@ export function DesignerPageBody({
     }
   }, [actionScope, designerScope, dispatch, pendingCreateDialog, props.helpers]);
 
+  const reportHostIssue = useCallback(
+    (input: { message: string; error?: unknown; details?: Record<string, unknown> }) => {
+      reportRuntimeHostIssue({
+        env,
+        level: 'error',
+        message: input.message,
+        error: input.error,
+        phase: 'render',
+        details: input.details,
+      });
+    },
+    [env],
+  );
+
+  useEffect(() => {
+    if (!layoutError) {
+      return;
+    }
+
+    reportHostIssue({
+      message: layoutError,
+      error: new Error(layoutError),
+      details: {
+        reason: 'designer-auto-layout-failed',
+        documentId: snapshot.doc.id,
+        documentMode: config.documentMode,
+      },
+    });
+  }, [config.documentMode, layoutError, reportHostIssue, snapshot.doc.id]);
+
   const ctxValue = useMemo<DesignerContextValue>(
     () =>
       createDesignerContextValue({
@@ -194,8 +239,17 @@ export function DesignerPageBody({
         config,
         openCreateDialog: handleOpenCreateDialog,
         onPlusButtonClick: ctxOnPlusButtonClick,
+        reportHostIssue,
       }),
-    [commandAdapter, config, core, dispatch, handleOpenCreateDialog, ctxOnPlusButtonClick],
+    [
+      commandAdapter,
+      config,
+      core,
+      dispatch,
+      handleOpenCreateDialog,
+      ctxOnPlusButtonClick,
+      reportHostIssue,
+    ],
   );
 
   useLayoutEffect(() => {
@@ -232,6 +286,8 @@ export function DesignerPageBody({
     },
     [actionScope, designerScope, props.helpers],
   );
+  const showPalettePanel = hasPalettePanel(config);
+  const showInspectorPanel = hasInspectorPanel(config);
 
   useStatusPathPublication<DesignerHostStatusSummary>(
     props.node.scope.parent ?? props.node.scope,
@@ -240,6 +296,7 @@ export function DesignerPageBody({
       kind: 'designer',
       dirty: snapshot.isDirty,
       busy: layoutBusy,
+      error: layoutError,
       canUndo: snapshot.canUndo,
       canRedo: snapshot.canRedo,
       selectionKind: snapshot.activeNode ? 'node' : snapshot.activeEdge ? 'edge' : 'none',
@@ -294,21 +351,23 @@ export function DesignerPageBody({
               />
             )
           }
-          leftPanel={<DesignerPaletteContent />}
+          leftPanel={showPalettePanel ? <DesignerPaletteContent /> : undefined}
           leftCollapsed={snapshot.paletteCollapsed}
           onLeftToggle={() => dispatch({ type: 'togglePalette' })}
           leftLabel={t('flux.flowDesigner.expandPalette')}
+          leftCollapseLabel={t('flux.flowDesigner.collapsePalette')}
           canvas={<DesignerCanvasContent />}
           rightPanel={
-            hasRendererSlotContent(asReactNode(inspectorSlot)) ? (
-              asReactNode(inspectorSlot)
-            ) : (
-              <DefaultInspector renderSchema={renderInspectorSchema} />
-            )
+            showInspectorPanel
+              ? hasRendererSlotContent(asReactNode(inspectorSlot))
+                ? asReactNode(inspectorSlot)
+                : <DefaultInspector renderSchema={renderInspectorSchema} />
+              : undefined
           }
           rightCollapsed={snapshot.inspectorCollapsed}
           onRightToggle={() => dispatch({ type: 'toggleInspector' })}
           rightLabel={t('flux.flowDesigner.expandInspector')}
+          rightCollapseLabel={t('flux.flowDesigner.collapseInspector')}
           dialogs={
             hasRendererSlotContent(asReactNode(dialogsSlot)) ? asReactNode(dialogsSlot) : undefined
           }

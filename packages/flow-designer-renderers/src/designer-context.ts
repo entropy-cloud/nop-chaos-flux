@@ -30,6 +30,11 @@ export interface DesignerContextValue {
     clientY: number,
     sourceKind?: 'node' | 'branch-group' | 'merge',
   ) => void;
+  reportHostIssue?: (input: {
+    message: string;
+    error?: unknown;
+    details?: Record<string, unknown>;
+  }) => void;
 }
 
 export const DesignerContext = React.createContext<DesignerContextValue | null>(null);
@@ -118,7 +123,15 @@ export function buildDesignerScopeData(input: { snapshot: DesignerSnapshot }) {
   const edgeIds = snapshot.selection.selectedEdgeIds;
 
   return {
-    doc: snapshot.doc,
+    doc: {
+      id: snapshot.doc.id,
+      kind: snapshot.doc.kind,
+      name: snapshot.doc.name,
+      version: snapshot.doc.version,
+      viewport: snapshot.doc.viewport,
+      nodeCount: snapshot.doc.nodes.length,
+      edgeCount: snapshot.doc.edges.length,
+    },
     selection: {
       kind: selectionKind,
       count: nodeIds.length + edgeIds.length,

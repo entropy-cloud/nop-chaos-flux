@@ -11,6 +11,7 @@ type DesignerCoreLike = ReturnType<typeof createDesignerCore>;
 
 export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerConfig) {
   const [layoutBusy, setLayoutBusy] = useState(false);
+  const [layoutError, setLayoutError] = useState<string | null>(null);
   const layoutRequestRef = useRef(0);
   const initialTreeAutolayoutDoneRef = useRef(false);
   const elkOwnerRef = useRef(createElkLayoutOwner());
@@ -19,6 +20,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
     const requestId = layoutRequestRef.current + 1;
     layoutRequestRef.current = requestId;
     setLayoutBusy(true);
+    setLayoutError(null);
     const doc = core.getDocument();
     if (doc.nodes.length === 0) {
       if (layoutRequestRef.current === requestId) {
@@ -60,6 +62,11 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
         return;
       }
       core.layoutNodes(positions);
+    } catch (error) {
+      if (layoutRequestRef.current === requestId) {
+        setLayoutError(error instanceof Error ? error.message : 'Auto-layout failed');
+      }
+      throw error;
     } finally {
       if (layoutRequestRef.current === requestId) {
         setLayoutBusy(false);
@@ -88,6 +95,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
     const requestId = layoutRequestRef.current + 1;
     layoutRequestRef.current = requestId;
     setLayoutBusy(true);
+    setLayoutError(null);
 
     void layoutTreeWithElk(
       doc.nodes,
@@ -105,7 +113,12 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
         core.layoutNodes(positions);
       })
       .catch((error: unknown) => {
-        console.warn('[flow-designer] Auto-layout failed', error);
+        if (layoutRequestRef.current !== requestId) {
+          return;
+        }
+        const layoutError =
+          error instanceof Error ? error : new Error('Auto-layout failed');
+        setLayoutError(layoutError.message);
       })
       .finally(() => {
         if (layoutRequestRef.current === requestId) {
@@ -124,6 +137,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
 
   return {
     layoutBusy,
+    layoutError,
     handleAutoLayout,
   };
 }

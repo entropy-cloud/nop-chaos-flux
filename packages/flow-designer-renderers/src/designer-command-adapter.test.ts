@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
 import { createDesignerCommandAdapter } from './designer-command-adapter.js';
@@ -229,5 +229,65 @@ describe('createDesignerCommandAdapter', () => {
     expect(firstResult.snapshot.inspectorCollapsed).toBe(false);
     expect(secondResult.snapshot.paletteCollapsed).toBe(true);
     expect(secondResult.snapshot.inspectorCollapsed).toBe(true);
+  });
+
+  it('rewires edges in one replace when inserting a chain node', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+    const replaceSpy = vi.spyOn(core, 'replaceDocument');
+
+    const result = adapter.execute({
+      type: 'insertChainNode',
+      sourceId: 'task-1',
+      nodeType: 'task',
+      data: { label: 'Inserted' },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(replaceSpy).toHaveBeenCalledTimes(1);
+
+    const replacedDoc = replaceSpy.mock.calls[0]?.[0];
+    expect(replacedDoc.edges.filter((edge) => edge.source === 'task-1')).toHaveLength(1);
+    expect(replacedDoc.edges.filter((edge) => edge.target === 'end-1')).toHaveLength(1);
+  });
+
+  it('rewires incoming edges in one replace when inserting at a merge target', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+    const replaceSpy = vi.spyOn(core, 'replaceDocument');
+
+    const result = adapter.execute({
+      type: 'insertChainNodeAtMerge',
+      targetId: 'end-1',
+      nodeType: 'task',
+      data: { label: 'Merge insert' },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(replaceSpy).toHaveBeenCalledTimes(1);
+
+    const replacedDoc = replaceSpy.mock.calls[0]?.[0];
+    expect(replacedDoc.edges.filter((edge) => edge.target === 'end-1')).toHaveLength(1);
+    expect(replacedDoc.edges.filter((edge) => edge.source === 'task-1')).toHaveLength(1);
+  });
+
+  it('rewires outgoing branch edges in one replace when inserting a branch pair', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+    const replaceSpy = vi.spyOn(core, 'replaceDocument');
+
+    const result = adapter.execute({
+      type: 'insertBranchPair',
+      sourceId: 'task-1',
+      condNodeType: 'task',
+      condData: { label: 'Condition' },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(replaceSpy).toHaveBeenCalledTimes(1);
+
+    const replacedDoc = replaceSpy.mock.calls[0]?.[0];
+    expect(replacedDoc.edges.filter((edge) => edge.source === 'task-1')).toHaveLength(2);
+    expect(replacedDoc.edges.filter((edge) => edge.target === 'end-1')).toHaveLength(2);
   });
 });

@@ -34,6 +34,9 @@ export function createTestConfig(): DesignerConfig {
         label: 'Task',
         body: { type: 'text', text: 'Task' },
         defaults: { label: 'Task' },
+        inspector: {
+          body: { type: 'text', text: 'Task inspector' },
+        },
       },
       {
         id: 'end',

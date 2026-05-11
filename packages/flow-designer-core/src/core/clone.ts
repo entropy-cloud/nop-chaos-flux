@@ -1,5 +1,12 @@
 import type { GraphDocument, GraphNode, GraphEdge } from '../types.js';
 
+function cloneValue<T>(value: T): T {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(value);
+  }
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -8,14 +15,14 @@ export function cloneNode(node: GraphNode): GraphNode {
   return {
     ...node,
     position: { ...node.position },
-    data: { ...node.data },
+    data: cloneValue(node.data ?? {}),
   };
 }
 
 export function cloneEdge(edge: GraphEdge): GraphEdge {
   return {
     ...edge,
-    data: { ...edge.data },
+    data: cloneValue(edge.data ?? {}),
   };
 }
 

@@ -389,6 +389,7 @@ export interface DesignerHostStatusSummary extends DomainHostStatusSummary {
   kind: 'designer';
   dirty: boolean;
   busy: boolean;
+  error?: string | null;
   canUndo: boolean;
   canRedo: boolean;
   selectionKind: 'node' | 'edge' | 'none';

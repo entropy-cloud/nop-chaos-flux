@@ -398,6 +398,51 @@ describe('DesignerPageRenderer basic rendering', () => {
     expect(view.getAllByText('Designer requires config prop').length).toBeGreaterThan(0);
   });
 
+  it('hides sides without resolved palette or inspector config', () => {
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flow/index-hidden-sides"
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: {
+            version: '1.0.0',
+            kind: 'flow',
+            nodeTypes: [
+              {
+                id: 'task',
+                label: 'Task',
+                body: { type: 'text', text: 'Task' },
+              },
+            ],
+          },
+          inspector: { type: 'text', text: 'Host inspector override' },
+        }}
+        env={createRendererEnv() as RendererEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(screen.queryByTestId('left-panel-expanded')).toBeNull();
+    expect(screen.queryByTestId('left-panel-collapsed')).toBeNull();
+    expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
+    expect(screen.queryByTestId('right-panel-collapsed')).toBeNull();
+    expect(screen.queryByText('Host inspector override')).toBeNull();
+  });
+
   it('uses data-slot for the node quick toolbar instead of internal toolbar marker classes', async () => {
     const SchemaRenderer = createSchemaRenderer([
       ...basicTestRendererDefinitions,
