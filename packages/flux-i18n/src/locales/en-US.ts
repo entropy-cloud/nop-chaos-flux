@@ -336,6 +336,8 @@ export const enUS: Resource = {
       loadingPanels: 'Loading inspector panels...',
       loadPanelsFailed: 'Failed to load inspector panels.',
       noPanels: 'No inspector panels available.',
+      inspectorTitle: 'Inspector',
+      inspectorSubtitle: 'Edit workbook, sheet, cell, or range properties',
       collapseFieldPanel: 'Collapse field panel',
       expandFieldPanel: 'Expand field panel',
       collapseInspector: 'Collapse inspector',

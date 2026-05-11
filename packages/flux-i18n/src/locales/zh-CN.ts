@@ -335,6 +335,8 @@ export const zhCN: Resource = {
       loadingPanels: '正在加载检查器面板...',
       loadPanelsFailed: '加载检查器面板失败。',
       noPanels: '无可用的检查器面板。',
+      inspectorTitle: '检查器',
+      inspectorSubtitle: '编辑工作簿、工作表、单元格或区域属性',
       collapseFieldPanel: '收起字段面板',
       expandFieldPanel: '展开字段面板',
       collapseInspector: '收起检查器',
