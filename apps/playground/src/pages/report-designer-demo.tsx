@@ -201,7 +201,7 @@ export function ReportDesignerDemo() {
     void designerCore.setSelectionTarget(designerCore.getSnapshot().selectionTarget);
   }, [designerCore]);
 
-  const sheetId = spreadsheetDoc.workbook.sheets[0].id;
+  const sheetId = spreadsheetRuntimeSnapshot.activeSheetId || spreadsheetDoc.workbook.sheets[0].id;
 
   const {
     snapshot,

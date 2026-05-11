@@ -452,7 +452,7 @@ export function SpreadsheetGrid({
             position: 'relative',
           }}
         >
-          <table>
+          <table key={activeSheetId}>
             <thead>
               <tr>
                 <th

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
 
 export interface ResizeState {
@@ -36,6 +36,12 @@ export function useResize(input: {
   });
   const [columnWidthPreview, setColumnWidthPreview] = useState<Record<number, number>>({});
   const [rowHeightPreview, setRowHeightPreview] = useState<Record<number, number>>({});
+  const lastSheetIdRef = useRef(snapshot.activeSheet?.id);
+  if (snapshot.activeSheet?.id !== lastSheetIdRef.current) {
+    lastSheetIdRef.current = snapshot.activeSheet?.id;
+    setColumnWidthPreview({});
+    setRowHeightPreview({});
+  }
 
   const columnWidths = useMemo(() => {
     const widths: Record<number, number> = {};
