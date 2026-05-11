@@ -21,6 +21,12 @@
     "react": "^19.0.0",
     "use-sync-external-store": "^1.6.0"
   },
+  "devDependencies": {
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/flux-renderers-basic": "workspace:*",
+    "@nop-chaos/flux-renderers-data": "workspace:*",
+    "@nop-chaos/flux-renderers-form": "workspace:*"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",

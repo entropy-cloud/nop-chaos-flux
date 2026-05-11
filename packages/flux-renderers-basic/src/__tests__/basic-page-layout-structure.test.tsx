@@ -1,6 +1,29 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { basicRendererDefinitions } from '../index.js';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
+
+const formRendererDefinitions: RendererDefinition[] = [
+  {
+    type: 'form',
+    component: (props: any) => <form>{props.regions.body?.render?.()}</form>,
+    fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+  },
+  {
+    type: 'input-text',
+    component: (props: any) => (
+      <label>
+        <span>{String(props.props.label ?? '')}</span>
+        <input
+          aria-label={String(props.props.label ?? '')}
+          defaultValue={String(props.props.value ?? '')}
+        />
+      </label>
+    ),
+  },
+];
 
 describe('basicRendererDefinitions page and layout behavior', () => {
   it('renders page title from a plain value', () => {
@@ -185,6 +208,60 @@ describe('basicRendererDefinitions page and layout behavior', () => {
       expect(screen.getByText('title:second:1:second')).toBeTruthy();
       expect(screen.getByText('toolbar:second:1:second')).toBeTruthy();
       expect(screen.getByText('body:second:1:second')).toBeTruthy();
+    });
+
+    cleanup();
+  });
+
+  it('keeps nested form values when switching tabs', async () => {
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout-tabs-form-retention"
+        schema={{
+          type: 'tabs',
+          items: [
+            {
+              key: 'info',
+              title: 'Basic Info',
+              body: [
+                {
+                  type: 'form',
+                  body: [
+                    { type: 'input-text', name: 'firstName', label: 'First Name' },
+                  ],
+                },
+              ],
+            },
+            {
+              key: 'contact',
+              title: 'Contact',
+              body: [
+                {
+                  type: 'form',
+                  body: [
+                    { type: 'input-text', name: 'email', label: 'Email' },
+                  ],
+                },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const firstNameInput = screen.getByLabelText('First Name') as HTMLInputElement;
+    fireEvent.change(firstNameInput, { target: { value: 'Alice' } });
+    expect(firstNameInput.value).toBe('Alice');
+
+    fireEvent.click(screen.getByText('Contact'));
+    await waitFor(() => expect(screen.getByLabelText('Email')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Basic Info'));
+    await waitFor(() => {
+      expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice');
     });
 
     cleanup();

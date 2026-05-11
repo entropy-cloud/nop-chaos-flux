@@ -14,10 +14,8 @@
   },
   "dependencies": {
     "@nop-chaos/flux-core": "workspace:*",
-    "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
-    "@nop-chaos/flux-renderers-form": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@tanstack/react-virtual": "^3.13.24",
     "lucide-react": "^1.7.0",
@@ -31,7 +29,9 @@
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
   },
   "devDependencies": {
+    "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
-    "@nop-chaos/flux-compiler": "workspace:*"
+    "@nop-chaos/flux-compiler": "workspace:*",
+    "@nop-chaos/flux-renderers-form": "workspace:*"
   }
 }

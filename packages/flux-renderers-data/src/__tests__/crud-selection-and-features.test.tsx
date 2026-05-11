@@ -96,6 +96,70 @@ describe('CRUD selection and features', () => {
     });
   });
 
+  it('replaces CRUD selection in radio mode and keeps $crud summary single-valued', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer([disabledAwareButtonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-radio-selection"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'radio-selection-crud',
+              selection: { type: 'radio' },
+              source: [
+                { id: '1', name: 'Alice' },
+                { id: '2', name: 'Bob' },
+              ],
+              listActions: [
+                {
+                  type: 'button',
+                  label: 'Inspect Selected',
+                  disabled: '${!$crud.hasSelection}',
+                },
+              ],
+              footerToolbar: [
+                {
+                  type: 'text',
+                  text: 'Selected rows: ${$crud.selectionCount}; Keys: ${$crud.selectedRowKeys}',
+                },
+              ],
+              columns: [{ name: 'name', label: 'Name' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const inspectSelectedButton = screen.getByRole('button', { name: 'Inspect Selected' });
+    expect(inspectSelectedButton.hasAttribute('disabled')).toBe(true);
+    expect(screen.getByText(/Selected rows: 0; Keys:/)).toBeTruthy();
+
+    const radios = document.querySelectorAll('[data-slot="checkbox"][data-shape="circle"]');
+    expect(radios.length).toBe(2);
+
+    fireEvent.click(radios[0] as HTMLElement);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Inspect Selected' }).hasAttribute('disabled'),
+      ).toBe(false);
+      expect(screen.getByText('Selected rows: 1; Keys: 1')).toBeTruthy();
+    });
+
+    fireEvent.click(radios[1] as HTMLElement);
+
+    await waitFor(() => {
+      expect(screen.getByText('Selected rows: 1; Keys: 2')).toBeTruthy();
+      expect(screen.queryByText('Selected rows: 2; Keys: 1,2')).toBeNull();
+    });
+  });
+
   it('forwards responsive expand baseline through crud into the internal table', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer();
