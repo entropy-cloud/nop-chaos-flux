@@ -1,4 +1,5 @@
 import {
+  reportRuntimeHostIssue,
   type AsyncGovernanceStore,
   type AsyncRunHandle,
   type CompiledReaction,
@@ -12,7 +13,6 @@ import {
 } from '@nop-chaos/flux-core';
 import { isAbortError } from '../error-utils.js';
 
-let globalCascadeDepth = 0;
 const MAX_GLOBAL_CASCADE_DEPTH = 200;
 import { createRootDependencySet, scopeChangeHitsDependencies } from '../scope-change.js';
 import {
@@ -30,25 +30,31 @@ export interface ReactionRegistration {
   dispose(): void;
 }
 
-function tryEnterGlobalCascade(): boolean {
-  if (globalCascadeDepth >= MAX_GLOBAL_CASCADE_DEPTH) {
+interface ReactionCascadeState {
+  depth: number;
+}
+
+const reactionCascadeTestState: ReactionCascadeState = { depth: 0 };
+
+function tryEnterGlobalCascade(state: ReactionCascadeState): boolean {
+  if (state.depth >= MAX_GLOBAL_CASCADE_DEPTH) {
     return false;
   }
 
-  globalCascadeDepth += 1;
+  state.depth += 1;
   return true;
 }
 
-function leaveGlobalCascade() {
-  globalCascadeDepth = Math.max(0, globalCascadeDepth - 1);
+function leaveGlobalCascade(state: ReactionCascadeState) {
+  state.depth = Math.max(0, state.depth - 1);
 }
 
 export function __getGlobalCascadeDepthForTests(): number {
-  return globalCascadeDepth;
+  return reactionCascadeTestState.depth;
 }
 
 export function __setGlobalCascadeDepthForTests(value: number) {
-  globalCascadeDepth = Math.max(0, value);
+  reactionCascadeTestState.depth = Math.max(0, value);
 }
 
 export interface RuntimeReactionRegistry {
@@ -81,6 +87,7 @@ export function registerReaction(input: {
     async?: import('@nop-chaos/flux-core').AsyncOwnerDebugState;
   }) => void;
   onDispose?: () => void;
+  cascadeState?: ReactionCascadeState;
 }): ReactionRegistration {
   const compiled = input.compiledReaction;
 
@@ -147,13 +154,26 @@ export function registerReaction(input: {
     }),
     cascadeDepth = 0,
   ) {
-    const enteredGlobalCascade = tryEnterGlobalCascade();
+    const cascadeState = input.cascadeState ?? reactionCascadeTestState;
+    const enteredGlobalCascade = tryEnterGlobalCascade(cascadeState);
     if (!enteredGlobalCascade) {
-      console.error('[flux-runtime] Global reaction cascade depth limit exceeded');
+      const error = new Error('Global reaction cascade depth limit exceeded');
+      reportRuntimeHostIssue({
+        env: input.runtime.env,
+        level: 'error',
+        message: error.message,
+        error,
+        phase: 'action',
+        details: {
+          reason: 'global-reaction-cascade-depth-limit',
+          reactionId: input.id,
+          scopeId: input.scope.id,
+        },
+      });
       if (run && input.asyncGovernance) {
         input.asyncGovernance.settleRun(run, {
           outcome: 'failed',
-          error: new Error('Global reaction cascade depth limit exceeded'),
+          error,
         });
       }
       dispose();
@@ -317,7 +337,7 @@ export function registerReaction(input: {
       }
     } finally {
       if (enteredGlobalCascade) {
-        leaveGlobalCascade();
+        leaveGlobalCascade(cascadeState);
       }
       running = false;
       emitDebug();
@@ -435,6 +455,7 @@ export function registerReaction(input: {
 
 export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
   const scopeEntries = new Map<string, Map<string, OwnedReactionRegistration>>();
+  const cascadeState: ReactionCascadeState = { depth: 0 };
 
   function register(input: {
     id: string;
@@ -465,6 +486,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
 
     const registration = registerReaction({
       ...input,
+      cascadeState,
       onDebugUpdate: (debug) => {
         latestDependencies = debug.dependencies;
         fireCount = debug.fireCount;

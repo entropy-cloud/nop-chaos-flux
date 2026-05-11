@@ -57,7 +57,7 @@ describe('createRendererRuntime', () => {
     expect(commits).toBeLessThanOrEqual(1);
   });
 
-  it('can replace chained setValue actions with one setValues action for equivalent form updates', async () => {
+  it('matches chained form.setValue updates with fewer commits', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
@@ -76,32 +76,8 @@ describe('createRendererRuntime', () => {
       chainedCommits += 1;
     });
 
-    await runtime.dispatch(
-      [
-        {
-          action: 'setValue',
-          formId: 'profile-form',
-          args: {
-            path: 'username',
-            value: 'Bob',
-          },
-        },
-        {
-          action: 'setValue',
-          formId: 'profile-form',
-          args: {
-            path: 'role',
-            value: 'admin',
-          },
-        },
-      ],
-      {
-        runtime,
-        scope: form.scope,
-        page,
-        form,
-      },
-    );
+    form.setValue('username', 'Bob');
+    form.setValue('role', 'admin');
 
     unsubscribeChained();
 
@@ -114,24 +90,10 @@ describe('createRendererRuntime', () => {
       batchedCommits += 1;
     });
 
-    await runtime.dispatch(
-      {
-        action: 'setValues',
-        formId: 'profile-form',
-        args: {
-          values: {
-            username: 'Bob',
-            role: 'admin',
-          },
-        },
-      },
-      {
-        runtime,
-        scope: form.scope,
-        page,
-        form,
-      },
-    );
+    form.setValues({
+      username: 'Bob',
+      role: 'admin',
+    });
 
     unsubscribeBatched();
 

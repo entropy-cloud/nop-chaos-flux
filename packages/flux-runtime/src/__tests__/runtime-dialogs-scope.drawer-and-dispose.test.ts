@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '../index.js';
-import { textRenderer, env } from './test-fixtures.js';
+import { pageRenderer, textRenderer, env } from './test-fixtures.js';
 
 describe('createRendererRuntime - drawer and teardown behavior', () => {
   it('opens and closes drawers through openDrawer actions', async () => {
-    const registry = createRendererRegistry([textRenderer]);
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
@@ -71,7 +71,7 @@ describe('createRendererRuntime - drawer and teardown behavior', () => {
   });
 
   it('supports args as the recommended drawer payload carrier', async () => {
-    const registry = createRendererRegistry([textRenderer]);
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
@@ -103,7 +103,7 @@ describe('createRendererRuntime - drawer and teardown behavior', () => {
   });
 
   it('applies drawer data as the child-scope init patch', async () => {
-    const registry = createRendererRegistry([textRenderer]);
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
@@ -138,7 +138,7 @@ describe('createRendererRuntime - drawer and teardown behavior', () => {
   });
 
   it('disposes open surface entries during runtime teardown', async () => {
-    const registry = createRendererRegistry([textRenderer]);
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,

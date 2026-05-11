@@ -10,7 +10,6 @@ import type {
 import { normalizeRootPaths } from '@nop-chaos/flux-core';
 
 const MAX_SOURCE_CASCADE_DEPTH = 100;
-let sourceCascadeDepth = 0;
 import type { ApiCacheStore } from './api-cache.js';
 import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import {
@@ -35,25 +34,31 @@ interface RuntimeSourceEntry {
   dispose(): void;
 }
 
-function tryEnterSourceCascade(): boolean {
-  if (sourceCascadeDepth >= MAX_SOURCE_CASCADE_DEPTH) {
+interface SourceCascadeState {
+  depth: number;
+}
+
+const sourceCascadeTestState: SourceCascadeState = { depth: 0 };
+
+function tryEnterSourceCascade(state: SourceCascadeState): boolean {
+  if (state.depth >= MAX_SOURCE_CASCADE_DEPTH) {
     return false;
   }
 
-  sourceCascadeDepth += 1;
+  state.depth += 1;
   return true;
 }
 
-function leaveSourceCascade() {
-  sourceCascadeDepth = Math.max(0, sourceCascadeDepth - 1);
+function leaveSourceCascade(state: SourceCascadeState) {
+  state.depth = Math.max(0, state.depth - 1);
 }
 
 export function __getSourceCascadeDepthForTests(): number {
-  return sourceCascadeDepth;
+  return sourceCascadeTestState.depth;
 }
 
 export function __setSourceCascadeDepthForTests(value: number) {
-  sourceCascadeDepth = Math.max(0, value);
+  sourceCascadeTestState.depth = Math.max(0, value);
 }
 
 function extractExpressionSource(
@@ -95,6 +100,7 @@ export function createRuntimeSourceRegistry(input: {
 }): RuntimeSourceRegistry {
   const scopeEntries = new Map<string, Map<string, RuntimeSourceEntry>>();
   const nameIndex = new Map<string, RuntimeSourceEntry>();
+  const cascadeState: SourceCascadeState = { depth: 0 };
 
   function registerDataSource(args: {
     id: string;
@@ -224,8 +230,19 @@ export function createRuntimeSourceRegistry(input: {
         return;
       }
 
-      if (!tryEnterSourceCascade()) {
-        console.error('[flux-runtime] Source cascade depth limit exceeded');
+      if (!tryEnterSourceCascade(cascadeState)) {
+        reportRuntimeHostIssue({
+          env: input.runtime.env,
+          level: 'error',
+          message: 'Source cascade depth limit exceeded',
+          error: new Error('Source cascade depth limit exceeded'),
+          phase: 'api',
+          details: {
+            reason: 'source-cascade-depth-limit',
+            sourceId: args.id,
+            ownerScopeId,
+          },
+        });
         return;
       }
 
@@ -236,10 +253,10 @@ export function createRuntimeSourceRegistry(input: {
             reportRefreshFailure(error);
           })
           .finally(() => {
-            leaveSourceCascade();
+            leaveSourceCascade(cascadeState);
           });
       } catch (error) {
-        leaveSourceCascade();
+        leaveSourceCascade(cascadeState);
         reportRefreshFailure(error);
       }
     });

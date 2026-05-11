@@ -6,7 +6,7 @@ import { textRenderer, pageRenderer, env } from './test-fixtures.js';
 
 describe('createRendererRuntime - dialog state', () => {
   it('stores schema-based dialog title and body as raw schema when opening dialogs', async () => {
-    const registry = createRendererRegistry([textRenderer]);
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
@@ -38,7 +38,7 @@ describe('createRendererRuntime - dialog state', () => {
   });
 
   it('supports args as the recommended dialog payload carrier', async () => {
-    const registry = createRendererRegistry([textRenderer]);
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
@@ -122,7 +122,7 @@ describe('createRendererRuntime - dialog state', () => {
   });
 
   it('applies dialog data as the child-scope init patch', async () => {
-    const registry = createRendererRegistry([textRenderer]);
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
@@ -218,7 +218,7 @@ describe('createRendererRuntime - dialog state', () => {
 
   it('stores ownerNodeInstance in dialog state when opened directly via surfaceRuntime.open', () => {
     const runtime = createRendererRuntime({
-      registry: createRendererRegistry([textRenderer]),
+      registry: createRendererRegistry([pageRenderer, textRenderer]),
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });

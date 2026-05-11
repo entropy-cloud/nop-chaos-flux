@@ -141,6 +141,16 @@ export function createNodeRuntime(input: {
   ): ResolvedNodeMeta {
     const env = input.getEnv();
     const meta = node.metaProgram;
+    const structuralWhen =
+      node.structuralWhen === undefined
+        ? evaluateCompiledValue(input.expressionCompiler, meta.when, scope, env, state?.meta.when)
+        : evaluateCompiledValue(
+            input.expressionCompiler,
+            node.structuralWhen,
+            scope,
+            env,
+            state?.meta.when,
+          );
     const resolved: ResolvedNodeMeta = {
       id: evaluateCompiledValue(input.expressionCompiler, meta.id, scope, env, state?.meta.id),
       className: evaluateCompiledValue(
@@ -158,8 +168,7 @@ export function createNodeRuntime(input: {
         state?.meta.frameClassName,
       ),
       when: Boolean(
-        evaluateCompiledValue(input.expressionCompiler, meta.when, scope, env, state?.meta.when) ??
-          true,
+        structuralWhen ?? true,
       ),
       visible: Boolean(
         evaluateCompiledValue(

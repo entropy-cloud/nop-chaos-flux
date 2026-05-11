@@ -179,4 +179,75 @@ describe('owner validation lifecycle contracts', () => {
 
     expect(runtime.getScopeState()).toMatchObject({ validating: false, ready: true, valid: true });
   });
+
+  it('submit supersedes lower-priority async validation and prevents stale publication', async () => {
+    let releaseBlur: ((error: ReturnType<typeof realValidateRule> | undefined) => void) | undefined;
+    let releaseSubmit: ((error: ReturnType<typeof realValidateRule> | undefined) => void) | undefined;
+    const executeValidationRule = vi.fn().mockImplementation(async (_compiledRule, _rule, _field, _scope, signal) => {
+      return await new Promise((resolve, reject) => {
+        const release = (value: ReturnType<typeof realValidateRule> | undefined) => {
+          if (signal?.aborted) {
+            const error = new Error('aborted');
+            (error as Error & { name: string }).name = 'AbortError';
+            reject(error);
+            return;
+          }
+
+          resolve(value);
+        };
+
+        if (!releaseBlur) {
+          releaseBlur = release;
+        } else {
+          releaseSubmit = release;
+        }
+      });
+    });
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      parentScope: createStubScope({ name: 'Alice' }),
+      initialValues: { name: 'Alice' },
+      validation: makeFormModel({ name: makeNode('name', { async: true }) }),
+      validateRule: realValidateRule,
+      executeValidationRule,
+      lifecycle: {
+        submitAction: vi.fn().mockResolvedValue({ ok: true, data: { submitted: true } }),
+      },
+    });
+
+    const blurPromise = runtime.validateField('name', 'blur');
+    await Promise.resolve();
+    expect(runtime.getScopeState()).toMatchObject({ validating: true, ready: false });
+    expect(executeValidationRule).toHaveBeenCalledTimes(1);
+
+    const submitPromise = runtime.submit();
+    await Promise.resolve();
+    expect(executeValidationRule).toHaveBeenCalledTimes(2);
+
+    releaseBlur?.({ path: 'name', rule: 'async', message: 'stale blur error' } as any);
+    await Promise.resolve();
+
+    expect(runtime.getFieldState('name').errors).toEqual([]);
+
+    releaseSubmit?.(undefined);
+
+    await expect(blurPromise).rejects.toMatchObject({ name: 'AbortError' });
+    await expect(submitPromise).resolves.toMatchObject({ ok: true, data: { submitted: true } });
+    expect(runtime.getFieldState('name').errors).toEqual([]);
+    const getAsyncOwnerDebugSnapshot = runtime.getAsyncOwnerDebugSnapshot;
+    expect(getAsyncOwnerDebugSnapshot).toBeTypeOf('function');
+    const asyncDebugSnapshot = getAsyncOwnerDebugSnapshot?.();
+    expect(asyncDebugSnapshot).toBeTruthy();
+    expect(asyncDebugSnapshot).toMatchObject({
+      owners: [
+        expect.objectContaining({
+          ownerId: 'validation:test-form:name',
+          recentRuns: expect.arrayContaining([
+            expect.objectContaining({ cause: 'submit' }),
+            expect.objectContaining({ cause: 'blur', outcome: expect.stringMatching(/cancelled|stale-dropped/) }),
+          ]),
+        }),
+      ],
+    });
+  });
 });

@@ -6,6 +6,7 @@ import { createRendererRuntime } from '../index.js';
 import {
   __getGlobalCascadeDepthForTests,
   __setGlobalCascadeDepthForTests,
+  registerReaction as registerOwnedReaction,
 } from '../async-data/reaction-runtime.js';
 
 const textRenderer = {
@@ -13,9 +14,10 @@ const textRenderer = {
   component: () => null,
 };
 
+const notify = vi.fn();
 const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true as const, status: 200, data: null as T }),
-  notify: () => undefined,
+  notify,
 };
 
 function createRuntime() {
@@ -36,6 +38,7 @@ describe('registerReaction dispose race with scheduled microtask', () => {
   afterEach(() => {
     vi.useRealTimers();
     __setGlobalCascadeDepthForTests(0);
+    notify.mockReset();
   });
 
   it('does not create a debounce setTimeout when dispose races the scheduled microtask', async () => {
@@ -329,7 +332,6 @@ describe('registerReaction dispose race with scheduled microtask', () => {
   });
 
   it('does not underflow the global cascade counter when the limit is exceeded', async () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     __setGlobalCascadeDepthForTests(200);
 
     const runtime = createRuntime();
@@ -354,10 +356,40 @@ describe('registerReaction dispose race with scheduled microtask', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(error).toHaveBeenCalledWith('[flux-runtime] Global reaction cascade depth limit exceeded');
+    expect(notify).not.toHaveBeenCalled();
     expect(__getGlobalCascadeDepthForTests()).toBe(200);
 
     registration.dispose();
-    error.mockRestore();
+  });
+
+  it('reports the retained cascade-limit failure through the host channel', async () => {
+    __setGlobalCascadeDepthForTests(200);
+
+    const runtime = createRuntime();
+    const page = runtime.createPageRuntime({ count: 0 });
+
+    const registration = registerOwnedReaction({
+      id: 'global-cascade-limit-reporting',
+      runtime,
+      scope: page.scope,
+      compiledReaction: compileReaction(
+        'global-cascade-limit-reporting',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          actions: { action: 'custom:noop' },
+        },
+        expressionCompiler,
+      ),
+      helpers: { dispatch: vi.fn() },
+    });
+
+    page.scope.update('count', 1);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(notify).toHaveBeenCalledWith('error', 'Global reaction cascade depth limit exceeded');
+
+    registration.dispose();
   });
 });

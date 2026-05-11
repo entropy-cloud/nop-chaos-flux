@@ -11,7 +11,7 @@ import type {
   RendererRuntime,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
+import { isSchema, isSchemaArray, reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import type { ApiRequestExecutor } from './async-data/request-runtime.js';
 import { executeRuntimeAjaxAction } from './runtime-action-helpers.js';
 
@@ -37,7 +37,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
     const body = surface.body;
 
     if (!isSchema(body) && !isSchemaArray(body)) {
-      return undefined;
+      return { plan: undefined };
     }
 
     try {
@@ -46,50 +46,46 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         body,
       });
       const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
-      return root?.validationPlan;
-    } catch {
-      return undefined;
+      return { plan: root?.validationPlan };
+    } catch (error) {
+      return {
+        plan: undefined,
+        error:
+          error instanceof Error
+            ? error
+            : new Error('Failed to compile surface validation plan'),
+      };
     }
   }
 
-  function resolveFormTarget(
-    formId: string | undefined,
-    ctx: ActionContext,
-  ):
-    | { kind: 'current' }
-    | { kind: 'resolved'; form: import('@nop-chaos/flux-core').FormRuntime }
-    | { kind: 'not-found'; formId: string } {
-    if (!formId) {
-      return { kind: 'current' };
-    }
-
-    if (ctx.form && ctx.form.id === formId) {
-      return { kind: 'resolved', form: ctx.form };
-    }
-
-    return { kind: 'not-found', formId };
+  function createSurfaceValidationFailureResult(
+    kind: 'dialog' | 'drawer',
+    error: Error,
+    surface: Record<string, unknown>,
+  ): ActionResult {
+    reportRuntimeHostIssue({
+      env: runtime.env,
+      level: 'error',
+      message: `Failed to open ${kind}: validation plan compilation failed`,
+      error,
+      phase: 'action',
+      details: {
+        reason: 'surface-validation-plan-compile-failed',
+        surfaceKind: kind,
+        title: typeof surface.title === 'string' ? surface.title : undefined,
+      },
+    });
+    return { ok: false, error };
   }
 
   return {
     async invokeBuiltInAction(invocation: BuiltInActionInvocation, ctx) {
       switch (invocation.action) {
         case 'setValue': {
-          const path =
-            typeof invocation.args?.path === 'string'
-              ? invocation.args.path
-              : (invocation.targeting.componentId ?? '');
+          const path = typeof invocation.args?.path === 'string' ? invocation.args.path : '';
           const value = invocation.args?.value;
 
-          const target = resolveFormTarget(invocation.targeting.formId, ctx);
-          if (target.kind === 'not-found') {
-            return { ok: false, error: new Error(`Form not found: ${target.formId}`) };
-          }
-
-          if (target.kind === 'resolved') {
-            target.form.setValue(path, value);
-          } else {
-            ctx.scope.update(path, value);
-          }
+          ctx.scope.update(path, value);
           return { ok: true, data: value };
         }
 
@@ -99,32 +95,18 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: true, data: values };
           }
 
+          if (ctx.form) {
+            ctx.form.setValues(values);
+            return { ok: true, data: values };
+          }
+
           const basePath =
             typeof invocation.args?.path === 'string'
               ? invocation.args.path
               : invocation.targeting.targetId;
 
-          const target = resolveFormTarget(invocation.targeting.formId, ctx);
-          if (target.kind === 'not-found') {
-            return { ok: false, error: new Error(`Form not found: ${target.formId}`) };
-          }
-
-          const formTarget = target.kind === 'resolved' ? target.form : undefined;
-
-          if (formTarget) {
-            if (basePath) {
-              const nextValues = Object.fromEntries(
-                Object.entries(values).map(([key, val]) => [`${basePath}.${key}`, val]),
-              );
-              formTarget.setValues(nextValues);
-              return { ok: true, data: nextValues };
-            }
-
-            formTarget.setValues(values);
-          } else {
-            for (const [targetPath, val] of Object.entries(values)) {
-              ctx.scope.update(basePath ? `${basePath}.${targetPath}` : targetPath, val);
-            }
+          for (const [targetPath, val] of Object.entries(values)) {
+            ctx.scope.update(basePath ? `${basePath}.${targetPath}` : targetPath, val);
           }
 
           if (basePath) {
@@ -156,47 +138,6 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         }
 
         case 'submitForm': {
-          if (invocation.targeting.formId) {
-            if (!ctx.componentRegistry) {
-              return {
-                ok: false,
-                error: new Error(
-                  `Form not found: ${invocation.targeting.formId} (no component registry)`,
-                ),
-              };
-            }
-            let handle;
-            try {
-              handle = ctx.componentRegistry.resolve({
-                componentId: invocation.targeting.formId,
-              });
-            } catch (error) {
-              return {
-                ok: false,
-                error:
-                  error instanceof Error
-                    ? error
-                    : new Error(`Form not found: ${invocation.targeting.formId}`),
-              };
-            }
-
-            if (!handle) {
-              return {
-                ok: false,
-                error: new Error(`Form not found: ${invocation.targeting.formId}`),
-              };
-            }
-
-            return handle.capabilities.invoke(
-              'submit',
-              {
-                interactionId: ctx.interactionId,
-                signal: invocation.signal,
-              },
-              ctx,
-            );
-          }
-
           if (!ctx.form) {
             return { ok: false, error: new Error('submitForm requires form runtime') };
           }
@@ -212,6 +153,15 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: false, error: new Error('openDialog requires surface runtime') };
           }
 
+          const validation = resolveSurfaceValidationPlan(invocation.args ?? {});
+          if (validation.error) {
+            return createSurfaceValidationFailureResult(
+              'dialog',
+              validation.error,
+              (invocation.args ?? {}) as Record<string, unknown>,
+            );
+          }
+
           const dialogData =
             invocation.args?.data && typeof invocation.args.data === 'object'
               ? (invocation.args.data as Record<string, unknown>)
@@ -225,7 +175,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             options: {
               actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
               componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
-              validationPlan: resolveSurfaceValidationPlan(invocation.args ?? {}),
+              validationPlan: validation.plan,
               ownerNodeInstance: ctx.nodeInstance,
             },
           });
@@ -261,6 +211,15 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: false, error: new Error('openDrawer requires surface runtime') };
           }
 
+          const validation = resolveSurfaceValidationPlan(invocation.args ?? {});
+          if (validation.error) {
+            return createSurfaceValidationFailureResult(
+              'drawer',
+              validation.error,
+              (invocation.args ?? {}) as Record<string, unknown>,
+            );
+          }
+
           const drawerData =
             invocation.args?.data && typeof invocation.args.data === 'object'
               ? (invocation.args.data as Record<string, unknown>)
@@ -275,7 +234,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             options: {
               actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
               componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
-              validationPlan: resolveSurfaceValidationPlan(invocation.args ?? {}),
+              validationPlan: validation.plan,
               ownerNodeInstance: ctx.nodeInstance,
             },
           });

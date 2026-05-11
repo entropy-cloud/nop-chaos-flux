@@ -118,6 +118,48 @@ describe('createActionRuntimeAdapter direct branches', () => {
       }),
     );
 
+    const compileError = new Error('bad surface body');
+    const failingSurfaceRuntime = { open: vi.fn(), close: vi.fn() };
+    const failingAdapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify }) as any,
+      expressionCompiler: {} as any,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as any,
+      runtime: {
+        env: { notify, monitor: { onError: vi.fn() } },
+        createChildScope,
+        refreshDataSource,
+        compile: vi.fn(() => {
+          throw compileError;
+        }),
+      } as any,
+      createSurfaceScope,
+    });
+
+    await expect(
+      failingAdapter.invokeBuiltInAction(
+        createBuiltInInvocation('openDialog', { title: 'Broken', body: [{ type: 'text' }] }),
+        createCtx({ surfaceRuntime: failingSurfaceRuntime }),
+      ),
+    ).resolves.toEqual({ ok: false, error: compileError });
+    expect(failingSurfaceRuntime.open).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith(
+      'error',
+      'Failed to open dialog: validation plan compilation failed',
+    );
+
+    await expect(
+      failingAdapter.invokeBuiltInAction(
+        createBuiltInInvocation('openDrawer', { title: 'Broken drawer', body: [{ type: 'text' }] }),
+        createCtx({ surfaceRuntime: failingSurfaceRuntime }),
+      ),
+    ).resolves.toEqual({ ok: false, error: compileError });
+    expect(failingSurfaceRuntime.open).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith(
+      'error',
+      'Failed to open drawer: validation plan compilation failed',
+    );
+
     await expect(
       adapter.invokeBuiltInAction(
         createBuiltInInvocation('closeSurface', { surfaceId: 'surface-1' }),
@@ -406,8 +448,8 @@ describe('createActionRuntimeAdapter direct branches', () => {
   });
 });
 
-describe('formId targeting in built-in actions', () => {
-  it('setValue uses form when formId matches', async () => {
+describe('built-in scope-write and submit semantics', () => {
+  it('setValue always writes current scope even when form exists', async () => {
     const adapter = createAdapter();
     const form = { id: 'form-1', setValue: vi.fn() };
     const scopeUpdate = vi.fn();
@@ -415,25 +457,27 @@ describe('formId targeting in built-in actions', () => {
     scope.update = scopeUpdate;
 
     await adapter.invokeBuiltInAction(
-      createBuiltInInvocation('setValue', { path: 'name', value: 'Alice' }, { formId: 'form-1' }),
+      createBuiltInInvocation('setValue', { path: 'name', value: 'Alice' }),
       createCtx({ form, scope }),
     );
 
-    expect(form.setValue).toHaveBeenCalledWith('name', 'Alice');
-    expect(scopeUpdate).not.toHaveBeenCalled();
+    expect(scopeUpdate).toHaveBeenCalledWith('name', 'Alice');
+    expect(form.setValue).not.toHaveBeenCalled();
   });
 
-  it('setValue returns error when formId does not match', async () => {
+  it('setValue no longer uses componentId as a path fallback', async () => {
     const adapter = createAdapter();
-    const form = { id: 'form-1', setValue: vi.fn() };
+    const scopeUpdate = vi.fn();
+    const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
+    scope.update = scopeUpdate;
 
     const result = await adapter.invokeBuiltInAction(
-      createBuiltInInvocation('setValue', { path: 'name', value: 'Alice' }, { formId: 'form-2' }),
-      createCtx({ form }),
+      createBuiltInInvocation('setValue', { value: 'Alice' }, { componentId: 'legacy-component' }),
+      createCtx({ scope }),
     );
 
-    expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
-    expect(form.setValue).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ ok: true, data: 'Alice' });
+    expect(scopeUpdate).toHaveBeenCalledWith('', 'Alice');
   });
 
   it('setValue uses scope without formId even when form exists', async () => {
@@ -452,7 +496,7 @@ describe('formId targeting in built-in actions', () => {
     expect(form.setValue).not.toHaveBeenCalled();
   });
 
-  it('setValue uses scope without form when no formId and no form', async () => {
+  it('setValue uses scope without form when no form exists', async () => {
     const adapter = createAdapter();
     const scopeUpdate = vi.fn();
     const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
@@ -466,145 +510,71 @@ describe('formId targeting in built-in actions', () => {
     expect(scopeUpdate).toHaveBeenCalledWith('name', 'Alice');
   });
 
-  it('setValues returns error when formId does not match', async () => {
+  it('setValues uses current form runtime when one exists', async () => {
     const adapter = createAdapter();
     const form = { id: 'form-1', setValues: vi.fn() };
+    const scopeUpdate = vi.fn();
+    const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
+    scope.update = scopeUpdate;
 
     const result = await adapter.invokeBuiltInAction(
-      createBuiltInInvocation('setValues', { values: { name: 'Alice' } }, { formId: 'form-2' }),
-      createCtx({ form }),
+      createBuiltInInvocation('setValues', { values: { name: 'Alice' } }),
+      createCtx({ form, scope }),
+    );
+
+    expect(result).toMatchObject({ ok: true, data: { name: 'Alice' } });
+    expect(form.setValues).toHaveBeenCalledWith({ name: 'Alice' });
+    expect(scopeUpdate).not.toHaveBeenCalled();
+  });
+
+  it('submitForm returns error when there is no current form runtime', async () => {
+    const adapter = createAdapter();
+
+    const result = await adapter.invokeBuiltInAction(
+      createBuiltInInvocation('submitForm'),
+      createCtx({ form: undefined }),
     );
 
     expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
-    expect(form.setValues).not.toHaveBeenCalled();
   });
 
-  it('submitForm resolves through component registry when formId is provided', async () => {
-    const adapter = createAdapter();
-    const form = { id: 'form-1', submit: vi.fn() };
-    const remoteHandle = {
-      capabilities: {
-        invoke: vi.fn().mockResolvedValue({ ok: true, data: { submitted: true } }),
-      },
-    };
-
-    const result = await adapter.invokeBuiltInAction(
-      createBuiltInInvocation('submitForm', undefined, { formId: 'remote-form' }),
-      createCtx({
-        form,
-        componentRegistry: {
-          resolve: vi.fn().mockReturnValue(remoteHandle),
-        },
-      }),
-    );
-
-    expect(result).toMatchObject({ ok: true, data: { submitted: true } });
-    expect(form.submit).not.toHaveBeenCalled();
-  });
-
-  it('submitForm forwards abort signal when formId resolves through component registry', async () => {
+  it('submitForm forwards abort signal to the current form', async () => {
     const adapter = createAdapter();
     const controller = new AbortController();
-    const remoteHandle = {
-      capabilities: {
-        invoke: vi.fn().mockResolvedValue({ ok: true, data: { submitted: true } }),
-      },
+    const form = {
+      submit: vi.fn().mockResolvedValue({ ok: true, data: { submitted: true } }),
     };
 
     const result = await adapter.invokeBuiltInAction(
       {
-        ...createBuiltInInvocation('submitForm', undefined, { formId: 'remote-form' }),
+        ...createBuiltInInvocation('submitForm'),
         signal: controller.signal,
       },
       createCtx({
-        interactionId: 'submit-remote',
-        componentRegistry: {
-          resolve: vi.fn().mockReturnValue(remoteHandle),
-        },
+        interactionId: 'submit-local',
+        form,
       }),
     );
 
     expect(result).toMatchObject({ ok: true, data: { submitted: true } });
-    expect(remoteHandle.capabilities.invoke).toHaveBeenCalledWith(
-      'submit',
+    expect(form.submit).toHaveBeenCalledWith(
       {
-        interactionId: 'submit-remote',
+        interactionId: 'submit-local',
         signal: controller.signal,
       },
-      expect.any(Object),
     );
   });
 
-  it('submitForm returns error when formId does not resolve', async () => {
+  it('submitForm preserves current-form failures', async () => {
     const adapter = createAdapter();
-    const form = { id: 'form-1', submit: vi.fn() };
-
-    const result = await adapter.invokeBuiltInAction(
-      createBuiltInInvocation('submitForm', undefined, { formId: 'missing-form' }),
-      createCtx({
-        form,
-        componentRegistry: {
-          resolve: vi.fn().mockReturnValue(undefined),
-        },
-      }),
-    );
-
-    expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
-    expect(form.submit).not.toHaveBeenCalled();
-  });
-
-  it('submitForm preserves registry resolve error causes', async () => {
-    const adapter = createAdapter();
-    const resolveError = new Error('registry broke');
-
-    const result = await adapter.invokeBuiltInAction(
-      createBuiltInInvocation('submitForm', undefined, { formId: 'missing-form' }),
-      createCtx({
-        componentRegistry: {
-          resolve: vi.fn(() => {
-            throw resolveError;
-          }),
-        },
-      }),
-    );
-
-    expect(result).toMatchObject({ ok: false, error: resolveError });
-  });
-
-  it('submitForm returns error when formId is provided but no component registry', async () => {
-    const adapter = createAdapter();
-    const form = { id: 'form-1', submit: vi.fn() };
-
-    const result = await adapter.invokeBuiltInAction(
-      createBuiltInInvocation('submitForm', undefined, { formId: 'missing-form' }),
-      createCtx({
-        form,
-        componentRegistry: undefined,
-      }),
-    );
-
-    expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
-    expect(form.submit).not.toHaveBeenCalled();
-  });
-
-  it('submitForm preserves remote submit failures from the resolved handle', async () => {
-    const adapter = createAdapter();
-    const submitError = new Error('permission denied');
-    const remoteHandle = {
-      capabilities: {
-        invoke: vi.fn().mockRejectedValue(submitError),
-      },
-    };
+    const submitError = new Error('submit failed');
+    const form = { submit: vi.fn().mockRejectedValue(submitError) };
 
     await expect(
       adapter.invokeBuiltInAction(
-        createBuiltInInvocation('submitForm', undefined, { formId: 'remote-form' }),
-        createCtx({
-          componentRegistry: {
-            resolve: vi.fn().mockReturnValue(remoteHandle),
-          },
-        }),
+        createBuiltInInvocation('submitForm'),
+        createCtx({ form }),
       ),
-    ).rejects.toThrow('permission denied');
+    ).rejects.toThrow('submit failed');
   });
 });

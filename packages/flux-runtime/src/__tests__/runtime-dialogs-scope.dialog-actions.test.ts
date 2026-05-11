@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '../index.js';
-import { textRenderer, env } from './test-fixtures.js';
+import { pageRenderer, textRenderer, env } from './test-fixtures.js';
 
 describe('createRendererRuntime - dialog and drawer actions', () => {
   it('opens and closes dialogs through openDialog actions', async () => {
-    const registry = createRendererRegistry([textRenderer]);
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
@@ -58,7 +58,7 @@ describe('createRendererRuntime - dialog and drawer actions', () => {
   });
 
   it('closes surfaces through closeSurface actions', async () => {
-    const registry = createRendererRegistry([textRenderer]);
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
@@ -102,7 +102,7 @@ describe('createRendererRuntime - dialog and drawer actions', () => {
   });
 
   it('closes explicit surface ids through closeSurface actions', async () => {
-    const registry = createRendererRegistry([textRenderer]);
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
@@ -166,7 +166,7 @@ describe('createRendererRuntime - dialog and drawer actions', () => {
   });
 
   it('closes the nearest dialog by default', async () => {
-    const registry = createRendererRegistry([textRenderer]);
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,

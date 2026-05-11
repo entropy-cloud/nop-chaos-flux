@@ -1,4 +1,5 @@
 import {
+  reportRuntimeHostIssue,
   type AsyncGovernanceStore,
   type CompiledRuntimeValue,
   type DataSourceController,
@@ -48,6 +49,23 @@ export function createFormulaDataSourceController(input: {
   let stopped = false;
   let state = createInitialDataSourceState(input.initialData);
   const asyncOwnerId = input.ownerId;
+
+  function reportPublishFailure(error: unknown) {
+    reportRuntimeHostIssue({
+      env: input.runtime.env,
+      level: 'error',
+      message: `Formula data source publish failed: ${asyncOwnerId ?? input.targetPath ?? 'unknown'}`,
+      error,
+      phase: 'api',
+      details: {
+        reason: 'formula-data-source-publish-failed',
+        ownerId: asyncOwnerId,
+        scopeId: input.scope.id,
+        targetPath: input.targetPath,
+        statusPath: input.statusPath,
+      },
+    });
+  }
 
   function updateAsyncState() {
     if (!asyncOwnerId || !input.asyncGovernance) {
@@ -174,6 +192,7 @@ export function createFormulaDataSourceController(input: {
           publish();
         })
         .catch((error: unknown) => {
+          reportPublishFailure(error);
           updateState((current) => ({
             ...current,
             status: 'error',
