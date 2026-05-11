@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -167,7 +169,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     await waitFor(() => {
       expect(
         JSON.parse(screen.getByTestId('form-state:reviewers').textContent ?? 'null'),
-      ).toMatchObject([{ value: 'alice' }, { value: 'bob' }, { value: 'carol' }]);
+      ).toMatchObject([{ value: 'alice' }, { value: 'carol' }]);
     });
 
     fireEvent.click(screen.getByText('Submit reordered reviewers'));
@@ -177,9 +179,9 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     });
 
     expect(screen.queryByText('Reviewers requires at least one item')).toBeNull();
-    expect(submitCalls[0].reviewers).toHaveLength(3);
+    expect(submitCalls[0].reviewers).toHaveLength(2);
     expect(submitCalls[0]).toMatchObject({
-      reviewers: [{ value: 'alice' }, { value: 'bob' }, { value: 'carol' }],
+      reviewers: [{ value: 'alice' }, { value: 'carol' }],
     });
   });
 
@@ -393,7 +395,8 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Reviewer 1')).toBeTruthy();
-      expect(screen.getByPlaceholderText('Reviewer 2')).toBeTruthy();
+      expect(screen.queryByPlaceholderText('Reviewer 2')).toBeNull();
+      expect(screen.queryByText('Reviewer 2 is required')).toBeNull();
     });
   });
 

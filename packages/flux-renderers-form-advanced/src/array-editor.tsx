@@ -36,12 +36,12 @@ function ArrayEditorRow(props: {
   currentForm: FormRuntime | undefined;
   childBehavior: CompiledValidationBehavior;
   onSync(nextItems: ArrayEditorItem[]): void;
+  onRemove(index: number): void;
   items: ArrayEditorItem[];
   itemLabel?: string;
   disabled?: boolean;
   readOnly?: boolean;
   inputRef?: React.Ref<HTMLInputElement>;
-  onBeforeRemove?(index: number): void;
 }) {
   const {
     item,
@@ -50,12 +50,12 @@ function ArrayEditorRow(props: {
     currentForm,
     childBehavior,
     onSync,
+    onRemove,
     items,
     itemLabel,
     disabled,
     readOnly,
     inputRef,
-    onBeforeRemove,
   } = props;
   const itemPath = `${name}.${index}.value`;
   const inputId = `${name || 'array-editor'}-${item.id}-value`;
@@ -134,16 +134,7 @@ function ArrayEditorRow(props: {
             return;
           }
 
-          onBeforeRemove?.(index);
-          const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
-
-          if (currentForm && name) {
-            currentForm.removeValue(name, index);
-            void currentForm.validateSubtree(name);
-            return;
-          }
-
-          onSync(nextItems);
+          onRemove(index);
         }}
       >
         {t('flux.form.remove')}
@@ -274,6 +265,24 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
     [currentForm, name, scope],
   );
 
+  const handleRemove = React.useCallback(
+    (index: number) => {
+      pendingFocusRef.current = { kind: 'remove', index };
+      const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
+
+      itemsRef.current = nextItems;
+
+      if (currentForm && name) {
+        currentForm.removeValue(name, index);
+        void currentForm.validateSubtree(name);
+        return;
+      }
+
+      syncItems(nextItems);
+    },
+    [currentForm, items, name, syncItems],
+  );
+
   React.useEffect(() => {
     if (!currentForm || !name) {
       return;
@@ -333,6 +342,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             currentForm={currentForm}
             childBehavior={childBehavior}
             onSync={syncItems}
+            onRemove={handleRemove}
             items={items}
             itemLabel={props.props.itemLabel ? String(props.props.itemLabel) : undefined}
             disabled={presentation.effectiveDisabled || presentation.readOnly}
@@ -343,9 +353,6 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
               } else {
                 inputRefs.current.delete(item.id);
               }
-            }}
-            onBeforeRemove={(removedIndex) => {
-              pendingFocusRef.current = { kind: 'remove', index: removedIndex };
             }}
           />
         );

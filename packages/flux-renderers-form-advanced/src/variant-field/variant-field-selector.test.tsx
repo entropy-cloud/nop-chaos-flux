@@ -1,10 +1,12 @@
+import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentValidationScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
+import { Button } from '@nop-chaos/ui';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support.js';
 
@@ -23,6 +25,51 @@ function ScopeSelectorProbeRenderer() {
 const scopeSelectorProbeRenderer: RendererDefinition = {
   type: 'scope-selector-probe',
   component: () => <ScopeSelectorProbeRenderer />,
+};
+
+function ValidationOwnerExternalErrorProbe() {
+  const validationOwner = useCurrentValidationScope();
+  const [payloadValueErrors, setPayloadValueErrors] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    if (!validationOwner?.store) {
+      setPayloadValueErrors([]);
+      return;
+    }
+
+    const sync = () => {
+      setPayloadValueErrors(
+        validationOwner.getFieldState('payload.value').errors.map((error) => error.message),
+      );
+    };
+
+    sync();
+    return validationOwner.store.subscribe(sync);
+  }, [validationOwner]);
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => {
+          validationOwner?.applyExternalErrors({
+            sourceId: 'page-root-server',
+            replace: true,
+            errors: [{ path: 'payload.value', rule: 'required', message: 'Server payload error' }],
+          });
+        }}
+      >
+        Inject external error
+      </Button>
+      <span data-testid="payload-value-errors">{payloadValueErrors.join('|')}</span>
+    </>
+  );
+}
+
+const validationOwnerExternalErrorProbeRenderer: RendererDefinition = {
+  type: 'validation-owner-external-error-probe',
+  component: ValidationOwnerExternalErrorProbe,
 };
 
 const variantSchema = {
@@ -211,6 +258,68 @@ describe('variant-field renderer selector behavior', () => {
 
     const errors = screen.queryAllByText(/required/i);
     expect(errors.length).toBe(0);
+  });
+
+  it('clears hidden-branch external errors through the page-root validation owner on variant switch', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      ...formAdvancedRendererDefinitions,
+      validationOwnerExternalErrorProbeRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-selector.test.tsx#3b"
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'validation-owner-external-error-probe' },
+            {
+              type: 'variant-field',
+              name: 'payload',
+              label: 'Payload',
+              defaultVariant: 'text',
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  content: [
+                    { type: 'input-text', name: 'value', label: 'Text Value', required: true },
+                  ],
+                  initialValue: { value: '' },
+                },
+                {
+                  key: 'number',
+                  label: 'Number',
+                  content: [{ type: 'input-text', name: 'amount', label: 'Amount' }],
+                  initialValue: { amount: 0 },
+                },
+              ],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Text')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Inject external error'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('payload-value-errors').textContent).toContain('Server payload error');
+    });
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Number' }));
+
+    await waitFor(() => {
+      const container = document.querySelector('[data-active-variant]');
+      expect(container?.getAttribute('data-active-variant')).toBe('number');
+      expect(screen.getByTestId('payload-value-errors').textContent).toBe('');
+    });
   });
 
   it('renders variant viewer in readOnly mode instead of content', async () => {

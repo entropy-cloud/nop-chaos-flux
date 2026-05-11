@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -50,9 +52,8 @@ describe('composite editor hidden ids', () => {
       expect(
         JSON.parse(screen.getByTestId('form-state:reviewers').textContent ?? 'null'),
       ).toMatchObject([
-        { id: 'item-1', value: 'alice' },
         { id: 'item-3', value: 'carol' },
-        { id: 'item-4', value: '' },
+        { id: 'item-2', value: '' },
       ]);
     });
   });

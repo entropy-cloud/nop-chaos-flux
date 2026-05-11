@@ -66,7 +66,7 @@ describe('formRendererDefinitions - source-backed options', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Role')).toBeTruthy();
+      expect(screen.getByRole('combobox', { name: 'Role' })).toBeTruthy();
     });
 
     await selectOption('Role', 'Editor');
@@ -136,7 +136,7 @@ describe('formRendererDefinitions - source-backed options', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Role').hasAttribute('disabled')).toBe(true);
+      expect(screen.getByRole('combobox', { name: 'Role' }).hasAttribute('disabled')).toBe(true);
       expect(document.querySelector('[role="status"]')).toBeTruthy();
     });
 
@@ -150,7 +150,7 @@ describe('formRendererDefinitions - source-backed options', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Role').hasAttribute('disabled')).toBe(false);
+      expect(screen.getByRole('combobox', { name: 'Role' }).hasAttribute('disabled')).toBe(false);
     });
   });
 
