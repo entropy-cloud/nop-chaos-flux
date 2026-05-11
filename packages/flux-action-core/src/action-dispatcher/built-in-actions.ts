@@ -51,11 +51,10 @@ export async function runBuiltInAction(
   switch (action.action) {
     case 'setValue': {
       const payload = resolveSetValuePayload(action, ctx, internals.evaluator);
-      const targetPath = payload.path ?? action.targeting.componentId ?? '';
       invocation = {
         action: 'setValue',
         args: {
-          path: targetPath,
+          path: payload.path ?? '',
           value: payload.value,
         },
         targeting: action.targeting,
@@ -210,7 +209,7 @@ export async function runBuiltInAction(
     }
     case 'submit':
     case 'submitForm': {
-      if (!action.targeting.formId && !ctx.form) {
+      if (!ctx.form) {
         return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
           ok: false,
           error: new Error('submit requires form runtime'),

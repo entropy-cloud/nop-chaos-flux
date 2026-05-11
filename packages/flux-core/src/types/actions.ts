@@ -39,7 +39,6 @@ export interface ActionShapeFields extends SchemaObject {
   targetId?: string;
   componentId?: string;
   componentName?: string;
-  formId?: string;
   dialogId?: string;
   surfaceId?: string;
   args?: Record<string, SchemaValue>;
@@ -299,7 +298,6 @@ export interface CompiledActionTargeting {
   targetId?: string;
   componentId?: string;
   componentName?: string;
-  formId?: string;
   dialogId?: string;
   surfaceId?: string;
 }

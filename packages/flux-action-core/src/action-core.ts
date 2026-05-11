@@ -42,7 +42,6 @@ export function createActionKey(action: CompiledActionNode, ctx: ActionContext):
   const target =
     action.targeting.targetId ??
     action.targeting.componentId ??
-    action.targeting.formId ??
     action.targeting.dialogId ??
     requestUrl ??
     '';

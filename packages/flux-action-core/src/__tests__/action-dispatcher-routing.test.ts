@@ -60,21 +60,22 @@ describe('action-dispatcher routing', () => {
     expect(invocation.action).toBe('showToast');
   });
 
-  it('dispatches submitForm with formId through built-in adapter without local form runtime', async () => {
+  it('dispatches submitForm through built-in adapter when local form runtime exists', async () => {
     const adapter = createMockAdapter();
     const { dispatcher, runtime } = createTestDispatcher({ adapter });
+    const form = { id: 'form-1', submit: vi.fn() } as any;
 
     const result = await dispatcher.dispatch(
       makeCompiledProgram([
         {
           action: 'submitForm',
           payload: {},
-          targeting: { formId: 'remote-form' },
+          targeting: {},
           control: {},
-          source: { action: 'submitForm', formId: 'remote-form' },
+          source: { action: 'submitForm' },
         },
       ]),
-      createActionCtx({ runtime, form: undefined }),
+      createActionCtx({ runtime, form }),
     );
 
     expect(result.ok).toBe(true);
@@ -82,7 +83,7 @@ describe('action-dispatcher routing', () => {
     const invocation = (adapter.invokeBuiltInAction as ReturnType<typeof vi.fn>).mock
       .calls[0][0] as BuiltInActionInvocation;
     expect(invocation.action).toBe('submitForm');
-    expect(invocation.targeting).toEqual({ formId: 'remote-form' });
+    expect(invocation.targeting).toEqual({});
   });
 
   it('dispatches component: actions through component adapter', async () => {

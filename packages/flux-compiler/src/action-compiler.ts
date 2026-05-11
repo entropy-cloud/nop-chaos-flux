@@ -31,7 +31,6 @@ function compileTargeting(action: ActionSchema): CompiledActionTargeting {
     targetId: action.targetId,
     componentId: action.componentId,
     componentName: action.componentName,
-    formId: action.formId,
     dialogId: action.dialogId,
     surfaceId: action.surfaceId,
   };

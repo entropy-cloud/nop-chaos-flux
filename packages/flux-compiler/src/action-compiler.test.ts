@@ -64,7 +64,6 @@ describe('compileAction', () => {
         targetId: 'target-1',
         componentId: 'comp-1',
         componentName: 'myForm',
-        formId: 'form-1',
         dialogId: 'dialog-1',
         surfaceId: 'surface-1',
       } as unknown as ActionSchema,
@@ -75,7 +74,6 @@ describe('compileAction', () => {
     expect(targeting.targetId).toBe('target-1');
     expect(targeting.componentId).toBe('comp-1');
     expect(targeting.componentName).toBe('myForm');
-    expect(targeting.formId).toBe('form-1');
     expect(targeting.dialogId).toBe('dialog-1');
     expect(targeting.surfaceId).toBe('surface-1');
   });
