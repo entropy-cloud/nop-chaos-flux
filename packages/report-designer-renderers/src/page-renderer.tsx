@@ -26,7 +26,7 @@ import type {
 } from '@nop-chaos/report-designer-core';
 import { createReportDesignerCore } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn, resolveLucideIcon } from '@nop-chaos/ui';
 import { renderFallbackFieldPanel } from './fallbacks.js';
 import { createReportDesignerActionProvider } from './host-action-provider.js';
 import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
@@ -127,6 +127,50 @@ function serializeSpreadsheetDocument(document: SpreadsheetRuntimeSnapshot['docu
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
+}
+
+function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
+  const Icon = resolveLucideIcon(direction === 'left' ? 'chevron-left' : 'chevron-right');
+  const Comp = Icon as React.ComponentType<{ className?: string; size?: number; strokeWidth?: number }>;
+  return <Comp className="nop-icon" size={16} strokeWidth={1.8} aria-hidden="true" />;
+}
+
+function renderPanelFrame(input: {
+  title: string;
+  subtitle: string;
+  collapseLabel: string;
+  collapseIcon: 'left' | 'right';
+  collapseTestId: string;
+  onCollapse: () => void;
+  content: React.ReactNode;
+}) {
+  const CollapseButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      onClick={input.onCollapse}
+      aria-label={input.collapseLabel}
+      data-testid={input.collapseTestId}
+      className="shrink-0 self-start"
+    >
+      <ChevronIcon direction={input.collapseIcon} />
+    </Button>
+  );
+
+  return (
+    <div className="flex h-full min-h-0 flex-col text-foreground">
+      <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+        {input.collapseIcon === 'right' ? CollapseButton : null}
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-foreground">{input.title}</div>
+          <div className="text-sm text-muted-foreground">{input.subtitle}</div>
+        </div>
+        {input.collapseIcon === 'left' ? CollapseButton : null}
+      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto p-3">{input.content}</div>
+    </div>
+  );
 }
 
 function hasConfiguredFieldPanel(args: {
@@ -393,23 +437,52 @@ export function ReportDesignerPageRenderer(
     </>
   );
 
+  const leftPanelSlot = showFieldPanel
+    ? renderPanelFrame({
+        title: t('flux.reportDesigner.fieldSources'),
+        subtitle: `${getFieldCount(snapshot.fieldSources)} ${t('flux.reportDesigner.fields')}`,
+        collapseLabel: t('flux.reportDesigner.collapseFieldPanel'),
+        collapseIcon: 'left',
+        collapseTestId: 'collapse-report-field-panel',
+        onCollapse: () => setLeftCollapsed(true),
+        content: hasRendererSlotContent(asReactNode(fieldPanelContent))
+          ? asReactNode(fieldPanelContent)
+          : renderFallbackFieldPanel(snapshot.fieldSources),
+      })
+    : undefined;
+
+  const rightPanelSlot = showInspectorPanel
+    ? renderPanelFrame({
+        title: t('flux.reportDesigner.inspectorTitle'),
+        subtitle: t('flux.reportDesigner.inspectorSubtitle'),
+        collapseLabel: t('flux.reportDesigner.collapseInspector'),
+        collapseIcon: 'right',
+        collapseTestId: 'collapse-report-inspector',
+        onCollapse: () => setRightCollapsed(true),
+        content: hasRendererSlotContent(asReactNode(inspectorContent))
+          ? asReactNode(inspectorContent)
+          : asReactNode(
+              props.helpers.render(
+                { type: 'report-inspector-shell' },
+                {
+                  scope: reportDesignerScope,
+                  actionScope,
+                },
+              ),
+            ),
+      })
+    : undefined;
+
   return (
     <WorkbenchShell
       className={cn('nop-report-designer', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
       header={headerSlot}
-      leftPanel={
-        showFieldPanel
-          ? hasRendererSlotContent(asReactNode(fieldPanelContent))
-            ? asReactNode(fieldPanelContent)
-            : renderFallbackFieldPanel(snapshot.fieldSources)
-          : undefined
-      }
+      leftPanel={leftPanelSlot}
       leftCollapsed={leftCollapsed}
       onLeftToggle={() => setLeftCollapsed((v) => !v)}
       leftLabel={t('flux.reportDesigner.expandFieldPanel')}
-      leftCollapseLabel={t('flux.reportDesigner.collapseFieldPanel')}
       canvas={
         hasRendererSlotContent(asReactNode(bodyContent)) ? (
           asReactNode(bodyContent)
@@ -422,25 +495,10 @@ export function ReportDesignerPageRenderer(
           />
         )
       }
-      rightPanel={
-        showInspectorPanel
-          ? hasRendererSlotContent(asReactNode(inspectorContent))
-            ? asReactNode(inspectorContent)
-            : asReactNode(
-                props.helpers.render(
-                  { type: 'report-inspector-shell' },
-                  {
-                    scope: reportDesignerScope,
-                    actionScope,
-                  },
-                ),
-              )
-          : undefined
-      }
+      rightPanel={rightPanelSlot}
       rightCollapsed={rightCollapsed}
       onRightToggle={() => setRightCollapsed((v) => !v)}
       rightLabel={t('flux.reportDesigner.expandInspector')}
-      rightCollapseLabel={t('flux.reportDesigner.collapseInspector')}
       dialogs={
         hasRendererSlotContent(asReactNode(dialogsContent))
           ? asReactNode(dialogsContent)

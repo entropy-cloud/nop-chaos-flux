@@ -330,8 +330,8 @@ describe('report-designer namespaced actions integration', { timeout: 15000 }, (
       expect(screen.getByTestId('right-panel-expanded')).toBeTruthy();
     });
 
-    fireEvent.click(screen.getByTestId('collapse-left-panel'));
-    fireEvent.click(screen.getByTestId('collapse-right-panel'));
+    fireEvent.click(screen.getByTestId('collapse-report-field-panel'));
+    fireEvent.click(screen.getByTestId('collapse-report-inspector'));
 
     await waitFor(() => {
       expect(screen.getByTestId('left-panel-collapsed')).toBeTruthy();
