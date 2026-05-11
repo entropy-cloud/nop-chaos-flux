@@ -1,4 +1,4 @@
-import { ArrowLeft, Save, FileText, Database, Columns, Type } from 'lucide-react';
+import { ArrowLeft, Save, FileText, Database, Columns, Type, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
@@ -138,8 +138,27 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   );
 
   const defaultLeftPanelSlot = (
-    <Tabs data-orientation="horizontal" className="flex-col gap-0 h-full">
-      <TabsList variant="line" className="w-full rounded-none border-b border-border px-0 shrink-0">
+    <div className="flex h-full min-h-0 flex-col text-foreground">
+      <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-foreground">{t('flux.wordEditor.datasets')}</div>
+          <div className="text-sm text-muted-foreground">{t('flux.wordEditor.selectDatasetHint')}</div>
+        </div>
+        <div className="shrink-0 self-start">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setLeftCollapsed(true)}
+            aria-label={t('flux.wordEditor.collapseFieldPanel')}
+            data-testid="collapse-field-panel"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+      <Tabs data-orientation="horizontal" className="flex min-h-0 flex-1 flex-col gap-0">
+        <TabsList variant="line" className="w-full rounded-none border-b border-border px-0 shrink-0">
         <TabsTrigger
           value="datasets"
           data-state={activePanel === 'datasets' ? 'active' : 'inactive'}
@@ -158,19 +177,21 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           <Columns className="w-3.5 h-3.5" />
           <span>{t('flux.wordEditor.fields')}</span>
         </TabsTrigger>
-      </TabsList>
-      <TabsContent value={activePanel} className="flex-1 min-h-0 overflow-hidden">
+        </TabsList>
+      <TabsContent value={activePanel} className="flex-1 min-h-0 overflow-y-auto">
         {activePanel === 'datasets' ? (
           <DatasetPanel
             store={datasetStore}
             onAddDataset={actions.handleAddDataset}
             onEditDataset={actions.handleEditDataset}
+            showHeader={false}
           />
         ) : (
-          <FieldList store={datasetStore} onFieldClick={actions.handleFieldClick} />
+          <FieldList store={datasetStore} onFieldClick={actions.handleFieldClick} showHeader={false} />
         )}
       </TabsContent>
-    </Tabs>
+      </Tabs>
+    </div>
   );
 
   const canvasSlot = (
@@ -213,10 +234,34 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       : defaultLeftPanelSlot
     : undefined;
 
-  const rightPanelSlot = showRightPanel
-    ? hasRendererSlotContent(renderedRightPanel)
+    const rightPanelSlot = showRightPanel
+      ? hasRendererSlotContent(renderedRightPanel)
       ? renderedRightPanel
-      : <OutlinePanel bridge={bridge} />
+      : (
+          <div className="flex h-full min-h-0 flex-col text-foreground">
+            <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+              <div className="shrink-0 self-start">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setRightCollapsed(true)}
+                  aria-label={t('flux.wordEditor.collapseOutline')}
+                  data-testid="collapse-outline-panel"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-foreground">{t('flux.wordEditor.outline')}</div>
+                <div className="text-sm text-muted-foreground">{t('flux.wordEditor.addHeadingsHint')}</div>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <OutlinePanel bridge={bridge} showHeader={false} />
+            </div>
+          </div>
+        )
     : undefined;
 
   return (
@@ -236,13 +281,11 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         leftCollapsed={leftCollapsed}
         onLeftToggle={() => setLeftCollapsed((v) => !v)}
         leftLabel={t('flux.wordEditor.expandFieldPanel')}
-        leftCollapseLabel={t('flux.wordEditor.collapseFieldPanel')}
         canvas={canvasSlot}
         rightPanel={rightPanelSlot}
         rightCollapsed={rightCollapsed}
         onRightToggle={() => setRightCollapsed((v) => !v)}
         rightLabel={t('flux.wordEditor.expandOutline')}
-        rightCollapseLabel={t('flux.wordEditor.collapseOutline')}
         dialogs={
           <DatasetDialog
             key={`${editingDatasetId ?? 'new'}:${datasetDialogOpen ? 'open' : 'closed'}`}

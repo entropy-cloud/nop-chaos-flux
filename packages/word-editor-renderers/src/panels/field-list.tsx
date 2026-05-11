@@ -7,9 +7,10 @@ import { Button, ScrollArea, cn } from '@nop-chaos/ui';
 interface FieldListProps {
   store: DatasetStoreApi;
   onFieldClick?: (datasetName: string, columnName: string) => void;
+  showHeader?: boolean;
 }
 
-export function FieldList({ store, onFieldClick }: FieldListProps) {
+export function FieldList({ store, onFieldClick, showHeader = true }: FieldListProps) {
   const selectedDataset = useSyncExternalStoreWithSelector(
     store.subscribe,
     store.getState,
@@ -47,11 +48,13 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-4 py-3 border-b border-[var(--nop-border)]">
-        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">
-          {t('flux.wordEditor.fields')}
-        </h2>
-      </div>
+      {showHeader ? (
+        <div className="px-4 py-3 border-b border-[var(--nop-border)]">
+          <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">
+            {t('flux.wordEditor.fields')}
+          </h2>
+        </div>
+      ) : null}
       <ScrollArea className="flex-1">
         <div className="p-3">
           {!selectedDataset ? (

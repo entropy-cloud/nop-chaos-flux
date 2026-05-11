@@ -8,9 +8,10 @@ interface DatasetPanelProps {
   store: DatasetStoreApi;
   onAddDataset: () => void;
   onEditDataset: (datasetId: string) => void;
+  showHeader?: boolean;
 }
 
-export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPanelProps) {
+export function DatasetPanel({ store, onAddDataset, onEditDataset, showHeader = true }: DatasetPanelProps) {
   const datasets = useSyncExternalStoreWithSelector(
     store.subscribe,
     store.getState,
@@ -51,23 +52,25 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-4 py-3 border-b border-[var(--nop-border)]">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">
-            {t('flux.wordEditor.datasets')}
-          </h2>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              onClick={onAddDataset}
-              title={t('flux.wordEditor.addDataset')}
-              aria-label={t('flux.wordEditor.addDataset')}
-            >
-            <Plus className="w-4 h-4 text-[var(--nop-accent)]" />
-          </Button>
+      {showHeader ? (
+        <div className="px-4 py-3 border-b border-[var(--nop-border)]">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">
+              {t('flux.wordEditor.datasets')}
+            </h2>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                onClick={onAddDataset}
+                title={t('flux.wordEditor.addDataset')}
+                aria-label={t('flux.wordEditor.addDataset')}
+              >
+              <Plus className="w-4 h-4 text-[var(--nop-accent)]" />
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : null}
       <ScrollArea className="flex-1">
         <div className="p-3">
           {datasets.length === 0 ? (

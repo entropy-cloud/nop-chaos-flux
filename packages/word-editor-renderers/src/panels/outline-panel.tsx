@@ -7,6 +7,7 @@ import type { TitleLevel, WordEditorElement } from '@nop-chaos/word-editor-core'
 
 interface OutlinePanelProps {
   bridge: CanvasEditorBridge | null;
+  showHeader?: boolean;
 }
 
 interface HeadingItem {
@@ -99,7 +100,7 @@ function applyExpandedState(
   }));
 }
 
-export function OutlinePanel({ bridge }: OutlinePanelProps) {
+export function OutlinePanel({ bridge, showHeader = true }: OutlinePanelProps) {
   const [outlineRevision, setOutlineRevision] = useState(0);
   const [expandedState, setExpandedState] = useState<Record<string, boolean>>({});
   void outlineRevision;
@@ -194,11 +195,13 @@ export function OutlinePanel({ bridge }: OutlinePanelProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-4 py-3 border-b border-[var(--nop-border)]">
-        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">
-          {t('flux.wordEditor.outline')}
-        </h2>
-      </div>
+      {showHeader ? (
+        <div className="px-4 py-3 border-b border-[var(--nop-border)]">
+          <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">
+            {t('flux.wordEditor.outline')}
+          </h2>
+        </div>
+      ) : null}
       <ScrollArea className="flex-1">
         <div className="p-3">
           {outline.length === 0 ? (

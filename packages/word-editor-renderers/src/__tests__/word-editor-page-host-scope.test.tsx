@@ -707,8 +707,8 @@ describe('WordEditorPage host scope', () => {
     expect(screen.getByTestId('left-panel-expanded')).toBeTruthy();
     expect(screen.getByTestId('right-panel-expanded')).toBeTruthy();
 
-    fireEvent.click(screen.getByTestId('collapse-left-panel'));
-    fireEvent.click(screen.getByTestId('collapse-right-panel'));
+    fireEvent.click(screen.getByTestId('collapse-field-panel'));
+    fireEvent.click(screen.getByTestId('collapse-outline-panel'));
 
     await waitFor(() => {
       expect(screen.getByTestId('left-panel-collapsed')).toBeTruthy();
