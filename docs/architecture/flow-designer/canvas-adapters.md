@@ -101,6 +101,21 @@ ELK auto-layout stale-result guards are instance-owned.
 
 This keeps layout cancellation aligned with the host-owner boundary instead of using a module-level shared token.
 
+Initial auto-layout failure follows the same host-owner rule:
+
+- the first tree-mode auto-layout failure must publish a host-visible error summary through the owning `designer-page` status/reporting path
+- the failure is not allowed to remain a console-only side channel when the host/debug surface should see it
+
+## Instance-Local Plus-Button Routing
+
+Tree-mode plus-button routing is also instance-owned.
+
+- each designer instance registers its own plus-button handler against its own `DesignerCore` owner
+- handler cleanup removes only the handler that was registered by the same instance
+- mounting, unmounting, or reopening one designer must not overwrite or clear a sibling designer's plus-button bridge
+
+This prevents module-global cross-talk between concurrent designer instances.
+
 ## Live Xyflow Translation Rules
 
 The React Flow integration translates library callbacks back into the host contract.

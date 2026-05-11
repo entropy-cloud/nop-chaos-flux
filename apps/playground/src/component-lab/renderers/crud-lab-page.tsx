@@ -292,6 +292,37 @@ const selectionRefreshCrud = {
   ],
 };
 
+const radioSelectionCrud = {
+  type: 'page',
+  body: [
+    {
+      type: 'crud',
+      id: 'radio-selection-crud',
+      source: '${records}',
+      rowKey: 'id',
+      selection: { type: 'radio' },
+      listActions: [
+        {
+          type: 'button',
+          label: 'Inspect Selected',
+          disabled: '${!$crud.hasSelection}',
+        },
+      ],
+      footerToolbar: [
+        {
+          type: 'text',
+          text: 'Selected rows: ${$crud.selectionCount}; Keys: ${$crud.selectedRowKeys}',
+        },
+      ],
+      columns: [
+        { label: 'Name', name: 'name' },
+        { label: 'Owner', name: 'owner' },
+        { label: 'Status', name: 'status' },
+      ],
+    },
+  ],
+};
+
 const clientModeCrud = {
   type: 'page',
   body: [
@@ -420,6 +451,13 @@ export function CrudLabPage() {
           description:
             'Shows selection-driven list-action state and the current auto-clear-on-refresh behavior on the CRUD owner surface.',
           schema: selectionRefreshCrud,
+          data: { records },
+        },
+        {
+          title: 'CRUD radio selection baseline',
+          description:
+            'Shows single-row selection through the CRUD selection bridge, using radio-style row selectors and selection-aware list actions.',
+          schema: radioSelectionCrud,
           data: { records },
         },
         {

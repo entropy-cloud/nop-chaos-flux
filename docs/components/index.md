@@ -149,6 +149,23 @@ The live runtime baseline also now includes the first tree family split promised
 
 These types are now registered runtime components rather than target-contract-only design notes.
 
+### 2.2 Container Family Baseline
+
+When writing or reviewing container-like component docs, treat the following split as the current baseline:
+
+| Type                | Family role              | Primary responsibility                                               | Should not be used as        |
+| ------------------- | ------------------------ | -------------------------------------------------------------------- | ---------------------------- |
+| `page`              | shell owner              | page root shell and page runtime boundary                            | ordinary content section     |
+| `form`              | semantic lifecycle owner | values, validation, submit/reset lifecycle                           | generic layout wrapper       |
+| `dialog` / `drawer` | surface owner            | surface open-state, host stack, dismiss/focus semantics              | in-page content block        |
+| `tabs`              | interaction owner        | mutually exclusive panels and activation state                       | static content shell         |
+| `fieldset`          | semantic group container | form field grouping with `<fieldset>/<legend>` semantics             | generic section/card wrapper |
+| `container`         | semantic content shell   | ordinary content grouping with optional `header` / `body` / `footer` | page/form/surface/tabs owner |
+| `flex`              | pure layout container    | axis, justify, wrap, gap                                             | content shell with regions   |
+| `fragment`          | no-UI structural node    | grouping for `when` / `data` / `isolate`                             | visible container            |
+
+This matrix is normative for owner-doc writing: component docs should explain not only what a container is, but also which neighboring container it must not absorb.
+
 ### 3. 事件字段名称
 
 事件入口统一使用 `onXxx`。
@@ -398,6 +415,8 @@ UI primitive 对齐补充规则：
 同理，`input-tree/` 与 `tree-select/` 属于 form field family，不应与通用 `tree/` 混同。
 
 结构节点与视觉节点要分开理解：例如 `fragment` / `loop` 是无 UI 的结构节点，而 `container` / `list` / `table` 是带 UI 或容器语义的 renderer。
+
+同样，容器语义与 owner 语义也要分开理解：`container` 是普通内容壳层，不应替代 `page`、`form`、`tabs`、`dialog`、`drawer` 这些拥有独立状态轴的容器家族。
 
 ### 不建议直接照搬 AMIS type 的场景
 

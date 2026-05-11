@@ -158,8 +158,9 @@ interface DesignerPageSchema {
 - `config` 是 designer 专用配置，定义 nodeTypes、ports、edgeTypes 等领域规则
 - `statusPath` 用于向宿主外部发布 `DesignerHostStatusSummary` 这类窄摘要；它不是 host scope 投影的一部分
 - `toolbar`、`inspector`、`dialogs` 是当前已实际挂载的 schema 片段，由 `SchemaRenderer` 渲染
-- `toolbar`、`inspector`、`dialogs` 是 page 级 explicit override surfaces；palette 与 canvas 仍是 renderer-owned default UI，而不是同级 page region
-- 但 `designer-page` 当前并不是“所有可见工作台内容都必须 schema 化”的模型；它仍保留默认 palette、默认 toolbar/inspector fallback 与其他 renderer-owned workbench UI，只是在选定区域开放 schema override 面
+- `toolbar`、`inspector`、`dialogs` 是 page 级 explicit override surfaces
+- palette 与右侧 inspector 都遵循 `docs/architecture/designer-workbench-shell.md` 的共享规则：canonical panel existence 来自 family config，page regions 只负责 override/mount，而不是决定该侧是否永远可见
+- Flow Designer 仍可提供 built-in default generators，但这些默认内容属于 `DesignerConfig` 驱动的通用设计器特化结果，而不是 renderer-private permanently-on sidebars
 - `dialogs` region 本身现在已经会被 `DesignerPageRenderer` 挂载；但通过共享 `dialog` action 打开的弹窗仍然是另一条 dialog runtime 路径，两者不应混为一谈
 
 ## 6. 数据模型分层

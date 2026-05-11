@@ -24,7 +24,28 @@
 - `Resource` 是"拥有生命周期的值生产者，通过写 scope 发布其产出"。远程 producer 请求应作为 `ajax` action invocation 进入 Action/Capability / `ActionRuntimeAdapter` 边界取得值，formula Resource 通过表达式求值生产值；但 Resource 自身仍拥有刷新、轮询、stale/drop、status 和 publish-to-scope 生命周期，不等同于一次普通 action dispatch。
 - `Reaction` 是被监听 Value 变化到 Action 派发的桥梁，不用于值派生，也不用于 validation 依赖重校验。
 - `Capability` 是 schema-authored command/effect 的权限路径。字段编辑、owner-local 写入和 Resource 发布属于值修改/发布侧；只有当 schema 显式声明 `setValue`、`submitForm`、`ajax` 等 action 时，它们才进入 Capability / Action Algebra。
-- `Host Projection` 是只读快照数据，不是宿主桥接对象或可变会话容器。
+- `Host Projection` 是只读宿主读面，不是宿主桥接对象或可变会话容器。
+
+### 只读读面默认零拷贝
+
+Flux 的顶层基线不是“防御性复制优先”，而是“只读纪律 + 零拷贝读面优先”。
+
+对于以下公开读面，默认允许返回 **by-reference readonly view**：
+
+- `getState()` / `getSnapshot()` 这类 public getter
+- `Host Projection` 发布到 schema/host 的只读字段
+- capability read result、默认 result payload、owner snapshot surface
+
+规范性规则：
+
+1. `readonly` 的核心含义是**单向读语义**，不是“必须 detached clone”。Projection 对外暴露的是只读接口/契约形状；其底层实现可以直接绑定内部对象。
+2. 在没有明确例外说明时，为了性能不得为了防御性隔离而默认复制整份数据结构。
+3. 框架主路径必须遵守 React 风格的单向只读数据模型：这些读面只能读，不能原地改写。
+4. 如果某个 surface 确实需要 detached snapshot、defensive clone、或允许局部可写协议，必须有明确注释和 owner 文档说明；否则一律按“只读接口 + 零拷贝内部实现”解释。
+5. 评审和审计时，不得仅因“public getter / snapshot / host projection 返回 live 引用”而判定缺陷；只有在以下情况下才成立：
+   - 已发现真实 mutation 路径
+   - 当前 owner 文档明确要求 detached snapshot / materialized copy
+   - 该读面越过了框架只读纪律边界，交给不受此约束的外部消费者
 
 ## 阅读须知
 
@@ -64,7 +85,7 @@
 8. `ApiSchema` 是 `ajax` 动作使用的内部传输描述符，不是独立的执行路径。编写层的 `api` 字段会编译为标准 `ajax` 动作。`Operation Control` 始终是共享的执行控制层。
 9. 保持 `Semantic Lifecycle Entry` 由语义节点（如表单、页面、对话框、语义宿主）拥有，而非将完整的业务管道分散到 UI 触发器中。
 10. 保持 `Resource` 发布围绕 `name` 作为身份标识和默认发布路径收敛，`mergeToScope: true` 作为唯一收窄的特殊发布扩展，`statusPath` 作为只读状态摘要。
-11. 保持宿主边界严格：通过只读 `Host Projection` 读取，通过 `Capability` 写入，bridge/controller/protocol 对象保持宿主私有。
+11. 保持宿主边界严格：通过只读 `Host Projection` 读取，通过 `Capability` 写入，bridge/controller/protocol 对象保持宿主私有；`Host Projection` 默认暴露只读接口，内部实现允许零拷贝复用宿主对象，而不是强制 defensive clone。
 12. 保持 validation 拆成 value axis 与 owner axis：字段值读取、field path 绑定和可求值规则参数不引入新原语；编译后的验证图、字段参与、错误状态、级联和生命周期属于领域运行时，不扩展原语集。
 
 ## 契约分层规则
@@ -79,7 +100,7 @@
 
 规范性规则：
 
-1. 便捷投影仅在以下条件下可接受：从核心契约派生，不引入第二所有权模型、第二写入路径或第二公开身份。
+1. 便捷投影仅在以下条件下可接受：从核心契约派生，不引入第二所有权模型、第二写入路径或第二公开身份。便捷投影可以是 by-reference readonly view，不要求默认 detached copy。
 2. 兼容别名不是便捷投影。如果两个公开名称表达同一含义，非规范名称必须被标注并视为兼容用途。
 3. 新架构文档和新示例应首先描述核心契约，将便捷或兼容表面放在明确标注的次要章节中。
 4. 新测试应主要锁定核心契约。兼容性测试仅在项目明确决定保留该迁移表面时才允许存在。

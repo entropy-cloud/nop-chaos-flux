@@ -22,6 +22,16 @@ When a candidate issue matches one of the entries below:
 2. distinguish the already-adjudicated baseline from any still-live residual
 3. only keep the new finding when the live code still violates the supported baseline or the new issue is materially different from the already-decided one
 
+## V1 Override
+
+These adjudications prevent duplicate reporting of already-routed or already-fixed issues. They must not be used as a blanket defense for live compatibility layers, transitional mirrors, or partial migrations when the active audit baseline explicitly declares `v1 / no compatibility burden / no transitional main-path allowances`.
+
+Under that v1 baseline:
+
+- a previously tolerated transition may become an invalid current design
+- "accepted tradeoff for the current baseline" only applies if the current baseline still says so
+- reviewers should still avoid duplicate historical reports, but must not preserve live suboptimal design solely because it was once accepted during migration
+
 ## Adjudications
 
 ### 1. Wrapped Secondary Actions Stay Non-Labelable

@@ -600,7 +600,7 @@ Current async-governance baseline:
 - in `parallel` mode, multiple requests may remain in flight, but only the current authoritative run may publish value/status updates; older late-settled runs are recorded as `stale-dropped`
 - additive async diagnostics are exposed through source debug snapshots and `statusPath` summary metadata without changing the main author-visible publication contract
 - stopped or reset controllers do not remain in a fake `started + stopped` state: `stop()` clears `started`, `reset()` returns the controller to the initial idle/not-started baseline, and a later `start()` or direct `refresh()` re-activates the controller under the same restartable contract
-- reaction-triggered action dispatch and form-targeted submit through component handles now preserve `AbortSignal` end to end, so dispose / parent cancellation can abort both direct current-form submit and indirect `component:submit` / `submitForm(formId)` execution paths
+- reaction-triggered action dispatch and form-targeted submit through component handles now preserve `AbortSignal` end to end, so dispose / parent cancellation can abort both direct current-form submit and indirect `component:submit` execution paths
 
 Design intent:
 
@@ -1078,6 +1078,8 @@ Remaining compatibility-oriented gaps:
 - `mergeToScope` remains the only narrowed compatibility-style publish extension beyond the named publication path and should not be expanded into a parallel main contract
 - dependency invalidation is already root-normalized, but runtime fallback still exists when `dependsOn` is absent
 - richer debugger integration and advanced loop-depth diagnostics for `reaction` are still incomplete beyond the current debug snapshot plus bounded-fire safety rail
+- retained cascade guards are now owner-local: reaction cascade depth is owned by one reaction registry instance, and source cascade depth is owned by one source registry instance, rather than by module-global mutable counters shared across runtimes
+- retained degraded async-data paths now use the runtime host-reporting seam: reaction/source cascade-limit failures and formula-source publish failures report through `reportRuntimeHostIssue(...)` so `env.notify(...)` and `env.monitor?.onError?.(...)` can observe them instead of relying on console-only visibility
 
 ## Action Write Targeting Boundary
 

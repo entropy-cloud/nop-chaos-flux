@@ -300,9 +300,10 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
   {
     id: 'crud',
     title: 'Crud',
-    tier: 'read',
+    tier: 'edit',
     primaryScenario: 'Basic CRUD shell',
-    notes: 'Verifies the CRUD shell renders toolbar and table columns from local source data',
+    notes:
+      'Verifies the CRUD shell renders and the radio-selection scenario keeps exactly one selected row while enabling selection-aware actions',
   },
   {
     id: 'table',

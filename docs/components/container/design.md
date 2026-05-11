@@ -2,63 +2,168 @@
 
 ## 1. 组件定位
 
-- `container` 是最通用的结构化容器 renderer，用来承接简单布局和内容包装。
-- 它不承担 page、form 或 data-source 的领域语义，只负责壳层组织。
+- `container` 是通用内容壳层 renderer，用来承接普通内容分组、轻量 section 包装，以及 `header` / `body` / `footer` 三段式内容组织。
+- 它不是 page root、form owner、surface、tabs 或纯布局原语的替代品。
+- 它的最佳心智模型是：有最小容器语义，但不拥有独立运行时状态，也不自带 card/panel 视觉协议。
 
-## 2. 与 AMIS 或既有产品的能力对照
+## 2. 容器家族分工
 
-- 当前实现已经支持方向、换行、对齐、间距和 `header`/`body`/`footer` 三段式区域。
-- 复杂分栏、响应式断点和装饰性壳层能力应优先通过样式系统完成，而不是继续膨胀 `container` 私有字段。
+Flux 中常见容器类 renderer 的职责应保持分层明确：
 
-## 3. Flux 中的 renderer/type 定义
+| 类型                | 家族角色                 | 主要职责                                            | 不应替代                |
+| ------------------- | ------------------------ | --------------------------------------------------- | ----------------------- |
+| `page`              | shell owner              | 页面根壳层、page runtime 边界                       | 普通内容分组            |
+| `form`              | semantic lifecycle owner | form runtime、校验、提交、values/status publication | 通用布局壳层            |
+| `dialog` / `drawer` | surface owner            | 弹层 surface open-state 与 host stack               | 页面内普通容器          |
+| `tabs`              | interaction owner        | 互斥面板切换与激活态                                | 静态 section 容器       |
+| `fieldset`          | semantic group container | 表单字段分组、`<fieldset>/<legend>` 语义            | 通用内容包装            |
+| `flex`              | pure layout container    | 主轴/交叉轴/justify/wrap/gap 布局                   | header/body/footer 壳层 |
+| `fragment`          | no-UI structural node    | `when` / `data` / `isolate` 的结构分组              | 有 UI 容器              |
+| `container`         | semantic content shell   | 普通内容壳层、三段式区域、轻量内容分组              | 上述所有专门容器        |
+
+作者选型规则：
+
+- 需要页面根节点，用 `page`。
+- 需要表单 owner，用 `form`。
+- 需要弹层，用 `dialog` 或 `drawer`。
+- 需要 tab 切换，用 `tabs`。
+- 需要表单分组，用 `fieldset`。
+- 需要纯布局控制，用 `flex`。
+- 需要无 UI 结构分组，用 `fragment`。
+- 需要普通内容壳层或 `header` / `body` / `footer` 结构时，才用 `container`。
+
+## 3. 与 AMIS 或既有产品的能力对照
+
+- 当前实现已支持 `direction`、`wrap`、`align`、`gap` 以及 `header` / `body` / `footer` 三段式区域。
+- Flux 不把 `container` 设计成历史 panel/card 的全集兼容层。更复杂的视觉壳层、响应式断点和装饰能力应交给样式系统或更专门的 renderer。
+- `container` 可以承接 card-like 包装，但它本身不是 `Card` renderer，也不默认提供 card padding、分割线或视觉变体协议。
+
+## 4. Flux 中的 renderer/type 定义
 
 - `type: 'container'`
 - `category: 'layout'`
 - `sourcePackage: '@nop-chaos/flux-renderers-basic'`
-- 当前 regions: `body`、`header`、`footer`
+- 当前 regions: `header`、`body`、`footer`
 
-## 4. schema 设计
+## 5. schema 设计
 
-- 当前导出字段包括 `direction`、`wrap`、`align`、`gap`、`body`。
-- 文档建议继续保留 `header`、`footer` 为显式 regions，并将更复杂的视觉布局交给 `className`/`classAliases`。
+当前 live schema：
 
-## 5. 字段分类
+```ts
+interface ContainerSchema extends BaseSchema {
+  type: 'container';
+  direction?: 'row' | 'column';
+  wrap?: boolean;
+  align?: 'start' | 'center' | 'end' | 'stretch';
+  gap?: number | string;
+  body?: BaseSchema[];
+  header?: BaseSchema[];
+  footer?: BaseSchema[];
+  bodyClassName?: string;
+  headerClassName?: string;
+  footerClassName?: string;
+}
+```
+
+设计原则：
+
+- 保留 `header`、`body`、`footer` 作为显式 regions，确保它与 `flex` 和 `fragment` 的边界清楚。
+- 保留 `bodyClassName`、`headerClassName`、`footerClassName` 作为 inner-slot 样式入口，避免把所有控制都挤到 root `className`。
+- 不为 `container` 添加 `padding`、`variant`、`collapsible` 之类会把它推向专门壳层组件的字段，除非已有更高优先级 owner doc 明确要求。
+
+## 6. 字段分类
 
 - `direction`、`wrap`、`align`、`gap`: `value`
 - `header`、`body`、`footer`: `region`
+- `bodyClassName`、`headerClassName`、`footerClassName`: 样式 value
 - `visible`、`hidden`、`className`: `meta` 或基础样式字段
 
-## 6. regions 与 slot 约定
+## 7. regions 与 slot 约定
 
 - `body` 是默认主内容区。
-- `header`、`footer` 是可选结构化 slots，适合 panel/card shell 之外的通用容器。
+- `header`、`footer` 是可选结构化 slots，用于标题区、摘要区、状态区、工具补充区等轻量内容壳层需求。
+- 需要更复杂的头部工具条、分页壳层、可关闭标签或弹层行为时，应使用更专门的 renderer，而不是继续扩 `container`。
 
-## 7. 运行期状态归属
+## 8. 默认布局基线
 
-- `container` 不应维护独立状态。
+`container` 的默认基线应与 `docs/architecture/container-spacing-design.md` 保持一致：
+
+- `container-body` 默认是纵向内容流，带默认 `gap`
+- `container-header` 与 `container-footer` 默认只提供与 body 的分隔间距
+- `container` 默认没有 `padding`
+
+这组基线表达的是：
+
+- `container` 是内容分组容器，所以应有最小的内部节奏
+- `container` 不是 card/panel 视觉组件，所以不应默认长出内边距或固定 chrome
+
+如果作者需要 card-like 内边距，应显式使用 `className: "p-4"` 或 slot `className`。不要把“看起来像卡片”误读为“应该有默认 padding”。
+
+## 9. 运行期状态归属
+
+- `container` 不创建 scope，也不维护独立 owner 状态。
 - 可见性、禁用态和样式都由 resolved meta 或 resolved props 决定。
+- 如果后续出现折叠、展开、打开态、激活态等交互诉求，应优先判断是否已经属于 `collapse`、`dialog`、`drawer`、`tabs` 等专门容器的职责。
 
-## 8. 事件、动作与组件句柄能力
+## 10. 事件、动作与组件句柄能力
 
 - 首版不需要专用句柄。
-- 如果未来出现折叠、展开、聚焦等交互，应考虑升级为专门 renderer，而不是把 `container` 演变成万能组件。
+- `container` 不应演变为通用 imperative 容器。
+- 如果未来确有焦点管理、滚动定位等通用能力，应先判断它是否属于更高层 host/inspect 体系，而不是直接给 `container` 增加私有 handle。
 
-## 9. 数据源、表达式、导入能力接入点
+## 11. 数据源、表达式、导入能力接入点
 
 - `direction`、`align`、`gap` 可按普通值通道支持表达式。
 - 子内容的动态装配通过 `body` region 和外部 loader 解决。
+- `container` 不应自行发明数据请求、异步装配或 owner 级状态 publication 协议。
 
-## 10. 样式与 DOM marker 约定
+## 12. 样式与 DOM marker 约定
 
 - 根节点保留 `nop-container` marker。
-- renderer 只负责输出最小语义类；布局方向和间距应优先映射为 schema 驱动的样式，而不是 renderer 内硬编码大量 Tailwind 工具类。
+- renderer 只负责输出最小语义类；默认 spacing 基线来自 package CSS，不来自 renderer 组件代码内硬编码 Tailwind。
+- root `className` 作用于 `.nop-container` 本身；body/header/footer 的内层样式应优先通过对应 slot `className` 控制。
+- `container.align` 在当前 live 实现中是内容整体摆放语义，不是 `flex` 的完整双轴模型：
+  - `center` 同时映射内容的水平/垂直居中
+  - `start` / `end` 是内容整体靠起始/结束侧
+  - 若需要主轴与交叉轴精细分离控制，应改用 `flex`
 
-## 11. 实现拆分建议
+## 13. 与其他容器的边界
+
+### 13.1 与 `flex`
+
+- `flex` 是纯布局原语；`container` 是内容壳层。
+- 需要 `justify`、严格主轴/交叉轴控制、工具条/行布局/网格替代时，用 `flex`。
+- 需要 `header` / `body` / `footer` 或普通 section 包装时，用 `container`。
+
+### 13.2 与 `fragment`
+
+- `fragment` 是无 UI 结构分组；`container` 是有容器语义的内容壳层。
+- 只是想统一挂 `when`、`data`、`isolate` 时，用 `fragment`。
+- 需要真实内容包裹语义时，才用 `container`。
+
+### 13.3 与 `fieldset`
+
+- `fieldset` 是表单字段分组容器，使用 `<fieldset>/<legend>` 语义。
+- `container` 不是表单语义分组，不负责字段分组、折叠表单区块或 form mode 语义。
+
+### 13.4 与 `page` / `form`
+
+- `page`、`form` 都是 owner 级容器；`container` 只是普通内容壳层。
+- 不要用 `container` 模拟页面根壳层或表单 owner。
+
+### 13.5 与 `tabs` / `dialog` / `drawer`
+
+- `tabs`、`dialog`、`drawer` 都有明确交互状态轴。
+- `container` 不负责互斥面板、surface open-state 或 host stack 行为。
+
+## 14. 实现拆分建议
 
 - 布局值解析逻辑放在独立工具文件。
-- renderer 本体只负责组装 `header`/`body`/`footer` 和根容器属性。
+- renderer 本体只负责组装 `header` / `body` / `footer`、slot `className` 和根容器属性。
+- 不把 card-like 视觉协议、surface-like 状态桥接或 form-like owner 逻辑混回 `container.tsx`。
 
-## 12. 风险、取舍与后续阶段
+## 15. 风险、取舍与后续阶段
 
-- `container` 容易被滥用为视觉组件全集，需要在文档中持续强调它的“通用壳层”定位。
-- 响应式专属 DSL 应在有跨组件统一方案后再引入。
+- `container` 最容易被误用成“什么都能包的视觉组件全集”；owner doc 需要持续强调它只是通用内容壳层。
+- `container` 同时支持轻量布局语义和 slot 壳层，已经覆盖不少日常场景；继续扩字段前，必须先证明 `flex`、`fragment`、`fieldset`、`card`、`collapse` 等边界无法承接。
+- 响应式专属 DSL、真正的 `Card` renderer、以及更强的 panel/collapse 协议，应在独立家族里设计，而不是继续堆到 `container` 上。

@@ -32,6 +32,24 @@
 - `useDesignerHostScope` → 将快照投影成 child scope，通过 `buildDesignerScopeData` 生成 `doc`、`selection`、`activeNode`、`activeEdge`、`runtime` 等字段
 - region 渲染时传入 `{ scope: designerScope, actionScope }` 使片段可读取上述字段
 
+### Current Projection Matrix
+
+- retained canonical schema-visible fields:
+  - `doc` as a narrowed summary DTO (`id`, `kind`, `name`, `version`, `viewport`, `nodeCount`, `edgeCount`)
+  - `selection`
+  - `activeNode`
+  - `activeEdge`
+  - `activeBranch`
+  - `runtime`
+- retained external host summary path:
+  - `statusPath` publishes `DesignerHostStatusSummary`, including host-visible `error` when initial auto-layout fails
+- removed from the supported region host scope boundary:
+  - `DesignerCore` instance
+  - command adapter instance
+  - full graph document payload under `doc`
+  - config internals such as palette / nodeTypes / edgeTypes
+  - module-global bridge state
+
 注意：host scope 已经接线，但只对 `toolbar` / `inspector` / `dialogs` 三个 region 有效；schema 表达式全局 scope（非 region 内部）不自动获得这些字段。
 
 ## 1. 当前真实快照契约

@@ -71,4 +71,26 @@ test.describe('crud renderer editing and selection flows', () => {
     await expect(bulkDelete).toBeDisabled();
     await expect(crudFooter(stage)).toContainText('Selected rows: 0');
   });
+
+  test('keeps only one selected row in radio selection mode', async ({ page }) => {
+    const lab = await openCrudLab(page);
+    const stage = crudStage(lab, 'CRUD radio selection baseline');
+
+    await expectCrudStageVisible(stage);
+
+    const inspectSelected = stage.getByRole('button', { name: 'Inspect Selected' });
+    await expect(inspectSelected).toBeDisabled();
+    await expect(crudFooter(stage)).toContainText('Selected rows: 0');
+
+    const radios = stage.locator('tbody [data-slot="checkbox"][data-shape="circle"]');
+    await expect(radios).toHaveCount(3);
+
+    await radios.nth(0).click();
+    await expect(inspectSelected).toBeEnabled();
+    await expect(crudFooter(stage)).toContainText('Selected rows: 1; Keys: 1');
+
+    await radios.nth(1).click();
+    await expect(crudFooter(stage)).toContainText('Selected rows: 1; Keys: 2');
+    await expect(crudFooter(stage)).not.toContainText('Keys: 1,2');
+  });
 });

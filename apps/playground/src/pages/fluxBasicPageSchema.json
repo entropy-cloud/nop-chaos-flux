@@ -208,8 +208,8 @@
               "type": "button",
               "label": "Submit Form",
               "onClick": {
-                "action": "submitForm",
-                "formId": "user-form",
+                "action": "component:submit",
+                "componentId": "user-form",
                 "args": {
                   "method": "post",
                   "url": "/api/users"
@@ -285,8 +285,8 @@
                           "type": "button",
                           "label": "Submit key-value demo",
                           "onClick": {
-                            "action": "submitForm",
-                            "formId": "kv-visibility-form",
+                            "action": "component:submit",
+                            "componentId": "kv-visibility-form",
                             "args": {
                               "method": "post",
                               "url": "/api/composite-demo"
@@ -337,8 +337,8 @@
                           "type": "button",
                           "label": "Submit array demo",
                           "onClick": {
-                            "action": "submitForm",
-                            "formId": "array-visibility-form",
+                            "action": "component:submit",
+                            "componentId": "array-visibility-form",
                             "args": {
                               "method": "post",
                               "url": "/api/composite-demo"
@@ -375,8 +375,8 @@
                       "body": {
                         "type": "container",
                         "body": [
-                          { "type": "text", "text": "User: ${record.username}" },
-                          { "type": "text", "text": "Email: ${record.email}" },
+                          { "type": "text", "text": "User: ${$slot.record.username}" },
+                          { "type": "text", "text": "Email: ${$slot.record.email}" },
                           {
                             "type": "button",
                             "label": "Close",

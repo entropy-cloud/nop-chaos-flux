@@ -5,6 +5,7 @@
 - `dialog` 是模态对话框 renderer，用来承接标题、内容、操作区和打开关闭状态。
 - 它是通用弹层容器，不应与具体业务表单或确认框混写为单独 type。
 - 从长期架构看，`dialog` 属于 surface family 的一种 public DSL authoring 形式，而不是独立 runtime family。
+- 它不是普通页面内容区块，不应由 `container` 伪装实现。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
@@ -84,14 +85,20 @@ Current live implementation note:
 - 标准 shell 结构应为 `DialogContent -> DialogHeader? -> DialogBody -> DialogFooter?`。
 - `DialogContent` 负责弹层壳行为；默认 body spacing 应归 `DialogBody`，不要把正文 padding/gap 放回 `DialogContent`。
 
-## 11. 实现拆分建议
+## 11. 与其他容器的边界
+
+- 与 `container`：`container` 是页面内普通内容壳层；`dialog` 是 surface owner。
+- 与 `drawer`：二者共享 surface family，但视觉 kind 和进入方式不同。
+- 与 `tabs`：tabs activation 不等于 surface open-state；不要用 `tabs` 模拟 dialog，也不要把 dialog 写成多 tab 容器的别名。
+
+## 12. 实现拆分建议
 
 - dialog shell、open-state bridge、host integration 和 actions footer 分开实现。
 - host integration 应围绕共享 surface host / stack 实现，而不是让每个 dialog renderer 自己管理一套嵌套 host。
 - `dialog` 的实现拆分重点不是 local controller hook，而是 surface family shared helper / runtime：open-state bridge、active-surface 判断、stack registration、status publish 这类逻辑如果在 `dialog` 和 `drawer` 中重复出现，应优先抽成共享 surface helper，而不是分别在两个 renderer 里长出各自的 controller。
 - renderer/view 层应保留 `DialogContent -> DialogHeader? -> DialogBody -> DialogFooter?` 结构、slot 组合、`RendererComponentProps` 接线和事件透传；不要把共享 stack/runtime 规则重新混回每个具体 surface renderer 的 JSX 文件。
 
-## 12. 风险、取舍与后续阶段
+## 13. 风险、取舍与后续阶段
 
 - 最大风险是 surface family 统一收口做一半，留下 declarative 与 action-opened 两套并存实现。
 - `dialog` 的第一优先级不是继续扩字段，而是先完成统一 surface runtime 的收口。

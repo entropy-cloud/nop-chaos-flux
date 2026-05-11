@@ -44,6 +44,13 @@ Precedence note:
 - `action-scope-and-imports.md` still owns runtime dispatch order and lexical visibility rules
 - this document owns the **static manifest contract** that lets the compiler understand what a host projection exposes and what a host capability accepts
 
+Readonly-projection note:
+
+- in this repository, readonly host projection means **one-way readonly semantics**, not mandatory defensive copying
+- projection exposes a readonly interface to schema/host consumers; the backing implementation may still be the live internal object graph
+- a host projection may legally expose by-reference live objects when they remain inside the framework's strict readonly discipline
+- do not infer detached-clone requirements from the word `readonly` unless the owner doc explicitly says `snapshot copy`, `materialized copy`, `defensive clone`, or equivalent
+
 ## Problem
 
 The current architecture already has the right runtime split:
@@ -106,6 +113,8 @@ Complex hosts should publish two things separately:
 1. runtime bridge/scope wiring
 2. static manifest contract
 
+The bridge may keep projection reads zero-copy for performance. The contract requirement is readonly interface semantics, not copy semantics, unless the owner doc explicitly tightens that boundary.
+
 The runtime bridge answers:
 
 - how the host is mounted
@@ -136,6 +145,8 @@ It is derived from the existing primitive split:
 
 The manifest simply gives those two existing channels a compile-time contract.
 
+It does not turn readonly projection into clone-on-read by default.
+
 ## Mental Model
 
 The full host integration stack should be read as five layers:
@@ -156,6 +167,10 @@ domain core / bridge
 ```
 
 ## Non-Goals
+
+This design does not attempt to:
+
+- force detached copying for every host projection read surface when a zero-copy readonly view already satisfies the active owner contract
 
 This design does not attempt to:
 
@@ -249,6 +264,8 @@ The family name is also the default action namespace prefix.
 ### Projection Contract
 
 The projection contract declares the readonly fields that schema expressions may read from the host boundary.
+
+In the current baseline, these readonly fields may be backed by live by-reference objects. The manifest constrains **who may write** and **which fields are schema-visible**; it does not by itself require clone-on-read. In other words, the projection is an external readonly contract, not a promise that the runtime materializes a detached copy.
 
 Examples:
 

@@ -4,6 +4,7 @@
 
 - `flex` 是显式的弹性布局 renderer，用来表达一组子节点的主轴、交叉轴和换行规则。
 - 它是 `container` 的布局特化版，不承载业务数据语义。
+- 它是纯布局原语，不负责 `header` / `body` / `footer` 壳层，也不承担普通内容分组语义。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
@@ -53,12 +54,19 @@
 - 根节点保留 `nop-flex` marker。
 - `direction`/`justify`/`align` 是布局语义，不应再发明第二套 `flexMode` 或 `layoutMode` 命名。
 
-## 11. 实现拆分建议
+## 11. 与其他容器的边界
+
+- 与 `container`：需要纯布局控制时用 `flex`；需要普通内容壳层或三段式 slot 时用 `container`。
+- 与 `fragment`：需要无 UI 结构分组时用 `fragment`；需要真实布局盒模型时用 `flex`。
+- 与 `fieldset`：`fieldset` 是表单语义分组；`flex` 只负责布局，可作为 `fieldset.body` 内部的行布局工具。
+
+## 12. 实现拆分建议
 
 - 布局 class 计算应在工具层完成。
 - renderer 本体只负责 root 和 child region 渲染。
 
-## 12. 风险、取舍与后续阶段
+## 13. 风险、取舍与后续阶段
 
 - `body` 和 `items` 的双 region 需要后续收敛为更清晰的外部契约。
 - 响应式断点支持应与全局 styling system 一起设计，不宜让 `flex` 单独扩展。
+- 要避免因为 `container` 也支持部分布局字段，就把 `flex` 降级成“可有可无的别名”。两者必须继续保持“纯布局”与“内容壳层”的边界。

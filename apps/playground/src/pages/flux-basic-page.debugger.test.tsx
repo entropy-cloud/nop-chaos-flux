@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createNopDebugger, getNopDebuggerAutomationApi } from '@nop-chaos/nop-debugger';
 import { FluxBasicPage } from './flux-basic-page';
 
@@ -33,7 +33,7 @@ function readFormCidByFieldLabel(labelText: string) {
 }
 
 async function selectOption(labelText: string, optionText: string) {
-  const trigger = screen.getByLabelText(labelText);
+  const trigger = screen.getByRole('combobox', { name: labelText });
   fireEvent.click(trigger);
   const optionTextEl = await screen.findByText(optionText);
   const optionEl = optionTextEl.closest('[role="option"]') ?? optionTextEl;
@@ -163,4 +163,41 @@ describe('FluxBasicPage debugger wiring', () => {
       });
     });
   }, 15000);
+
+  it('opens the user inspect dialog from the table row action', async () => {
+    const debuggerController = createNopDebugger({
+      id: 'playground-flux-basic-page-inspect-dialog-test',
+      enabled: true,
+    });
+
+    render(<FluxBasicPage debuggerController={debuggerController} onBack={() => undefined} />);
+
+    const inspectButtons = await screen.findAllByRole('button', { name: 'Inspect' });
+    fireEvent.click(inspectButtons[1]);
+
+    expect(await screen.findByText('User Details')).toBeTruthy();
+    expect(screen.getByText('User: bob')).toBeTruthy();
+    expect(screen.getByText('Email: bob@example.com')).toBeTruthy();
+  });
+
+  it('removes rows in the submit-only array child items demo', async () => {
+    const debuggerController = createNopDebugger({
+      id: 'playground-flux-basic-page-array-delete-test',
+      enabled: true,
+    });
+
+    render(<FluxBasicPage debuggerController={debuggerController} onBack={() => undefined} />);
+
+    const submitButton = await screen.findByRole('button', { name: 'Submit array demo' });
+    const form = submitButton.closest('.nop-form');
+
+    expect(form).toBeTruthy();
+    expect(within(form as HTMLElement).getByPlaceholderText('Reviewer 1')).toBeTruthy();
+
+    fireEvent.click(within(form as HTMLElement).getByRole('button', { name: /Reviewer 1$/ }));
+
+    await waitFor(() => {
+      expect(within(form as HTMLElement).queryByPlaceholderText('Reviewer 1')).toBeNull();
+    });
+  });
 });

@@ -1,7 +1,7 @@
 # Word Editor Architecture
 
 > Owner Doc Status: Active
-> Last Updated: 2026-04-16
+> Last Updated: 2026-05-11
 
 ## Overview
 
@@ -39,7 +39,7 @@ React 19 rendering layer. Contains:
 | `word-editor-page.tsx` | Main page component orchestrating all panels |
 | `editor-canvas.tsx`    | Canvas-editor wrapper with React lifecycle   |
 | `toolbar/`             | Ribbon-style toolbar components              |
-| `panels/`              | Side panels (dataset, properties)            |
+| `panels/`              | Side panels (dataset, outline)               |
 | `dialogs/`             | Modal dialogs (chart config, code config)    |
 | `preview/`             | Document preview components                  |
 | `hooks/`               | React hooks for editor integration           |
@@ -50,7 +50,7 @@ React 19 rendering layer. Contains:
 ┌─────────────────────────────────────────────────────────────────┐
 │                        WordEditorPage                           │
 │  ┌──────────────┐  ┌─────────────────────┐  ┌───────────────┐  │
-│  │ DatasetPanel │  │    EditorCanvas     │  │ PropertyPanel │  │
+│  │ DatasetPanel │  │    EditorCanvas     │  │ OutlinePanel  │  │
 │  │              │  │                     │  │               │  │
 │  │ dataset-store│  │ canvas-editor-bridge│  │  editor-store │  │
 │  └──────┬───────┘  └──────────┬──────────┘  └───────┬───────┘  │
@@ -126,10 +126,25 @@ The Word Editor page is rendered as the `word-editor-page` host-owner renderer a
 
 Current live workbench behavior is:
 
-- substantial built-in default UI remains renderer-owned, including the Ribbon toolbar, the default dataset/field left panel, and the default outline right panel
-- `toolbar`, `leftPanel`, and `rightPanel` are explicit override surfaces; when provided, the renderer mounts those schema regions with the word-editor host scope and action scope
-- this is a host-family-specific “default UI + differential override” pattern, not a requirement that every visible control be declared by schema
-- this pattern is intentionally owned by `word-editor-page` itself; Flux does not currently define one universal cross-designer baseline object that all workbench families must implement
+- Word Editor now follows the shared workbench-shell baseline in `docs/architecture/designer-workbench-shell.md`
+- left and right authoring panels are family-config-generated optional panels; they are not permanently-on renderer-private sidebars
+- current dataset/field and outline surfaces are the default generators behind the current minimal `WordEditorConfig`
+- `toolbar`, `leftPanel`, and `rightPanel` remain explicit override surfaces; when provided, the renderer mounts those schema regions with the word-editor host scope and action scope
+- when no resolved left or right panel definition exists, that side should hide completely instead of leaving a collapsed placeholder rail
+
+Current minimal side-panel config contract:
+
+```ts
+interface WordEditorConfig {
+  leftPanel?: { generator?: 'default' };
+  rightPanel?: { generator?: 'default' };
+}
+```
+
+- `leftPanel` controls whether the dataset/field side exists at all
+- `rightPanel` controls whether the outline side exists at all
+- the current supported generator is `'default'`, which selects the built-in panel generators
+- page `leftPanel` / `rightPanel` regions remain override surfaces that mount only after the corresponding config side exists
 
 The renderer publishes the `word-editor` host family manifest, host projection scope, and namespaced actions such as `word-editor:save`, `word-editor:insertField`, `word-editor:insertChart`, `word-editor:insertCode`, `word-editor:undo`, and `word-editor:redo`.
 
@@ -147,6 +162,7 @@ Save and autosave truth rules:
 - a failed host save keeps the editor dirty so close protection, status publication, and host integrations still see unsaved work
 - autosave must build `SavedDocumentData` from the current runtime `charts` / `codes`, not from `initialDocument`
 - when an explicit save succeeds, the persisted host projection updates its saved `charts` / `codes` extras from the same runtime values used for the save
+- explicit save now treats `SavedDocumentData` as the single persisted truth surface for the renderer-owned save path: the success callback receives the full saved envelope, and host projection `document` refreshes from `saved.data` in that same envelope
 - async save completion must not recreate local UI state after unmount; save-success banners and timers are renderer-local affordances only while the page is still mounted
 - in-repo live renderer call sites use the canonical `flux.wordEditor.*` i18n namespace; legacy unprefixed forms are not the current source baseline
 - document/dataset persistence helpers are browser-optional: in SSR or non-browser environments they must return explicit safe fallbacks (`false`, `null`, `[]`) instead of touching `localStorage`

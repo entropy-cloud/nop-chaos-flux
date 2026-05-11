@@ -5,7 +5,10 @@ const withHeaderBodyFooter = {
   body: [
     {
       type: 'container',
-      className: 'border rounded-xl overflow-hidden',
+      className: 'rounded-xl border bg-card',
+      headerClassName: 'px-4 pt-4',
+      bodyClassName: 'px-4',
+      footerClassName: 'px-4 pb-4',
       header: [{ type: 'text', text: 'User Account', className: 'font-semibold text-base' }],
       body: [
         { type: 'text', text: 'Name: Alice Johnson' },
@@ -47,18 +50,18 @@ const withClassNameCard = {
 export function ContainerLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Generic layout container with optional header, body, and footer regions. Use className to apply visual card styling or custom borders."
+      introDescription="Generic content shell with optional header, body, and footer regions. Container provides slot structure and default body flow; card chrome and padding stay explicit through root or slot className props."
       scenarios={[
         {
           title: 'Container with header, body, and footer',
           description:
-            'Each region is independently populated. The header holds the title, the body holds main content, and the footer holds status badges.',
+            'Each region is independently populated. This example keeps the container baseline honest by adding padding explicitly through header/body/footer className props instead of relying on any hidden default.',
           schema: withHeaderBodyFooter,
         },
         {
           title: 'Card layout via className',
           description:
-            'Container emits no visual styles itself. Pass className to wrap content in a styled card.',
+            'Container emits no card styling itself. Pass explicit className values to create bordered card shells around the body content.',
           schema: withClassNameCard,
         },
       ]}

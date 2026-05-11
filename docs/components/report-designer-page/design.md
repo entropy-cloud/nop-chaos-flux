@@ -26,6 +26,7 @@
 - `profile` 和 `adapters` 是可选宿主扩展入口。
 - `toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body` 是主要 regions。
 - 目标设计中，如需让宿主外部读取 report designer host 摘要，应使用 `statusPath`，而不是把完整 host projection 提升到 page 全局 scope。
+- 左右工作台是否出现由 resolved `designer` config 决定；`fieldPanel` 与 `inspector` regions 是 override surfaces，不是 side-panel existence 的 canonical source。
 
 ## 5. 字段分类
 
@@ -40,6 +41,8 @@
 - `fieldPanel` 承接左侧字段源。
 - `inspector` 承接右侧属性面板。
 - `body` 承接中央 spreadsheet 或其他主工作区扩展。
+- 若 `designer.fieldSources` / provider / `designer.features.fieldPanel` 未解析出左侧内容，则左侧整体隐藏；page `fieldPanel` region 不会单独制造一个左侧空壳。
+- 若 `designer.inspector` / `designer.features.inspector` 未解析出右侧内容，则右侧整体隐藏；page `inspector` region 不会单独制造一个右侧空壳。
 
 补充约束:
 

@@ -36,6 +36,8 @@
 - `inspector` 用于右侧 schema 渲染区域。
 - `dialogs` 用于 designer 内部补充弹层挂载点。
 - palette 和 canvas 当前由内建 renderer 壳层承接，不作为自由 region 暴露。
+- 左右工作台显隐和收缩行为遵循 `docs/architecture/designer-workbench-shell.md`：palette/inspector 的 canonical existence 来自 resolved config，`inspector` region 只是 override surface，不意味着右侧必须永远存在。
+- 当前 live baseline里，左侧仅在 `config.palette.groups` 解析出 palette 时存在；右侧仅在 node/edge inspector config 解析出 inspector surface 时存在。
 
 ## 7. 运行期状态归属
 

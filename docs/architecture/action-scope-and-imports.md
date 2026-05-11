@@ -645,7 +645,8 @@ Preferred targeting matrix:
 
 Compatibility carriers:
 
-- `formId` is a real targeting carrier for built-in form-targeting paths (`setValue`, `setValues`, `submitForm`). For `submitForm`, dispatcher and runtime now share one baseline: when `formId` is provided and resolves (through `ctx.form.id` match or component registry lookup), the action targets that form even if the current action context has no local `ctx.form`. When `formId` is provided but doesn't resolve, the action returns an explicit error instead of silently falling back. New schema should prefer `component:submit` targeting the concrete form instance for clarity, but `formId` remains a supported targeting mechanism.
+- built-in `setValue` / `setValues` belong to the lexical scope-write family, not the component-targeting family. Their canonical baseline is to write the current dispatch scope only. If schema needs to target a concrete form or component instance, prefer `component:setValue` / `component:setValues`.
+- `submitForm` remains the semantic built-in for submitting the current form only. If schema needs to target a concrete form instance, use `component:submit`.
 - overloaded path-style targeting fields such as `componentPath` are not the preferred authoring baseline for new schema when stable instance targeting by `componentId` or `componentName` is available
 
 ## Action Scope Ownership

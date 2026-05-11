@@ -18,6 +18,14 @@ When a candidate finding matches a pattern below:
 2. only keep the finding if the stronger evidence condition is satisfied
 3. explain why this case is not just the known false-positive pattern
 
+## V1 Override
+
+If the current audit baseline explicitly declares the repository is operating as `v1 / no compatibility burden / no transitional main-path allowances`, then transitional-state and migration-phase downgrade logic does not apply on its own. In that mode:
+
+- a live compatibility layer on the main path is itself candidate defect evidence
+- an intermediate slice already wired into public/runtime/host surfaces must be judged as current design, not excused as "still converging"
+- this file still filters stylistic false positives, but it must not be used to preserve partial migrations or compatibility carry paths
+
 ## Disposition Levels
 
 - `reject`: do not report unless the case clearly escapes the pattern definition
@@ -73,6 +81,7 @@ Each pattern records:
 - Why this is noisy: this repository often contains partially wired slices, transitional exports, or owner convergence work that is not yet claiming final contract closure.
 - Keep only when: current live code and current baseline docs both imply the contract is already active, or the intermediate state already causes user-visible bugs, data loss, safety risk, or strong developer misdirection.
 - Notes: distinguish "not finished" from "finished incorrectly."
+- V1 override: when the repo baseline explicitly disallows transitional main-path states, do not use this pattern to downgrade a live partial migration.
 
 ### 6. Unwired Or Non-Barrel Code Treated As Dead Code
 

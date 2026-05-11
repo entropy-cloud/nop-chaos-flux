@@ -6,6 +6,8 @@
 
 Flux provides out-of-box sensible spacing for page, form, fieldset, container, field-frame, and tabs renderers through theme-tunable CSS custom properties and `@layer base` default rules. No manual `className` is required for standard layouts. Schema authors can override spacing per-container via `gap` semantic props or `className`. Widget renderers (table, condition-builder, etc.) remain unaffected.
 
+Within the container family, these defaults are intentionally asymmetric: `page`, `form`, `fieldset`, `tabs`, and `container` do not all mean the same kind of shell. In particular, `container` is the generic content-shell renderer, not a card/panel visual component, so its baseline includes internal body flow/gap but intentionally omits default padding.
+
 ## Architecture
 
 Three layers, each independently overridable:
@@ -200,6 +202,8 @@ Per-slot props are simpler, match the existing pattern (`gap`, `direction`), and
 | FieldFrame             | 4px internal, 8px label-top, 16px label-left                     | CSS `@layer base`                               |
 
 **Why Flex has no default gap**: Flex is a layout primitive. No single default is correct for toolbars, card grids, form rows, or tag lists.
+
+**Why Container has no default padding**: `container` is the generic content-shell renderer. Default padding would make it look like a card/panel component and blur its boundary with future `card`/`panel` family renderers. Authors who want card-like chrome must declare padding explicitly.
 
 ## Known Limitations
 

@@ -43,9 +43,10 @@ interface ReportDesignerPageSchema {
 当前实现补充：
 
 - `spreadsheet-page` 的 live renderer 当前支持 `toolbar` / `body` / `dialogs` 三个 region；未覆盖 `body` 时使用内置 spreadsheet canvas。
-- `report-designer-page` 的 live renderer 当前支持 `toolbar` / `fieldPanel` / `inspector` / `dialogs` / `body` 五个 region；未覆盖时分别使用内置 field panel、canvas 与 inspector。
+- `report-designer-page` 的 live renderer 当前支持 `toolbar` / `fieldPanel` / `inspector` / `dialogs` / `body` 五个 region；这些 page regions 是 override surfaces，不是左/右 panel existence 的 canonical source。
 - 两者当前都支持 `statusPath`，向宿主外部发布窄只读状态摘要。
 - `report-designer-page` 当前 live schema 使用 `document.spreadsheet` 作为 spreadsheet 文档入口；本文件不再把额外 top-level `spreadsheet?: SpreadsheetConfig` 写成当前 renderer contract。
+- 按 `docs/architecture/designer-workbench-shell.md` 的共享规则，左侧 field panel 与右侧 inspector 的 canonical source 来自 resolved `designer` config；无已解析 panel definition 时，对应侧直接隐藏。
 
 ## 2. SpreadsheetDocument
 
@@ -248,7 +249,7 @@ interface ReportDesignerConfig {
 说明:
 
 - `kind` 用于标识报表模板类型或 profile，例如 `generic-report`、`nop-report`
-- `fieldSources` 定义左侧字段面板
+- `fieldSources` 定义左侧字段面板的 canonical config surface
 - `inspector` 定义右侧属性面板如何匹配与渲染
 - `preview` 定义预览集成边界
 - `expressions` 定义表达式编辑器适配入口
@@ -291,6 +292,7 @@ interface FieldItemConfig {
 - 字段面板可由静态配置生成，也可由外部 provider 动态生成
 - 拖拽时必须产出标准化 payload
 - payload 只表达字段信息，不直接表达如何写入某个具体后端模型
+- 如果 `fieldSources` 最终解析为空，或 `features.fieldPanel === false`，则左侧工作台隐藏
 
 ## 7. inspector 配置
 
@@ -320,6 +322,7 @@ interface ReportInspectorConfig {
 - 如果存在大量重复配置，应优先在 schema 组装层通过元编程生成最终 inspector schema，而不是在 runtime 层定义额外匹配模型
 - `mode?: 'panel' | 'drawer'` 表示 inspector 容器显示方式的 schema/config 合同；当前 live renderer 是否已经完整支持某种 mode，需要以对应 renderer 实现为准，不应仅凭 schema shape 推断全部已落地
 - 如果某个 target 没有显式可编辑 schema，则可以没有可编辑内容；不要求 fallback form
+- 如果 `features.inspector === false`，或最终没有解析出可挂载 inspector schema，则右侧工作台隐藏
 
 ## 8. preview 配置
 

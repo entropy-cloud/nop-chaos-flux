@@ -13,6 +13,8 @@
 
 它不是数据装配器，也不是设计器平台。动态 tabs 的结构生成应优先在 loader 完成；运行时只负责执行最终 schema，并在明确需要时支持有限的运行期重复与状态同步。
 
+它也不是普通 `container` 的增强模式。`tabs` 的核心价值是互斥可见面板和激活态 ownership，而不是简单的 header/body 包装。
+
 参考基线：AMIS `tabs` 的公开能力模型，以及当前仓库中的 `@nop-chaos/ui` tabs primitive 与 `docs/architecture/renderer-runtime.md`、`docs/architecture/field-metadata-slot-modeling.md`。
 
 ## 2. 设计目标
@@ -209,6 +211,13 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 - tab 切换状态也不应与 dialog/drawer 的 surface open-state 混用
 - 如果未来需要对外发布 tabs 只读状态摘要，优先通过 `statusPath`
 - `valueStatePath` 继续负责可写激活态持久化；`statusPath` 若存在，则负责只读摘要发布
+- 当前 live baseline 下，inactive tab panels 保持 mounted；tabs 只切换可见性，不应因为 panel unmount 而重置其中 form/detail 等 owner runtime 的本地草稿值
+
+## 9. 与其他容器的边界
+
+- 与 `container`：只需要普通内容壳层时用 `container`；需要互斥面板和激活态时用 `tabs`。
+- 与 `flex`：`flex` 只解决布局，不解决 panel activation。
+- 与 `dialog` / `drawer`：surface open-state 与 tabs activation 是两条不同状态轴，不能混为一类容器。
 
 ### 8.1 `local`
 
@@ -242,7 +251,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 - 若后续补充 `statusPath`，其职责应是发布 owner-level readonly summary，例如 `activeKey`、`activeIndex`、`canCloseActive`，而不是替代 `valueStatePath`
 - 是否增加局部 `$tabs` 绑定，应等证明 subtree-local authoring 有稳定需求后再决定，不应先于 `statusPath` 收口
 
-## 9. 可见性与候选激活项修正
+## 10. 可见性与候选激活项修正
 
 当当前激活 tab 不可见、被删除、或数据源变化导致不存在时，需要自动修正激活项。
 
@@ -255,7 +264,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 这里的“可见”应由 item 级 `visible`/`hidden` 之类的规范 meta 决定，而不是 DOM 检测。
 
-## 10. `items` 的动态输入
+## 11. `items` 的动态输入
 
 按 Flux 当前设计原则，`tabs` 正式契约应优先保留单一 `items` 字段，而不是拆成 `items` + `itemsSource` 两个平行字段。
 
@@ -288,7 +297,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 - 这和 `docs/architecture/flux-dsl-vm-extensibility.md` 的最终模型原则一致：运行时应执行最终结构，不应承担主要结构生成职责。
 - 这也和 `docs/architecture/field-metadata-slot-modeling.md` 的“一种概念尽量一个字段名”一致，避免把集合本体和集合来源拆成两个默认并行字段。
 
-## 11. 事件设计
+## 12. 事件设计
 
 当前 live 事件集：
 
@@ -302,11 +311,11 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 事件 payload 应直接走 Flux `ActionSchema` 事件分发，不需要保留 AMIS 的字符串脚本 `onSelect: "alert(key)"` 形式。
 
-## 12. 动作与组件能力
+## 13. 动作与组件能力
 
 `tabs` 应同时支持两类外部驱动方式。
 
-### 12.1 声明式动作
+### 13.1 声明式动作
 
 当前 live 声明式能力：
 
@@ -324,7 +333,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 }
 ```
 
-### 12.2 组件句柄能力
+### 13.2 组件句柄能力
 
 当前 live capability：
 
@@ -333,7 +342,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 这与 `docs/architecture/action-scope-and-imports.md`、`docs/architecture/component-resolution.md` 的组件定向调用模型一致。
 
-## 13. 表单集成
+## 14. 表单集成
 
 当前 live runtime 仍以 interaction owner 为主，尚未提供专门的 tabs 表单值投影 contract。
 
@@ -343,7 +352,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 - 如果后续要接入 form runtime，应显式补文档与实现，而不是继续沿用 AMIS 的“默认把 active tab 当字段值”规则
 - 不建议把标题文案当提交值；稳定业务值仍应优先来自 `value` / `key`
 
-## 14. 样式与 DOM 约定
+## 15. 样式与 DOM 约定
 
 实现应基于 `@nop-chaos/ui` 的 tabs primitives，而不是重新造一套 DOM/交互系统。
 
@@ -374,7 +383,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 像 AMIS 的 `chrome`、`strong`、`sidebar` 这类风格可以后续作为 host theme、schema preset 或扩展 variant 再补，不应先固化为基础 renderer 契约。
 
-## 15. 实现拆分建议
+## 16. 实现拆分建议
 
 建议拆分为以下模块：
 
@@ -393,7 +402,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 如果首版实现较小，也可以先保留在一个文件中，但状态解析和 item 规范化逻辑仍应与 JSX 渲染逻辑分开。
 
-## 16. 实现阶段建议
+## 17. 实现阶段建议
 
 ### Phase 1
 
@@ -421,7 +430,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 - route fragment / deep-link
 - mobile swipe
 
-## 17. 关键取舍
+## 18. 关键取舍
 
 1. 不直接复制 AMIS 的 `tab` 字段，统一收敛到 `body`
 2. 不保留字符串脚本式 `onSelect`，统一走 Flux `ActionSchema`
@@ -431,7 +440,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 6. `addable`、`closable`、`draggable` 作为 renderer 扩展能力保留语义原名，不额外改造成 `allowXxx`
 7. 对外部驱动优先提供 component handle capability，而不是暴露 React ref
 
-## 18. 与 AMIS 字段对照
+## 19. 与 AMIS 字段对照
 
 下表仅用于迁移和参考，不代表 Flux 正式契约保留这些旧字段。
 
@@ -454,7 +463,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 | `changeActiveKey`  | `component:setValue`                                         | 与底层 value 语义对齐                                                                           |
 | `deleteTab`        | future `component:removeItem`                                | 当前 live 未实现                                                                                |
 
-## 19. 与架构文档的关系
+## 20. 与架构文档的关系
 
 本组件设计依赖以下架构文档：
 

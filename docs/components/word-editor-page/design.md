@@ -5,6 +5,7 @@
 - `word-editor-page` 是 Word 模板设计器宿主根 renderer。
 - 它把 canvas-editor bridge、editor store、dataset store、工具栏、数据集面板、大纲面板和对话框组织为同一工作台。
 - 本文档只拥有 `word-editor-page` 单 renderer 契约；Word Editor family 的平台架构由 `docs/architecture/word-editor/` 文档族负责。
+- 左右工作台遵循 `docs/architecture/designer-workbench-shell.md` 的共享基线；本 renderer doc 只记录当前页面字段与 region surface，不拥有 side-panel existence 的 family-level 规则。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
@@ -19,13 +20,14 @@
 - `rendererClass: 'domain-host-renderer'`
 - `rendererTraits`: `workbench-shell`, `builder-facing`
 - 当前 regions: `toolbar`、`leftPanel`、`rightPanel`
-- 当前 fields: `title` 为 `value-or-region`；`onBack`、`onSave` 为 `event`；`statusPath`、`initialDocument`、`datasets`、`initialCharts`、`initialCodes` 为 `prop`
+- 当前 fields: `title` 为 `value-or-region`；`onBack`、`onSave` 为 `event`；`config`、`statusPath`、`initialDocument`、`datasets`、`initialCharts`、`initialCodes` 为 `prop`
 
 ## 4. schema 设计
 
 ```typescript
 interface WordEditorPageSchema {
   type: 'word-editor-page';
+  config?: WordEditorConfig;
   statusPath?: string;
 
   // 回退动作
@@ -44,11 +46,17 @@ interface WordEditorPageSchema {
   // 保存回调
   onSave?: ActionSchema;
 }
+
+interface WordEditorConfig {
+  leftPanel?: { generator?: 'default' };
+  rightPanel?: { generator?: 'default' };
+}
 ```
 
 核心字段：
 
 - `onBack` 是可选回调；提供时用于返回上级页面，renderer 会向事件处理器透传原始 click event
+- `config` 是左右工作台是否存在的 canonical surface；当前最小支持面是 `leftPanel` / `rightPanel` 两个可选定义
 - `initialDocument` 和 `datasets` 是可选初始数据
 - `Dataset` 是当前公开契约词汇；`DataSet` 不再属于支持中的 public surface
 - `initialCharts` / `initialCodes` 允许宿主直接注入初始占位符元数据
@@ -63,20 +71,23 @@ interface WordEditorPageSchema {
 | `onBack`          | `event`           | 返回动作               |
 | `onSave`          | `event`           | 保存动作               |
 | `statusPath`      | `value`           | 外部只读状态摘要路径   |
+| `config`          | `value`           | 侧栏存在性配置         |
 | `initialDocument` | `value`           | 初始文档数据           |
 | `datasets`        | `value`           | 预配置数据集           |
 | `initialCharts`   | `value`           | 初始图表占位符         |
 | `initialCodes`    | `value`           | 初始条码/二维码占位符  |
 | `toolbar`         | `region`          | 顶部 Ribbon 工具栏     |
-| `leftPanel`       | `region`          | 左侧面板 (大纲/数据集) |
-| `rightPanel`      | `region`          | 右侧属性面板           |
+| `leftPanel`       | `region`          | 左侧面板 (数据集/字段) |
+| `rightPanel`      | `region`          | 右侧大纲面板           |
 
 ## 6. regions 与 slot 约定
 
 - `toolbar` 承接顶部 Ribbon 风格动作区，包含格式化、插入、视图等功能组。
-- `leftPanel` 承接左侧面板，默认包含数据集管理 (`datasets` tab) 和字段列表 (`fields` tab) 两个 Tab。
-- `rightPanel` 承接右侧大纲面板，默认渲染 `OutlinePanel`。
+- `leftPanel` 承接左侧 override surface；当前默认生成器可提供数据集管理 (`datasets` tab) 和字段列表 (`fields` tab) 等内容。
+- `rightPanel` 承接右侧 override surface；当前默认生成器提供 outline 内容。
 - renderer definition 当前将 host capability publication 约束到 `toolbar`、`leftPanel`、`rightPanel` 三个 region。
+- 是否显示左/右工作台由 `config.leftPanel` / `config.rightPanel` 决定；对应 side 未定义时应整体隐藏。
+- 当前 `generator: 'default'` 会启用内置默认生成器；region override 只在对应 side 已由 config 启用后才挂载。
 
 ## 7. 运行期状态归属
 
@@ -145,7 +156,7 @@ host scope 向下投影四个只读字段：
 | `WordEditorPage.tsx` | renderers | 主页面编排                    |
 | `EditorCanvas.tsx`   | renderers | canvas-editor React 封装      |
 | `toolbar/`           | renderers | Ribbon 工具栏组件             |
-| `panels/`            | renderers | 左侧面板 (大纲、数据集、字段) |
+| `panels/`            | renderers | 左侧数据集/字段与右侧大纲面板 |
 | `dialogs/`           | renderers | 数据集配置、图表配置等对话框  |
 | `hooks/`             | renderers | 快捷键、store 订阅等 hooks    |
 

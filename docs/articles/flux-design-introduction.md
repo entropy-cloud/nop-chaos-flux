@@ -663,7 +663,7 @@ Flux 的验证系统围绕一个分层的 Owner 层次结构组织，每个 Owne
 
 每个 Owner 都有显式的生命周期阶段：`bootstrapping` → `active` → `refreshing` → `disposed`。`bootstrapping` 阶段完成字段注册与初始校验规则的挂载；`active` 阶段接受用户交互与实时验证；`refreshing` 阶段处理作用域数据刷新导致的验证状态同步；`disposed` 阶段清理所有验证资源。
 
-`formId` 机制使得跨表单操作成为可能：`setValue` / `setValues` / `submitForm` 等动作可以通过 `formId` 精确指定目标表单，在 `formId` 不匹配时显式失败——这避免了动作误发到错误表单的隐蔽问题。
+跨表单操作不应与普通 scope 写入混用：`setValue` / `setValues` 的规范语义是更新当前 dispatch scope，而不是隐式查找远程表单。若需要对具体表单实例执行写入或提交，推荐使用 `component:setValue` / `component:setValues` / `component:submit` 这类显式实例能力调用。
 
 ## 16. 总结 — 设计哲学
 

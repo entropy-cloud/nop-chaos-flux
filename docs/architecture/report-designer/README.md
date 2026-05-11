@@ -13,8 +13,8 @@ It is not a narrow product appendix for `nop-report`. This family documents how 
 Boundary reminder for this family:
 
 - Spreadsheet/Report editors share the same host-manifest / host-projection / namespaced-action / `WorkbenchShell` pattern as other domain hosts
-- but they do not participate in one universal workbench baseline object shared across all designers
-- each host family still owns its built-in default UI and its own explicit override surfaces
+- they do participate in the shared designer workbench-shell baseline defined by `docs/architecture/designer-workbench-shell.md`
+- this family still owns spreadsheet/report document semantics, config semantics, default generators, and explicit override surfaces
 - any future tooling should consume those per-family override surfaces rather than invent a second ambient workbench registry model
 
 Owner boundary:

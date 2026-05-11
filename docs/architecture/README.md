@@ -61,9 +61,11 @@ These docs are core architecture, not peripheral domain appendices.
 
 - `complex-control-host-protocol.md`
 - `capability-projection-manifest.md`
+- `designer-workbench-shell.md`
 - `flux-dsl-vm-extensibility.md`
 - `flow-designer/`
 - `report-designer/`
+- `word-editor/`
 
 They belong here because they define how Flux hosts complex editable domains, workbench shells, bridge/snapshot boundaries, namespace actions, and reusable host-platform abstractions.
 
@@ -133,7 +135,8 @@ Rules:
 
 - Treat `flux-design-principles.md` as the governing-principles anchor.
 - Treat `frontend-programming-model.md` as the top normative precedence document.
-- Treat `flow-designer` / `report-designer` / `complex-control-host-protocol.md` as core platform-extension architecture.
+- Treat `designer-workbench-shell.md` as the shared workbench-shell baseline for designer-style hosts.
+- Treat `flow-designer` / `report-designer` / `word-editor` / `complex-control-host-protocol.md` as core platform-extension architecture.
 - Treat `docs/architecture/condition-builder.md` and `docs/architecture/code-editor.md` as redirect notes only; their long-term owners now live under `docs/components/`.
 - Treat `docs/components/designer-page/design.md`, `docs/components/report-designer-page/design.md`, and `docs/components/spreadsheet-page/design.md` as renderer-owner docs that must defer family-level platform architecture back to `flow-designer/` and `report-designer/`.
 - Route historical evolution, migration narratives, and option-comparison material to `docs/analysis/`, `docs/plans/`, `docs/logs/`, or `docs/discussions/` instead of growing this subtree sideways.

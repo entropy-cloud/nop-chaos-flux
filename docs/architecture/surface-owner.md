@@ -317,6 +317,7 @@ Current live baseline:
 
 - declarative `dialog` / `drawer` 已成为 host-managed `SurfaceEntry`，并通过 root host stack 渲染。
 - 每个已打开 surface 都拥有 runtime-created child scope 和 surface-root validation owner；关闭后统一跟随 entry 生命周期释放。
+- 当 `openDialog` / `openDrawer` 需要为 surface body 编译 validation plan 时，compile failure 现在走 fail-closed 语义：surface 不再继续打开为“弱化成功”路径，而是通过 runtime host-reporting seam 报告结构化失败。
 
 This rule is part of the broader creator-owned boundary model documented in `docs/architecture/renderer-runtime.md` -> "Execution Boundary Ownership Matrix".
 

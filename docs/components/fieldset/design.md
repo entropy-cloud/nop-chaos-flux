@@ -5,6 +5,7 @@
 - `fieldset` 是表单分组容器 renderer，用来将多个表单字段组织在一个带标题的区域内。
 - 它是独立的容器组件，不使用 FieldFrame，不嵌入 FieldFrame 的 label/error/hint 逻辑。
 - 它渲染 `<fieldset>/<legend>` 结构，可选支持折叠/展开。
+- 它不是通用内容壳层；非表单内容分组应优先使用 `container`。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
@@ -100,6 +101,12 @@ fieldset 不涉及布局配置。`mode`/`labelAlign`/`labelWidth` 通过 React c
 | `flex`       | 多字段行布局                                  | fieldset 不负责行布局，但 body 内可以嵌套 flex                           |
 | `collapse`   | 通用折叠容器                                  | fieldset 专注表单分组，固定 `<fieldset>/<legend>` 结构，可传播 form mode |
 | `container`  | 通用视觉容器                                  | container 不传播 form mode，不使用 `<fieldset>` 语义                     |
+
+补充选型规则：
+
+- 需要表单字段分组，用 `fieldset`。
+- 需要普通说明区、摘要区、卡片样 section，用 `container`。
+- 需要行布局或栅格替代时，在 `fieldset.body` 内嵌 `flex` 或其他布局 renderer，而不是让 `fieldset` 自己承担布局原语角色。
 
 ## 12. 风险、取舍与后续阶段
 

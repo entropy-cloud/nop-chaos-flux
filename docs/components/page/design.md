@@ -4,6 +4,7 @@
 
 - `page` 是页面级根 renderer，用来承接 page runtime、页面标题和页面级 regions。
 - 它是 `SchemaRenderer` 在业务页面场景下的首选根节点，而不是普通布局容器的放大版。
+- 它不是 `container` 的语义增强写法，也不应被 `container` 替代。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
@@ -63,13 +64,19 @@
 - 根节点保留 `nop-page` 语义 marker。
 - 页面布局、间距和背景来自 schema 样式字段，不应在 renderer 内硬编码页面专属 spacing 规则。
 
-## 11. 实现拆分建议
+## 11. 与其他容器的边界
+
+- `page` 是 shell owner；`container` 只是普通内容壳层。
+- 页面内的普通 section、卡片包裹、说明区块应使用 `container` 或更专门的内容 renderer，而不是继续嵌套多个 `page`。
+- `page` 不负责替代 `form`、`tabs`、`dialog`、`drawer` 这些更窄 owner 语义。
+
+## 12. 实现拆分建议
 
 - `schemas.ts` 维护 `PageSchema`。
 - `index.tsx` 维护 renderer definition。
 - `page.tsx` 只消费 `props`、`regions` 和 page runtime hook。
 
-## 12. 风险、取舍与后续阶段
+## 13. 风险、取舍与后续阶段
 
 - 当前 TS schema 与 renderer regions 有轻微不一致，需要后续收敛。
 - 页面级导航、面包屑和 toolbar DSL 建议在有真实宿主需求后再补充，避免首版契约过重。

@@ -31,6 +31,7 @@ interface DesignerPageSchema {
 - 当前真正生效的 dialog 路径，是 toolbar / inspector / 其他 schema 片段通过共享 `dialog` action 打开 `SchemaRenderer` 自带的 dialog runtime
 - 仍然需要区分两件事：一是 `dialogs` region 片段本身现在已经会挂载；二是通过共享 `dialog` action 打开的弹窗仍然是另一条 dialog runtime 路径
 - `packages/flow-designer-renderers/src/designer-page-shell.test.tsx` 现在也有正向回归测试锁定该现状：直接传入 `dialogs` schema 会出现在页面上，避免文档与 live behavior 再次漂移
+- 根据 `docs/architecture/designer-workbench-shell.md`，左侧 palette 与右侧 inspector 的 canonical existence 来自 resolved config，而不是来自 renderer 私有固定栏位；没有 resolved panel definition 时，该侧应整体隐藏而不是保留空 rail
 
 ### 1.1 树模式文档字段
 
@@ -111,6 +112,7 @@ interface DesignerConfig {
 - `kind` 用于标识文档类型，比如 `workflow`、`state-machine`
 - `extends` 允许继承预设
 - `nodeTypes` 是核心配置
+- `palette` 定义左侧 palette 的 canonical config surface；当其解析结果为空时，左侧工作台应隐藏
 - `DesignerConfig` 只定义通用 graph editor 配置；某个 domain 如何把 `GraphDocument` round-trip 成自己的值 DSL，不属于 `DesignerConfig` 本体职责
 
 ### 3.0.2 树模式配置字段

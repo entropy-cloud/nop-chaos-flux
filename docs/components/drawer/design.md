@@ -5,6 +5,7 @@
 - `drawer` 是抽屉式弹层 renderer。
 - 它与 `dialog` 共享弹层语义，但强调边缘滑入和较强的上下文保留。
 - 从长期架构看，`drawer` 属于 surface family 的一种 public DSL authoring 形式，而不是独立 runtime family。
+- 它不是 `container` 的样式变体，也不是页面内普通侧边栏 section 的别名。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
@@ -76,11 +77,16 @@ Current live implementation note:
 - 标准 shell 结构应为 `DrawerContent -> DrawerHeader? -> DrawerBody -> DrawerFooter?`。
 - `DrawerContent` 负责弹层壳行为；默认 body spacing 应归 `DrawerBody`，并与 dialog 保持相同的 body-slot 责任边界。
 
-## 11. 实现拆分建议
+## 11. 与其他容器的边界
+
+- 与 `container`：需要页面内普通侧栏或说明面板时，用 `container`；需要 surface open-state 和 host stack 时，用 `drawer`。
+- 与 `dialog`：同属 surface family，但交互形态不同；不要仅因视觉偏好就把二者混成一个无差别 type。
+
+## 12. 实现拆分建议
 
 - 抽屉 open-state、方向映射和 host integration 分离。
 - surface family 的 open-state bridge、status publish、stack 订阅等共享逻辑应沉到共享 helper/runtime，而不是在 `drawer` 自己内部再长一套。
 
-## 12. 风险、取舍与后续阶段
+## 13. 风险、取舍与后续阶段
 
 - 需要避免 dialog/drawer 在统一 surface family 收口过程中再次分裂成 declarative 与 action-opened 两套生命周期模型；二者差异应尽量只保留在 `kind` 和 `side`。

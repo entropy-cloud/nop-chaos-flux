@@ -46,6 +46,10 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
         {
           type: 'word-editor-page',
           title: 'Word Editor',
+          config: {
+            leftPanel: { generator: 'default' },
+            rightPanel: { generator: 'default' },
+          },
           onBack: { action: 'navigate', args: { back: true } },
         } as any
       }

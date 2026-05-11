@@ -116,11 +116,13 @@ fragment scope = own patch only
 
 - `fragment`：无 UI、无布局、无 marker、只负责结构分组
 - `container`：有容器语义和最小壳层 marker，适合布局/包装
+- `flex`：纯布局盒模型，适合主轴/交叉轴控制，不适合无 UI 条件分组
 
 如果作者需要的是：
 
 - “把几项东西包在一起并统一加条件” -> `fragment`
 - “把几项东西放在一个通用容器壳层里” -> `container`
+- “把几项东西沿某个方向排布” -> `flex`
 
 ## 10. 与 Loop 的关系
 
