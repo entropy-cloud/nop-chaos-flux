@@ -72,15 +72,24 @@ export function DesignerPaletteContent(props: {
       data-testid={props.rootProps?.['data-testid']}
       data-cid={props.rootProps?.['data-cid']}
     >
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div>
+      <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+        <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-foreground">节点库</div>
           <div className="text-sm text-muted-foreground">{t('flux.flowDesigner.addNodeHint')}</div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-2 self-start">
           <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-border bg-transparent">
             {nodeTypes.length}
           </span>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => dispatch({ type: 'togglePalette' })}
+            aria-label={t('flux.flowDesigner.collapsePalette')}
+            data-testid="collapse-palette"
+          >
+            <DesignerIcon icon="chevron-left" />
+          </Button>
         </div>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto p-3">

@@ -287,8 +287,19 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
 
   return (
     <div className={cn('nop-inspector flex flex-col h-full text-foreground')}>
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div>
+      <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+        <div className="shrink-0 self-start">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => dispatch({ type: 'toggleInspector' })}
+            aria-label={t('flux.flowDesigner.collapseInspector')}
+            data-testid="collapse-inspector"
+          >
+            <DesignerIcon icon="chevron-right" />
+          </Button>
+        </div>
+        <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-foreground">
             {t('flux.flowDesigner.inspector.propertyPanel')}
           </div>

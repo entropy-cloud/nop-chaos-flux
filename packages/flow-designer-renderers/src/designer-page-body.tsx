@@ -355,7 +355,6 @@ export function DesignerPageBody({
           leftCollapsed={snapshot.paletteCollapsed}
           onLeftToggle={() => dispatch({ type: 'togglePalette' })}
           leftLabel={t('flux.flowDesigner.expandPalette')}
-          leftCollapseLabel={t('flux.flowDesigner.collapsePalette')}
           canvas={<DesignerCanvasContent />}
           rightPanel={
             showInspectorPanel
@@ -367,7 +366,6 @@ export function DesignerPageBody({
           rightCollapsed={snapshot.inspectorCollapsed}
           onRightToggle={() => dispatch({ type: 'toggleInspector' })}
           rightLabel={t('flux.flowDesigner.expandInspector')}
-          rightCollapseLabel={t('flux.flowDesigner.collapseInspector')}
           dialogs={
             hasRendererSlotContent(asReactNode(dialogsSlot)) ? asReactNode(dialogsSlot) : undefined
           }
