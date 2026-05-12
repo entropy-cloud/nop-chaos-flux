@@ -37,6 +37,7 @@ export interface CompileSchemaOptions {
   basePath?: SchemaPath;
   parentPath?: SchemaPath;
   schemaUrl?: string;
+  signal?: AbortSignal;
   parentScopePolicy?: ScopePolicy;
   cidState?: CompiledCidState;
   symbolTable?: CompileSymbolTable;

@@ -249,6 +249,7 @@ export function createRendererRuntime(input: {
 
       const result = await prepare(schema, {
         schemaUrl: options?.schemaUrl,
+        signal: options?.signal,
         importLoader: getEnv().importLoader,
         resolveImportUrl: getEnv().resolveImportUrl,
       });
@@ -274,10 +275,12 @@ export function createRendererRuntime(input: {
               if (pending) {
                 loadedModule = await pending;
               } else if (importLoader) {
+                options?.signal?.throwIfAborted?.();
                 const promise = importLoader.load(prepared.resolvedSpec);
                 moduleCache.setPending(moduleKey, promise);
                 try {
                   loadedModule = await promise;
+                  options?.signal?.throwIfAborted?.();
                   moduleCache.set(moduleKey, loadedModule);
                 } finally {
                   moduleCache.removePending(moduleKey);

@@ -247,6 +247,70 @@ describe('SchemaRenderer import preparation', () => {
       createRendererRuntimeSpy.mockRestore();
     }
   });
+
+  it('passes an AbortSignal into runtime.prepareSchema and aborts stale import prepares on rerender', async () => {
+    const originalCreateRendererRuntime = fluxRuntime.createRendererRuntime;
+    const formulaCompiler = createFormulaCompiler();
+    const seenSignals: AbortSignal[] = [];
+    let resolveFirst: ((value: { preparedImports: Map<string, any> }) => void) | undefined;
+    let resolveSecond: ((value: { preparedImports: Map<string, any> }) => void) | undefined;
+    const prepareSchema = vi
+      .fn()
+      .mockImplementationOnce((_schema, options?: { signal?: AbortSignal }) => {
+        seenSignals.push(options?.signal as AbortSignal);
+        return new Promise((resolve) => {
+          resolveFirst = resolve;
+        });
+      })
+      .mockImplementationOnce((_schema, options?: { signal?: AbortSignal }) => {
+        seenSignals.push(options?.signal as AbortSignal);
+        return new Promise((resolve) => {
+          resolveSecond = resolve;
+        });
+      });
+    const createRendererRuntimeSpy = vi
+      .spyOn(fluxRuntime, 'createRendererRuntime')
+      .mockImplementation((input) => {
+        const runtime = originalCreateRendererRuntime(input);
+        runtime.prepareSchema = prepareSchema as typeof runtime.prepareSchema;
+        return runtime;
+      });
+
+    try {
+      const SchemaRenderer = createSchemaRenderer([textRenderer]);
+      const { rerender } = render(
+        <SchemaRenderer
+          schemaUrl="test://schema-a.json"
+          schema={{ type: 'text', text: 'A', 'xui:imports': [{ from: 'lib-a', as: 'demo' }] } as any}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      await waitFor(() => expect(screen.getByText('Preparing schema imports.')).toBeTruthy());
+
+      rerender(
+        <SchemaRenderer
+          schemaUrl="test://schema-b.json"
+          schema={{ type: 'text', text: 'B', 'xui:imports': [{ from: 'lib-b', as: 'demo' }] } as any}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      await waitFor(() => expect(prepareSchema).toHaveBeenCalledTimes(2));
+      expect(seenSignals).toHaveLength(2);
+      expect(seenSignals[0].aborted).toBe(true);
+      expect(seenSignals[1].aborted).toBe(false);
+
+      resolveSecond?.({ preparedImports: new Map() });
+      await waitFor(() => expect(screen.getByText('B')).toBeTruthy());
+      resolveFirst?.({ preparedImports: new Map() });
+      await waitFor(() => expect(screen.getByText('B')).toBeTruthy());
+    } finally {
+      createRendererRuntimeSpy.mockRestore();
+    }
+  });
 });
 
 describe('SchemaRenderer null rendering', () => {

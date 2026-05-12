@@ -319,6 +319,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
 
       void prepare(props.schema, {
         schemaUrl: props.schemaUrl,
+        signal,
       })
         .then((result) => {
           if (signal.aborted || prepareRequestIdRef.current !== requestId) {

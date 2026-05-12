@@ -299,6 +299,7 @@ export interface RendererRuntime {
     schema: SchemaInput,
     options?: {
       schemaUrl?: string;
+      signal?: AbortSignal;
     },
   ): Promise<{
     preparedImports: ReadonlyMap<string, PreparedImportSpec>;
