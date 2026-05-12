@@ -6,6 +6,7 @@ import { createSchemaRenderer } from './schema-renderer.js';
 import { hasRendererSlotContent, resolveRendererSlotContent } from './render-nodes.js';
 import { FieldFrame } from './field-frame.js';
 import { EMPTY_FORM_STORE_STATE } from './form-state.js';
+import { NodeFrameWrapper } from './node-frame-wrapper.js';
 import { resolveFrameWrapMode } from './node-renderer-utils.js';
 import {
   buttonRenderer,
@@ -449,5 +450,56 @@ describe('reactive meta and draggable dialogs', () => {
     const drawerSurface = document.querySelector('[data-slot="drawer-surface"]');
     expect(drawerSurface).toBeTruthy();
     expect(document.querySelector('.nop-drawer-card')).toBeNull();
+  });
+
+  it('uses resolved frame props instead of raw schema values for field chrome', async () => {
+    const { container } = render(
+      <FormContext.Provider
+        value={{
+          store: {
+            subscribe: () => () => undefined,
+            getState: () => EMPTY_FORM_STORE_STATE,
+          },
+          validation: undefined,
+        } as any}
+      >
+        <NodeFrameWrapper
+          templateNode={{
+            type: 'wrap-probe',
+            schema: {
+              type: 'wrap-probe',
+              frameWrap: true,
+              hint: 'Schema hint',
+              description: 'Schema description',
+              labelAlign: 'left',
+              labelWidth: '80px',
+            },
+          } as any}
+          definitionWrap={true}
+          resolvedMeta={{} as any}
+          resolvedPropsValue={{
+            name: 'query',
+            label: 'Resolved Query',
+            hint: 'Runtime hint',
+            description: 'Runtime description',
+            labelAlign: 'top',
+            labelWidth: '240px',
+          }}
+          regions={{}}
+        >
+          <input aria-label="Query" />
+        </NodeFrameWrapper>
+      </FormContext.Provider>,
+    );
+
+    const field = await screen.findByText('Resolved Query');
+    expect(field).toBeTruthy();
+    expect(container.querySelector('.nop-field')?.getAttribute('data-label-align')).toBe('top');
+    expect(container.querySelector('[data-slot="field-label"]')?.getAttribute('style')).toContain(
+      'width: 240px',
+    );
+    expect(container.querySelector('[data-slot="field-description"]')?.textContent).toBe(
+      'Runtime description',
+    );
   });
 });

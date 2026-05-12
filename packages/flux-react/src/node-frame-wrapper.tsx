@@ -33,20 +33,39 @@ export function NodeFrameWrapper(props: {
     typeof props.resolvedPropsValue.required === 'boolean'
       ? props.resolvedPropsValue.required
       : undefined;
-  const hintValue = typeof schema.hint === 'string' ? schema.hint : undefined;
-  const descriptionValue = typeof schema.description === 'string' ? schema.description : undefined;
+  const hintValue =
+    typeof props.resolvedPropsValue.hint === 'string'
+      ? props.resolvedPropsValue.hint
+      : typeof schema.hint === 'string'
+        ? schema.hint
+        : undefined;
+  const descriptionValue =
+    typeof props.resolvedPropsValue.description === 'string'
+      ? props.resolvedPropsValue.description
+      : typeof schema.description === 'string'
+        ? schema.description
+        : undefined;
 
   const remarkValue =
-    typeof schema.remark === 'object' && schema.remark !== null
-      ? toFieldRemarkProps(schema.remark as FieldRemarkSchemaLike)
+    typeof props.resolvedPropsValue.remark === 'object' && props.resolvedPropsValue.remark !== null
+      ? toFieldRemarkProps(props.resolvedPropsValue.remark as FieldRemarkSchemaLike)
+      : typeof schema.remark === 'object' && schema.remark !== null
+        ? toFieldRemarkProps(schema.remark as FieldRemarkSchemaLike)
       : undefined;
   const labelRemarkValue =
-    typeof schema.labelRemark === 'object' && schema.labelRemark !== null
-      ? toFieldRemarkProps(schema.labelRemark as FieldRemarkSchemaLike)
+    typeof props.resolvedPropsValue.labelRemark === 'object' &&
+    props.resolvedPropsValue.labelRemark !== null
+      ? toFieldRemarkProps(props.resolvedPropsValue.labelRemark as FieldRemarkSchemaLike)
+      : typeof schema.labelRemark === 'object' && schema.labelRemark !== null
+        ? toFieldRemarkProps(schema.labelRemark as FieldRemarkSchemaLike)
       : undefined;
 
-  const labelAlignValue = schema.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined;
-  const labelWidthValue = schema.labelWidth as string | number | undefined;
+  const labelAlignValue =
+    (props.resolvedPropsValue.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined) ??
+    (schema.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined);
+  const labelWidthValue =
+    (props.resolvedPropsValue.labelWidth as string | number | undefined) ??
+    (schema.labelWidth as string | number | undefined);
   const usesInteractiveControlRoot =
     props.templateNode.type === 'array-editor' ||
     props.templateNode.type === 'array-field' ||
