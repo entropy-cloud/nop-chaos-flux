@@ -42,11 +42,15 @@ export function useCurrentValidationScope(): ValidationScopeRuntime | undefined 
   const currentForm = useCurrentForm();
   const currentPage = useContext(PageContext) as PageRuntime | undefined;
 
-  if (validationScope === NO_VALIDATION_OWNER) {
+  if (currentForm) {
     return currentForm;
   }
 
-  return validationScope ?? currentForm ?? currentPage?.validationOwner;
+  if (validationScope === NO_VALIDATION_OWNER) {
+    return undefined;
+  }
+
+  return validationScope ?? currentPage?.validationOwner;
 }
 
 function useCurrentValidationStore(): ValidationStoreApi | undefined {

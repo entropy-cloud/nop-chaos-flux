@@ -4,8 +4,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import type { ScopeValidationStateSnapshot, ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '../schema-renderer.js';
-import { useCurrentValidationScope } from '../hooks.js';
-import { env, pageRenderer } from '../test-support-core.js';
+import { useCurrentForm, useCurrentValidationScope } from '../hooks.js';
+import { env, formRenderer, pageRenderer } from '../test-support-core.js';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
@@ -37,6 +37,27 @@ const validationOwnerStateProbeRenderer: RendererDefinition = {
     }
 
     return <span data-testid="validation-owner-state-probe">probe</span>;
+  },
+};
+
+const nestedOwnerProbeState: {
+  validationOwnerScopeId: string | undefined;
+  currentFormScopeId: string | undefined;
+} = {
+  validationOwnerScopeId: undefined,
+  currentFormScopeId: undefined,
+};
+
+const nestedFormOwnerProbeRenderer: RendererDefinition = {
+  type: 'nested-form-owner-probe',
+  component: function NestedFormOwnerProbe() {
+    const validationOwner = useCurrentValidationScope();
+    const currentForm = useCurrentForm();
+
+    nestedOwnerProbeState.validationOwnerScopeId = validationOwner?.scopeId;
+    nestedOwnerProbeState.currentFormScopeId = currentForm?.scopeId;
+
+    return <span data-testid="nested-form-owner-probe">probe</span>;
   },
 };
 
@@ -155,6 +176,44 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
     });
 
     await screen.findByTestId('field-probe');
+  });
+
+  it('prefers the current form owner over an ancestor validation owner', async () => {
+    nestedOwnerProbeState.validationOwnerScopeId = undefined;
+    nestedOwnerProbeState.currentFormScopeId = undefined;
+
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      formRenderer,
+      nestedFormOwnerProbeRenderer,
+      fieldProbeRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema-validation-owner/nested-form"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'form',
+              body: [
+                { type: 'field-probe', name: 'email' },
+                { type: 'nested-form-owner-probe' },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(nestedOwnerProbeState.validationOwnerScopeId).toBe(
+        nestedOwnerProbeState.currentFormScopeId,
+      );
+    });
   });
 
   it('keeps managed surface-root owners bootstrapping when the opened body has no compiled validation plan', () => {
