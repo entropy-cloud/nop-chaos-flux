@@ -54,10 +54,13 @@ describe('crud-renderer-state helpers', () => {
       pageSize: 25,
     });
     expect(normalizePagination(undefined, 20)).toEqual({ currentPage: 1, pageSize: 20 });
-    expect(normalizeSort({ field: 'name', order: 'asc' })).toEqual({ field: 'name', order: 'asc' });
+    expect(normalizeSort({ field: 'name', order: 'asc' })).toEqual({
+      column: 'name',
+      direction: 'asc',
+    });
     expect(normalizeSort({ field: 3, order: 'bad' })).toEqual({
-      field: undefined,
-      order: undefined,
+      column: undefined,
+      direction: undefined,
     });
   });
 
@@ -286,7 +289,7 @@ describe('useCrudRuntimeState', () => {
 
     expect(runtimeState.queryState).toEqual({ values: { role: 'admin' }, refreshCount: 0 });
     expect(runtimeState.paginationState).toEqual({ currentPage: 4, pageSize: 25 });
-    expect(runtimeState.sortState).toEqual({ field: 'name', order: 'desc' });
+    expect(runtimeState.sortState).toEqual({ column: 'name', direction: 'desc' });
     expect(runtimeState.filterState).toEqual({ status: 'active' });
     expect(runtimeState.selectedRowKeys).toEqual(['r2']);
     expect(update).toHaveBeenCalledWith('query', { values: { role: 'user' }, refreshCount: 0 });
@@ -340,7 +343,7 @@ describe('useCrudRuntimeState', () => {
 
     expect(runtimeState.queryState).toEqual({ values: { role: 'scope' }, refreshCount: 7 });
     expect(runtimeState.paginationState).toEqual({ currentPage: 2, pageSize: 15 });
-    expect(runtimeState.sortState).toEqual({ field: 'scopeField', order: 'desc' });
+    expect(runtimeState.sortState).toEqual({ column: 'scopeField', direction: 'desc' });
     expect(runtimeState.filterState).toEqual({ status: 'scope' });
     expect(runtimeState.selectedRowKeys).toEqual(['scope-key']);
     expect(update).not.toHaveBeenCalled();

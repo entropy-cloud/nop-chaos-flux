@@ -110,6 +110,7 @@ export function renderDataRow(
       data-interactive={isRowInteractive || undefined}
       data-expanded={isExpanded || undefined}
       data-striped={isStriped && isEven ? true : undefined}
+      aria-expanded={expandRowByClick ? isExpanded : undefined}
       tabIndex={isRowInteractive ? 0 : undefined}
       onClick={isRowInteractive ? handleRowActivate : undefined}
       onKeyDown={

@@ -23,8 +23,8 @@ export interface CrudPaginationState {
 }
 
 export interface CrudSortState {
-  field?: string;
-  order?: 'asc' | 'desc';
+  column?: string;
+  direction?: 'asc' | 'desc';
 }
 
 export type CrudFilterState = Record<string, unknown>;
@@ -57,9 +57,21 @@ export function normalizePagination(value: unknown, fallbackPageSize: number): C
 
 export function normalizeSort(value: unknown): CrudSortState {
   const record = toRecord(value);
+  const column =
+    typeof record.column === 'string'
+      ? record.column
+      : typeof record.field === 'string'
+        ? record.field
+        : undefined;
+  const direction =
+    record.direction === 'asc' || record.direction === 'desc'
+      ? record.direction
+      : record.order === 'asc' || record.order === 'desc'
+        ? record.order
+        : undefined;
   return {
-    field: typeof record.field === 'string' ? record.field : undefined,
-    order: record.order === 'asc' || record.order === 'desc' ? record.order : undefined,
+    column,
+    direction,
   };
 }
 
@@ -254,7 +266,7 @@ export function useCrudRuntimeState(args: {
       const sort = getIn(scopeData, sortStatePath);
       return normalizeSort(sort ?? owner.sort);
     },
-    (a, b) => a.field === b.field && a.order === b.order,
+    (a, b) => a.column === b.column && a.direction === b.direction,
     { paths: [ownerStatePath, sortStatePath] },
   );
 

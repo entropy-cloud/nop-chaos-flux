@@ -254,7 +254,7 @@ describe('CRUD selection and features', () => {
       />,
     );
 
-    const inspectButtons = screen.getAllByText('Inspect');
+    const inspectButtons = await screen.findAllByText('Inspect');
     fireEvent.click(inspectButtons[1]);
 
     expect(await screen.findByText('Inspect record')).toBeTruthy();

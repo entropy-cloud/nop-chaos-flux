@@ -176,8 +176,8 @@ export interface CrudStatusSummary {
     pageSize?: number;
   };
   sort?: {
-    field?: string;
-    order?: 'asc' | 'desc';
+    column?: string;
+    direction?: 'asc' | 'desc';
   };
   filters?: Record<string, unknown>;
   visibleColumnNames?: string[];

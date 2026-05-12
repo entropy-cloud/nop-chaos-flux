@@ -55,7 +55,7 @@ describe('dataRendererDefinitions table behavior', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    const inspectButtons = screen.getAllByText('Inspect');
+    const inspectButtons = await screen.findAllByText('Inspect');
     fireEvent.click(inspectButtons[1]);
     expect(await screen.findByText('Record details')).toBeTruthy();
     expect(screen.getByText('User: Bob')).toBeTruthy();

@@ -2,7 +2,7 @@ import { startTransition, useCallback, useMemo, useState } from 'react';
 import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
-import { toStringArray } from './table-data.js';
+import { buildTableRowEntries, toStringArray } from './table-data.js';
 
 export function useTableSelection(
   schemaProps: TableSchema,
@@ -51,14 +51,22 @@ export function useTableSelection(
     [selectionOwnership, controlledSelectedRowKeys, scopeSelectedRowKeys, localSelectedRowKeys],
   );
 
+  const normalizedRows = useMemo(
+    () => buildTableRowEntries(source, schemaProps.rowKey),
+    [schemaProps.rowKey, source],
+  );
+
   const allSelected = useMemo(
-    () => source.length > 0 && source.every((r) => selectedRowKeys.has(String(r.id ?? ''))),
-    [source, selectedRowKeys],
+    () =>
+      normalizedRows.length > 0 && normalizedRows.every((row) => selectedRowKeys.has(row.rowKey)),
+    [normalizedRows, selectedRowKeys],
   );
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
-      const nextKeys = checked ? new Set(source.map((r) => String(r.id ?? ''))) : new Set<string>();
+      const nextKeys = checked
+        ? new Set(normalizedRows.map((row) => row.rowKey))
+        : new Set<string>();
 
       startTransition(() => {
         if (selectionOwnership === 'local') {
@@ -75,7 +83,7 @@ export function useTableSelection(
         ),
       });
     },
-    [selectionOwnership, selectionStatePath, source, onSelectionChange, helpers, renderScope],
+    [helpers, normalizedRows, onSelectionChange, renderScope, selectionOwnership, selectionStatePath],
   );
 
   const isRadio = schemaProps.rowSelection?.type === 'radio';

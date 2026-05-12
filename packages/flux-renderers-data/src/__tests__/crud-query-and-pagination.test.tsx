@@ -258,7 +258,7 @@ describe('CRUD query and pagination', () => {
               footerToolbar: [
                 {
                   type: 'text',
-                  text: 'Summary: page=${$crud.pagination.currentPage}/${$crud.pagination.pageSize}; sort=${$crud.sort.field || "none"}:${$crud.sort.order || "none"}; filter=${$crud.filters.status || "none"}',
+                  text: 'Summary: page=${$crud.pagination.currentPage}/${$crud.pagination.pageSize}; sort=${$crud.sort.column || "none"}:${$crud.sort.direction || "none"}; filter=${$crud.filters.status || "none"}',
                 },
               ],
               columns: [{ name: 'name', label: 'Name' }],
@@ -279,6 +279,48 @@ describe('CRUD query and pagination', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Summary: page=3/20; sort=name:asc; filter=active')).toBeTruthy();
+    });
+  });
+
+  it('updates $crud.sort using the canonical table sort shape after header clicks', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-sort-shape"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              source: [
+                { id: '1', name: 'Bob' },
+                { id: '2', name: 'Alice' },
+              ],
+              sortOwnership: 'scope',
+              sortStatePath: 'crudState.sort',
+              footerToolbar: [
+                {
+                  type: 'text',
+                  text: 'Sort=${$crud.sort.column || "none"}:${$crud.sort.direction || "none"}',
+                },
+              ],
+              columns: [{ name: 'name', label: 'Name', sortable: true }],
+            },
+          ],
+        }}
+        data={{ crudState: { sort: {} } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(screen.getByText('Sort=none:none')).toBeTruthy();
+    fireEvent.click(screen.getByText('Name'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Sort=name:asc')).toBeTruthy();
     });
   });
 });

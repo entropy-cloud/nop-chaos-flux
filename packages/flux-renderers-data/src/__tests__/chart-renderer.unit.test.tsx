@@ -182,6 +182,29 @@ describe('ChartRenderer', () => {
     expect(screen.getByLabelText('Revenue chart')).toBeTruthy();
   });
 
+  it('renders a textual data equivalent for assistive technologies', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            title: 'Revenue chart',
+            xAxis: { dataKey: 'month' },
+            source: [
+              { month: 'Jan', value: 3 },
+              { month: 'Feb', value: 5 },
+            ],
+            series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+          },
+        })}
+      />,
+    );
+
+    const equivalent = document.querySelector('[data-slot="chart-data-equivalent"]');
+    expect(equivalent?.textContent).toContain('Revenue chart');
+    expect(equivalent?.textContent).toContain('Jan: Revenue: 3');
+    expect(equivalent?.textContent).toContain('Feb: Revenue: 5');
+  });
+
   it('registers a chart handle and supports the resize capability', () => {
     const dispose = vi.fn();
     const register = vi.fn(() => dispose);

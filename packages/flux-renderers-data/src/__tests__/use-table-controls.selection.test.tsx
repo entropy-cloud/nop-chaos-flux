@@ -106,6 +106,29 @@ describe('useTableSelection', () => {
     expect(renderScopeUpdate).toHaveBeenCalledWith('tableState.selected', []);
   });
 
+  it('uses normalized rowKey values for select-all state', () => {
+    const helpers = createHelpers();
+    let api: any;
+
+    render(
+      <SelectionProbe
+        schemaProps={{
+          rowKey: 'meta.key',
+          rowSelection: { selectedRowKeys: ['user-1', 'user-2'], type: 'checkbox' },
+          selectionOwnership: 'controlled',
+        }}
+        source={[{ id: '1', meta: { key: 'user-1' } }, { id: '2', meta: { key: 'user-2' } }]}
+        onSelectionChange={vi.fn()}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    expect(api.allSelected).toBe(true);
+  });
+
   it('accumulates checkbox selections in scope ownership mode', () => {
     const helpers = createHelpers();
     const onSelectionChange = vi.fn();

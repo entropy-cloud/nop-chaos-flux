@@ -229,6 +229,45 @@ describe('table internal components', () => {
     expect(onRowClick).toHaveBeenCalledTimes(2);
   });
 
+  it('publishes aria-expanded on rows when row-click expansion is enabled', () => {
+    const rowScopeCache = new Map<string, any>([['1', makeRowScope({ name: 'Alice' }, 0)]]);
+    const processedData = [{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } }];
+
+    render(
+      <table>
+        <TableBodyRows
+          props={makeTableProps({ events: {} })}
+          columns={[{ label: 'Name', name: 'name' } as any]}
+          responsiveHiddenColumns={[]}
+          processedData={processedData as any}
+          rowScopeCache={rowScopeCache}
+          rowRepeatedTemplateId="row"
+          expandedRowKeys={new Set(['1'])}
+          selectedRowKeys={new Set()}
+          columnCount={1}
+          isStriped={false}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
+          emptyContent={null}
+          showExpandColumn={false}
+          expandRowByClick={true}
+          onToggleExpand={() => {}}
+          onSelectRow={() => {}}
+          virtualEnabled={false}
+        />
+      </table>,
+    );
+
+    expect(document.querySelector('[data-slot="table-row"]')?.getAttribute('aria-expanded')).toBe(
+      'true',
+    );
+  });
+
   it('renders data rows with checkbox selection cells and correct field values', () => {
     const onSelectRow = vi.fn();
     const rowScopeCache = new Map<string, any>([

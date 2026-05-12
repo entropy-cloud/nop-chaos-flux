@@ -116,6 +116,26 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
 
   const chartHeight = typeof height === 'number' ? `${height}px` : height || '400px';
   const chartAccessibleName = title?.trim() || t('flux.common.chart');
+  const resolvedChartType = (
+    series.length > 0 ? (series[0].type ?? chartType) : chartType
+  ) as ChartType;
+  const chartDataSummary = useMemo(() => {
+    if (resolvedChartType === 'pie') {
+      return pieData.map((item) => `${item.name}: ${item.value}`);
+    }
+
+    return cartesianData.slice(0, 20).map((item, index) => {
+      const record = item as Record<string, unknown>;
+      const label = xKey ? String(record[xKey] ?? `item-${index + 1}`) : `item-${index + 1}`;
+      const seriesList = (series.length > 0 ? series : [{ name: 'value' } as ChartSeriesSchema])
+        .map((seriesItem) => {
+          const key = seriesItem.dataRegionKey ?? seriesItem.name ?? 'value';
+          return `${seriesItem.name ?? key}: ${String(record[key] ?? '')}`;
+        })
+        .join(', ');
+      return `${label}: ${seriesList}`;
+    });
+  }, [cartesianData, pieData, resolvedChartType, series, xKey]);
 
   const handleResize = useCallback(() => {
     void chartRef.current;
@@ -153,10 +173,6 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     if (!componentRegistry) return;
     return componentRegistry.register(chartHandle, { cid: props.meta.cid });
   }, [chartHandle, componentRegistry, props.meta.cid]);
-
-  const resolvedChartType = (
-    series.length > 0 ? (series[0].type ?? chartType) : chartType
-  ) as ChartType;
 
   const renderChart = () => {
     if (resolvedChartType === 'pie') {
@@ -283,6 +299,14 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           }
           onMouseEnter={(event) => void props.events.onHover?.(event, {})}
         >
+          <div className="sr-only" data-slot="chart-data-equivalent">
+            <p>{chartAccessibleName}</p>
+            <ul>
+              {chartDataSummary.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
           {loading ? (
             <div
               style={{
