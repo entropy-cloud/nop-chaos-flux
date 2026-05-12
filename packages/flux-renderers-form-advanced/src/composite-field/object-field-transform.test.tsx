@@ -252,4 +252,81 @@ describe('object-field transform actions', () => {
     });
   });
 
+  it('ignores pending async transformOutAction completion after unmount', async () => {
+    cleanup();
+    const submitValues: Record<string, unknown>[] = [];
+    let resolveTransform:
+      | ((value: { ok: boolean; data: Record<string, unknown> }) => void)
+      | undefined;
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: (method: string): Promise<ActionResult> => {
+            if (method !== 'toPersisted') {
+              return Promise.resolve({ ok: true });
+            }
+
+            return new Promise((resolve) => {
+              resolveTransform = resolve as (value: {
+                ok: boolean;
+                data: Record<string, unknown>;
+              }) => void;
+            });
+          },
+        }),
+      })),
+    };
+
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs, submitButtonRenderer]);
+    const rendered = render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/object-field.test.tsx#9"
+        schema={{
+          type: 'form',
+          id: 'obj-transform-out-unmount-form',
+          data: {
+            profile: {
+              firstName: 'Alice',
+              lastName: 'Smith',
+            },
+          },
+          body: [
+            {
+              type: 'object-field',
+              name: 'profile',
+              label: 'Profile',
+              'xui:imports': [{ from: 'object-lib', as: 'objectLib' }],
+              transformOutAction: { action: 'objectLib:toPersisted' },
+              body: [{ type: 'input-text', name: 'firstName', label: 'First Name' }],
+            },
+          ],
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit',
+              onClick: { action: 'component:submit', componentId: 'obj-transform-out-unmount-form' },
+            },
+          ],
+        }}
+        env={{
+          ...env,
+          importLoader,
+          fetcher: makeCapturingFetcher(submitValues),
+        }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const input = await screen.findByLabelText('First Name');
+    fireEvent.change(input, { target: { value: 'Bob' } });
+    rendered.unmount();
+
+    resolveTransform?.({ ok: true, data: { firstName: 'BOB', lastName: 'Smith' } });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(submitValues).toHaveLength(0);
+  });
+
 });

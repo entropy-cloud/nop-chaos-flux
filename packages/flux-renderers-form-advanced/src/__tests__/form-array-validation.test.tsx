@@ -271,6 +271,43 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     expect(input.getAttribute('aria-errormessage')).toBe(error.id);
   });
 
+  it('does not publish parent array validation on change when validateOn is submit', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-array-validation.test.tsx#validateon-submit"
+        schema={{
+          type: 'form',
+          showErrorOn: ['touched', 'submit'],
+          validateOn: ['submit'],
+          data: {
+            reviewers: [],
+          },
+          body: [
+            {
+              type: 'array-editor',
+              name: 'reviewers',
+              label: 'Reviewers',
+              itemLabel: 'Reviewer',
+              minItems: 2,
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Add item'));
+    fireEvent.change(screen.getByPlaceholderText('Reviewer 1'), { target: { value: 'alice' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Reviewers must contain at least 2 item(s)')).toBeNull();
+    });
+  });
+
   it('associates key-value child errors with the matching inputs', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs]);

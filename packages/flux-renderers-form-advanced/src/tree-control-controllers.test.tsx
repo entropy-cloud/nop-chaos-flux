@@ -1,8 +1,9 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   getSourceErrorMessage,
+  useTreeOptionNodeController,
   useTreeOptionListController,
   useTreeSelectController,
 } from './tree-control-controllers.js';
@@ -48,6 +49,38 @@ function TriggerHarness(props: {
       <span data-testid="trigger-label">{result.triggerLabel}</span>
       <span data-testid="has-selection">{String(result.hasSelection)}</span>
     </div>
+  );
+}
+
+function NodeControllerHarness(props: {
+  disabled?: boolean;
+  onChange: (value: unknown) => void;
+}) {
+  const option = buildTreeOptionMetaList([
+    {
+      label: 'Engineering',
+      value: 'eng',
+      children: [{ label: 'Platform', value: 'platform' }],
+    },
+  ])[0];
+  const controller = useTreeOptionNodeController({
+    option,
+    value: '',
+    multiple: false,
+    disabled: props.disabled ?? false,
+    onChange: props.onChange,
+  });
+
+  return (
+    <>
+      <button type="button" onKeyDown={controller.handleChevronKeyDown} data-testid="chevron">
+        chevron
+      </button>
+      <div onKeyDown={controller.handleKeyDown} data-testid="row" tabIndex={0}>
+        row
+      </div>
+      <span data-testid="expanded">{String(controller.expanded)}</span>
+    </>
   );
 }
 
@@ -116,5 +149,20 @@ describe('tree control controllers', () => {
     expect(screen.getByTestId('trigger-text').textContent).toBe('');
     expect(screen.getByTestId('trigger-label').textContent).toBe('Choose department');
     expect(screen.getByTestId('has-selection').textContent).toBe('false');
+  });
+
+  it('toggles chevron by keyboard without selecting the row', () => {
+    cleanup();
+    const onChange = vi.fn();
+
+    render(<NodeControllerHarness onChange={onChange} />);
+
+    fireEvent.keyDown(screen.getByTestId('chevron'), { key: 'Enter' });
+    expect(screen.getByTestId('expanded').textContent).toBe('false');
+    expect(onChange).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(screen.getByTestId('chevron'), { key: ' ' });
+    expect(screen.getByTestId('expanded').textContent).toBe('true');
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

@@ -13,8 +13,12 @@ import {
   cn,
 } from '@nop-chaos/ui';
 import { ChevronRightIcon, ChevronsUpDownIcon, SearchIcon, XIcon } from 'lucide-react';
-import { formLabelFieldRule, useFormFieldController } from '@nop-chaos/flux-renderers-form';
-import { createFieldValidation } from '@nop-chaos/flux-renderers-form';
+import {
+  createFieldValidation,
+  formLabelFieldRule,
+  useFormFieldController,
+  validateInputFieldSchema,
+} from '@nop-chaos/flux-renderers-form';
 import type { InputTreeSchema, TreeSelectSchema } from '@nop-chaos/flux-renderers-form';
 import { buildTreeOptionMetaList, getTreeOptionConfig, type TreeOptionMeta } from './tree-options.js';
 import {
@@ -33,8 +37,15 @@ function TreeOptionNode(props: {
   disabled: boolean;
   onChange: (value: unknown) => void;
 }) {
-  const { expanded, checked, hasChildren, handleSelect, handleKeyDown, handleChevronClick } =
-    useTreeOptionNodeController(props);
+  const {
+    expanded,
+    checked,
+    hasChildren,
+    handleSelect,
+    handleKeyDown,
+    handleChevronClick,
+    handleChevronKeyDown,
+  } = useTreeOptionNodeController(props);
 
   return (
     <div data-slot="tree-option-node" data-depth={props.option.depth}>
@@ -72,6 +83,7 @@ function TreeOptionNode(props: {
           }
           disabled={!hasChildren}
           onClick={handleChevronClick}
+          onKeyDown={handleChevronKeyDown}
         >
           <ChevronRightIcon
             className={cn('size-3.5 transition-transform', expanded ? 'rotate-90' : '')}
@@ -189,7 +201,11 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           multiple={multiple}
           showPathLabel={props.props.showPathLabel === true}
           searchable={props.props.searchable === true}
-          disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
+          disabled={
+            presentation.effectiveDisabled ||
+            presentation.readOnly ||
+            optionsSourceState?.loading === true
+          }
           onChange={(nextValue) => handlers.onChange(nextValue)}
           searchLabel={searchLabel}
         />
@@ -282,7 +298,11 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             multiple={multiple}
             showPathLabel={props.props.showPathLabel === true}
             searchable={props.props.searchable === true}
-            disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
+            disabled={
+              presentation.effectiveDisabled ||
+              presentation.readOnly ||
+              optionsSourceState?.loading === true
+            }
             onChange={(nextValue) => handlers.onChange(nextValue)}
             searchLabel={searchLabel}
           />
@@ -309,6 +329,7 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
     ],
     validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
     component: InputTreeRenderer,
   },
@@ -319,6 +340,7 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
     ],
     validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
     component: TreeSelectRenderer,
   },

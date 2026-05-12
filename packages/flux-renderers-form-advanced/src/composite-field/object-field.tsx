@@ -164,6 +164,13 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const pendingTransformOutOwner = React.useMemo(() => ({}), []);
 
   React.useEffect(() => {
+    return () => {
+      invalidateTransformOutSequence(transformOutOwner);
+      setPendingTransformOut(pendingTransformOutOwner, null);
+    };
+  }, [pendingTransformOutOwner, transformOutOwner]);
+
+  React.useEffect(() => {
     if (!usesWorkingValue || !schemaProps.transformInAction) {
       setResolvedValue(rawValue);
       return;

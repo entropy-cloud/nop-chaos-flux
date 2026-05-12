@@ -39,24 +39,24 @@ describe('tag-list renderer', () => {
     const redTag = await screen.findByText('red');
     const blueTag = screen.getByText('blue');
 
-    const initialRedClass = redTag.closest('[role="button"]')?.className;
-    const initialBlueClass = blueTag.closest('[role="button"]')?.className;
+    const initialRedClass = redTag.closest('button')?.className;
+    const initialBlueClass = blueTag.closest('button')?.className;
 
     fireEvent.click(redTag);
     await waitFor(() =>
-      expect(redTag.closest('[role="button"]')?.className).not.toBe(initialRedClass),
+      expect(redTag.closest('button')?.className).not.toBe(initialRedClass),
     );
 
     fireEvent.click(blueTag);
     await waitFor(() =>
-      expect(blueTag.closest('[role="button"]')?.className).not.toBe(initialBlueClass),
+      expect(blueTag.closest('button')?.className).not.toBe(initialBlueClass),
     );
 
     fireEvent.click(redTag);
-    await waitFor(() => expect(redTag.closest('[role="button"]')?.className).toBe(initialRedClass));
+    await waitFor(() => expect(redTag.closest('button')?.className).toBe(initialRedClass));
   });
 
-  it('validates required selections after the field has been touched in a form', async () => {
+  it('revalidates change-path selections in a form when validateOn includes change', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
@@ -69,6 +69,54 @@ describe('tag-list renderer', () => {
         schemaUrl="test://flux-renderers-form-advanced/tag-list.test.tsx#2"
         schema={{
           type: 'form',
+          validateOn: 'change',
+          data: {
+            tags: [],
+          },
+          body: [
+            {
+              type: 'tag-list',
+              name: 'tags',
+              label: 'Tags',
+              required: true,
+              tags: ['red'],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const redTag = await screen.findByText('red');
+    fireEvent.focus(redTag);
+    fireEvent.click(redTag);
+
+    await waitFor(() => {
+      expect(redTag.closest('button')?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    fireEvent.click(redTag);
+
+    await waitFor(() => {
+      expect(redTag.closest('button')?.getAttribute('aria-pressed')).toBe('false');
+    });
+  });
+
+  it('does not validate on change when validateOn is submit-only', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      ...formAdvancedRendererDefinitions,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/tag-list.test.tsx#submit-only"
+        schema={{
+          type: 'form',
+          validateOn: 'submit',
           data: {
             tags: [],
           },
@@ -92,10 +140,13 @@ describe('tag-list renderer', () => {
     fireEvent.click(redTag);
     fireEvent.click(redTag);
 
-    await waitFor(() => expect(screen.getByText('Tags requires at least one tag')).toBeTruthy());
+    await waitFor(() => {
+      expect(redTag.closest('button')?.getAttribute('aria-pressed')).toBe('false');
+    });
+    expect(screen.queryByText('Tags requires at least one tag')).toBeNull();
   });
 
-  it('does not toggle an internal tag action when the wrapped field shell is clicked', async () => {
+  it('toggles an internal tag action when the wrapped field shell is clicked through label semantics', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
@@ -127,11 +178,11 @@ describe('tag-list renderer', () => {
     const field = redTag.closest('.nop-field');
 
     expect(field).toBeTruthy();
-    expect(redTag.closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('false');
+    expect(redTag.closest('button')?.getAttribute('aria-pressed')).toBe('false');
 
     fireEvent.click(field!);
 
-    expect(redTag.closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('false');
+    expect(redTag.closest('button')?.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('toggles tags with keyboard activation through the same business path as click', async () => {
@@ -162,7 +213,7 @@ describe('tag-list renderer', () => {
     );
 
     const redTag = await screen.findByText('red');
-    const action = redTag.closest('[role="button"]');
+    const action = redTag.closest('button');
 
     expect(action?.getAttribute('aria-pressed')).toBe('false');
     fireEvent.keyDown(action!, { key: 'Enter' });
@@ -214,14 +265,14 @@ describe('tag-list renderer', () => {
     );
 
     const tagButtons = await screen.findAllByText('alpha');
-    expect(tagButtons[0].closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('true');
+    expect(tagButtons[0].closest('button')?.getAttribute('aria-pressed')).toBe('true');
     fireEvent.click(tagButtons[0]);
 
     await waitFor(() => {
-      expect(tagButtons[0].closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('false');
+      expect(tagButtons[0].closest('button')?.getAttribute('aria-pressed')).toBe('false');
     });
     expect(screen.queryByText('Tags requires at least one tag')).toBeNull();
-    expect(tagButtons[1].closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('true');
+    expect(tagButtons[1].closest('button')?.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('does not mutate value when rendered readOnly', async () => {
@@ -255,7 +306,7 @@ describe('tag-list renderer', () => {
     );
 
     const redTag = await screen.findByText('red');
-    const action = redTag.closest('[role="button"]');
+    const action = redTag.closest('button');
 
     expect(action?.getAttribute('aria-pressed')).toBe('true');
     fireEvent.click(redTag);

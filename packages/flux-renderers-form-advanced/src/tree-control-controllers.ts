@@ -96,9 +96,37 @@ export function useTreeOptionNodeController(input: {
   );
 
   const handleChevronClick = React.useCallback((event: React.MouseEvent<HTMLSpanElement>) => {
+    event.preventDefault();
     event.stopPropagation();
     setExpanded((previous) => !previous);
   }, []);
+
+  const handleChevronKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (!hasChildren) {
+        return;
+      }
+
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        event.stopPropagation();
+        setExpanded((previous) => !previous);
+      }
+
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        event.stopPropagation();
+        setExpanded(true);
+      }
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        event.stopPropagation();
+        setExpanded(false);
+      }
+    },
+    [hasChildren],
+  );
 
   return {
     expanded,
@@ -107,6 +135,7 @@ export function useTreeOptionNodeController(input: {
     handleSelect,
     handleKeyDown,
     handleChevronClick,
+    handleChevronKeyDown,
   };
 }
 

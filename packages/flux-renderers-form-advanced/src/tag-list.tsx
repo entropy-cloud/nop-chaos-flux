@@ -2,13 +2,14 @@ import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import {
   useCurrentFormFieldState,
-  useCurrentFormModelGeneration,
   useCurrentValidationScope,
 } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   resolveFieldLabelText,
+  shouldValidateOn,
+  shouldValidateOnOwner,
   useFormFieldController,
 } from '@nop-chaos/flux-renderers-form';
 import type { TagListSchema } from '@nop-chaos/flux-renderers-form';
@@ -30,24 +31,23 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const value = Array.isArray(boundValue) ? boundValue.map((item) => String(item)) : [];
   const labelText = resolveFieldLabelText(props, name);
   const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];
-  const modelGeneration = useCurrentFormModelGeneration();
   const currentValidationScope = useCurrentValidationScope();
-  const fieldState = useCurrentFormFieldState(name, { path: name, ownerPath: name });
+  const _fieldState = useCurrentFormFieldState(name, { path: name, ownerPath: name });
 
   const syncErrorVisibility = React.useCallback(() => {
     if (!name) {
       return;
     }
 
-    if (currentForm && (currentForm.isTouched(name) || fieldState.submitting)) {
+    if (currentForm && shouldValidateOn(name, currentForm, 'change')) {
       void currentForm.validateField(name);
       return;
     }
 
-    if (currentValidationScope?.touchField && fieldState.touched) {
+    if (currentValidationScope?.touchField && shouldValidateOnOwner(name, currentValidationScope, 'change')) {
       void currentValidationScope.validateAt(name, 'change');
     }
-  }, [currentForm, currentValidationScope, fieldState.submitting, fieldState.touched, name]);
+  }, [currentForm, currentValidationScope, name]);
 
   React.useEffect(() => {
     const owner = currentForm ?? currentValidationScope;
@@ -80,7 +80,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
         return [];
       },
     }).unregister;
-  }, [currentForm, currentValidationScope, labelText, modelGeneration, name, required, scope]);
+  }, [currentForm, currentValidationScope, labelText, name, required, scope]);
 
   return (
     <div
@@ -122,7 +122,12 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
               } else {
                 currentValidationScope?.touchField?.(name);
                 scope.update(name, nextValue);
-                void currentValidationScope?.validateAt(name, 'change');
+                if (
+                  currentValidationScope &&
+                  shouldValidateOnOwner(name, currentValidationScope, 'change')
+                ) {
+                  void currentValidationScope.validateAt(name, 'change');
+                }
               }
             }}
           >

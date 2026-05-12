@@ -316,4 +316,16 @@ describe('createItemFormProxy', () => {
     proxy.setValue('', { name: 'Alice' });
     expect(form.setValue).toHaveBeenCalledWith('contacts.0', { name: 'Alice' });
   });
+
+  it('delegates array mutation helpers through the projected item form', () => {
+    const store = createMinimalFormStore();
+    const form = createMinimalFormRuntime(store);
+    const proxy = createItemFormProxy(form, 'contacts', 0, 'object');
+
+    proxy.appendValue?.('phones', { number: '123' });
+    proxy.removeValue?.('phones', 1);
+
+    expect(form.appendValue).toHaveBeenCalledWith('contacts.0.phones', { number: '123' });
+    expect(form.removeValue).toHaveBeenCalledWith('contacts.0.phones', 1);
+  });
 });

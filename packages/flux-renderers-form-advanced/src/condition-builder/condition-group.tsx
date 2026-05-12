@@ -256,6 +256,7 @@ export function ConditionGroup({
             className="absolute -right-2 -top-2 z-10 rounded-full text-muted-foreground hover:text-destructive hover:border-destructive shadow-sm"
             onClick={onRemove}
             title={removeGroupLabel}
+            aria-label={removeGroupLabel}
           >
             ×
           </WrappedFieldAction>
@@ -268,6 +269,7 @@ export function ConditionGroup({
                 <WrappedFieldAction
                   variant="ghost"
                   size="xs"
+                  aria-pressed={value.conjunction === 'and'}
                   className={cn(
                     'px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors',
                     value.conjunction === 'and'
@@ -282,6 +284,7 @@ export function ConditionGroup({
                 <WrappedFieldAction
                   variant="ghost"
                   size="xs"
+                  aria-pressed={value.conjunction === 'or'}
                   className={cn(
                     'px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors',
                     value.conjunction === 'or'
@@ -302,6 +305,7 @@ export function ConditionGroup({
               <WrappedFieldAction
                 variant="ghost"
                 size="xs"
+                aria-pressed={value.not}
                 className={cn(
                   'ml-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-colors',
                   value.not

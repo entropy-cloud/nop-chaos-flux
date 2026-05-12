@@ -63,6 +63,7 @@ export function createItemFormProxy(
     ownerRootPath: itemFullPrefix,
     prefixPath,
     scalarValueAlias: itemKind === 'scalar' ? 'value' : undefined,
+    supportsArrayMutations: true,
     projectValues(state) {
       const rawItemValue = getIn(state.values, itemFullPrefix);
       return itemKind === 'scalar'

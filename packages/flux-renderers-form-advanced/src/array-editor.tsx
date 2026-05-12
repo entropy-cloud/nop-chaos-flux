@@ -260,7 +260,10 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       }
 
       currentForm.setValue(name, nextItems);
-      void currentForm.validateField(name);
+
+      if (shouldValidateOn(name, currentForm, 'change')) {
+        void currentForm.validateField(name);
+      }
     },
     [currentForm, name, scope],
   );
@@ -375,7 +378,11 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
           if (currentForm && name) {
             currentForm.appendValue(name, nextItem);
-            void currentForm.validateField(name);
+
+            if (shouldValidateOn(name, currentForm, 'change')) {
+              void currentForm.validateField(name);
+            }
+
             return;
           }
 

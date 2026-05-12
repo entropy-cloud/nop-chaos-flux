@@ -1,11 +1,14 @@
 import React from 'react';
+import { Button } from '@nop-chaos/ui';
 
-type WrappedFieldActionProps = Omit<React.HTMLAttributes<HTMLSpanElement>, 'onClick'> & {
+type WrappedFieldActionProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
   variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive' | 'link';
   size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon' | 'icon-xs' | 'icon-sm' | 'icon-lg';
   disabled?: boolean;
-  onClick?: (event: React.MouseEvent<HTMLSpanElement>) => void;
-  onPress?: (event: React.MouseEvent<HTMLSpanElement> | React.KeyboardEvent<HTMLSpanElement>) => void;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onPress?: (
+    event: React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLButtonElement>,
+  ) => void;
 };
 
 function joinClassNames(...parts: Array<string | undefined | false>) {
@@ -66,7 +69,7 @@ export function WrappedFieldAction(props: WrappedFieldActionProps) {
   } = props;
 
   const invokePrimaryAction = (
-    e: React.MouseEvent<HTMLSpanElement> | React.KeyboardEvent<HTMLSpanElement>,
+    e: React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLButtonElement>,
   ) => {
     onPress?.(e);
 
@@ -76,11 +79,11 @@ export function WrappedFieldAction(props: WrappedFieldActionProps) {
     }
 
     if (onClick) {
-      onClick(e as unknown as React.MouseEvent<HTMLSpanElement>);
+      onClick(e as unknown as React.MouseEvent<HTMLButtonElement>);
     }
   };
 
-  const handleClick = (e: React.MouseEvent<HTMLSpanElement>) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) {
       e.preventDefault();
       e.stopPropagation();
@@ -91,7 +94,7 @@ export function WrappedFieldAction(props: WrappedFieldActionProps) {
     invokePrimaryAction(e);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     onKeyDown?.(e);
 
     if (e.defaultPrevented || disabled) {
@@ -106,17 +109,18 @@ export function WrappedFieldAction(props: WrappedFieldActionProps) {
   };
 
   return (
-    <span
+    <Button
       {...rest}
-      role="button"
-      tabIndex={disabled ? -1 : 0}
-      aria-disabled={disabled ? 'true' : undefined}
+      type={rest.type ?? 'button'}
+      disabled={disabled}
+      variant={variant}
+      size={size}
       className={getWrappedFieldActionClasses(variant, size, className, disabled)}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       data-slot="button"
     >
       {children}
-    </span>
+    </Button>
   );
 }

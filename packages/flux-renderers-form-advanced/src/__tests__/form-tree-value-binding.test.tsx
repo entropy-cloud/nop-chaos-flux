@@ -234,4 +234,43 @@ describe('tree controls - value binding and form integration', () => {
       );
     });
   });
+
+  it('does not mutate input-tree value when field is readOnly', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-value-binding.test.tsx#5"
+        schema={
+          {
+            type: 'form',
+            data: { dept: '' },
+            body: [
+              {
+                type: 'input-tree',
+                name: 'dept',
+                label: 'Dept',
+                readOnly: true,
+                treeMode: 'radio',
+                options: [{ label: 'Engineering', value: 'eng' }],
+              },
+              {
+                type: 'form-state-probe',
+                name: 'dept',
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Engineering'));
+
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('form-state:dept').textContent ?? 'null')).toBe('');
+    });
+  });
 });

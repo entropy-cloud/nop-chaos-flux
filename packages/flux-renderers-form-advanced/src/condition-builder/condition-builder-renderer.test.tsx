@@ -349,4 +349,43 @@ describe('condition-builder renderer integration', () => {
       });
     });
   });
+
+  it('publishes pressed state for conjunction toggles and an accessible remove-group action', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allDefs);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#a11y"
+        schema={
+          {
+            type: 'form',
+            data: {
+              filters: {
+                id: 'root',
+                conjunction: 'and',
+                children: [{ id: 'group-1', conjunction: 'or', children: [] }],
+              },
+            },
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                fields: [{ name: 'status', label: 'Status', type: 'text' }],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const andButtons = screen.getAllByRole('button', { name: 'AND' });
+    const orButtons = screen.getAllByRole('button', { name: 'OR' });
+    expect(andButtons[0].getAttribute('aria-pressed')).toBe('true');
+    expect(orButtons[0].getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByRole('button', { name: 'Remove group' })).toBeTruthy();
+  });
 });
