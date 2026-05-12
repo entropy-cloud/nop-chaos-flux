@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useId, useMemo } from 'react';
+import React, { useContext, useEffect, useId, useLayoutEffect, useMemo, useState } from 'react';
 import type {
   BaseSchema,
   CompileSchemaOptions,
@@ -104,6 +104,26 @@ function getFragmentScopeCache(runtime: RendererRuntime): Map<string, FragmentSc
   }
 
   return cache;
+}
+
+function matchesFragmentScopeEntry(
+  entry: FragmentScopeCacheEntry | undefined,
+  input: {
+    parent: ScopeRef;
+    runtime: RendererRuntime;
+    isolate: boolean | undefined;
+    pathSuffix: string | undefined;
+    scopeKey: string | undefined;
+  },
+): entry is FragmentScopeCacheEntry {
+  return Boolean(
+    entry &&
+      entry.parent === input.parent &&
+      entry.runtime === input.runtime &&
+      entry.isolate === input.isolate &&
+      entry.pathSuffix === input.pathSuffix &&
+      entry.scopeKey === input.scopeKey,
+  );
 }
 
 export function normalizeNodeInput(
@@ -241,45 +261,73 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     [runtime, props.input, compileOptions],
   );
   const shouldUseFragmentScope = !explicitScope && !!fragmentBindings;
-  const fragmentScope = useMemo(() => {
-    if (!shouldUseFragmentScope || !fragmentBindings) {
-      return undefined;
-    }
-
-    const fragmentScopeCache = getFragmentScopeCache(runtime);
-    const cachedFragmentScope = fragmentScopeCache.get(fragmentScopeCacheKey);
-    if (
-      cachedFragmentScope &&
-      cachedFragmentScope.parent === currentScope &&
-      cachedFragmentScope.runtime === runtime &&
-      cachedFragmentScope.isolate === isolate &&
-      cachedFragmentScope.pathSuffix === pathSuffix &&
-      cachedFragmentScope.scopeKey === scopeKey
-    ) {
-      return cachedFragmentScope.scope;
-    }
-
-    const scope = runtime.createChildScope(currentScope, fragmentBindings, {
-      isolate,
-      pathSuffix,
-      scopeKey,
-      source: 'fragment',
-    });
-
-    fragmentScopeCache.set(fragmentScopeCacheKey, {
-      scope,
+  const fragmentScopeCache = useMemo(() => getFragmentScopeCache(runtime), [runtime]);
+  const fragmentScopeIdentity = useMemo(
+    () => ({
       parent: currentScope,
       runtime,
       isolate,
       pathSuffix,
       scopeKey,
-    });
+    }),
+    [currentScope, runtime, isolate, pathSuffix, scopeKey],
+  );
+  const [hasCommittedFragmentScope, setHasCommittedFragmentScope] = useState(false);
+  const cachedFragmentScope = fragmentScopeCache.get(fragmentScopeCacheKey);
+  const fragmentScopeEntry = matchesFragmentScopeEntry(cachedFragmentScope, fragmentScopeIdentity)
+    ? cachedFragmentScope
+    : undefined;
+  const fragmentScope = shouldUseFragmentScope ? fragmentScopeEntry?.scope : undefined;
 
-    return scope;
+  useLayoutEffect(() => {
+    if (!shouldUseFragmentScope || !fragmentBindings) {
+      if (hasCommittedFragmentScope) {
+        queueMicrotask(() => {
+          setHasCommittedFragmentScope(false);
+        });
+      }
+      return;
+    }
+
+    let nextEntry = fragmentScopeCache.get(fragmentScopeCacheKey);
+    if (!matchesFragmentScopeEntry(nextEntry, fragmentScopeIdentity)) {
+      nextEntry = {
+        scope: runtime.createChildScope(currentScope, fragmentBindings, {
+          isolate,
+          pathSuffix,
+          scopeKey,
+          source: 'fragment',
+        }),
+        parent: currentScope,
+        runtime,
+        isolate,
+        pathSuffix,
+        scopeKey,
+      };
+      fragmentScopeCache.set(fragmentScopeCacheKey, nextEntry);
+    }
+
+    const currentOwnSnapshot = nextEntry.scope.readOwn();
+    if (currentOwnSnapshot !== fragmentBindings) {
+      const change = createFragmentScopeChange(currentOwnSnapshot, fragmentBindings);
+      if (change) {
+        nextEntry.scope.store?.setSnapshot(fragmentBindings, change);
+      }
+    }
+
+    if (!hasCommittedFragmentScope) {
+      queueMicrotask(() => {
+        setHasCommittedFragmentScope(true);
+      });
+    }
+
   }, [
     currentScope,
     fragmentBindings,
+    fragmentScopeCache,
     fragmentScopeCacheKey,
+    fragmentScopeIdentity,
+    hasCommittedFragmentScope,
     isolate,
     pathSuffix,
     runtime,
@@ -289,29 +337,10 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
 
   useEffect(() => {
     return () => {
+      setHasCommittedFragmentScope(false);
       getFragmentScopeCache(runtime).delete(fragmentScopeCacheKey);
     };
   }, [fragmentScopeCacheKey, runtime]);
-
-  useEffect(() => {
-    if (!shouldUseFragmentScope || !fragmentBindings || !fragmentScope?.store) {
-      return;
-    }
-
-    const currentOwnSnapshot = fragmentScope.readOwn();
-
-    if (currentOwnSnapshot === fragmentBindings) {
-      return;
-    }
-
-    const change = createFragmentScopeChange(currentOwnSnapshot, fragmentBindings);
-
-    if (!change) {
-      return;
-    }
-
-    fragmentScope.store.setSnapshot(fragmentBindings, change);
-  }, [fragmentBindings, fragmentScope, shouldUseFragmentScope]);
 
   const actionScope = options?.actionScope ?? currentActionScope;
   const componentRegistry = options?.componentRegistry ?? currentComponentRegistry;
@@ -320,6 +349,10 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     options?.instancePath ?? ownerNodeInstance?.instancePath ?? currentInstancePath;
 
   if (!compiled) {
+    return null;
+  }
+
+  if (shouldUseFragmentScope && !hasCommittedFragmentScope) {
     return null;
   }
 

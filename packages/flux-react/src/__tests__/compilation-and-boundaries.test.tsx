@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { createActionScope } from '@nop-chaos/flux-runtime';
@@ -320,5 +320,66 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
       </RuntimeContext.Provider>,
     );
     expect(screen.getByTestId('path-probe').textContent).toBe('host.root.inline');
+  });
+
+  it('allocates fragment child scope only after the render commits', async () => {
+    const textRendererWithBinding = {
+      type: 'text',
+      component: (props: any) => <span>{String(props.props.text ?? '')}</span>,
+      fields: [{ key: 'text', kind: 'prop', allowSource: true }],
+    } as const;
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRendererWithBinding]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ child: 'committed-child' });
+    const createChildScopeSpy = vi.spyOn(runtime, 'createChildScope');
+    let releaseRender: (() => void) | undefined;
+
+    function AbortBeforeCommit(): never {
+      throw new Promise<void>((resolve) => {
+        releaseRender = resolve;
+      });
+    }
+
+    function CommittedFragmentHost() {
+      return (
+        <RenderNodes
+          input={{ type: 'text', text: '${child}' } as any}
+          options={{ bindings: { child: 'fragment-child' }, pathSuffix: 'fragment' }}
+        />
+      );
+    }
+
+    const abortedRender = render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <Suspense fallback={<span>loading</span>}>
+            <AbortBeforeCommit />
+            <CommittedFragmentHost />
+          </Suspense>
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    expect(screen.getByText('loading')).toBeTruthy();
+    expect(createChildScopeSpy).not.toHaveBeenCalled();
+
+    abortedRender.unmount();
+    releaseRender?.();
+
+    render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <CommittedFragmentHost />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('fragment-child')).toBeTruthy();
+    });
+    expect(createChildScopeSpy).toHaveBeenCalledTimes(1);
   });
 });
