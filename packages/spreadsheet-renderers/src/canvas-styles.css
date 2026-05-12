@@ -741,11 +741,11 @@
   min-width: 80px;
   height: 20px;
   box-sizing: border-box;
-  box-shadow: 0 0 0 3px var(--ring/20, hsl(223 64% 48% / 0.15));
+  box-shadow: 0 0 0 3px hsl(223 64% 48% / 0.15);
 }
 
 .ss-sheet-tab-rename:focus {
-  box-shadow: 0 0 0 3px var(--ring/30, hsl(223 64% 48% / 0.25));
+  box-shadow: 0 0 0 3px hsl(223 64% 48% / 0.25);
 }
 
 .ss-sheet-tab-close {
@@ -774,12 +774,12 @@
 }
 
 .ss-sheet-tab-close:hover {
-  background-color: var(--destructive/15, hsl(0 84% 60% / 0.15));
+  background-color: hsl(0 84% 60% / 0.15);
   color: var(--destructive, hsl(0 84% 60%));
 }
 
 .ss-sheet-tab-close:active {
-  background-color: var(--destructive/25, hsl(0 84% 60% / 0.25));
+  background-color: hsl(0 84% 60% / 0.25);
 }
 
 .ss-sheet-add {

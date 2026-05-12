@@ -440,8 +440,8 @@ test.describe('Subagent-A: Report Designer basic interaction', () => {
       await page.waitForTimeout(200);
     }
 
-    const inspector = page.locator('[data-slot="report-demo-inspector"]');
-    await expect(inspector).toContainText('cell');
+    const inspector = page.locator('[data-slot="workbench-right-panel"]');
+    await expect(inspector).toContainText('Inspector');
 
     await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);

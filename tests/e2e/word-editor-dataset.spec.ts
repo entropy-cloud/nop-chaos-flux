@@ -60,7 +60,7 @@ test.describe('Dataset Sidebar Panel', () => {
     await fieldsTab.click();
 
     await expect(page.getByText('未选择数据集')).toBeVisible();
-    await expect(page.getByText('选择数据集查看字段')).toBeVisible();
+    await expect(page.getByText('选择数据集查看字段').first()).toBeVisible();
   });
 
   test('clicking a dataset opens the dialog in edit mode', async ({ page }) => {

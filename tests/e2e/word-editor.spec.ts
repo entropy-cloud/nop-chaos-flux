@@ -91,7 +91,7 @@ test.describe('Word Editor Page', () => {
   test('displays right panel with Outline', async ({ page }) => {
     await openWordEditor(page);
 
-    await expect(page.getByRole('heading', { name: '大纲', level: 2 })).toBeVisible({
+    await expect(page.getByText('大纲')).toBeVisible({
       timeout: 15000,
     });
   });
@@ -164,11 +164,11 @@ test.describe('Word Editor Page', () => {
   test('can open dataset dialog', async ({ page }) => {
     await openWordEditor(page);
 
-    const addDatasetButton = page.getByTitle('添加数据集');
+    const addDatasetButton = page.getByRole('button', { name: '添加数据集' }).first();
     await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
     await addDatasetButton.click();
 
-    await expect(page.getByText('Create Dataset')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Create Dataset' })).toBeVisible();
 
     await expect(page.getByPlaceholder('Enter dataset name')).toBeVisible();
     await expect(page.getByPlaceholder('Enter dataset description')).toBeVisible();

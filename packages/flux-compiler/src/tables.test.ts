@@ -247,4 +247,161 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       expect(regions['items.1.body']).toBeDefined();
     });
   });
+
+  describe('table.expandable', () => {
+    it('returns value unchanged when value is falsy', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS.table.expandable;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      expect(normalize({ value: null, path: '$', regions, compileSchema })).toBeNull();
+      expect(normalize({ value: undefined, path: '$', regions, compileSchema })).toBeUndefined();
+      expect(normalize({ value: '', path: '$', regions, compileSchema })).toBe('');
+    });
+
+    it('returns value unchanged when value is an array', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS.table.expandable;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+      const arr = [{ a: 1 }];
+
+      expect(normalize({ value: arr, path: '$', regions, compileSchema })).toBe(arr);
+    });
+
+    it('returns value unchanged when value is not an object', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS.table.expandable;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      expect(normalize({ value: 42, path: '$', regions, compileSchema })).toBe(42);
+    });
+
+    it('extracts expandedRow schema into regions', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS.table.expandable;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      const expandable = { expandedRow: { type: 'text', text: 'Details ${record.id}' } };
+
+      const result = normalize({
+        value: expandable,
+        path: '$.expandable',
+        regions,
+        compileSchema,
+      }) as Record<string, unknown>;
+
+      expect(regions['expandable.expandedRow']).toBeDefined();
+      expect(regions['expandable.expandedRow']?.params).toEqual(['record', 'index']);
+      expect(regions['expandable.expandedRow']?.isolate).toBe(true);
+      expect(result.expandedRow).toBeUndefined();
+      expect(result.expandedRowRegionKey).toBe('expandable.expandedRow');
+    });
+
+    it('preserves expandable object without expandedRow', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS.table.expandable;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      const expandable = { rowExpandable: '${record.active}' };
+
+      const result = normalize({ value: expandable, path: '$', regions, compileSchema });
+
+      expect(result).toEqual(expandable);
+    });
+  });
+
+  describe('variant-field.variants', () => {
+    it('returns value unchanged when value is not an array', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS['variant-field'].variants;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      expect(normalize({ value: 'not-array', path: '$', regions, compileSchema })).toBe(
+        'not-array',
+      );
+      expect(normalize({ value: null, path: '$', regions, compileSchema })).toBeNull();
+    });
+
+    it('returns item unchanged when item is not an object', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS['variant-field'].variants;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      const result = normalize({ value: ['string', 42, null], path: '$', regions, compileSchema });
+      expect(result).toEqual(['string', 42, null]);
+    });
+
+    it('preserves items without match field', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS['variant-field'].variants;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      const variants = [{ content: { type: 'text', text: 'Hello' } }];
+
+      const result = normalize({ value: variants, path: '$', regions, compileSchema }) as any[];
+      expect(result[0].content).toBeUndefined();
+      expect(result[0].contentRegionKey).toBe('variants.0.content');
+      expect(result[0].match).toBeUndefined();
+    });
+
+    it('preserves items where match is not an object', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS['variant-field'].variants;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      const variants = [{ match: 'not-object' }];
+
+      const result = normalize({ value: variants, path: '$', regions, compileSchema }) as any[];
+      expect(result[0].match).toBe('not-object');
+    });
+
+    it('preserves items where match is an array', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS['variant-field'].variants;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      const variants = [{ match: [{ kind: 'expression' }] }];
+
+      const result = normalize({ value: variants, path: '$', regions, compileSchema }) as any[];
+      expect(Array.isArray(result[0].match)).toBe(true);
+    });
+
+    it('preserves items where match.kind is not expression', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS['variant-field'].variants;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      const variants = [{ match: { kind: 'static', when: 'hello' } }];
+
+      const result = normalize({ value: variants, path: '$', regions, compileSchema }) as any[];
+      expect(result[0].match).toEqual({ kind: 'static', when: 'hello' });
+    });
+
+    it('preserves items where match.when is not a string', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS['variant-field'].variants;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      const variants = [{ match: { kind: 'expression', when: 42 } }];
+
+      const result = normalize({ value: variants, path: '$', regions, compileSchema }) as any[];
+      expect(result[0].match).toEqual({ kind: 'expression', when: 42 });
+    });
+
+    it('wraps expression match.when with __nopPreserveLiteral', () => {
+      const normalize = DEEP_FIELD_NORMALIZERS['variant-field'].variants;
+      const regions: Record<string, TemplateRegion> = {};
+      const compileSchema = createMockCompileSchema();
+
+      const variants = [
+        { content: { type: 'text', text: 'Hello' }, match: { kind: 'expression', when: '${x === 1}' } },
+      ];
+
+      const result = normalize({ value: variants, path: '$', regions, compileSchema }) as any[];
+      expect(result[0].match.when).toEqual({
+        __nopPreserveLiteral: true,
+        value: '${x === 1}',
+      });
+    });
+  });
 });

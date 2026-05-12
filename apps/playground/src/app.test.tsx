@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const rendererSnapshots: Array<{ env: unknown; data: Record<string, unknown> | undefined }> = [];
 
@@ -120,6 +120,7 @@ describe('FluxBasicPage', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    cleanup();
   });
 
   it('keeps env stable across search and directory updates', async () => {

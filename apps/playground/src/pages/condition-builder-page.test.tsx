@@ -1,5 +1,8 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup } from '@testing-library/react';
+
+afterEach(() => cleanup());
 import { render } from '@testing-library/react';
 import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';

@@ -96,7 +96,7 @@ test.describe('fragment renderer', () => {
     await expect(stage).toBeVisible();
     await expect(stage.getByText(/Inside isolated fragment/)).toBeVisible();
     await expect(stage.getByText(/only inside fragment/)).toBeVisible();
-    await expect(stage.getByText(/Parent var secret here: "should-not-leak"/)).toBeVisible();
+    await expect(stage.getByText(/Parent var secret here: ""/)).toBeVisible();
     await expect(stage.getByText(/Back in parent .*should-not-leak/)).toBeVisible();
   });
 });

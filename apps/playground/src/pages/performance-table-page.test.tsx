@@ -1,7 +1,10 @@
 // @vitest-environment happy-dom
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup } from '@testing-library/react';
+
+afterEach(() => cleanup());
 import { PerformanceTablePage } from './performance-table-page';
 
 describe('PerformanceTablePage', () => {
