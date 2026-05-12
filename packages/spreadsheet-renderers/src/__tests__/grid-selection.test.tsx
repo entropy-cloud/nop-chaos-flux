@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import React from 'react';
- import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
 import {
@@ -249,6 +249,39 @@ describe('spreadsheet grid selection', () => {
     });
   });
 
+  it('keeps the cell editor open when setCellValue dispatch fails', async () => {
+    const documentModel = createEmptyDocument('edit-failure-keeps-draft');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    vi.spyOn(bridge, 'dispatch').mockResolvedValueOnce({
+      ok: false,
+      changed: false,
+      error: new Error('save failed'),
+    });
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+
+    fireEvent.doubleClick(firstCell!);
+
+    await waitFor(() => {
+      expect(container.querySelector('input.ss-cell-edit-input')).toBeTruthy();
+    });
+
+    const input = container.querySelector('input.ss-cell-edit-input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'draft' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(container.querySelector('input.ss-cell-edit-input')).toBeTruthy();
+      expect((container.querySelector('input.ss-cell-edit-input') as HTMLInputElement).value).toBe(
+        'draft',
+      );
+    });
+  });
+
   it('commits column resize to spreadsheet core state on mouseup', async () => {
     const documentModel = createEmptyDocument('column-resize-commit');
     const core = createSpreadsheetCore({ document: documentModel });
@@ -398,6 +431,21 @@ describe('spreadsheet grid selection', () => {
     await waitFor(() => {
       expect(dispatchSpy).toHaveBeenCalled();
       expect(logs).toContain('Selection failed: select failed');
+    });
+  });
+
+  it('only points aria-activedescendant at mounted virtual cells', async () => {
+    const documentModel = createEmptyDocument('aria-activedescendant-mounted-cell');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const grid = container.querySelector('[role="grid"]') as HTMLElement;
+    fireEvent.click(container.querySelector('td.ss-cell') as HTMLElement);
+
+    await waitFor(() => {
+      expect(grid.getAttribute('aria-activedescendant')).toBe('spreadsheet-cell-A1');
     });
   });
 

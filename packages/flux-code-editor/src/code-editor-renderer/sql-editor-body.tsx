@@ -1,7 +1,7 @@
 import { VariablePanel } from '../variable-panel.js';
 import type { VariableItem } from '../types.js';
 
-interface CodeEditorBodyProps {
+interface SQLEditorBodyProps {
   editorRef: React.RefObject<HTMLDivElement | null>;
   isFullscreen: boolean;
   hasVariablePanel: boolean;
@@ -12,7 +12,7 @@ interface CodeEditorBodyProps {
   onToggleVariablePanel: () => void;
 }
 
-export function CodeEditorBody({
+export function SQLEditorBody({
   editorRef,
   isFullscreen,
   hasVariablePanel,
@@ -21,7 +21,7 @@ export function CodeEditorBody({
   insertTemplate,
   onInsertVariable,
   onToggleVariablePanel,
-}: CodeEditorBodyProps) {
+}: SQLEditorBodyProps) {
   return (
     <div
       data-slot={hasVariablePanel ? 'code-editor-body' : undefined}

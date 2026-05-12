@@ -32,7 +32,7 @@
     "@nop-chaos/flux-runtime": "workspace:*"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node -e \"fs.cpSync('src/canvas-styles.css','dist/canvas-styles.css')\"",
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/canvas-styles.css dist/canvas-styles.css",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"

@@ -252,6 +252,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
       />,
     );
 
+    await waitFor(() => expect(screen.getByLabelText('First Name')).toBeTruthy());
     const firstNameInput = screen.getByLabelText('First Name') as HTMLInputElement;
     fireEvent.change(firstNameInput, { target: { value: 'Alice' } });
     expect(firstNameInput.value).toBe('Alice');
@@ -267,7 +268,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     cleanup();
   });
 
-  it('stacks default tabs above the active panel and keeps vertical tabs side by side', () => {
+  it('stacks default tabs above the active panel and keeps vertical tabs side by side', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { rerender } = render(
       <SchemaRenderer
@@ -288,6 +289,9 @@ describe('basicRendererDefinitions page and layout behavior', () => {
       />,
     );
 
+    expect(document.querySelector('[data-slot="tabs-root"]')?.getAttribute('data-orientation')).toBe(
+      'horizontal',
+    );
     expect(document.querySelector('[data-slot="tabs-root"]')?.className).toContain('flex-col');
 
     rerender(
@@ -310,7 +314,12 @@ describe('basicRendererDefinitions page and layout behavior', () => {
       />,
     );
 
-    expect(document.querySelector('[data-slot="tabs-root"]')?.className).not.toContain('flex-col');
+    await waitFor(() =>
+      expect(document.querySelector('[data-slot="tabs-root"]')?.getAttribute('data-orientation')).toBe(
+        'vertical',
+      ),
+    );
+    expect(document.querySelector('[data-slot="tabs-root"]')?.className).toContain('flex');
     cleanup();
   });
 

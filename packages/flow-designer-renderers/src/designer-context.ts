@@ -123,6 +123,13 @@ export function buildDesignerScopeData(input: { snapshot: DesignerSnapshot }) {
   const edgeIds = snapshot.selection.selectedEdgeIds;
 
   return {
+    kind: 'designer',
+    dirty: snapshot.isDirty,
+    busy: false,
+    canUndo: snapshot.canUndo,
+    canRedo: snapshot.canRedo,
+    selectionKind,
+    selectionCount: nodeIds.length + edgeIds.length,
     doc: {
       id: snapshot.doc.id,
       kind: snapshot.doc.kind,

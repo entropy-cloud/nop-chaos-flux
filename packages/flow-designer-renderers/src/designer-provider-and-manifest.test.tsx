@@ -239,6 +239,14 @@ describe('flowDesignerRendererDefinitions', () => {
     );
     expect(designerPageDef?.propContracts?.config?.required).toBe(true);
     expect(designerPageDef?.scopeExportContracts?.$designer?.kind).toBe('object');
+    expect(designerPageDef?.scopeExportContracts?.$designer?.fields).toMatchObject({
+      kind: { kind: 'literal', value: 'designer' },
+      dirty: { kind: 'boolean' },
+      canUndo: { kind: 'boolean' },
+      canRedo: { kind: 'boolean' },
+      selectionKind: { kind: 'union' },
+      selectionCount: { kind: 'number' },
+    });
     expect(designerPageDef?.hostContract?.family).toBe('designer');
     expect(designerPageDef?.hostContract?.defaultVersion).toBe('1.0');
     expect(designerPageDef?.hostContract?.capabilityPublication).toMatchObject({

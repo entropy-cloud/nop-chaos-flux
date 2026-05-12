@@ -660,4 +660,92 @@ describe('DesignerPageRenderer tree mode', () => {
     expect(core?.getSnapshot().selection.activeNodeId).toBe('task-1');
     expect(core?.getSnapshot().doc.nodes.some((node) => node.id === 'end-1')).toBe(true);
   });
+
+  it('keeps tree history snapshots paired with external treeDocument replacements', async () => {
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...flowDesignerRendererDefinitions,
+    ]);
+    const config = createTreeTestConfig();
+    const initialTreeDocument = {
+      id: 'tree-history-pairing',
+      kind: 'test-tree',
+      name: 'History Pairing Tree',
+      version: '1.0',
+      root: {
+        id: 'start',
+        type: 'start',
+        data: { label: 'Start' },
+        child: {
+          id: 'task-1',
+          type: 'task',
+          data: { label: 'Task 1' },
+        },
+      },
+    };
+    const replacementTreeDocument = {
+      ...initialTreeDocument,
+      root: {
+        ...initialTreeDocument.root,
+        child: {
+          id: 'task-1',
+          type: 'task',
+          data: { label: 'Task 1 updated' },
+          child: {
+            id: 'end-1',
+            type: 'end',
+            data: { label: 'End' },
+          },
+        },
+      },
+    };
+
+    const { container, rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-history-pairing"
+        schema={{
+          type: 'designer-page',
+          treeDocument: initialTreeDocument,
+          config,
+        }}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('.react-flow__node')).toHaveLength(2);
+    });
+
+    const core = createDesignerCoreMock.mock.results.at(-1)?.value as DesignerCore | undefined;
+    expect(core).toBeTruthy();
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-history-pairing"
+        schema={{
+          type: 'designer-page',
+          treeDocument: replacementTreeDocument,
+          config,
+        }}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('.react-flow__node')).toHaveLength(3);
+    });
+
+    expect(core?.getSnapshot().doc.nodes.some((node) => node.id === 'end-1')).toBe(true);
+
+    core?.undo();
+
+    expect(core?.getSnapshot().doc.nodes.some((node) => node.id === 'end-1')).toBe(false);
+
+    core?.redo();
+
+    expect(core?.getSnapshot().doc.nodes.some((node) => node.id === 'end-1')).toBe(true);
+  });
 });

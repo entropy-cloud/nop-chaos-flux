@@ -26,7 +26,7 @@ describe('basicRendererDefinitions structural rendering', () => {
     cleanup();
   });
 
-  it('supports fragment data with isolate', () => {
+  it('supports fragment data with isolate', async () => {
     const SchemaRenderer = createBasicSchemaRenderer([scopeProbeRenderer]);
     render(
       <SchemaRenderer
@@ -47,7 +47,7 @@ describe('basicRendererDefinitions structural rendering', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    expect(screen.getByTestId('scope-probe').textContent).toContain('|inside');
+    await waitFor(() => expect(screen.getByTestId('scope-probe').textContent).toContain('|inside'));
     cleanup();
   });
 

@@ -5,7 +5,9 @@ import type {
   BaseSchema,
   ExecutableApiRequest,
   RendererComponentProps,
+  RendererRegistry,
 } from '@nop-chaos/flux-core';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 import type { RendererDefinition } from '../react-contracts.js';
 import { createDefaultEnv, createDefaultRegistry } from '../defaults.js';
 import { createAutoRendererComponent, ensureRendererComponent } from '../auto-renderer.js';
@@ -91,6 +93,26 @@ describe('defaults and auto renderer', () => {
     ]);
     expect(registry.get('x')?.component).toBeTruthy();
     expect(registry.get('y')?.component).toBe(component);
+  });
+
+  it('requires caller-provided registries to be core-normalized before register', () => {
+    const registry = createRendererRegistry() as RendererRegistry;
+
+    expect(() =>
+      registry.register({
+        type: 'plain-react',
+        reactComponent: () => null,
+      } as RendererDefinition),
+    ).toThrow(/must specify "component"/i);
+
+    expect(() =>
+      registry.register(
+        ensureRendererComponent({
+          type: 'normalized-react',
+          reactComponent: () => null,
+        } as RendererDefinition),
+      ),
+    ).not.toThrow();
   });
 
   it('skips undefined event handlers and omits empty ids', () => {

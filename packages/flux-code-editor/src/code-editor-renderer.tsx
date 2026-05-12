@@ -3,21 +3,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useRenderScope } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
-import { XIcon } from 'lucide-react';
+import { Maximize2Icon, XIcon } from 'lucide-react';
 import { ToolbarButton } from './code-editor-renderer/toolbar-button.js';
-import { CodeEditorBody } from './code-editor-renderer/code-editor-body.js';
-import { CodeEditorToolbar } from './code-editor-renderer/code-editor-toolbar.js';
 import type { CodeEditorRendererProps } from './code-editor-renderer/shared.js';
 import { useCodeEditorBinding } from './code-editor-renderer/use-code-editor-binding.js';
-import { useSQLEditorState } from './code-editor-renderer/use-sql-editor-state.js';
+import { useSQLEditorSlots, hasSQLToolbarFlags } from './code-editor-renderer/sql-editor-assembly.js';
 import { createBaseExtensions } from './extensions/base.js';
 import {
   useResolvedFunctions,
-  useResolvedSQLVariables,
   useResolvedTables,
   useResolvedVariables,
 } from './source-resolvers.js';
-import { SQLResultPanel } from './sql-result-panel.js';
 import type {
   CodeEditorSchema,
   EditorLanguage,
@@ -29,7 +25,6 @@ import {
   getDefaultAutoHeight,
   getDefaultHeight,
   getDefaultLineNumbers,
-  resolveFormatConfig,
 } from './types.js';
 import { useCodeMirror } from './use-code-mirror.js';
 
@@ -156,25 +151,21 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
     onBlur: handleBlur,
   });
 
-  const {
-    hasSnippets,
-    hasVariablePanel,
-    hasExecution,
-    variablePanelCollapsed,
-    setVariablePanelCollapsed,
-    sqlResult,
-    insertAtCursor,
-    handleFormatSQL,
-    handleExecuteSQL,
-    handleClearResult,
-  } = useSQLEditorState(props, sqlConfig, view);
+  const isSQL = language === 'sql' && Boolean(sqlConfig);
+  const sqlSlots = useSQLEditorSlots({
+    props,
+    sqlConfig,
+    scope,
+    view,
+    allowFullscreen,
+    isFullscreen,
+    toggleFullscreen,
+    editorRef,
+  });
 
-  const sqlVariables = useResolvedSQLVariables(sqlConfig, scope);
-  const formatConfig = resolveFormatConfig(sqlConfig);
-  const hasSQLToolbar =
-    language === 'sql' &&
-    (Boolean(formatConfig) || hasSnippets || hasVariablePanel || hasExecution);
-  const showToolbar = (allowFullscreen && !isFullscreen) || hasSQLToolbar;
+  const hasSQLToolbar = isSQL && hasSQLToolbarFlags(sqlConfig);
+  const showToolbar =
+    (allowFullscreen && !isFullscreen) || hasSQLToolbar;
 
   return (
     <div
@@ -200,42 +191,24 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
         </div>
       ) : null}
 
-      {showToolbar ? (
-        <CodeEditorToolbar
-          language={language}
-          allowFullscreen={allowFullscreen}
-          isFullscreen={isFullscreen}
-          formatConfig={formatConfig}
-          snippets={sqlConfig?.snippets}
-          hasVariablePanel={hasVariablePanel}
-          hasExecution={hasExecution}
-          variablePanelCollapsed={variablePanelCollapsed}
-          onFormatSQL={handleFormatSQL}
-          onInsertSnippet={insertAtCursor}
-          onToggleVariables={() => setVariablePanelCollapsed((value) => !value)}
-          onExecuteSQL={handleExecuteSQL}
-          onEnterFullscreen={toggleFullscreen}
-        />
-      ) : null}
+      {isSQL ? sqlSlots.toolbar : null}
 
-      <CodeEditorBody
-        editorRef={editorRef}
-        isFullscreen={isFullscreen}
-        hasVariablePanel={hasVariablePanel}
-        variablePanelCollapsed={variablePanelCollapsed}
-        sqlVariables={sqlVariables}
-        insertTemplate={sqlConfig?.variablePanel?.insertTemplate}
-        onInsertVariable={insertAtCursor}
-        onToggleVariablePanel={() => setVariablePanelCollapsed((value) => !value)}
-      />
-
-      {hasExecution &&
-      sqlConfig?.execution?.showPreview !== false &&
-      sqlResult.status !== 'idle' ? (
-        <div data-slot="code-editor-result-container">
-          <SQLResultPanel result={sqlResult} onClose={handleClearResult} />
+      {!isSQL && allowFullscreen && !isFullscreen ? (
+        <div data-slot="code-editor-toolbar">
+          <ToolbarButton
+            data-slot="code-editor-toolbar-fullscreen"
+            onClick={toggleFullscreen}
+            aria-label="Enter fullscreen"
+            title="Fullscreen"
+          >
+            <Maximize2Icon />
+          </ToolbarButton>
         </div>
       ) : null}
+
+      {isSQL ? sqlSlots.body : <div ref={editorRef} />}
+
+      {isSQL ? sqlSlots.resultPanel : null}
     </div>
   );
 }

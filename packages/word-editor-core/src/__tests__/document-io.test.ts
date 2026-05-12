@@ -1,6 +1,7 @@
 import { afterEach, describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   createSavedDocumentData,
+  SaveDocumentError,
   saveDocument,
   loadDocument,
   clearDocument,
@@ -101,7 +102,7 @@ describe('saveDocument', () => {
       getPaperSettings: vi.fn(),
     } as any;
 
-    expect(saveDocument(mockBridge)).toBeNull();
+    expect(() => saveDocument(mockBridge)).toThrow(SaveDocumentError);
     expect(localStorageState.current.setItem).not.toHaveBeenCalled();
   });
 
@@ -125,6 +126,26 @@ describe('saveDocument', () => {
       direction: 'vertical',
       margins: [100, 120, 100, 120],
     });
+  });
+
+  it('preserves storage write failures with a distinguishable reason', () => {
+    const mockBridge = {
+      getValue: vi.fn(() => ({ data: { main: [{ value: 'main' }] } })),
+      getPaperSettings: vi.fn(() => null),
+    } as any;
+    const quotaError = new DOMException('Quota exceeded', 'QuotaExceededError');
+    localStorageState.current.setItem.mockImplementation(() => {
+      throw quotaError;
+    });
+
+    try {
+      saveDocument(mockBridge);
+      expect.fail('Expected saveDocument to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(SaveDocumentError);
+      expect((error as SaveDocumentError).reason).toBe('storage-write-failed');
+      expect((error as Error).cause).toBe(quotaError);
+    }
   });
 
   it('normalizes saved document data with defaults', () => {

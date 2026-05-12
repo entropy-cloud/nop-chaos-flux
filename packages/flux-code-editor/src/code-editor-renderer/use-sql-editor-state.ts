@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ActionResult, ActionSchema, SchemaValue } from '@nop-chaos/flux-core';
 import type { EditorView } from '@codemirror/view';
 import { formatSQL } from '../extensions/sql/format.js';
@@ -129,6 +129,16 @@ export function useSQLEditorState(
 ) {
   const [variablePanelCollapsed, setVariablePanelCollapsed] = useState(false);
   const [sqlResult, setSqlResult] = useState<SQLResultState>({ status: 'idle' });
+  const executeRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      executeRequestIdRef.current += 1;
+    };
+  }, []);
 
   const hasSnippets = Boolean(sqlConfig?.snippets?.length);
   const hasVariablePanel = Boolean(sqlConfig?.variablePanel?.enabled);
@@ -161,6 +171,8 @@ export function useSQLEditorState(
   const handleExecuteSQL = useCallback(async () => {
     if (!sqlConfig?.execution?.enabled || !view) return;
 
+    const requestId = ++executeRequestIdRef.current;
+
     setSqlResult({ status: 'loading' });
 
     try {
@@ -185,8 +197,16 @@ export function useSQLEditorState(
         result = await props.helpers.dispatch(action);
       }
 
+      if (!mountedRef.current || executeRequestIdRef.current !== requestId) {
+        return;
+      }
+
       setSqlResult(mapExecutionResult(result, sqlConfig.execution.resultPath));
     } catch (err: unknown) {
+      if (!mountedRef.current || executeRequestIdRef.current !== requestId) {
+        return;
+      }
+
       const message = err instanceof Error ? err.message : String(err);
       setSqlResult({ status: 'error', message });
     }

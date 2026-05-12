@@ -104,4 +104,58 @@ describe('createWordEditorActionProvider', () => {
     expect(editorStore.setDirty).toHaveBeenCalledWith(false);
     expect(onDocumentSaved).toHaveBeenCalledWith(savedDocument);
   });
+
+  it('preserves saveDocument root cause through the returned action error', async () => {
+    const editorStore: PartialEditorStoreApi = { setDirty: vi.fn() };
+    const quotaError = new Error('quota exceeded');
+    const provider = createWordEditorActionProvider({
+      bridge: {} as CanvasEditorBridge,
+      editorStore: editorStore as EditorStoreApi,
+      datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
+      getCharts: () => [mockChart()],
+      setCharts: () => undefined,
+      getCodes: () => [mockCode()],
+      setCodes: () => undefined,
+    });
+
+    const { saveDocument } = await import('@nop-chaos/word-editor-core');
+    vi.mocked(saveDocument).mockImplementationOnce(() => {
+      throw quotaError;
+    });
+
+    const result = await provider.invoke('save', undefined, {} as ActionContext);
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect((result.error as Error).message).toBe('Unable to save word document.');
+    expect((result.error as Error).cause).toBe(quotaError);
+    expect(editorStore.setDirty).not.toHaveBeenCalledWith(false);
+  });
+
+  it('does not clear dirty state after saveEvent when the action signal is aborted', async () => {
+    const onDocumentSaved = vi.fn();
+    const editorStore: PartialEditorStoreApi = { setDirty: vi.fn() };
+    const provider = createWordEditorActionProvider({
+      bridge: {} as CanvasEditorBridge,
+      editorStore: editorStore as EditorStoreApi,
+      datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
+      getCharts: () => [mockChart()],
+      setCharts: () => undefined,
+      getCodes: () => [mockCode()],
+      setCodes: () => undefined,
+      saveEvent: async (): Promise<ActionResult> => ({ ok: true }),
+      onDocumentSaved,
+    });
+    const controller = new AbortController();
+    controller.abort();
+
+    const result = await provider.invoke('save', undefined, {
+      signal: controller.signal,
+    } as ActionContext);
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe('Word document save was aborted.');
+    expect(editorStore.setDirty).not.toHaveBeenCalledWith(false);
+    expect(onDocumentSaved).not.toHaveBeenCalled();
+  });
 });

@@ -33,14 +33,17 @@ export function useEditing(
     if (!currentEditCell) return;
     const currentEditValue = editValueRef.current;
     const addr = cellAddress(currentEditCell.row, currentEditCell.col);
-    editingCellRef.current = null;
-    editValueRef.current = '';
-    setEditingCell(null);
-    await bridge.dispatch({
+    const result = await bridge.dispatch({
       type: 'spreadsheet:setCellValue',
       cell: { sheetId, address: addr, row: currentEditCell.row, col: currentEditCell.col },
       value: currentEditValue,
     });
+
+    if (result.ok) {
+      editingCellRef.current = null;
+      editValueRef.current = '';
+      setEditingCell(null);
+    }
   }, [bridge, sheetId]);
 
   const handleEditCancel = useCallback(() => {

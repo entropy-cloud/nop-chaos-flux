@@ -178,6 +178,8 @@ export function buildReportDesignerScopeData(
     },
     spreadsheet,
     selectionTarget: snapshot.selectionTarget,
+    selection: snapshot.selectionTarget,
+    target: snapshot.selectionTarget,
     reportDocument,
     workbook,
     activeSheet,

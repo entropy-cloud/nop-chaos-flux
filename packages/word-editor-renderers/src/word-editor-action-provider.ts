@@ -17,6 +17,10 @@ function fail(message: string): ActionResult {
   return { ok: false, error: new Error(message) };
 }
 
+function failWithError(error: Error): ActionResult {
+  return { ok: false, error };
+}
+
 export function createWordEditorActionProvider(input: {
   bridge: CanvasEditorBridge;
   editorStore: EditorStoreApi;
@@ -40,12 +44,19 @@ export function createWordEditorActionProvider(input: {
         case 'save': {
           const charts = input.getCharts();
           const codes = input.getCodes();
-          const saved = saveDocument(input.bridge, {
-            charts,
-            codes,
-          });
-          if (!saved) {
-            return fail('Unable to save word document.');
+          let saved: SavedDocumentData;
+          try {
+            saved = saveDocument(input.bridge, {
+              charts,
+              codes,
+            });
+          } catch (error) {
+            const normalizedError = error instanceof Error ? error : new Error(String(error));
+            return failWithError(
+              new Error('Unable to save word document.', {
+                cause: normalizedError,
+              }),
+            );
           }
           saveDatasets(input.datasetStore.getAll());
           if (input.saveEvent) {
@@ -53,6 +64,9 @@ export function createWordEditorActionProvider(input: {
             if (!result.ok) {
               return result;
             }
+          }
+          if (ctx.signal?.aborted) {
+            return { ok: false, error: new Error('Word document save was aborted.') };
           }
           input.editorStore.setDirty(false);
           input.onDocumentSaved?.(saved);

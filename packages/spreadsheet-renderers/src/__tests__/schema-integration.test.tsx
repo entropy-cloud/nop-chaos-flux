@@ -16,6 +16,7 @@ import {
   defineSpreadsheetPageSchema,
   registerSpreadsheetRenderers,
 } from '../index.js';
+import { SPREADSHEET_HOST_METHODS } from '../host-action-provider.js';
 
 const env: RendererEnv = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
@@ -317,5 +318,11 @@ describe('spreadsheet-page schema integration', () => {
     } finally {
       unregister();
     }
+  });
+
+  it('exposes the documented spreadsheet host methods through listMethods', () => {
+    const provider = createSpreadsheetActionProvider(async () => ({ ok: true, changed: false }));
+
+    expect(provider.listMethods?.()).toEqual(SPREADSHEET_HOST_METHODS);
   });
 });

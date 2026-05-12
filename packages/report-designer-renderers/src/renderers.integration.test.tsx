@@ -18,7 +18,10 @@ import {
   type ReportDesignerProfile,
 } from '@nop-chaos/report-designer-core';
 import { defineReportDesignerPageSchema, registerReportDesignerRenderers } from './index.js';
-import { createReportDesignerActionProvider } from './host-action-provider.js';
+import {
+  createReportDesignerActionProvider,
+  REPORT_DESIGNER_HOST_METHODS,
+} from './host-action-provider.js';
 
 const env: RendererEnv = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
@@ -590,5 +593,11 @@ describe('report-designer namespaced actions integration', { timeout: 15000 }, (
     } finally {
       unregister();
     }
+  });
+
+  it('exposes the documented report-designer host methods through listMethods', () => {
+    const provider = createReportDesignerActionProvider(async () => ({ ok: true, changed: false }));
+
+    expect(provider.listMethods?.()).toEqual(REPORT_DESIGNER_HOST_METHODS);
   });
 });

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { mergeProps } from '@base-ui/react/merge-props';
 import { useRender } from '@base-ui/react/use-render';
-import { t } from '@nop-chaos/flux-i18n';
+import { t } from '../../lib/i18n.js';
 
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';

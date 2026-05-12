@@ -44,7 +44,7 @@ export function TreeModeLayoutWrapper(
     }
     lastSyncedInputRef.current = inputTreeDocument;
     if (inputTreeDocument) {
-      core.replaceDocument(computeTreeModeDocument(inputTreeDocument, config));
+      core.replaceDocument(computeTreeModeDocument(inputTreeDocument, config), inputTreeDocument);
     }
   }, [config, core, inputTreeDocument]);
 

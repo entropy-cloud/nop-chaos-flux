@@ -19,6 +19,22 @@ export interface WordEditorRecoveredState {
   datasets: Dataset[];
 }
 
+export type SaveDocumentFailureReason =
+  | 'storage-unavailable'
+  | 'empty-document'
+  | 'bridge-read-failed'
+  | 'storage-write-failed';
+
+export class SaveDocumentError extends Error {
+  readonly reason: SaveDocumentFailureReason;
+
+  constructor(reason: SaveDocumentFailureReason, message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'SaveDocumentError';
+    this.reason = reason;
+  }
+}
+
 function getStorage(): Storage | null {
   if (typeof localStorage === 'undefined') {
     return null;
@@ -69,32 +85,48 @@ export function createSavedDocumentData(input: {
 export function saveDocument(
   bridge: CanvasEditorBridge,
   extras?: { charts?: DocChart[]; codes?: DocCode[] },
-): SavedDocumentData | null {
-  try {
-    const storage = getStorage();
-    if (!storage) return null;
-
-    const value = bridge.getValue();
-    if (!value) return null;
-
-    const paperSettings = bridge.getPaperSettings();
-
-    const saved = createSavedDocumentData({
-      data: {
-        header: value.data.header ?? [],
-        main: value.data.main,
-        footer: value.data.footer ?? [],
-        charts: extras?.charts ?? [],
-        codes: extras?.codes ?? [],
-      },
-      paperSettings,
-    });
-
-    storage.setItem(STORAGE_KEY, JSON.stringify(saved));
-    return saved;
-  } catch {
-    return null;
+): SavedDocumentData {
+  const storage = getStorage();
+  if (!storage) {
+    throw new SaveDocumentError('storage-unavailable', 'Local storage is unavailable.');
   }
+
+  let value: ReturnType<CanvasEditorBridge['getValue']>;
+  let paperSettings: ReturnType<CanvasEditorBridge['getPaperSettings']>;
+
+  try {
+    value = bridge.getValue();
+    paperSettings = bridge.getPaperSettings();
+  } catch (error) {
+    throw new SaveDocumentError('bridge-read-failed', 'Failed to read the current word document.', {
+      cause: error,
+    });
+  }
+
+  if (!value) {
+    throw new SaveDocumentError('empty-document', 'The editor has no document to save.');
+  }
+
+  const saved = createSavedDocumentData({
+    data: {
+      header: value.data.header ?? [],
+      main: value.data.main,
+      footer: value.data.footer ?? [],
+      charts: extras?.charts ?? [],
+      codes: extras?.codes ?? [],
+    },
+    paperSettings,
+  });
+
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(saved));
+  } catch (error) {
+    throw new SaveDocumentError('storage-write-failed', 'Failed to persist the word document.', {
+      cause: error,
+    });
+  }
+
+  return saved;
 }
 
 export function loadDocument(): SavedDocumentData | null {

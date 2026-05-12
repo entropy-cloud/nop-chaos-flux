@@ -113,14 +113,14 @@ describe('createSchemaRenderer scope behavior', () => {
         pageStore={pageStore}
       />,
     );
-    expect(screen.getByTestId('lexical-value').textContent).toBe('parent-a');
+    await waitFor(() => expect(screen.getByTestId('lexical-value').textContent).toBe('parent-a'));
     pageStore.updateData('shared', 'parent-b');
     await waitFor(() => expect(screen.getByTestId('lexical-value').textContent).toBe('parent-b'));
     fireEvent.click(screen.getByText('Refresh fragment 0'));
     await waitFor(() => expect(screen.getByTestId('own-child-value').textContent).toBe('child-b'));
   });
 
-  it('updates page scope data without recreating the form runtime', () => {
+  it('updates page scope data without recreating the form runtime', async () => {
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
       formRenderer,
@@ -146,13 +146,14 @@ describe('createSchemaRenderer scope behavior', () => {
     }
     const view = render(<Host />);
     const canvas = within(view.container);
+    await waitFor(() => expect(canvas.getByLabelText('Email')).toBeTruthy());
     fireEvent.change(canvas.getByLabelText('Email'), { target: { value: 'a' } });
     fireEvent.click(canvas.getByText('Rename user'));
     expect(canvas.getByTestId('page-value').textContent).toBe('Operator');
     expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');
   });
 
-  it('preserves form state when fragment render data is recreated on host rerender', () => {
+  it('preserves form state when fragment render data is recreated on host rerender', async () => {
     const SchemaRenderer = createSchemaRenderer([
       fragmentRenderHostRenderer,
       formRenderer,
@@ -167,6 +168,7 @@ describe('createSchemaRenderer scope behavior', () => {
       />,
     );
     const canvas = within(view.container);
+    await waitFor(() => expect(canvas.getByLabelText('Email')).toBeTruthy());
     fireEvent.change(canvas.getByLabelText('Email'), { target: { value: 'a' } });
     fireEvent.click(canvas.getByText('Refresh fragment 0'));
     expect((canvas.getByLabelText('Email') as HTMLInputElement).value).toBe('a');

@@ -42,12 +42,12 @@ describe('buildReportDesignerScopeData', () => {
     const designer = scopeData.designer as { inspectorPanels?: unknown; fieldSources?: unknown[] };
 
     expect(scopeData).toHaveProperty('selectionTarget');
+    expect(scopeData).toHaveProperty('selection');
+    expect(scopeData).toHaveProperty('target');
     expect(scopeData).toHaveProperty('reportDocument');
     expect(scopeData).toHaveProperty('fieldSources');
     expect(scopeData).toHaveProperty('preview');
     expect(scopeData).toHaveProperty('inspectorPanels');
-    expect(scopeData).not.toHaveProperty('target');
-    expect(scopeData).not.toHaveProperty('selection');
     expect(scopeData).not.toHaveProperty('inspectorBody');
     expect(designer).toHaveProperty('inspectorPanels');
     expect(Array.isArray(designer.fieldSources)).toBe(true);

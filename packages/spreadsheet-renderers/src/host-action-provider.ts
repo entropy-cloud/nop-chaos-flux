@@ -1,6 +1,71 @@
 import type { ActionNamespaceProvider, ActionResult } from '@nop-chaos/flux-core';
 import type { SpreadsheetCommand, SpreadsheetCommandResult } from '@nop-chaos/spreadsheet-core';
 
+export const SPREADSHEET_HOST_METHODS = [
+  'setActiveSheet',
+  'setSelection',
+  'setCellValue',
+  'setCellFormula',
+  'setCellStyle',
+  'resizeRow',
+  'resizeColumn',
+  'mergeRange',
+  'unmergeRange',
+  'hideRow',
+  'hideColumn',
+  'addSheet',
+  'removeSheet',
+  'undo',
+  'redo',
+  'copyCells',
+  'cutCells',
+  'pasteCells',
+  'clearCells',
+  'insertRow',
+  'insertColumn',
+  'deleteRow',
+  'deleteColumn',
+  'renameSheet',
+  'moveSheet',
+  'copySheet',
+  'setSheetTabColor',
+  'hideSheet',
+  'protectSheet',
+  'selectAll',
+  'selectRow',
+  'selectColumn',
+  'setCellFontFamily',
+  'setCellFontSize',
+  'setCellFontWeight',
+  'setCellFontStyle',
+  'setCellTextDecoration',
+  'setCellFontColor',
+  'setCellBackgroundColor',
+  'setCellBorder',
+  'setCellTextAlign',
+  'setCellVerticalAlign',
+  'setCellWrapText',
+  'setCellNumberFormat',
+  'fillDown',
+  'fillRight',
+  'fillSeries',
+  'addComment',
+  'editComment',
+  'deleteComment',
+  'autoFitRow',
+  'autoFitColumn',
+  'mergeCellsCenter',
+  'freezePanes',
+  'unfreezePanes',
+  'sortRange',
+  'filterRowsByCellValue',
+  'clearRowFilters',
+  'find',
+  'findNext',
+  'replace',
+  'replaceAll',
+] as const;
+
 type CommandRecord = Record<string, unknown>;
 
 function isCommandRecord(payload: unknown): payload is CommandRecord {
@@ -33,7 +98,7 @@ export function createSpreadsheetActionProvider(
   return {
     kind: 'host',
     listMethods() {
-      return [];
+      return SPREADSHEET_HOST_METHODS;
     },
     async invoke(method, payload) {
       const args = isCommandRecord(payload) ? payload : {};

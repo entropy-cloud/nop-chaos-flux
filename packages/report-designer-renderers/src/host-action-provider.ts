@@ -4,6 +4,21 @@ import type {
   ReportDesignerCommandResult,
 } from '@nop-chaos/report-designer-core';
 
+export const REPORT_DESIGNER_HOST_METHODS = [
+  'dropFieldToTarget',
+  'updateMeta',
+  'replaceMeta',
+  'openInspector',
+  'closeInspector',
+  'preview',
+  'stopPreview',
+  'undo',
+  'redo',
+  'save',
+  'importTemplate',
+  'exportTemplate',
+] as const;
+
 type CommandRecord = Record<string, unknown>;
 
 function isCommandRecord(payload: unknown): payload is CommandRecord {
@@ -37,7 +52,7 @@ export function createReportDesignerActionProvider(
   return {
     kind: 'host',
     listMethods() {
-      return [];
+      return REPORT_DESIGNER_HOST_METHODS;
     },
     async invoke(method, payload) {
       const args = isCommandRecord(payload) ? payload : {};

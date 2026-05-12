@@ -119,7 +119,7 @@ export function SpreadsheetGrid({
   const activeSheetId = snapshot.activeSheet?.id ?? '';
   const selectedRange = getSelectedRange();
   const selectionAnchorCell = useMemo(() => getAnchorCellFromSelection(selection), [selection]);
-  const selectedCellAddress = selectedCell ? cellAddress(selectedCell.row, selectedCell.col) : null;
+  const _selectedCellAddress = selectedCell ? cellAddress(selectedCell.row, selectedCell.col) : null;
   const selectedRowInfo = useMemo(() => getSelectedAxisInfo(selection, 'row'), [selection]);
   const selectedColumnInfo = useMemo(() => getSelectedAxisInfo(selection, 'column'), [selection]);
   const canUseRowStructureActions =
@@ -245,6 +245,10 @@ export function SpreadsheetGrid({
   for (let r = visStartRow; r <= visEndRow; r++) {
     if (!snapshot.activeSheet?.rows?.[String(r)]?.filteredOut) visibleRowIndices.push(r);
   }
+  const mountedSelectedCellId =
+    selectedCell && visibleRowIndices.includes(selectedCell.row) && visibleColIndices.includes(selectedCell.col)
+      ? `spreadsheet-cell-${cellAddress(selectedCell.row, selectedCell.col)}`
+      : undefined;
 
   function renderCell(r: number, c: number) {
     const addr = cellAddress(r, c);
@@ -390,9 +394,7 @@ export function SpreadsheetGrid({
         tabIndex={0}
         role="grid"
         aria-label="Spreadsheet grid"
-        aria-activedescendant={
-          selectedCellAddress ? `spreadsheet-cell-${selectedCellAddress}` : undefined
-        }
+        aria-activedescendant={mountedSelectedCellId}
         onScroll={handleScroll}
         onKeyDown={(event) => {
           if (editingCell) {

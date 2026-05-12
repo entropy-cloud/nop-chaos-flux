@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Dialog as SheetPrimitive } from '@base-ui/react/dialog';
-import { t } from '@nop-chaos/flux-i18n';
+import { t } from '../../lib/i18n.js';
 
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';

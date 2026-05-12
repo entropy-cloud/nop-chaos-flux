@@ -91,7 +91,7 @@ describe('event handler contracts', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    expect(screen.getByText('First body')).toBeTruthy();
+    await waitFor(() => expect(screen.getByText('First body')).toBeTruthy());
     fireEvent.click(screen.getByText('Second'));
     await waitFor(() => expect(screen.getByText('Second body')).toBeTruthy());
   });
