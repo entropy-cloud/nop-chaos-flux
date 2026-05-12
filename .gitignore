@@ -14,6 +14,7 @@ stryker.log
 .venv/
 .turbo/
 tmp/
+dist-packages/
 
 # Prevent TypeScript build artifacts from leaking into src/ directories.
 # All compiled output must go to dist/ via tsconfig.build.json (outDir: "dist").

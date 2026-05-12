@@ -1,0 +1,262 @@
+.nop-flux-root {
+  display: contents;
+}
+
+.nop-flux-root .nop-flex {
+  display: flex;
+}
+
+.nop-flux-root .nop-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.nop-flux-root .nop-page > [data-slot='page-body'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-section-gap);
+  padding: var(--space-page-body);
+}
+
+.nop-flux-root .nop-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.nop-flux-root .nop-form > [data-slot='form-body'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-item-gap);
+}
+
+.nop-flux-root .nop-form > [data-slot='form-actions'] {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-form-actions-gap);
+  margin-top: var(--space-form-body-to-actions);
+}
+
+.nop-flux-root .nop-fieldset {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-form-item-gap) var(--space-form-item-gap);
+}
+
+.nop-flux-root .nop-fieldset > legend {
+  padding: 0 var(--space-field-label-gap);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.nop-flux-root .nop-fieldset > [data-slot='fieldset-body'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-fieldset-body-gap);
+}
+
+.nop-flux-root .nop-container > [data-slot='container-body'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-form-item-gap);
+}
+
+.nop-flux-root .nop-container > [data-slot='container-header'] {
+  margin-bottom: var(--space-field-label-gap);
+}
+
+.nop-flux-root .nop-container > [data-slot='container-footer'] {
+  margin-top: var(--space-field-label-gap);
+}
+
+.nop-flux-root [data-slot='tabs-content'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tabs-content-gap);
+}
+
+.nop-flux-root .nop-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-field-internal);
+}
+
+.nop-flux-root .nop-field[data-label-align='top'] {
+  flex-direction: column;
+  gap: var(--space-field-label-gap);
+}
+
+.nop-flux-root .nop-field[data-label-align='left'] {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--space-field-label-h-gap);
+}
+
+.nop-flux-root .nop-field > [data-slot='field-control'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-field-internal);
+}
+
+.nop-flux-root .nop-field[data-label-align='left'] [data-slot='field-label'] {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 6px;
+}
+
+.nop-flux-root .nop-field[data-label-align='left'] [data-slot='field-control'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.nop-flux-root [data-slot='field-label'] {
+  font-size: 13px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  line-height: 1.4;
+}
+
+.nop-flux-root [data-slot='field-required'] {
+  color: var(--nop-field-error, #b53b2c);
+  margin-left: 2px;
+}
+
+.nop-flux-root [data-slot='field-error'] {
+  font-size: 12px;
+  color: var(--nop-field-error, #b53b2c);
+  line-height: 1.4;
+}
+
+.nop-flux-root [data-slot='field-hint'],
+.nop-flux-root [data-slot='field-description'] {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.4;
+}
+
+.nop-flux-root [data-slot='field-remark'],
+.nop-flux-root [data-slot='field-label-remark'] {
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+}
+
+.nop-flux-root .nop-schema-root-fallback {
+  align-items: center;
+}
+
+.nop-flux-root .nop-schema-root-fallback--status {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.nop-flux-root .nop-schema-root-fallback__message {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.nop-flux-root .nop-node-error {
+  width: fit-content;
+  max-width: 100%;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border-style: dashed;
+  border-radius: var(--radius-sm);
+  background: var(--nop-surface, transparent);
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.nop-flux-root .nop-node-error__message {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nop-flux-root .nop-node-error__retry {
+  flex-shrink: 0;
+  padding-inline: 0.25rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.nop-flux-root [data-slot='select-wrapper'] {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.nop-flux-root [data-slot='select-wrapper'] [data-slot='select-trigger'] {
+  width: 100%;
+}
+
+.nop-flux-root [data-slot='select-wrapper'] [data-slot='select-error'] {
+  font-size: 0.875rem;
+  color: hsl(var(--destructive));
+}
+
+.nop-flux-root [data-slot='checkbox-wrapper'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.nop-flux-root [data-slot='checkbox-wrapper'] [data-slot='checkbox-label'] {
+  font-weight: 500;
+}
+
+.nop-flux-root [data-slot='switch-wrapper'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nop-flux-root [data-slot='switch-wrapper'] [data-slot='switch-label'] {
+  font-weight: 600;
+}
+
+.nop-flux-root [data-slot='radio-group-wrapper'],
+.nop-flux-root [data-slot='checkbox-group-wrapper'] {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.nop-flux-root [data-slot='radio-group-wrapper'] [data-slot='radio-group-loading'],
+.nop-flux-root [data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-loading'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.nop-flux-root [data-slot='radio-group-wrapper'] [data-slot='radio-group-options'] {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.nop-flux-root [data-slot='radio-group-wrapper'] [data-slot='radio-group-item'],
+.nop-flux-root [data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-item'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.nop-flux-root [data-slot='radio-group-wrapper'] [data-slot='radio-group-item-label'],
+.nop-flux-root [data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-item-label'] {
+  font-weight: 500;
+}
+
+.nop-flux-root [data-slot='radio-group-wrapper'] [data-slot='radio-group-error'],
+.nop-flux-root [data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-error'] {
+  font-size: 0.875rem;
+  color: hsl(var(--destructive));
+}

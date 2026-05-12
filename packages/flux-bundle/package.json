@@ -1,0 +1,53 @@
+{
+  "name": "@nop-chaos/flux",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "*.css",
+    "./dist/style.css"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "peerDependencies": {
+    "@nop-chaos/ui": "*",
+    "lucide-react": "^1.7.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/flux-renderers-basic": "workspace:*",
+    "@nop-chaos/flux-renderers-data": "workspace:*",
+    "@nop-chaos/flux-renderers-form": "workspace:*",
+    "@nop-chaos/ui": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "lucide-react": "^1.7.0",
+    "zustand": "^5.0.12"
+  },
+  "scripts": {
+    "build": "vite build && node ../../scripts/prepare-flux-bundle-dist.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint",
+    "pack:release": "node ../../scripts/pack-flux-bundle.mjs",
+    "check:pack": "node ../../scripts/check-flux-bundle-pack.mjs"
+  }
+}

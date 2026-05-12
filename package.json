@@ -30,6 +30,7 @@
     "check:i18n-keys": "node scripts/check-i18n-keys.mjs",
     "check:workspace-manifest-deps": "node scripts/check-workspace-manifest-deps.mjs",
     "check:audit-suspects": "node scripts/audit/discover-audit-suspects.mjs",
+    "check:flux-bundle-pack": "node scripts/check-flux-bundle-pack.mjs",
     "check:audit-reactive-render-reads": "node scripts/audit/find-reactive-render-reads.mjs",
     "check:audit-async-failure-paths": "node scripts/audit/find-async-without-failure-path.mjs",
     "check:audit-fieldframe-bypasses": "node scripts/audit/find-fieldframe-bypasses.mjs",
@@ -43,6 +44,7 @@
     "clean:src-artifacts": "node scripts/clean-src-artifacts.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "pack:flux-bundle": "node scripts/pack-flux-bundle.mjs",
     "prepare": "husky"
   },
   "devDependencies": {

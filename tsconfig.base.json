@@ -22,17 +22,38 @@
       "@nop-chaos/flux-action-core": ["./packages/flux-action-core/src/index.ts"],
       "@nop-chaos/flux-compiler": ["./packages/flux-compiler/src/index.ts"],
       "@nop-chaos/flux-formula": ["./packages/flux-formula/src/index.ts"],
+      "@nop-chaos/flux-i18n": ["./packages/flux-i18n/src/index.ts"],
+      "@nop-chaos/flux-i18n/locales/zh-CN": ["./packages/flux-i18n/src/locales/zh-CN.ts"],
+      "@nop-chaos/flux-i18n/locales/en-US": ["./packages/flux-i18n/src/locales/en-US.ts"],
       "@nop-chaos/nop-debugger": ["./packages/nop-debugger/src/index.tsx"],
       "@nop-chaos/flux-runtime": ["./packages/flux-runtime/src/index.ts"],
+      "@nop-chaos/flux-react/default-spacing.css": [
+        "./packages/flux-react/src/default-spacing.css"
+      ],
       "@nop-chaos/flux-react": ["./packages/flux-react/src/index.tsx"],
       "@nop-chaos/flux-react/unstable": ["./packages/flux-react/src/unstable.ts"],
+      "@nop-chaos/flux/style.css": ["./packages/flux-bundle/src/style.css"],
+      "@nop-chaos/flux": ["./packages/flux-bundle/src/index.tsx"],
       "@nop-chaos/flux-renderers-basic": ["./packages/flux-renderers-basic/src/index.tsx"],
       "@nop-chaos/flux-renderers-form": ["./packages/flux-renderers-form/src/index.tsx"],
+      "@nop-chaos/flux-renderers-form/definitions": [
+        "./packages/flux-renderers-form/src/definitions.ts"
+      ],
+      "@nop-chaos/flux-renderers-form/form-renderers.css": [
+        "./packages/flux-renderers-form/src/form-renderers.css"
+      ],
       "@nop-chaos/flux-renderers-form/test-support": [
         "./packages/flux-renderers-form/src/test-support.tsx"
       ],
       "@nop-chaos/flux-renderers-data": ["./packages/flux-renderers-data/src/index.tsx"],
+      "@nop-chaos/flux-code-editor": ["./packages/flux-code-editor/src/index.ts"],
+      "@nop-chaos/flux-code-editor/code-editor-styles.css": [
+        "./packages/flux-code-editor/src/code-editor-styles.css"
+      ],
       "@nop-chaos/theme-tokens": ["./packages/theme-tokens/src/index.ts"],
+      "@nop-chaos/theme-tokens/styles.css": ["./packages/theme-tokens/src/styles.css"],
+      "@nop-chaos/ui/styles.css": ["./packages/ui/src/styles/index.css"],
+      "@nop-chaos/ui/base.css": ["./packages/ui/src/styles/base.css"],
       "@nop-chaos/ui/chart": ["./packages/ui/src/components/ui/chart.tsx"],
       "@nop-chaos/ui/lib/utils": ["./packages/ui/src/lib/utils.ts"],
       "@nop-chaos/ui": ["./packages/ui/src/index.ts"],
@@ -42,15 +63,23 @@
       ],
       "@nop-chaos/spreadsheet-renderers": ["./packages/spreadsheet-renderers/src/index.ts"],
       "@nop-chaos/report-designer-core": ["./packages/report-designer-core/src/index.ts"],
+      "@nop-chaos/report-designer-renderers/report-field-panel.css": [
+        "./packages/report-designer-renderers/src/report-field-panel.css"
+      ],
       "@nop-chaos/report-designer-renderers": ["./packages/report-designer-renderers/src/index.ts"],
       "@nop-chaos/flow-designer-core": ["./packages/flow-designer-core/src/index.ts"],
+      "@nop-chaos/flow-designer-renderers/designer-theme.css": [
+        "./packages/flow-designer-renderers/src/designer-theme.css"
+      ],
       "@nop-chaos/flow-designer-renderers/unstable": [
         "./packages/flow-designer-renderers/src/unstable.ts"
       ],
       "@nop-chaos/flow-designer-renderers": ["./packages/flow-designer-renderers/src/index.tsx"],
-      "@nop-chaos/flux-code-editor": ["./packages/flux-code-editor/src/index.ts"],
       "@nop-chaos/word-editor-core": ["./packages/word-editor-core/src/index.ts"],
-      "@nop-chaos/word-editor-renderers": ["./packages/word-editor-renderers/src/index.ts"]
+      "@nop-chaos/word-editor-renderers": ["./packages/word-editor-renderers/src/index.ts"],
+      "@nop-chaos/word-editor-renderers/styles.css": [
+        "./packages/word-editor-renderers/src/styles.css"
+      ]
     }
   }
 }

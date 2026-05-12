@@ -19,56 +19,39 @@ fi
 
 FLUX_LIB_DIR="$CONSUMER_DIR/flux-lib"
 
-PACKAGES=(
-  flux-core
-  flux-formula
-  flux-runtime
-  flux-react
-  flux-renderers-basic
-  flux-renderers-form
-  flux-renderers-data
-  flow-designer-core
-  flow-designer-renderers
-  spreadsheet-core
-  spreadsheet-renderers
-  report-designer-core
-  report-designer-renderers
-  nop-debugger
-  ui
-)
-
-echo "=== Building all packages ==="
+echo "=== Building @nop-chaos/ui and packing @nop-chaos/flux ==="
 cd "$FLUX_ROOT"
-pnpm -r build
+pnpm --filter @nop-chaos/ui build
+node scripts/pack-flux-bundle.mjs
 
 echo ""
-echo "=== Syncing to $FLUX_LIB_DIR ==="
+echo "=== Syncing @nop-chaos/ui to $FLUX_LIB_DIR ==="
 
-rm -rf "$FLUX_LIB_DIR"
 mkdir -p "$FLUX_LIB_DIR"
 
-for pkg in "${PACKAGES[@]}"; do
-  src="$FLUX_ROOT/packages/$pkg"
-  dst="$FLUX_LIB_DIR/$pkg"
+src="$FLUX_ROOT/packages/ui"
+dst="$FLUX_LIB_DIR/ui"
 
-  if [ ! -d "$src/dist" ]; then
-    echo "SKIP: $pkg (no dist/)"
-    continue
-  fi
+if [ ! -d "$src/dist" ]; then
+  echo "ERROR: ui dist/ missing after build"
+  exit 1
+fi
 
-  rm -rf "$dst"
-  cp -R "$src" "$dst"
-  rm -rf "$dst/src"
-  rm -rf "$dst/node_modules"
+rm -rf "$dst"
+cp -R "$src" "$dst"
+rm -rf "$dst/src"
+rm -rf "$dst/node_modules"
 
-  echo "OK: $pkg"
-done
+echo "OK: ui"
+
+TARBALL_PATH="$FLUX_ROOT/dist-packages/nop-chaos-flux-0.1.0.tgz"
 
 echo ""
 echo "=== Done ==="
-echo "flux-lib packages copied to: $FLUX_LIB_DIR"
+echo "flux-lib/ui copied to: $dst"
+echo "host-facing Flux tarball ready at: $TARBALL_PATH"
 echo ""
-echo "Next steps in nop-chaos-next:"
-echo "  1. Ensure pnpm-workspace.yaml includes 'flux-lib/*'"
-echo "  2. Run pnpm install"
-echo "  3. Update apps/main/package.json with workspace:* deps"
+echo "Supported next steps in nop-chaos-next:"
+echo "  1. Keep only flux-lib/ui as a synced workspace package"
+echo "  2. Add @nop-chaos/flux via file:.../dist-packages/nop-chaos-flux-0.1.0.tgz"
+echo "  3. Do not sync flux-core/flux-react/flux-renderers-* into flux-lib/"

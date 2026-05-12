@@ -8,6 +8,7 @@
     { "path": "./packages/flux-i18n" },
     { "path": "./packages/flux-runtime" },
     { "path": "./packages/flux-react" },
+    { "path": "./packages/flux-bundle" },
     { "path": "./packages/flux-renderers-basic" },
     { "path": "./packages/flux-renderers-form" },
     { "path": "./packages/flux-renderers-form-advanced" },
