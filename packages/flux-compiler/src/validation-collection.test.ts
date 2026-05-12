@@ -359,12 +359,12 @@ describe('collectValidationModel', () => {
 
     const compiled = compiler.compile({
       type: 'form',
-      hiddenFieldPolicy: 'validate-and-submit',
+      hiddenFieldPolicy: { validateWhenHidden: true },
       body: { type: 'input-text', name: 'email' },
     });
 
     const root = compiled.root as TemplateNode;
-    expect(root.validationPlan?.defaultHiddenFieldPolicy).toBe('validate-and-submit');
+    expect(root.validationPlan?.defaultHiddenFieldPolicy).toEqual({ validateWhenHidden: true });
   });
 
   it('handles array of template nodes at root', () => {

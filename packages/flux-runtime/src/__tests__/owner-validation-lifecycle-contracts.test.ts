@@ -111,6 +111,59 @@ describe('owner validation lifecycle contracts', () => {
     expect(validateRule).toHaveBeenCalledTimes(1);
   });
 
+  it('returns a blocked result after disposal instead of a clean success', async () => {
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      parentScope: createStubScope({ name: '' }),
+      initialValues: { name: '' },
+      validation: makeFormModel({ name: makeNode('name', { required: true }) }),
+      validateRule: vi.fn().mockReturnValue(undefined),
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    runtime.dispose();
+
+    await expect(runtime.validateField('name')).resolves.toMatchObject({
+      ok: false,
+      errors: [expect.objectContaining({ message: expect.stringContaining('disposed') })],
+    });
+  });
+
+  it('publishes sync validation errors before async validation settles', async () => {
+    let resolveAsyncRule:
+      | ((value: ReturnType<typeof realValidateRule> | undefined) => void)
+      | undefined;
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      parentScope: createStubScope({ name: '' }),
+      initialValues: { name: '' },
+      validation: makeFormModel({ name: makeNode('name', { required: true, async: true }) }),
+      validateRule: realValidateRule,
+      executeValidationRule: vi.fn().mockImplementation(
+        async () =>
+          await new Promise((resolve) => {
+            resolveAsyncRule = resolve;
+          }),
+      ),
+    });
+
+    const validationPromise = runtime.validateField('name', 'change');
+
+    await vi.waitFor(() => {
+      expect(runtime.getFieldState('name').errors).toMatchObject([
+        expect.objectContaining({ rule: 'required' }),
+      ]);
+      expect(runtime.getFieldState('name').validating).toBe(true);
+    });
+
+    resolveAsyncRule?.(undefined);
+
+    await expect(validationPromise).resolves.toMatchObject({ ok: false });
+    expect(runtime.getFieldState('name').errors).toMatchObject([
+      expect.objectContaining({ rule: 'required' }),
+    ]);
+  });
+
   it('defers validateAll while lifecycle is bootstrapping until the owner becomes active', async () => {
     const model = makeFormModel({ name: makeNode('name', { required: true }) });
     const validateRule = vi.fn().mockReturnValue(undefined);

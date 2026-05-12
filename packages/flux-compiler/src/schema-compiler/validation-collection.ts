@@ -6,7 +6,7 @@ import type {
   ValidationTrigger,
   ValidationVisibilityTrigger,
 } from '@nop-chaos/flux-core';
-import { buildCompiledFormValidationModel } from '@nop-chaos/flux-core';
+import { buildCompiledFormValidationModel, normalizeHiddenFieldPolicy } from '@nop-chaos/flux-core';
 import {
   collectSchemaValidationRules,
   compileValidationRules,
@@ -100,8 +100,9 @@ export function collectValidationModel(
       );
       const formHiddenPolicy = (entry.schema as { hiddenFieldPolicy?: HiddenFieldPolicy })
         .hiddenFieldPolicy;
-      if (formHiddenPolicy) {
-        formDefaultHiddenFieldPolicy = formHiddenPolicy;
+      const normalizedFormHiddenPolicy = normalizeHiddenFieldPolicy(formHiddenPolicy);
+      if (normalizedFormHiddenPolicy) {
+        formDefaultHiddenFieldPolicy = normalizedFormHiddenPolicy;
       }
     }
 
@@ -147,6 +148,7 @@ export function collectValidationModel(
         const label = typeof entry.schema.label === 'string' ? entry.schema.label : undefined;
         const fieldHiddenPolicy = (entry.schema as { hiddenFieldPolicy?: HiddenFieldPolicy })
           .hiddenFieldPolicy;
+        const normalizedFieldHiddenPolicy = normalizeHiddenFieldPolicy(fieldHiddenPolicy);
 
         validationNodes[fieldPath] = {
           path: fieldPath,
@@ -157,7 +159,7 @@ export function collectValidationModel(
           behavior,
           children: [],
           parent: parentPath,
-          hiddenFieldPolicy: fieldHiddenPolicy,
+          hiddenFieldPolicy: normalizedFieldHiddenPolicy,
         };
 
         if (validationNodes[parentPath] !== undefined) {

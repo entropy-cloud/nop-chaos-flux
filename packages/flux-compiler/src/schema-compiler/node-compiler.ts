@@ -55,6 +55,7 @@ import {
   normalizeValidationTriggers,
   normalizeValidationVisibilityTriggers,
 } from '../validation-lowering.js';
+import { normalizeHiddenFieldPolicy } from '@nop-chaos/flux-core';
 
 export type CompileSingleNodeFn = (
   schema: BaseSchema,
@@ -435,6 +436,14 @@ export function createCompileSingleNode(
               ...regionOptions,
               schemaUrl: regionOptions?.schemaUrl ?? options.schemaUrl,
               preparedImports: options.preparedImports,
+              diagnostics: diagnostics.enabled
+                ? {
+                    enabled: true,
+                    continueOnError: diagnostics.continueOnError,
+                    maxIssues: diagnostics.maxIssues,
+                    reporter: (issue) => diagnostics.emit(issue),
+                  }
+                : regionOptions?.diagnostics,
               symbolTable: pushRegionParamSymbols(
                 symbolTable,
                 rule.params,
@@ -491,13 +500,32 @@ export function createCompileSingleNode(
             value,
             path,
             regions,
-            compileSchema: (s: SchemaInput, o?: CompileSchemaOptions) =>
+            compileSchema: (
+              s: SchemaInput,
+              o?: CompileSchemaOptions,
+              regionMeta?: { params?: readonly string[]; isolate?: boolean },
+            ) =>
               compileSchemaToTemplateNodes(
                 s,
                 {
                   ...o,
                   schemaUrl: o?.schemaUrl ?? options.schemaUrl,
                   preparedImports: o?.preparedImports ?? options.preparedImports,
+                  diagnostics: diagnostics.enabled
+                    ? {
+                        enabled: true,
+                        continueOnError: diagnostics.continueOnError,
+                        maxIssues: diagnostics.maxIssues,
+                        reporter: (issue) => diagnostics.emit(issue),
+                      }
+                    : o?.diagnostics,
+                  symbolTable: regionMeta?.params?.length
+                    ? pushRegionParamSymbols(
+                        o?.symbolTable ?? symbolTable,
+                        regionMeta.params,
+                        `${path}.${key}:slot`,
+                      )
+                    : (o?.symbolTable ?? symbolTable),
                 },
                 depth + 1,
               ),
@@ -693,10 +721,9 @@ export function createCompileSingleNode(
                   'touched',
                   'submit',
                 ]),
-                defaultHiddenFieldPolicy: (schema as { hiddenFieldPolicy?: unknown })
-                  .hiddenFieldPolicy as
-                  | import('@nop-chaos/flux-core').HiddenFieldPolicy
-                  | undefined,
+                defaultHiddenFieldPolicy: normalizeHiddenFieldPolicy(
+                  (schema as { hiddenFieldPolicy?: unknown }).hiddenFieldPolicy,
+                ),
               },
             )
           : undefined,

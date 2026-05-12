@@ -56,7 +56,7 @@ describe('createSchemaCompiler', () => {
         {
           label: 'Member',
           name: 'name',
-          cell: { type: 'text', text: 'User ${record.name}' },
+          cell: { type: 'text', text: 'User ${$slot.record.name}' },
         },
       ],
     });
@@ -98,5 +98,73 @@ describe('createSchemaCompiler', () => {
     expect(plainNode.regions.empty).toBeUndefined();
     expect(regionNode.propsProgram?.value?.empty).toEqual({ type: 'text', text: 'No rows' });
     expect(regionNode.regions?.empty).toBeUndefined();
+  });
+
+  it('warns when table parameterized slots use bare record instead of $slot.record', () => {
+    const tableRenderer: RendererDefinition = {
+      type: 'table',
+      component: () => null,
+    };
+    const textRenderer: RendererDefinition = {
+      type: 'text',
+      component: () => null,
+    };
+    const registry = createRendererRegistry([tableRenderer, textRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const diagnostics = compiler.validate?.({
+      type: 'table',
+      columns: [
+        {
+          name: 'name',
+          cell: { type: 'text', text: 'User ${record.name}' },
+        },
+      ],
+    });
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'unknown-slot-param',
+          severity: 'warning',
+          path: '$.columns[0].cell.text',
+        }),
+      ]),
+    );
+  });
+
+  it('accepts $slot.record in table parameterized slots without slot diagnostics', () => {
+    const tableRenderer: RendererDefinition = {
+      type: 'table',
+      component: () => null,
+    };
+    const textRenderer: RendererDefinition = {
+      type: 'text',
+      component: () => null,
+    };
+    const registry = createRendererRegistry([tableRenderer, textRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const diagnostics = compiler.validate?.({
+      type: 'table',
+      columns: [
+        {
+          name: 'name',
+          cell: { type: 'text', text: 'User ${$slot.record.name}' },
+        },
+      ],
+    });
+
+    expect(
+      diagnostics?.filter(
+        (issue) => issue.code === 'unknown-slot-param' || issue.code === 'slot-used-outside-region',
+      ),
+    ).toEqual([]);
   });
 });

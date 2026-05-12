@@ -95,15 +95,28 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: true, data: values };
           }
 
-          if (ctx.form) {
-            ctx.form.setValues(values);
-            return { ok: true, data: values };
-          }
-
           const basePath =
             typeof invocation.args?.path === 'string'
               ? invocation.args.path
               : invocation.targeting.targetId;
+
+          const resolvedValues = basePath
+            ? Object.fromEntries(
+                Object.entries(values).map(([targetPath, val]) => [`${basePath}.${targetPath}`, val]),
+              )
+            : values;
+
+          if (ctx.form) {
+            if (basePath) {
+              for (const [targetPath, val] of Object.entries(resolvedValues)) {
+                ctx.form.setValue(targetPath, val);
+              }
+            } else {
+              ctx.form.setValues(values);
+            }
+
+            return { ok: true, data: resolvedValues };
+          }
 
           for (const [targetPath, val] of Object.entries(values)) {
             ctx.scope.update(basePath ? `${basePath}.${targetPath}` : targetPath, val);
@@ -112,9 +125,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           if (basePath) {
             return {
               ok: true,
-              data: Object.fromEntries(
-                Object.entries(values).map(([key, val]) => [`${basePath}.${key}`, val]),
-              ),
+              data: resolvedValues,
             };
           }
 

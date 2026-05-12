@@ -527,6 +527,31 @@ describe('built-in scope-write and submit semantics', () => {
     expect(scopeUpdate).not.toHaveBeenCalled();
   });
 
+  it('setValues honors args.path inside the current form runtime', async () => {
+    const adapter = createAdapter();
+    const form = { id: 'form-1', setValue: vi.fn(), setValues: vi.fn() };
+
+    const result = await adapter.invokeBuiltInAction(
+      createBuiltInInvocation('setValues', {
+        path: 'profile',
+        values: { firstName: 'Alice', lastName: 'Smith' },
+      }),
+      createCtx({ form }),
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      data: {
+        'profile.firstName': 'Alice',
+        'profile.lastName': 'Smith',
+      },
+    });
+    expect(form.setValue).toHaveBeenCalledTimes(2);
+    expect(form.setValue).toHaveBeenCalledWith('profile.firstName', 'Alice');
+    expect(form.setValue).toHaveBeenCalledWith('profile.lastName', 'Smith');
+    expect(form.setValues).not.toHaveBeenCalled();
+  });
+
   it('submitForm returns error when there is no current form runtime', async () => {
     const adapter = createAdapter();
 

@@ -44,6 +44,19 @@ function emitSymbolDiagnostics(ast: FormulaAstNode, options?: ExpressionCompileO
 
   const seen = new Set<string>();
 
+  function isTableSlotParamBareAccess(path: string[]): boolean {
+    if (path.length === 0) {
+      return false;
+    }
+
+    const resolvedSlot = requiredSymbolTable.resolve('$slot');
+    return (
+      resolvedSlot?.kind === 'slot-root' &&
+      (path[0] === 'record' || path[0] === 'index') &&
+      resolvedSlot.members?.includes(path[0]) === true
+    );
+  }
+
   function emit(
     code: SchemaDiagnosticCode,
     message: string,
@@ -81,6 +94,13 @@ function emitSymbolDiagnostics(ast: FormulaAstNode, options?: ExpressionCompileO
 
     if (node.type === 'MemberExpression') {
       const path = buildMemberPath(node);
+      if (path && isTableSlotParamBareAccess(path)) {
+        emit(
+          'unknown-slot-param',
+          `Table parameterized slot params must be accessed through $slot.${path.join('.')} instead of bare ${path[0]}.`,
+          'warning',
+        );
+      }
       if (path && path[0].startsWith('$')) {
         const resolved = requiredSymbolTable.resolve(path[0]);
 
@@ -120,6 +140,14 @@ function emitSymbolDiagnostics(ast: FormulaAstNode, options?: ExpressionCompileO
           );
         }
       }
+    }
+
+    if (node.type === 'Identifier' && isTableSlotParamBareAccess([node.name])) {
+      emit(
+        'unknown-slot-param',
+        `Table parameterized slot params must be accessed through $slot.${node.name} instead of bare ${node.name}.`,
+        'warning',
+      );
     }
 
     if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {

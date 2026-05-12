@@ -14,6 +14,12 @@ export type NestedRegionFieldRule = {
   isolate?: boolean;
 };
 
+export type RegionCompileSchema = (
+  input: SchemaInput,
+  options?: CompileSchemaOptions,
+  regionMeta?: { params?: readonly string[]; isolate?: boolean },
+) => TemplateNode | TemplateNode[];
+
 const RESERVED_SLOT_PARAM_NAMES = new Set(['$parent', '$name', '$key', '$depth']);
 
 export function validateRegionParams(params: readonly string[], regionPath: string): void {
@@ -78,10 +84,7 @@ export function extractNestedSchemaRegions(input: {
   itemRegionKeyPrefix: string;
   rules: readonly NestedRegionFieldRule[];
   regions: Record<string, TemplateRegion>;
-  compileSchema: (
-    input: SchemaInput,
-    options?: CompileSchemaOptions,
-  ) => TemplateNode | TemplateNode[];
+  compileSchema: RegionCompileSchema;
 }) {
   const nextValue: Record<string, unknown> = { ...input.candidate };
   let changed = false;
@@ -99,7 +102,7 @@ export function extractNestedSchemaRegions(input: {
       regionKey,
       fieldValue,
       regionPath,
-      input.compileSchema,
+      (schema, options) => input.compileSchema(schema, options, { params: rule.params, isolate: rule.isolate }),
       { params: rule.params, isolate: rule.isolate },
     );
     delete nextValue[rule.key];

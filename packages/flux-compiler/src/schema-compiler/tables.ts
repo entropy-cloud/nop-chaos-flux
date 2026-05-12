@@ -65,6 +65,7 @@ export type DeepFieldNormalizer = (input: {
   compileSchema: (
     input: SchemaInput,
     options?: CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
   ) => TemplateNode | TemplateNode[];
 }) => unknown;
 
@@ -75,6 +76,7 @@ function normalizeTableColumns(
   compileSchema: (
     input: SchemaInput,
     options?: CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
   ) => TemplateNode | TemplateNode[],
 ) {
   if (!Array.isArray(value)) {
@@ -104,6 +106,7 @@ function normalizeTabsItems(
   compileSchema: (
     input: SchemaInput,
     options?: CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
   ) => TemplateNode | TemplateNode[],
 ) {
   if (!Array.isArray(value)) {
@@ -133,6 +136,7 @@ function normalizeVariantItems(
   compileSchema: (
     input: SchemaInput,
     options?: CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
   ) => TemplateNode | TemplateNode[],
 ) {
   if (!Array.isArray(value)) {
@@ -180,6 +184,7 @@ function normalizeTableExpandable(
   compileSchema: (
     input: SchemaInput,
     options?: CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
   ) => TemplateNode | TemplateNode[],
 ) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {

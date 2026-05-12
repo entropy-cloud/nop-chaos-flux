@@ -12,19 +12,41 @@ const DEFAULT_HIDDEN_FIELD_POLICY: HiddenFieldPolicy = {
   clearValueWhenHidden: false,
 };
 
+export function normalizeHiddenFieldPolicy(value: unknown): HiddenFieldPolicy | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const record = value as Record<string, unknown>;
+  const policy: HiddenFieldPolicy = {};
+
+  if (typeof record.validateWhenHidden === 'boolean') {
+    policy.validateWhenHidden = record.validateWhenHidden;
+  }
+
+  if (typeof record.clearValueWhenHidden === 'boolean') {
+    policy.clearValueWhenHidden = record.clearValueWhenHidden;
+  }
+
+  return Object.keys(policy).length > 0 ? policy : {};
+}
+
 export function resolveHiddenFieldPolicy(
   fieldPolicy: HiddenFieldPolicy | undefined,
   formPolicy: HiddenFieldPolicy | undefined,
 ): HiddenFieldPolicy {
-  if (!fieldPolicy && !formPolicy) {
+  const normalizedFieldPolicy = normalizeHiddenFieldPolicy(fieldPolicy);
+  const normalizedFormPolicy = normalizeHiddenFieldPolicy(formPolicy);
+
+  if (!normalizedFieldPolicy && !normalizedFormPolicy) {
     return DEFAULT_HIDDEN_FIELD_POLICY;
   }
 
-  if (!fieldPolicy) {
-    return { ...DEFAULT_HIDDEN_FIELD_POLICY, ...formPolicy };
+  if (!normalizedFieldPolicy) {
+    return { ...DEFAULT_HIDDEN_FIELD_POLICY, ...normalizedFormPolicy };
   }
 
-  return { ...DEFAULT_HIDDEN_FIELD_POLICY, ...formPolicy, ...fieldPolicy };
+  return { ...DEFAULT_HIDDEN_FIELD_POLICY, ...normalizedFormPolicy, ...normalizedFieldPolicy };
 }
 
 export function isCompiledValidationFieldNode(
@@ -150,7 +172,7 @@ export function buildCompiledFormValidationModel(input: {
     dependents: buildCompiledValidationDependentMap(nodes),
     nodes,
     rootPath,
-    defaultHiddenFieldPolicy: input.defaultHiddenFieldPolicy,
+    defaultHiddenFieldPolicy: normalizeHiddenFieldPolicy(input.defaultHiddenFieldPolicy),
   };
 }
 

@@ -84,7 +84,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      const columns = [{ name: 'name', cell: { type: 'text', text: 'Cell ${record.name}' } }];
+      const columns = [{ name: 'name', cell: { type: 'text', text: 'Cell ${$slot.record.name}' } }];
 
       normalize({ value: columns, path: '$.columns', regions, compileSchema });
 

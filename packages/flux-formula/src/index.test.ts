@@ -69,6 +69,14 @@ describe('createFormulaCompiler', () => {
     expect(result).toBe('Status: clean');
   });
 
+  it('parses single-quoted string literals in templates', () => {
+    const compiler = createFormulaCompiler();
+    const template = compiler.compileTemplate("Status: ${isDirty ? 'dirty' : 'clean'}");
+    const scope = createScope({ isDirty: true });
+    const result = template.exec(scope, env);
+    expect(result).toBe('Status: dirty');
+  });
+
   it('handles multiple ternary expressions', () => {
     const compiler = createFormulaCompiler();
     const template = compiler.compileTemplate('${a ? 1 : 0} and ${b ? 2 : 3}');

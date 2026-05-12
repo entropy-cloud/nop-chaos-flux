@@ -21,6 +21,48 @@ export interface FormulaSyntaxError extends Error {
 
 const MAX_PARSER_DEPTH = 256;
 
+function parseStringLiteral(raw: string): string {
+  if (raw.startsWith('"')) {
+    return JSON.parse(raw);
+  }
+
+  if (!raw.startsWith("'")) {
+    throw new Error(`Unsupported string literal: ${raw}`);
+  }
+
+  let normalized = '"';
+  for (let index = 1; index < raw.length - 1; index += 1) {
+    const current = raw[index];
+
+    if (current === '\\') {
+      const next = raw[index + 1];
+      if (next === undefined || index + 1 >= raw.length - 1) {
+        throw new Error(`Unterminated string literal: ${raw}`);
+      }
+
+      if (next === "'") {
+        normalized += "'";
+      } else if (next === '"') {
+        normalized += '\\"';
+      } else {
+        normalized += `\\${next}`;
+      }
+      index += 1;
+      continue;
+    }
+
+    if (current === '"') {
+      normalized += '\\"';
+      continue;
+    }
+
+    normalized += current;
+  }
+
+  normalized += '"';
+  return JSON.parse(normalized);
+}
+
 class Parser {
   private readonly tokens: FormulaToken[];
   private index = 0;
@@ -381,7 +423,7 @@ class Parser {
 
       if (this.match('string')) {
         this.consume();
-        return createLiteralNode(JSON.parse(token.value), token.value, token.start, token.end);
+        return createLiteralNode(parseStringLiteral(token.value), token.value, token.start, token.end);
       }
 
       if (this.match('keyword', 'true') || this.match('keyword', 'false')) {
@@ -464,7 +506,12 @@ class Parser {
           key = createIdentifierNode(this.consume());
         } else if (this.match('string')) {
           const token = this.consume();
-          key = createLiteralNode(JSON.parse(token.value), token.value, token.start, token.end);
+          key = createLiteralNode(
+            parseStringLiteral(token.value),
+            token.value,
+            token.start,
+            token.end,
+          );
         } else {
           this.throwSyntaxError('Invalid object key');
         }

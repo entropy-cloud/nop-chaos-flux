@@ -233,6 +233,7 @@ async function runSingleActionWithRetry(
 ): Promise<ActionResult> {
   if (isRequestBackedAction(action)) {
     const result = await runSingleActionWithTimeout(ctx, action, actionCtx);
+    const resultWithRetry = result as { attempts?: unknown; failureCount?: unknown };
     const errorWithRetry = result.error as
       | { attempts?: unknown; failureCount?: unknown }
       | undefined;
@@ -240,9 +241,15 @@ async function runSingleActionWithRetry(
     return {
       ...result,
       attempts:
-        typeof errorWithRetry?.attempts === 'number' ? errorWithRetry.attempts : result.attempts,
+        typeof resultWithRetry.attempts === 'number'
+          ? resultWithRetry.attempts
+          : typeof errorWithRetry?.attempts === 'number'
+            ? errorWithRetry.attempts
+            : result.attempts,
       failureCount:
-        typeof errorWithRetry?.failureCount === 'number'
+        typeof resultWithRetry.failureCount === 'number'
+          ? resultWithRetry.failureCount
+          : typeof errorWithRetry?.failureCount === 'number'
           ? errorWithRetry.failureCount
           : result.failureCount,
     };
@@ -266,11 +273,24 @@ async function runSingleActionWithRetry(
       },
       (result) => Boolean(result.ok || result.skipped || result.cancelled || result.timedOut),
     );
+    const lastResultWithRetry = lastResult as { attempts?: unknown; failureCount?: unknown } | undefined;
+    const preservedAttempts =
+      attempts > 1 || failureCount > 0
+        ? attempts
+        : typeof lastResultWithRetry?.attempts === 'number'
+          ? lastResultWithRetry.attempts
+          : attempts;
+    const preservedFailureCount =
+      attempts > 1 || failureCount > 0
+        ? failureCount
+        : typeof lastResultWithRetry?.failureCount === 'number'
+          ? lastResultWithRetry.failureCount
+          : failureCount;
 
     return {
       ...(lastResult ?? { ok: false, error: new Error('Action failed without result') }),
-      attempts,
-      failureCount,
+      attempts: preservedAttempts,
+      failureCount: preservedFailureCount,
       error: lastResult?.error ?? lastFailureReason,
     };
   } catch (error) {

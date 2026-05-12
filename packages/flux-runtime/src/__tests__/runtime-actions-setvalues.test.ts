@@ -57,6 +57,51 @@ describe('createRendererRuntime', () => {
     expect(commits).toBeLessThanOrEqual(1);
   });
 
+  it('scopes setValues args.path writes inside forms', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ pageValue: 'root' });
+    const form = runtime.createFormRuntime({
+      id: 'profile-form',
+      initialValues: { profile: { firstName: 'Old', lastName: 'Name' } },
+      parentScope: page.scope,
+      page,
+    });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'setValues',
+        formId: 'profile-form',
+        args: {
+          path: 'profile',
+          values: {
+            firstName: 'Bob',
+            lastName: 'Smith',
+          },
+        },
+      },
+      {
+        runtime,
+        scope: form.scope,
+        page,
+        form,
+      },
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      data: {
+        'profile.firstName': 'Bob',
+        'profile.lastName': 'Smith',
+      },
+    });
+    expect(form.scope.get('profile.firstName')).toBe('Bob');
+    expect(form.scope.get('profile.lastName')).toBe('Smith');
+  });
+
   it('matches chained form.setValue updates with fewer commits', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),

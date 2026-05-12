@@ -95,7 +95,7 @@ describe('createSchemaCompiler', () => {
         {
           label: 'Member',
           name: 'name',
-          cell: { type: 'text', text: 'User ${record.name}' },
+          cell: { type: 'text', text: 'User ${$slot.record.name}' },
         },
       ],
     });

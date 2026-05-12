@@ -8,7 +8,7 @@ import { compileActions } from '@nop-chaos/flux-compiler';
 import type { ActionDispatcherContext } from './types.js';
 
 export function isRequestBackedAction(action: CompiledActionNode): boolean {
-  return action.action === 'ajax' || action.action === 'submitForm' || action.action === 'submit';
+  return action.action === 'ajax' || action.action === 'submit';
 }
 
 export function isCompiledActionProgram(action: unknown): action is CompiledActionProgram {

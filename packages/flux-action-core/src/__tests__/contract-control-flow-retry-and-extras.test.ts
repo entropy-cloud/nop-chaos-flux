@@ -88,6 +88,37 @@ describe('contract: retry with edge cases', () => {
     expect(result.ok).toBe(false);
     expect(callCount).toBe(1);
   });
+
+  it('retries submitForm failures through the standard retry pipeline', async () => {
+    let callCount = 0;
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: async () => {
+        callCount += 1;
+        if (callCount < 3) {
+          return { ok: false, error: new Error('submit failed') };
+        }
+
+        return { ok: true, data: { submitted: true } };
+      },
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'submitForm',
+          payload: {},
+          targeting: {},
+          control: { retry: { times: 3, delay: 0 } },
+          source: { action: 'submitForm', retry: { times: 3, delay: 0 } },
+        },
+      ]),
+      createActionCtx({ runtime, form: { id: 'form-1', submit: vi.fn() } as any }),
+    );
+
+    expect(result).toMatchObject({ ok: true, data: { submitted: true }, attempts: 3 });
+    expect(callCount).toBe(3);
+  });
 });
 
 describe('contract: action returning null/undefined data', () => {

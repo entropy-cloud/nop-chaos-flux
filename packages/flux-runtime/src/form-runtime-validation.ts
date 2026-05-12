@@ -38,6 +38,23 @@ function createValidationResult(errors: ValidationError[]): ValidationResult {
   };
 }
 
+function createBlockedValidationResult(
+  lifecycleState: FormRuntimeValidationState['lifecycleState'],
+): ValidationResult {
+  return {
+    ok: false,
+    errors: [
+      {
+        path: '',
+        ownerPath: '',
+        rule: 'async',
+        message: `Validation is blocked while owner lifecycleState is "${lifecycleState}".`,
+        sourceKind: 'form',
+      },
+    ],
+  };
+}
+
 function isLifecycleTransitional(state: FormRuntimeValidationState): boolean {
   return state.lifecycleState === 'bootstrapping' || state.lifecycleState === 'refreshing';
 }
@@ -248,9 +265,9 @@ async function validateCompiledField(
   sharedState.validationAbortControllers.get(path)?.abort();
   sharedState.validationAbortControllers.delete(path);
   const value = syncedRuntimeValue ?? sharedState.scope.get(path);
-    const errors: ValidationError[] = [];
-    const hasAsyncRules = field.rules.some((compiledRule) => compiledRule.rule.kind === 'async');
-    let finalErrors: ValidationError[] = [];
+  const errors: ValidationError[] = [];
+  const hasAsyncRules = field.rules.some((compiledRule) => compiledRule.rule.kind === 'async');
+  let finalErrors: ValidationError[] = [];
   const validationRun = hasAsyncRules
     ? sharedState.validationAsyncGovernance.beginRun({
         ownerKind: 'validation',
@@ -329,6 +346,16 @@ async function validateCompiledField(
 
       if (syncError) {
         errors.push(syncError);
+      }
+
+      if (hasAsyncRules) {
+        finalErrors = overlayFieldErrorsWithExternal(sharedState, path, errors);
+        commitPathValidationState({
+          sharedState,
+          path,
+          errors: finalErrors,
+          validating: true,
+        });
       }
     }
 
@@ -431,14 +458,14 @@ export async function validatePath(
   reason?: ValidationReason,
 ): Promise<ValidationResult> {
   if (sharedState.lifecycleState === 'disposed') {
-    return createValidationResult([]);
+    return createBlockedValidationResult(sharedState.lifecycleState);
   }
 
   if (isLifecycleTransitional(sharedState)) {
     const activated = await waitForActiveLifecycle(sharedState);
 
     if (!activated) {
-      return createValidationResult([]);
+      return createBlockedValidationResult(sharedState.lifecycleState);
     }
   }
 
@@ -487,7 +514,9 @@ export async function validatePath(
     return await validateCompiledField(sharedState, path, field, reason);
   } catch (error) {
     if (error === VALIDATION_CANCELLED) {
-      return createValidationResult([]);
+      return sharedState.lifecycleState === 'active'
+        ? createValidationResult([])
+        : createBlockedValidationResult(sharedState.lifecycleState);
     }
 
     throw error;
