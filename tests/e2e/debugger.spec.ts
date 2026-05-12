@@ -25,9 +25,9 @@ function getLauncher(page: import('@playwright/test').Page) {
 }
 
 async function prepareFreshPage(page: import('@playwright/test').Page): Promise<void> {
-  await page.goto('/', { waitUntil: 'commit' });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => localStorage.clear());
-  await page.goto('/', { waitUntil: 'load' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: 'Playground', level: 1 }).waitFor({
     state: 'visible',
     timeout: 45000,

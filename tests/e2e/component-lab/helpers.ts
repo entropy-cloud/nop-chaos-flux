@@ -22,7 +22,6 @@ const COMPONENT_LAB_RENDERER_TIMEOUT = 30_000;
  */
 export async function openRendererDirect(page: Page, rendererId: string): Promise<void> {
   await page.goto(`/#/lab/${rendererId}`, { waitUntil: 'domcontentloaded' });
-  await page.waitForLoadState('networkidle');
   await expect(page.getByTestId('component-lab')).toBeVisible({
     timeout: COMPONENT_LAB_BOOT_TIMEOUT,
   });
@@ -36,7 +35,6 @@ export async function openRendererDirect(page: Page, rendererId: string): Promis
  */
 export async function openLabHome(page: Page): Promise<void> {
   await page.goto('/#/lab', { waitUntil: 'domcontentloaded' });
-  await page.waitForLoadState('networkidle');
   await expect(page.getByTestId('component-lab')).toBeVisible({
     timeout: COMPONENT_LAB_BOOT_TIMEOUT,
   });
