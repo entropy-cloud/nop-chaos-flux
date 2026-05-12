@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { formRendererDefinition } from './form.js';
+import { formRendererDefinition } from './form-definition.js';
 
 describe('form schemaValidator', () => {
   const compiler = createSchemaCompiler({
@@ -44,6 +44,23 @@ describe('form schemaValidator', () => {
         expect.objectContaining({
           code: 'invalid-property-shape',
           path: '/actions',
+          source: 'renderer',
+        }),
+      ]),
+    );
+  });
+
+  it('rejects string hiddenFieldPolicy authoring', () => {
+    expect(
+      compiler.validate?.({
+        type: 'form',
+        hiddenFieldPolicy: 'validate',
+      } as any),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-property-shape',
+          path: '/hiddenFieldPolicy',
           source: 'renderer',
         }),
       ]),

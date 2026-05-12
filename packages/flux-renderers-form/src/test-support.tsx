@@ -21,8 +21,19 @@ import {
 import { Input } from '@nop-chaos/ui';
 import { useFieldHandlers } from './field-utils.js';
 
-resetFluxI18n();
-initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+let initialized = false;
+
+function ensureTestI18n() {
+  if (initialized) {
+    return;
+  }
+
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  initialized = true;
+}
+
+ensureTestI18n();
 
 export async function selectOption(labelText: string, optionText: string) {
   const trigger =

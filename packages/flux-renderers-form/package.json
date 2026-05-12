@@ -13,6 +13,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./definitions": {
+      "types": "./dist/definitions.d.ts",
+      "default": "./dist/definitions.js"
+    },
     "./form-renderers.css": {
       "default": "./dist/form-renderers.css"
     },
@@ -27,6 +31,7 @@
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
+    "@testing-library/react": "^16.3.0",
     "lucide-react": "^1.7.0",
     "react": "^19.0.0"
   },
@@ -39,6 +44,7 @@
   "devDependencies": {
     "@nop-chaos/flux-compiler": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
-    "@nop-chaos/flux-renderers-basic": "workspace:*"
+    "@nop-chaos/flux-renderers-basic": "workspace:*",
+    "@testing-library/jest-dom": "^6.9.1"
   }
 }

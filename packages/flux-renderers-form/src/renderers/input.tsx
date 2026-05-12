@@ -1,9 +1,11 @@
 import {
   booleanStringAdapter,
+  type BaseSchema,
   numberAdapter,
   stringAdapter,
   type RendererComponentProps,
   type RendererDefinition,
+  type RendererSchemaValidationContext,
   type ValueAdapter,
 } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
@@ -37,6 +39,11 @@ import type {
   SwitchSchema,
   TextareaSchema,
 } from '../schemas.js';
+import { validateHiddenFieldPolicySchema } from './hidden-field-policy-schema.js';
+
+export function validateInputFieldSchema(context: RendererSchemaValidationContext<BaseSchema>) {
+  validateHiddenFieldPolicySchema(context);
+}
 
 export function createInputRenderer(inputType: string) {
   return function InputRenderer(props: RendererComponentProps<InputSchema>) {
@@ -559,6 +566,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     component: createInputRenderer('text'),
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
   },
   {
@@ -566,6 +574,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     component: createInputRenderer('email'),
     fields: [formLabelFieldRule],
     validation: createFieldValidation(undefined, true),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
   },
   {
@@ -573,6 +582,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     component: createInputRenderer('password'),
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
   },
   {
@@ -582,6 +592,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
     ],
     validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
     component: SelectRenderer,
   },
@@ -590,12 +601,14 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: [formLabelFieldRule],
     component: TextareaRenderer,
     validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
   },
   {
     type: 'checkbox',
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
     component: CheckboxRenderer,
   },
@@ -603,6 +616,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     type: 'switch',
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
     component: SwitchRenderer,
   },
@@ -613,6 +627,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
     ],
     validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
     component: RadioGroupRenderer,
   },
@@ -623,6 +638,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
     ],
     validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
     component: CheckboxGroupRenderer,
   },
@@ -630,6 +646,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     type: 'input-number',
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
+    schemaValidator: validateInputFieldSchema,
     wrap: true,
     component: InputNumberRenderer,
   },

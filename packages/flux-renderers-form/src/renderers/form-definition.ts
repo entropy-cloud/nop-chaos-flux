@@ -6,6 +6,7 @@ import {
 } from '@nop-chaos/flux-core';
 import { FormRenderer } from './form.js';
 import type { FormSchema } from '../schemas.js';
+import { validateHiddenFieldPolicySchema } from './hidden-field-policy-schema.js';
 
 function escapeJsonPointerSegment(segment: string) {
   return segment.replace(/~/g, '~0').replace(/\//g, '~1');
@@ -57,6 +58,8 @@ function validateFormSchema(context: RendererSchemaValidationContext<BaseSchema>
       message: 'form.data must be an object when provided.',
     });
   }
+
+  validateHiddenFieldPolicySchema(context);
 }
 
 export const formRendererDefinition: RendererDefinition = {
@@ -88,19 +91,12 @@ export const formRendererDefinition: RendererDefinition = {
     },
     hiddenFieldPolicy: {
       shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'validate' },
-          { kind: 'literal', value: 'ignore' },
-          {
-            kind: 'object',
-            fields: {
-              validateWhenHidden: { kind: 'boolean' },
-              clearValueWhenHidden: { kind: 'boolean' },
-            },
-            optional: ['validateWhenHidden', 'clearValueWhenHidden'],
-          },
-        ],
+        kind: 'object',
+        fields: {
+          validateWhenHidden: { kind: 'boolean' },
+          clearValueWhenHidden: { kind: 'boolean' },
+        },
+        optional: ['validateWhenHidden', 'clearValueWhenHidden'],
       },
       displayName: 'Hidden Field Policy',
       description: 'Controls how hidden fields participate in validation and clearing.',
@@ -229,6 +225,7 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'onValidateError', kind: 'event' },
     { key: 'statusPath', kind: 'prop' },
     { key: 'valuesPath', kind: 'prop' },
+    { key: 'hiddenFieldPolicy', kind: 'prop' },
     { key: 'mode', kind: 'prop' },
     { key: 'labelAlign', kind: 'prop' },
     { key: 'labelWidth', kind: 'prop' },

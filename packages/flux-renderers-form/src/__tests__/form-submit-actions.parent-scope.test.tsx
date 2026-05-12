@@ -137,6 +137,7 @@ describe('formRendererDefinitions - parent scope publication', () => {
       />,
     );
 
+    await waitFor(() => expect(screen.getByText('Submit surface form')).toBeTruthy());
     fireEvent.click(screen.getByText('Submit surface form'));
 
     await waitFor(() => {
@@ -202,6 +203,7 @@ describe('formRendererDefinitions - parent scope publication', () => {
       />,
     );
 
+    await waitFor(() => expect(screen.getByLabelText('Name')).toBeTruthy());
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Erin' } });
     fireEvent.click(screen.getByText('Submit via built-in submit'));
 
