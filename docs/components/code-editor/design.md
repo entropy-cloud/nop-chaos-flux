@@ -24,6 +24,7 @@
 - `sourcePackage: '@nop-chaos/flux-code-editor'`
 - `wrap: true`
 - validation contributor: `kind: 'field'`、`valueKind: 'scalar'`
+- 不新增 `sql-editor`、`expression-editor` 等平级 renderer type；语言差异统一由 `language` 驱动。
 
 ## 4. schema 设计
 
@@ -108,14 +109,55 @@ packages/flux-code-editor/src/
   types.ts
   use-code-mirror.ts
   code-editor-renderer.tsx
+  code-editor-renderer/
+    shared.ts
+    toolbar-button.tsx
+    snippet-panel.tsx
+    sql-editor-assembly.tsx
+    sql-editor-toolbar.tsx
+    sql-editor-body.tsx
+    use-code-editor-binding.ts
+    use-sql-editor-state.ts
   source-resolvers.ts
   variable-panel.tsx
   sql-result-panel.tsx
   extensions/
+    base.ts
+    sql/
+      index.ts
+      completion.ts
+      format.ts
+    expression/
+      completion.ts
+      decoration.ts
+      linter.ts
+      template-mode.ts
 ```
 
 - language extension、completion source、lint、SQL format/snippet/preview feature 应分离维护。
 - React 壳层只负责 renderer integration 和 hook bridge，不要把 CM6 feature logic 重新堆进 renderer 文件。
+- `extensions/` 目录只承载 CodeMirror 语言扩展、completion、lint、decoration、template mode 这类编辑器内核能力。
+- SQL execution、toolbar action、snippet dropdown、variable panel、result preview 等 renderer/UI feature 不属于 `extensions/`；它们应留在 `code-editor-renderer/` 或其他明确的 feature 目录中。
+- `code-editor-renderer.tsx` 只保留通用 renderer 壳、props 解析和语言特化装配；不要在该文件中长期堆积 SQL/Expression 细节分支。
+- 语言特化通过 `language` 分发到 `sql`、`expression` 等专属模块，不通过新增 renderer type 达成。
+
+## 11.1 目录边界约束
+
+- `code-editor-renderer.tsx`: 统一入口，负责 field renderer 接线、通用布局壳、以及按 `language` 选择特化装配。通过 `useSQLEditorSlots` hook 将 SQL 特定渲染委托给 `sql-editor-assembly.tsx`，不在入口文件中直接处理 SQL toolbar/variable/result-panel 分支。
+- `code-editor-renderer/`: 放 renderer 侧 hook、toolbar/body 组装、SQL result preview、SQL variable panel 联动等 React/UI feature。SQL-only 子组件使用 `sql-editor-*` 前缀明确标识职责。
+- `code-editor-renderer/sql-editor-assembly.tsx`: SQL 语言特化渲染入口，聚合 `useSQLEditorState`、`useResolvedSQLVariables`、`SQLEditorToolbar`、`SQLEditorBody` 等 SQL 专属模块。
+- `code-editor-renderer/sql-editor-toolbar.tsx`: SQL 专属工具栏（format/snippet/variable toggle/execute/fullscreen），不再伪装为通用 toolbar。
+- `code-editor-renderer/sql-editor-body.tsx`: SQL 专属编辑器主体（CodeMirror 容器 + variable panel 侧栏），不再伪装为通用 body。
+- `code-editor-renderer/snippet-panel.tsx`: SQL snippet 下拉面板 React UI 组件，从 `extensions/` 迁出以确保 `extensions/` 只包含 CodeMirror 逻辑。
+- `extensions/sql/`、`extensions/expression/`: 放语言级 CodeMirror 扩展与补全/lint/decoration 逻辑。`extensions/sql/index.ts` 只导出 CodeMirror 能力（completion source、format），不导出 React UI 组件。
+- `source-resolvers.ts`: 放 schema 已解析后的 plain config 读取与 scope 引用解析；不承担 UI 组装职责。
+- 如果某个模块主要产出 React 节点、按钮交互、面板显示状态，它就不应放入 `extensions/`。
+
+## 11.2 禁止事项
+
+- 不为 SQL 再引入独立 `sql-editor` 组件协议、schema type、renderer 注册项。
+- 不把 SQL toolbar、snippet 面板、执行预览等 UI feature 伪装成 CodeMirror extension 塞进 `extensions/`。
+- 不在 `code-editor-renderer.tsx` 中继续扩大跨语言条件分支，导致 renderer 壳层同时承担通用逻辑和所有语言细节。
 
 ## 12. 当前实现基线
 

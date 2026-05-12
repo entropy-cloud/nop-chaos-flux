@@ -1,8 +1,8 @@
 # 2026-05-12 Deep Audit Stage-1 Review Results
 
-> 状态：阶段性复核结果。由于第 2 轮追加深挖尚未完成，本文件不能作为最终复核结论，只能作为后续深挖输入线索。
+> 状态：历史阶段性复核记录，已被 `final-review-results-01-05.md`、`final-review-results-06-10.md`、`final-review-results-11-15.md`、`final-review-results-16-20.md` 和 `summary.md` 取代。保留本文件仅用于追溯第 1 轮复核如何被后续深挖修订。
 
-本文件记录 20 个维度第 1 轮初审后的独立复核结论。最终汇总见 `summary.md`。
+本文件记录 20 个维度第 1 轮初审后的独立复核结论。最终结论以 `summary.md` 和 `final-review-results-*.md` 为准。
 
 ## 维度复核结论
 
@@ -69,7 +69,8 @@
 | 20-06 | 保留       | P2           | interactive table row 缺 role/name/state。                             |
 | 20-07 | 保留       | P2           | chart 缺数据文本替代。                                                 |
 
-## 执行限制
+## 历史限制
 
-- 本轮未执行第 2 轮追加深挖；所有统计均基于第 1 轮初审与独立复核。
-- 未进行代码修复，也未运行 typecheck/build/lint/test。
+- 本文件仅覆盖第 1 轮初审与当时的独立复核，不包含后续第 2-5 轮追加深挖。
+- 后续最终复核已修订多个结论，例如 `12-02` 与 `16-04` 驳回、`19-01` 降级改窄、`03-05` 修订为 test-support subpath dependency/side-effect 问题。
+- 本轮未进行代码修复，也未运行 typecheck/build/lint/test。

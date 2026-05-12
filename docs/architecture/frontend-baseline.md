@@ -66,6 +66,7 @@ packages/
   flux-i18n/
   flux-runtime/
   flux-react/
+  flux-bundle/
   flux-renderers-basic/
   flux-renderers-form/
   flux-renderers-form-advanced/
@@ -89,8 +90,30 @@ Design rules:
 
 - `runtime` stays React-independent where possible
 - `react` focuses on integration, context, and hooks
+- `flux-bundle` is the supported host-facing release facade published as `@nop-chaos/flux`
 - renderer packages are split by capability instead of one giant renderer package
 - `playground` remains the first integration surface for new behavior
+
+## Host-Facing Release Baseline
+
+The repo now supports two distinct package shapes with different audiences:
+
+- internal workspace packages under `packages/flux-*` remain the development baseline for source ownership and local composition
+- `packages/flux-bundle` publishes the host-facing facade package `@nop-chaos/flux` for tarball or registry-style consumption
+
+Current host-facing release rules:
+
+- hosts should depend on `@nop-chaos/flux`, not on `@nop-chaos/flux-core`, `@nop-chaos/flux-react`, or `@nop-chaos/flux-renderers-*`
+- `@nop-chaos/flux` exports a stable JS entry and `./style.css`
+- host-owned singleton dependencies stay external and appear as facade peers: `react`, `react-dom`, `zustand`, `lucide-react`, and `@nop-chaos/ui`
+- the repo-owned tarball output convention is `dist-packages/`
+- `pnpm check:flux-bundle-pack` validates the real packed tarball shape, not only local `dist/`
+
+Legacy sync workflow baseline:
+
+- `scripts/sync-flux-lib.sh` no longer syncs Flux internal packages into consumer workspaces as the supported model
+- the only remaining sync target is `flux-lib/ui/` for the current `nop-chaos-next` UI workspace
+- Flux core consumption now flows through the packed `@nop-chaos/flux` tarball instead of `flux-lib/flux-*`
 
 ## Package Naming
 
@@ -112,6 +135,7 @@ The repository should keep these checks passing:
 - `pnpm typecheck`
 - `pnpm test`
 - `pnpm lint`
+- `pnpm check:flux-bundle-pack`
 - `node scripts/verify-no-src-artifacts.mjs`
 
 Additional audit-oriented tooling now tracked at the root:

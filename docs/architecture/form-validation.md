@@ -769,6 +769,7 @@ Current live participation baseline:
 
 - hidden-field participation is published through the nearest `ValidationScopeRuntime` via `notifyFieldHidden(...)`
 - forms and non-form validation owners therefore use the same supported hidden-participation contract
+- supported schema-level `hiddenFieldPolicy` authoring shape is the canonical object `{ validateWhenHidden?, clearValueWhenHidden? }`; string literals such as `'validate'` or `'ignore'` are not part of the live contract
 - hiding a parent path excludes descendant compiled fields from active validation participation, and owner cleanup clears stale descendant errors when that subtree transitions to hidden
 - hiding a parent path also invalidates descendant in-flight async validation work so stale async completions cannot republish into the hidden subtree
 - `clearValueWhenHidden` now cascades across descendant compiled fields inside the hidden subtree rather than only clearing the exact path passed to `notifyFieldHidden(...)`

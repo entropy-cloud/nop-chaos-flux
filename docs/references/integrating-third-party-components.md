@@ -172,7 +172,7 @@ These still use the same `RendererDefinition` registration system, but they are 
 
 ## Minimum Viable Renderer
 
-The minimum required registration surface on the host-neutral `RendererDefinition` is `type` plus `component`. If you are registering through the React host helpers in `@nop-chaos/flux-react`, you may also use the React-only convenience field `reactComponent` and let the host auto-wrap it.
+The minimum required registration surface on the host-neutral `RendererDefinition` is `type` plus `component`. If you are registering through the React host helpers in `@nop-chaos/flux-react`, you may also use the React-only convenience field `reactComponent` and let the host auto-wrap it before the definition reaches the core registry.
 
 ```ts
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
@@ -188,6 +188,12 @@ const registry = createRendererRegistry([
 ```
 
 If you already have a plain React component that accepts normal props, register it through `@nop-chaos/flux-react` using `reactComponent`; the React host will auto-wrap it into the standard `RendererComponentProps` boundary before registration reaches the core registry.
+
+Important current baseline:
+
+- `createSchemaRenderer([...])` and `createDefaultRegistry([...])` normalize `reactComponent` automatically
+- a caller-supplied `RendererRegistry` passed through `SchemaRendererProps.registry` is treated as already core-normalized
+- if you call `createRendererRegistry()` directly, later `registry.register(...)` calls must provide `component` or explicitly pass the definition through `ensureRendererComponent(...)` first
 
 Schema usage:
 

@@ -41,7 +41,7 @@ For the detailed DOM marker contract around `role`, `data-slot`, root `nop-*` ma
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     JSON Schema                              │
-│  { type: "button", variant: "primary", label: "Submit" }    │
+│  { type: "button", variant: "default", label: "Submit" }    │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           ▼

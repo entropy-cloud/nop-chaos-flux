@@ -188,7 +188,7 @@ interface CrudStatusSummary {
   selectedRowKeys: string[];
   query?: Record<string, unknown>;
   pagination?: { currentPage?: number; pageSize?: number };
-  sort?: { field?: string; order?: 'asc' | 'desc' };
+  sort?: { column?: string; direction?: 'asc' | 'desc' };
   filters?: Record<string, unknown>;
   visibleColumnNames?: string[];
 }

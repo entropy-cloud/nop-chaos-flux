@@ -436,6 +436,23 @@ The `selection`/`target` compatibility aliases for `selectionTarget` have been r
 
 `@nop-chaos/flux-react` root exports are now limited to the stable renderer/runtime surface. Internal orchestration helpers and raw contexts that are still needed by renderer packages live behind `@nop-chaos/flux-react/unstable`.
 
+`@nop-chaos/flux` is now the supported host-facing facade package.
+
+Its boundary is intentionally narrower than the internal package graph:
+
+- hosts should create the default renderer stack through `createFluxRendererRegistry()` or `createFluxSchemaRenderer()` from `@nop-chaos/flux`
+- hosts should import Flux package CSS through `@nop-chaos/flux/style.css`
+- hosts should not import `@nop-chaos/flux-core`, `@nop-chaos/flux-runtime`, `@nop-chaos/flux-react`, or `@nop-chaos/flux-renderers-*` directly for ordinary page rendering
+- `@nop-chaos/flux` may compose those internal packages at build time, but the packed manifest must not expose them as host-install requirements
+
+The facade package currently owns the release-shaped host contract only:
+
+- stable renderer creation entry points
+- stable host env/schema/registry-facing types owned by the facade package
+- CSS isolation boundary under `.nop-flux-root`
+
+It does not change code ownership of runtime/compiler/react modules. Internal runtime semantics still belong to their existing packages.
+
 Current unstable-only examples:
 
 - `RenderNodes`

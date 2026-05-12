@@ -1,6 +1,6 @@
 # 250 Open-Ended Adversarial Review 2026-05-12 Remediation Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-12
 > Source: `docs/analysis/2026-05-12-open-ended-adversarial-review-01/{round-01.md,round-02.md,round-03.md,round-04.md}`
 > Related: `docs/plans/{223-reactive-and-async-follow-up-closure-plan.md,226-accessibility-follow-up-plan.md,230-renderer-slot-and-type-contract-cleanup-plan.md}`
@@ -63,132 +63,132 @@
 
 ### Phase 1 - Repair Data Renderer State Bridges
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/{crud-renderer.tsx,crud-renderer-state.ts,table-renderer.tsx,table-renderer/*}`, data renderer tests
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Decision] Audit current docs, tests, and example usages of `$crud.sort`, `sortStatePath`, `sort.field`, `sort.order`, `sort.column`, and `sort.direction` before choosing the canonical scope-backed sort shape for CRUD-owned Table integration.
-- [ ] [Decision] Choose and document the canonical scope-backed sort shape. Preferred direction: normalize the shared `sortStatePath` to the Table shape `{ column, direction }`, while either preserving `{ field, order }` as a derived public `$crud.sort` compatibility projection or recording an explicit public contract change with owner-doc updates and focused tests.
-- [ ] [Fix] Make CRUD initialization, table scope sort read/write, `$crud.sort` status/query publication, and `onSortChange` payload consume one canonical sort model without lossy conversion.
-- [ ] [Fix] Route Table select-all through the same normalized row entries or `normalizeRowKey()` path as row rendering and single-row selection, including custom `rowKey`, nested rowKey, `__rowKey`, `id`, and legacy index fallback.
-- [ ] [Proof] Add focused tests covering CRUD initial sort, header sort click, `$crud.sort` publication, and custom `rowKey` select-all behavior.
+- [x] [Decision] Audit current docs, tests, and example usages of `$crud.sort`, `sortStatePath`, `sort.field`, `sort.order`, `sort.column`, and `sort.direction` before choosing the canonical scope-backed sort shape for CRUD-owned Table integration.
+- [x] [Decision] Choose and document the canonical scope-backed sort shape. Preferred direction: normalize the shared `sortStatePath` to the Table shape `{ column, direction }`, while either preserving `{ field, order }` as a derived public `$crud.sort` compatibility projection or recording an explicit public contract change with owner-doc updates and focused tests.
+- [x] [Fix] Make CRUD initialization, table scope sort read/write, `$crud.sort` status/query publication, and `onSortChange` payload consume one canonical sort model without lossy conversion.
+- [x] [Fix] Route Table select-all through the same normalized row entries or `normalizeRowKey()` path as row rendering and single-row selection, including custom `rowKey`, nested rowKey, `__rowKey`, `id`, and legacy index fallback.
+- [x] [Proof] Add focused tests covering CRUD initial sort, header sort click, `$crud.sort` publication, and custom `rowKey` select-all behavior.
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-- [ ] CRUD/Table sort no longer reads and writes incompatible shapes at the same `sortStatePath`.
-- [ ] Table select-all and single-row selection produce the same key space for custom `rowKey` and fallback row identity.
-- [ ] Focused tests fail on the pre-fix behavior and pass on the final behavior.
-- [ ] Affected owner docs are updated if the public sort/selection shape baseline changes; otherwise `No owner-doc update required` is explicitly recorded.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] CRUD/Table sort no longer reads and writes incompatible shapes at the same `sortStatePath`.
+- [x] Table select-all and single-row selection produce the same key space for custom `rowKey` and fallback row identity.
+- [x] Focused tests fail on the pre-fix behavior and pass on the final behavior.
+- [x] Affected owner docs are updated if the public sort/selection shape baseline changes; otherwise `No owner-doc update required` is explicitly recorded.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 2 - Close Table Slot Authoring Contract Drift
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/src/**`, `packages/flux-formula/src/compile/symbol-diagnostics.ts`, table docs/examples/tests
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Decision] Freeze table cell/buttons parameterized region authoring baseline as `$slot.record` / `$slot.index`; naked `record` / `index` inside those regions is not a supported parameter access path unless an explicit legacy mode is introduced.
-- [ ] [Fix] Update compiler tests and examples that currently use `${record.*}` in table cell/buttons to `$slot.record.*`, including `packages/flux-compiler/src/schema-compiler-table.test.ts` and `schema-compiler-registry-features.test.ts`.
-- [ ] [Fix] Add a focused diagnostic or migration warning for naked table slot param names in parameterized regions, scoped narrowly enough not to reject ordinary parent-scope variables outside table cell/buttons.
-- [ ] [Fix] Sync architecture/component docs that still present naked row-local examples for the table cell/buttons authoring path.
-- [ ] [Proof] Add compiler diagnostics tests proving naked `record` in table cell/buttons is warned/rejected according to the chosen severity, while `$slot.record` is accepted.
+- [x] [Decision] Freeze table cell/buttons parameterized region authoring baseline as `$slot.record` / `$slot.index`; naked `record` / `index` inside those regions is not a supported parameter access path unless an explicit legacy mode is introduced.
+- [x] [Fix] Update compiler tests and examples that currently use `${record.*}` in table cell/buttons to `$slot.record.*`, including `packages/flux-compiler/src/schema-compiler-table.test.ts` and `schema-compiler-registry-features.test.ts`.
+- [x] [Fix] Add a focused diagnostic or migration warning for naked table slot param names in parameterized regions, scoped narrowly enough not to reject ordinary parent-scope variables outside table cell/buttons.
+- [x] [Fix] Sync architecture/component docs that still present naked row-local examples for the table cell/buttons authoring path.
+- [x] [Proof] Add compiler diagnostics tests proving naked `record` in table cell/buttons is warned/rejected according to the chosen severity, while `$slot.record` is accepted.
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-- [ ] Table cell/buttons docs and tests no longer teach naked `${record.*}` for parameterized slots.
-- [ ] Diagnostics provide an actionable signal when a schema uses naked table slot parameter names in the affected parameterized regions.
-- [ ] `$slot.record` / `$slot.index` remains the stable runtime and authoring baseline.
-- [ ] `docs/architecture/table-row-identity-and-scope-performance.md` and any relevant renderer/slot docs are synced to the final baseline.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] Table cell/buttons docs and tests no longer teach naked `${record.*}` for parameterized slots.
+- [x] Diagnostics provide an actionable signal when a schema uses naked table slot parameter names in the affected parameterized regions.
+- [x] `$slot.record` / `$slot.index` remains the stable runtime and authoring baseline.
+- [x] `docs/architecture/table-row-identity-and-scope-performance.md` and any relevant renderer/slot docs are synced to the final baseline.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 3 - Canonicalize Hidden Field Policy Shape
 
-Status: planned
+Status: completed
 Targets: form renderer definitions, compiler validation collection, core validation model, hidden-field tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Decision] Choose the supported authoring surface for `hiddenFieldPolicy`. Preferred direction: keep object shape as canonical and either remove string literals from renderer contracts or lower only explicitly supported strings (`'validate'`, `'ignore'`) into object policies at compile time.
-- [ ] [Fix] Delete the unowned `'validate-and-submit'` passthrough test expectation and replace it with tests for the chosen canonical behavior.
-- [ ] [Fix] Ensure form-level and field-level hidden policies entering `CompiledFormValidationModel` are runtime-compatible `HiddenFieldPolicy` objects, not arbitrary strings.
-- [ ] [Fix] Update renderer definition/schema typing/docs so author-facing contract matches runtime semantics.
-- [ ] [Proof] Add focused runtime/compiler tests proving accepted string sugar, if retained, actually changes `validateWhenHidden` / `clearValueWhenHidden` behavior; unsupported strings must produce diagnostics or validation failure, not silent default behavior.
+- [x] [Decision] Choose the supported authoring surface for `hiddenFieldPolicy`. Preferred direction: keep object shape as canonical and either remove string literals from renderer contracts or lower only explicitly supported strings (`'validate'`, `'ignore'`) into object policies at compile time.
+- [x] [Fix] Delete the unowned `'validate-and-submit'` passthrough test expectation and replace it with tests for the chosen canonical behavior.
+- [x] [Fix] Ensure form-level and field-level hidden policies entering `CompiledFormValidationModel` are runtime-compatible `HiddenFieldPolicy` objects, not arbitrary strings.
+- [x] [Fix] Update renderer definition/schema typing/docs so author-facing contract matches runtime semantics.
+- [x] [Proof] Add focused runtime/compiler tests proving accepted string sugar, if retained, actually changes `validateWhenHidden` / `clearValueWhenHidden` behavior; unsupported strings must produce diagnostics or validation failure, not silent default behavior.
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-- [ ] No accepted `hiddenFieldPolicy` authoring shape silently degrades to default object behavior.
-- [ ] `CompiledFormValidationModel.defaultHiddenFieldPolicy` and field `hiddenFieldPolicy` values are runtime-compatible canonical objects.
-- [ ] Focused tests cover form-level and field-level hidden policy behavior, including at least one hidden required field case.
-- [ ] `docs/architecture/form-validation.md` and references are updated if the public hidden policy contract changes; otherwise `No owner-doc update required` is explicitly recorded.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] No accepted `hiddenFieldPolicy` authoring shape silently degrades to default object behavior.
+- [x] `CompiledFormValidationModel.defaultHiddenFieldPolicy` and field `hiddenFieldPolicy` values are runtime-compatible canonical objects.
+- [x] Focused tests cover form-level and field-level hidden policy behavior, including at least one hidden required field case.
+- [x] `docs/architecture/form-validation.md` and references are updated if the public hidden policy contract changes; otherwise `No owner-doc update required` is explicitly recorded.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 4 - Repair Tree Control ReadOnly And Keyboard Isolation
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/{tree-controls.tsx,tree-control-controllers.ts}`, focused tests
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] Include `presentation.readOnly` in `input-tree` option interaction gating so read-only tree items cannot change field value by mouse or keyboard.
-- [ ] [Fix] Prevent chevron keyboard activation from bubbling into parent `treeitem` selection while preserving expand/collapse behavior and accessible names.
-- [ ] [Proof] Add focused tests proving `input-tree readOnly` blocks value changes and chevron keyboard activation expands/collapses without selecting/toggling the option.
-- [ ] [Decision] Record whether owner-doc updates are required; expected default is `No owner-doc update required` because this restores existing read-only/keyboard equivalence contracts.
+- [x] [Fix] Include `presentation.readOnly` in `input-tree` option interaction gating so read-only tree items cannot change field value by mouse or keyboard.
+- [x] [Fix] Prevent chevron keyboard activation from bubbling into parent `treeitem` selection while preserving expand/collapse behavior and accessible names.
+- [x] [Proof] Add focused tests proving `input-tree readOnly` blocks value changes and chevron keyboard activation expands/collapses without selecting/toggling the option.
+- [x] [Decision] Record whether owner-doc updates are required; expected default is `No owner-doc update required` because this restores existing read-only/keyboard equivalence contracts.
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-- [ ] `input-tree` read-only behavior matches the field interaction contract and no longer mutates form state.
-- [ ] Tree chevron mouse and keyboard paths are equivalent: expand/collapse does not also select/toggle the option.
-- [ ] Focused DOM tests cover both defects.
-- [ ] Affected owner docs are updated if the stable component contract changes; otherwise `No owner-doc update required` is explicitly recorded.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] `input-tree` read-only behavior matches the field interaction contract and no longer mutates form state.
+- [x] Tree chevron mouse and keyboard paths are equivalent: expand/collapse does not also select/toggle the option.
+- [x] Focused DOM tests cover both defects.
+- [x] Affected owner docs are updated if the stable component contract changes; otherwise `No owner-doc update required` is explicitly recorded.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ### Phase 5 - Verification And Independent Closure Audit
 
-Status: planned
+Status: completed
 Targets: affected packages, this plan, daily log, closure evidence
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] [Proof] Run all focused tests added or modified by Phases 1-4.
-- [ ] [Proof] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all code/doc updates land.
-- [ ] [Decision] Perform an independent closure audit with a fresh subagent, requiring it to re-read this plan, live code, focused tests, affected docs, and the original four analysis rounds.
-- [ ] [Fix] Address any closure-audit blocker before marking this plan completed; if the audit identifies a truly out-of-scope residual, move it to `Deferred But Adjudicated` with a concrete non-blocking reason or successor plan.
+- [x] [Proof] Run all focused tests added or modified by Phases 1-4.
+- [x] [Proof] Run workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all code/doc updates land.
+- [x] [Decision] Perform an independent closure audit with a fresh subagent, requiring it to re-read this plan, live code, focused tests, affected docs, and the original four analysis rounds.
+- [x] [Fix] Address any closure-audit blocker before marking this plan completed; if the audit identifies a truly out-of-scope residual, move it to `Deferred But Adjudicated` with a concrete non-blocking reason or successor plan.
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-- [ ] Focused verification for all four defect families has passed.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass after all in-scope remediation lands. If a pre-existing unrelated failure is discovered, this plan cannot be marked `completed` until the failure is fixed or this plan is explicitly revised with non-conflicting closure gates and concrete successor ownership.
-- [ ] Independent closure audit confirms there is no remaining plan-owned blocker, no interface-vs-semantics mismatch, and no in-scope defect silently downgraded to follow-up.
-- [ ] `docs/logs/` 对应日期条目已 updated with execution and closure evidence.
+- [x] Focused verification for all four defect families has passed.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass after all in-scope remediation lands. If a pre-existing unrelated failure is discovered, this plan cannot be marked `completed` until the failure is fixed or this plan is explicitly revised with non-conflicting closure gates and concrete successor ownership.
+- [x] Independent closure audit confirms there is no remaining plan-owned blocker, no interface-vs-semantics mismatch, and no in-scope defect silently downgraded to follow-up.
+- [x] `docs/logs/` 对应日期条目已 updated with execution and closure evidence.
 
 ## Closure Gates
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] CRUD/Table sort shape drift is fixed and test-covered.
-- [ ] Table select-all rowKey drift is fixed and test-covered.
-- [ ] Table cell/buttons slot authoring docs/tests/diagnostics align with `$slot.record` / `$slot.index` runtime semantics.
-- [ ] `hiddenFieldPolicy` authoring contract and runtime canonical shape are aligned and test-covered.
-- [ ] `input-tree` read-only and tree chevron keyboard interaction defects are fixed and test-covered.
-- [ ] No in-scope confirmed live defect or public-contract drift is silently deferred or downgraded.
-- [ ] Affected owner docs are synced to the live baseline, or each phase explicitly records `No owner-doc update required`.
-- [ ] Independent closure audit confirms no remaining in-scope blocker.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] CRUD/Table sort shape drift is fixed and test-covered.
+- [x] Table select-all rowKey drift is fixed and test-covered.
+- [x] Table cell/buttons slot authoring docs/tests/diagnostics align with `$slot.record` / `$slot.index` runtime semantics.
+- [x] `hiddenFieldPolicy` authoring contract and runtime canonical shape are aligned and test-covered.
+- [x] `input-tree` read-only and tree chevron keyboard interaction defects are fixed and test-covered.
+- [x] No in-scope confirmed live defect or public-contract drift is silently deferred or downgraded.
+- [x] Affected owner docs are synced to the live baseline, or each phase explicitly records `No owner-doc update required`.
+- [x] Independent closure audit confirms no remaining in-scope blocker.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -201,13 +201,13 @@ None currently. Any retained residual must be recorded here before closure; no i
 
 ## Closure
 
-Status Note: Not started. This plan is newly drafted and must not be marked completed until all phases, closure gates, workspace verification, and independent closure audit are complete.
+Status Note: Completed after all five phases landed, workspace hard gates passed (`pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`), and an independent closure audit re-validated the live code/docs/tests against the original four analysis rounds.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: `general` subagent `ses_1e4ef0c05ffe35PyWIuNHC16b3`
+- Evidence: `AUDIT RESULT: PASS` with no remaining in-scope blocker found; audit explicitly re-validated CRUD/Table sort + rowKey normalization, table slot `$slot.record` diagnostics/docs/tests alignment, `hiddenFieldPolicy` object-only runtime contract, tree readOnly + chevron keyboard isolation, and the formula parser fix for single-quoted template literals used by workspace schema examples.
 
 Follow-up:
 
-- pending execution
+- None required for plan closure.

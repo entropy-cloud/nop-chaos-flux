@@ -1,129 +1,71 @@
-# 深度审核阶段性报告
+# 深度审核最终报告
 
-> 状态：阶段性结果，尚未完成手册要求的追加深挖轮次。当前内容仅代表第 1 轮初审 + 一次独立复核，不能作为最终深度审核结论。
+> 状态：最终归档。第 2-5 轮追加深挖已补跑并记录完整原始发现；第 5 轮仍有新增，因此本次按“达到执行上限后进入最终复核”处理，不声称自然收敛。
 
 ## 审核范围
 
 - 执行维度：01-20 全量维度。
-- 覆盖范围：`packages/`、`apps/`、`tests/e2e/`、`docs/architecture/`、`docs/references/`、`docs/plans/`。
+- 覆盖范围：`packages/`、`apps/`、`tests/e2e/`、`docs/architecture/`、`docs/references/`、`docs/discussions/`。
 - 审核日期：2026-05-12。
-- 执行方式：20 个维度第 1 轮初审 + 4 个独立复核 agent 分组复核。第 2 轮追加深挖尚未完成，需补跑后重新复核并生成最终报告。
+- 代码修改：无运行时代码修改；本次仅补齐审计归档与复核记录。
 
-## 深挖统计
+## 归档结构
 
-- 维度总数：20。
-- 深挖轮次：所有维度均为 1 轮初审。
-- 初审发现数：59。
-- 零发现维度：1 个（维度 01）。
+- 第 1 轮完整正文：`stage-1-full-findings-01-05.md`、`stage-1-full-findings-06-10.md`、`stage-1-full-findings-11-15.md`、`stage-1-full-findings-16-20.md`。
+- 第 2-5 轮追加 raw findings：`round-2-to-5-raw-findings.md`、`raw-findings-03-06.md`、`raw-findings-07-20.md`。
+- 最终逐条复核：`final-review-results-01-05.md`、`final-review-results-06-10.md`、`final-review-results-11-15.md`、`final-review-results-16-20.md`。
+- 旧 `review-results.md`：仅保留为 Stage-1 历史复核记录，不再作为最终结论来源。
 
-## 复核统计
+## 执行统计
 
-- 已独立复核条目数：59。
-- 维度级复核覆盖数：20。
-- 保留：45。
-- 降级保留：12。
-- 驳回：2。
-- 最终需跟进条目：57。
+- 深挖轮次：第 1 轮初审 + 第 2-5 轮追加深挖。
+- 收敛状态：第 5 轮达到本次执行上限，仍有新增，进入最终复核。
+- 最终复核条目数：118。
+- 最终保留条目数：112。
+- 最终驳回条目数：6。
+- 最终 P1：7。
+- 最终 P2：61。
+- 最终 P3：44。
+- 零最终发现维度：维度 01。
+
+## 驳回与重大修订
+
+- [04-02] 驳回：report/spreadsheet dual-core bridge 被架构文档明确允许，不作为状态所有权缺陷。
+- [07-01] 驳回：React-owned anonymous source hook lifecycle 与当前设计一致，cleanup 存在。
+- [07-02] 驳回：`useSourceValue` observer wiring 与当前 observer design 一致。
+- [07-06] 驳回：status publication 的 same-target summary update 未证明 per-summary cleanup 缺陷。
+- [12-02] 驳回：live compiler 已支持 deep parameterized `$slot` symbol propagation。
+- [16-04] 驳回：API adaptor `${...}` 示例会被 formula compiler expression normalization 接受。
+- [03-05] 修订保留：原“build 不产物”部分为误报；最终问题改为 public `test-support` subpath 的 undeclared testing dependency 与全局 i18n side effects。
+- [19-01] 修订降级：广义 ajax retry claim 过宽；最终问题改窄为 `submitForm` action-level retry 被跳过。
 
 ## P1 清单
 
-| 编号  | 文件                                                                  | 摘要                                                                                                |
-| ----- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| 07-05 | `packages/flux-react/src/render-nodes.tsx`                            | `RenderNodes` 在 render/useMemo 阶段写 fragment scope cache，pre-commit abort 时 cleanup 不会运行。 |
-| 08-01 | `packages/flux-react/src/hooks/use-form-hooks.ts`                     | 表单内部 validation owner 解析可能优先读祖先 `ValidationContext`。                                  |
-| 08-02 | `packages/flux-runtime/src/form-runtime-validation.ts`                | disposed/未激活 validation owner 返回 clean success。                                               |
-| 08-04 | `packages/flux-runtime/src/form-runtime-validation.ts`                | 同一路径含 async rule 时，同步错误被 debounce/async 阶段延后发布。                                  |
-| 12-02 | `packages/flux-compiler/src/schema-compiler/node-compiler.ts`         | deep parameterized region 编译期缺 `$slot` 符号表。                                                 |
-| 16-03 | `packages/flux-runtime/src/action-adapter.ts`                         | `setValues` live 行为与 current-scope/no-targeting 文档契约冲突。                                   |
-| 19-01 | `packages/flux-action-core/src/action-dispatcher/action-execution.ts` | request-backed action 绕过 action-layer retry，软失败不重试/不计数。                                |
+| 编号  | 文件                                                                                                     | 最终结论                                                                                                   |
+| ----- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 04-03 | `packages/flow-designer-renderers/src/designer-tree-mode.tsx`, `packages/flow-designer-core/src/core.ts` | Tree mode `TreeDocument` 在 React state 与 core history 双重维护，history 可能保存 Graph/Tree 错配快照。   |
+| 07-05 | `packages/flux-react/src/render-nodes.tsx`                                                               | `RenderNodes` 在 render/useMemo 阶段创建 child scope 并写 WeakMap cache，aborted render cleanup 不会运行。 |
+| 08-01 | `packages/flux-react/src/hooks/use-form-hooks.ts`                                                        | current validation scope 可优先返回 ancestor owner 而非 current form。                                     |
+| 08-02 | `packages/flux-runtime/src/form-runtime-validation.ts`                                                   | disposed/unactivated validation resolve 为 successful empty result。                                       |
+| 08-04 | `packages/flux-runtime/src/form-runtime-validation.ts`                                                   | mixed sync+async field rules 延迟 sync error publication。                                                 |
+| 08-05 | `packages/flux-renderers-form-advanced/src/tag-list.tsx`                                                 | TagList 直接触发 change validation，绕过 `validateOn`。                                                    |
+| 16-03 | `packages/flux-runtime/src/action-adapter.ts`                                                            | form context 下 `setValues.args.path` 被忽略，写入语义与文档冲突。                                         |
 
-## P2 清单
+## 高密度 P2 区域
 
-| 编号  | 文件                                                                              | 摘要                                                                         |
-| ----- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| 02-01 | `packages/flux-compiler/src/schema-compiler/node-compiler.ts`                     | >700 行且混合节点、动作、导入、验证、source/reaction 编译职责。              |
-| 02-03 | `packages/flux-renderers-form-advanced/src/composite-field/array-field.tsx`       | ArrayField 混合 identity、runtime projection、validation、UI。               |
-| 03-02 | `docs/references/form-validation-runtime-types.md`                                | Store API 文档缺 `subscribeToModelGeneration`。                              |
-| 04-01 | `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-editing.ts`      | Spreadsheet editing 状态在 renderer local state/ref 与 core snapshot 双轨。  |
-| 05-01 | `packages/flux-runtime/src/form-runtime.ts`                                       | field state 变更会广播给 form scope 数据订阅。                               |
-| 06-01 | `packages/flux-react/src/schema-renderer.tsx`                                     | schema import preload 未把 AbortSignal 传到底层 prepare/importLoader。       |
-| 06-03 | `packages/flow-designer-renderers/src/use-designer-auto-layout.ts`                | auto-layout cleanup 未失效 requestId，卸载后可能 setState。                  |
-| 06-04 | `packages/flow-designer-renderers/src/designer-page-body.tsx`                     | 创建节点失败只返回 false/console.warn，无用户反馈。                          |
-| 07-04 | `packages/flux-runtime/src/action-scope.ts`                                       | ActionScope 缺少 scope-level namespace cleanup。                             |
-| 09-02 | `packages/flux-renderers-data/src/tree-renderer.tsx`                              | tree parameterized region 缺 repeated `instancePath`。                       |
-| 10-01 | `packages/flux-react/src/node-error-boundary.tsx`                                 | 错误兜底 UI 仍使用 BEM 状态/区域类。                                         |
-| 10-02 | `packages/flux-react/src/default-spacing.css`                                     | 默认 CSS 仍使用 BEM error UI selector。                                      |
-| 12-01 | `packages/flux-react/src/node-frame-wrapper.tsx`                                  | FieldFrame 部分 chrome 从 raw schema 读取。                                  |
-| 12-03 | `packages/flux-compiler/src/schema-compiler/tables.ts`                            | deep region rules 位于 compiler 全局表，未进入 RendererDefinition metadata。 |
-| 13-01 | `packages/word-editor-core/src/document-io.ts`                                    | persisted datasets JSON 直接断言为 `Dataset[]`。                             |
-| 15-01 | `packages/report-designer-renderers/src/page-renderer.tsx`                        | 双向同步热路径全量 `JSON.stringify` spreadsheet document。                   |
-| 16-01 | `docs/architecture/report-designer/design.md`                                     | `selection`/`target` alias 文档与 live code/tests 冲突。                     |
-| 16-02 | `docs/architecture/report-designer/design.md`                                     | `inspectorPanels` 文档称非规范但 manifest/host-data/tests 发布。             |
-| 17-02 | `docs/references/flux-json-conventions.md`                                        | Button variant 文档与 live `ButtonSchema` 值域冲突。                         |
-| 17-03 | `packages/flow-designer-core/src/types.ts`                                        | toolbar button variant 与 basic Button variant 值域分裂。                    |
-| 17-07 | `packages/flux-renderers-form-advanced/src/condition-builder/operators.ts`        | condition-builder operator ids 使用 snake_case。                             |
-| 18-01 | `packages/flow-designer-renderers/src/index.tsx`                                  | `designer-page` 声明 `$designer` scope export，但 live projection 不发布。   |
-| 20-01 | `packages/flux-react/src/field-frame.tsx`                                         | `FieldFrame` `rootTag="div"` 路径 label 未程序化关联复合控件。               |
-| 20-02 | `packages/flux-renderers-form/src/renderers/input.tsx`                            | Select/RadioGroup 错误说明未稳定关联实际 focus target。                      |
-| 20-03 | `packages/flux-runtime/src/form-runtime-submit-flow.ts`                           | 提交校验失败后无首个错误字段聚焦。                                           |
-| 20-04 | `packages/flux-renderers-form-advanced/src/condition-builder/condition-group.tsx` | AND/OR 状态只通过视觉样式表达。                                              |
-| 20-05 | `packages/flux-renderers-form-advanced/src/condition-builder/condition-group.tsx` | 删除子组按钮缺稳定语义名称。                                                 |
-| 20-06 | `packages/flux-renderers-data/src/table-renderer/table-body-row-rendering.tsx`    | 可点击表格行缺 role/name/`aria-expanded`。                                   |
-| 20-07 | `packages/flux-renderers-data/src/chart-renderer.tsx`                             | 图表缺数据文本替代。                                                         |
+- 模块边界：维度 02 保留 14 个 P2，集中在 compiler/runtime import/reaction、form advanced renderers、spreadsheet grid、测试巨文件与 unstable context 依赖。
+- 异步安全：维度 06 保留 7 个 P2，集中在取消传播、stale save、edit draft 清理、transformOut/SQL 竞态。
+- API/跨包契约：维度 03、18 共保留 10 个 P2，集中在 public subpath/alias、manifest/provider discovery 与 scope export drift。
+- 可访问性：维度 20 保留 9 个 P2，集中在 label/error association、first invalid focus、interactive row semantics、chart data alternative 与 virtualized grid active descendant。
 
-## P3 / 降级保留清单
+## 建议优先级
 
-| 编号  | 文件                                                                            | 摘要                                                       |
-| ----- | ------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| 02-02 | `packages/flow-designer-renderers/src/index.tsx`                                | root entry 过厚，包含 config compile 和 definitions。      |
-| 02-04 | `packages/report-designer-renderers/src/page-renderer.tsx`                      | page renderer 是 report/spreadsheet bridge 可维护性热点。  |
-| 03-01 | `packages/flux-renderers-form/src/index.tsx`                                    | form root barrel 暴露底层 field helpers。                  |
-| 05-02 | `packages/flux-renderers-form/src/field-utils/field-handlers.tsx`               | scope fallback 缺 path 订阅。                              |
-| 05-03 | `packages/flux-react/src/dialog-host.tsx`                                       | surface host 整 scope 订阅较粗。                           |
-| 05-04 | `packages/flux-code-editor/src/code-editor-renderer/use-code-editor-binding.ts` | form 模式下仍启用 scope fallback 订阅。                    |
-| 06-02 | `packages/report-designer-renderers/src/page-renderer.tsx`                      | 初始 field source refresh 失败可能产生旧告警。             |
-| 07-01 | `packages/flux-react/src/use-node-source-props.ts`                              | anonymous source hook/runtime lifecycle 边界仍偏 React。   |
-| 07-03 | `packages/flux-runtime/src/async-data/request-runtime.ts`                       | parent signal listener 请求完成后不移除。                  |
-| 08-03 | `packages/flux-runtime/src/form-runtime-submit-flow.ts`                         | `summary-gate` 命名/行为与 recurse-submit 边界模糊。       |
-| 09-01 | `packages/flux-renderers-basic/src/flex.tsx`                                    | flex renderer semantic props 与 marker-only 口径存在张力。 |
-| 09-03 | `packages/flux-renderers-basic/src/tabs.tsx`                                    | tabs semantic event payload 一致性不足。                   |
-| 09-04 | `packages/flux-renderers-data/src/crud-renderer.tsx`                            | CRUD refresh semantic event payload 一致性不足。           |
-| 10-03 | `apps/playground/src/flow-designer/flow-designer-canvas.tsx`                    | playground Flow Designer 保留 modifier class。             |
-| 11-01 | `packages/nop-debugger/src/panel/json-viewer.tsx`                               | JSON viewer 折叠控件使用 raw button。                      |
-| 14-01 | `tests/e2e/component-lab/coverage-manifest.ts`                                  | Component Lab manifest 漏 `input-number`。                 |
-| 14-02 | `tests/e2e/component-lab/coverage-manifest.ts`                                  | manifest write 覆盖声明与 spec 不一致。                    |
-| 17-01 | `packages/flux-code-editor/src/types.ts`                                        | source ref 仍兼容 `dataPath`。                             |
-| 17-04 | `docs/components/button/example.json`                                           | Button 示例使用不在 live schema 的 `size: "md"`。          |
-| 17-05 | `docs/architecture/flow-designer/config-schema.md`                              | icon 示例使用 PascalCase。                                 |
-| 17-06 | `packages/flow-designer-renderers/src/index.tsx`                                | `createFlowDesignerRegistry` 命名与行为不一致。            |
+1. 先修 P1：`TreeDocument` history owner、render-phase fragment cache、validation owner precedence/lifecycle result、sync+async validation publication、TagList validateOn、`setValues.args.path`。
+2. 然后修 P2 中会导致 runtime 行为错误或用户可见失败的项：06-01、06-06、06-08、06-13、06-16、08-06、19-01、19-02、20-01 到 20-07、20-09、20-10。
+3. 再整理 API/docs/tooling contract：03-02 到 03-07、16-01、16-02、17-02、18-01 到 18-04。
+4. 最后处理边界与样式卫生：02 系列、10 系列、11 系列、14 系列、17 系列低风险项。
 
-## 驳回项
+## 验证状态
 
-| 编号  | 理由                                                                                                       |
-| ----- | ---------------------------------------------------------------------------------------------------------- |
-| 04-02 | report-designer 与 spreadsheet-core 双 core bridge 属 owner doc 支持的 bridge 形态，不作为单一事实源缺陷。 |
-| 07-02 | `useSourceValue` 的 React mount/subscribe/dispose wiring 与当前 runtime observer 设计一致。                |
-
-## 高频问题文件
-
-| 文件                                                                              | 涉及维度           |
-| --------------------------------------------------------------------------------- | ------------------ |
-| `packages/report-designer-renderers/src/page-renderer.tsx`                        | 02, 06, 15         |
-| `packages/flux-runtime/src/form-runtime-validation.ts`                            | 08                 |
-| `packages/flux-react/src/*`                                                       | 05, 07, 10, 12, 20 |
-| `packages/flux-renderers-form-advanced/src/condition-builder/condition-group.tsx` | 20                 |
-| `docs/architecture/report-designer/design.md`                                     | 16                 |
-
-## 建议新增自动化检查
-
-- 检查 Component Lab route registry 与 `coverage-manifest.ts` 集合一致。
-- 检查 `nop-*__*`、`nop-*--*`、`fd-*--*` BEM selector 残留。
-- 检查 docs JSON examples 是否符合 live schema 枚举（Button variant/size/icon）。
-- 检查 raw `<button>` 在非 `packages/ui`、非测试、非 host surface 的使用。
-
-## 归档文件说明
-
-- `review-results.md` 保存逐条复核结论。
-- `01-*.md` 到 `20-*.md` 保存每维度最终保留项与复核状态。
-- 本轮没有修改源代码，未运行 typecheck/build/lint/test。
-- 2026-05-12 修正：该报告不能视为最终审核结果；需执行追加深挖直到各维度无新发现后，再重新独立复核。
+- 本次没有修改运行时代码，未运行 `pnpm typecheck`、`pnpm build`、`pnpm lint`、`pnpm test`。
+- 审计期间曾运行 oversized code file 检查并观察到多个 >700 行文件；最终复核将相关测试巨文件从 P1 降级为 P2，因为未在最终复核中重新确认 hard check failure。

@@ -136,7 +136,15 @@
 
 - `path` 是推荐字段名，不使用 `dataPath`
 - `setValues.args.path` 存在时，`args.values` 的 key 相对这个基准路径
+- 在 `form` context 中同样遵守这条规则；runtime 会把相对 key 展开到 `args.path` 下，而不是退回根路径写入
+- `setValues` 兼容读取 `targetId` 作为基准路径 fallback，但显式 `args.path` 优先
 - `setValue` / `setValues` 不使用 `componentPath` / 顶层 `value` / 顶层 `values`
+
+`submitForm` retry 约定：
+
+- authoring-level `retry` 作用于 `submitForm` action 本身
+- `submitForm` 现在走标准 action retry pipeline，而不是 request-backed special path
+- `retry.times = 0` 表示执行 1 次且不重试；`attempts` / `failureCount` 统计最终包含首轮尝试
 
 这样设计的原因：
 
@@ -188,10 +196,10 @@
 
 ### 3.1 `variant` vs `level`
 
-| 组件类型   | 属性      | 值                                             | 用途         |
-| ---------- | --------- | ---------------------------------------------- | ------------ |
-| **Button** | `variant` | `'default' \| 'primary' \| 'danger'`           | 按钮样式变体 |
-| **Badge**  | `level`   | `'info' \| 'success' \| 'warning' \| 'danger'` | 状态级别     |
+| 组件类型   | 属性      | 值                                                                            | 用途         |
+| ---------- | --------- | ----------------------------------------------------------------------------- | ------------ |
+| **Button** | `variant` | `'default' \| 'destructive' \| 'outline' \| 'secondary' \| 'ghost' \| 'link'` | 按钮样式变体 |
+| **Badge**  | `level`   | `'info' \| 'success' \| 'warning' \| 'danger'`                                | 状态级别     |
 
 **示例**：
 
@@ -200,7 +208,7 @@
 {
   "type": "button",
   "label": "保存",
-  "variant": "primary"
+  "variant": "default"
 }
 
 // Badge

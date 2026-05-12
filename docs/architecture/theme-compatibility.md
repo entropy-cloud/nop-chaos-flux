@@ -52,6 +52,22 @@ Ownership summary:
 
 ## Theme Root Contract
 
+### `.nop-flux-root`
+
+`@nop-chaos/flux/style.css` scopes facade-owned layout and form chrome selectors under `.nop-flux-root`.
+
+Responsibilities:
+
+- give the host-facing package a stable CSS isolation root
+- prevent facade-owned `[data-slot='...']` selectors from leaking into AMIS, shell, or ordinary host pages
+- let hosts opt into Flux visuals by mounting the renderer subtree inside the facade wrapper instead of relying on document-global selectors
+
+Current boundary rules for the facade stylesheet:
+
+- package-owned selectors in the host-facing facade must be rooted at `.nop-flux-root`
+- facade CSS must not add raw `html`, `body`, or `:root` selectors
+- host token defaults still come from `@nop-chaos/ui` and theme token layers; the facade stylesheet only scopes Flux-specific structure and field chrome
+
 ### `.nop-theme-root`
 
 `.nop-theme-root` is the canonical shared theme scope for the project.

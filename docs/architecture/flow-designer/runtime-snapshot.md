@@ -29,12 +29,13 @@
 - `DesignerSnapshot`
 - `DesignerContextValue`
 - `designer` action namespace
-- `useDesignerHostScope` → 将快照投影成 child scope，通过 `buildDesignerScopeData` 生成 `doc`、`selection`、`activeNode`、`activeEdge`、`runtime` 等字段
+- `useDesignerHostScope` → 将快照投影成 child scope，通过 `buildDesignerScopeData` 生成 `$designer`、`doc`、`selection`、`activeNode`、`activeEdge`、`activeBranch`、`runtime` 等字段
 - region 渲染时传入 `{ scope: designerScope, actionScope }` 使片段可读取上述字段
 
 ### Current Projection Matrix
 
 - retained canonical schema-visible fields:
+  - `$designer` as the compact host summary export (`kind`, `dirty`, `busy`, `canUndo`, `canRedo`, `selectionKind`, `selectionCount`)
   - `doc` as a narrowed summary DTO (`id`, `kind`, `name`, `version`, `viewport`, `nodeCount`, `edgeCount`)
   - `selection`
   - `activeNode`

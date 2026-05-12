@@ -1,7 +1,7 @@
 # Form Validation Runtime Types Reference
 
 > Reference Status: Active
-> Last Updated: 2026-05-02
+> Last Updated: 2026-05-12
 > Owner Doc: `docs/architecture/form-validation.md`
 
 This document is the live-code reference for the exported validation runtime types.
@@ -57,6 +57,13 @@ interface ValidationResult {
 interface FormValidationResult extends ValidationResult {
   fieldErrors: Record<string, ValidationError[]>;
 }
+
+interface FormErrorQuery {
+  path?: string;
+  ownerPath?: string;
+  sourceKinds?: Array<NonNullable<ValidationError['sourceKind']>>;
+  rule?: ValidationRule['kind'];
+}
 ```
 
 Current return-shape baseline:
@@ -66,6 +73,17 @@ Current return-shape baseline:
 - `ValidationScopeRuntime.validateAll()` returns `Promise<FormValidationResult>`
 - `ValidationScopeRuntime.applyChangesAndRevalidate()` returns `Promise<FormValidationResult>`
 - `FormRuntime.submit()` returns `Promise<ActionResult>`
+
+`FormErrorQuery` is the public filter shape used by React form-state hooks such as
+`useCurrentFormErrors(query)`, `useCurrentFormError(query)`, and
+`useCurrentFormFieldState(path, query)`.
+
+Current live filter semantics:
+
+- `path` filters by exact `ValidationError.path`
+- `ownerPath` filters by exact `ValidationError.ownerPath`, falling back to `error.path` when `ownerPath` is absent
+- `sourceKinds` filters by `ValidationError.sourceKind`
+- `rule` filters by `ValidationError.rule`
 
 ## Registration And Behavior Types
 
@@ -218,6 +236,7 @@ interface ValidationStoreApi {
   subscribeToPath(path: string, listener: () => void): () => void;
   subscribeToPaths(paths: readonly string[], listener: () => void): () => void;
   subscribeToSubmitting(listener: () => void): () => void;
+  subscribeToModelGeneration?(listener: () => void): () => void;
   getPathState(path: string): FormPathState;
   getFieldState(path: string): FieldState | undefined;
 }
@@ -228,6 +247,7 @@ interface FormStoreApi {
   subscribeToPath(path: string, listener: () => void): () => void;
   subscribeToPaths(paths: readonly string[], listener: () => void): () => void;
   subscribeToSubmitting(listener: () => void): () => void;
+  subscribeToModelGeneration?(listener: () => void): () => void;
   getPathState(path: string): FormPathState;
   getFieldState(path: string): FieldState | undefined;
 
@@ -244,6 +264,11 @@ interface FormStoreApi {
   batchUpdate(updates: Partial<FormStoreState>): void;
 }
 ```
+
+Current live note:
+
+- `subscribeToModelGeneration` is optional because projected runtimes and test doubles may forward it conditionally
+- listeners are notified when the current owner swaps to a newer compiled validation model generation; React hooks use this to re-register or refresh subscriptions across model replacement
 
 ## Child Contract Types
 
@@ -290,6 +315,7 @@ interface ValidationScopeRuntime {
   readonly rootPath: string;
   readonly lifecycleState: ValidationOwnerLifecycleState;
   readonly modelGeneration: number;
+  subscribeToModelGeneration?(listener: () => void): () => void;
   readonly store?: ValidationStoreApi;
   readonly scope?: ScopeRef;
   readonly validation?: CompiledFormValidationModel;
@@ -333,6 +359,7 @@ interface ValidationScopeRuntime {
 Current live note:
 
 - the exported property name is `validation?`, not `compiledModel`
+- `subscribeToModelGeneration` is part of the public owner contract and mirrors model-generation changes even when consumers only hold the owner runtime rather than the store
 - subtree and owner-wide operations currently return `FormValidationResult`
 - `applyExternalErrors(...)` currently returns `ScopeValidationStateSnapshot`
 - `notifyFieldHidden(...)` is part of `ValidationScopeRuntime`, so non-form owners participate in hidden-field policy without a `FormRuntime`-only contract

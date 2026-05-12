@@ -145,11 +145,13 @@ Optional projected extras such as future `rowData` must stay additive and narrow
 
 ### 4. Same-Row Access Model
 
-Row-local expressions and renderers should read same-row values through `record`:
+Table parameterized slot expressions and renderers should read same-row values through `$slot.record`:
 
-- `${record.name}`
-- `${record.status}`
-- `${record.total}`
+- `${$slot.record.name}`
+- `${$slot.record.status}`
+- `${$slot.record.total}`
+
+Runtime row scope still carries `record` and `index`, but parameterized region authoring uses the reserved `$slot` namespace so slot-local bindings do not silently fall through to parent scope names.
 
 Do not model same-row access through sibling component lookup, DOM lookup, or component-handle lookup.
 

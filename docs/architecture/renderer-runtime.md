@@ -620,6 +620,7 @@ Host boundary note:
 
 - `@nop-chaos/flux-core` owns the host-neutral callable shape (`RendererComponentProps`, `RendererHelpers`, `RenderRegionHandle`, `RendererDefinition`) and uses a host-owned render-result alias rather than React element types.
 - `@nop-chaos/flux-react` owns the React-specialized aliases layered on top of that core contract, including `RenderRegionHandle<ReactElement | null>` and the optional `reactComponent` convenience registration path.
+- `reactComponent` normalization only happens on the React-owned entry points that explicitly call `ensureRendererComponent(...)` (`createSchemaRenderer([...])`, `createDefaultRegistry([...])`, or caller code using the helper directly). A prebuilt `RendererRegistry` passed into `SchemaRendererProps.registry` is expected to already satisfy the core `component` contract.
 
 Why this is preferred:
 

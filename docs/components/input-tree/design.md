@@ -70,6 +70,7 @@ interface InputTreeSchema extends InputSchema {
 
 - `tree` 不承担字段值绑定
 - `input-tree` 必须承担 value/validation/disabled/readOnly 语义
+- `readOnly` 是稳定字段契约的一部分：read-only tree items仍可见，但鼠标和键盘都不得改变字段值；展开/折叠按钮也不得顺带触发 selection
 
 ## 8. 与 TreeSelect 的边界
 
