@@ -35,7 +35,7 @@ root 稳定导出：
 
 - `flowDesignerRendererDefinitions`
 - `registerFlowDesignerRenderers(registry)`
-- `createFlowDesignerRegistry()`
+- `extendFlowDesignerRegistry(registry)`
 - `createDesignerActionProvider(core)`
 - `FLOW_DESIGNER_MANIFEST_V1`
 - `resolveDesignerManifest()`

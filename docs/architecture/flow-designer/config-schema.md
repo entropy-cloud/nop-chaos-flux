@@ -695,7 +695,7 @@ type ToolbarItem =
       label?: string;
       disabled?: string;
       active?: string;
-      variant?: 'default' | 'primary' | 'danger'; // designer toolbar semantic vocabulary
+      variant?: 'default' | 'accent' | 'danger'; // designer toolbar semantic vocabulary
     };
 
 interface DesignerConfig {
@@ -740,7 +740,7 @@ interface DesignerConfig {
         "action": "designer:save",
         "icon": "save",
         "label": "保存",
-        "variant": "primary",
+        "variant": "accent",
         "disabled": "${!runtime.dirty}"
       }
     ]
@@ -765,7 +765,7 @@ interface DesignerConfig {
       {
         "type": "button",
         "label": "保存",
-        "variant": "primary",
+        "variant": "accent",
         "disabled": "${!runtime.dirty}",
         "onClick": { "action": "designer:save" }
       }

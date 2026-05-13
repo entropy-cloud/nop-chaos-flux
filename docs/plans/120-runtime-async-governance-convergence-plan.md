@@ -220,7 +220,7 @@ Exit Criteria:
 
 ### Phase 7 - Docs Sync, Verification, And Closure Prep
 
-Status: completed with external workspace blockers noted
+Status: completed
 Targets: affected runtime modules, `docs/architecture/api-data-source.md`, `docs/architecture/form-validation.md`, `docs/architecture/debugger-runtime.md`, `docs/architecture/action-interaction-state.md`, `docs/logs/`
 
 - [x] 把统一后的 async-governance baseline 写回 owner docs，避免多个 subsystem docs 各自发明新术语。

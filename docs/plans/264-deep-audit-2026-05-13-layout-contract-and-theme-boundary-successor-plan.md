@@ -2,7 +2,7 @@
 
 > Plan Status: planned
 > Last Reviewed: 2026-05-13
-> Source: `docs/analysis/2026-05-12-deep-audit-full/09-renderer-contract.md`, `docs/analysis/2026-05-12-deep-audit-full/10-styling.md`, `docs/analysis/2026-05-12-deep-audit-full/11-ui-components.md`
+> Source: `docs/analysis/2026-05-12-deep-audit-full/09-renderer-contract.md`, `docs/analysis/2026-05-12-deep-audit-full/10-styling.md`, `docs/analysis/2026-05-12-deep-audit-full/11-ui-components.md`, `docs/analysis/2026-05-13-deep-audit-batch1/summary.md`
 > Related: `docs/plans/259-deep-audit-2026-05-12-styling-and-ui-primitive-cleanup-plan.md`, `docs/plans/00-plan-authoring-and-execution-guide.md`
 
 ## Purpose
@@ -53,6 +53,7 @@ Exit Criteria:
 
 - [ ] Every in-scope retained ID has an explicit contract decision.
 - [ ] Any behavior-changing fix has focused verification and owner-doc updates.
+- [ ] Relevant owner docs are updated, or `No owner-doc update required` is recorded.
 - [ ] `docs/logs/` corresponding date entry is updated.
 
 ## Closure Gates
@@ -60,6 +61,11 @@ Exit Criteria:
 - [ ] All in-scope retained findings are adjudicated.
 - [ ] No confirmed styling/theme drift is silently deferred.
 - [ ] Remaining exceptions are documented as supported contract, not implicit behavior.
+- [ ] Independent closure audit is completed and recorded with evidence.
+- [ ] `pnpm typecheck`
+- [ ] `pnpm build`
+- [ ] `pnpm lint`
+- [ ] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -68,3 +74,16 @@ None yet.
 ## Non-Blocking Follow-ups
 
 None yet.
+
+## Closure
+
+Status Note: pending execution.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: pending
+- Evidence: pending
+
+Follow-up:
+
+- Pending execution.

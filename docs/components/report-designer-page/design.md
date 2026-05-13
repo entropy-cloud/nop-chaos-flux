@@ -122,7 +122,7 @@ host scope 向下投影一套 canonical contract，不再把 compatibility alias
 
 ## 10. 样式与 DOM marker 约定
 
-- 根节点保留 `nop-report-designer-page` marker。
+- 根节点保留 `nop-report-designer` marker。
 - 工作台布局遵循 report designer 架构，而不是普通页面默认间距。
 - 默认布局优先保障 canvas 的连续编辑空间，避免在主工作区底部追加与编辑无关的常驻信息区。
 

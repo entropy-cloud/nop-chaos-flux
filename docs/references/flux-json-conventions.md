@@ -196,10 +196,14 @@
 
 ### 3.1 `variant` vs `level`
 
+Normative styling vocabulary rules live in `docs/architecture/variant-vocabulary.md`. This section is the JSON authoring shortcut.
+
 | 组件类型   | 属性      | 值                                                                            | 用途         |
 | ---------- | --------- | ----------------------------------------------------------------------------- | ------------ |
 | **Button** | `variant` | `'default' \| 'destructive' \| 'outline' \| 'secondary' \| 'ghost' \| 'link'` | 按钮样式变体 |
 | **Badge**  | `level`   | `'info' \| 'success' \| 'warning' \| 'danger'`                                | 状态级别     |
+
+Toolbar/workbench action buttons that need values like `primary`, `danger`, `warning`, or `success` should expose `intent`, not `variant`. `variant="primary"` is not a shadcn-compatible Button variant.
 
 **示例**：
 
@@ -223,6 +227,8 @@
 
 - `variant` 表示**视觉变体**（同一组件的不同外观风格）
 - `level` 表示**语义级别**（信息的重要性等级）
+- `intent` 表示**动作语义**（主操作、危险操作、警告操作等）
+- `danger` 是 Flux 语义词；直接映射到 shadcn Button 时使用 `destructive`
 
 ## 4. Icon 命名
 
@@ -325,7 +331,7 @@
       { "type": "title", "tpl": "${doc.name}" },
       { "type": "badge", "level": "success", "text": "已保存" },
       { "type": "divider" },
-      { "type": "button", "action": "designer:save", "icon": "save", "variant": "primary" }
+      { "type": "button", "action": "designer:save", "icon": "save", "variant": "accent" }
     ]
   }
 }

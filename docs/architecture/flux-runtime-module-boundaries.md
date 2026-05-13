@@ -358,7 +358,7 @@ For a new built-in sync rule:
 2. Add the validator implementation in `packages/flux-runtime/src/validation/validators.ts`.
 3. Add default messaging in `packages/flux-runtime/src/validation/message.ts` if needed.
 4. Add focused coverage in `packages/flux-runtime/src/validation/validators.test.ts` or `packages/flux-runtime/src/validation/registry.test.ts`.
-5. Add or update integration coverage in `packages/flux-runtime/src/index.test.ts` when runtime behavior changes.
+5. Add or update integration coverage in active runtime test files such as `packages/flux-runtime/src/index.test.ts`, `packages/flux-runtime/src/form-runtime-validation.test.ts`, or other colocated runtime contract tests when behavior changes.
 
 For async rules:
 

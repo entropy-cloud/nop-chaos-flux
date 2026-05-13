@@ -83,7 +83,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 建议包含：
 
 - `designer-page`、`designer-canvas`、`designer-palette` 等 `RendererDefinition`
-- `registerFlowDesignerRenderers()`、`createFlowDesignerRegistry()` 与 `flowDesignerRendererDefinitions` 等稳定 package surface
+- `registerFlowDesignerRenderers()`、`extendFlowDesignerRegistry()` 与 `flowDesignerRendererDefinitions` 等稳定 package surface
 - graph runtime 到 schema runtime 的桥接层
 - 宿主 scope 注入
 - `designer:*` action 注册
@@ -93,7 +93,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `designer-field` inspector 控件
 - `designer-canvas` / `designer-palette` / `designer-node-card` / `designer-edge-row` 占位 renderer 定义
 - `registerFlowDesignerRenderers(registry)`
-- `createFlowDesignerRegistry()` 当前仍保留在 root stable surface；其 create 命名语义漂移已被明确列为 deferred naming residual，而不是本轮 closure blocker
+- `extendFlowDesignerRegistry()` 是当前 root stable surface 中与 register 语义一致的 helper
 - `designer-page` 在自身 action-scope 边界内注册 `designer` namespace provider，并让 toolbar/inspector 片段沿该边界执行
 - 当前 `designer-page` 不只是在 React 树上把 toolbar/inspector 放在同一 action-scope 边界里，还会在 region render 调用时显式透传 host `scope` 与 `actionScope`，降低后续 render-path 调整时丢失 designer namespace 绑定的风险
 - `designer-page.shortcuts`，用于在宿主层把键盘事件映射到已有 `designer:*` / shared action 链

@@ -564,6 +564,17 @@ function useStructuralLoopContext(): StructuralLoopRenderContext | undefined;
 function useRenderFragment(): RendererHelpers['render'];
 function useCurrentFormModelGeneration(): number;
 function useCurrentValidationScope(): ValidationScopeRuntime | undefined;
+function useCurrentValidationValues<T>(
+  selector: (values: Record<string, unknown>) => T,
+  equalityFn?: (a: T, b: T) => boolean,
+  options?: { enabled?: boolean; path?: string; paths?: readonly string[] },
+): T;
+function useFormLayout(): {
+  mode?: 'normal' | 'horizontal' | 'inline';
+  labelAlign?: 'top' | 'left' | 'right';
+  labelWidth?: string | number;
+};
+function useStrictMode(): boolean;
 function useDataSourceStatus(
   path: string,
   options?: { enabled?: boolean },
@@ -576,7 +587,7 @@ Current scope-hook semantics are:
 - `useOwnScopeSelector()` subscribes only to the current scope's own snapshot, for paths that intentionally ignore parent-scope churn.
 - `readOwn()` remains a current-layer-only API; selector inheritance should come from hook choice, not hidden fields on own snapshots.
 
-Form-specific hooks such as `useCurrentValidationScope`, `useCurrentFormErrors`, `useCurrentFormError`, `useCurrentFormState`, `useCurrentFormFieldState`, `useValidationNodeState`, `useFieldError`, `useOwnedFieldState`, `useChildFieldState`, `useAggregateError`, `useDataSourceStatus`, and `useCurrentFormModelGeneration` also exist and are part of the active form integration surface.
+Form-specific hooks such as `useCurrentValidationScope`, `useCurrentValidationValues`, `useCurrentFormErrors`, `useCurrentFormError`, `useCurrentFormState`, `useCurrentFormFieldState`, `useValidationNodeState`, `useFieldError`, `useOwnedFieldState`, `useChildFieldState`, `useAggregateError`, `useDataSourceStatus`, and `useCurrentFormModelGeneration` also exist and are part of the active form integration surface.
 
 Current form-hook implementation note:
 
@@ -584,6 +595,8 @@ Current form-hook implementation note:
 - `useCurrentFormState(..., { path })` is the active path-aware subscription surface for single-path value reads; callers that only need one form value should prefer it over whole-store subscriptions.
 - `useCurrentFormState(..., { paths })` is the active multi-path subscription surface for derived reads such as dynamic requiredness; callers should subscribe to the exact dependency set they need instead of falling back to whole-form `state.values` reads.
 - `useChildFieldState(path)` remains an intentional alias for `useCurrentFormFieldState(path, { path })` in composite-field style UIs; it is still part of the active public hook surface.
+- `useCurrentValidationValues(..., { path | paths })` mirrors the path-aware selector contract for non-form validation owners, and is the active subscription surface for owner-local derived validation reads.
+- `useFormLayout()` exposes the current field-layout contract consumed by `FieldFrame`, while `useStrictMode()` exposes the runtime strict-mode flag for renderer-side feature gating.
 
 ## Regions And Fragment Rendering
 

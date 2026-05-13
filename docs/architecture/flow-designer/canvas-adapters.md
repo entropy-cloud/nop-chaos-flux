@@ -155,6 +155,6 @@ Minimum regression areas:
 ## Code Anchors
 
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
-- `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx`
+- `packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-xyflow-canvas.tsx`
 - `packages/flow-designer-renderers/src/canvas-bridge.test.tsx`
 - `packages/flow-designer-renderers/src/designer-page-shell.test.tsx`

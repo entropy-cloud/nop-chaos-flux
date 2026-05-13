@@ -102,7 +102,7 @@ Exit Criteria:
 
 ### Phase 3 - 异步安全 .catch()
 
-Status: skipped (false positive)
+Status: cancelled
 
 经复核，3 处 `void` promise 调用的目标函数（`runRequest`、`runReaction`）均有完整的 try/catch/finally 内部处理，不会产生 unhandled rejection。`void` 仅表示不 await，不等于 unhandled。添加 `.catch(() => {})` 是冗余的。
 

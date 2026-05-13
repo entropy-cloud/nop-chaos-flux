@@ -45,7 +45,7 @@
     {
       "type": "button",
       "label": "提交",
-      "variant": "primary",
+      "variant": "default",
       "onClick": {
         "action": "component:submit"
       }

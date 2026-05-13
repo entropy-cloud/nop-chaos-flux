@@ -8,10 +8,12 @@ This document defines how the low-code framework handles styling in a TailwindCS
 - When to use semantic props vs raw className
 - `classAliases` mechanism for reusable class definitions
 - shadcn/ui component library integration
+- `variant` / `intent` / `level` naming boundaries
 
 This is the umbrella styling architecture document.
 
 - Use this file for renderer styling contracts, semantic props, class aliasing, spacing rules, and shadcn/ui integration.
+- Use `docs/architecture/variant-vocabulary.md` for the focused naming contract around `variant`, `intent`, `level`, `primary`, `danger`, `destructive`, `success`, and `warning`.
 - Use `docs/architecture/renderer-markers-and-selectors.md` for the focused DOM marker protocol: which root `nop-*` markers stay, when `data-slot` replaces renderer-internal regions, and when state must move to `data-*` / `aria-*`.
 - If the two ever appear to disagree, this file defines the higher-level styling architecture and `renderer-markers-and-selectors.md` must be aligned to it.
 
@@ -32,7 +34,7 @@ The framework uses shadcn/ui components (from `@nop-chaos/ui`) as the UI compone
 
 4. **Accessibility Built-in**: radix-ui primitives provide ARIA support, keyboard navigation, focus management out of the box.
 
-5. **Variant System**: `class-variance-authority` (cva) provides clean variant/size APIs that map naturally to schema props.
+5. **Variant System**: `class-variance-authority` (cva) provides clean component-local variant/size APIs that map naturally to schema props. `variant` is not a global enum; see `docs/architecture/variant-vocabulary.md` for when to use `variant`, `intent`, or `level`.
 
 For the detailed DOM marker contract around `role`, `data-slot`, root `nop-*` markers, and state attributes, see `docs/architecture/renderer-markers-and-selectors.md`.
 

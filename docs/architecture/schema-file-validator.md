@@ -40,7 +40,7 @@ The first compiler-integrated diagnostics slice is now implemented.
 - `createSchemaCompiler(...).validate(...)` reuses the same compiler-owned analysis helpers as `compile(...)`.
 - `validateSchema(...)` is available as a convenience adapter that builds a compiler and delegates to that same analysis path.
 - built-in `xui:imports` validation now runs through a namespace validator instead of falling into generic passthrough.
-- closed prop models can now report unknown bare keys before permissive prop lowering; namespaced passthrough remains a directional extension-channel concern rather than a current `CompiledSchemaNode` field.
+- closed prop models can now report unknown bare keys before permissive prop lowering; namespaced passthrough remains a directional extension-channel concern rather than a current `TemplateNode` field or compiler-owned normalized prop surface.
 - renderer-owned `schemaValidator` rollout is now active for higher-value shape checks in shipped renderers such as `form` and `table`.
 - representative docs example coverage now exists through diagnostics tests that validate `docs/examples/user-management-schema.md` with the shared `validateSchema(...)` path.
 
