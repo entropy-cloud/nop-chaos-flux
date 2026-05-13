@@ -5,7 +5,7 @@ import type { TableRowEntry } from './types.js';
 import { createRowScopeId, createRowScopePath } from './table-data.js';
 
 interface RowScopePayload {
-  record: Record<string, any>;
+  record: TableRowEntry['record'];
   index: number;
 }
 

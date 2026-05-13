@@ -129,6 +129,36 @@ describe('useTableSelection', () => {
     expect(api.allSelected).toBe(true);
   });
 
+  it('select-all only targets the current processed rows after filter/sort/pagination', () => {
+    const helpers = createHelpers();
+    let api: any;
+
+    render(
+      <SelectionProbe
+        schemaProps={{
+          rowSelection: { selectedRowKeys: [], type: 'checkbox' },
+          selectionOwnership: 'local',
+        }}
+        source={[
+          { id: 'visible-2', name: 'Bob' },
+          { id: 'visible-1', name: 'Alice' },
+        ]}
+        onSelectionChange={vi.fn()}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handleSelectAll(true);
+    });
+
+    expect(Array.from(api.selectedRowKeys)).toEqual(['visible-2', 'visible-1']);
+    expect(api.allSelected).toBe(true);
+  });
+
   it('accumulates checkbox selections in scope ownership mode', () => {
     const helpers = createHelpers();
     const onSelectionChange = vi.fn();

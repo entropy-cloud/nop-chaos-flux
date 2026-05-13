@@ -147,12 +147,12 @@
     align-items: center;
   }
 
-  .nop-schema-root-fallback--status {
+  .nop-schema-root-fallback[data-mode='loading'] {
     background: hsl(var(--background));
     color: hsl(var(--foreground));
   }
 
-  .nop-schema-root-fallback__message {
+  [data-slot='schema-root-fallback-message'] {
     min-width: 0;
     overflow-wrap: anywhere;
   }
@@ -169,7 +169,7 @@
     line-height: 1rem;
   }
 
-  .nop-node-error__message {
+  [data-slot='node-error-message'] {
     flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
@@ -177,7 +177,7 @@
     white-space: nowrap;
   }
 
-  .nop-node-error__retry {
+  [data-slot='node-error-retry'] {
     flex-shrink: 0;
     padding-inline: 0.25rem;
     font-size: 0.6875rem;

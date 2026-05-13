@@ -48,6 +48,18 @@ function createTabRegionOptions(item: TabsItemSchema, index: number) {
   };
 }
 
+function createTabsChangePayload(items: TabsItemSchema[], nextValue: string) {
+  const nextIndex = items.findIndex((item, index) => getItemValue(item, index) === nextValue);
+  return {
+    type: 'change',
+    value: nextValue,
+    activeValue: nextValue,
+    index: nextIndex,
+    activeIndex: nextIndex,
+    item: nextIndex >= 0 ? items[nextIndex] : undefined,
+  };
+}
+
 export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
   const schemaProps = useSchemaProps(props);
@@ -196,14 +208,13 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
         value={ownedAxis.value}
         onValueChange={(next) => {
           ownedAxis.setValue(String(next));
-          const nextIndex = items.findIndex(
-            (item, index) => getItemValue(item, index) === String(next),
-          );
-          void props.events.onChange?.(null, {
+          const payload = createTabsChangePayload(items, String(next));
+          void props.events.onChange?.(payload, {
             scope: props.helpers.createScope(
-              { value: next, index: nextIndex },
+              payload,
               { scopeKey: 'tabs', pathSuffix: 'tabs' },
             ),
+            event: payload,
           });
         }}
         orientation={orientation}

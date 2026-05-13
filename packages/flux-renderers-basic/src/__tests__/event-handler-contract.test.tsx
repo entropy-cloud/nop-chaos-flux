@@ -79,7 +79,14 @@ describe('event handler contracts', () => {
             {
               type: 'tabs',
               value: 'first',
-              onChange: { action: 'setValue', args: { path: 'tabChanged', value: true } },
+              onChange: {
+                action: 'setValues',
+                args: {
+                  values: {
+                    tabChanged: true,
+                  },
+                },
+              },
               items: [
                 { key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] },
                 { key: 'second', title: 'Second', body: [{ type: 'text', text: 'Second body' }] },

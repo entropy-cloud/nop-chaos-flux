@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { Component, Fragment } from 'react';
 import type { ReactNode } from 'react';
 import { AlertCircleIcon } from 'lucide-react';
 import { Alert, AlertAction, AlertDescription, Button, cn } from '@nop-chaos/ui';
@@ -20,6 +20,7 @@ interface SchemaRootBoundaryProps {
 interface SchemaRootBoundaryState {
   hasError: boolean;
   error: unknown;
+  attemptKey: number;
 }
 
 function renderErrorMessage(error: unknown, fallback: string) {
@@ -43,10 +44,11 @@ function SchemaRootFallback(props: {
       data-slot={props.mode === 'loading' ? 'schema-root-status' : 'schema-root-error'}
       role={props.mode === 'loading' ? 'status' : 'alert'}
       variant={destructive ? 'destructive' : 'default'}
-      className={cn('nop-schema-root-fallback', !destructive && 'nop-schema-root-fallback--status')}
+      data-mode={props.mode}
+      className={cn('nop-schema-root-fallback')}
     >
       {destructive ? <AlertCircleIcon className="size-4 shrink-0" /> : null}
-      <AlertDescription className="nop-schema-root-fallback__message">
+      <AlertDescription data-slot="schema-root-fallback-message">
         {props.message}
       </AlertDescription>
       {props.onRetry ? (
@@ -79,10 +81,10 @@ export class SchemaRootErrorBoundary extends Component<
 > {
   constructor(props: SchemaRootBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: undefined };
+    this.state = { hasError: false, error: undefined, attemptKey: 0 };
   }
 
-  static getDerivedStateFromError(error: unknown): SchemaRootBoundaryState {
+  static getDerivedStateFromError(error: unknown): Partial<SchemaRootBoundaryState> {
     return { hasError: true, error };
   }
 
@@ -91,7 +93,11 @@ export class SchemaRootErrorBoundary extends Component<
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, error: undefined });
+    this.setState((prev) => ({
+      hasError: false,
+      error: undefined,
+      attemptKey: prev.attemptKey + 1,
+    }));
   };
 
   render() {
@@ -105,7 +111,7 @@ export class SchemaRootErrorBoundary extends Component<
       );
     }
 
-    return this.props.children;
+    return <Fragment key={this.state.attemptKey}>{this.props.children}</Fragment>;
   }
 }
 
@@ -142,7 +148,7 @@ export class NodeErrorBoundary extends Component<NodeErrorBoundaryProps, NodeErr
           className="nop-node-error"
         >
           <AlertCircleIcon className="size-3.5 shrink-0" />
-          <AlertDescription className="nop-node-error__message">
+          <AlertDescription data-slot="node-error-message">
             {nodeId}: {message || 'Render error'}
           </AlertDescription>
           <AlertAction>
@@ -151,7 +157,7 @@ export class NodeErrorBoundary extends Component<NodeErrorBoundaryProps, NodeErr
               variant="ghost"
               size="sm"
               onClick={this.handleRetry}
-              className="nop-node-error__retry"
+              data-slot="node-error-retry"
             >
               retry
             </Button>

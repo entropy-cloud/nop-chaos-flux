@@ -1,5 +1,10 @@
 import { useEffect, useMemo } from 'react';
-import { getIn, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
+import {
+  getIn,
+  type ActionContext,
+  type RendererComponentProps,
+  type ScopeRef,
+} from '@nop-chaos/flux-core';
 import {
   useCurrentComponentRegistry,
   useScopeSelector,
@@ -161,7 +166,7 @@ export function useCrudStatusPublisher(
 export function useCrudHandle(
   props: RendererComponentProps<CrudSchema>,
   internalTableRef: React.RefObject<InternalTableHandle>,
-  handleRefresh: () => void,
+  handleRefresh: (ctx?: Partial<ActionContext>) => void,
 ) {
   const componentRegistry = useCurrentComponentRegistry();
   const cid = props.meta.cid;
@@ -185,10 +190,10 @@ export function useCrudHandle(
           listMethods() {
             return ['refresh', 'getSelection', 'clearSelection'];
           },
-          async invoke(method) {
+          async invoke(method, _payload, ctx) {
             switch (method) {
               case 'refresh':
-                handleRefresh();
+                handleRefresh(ctx);
                 return { ok: true };
               case 'getSelection':
                 return { ok: true, data: internalTableRef.current?.getSelection?.() ?? [] };

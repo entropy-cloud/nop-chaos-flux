@@ -3,6 +3,8 @@ import type { ActionNamespaceProvider, ActionScope, ScopeRef } from '@nop-chaos/
 import type { DomainBridge } from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope } from '../hooks.js';
 
+type DisposableScopeRef = ScopeRef & { dispose?: () => void };
+
 interface HostScopeStore {
   current: ScopeRef;
   subscribe(listener: () => void): () => void;
@@ -71,6 +73,7 @@ export function useHostScope(
       return;
     }
 
+    const previous = current as DisposableScopeRef;
     store.replace(
       runtime.createHostProjectionScope({
         parentScope,
@@ -79,11 +82,19 @@ export function useHostScope(
         scopeLabel,
       }),
     );
+    previous.dispose?.();
   }, [parentScope, path, runtime, scopeData, scopeLabel, store]);
 
   useLayoutEffect(() => {
     scope.replace?.(scopeData);
   }, [scope, scopeData]);
+
+  useLayoutEffect(() => {
+    const scopeRef = store.current;
+    return () => {
+      (scopeRef as DisposableScopeRef).dispose?.();
+    };
+  }, [store]);
 
   return scope;
 }

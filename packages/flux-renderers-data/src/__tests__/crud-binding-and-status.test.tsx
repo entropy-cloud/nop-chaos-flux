@@ -127,4 +127,5 @@ describe('CRUD binding and status', () => {
       expect(screen.queryByText('alice@example.com')).toBeNull();
     });
   });
+
 });

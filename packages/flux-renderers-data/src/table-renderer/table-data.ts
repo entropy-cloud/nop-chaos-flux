@@ -1,13 +1,19 @@
 import { getIn, toPositiveNumber, toStringArray } from '@nop-chaos/flux-core';
 import type { FilterState, SortState, TableRowEntry } from './types.js';
 
+function toRowRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
 function isDevRuntime() {
   const importMeta = import.meta as ImportMeta & { env?: { DEV?: boolean } };
   return importMeta.env?.DEV === true;
 }
 
 export function normalizeRowKey(
-  record: Record<string, any>,
+  record: Record<string, unknown>,
   sourceIndex: number,
   rowKeyField?: string,
 ): string {
@@ -26,14 +32,17 @@ export function normalizeRowKey(
 }
 
 export function buildTableRowEntries(
-  source: Array<Record<string, any>>,
+  source: unknown[],
   rowKeyField?: string,
 ): TableRowEntry[] {
-  return source.map((record, sourceIndex) => ({
-    rowKey: normalizeRowKey(record, sourceIndex, rowKeyField),
-    sourceIndex,
-    record,
-  }));
+  return source.map((value, sourceIndex) => {
+    const record = toRowRecord(value);
+    return {
+      rowKey: normalizeRowKey(record, sourceIndex, rowKeyField),
+      sourceIndex,
+      record,
+    };
+  });
 }
 
 export function warnOnDuplicateRowKeys(entries: TableRowEntry[]): void {
@@ -58,7 +67,7 @@ export function warnOnDuplicateRowKeys(entries: TableRowEntry[]): void {
 }
 
 export function processTableData(
-  source: Array<Record<string, any>>,
+  source: unknown[],
   rowKeyField: string | undefined,
   sortState: SortState,
   filterState: FilterState,

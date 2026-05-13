@@ -32,12 +32,16 @@ import {
   useCrudVisibleColumnNames,
 } from './crud-renderer-ownership.js';
 
+type CrudRefreshContext = Parameters<NonNullable<RendererComponentProps<CrudSchema>['events']['onRefresh']>>[1];
+
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }
 
 export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const defaultEmptyLabel = t('flux.common.noData');
+  const onRefresh = props.events.onRefresh;
+  const nodeScope = props.node.scope;
   const schemaProps = useSchemaProps(props);
   const normalizedSchema = useMemo(
     () => normalizeCrudSchema(schemaProps as CrudSchema),
@@ -164,7 +168,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     [scope, summary],
   );
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback((ctx?: CrudRefreshContext) => {
     internalTableRef.current?.refreshSource?.();
     if (normalizedSchema.autoClearSelectionOnRefresh) {
       internalTableRef.current?.clearSelection?.();
@@ -176,18 +180,42 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       refreshCount: queryState.refreshCount + 1,
     });
 
-    props.events.onRefresh?.(undefined, {
-      scope: crudScope,
+    const refreshSummary = {
+      type: 'refresh',
+      refreshCount: queryState.refreshCount + 1,
+      query: queryState.values,
+      selectionCleared: normalizedSchema.autoClearSelectionOnRefresh === true,
+      selectedRowKeys,
+    };
+
+    onRefresh?.(refreshSummary, {
+      scope: scope ?? ctx?.scope ?? nodeScope,
+      event: refreshSummary,
+      actionScope: ctx?.actionScope,
+      componentRegistry: ctx?.componentRegistry,
+      form: ctx?.form,
+      page: ctx?.page,
+      nodeInstance: ctx?.nodeInstance,
+      instancePath: ctx?.instancePath,
+      interactionId: ctx?.interactionId,
+      signal: ctx?.signal,
+      evaluationBindings: {
+        ...(ctx?.evaluationBindings ?? {}),
+        ...refreshSummary,
+        $crud: summary,
+      },
     });
   }, [
-    crudScope,
     normalizedSchema.autoClearSelectionOnRefresh,
-    props.events,
+    nodeScope,
+    onRefresh,
     queryState.refreshCount,
     queryState.values,
     queryStatePath,
     scope,
+    selectedRowKeys,
     selectionStatePath,
+    summary,
   ]);
 
   const queryFormId = `${props.id}-query-form`;

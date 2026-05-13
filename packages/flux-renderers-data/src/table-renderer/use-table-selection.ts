@@ -3,10 +3,11 @@ import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { buildTableRowEntries, toStringArray } from './table-data.js';
+import type { TableRowEntry } from './types.js';
 
 export function useTableSelection(
   schemaProps: TableSchema,
-  source: Array<Record<string, any>>,
+  source: TableRowEntry['record'][],
   onSelectionChange: RendererComponentProps<TableSchema>['events']['onSelectionChange'],
   helpers: RendererComponentProps<TableSchema>['helpers'],
 ) {
