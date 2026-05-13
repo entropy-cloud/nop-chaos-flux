@@ -368,6 +368,20 @@ describe('report-designer namespaced actions integration', { timeout: 15000 }, (
     });
   });
 
+  it('falls back from invalid schema runtime inputs instead of blindly trusting host casts', async () => {
+    renderReportDesignerPage({
+      document: 'bad-document',
+      config: 'bad-config' as any,
+      profile: { id: 1, kind: null } as any,
+      adapters: 'bad-adapters' as any,
+      toolbar: { type: 'report-target-kind-probe' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('report-target-kind').textContent).toBe('sheet');
+    });
+  });
+
   it('exposes shared collapse controls for expanded workbench sides', async () => {
     renderReportDesignerPage({
       config: createRuntimeConfig({

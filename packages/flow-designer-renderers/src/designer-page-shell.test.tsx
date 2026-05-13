@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react';
 import { cleanup, render, waitFor, fireEvent, within, screen } from '@testing-library/react';
@@ -79,6 +79,79 @@ describe('designer-page status publication', () => {
     await waitFor(() => {
       expect(document.querySelector('[data-testid="designer-status"]')?.textContent).toBe(
         'designer:none:0',
+      );
+    });
+  });
+
+  it('reports lifecycle hook failures through structured host issue monitoring', async () => {
+    const onError = vi.fn();
+    const actionButtonRenderer = {
+      type: 'action-button',
+      component: (props: { props: { label?: string }; events: { onClick?: () => void } }) => (
+        <button type="button" onClick={() => void props.events.onClick?.()}>
+          {String(props.props.label ?? 'Action')}
+        </button>
+      ),
+      fields: [{ key: 'onClick', kind: 'event' }],
+    } as RendererDefinition;
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+      actionButtonRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flow/index-lifecycle-hook-error"
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: {
+            ...createTestConfig(),
+            hooks: {
+              beforeCreateNode: () => {
+                throw new Error('beforeCreateNode exploded');
+              },
+            },
+          },
+          toolbar: {
+            type: 'action-button',
+            label: 'Add node',
+            onClick: {
+              action: 'designer:addNode',
+              args: { nodeType: 'task', position: { x: 40, y: 60 } },
+            },
+          },
+        }}
+        env={{
+          ...createRendererEnv() as RendererEnv,
+          monitor: { onError },
+        }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add node' }));
+
+    await waitFor(() => {
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phase: 'render',
+          error: expect.any(Error),
+          details: expect.objectContaining({
+            reason: 'designer-lifecycle-hook-failed',
+            hook: 'beforeCreateNode',
+            documentMode: undefined,
+          }),
+        }),
       );
     });
   });

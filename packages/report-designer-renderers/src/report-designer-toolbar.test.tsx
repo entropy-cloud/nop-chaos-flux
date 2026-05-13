@@ -69,7 +69,13 @@ describe('report-toolbar renderer', () => {
   it('renders with itemsOverride that adds a button', () => {
     renderToolbarInPage({
       itemsOverride: [
-        { id: 'custom-btn', type: 'button', label: 'Custom', action: 'report-designer:save' },
+        {
+          id: 'custom-btn',
+          type: 'button',
+          label: 'Custom',
+          action: 'report-designer:save',
+          intent: 'primary',
+        },
       ],
     });
     expect(screen.getByText('Custom')).toBeTruthy();

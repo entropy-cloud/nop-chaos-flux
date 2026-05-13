@@ -1,3 +1,5 @@
+import './report-field-panel.css';
+
 export type {
   ReportDesignerHostSnapshot,
   ReportDesignerBridge,

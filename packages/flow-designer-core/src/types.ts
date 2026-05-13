@@ -1,5 +1,7 @@
 import type { ActionSchema, DomainHostStatusSummary, SchemaInput } from '@nop-chaos/flux-core';
 
+export type ActionIntent = 'neutral' | 'primary' | 'danger' | 'warning' | 'success' | 'info';
+
 export interface GraphDocument {
   id: string;
   kind: string;
@@ -233,7 +235,7 @@ export type ToolbarItem =
       label?: string;
       disabled?: string;
       active?: string;
-      variant?: 'default' | 'accent' | 'danger';
+      intent?: ActionIntent;
     }
   | {
       type: 'switch';

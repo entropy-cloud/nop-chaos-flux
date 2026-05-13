@@ -63,7 +63,11 @@ export function createDesignerActionProvider(
             },
             data: payload?.data as Record<string, unknown> | undefined,
           });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'addBranch': {
@@ -74,7 +78,11 @@ export function createDesignerActionProvider(
             childType: typeof payload?.childType === 'string' ? payload.childType : undefined,
             childData: payload?.childData as Record<string, unknown> | undefined,
           });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'addEdge': {
@@ -86,7 +94,11 @@ export function createDesignerActionProvider(
             targetPort: typeof payload?.targetPort === 'string' ? payload.targetPort : undefined,
             data: payload?.data as Record<string, unknown> | undefined,
           });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'clearSelection': {
@@ -128,7 +140,11 @@ export function createDesignerActionProvider(
             nodeId: String(payload?.nodeId ?? ''),
             branchId: String(payload?.branchId ?? ''),
           });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'deleteEdge': {
@@ -143,7 +159,11 @@ export function createDesignerActionProvider(
             type: 'duplicateNode',
             nodeId: String(payload?.nodeId ?? ''),
           });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'moveNode': {
@@ -152,7 +172,11 @@ export function createDesignerActionProvider(
             nodeId: String(payload?.nodeId ?? ''),
             position: (payload?.position as { x: number; y: number } | undefined) ?? { x: 0, y: 0 },
           });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'moveBranch': {
@@ -162,7 +186,11 @@ export function createDesignerActionProvider(
             branchId: String(payload?.branchId ?? ''),
             direction: payload?.direction === 'left' ? 'left' : 'right',
           });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'updateBranchData': {
@@ -172,7 +200,11 @@ export function createDesignerActionProvider(
             branchId: String(payload?.branchId ?? ''),
             data: (payload?.data as Record<string, unknown>) ?? {},
           });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'reconnectEdge': {
@@ -184,7 +216,11 @@ export function createDesignerActionProvider(
             sourcePort: typeof payload?.sourcePort === 'string' ? payload.sourcePort : undefined,
             targetPort: typeof payload?.targetPort === 'string' ? payload.targetPort : undefined,
           });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'updateNodeData': {
@@ -193,7 +229,11 @@ export function createDesignerActionProvider(
             nodeId: String(payload?.nodeId ?? ''),
             data: (payload?.data as Record<string, unknown>) ?? {},
           });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'updateEdgeData': {
@@ -202,7 +242,11 @@ export function createDesignerActionProvider(
             edgeId: String(payload?.edgeId ?? ''),
             data: (payload?.data as Record<string, unknown>) ?? {},
           });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'export': {
@@ -211,12 +255,20 @@ export function createDesignerActionProvider(
         }
         case 'undo': {
           const result = adapter.execute({ type: 'undo' });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'redo': {
           const result = adapter.execute({ type: 'redo' });
-          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          notifyCommandFailure({
+            notify: ctx?.runtime?.env?.notify,
+            error: result.error,
+            reason: result.reason,
+          });
           return toActionResult(result);
         }
         case 'toggleGrid': {

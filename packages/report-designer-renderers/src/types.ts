@@ -1,4 +1,4 @@
-import type { BaseSchema } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaInput } from '@nop-chaos/flux-core';
 import type {
   ReportDesignerAdapterRegistry,
   ReportDesignerConfig,
@@ -23,7 +23,7 @@ export interface ReportDesignerPageSchemaInput {
   id?: string;
   name?: string;
   label?: string;
-  title?: string;
+  title?: string | SchemaInput;
   className?: string;
   visible?: boolean | string;
   hidden?: boolean | string;
@@ -50,6 +50,7 @@ export function defineReportDesignerPageSchema<T extends ReportDesignerPageSchem
 
 export interface ReportInspectorShellSchema extends BaseSchema {
   type: 'report-inspector-shell';
+  title?: string | SchemaInput;
   emptyLabel?: string;
   noSelectionLabel?: string;
   errorLabel?: string;

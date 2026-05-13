@@ -1,7 +1,7 @@
 import { createSharedVitestConfig } from '../../vitest.shared';
 
 export default createSharedVitestConfig({
-  environment: 'node',
+  environment: 'happy-dom',
   coverage: {
     provider: 'v8',
     reporter: ['text', 'json-summary'],

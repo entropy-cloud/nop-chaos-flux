@@ -14,7 +14,7 @@ describe('ToolbarItem', () => {
       label: 'Save',
       icon: 'save',
       action: 'save',
-      variant: 'primary',
+      intent: 'primary',
     } satisfies ToolbarItem;
 
     expect(item.type).toBe('button');
@@ -106,10 +106,10 @@ describe('defineReportDesignerPageSchema with toolbar', () => {
       type: 'report-designer-page',
       document: doc,
       designer: { kind: 'report-template' },
-      toolbar: {
-        type: 'report-toolbar',
-        itemsOverride: [
-          { type: 'button', label: 'Save', action: 'save', variant: 'primary' },
+        toolbar: {
+          type: 'report-toolbar',
+          itemsOverride: [
+          { type: 'button', label: 'Save', action: 'save', intent: 'primary' },
           { type: 'divider' },
           { type: 'button', label: 'Export', action: 'export' },
         ],

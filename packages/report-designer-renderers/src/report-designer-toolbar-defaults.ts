@@ -25,7 +25,7 @@ export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
     type: 'button',
     label: 'Preview',
     action: 'report-designer:preview',
-    variant: 'primary',
+    intent: 'primary',
   },
   {
     id: 'stopPreview',

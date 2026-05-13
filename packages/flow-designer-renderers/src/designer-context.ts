@@ -91,15 +91,17 @@ export function useDesignerSnapshot(core: DesignerCore): DesignerSnapshot {
 }
 
 export function notifyCommandFailure(
-  notify: import('@nop-chaos/flux-core').RendererEnv['notify'] | undefined,
-  error: string | undefined,
-  reason?: string,
+  input: {
+    notify: import('@nop-chaos/flux-core').RendererEnv['notify'] | undefined;
+    error: string | undefined;
+    reason?: string;
+  },
 ) {
-  if (!error || reason === 'unchanged') {
+  if (!input.error || input.reason === 'unchanged') {
     return;
   }
 
-  notify?.('warning', error);
+  input.notify?.('warning', input.error);
 }
 
 export function toActionResult(result: import('./designer-command-adapter.js').DesignerCommandResult) {

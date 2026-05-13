@@ -224,8 +224,12 @@ export function DesignerToolbarContent(props: {
           const active =
             evalBooleanExpr(item.active, snapshot) ||
             (item.action === 'designer:export' && props.exportActive === true);
-          const isPrimary = item.variant === 'accent';
-          const variant = active || isPrimary ? 'default' : 'outline';
+          const variant =
+            item.intent === 'danger'
+              ? 'destructive'
+              : active || item.intent === 'primary'
+                ? 'default'
+                : 'outline';
           return (
             <Button
               key={key}

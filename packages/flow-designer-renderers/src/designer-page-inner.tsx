@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { reportRuntimeHostIssue, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRendererEnv } from '@nop-chaos/flux-react';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
@@ -52,10 +52,33 @@ export function DesignerPageInner({
   const dispatch = useCallback(
     (command: import('./designer-command-adapter.js').DesignerCommand) => {
       const result = commandAdapter.execute(command);
-      notifyCommandFailure(env.notify, result.error, result.reason);
+      notifyCommandFailure({ notify: env.notify, error: result.error, reason: result.reason });
       return result;
     },
     [commandAdapter, env],
+  );
+
+  useEffect(
+    () =>
+      core.subscribe((event) => {
+        if (event.type !== 'lifecycleHookError') {
+          return;
+        }
+
+        reportRuntimeHostIssue({
+          env,
+          level: 'warning',
+          message: event.error,
+          error: new Error(event.error),
+          phase: 'render',
+          details: {
+            reason: 'designer-lifecycle-hook-failed',
+            hook: event.hook,
+            documentMode: config.documentMode,
+          },
+        });
+      }),
+    [config.documentMode, core, env],
   );
 
   return (

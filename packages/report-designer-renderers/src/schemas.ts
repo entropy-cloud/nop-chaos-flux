@@ -1,5 +1,7 @@
 import type { BaseSchema, SchemaObject } from '@nop-chaos/flux-core';
 
+export type ActionIntent = 'neutral' | 'primary' | 'danger' | 'warning' | 'success' | 'info';
+
 export interface ToolbarItem extends SchemaObject {
   type: 'button' | 'divider' | 'spacer' | 'text' | 'badge' | 'switch' | 'title';
   id?: string;
@@ -10,7 +12,7 @@ export interface ToolbarItem extends SchemaObject {
   action?: string;
   disabled?: boolean | string;
   active?: boolean | string;
-  variant?: 'default' | 'primary' | 'danger';
+  intent?: ActionIntent;
   level?: string;
   visible?: boolean | string;
 }

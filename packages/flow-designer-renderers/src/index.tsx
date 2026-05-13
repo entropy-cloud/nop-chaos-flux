@@ -7,6 +7,7 @@ import {
   type RendererDefinition,
   type RendererRegistry,
 } from '@nop-chaos/flux-core';
+import type { ActionIntent } from '@nop-chaos/flow-designer-core';
 import {
   DesignerPageRenderer,
   DesignerCanvasRenderer,
@@ -16,6 +17,10 @@ import { DesignerFieldRenderer } from './designer-field.js';
 import { designerHostContract } from './designer-manifest.js';
 
 function compileDesignerConfig(value: unknown, context: FieldCompileContext): unknown {
+  if (!isPlainObject(value) && context.sourcePath.endsWith('.config')) {
+    return context.compileValue(value);
+  }
+
   if (Array.isArray(value)) {
     return value.map((item, index) =>
       compileDesignerConfig(item, { ...context, sourcePath: `${context.sourcePath}.${index}` }),
@@ -55,6 +60,53 @@ export {
   DESIGNER_CAPABILITY_PUBLICATION,
 } from './designer-manifest.js';
 
+function validateDesignerToolbarIntent(value: unknown): value is ActionIntent {
+  return (
+    value === 'neutral' ||
+    value === 'primary' ||
+    value === 'danger' ||
+    value === 'warning' ||
+    value === 'success' ||
+    value === 'info'
+  );
+}
+
+function validateDesignerConfigToolbar(context: import('@nop-chaos/flux-core').RendererSchemaValidationContext) {
+  if (context.schema.type !== 'designer-page') {
+    return;
+  }
+
+  const config = (context.schema as { config?: unknown }).config;
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    return;
+  }
+
+  const toolbar = (config as { toolbar?: { items?: unknown } }).toolbar;
+  if (!toolbar || !Array.isArray(toolbar.items)) {
+    return;
+  }
+
+  toolbar.items.forEach((item, index) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      return;
+    }
+
+    const button = item as { type?: unknown; intent?: unknown };
+    if (button.type !== 'button' || button.intent === undefined) {
+      return;
+    }
+
+    if (!validateDesignerToolbarIntent(button.intent)) {
+      context.emit({
+        code: 'invalid-property-value',
+        path: `/config/toolbar/items/${index}/intent`,
+        message:
+          'Invalid value for property "intent" on Flow Designer toolbar button. Expected neutral | primary | danger | warning | success | info.',
+      });
+    }
+  });
+}
+
 export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'designer-page',
@@ -90,6 +142,7 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
         required: true,
       },
     },
+    schemaValidator: validateDesignerConfigToolbar,
     scopeExportContracts: {
       $designer: {
         kind: 'object',

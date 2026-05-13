@@ -247,7 +247,13 @@ describe('mergeToolbarItems', () => {
 
   it('overrides matching item by id', () => {
     const overrides: ToolbarItem[] = [
-      { id: 'undo', type: 'button', label: 'Undo (custom)', action: 'report-designer:undo' },
+      {
+        id: 'undo',
+        type: 'button',
+        label: 'Undo (custom)',
+        action: 'report-designer:undo',
+        intent: 'neutral',
+      },
     ];
     const result = mergeToolbarItems(defaults, overrides);
     expect(result).toHaveLength(3);
@@ -272,7 +278,13 @@ describe('mergeToolbarItems', () => {
 
   it('appends new override items without matching id', () => {
     const overrides: ToolbarItem[] = [
-      { id: 'export', type: 'button', label: 'Export', action: 'report-designer:export' },
+      {
+        id: 'export',
+        type: 'button',
+        label: 'Export',
+        action: 'report-designer:export',
+        intent: 'primary',
+      },
     ];
     const result = mergeToolbarItems(defaults, overrides);
     expect(result).toHaveLength(4);

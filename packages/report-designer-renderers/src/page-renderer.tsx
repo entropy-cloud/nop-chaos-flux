@@ -10,7 +10,11 @@ import {
   useStatusPathPublication,
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
-import { createSpreadsheetCore, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
+import {
+  createEmptyDocument,
+  createSpreadsheetCore,
+  type SpreadsheetRuntimeSnapshot,
+} from '@nop-chaos/spreadsheet-core';
 import {
   createSpreadsheetBridge,
   createSpreadsheetActionProvider,
@@ -24,7 +28,11 @@ import type {
   ReportDesignerProfile,
   ReportTemplateDocument,
 } from '@nop-chaos/report-designer-core';
-import { createReportDesignerCore } from '@nop-chaos/report-designer-core';
+import {
+  createEmptyAdapterRegistry,
+  createReportDesignerCore,
+  createReportTemplateDocument,
+} from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, resolveLucideIcon } from '@nop-chaos/ui';
 import { renderFallbackFieldPanel } from './fallbacks.js';
@@ -128,6 +136,60 @@ function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isReportTemplateDocument(value: unknown): value is ReportTemplateDocument {
+  return (
+    isRecord(value) &&
+    value.kind === 'report-template' &&
+    typeof value.name === 'string' &&
+    isRecord(value.spreadsheet)
+  );
+}
+
+function resolveReportTemplateDocument(value: unknown): ReportTemplateDocument {
+  if (isReportTemplateDocument(value)) {
+    return value;
+  }
+
+  return createReportTemplateDocument(createEmptyDocument('report-designer-page-invalid-document'));
+}
+
+function resolveReportDesignerConfig(value: unknown): ReportDesignerConfig {
+  return isRecord(value) ? (value as ReportDesignerConfig) : {};
+}
+
+function resolveReportDesignerProfile(value: unknown): ReportDesignerProfile | undefined {
+  if (!isRecord(value) || typeof value.id !== 'string' || typeof value.kind !== 'string') {
+    return undefined;
+  }
+
+  return {
+    id: value.id,
+    kind: value.kind,
+    fieldSourceIds: Array.isArray(value.fieldSourceIds)
+      ? value.fieldSourceIds.filter((item): item is string => typeof item === 'string')
+      : [],
+    fieldDropIds: Array.isArray(value.fieldDropIds)
+      ? value.fieldDropIds.filter((item): item is string => typeof item === 'string')
+      : [],
+    inspectorSchemaId:
+      typeof value.inspectorSchemaId === 'string' ? value.inspectorSchemaId : undefined,
+    previewId: typeof value.previewId === 'string' ? value.previewId : undefined,
+    codecId: typeof value.codecId === 'string' ? value.codecId : undefined,
+    expressionEditorId:
+      typeof value.expressionEditorId === 'string' ? value.expressionEditorId : undefined,
+  };
+}
+
+function resolveReportDesignerAdapters(
+  value: unknown,
+): Partial<ReportDesignerAdapterRegistry> | undefined {
+  return isRecord(value) ? (value as Partial<ReportDesignerAdapterRegistry>) : undefined;
+}
+
 function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
   const Icon = resolveLucideIcon(direction === 'left' ? 'chevron-left' : 'chevron-right');
   const Comp = Icon as React.ComponentType<{ className?: string; size?: number; strokeWidth?: number }>;
@@ -213,12 +275,22 @@ export function ReportDesignerPageRenderer(
   props: RendererComponentProps<ReportDesignerPageSchema>,
 ) {
   const titleContent = resolveRendererSlotContent(props, 'title');
-  const resolvedDocument = props.props.document as ReportTemplateDocument;
-  const resolvedDesigner = props.props.designer as ReportDesignerConfig;
-  const resolvedProfile = props.props.profile as ReportDesignerProfile | undefined;
-  const resolvedAdapters = props.props.adapters as
-    | Partial<ReportDesignerAdapterRegistry>
-    | undefined;
+  const resolvedDocument = useMemo(
+    () => resolveReportTemplateDocument(props.props.document),
+    [props.props.document],
+  );
+  const resolvedDesigner = useMemo(
+    () => resolveReportDesignerConfig(props.props.designer),
+    [props.props.designer],
+  );
+  const resolvedProfile = useMemo(
+    () => resolveReportDesignerProfile(props.props.profile),
+    [props.props.profile],
+  );
+  const resolvedAdapters = useMemo(
+    () => resolveReportDesignerAdapters(props.props.adapters),
+    [props.props.adapters],
+  );
   const spreadsheetCore = useMemo(
     () => createSpreadsheetCore({ document: resolvedDocument.spreadsheet }),
     [resolvedDocument],
@@ -237,7 +309,7 @@ export function ReportDesignerPageRenderer(
         document: resolvedDocument,
         config: resolvedDesigner,
         profile: resolvedProfile,
-        adapters: resolvedAdapters,
+        adapters: resolvedAdapters ?? createEmptyAdapterRegistry(),
       }),
     [resolvedAdapters, resolvedDesigner, resolvedDocument, resolvedProfile],
   );

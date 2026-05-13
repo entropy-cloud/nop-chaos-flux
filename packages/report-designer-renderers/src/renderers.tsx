@@ -9,6 +9,18 @@ import { reportDesignerHostContract } from './report-designer-manifest.js';
 import type { ReportDesignerPageSchemaInput, ReportDesignerPageSchema } from './types.js';
 export { defineReportDesignerPageSchema } from './types.js';
 
+const actionIntentShape = {
+  kind: 'union' as const,
+  anyOf: [
+    { kind: 'literal' as const, value: 'neutral' },
+    { kind: 'literal' as const, value: 'primary' },
+    { kind: 'literal' as const, value: 'danger' },
+    { kind: 'literal' as const, value: 'warning' },
+    { kind: 'literal' as const, value: 'success' },
+    { kind: 'literal' as const, value: 'info' },
+  ],
+};
+
 export type { ReportDesignerPageSchemaInput, ReportDesignerPageSchema };
 
 export const reportDesignerRendererDefinitions: RendererDefinition[] = [
@@ -102,6 +114,24 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'report-toolbar',
     component: ReportToolbarRenderer,
+    propContracts: {
+      itemsOverride: {
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              intent: actionIntentShape,
+            },
+            optional: ['type', 'intent'],
+          },
+        },
+        displayName: 'Items Override',
+        description: 'Toolbar item overrides merged with report toolbar defaults.',
+        editorType: 'object-array',
+      },
+    },
     fields: [{ key: 'itemsOverride', kind: 'prop' }],
   },
 ];

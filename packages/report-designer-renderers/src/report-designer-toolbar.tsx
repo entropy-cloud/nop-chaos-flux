@@ -97,13 +97,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
               <Button
                 key={item.id ?? `button-${index}`}
                 type="button"
-                variant={
-                  item.variant === 'primary'
-                    ? 'default'
-                    : item.variant === 'danger'
-                      ? 'destructive'
-                      : 'outline'
-                }
+                variant={item.intent === 'danger' ? 'destructive' : item.intent === 'primary' ? 'default' : 'outline'}
                 size="sm"
                 disabled={disabled}
                 data-active={active || undefined}
