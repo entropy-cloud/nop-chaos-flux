@@ -233,7 +233,7 @@ export type ToolbarItem =
       label?: string;
       disabled?: string;
       active?: string;
-      variant?: 'default' | 'primary' | 'danger';
+      variant?: 'default' | 'accent' | 'danger';
     }
   | {
       type: 'switch';

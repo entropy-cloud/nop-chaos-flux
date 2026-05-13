@@ -149,6 +149,13 @@ export function registerFlowDesignerRenderers(registry: RendererRegistry) {
   return registerRendererDefinitions(registry, flowDesignerRendererDefinitions);
 }
 
-export function createFlowDesignerRegistry(baseRegistry: RendererRegistry): RendererRegistry {
+export function extendFlowDesignerRegistry(baseRegistry: RendererRegistry): RendererRegistry {
   return registerFlowDesignerRenderers(baseRegistry);
+}
+
+/**
+ * @deprecated Use `extendFlowDesignerRegistry()` for register/extend semantics.
+ */
+export function createFlowDesignerRegistry(baseRegistry: RendererRegistry): RendererRegistry {
+  return extendFlowDesignerRegistry(baseRegistry);
 }

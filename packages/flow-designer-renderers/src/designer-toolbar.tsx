@@ -224,7 +224,7 @@ export function DesignerToolbarContent(props: {
           const active =
             evalBooleanExpr(item.active, snapshot) ||
             (item.action === 'designer:export' && props.exportActive === true);
-          const isPrimary = item.variant === 'primary';
+          const isPrimary = item.variant === 'accent';
           const variant = active || isPrimary ? 'default' : 'outline';
           return (
             <Button

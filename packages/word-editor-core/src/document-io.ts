@@ -5,6 +5,7 @@ import type { Dataset } from './dataset-model.js';
 import type { DocChart } from './chart-model.js';
 import type { DocCode } from './code-model.js';
 import { createDataColumn, createDataset, validateDataset } from './dataset-model.js';
+import { DEFAULT_PAPER_SETTINGS } from './paper-settings.js';
 
 const STORAGE_KEY = 'nop-word-editor-document';
 const DATASET_STORAGE_KEY = 'nop-word-editor-datasets';
@@ -57,6 +58,38 @@ function normalizeWordDocument(value: unknown): WordDocument | null {
     footer: Array.isArray(record.footer) ? (record.footer as WordDocument['footer']) : [],
     charts: Array.isArray(record.charts) ? (record.charts as DocChart[]) : [],
     codes: Array.isArray(record.codes) ? (record.codes as DocCode[]) : [],
+  };
+}
+
+function normalizePaperSettings(value: unknown): PaperSettings {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return DEFAULT_PAPER_SETTINGS;
+  }
+
+  const record = value as Record<string, unknown>;
+  const width = typeof record.width === 'number' ? record.width : DEFAULT_PAPER_SETTINGS.width;
+  const height = typeof record.height === 'number' ? record.height : DEFAULT_PAPER_SETTINGS.height;
+  const direction =
+    record.direction === 'horizontal' || record.direction === 'vertical'
+      ? record.direction
+      : DEFAULT_PAPER_SETTINGS.direction;
+  const margins =
+    Array.isArray(record.margins) &&
+    record.margins.length === 4 &&
+    record.margins.every((entry) => typeof entry === 'number')
+      ? ([record.margins[0], record.margins[1], record.margins[2], record.margins[3]] as [
+          number,
+          number,
+          number,
+          number,
+        ])
+      : DEFAULT_PAPER_SETTINGS.margins;
+
+  return {
+    width,
+    height,
+    direction,
+    margins,
   };
 }
 
@@ -145,7 +178,7 @@ export function loadDocument(): SavedDocumentData | null {
 
     return {
       data,
-      paperSettings: parsed.paperSettings as PaperSettings,
+      paperSettings: normalizePaperSettings(parsed.paperSettings),
       savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : new Date(0).toISOString(),
     };
   } catch {

@@ -204,6 +204,28 @@ describe('loadDocument', () => {
     expect(result?.data.charts).toEqual([]);
     expect(result?.data.codes).toEqual([]);
   });
+
+  it('drops invalid persisted paper settings instead of blindly trusting JSON shape', () => {
+    localStorageState.current._store[STORAGE_KEY] = JSON.stringify({
+      data: { header: [], main: [{ value: 'hello' }], footer: [], charts: [], codes: [] },
+      paperSettings: {
+        width: 'bad',
+        height: null,
+        direction: 'sideways',
+        margins: ['x', 1, 2],
+      },
+      savedAt: '2025-01-01T00:00:00.000Z',
+    });
+
+    const result = loadDocument();
+
+    expect(result?.paperSettings).toEqual({
+      width: 595,
+      height: 842,
+      direction: 'vertical',
+      margins: [100, 120, 100, 120],
+    });
+  });
 });
 
 describe('clearDocument', () => {

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import React from 'react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -315,6 +315,56 @@ describe('report-designer namespaced actions integration', { timeout: 15000 }, (
       expect(screen.queryByTestId('left-panel-expanded')).toBeNull();
       expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
       expect(screen.queryByText('Inspector body')).toBeNull();
+    });
+  });
+
+  it('reports refreshFieldSources failures through monitor in addition to notify', async () => {
+    const onError = vi.fn();
+    const notify = vi.fn();
+    const fieldSourceProvider = {
+      id: 'broken-field-source',
+      load: vi.fn(async () => {
+        throw new Error('field sources exploded');
+      }),
+    };
+    const monitoredEnv: RendererEnv = {
+      ...env,
+      notify,
+      monitor: { onError },
+    };
+    const spreadsheet = createEmptyDocument('integration-report-designer-monitor');
+    const document = createReportTemplateDocument(spreadsheet, 'Integration Report');
+    const schema = defineReportDesignerPageSchema({
+      type: 'report-designer-page',
+      document,
+      designer: createRuntimeConfig({
+        fieldSources: [
+          { id: 'remote', label: 'Remote', provider: 'broken-field-source', groups: [] },
+        ],
+      }),
+      adapters: {
+        fieldSources: new Map([[fieldSourceProvider.id, fieldSourceProvider]]),
+      },
+    });
+    const registry = createDefaultRegistry([pageRenderer]);
+    registerReportDesignerRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://report/renderers-monitor"
+        schema={schema}
+        env={monitoredEnv}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{}}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(fieldSourceProvider.load).toHaveBeenCalled();
+      expect(notify).toHaveBeenCalledWith('warning', 'field sources exploded');
+      expect(onError).toHaveBeenCalled();
     });
   });
 

@@ -29,6 +29,7 @@
     "use-sync-external-store": "^1.6.0"
   },
   "devDependencies": {
+    "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
     "@testing-library/react": "^16.3.0"
   },

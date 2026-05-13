@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import type { RendererComponentProps, RenderNodeInput } from '@nop-chaos/flux-core';
+import { reportRuntimeHostIssue, type RendererComponentProps, type RenderNodeInput } from '@nop-chaos/flux-core';
 import type { ReportDesignerHostStatusSummary } from '@nop-chaos/report-designer-core';
 import {
   hasRendererSlotContent,
@@ -270,12 +270,22 @@ export function ReportDesignerPageRenderer(
 
   useEffect(() => {
     void core.refreshFieldSources().catch((error) => {
+      reportRuntimeHostIssue({
+        env,
+        error,
+        phase: 'render',
+        path: props.path,
+        details: {
+          schemaPath: props.path,
+          operation: 'refreshFieldSources',
+        },
+      });
       env.notify?.(
         'warning',
         error instanceof Error && error.message ? error.message : t('flux.reportDesigner.loadPanelsFailed'),
       );
     });
-  }, [core, env]);
+  }, [core, env, props.path]);
 
   useEffect(() => {
     return () => {
