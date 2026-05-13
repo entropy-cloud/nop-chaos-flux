@@ -336,6 +336,18 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
       return;
     }
 
+    if (!fragmentScope) {
+      const nextVersion = fragmentScopeVersion + 1;
+      if (pendingFragmentScopeVersionRef.current !== nextVersion) {
+        pendingFragmentScopeVersionRef.current = nextVersion;
+        queueMicrotask(() => {
+          setFragmentScopeVersion(nextVersion);
+          setCommittedFragmentScopeVersion(0);
+        });
+      }
+      return;
+    }
+
     const cachedEntry = fragmentScopeCache.get(fragmentScopeCacheKey);
     if (!matchesFragmentScopeEntry(cachedEntry, fragmentScopeIdentity)) {
       const nextVersion = fragmentScopeVersion + 1;
@@ -359,6 +371,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     fragmentScopeCache,
     fragmentScopeCacheKey,
     fragmentScopeIdentity,
+    fragmentScope,
     fragmentScopeVersion,
     shouldUseFragmentScope,
   ]);

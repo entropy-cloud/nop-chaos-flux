@@ -178,6 +178,7 @@ export function FieldFrame(props: FieldFrameProps) {
         id?: string;
         'aria-describedby'?: string;
         'aria-errormessage'?: string;
+        'aria-labelledby'?: string;
         'aria-invalid'?: boolean;
         onFocus?: (event: unknown) => void;
         onBlur?: (event: unknown) => void;
@@ -187,6 +188,7 @@ export function FieldFrame(props: FieldFrameProps) {
     ? cloneElement(children, {
         ...( {
           id: childProps?.id ?? controlId,
+          'aria-labelledby': mergeDescribedBy(childProps?.['aria-labelledby'], labelId),
           'aria-describedby': mergeDescribedBy(childProps?.['aria-describedby'], describedBy),
           'aria-errormessage': showError ? errorId : undefined,
           'aria-invalid': (childProps?.['aria-invalid'] ?? showError) || undefined,

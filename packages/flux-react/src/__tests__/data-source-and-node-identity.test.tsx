@@ -352,9 +352,11 @@ describe('createSchemaRenderer data sources and node identity', () => {
 
     const labelNode = container.querySelector('[data-slot="field-label"] [id]');
     const control = container.querySelector('[data-slot="field-control"]');
+    const childRoot = container.querySelector('[data-testid="composite-root"]');
 
     expect(labelNode).toBeTruthy();
     expect(control?.getAttribute('aria-labelledby')).toBe(labelNode?.getAttribute('id'));
+    expect(childRoot?.getAttribute('aria-labelledby')).toBe(labelNode?.getAttribute('id'));
   });
 
   it('does not fabricate a cid for createNodeInstance when none is provided', async () => {

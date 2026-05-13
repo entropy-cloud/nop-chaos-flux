@@ -63,7 +63,10 @@ describe('createSchemaRenderer import basics', () => {
     fireEvent.click(screen.getByText('Run import action'));
 
     await waitFor(() => {
-      expect(importLoader.load).toHaveBeenCalledWith({ from: 'demo-lib', as: 'demo' });
+      expect(importLoader.load).toHaveBeenCalledWith(
+        { from: 'demo-lib', as: 'demo' },
+        expect.any(AbortSignal),
+      );
     });
   });
 
@@ -335,10 +338,13 @@ describe('createSchemaRenderer import basics', () => {
       './demo-lib.js',
       undefined,
     );
-    expect(importLoader.load).toHaveBeenCalledWith({
-      from: 'resolved:https://app.local/schema/page.json:./demo-lib.js',
-      as: 'demo',
-    });
+    expect(importLoader.load).toHaveBeenCalledWith(
+      {
+        from: 'resolved:https://app.local/schema/page.json:./demo-lib.js',
+        as: 'demo',
+      },
+      expect.any(AbortSignal),
+    );
   });
 
   it('keeps nested imported helpers shadowed by the nearest import frame', async () => {

@@ -115,8 +115,8 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
 
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('page-root-validation');
     expect(testState.firstPublishedScopeState).toMatchObject({
-      lifecycleState: 'bootstrapping',
-      ready: false,
+      lifecycleState: 'active',
+      ready: true,
     });
 
     rerender(
@@ -135,7 +135,7 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('');
   });
 
-  it('promotes the page-root owner from bootstrapping to active after the root validation plan attaches', async () => {
+  it('keeps the page-root owner active after the root validation plan attaches', async () => {
     testState.firstPublishedScopeState = undefined;
     testState.latestValidationOwner = undefined;
 
@@ -164,8 +164,8 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
 
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('page-root-validation');
     expect(testState.firstPublishedScopeState).toMatchObject({
-      lifecycleState: 'bootstrapping',
-      ready: false,
+      lifecycleState: 'active',
+      ready: true,
     });
 
     await waitFor(() => {
@@ -216,7 +216,7 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
     });
   });
 
-  it('keeps managed surface-root owners bootstrapping when the opened body has no compiled validation plan', () => {
+  it('keeps managed surface-root owners active when the opened body has no compiled validation plan', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([pageRenderer, validationOwnerProbeRenderer]),
       env,
@@ -237,8 +237,8 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
 
     const entry = surfaceRuntime.store.getState().entries.find((item) => item.id === surfaceId);
     expect(entry?.validationOwner?.getScopeState()).toMatchObject({
-      lifecycleState: 'bootstrapping',
-      ready: false,
+      lifecycleState: 'active',
+      ready: true,
     });
     expect(entry?.validationOwner?.validation).toBeUndefined();
   });
