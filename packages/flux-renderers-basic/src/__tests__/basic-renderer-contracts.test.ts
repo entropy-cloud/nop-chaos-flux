@@ -11,4 +11,11 @@ describe('basic renderer static contracts', () => {
     expect(button?.eventContracts?.onClick?.displayName).toBe('Click');
     expect(button?.hostContract).toBeUndefined();
   });
+
+  it('declares tabs finite option prop contracts', () => {
+    const tabs = basicRendererDefinitions.find((definition) => definition.type === 'tabs');
+
+    expect(tabs?.propContracts?.variant?.shape.kind).toBe('union');
+    expect(tabs?.propContracts?.orientation?.shape.kind).toBe('union');
+  });
 });

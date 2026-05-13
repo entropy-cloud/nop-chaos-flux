@@ -37,7 +37,7 @@ export const crudRendererDefinition: RendererDefinition = {
       editorType: 'object',
     },
     columns: {
-      shape: { kind: 'array', item: { kind: 'object', fields: {} } },
+      shape: { kind: 'unknown' },
       displayName: 'Columns',
       description:
         'Table column declarations, including operation, fixed, searchable, filterable, and quick-edit metadata.',
@@ -105,16 +105,32 @@ export const crudRendererDefinition: RendererDefinition = {
       editorType: 'path',
     },
     selectionOwnership: {
-      shape: { kind: 'string' },
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'local' },
+          { kind: 'literal', value: 'controlled' },
+          { kind: 'literal', value: 'scope' },
+        ],
+      },
       displayName: 'Selection Ownership',
       description: 'Controls whether selection state is local, controlled, or scope-owned.',
       editorType: 'select',
+      defaultValue: 'local',
     },
     paginationOwnership: {
-      shape: { kind: 'string' },
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'local' },
+          { kind: 'literal', value: 'controlled' },
+          { kind: 'literal', value: 'scope' },
+        ],
+      },
       displayName: 'Pagination Ownership',
       description: 'Controls whether pagination state is local, controlled, or scope-owned.',
       editorType: 'select',
+      defaultValue: 'local',
     },
     paginationStatePath: {
       shape: { kind: 'string' },
@@ -123,10 +139,18 @@ export const crudRendererDefinition: RendererDefinition = {
       editorType: 'path',
     },
     sortOwnership: {
-      shape: { kind: 'string' },
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'local' },
+          { kind: 'literal', value: 'controlled' },
+          { kind: 'literal', value: 'scope' },
+        ],
+      },
       displayName: 'Sort Ownership',
       description: 'Controls whether sort state is local, controlled, or scope-owned.',
       editorType: 'select',
+      defaultValue: 'local',
     },
     sortStatePath: {
       shape: { kind: 'string' },
@@ -135,10 +159,18 @@ export const crudRendererDefinition: RendererDefinition = {
       editorType: 'path',
     },
     filterOwnership: {
-      shape: { kind: 'string' },
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'local' },
+          { kind: 'literal', value: 'controlled' },
+          { kind: 'literal', value: 'scope' },
+        ],
+      },
       displayName: 'Filter Ownership',
       description: 'Controls whether filter state is local, controlled, or scope-owned.',
       editorType: 'select',
+      defaultValue: 'local',
     },
     filterStatePath: {
       shape: { kind: 'string' },

@@ -69,9 +69,8 @@ describe('dataRendererDefinitions table columns', () => {
       />,
     );
     const operationHeader = await screen.findByText('Actions');
-    const operationCell = screen
-      .getByText('Inspect')
-      .closest('[data-slot="table-cell"]') as HTMLElement | null;
+    const inspectButton = await screen.findByText('Inspect');
+    const operationCell = inspectButton.closest('[data-slot="table-cell"]') as HTMLElement | null;
     expect(
       (operationHeader.closest('[data-slot="table-head"]') as HTMLElement | null)?.dataset.fixed,
     ).toBe('right');

@@ -331,10 +331,47 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: TabsRenderer,
+    propContracts: {
+      orientation: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'horizontal' },
+            { kind: 'literal', value: 'vertical' },
+          ],
+        },
+        displayName: 'Orientation',
+        editorType: 'select',
+        defaultValue: 'horizontal',
+      },
+      variant: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'default' },
+            { kind: 'literal', value: 'line' },
+          ],
+        },
+        displayName: 'Variant',
+        editorType: 'select',
+        defaultValue: 'default',
+      },
+    },
     fields: [
       { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
       { key: 'onChange', kind: 'event' },
       { key: 'items', kind: 'prop' },
+      { key: 'value', kind: 'prop' },
+      { key: 'defaultValue', kind: 'prop' },
+      { key: 'valueOwnership', kind: 'prop' },
+      { key: 'valueStatePath', kind: 'prop' },
+      { key: 'statusPath', kind: 'prop' },
+      { key: 'orientation', kind: 'prop' },
+      { key: 'variant', kind: 'prop' },
+      { key: 'tabsMode', kind: 'prop' },
+      { key: 'sidePosition', kind: 'prop' },
+      { key: 'contentClassName', kind: 'prop' },
+      { key: 'toolbarClassName', kind: 'prop' },
     ],
   },
 ];

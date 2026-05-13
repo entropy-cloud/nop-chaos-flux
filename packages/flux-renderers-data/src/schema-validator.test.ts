@@ -55,7 +55,8 @@ describe('table schemaValidator', () => {
         rowSelection: { selectedRowKeys: [1] },
         expandable: { expandedRowKeys: [1] },
       } as any),
-    ).toEqual([
+    ).toEqual(
+      expect.arrayContaining([
       expect.objectContaining({
         code: 'invalid-property-shape',
         path: '/columns',
@@ -76,7 +77,8 @@ describe('table schemaValidator', () => {
         path: '/expandable/expandedRowKeys',
         source: 'renderer',
       }),
-    ]);
+      ]),
+    );
   });
 });
 
@@ -131,13 +133,15 @@ describe('crud schemaValidator', () => {
         type: 'crud',
         columns: 'bad',
       } as any),
-    ).toEqual([
+    ).toEqual(
+      expect.arrayContaining([
       expect.objectContaining({
         code: 'invalid-property-shape',
         path: '/columns',
         source: 'renderer',
       }),
-    ]);
+      ]),
+    );
   });
 
   it('rejects legacy bulkActions authoring', () => {

@@ -89,6 +89,32 @@ export const formRendererDefinition: RendererDefinition = {
       description: 'Publishes the readonly form values snapshot to parent scope.',
       editorType: 'path',
     },
+    mode: {
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'normal' },
+          { kind: 'literal', value: 'horizontal' },
+        ],
+      },
+      displayName: 'Mode',
+      description: 'Controls form layout mode.',
+      editorType: 'select',
+      defaultValue: 'normal',
+    },
+    labelAlign: {
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'top' },
+          { kind: 'literal', value: 'left' },
+          { kind: 'literal', value: 'right' },
+        ],
+      },
+      displayName: 'Label Align',
+      description: 'Controls label alignment in horizontal layout.',
+      editorType: 'select',
+    },
     hiddenFieldPolicy: {
       shape: {
         kind: 'object',

@@ -18,7 +18,5 @@ const sharedConfig = createSharedVitestConfig({
 });
 
 export default mergeConfig(sharedConfig, {
-  test: {
-    maxWorkers: 1,
-  },
+  test: {},
 });
