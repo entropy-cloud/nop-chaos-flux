@@ -90,4 +90,13 @@ describe('scopeChangeHitsDependencies', () => {
       ),
     ).toBe(true);
   });
+
+  it('does not treat deep sibling paths as overlapping dependencies', () => {
+    expect(
+      scopeChangeHitsDependencies(
+        { paths: ['user.name'], sourceScopeId: 'scope', kind: 'update' },
+        { paths: ['user.email'], wildcard: false, broadAccess: false },
+      ),
+    ).toBe(false);
+  });
 });

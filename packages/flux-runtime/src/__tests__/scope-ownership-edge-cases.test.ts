@@ -414,13 +414,13 @@ describe('H7: scopeChangeHitsDependencies edge cases', () => {
     expect(result).toBe(false);
   });
 
-  it('sibling paths DO match (both share same root)', () => {
+  it('sibling deep paths do not match when only the root is shared', () => {
     expect(
       scopeChangeHitsDependencies(
         { paths: ['user.name'], sourceScopeId: 's', kind: 'update' },
         { paths: ['user.email'], wildcard: false, broadAccess: false },
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('multi-path change matches if any path hits', () => {

@@ -34,9 +34,17 @@ function pathPrefixes(path: string): readonly string[] {
   return prefixes;
 }
 
+function pathsOverlap(changePath: string, dependencyPath: string): boolean {
+  return (
+    changePath === dependencyPath ||
+    changePath.startsWith(`${dependencyPath}.`) ||
+    dependencyPath.startsWith(`${changePath}.`)
+  );
+}
+
 function buildDependencyPathIndex(paths: readonly string[]) {
   const exact = new Set<string>();
-  const descendantsByPrefix = new Map<string, string[]>();
+  const descendantsByPrefix = new Map<string, Set<string>>();
 
   for (const path of paths) {
     exact.add(path);
@@ -46,9 +54,9 @@ function buildDependencyPathIndex(paths: readonly string[]) {
       const prefix = prefixes[index];
       const descendants = descendantsByPrefix.get(prefix);
       if (descendants) {
-        descendants.push(path);
+        descendants.add(path);
       } else {
-        descendantsByPrefix.set(prefix, [path]);
+        descendantsByPrefix.set(prefix, new Set([path]));
       }
     }
   }
@@ -163,8 +171,19 @@ export function scopeChangeHitsDependencies(
     }
 
     for (const prefix of pathPrefixes(changePath)) {
-      if (dependencyIndex.exact.has(prefix) || dependencyIndex.descendantsByPrefix.has(prefix)) {
+      if (dependencyIndex.exact.has(prefix)) {
         return true;
+      }
+
+      const descendants = dependencyIndex.descendantsByPrefix.get(prefix);
+      if (!descendants) {
+        continue;
+      }
+
+      for (const dependencyPath of descendants) {
+        if (pathsOverlap(changePath, dependencyPath)) {
+          return true;
+        }
       }
     }
   }
