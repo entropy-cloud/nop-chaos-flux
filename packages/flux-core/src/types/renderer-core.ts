@@ -325,6 +325,7 @@ export interface RendererRuntime {
     scopeLabel: string;
   }): ScopeRef;
   createActionScope(input?: { id?: string; parent?: ActionScope }): ActionScope;
+  releaseActionScope(actionScope: ActionScope): void;
   createComponentHandleRegistry(input?: {
     id?: string;
     parent?: ComponentHandleRegistry;

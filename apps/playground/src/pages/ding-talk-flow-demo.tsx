@@ -55,6 +55,7 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
 
   const overlays = useMemo(() => {
     const result: BranchOverlay[] = [];
+    const nodeMap = new Map(nodes.map((node) => [node.id, node] as const));
     const sourceGroups = new Map<string, Edge[]>();
     for (const e of edges) {
       const arr = sourceGroups.get(e.source) ?? [];
@@ -70,9 +71,9 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
 
     for (const [sourceId, outs] of sourceGroups) {
       if (outs.length < 2) continue;
-      const sourceNode = nodes.find((n) => n.id === sourceId);
+      const sourceNode = nodeMap.get(sourceId);
       if (!sourceNode) continue;
-      const firstTarget = nodes.find((n) => n.id === outs[0].target);
+      const firstTarget = nodeMap.get(outs[0].target);
       if (!firstTarget) continue;
       const branchLineY = firstTarget.position.y - BRANCH_SHORT_LEG;
       const cx = sourceNode.position.x + W / 2;
@@ -81,9 +82,9 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
 
     for (const [targetId, ins] of targetGroups) {
       if (ins.length < 2) continue;
-      const targetNode = nodes.find((n) => n.id === targetId);
+      const targetNode = nodeMap.get(targetId);
       if (!targetNode) continue;
-      const firstSource = nodes.find((n) => n.id === ins[0].source);
+      const firstSource = nodeMap.get(ins[0].source);
       if (!firstSource) continue;
       const mergeLineY = firstSource.position.y + CARD_H + MERGE_SHORT_LEG;
       const cx = targetNode.position.x + W / 2;

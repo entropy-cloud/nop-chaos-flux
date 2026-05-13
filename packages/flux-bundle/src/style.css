@@ -150,16 +150,6 @@
   align-items: center;
 }
 
-.nop-flux-root .nop-schema-root-fallback--status {
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-}
-
-.nop-flux-root .nop-schema-root-fallback__message {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
 .nop-flux-root .nop-node-error {
   width: fit-content;
   max-width: 100%;

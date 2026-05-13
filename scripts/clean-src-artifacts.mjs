@@ -6,7 +6,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
 const SOURCE_ROOTS = ['packages', 'apps'];
 
-const ARTIFACT_EXTENSIONS = ['.d.ts', '.js', '.js.map'];
+const ARTIFACT_EXTENSIONS = ['.d.ts', '.d.ts.map', '.js', '.js.map'];
 
 async function removeArtifacts(dir) {
   let removed = 0;
