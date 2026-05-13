@@ -17,8 +17,6 @@ import {
 } from '@nop-chaos/flux-react/unstable';
 import { resolveGap } from '@nop-chaos/flux-react';
 import type { FormSchema } from '../schemas.js';
-import { usePublishedFormStatus, usePublishedFormValues } from './form-status-publication.js';
-
 function createFormLifecycleScope(
   scope: ScopeRef,
   importBindings: Readonly<Record<string, unknown>>,
@@ -147,6 +145,8 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
 
   const formId = typeof props.props.id === 'string' ? props.props.id : props.id;
   const formName = typeof props.props.name === 'string' ? props.props.name : undefined;
+  const statusPath = typeof props.props.statusPath === 'string' ? props.props.statusPath : undefined;
+  const valuesPath = typeof props.props.valuesPath === 'string' ? props.props.valuesPath : undefined;
   const initialValues =
     props.props.data && typeof props.props.data === 'object'
       ? (props.props.data as Record<string, unknown>)
@@ -160,10 +160,21 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         name: formName,
         initialValues: initialValuesRef.current, // eslint-disable-line react-hooks/refs -- intentional: initial values must not retrigger useMemo
         parentScope,
+        statusPath,
+        valuesPath,
         page: currentPage,
         validation: props.templateNode.validationPlan,
       }),
-    [runtime, formId, formName, parentScope, currentPage, props.templateNode.validationPlan],
+    [
+      runtime,
+      formId,
+      formName,
+      parentScope,
+      statusPath,
+      valuesPath,
+      currentPage,
+      props.templateNode.validationPlan,
+    ],
   );
 
   const baseLifecycleScope = ownedForm.scope;
@@ -326,14 +337,6 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     };
   }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm, props.path, runtime]);
 
-  const statusPath =
-    typeof (props.props as FormSchema).statusPath === 'string'
-      ? (props.props as FormSchema).statusPath
-      : undefined;
-  const valuesPath =
-    typeof (props.props as FormSchema).valuesPath === 'string'
-      ? (props.props as FormSchema).valuesPath
-      : undefined;
   const formMode = (props.props as FormSchema).mode;
   const formLabelAlign = (props.props as FormSchema).labelAlign;
   const formLabelWidth = (props.props as FormSchema).labelWidth;
@@ -345,9 +348,6 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     if (formLabelWidth !== undefined) value.labelWidth = formLabelWidth;
     return Object.keys(value).length > 0 ? value : undefined;
   }, [formLabelAlign, formLabelWidth, formMode]);
-
-  usePublishedFormStatus({ statusPath, parentScope, ownedForm });
-  usePublishedFormValues({ valuesPath, parentScope, ownedForm });
 
   useEffect(() => {
     if (!currentComponentRegistry) {

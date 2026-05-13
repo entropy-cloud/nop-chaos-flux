@@ -9,8 +9,6 @@ const mocks = vi.hoisted(() => ({
   useRenderScope: vi.fn(),
   useRendererRuntime: vi.fn(),
   createFormComponentHandle: vi.fn((form: unknown) => ({ form })),
-  usePublishedFormStatus: vi.fn(),
-  usePublishedFormValues: vi.fn(),
   resolveGap: vi.fn(() => ({ className: 'gap-class', style: { '--gap': '1rem' } })),
 }));
 
@@ -45,11 +43,6 @@ vi.mock('@nop-chaos/flux-react/unstable', async () => {
     createFormComponentHandle: mocks.createFormComponentHandle,
   };
 });
-
-vi.mock('../renderers/form-status-publication', () => ({
-  usePublishedFormStatus: mocks.usePublishedFormStatus,
-  usePublishedFormValues: mocks.usePublishedFormValues,
-}));
 
 vi.mock('@nop-chaos/ui', () => ({
   cn: (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' '),
@@ -193,18 +186,10 @@ describe('FormRenderer lifecycle wiring', () => {
       name: 'profile',
       initialValues: { username: 'Alice' },
       parentScope: shellScope,
+      statusPath: 'ui.status',
+      valuesPath: 'ui.values',
       page: { id: 'page-1' },
       validation: { kind: 'validation-plan' },
-    });
-    expect(mocks.usePublishedFormStatus).toHaveBeenCalledWith({
-      statusPath: 'ui.status',
-      parentScope: shellScope,
-      ownedForm,
-    });
-    expect(mocks.usePublishedFormValues).toHaveBeenCalledWith({
-      valuesPath: 'ui.values',
-      parentScope: shellScope,
-      ownedForm,
     });
     expect(register).toHaveBeenCalledWith({ form: ownedForm }, { cid: 'cid-1' });
     expect(screen.getByTestId('form-test').className).toContain('nop-form');

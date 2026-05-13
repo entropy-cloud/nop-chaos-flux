@@ -5,7 +5,7 @@ import type { FormRuntime, FormStoreState, ScopeRef, ValidationError } from '@no
 import {
   usePublishedFormStatus,
   usePublishedFormValues,
-} from '../renderers/form-status-publication.js';
+} from '@nop-chaos/flux-react';
 
 function createFormStore(initial: FormStoreState) {
   let state = initial;
