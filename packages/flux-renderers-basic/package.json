@@ -16,13 +16,17 @@
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
-    "@nop-chaos/ui": "workspace:*",
+    "@nop-chaos/ui": "workspace:*"
+  },
+  "peerDependencies": {
     "lucide-react": "^1.7.0",
     "react": "^19.0.0"
   },
   "devDependencies": {
     "@nop-chaos/flux-formula": "workspace:*",
-    "@nop-chaos/flux-runtime": "workspace:*"
+    "@nop-chaos/flux-runtime": "workspace:*",
+    "lucide-react": "^1.7.0",
+    "react": "^19.0.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

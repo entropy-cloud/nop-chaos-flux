@@ -26,8 +26,9 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
-    "@nop-chaos/ui": "workspace:*",
-    "@testing-library/react": "^16.3.0",
+    "@nop-chaos/ui": "workspace:*"
+  },
+  "peerDependencies": {
     "lucide-react": "^1.7.0",
     "react": "^19.0.0"
   },
@@ -41,6 +42,9 @@
     "@nop-chaos/flux-compiler": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
-    "@testing-library/jest-dom": "^6.9.1"
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "lucide-react": "^1.7.0",
+    "react": "^19.0.0"
   }
 }

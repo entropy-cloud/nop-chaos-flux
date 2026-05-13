@@ -25,13 +25,16 @@
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "react": "^19.0.0",
     "use-sync-external-store": "^1.6.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
-    "@testing-library/react": "^16.3.0"
+    "@testing-library/react": "^16.3.0",
+    "react": "^19.0.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node -e \"fs.cpSync('src/report-field-panel.css','dist/report-field-panel.css')\"",

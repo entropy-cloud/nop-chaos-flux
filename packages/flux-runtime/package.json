@@ -16,7 +16,12 @@
     "@nop-chaos/flux-action-core": "workspace:*",
     "@nop-chaos/flux-compiler": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
-    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
     "zustand": "^5.0.12"
   },
   "scripts": {

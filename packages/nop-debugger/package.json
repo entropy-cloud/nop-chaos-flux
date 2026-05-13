@@ -17,15 +17,19 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "lucide-react": "^1.7.0",
-    "react": "^19.0.0",
     "use-sync-external-store": "^1.6.0"
+  },
+  "peerDependencies": {
+    "lucide-react": "^1.7.0",
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@nop-chaos/flux-renderers-data": "workspace:*",
-    "@nop-chaos/flux-renderers-form": "workspace:*"
+    "@nop-chaos/flux-renderers-form": "workspace:*",
+    "lucide-react": "^1.7.0",
+    "react": "^19.0.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

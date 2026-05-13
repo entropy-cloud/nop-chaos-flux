@@ -21,15 +21,17 @@
     }
   },
   "peerDependencies": {
-    "react": "^19.0.0"
-  },
-  "dependencies": {
-    "@nop-chaos/flux-core": "workspace:*",
     "i18next": "^26.0.5",
+    "react": "^19.0.0",
     "react-i18next": "^17.0.4"
   },
+  "dependencies": {
+    "@nop-chaos/flux-core": "workspace:*"
+  },
   "devDependencies": {
-    "@types/react": "^19.0.0"
+    "@types/react": "^19.0.0",
+    "i18next": "^26.0.5",
+    "react-i18next": "^17.0.4"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

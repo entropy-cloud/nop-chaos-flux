@@ -225,6 +225,7 @@ importers:
       elkjs:
         specifier: ^0.11.1
         version: 0.11.1
+    devDependencies:
       zustand:
         specifier: ^5.0.12
         version: 5.0.12(@types/react@19.2.14)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
@@ -249,12 +250,6 @@ importers:
       '@xyflow/react':
         specifier: ^12.10.2
         version: 12.10.2(@types/react@19.2.14)(immer@11.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
       use-sync-external-store:
         specifier: ^1.6.0
         version: 1.6.0(react@19.2.4)
@@ -271,6 +266,12 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.4
         version: 19.2.3(@types/react@19.2.14)
+      lucide-react:
+        specifier: ^1.7.0
+        version: 1.7.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
 
   packages/flux-action-core:
     dependencies:
@@ -379,12 +380,6 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
-      lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
       sql-formatter:
         specifier: ^15.7.3
         version: 15.7.3
@@ -401,6 +396,12 @@ importers:
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      lucide-react:
+        specifier: ^1.7.0
+        version: 1.7.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
 
   packages/flux-compiler:
     dependencies:
@@ -424,19 +425,19 @@ importers:
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
-      i18next:
-        specifier: ^26.0.5
-        version: 26.0.5(typescript@6.0.2)
       react:
         specifier: ^19.0.0
         version: 19.2.4
-      react-i18next:
-        specifier: ^17.0.4
-        version: 17.0.4(i18next@26.0.5(typescript@6.0.2))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
     devDependencies:
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.14
+      i18next:
+        specifier: ^26.0.5
+        version: 26.0.5(typescript@6.0.2)
+      react-i18next:
+        specifier: ^17.0.4
+        version: 17.0.4(i18next@26.0.5(typescript@6.0.2))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2)
 
   packages/flux-react:
     dependencies:
@@ -455,12 +456,6 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
-      lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
       use-sync-external-store:
         specifier: ^1.6.0
         version: 1.6.0(react@19.2.4)
@@ -474,6 +469,12 @@ importers:
       '@types/use-sync-external-store':
         specifier: ^1.5.0
         version: 1.5.0
+      lucide-react:
+        specifier: ^1.7.0
+        version: 1.7.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
 
   packages/flux-renderers-basic:
     dependencies:
@@ -489,12 +490,6 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
-      lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
     devDependencies:
       '@nop-chaos/flux-formula':
         specifier: workspace:*
@@ -502,6 +497,12 @@ importers:
       '@nop-chaos/flux-runtime':
         specifier: workspace:*
         version: link:../flux-runtime
+      lucide-react:
+        specifier: ^1.7.0
+        version: 1.7.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
 
   packages/flux-renderers-data:
     dependencies:
@@ -520,15 +521,6 @@ importers:
       '@tanstack/react-virtual':
         specifier: ^3.13.24
         version: 3.13.24(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
-      recharts:
-        specifier: ^3.8.1
-        version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@18.3.1)(react@19.2.4)(redux@5.0.1)
     devDependencies:
       '@nop-chaos/flux-compiler':
         specifier: workspace:*
@@ -542,6 +534,15 @@ importers:
       '@nop-chaos/flux-runtime':
         specifier: workspace:*
         version: link:../flux-runtime
+      lucide-react:
+        specifier: ^1.7.0
+        version: 1.7.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      recharts:
+        specifier: ^3.8.1
+        version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@18.3.1)(react@19.2.4)(redux@5.0.1)
 
   packages/flux-renderers-form:
     dependencies:
@@ -560,15 +561,6 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
-      '@testing-library/react':
-        specifier: ^16.3.0
-        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
     devDependencies:
       '@nop-chaos/flux-compiler':
         specifier: workspace:*
@@ -582,6 +574,15 @@ importers:
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
+      '@testing-library/react':
+        specifier: ^16.3.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      lucide-react:
+        specifier: ^1.7.0
+        version: 1.7.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
 
   packages/flux-renderers-form-advanced:
     dependencies:
@@ -609,12 +610,6 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
-      lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
     devDependencies:
       '@nop-chaos/flux-formula':
         specifier: workspace:*
@@ -628,6 +623,12 @@ importers:
       '@nop-chaos/flux-runtime':
         specifier: workspace:*
         version: link:../flux-runtime
+      lucide-react:
+        specifier: ^1.7.0
+        version: 1.7.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
 
   packages/flux-runtime:
     dependencies:
@@ -643,6 +644,7 @@ importers:
       '@nop-chaos/flux-formula':
         specifier: workspace:*
         version: link:../flux-formula
+    devDependencies:
       zustand:
         specifier: ^5.0.12
         version: 5.0.12(@types/react@19.2.14)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
@@ -661,12 +663,6 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
-      lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
       use-sync-external-store:
         specifier: ^1.6.0
         version: 1.6.0(react@19.2.4)
@@ -683,6 +679,12 @@ importers:
       '@nop-chaos/flux-renderers-form':
         specifier: workspace:*
         version: link:../flux-renderers-form
+      lucide-react:
+        specifier: ^1.7.0
+        version: 1.7.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
 
   packages/report-designer-core:
     dependencies:
@@ -692,6 +694,7 @@ importers:
       '@nop-chaos/spreadsheet-core':
         specifier: workspace:*
         version: link:../spreadsheet-core
+    devDependencies:
       zustand:
         specifier: ^5.0.12
         version: 5.0.12(@types/react@19.2.14)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
@@ -719,9 +722,6 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
       use-sync-external-store:
         specifier: ^1.6.0
         version: 1.6.0(react@19.2.4)
@@ -729,12 +729,18 @@ importers:
       '@nop-chaos/flux-formula':
         specifier: workspace:*
         version: link:../flux-formula
+      '@nop-chaos/flux-runtime':
+        specifier: workspace:*
+        version: link:../flux-runtime
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
 
   packages/spreadsheet-core:
-    dependencies:
+    devDependencies:
       zustand:
         specifier: ^5.0.12
         version: 5.0.12(@types/react@19.2.14)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
@@ -756,12 +762,6 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
-      lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
       use-sync-external-store:
         specifier: ^1.6.0
         version: 1.6.0(react@19.2.4)
@@ -772,6 +772,12 @@ importers:
       '@nop-chaos/flux-runtime':
         specifier: workspace:*
         version: link:../flux-runtime
+      lucide-react:
+        specifier: ^1.7.0
+        version: 1.7.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
 
   packages/tailwind-preset:
     dependencies:
@@ -804,9 +810,6 @@ importers:
       input-otp:
         specifier: ^1.1.5
         version: 1.4.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -822,12 +825,6 @@ importers:
       react-resizable-panels:
         specifier: ^4.9.0
         version: 4.9.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      recharts:
-        specifier: ^3.8.1
-        version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@18.3.1)(react@19.2.4)(redux@5.0.1)
-      sonner:
-        specifier: ^2.0.7
-        version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0
@@ -841,12 +838,22 @@ importers:
       '@types/react':
         specifier: ^19.0.10
         version: 19.2.14
+      lucide-react:
+        specifier: ^1.7.0
+        version: 1.7.0(react@19.2.4)
+      recharts:
+        specifier: ^3.8.1
+        version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@18.3.1)(react@19.2.4)(redux@5.0.1)
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
   packages/word-editor-core:
     dependencies:
       '@hufe921/canvas-editor':
         specifier: ^0.9.130
         version: 0.9.130
+    devDependencies:
       zustand:
         specifier: ^5.0.12
         version: 5.0.12(@types/react@19.2.14)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
@@ -871,15 +878,6 @@ importers:
       '@nop-chaos/word-editor-core':
         specifier: workspace:*
         version: link:../word-editor-core
-      lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.4
-      recharts:
-        specifier: ^3.8.1
-        version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@18.3.1)(react@19.2.4)(redux@5.0.1)
       use-sync-external-store:
         specifier: ^1.6.0
         version: 1.6.0(react@19.2.4)
@@ -905,6 +903,15 @@ importers:
       happy-dom:
         specifier: ^15.11.0
         version: 15.11.7
+      lucide-react:
+        specifier: ^1.7.0
+        version: 1.7.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      recharts:
+        specifier: ^3.8.1
+        version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@18.3.1)(react@19.2.4)(redux@5.0.1)
 
 packages:
 

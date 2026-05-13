@@ -17,7 +17,9 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "@tanstack/react-virtual": "^3.13.24",
+    "@tanstack/react-virtual": "^3.13.24"
+  },
+  "peerDependencies": {
     "lucide-react": "^1.7.0",
     "react": "^19.0.0",
     "recharts": "^3.8.1"
@@ -32,6 +34,9 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/flux-compiler": "workspace:*",
-    "@nop-chaos/flux-renderers-form": "workspace:*"
+    "@nop-chaos/flux-renderers-form": "workspace:*",
+    "lucide-react": "^1.7.0",
+    "react": "^19.0.0",
+    "recharts": "^3.8.1"
   }
 }

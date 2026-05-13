@@ -22,10 +22,12 @@
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@nop-chaos/word-editor-core": "workspace:*",
+    "use-sync-external-store": "^1.6.0"
+  },
+  "peerDependencies": {
     "lucide-react": "^1.7.0",
     "react": "^19.0.0",
-    "recharts": "^3.8.1",
-    "use-sync-external-store": "^1.6.0"
+    "recharts": "^3.8.1"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css",
@@ -40,6 +42,9 @@
     "@testing-library/user-event": "^14.6.1",
     "@nop-chaos/flux-formula": "workspace:*",
     "@types/use-sync-external-store": "^1.5.0",
-    "happy-dom": "^15.11.0"
+    "happy-dom": "^15.11.0",
+    "lucide-react": "^1.7.0",
+    "react": "^19.0.0",
+    "recharts": "^3.8.1"
   }
 }

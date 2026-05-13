@@ -20,7 +20,12 @@
   },
   "dependencies": {
     "@nop-chaos/flux-core": "workspace:*",
-    "elkjs": "^0.11.1",
+    "elkjs": "^0.11.1"
+  },
+  "peerDependencies": {
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
     "zustand": "^5.0.12"
   }
 }
