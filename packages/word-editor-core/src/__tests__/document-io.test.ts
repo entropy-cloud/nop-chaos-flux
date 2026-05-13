@@ -226,6 +226,84 @@ describe('loadDocument', () => {
       margins: [100, 120, 100, 120],
     });
   });
+
+  it('filters invalid nested persisted document items instead of blindly trusting saved arrays', () => {
+    localStorageState.current._store[STORAGE_KEY] = JSON.stringify({
+      data: {
+        header: [null, { value: 'header' }, 'bad'],
+        main: [{ value: 'hello' }, 42, ['bad-child']],
+        footer: [{ value: 'footer' }, false],
+        charts: [
+          {
+            id: 'chart_1',
+            chartName: 'Revenue',
+            chartType: 'bar',
+            showChartName: true,
+            datasetId: 'ds',
+            categoryField: 'month',
+            valueField: ['value'],
+          },
+          {
+            id: 'chart_2',
+            chartName: '',
+            chartType: 'bad',
+            datasetId: '',
+            categoryField: 'month',
+            valueField: [],
+          },
+        ],
+        codes: [
+          {
+            id: 'code_1',
+            codeName: 'QR',
+            codeType: 'qrcode',
+            datasetId: 'ds',
+            valueField: 'id',
+          },
+          {
+            id: 'code_2',
+            codeName: '',
+            codeType: 'bad',
+            datasetId: '',
+            valueField: '',
+          },
+        ],
+      },
+      paperSettings: {
+        width: 595,
+        height: 842,
+        direction: 'vertical',
+        margins: [100, 120, 100, 120],
+      },
+      savedAt: '2025-01-01T00:00:00.000Z',
+    });
+
+    const result = loadDocument();
+
+    expect(result?.data.header).toEqual([{ value: 'header' }]);
+    expect(result?.data.main).toEqual([{ value: 'hello' }]);
+    expect(result?.data.footer).toEqual([{ value: 'footer' }]);
+    expect(result?.data.charts).toEqual([
+      {
+        id: 'chart_1',
+        chartName: 'Revenue',
+        chartType: 'bar',
+        showChartName: true,
+        datasetId: 'ds',
+        categoryField: 'month',
+        valueField: ['value'],
+      },
+    ]);
+    expect(result?.data.codes).toEqual([
+      {
+        id: 'code_1',
+        codeName: 'QR',
+        codeType: 'qrcode',
+        datasetId: 'ds',
+        valueField: 'id',
+      },
+    ]);
+  });
 });
 
 describe('clearDocument', () => {

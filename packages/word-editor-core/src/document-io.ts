@@ -5,7 +5,23 @@ import type { Dataset } from './dataset-model.js';
 import type { DocChart } from './chart-model.js';
 import type { DocCode } from './code-model.js';
 import { createDataColumn, createDataset, validateDataset } from './dataset-model.js';
+import { createDocChart, validateDocChart } from './chart-model.js';
+import { createDocCode, validateDocCode } from './code-model.js';
 import { DEFAULT_PAPER_SETTINGS } from './paper-settings.js';
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string' && item.trim());
+}
+
+function normalizeChartType(value: unknown): DocChart['chartType'] | undefined {
+  return value === 'bar' || value === 'line' || value === 'pie' || value === 'scatter' || value === 'area'
+    ? value
+    : undefined;
+}
+
+function normalizeCodeType(value: unknown): DocCode['codeType'] | undefined {
+  return value === 'barcode' || value === 'qrcode' ? value : undefined;
+}
 
 const STORAGE_KEY = 'nop-word-editor-document';
 const DATASET_STORAGE_KEY = 'nop-word-editor-datasets';
@@ -45,7 +61,82 @@ function getStorage(): Storage | null {
   return localStorage;
 }
 
-function normalizeWordDocument(value: unknown): WordDocument | null {
+function normalizeWordElements(value: unknown): WordDocument['main'] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(
+    (entry): entry is WordDocument['main'][number] =>
+      !!entry && typeof entry === 'object' && !Array.isArray(entry),
+  );
+}
+
+export function normalizeDocCharts(value: unknown): DocChart[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return null;
+      }
+
+      const record = entry as Record<string, unknown>;
+      const candidate = {
+        id: typeof record.id === 'string' && record.id.trim() ? record.id : undefined,
+        chartName: typeof record.chartName === 'string' ? record.chartName : undefined,
+        chartType: normalizeChartType(record.chartType),
+        showChartName:
+          typeof record.showChartName === 'boolean' ? record.showChartName : undefined,
+        datasetId: typeof record.datasetId === 'string' ? record.datasetId : undefined,
+        categoryField: typeof record.categoryField === 'string' ? record.categoryField : undefined,
+        valueField: isNonEmptyStringArray(record.valueField) ? record.valueField : undefined,
+        seriesField: isNonEmptyStringArray(record.seriesField) ? record.seriesField : undefined,
+      };
+
+      const validation = validateDocChart(candidate);
+      if (!validation.valid) {
+        return null;
+      }
+
+      return createDocChart(candidate);
+    })
+    .filter((chart): chart is DocChart => chart !== null);
+}
+
+export function normalizeDocCodes(value: unknown): DocCode[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return null;
+      }
+
+      const record = entry as Record<string, unknown>;
+      const candidate = {
+        id: typeof record.id === 'string' && record.id.trim() ? record.id : undefined,
+        codeName: typeof record.codeName === 'string' ? record.codeName : undefined,
+        codeType: normalizeCodeType(record.codeType),
+        datasetId: typeof record.datasetId === 'string' ? record.datasetId : undefined,
+        valueField: typeof record.valueField === 'string' ? record.valueField : undefined,
+      };
+
+      const validation = validateDocCode(candidate);
+      if (!validation.valid) {
+        return null;
+      }
+
+      return createDocCode(candidate);
+    })
+    .filter((code): code is DocCode => code !== null);
+}
+
+export function normalizeWordDocument(value: unknown): WordDocument | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
   }
@@ -53,11 +144,11 @@ function normalizeWordDocument(value: unknown): WordDocument | null {
   const record = value as Record<string, unknown>;
 
   return {
-    header: Array.isArray(record.header) ? (record.header as WordDocument['header']) : [],
-    main: Array.isArray(record.main) ? (record.main as WordDocument['main']) : [],
-    footer: Array.isArray(record.footer) ? (record.footer as WordDocument['footer']) : [],
-    charts: Array.isArray(record.charts) ? (record.charts as DocChart[]) : [],
-    codes: Array.isArray(record.codes) ? (record.codes as DocCode[]) : [],
+    header: normalizeWordElements(record.header),
+    main: normalizeWordElements(record.main),
+    footer: normalizeWordElements(record.footer),
+    charts: normalizeDocCharts(record.charts),
+    codes: normalizeDocCodes(record.codes),
   };
 }
 
@@ -194,7 +285,7 @@ export function saveDatasets(datasets: Dataset[]): void {
   getStorage()?.setItem(DATASET_STORAGE_KEY, JSON.stringify(datasets));
 }
 
-function normalizeDataset(value: unknown): Dataset | null {
+export function normalizeDataset(value: unknown): Dataset | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
   }
@@ -261,6 +352,16 @@ export function loadDatasets(): Dataset[] {
   } catch {
     return [];
   }
+}
+
+export function normalizeDatasets(value: unknown): Dataset[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((dataset) => normalizeDataset(dataset))
+    .filter((dataset): dataset is Dataset => dataset !== null);
 }
 
 export function loadRecoveredState(initialDatasets?: Dataset[]): WordEditorRecoveredState {

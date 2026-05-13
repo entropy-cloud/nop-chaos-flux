@@ -30,6 +30,11 @@ export {
   saveDatasets,
   loadDatasets,
   loadRecoveredState,
+  normalizeWordDocument,
+  normalizeDocCharts,
+  normalizeDocCodes,
+  normalizeDataset,
+  normalizeDatasets,
 } from './document-io.js';
 export { createSavedDocumentData } from './document-io.js';
 export type { SavedDocumentData, WordEditorRecoveredState } from './document-io.js';

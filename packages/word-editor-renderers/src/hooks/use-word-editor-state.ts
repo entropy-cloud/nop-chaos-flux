@@ -17,6 +17,10 @@ import {
   createEditorStore,
   createSavedDocumentData,
   loadRecoveredState,
+  normalizeDatasets,
+  normalizeDocCharts,
+  normalizeDocCodes,
+  normalizeWordDocument,
 } from '@nop-chaos/word-editor-core';
 import type {
   Dataset,
@@ -50,8 +54,14 @@ declare global {
 }
 
 export function useWordEditorState(props: RendererComponentProps<WordEditorPageSchema>) {
-  const initialDocument = props.props.initialDocument as WordDocument | undefined;
-  const initialDatasets = props.props.datasets as Dataset[] | undefined;
+  const initialDocument = useMemo(() => {
+    const normalized = normalizeWordDocument(props.props.initialDocument);
+    return normalized ?? undefined;
+  }, [props.props.initialDocument]);
+  const initialDatasets = useMemo(() => {
+    const normalized = normalizeDatasets(props.props.datasets);
+    return normalized.length > 0 ? normalized : undefined;
+  }, [props.props.datasets]);
   const recoveredState = useMemo(
     () => loadRecoveredState(initialDatasets),
     [initialDatasets],
@@ -61,12 +71,8 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
   const datasetStore = useMemo(() => createDatasetStore(), []);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const mountedRef = useRef(true);
-  const [charts, setCharts] = useState<DocChart[]>(
-    () => (props.props.initialCharts as DocChart[] | undefined) ?? [],
-  );
-  const [codes, setCodes] = useState<DocCode[]>(
-    () => (props.props.initialCodes as DocCode[] | undefined) ?? [],
-  );
+  const [charts, setCharts] = useState<DocChart[]>(() => normalizeDocCharts(props.props.initialCharts));
+  const [codes, setCodes] = useState<DocCode[]>(() => normalizeDocCodes(props.props.initialCodes));
   const [savedDocument, setSavedDocument] = useState<SavedDocumentData | null>(() => {
     return recoveredState.document ??
       (initialDocument

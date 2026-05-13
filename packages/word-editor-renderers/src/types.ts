@@ -1,4 +1,4 @@
-import type { ActionSchema, BaseSchema } from '@nop-chaos/flux-core';
+import type { ActionSchema, BaseSchema, SchemaInput } from '@nop-chaos/flux-core';
 import type { Dataset, DocChart, DocCode, WordDocument } from '@nop-chaos/word-editor-core';
 
 export interface WordEditorPanelConfig {
@@ -15,7 +15,7 @@ export interface WordEditorPageSchemaInput {
   id?: string;
   name?: string;
   label?: string;
-  title?: string;
+  title?: string | SchemaInput;
   className?: string;
   visible?: boolean | string;
   hidden?: boolean | string;

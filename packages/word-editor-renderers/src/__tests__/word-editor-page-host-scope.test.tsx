@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -649,6 +650,83 @@ describe('WordEditorPage host scope', () => {
 
     await waitFor(() => {
       expect(datasetStore.load).toHaveBeenCalledWith(persistedDatasets);
+    });
+  });
+
+  it('normalizes invalid schema seed document and extras before exposing host scope', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+    mockedCore.loadRecoveredStateMock.mockImplementationOnce((initialDatasets?: Dataset[]) => ({
+      document: null,
+      datasets: initialDatasets ?? [],
+    }));
+
+    const DocumentProbe: RendererDefinition = {
+      type: 'schema-seed-probe',
+      component: function SchemaSeedProbeComponent() {
+        const summary = useScopeSelector((data: any) => ({
+          mainCount: Array.isArray(data.document?.main) ? data.document.main.length : -1,
+          chartCount: Array.isArray(data.document?.charts) ? data.document.charts.length : -1,
+          codeCount: Array.isArray(data.document?.codes) ? data.document.codes.length : -1,
+          datasetCount: Array.isArray(data.datasets) ? data.datasets.length : -1,
+        }));
+        return (
+          <div>
+            <span data-testid="schema-main-count">{String(summary.mainCount)}</span>
+            <span data-testid="schema-chart-count">{String(summary.chartCount)}</span>
+            <span data-testid="schema-code-count">{String(summary.codeCount)}</span>
+            <span data-testid="schema-dataset-count">{String(summary.datasetCount)}</span>
+          </div>
+        );
+      },
+    };
+
+    renderWordEditor({
+      schema: {
+        type: 'word-editor-page',
+        config: { leftPanel: { generator: 'default' } },
+        leftPanel: { type: 'schema-seed-probe' },
+        initialDocument: {
+          header: [null, { value: 'keep-header' }] as any,
+          main: [{ value: 'keep-main' }, 123] as any,
+          footer: ['bad-footer'] as any,
+          charts: [
+            {
+              id: 'chart_1',
+              chartName: 'Revenue',
+              chartType: 'bar',
+              showChartName: true,
+              datasetId: 'ds',
+              categoryField: 'month',
+              valueField: ['value'],
+            },
+            { id: 'chart_2', chartName: '', chartType: 'bad' },
+          ] as any,
+          codes: [
+            {
+              id: 'code_1',
+              codeName: 'QR',
+              codeType: 'qrcode',
+              datasetId: 'ds',
+              valueField: 'id',
+            },
+            { id: 'code_2', codeName: '', codeType: 'bad' },
+          ] as any,
+        },
+        datasets: [
+          { id: 'good', name: 'Users', description: '', type: 'sql', columns: [] },
+          { id: 'bad', name: '', description: '', type: 'invalid', columns: 'oops' },
+        ] as any,
+      },
+      extraRenderers: [DocumentProbe],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('schema-main-count').textContent).toBe('1');
+      expect(screen.getByTestId('schema-chart-count').textContent).toBe('1');
+      expect(screen.getByTestId('schema-code-count').textContent).toBe('1');
+      expect(screen.getByTestId('schema-dataset-count').textContent).toBe('1');
     });
   });
 
