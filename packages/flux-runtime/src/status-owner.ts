@@ -18,8 +18,7 @@ export function createReadonlyScopeBinding<TSummary>(
   bindingKey: string,
   getSummary: () => TSummary,
 ): ScopeRef {
-  const getSummaryVersion = () => {
-    const summary = getSummary();
+  const getSummaryVersion = (summary: TSummary) => {
 
     if (!summary || typeof summary !== 'object') {
       return summary;
@@ -32,7 +31,9 @@ export function createReadonlyScopeBinding<TSummary>(
     ...scope.readOwn(),
     [bindingKey]: getSummary(),
   });
-  const { readSnapshot, store } = createProjectedScopeStore(scope, buildOwnSnapshot, getSummaryVersion);
+  const { readSnapshot, store } = createProjectedScopeStore(scope, buildOwnSnapshot, () =>
+    getSummaryVersion(getSummary()),
+  );
 
   let lastParentVisible: Record<string, any> | undefined;
   let lastSummaryVersionForVisible: unknown;
@@ -81,7 +82,7 @@ export function createReadonlyScopeBinding<TSummary>(
     readVisible() {
       const parentVisible = scope.readVisible();
       const summary = getSummary();
-      const summaryVersion = getSummaryVersion();
+      const summaryVersion = getSummaryVersion(summary);
       if (cachedVisible && lastParentVisible === parentVisible && lastSummaryVersionForVisible === summaryVersion) {
         return cachedVisible;
       }
@@ -95,7 +96,7 @@ export function createReadonlyScopeBinding<TSummary>(
     materializeVisible() {
       const parentMat = scope.materializeVisible();
       const summary = getSummary();
-      const summaryVersion = getSummaryVersion();
+      const summaryVersion = getSummaryVersion(summary);
       if (cachedMat && lastParentMat === parentMat && lastSummaryVersionForMat === summaryVersion) {
         return cachedMat;
       }

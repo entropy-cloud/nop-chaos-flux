@@ -442,10 +442,10 @@ describe('createRendererRuntime', () => {
       parentScope: page.scope,
       page,
       lifecycle: {
-        submitAction: async () =>
+        submitAction: async (options) =>
           runtime.dispatch(
             { action: 'ajax', args: { url: '/api/profile', method: 'post' }, timeout: 1000 },
-            { runtime, scope: form.scope, page },
+            { runtime, scope: form.scope, page, signal: options?.signal },
           ),
       },
     });

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createApiCacheStore, generateCacheKey, stableStringify } from './api-cache.js';
+import { createApiCacheStore, generateCacheKey, resolveCacheKey, stableStringify } from './api-cache.js';
 
 const LONG_TTL = 60_000;
 
@@ -167,6 +167,19 @@ describe('createApiCacheStore', () => {
   });
 
   describe('generateCacheKey', () => {
+    it('produces different keys for falsy data values versus undefined', () => {
+      const keyWithZero = generateCacheKey({ url: '/api/test', method: 'get', data: 0 });
+      const keyWithFalse = generateCacheKey({ url: '/api/test', method: 'get', data: false });
+      const keyWithEmpty = generateCacheKey({ url: '/api/test', method: 'get', data: '' });
+      const keyWithNull = generateCacheKey({ url: '/api/test', method: 'get', data: null });
+      const keyWithUndefined = generateCacheKey({ url: '/api/test', method: 'get' });
+
+      expect(keyWithZero).not.toBe(keyWithFalse);
+      expect(keyWithFalse).not.toBe(keyWithEmpty);
+      expect(keyWithEmpty).not.toBe(keyWithNull);
+      expect(keyWithNull).not.toBe(keyWithUndefined);
+    });
+
     it('uses stable object-key ordering for params and data', () => {
       const keyA = generateCacheKey({
         method: 'post',
@@ -206,6 +219,60 @@ describe('createApiCacheStore', () => {
       const huge = Array.from({ length: 2505 }, (_, index) => ({ index }));
 
       expect(stableStringify(huge)).toContain('[MaxNodesExceeded]');
+    });
+
+    it('does not collide different payloads truncated at MaxNodesExceeded', () => {
+      const payload1 = Array.from({ length: 2505 }, (_, i) => ({ index: i }));
+      const payload2 = Array.from({ length: 2505 }, (_, i) => ({ index: i, extra: true }));
+
+      const key1 = stableStringify(payload1);
+      const key2 = stableStringify(payload2);
+
+      expect(key1).toContain('[MaxNodesExceeded]');
+      expect(key2).toContain('[MaxNodesExceeded]');
+      expect(key1).not.toBe(key2);
+    });
+  });
+
+  describe('stableStringify', () => {
+    it('returns undefined for undefined input', () => {
+      expect(stableStringify(undefined)).toBeUndefined();
+    });
+
+    it('returns a string for null input', () => {
+      expect(stableStringify(null)).toBe('null');
+    });
+
+    it('returns a string for NaN and Infinity input', () => {
+      expect(typeof stableStringify(NaN)).toBe('string');
+      expect(typeof stableStringify(Infinity)).toBe('string');
+    });
+
+    it('produces stable output regardless of object key order', () => {
+      const a = stableStringify({ x: 1, y: 2, z: 3 });
+      const b = stableStringify({ z: 3, x: 1, y: 2 });
+
+      expect(a).toBe(b);
+    });
+  });
+
+  describe('resolveCacheKey', () => {
+    it('returns null when cacheTTL is undefined, zero, or negative', () => {
+      expect(resolveCacheKey({ url: '/api/test', method: 'get' }, {})).toBeNull();
+      expect(resolveCacheKey({ url: '/api/test', method: 'get' }, { cacheTTL: 0 })).toBeNull();
+      expect(resolveCacheKey({ url: '/api/test', method: 'get' }, { cacheTTL: -100 })).toBeNull();
+    });
+
+    it('uses custom cacheKey when provided', () => {
+      expect(
+        resolveCacheKey({ url: '/api/test', method: 'get' }, { cacheTTL: 1000, cacheKey: 'my-custom-key' }),
+      ).toBe('my-custom-key');
+    });
+
+    it('generates key from request when no custom key is provided', () => {
+      expect(
+        resolveCacheKey({ url: '/api/test', method: 'post', data: { a: 1 } }, { cacheTTL: 1000 }),
+      ).toBe('post:/api/test:{"a":1}');
     });
   });
 });

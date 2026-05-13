@@ -70,6 +70,43 @@ function createSubmitAbortError() {
   return Object.assign(new Error('Submit aborted'), { name: 'AbortError' });
 }
 
+function attachLifecycleError(result: ActionResult, error: unknown): ActionResult {
+  return {
+    ...result,
+    settledError:
+      typeof result.settledError === 'undefined' ? error : [result.settledError, error],
+  };
+}
+
+async function runFailureLifecycleHandler(
+  result: ActionResult,
+  handler:
+    | ((
+        result: ActionResult,
+        options?: { interactionId?: string; signal?: AbortSignal },
+      ) => Promise<ActionResult>)
+    | undefined,
+  options?: { interactionId?: string; signal?: AbortSignal },
+): Promise<ActionResult> {
+  if (!handler) {
+    return result;
+  }
+
+  try {
+    const nextResult = await handler(result, options);
+    if (!nextResult || nextResult.ok || nextResult.cancelled) {
+      return result;
+    }
+
+    return {
+      ...result,
+      settledError: nextResult.settledError ?? result.settledError,
+    };
+  } catch (error) {
+    return attachLifecycleError(result, error);
+  }
+}
+
 async function awaitWithAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
   if (!signal) {
     return promise;
@@ -200,11 +237,7 @@ export async function executeFormSubmit(
         return { ok: false, cancelled: true, error: new Error('Submit aborted') };
       }
 
-      const lifecycleResult = lifecycleHandlers?.onValidateError
-        ? await lifecycleHandlers.onValidateError(validationFailure, options)
-        : undefined;
-
-      return lifecycleResult ?? validationFailure;
+      return runFailureLifecycleHandler(validationFailure, lifecycleHandlers?.onValidateError, options);
     }
 
     const childValidationPromises: Promise<import('@nop-chaos/flux-core').ValidationResult>[] = [];
@@ -241,9 +274,7 @@ export async function executeFormSubmit(
         data: {},
       } as const;
 
-      return lifecycleHandlers?.onValidateError
-        ? await lifecycleHandlers.onValidateError(summaryGateFailure, options)
-        : summaryGateFailure;
+      return runFailureLifecycleHandler(summaryGateFailure, lifecycleHandlers?.onValidateError, options);
     }
 
     if (summaryGatePromises.length > 0) {
@@ -260,9 +291,11 @@ export async function executeFormSubmit(
           data: {},
         } as const;
 
-        return lifecycleHandlers?.onValidateError
-          ? await lifecycleHandlers.onValidateError(childValidationFailure, options)
-          : childValidationFailure;
+        return runFailureLifecycleHandler(
+          childValidationFailure,
+          lifecycleHandlers?.onValidateError,
+          options,
+        );
       }
     }
 
@@ -276,9 +309,11 @@ export async function executeFormSubmit(
           data: {},
         } as const;
 
-        return lifecycleHandlers?.onValidateError
-          ? await lifecycleHandlers.onValidateError(childValidationFailure, options)
-          : childValidationFailure;
+        return runFailureLifecycleHandler(
+          childValidationFailure,
+          lifecycleHandlers?.onValidateError,
+          options,
+        );
       }
     }
 
@@ -306,9 +341,7 @@ export async function executeFormSubmit(
     }
 
     if (resultClass === 'failure') {
-      return lifecycleHandlers?.onSubmitError
-        ? await lifecycleHandlers.onSubmitError(result, options)
-        : result;
+      return runFailureLifecycleHandler(result, lifecycleHandlers?.onSubmitError, options);
     }
 
     return result;
@@ -319,9 +352,7 @@ export async function executeFormSubmit(
       return failureResult;
     }
 
-    return getLifecycleHandlers()?.onSubmitError
-      ? await getLifecycleHandlers()?.onSubmitError?.(failureResult, options) ?? failureResult
-      : failureResult;
+    return runFailureLifecycleHandler(failureResult, getLifecycleHandlers()?.onSubmitError, options);
   } finally {
     setIsSubmitting(false);
 

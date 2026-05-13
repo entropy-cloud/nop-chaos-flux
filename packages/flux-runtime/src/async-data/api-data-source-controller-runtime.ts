@@ -234,12 +234,13 @@ export function createApiDataSourceRequestRunner(
             return;
           }
 
-          const settledRun = settleControllerRunIfNeeded(input, mutable, run, requestSequence, {
-            outcome: 'succeeded',
-          });
-          runSettled = settledRun !== undefined;
-
-          if (settledRun?.outcome === 'stale-dropped') {
+          if (
+            run &&
+            input.asyncGovernance &&
+            !input.asyncGovernance.isCurrentRun(run)
+          ) {
+            input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
+            runSettled = true;
             updateControllerState(input, mutable, (current) => current);
             return;
           }
@@ -259,6 +260,11 @@ export function createApiDataSourceRequestRunner(
           updateControllerState(input, mutable, (current) =>
             toSuccessDataSourceState(current, mappedValue),
           );
+
+          const settledRun = settleControllerRunIfNeeded(input, mutable, run, requestSequence, {
+            outcome: 'succeeded',
+          });
+          runSettled = settledRun !== undefined;
 
           if (evaluateControllerStopCondition(input, mutable)) {
             options.stop();
@@ -285,11 +291,9 @@ export function createApiDataSourceRequestRunner(
         return;
       }
 
-      const settledRun = settleControllerRunIfNeeded(input, mutable, run, requestSequence, {
-        outcome: 'succeeded',
-      });
-
-      if (settledRun?.outcome === 'stale-dropped') {
+      if (run && input.asyncGovernance && !input.asyncGovernance.isCurrentRun(run)) {
+        input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
+        runSettled = true;
         updateControllerState(input, mutable, (current) => current);
         return;
       }
@@ -314,6 +318,11 @@ export function createApiDataSourceRequestRunner(
       updateControllerState(input, mutable, (current) =>
         toSuccessDataSourceState(current, mappedValue),
       );
+
+      const settledRun = settleControllerRunIfNeeded(input, mutable, run, requestSequence, {
+        outcome: 'succeeded',
+      });
+      runSettled = settledRun !== undefined;
 
       if (evaluateControllerStopCondition(input, mutable)) {
         options.stop();

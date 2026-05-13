@@ -218,6 +218,8 @@ export async function withRetry<T>(
       return { result: lastResult, attempts, failureCount, lastFailureReason };
     }
 
+    lastFailureReason = lastResult;
+
     if (attempts > retryTimes) {
       failureCount += 1;
       options.onFailedAttempt?.(failureCount, lastResult);

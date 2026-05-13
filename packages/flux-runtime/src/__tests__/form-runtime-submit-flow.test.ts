@@ -137,7 +137,11 @@ describe('executeFormSubmit', () => {
       },
     });
 
-    await expect(executeFormSubmit(submitSetup.input)).resolves.toBe(lifecycleResult);
+    await expect(executeFormSubmit(submitSetup.input)).resolves.toEqual({
+      ok: false,
+      error: [{ message: 'required' }],
+      data: { name: 'required' },
+    });
     expect(submitSetup.store.setSubmitAttempted).toHaveBeenCalledWith(true);
     expect(submitSetup.store.setSubmitting).toHaveBeenLastCalledWith(false);
 
@@ -158,6 +162,33 @@ describe('executeFormSubmit', () => {
       ok: false,
       error: [{ message: 'required' }],
       data: { name: 'required' },
+    });
+  });
+
+  it('preserves validation failure when onValidateError throws', async () => {
+    const lifecycleError = new Error('validate lifecycle exploded');
+    const setup = createSubmitInput({
+      sharedState: {
+        runtimeFieldRegistrations: new Map([['name', { registration: { path: 'name' } }]]),
+      },
+      input: {
+        validateForm: vi.fn().mockResolvedValue({
+          ok: false,
+          errors: [{ message: 'required' }],
+          fieldErrors: { name: 'required' },
+        }),
+        getLifecycleHandlers: () => ({
+          onValidateError: vi.fn().mockRejectedValue(lifecycleError),
+          onSubmitError: vi.fn(),
+        }),
+      },
+    });
+
+    await expect(executeFormSubmit(setup.input)).resolves.toEqual({
+      ok: false,
+      error: [{ message: 'required' }],
+      data: { name: 'required' },
+      settledError: lifecycleError,
     });
   });
 
@@ -405,9 +436,9 @@ describe('executeFormSubmit', () => {
     const failureSetup = createSubmitInput({
       input: { getLifecycleHandlers: () => lifecycleHandlers },
     });
-    await expect(executeFormSubmit(failureSetup.input)).resolves.toEqual({
+    await expect(executeFormSubmit(failureSetup.input)).resolves.toMatchObject({
       ok: false,
-      data: { wrapped: 'failure' },
+      error: expect.objectContaining({ message: 'failed' }),
     });
 
     lifecycleHandlers.submitAction.mockResolvedValueOnce({ ok: true, skipped: true });
@@ -423,9 +454,9 @@ describe('executeFormSubmit', () => {
     const thrownSetup = createSubmitInput({
       input: { getLifecycleHandlers: () => lifecycleHandlers },
     });
-    await expect(executeFormSubmit(thrownSetup.input)).resolves.toEqual({
+    await expect(executeFormSubmit(thrownSetup.input)).resolves.toMatchObject({
       ok: false,
-      data: { wrapped: 'failure' },
+      error: expect.objectContaining({ message: 'boom' }),
     });
 
     lifecycleHandlers.submitAction.mockRejectedValueOnce({ name: 'AbortError' });
@@ -452,5 +483,75 @@ describe('executeFormSubmit', () => {
     await expect(
       executeFormSubmit(signalSetup.input, { signal: signalController.signal }),
     ).resolves.toMatchObject({ ok: false, cancelled: true });
+  });
+
+  it('preserves submit failure when onSubmitError throws', async () => {
+    const submitFailure = new Error('submit failed');
+    const lifecycleError = new Error('submit lifecycle exploded');
+    const setup = createSubmitInput({
+      input: {
+        getLifecycleHandlers: () => ({
+          submitAction: vi.fn().mockResolvedValue({ ok: false, error: submitFailure }),
+          onSubmitError: vi.fn().mockRejectedValue(lifecycleError),
+        }),
+      },
+    });
+
+    await expect(executeFormSubmit(setup.input)).resolves.toEqual({
+      ok: false,
+      error: submitFailure,
+      settledError: lifecycleError,
+    });
+  });
+
+  it('does not let onValidateError replace the primary validation failure', async () => {
+    const setup = createSubmitInput({
+      sharedState: {
+        runtimeFieldRegistrations: new Map([['name', { registration: { path: 'name' } }]]),
+      },
+      input: {
+        validateForm: vi.fn().mockResolvedValue({
+          ok: false,
+          errors: [{ message: 'required' }],
+          fieldErrors: { name: 'required' },
+        }),
+        getLifecycleHandlers: () => ({
+          onValidateError: vi.fn().mockResolvedValue({
+            ok: false,
+            error: new Error('replacement failure'),
+            data: { replaced: true },
+          }),
+        }),
+      },
+    });
+
+    await expect(executeFormSubmit(setup.input)).resolves.toEqual({
+      ok: false,
+      error: [{ message: 'required' }],
+      data: { name: 'required' },
+      settledError: undefined,
+    });
+  });
+
+  it('does not let onSubmitError replace the primary submit failure', async () => {
+    const submitFailure = new Error('submit failed');
+    const setup = createSubmitInput({
+      input: {
+        getLifecycleHandlers: () => ({
+          submitAction: vi.fn().mockResolvedValue({ ok: false, error: submitFailure }),
+          onSubmitError: vi.fn().mockResolvedValue({
+            ok: false,
+            error: new Error('replacement failure'),
+            data: { replaced: true },
+          }),
+        }),
+      },
+    });
+
+    await expect(executeFormSubmit(setup.input)).resolves.toEqual({
+      ok: false,
+      error: submitFailure,
+      settledError: undefined,
+    });
   });
 });

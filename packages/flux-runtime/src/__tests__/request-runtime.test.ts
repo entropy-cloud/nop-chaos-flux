@@ -354,7 +354,102 @@ describe('finalizeApiRequest', () => {
   });
 });
 
+describe('executeApiSchema error path', () => {
+  const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+
+  it('throws generic error when response is not ok and data has no message', async () => {
+    const scope = createTestScope({});
+    const env = {
+      fetcher: vi.fn(async () => ({
+        ok: false,
+        status: 500,
+        data: { error: 'internal' },
+      })),
+      notify: vi.fn(),
+    } as unknown as RendererEnv;
+
+    await expect(executeApiSchema({ url: '/api/fail', type: 'test' }, scope, env, expressionCompiler)).rejects.toThrow(
+      'Request failed with status 500',
+    );
+  });
+
+  it('throws with message from response data', async () => {
+    const scope = createTestScope({});
+    const env = {
+      fetcher: vi.fn(async () => ({
+        ok: false,
+        status: 422,
+        data: { message: 'Validation failed' },
+      })),
+      notify: vi.fn(),
+    } as unknown as RendererEnv;
+
+    await expect(executeApiSchema({ url: '/api/fail', type: 'test' }, scope, env, expressionCompiler)).rejects.toThrow(
+      'Validation failed',
+    );
+  });
+
+  it('handles ok:false with undefined or null data', async () => {
+    const scope = createTestScope({});
+    const missingDataEnv = {
+      fetcher: vi.fn(async () => ({ ok: false, status: 404, data: undefined as any })),
+      notify: vi.fn(),
+    } as unknown as RendererEnv;
+    const nullDataEnv = {
+      fetcher: vi.fn(async () => ({ ok: false, status: 500, data: null as any })),
+      notify: vi.fn(),
+    } as unknown as RendererEnv;
+
+    await expect(executeApiSchema({ url: '/api/fail', type: 'test' }, scope, missingDataEnv, expressionCompiler)).rejects.toThrow(
+      'Request failed with status 404',
+    );
+    await expect(executeApiSchema({ url: '/api/fail', type: 'test' }, scope, nullDataEnv, expressionCompiler)).rejects.toThrow(
+      'Request failed with status 500',
+    );
+  });
+
+  it('preserves retry metadata on fetcher-thrown errors', async () => {
+    const scope = createTestScope({});
+    const env = {
+      fetcher: vi.fn(async () => {
+        throw new Error('network error');
+      }),
+      notify: vi.fn(),
+    } as unknown as RendererEnv;
+
+    const error = await executeApiSchema(
+      { url: '/api/fail', type: 'test' },
+      scope,
+      env,
+      expressionCompiler,
+      { control: { retry: { times: 2, delay: 0 } } },
+    ).catch((caught) => caught);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('network error');
+    expect(error.attempts).toBe(3);
+    expect(error.failureCount).toBe(3);
+  });
+});
+
 describe('createApiRequestExecutor', () => {
+  it('forwards pre-aborted signals to the fetcher path', async () => {
+    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: 'completed' }));
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+    const controller = new AbortController();
+
+    controller.abort();
+
+    const result = await execute('ajax', { url: '/api/test' }, scope, undefined, {
+      signal: controller.signal,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
   it('treats different params as distinct requests', async () => {
     let resolveFirst: ((value: any) => void) | undefined;
     const fetcher = vi.fn(
@@ -563,8 +658,9 @@ describe('createApiRequestExecutor', () => {
 
   it('preserves retry metadata on ok:false request failures', async () => {
     const scope = createTestScope({});
+    const failedResponse = { ok: false, status: 500, data: { message: 'server failed' } };
     const env = {
-      fetcher: vi.fn(async () => ({ ok: false, status: 500, data: { message: 'server failed' } })),
+      fetcher: vi.fn(async () => failedResponse),
     } as unknown as RendererEnv;
     const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
@@ -580,6 +676,77 @@ describe('createApiRequestExecutor', () => {
       message: 'server failed',
       attempts: 3,
       failureCount: 3,
+      status: 500,
+      response: failedResponse,
+      responseData: failedResponse.data,
+      lastFailureReason: failedResponse,
     });
+  });
+
+  it('aborts all active requests on dispose', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    let releaseRequest: (() => void) | undefined;
+    const fetcher = vi.fn(async (_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
+      capturedSignal = ctx.signal;
+      await new Promise<void>((resolve) => {
+        releaseRequest = resolve;
+      });
+      if (ctx.signal?.aborted) {
+        throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+      }
+      return { ok: true, status: 200, data: null };
+    });
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+
+    const promise = execute('ajax', { url: '/api/test' }, scope);
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    execute.dispose();
+
+    expect(capturedSignal?.aborted).toBe(true);
+    releaseRequest?.();
+
+    await expect(promise).rejects.toThrow('aborted');
+  });
+
+  it('cancel-previous aborts the in-flight request', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    let resolveSecond: ((value: unknown) => void) | undefined;
+    const fetcher = vi.fn(async (_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
+      capturedSignal = ctx.signal;
+      if (fetcher.mock.calls.length === 1) {
+        return new Promise((_resolve, reject) => {
+          ctx.signal?.addEventListener(
+            'abort',
+            () => {
+              reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+            },
+            { once: true },
+          );
+        });
+      }
+      return new Promise((resolve) => {
+        resolveSecond = resolve;
+      }).then(() => ({ ok: true, status: 200, data: null }));
+    });
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+
+    const first = execute('ajax', { url: '/api/test' }, scope);
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+    const firstSignal = capturedSignal;
+
+    const second = execute('ajax', { url: '/api/test' }, scope);
+    expect(firstSignal?.aborted).toBe(true);
+
+    resolveSecond?.(undefined);
+    await expect(second).resolves.toMatchObject({ ok: true });
+    await expect(first).rejects.toThrow('aborted');
   });
 });

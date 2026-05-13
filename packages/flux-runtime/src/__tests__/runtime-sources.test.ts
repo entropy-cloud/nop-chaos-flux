@@ -348,8 +348,15 @@ describe('createRendererRuntime', () => {
     });
 
     await vi.waitFor(() => {
-      expect(notify).toHaveBeenCalledWith('error', 'publish exploded');
+      expect(registration.controller.getState()).toMatchObject({
+        status: 'error',
+        fetchStatus: 'idle',
+        hasError: true,
+        failureCount: 1,
+      });
     });
+
+    expect(notify).toHaveBeenCalledWith('error', 'publish exploded');
 
     expect(onError).toHaveBeenCalledWith(
       expect.objectContaining({

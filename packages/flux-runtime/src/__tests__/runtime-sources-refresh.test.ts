@@ -133,6 +133,52 @@ describe('createRendererRuntime', () => {
     registration.dispose();
   });
 
+  it('does not auto-refresh api sources without discovered dependencies on unrelated scope writes', async () => {
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: { url: string }) => ({
+      ok: true,
+      status: 200,
+      data: { url: api.url } as T,
+    });
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
+      },
+      expressionCompiler,
+    });
+    const page = runtime.createPageRuntime({});
+
+    const registration = runtime.registerDataSource({
+      id: 'static-user-api-source',
+      scope: page.scope,
+      compiledSource: compileDataSource(
+        'static-user-api-source',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/users/static' },
+          name: 'payload',
+        },
+        expressionCompiler,
+      ),
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ url: '/api/users/static' });
+    });
+
+    page.scope.update('$_crud.request-owned.query', { values: {}, refreshCount: 0 });
+    page.scope.update('$_crud.request-owned.pagination', { currentPage: 1, pageSize: 10 });
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    registration.dispose();
+  });
+
   it('supersedes an in-flight api source refresh with the latest request', async () => {
     let callCount = 0;
     let releaseSecond: (() => void) | undefined;

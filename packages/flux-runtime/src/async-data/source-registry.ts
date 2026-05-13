@@ -218,6 +218,10 @@ export function createRuntimeSourceRegistry(input: {
         return;
       }
 
+      if (!dependencies) {
+        return;
+      }
+
       const observedChange = ignoredRootsSet
         ? filterScopeChangeByIgnoredRoots(change, ignoredRootsSet)
         : change;

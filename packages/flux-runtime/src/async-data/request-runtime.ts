@@ -33,6 +33,31 @@ export interface ApiRequestExecutionResult<T> {
   retry: RetryResult<ApiResponse<T>>;
 }
 
+function createApiResponseError(
+  response: ApiResponse<unknown>,
+  retryMetadata: { attempts: number; failureCount: number; lastFailureReason?: unknown },
+): Error & {
+  response: ApiResponse<unknown>;
+  status?: number;
+  responseData: unknown;
+  lastFailureReason?: unknown;
+} {
+  const responseData = response.data;
+  const message =
+    responseData &&
+    typeof responseData === 'object' &&
+    'message' in (responseData as Record<string, unknown>) &&
+    typeof (responseData as { message?: unknown }).message === 'string'
+      ? (responseData as { message: string }).message
+      : `Request failed with status ${response.status}`;
+
+  return Object.assign(new Error(message, { cause: response }), retryMetadata, {
+    response,
+    status: response.status,
+    responseData,
+  });
+}
+
 export async function executeRequestWithControl<T>(input: {
   execute: () => Promise<ApiResponse<T>>;
   control?: OperationControlConfig;
@@ -296,23 +321,13 @@ export async function executeApiSchema(
   const response = execution.response;
 
   if (!response.ok) {
-    const responseData = response.data;
     const retryMetadata = {
       attempts: execution.retry.attempts,
       failureCount: execution.retry.failureCount,
       lastFailureReason: execution.retry.lastFailureReason,
     };
 
-    if (
-      responseData &&
-      typeof responseData === 'object' &&
-      'message' in (responseData as Record<string, unknown>) &&
-      typeof (responseData as { message?: unknown }).message === 'string'
-    ) {
-      throw Object.assign(new Error((responseData as { message: string }).message), retryMetadata);
-    }
-
-    throw Object.assign(new Error(`Request failed with status ${response.status}`), retryMetadata);
+    throw createApiResponseError(response, retryMetadata);
   }
 
   const adaptedData = applyResponseAdaptor(
