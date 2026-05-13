@@ -1,6 +1,6 @@
 # 253 Flux Host-Facing Facade Package And Release Integration Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-12
 > Source: `C:/can/nop/nop-chaos-next/docs/design/amis-flux-rendering-engine-integration.md`, `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `vite.workspace-alias.ts`, `tsconfig.base.json`, `.gitignore`, `scripts/sync-flux-lib.sh`, `scripts/check-package-css-exports.mjs`, `scripts/check-workspace-manifest-deps.mjs`, `packages/flux-react/package.json`, `packages/flux-runtime/package.json`, `packages/flux-renderers-basic/src/index.tsx`, `packages/flux-renderers-form/src/index.tsx`, `packages/flux-renderers-data/src/index.tsx`, `docs/architecture/frontend-baseline.md`, `docs/architecture/flux-runtime-module-boundaries.md`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`
@@ -166,7 +166,7 @@ Targets: `packages/flux-bundle/**`, updated docs/logs, verification outputs, `C:
 - [x] [Proof] Verified the chosen chunk/dynamic-import policy against the built artifact through `scripts/check-flux-bundle-pack.mjs`, which enforces the single-entry tarball shape.
 - [x] [Proof] Performed a real consumer-side validation in `C:/can/nop/nop-chaos-next` using the generated `.tgz` through disposable host projects under `temp/flux-bundle-verify*`; after syncing the supported `flux-lib/ui` package and removing its residual `@nop-chaos/flux-i18n` workspace dependency, `pnpm install`, `pnpm typecheck`, `pnpm build`, and `pnpm lint` all succeeded there.
 - [x] [Proof] Re-audited this plan text against the live repo after implementation and synchronized statuses, exit criteria, and closure gates honestly.
-- [ ] [Proof] Run an independent closure audit with a fresh subagent session after implementation lands.
+- [x] [Proof] Ran an independent closure audit with a fresh subagent session after implementation landed.
 - [x] [Follow-up] No non-blocking residuals remain inside this plan's scope.
 
 Exit Criteria:
@@ -195,7 +195,7 @@ Exit Criteria:
 - [x] Real `nop-chaos-next` consumption proof exists for the generated `.tgz`, and the host-side blockers found during proof were fixed before closure.
 - [x] No in-scope release defect or contract drift is silently deferred.
 - [x] Affected owner docs are synced to the live baseline.
-- [ ] Independent subagent closure audit is completed and recorded.
+- [x] Independent subagent closure audit is completed and recorded.
 - [x] `pnpm check:package-css-exports`
 - [x] `pnpm check:workspace-manifest-deps`
 - [x] `pnpm typecheck`
@@ -219,13 +219,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: pending final independent closure audit
+Status Note: completed
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending final independent closure audit
-- Evidence: pending final audit rerun after checklist synchronization
+- Reviewer / Agent: `general` subagent `ses_1e3525fcaffema29AlKKyABaMY`
+- Evidence: independent closure audit returned `PASS` after re-checking the packed tarball shape, the narrowed `ui` sync boundary, workspace verification, and real host-consumption proof in `C:/can/nop/nop-chaos-next/temp/flux-bundle-verify-file`.
 
 Follow-up:
 
-- none once the final independent audit is recorded
+- none

@@ -269,6 +269,14 @@
 约定：
 
 - 非命名空间字段继续使用 camelCase，例如 `className`、`visible`、`validateOn`。
+
+### 5.2 DSL Token Exceptions
+
+以下值虽然出现在 JSON 中，但它们是 DSL token / runtime vocabulary，不按普通 schema key 的 camelCase 规则收敛：
+
+- `condition-builder` operator ids 当前支持 `not_equal`、`less_or_equal`、`is_empty` 这类 snake_case token
+- 这类 token 可以出现在 `operators.labels`、`operators.defaultOpByType` 等 operator 映射表中
+- 普通 schema 字段名仍然保持 camelCase；不要把这个例外扩展到一般属性命名
 - 命名空间字段用于扩展负载，不要把本来属于核心 contract 的普通字段伪装成 `vendor:*` 来绕过校验。
 - schema 文件 validator 应支持 `delegate-or-ignore` 策略：如果存在对应 namespace validator，则委托该扩展校验；否则忽略该 key 及其整个子树，不参与核心校验。
 - 对于已经进入 Flux 主契约的核心 namespace（当前最明确的是 `xui:*`），标准 validator bundle 应内置对应 namespace validator，而不是把它们一律当成“未知扩展”跳过。

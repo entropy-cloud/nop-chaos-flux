@@ -70,6 +70,12 @@ interface ConditionBuilderSchema extends BaseSchema {
 - 逻辑和交互开关：`showAndOr`、`showNot`、`showIf`、`draggable`、`uniqueFields`
 - 文案与按钮可见性：`placeholder`、`addConditionLabel`、`addGroupLabel`、`addBtnVisibleOn`、`addGroupBtnVisibleOn`
 
+Operator naming baseline:
+
+- 内置 operator id 当前 live baseline 仍使用 DSL token 形式的 snake_case，例如 `not_equal`、`less_or_equal`、`is_empty`
+- 这些 id 属于 condition-builder 自己的 operator vocabulary，不是通用 schema field key
+- 自定义 operator 的 `value` 应与同一 vocabulary 保持一致，避免同一个 builder 中混用多套命名
+
 ## 5. 字段分类
 
 - `label`: `value-or-region`

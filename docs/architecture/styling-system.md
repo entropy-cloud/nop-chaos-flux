@@ -686,6 +686,7 @@ This is a self-contained rendering subtree. The `ss-*` classes stay inside the c
 2. **`ss-*` prefix**: Namespace-isolated from `nop-*` marker classes and Tailwind utilities.
 3. **`data-*` for state**: Follows the same pattern as shadcn/ui's `data-state` and flux renderer's `data-field-*`.
 4. **Current implementation uses the documented hybrid split**: `spreadsheet-grid.tsx` now routes finite `CellStyle` values through `cell-style-map.ts` into `ss-*` classes while keeping continuous values and geometry in inline style. Package-owned structural classes such as `spreadsheet-grid`, `row-header`, and `col-header` remain acceptable inside this high-volume canvas subtree; they are not the same concern as generic renderer root markers.
+5. **Spreadsheet grid table shell is an explicit exception, not a general primitive bypass**: the canvas keeps raw `<table>/<thead>/<tbody>/<tr>/<td>/<th>` semantics for virtualization, sticky geometry, and assistive grid navigation, but interactive controls inside the shell should still use `@nop-chaos/ui` primitives such as `Input` and `Button`.
 
 ### Full Design Doc
 

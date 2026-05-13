@@ -111,11 +111,7 @@ export function FlowDesignerCanvas({
           {doc.nodes.map((node) => (
             <div
               key={node.id}
-              className={classNames(
-                'fd-node',
-                snapshot.selection.activeNodeId === node.id && 'fd-node--selected',
-                node.type && `fd-node--${node.type}`,
-              )}
+              className={classNames('fd-node')}
               data-slot="flow-designer-node"
               data-selected={snapshot.selection.activeNodeId === node.id ? '' : undefined}
               data-type={node.type || undefined}
@@ -201,10 +197,7 @@ export function FlowDesignerCanvas({
             return (
               <g
                 key={edge.id}
-                className={classNames(
-                  'fd-edge',
-                  snapshot.selection.activeEdgeId === edge.id && 'fd-edge--selected',
-                )}
+                className={classNames('fd-edge')}
                 data-slot="flow-designer-edge"
                 data-selected={snapshot.selection.activeEdgeId === edge.id ? '' : undefined}
                 onClick={(e) => onEdgeClick(edge.id, e as unknown as React.MouseEvent)}

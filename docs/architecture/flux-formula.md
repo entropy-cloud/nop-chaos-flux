@@ -343,17 +343,22 @@ SWITCH(expr, ...caseValuePairs) {
 
 通过内置变量直接暴露工具对象，收束相关方法，避免单独注册几十个顶层函数：
 
-| 变量    | 返回               | 用法示例                                               |
-| ------- | ------------------ | ------------------------------------------------------ |
-| `$Math` | `Math`（原生对象） | `$Math.abs(-3)`、`$Math.round(1.5)`、`$Math.max(1, 2)` |
-| `$JSON` | `JSON`（原生对象） | `$JSON.stringify(obj)`、`$JSON.parse(str)`             |
-| `$Date` | `DateHelper` 对象  | `$Date.now()`、`$Date.format(d, 'iso-date')`           |
+| 变量    | 返回                     | 用法示例                                               |
+| ------- | ------------------------ | ------------------------------------------------------ |
+| `$Math` | `Math`（原生对象）       | `$Math.abs(-3)`、`$Math.round(1.5)`、`$Math.max(1, 2)` |
+| `$JSON` | sanitized JSON namespace | `$JSON.stringify(obj)`、`$JSON.parse(str)`             |
+| `$Date` | `DateHelper` 对象        | `$Date.now()`、`$Date.format(d, 'iso-date')`           |
 
 `$Math`、`$JSON`、`$Date` 通过 registry namespace 暴露，evaluator 将其作为内置 Identifier 处理，无需注册到 scope。
 
 ```typescript
 registry.registerNamespace('$Math', Math);
-registry.registerNamespace('$JSON', JSON);
+registry.registerNamespace('$JSON', {
+  parse(text) {
+    return deepSanitize(JSON.parse(text));
+  },
+  stringify: JSON.stringify.bind(JSON),
+});
 registry.registerNamespace('$Date', dateHelper);
 
 // evaluator Identifier 解析
@@ -362,7 +367,7 @@ if (ast.type === 'Identifier' && namespaces[ast.name] !== undefined) {
 }
 ```
 
-`$Math` 和 `$JSON` 直接返回原生对象，零成本。`$Date` 返回一个 `DateHelper` 对象，封装日期操作：
+`$Math` 直接返回原生对象。`$JSON.stringify()` 走原生实现，但 `$JSON.parse()` 会对解析结果做深度 sanitize，移除 `__proto__`、`constructor`、`prototype` 这类危险 key；`$Date` 返回一个 `DateHelper` 对象，封装日期操作：
 
 ```typescript
 const dateHelper = {

@@ -1,7 +1,7 @@
 # 256 Deep Audit 2026-05-12 Module Boundary And Test Hygiene Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-12
+> Plan Status: completed
+> Last Reviewed: 2026-05-13
 > Source: `docs/analysis/2026-05-12-deep-audit-full/summary.md`, `docs/analysis/2026-05-12-deep-audit-full/final-review-results-01-05.md`, `docs/analysis/2026-05-12-deep-audit-full/final-review-results-11-15.md`
 > Related: `docs/plans/251-deep-audit-2026-05-12-priority-remediation-plan.md`, `docs/plans/00-plan-authoring-and-execution-guide.md`
 
@@ -12,8 +12,9 @@ Own the retained module-boundary, large-file, and test-hygiene findings that wer
 ## Current Baseline
 
 - Plan 251 fixed the public contract drift that blocked the priority remediation closure path.
-- This successor owns the remaining structural and test-hygiene work.
-- No execution has started yet under this plan.
+- The remaining structural `02-*` work has been moved into explicit successor ownership under Plan 262.
+- The test-hygiene findings `14-01`, `14-02`, and `14-03` no longer reproduce after the live updates in `tests/e2e/component-lab/{coverage-manifest.ts,complex-form.spec.ts}` and `packages/flux-renderers-data/src/__tests__/use-table-controls.selection.test.tsx`.
+- Independent re-audit on 2026-05-13 confirmed that the large-file/module-boundary findings remain live and cannot be silently closed.
 
 ## Goals
 
@@ -41,32 +42,45 @@ Own the retained module-boundary, large-file, and test-hygiene findings that wer
 
 ### Phase 1 - Re-audit Structure And Test Hygiene
 
-Status: planned
+Status: completed
 Targets: retained IDs listed in Scope
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] Re-audit the retained structural and test-hygiene findings.
-- [ ] Land the still-live fixes with focused proof.
-- [ ] Record any justified scope change or downgrade with explicit evidence.
+- [x] Re-audit the retained structural and test-hygiene findings.
+- [x] Land the still-live test-hygiene fixes with focused proof for `14-01`, `14-02`, and `14-03`.
+- [x] Move the remaining structural findings into explicit successor ownership instead of leaving this plan half-open.
 
 Exit Criteria:
 
-- [ ] Every in-scope retained ID is adjudicated.
-- [ ] Focused verification covers each behavior-changing fix.
-- [ ] Owner docs/logs are updated where required.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Every in-scope retained ID is adjudicated.
+- [x] Focused verification covers each behavior-changing fix.
+- [x] Owner docs/logs are updated where required.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ## Closure Gates
 
-- [ ] All in-scope retained findings are adjudicated.
-- [ ] No confirmed live defect is silently deferred.
-- [ ] Focused verification passes.
+- [x] All in-scope retained findings are adjudicated.
+- [x] No confirmed live defect is silently deferred.
+- [x] Focused verification passes for the landed test-hygiene fixes, and the remaining structural work is moved to explicit successor ownership.
+
+## Closure Notes
+
+- `14-01`, `14-02`, and `14-03` were closed by the landed Component Lab and selection-coverage fixes already recorded in this plan.
+- The still-live structural findings `02-01`, `02-02`, `02-03`, `02-04`, `02-07`, `02-08`, `02-09`, `02-11`, `02-12`, and `02-13` were moved to `docs/plans/262-deep-audit-2026-05-13-structural-owner-successor-plan.md`.
+- Closure audit evidence: independent review `ses_1e137c328ffeVBrqXeuqXvwgdD` confirmed this plan can now be marked `completed` because all remaining live structural work was moved into explicit successor ownership.
 
 ## Deferred But Adjudicated
 
-None yet.
+### Structural owner slice moved to explicit successor ownership (`02-01`, `02-02`, `02-03`, `02-04`, `02-07`, `02-08`, `02-09`, `02-11`, `02-12`, `02-13`)
+
+- Classification: `moved to explicit successor ownership`
+- Why Not Blocking Closure: these are still-live maintainability/module-boundary hotspots, but they now have a dedicated active owner plan instead of remaining inside this closure-ready remediation plan.
+- Successor Required: `yes`
+- Successor Path: `docs/plans/262-deep-audit-2026-05-13-structural-owner-successor-plan.md`
 
 ## Non-Blocking Follow-ups
 
-None yet.
+- `14-01`: resolved by adding the missing `input-number` Component Lab manifest coverage entry in `tests/e2e/component-lab/coverage-manifest.ts`.
+- `14-02`: resolved by aligning write-tier coverage with real interaction assertions in `tests/e2e/component-lab/complex-form.spec.ts`.
+- `14-03`: resolved by adding selection semantics coverage in `packages/flux-renderers-data/src/__tests__/use-table-controls.selection.test.tsx`.
