@@ -1,5 +1,4 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   FormErrorQuery,
   FormFieldStateSnapshot,
@@ -32,6 +31,7 @@ import {
   shallowEqualArrays,
   shallowEqualFormFieldState,
 } from '../hook-subscriptions.js';
+import { useSyncExternalStoreWithSelector } from '../use-sync-external-store-with-selector.js';
 
 export function useCurrentForm(): FormRuntime | undefined {
   return useContext(FormContext);

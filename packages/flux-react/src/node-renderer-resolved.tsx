@@ -4,7 +4,6 @@ import {
   useMemo,
   memo,
 } from 'react';
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionSchema,
   ActionScope,
@@ -41,6 +40,7 @@ import { useNodeSourceProps } from './use-node-source-props.js';
 import { useNodeLifecycleActions, useRenderMonitor } from './node-renderer-effects.js';
 import { NodeRendererProviders } from './node-renderer-providers.js';
 import { buildSlotFrame, readSlotFrame, SLOT_KEY } from './slot-frame.js';
+import { useSyncExternalStoreWithSelector } from './use-sync-external-store-with-selector.js';
 
 function isCompiledActionProgram(
   action: import('@nop-chaos/flux-core').CompiledActionProgram | undefined,

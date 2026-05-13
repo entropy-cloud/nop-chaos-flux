@@ -172,6 +172,79 @@ describe('Hook contract: useScopeSelector', () => {
     expect(renders).toBe(2);
   });
 
+  it('H2c: keeps path subscriptions stable when callers pass inline arrays', async () => {
+    const { scope } = createTestScope({ watched: 'alpha', ignored: 0 });
+    const subscribeSpy = vi.spyOn(scope.store!, 'subscribe');
+
+    function Probe() {
+      const [tick, setTick] = React.useState(0);
+      const watched = useScopeSelector(
+        (data: { watched?: string }) => data.watched ?? '',
+        Object.is,
+        { paths: ['watched', 'ignored'] },
+      );
+      return (
+        <div>
+          <button type="button" onClick={() => setTick((value) => value + 1)}>
+            rerender
+          </button>
+          <span data-testid="inline-paths">{`${watched}:${tick}`}</span>
+        </div>
+      );
+    }
+
+    render(
+      <ScopeContext.Provider value={scope}>
+        <Probe />
+      </ScopeContext.Provider>,
+    );
+
+    expect(subscribeSpy).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'rerender' }));
+
+    await waitFor(() => expect(screen.getByTestId('inline-paths').textContent).toBe('alpha:1'));
+    expect(subscribeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('H2d: does not wake deep-path selectors for sibling writes under the same root', async () => {
+    const { scope } = createTestScope({ profile: { email: 'a@example.com', name: 'Alice' } });
+    let selectorRuns = 0;
+
+    function Probe() {
+      const email = useScopeSelector(
+        (data: { profile?: { email?: string } }) => {
+          selectorRuns += 1;
+          return data.profile?.email ?? '';
+        },
+        Object.is,
+        { paths: ['profile.email'] },
+      );
+
+      return <span data-testid="deep-email">{email}</span>;
+    }
+
+    render(
+      <ScopeContext.Provider value={scope}>
+        <Probe />
+      </ScopeContext.Provider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('deep-email').textContent).toBe('a@example.com'));
+    const initialRuns = selectorRuns;
+
+    act(() => {
+      scope.store!.setSnapshot(
+        { profile: { email: 'a@example.com', name: 'Bob' } },
+        { paths: ['profile.name'], kind: 'update' },
+      );
+    });
+
+    await Promise.resolve();
+    expect(selectorRuns).toBe(initialRuns);
+    expect(screen.getByTestId('deep-email').textContent).toBe('a@example.com');
+  });
+
   it('H2b: does not re-render when selector returns referentially equal value', async () => {
     const { scope } = createTestScope({ items: [1, 2, 3], other: 'x' });
     let renders = 0;

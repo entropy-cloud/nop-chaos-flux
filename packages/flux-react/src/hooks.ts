@@ -1,5 +1,4 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
   ComponentHandleRegistry,
@@ -10,6 +9,7 @@ import type {
   RendererRuntime,
   ScopeRef,
 } from '@nop-chaos/flux-core';
+import { getIn, parsePath } from '@nop-chaos/flux-core';
 import {
   ActionScopeContext,
   ComponentRegistryContext,
@@ -25,7 +25,6 @@ import {
   type FormLayoutContextValue,
   useRequiredContext,
 } from './contexts.js';
-import { getIn } from '@nop-chaos/flux-core';
 import { createHelpers } from './helpers.js';
 import {
   createFormModelGenerationSubscribe,
@@ -33,6 +32,7 @@ import {
   createScopeOwnSubscribe,
   emptyUnsubscribe,
 } from './hook-subscriptions.js';
+import { useSyncExternalStoreWithSelector } from './use-sync-external-store-with-selector.js';
 import {
   useCurrentForm,
   useCurrentValidationScope,
@@ -100,10 +100,24 @@ export function useScopeSelector<T, S = Record<string, unknown>>(
 ): T {
   const scope = useRenderScope();
   const enabled = options?.enabled !== false;
-  const paths = options?.paths;
+  const pathsKey =
+    options?.paths && options.paths.length > 0
+      ? Array.from(
+          new Set(
+            options.paths
+              .map((path) => parsePath(path.trim()).join('.'))
+              .filter((path) => path.length > 0),
+          ),
+        )
+          .sort()
+          .join('\u0000') || undefined
+      : undefined;
   const subscribe = useMemo(
-    () => (enabled ? createScopeSubscribe(scope, paths) : () => emptyUnsubscribe),
-    [enabled, paths, scope],
+    () =>
+      enabled
+        ? createScopeSubscribe(scope, pathsKey ? pathsKey.split('\u0000') : undefined)
+        : () => emptyUnsubscribe,
+    [enabled, pathsKey, scope],
   );
   const getSnapshot = useMemo(
     () =>

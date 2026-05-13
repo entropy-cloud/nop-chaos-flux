@@ -6,7 +6,6 @@ import {
   SurfaceScopeProviders,
   useSurfaceScopeSnapshot,
 } from './dialog-host-surface.js';
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import {
   Dialog,
   DialogBody,
@@ -23,6 +22,7 @@ import {
   cn,
 } from '@nop-chaos/ui';
 import { resolveContainerElement } from './container-hooks.js';
+import { useSyncExternalStoreWithSelector } from './use-sync-external-store-with-selector.js';
 
 function sameSurfaces(left: SurfaceEntry[], right: SurfaceEntry[]) {
   if (left === right) {

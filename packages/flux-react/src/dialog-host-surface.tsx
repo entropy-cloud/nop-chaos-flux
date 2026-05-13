@@ -1,5 +1,4 @@
 import React from 'react';
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import type {
   ActionScope,
   ComponentHandleRegistry,
@@ -17,6 +16,7 @@ import {
   ValidationContext,
 } from './contexts.js';
 import { RenderNodes } from './render-nodes.js';
+import { useSyncExternalStoreWithSelector } from './use-sync-external-store-with-selector.js';
 
 export interface SurfaceRenderContext {
   scope: ScopeRef;

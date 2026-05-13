@@ -3,10 +3,12 @@ import type {
   FormStoreApi,
   FormStoreState,
   ScopeChange,
+  ScopeDependencySet,
   ScopeRef,
 } from '@nop-chaos/flux-core';
+import { parsePath } from '@nop-chaos/flux-core';
 import { EMPTY_FORM_STORE_STATE } from './form-state.js';
-import { createRootDependencySet, scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
+import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
 
 export function shallowEqualFormFieldState(
   a: FormFieldStateSnapshot,
@@ -34,6 +36,50 @@ export function shallowEqualArrays<T>(a: T[], b: T[]): boolean {
 
 export function emptyUnsubscribe() {
   return undefined;
+}
+
+function createScopeDependencySet(paths: readonly string[] | undefined): ScopeDependencySet | undefined {
+  if (!paths || paths.length === 0) {
+    return undefined;
+  }
+
+  let wildcard = false;
+  const normalizedPaths = new Set<string>();
+
+  for (const path of paths) {
+    const trimmed = path.trim();
+    if (trimmed.length === 0) {
+      continue;
+    }
+
+    if (trimmed === '*') {
+      wildcard = true;
+      break;
+    }
+
+    const normalizedPath = parsePath(trimmed).join('.');
+    if (normalizedPath.length > 0) {
+      normalizedPaths.add(normalizedPath);
+    }
+  }
+
+  if (wildcard) {
+    return {
+      paths: ['*'],
+      wildcard: true,
+      broadAccess: true,
+    };
+  }
+
+  if (normalizedPaths.size === 0) {
+    return undefined;
+  }
+
+  return {
+    paths: Array.from(normalizedPaths).sort(),
+    wildcard: false,
+    broadAccess: false,
+  };
 }
 
 export function createFormErrorSubscribe(
@@ -157,7 +203,7 @@ export function createScopeSubscribe(scope: ScopeRef, paths?: readonly string[])
       return emptyUnsubscribe;
     }
 
-    const dependencies = createRootDependencySet(paths);
+    const dependencies = createScopeDependencySet(paths);
 
     return subscribe((change: ScopeChange) => {
       if (dependencies && !scopeChangeHitsDependencies(change, dependencies)) {

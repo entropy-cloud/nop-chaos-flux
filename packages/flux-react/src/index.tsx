@@ -67,6 +67,8 @@ export {
 } from './container-hooks.js';
 export { useSourceValue } from './use-source-value.js';
 export { useStatusPathPublication } from './status-path.js';
+export { usePublishedFormStatus, usePublishedFormValues } from './form-publication.js';
+export { StructuralLoopProvider } from './structural-loop-provider.js';
 export type { SourceTransientState } from './use-node-source-props.js';
 export type { WorkbenchShellProps } from './workbench/index.js';
 export { resolveGap, GAP_TOKENS } from './resolve-gap.js';

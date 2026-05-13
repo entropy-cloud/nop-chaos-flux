@@ -12,6 +12,12 @@ describe('flux-react public surface', () => {
     expect('publishOwnerStatus' in fluxReact).toBe(false);
   });
 
+  it('exposes stable publication helpers on the root entry', () => {
+    expect(typeof fluxReact.StructuralLoopProvider).toBe('function');
+    expect(typeof fluxReact.usePublishedFormStatus).toBe('function');
+    expect(typeof fluxReact.usePublishedFormValues).toBe('function');
+  });
+
   it('exposes internal orchestration exports through the unstable entry', () => {
     expect(typeof fluxReactUnstable.RenderNodes).toBe('function');
     expect(typeof fluxReactUnstable.createHelpers).toBe('function');
