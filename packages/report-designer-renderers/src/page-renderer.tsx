@@ -36,6 +36,7 @@ import type { ReportDesignerPageSchema } from './types.js';
 
 export interface ReportPageSnapshotSlice {
   document: ReportTemplateDocument;
+  spreadsheetSyncSource?: ReportTemplateDocument['spreadsheet'];
   dirty: boolean;
   canUndo: boolean;
   canRedo: boolean;
@@ -52,6 +53,7 @@ export function selectReportPageSnapshot(
 ): ReportPageSnapshotSlice {
   return {
     document: snapshot.document,
+    spreadsheetSyncSource: snapshot.spreadsheetSyncSource,
     dirty: snapshot.dirty,
     canUndo: snapshot.canUndo,
     canRedo: snapshot.canRedo,
@@ -67,6 +69,7 @@ export function selectReportPageSnapshot(
 export function equalReportPageSnapshot(a: ReportPageSnapshotSlice, b: ReportPageSnapshotSlice) {
   return (
     a.document === b.document &&
+    a.spreadsheetSyncSource === b.spreadsheetSyncSource &&
     a.dirty === b.dirty &&
     a.canUndo === b.canUndo &&
     a.canRedo === b.canRedo &&
@@ -119,10 +122,6 @@ export function equalReportSpreadsheetSnapshot(
     a.viewport === b.viewport &&
     a.layout === b.layout
   );
-}
-
-function serializeSpreadsheetDocument(document: SpreadsheetRuntimeSnapshot['document']): string {
-  return JSON.stringify(document);
 }
 
 function asReactNode(value: unknown): React.ReactNode {
@@ -299,20 +298,21 @@ export function ReportDesignerPageRenderer(
     equalReportSpreadsheetSnapshot,
   );
   const syncingSpreadsheetFromReportRef = useRef(false);
-  const lastSyncedSpreadsheetRef = useRef(serializeSpreadsheetDocument(spreadsheetSnapshot.document));
-  const lastAppliedReportSpreadsheetRef = useRef(
-    serializeSpreadsheetDocument(snapshot.document.spreadsheet),
-  );
+  const lastSyncedSpreadsheetRef = useRef(spreadsheetSnapshot.document);
+  const lastAppliedReportSpreadsheetRef = useRef(snapshot.document.spreadsheet);
 
   useEffect(() => {
-    const nextReportSpreadsheet = serializeSpreadsheetDocument(snapshot.document.spreadsheet);
+    const nextReportSpreadsheet = snapshot.document.spreadsheet;
 
     if (nextReportSpreadsheet === lastAppliedReportSpreadsheetRef.current) {
       return;
     }
 
     lastAppliedReportSpreadsheetRef.current = nextReportSpreadsheet;
-    if (nextReportSpreadsheet === lastSyncedSpreadsheetRef.current) {
+    if (
+      nextReportSpreadsheet === lastSyncedSpreadsheetRef.current ||
+      snapshot.spreadsheetSyncSource === lastSyncedSpreadsheetRef.current
+    ) {
       return;
     }
 
@@ -320,10 +320,10 @@ export function ReportDesignerPageRenderer(
     spreadsheetCore.replaceDocument(snapshot.document.spreadsheet);
     lastSyncedSpreadsheetRef.current = nextReportSpreadsheet;
     syncingSpreadsheetFromReportRef.current = false;
-  }, [snapshot.document.spreadsheet, spreadsheetCore]);
+  }, [snapshot.document.spreadsheet, snapshot.spreadsheetSyncSource, spreadsheetCore]);
 
   useEffect(() => {
-    const nextSpreadsheetDocument = serializeSpreadsheetDocument(spreadsheetSnapshot.document);
+    const nextSpreadsheetDocument = spreadsheetSnapshot.document;
 
     if (syncingSpreadsheetFromReportRef.current) {
       return;

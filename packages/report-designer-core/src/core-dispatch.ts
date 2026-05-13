@@ -21,6 +21,7 @@ import {
 
 export interface ReportDesignerInternalState {
   document: ReportTemplateDocument;
+  spreadsheetSyncSource?: ReportTemplateDocument['spreadsheet'];
   selectionTarget: ReportSelectionTarget | undefined;
   inspector: InspectorRuntimeState;
   fieldSources: FieldSourceSnapshot[];

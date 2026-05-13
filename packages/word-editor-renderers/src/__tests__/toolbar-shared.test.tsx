@@ -38,6 +38,7 @@ describe('ToolbarButton', () => {
   it('renders with title', () => {
     render(<ToolbarButton onClick={vi.fn()} title="Bold" />);
     expect(screen.getByTitle('Bold')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
   });
 
   it('calls onClick when clicked', async () => {

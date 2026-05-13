@@ -75,4 +75,19 @@ describe('DocPreviewPage', () => {
     expect(packageStyles).toContain('--nop-border:');
     expect(packageStyles).toContain('--nop-playground-stage-bg:');
   });
+
+  it('adds explicit accessible labels to icon-only back buttons', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    await changeLanguage('zh-CN');
+
+    render(
+      <DocPreviewPage
+        documentData={{ header: [], main: [{ value: 'Doc A' }], footer: [] } as any}
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: '返回' })).toBeInTheDocument();
+  });
 });

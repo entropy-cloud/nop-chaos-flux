@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import type { EditorSelectionState } from '@nop-chaos/word-editor-core';
-import { NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
+import { Input, NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
 import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from './shared.js';
 
 interface FontControlsProps {
@@ -107,19 +107,21 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
         title="Subscript"
       />
       <ToolbarSeparator />
-      <input
+      <Input
         type="color"
         value={selection.color || '#000000'}
         onChange={(e) => bridge?.command?.executeColor(e.target.value)}
         className={cn('w-7 h-7 cursor-pointer flex-shrink-0 border rounded')}
         title="Text Color"
+        aria-label="Text Color"
       />
-      <input
+      <Input
         type="color"
         value={selection.highlight || '#ffff00'}
         onChange={(e) => bridge?.command?.executeHighlight(e.target.value)}
         className={cn('w-7 h-7 cursor-pointer flex-shrink-0 border rounded')}
         title="Highlight Color"
+        aria-label="Highlight Color"
       />
     </ToolbarGroup>
   );

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { t } from '@nop-chaos/flux-i18n';
+import { Button } from '@nop-chaos/ui';
 
 export function JsonViewer(props: { data: unknown; maxDepth?: number; defaultExpanded?: number }) {
   const maxDepth = props.maxDepth ?? 3;
@@ -55,15 +56,17 @@ function JsonNode(props: {
     const hasMore = data.length > 50;
     return (
       <div>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           className="ndbg-json-toggle"
           aria-expanded={!collapsed}
           aria-label={`${collapsed ? 'Expand' : 'Collapse'} JSON array`}
           onClick={() => setCollapsed((value) => !value)}
         >
           {collapsed ? `▶ Array(${data.length})` : `▼ Array(${data.length})`}
-        </button>
+        </Button>
         {!collapsed && (
           <div style={{ paddingLeft: 12 }}>
             {displayItems.map((item, index) => {
@@ -100,15 +103,17 @@ function JsonNode(props: {
     }
     return (
       <div>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           className="ndbg-json-toggle"
           aria-expanded={!collapsed}
           aria-label={`${collapsed ? 'Expand' : 'Collapse'} JSON object`}
           onClick={() => setCollapsed((value) => !value)}
         >
           {collapsed ? `▶ Object{${entries.length}}` : `▼ Object{${entries.length}}`}
-        </button>
+        </Button>
         {!collapsed && (
           <div style={{ paddingLeft: 12 }}>
             {entries.map(([key, value]) => (

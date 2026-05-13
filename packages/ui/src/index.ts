@@ -64,3 +64,5 @@ export {
   resolveLucideIcon,
   type LucideIconComponent,
 } from './lib/icon-utils.js';
+
+export { setI18nGetter } from './lib/i18n.js';

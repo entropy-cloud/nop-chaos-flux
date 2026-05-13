@@ -101,6 +101,7 @@ export interface InspectorRuntimeState {
 
 export interface ReportDesignerRuntimeSnapshot {
   document: ReportTemplateDocument;
+  spreadsheetSyncSource?: SpreadsheetDocument;
   dirty: boolean;
   selectionTarget?: ReportSelectionTarget;
   activeMeta?: MetadataBag;

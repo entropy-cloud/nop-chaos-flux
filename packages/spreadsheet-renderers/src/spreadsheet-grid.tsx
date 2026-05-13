@@ -4,7 +4,7 @@ import {
   type SpreadsheetRange,
   type SpreadsheetFrozenPane,
 } from '@nop-chaos/spreadsheet-core';
-import { ContextMenu, ContextMenuTrigger } from '@nop-chaos/ui';
+import { Button, ContextMenu, ContextMenuTrigger, Input } from '@nop-chaos/ui';
 import type { SpreadsheetHostSnapshot, SpreadsheetBridge } from './bridge.js';
 import { mapCellStyle } from './cell-style-map.js';
 import {
@@ -317,9 +317,10 @@ export function SpreadsheetGrid({
         onDragLeave={() => onFieldDragLeave?.()}
       >
         {isEditing ? (
-          <input
+          <Input
             type="text"
             className="ss-cell-edit-input"
+            size="sm"
             value={editValue}
             onChange={(e) => onEditValueChange(e.target.value)}
             onBlur={onEditSave}
@@ -546,14 +547,15 @@ export function SpreadsheetGrid({
                       }
                     }}
                   >
-                    <button
-                      type="button"
+                    <Button
                       className="ss-row-header-button"
+                      variant="ghost"
+                      size="sm"
                       aria-label={`Select row ${r + 1}`}
                       onClick={(event) => onSelectRow(r, event.shiftKey)}
                     >
                       {r + 1}
-                    </button>
+                    </Button>
                     <div
                       className="ss-row-resize-handle"
                       data-slot="spreadsheet-row-resize-handle"

@@ -44,10 +44,11 @@ export function ToolbarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-label={title}
       aria-pressed={active}
       className={cn('flex-shrink-0', active && 'bg-accent text-accent-foreground')}
     >
-      {Icon && <Icon className="w-4 h-4" />}
+      {Icon && <Icon className="w-4 h-4" aria-hidden="true" />}
     </Button>
   );
 }

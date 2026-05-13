@@ -236,6 +236,16 @@ describe('createReportDesignerCore', () => {
     );
   });
 
+  it('tracks the last spreadsheet sync source reference for renderer short-circuiting', () => {
+    const nextSpreadsheet = cloneStructured(doc.spreadsheet);
+
+    core.syncSpreadsheetDocument(nextSpreadsheet);
+
+    const snapshot = core.getSnapshot();
+    expect(snapshot.spreadsheetSyncSource).toBe(nextSpreadsheet);
+    expect(snapshot.document.spreadsheet).not.toBe(nextSpreadsheet);
+  });
+
   it('syncSpreadsheetDocument participates in undo history', async () => {
     const nextSpreadsheet = cloneStructured(doc.spreadsheet);
     nextSpreadsheet.workbook.sheets[0]!.cells = {

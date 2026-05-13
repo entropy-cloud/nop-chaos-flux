@@ -31,6 +31,7 @@
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
     "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",

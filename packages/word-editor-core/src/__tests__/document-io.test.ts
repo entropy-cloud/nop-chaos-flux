@@ -249,6 +249,17 @@ describe('loadDatasets', () => {
   it('returns empty array when nothing saved', () => {
     expect(loadDatasets()).toEqual([]);
   });
+
+  it('drops invalid persisted dataset entries instead of blindly casting JSON', () => {
+    localStorageState.current._store[DATASET_STORAGE_KEY] = JSON.stringify([
+      { id: 'good', name: 'Users', description: '', type: 'sql', columns: [] },
+      { id: 'bad', name: '', description: '', type: 'invalid', columns: 'oops' },
+    ]);
+
+    expect(loadDatasets()).toEqual([
+      { id: 'good', name: 'Users', description: '', type: 'sql', columns: [] },
+    ]);
+  });
 });
 
 describe('loadRecoveredState', () => {

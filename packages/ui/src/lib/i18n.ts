@@ -12,6 +12,15 @@ const messages: Record<string, string> = {
   'flux.sidebar.toggle': 'Toggle sidebar',
 };
 
+let i18nGetter: ((key: string) => string) | null = null;
+
+export function setI18nGetter(getter: ((key: string) => string) | null) {
+  i18nGetter = getter;
+}
+
 export function t(key: string) {
+  if (i18nGetter) {
+    return i18nGetter(key);
+  }
   return messages[key] ?? key;
 }

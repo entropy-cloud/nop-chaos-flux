@@ -38,6 +38,7 @@ describe('report-designer page snapshot selectors', () => {
     const document = createReportTemplateDocument(spreadsheet, 'Selector Report');
     const baseSnapshot = {
       document,
+      spreadsheetSyncSource: undefined,
       dirty: false,
       canUndo: false,
       canRedo: false,
@@ -88,6 +89,12 @@ describe('report-designer page snapshot selectors', () => {
 
     expect(renderCount).toBe(2);
     expect(screen.getByTestId('report-dirty').textContent).toBe('true');
+
+    act(() => {
+      store.update({ ...baseSnapshot, spreadsheetSyncSource: spreadsheet });
+    });
+
+    expect(renderCount).toBe(3);
   });
 
   it('skips rerenders when unrelated embedded spreadsheet fields change', () => {

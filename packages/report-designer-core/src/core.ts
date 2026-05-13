@@ -59,6 +59,7 @@ function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntim
 
   return {
     document: state.document,
+    spreadsheetSyncSource: state.spreadsheetSyncSource,
     dirty: state.undoStack.length > 0,
     selectionTarget: state.selectionTarget,
     activeMeta: meta,
@@ -96,6 +97,7 @@ export function createReportDesignerCore(
 
   const store = createStore<ReportDesignerInternalState>(() => ({
     document: initialDocument,
+    spreadsheetSyncSource: undefined,
     selectionTarget: initialSelectionTarget,
     inspector: {
       open: false,
@@ -410,6 +412,7 @@ export function createReportDesignerCore(
       });
 
       if (changed) {
+        store.setState((current) => ({ ...current, spreadsheetSyncSource: nextDocument }));
         void refreshDerivedState();
       }
     },

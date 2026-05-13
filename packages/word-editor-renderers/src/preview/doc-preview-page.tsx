@@ -66,8 +66,9 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
             size="icon-sm"
             onClick={onBack}
             title={t('flux.wordEditor.back')}
+            aria-label={t('flux.wordEditor.back')}
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
           </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
@@ -93,8 +94,9 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
             size="icon-sm"
             onClick={onBack}
             title={t('flux.wordEditor.back')}
+            aria-label={t('flux.wordEditor.back')}
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
           </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />

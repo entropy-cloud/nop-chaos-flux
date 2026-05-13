@@ -4,6 +4,7 @@ import type { WordDocument } from './template-model.js';
 import type { Dataset } from './dataset-model.js';
 import type { DocChart } from './chart-model.js';
 import type { DocCode } from './code-model.js';
+import { createDataColumn, createDataset, validateDataset } from './dataset-model.js';
 
 const STORAGE_KEY = 'nop-word-editor-document';
 const DATASET_STORAGE_KEY = 'nop-word-editor-datasets';
@@ -160,6 +161,55 @@ export function saveDatasets(datasets: Dataset[]): void {
   getStorage()?.setItem(DATASET_STORAGE_KEY, JSON.stringify(datasets));
 }
 
+function normalizeDataset(value: unknown): Dataset | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const candidate = {
+    name: typeof record.name === 'string' ? record.name : undefined,
+    description: typeof record.description === 'string' ? record.description : '',
+    type: typeof record.type === 'string' ? record.type : undefined,
+    columns: Array.isArray(record.columns)
+      ? record.columns.map((column) => {
+          if (!column || typeof column !== 'object' || Array.isArray(column)) {
+            return {};
+          }
+
+          const columnRecord = column as Record<string, unknown>;
+          return {
+            name: typeof columnRecord.name === 'string' ? columnRecord.name : undefined,
+            label: typeof columnRecord.label === 'string' ? columnRecord.label : undefined,
+            description:
+              typeof columnRecord.description === 'string' ? columnRecord.description : undefined,
+            type: typeof columnRecord.type === 'string' ? columnRecord.type : undefined,
+          };
+        })
+      : undefined,
+  };
+
+  const validation = validateDataset(candidate);
+  if (!validation.valid) {
+    return null;
+  }
+
+  return createDataset({
+    id: typeof record.id === 'string' && record.id.trim() ? record.id : undefined,
+    name: candidate.name,
+    description: candidate.description ?? '',
+    type: candidate.type as Dataset['type'],
+    columns: (candidate.columns ?? []).map((column) =>
+      createDataColumn({
+        name: column.name,
+        label: column.label,
+        description: column.description,
+        type: column.type as Dataset['columns'][number]['type'],
+      }),
+    ),
+  });
+}
+
 export function loadDatasets(): Dataset[] {
   try {
     const storage = getStorage();
@@ -167,7 +217,14 @@ export function loadDatasets(): Dataset[] {
 
     const raw = storage.getItem(DATASET_STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as Dataset[];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((dataset) => normalizeDataset(dataset))
+      .filter((dataset): dataset is Dataset => dataset !== null);
   } catch {
     return [];
   }
