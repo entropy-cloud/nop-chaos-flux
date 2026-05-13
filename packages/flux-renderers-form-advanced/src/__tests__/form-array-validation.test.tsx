@@ -12,7 +12,7 @@ import {
   env,
   formStateProbeRenderer,
   submitCalls,
-} from '@nop-chaos/flux-renderers-form/test-support';
+} from '../test-support.js';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 

@@ -9,7 +9,7 @@ import {
   env,
   formStateProbeRenderer,
   submitCalls,
-} from '@nop-chaos/flux-renderers-form/test-support';
+} from '../test-support.js';
 import { allFormDefs } from './tree-checkbox-fields-test-helpers.js';
 
 describe('tree controls - value binding and form integration', () => {

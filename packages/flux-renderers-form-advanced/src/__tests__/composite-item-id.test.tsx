@@ -7,7 +7,7 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index.js';
-import { env, formStateProbeRenderer } from '@nop-chaos/flux-renderers-form/test-support';
+import { env, formStateProbeRenderer } from '../test-support.js';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 
