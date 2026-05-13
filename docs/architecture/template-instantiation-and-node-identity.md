@@ -7,7 +7,7 @@ This document is the canonical architecture note for:
 - compile-time template structure
 - runtime node instances
 - `cid` / live runtime node identity
-- repeated-instance identity for table rows and future `type: 'loop'`
+- repeated-instance identity for table rows, tree nodes, and future `type: 'loop'`
 - the relationship between node state, scope, registry, debugger, and DOM markers
 
 ## Main Rule
@@ -237,6 +237,14 @@ These identify structure inside the compiled template. `templateNodeId` is globa
 - `instancePath`
 
 `instancePath` matters specifically for repeated materialization. For singleton nodes `instancePath` is `undefined`.
+
+Current repeated-renderer baseline:
+
+- table row regions append `{ repeatedTemplateId: 'table-row:<ownerId>', instanceKey: rowKey }`
+- tree node regions append `{ repeatedTemplateId: 'tree-node:<ownerId>', instanceKey: nodeKey }`
+- structural loop/recurse append `{ repeatedTemplateId: 'loop:<ownerId>', instanceKey: itemKey }`
+
+The renderer that owns a repeated boundary must pass the accumulated absolute `instancePath` into repeated child region renders so debugger lookup, action context, diagnostics, and nested component handles stay aligned with the concrete repeated instance rather than collapsing back to the structural template node.
 
 ### Singleton optimization
 

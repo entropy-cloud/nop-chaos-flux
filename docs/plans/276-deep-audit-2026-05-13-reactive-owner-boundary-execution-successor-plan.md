@@ -1,6 +1,6 @@
 # 276 Deep Audit 2026-05-13 Reactive Owner Boundary Execution Successor Plan
 
-> Plan Status: planned
+> Plan Status: in progress
 > Last Reviewed: 2026-05-13
 > Source: `docs/plans/265-deep-audit-2026-05-13-reactive-owner-boundary-successor-plan.md`, `docs/analysis/2026-05-13-deep-audit-batch1/summary.md`, `docs/analysis/2026-05-12-deep-audit-full/final-review-results-01-05.md`, `docs/plans/00-plan-authoring-and-execution-guide.md`
 
@@ -42,16 +42,16 @@ Targets: `packages/flux-react/src/hook-subscriptions.ts`, `packages/flux-runtime
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] Re-audit each in-scope retained ID against the live repo.
-- [ ] Land the first closure-ready reactive/owner-boundary fixes.
-- [ ] Record explicit successor ownership for any surviving larger reshape.
+- [x] Re-audit each in-scope retained ID against the live repo.
+- [x] Land the first closure-ready reactive/owner-boundary fixes.
+- [x] Record explicit successor ownership for any surviving larger reshape.
 
 Exit Criteria:
 
 - [ ] Every in-scope retained ID has an explicit execution decision.
-- [ ] Any landed fix has focused proof.
-- [ ] Relevant owner docs are updated, or `No owner-doc update required` is recorded.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Any landed fix has focused proof.
+- [x] Relevant owner docs are updated, or `No owner-doc update required` is recorded.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ## Closure Gates
 
@@ -61,7 +61,12 @@ Exit Criteria:
 
 ## Deferred But Adjudicated
 
-None yet.
+### Remaining reactive precision and owner-boundary backlog after landing `09-02`
+
+- Classification: `out-of-scope improvement`
+- Why Not Blocking Closure: This execution slice intentionally closed the smallest live repeated-instance identity defect first. The remaining retained items (`02-14`, `02-16`, `04-04`, `05-01`, `05-05`, `05-06`, `05-08`, `07-01`, `07-02`) still require their own re-audit/adjudication before the plan can close, so they remain explicitly plan-owned rather than silently deferred.
+- Successor Required: `no`
+- Successor Path: `N/A yet; still owned by this plan`
 
 ## Non-Blocking Follow-ups
 
