@@ -78,6 +78,89 @@ afterEach(() => {
 });
 
 describe('variant-field generic owner contracts', () => {
+  it('does not register child contracts for default projected form ownership', () => {
+    state.parentScope = {
+      id: 'form-scope',
+      path: '$form',
+      get: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      has: vi.fn(() => true),
+      readOwn: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      readVisible: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      materializeVisible: vi.fn(() => ({ kind: 'text', value: 'alpha' })),
+      update: vi.fn(),
+      merge: vi.fn(),
+    };
+    state.parentForm = {
+      scopeId: 'form-owner',
+      id: 'form-1',
+      name: 'demo',
+      store: { getState: vi.fn(() => ({ values: { kind: { value: 'alpha' } } })) },
+      getScopeState: vi.fn(() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
+      validateAll: vi.fn(async () => ({ ok: true, errors: [], fieldErrors: {} })),
+      notifyFieldHidden: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
+      setValue: vi.fn(),
+      setValues: vi.fn(),
+      getFieldState: vi.fn(),
+      validateAt: vi.fn(),
+      validateField: vi.fn(),
+      validateForm: vi.fn(),
+      getField: vi.fn(),
+      getDependents: vi.fn(() => []),
+      findByPrefix: vi.fn(() => []),
+      getChildren: vi.fn(() => []),
+      getError: vi.fn(),
+      isValidating: vi.fn(() => false),
+      isTouched: vi.fn(() => false),
+      isDirty: vi.fn(() => false),
+      isVisited: vi.fn(() => false),
+      touchField: vi.fn(),
+      visitField: vi.fn(),
+      clearErrors: vi.fn(),
+      submit: vi.fn(),
+      reset: vi.fn(),
+      appendValue: vi.fn(),
+      prependValue: vi.fn(),
+      insertValue: vi.fn(),
+      removeValue: vi.fn(),
+      moveValue: vi.fn(),
+      swapValue: vi.fn(),
+      replaceValue: vi.fn(),
+      registerField: vi.fn(),
+      updateFieldRegistration: vi.fn(),
+      validateSubtree: vi.fn(async () => ({ ok: true, errors: [], fieldErrors: {} })),
+    };
+
+    render(
+      <VariantFieldRenderer
+        id="variant"
+        path="$.body[0]"
+        schema={{ type: 'variant-field', name: 'kind', variants: [] } as any}
+        templateNode={{ validationOwnerPlan: { boundary: 'inherit-owner' } } as any}
+        node={{} as any}
+        meta={{} as any}
+        props={{
+          name: 'kind',
+          selectorMode: 'tabs',
+          variants: [{ key: 'text', label: 'Text', content: [{ type: 'input-text', name: 'value' }] }],
+        }}
+        regions={{}}
+        events={{}}
+        helpers={{
+          evaluate: vi.fn(),
+          createScope: vi.fn(() => state.parentScope),
+          dispatch: vi.fn(),
+          render: vi.fn(),
+          evaluateCompiled: vi.fn(),
+          executeSource: vi.fn(),
+        } as any}
+      />,
+    );
+
+    expect(state.parentForm.registerChildContract).not.toHaveBeenCalled();
+  });
+
   it('routes hidden paths and validation context through non-form owners without child contracts', () => {
     state.parentScope = {
       id: 'page-scope',
@@ -104,7 +187,7 @@ describe('variant-field generic owner contracts', () => {
         id="variant"
         path="$.body[0]"
         schema={{ type: 'variant-field', name: 'kind', variants: [] } as any}
-        templateNode={{ validationOwnerPlan: { boundary: 'create-owner', childContractMode: 'recurse-submit' } } as any}
+        templateNode={{ validationOwnerPlan: { boundary: 'inherit-owner' } } as any}
         node={{} as any}
         meta={{} as any}
         props={{

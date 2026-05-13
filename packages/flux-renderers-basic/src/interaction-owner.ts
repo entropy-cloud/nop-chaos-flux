@@ -22,6 +22,11 @@ export function useOwnedAxisValue<TValue extends string | number>(input: {
       ? (scopeData) => getIn(scopeData, statePath) as TValue | undefined
       : () => UNUSED as unknown as TValue | undefined,
     Object.is,
+    {
+      enabled: ownership === 'scope' && Boolean(statePath),
+      fallback: undefined,
+      paths: ownership === 'scope' && statePath ? [statePath] : undefined,
+    },
   );
 
   const [localValue, setLocalValue] = useState<TValue>(

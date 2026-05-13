@@ -424,7 +424,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   React.useEffect(() => {
     const owner = parentForm ?? parentValidationOwner;
     const childOwner = parentForm ? variantForm : variantValidationOwner;
-    const hasIndependentChildOwner = Boolean(parentForm);
+    const ownerPlan = props.templateNode.validationOwnerPlan;
+    const hasIndependentChildOwner =
+      ownerPlan?.boundary === 'create-owner' && ownerPlan.childContractMode === 'recurse-submit';
 
     if (!owner || !childOwner || !name || !hasIndependentChildOwner) {
       return;
@@ -460,7 +462,14 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     return () => {
       owner.unregisterChildContract(childOwnerId);
     };
-  }, [name, parentForm, parentValidationOwner, variantForm, variantValidationOwner]);
+  }, [
+    name,
+    parentForm,
+    parentValidationOwner,
+    props.templateNode.validationOwnerPlan,
+    variantForm,
+    variantValidationOwner,
+  ]);
 
   const renderSelector = () => {
     if (readOnly || effectiveDisabled) return null;

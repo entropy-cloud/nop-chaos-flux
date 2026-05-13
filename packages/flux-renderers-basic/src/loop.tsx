@@ -5,8 +5,7 @@ import type {
   StructuralLoopBindings,
   StructuralLoopRenderContext,
 } from '@nop-chaos/flux-core';
-import { useRenderInstancePath } from '@nop-chaos/flux-react';
-import { StructuralLoopContext } from '@nop-chaos/flux-react/unstable';
+import { StructuralLoopProvider, useRenderInstancePath } from '@nop-chaos/flux-react';
 import type { LoopSchema } from './schemas.js';
 import {
   createStructuralRepeatedTemplateId,
@@ -56,9 +55,7 @@ function LoopProvider(props: LoopProviderProps) {
   );
 
   return (
-    <StructuralLoopContext.Provider value={contextValue}>
-      {props.children}
-    </StructuralLoopContext.Provider>
+    <StructuralLoopProvider value={contextValue}>{props.children}</StructuralLoopProvider>
   );
 }
 
