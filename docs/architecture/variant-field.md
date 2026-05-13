@@ -79,6 +79,12 @@ interface VariantOption {
 3. 如果仍无法判定，再执行 `detectVariantAction`
 4. 最后 fallback 到 `defaultVariant`
 
+当前 live baseline 还要求一条 owner 规则：
+
+- 当前 active variant 必须始终回到 parent owner 当前值推导出的 canonical 结果
+- `match` / `detectVariantAction` 得到的 owner-derived variant 高于本地 selector 态
+- 用户手动切换只允许作为一次切换事务中的短暂 override；一旦 parent value 已写回并可重新判定，active branch 必须重新跟随 owner-derived result，而不是继续长期保留旧的本地选择
+
 ### Why Built-In Matching First
 
 大多数常见场景不需要动态检测 action。
@@ -169,6 +175,7 @@ Mounted-subtree rule:
 - built-in match + optional `detectVariantAction`
 - switch 时使用目标 variant `initialValue` 或目标 variant `transformInAction`
 - 切换后直接把结果写回 parent field value
+- active variant 的最终事实源是 parent-owned current value 的 canonical detection result；本地 selector state 只能在 owner 尚未重新判定前短暂存在，不能长期压过 `matchedKey` / `detectedKey`
 - `detectVariantAction` 与 async switch migration 采用 latest-request-wins sequencing；superseded completion 会被静默丢弃，不再覆盖当前 active variant / parent value
 - 当前并没有完整落地 field-level / variant-level `validateValueAction` 与 `transformOutAction` pipeline
 

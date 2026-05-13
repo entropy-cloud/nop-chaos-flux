@@ -177,11 +177,11 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const switchRequestIdRef = React.useRef(0);
 
   const activeKey = React.useMemo(() => {
-    if (userSelectedKey) return userSelectedKey;
     if (matchedKey) return matchedKey;
     if (detectedKey) return detectedKey;
+    if (userSelectedKey) return userSelectedKey;
     return initialKey;
-  }, [matchedKey, userSelectedKey, detectedKey, initialKey]);
+  }, [matchedKey, detectedKey, userSelectedKey, initialKey]);
 
   React.useEffect(() => {
     if (userSelectedKey && matchedKey && matchedKey !== userSelectedKey) {

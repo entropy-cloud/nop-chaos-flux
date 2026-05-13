@@ -2,7 +2,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { useCurrentValidationScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentForm, useCurrentValidationScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
@@ -70,6 +70,27 @@ function ValidationOwnerExternalErrorProbe() {
 const validationOwnerExternalErrorProbeRenderer: RendererDefinition = {
   type: 'validation-owner-external-error-probe',
   component: ValidationOwnerExternalErrorProbe,
+};
+
+function SetPayloadValueProbe() {
+  const form = useCurrentForm();
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => {
+        form?.setValue('payload', { amount: '42' });
+      }}
+    >
+      Set payload to amount
+    </Button>
+  );
+}
+
+const setPayloadValueProbeRenderer: RendererDefinition = {
+  type: 'set-payload-value-probe',
+  component: SetPayloadValueProbe,
 };
 
 const variantSchema = {
@@ -429,6 +450,91 @@ describe('variant-field renderer selector behavior', () => {
     const container = document.querySelector('[data-active-variant]');
     expect(container?.querySelector('[data-slot="variant-field-readonly-body"]')).toBeTruthy();
     expect(container?.querySelector('[data-slot="variant-field-selector"]')).toBeNull();
+  });
+
+  it('follows owner-derived variant after an external write even after a manual switch', async () => {
+    cleanup();
+    const importLoader = {
+      load: async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async (_method: string, payload: Record<string, unknown> | undefined) => ({
+            ok: true,
+            data:
+              payload && typeof payload.value === 'object' && payload.value !== null && 'amount' in payload.value
+                ? { variant: 'number' }
+                : { variant: 'text' },
+          }),
+        }),
+      }),
+    };
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      ...formAdvancedRendererDefinitions,
+      setPayloadValueProbeRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-selector.test.tsx#4b"
+        schema={{
+          type: 'form',
+          data: {
+            payload: null,
+          },
+          body: [
+            {
+              type: 'set-payload-value-probe',
+            },
+            {
+              type: 'variant-field',
+              name: 'payload',
+              label: 'Payload',
+              defaultVariant: 'text',
+              'xui:imports': [{ from: 'variant-lib', as: 'variantLib' }],
+              detectVariantAction: { action: 'variantLib:detect' },
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  content: [{ type: 'input-text', name: 'value', label: 'Text Value' }],
+                  initialValue: { value: '' },
+                },
+                {
+                  key: 'number',
+                  label: 'Number',
+                  content: [{ type: 'input-text', name: 'amount', label: 'Amount' }],
+                  initialValue: { amount: '' },
+                },
+              ],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      const container = document.querySelector('[data-active-variant]');
+      expect(container?.getAttribute('data-active-variant')).toBe('text');
+    });
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Number' }));
+
+    await waitFor(() => {
+      const container = document.querySelector('[data-active-variant]');
+      expect(container?.getAttribute('data-active-variant')).toBe('number');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Set payload to amount' }));
+
+    await waitFor(() => {
+      const container = document.querySelector('[data-active-variant]');
+      expect(container?.getAttribute('data-active-variant')).toBe('number');
+      expect(screen.getByLabelText('Amount')).toBeTruthy();
+    });
   });
 
   it('publishes projected variant scope through useScopeSelector', async () => {
