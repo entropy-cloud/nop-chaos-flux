@@ -412,5 +412,7 @@ export interface RendererRuntime {
     page?: PageRuntime;
     validation?: CompiledFormValidationModel;
     lifecycle?: FormLifecycleHandlers;
+    statusPath?: string;
+    valuesPath?: string;
   }): FormRuntime;
 }
