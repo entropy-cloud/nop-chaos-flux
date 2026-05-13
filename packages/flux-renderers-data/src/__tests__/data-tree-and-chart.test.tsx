@@ -243,6 +243,35 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
     );
   });
 
+  it('passes repeated instancePath into tree node child renderers', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer([nodeInstanceProbeRenderer]);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-node-instance-path"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tree',
+              data: '${nodes}',
+              node: { type: 'node-instance-probe' },
+            },
+          ],
+        }}
+        data={{
+          nodes: [{ id: 'root', label: 'Root', children: [{ id: 'child', label: 'Child' }] }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect((await screen.findByTestId('node-instance-probe')).textContent ?? '').toBe(
+      '[{"repeatedTemplateId":"tree-node:_.body_0_","instanceKey":"root"}]',
+    );
+  });
+
   it('collapses child nodes when the chevron trigger is clicked', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer();

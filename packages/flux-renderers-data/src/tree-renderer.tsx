@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import type { InstanceFrame, RendererComponentProps } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
@@ -22,6 +22,10 @@ interface TreeNodeRecord {
 const DEFAULT_CHILDREN_KEY = 'children';
 const DEFAULT_LABEL_FIELD = 'label';
 const DEFAULT_KEY_FIELD = 'id';
+
+function createTreeNodeRepeatedTemplateId(ownerId: string): string {
+  return `tree-node:${ownerId}`;
+}
 
 function isTreeNodeRecord(value: unknown): value is TreeNodeRecord {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -64,6 +68,8 @@ function TreeNodeRenderer(props: {
   keyField: string;
   expandOnClickNode: boolean;
   initiallyExpanded?: boolean | number;
+  parentInstancePath?: readonly InstanceFrame[];
+  repeatedTemplateId: string;
 }) {
   const {
     owner,
@@ -76,8 +82,11 @@ function TreeNodeRenderer(props: {
     keyField,
     expandOnClickNode,
     initiallyExpanded,
+    parentInstancePath,
+    repeatedTemplateId,
   } = props;
   const nodeKey = toNodeKey(node, keyField, index);
+  const instancePath = [...(parentInstancePath ?? []), { repeatedTemplateId, instanceKey: nodeKey }];
   const childNodes = toTreeNodes(getIn(node, childrenKey));
   const hasChildren = childNodes.length > 0;
   const [open, setOpen] = useState(
@@ -87,6 +96,7 @@ function TreeNodeRenderer(props: {
   const nodeContent = owner.regions.node
     ? owner.regions.node.render({
         bindings: { node, index, depth, key: nodeKey, parentNode },
+        instancePath,
       })
     : null;
   const interactiveNode = hasChildren && expandOnClickNode;
@@ -152,6 +162,8 @@ function TreeNodeRenderer(props: {
                   keyField={keyField}
                   expandOnClickNode={expandOnClickNode}
                   initiallyExpanded={initiallyExpanded}
+                  parentInstancePath={instancePath}
+                  repeatedTemplateId={repeatedTemplateId}
                 />
               ))}
             </div>
@@ -183,6 +195,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   });
   const statusPath =
     typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;
+  const repeatedTemplateId = createTreeNodeRepeatedTemplateId(props.id);
 
   useStatusPathPublication(props.node.scope.parent ?? props.node.scope, statusPath, {
     kind: 'tree',
@@ -221,11 +234,13 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
           node={node}
           index={index}
           depth={0}
+          parentInstancePath={props.node.instancePath}
           childrenKey={childrenKey}
           labelField={labelField}
           keyField={keyField}
           expandOnClickNode={expandOnClickNode}
           initiallyExpanded={schemaProps.initiallyExpanded as boolean | number | undefined}
+          repeatedTemplateId={repeatedTemplateId}
         />
       ))}
     </div>
