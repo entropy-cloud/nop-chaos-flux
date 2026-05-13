@@ -29,7 +29,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
 
-test('captures node and hover toolbar html', async ({ page }, testInfo) => {
+test.skip('captures node and hover toolbar html', async ({ page }, testInfo) => {
   await openFlowDesigner(page);
 
   const shotsDir = join(testInfo.outputDir, 'screenshots');

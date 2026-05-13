@@ -67,18 +67,21 @@ Representative current `@nop-chaos/ui` examples:
 
 ### 0. Current Enforcement Status
 
-This document defines authoring vocabulary, not a fully enforced compiler guarantee.
+This document defines the live authoring vocabulary enforced by compiler-integrated validation where renderer prop contracts register finite shapes.
 
-Current compiler-integrated validation can detect many structural issues and unknown bare properties, but it does not generically validate ordinary renderer prop values against `propContracts.shape` literal/union ranges. For example, `button.variant: "primary"` is an invalid authoring value by this document, but current `validateSchema(...)` / `strictValidation` does not reject it solely because `primary` is outside the `button.variant` enum.
+Current compiler baseline:
+
+- `validateSchema(...)` and compile diagnostics now validate statically knowable renderer prop values against registered `propContracts.shape` `literal` / `union` / primitive / array / object constraints.
+- `button.variant: "primary"` now emits `invalid-property-value` because `primary` is outside the public `button.variant` vocabulary.
+- Dynamic expressions such as `button.variant: "${expr}"` and source-shaped authored values are intentionally skipped by compile-time finite-value validation because their runtime result is not statically knowable.
+- Invalid finite prop values are skipped from prop lowering the same way error-severity unknown properties are skipped, so compile output does not silently normalize unsupported authored values into renderer props.
 
 Relevant implementation baseline:
 
 - `packages/flux-compiler/src/schema-compiler/shape-validation-utils.ts` uses `propContracts` and `propSchema` to build accepted key sets.
-- `packages/flux-compiler/src/schema-compiler/shape-validation.ts` reports unknown keys and invokes renderer-owned `schemaValidator` hooks.
-- `packages/flux-renderers-basic/src/basic-renderer-definitions.ts` declares `button.variant` as a union of literals for tooling/metadata.
-- `packages/flux-compiler/src/schema-compiler/host-action-validation.ts` validates `union`/`literal` shapes for host capability action args, but that path is not applied to ordinary renderer props.
-
-Any future prop-value validation should enforce this vocabulary in compiler diagnostics, especially for closed renderer prop contracts.
+- `packages/flux-compiler/src/schema-compiler/shape-validation.ts` now reports both unknown keys and invalid finite prop values, while still invoking renderer-owned `schemaValidator` hooks for nested/domain-specific validation.
+- `packages/flux-compiler/src/schema-compiler/flux-value-shape-validation.ts` is the reusable `FluxValueShape` validator shared by ordinary renderer props and host capability args.
+- `packages/flux-renderers-basic/src/basic-renderer-definitions.ts` declares `button.variant` and `tabs.variant` as finite unions consumed by validation.
 
 ### 1. Do Not Create A Global `variant` Enum
 
@@ -130,7 +133,7 @@ Toolbar/workbench buttons are often authored by semantic role: save, delete, pub
 
 Those should not overload `variant` with domain values such as `primary`, `accent`, or `danger`.
 
-This is target guidance for new or migrated contracts. Existing Flow Designer and Report Designer toolbar schemas still use `variant` today and remain live until a migration is explicitly implemented.
+This is the live baseline for supported toolbar contracts owned by this repo. Flow Designer and Report Designer toolbar schemas now use `intent` instead of semantic `variant` values.
 
 Preferred new contract:
 

@@ -7,7 +7,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
 
-test('debug core state via React fiber', async ({ page }) => {
+test.skip('debug core state via React fiber', async ({ page }) => {
   await openFlowDesigner(page);
 
   // Expose the React internals to check the snapshot value

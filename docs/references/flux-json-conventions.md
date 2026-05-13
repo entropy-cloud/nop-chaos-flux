@@ -331,7 +331,7 @@ Toolbar/workbench action buttons that need values like `primary`, `danger`, `war
       { "type": "title", "tpl": "${doc.name}" },
       { "type": "badge", "level": "success", "text": "已保存" },
       { "type": "divider" },
-      { "type": "button", "action": "designer:save", "icon": "save", "variant": "accent" }
+      { "type": "button", "action": "designer:save", "icon": "save", "intent": "primary" }
     ]
   }
 }

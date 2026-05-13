@@ -57,7 +57,7 @@
     {
       "type": "button",
       "label": "新增用户",
-      "variant": "primary",
+      "variant": "default",
       "onClick": {
         "action": "openDialog",
         "args": {
@@ -104,7 +104,7 @@
     {
       "type": "button",
       "label": "批量删除",
-      "variant": "danger",
+      "variant": "destructive",
       "disabled": "${!$crud.hasSelection}",
       "onClick": {
         "action": "ajax",

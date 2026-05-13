@@ -13,7 +13,7 @@
       "id": "save",
       "label": "保存",
       "action": "report-designer:save",
-      "variant": "primary"
+      "intent": "primary"
     }
   ]
 }

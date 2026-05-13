@@ -41,12 +41,14 @@ The first compiler-integrated diagnostics slice is now implemented.
 - `validateSchema(...)` is available as a convenience adapter that builds a compiler and delegates to that same analysis path.
 - built-in `xui:imports` validation now runs through a namespace validator instead of falling into generic passthrough.
 - closed prop models can now report unknown bare keys before permissive prop lowering; namespaced passthrough remains a directional extension-channel concern rather than a current `TemplateNode` field or compiler-owned normalized prop surface.
+- statically knowable ordinary renderer prop values now validate against registered `propContracts.shape` using shared `FluxValueShape` semantics, and invalid finite values emit `invalid-property-value` diagnostics.
 - renderer-owned `schemaValidator` rollout is now active for higher-value shape checks in shipped renderers such as `form` and `table`.
 - representative docs example coverage now exists through diagnostics tests that validate `docs/examples/user-management-schema.md` with the shared `validateSchema(...)` path.
 
 Current limitation:
 
 - unknown bare-key diagnostics are only reliable for renderers that expose a closed prop surface such as `propSchema` and/or richer renderer-owned validation; open-ended renderers still need incremental metadata or `schemaValidator` contributions before strict unknown-key checks become authoritative.
+- compile-time finite-value validation intentionally skips dynamic expressions and source-shaped authored values because they require runtime evaluation.
 
 ## Problem
 

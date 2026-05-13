@@ -10,7 +10,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await page.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => {});
 }
 
-test('debug snapshot via React fiber tree', async ({ page }) => {
+test.skip('debug snapshot via React fiber tree', async ({ page }) => {
   await openFlowDesigner(page);
 
   const collapseButton = page.locator('[data-testid="collapse-palette"]');

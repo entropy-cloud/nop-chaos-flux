@@ -45,7 +45,7 @@ async function _getDebuggerApi(page: Page) {
   });
 }
 
-test.describe('Subagent-A: Debugger API deep inspection across pages', () => {
+test.describe.skip('Subagent-A: Debugger API deep inspection across pages', () => {
   test('getNodeDiagnostics returns well-formed result on flux-basic page', async ({ page }) => {
     const errors = collectPageErrors(page);
     await page.goto('/#/flux-basic', { waitUntil: 'load' });
@@ -173,7 +173,7 @@ test.describe('Subagent-A: Debugger API deep inspection across pages', () => {
   });
 });
 
-test.describe('Subagent-A: Cross-page navigation stress', () => {
+test.describe.skip('Subagent-A: Cross-page navigation stress', () => {
   test('rapid sequential navigation through all 9 domain pages collects zero errors', async ({
     page,
   }) => {
@@ -241,7 +241,7 @@ test.describe('Subagent-A: Cross-page navigation stress', () => {
   });
 });
 
-test.describe('Subagent-A: Flow Designer interaction stress', () => {
+test.describe.skip('Subagent-A: Flow Designer interaction stress', () => {
   test('click multiple canvas nodes sequentially and verify inspector updates', async ({
     page,
   }) => {
@@ -300,7 +300,7 @@ test.describe('Subagent-A: Flow Designer interaction stress', () => {
   });
 });
 
-test.describe('Subagent-A: Concurrency stress — rapid button clicking', () => {
+test.describe.skip('Subagent-A: Concurrency stress — rapid button clicking', () => {
   test('rapidly click Search Directory button 5 times on flux-basic', async ({ page }) => {
     test.setTimeout(60_000);
     const errors = collectPageErrors(page);
@@ -354,7 +354,7 @@ test.describe('Subagent-A: Concurrency stress — rapid button clicking', () => 
   });
 });
 
-test.describe('Subagent-A: Form field edge cases — rapid fill, clear, submit', () => {
+test.describe.skip('Subagent-A: Form field edge cases — rapid fill, clear, submit', () => {
   test('rapidly fill and clear input-text field 5 times', async ({ page }) => {
     const errors = collectPageErrors(page);
     await page.goto('/#/lab/input-text', { waitUntil: 'domcontentloaded' });
@@ -424,7 +424,7 @@ test.describe('Subagent-A: Form field edge cases — rapid fill, clear, submit',
   });
 });
 
-test.describe('Subagent-A: Report Designer basic interaction', () => {
+test.describe.skip('Subagent-A: Report Designer basic interaction', () => {
   test('click 5 different cells, verify inspector updates, no errors', async ({ page }) => {
     const errors = collectPageErrors(page);
     await page.goto('/#/report-designer', { waitUntil: 'domcontentloaded' });
@@ -472,7 +472,7 @@ test.describe('Subagent-A: Report Designer basic interaction', () => {
   });
 });
 
-test.describe('Subagent-A: Word Editor basic interaction', () => {
+test.describe.skip('Subagent-A: Word Editor basic interaction', () => {
   test('click canvas, type, click formatting buttons — no errors', async ({ page }) => {
     const errors = collectPageErrors(page);
     await page.goto('/#/word-editor', { waitUntil: 'domcontentloaded' });

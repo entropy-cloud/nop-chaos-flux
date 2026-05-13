@@ -695,7 +695,7 @@ type ToolbarItem =
       label?: string;
       disabled?: string;
       active?: string;
-      variant?: 'default' | 'accent' | 'danger'; // designer toolbar semantic vocabulary
+      intent?: 'neutral' | 'primary' | 'danger' | 'warning' | 'success' | 'info';
     };
 
 interface DesignerConfig {
@@ -740,7 +740,7 @@ interface DesignerConfig {
         "action": "designer:save",
         "icon": "save",
         "label": "保存",
-        "variant": "accent",
+        "intent": "primary",
         "disabled": "${!runtime.dirty}"
       }
     ]
@@ -765,7 +765,7 @@ interface DesignerConfig {
       {
         "type": "button",
         "label": "保存",
-        "variant": "accent",
+        "variant": "default",
         "disabled": "${!runtime.dirty}",
         "onClick": { "action": "designer:save" }
       }
@@ -796,7 +796,7 @@ const defaultToolbarItems: ToolbarItem[] = [
     type: 'button',
     action: 'designer:save',
     icon: 'save',
-    variant: 'primary',
+    intent: 'primary',
     disabled: '${!runtime.dirty}',
   },
 ];
@@ -933,7 +933,7 @@ const schema = {
 5. 网格开关 - `{ type: 'button', action: 'designer:toggle-grid', ... }`
 6. 撤销/重做 - `{ type: 'button', action: 'designer:undo', ... }`
 7. 恢复/导出 - `{ type: 'button', action: 'designer:restore', ... }`
-8. 保存 - `{ type: 'button', action: 'designer:save', variant: 'primary' }`
+8. 保存 - `{ type: 'button', action: 'designer:save', intent: 'primary' }`
 
 **面板分组**：
 
@@ -967,7 +967,7 @@ const schema = {
 
 - **表达式语法**：统一使用 `${xxx}`，不需要 `xxxOn` 后缀
 - **Action 语法**：简单 action 直接写 `{ "action": "designer:save" }`
-- **样式属性**：Button 用 `variant`，Badge 用 `level`。`designer-page.toolbar.items[].variant` 是 designer toolbar 自己的语义词汇：当前 live baseline 支持 `default`、`primary`、`danger`，再映射到实际 UI button variants；它不等同于通用 `ButtonSchema.variant` 枚举。
+- **样式属性**：Button 用组件私有 `variant`，Badge 用 `level`。`designer-page.toolbar.items[].intent` 用于 toolbar 动作语义，当前 live baseline 支持 `neutral`、`primary`、`danger`、`warning`、`success`、`info`，再映射到实际 UI button variants；它不等同于通用 `ButtonSchema.variant` 枚举。
 - **Icon 命名**：配置用 kebab-case，运行时转 PascalCase
 - **JSON Key**：统一 camelCase
 - **Config 与 Data 分离**：`config` 定义类型，`document` 存实例

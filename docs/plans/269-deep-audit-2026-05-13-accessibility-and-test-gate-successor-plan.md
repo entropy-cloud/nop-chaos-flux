@@ -1,6 +1,6 @@
 # 269 Deep Audit 2026-05-13 Accessibility And Test-Gate Successor Plan
 
-> Plan Status: planned
+> Plan Status: in progress
 > Last Reviewed: 2026-05-13
 > Source: `docs/analysis/2026-05-13-deep-audit-batch1/summary.md`, `docs/plans/267-deep-audit-2026-05-13-priority-remediation-plan.md`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`
@@ -12,8 +12,11 @@ Own the retained main-path accessibility defects and test-gate false-green findi
 ## Current Baseline
 
 - Plan 267 routes the accessibility and test-governance bucket here.
-- The in-scope items cover field label/error association, tree-control focus semantics, exploratory/debug suite leakage, mixed renderer test environments, and coverage/test-signal hygiene.
-- These items need a dedicated owner plan because they change supported test gates and user-facing interaction semantics.
+- Live re-audit is complete for all in-scope IDs.
+- `20-01`, `20-02`, `20-03`, and `20-04` are now fixed in `packages/flux-react/src/field-frame.tsx`, `packages/flux-renderers-form/src/renderers/input.tsx`, and `packages/flux-renderers-form-advanced/src/tree-controls.tsx`, with focused proof in `packages/flux-react/src/__tests__/data-source-and-node-identity.test.tsx`, `packages/flux-renderers-form-advanced/src/__tests__/form-tree-control-source-states.test.tsx`, and `packages/flux-renderers-form-advanced/src/tree-control-controllers.test.tsx`.
+- `14-01`, `14-02`, and `14-06` are fixed by explicitly skipping exploratory/debug Playwright suites; `14-03` and `14-07` are fixed by converging active renderer packages onto package-level `happy-dom`; `14-05` and `14-09` are fixed by package-level coverage thresholds in active public packages; `14-08` is fixed by skipping the remaining asset-capture helper tests in `tests/e2e/code-editor.spec.ts` and `tests/e2e/flow-designer-ui.spec.ts`.
+- `12-01` is now fixed: `tag-list` no longer toggles from wrapped field-shell clicks, and the live regression proof now aligns across `packages/flux-renderers-form-advanced/src/tag-list.test.tsx` and `packages/flux-renderers-form-advanced/src/__tests__/form-double-edit-regression.test.tsx`.
+- `14-04` is now fixed: `packages/flux-runtime/src/__tests__/async-data-contracts.test.ts` has been reduced to the remaining data-source integration slice, while cache and source-observer proofs now live with their owners in `packages/flux-runtime/src/async-data/api-cache.test.ts` and `packages/flux-runtime/src/async-data/source-observer.test.ts`.
 
 ## Goals
 
@@ -39,27 +42,27 @@ Own the retained main-path accessibility defects and test-gate false-green findi
 
 ### Phase 1 - Re-audit Accessibility And Test Gates
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/field-frame.tsx`, `packages/flux-renderers-form/src/renderers/input.tsx`, `packages/flux-renderers-form-advanced/src/{tag-list.tsx,tree-controls.tsx}`, `tests/e2e/*`, renderer `vitest.config.ts` files
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] Re-audit each retained ID against live code and current test runners.
-- [ ] Land the first closure-ready accessibility and false-green gate fixes.
-- [ ] Record owner decisions for the lower-priority test-governance residuals.
+- [x] Re-audit each retained ID against live code and current test runners.
+- [x] Land the first closure-ready accessibility and false-green gate fixes.
+- [x] Record owner decisions for the lower-priority test-governance residuals.
 
 Exit Criteria:
 
-- [ ] Every in-scope retained ID has an explicit owner decision.
-- [ ] Any landed fix has focused DOM/runner proof.
-- [ ] Relevant owner docs are updated, or `No owner-doc update required` is recorded.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Every in-scope retained ID has an explicit owner decision.
+- [x] Any landed fix has focused DOM/runner proof.
+- [x] Relevant owner docs are updated, or `No owner-doc update required` is recorded.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ## Closure Gates
 
-- [ ] All in-scope retained findings are adjudicated.
-- [ ] No confirmed accessibility or test-gate defect is silently deferred.
-- [ ] Remaining work has explicit successor ownership or landed fixes.
+- [x] All in-scope retained findings are adjudicated.
+- [x] No confirmed accessibility or test-gate defect is silently deferred.
+- [x] Remaining work has explicit successor ownership or landed fixes.
 - [ ] Independent closure audit is completed and recorded with evidence.
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
@@ -76,13 +79,13 @@ None yet.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: all in-scope retained IDs now have landed fixes or explicit adjudication. Keep the plan below `completed` until independent closure audit and full workspace closure-gate verification are recorded.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: pending
-- Evidence: pending
+- Evidence: focused proof already landed for `12-01`, `20-01`, `20-02`, `20-03`, `20-04`, `14-03`, `14-04`, `14-07`, `14-08`, and `14-09`; independent closure audit still pending.
 
 Follow-up:
 
-- Pending execution.
+- Pending only: independent closure audit and final closure-gate verification

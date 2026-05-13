@@ -33,7 +33,7 @@ async function assertDebuggerZeroErrors(page: Page) {
   expect(debuggerErrors).toHaveLength(0);
 }
 
-test.describe('Exploratory: form interactions', () => {
+test.describe.skip('Exploratory: form interactions', () => {
   test('form: empty submit shows validation errors, then fill and submit succeeds', async ({ page }) => {
     const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
@@ -163,7 +163,7 @@ test.describe('Exploratory: form interactions', () => {
   });
 });
 
-test.describe('Exploratory: dialog/drawer lifecycle', () => {
+test.describe.skip('Exploratory: dialog/drawer lifecycle', () => {
   test('dialog: open, fill form, confirm, verify writeback', async ({ page }) => {
     const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
@@ -252,7 +252,7 @@ test.describe('Exploratory: dialog/drawer lifecycle', () => {
   });
 });
 
-test.describe('Exploratory: tabs switching', () => {
+test.describe.skip('Exploratory: tabs switching', () => {
   test('tabs: switch between all tabs', async ({ page }) => {
     const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
@@ -278,7 +278,7 @@ test.describe('Exploratory: tabs switching', () => {
   });
 });
 
-test.describe('Exploratory: dynamic renderer switching', () => {
+test.describe.skip('Exploratory: dynamic renderer switching', () => {
   test('dynamic-renderer: rapid schema switching has no errors', async ({ page }) => {
     const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
@@ -300,7 +300,7 @@ test.describe('Exploratory: dynamic renderer switching', () => {
   });
 });
 
-test.describe('Exploratory: reaction watched field', () => {
+test.describe.skip('Exploratory: reaction watched field', () => {
   test('reaction: counter increment and derived value update', async ({ page }) => {
     const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
@@ -323,7 +323,7 @@ test.describe('Exploratory: reaction watched field', () => {
   });
 });
 
-test.describe('Exploratory: complex form fields', () => {
+test.describe.skip('Exploratory: complex form fields', () => {
   test('array-field: add row, fill, remove', async ({ page }) => {
     const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);

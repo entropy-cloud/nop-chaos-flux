@@ -7,7 +7,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
 
-test('debug collapsible state', async ({ page }) => {
+test.skip('debug collapsible state', async ({ page }) => {
   await openFlowDesigner(page);
 
   // Check what the collapse button click does

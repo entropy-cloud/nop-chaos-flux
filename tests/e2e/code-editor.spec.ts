@@ -322,7 +322,7 @@ test('read-only viewer renders with dark theme and no editing', async ({ page })
   expect(readOnly).toBe('true');
 });
 
-test('captures code editor page screenshot', async ({ page }, testInfo) => {
+test.skip('captures code editor page screenshot', async ({ page }, testInfo) => {
   await openCodeEditor(page);
 
   const shotsDir = join(testInfo.outputDir, 'screenshots');
