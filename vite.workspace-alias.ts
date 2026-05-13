@@ -49,9 +49,6 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-renderers-form/definitions': fileURLToPath(
     new URL('./packages/flux-renderers-form/src/definitions.ts', import.meta.url),
   ),
-  '@nop-chaos/flux-renderers-form/test-support': fileURLToPath(
-    new URL('./packages/flux-renderers-form/src/test-support.tsx', import.meta.url),
-  ),
   '@nop-chaos/flux-renderers-form/form-renderers.css': fileURLToPath(
     new URL('./packages/flux-renderers-form/src/form-renderers.css', import.meta.url),
   ),

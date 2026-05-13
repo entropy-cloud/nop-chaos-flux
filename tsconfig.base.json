@@ -42,9 +42,6 @@
       "@nop-chaos/flux-renderers-form/form-renderers.css": [
         "./packages/flux-renderers-form/src/form-renderers.css"
       ],
-      "@nop-chaos/flux-renderers-form/test-support": [
-        "./packages/flux-renderers-form/src/test-support.tsx"
-      ],
       "@nop-chaos/flux-renderers-data": ["./packages/flux-renderers-data/src/index.tsx"],
       "@nop-chaos/flux-code-editor": ["./packages/flux-code-editor/src/index.ts"],
       "@nop-chaos/flux-code-editor/code-editor-styles.css": [

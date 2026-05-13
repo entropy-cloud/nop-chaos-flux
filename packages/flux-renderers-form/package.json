@@ -19,10 +19,6 @@
     },
     "./form-renderers.css": {
       "default": "./dist/form-renderers.css"
-    },
-    "./test-support": {
-      "types": "./dist/test-support.d.ts",
-      "default": "./dist/test-support.js"
     }
   },
   "dependencies": {
