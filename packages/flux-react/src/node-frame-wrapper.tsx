@@ -22,7 +22,7 @@ export function NodeFrameWrapper(props: {
     return <>{props.children}</>;
   }
 
-  const schema = props.templateNode.schema as Record<string, unknown>;
+  const _schema = props.templateNode.schema as Record<string, unknown>;
   const fieldName =
     typeof props.resolvedPropsValue.name === 'string' ? props.resolvedPropsValue.name : undefined;
   const labelValue =
@@ -34,43 +34,33 @@ export function NodeFrameWrapper(props: {
       ? props.resolvedPropsValue.required
       : undefined;
   const hintValue =
-    typeof props.resolvedPropsValue.hint === 'string'
-      ? props.resolvedPropsValue.hint
-      : typeof schema.hint === 'string'
-        ? schema.hint
-        : undefined;
+    typeof props.resolvedPropsValue.hint !== 'undefined'
+      ? (props.resolvedPropsValue.hint as ReactNode)
+      : undefined;
   const descriptionValue =
-    typeof props.resolvedPropsValue.description === 'string'
-      ? props.resolvedPropsValue.description
-      : typeof schema.description === 'string'
-        ? schema.description
-        : undefined;
+    typeof props.resolvedPropsValue.description !== 'undefined'
+      ? (props.resolvedPropsValue.description as ReactNode)
+      : undefined;
 
   const remarkValue =
     typeof props.resolvedPropsValue.remark === 'object' && props.resolvedPropsValue.remark !== null
       ? toFieldRemarkProps(props.resolvedPropsValue.remark as FieldRemarkSchemaLike)
-      : typeof schema.remark === 'object' && schema.remark !== null
-        ? toFieldRemarkProps(schema.remark as FieldRemarkSchemaLike)
       : undefined;
   const labelRemarkValue =
     typeof props.resolvedPropsValue.labelRemark === 'object' &&
     props.resolvedPropsValue.labelRemark !== null
       ? toFieldRemarkProps(props.resolvedPropsValue.labelRemark as FieldRemarkSchemaLike)
-      : typeof schema.labelRemark === 'object' && schema.labelRemark !== null
-        ? toFieldRemarkProps(schema.labelRemark as FieldRemarkSchemaLike)
       : undefined;
 
   const labelAlignValue =
-    (props.resolvedPropsValue.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined) ??
-    (schema.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined);
-  const labelWidthValue =
-    (props.resolvedPropsValue.labelWidth as string | number | undefined) ??
-    (schema.labelWidth as string | number | undefined);
+    props.resolvedPropsValue.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined;
+  const labelWidthValue = props.resolvedPropsValue.labelWidth as string | number | undefined;
   const usesInteractiveControlRoot =
     props.templateNode.type === 'array-editor' ||
     props.templateNode.type === 'array-field' ||
     props.templateNode.type === 'input-tree' ||
     props.templateNode.type === 'tree-select' ||
+    props.templateNode.type === 'tag-list' ||
     props.templateNode.type === 'condition-builder' ||
     props.templateNode.type === 'key-value' ||
     props.templateNode.type === 'detail-field';

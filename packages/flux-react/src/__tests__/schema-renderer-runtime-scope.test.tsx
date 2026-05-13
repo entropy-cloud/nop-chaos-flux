@@ -120,6 +120,45 @@ describe('createSchemaRenderer scope behavior', () => {
     await waitFor(() => expect(screen.getByTestId('own-child-value').textContent).toBe('child-b'));
   });
 
+  it('does not fall back to parent scope while switching fragment scope identity', async () => {
+    const pageStore = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env,
+      expressionCompiler: createExpressionCompiler(sharedFormulaCompiler),
+    }).createPageRuntime({ shared: 'parent-a', child: 'parent-child' }).store;
+    const SchemaRenderer = createSchemaRenderer([
+      fragmentScopeProbeHostRenderer,
+      scopeLayerProbeRenderer,
+      ownScopeValueProbeRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={
+          {
+            type: 'fragment-scope-probe-host',
+            body: [{ type: 'scope-layer-probe' }, { type: 'own-scope-value-probe' }],
+          } as any
+        }
+        data={{ shared: 'parent-a', child: 'parent-child' }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+        pageStore={pageStore}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('own-value').textContent).toBe(''));
+    await waitFor(() => expect(screen.getByTestId('own-child-value').textContent).toBe('child-a'));
+
+    fireEvent.click(screen.getByText('Refresh fragment 0'));
+
+    expect(screen.queryByText('parent-child')).toBeNull();
+
+    await waitFor(() => expect(screen.getByTestId('own-child-value').textContent).toBe('child-b'));
+    expect(screen.getByTestId('own-value').textContent).toBe('');
+  });
+
   it('updates page scope data without recreating the form runtime', async () => {
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,

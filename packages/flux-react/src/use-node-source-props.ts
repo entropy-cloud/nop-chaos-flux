@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import type { TemplateNode, ScopeRef } from '@nop-chaos/flux-core';
 import { useRendererRuntime } from './hooks.js';
 import { isSourceSchema } from './use-source-value.js';
@@ -40,7 +40,7 @@ export function useNodeSourceProps(
     [propsValue, sourcePropKeys],
   );
 
-  const [controller] = useState(() => createNodeSourcePropController(node, runtime));
+  const controller = useMemo(() => createNodeSourcePropController(node, runtime), [node, runtime]);
 
   const propsValueRef = useRef(propsValue);
   const scopeRef = useRef(scope);

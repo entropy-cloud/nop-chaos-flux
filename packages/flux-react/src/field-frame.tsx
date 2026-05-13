@@ -1,4 +1,4 @@
-import { cloneElement, isValidElement, useState, type ReactNode } from 'react';
+import { cloneElement, isValidElement, useId, useState, type ReactNode } from 'react';
 import {
   useAggregateError,
   useCurrentForm,
@@ -97,6 +97,7 @@ export function FieldFrame(props: FieldFrameProps) {
   } = props;
 
   const formLayout = useFormLayout();
+  const reactId = useId();
 
   const currentForm = useCurrentForm();
   const currentValidationScope = useCurrentValidationScope();
@@ -165,6 +166,7 @@ export function FieldFrame(props: FieldFrameProps) {
   const effectiveRequired = Boolean(required) || Boolean(currentForm ? dynamicRequired : nonFormDynamicRequired);
   const errorId = name ? `${name}-error` : undefined;
   const controlId = name ? `${name}-control` : undefined;
+  const labelId = label && Tag === 'div' ? `${name ?? reactId}-label` : undefined;
   const showValidating = !showError && fieldState.validating;
   const showHint = !showError && !showValidating && Boolean(hint) && focused;
   const showDescription = !showError && !showValidating && !showHint && Boolean(description);
@@ -224,7 +226,7 @@ export function FieldFrame(props: FieldFrameProps) {
     >
       {label ? (
         <LabelTag data-slot="field-label" style={labelStyle}>
-          {label}
+          {labelId ? <span id={labelId}>{label}</span> : label}
           {effectiveRequired ? (
             <span data-slot="field-required" aria-hidden="true">
               *
@@ -241,12 +243,13 @@ export function FieldFrame(props: FieldFrameProps) {
         </LabelTag>
       ) : null}
 
-      <div
-        data-slot="field-control"
-        aria-describedby={describedBy}
-        aria-errormessage={showError ? errorId : undefined}
-        aria-invalid={showError || undefined}
-      >
+        <div
+          data-slot="field-control"
+          aria-labelledby={labelId}
+          aria-describedby={describedBy}
+          aria-errormessage={showError ? errorId : undefined}
+          aria-invalid={showError || undefined}
+        >
         {child}
         {remark ? (
           <span

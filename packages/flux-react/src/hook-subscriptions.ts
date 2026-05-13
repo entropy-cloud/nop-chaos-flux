@@ -3,39 +3,10 @@ import type {
   FormStoreApi,
   FormStoreState,
   ScopeChange,
-  ScopeDependencySet,
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { EMPTY_FORM_STORE_STATE } from './form-state.js';
-import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
-
-function createRootDependencySet(paths: readonly string[] | undefined): ScopeDependencySet | undefined {
-  if (!paths || paths.length === 0) {
-    return undefined;
-  }
-
-  const normalized = Array.from(
-    new Set(
-      paths
-        .map((path) => path.trim())
-        .filter((path) => path.length > 0)
-        .map((path) => path.replace(/\[(\d+)\]/g, '.$1'))
-        .map((path) => path.split('.').filter(Boolean)[0] ?? '*'),
-    ),
-  ).sort();
-
-  if (normalized.length === 0) {
-    return undefined;
-  }
-
-  const wildcard = normalized.includes('*');
-
-  return {
-    paths: wildcard ? ['*'] : normalized,
-    wildcard,
-    broadAccess: wildcard,
-  };
-}
+import { createRootDependencySet, scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
 
 export function shallowEqualFormFieldState(
   a: FormFieldStateSnapshot,

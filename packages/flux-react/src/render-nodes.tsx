@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useId, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type {
   BaseSchema,
   CompileSchemaOptions,
@@ -272,20 +272,23 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     }),
     [currentScope, runtime, isolate, pathSuffix, scopeKey],
   );
-  const [hasCommittedFragmentScope, setHasCommittedFragmentScope] = useState(false);
+  const [fragmentScopeVersion, setFragmentScopeVersion] = useState(0);
+  const [committedFragmentScopeVersion, setCommittedFragmentScopeVersion] = useState(0);
+  const pendingFragmentScopeVersionRef = useRef<number | undefined>(undefined);
   const cachedFragmentScope = fragmentScopeCache.get(fragmentScopeCacheKey);
   const fragmentScopeEntry = matchesFragmentScopeEntry(cachedFragmentScope, fragmentScopeIdentity)
     ? cachedFragmentScope
     : undefined;
   const fragmentScope = shouldUseFragmentScope ? fragmentScopeEntry?.scope : undefined;
+  const activeFragmentScopeVersion = shouldUseFragmentScope && fragmentScope ? fragmentScopeVersion : 0;
+  const effectiveCommittedVersion = shouldUseFragmentScope ? committedFragmentScopeVersion : 0;
+  const hasCommittedFragmentScope =
+    !shouldUseFragmentScope ||
+    (fragmentScope !== undefined && effectiveCommittedVersion === activeFragmentScopeVersion);
 
   useLayoutEffect(() => {
     if (!shouldUseFragmentScope || !fragmentBindings) {
-      if (hasCommittedFragmentScope) {
-        queueMicrotask(() => {
-          setHasCommittedFragmentScope(false);
-        });
-      }
+      pendingFragmentScopeVersionRef.current = undefined;
       return;
     }
 
@@ -314,20 +317,12 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
         nextEntry.scope.store?.setSnapshot(fragmentBindings, change);
       }
     }
-
-    if (!hasCommittedFragmentScope) {
-      queueMicrotask(() => {
-        setHasCommittedFragmentScope(true);
-      });
-    }
-
   }, [
     currentScope,
     fragmentBindings,
     fragmentScopeCache,
     fragmentScopeCacheKey,
     fragmentScopeIdentity,
-    hasCommittedFragmentScope,
     isolate,
     pathSuffix,
     runtime,
@@ -336,8 +331,41 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   ]);
 
   useEffect(() => {
+    if (!shouldUseFragmentScope || !fragmentBindings) {
+      pendingFragmentScopeVersionRef.current = undefined;
+      return;
+    }
+
+    const cachedEntry = fragmentScopeCache.get(fragmentScopeCacheKey);
+    if (!matchesFragmentScopeEntry(cachedEntry, fragmentScopeIdentity)) {
+      const nextVersion = fragmentScopeVersion + 1;
+      pendingFragmentScopeVersionRef.current = nextVersion;
+      queueMicrotask(() => {
+        setFragmentScopeVersion(nextVersion);
+        setCommittedFragmentScopeVersion(0);
+      });
+      return;
+    }
+
+    const pendingVersion = pendingFragmentScopeVersionRef.current;
+    if (pendingVersion !== undefined && committedFragmentScopeVersion !== pendingVersion) {
+      queueMicrotask(() => {
+        setCommittedFragmentScopeVersion(pendingVersion);
+      });
+    }
+  }, [
+    committedFragmentScopeVersion,
+    fragmentBindings,
+    fragmentScopeCache,
+    fragmentScopeCacheKey,
+    fragmentScopeIdentity,
+    fragmentScopeVersion,
+    shouldUseFragmentScope,
+  ]);
+
+  useEffect(() => {
     return () => {
-      setHasCommittedFragmentScope(false);
+      pendingFragmentScopeVersionRef.current = undefined;
       getFragmentScopeCache(runtime).delete(fragmentScopeCacheKey);
     };
   }, [fragmentScopeCacheKey, runtime]);

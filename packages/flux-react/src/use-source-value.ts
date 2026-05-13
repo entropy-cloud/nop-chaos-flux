@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import type { ScopeRef, SourceObserver, SourceSchema } from '@nop-chaos/flux-core';
 import { useRenderScope, useRendererRuntime } from './hooks.js';
 
@@ -22,7 +22,7 @@ export function useSourceValue<T>(
   const activeScope = useRenderScope();
   const scope = options?.scope ?? activeScope;
   const source = useMemo(() => (isSourceSchema(input) ? input : undefined), [input]);
-  const [observer] = useState<SourceObserver>(() => runtime.createSourceObserver());
+  const observer = useMemo<SourceObserver>(() => runtime.createSourceObserver(), [runtime]);
   const snapshot = useSyncExternalStore(observer.subscribe, observer.getSnapshot, observer.getSnapshot);
 
   useEffect(() => {

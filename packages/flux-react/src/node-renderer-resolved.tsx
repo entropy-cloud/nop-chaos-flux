@@ -140,9 +140,16 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     const resolvedClassName = mergedClassAliases
       ? resolveClassAliases(baseMeta.className, mergedClassAliases)
       : baseMeta.className;
+    const resolvedFrameClassName = mergedClassAliases
+      ? resolveClassAliases(baseMeta.frameClassName, mergedClassAliases)
+      : baseMeta.frameClassName;
     const nextMeta =
-      resolvedClassName !== baseMeta.className
-        ? { ...baseMeta, className: resolvedClassName }
+      resolvedClassName !== baseMeta.className || resolvedFrameClassName !== baseMeta.frameClassName
+        ? {
+            ...baseMeta,
+            className: resolvedClassName,
+            frameClassName: resolvedFrameClassName,
+          }
         : baseMeta;
 
     return nextMeta.cid === mountedCid ? nextMeta : { ...nextMeta, cid: mountedCid };

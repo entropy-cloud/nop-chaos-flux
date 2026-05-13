@@ -266,6 +266,114 @@ describe('createSchemaRenderer scope and reactivity', () => {
     expect(renders).toBe(2);
   });
 
+  it('refreshes sibling useScopeSelector bindings after form setValues updates multiple fields', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'test-form',
+      initialValues: { summary: { name: 'Original', status: 'draft' } },
+      parentScope: page.scope,
+    });
+
+    function Probe() {
+      const name = useScopeSelector(
+        (data: { summary?: { name?: string } }) => data.summary?.name ?? '',
+        Object.is,
+        { paths: ['summary.name'] },
+      );
+      const status = useScopeSelector(
+        (data: { summary?: { status?: string } }) => data.summary?.status ?? '',
+        Object.is,
+        { paths: ['summary.status'] },
+      );
+
+      return (
+        <div>
+          <span data-testid="summary-name">{name}</span>
+          <span data-testid="summary-status">{status}</span>
+        </div>
+      );
+    }
+
+    render(
+      <FormContext.Provider value={form}>
+        <ScopeContext.Provider value={form.scope}>
+          <Probe />
+        </ScopeContext.Provider>
+      </FormContext.Provider>,
+    );
+
+    expect(screen.getByTestId('summary-name').textContent).toBe('Original');
+    expect(screen.getByTestId('summary-status').textContent).toBe('draft');
+
+    form.setValues({
+      'summary.name': 'Changed Name',
+      'summary.status': 'published',
+    });
+
+    await waitFor(() => expect(screen.getByTestId('summary-name').textContent).toBe('Changed Name'));
+    await waitFor(() => expect(screen.getByTestId('summary-status').textContent).toBe('published'));
+  });
+
+  it('refreshes sibling schema text nodes after form setValues updates multiple fields', async () => {
+    const updateRenderer = {
+      type: 'update-summary-button',
+      component: function UpdateSummaryButton() {
+        const _form = useRenderScope();
+        const currentForm = React.useContext(FormContext);
+
+        return (
+          <button
+            type="button"
+            onClick={() => {
+              currentForm?.setValues({
+                'summary.name': 'Changed Name',
+                'summary.status': 'published',
+              });
+            }}
+          >
+            Update summary
+          </button>
+        );
+      },
+    };
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, formRenderer, textRenderer, updateRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'form',
+              data: { summary: { name: 'Original', status: 'draft' } },
+              body: [
+                { type: 'text', text: '${summary.name}', testid: 'schema-summary-name' },
+                { type: 'text', text: '${summary.status}', testid: 'schema-summary-status' },
+                { type: 'update-summary-button' },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />,
+    );
+
+    expect(screen.getByText('Original')).toBeTruthy();
+    expect(screen.getByText('draft')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Update summary'));
+
+    await waitFor(() => expect(screen.getByText('Changed Name')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('published')).toBeTruthy());
+  });
+
   it('subscribes useCurrentFormModelGeneration to the dedicated generation channel', async () => {
     let notifyGeneration: (() => void) | undefined;
     const subscribeToModelGeneration = (listener: () => void) => {

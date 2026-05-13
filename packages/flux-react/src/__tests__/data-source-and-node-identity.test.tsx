@@ -21,6 +21,7 @@ import {
   textRenderer,
   wrapProbeRenderer,
 } from '../test-support.js';
+import { NodeFrameWrapper } from '../node-frame-wrapper.js';
 
 const testState: {
   expressionCompiler: ReturnType<typeof createExpressionCompiler>;
@@ -301,6 +302,59 @@ describe('createSchemaRenderer data sources and node identity', () => {
       />,
     );
     expect(container.querySelector('fieldset.nop-field')).toBeTruthy();
+  });
+
+  it('does not fall back to raw schema field chrome when resolved props omit it', () => {
+    const { container } = render(
+      <NodeFrameWrapper
+        templateNode={{
+          type: 'wrap-probe',
+          schema: {
+            type: 'wrap-probe',
+            label: 'Schema label',
+            hint: 'Schema hint',
+            description: 'Schema description',
+            remark: { content: 'Schema remark' },
+            labelRemark: { content: 'Schema label remark' },
+          },
+        } as any}
+        definitionWrap
+        resolvedMeta={{} as any}
+        resolvedPropsValue={{ label: 'Resolved label' }}
+        regions={{} as any}
+      >
+        <input />
+      </NodeFrameWrapper>,
+    );
+
+    expect(container.querySelector('[data-slot="field-label"]')?.textContent).toContain('Resolved label');
+    expect(container.textContent).not.toContain('Schema hint');
+    expect(container.textContent).not.toContain('Schema description');
+    expect(container.querySelector('[data-slot="field-remark"]')).toBeNull();
+    expect(container.querySelector('[data-slot="field-label-remark"]')).toBeNull();
+  });
+
+  it('associates composite field-control roots with the rendered label when rootTag is div', () => {
+    const { container } = render(
+      <NodeFrameWrapper
+        templateNode={{
+          type: 'tag-list',
+          schema: { type: 'tag-list', label: 'Tags' },
+        } as any}
+        definitionWrap
+        resolvedMeta={{} as any}
+        resolvedPropsValue={{ label: 'Tags' }}
+        regions={{} as any}
+      >
+        <div data-testid="composite-root" />
+      </NodeFrameWrapper>,
+    );
+
+    const labelNode = container.querySelector('[data-slot="field-label"] [id]');
+    const control = container.querySelector('[data-slot="field-control"]');
+
+    expect(labelNode).toBeTruthy();
+    expect(control?.getAttribute('aria-labelledby')).toBe(labelNode?.getAttribute('id'));
   });
 
   it('does not fabricate a cid for createNodeInstance when none is provided', async () => {
