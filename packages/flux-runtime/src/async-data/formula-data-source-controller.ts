@@ -192,6 +192,7 @@ export function createFormulaDataSourceController(input: {
           publish();
         })
         .catch((error: unknown) => {
+          input.onDependenciesChange?.(undefined);
           reportPublishFailure(error);
           updateState((current) => ({
             ...current,

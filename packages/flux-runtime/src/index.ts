@@ -1,4 +1,5 @@
 export { createRendererRuntime, createModuleCache } from './runtime-factory.js';
+export type { HostProjectionScopeRef } from './runtime-host-projection-scope.js';
 export { createActionScope } from './action-scope.js';
 export { createComponentHandleRegistry } from './component-handle-registry.js';
 export { createFormComponentHandle } from './form-component-handle.js';

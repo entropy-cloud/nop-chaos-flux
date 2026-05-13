@@ -42,13 +42,13 @@ describe('scopeChangeHitsDependencies', () => {
     ).toBe(false);
   });
 
-  it('does not invalidate when no dependency set is tracked', () => {
+  it('conservatively invalidates when no dependency set is tracked', () => {
     expect(
       scopeChangeHitsDependencies(
         { paths: ['note'], sourceScopeId: 'scope', kind: 'update' },
         undefined,
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('filters ignored self roots before dependency matching', () => {

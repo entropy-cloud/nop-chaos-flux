@@ -74,6 +74,10 @@ export function createModuleCache(): ModuleCache {
     removePending(absUrl) {
       pending.delete(absUrl);
     },
+    clear() {
+      resolved.clear();
+      pending.clear();
+    },
   };
 }
 
@@ -128,6 +132,7 @@ export function createRendererRuntime(input: {
   const ownedFormRuntimes = new Set<FormRuntime>();
   let disposed = false;
   const moduleCache = input.moduleCache ?? createModuleCache();
+  const ownsModuleCache = !input.moduleCache;
   const importStack = createImportStack({
     moduleCache,
     getLoader: () => getEnv().importLoader,
@@ -509,6 +514,9 @@ export function createRendererRuntime(input: {
       importStack.dispose();
       ownedActionScopes.clear();
       executeApiRequest.dispose?.();
+      if (ownsModuleCache) {
+        moduleCache.clear();
+      }
     },
     createFormRuntime: runtimeOwnedFactories.createFormRuntime,
   };

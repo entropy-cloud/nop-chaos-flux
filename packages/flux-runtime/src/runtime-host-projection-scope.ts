@@ -1,5 +1,9 @@
 import type { ScopeRef } from '@nop-chaos/flux-core';
 
+export interface HostProjectionScopeRef extends ScopeRef {
+  dispose(): void;
+}
+
 export function createHostProjectionScope(input: {
   parentScope: ScopeRef;
   projection: Record<string, unknown>;
@@ -10,7 +14,8 @@ export function createHostProjectionScope(input: {
     patch: Record<string, unknown>,
     options?: { scopeKey?: string; pathSuffix?: string; isolate?: boolean },
   ) => ScopeRef;
-}) {
+}): HostProjectionScopeRef {
+  let disposed = false;
   let reservedKeys = new Set(Object.keys(input.projection));
   const hostScope = input.createChildScope(input.parentScope, input.projection, {
     scopeKey: `${input.path}:${input.scopeLabel}-host`,
@@ -41,6 +46,7 @@ export function createHostProjectionScope(input: {
       return hostScope.materializeVisible();
     },
     update(targetPath: string, value: unknown) {
+      if (disposed) return;
       const rootKey = targetPath.split('.')[0];
 
       if (reservedKeys.has(rootKey)) {
@@ -50,6 +56,7 @@ export function createHostProjectionScope(input: {
       hostScope.update(targetPath, value);
     },
     merge(data: Record<string, unknown>) {
+      if (disposed) return;
       const nextKeys = Object.keys(data);
 
       if (nextKeys.some((key) => reservedKeys.has(key))) {
@@ -61,8 +68,12 @@ export function createHostProjectionScope(input: {
       hostScope.merge(data);
     },
     replace(data: Record<string, unknown>) {
+      if (disposed) return;
       reservedKeys = new Set(Object.keys(data));
       hostScope.replace?.(data);
+    },
+    dispose() {
+      disposed = true;
     },
   };
 }

@@ -64,6 +64,7 @@ export interface ModuleCache {
   getPending(absUrl: string): Promise<ImportedLibraryModule> | undefined;
   setPending(absUrl: string, promise: Promise<ImportedLibraryModule>): void;
   removePending(absUrl: string): void;
+  clear(): void;
 }
 
 export interface ImportStackEntry {

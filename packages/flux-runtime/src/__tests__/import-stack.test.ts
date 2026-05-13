@@ -38,6 +38,10 @@ function createModuleCache(): ModuleCache {
     removePending: (key: string) => {
       pending.delete(key);
     },
+    clear() {
+      cache.clear();
+      pending.clear();
+    },
   };
 }
 

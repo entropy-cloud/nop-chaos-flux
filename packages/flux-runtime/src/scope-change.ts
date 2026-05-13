@@ -127,8 +127,12 @@ export function scopeChangeHitsDependencies(
   change: ScopeChange | undefined,
   dependencies: ScopeDependencySet | undefined,
 ): boolean {
-  if (!change || !dependencies) {
+  if (!change) {
     return false;
+  }
+
+  if (!dependencies) {
+    return true;
   }
 
   if (dependencies.wildcard || change.paths.includes('*')) {

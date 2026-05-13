@@ -371,8 +371,8 @@ describe('H7: scopeChangeHitsDependencies edge cases', () => {
     expect(scopeChangeHitsDependencies(undefined, { paths: ['x'], wildcard: false, broadAccess: false })).toBe(false);
   });
 
-  it('returns false for undefined dependencies', () => {
-    expect(scopeChangeHitsDependencies({ paths: ['x'], sourceScopeId: 's', kind: 'update' }, undefined)).toBe(false);
+  it('returns true for undefined dependencies (conservative)', () => {
+    expect(scopeChangeHitsDependencies({ paths: ['x'], sourceScopeId: 's', kind: 'update' }, undefined)).toBe(true);
   });
 
   it('returns false for both undefined', () => {
