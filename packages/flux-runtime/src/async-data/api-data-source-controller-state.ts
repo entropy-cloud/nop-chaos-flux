@@ -118,9 +118,7 @@ export function settleControllerRunIfNeeded(
   }
 
   if (!input.asyncGovernance.isCurrentRun(run)) {
-    return requestSequence < mutable.latestSettledRequestSequence
-      ? input.asyncGovernance.settleRun(run, settled)
-      : undefined;
+    return input.asyncGovernance.settleRun(run, settled);
   }
 
   return input.asyncGovernance.settleRun(run, settled);

@@ -146,6 +146,7 @@ function buildPreparedFrameEntryKey(spec: PreparedImportSpec): string {
 type InternalImportFrame = ImportFrame & {
   releaseMap: Map<string, () => void>;
   controllerMap: Map<string, AbortController>;
+  ownsActionScope: boolean;
 };
 
 function rollbackPartialFrameInstall(frame: Pick<InternalImportFrame, 'releaseMap' | 'controllerMap'>) {
@@ -217,10 +218,11 @@ export function createImportStack(input: {
       return undefined;
     }
 
-    const frameId = createFrameId(args.ownerNodeId);
-    const entries: Record<string, ImportStackEntry> = {};
-    const releaseMap = new Map<string, () => void>();
-    const controllerMap = new Map<string, AbortController>();
+  const frameId = createFrameId(args.ownerNodeId);
+  const entries: Record<string, ImportStackEntry> = {};
+  const releaseMap = new Map<string, () => void>();
+  const controllerMap = new Map<string, AbortController>();
+  let ownedActionScope: ActionScope | undefined;
 
     try {
       for (const spec of imports) {
@@ -260,12 +262,14 @@ export function createImportStack(input: {
             spec,
             signal: controller.signal,
           });
+          const actionScope =
+            args.actionScope ??
+            (ownedActionScope ??=
+              input.getRuntime().createActionScope({ id: `${frameId}:${spec.as}:action-scope` }));
           const context: ImportedNamespaceContext = {
             runtime: input.getRuntime(),
             env: input.getEnv(),
-            actionScope:
-              args.actionScope ??
-              input.getRuntime().createActionScope({ id: `${frameId}:${spec.as}:action-scope` }),
+            actionScope,
             componentRegistry: args.componentRegistry,
             scope: args.scope,
             spec,
@@ -311,10 +315,11 @@ export function createImportStack(input: {
       id: frameId,
       ownerNodeId: args.ownerNodeId,
       parentFrameId: args.parentFrameId,
-      actionScope: args.actionScope,
+      actionScope: args.actionScope ?? ownedActionScope,
       entries,
       releaseMap,
       controllerMap,
+      ownsActionScope: !args.actionScope,
     };
 
     framesById.set(frameId, frame);
@@ -337,10 +342,11 @@ export function createImportStack(input: {
       return undefined;
     }
 
-    const frameId = createFrameId(args.ownerNodeId);
-    const entries: Record<string, ImportStackEntry> = {};
-    const releaseMap = new Map<string, () => void>();
-    const controllerMap = new Map<string, AbortController>();
+  const frameId = createFrameId(args.ownerNodeId);
+  const entries: Record<string, ImportStackEntry> = {};
+  const releaseMap = new Map<string, () => void>();
+  const controllerMap = new Map<string, AbortController>();
+  let ownedActionScope: ActionScope | undefined;
 
     try {
       for (const prepared of imports) {
@@ -378,14 +384,16 @@ export function createImportStack(input: {
           throw error;
         }
 
+        const actionScope =
+          args.actionScope ??
+          (ownedActionScope ??=
+            input
+              .getRuntime()
+              .createActionScope({ id: `${frameId}:${prepared.spec.as}:action-scope` }));
         const context: ImportedNamespaceContext = {
           runtime: input.getRuntime(),
           env: input.getEnv(),
-          actionScope:
-            args.actionScope ??
-            input
-              .getRuntime()
-              .createActionScope({ id: `${frameId}:${prepared.spec.as}:action-scope` }),
+          actionScope,
           componentRegistry: args.componentRegistry,
           scope: args.scope,
           spec: prepared.resolvedSpec,
@@ -433,10 +441,11 @@ export function createImportStack(input: {
       ownerNodeId: args.ownerNodeId,
       parentFrameId: args.parentFrame?.id,
       parentFrame: args.parentFrame,
-      actionScope: args.actionScope,
+      actionScope: args.actionScope ?? ownedActionScope,
       entries,
       releaseMap,
       controllerMap,
+      ownsActionScope: !args.actionScope,
     };
 
     framesById.set(frameId, frame);
@@ -452,6 +461,9 @@ export function createImportStack(input: {
     }
 
     rollbackPartialFrameInstall(frame);
+    if (frame.ownsActionScope && frame.actionScope) {
+      input.getRuntime().releaseActionScope(frame.actionScope);
+    }
     framesById.delete(frameId);
     const index = orderedFrames.findIndex((candidate) => candidate.id === frameId);
     if (index >= 0) {

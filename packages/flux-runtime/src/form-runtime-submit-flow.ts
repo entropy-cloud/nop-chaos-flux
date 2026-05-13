@@ -66,6 +66,39 @@ function extractTouchedPaths(fieldStates: Record<string, FieldState>): Record<st
   return touched;
 }
 
+function createSubmitAbortError() {
+  return Object.assign(new Error('Submit aborted'), { name: 'AbortError' });
+}
+
+async function awaitWithAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) {
+    return promise;
+  }
+
+  if (signal.aborted) {
+    throw createSubmitAbortError();
+  }
+
+  return await new Promise<T>((resolve, reject) => {
+    const abort = () => {
+      signal.removeEventListener('abort', abort);
+      reject(createSubmitAbortError());
+    };
+
+    signal.addEventListener('abort', abort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener('abort', abort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener('abort', abort);
+        reject(error);
+      },
+    );
+  });
+}
+
 export async function executeFormSubmit(
   input: SubmitFormInput,
   options?: { interactionId?: string; signal?: AbortSignal },
@@ -184,7 +217,7 @@ export async function executeFormSubmit(
     const summaryGateBlockers: string[] = [];
     for (const contract of childContractsSnapshot) {
       if (contract.mode === 'recurse-submit') {
-        childValidationPromises.push(contract.triggerValidation());
+        childValidationPromises.push(awaitWithAbort(contract.triggerValidation(), options?.signal));
       } else if (contract.mode === 'summary-gate') {
         const childState = contract.getState();
         if (!childState.ready || childState.validating || !childState.valid) {
@@ -193,7 +226,7 @@ export async function executeFormSubmit(
         }
 
         summaryGatePromises.push(
-          contract.triggerValidation().then((result) => ({
+          awaitWithAbort(contract.triggerValidation(), options?.signal).then((result) => ({
             childOwnerId: contract.childOwnerId,
             result,
           })),
@@ -214,7 +247,10 @@ export async function executeFormSubmit(
     }
 
     if (summaryGatePromises.length > 0) {
-      const summaryGateResults = await Promise.all(summaryGatePromises);
+      const summaryGateResults = await awaitWithAbort(
+        Promise.all(summaryGatePromises),
+        options?.signal,
+      );
       const failingChildren = summaryGateResults.filter(({ result }) => !result.ok);
       if (failingChildren.length > 0) {
         const childErrors = failingChildren.flatMap(({ result }) => result.errors);
@@ -231,7 +267,7 @@ export async function executeFormSubmit(
     }
 
     if (childValidationPromises.length > 0) {
-      const childResults = await Promise.all(childValidationPromises);
+      const childResults = await awaitWithAbort(Promise.all(childValidationPromises), options?.signal);
       const childErrors = childResults.flatMap((r) => r.errors);
       if (childErrors.length > 0) {
         const childValidationFailure = {
@@ -255,7 +291,7 @@ export async function executeFormSubmit(
       return { ok: false, cancelled: true, error: new Error('Submit aborted') };
     }
 
-    const result = await executeSubmit();
+    const result = await awaitWithAbort(executeSubmit(), options?.signal);
 
     if (options?.signal?.aborted) {
       return { ok: false, cancelled: true, error: new Error('Submit aborted') };

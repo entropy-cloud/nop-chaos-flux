@@ -563,6 +563,6 @@ describe('createRendererRuntime', () => {
     expect(importLoader.load).toHaveBeenCalledWith({
       from: 'resolved:https://app.local/schema/page.json:./demo-lib',
       as: 'demo',
-    });
+    }, undefined);
   });
 });

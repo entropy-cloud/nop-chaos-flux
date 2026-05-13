@@ -127,7 +127,7 @@ export function createManagedSurfaceRuntime(
         initialValues: scope.readOwn(),
         existingScope: scope,
         validation: ownerValidationPlan,
-        initialLifecycleState: ownerValidationPlan ? 'active' : 'bootstrapping',
+        initialLifecycleState: 'active',
       });
       const entry: SurfaceEntry = {
         id: resolvedSurfaceId,

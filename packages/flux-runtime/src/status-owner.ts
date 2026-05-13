@@ -18,18 +18,28 @@ export function createReadonlyScopeBinding<TSummary>(
   bindingKey: string,
   getSummary: () => TSummary,
 ): ScopeRef {
+  const getSummaryVersion = () => {
+    const summary = getSummary();
+
+    if (!summary || typeof summary !== 'object') {
+      return summary;
+    }
+
+    const record = summary as Record<string, unknown>;
+    return JSON.stringify(Object.keys(record).sort().map((key) => [key, record[key]]));
+  };
   const buildOwnSnapshot = () => ({
     ...scope.readOwn(),
     [bindingKey]: getSummary(),
   });
-  const { readSnapshot, store } = createProjectedScopeStore(scope, buildOwnSnapshot);
+  const { readSnapshot, store } = createProjectedScopeStore(scope, buildOwnSnapshot, getSummaryVersion);
 
   let lastParentVisible: Record<string, any> | undefined;
-  let lastSummaryForVisible: TSummary | undefined;
+  let lastSummaryVersionForVisible: unknown;
   let cachedVisible: Record<string, any> | undefined;
 
   let lastParentMat: Record<string, any> | undefined;
-  let lastSummaryForMat: TSummary | undefined;
+  let lastSummaryVersionForMat: unknown;
   let cachedMat: Record<string, any> | undefined;
 
   return {
@@ -71,15 +81,12 @@ export function createReadonlyScopeBinding<TSummary>(
     readVisible() {
       const parentVisible = scope.readVisible();
       const summary = getSummary();
-      if (
-        cachedVisible &&
-        lastParentVisible === parentVisible &&
-        lastSummaryForVisible === summary
-      ) {
+      const summaryVersion = getSummaryVersion();
+      if (cachedVisible && lastParentVisible === parentVisible && lastSummaryVersionForVisible === summaryVersion) {
         return cachedVisible;
       }
       lastParentVisible = parentVisible;
-      lastSummaryForVisible = summary;
+      lastSummaryVersionForVisible = summaryVersion;
       const overlay = Object.create(parentVisible) as Record<string, any>;
       overlay[bindingKey] = summary;
       cachedVisible = overlay;
@@ -88,11 +95,12 @@ export function createReadonlyScopeBinding<TSummary>(
     materializeVisible() {
       const parentMat = scope.materializeVisible();
       const summary = getSummary();
-      if (cachedMat && lastParentMat === parentMat && lastSummaryForMat === summary) {
+      const summaryVersion = getSummaryVersion();
+      if (cachedMat && lastParentMat === parentMat && lastSummaryVersionForMat === summaryVersion) {
         return cachedMat;
       }
       lastParentMat = parentMat;
-      lastSummaryForMat = summary;
+      lastSummaryVersionForMat = summaryVersion;
       cachedMat = {
         ...parentMat,
         [bindingKey]: summary,

@@ -3,7 +3,7 @@ export type { HostProjectionScopeRef } from './runtime-host-projection-scope.js'
 export { createActionScope } from './action-scope.js';
 export { createComponentHandleRegistry } from './component-handle-registry.js';
 export { createFormComponentHandle } from './form-component-handle.js';
-export { scopeChangeHitsDependencies } from './scope-change.js';
+export { createRootDependencySet, scopeChangeHitsDependencies } from './scope-change.js';
 export { publishOwnerStatus } from './status-owner.js';
 export { createReadonlyScopeBinding } from './status-owner.js';
 export { createProjectedScopeStore } from './projected-scope-store.js';

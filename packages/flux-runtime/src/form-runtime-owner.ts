@@ -41,6 +41,28 @@ export function buildFormOwnerRuntime(input: {
   getThisForm: () => FormRuntime;
   setLastChange: (change: ScopeChange) => void;
 }) {
+  function createLifecycleBlockedValidationResult(): FormValidationResult {
+    const lifecycleState = input.sharedState.lifecycleState;
+    const message =
+      lifecycleState === 'disposed'
+        ? 'Validation is blocked because the owner is disposed.'
+        : `Validation is blocked while owner lifecycleState is "${lifecycleState}".`;
+
+    return {
+      ok: false,
+      errors: [
+        {
+          path: '',
+          ownerPath: '',
+          rule: 'async',
+          message,
+          sourceKind: 'form',
+        },
+      ],
+      fieldErrors: {},
+    } as FormValidationResult;
+  }
+
   let cachedFieldStatesRef: Record<string, FieldState> | undefined;
   let cachedLifecycleState = input.sharedState.lifecycleState;
   let cachedModelGeneration = input.sharedState.modelGeneration;
@@ -152,7 +174,7 @@ export function buildFormOwnerRuntime(input: {
             })();
 
       input.setLastChange({
-        paths: [],
+        paths: ['*'],
         sourceScopeId: input.formId,
         kind: 'update',
       });
@@ -179,7 +201,7 @@ export function buildFormOwnerRuntime(input: {
 
     const nextFieldStates = mergeFieldStateErrors({ currentFieldStates: fieldStates, nextErrors });
     input.setLastChange({
-      paths: [],
+      paths: ['*'],
       sourceScopeId: input.formId,
       kind: 'update',
     });
@@ -258,7 +280,7 @@ export function buildFormOwnerRuntime(input: {
       const nextErrors = rebuildStoreErrorsFromExternal(input.sharedState, currentFieldStates);
       const nextFieldStates = mergeFieldStateErrors({ currentFieldStates, nextErrors });
       input.setLastChange({
-        paths: [],
+        paths: ['*'],
         sourceScopeId: input.formId,
         kind: 'update',
       });
@@ -316,11 +338,7 @@ export function buildFormOwnerRuntime(input: {
     if (!currentValidation) {
       const lifecycleActive = await waitForActiveLifecycle(input.sharedState);
       if (!lifecycleActive) {
-        return {
-          ok: true,
-          errors: [],
-          fieldErrors: {},
-        } as FormValidationResult;
+        return createLifecycleBlockedValidationResult();
       }
     }
 
@@ -446,7 +464,7 @@ export function buildFormOwnerRuntime(input: {
     }
     if (changed) {
       input.setLastChange({
-        paths: [],
+        paths: ['*'],
         sourceScopeId: input.formId,
         kind: 'update',
       });
@@ -482,11 +500,7 @@ export function buildFormOwnerRuntime(input: {
     if (!currentValidation) {
       const lifecycleActive = await waitForActiveLifecycle(input.sharedState);
       if (!lifecycleActive) {
-        return {
-          ok: true,
-          errors: [],
-          fieldErrors: {},
-        } as FormValidationResult;
+        return createLifecycleBlockedValidationResult();
       }
 
       const targetPaths = collectSubtreeValidationTargets(input.sharedState, path);

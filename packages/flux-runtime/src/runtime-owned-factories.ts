@@ -119,7 +119,7 @@ export function createRuntimeOwnedFactories(input: {
       scopePath: '$page',
       initialValues: initialData,
       existingStore: validationStore,
-      initialLifecycleState: 'bootstrapping',
+      initialLifecycleState: 'active',
     });
     let refreshTick = 0;
     const refreshListeners = new Set<() => void>();

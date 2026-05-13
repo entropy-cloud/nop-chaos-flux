@@ -67,8 +67,10 @@ function createMockActionScope(namespaces: string[] = []): ActionScope {
 }
 
 function createMockRuntime(): RendererRuntime {
+  const releaseActionScope = vi.fn();
   return {
     createActionScope: () => createMockActionScope(),
+    releaseActionScope,
   } as unknown as RendererRuntime;
 }
 
@@ -525,6 +527,22 @@ describe('createImportStack', () => {
       stack.pop(frame!.id);
       expect(actionScope.listNamespaces()).not.toContain('a');
       expect(stack.resolveAlias('a')).toBeUndefined();
+    });
+
+    it('releases runtime-owned action scopes when popping auto-owned frames', async () => {
+      const { stack, scope, runtime } = createStackSetup();
+      const frame = await stack.push({
+        ownerNodeId: 'node-1',
+        imports: [{ from: 'lib', as: 'a' }],
+        scope,
+        schemaUrl: '/schema.json',
+      });
+
+      expect(frame?.actionScope).toBeDefined();
+
+      stack.pop(frame!.id);
+
+      expect(runtime.releaseActionScope).toHaveBeenCalledWith(frame!.actionScope);
     });
   });
 

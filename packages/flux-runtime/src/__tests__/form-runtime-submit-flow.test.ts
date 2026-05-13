@@ -285,6 +285,71 @@ describe('executeFormSubmit', () => {
     expect(submitAction).toHaveBeenCalledTimes(1);
   });
 
+  it('aborts a hanging recurse-submit child validation and clears submitting state', async () => {
+    const controller = new AbortController();
+    const triggerValidation = vi.fn(
+      () => new Promise<import('@nop-chaos/flux-core').ValidationResult>(() => undefined),
+    );
+    const setup = createSubmitInput({
+      sharedState: {
+        store: createSubmitInput().store,
+        lifecycleState: 'active',
+        runtimeFieldRegistrations: new Map(),
+        childContracts: new Map([
+          [
+            'child',
+            { mode: 'recurse-submit', active: true, triggerValidation, childOwnerId: 'child' },
+          ],
+        ]),
+      },
+    });
+
+    const submitPromise = executeFormSubmit(setup.input, { signal: controller.signal });
+    controller.abort();
+
+    await expect(submitPromise).resolves.toMatchObject({ ok: false, cancelled: true });
+    expect(setup.input.sharedState.store.setSubmitting).toHaveBeenLastCalledWith(false);
+    expect(setup.submittingState.get()).toBe(false);
+  });
+
+  it('aborts a hanging summary-gate child validation and clears submitting state', async () => {
+    const controller = new AbortController();
+    const triggerValidation = vi.fn(
+      () => new Promise<import('@nop-chaos/flux-core').ValidationResult>(() => undefined),
+    );
+    const submitAction = vi.fn();
+    const setup = createSubmitInput({
+      sharedState: {
+        store: createSubmitInput().store,
+        lifecycleState: 'active',
+        runtimeFieldRegistrations: new Map(),
+        childContracts: new Map([
+          [
+            'child',
+            {
+              mode: 'summary-gate',
+              active: true,
+              childOwnerId: 'detail-1',
+              getState: () => ({ ready: true, validating: false, valid: true, hasErrors: false }),
+              triggerValidation,
+            },
+          ],
+        ]),
+      },
+      input: {
+        getLifecycleHandlers: () => ({ submitAction }),
+      },
+    });
+
+    const submitPromise = executeFormSubmit(setup.input, { signal: controller.signal });
+    controller.abort();
+
+    await expect(submitPromise).resolves.toMatchObject({ ok: false, cancelled: true });
+    expect(submitAction).not.toHaveBeenCalled();
+    expect(setup.input.sharedState.store.setSubmitting).toHaveBeenLastCalledWith(false);
+    expect(setup.submittingState.get()).toBe(false);
+  });
+
   it('ignores inactive summary-gate children', async () => {
     const submitAction = vi.fn().mockResolvedValue({ ok: true, data: {} });
     const notValidState = { ready: true, validating: false, valid: false, hasErrors: true };

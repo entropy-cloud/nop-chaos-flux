@@ -347,17 +347,17 @@ describe('createRendererRuntime', () => {
     });
 
     releaseFirst?.();
+    await Promise.resolve();
+    await Promise.resolve();
 
-    await vi.waitFor(() => {
-      expect(page.scope.get('payload')).toEqual({ url: '/api/users/1' });
-    });
+    expect(page.scope.get('payload')).toBeUndefined();
 
     expect(registration.controller.getState()).toMatchObject({
       fetchStatus: 'fetching',
-      isInitialLoading: false,
-      isRefreshing: true,
-      inFlightCount: 1,
-      hasData: true,
+      isInitialLoading: true,
+      isRefreshing: false,
+      inFlightCount: 2,
+      hasData: false,
       hasError: false,
     });
 
@@ -453,6 +453,91 @@ describe('createRendererRuntime', () => {
         true,
       );
       expect(debugEntry?.async?.recentRuns.some((run) => run.outcome === 'succeeded')).toBe(true);
+    });
+
+    registration.dispose();
+  });
+
+  it('drops earlier parallel api source results as soon as a newer run starts', async () => {
+    let callCount = 0;
+    let releaseFirst: (() => void) | undefined;
+    let releaseSecond: (() => void) | undefined;
+    const fetcher = vi.fn(async <T>(api: { url: string }, _ctx?: { signal?: AbortSignal }) => {
+      callCount += 1;
+
+      if (callCount === 1) {
+        await new Promise<void>((resolve) => {
+          releaseFirst = resolve;
+        });
+      } else {
+        await new Promise<void>((resolve) => {
+          releaseSecond = resolve;
+        });
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        data: { url: api.url } as T,
+      };
+    });
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
+      },
+      expressionCompiler,
+    });
+    const page = runtime.createPageRuntime({ userId: 1 });
+
+    const registration = runtime.registerDataSource({
+      id: 'parallel-stale-early-drop',
+      scope: page.scope,
+      compiledSource: compileDataSource(
+        'parallel-stale-early-drop',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/users/${userId}' },
+          name: 'payload',
+          control: {
+            dedup: 'parallel',
+          },
+        },
+        expressionCompiler,
+      ),
+    });
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    page.scope.update('userId', 2);
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+
+    releaseFirst?.();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(page.scope.get('payload')).toBeUndefined();
+
+    releaseSecond?.();
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ url: '/api/users/2' });
+    });
+
+    await vi.waitFor(() => {
+      const debugSnapshot = runtime.getSourceDebugSnapshot?.();
+      const debugEntry = debugSnapshot?.sources.find((entry) => entry.id === 'parallel-stale-early-drop');
+
+      expect(debugEntry?.async?.recentRuns.some((run) => run.outcome === 'stale-dropped')).toBe(
+        true,
+      );
     });
 
     registration.dispose();

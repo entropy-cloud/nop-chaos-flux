@@ -116,7 +116,20 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           );
           store.setValues(next);
         },
-        subscribe: (listener) => store.subscribe(() => listener(lastChange)),
+        subscribe: (listener) => {
+          let previousValues = store.getState().values;
+
+          return store.subscribe(() => {
+            const nextValues = store.getState().values;
+
+            if (nextValues === previousValues) {
+              return;
+            }
+
+            previousValues = nextValues;
+            listener(lastChange);
+          });
+        },
       },
       update: (path, value) => {
         setLastChange({

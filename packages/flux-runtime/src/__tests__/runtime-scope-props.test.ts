@@ -103,4 +103,37 @@ describe('createRendererRuntime', () => {
       broadAccess: false,
     });
   });
+
+  it('refreshes sibling bindings when a parent object updates multiple fields', () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiledName = runtime.compile({
+      type: 'text',
+      text: '${summary.name}',
+    });
+    const compiledStatus = runtime.compile({
+      type: 'text',
+      text: '${summary.status}',
+    });
+    const nameNode = compiledName.root as any;
+    const statusNode = compiledStatus.root as any;
+
+    const page = runtime.createPageRuntime({ summary: { name: 'Original', status: 'draft' } });
+    const nameState = createRuntimeStateFromTemplateNode(nameNode);
+    const statusState = createRuntimeStateFromTemplateNode(statusNode);
+
+    expect(runtime.resolveNodeProps(nameNode, page.scope, nameState).value.text).toBe('Original');
+    expect(runtime.resolveNodeProps(statusNode, page.scope, statusState).value.text).toBe('draft');
+
+    page.scope.update('summary.name', 'Changed Name');
+    page.scope.update('summary.status', 'published');
+
+    expect(runtime.resolveNodeProps(nameNode, page.scope, nameState).value.text).toBe('Changed Name');
+    expect(runtime.resolveNodeProps(statusNode, page.scope, statusState).value.text).toBe('published');
+  });
 });

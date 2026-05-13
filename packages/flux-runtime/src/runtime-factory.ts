@@ -164,6 +164,10 @@ export function createRendererRuntime(input: {
     return actionScope;
   }
 
+  function releaseOwnedActionScope(actionScope: ActionScope) {
+    ownedActionScopes.delete(actionScope);
+  }
+
   function createOwnedComponentRegistry(
     registryInput: { id?: string; parent?: ComponentHandleRegistry } = {},
   ) {
@@ -281,7 +285,7 @@ export function createRendererRuntime(input: {
                 loadedModule = await pending;
               } else if (importLoader) {
                 options?.signal?.throwIfAborted?.();
-                const promise = importLoader.load(prepared.resolvedSpec);
+                const promise = importLoader.load(prepared.resolvedSpec, options?.signal);
                 moduleCache.setPending(moduleKey, promise);
                 try {
                   loadedModule = await promise;
@@ -366,6 +370,7 @@ export function createRendererRuntime(input: {
       });
     },
     createActionScope: createOwnedActionScope,
+    releaseActionScope: releaseOwnedActionScope,
     createComponentHandleRegistry: createOwnedComponentRegistry,
     resolvePreparedImports(inputValue) {
       const schemaUrl = inputValue.schemaUrl;

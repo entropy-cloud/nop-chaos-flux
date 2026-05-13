@@ -108,6 +108,21 @@ describe('createReadonlyScopeBinding', () => {
       expect(vis1).toBe(vis2);
       expect(callCount).toBe(2);
     });
+
+    it('reflects multiple sibling parent updates through the overlay scope', () => {
+      const scope = createScopeRef({
+        id: 'parent',
+        path: '$parent',
+        initialData: { summary: { name: 'Original', status: 'draft' } },
+      });
+      const binding = createReadonlyScopeBinding(scope, '$form', () => ({ valid: true }));
+
+      scope.update('summary.name', 'Changed Name');
+      scope.update('summary.status', 'published');
+
+      const visible = binding.readVisible() as { summary: { name: string; status: string } };
+      expect(visible.summary).toEqual({ name: 'Changed Name', status: 'published' });
+    });
   });
 
   describe('materializeVisible', () => {

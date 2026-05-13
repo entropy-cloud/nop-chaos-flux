@@ -157,6 +157,7 @@ export function createApiDataSourceRequestRunner(
     let run:
       | ReturnType<NonNullable<CreateApiDataSourceControllerInput['asyncGovernance']>['beginRun']>
       | undefined;
+    let runSettled = false;
     let controller: AbortController | undefined;
     let requestSequence = 0;
 
@@ -224,6 +225,7 @@ export function createApiDataSourceRequestRunner(
                 outcome: 'cancelled',
                 cancelled: true,
               });
+              runSettled = true;
             }
             if (!mutable.stopped && mutable.pendingRefresh) {
               updateControllerState(input, mutable, (current) => toIdleFetchState(current));
@@ -235,6 +237,7 @@ export function createApiDataSourceRequestRunner(
           const settledRun = settleControllerRunIfNeeded(input, mutable, run, requestSequence, {
             outcome: 'succeeded',
           });
+          runSettled = settledRun !== undefined;
 
           if (settledRun?.outcome === 'stale-dropped') {
             updateControllerState(input, mutable, (current) => current);
@@ -325,6 +328,7 @@ export function createApiDataSourceRequestRunner(
             cancelled: true,
             error: caughtError,
           });
+          runSettled = true;
         }
         if (!mutable.stopped && mutable.pendingRefresh) {
           updateControllerState(input, mutable, (current) => toIdleFetchState(current));
@@ -337,6 +341,7 @@ export function createApiDataSourceRequestRunner(
         outcome: 'failed',
         error: caughtError,
       });
+      runSettled = settledRun !== undefined;
 
       if (settledRun?.outcome === 'stale-dropped') {
         updateControllerState(input, mutable, (current) => current);
@@ -376,6 +381,7 @@ export function createApiDataSourceRequestRunner(
       if (
         run &&
         input.asyncGovernance &&
+        !runSettled &&
         !input.asyncGovernance.isCurrentRun(run) &&
         requestSequence < mutable.latestSettledRequestSequence
       ) {
