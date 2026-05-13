@@ -1,6 +1,6 @@
 # 271 Deep Audit 2026-05-13 Doc And Plan Baseline Successor Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-13
 > Source: `docs/analysis/2026-05-13-deep-audit-batch1/summary.md`, `docs/plans/267-deep-audit-2026-05-13-priority-remediation-plan.md`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`
@@ -62,11 +62,11 @@ Exit Criteria:
 - [x] All in-scope retained findings are adjudicated.
 - [x] No confirmed owner-doc or plan-baseline drift is silently deferred.
 - [x] Remaining work has explicit successor ownership or landed fixes.
-- [ ] Independent closure audit is completed and recorded with evidence.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Independent closure audit is completed and recorded with evidence.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -90,13 +90,13 @@ None yet.
 
 ## Closure
 
-Status Note: doc/plan baseline re-audit and correction slice are complete. Keep the plan below `completed` until an independent closure audit is recorded.
+Status Note: doc/plan baseline re-audit and correction slice are complete, the remaining naming items are explicitly adjudicated watch-only residuals, and independent closure audit plus workspace closure-gate verification are now recorded.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: live repo re-audit confirms `16-01/02/03/04/05/06/07`, `17-01`, and `18-01` are aligned; `17-02` and `17-03` are explicitly downgraded to watch-only residual naming debt. Independent closure audit still pending.
+- Reviewer / Agent: independent closure audit subagent `ses_1ded2dbb8ffeCRzAy09BcgcZHw`
+- Evidence: independent re-audit confirmed no remaining live owner-doc or plan-baseline defect in this plan's scope. `16-01/02/03/04/05/06/07`, `17-01`, and `18-01` match the live baseline, while `17-02` and `17-03` are correctly classified as watch-only residual naming debt rather than baseline drift. Workspace closure gates were rerun green on 2026-05-13 via `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`.
 
 Follow-up:
 
-- Pending only: independent closure audit and final closure-gate verification decision
+- No follow-up required.

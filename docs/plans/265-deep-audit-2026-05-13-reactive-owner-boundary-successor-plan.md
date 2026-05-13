@@ -15,6 +15,7 @@ Own the still-live reactive-precision and owner-boundary findings that remained 
 - The remaining work is concentrated in reactive subscription precision, renderer/runtime owner seams, dialog/table subscription hot paths, and one still-live tree renderer contract gap.
 - The prior `09-05` renderer-contract concern was removed through scope change after the 2026-05-13 batch re-audit concluded that the current unstable provider usage is an acceptable owner-renderer child-runtime boundary.
 - Plan 267 now additionally routes the 2026-05-13 retained reactive/publication set here, so this plan owns both the carried legacy reactive backlog and the current batch reactive owner matrix.
+- Live re-audit on 2026-05-13 confirms `05-02`, `05-03`, `05-04`, and `07-03` are fixed and `07-06` no longer reproduces, while `02-14`, `02-16`, `04-04`, `05-01`, `05-05`, `05-06`, `05-08`, `07-01`, `07-02`, and `09-02` remain live.
 
 ## Goals
 
@@ -98,13 +99,13 @@ None yet.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: partially re-audited. Several reactive precision issues are fixed or no longer live, but multiple owner-boundary and subscription defects remain active and block closure.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent baseline re-audit subagent `ses_1ded2dc6effe0GAdgIfbShDxak`
+- Evidence: re-audit confirmed path-scoped fixes in `field-handlers.tsx` and table visible-column selectors plus status-path publication fixes, but left live owner-boundary/subscription issues in `loop.tsx`, `form-status-publication.ts`, `hook-subscriptions.ts`, `interaction-owner.ts`, and `tree-renderer.tsx`.
 
 Follow-up:
 
-- Pending execution.
+- Remaining execution required for the still-live reactive owner-boundary set.

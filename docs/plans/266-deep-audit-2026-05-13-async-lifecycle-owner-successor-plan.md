@@ -14,6 +14,7 @@ Own the still-live async, cancellation, stale-settlement, and lifecycle hygiene 
 - Plan 255 no longer owns active execution; it closed after adjudicating its retained async/lifecycle set and moving the still-live subset here.
 - The remaining work spans flow designer async UI feedback, spreadsheet/report async command failure handling, object/detail field stale-settlement paths, and runtime lifecycle hygiene.
 - Plan 267 now additionally routes the 2026-05-13 retained async/lifecycle set here, including `06-01`, `06-02`, `06-03`, `06-04`, `07-04`, `07-05`, `07-07`, and `08-01`.
+- Live re-audit on 2026-05-13 confirms `06-01`, `06-03`, `06-04`, `07-05`, and `07-07` are fixed; `06-02` no longer reproduces; `08-01` was already closed earlier; and the carried legacy set (`06-05`, `06-07`, `06-09`, `06-10`, `06-11`, `06-12`, `06-14`, `06-15`, `06-17`) plus `07-04` still require real execution ownership here.
 
 ## Goals
 
@@ -96,13 +97,13 @@ None yet.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: partially re-audited. Several routed async items are already fixed or no longer live, but the carried legacy backlog and `07-04` still block closure.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent baseline re-audit subagent `ses_1ded2dc6effe0GAdgIfbShDxak`
+- Evidence: re-audit confirmed the landed runtime fixes for `06-01`, `06-03`, `06-04`, `07-05`, and `07-07`, but found the carried legacy async/lifecycle set still live and noted that `render-nodes.tsx` still uses queue-microtask fragment-scope gating for `07-04`.
 
 Follow-up:
 
-- Pending execution.
+- Remaining execution required for the carried legacy async/lifecycle backlog and `07-04`.

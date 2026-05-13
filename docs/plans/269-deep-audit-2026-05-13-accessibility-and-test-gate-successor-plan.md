@@ -1,6 +1,6 @@
 # 269 Deep Audit 2026-05-13 Accessibility And Test-Gate Successor Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-13
 > Source: `docs/analysis/2026-05-13-deep-audit-batch1/summary.md`, `docs/plans/267-deep-audit-2026-05-13-priority-remediation-plan.md`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`
@@ -63,11 +63,11 @@ Exit Criteria:
 - [x] All in-scope retained findings are adjudicated.
 - [x] No confirmed accessibility or test-gate defect is silently deferred.
 - [x] Remaining work has explicit successor ownership or landed fixes.
-- [ ] Independent closure audit is completed and recorded with evidence.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Independent closure audit is completed and recorded with evidence.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -79,13 +79,13 @@ None yet.
 
 ## Closure
 
-Status Note: all in-scope retained IDs now have landed fixes or explicit adjudication. Keep the plan below `completed` until independent closure audit and full workspace closure-gate verification are recorded.
+Status Note: all in-scope retained IDs are now fixed or explicitly adjudicated, the full workspace closure gates are green, and independent closure audit evidence is recorded below.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: focused proof already landed for `12-01`, `20-01`, `20-02`, `20-03`, `20-04`, `14-03`, `14-04`, `14-07`, `14-08`, and `14-09`; independent closure audit still pending.
+- Reviewer / Agent: independent closure audit subagent `ses_1ded2dbb8ffeCRzAy09BcgcZHw`
+- Evidence: independent re-audit found no remaining live in-scope accessibility or test-gate defect. Focused proof remains in the package test suites and skipped exploratory/debug E2E cases are now explicit. Workspace closure gates were rerun green on 2026-05-13 via `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`.
 
 Follow-up:
 
-- Pending only: independent closure audit and final closure-gate verification
+- No follow-up required.

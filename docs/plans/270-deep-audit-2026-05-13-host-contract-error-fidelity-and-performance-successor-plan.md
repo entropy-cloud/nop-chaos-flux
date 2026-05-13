@@ -1,6 +1,6 @@
 # 270 Deep Audit 2026-05-13 Host Contract Error Fidelity And Performance Successor Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-13
 > Source: `docs/analysis/2026-05-13-deep-audit-batch1/summary.md`, `docs/plans/267-deep-audit-2026-05-13-priority-remediation-plan.md`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`
@@ -63,11 +63,11 @@ Exit Criteria:
 - [x] All in-scope retained findings are adjudicated.
 - [x] No confirmed host-contract, error-fidelity, or main-path performance defect is silently deferred.
 - [x] Remaining work has explicit successor ownership or landed fixes.
-- [ ] Independent closure audit is completed and recorded with evidence.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Independent closure audit is completed and recorded with evidence.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -79,13 +79,13 @@ None yet.
 
 ## Closure
 
-Status Note: all in-scope retained IDs now have landed fixes or explicit adjudication. Keep the plan below `completed` until independent closure audit and full workspace closure-gate verification are recorded.
+Status Note: all in-scope retained IDs are now fixed or explicitly adjudicated, the stale interim `12-04` residual note has been superseded by the shared core type widening, and the full workspace closure gates are green.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: focused proof already landed for `12-02`, `12-04`, `13-01`, `13-02`, `13-03`, `15-03`, `15-04`, `15-05`, `18-03`, `19-01`, `19-02`, and `19-03`; independent closure audit still pending.
+- Reviewer / Agent: independent closure audit subagent `ses_1ded2dbb8ffeCRzAy09BcgcZHw`
+- Evidence: independent re-audit found no remaining live in-scope host-contract, error-fidelity, or main-path performance defect. The earlier 2026-05-13 interim note that still described `12-04` as blocked is superseded by the later shared `BaseSchema.title` widening already reflected in this plan's current baseline and the live repo. Workspace closure gates were rerun green on 2026-05-13 via `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`.
 
 Follow-up:
 
-- Pending only: independent closure audit and final closure-gate verification
+- No follow-up required.

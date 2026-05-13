@@ -14,6 +14,7 @@ Own the retained validation-owner and projected-validation contract findings tha
 - Plan 267 routes `04-03`, `08-02`, `08-03`, and `08-04` here.
 - These items all concern validation owner identity, projected validation reach, and hidden-branch participation semantics.
 - They are still-live retained findings and cannot remain under generic follow-up ownership.
+- Live re-audit on 2026-05-13 confirms `08-02` and `08-04` are already fixed, `04-03` remains live, and `08-03` no longer belongs here because the current owner-contract/public-surface question is already routed to Plan 263.
 
 ## Goals
 
@@ -77,13 +78,13 @@ None yet.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: partially re-audited. `08-02` and `08-04` are already fixed, but `04-03` remains live and `08-03` ownership text needs correction before this plan can close.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent baseline re-audit subagent `ses_1ded2dc6effe0GAdgIfbShDxak`
+- Evidence: re-audit confirmed projected validation scoping and hidden-branch clearing are fixed, but `variant-field` still prioritizes `userSelectedKey` over owner-derived matches for `04-03`, and `08-03` should be removed from this plan's live scope in favor of its existing successor ownership under Plan 263.
 
 Follow-up:
 
-- Pending execution.
+- Remaining execution required for `04-03` plus scope cleanup for the stale `08-03` ownership entry.

@@ -15,6 +15,7 @@ Own the still-live structural owner-boundary hotspots that remained after Plans 
 - The remaining live structural work still spans compiler tables, runtime/renderer boundaries, and large-file ownership seams.
 - These items need a dedicated owner plan instead of remaining as open-ended residuals inside closure-ready successor plans.
 - Plan 267 now also routes the 2026-05-13 retained structural set here, so this plan owns both the carried legacy structural backlog and the current batch structural owner matrix.
+- Live re-audit on 2026-05-13 confirms `01-02` and `02-04` are already fixed and `02-03` no longer reproduces, while `02-01`, `02-02`, `12-03`, `02-07`, `02-08`, `02-09`, `02-11`, `02-12`, and `02-13` remain live structural hotspots.
 
 ## Goals
 
@@ -97,13 +98,13 @@ None yet.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: partially re-audited. Some originally routed IDs (`01-02`, `02-03`, `02-04`) are already fixed/no longer live, but the remaining structural hotspots are still active and block closure.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent baseline re-audit subagent `ses_1ded2dc78ffePiZz96l9BE3Dqu`
+- Evidence: re-audit confirmed `01-02` fixed via `packages/report-designer-renderers/package.json`, `02-03` no longer live because no `src/**/*.d.ts.map` artifacts remain, and `02-04` fixed by `scripts/verify-no-src-artifacts.mjs`; the remaining large-file and ownership hotspots stay live.
 
 Follow-up:
 
-- Pending execution.
+- Remaining execution required for the still-live structural hotspots.

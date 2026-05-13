@@ -14,6 +14,7 @@ Own the remaining public-surface width and contract-rationalization findings aft
 - Plan 257 resolved the doc-baseline and owner-doc drift for `15-02`, `17-01`, `17-04`, `17-05`, and `17-07`.
 - The remaining live work is no longer doc drift; it is supported-surface narrowing, submit-semantics/public-contract adjudication, and semantic-vocabulary adjudication.
 - These items need their own plan because they may require package-export changes, test-support migration, or formal exception documentation.
+- Live re-audit on 2026-05-13 confirms `02-15` and `03-01` remain live public-surface width issues, `08-03` is no longer plan-owned here because the current behavior was already narrowed in `variant-field` owner-contract handling, and `17-03` has been downgraded to watch-only naming residual under Plan 271 rather than active public-baseline drift.
 
 ## Goals
 
@@ -60,6 +61,19 @@ Exit Criteria:
 - [ ] All in-scope retained findings are adjudicated.
 - [ ] No confirmed public-surface drift is silently deferred.
 - [ ] Remaining exceptions are documented as stable supported behavior, not implicit drift.
+
+## Closure
+
+Status Note: partially re-audited. `02-15` and `03-01` still require public-surface narrowing work, so this plan cannot be marked `completed`.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: independent baseline re-audit subagent `ses_1ded2dc78ffePiZz96l9BE3Dqu`
+- Evidence: re-audit confirmed `02-15` (`flux-renderers-form` public `./test-support` export) and `03-01` (`flux-renderers-form` broad public exports) remain live, while `08-03` is no longer a live defect in this plan's scope and `17-03` is now a watch-only naming residual under Plan 271.
+
+Follow-up:
+
+- Narrow or re-home the remaining public test-support/helper exports and then rerun closure audit.
 
 ## Deferred But Adjudicated
 

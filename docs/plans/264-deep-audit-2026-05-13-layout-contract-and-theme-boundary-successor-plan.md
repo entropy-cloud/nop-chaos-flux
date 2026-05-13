@@ -14,6 +14,7 @@ Own the still-live layout-contract and theme-boundary cleanup after Plan 259 clo
 - Plan 259 resolved `10-03`, `11-01`, `11-03`, and the actionable part of `11-02` by moving spreadsheet input/button controls onto `@nop-chaos/ui` primitives and documenting the raw table-shell exception.
 - The remaining live items are contract-level layout exceptions (`09-01`, `10-01`, `10-02`, `10-04`) and word-editor theme-boundary drift (`10-05`).
 - These items need a dedicated styling-contract owner plan rather than remaining as open residuals in a closure-ready cleanup plan.
+- Live re-audit on 2026-05-13 confirmed `10-01` and `10-02` were already fixed in `flux-react` styling/marker surfaces. Follow-up execution under Plan `275` closed the remaining retained items: `09-01` and `10-04` now converge on explicit-only semantic direction overrides in `flux-renderers-basic`, and `10-05` is no longer live because `@nop-chaos/word-editor-renderers` ships package-owned `--nop-*` fallback tokens from `src/styles.css` on the supported package entry path.
 
 ## Goals
 
@@ -77,13 +78,13 @@ None yet.
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: partially re-audited. `10-01` and `10-02` are already fixed, but `09-01`, `10-04`, and `10-05` remain live and block closure.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent baseline re-audit subagent `ses_1ded2dc78ffePiZz96l9BE3Dqu`
+- Evidence: re-audit confirmed `flux-react` no longer uses the older BEM-style node-error/spacing classes for `10-01`/`10-02`, but `flux-renderers-basic` `flex.tsx` and `container.tsx` still emit hardcoded layout classes and `word-editor-page.tsx` still depends on app/theme variables.
 
 Follow-up:
 
-- Pending execution.
+- Remaining execution moved to Plan `275` and closed there; no Plan `264`-owned live work remains.

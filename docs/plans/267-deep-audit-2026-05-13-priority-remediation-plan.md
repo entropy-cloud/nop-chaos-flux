@@ -1,6 +1,6 @@
 # 267 Deep Audit 2026-05-13 Priority Remediation Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-13
 > Source: `docs/analysis/2026-05-13-deep-audit-batch1/summary.md`, `docs/plans/00-plan-authoring-and-execution-guide.md`
 > Related: `docs/plans/262-deep-audit-2026-05-13-structural-owner-successor-plan.md`, `docs/plans/264-deep-audit-2026-05-13-layout-contract-and-theme-boundary-successor-plan.md`, `docs/plans/265-deep-audit-2026-05-13-reactive-owner-boundary-successor-plan.md`, `docs/plans/266-deep-audit-2026-05-13-async-lifecycle-owner-successor-plan.md`, `docs/plans/268-deep-audit-2026-05-13-validation-owner-successor-plan.md`, `docs/plans/269-deep-audit-2026-05-13-accessibility-and-test-gate-successor-plan.md`, `docs/plans/270-deep-audit-2026-05-13-host-contract-error-fidelity-and-performance-successor-plan.md`, `docs/plans/271-deep-audit-2026-05-13-doc-and-plan-baseline-successor-plan.md`
@@ -66,87 +66,87 @@
 
 ### Phase 1 - Normalize The Retained-ID Baseline
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/2026-05-13-deep-audit-batch1/summary.md`, this plan
 
 - Item Types: `Decision | Proof`
 
-- [ ] Reconcile the summary's review-count stats with the retained-ID table stats and record the distinction in this plan.
-- [ ] Build the canonical retained-ID matrix from the summary tables only, excluding rejected IDs and zero-finding dimensions.
-- [ ] Verify that the matrix contains exactly 66 retained IDs with no duplicates and no omissions.
+- [x] Reconcile the summary's review-count stats with the retained-ID table stats and record the distinction in this plan.
+- [x] Build the canonical retained-ID matrix from the summary tables only, excluding rejected IDs and zero-finding dimensions.
+- [x] Verify that the matrix contains exactly 66 retained IDs with no duplicates and no omissions.
 
 Exit Criteria:
 
-- [ ] The plan text clearly distinguishes review-result counts from retained-ID counts.
-- [ ] Every retained ID from the summary tables appears exactly once in the matrix.
-- [ ] `No owner-doc update required` is recorded for this docs-only routing phase.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] The plan text clearly distinguishes review-result counts from retained-ID counts.
+- [x] Every retained ID from the summary tables appears exactly once in the matrix.
+- [x] `No owner-doc update required` is recorded for this docs-only routing phase.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ### Phase 2 - Route Existing Successor Owners
 
-Status: planned
+Status: completed
 Targets: `docs/plans/262-deep-audit-2026-05-13-structural-owner-successor-plan.md`, `docs/plans/264-deep-audit-2026-05-13-layout-contract-and-theme-boundary-successor-plan.md`, `docs/plans/265-deep-audit-2026-05-13-reactive-owner-boundary-successor-plan.md`, `docs/plans/266-deep-audit-2026-05-13-async-lifecycle-owner-successor-plan.md`
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] Update Plan 262 so its scope explicitly owns `01-02`, `02-01`, `02-02`, `02-03`, `02-04`, and `12-03`.
-- [ ] Update Plan 264 so its scope explicitly owns `10-01` and `10-02`.
-- [ ] Update Plan 265 so its scope explicitly owns `05-01`, `05-02`, `05-03`, `05-04`, `07-01`, `07-02`, `07-03`, and `07-06`.
-- [ ] Update Plan 266 so its scope explicitly owns `06-01`, `06-02`, `06-03`, `06-04`, `07-04`, `07-05`, `07-07`, and `08-01`.
+- [x] Update Plan 262 so its scope explicitly owns `01-02`, `02-01`, `02-02`, `02-03`, `02-04`, and `12-03`.
+- [x] Update Plan 264 so its scope explicitly owns `10-01` and `10-02`.
+- [x] Update Plan 265 so its scope explicitly owns `05-01`, `05-02`, `05-03`, `05-04`, `07-01`, `07-02`, `07-03`, and `07-06`.
+- [x] Update Plan 266 so its scope explicitly owns `06-01`, `06-02`, `06-03`, `06-04`, `07-04`, `07-05`, `07-07`, and `08-01`.
 
 Exit Criteria:
 
-- [ ] Plans 262, 264, 265, and 266 each have explicit in-scope retained IDs matching the matrix.
-- [ ] No retained ID assigned to an existing successor remains ambiguous or ownerless.
-- [ ] `No owner-doc update required` is recorded for this docs-only routing phase.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Plans 262, 264, 265, and 266 each have explicit in-scope retained IDs matching the matrix.
+- [x] No retained ID assigned to an existing successor remains ambiguous or ownerless.
+- [x] `No owner-doc update required` is recorded for this docs-only routing phase.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ### Phase 3 - Create Missing Successor Owner Plans
 
-Status: planned
+Status: completed
 Targets: `docs/plans/268-deep-audit-2026-05-13-validation-owner-successor-plan.md`, `docs/plans/269-deep-audit-2026-05-13-accessibility-and-test-gate-successor-plan.md`, `docs/plans/270-deep-audit-2026-05-13-host-contract-error-fidelity-and-performance-successor-plan.md`, `docs/plans/271-deep-audit-2026-05-13-doc-and-plan-baseline-successor-plan.md`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Create Plan 268 for the validation/owner-contract bucket: `04-03`, `08-02`, `08-03`, `08-04`.
-- [ ] Create Plan 269 for the accessibility/test-gate bucket: `12-01`, `14-01`, `14-02`, `14-03`, `14-04`, `14-05`, `14-06`, `14-07`, `14-08`, `14-09`, `20-01`, `20-02`, `20-03`, `20-04`.
-- [ ] Create Plan 270 for the host-contract/error-fidelity/performance bucket: `12-02`, `12-04`, `13-01`, `13-02`, `13-03`, `15-01`, `15-03`, `15-04`, `15-05`, `18-03`, `19-01`, `19-02`, `19-03`.
-- [ ] Create Plan 271 for the doc/plan/naming baseline bucket: `16-01`, `16-02`, `16-03`, `16-04`, `16-05`, `16-06`, `16-07`, `17-01`, `17-02`, `17-03`, `18-01`.
+- [x] Create Plan 268 for the validation/owner-contract bucket: `04-03`, `08-02`, `08-03`, `08-04`.
+- [x] Create Plan 269 for the accessibility/test-gate bucket: `12-01`, `14-01`, `14-02`, `14-03`, `14-04`, `14-05`, `14-06`, `14-07`, `14-08`, `14-09`, `20-01`, `20-02`, `20-03`, `20-04`.
+- [x] Create Plan 270 for the host-contract/error-fidelity/performance bucket: `12-02`, `12-04`, `13-01`, `13-02`, `13-03`, `15-01`, `15-03`, `15-04`, `15-05`, `18-03`, `19-01`, `19-02`, `19-03`.
+- [x] Create Plan 271 for the doc/plan/naming baseline bucket: `16-01`, `16-02`, `16-03`, `16-04`, `16-05`, `16-06`, `16-07`, `17-01`, `17-02`, `17-03`, `18-01`.
 
 Exit Criteria:
 
-- [ ] Plans 268-271 exist and each contains a guide-compliant planned execution structure.
-- [ ] Every retained ID not owned by Plans 262/264/265/266 is owned by exactly one new successor plan.
-- [ ] `No owner-doc update required` is recorded for this docs-only routing phase.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Plans 268-271 exist and each contains a guide-compliant planned execution structure.
+- [x] Every retained ID not owned by Plans 262/264/265/266 is owned by exactly one new successor plan.
+- [x] `No owner-doc update required` is recorded for this docs-only routing phase.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ### Phase 4 - Closure Audit For Routing Honesty
 
-Status: planned
+Status: completed
 Targets: this plan, successor plans, retained-ID matrix, daily log
 
 - Item Types: `Proof | Decision | Fix`
 
-- [ ] Run an independent routing audit with a fresh subagent that re-reads this plan, the summary, and every referenced successor plan.
-- [ ] Fix any duplicated, missing, or semantically misrouted retained ID before closure.
-- [ ] Record closure evidence proving no confirmed retained item is left without an execution owner.
+- [x] Run an independent routing audit with a fresh subagent that re-reads this plan, the summary, and every referenced successor plan.
+- [x] Fix any duplicated, missing, or semantically misrouted retained ID before closure.
+- [x] Record closure evidence proving no confirmed retained item is left without an execution owner.
 
 Exit Criteria:
 
-- [ ] Independent audit concludes the retained-ID matrix is complete and one-to-one.
-- [ ] No confirmed retained item is silently downgraded to a vague follow-up.
-- [ ] `No owner-doc update required` is recorded for this docs-only routing phase.
-- [ ] Daily log records routing completion and closure evidence.
+- [x] Independent audit concludes the retained-ID matrix is complete and one-to-one.
+- [x] No confirmed retained item is silently downgraded to a vague follow-up.
+- [x] `No owner-doc update required` is recorded for this docs-only routing phase.
+- [x] Daily log records routing completion and closure evidence.
 
 ## Closure Gates
 
 > 这是纯文档 owner-routing plan。关闭条件是 retained owner matrix 与 successor ownership 完整，而不是代码已经全部修复。
 
-- [ ] All 66 retained IDs have exactly one current owner in the matrix.
-- [ ] All 10 P1 retained IDs are routed to explicit execution owner plans.
-- [ ] No confirmed live defect, contract drift, owner-doc drift, or hard-gate issue remains ownerless.
-- [ ] Every referenced successor plan exists and is at least `planned` with guide-compliant scope and exit criteria.
-- [ ] Independent closure audit is completed and recorded with evidence.
+- [x] All 66 retained IDs have exactly one current owner in the matrix.
+- [x] All 10 P1 retained IDs are routed to explicit execution owner plans.
+- [x] No confirmed live defect, contract drift, owner-doc drift, or hard-gate issue remains ownerless.
+- [x] Every referenced successor plan exists and is at least `planned` with guide-compliant scope and exit criteria.
+- [x] Independent closure audit is completed and recorded with evidence.
 
 ## Deferred But Adjudicated
 
@@ -199,12 +199,12 @@ None. Follow-ups may only be added after a retained item already has explicit su
 
 ## Closure
 
-Status Note: pending execution.
+Status Note: owner-routing closure is complete. The retained-ID matrix is one-to-one, all successor plans exist, and no batch-1 retained item remains ownerless.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent routing audit subagent `ses_1ded2dbb8ffeCRzAy09BcgcZHw`
+- Evidence: independent re-audit confirmed the matrix in this plan covers all 66 retained IDs exactly once, the eight successor plans exist, and each successor plan scopes the IDs assigned here; no retained item remained ownerless after the routing pass.
 
 Follow-up:
 

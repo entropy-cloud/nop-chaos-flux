@@ -1,6 +1,6 @@
 # 272 Compile-Time Prop Value Validation And Variant Convergence Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-13
 > Source: `docs/architecture/schema-file-validator.md`, `docs/architecture/variant-vocabulary.md`, `docs/logs/2026/05-13.md`
 > Related: `docs/plans/117-renderer-definition-unified-static-contract-plan.md`, `docs/plans/144-flux-execution-boundary-diagnostics-and-host-contract-tooling-plan.md`, `docs/plans/151-json-schema-property-coverage-100-percent-plan.md`
@@ -158,44 +158,44 @@ Exit Criteria:
 
 ### Phase 5 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: workspace verification, `docs/logs/`, affected owner docs
 
 - Item Types: `Proof`
 
-- [ ] Run focused compiler validation tests for prop shape/literal/union enforcement.
-- [ ] Run focused renderer/domain tests for migrated `variant`/`intent`/`level` behavior.
-- [ ] Run `node scripts/analyze-variant-vocabulary.mjs` and archive the final summary in the daily log.
-- [ ] Run `pnpm typecheck`.
-- [ ] Run `pnpm build`.
-- [ ] Run `pnpm lint`.
-- [ ] Run `pnpm test` or record a scoped test strategy only if a full test run is blocked by an independently documented external issue.
-- [ ] Run an independent closure-audit subagent after implementation is complete.
+- [x] Run focused compiler validation tests for prop shape/literal/union enforcement.
+- [x] Run focused renderer/domain tests for migrated `variant`/`intent`/`level` behavior.
+- [x] Run `node scripts/analyze-variant-vocabulary.mjs` and archive the final summary in the daily log.
+- [x] Run `pnpm typecheck`.
+- [x] Run `pnpm build`.
+- [x] Run `pnpm lint`.
+- [x] Run `pnpm test`.
+- [x] Run an independent closure-audit subagent after implementation is complete.
 
 Exit Criteria:
 
-- [ ] All focused validation and migration tests pass.
-- [ ] Workspace verification passes or any blocker is explicitly proven unrelated and routed to separate ownership before this plan can close.
-- [ ] Daily log records final test counts/summary if full test suite is green.
-- [ ] Independent closure audit confirms no remaining plan-owned validation or variant drift.
-- [ ] `docs/logs/` corresponding date entry has been updated.
+- [x] All focused validation and migration tests pass.
+- [x] Workspace verification passes.
+- [x] Daily log records final test counts/summary after the full green rerun.
+- [x] Independent closure audit confirms no remaining plan-owned validation or variant drift.
+- [x] `docs/logs/` corresponding date entry has been updated.
 
 ## Closure Gates
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] Generic compiler validation enforces statically knowable renderer prop values against registered `FluxValueShape` ranges.
-- [ ] RendererDefinition registration coverage exists for public finite-valued schema fields, with static enforcement against missing registrations.
-- [ ] Public `variant` vocabulary is normalized according to `docs/architecture/variant-vocabulary.md`.
-- [ ] Toolbar semantic styling uses `intent` or has an explicit compatibility exception with validation coverage.
-- [ ] CSS/selectors/renderers/tests affected by variant/intent/level migration are updated.
-- [ ] All validation failures introduced by the stricter checker are fixed, not hidden by weakening rules.
-- [ ] Relevant architecture and reference docs describe the final live behavior.
-- [ ] Independent closure audit has been completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Generic compiler validation enforces statically knowable renderer prop values against registered `FluxValueShape` ranges.
+- [x] RendererDefinition registration coverage exists for public finite-valued schema fields, with static enforcement against missing registrations.
+- [x] Public `variant` vocabulary is normalized according to `docs/architecture/variant-vocabulary.md`.
+- [x] Toolbar semantic styling uses `intent`.
+- [x] CSS/selectors/renderers/tests affected by variant/intent/level migration are updated.
+- [x] All validation failures introduced by the stricter checker are fixed, not hidden by weakening rules.
+- [x] Relevant architecture and reference docs describe the final live behavior.
+- [x] Independent closure audit has been completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -207,12 +207,12 @@ None at plan creation time.
 
 ## Closure
 
-Status Note: Phases 1-4 are complete. Full-workspace verification, final closure audit, and plan closure remain pending.
+Status Note: Phases 1-5 are complete. Full-workspace verification is green, the final closure audit has been recorded, and no remaining in-scope plan-owned gaps remain.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit after implementation.
-- Evidence: pending.
+- Reviewer / Agent: independent closure audit rerun recorded after repository doc sync on 2026-05-13.
+- Evidence: Plan 272 implementation, docs, and verification gates are now synchronized; final task id and verdict are recorded in the daily log entry for 2026-05-13.
 
 Follow-up:
 
