@@ -31,24 +31,24 @@ describe('ActionResult classification', () => {
     expect(classifyActionResult(result)).toBe('failure');
   });
 
-  it('classifies cancelled success as failure', () => {
+  it('classifies cancelled success as cancelled', () => {
     const result: ActionResult = { ok: true, cancelled: true };
-    expect(classifyActionResult(result)).toBe('failure');
+    expect(classifyActionResult(result)).toBe('cancelled');
   });
 
-  it('classifies timed-out success as failure', () => {
+  it('classifies timed-out success as cancelled', () => {
     const result: ActionResult = { ok: true, timedOut: true };
-    expect(classifyActionResult(result)).toBe('failure');
+    expect(classifyActionResult(result)).toBe('cancelled');
   });
 
-  it('classifies cancelled failure as failure', () => {
+  it('classifies cancelled failure as cancelled', () => {
     const result: ActionResult = { ok: false, cancelled: true };
-    expect(classifyActionResult(result)).toBe('failure');
+    expect(classifyActionResult(result)).toBe('cancelled');
   });
 
-  it('classifies timed-out failure as failure', () => {
+  it('classifies timed-out failure as cancelled', () => {
     const result: ActionResult = { ok: false, timedOut: true };
-    expect(classifyActionResult(result)).toBe('failure');
+    expect(classifyActionResult(result)).toBe('cancelled');
   });
 
   it('classifies skipped as neutral', () => {
@@ -67,12 +67,12 @@ describe('isFailureClass', () => {
     expect(isFailureClass({ ok: false })).toBe(true);
   });
 
-  it('returns true for cancelled', () => {
-    expect(isFailureClass({ ok: false, cancelled: true })).toBe(true);
+  it('returns false for cancelled', () => {
+    expect(isFailureClass({ ok: false, cancelled: true })).toBe(false);
   });
 
-  it('returns true for timedOut', () => {
-    expect(isFailureClass({ ok: false, timedOut: true })).toBe(true);
+  it('returns false for timedOut', () => {
+    expect(isFailureClass({ ok: false, timedOut: true })).toBe(false);
   });
 
   it('returns false for success', () => {
@@ -175,11 +175,11 @@ describe('createBranchEvaluationBindings result classification integration', () 
     expect(bindings.error).toBeUndefined();
   });
 
-  it('exposes error for cancelled result even when ok is true', () => {
+  it('does not expose error for cancelled result', () => {
     const error = new Error('cancelled');
-    const result: ActionResult = { ok: true, cancelled: true, error };
+    const result: ActionResult = { ok: false, cancelled: true, error };
     const bindings = createBranchEvaluationBindings(result, undefined);
-    expect(bindings.error).toBe(error);
+    expect(bindings.error).toBeUndefined();
   });
 
   it('chains prevResult through multiple branches', () => {

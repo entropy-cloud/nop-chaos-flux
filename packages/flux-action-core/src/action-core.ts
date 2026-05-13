@@ -61,14 +61,18 @@ export function buildActionMonitorPayload(
   };
 }
 
-export type ActionResultClass = 'success' | 'failure' | 'neutral';
+export type ActionResultClass = 'success' | 'failure' | 'cancelled' | 'neutral';
 
 export function classifyActionResult(result: ActionResult): ActionResultClass {
   if (result.skipped) {
     return 'neutral';
   }
 
-  if (!result.ok || result.cancelled || result.timedOut) {
+  if (result.cancelled || result.timedOut) {
+    return 'cancelled';
+  }
+
+  if (!result.ok) {
     return 'failure';
   }
 

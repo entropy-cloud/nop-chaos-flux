@@ -58,7 +58,7 @@ describe('contract: withRetry failureCount consistency', () => {
 });
 
 describe('contract: createBranchEvaluationBindings edge cases', () => {
-  it('error is undefined for timedOut result with ok:true', () => {
+  it('error is undefined for timedOut result (cancelled class)', () => {
     const result: ActionResult = { ok: true, timedOut: true, cancelled: true };
     const bindings = createBranchEvaluationBindings(result, undefined);
     expect(bindings.error).toBeUndefined();
@@ -81,12 +81,12 @@ describe('contract: createBranchEvaluationBindings edge cases', () => {
 });
 
 describe('contract: classifyActionResult combined flags', () => {
-  it('ok:false + cancelled:true + timedOut:true is failure', () => {
-    expect(classifyActionResult({ ok: false, cancelled: true, timedOut: true })).toBe('failure');
+  it('ok:false + cancelled:true + timedOut:true is cancelled', () => {
+    expect(classifyActionResult({ ok: false, cancelled: true, timedOut: true })).toBe('cancelled');
   });
 
-  it('ok:true + cancelled:true + timedOut:true is failure (cancelled dominates)', () => {
-    expect(classifyActionResult({ ok: true, cancelled: true, timedOut: true })).toBe('failure');
+  it('ok:true + cancelled:true + timedOut:true is cancelled (cancelled dominates)', () => {
+    expect(classifyActionResult({ ok: true, cancelled: true, timedOut: true })).toBe('cancelled');
   });
 
   it('ok:true + skipped:true is neutral even with other flags', () => {

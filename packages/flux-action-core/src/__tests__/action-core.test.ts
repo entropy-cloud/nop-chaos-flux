@@ -103,12 +103,12 @@ describe('classifyActionResult', () => {
     expect(classifyActionResult({ ok: false })).toBe('failure');
   });
 
-  it('classifies cancelled as failure', () => {
-    expect(classifyActionResult({ ok: true, cancelled: true })).toBe('failure');
+  it('classifies cancelled as cancelled', () => {
+    expect(classifyActionResult({ ok: true, cancelled: true })).toBe('cancelled');
   });
 
-  it('classifies timed out as failure', () => {
-    expect(classifyActionResult({ ok: true, timedOut: true })).toBe('failure');
+  it('classifies timed out as cancelled', () => {
+    expect(classifyActionResult({ ok: true, timedOut: true })).toBe('cancelled');
   });
 });
 

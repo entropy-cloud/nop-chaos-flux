@@ -56,13 +56,15 @@ async function runParallelActions(
     ),
   );
 
-  const representativeFailure = results.find((result) => classifyActionResult(result) === 'failure');
+  const representativeFailure = results.find(
+    (result) => { const cls = classifyActionResult(result); return cls === 'failure' || cls === 'cancelled'; },
+  );
   const representativeError =
     representativeFailure?.error ??
     (representativeFailure ? new Error('Parallel action failed') : undefined);
 
   return finishAction(ctx, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
-    ok: results.every((result) => classifyActionResult(result) !== 'failure'),
+    ok: results.every((result) => { const cls = classifyActionResult(result); return cls !== 'failure' && cls !== 'cancelled'; }),
     data: results,
     results,
     error: representativeError,
@@ -82,9 +84,9 @@ async function runSingleAction(
       : actionCtx;
   const startedAt = Date.now();
   const actionPayload = buildActionMonitorPayload(action, activeCtx);
-  ctx.getEnv().monitor?.onActionStart?.(actionPayload);
 
   try {
+    ctx.getEnv().monitor?.onActionStart?.(actionPayload);
     const processedAction =
       (ctx.plugins?.length ?? 0) > 0
         ? normalizeCompiledActionProgram(
@@ -374,31 +376,47 @@ async function dispatch(
         typeof (actionCtx.event as { type?: unknown } | undefined)?.type === 'string'
           ? (actionCtx.event as { type: string }).type
           : 'actionError';
-      previous = await dispatch(
-        ctx,
-        {
-          nodes: normalizedAction.onError,
-          isFullyStatic: false,
-        },
-        {
-          ...actionCtx,
-          interactionId: currentActionCtx.interactionId,
-          prevResult: result,
-          event: {
-            ...(actionCtx.event && typeof actionCtx.event === 'object'
-              ? (actionCtx.event as Record<string, unknown>)
-              : {}),
-            type: eventType,
-            result,
-            error: result.error,
-            prevResult: currentActionCtx.prevResult,
+      try {
+        previous = await dispatch(
+          ctx,
+          {
+            nodes: normalizedAction.onError,
+            isFullyStatic: false,
           },
-          evaluationBindings: branchBindings,
-        },
-      );
+          {
+            ...actionCtx,
+            interactionId: currentActionCtx.interactionId,
+            prevResult: result,
+            event: {
+              ...(actionCtx.event && typeof actionCtx.event === 'object'
+                ? (actionCtx.event as Record<string, unknown>)
+                : {}),
+              type: eventType,
+              result,
+              error: result.error,
+              prevResult: currentActionCtx.prevResult,
+            },
+            evaluationBindings: branchBindings,
+          },
+        );
+      } catch (error) {
+        ctx.onActionError?.(error, currentActionCtx);
+
+        for (const plugin of ctx.plugins ?? []) {
+          plugin.onError?.(error, {
+            phase: 'action',
+            error,
+            nodeId: actionCtx.nodeInstance?.templateNode.id,
+            path: actionCtx.nodeInstance?.templateNode.templatePath,
+          });
+        }
+
+        const message = error instanceof Error ? error.message : String(error);
+        ctx.getEnv().notify('error', message);
+      }
     }
 
-    if ((resultClass === 'success' || resultClass === 'failure') && normalizedAction.onSettled) {
+    if ((resultClass === 'success' || resultClass === 'failure' || resultClass === 'cancelled') && normalizedAction.onSettled) {
       const settledEventType = resultClass === 'failure' ? 'actionSettledError' : 'actionSettled';
 
       try {
