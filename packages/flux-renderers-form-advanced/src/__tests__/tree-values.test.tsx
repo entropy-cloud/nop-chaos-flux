@@ -65,7 +65,7 @@ describe('tree controls - value handling and form integration', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Runtime' }));
+    fireEvent.click(screen.getByRole('treeitem', { name: 'Runtime' }));
     fireEvent.click(screen.getByText('Submit categories'));
 
     await waitFor(() => {

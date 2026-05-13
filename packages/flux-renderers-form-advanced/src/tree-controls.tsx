@@ -132,6 +132,9 @@ function TreeOptionList(props: {
   disabled: boolean;
   onChange: (value: unknown) => void;
   searchLabel: string;
+  describedBy?: string;
+  errorMessage?: string;
+  invalid?: boolean;
 }) {
   const { query, setQuery, filteredOptions } = useTreeOptionListController({
     options: props.options,
@@ -156,6 +159,9 @@ function TreeOptionList(props: {
         data-slot="tree-option-items"
         role="tree"
         aria-multiselectable={props.multiple || undefined}
+        aria-describedby={props.describedBy}
+        aria-errormessage={props.errorMessage}
+        aria-invalid={props.invalid || undefined}
       >
         {filteredOptions.map((option) => (
           <TreeOptionNode
@@ -211,6 +217,9 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           }
           onChange={(nextValue) => handlers.onChange(nextValue)}
           searchLabel={searchLabel}
+          describedBy={sourceError ? sourceErrorId : undefined}
+          errorMessage={sourceError ? sourceErrorId : undefined}
+          invalid={Boolean(sourceError)}
         />
       </div>
       {sourceError ? (
@@ -312,6 +321,9 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             }
             onChange={(nextValue) => handlers.onChange(nextValue)}
             searchLabel={searchLabel}
+            describedBy={sourceError ? sourceErrorId : undefined}
+            errorMessage={sourceError ? sourceErrorId : undefined}
+            invalid={Boolean(sourceError)}
           />
         </PopoverContent>
       </Popover>

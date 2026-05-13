@@ -53,10 +53,10 @@ const arrayItemInstanceProbeRenderer: RendererDefinition = {
 
 function ArrayItemInstanceProbeWithInstancePath(props: { instancePath: unknown }) {
   const scope = useRenderScope();
-  const mountId = React.useId();
   const itemName = String(
     (scope.get('value') as { name?: unknown } | undefined)?.name ?? scope.get('name') ?? 'unknown',
   );
+  const [mountId] = React.useState(() => `mount:${itemName}`);
 
   return (
     <span data-testid={`array-item-probe-${itemName}`}>
@@ -315,6 +315,7 @@ describe('array-field renderer (object itemKind)', () => {
 
     await waitFor(() => expect(screen.getByText('Contacts')).toBeTruthy());
 
+    await waitFor(() => expect(screen.getAllByLabelText('Name')).toHaveLength(2));
     const nameInputs = screen.getAllByLabelText('Name') as HTMLInputElement[];
     expect(nameInputs.length).toBe(2);
     expect(nameInputs[0].value).toBe('Alice');

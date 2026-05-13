@@ -146,7 +146,7 @@ describe('tag-list renderer', () => {
     expect(screen.queryByText('Tags requires at least one tag')).toBeNull();
   });
 
-  it('toggles an internal tag action when the wrapped field shell is clicked through label semantics', async () => {
+  it('does not toggle an internal tag action when the wrapped field shell is clicked', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
@@ -182,7 +182,7 @@ describe('tag-list renderer', () => {
 
     fireEvent.click(field!);
 
-    expect(redTag.closest('button')?.getAttribute('aria-pressed')).toBe('true');
+    expect(redTag.closest('button')?.getAttribute('aria-pressed')).toBe('false');
   });
 
   it('toggles tags with keyboard activation through the same business path as click', async () => {

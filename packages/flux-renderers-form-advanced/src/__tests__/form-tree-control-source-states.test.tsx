@@ -88,6 +88,8 @@ describe('tree controls source state and picker branches', () => {
     expect(treeSelectError).toBeTruthy();
     expect(inputTreeError.getAttribute('id')).toBe('categoryIds-source-error');
     expect(treeSelectError.getAttribute('id')).toBe('departmentId-source-error');
+    expect(screen.getByRole('tree').getAttribute('aria-describedby')).toBe('categoryIds-source-error');
+    expect(screen.getByRole('tree').getAttribute('aria-errormessage')).toBe('categoryIds-source-error');
     expect(screen.getByRole('button', { name: /Department/ }).getAttribute('aria-describedby')).toBe(
       'departmentId-source-error',
     );

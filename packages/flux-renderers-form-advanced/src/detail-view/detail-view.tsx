@@ -64,7 +64,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   );
 
   const scopeProjectedValue = useScopeSelector(
-    (data) => (scopePath ? (data as Record<string, unknown>)[scopePath] : undefined),
+    (data) => (scopePath ? getIn(data as Record<string, unknown>, scopePath) : undefined),
     Object.is,
   );
 
@@ -320,8 +320,15 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         }
       }
 
-      if (parentForm || hasUsableParentValidationOwner()) {
+      if (parentForm) {
         return await settleParentValidation();
+      }
+
+      if (hasUsableParentValidationOwner()) {
+        const settled = await settleParentValidation();
+        if (!settled) {
+          return false;
+        }
       }
 
       return await validateCommittedDraftLocally(draftValues);
@@ -337,7 +344,10 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       } else {
         parentScope.merge(updates as Record<string, unknown>);
         if (hasUsableParentValidationOwner()) {
-          return await settleParentValidation();
+          const settled = await settleParentValidation();
+          if (!settled) {
+            return false;
+          }
         }
 
         return await validateCommittedDraftLocally(draftValues);

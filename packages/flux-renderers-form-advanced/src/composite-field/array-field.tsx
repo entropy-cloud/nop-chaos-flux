@@ -554,7 +554,13 @@ export const arrayFieldRendererDefinition: RendererDefinition = {
   component: ArrayFieldRenderer,
   wrap: true,
   fields: [
+    { key: 'name', kind: 'prop' },
     formLabelFieldRule,
+    { key: 'itemKind', kind: 'prop' },
+    { key: 'itemKey', kind: 'prop' },
+    { key: 'addable', kind: 'prop' },
+    { key: 'removable', kind: 'prop' },
+    { key: 'readOnly', kind: 'prop' },
     { key: 'item', kind: 'region', regionKey: 'item', params: ['index', 'value'] },
   ],
   validation: {
