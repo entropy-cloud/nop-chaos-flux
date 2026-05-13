@@ -120,7 +120,7 @@ Also in `default-spacing.css`: font-size, font-weight, color, and layout rules f
 
 When `ContainerRenderer` activates the flex-child path (semantic props `direction`, `gap`, `wrap`, `align` present), it adds `data-flex=""` to the inner body div. The attribute marks that the body layout is being shaped by semantic props rather than by the bare-path wrapper. Default spacing still remains in package CSS, while renderer code only adds explicit semantic classes or inline styles when the schema asked for them. This keeps the final owner split clean: CSS owns the default baseline, renderer code owns only author-requested overrides.
 
-- CSS `flex-direction: column` providing the default column baseline that semantic classes such as `flex-row` can override when requested
+- CSS `flex-direction: column` providing the default column baseline that semantic classes such as `flex-row` or `flex-col` can override only when the schema explicitly requests them
 - CSS default gap providing the shared default baseline until an explicit `gap` prop supplies a Tailwind utility or inline override
 - Duplicate `display: flex` declarations on the semantic path remaining harmless, because the ownership distinction is about where defaults are declared, not whether the same computed value is restated
 
@@ -190,16 +190,16 @@ Per-slot props are simpler, match the existing pattern (`gap`, `direction`), and
 
 ## Container Inventory
 
-| Container              | Default Internal Spacing                                         | Mechanism                                       |
-| ---------------------- | ---------------------------------------------------------------- | ----------------------------------------------- |
-| Page                   | 24px gap between sections, 16px padding                          | CSS `@layer base`                               |
-| Form                   | 16px gap between fields, 12px between actions                    | CSS `@layer base`; override via `gap` prop      |
-| FieldSet               | 16px gap + border/padding reset                                  | CSS `@layer base`; override via `gap` prop      |
-| Container (bare)       | 16px gap between children                                        | CSS `@layer base`                               |
-| Container (flex-child) | Same default baseline, overridden by semantic props when present | CSS `@layer base` + renderer semantic overrides |
-| Flex                   | Zero                                                             | Layout primitive — author sets `gap` prop       |
-| Tabs content           | 16px gap between children                                        | CSS `@layer base`                               |
-| FieldFrame             | 4px internal, 8px label-top, 16px label-left                     | CSS `@layer base`                               |
+| Container              | Default Internal Spacing                                                     | Mechanism                                       |
+| ---------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------- |
+| Page                   | 24px gap between sections, 16px padding                                      | CSS `@layer base`                               |
+| Form                   | 16px gap between fields, 12px between actions                                | CSS `@layer base`; override via `gap` prop      |
+| FieldSet               | 16px gap + border/padding reset                                              | CSS `@layer base`; override via `gap` prop      |
+| Container (bare)       | 16px gap between children                                                    | CSS `@layer base`                               |
+| Container (flex-child) | Same default baseline, overridden only by explicitly authored semantic props | CSS `@layer base` + renderer semantic overrides |
+| Flex                   | Zero                                                                         | Layout primitive — author sets `gap` prop       |
+| Tabs content           | 16px gap between children                                                    | CSS `@layer base`                               |
+| FieldFrame             | 4px internal, 8px label-top, 16px label-left                                 | CSS `@layer base`                               |
 
 **Why Flex has no default gap**: Flex is a layout primitive. No single default is correct for toolbars, card grids, form rows, or tag lists.
 

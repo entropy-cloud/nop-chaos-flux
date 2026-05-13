@@ -378,7 +378,7 @@ Child aliases override parent aliases with the same name.
 
 Not all renderers follow the same styling rules. Renderers fall into two categories:
 
-**Layout renderers** (container, flex, page, panel, grid, etc.) are transparent structural wrappers. They emit marker classes only and defer all visual styling to schema (`className`, `classAliases`, semantic props). The host/schema author controls gap, direction, padding, and spacing.
+**Layout renderers** (container, flex, page, panel, grid, etc.) are transparent structural wrappers. They emit marker classes plus explicit schema-authored semantic overrides and otherwise defer shipped defaults to schema classes or package CSS baselines. The host/schema author controls gap, direction, padding, and spacing, while package CSS may still provide theme-tunable baseline flow/gap defaults through root markers and slot selectors.
 
 **Widget renderers** (condition-builder, tag-list, key-value, array-editor, table, tree, code-editor, etc.) are complete, ready-to-use UI controls built on shadcn/ui. They ship with full internal styling — layout, spacing, typography — as part of their visual design. Schema-level `className` is for consumer customization overrides, not the primary styling mechanism.
 
@@ -386,12 +386,12 @@ Not all renderers follow the same styling rules. Renderers fall into two categor
 
 Layout renderers must follow a strict separation:
 
-| Layer                                 | Owns                                                                                                                 | Does NOT own                                                                  |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| **Renderer (code)**                   | Structural marker class (`nop-container`, `nop-flex`), ARIA attributes, DOM structure                                | gap, direction, padding, margin, width, height                                |
-| **Schema (classAliases + className)** | Author-controlled visual and layout choices that should stay explicit at usage sites                                 | Hidden default layout injected by renderer code                               |
-| **Component/UI layer**                | Component chrome, variant/size styling, stable class structure                                                       | Page- or feature-specific layout decisions that only the schema/host can know |
-| **Global CSS / theme layer**          | Interaction pseudo-states (`[data-selected]`, `:hover`), design tokens (`--foreground`, `--primary`), host overrides | Replacing schema-authored explicit layout choices with hidden defaults        |
+| Layer                                 | Owns                                                                                                                                   | Does NOT own                                                                    |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Renderer (code)**                   | Structural marker class (`nop-container`, `nop-flex`), ARIA attributes, DOM structure, explicit semantic overrides requested by schema | implicit gap, direction, padding, margin, width, height not requested by schema |
+| **Schema (classAliases + className)** | Author-controlled visual and layout choices that should stay explicit at usage sites                                                   | Hidden default layout injected by renderer code                                 |
+| **Component/UI layer**                | Component chrome, variant/size styling, stable class structure                                                                         | Page- or feature-specific layout decisions that only the schema/host can know   |
+| **Global CSS / theme layer**          | Interaction pseudo-states (`[data-selected]`, `:hover`), design tokens (`--foreground`, `--primary`), host overrides                   | Replacing schema-authored explicit layout choices with hidden defaults          |
 
 **Why**: A container used inside a card needs `gap-1` (4px), the same container in a form needs `gap-4` (16px), and in a list item it needs `gap-0`. The renderer cannot predict the correct value. When a renderer hardcodes `gap-4`, schema authors cannot see this hidden style and cannot override it without knowing it exists.
 
@@ -460,7 +460,7 @@ This rule is about semantic boundary clarity, not raw DOM performance. Replacing
 
 ### Exception: Semantic Props Are Explicit
 
-When a schema author writes `"direction": "column", "gap": "md"`, these are **explicit** declarations visible in the schema. The renderer may convert these to Tailwind classes because the author chose them. The rule only forbids **implicit** styles the author did not request. This applies to layout renderers; widget renderers already include styling as part of their design.
+When a schema author writes `"direction": "column"`, `"direction": "row"`, `"gap": "md"`, or alignment props, these are **explicit** declarations visible in the schema. The renderer may convert these to Tailwind classes because the author chose them. The rule only forbids **implicit** styles the author did not request. This applies to layout renderers; widget renderers already include styling as part of their design.
 
 ## Spacing Conventions
 
@@ -533,7 +533,7 @@ No single default is correct for all contexts. The `stack-*` alias convention re
 
 `packages/flux-renderers-basic/src/container.tsx`:
 
-The ContainerRenderer renders a `<div>` with only a marker class. All layout styles come from schema (`className` or semantic props):
+The ContainerRenderer root renders a `<div>` with only a marker class. Shipped default body flow/gap comes from package CSS, while semantic props still map to explicit overrides on the inner body slot:
 
 ```typescript
 // Container renderer (simplified)
@@ -542,7 +542,7 @@ The ContainerRenderer renders a `<div>` with only a marker class. All layout sty
 </div>
 ```
 
-When semantic props (`direction`, `gap`, `align`) are present, the renderer wraps children in a flex inner div:
+When semantic props (`direction`, `gap`, `align`, `wrap`) are present, the renderer wraps children in a flex inner div and only adds the classes explicitly requested by those props:
 
 ```typescript
 {useFlexChild ? (
@@ -554,16 +554,16 @@ When semantic props (`direction`, `gap`, `align`) are present, the renderer wrap
 )}
 ```
 
-The outer wrapper (`nop-container`) never injects layout styles.
+The outer wrapper (`nop-container`) never injects layout styles. The inner semantic path must also avoid inventing defaults: for example, `direction` classes are emitted only when the schema explicitly sets `direction`, not as an implicit fallback.
 
 ### Semantic Prop Mapping
 
-| Prop        | Values                                                                                                                                                                                                 | Tailwind Output                   |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
-| `direction` | `'row'` \| `'column'`                                                                                                                                                                                  | `flex-row` \| `flex-col`          |
-| `wrap`      | `boolean`                                                                                                                                                                                              | `flex-wrap`                       |
-| `align`     | `'start'` \| `'center'` \| `'end'` \| `'stretch'`                                                                                                                                                      | `items-* justify-*`               |
-| `gap`       | Named tokens: `'none'` \| `'xs'` \| `'sm'` \| `'md'` \| `'lg'` \| `'xl'` → Tailwind gap classes<br>Number values → inline style with px unit<br>Arbitrary CSS string values → inline style passthrough | `gap-*` or `style={{gap: '...'}}` |
+| Prop        | Values                                                                                                                                                                                                 | Tailwind Output                                                 |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| `direction` | `'row'` \| `'column'`                                                                                                                                                                                  | `flex-row` \| `flex-col` only when explicitly present in schema |
+| `wrap`      | `boolean`                                                                                                                                                                                              | `flex-wrap`                                                     |
+| `align`     | `'start'` \| `'center'` \| `'end'` \| `'stretch'`                                                                                                                                                      | `items-* justify-*`                                             |
+| `gap`       | Named tokens: `'none'` \| `'xs'` \| `'sm'` \| `'md'` \| `'lg'` \| `'xl'` → Tailwind gap classes<br>Number values → inline style with px unit<br>Arbitrary CSS string values → inline style passthrough | `gap-*` or `style={{gap: '...'}}`                               |
 
 ### Gap Token Mapping
 
