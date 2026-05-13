@@ -19,6 +19,8 @@ export interface CreateManagedFormRuntimeInput {
   name?: string;
   initialValues?: Record<string, any>;
   parentScope?: ScopeRef;
+  statusPath?: string;
+  valuesPath?: string;
   page?: PageRuntime;
   validation?: CompiledFormValidationModel;
   lifecycle?: FormLifecycleHandlers;

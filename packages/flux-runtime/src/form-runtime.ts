@@ -25,7 +25,11 @@ import {
   createAllTouchedComputer,
 } from './form-runtime-derived-state.js';
 import { buildInitialFieldState } from './form-runtime-state.js';
-import { createInitialFormScopeChange, createFormScopeWithBinding } from './form-runtime-status.js';
+import {
+  buildFormStatusSummary,
+  createInitialFormScopeChange,
+  createFormScopeWithBinding,
+} from './form-runtime-status.js';
 import { mergeFieldStateErrors } from './form-runtime-owner-field-states.js';
 import {
   cancelAllValidationDebounces,
@@ -55,6 +59,27 @@ import {
   type ArrayMutationContext,
 } from './form-runtime-array-ops.js';
 import { createScopeRef, toRecord } from './scope.js';
+import { publishOwnerStatus } from './status-owner.js';
+
+function formStatusSummaryEqual(
+  left: import('@nop-chaos/flux-core').FormStatusSummary | undefined,
+  right: import('@nop-chaos/flux-core').FormStatusSummary,
+): boolean {
+  return (
+    left !== undefined &&
+    left.id === right.id &&
+    left.name === right.name &&
+    left.submitting === right.submitting &&
+    left.validating === right.validating &&
+    left.dirty === right.dirty &&
+    left.touched === right.touched &&
+    left.visited === right.visited &&
+    left.valid === right.valid &&
+    left.invalid === right.invalid &&
+    left.hasErrors === right.hasErrors &&
+    left.errorCount === right.errorCount
+  );
+}
 
 export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInput): FormRuntime {
   const store = inputValue.existingStore ?? createFormStore(inputValue.initialValues ?? {});
@@ -88,6 +113,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   let lastChange: ScopeChange = createInitialFormScopeChange(formId);
   let currentValidation = inputValue.validation;
   let nextChangeRevision = lastChange.revision ?? 0;
+  let clearExternalPublication: (() => void) | undefined;
 
   function setLastChange(change: ScopeChange) {
     nextChangeRevision += 1;
@@ -201,6 +227,56 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     });
   }
 
+  function setupExternalPublication() {
+    const parentScope = inputValue.parentScope;
+    const { statusPath, valuesPath } = inputValue;
+
+    if (!parentScope || (!statusPath && !valuesPath)) {
+      return;
+    }
+
+    let lastStatusSummary: import('@nop-chaos/flux-core').FormStatusSummary | undefined;
+    let lastPublishedValues: Record<string, unknown> | undefined;
+
+    const publish = () => {
+      if (statusPath) {
+        const summary = buildFormStatusSummary(
+          store.getState(),
+          formId,
+          formName,
+          pendingValidationDebounces.size,
+        );
+
+        if (!formStatusSummaryEqual(lastStatusSummary, summary)) {
+          lastStatusSummary = summary;
+          publishOwnerStatus(parentScope, statusPath, summary);
+        }
+      }
+
+      if (valuesPath) {
+        const values = store.getState().values as Record<string, unknown>;
+        if (!Object.is(lastPublishedValues, values)) {
+          lastPublishedValues = values;
+          parentScope.update(valuesPath, values);
+        }
+      }
+    };
+
+    publish();
+
+    const unsubscribe = store.subscribe(publish);
+    clearExternalPublication = () => {
+      unsubscribe();
+      if (statusPath) {
+        publishOwnerStatus(parentScope, statusPath, undefined);
+      }
+      if (valuesPath) {
+        parentScope.update(valuesPath, undefined);
+      }
+      clearExternalPublication = undefined;
+    };
+  }
+
   const thisForm: FormRuntime = {
     id: formId,
     name: formName,
@@ -288,6 +364,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
 
     dispose() {
+      clearExternalPublication?.();
       ownerRuntime.dispose();
     },
 
@@ -527,6 +604,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   };
 
   formRuntimeRef.current = thisForm;
+  setupExternalPublication();
 
   return thisForm;
 }

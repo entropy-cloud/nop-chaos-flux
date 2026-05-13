@@ -270,6 +270,8 @@ export function createRuntimeOwnedFactories(input: {
     page?: PageRuntime;
     validation?: CompiledFormValidationModel;
     lifecycle?: FormLifecycleHandlers;
+    statusPath?: string;
+    valuesPath?: string;
   }): FormRuntime {
     const formRuntime = createManagedFormRuntime({
       ...inputValue,
