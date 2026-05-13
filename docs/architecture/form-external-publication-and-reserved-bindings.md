@@ -127,6 +127,7 @@ text: ${ui.profileFormStatus?.valid}
 
 - external readonly summary publication
 - 面向 parent / sibling / shell / page-level observers
+- publication 由 form runtime 生命周期负责首发、更新和 dispose cleanup，而不是由 renderer effect 单独挂接
 
 ### 5. External Values Publication
 
@@ -148,6 +149,7 @@ valuesPath: ui.profileDraft
 - external readonly values snapshot publication
 - 与 `statusPath` 分离
 - 明确作者意图
+- publication 由 form runtime 生命周期负责首发、更新和 dispose cleanup，而不是由 renderer effect 单独挂接
 
 ## Common Principle Across Owners
 

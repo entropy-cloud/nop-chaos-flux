@@ -106,6 +106,7 @@ Current host-facing release rules:
 - hosts should depend on `@nop-chaos/flux`, not on `@nop-chaos/flux-core`, `@nop-chaos/flux-react`, or `@nop-chaos/flux-renderers-*`
 - `@nop-chaos/flux` exports a stable JS entry and `./style.css`
 - host-owned singleton dependencies stay external and appear as facade peers: `react`, `react-dom`, `zustand`, `lucide-react`, and `@nop-chaos/ui`
+- any publishable host-facing or transitively shipped runtime package must model shared host-owned libraries as `peerDependencies` plus local `devDependencies` rather than ordinary `dependencies`; current singleton-sensitive libraries include `react`, `react-dom`, `zustand`, `lucide-react`, `i18next`, `react-i18next`, `recharts`, and `sonner`
 - the repo-owned tarball output convention is `dist-packages/`
 - `pnpm check:flux-bundle-pack` validates the real packed tarball shape, not only local `dist/`
 
