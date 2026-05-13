@@ -34,6 +34,31 @@ import { finishAction } from './action-runners.js';
 import { runBuiltInAction } from './built-in-actions.js';
 import { runComponentAction, runNamespacedAction, runNamedAction } from './action-runners.js';
 
+function reportActionError(
+  ctx: ActionDispatcherContext,
+  error: unknown,
+  actionCtx: ActionContext,
+) {
+  try {
+    ctx.onActionError?.(error, actionCtx);
+  } catch {
+    // Diagnostic hooks must not replace the primary action failure.
+  }
+
+  for (const plugin of ctx.plugins ?? []) {
+    try {
+      plugin.onError?.(error, {
+        phase: 'action',
+        error,
+        nodeId: actionCtx.nodeInstance?.templateNode.id,
+        path: actionCtx.nodeInstance?.templateNode.templatePath,
+      });
+    } catch {
+      // Plugin diagnostics are best-effort and must not mask the original failure.
+    }
+  }
+}
+
 async function runParallelActions(
   ctx: ActionDispatcherContext,
   action: CompiledActionNode,
@@ -179,16 +204,7 @@ async function runSingleAction(
       return result;
     }
 
-    ctx.onActionError?.(error, activeCtx);
-
-    for (const plugin of ctx.plugins ?? []) {
-      plugin.onError?.(error, {
-        phase: 'action',
-        error,
-        nodeId: activeCtx.nodeInstance?.templateNode.id,
-        path: activeCtx.nodeInstance?.templateNode.templatePath,
-      });
-    }
+    reportActionError(ctx, error, activeCtx);
 
     const result = {
       ok: false,
@@ -400,16 +416,7 @@ async function dispatch(
           },
         );
       } catch (error) {
-        ctx.onActionError?.(error, currentActionCtx);
-
-        for (const plugin of ctx.plugins ?? []) {
-          plugin.onError?.(error, {
-            phase: 'action',
-            error,
-            nodeId: actionCtx.nodeInstance?.templateNode.id,
-            path: actionCtx.nodeInstance?.templateNode.templatePath,
-          });
-        }
+        reportActionError(ctx, error, currentActionCtx);
 
         const message = error instanceof Error ? error.message : String(error);
         ctx.getEnv().notify('error', message);
@@ -451,16 +458,7 @@ async function dispatch(
           };
         }
       } catch (error) {
-        ctx.onActionError?.(error, currentActionCtx);
-
-        for (const plugin of ctx.plugins ?? []) {
-          plugin.onError?.(error, {
-            phase: 'action',
-            error,
-            nodeId: actionCtx.nodeInstance?.templateNode.id,
-            path: actionCtx.nodeInstance?.templateNode.templatePath,
-          });
-        }
+        reportActionError(ctx, error, currentActionCtx);
 
         const message = error instanceof Error ? error.message : String(error);
         ctx.getEnv().notify('error', message);
