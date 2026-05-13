@@ -164,6 +164,13 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes: 'Click Submit immediately, verify email format error is visible',
   },
   {
+    id: 'input-number',
+    title: 'Input Number',
+    tier: 'write',
+    primaryScenario: 'Required numeric fields and stepper behavior',
+    notes: 'Submit empty required field to verify validation, then use the stepper field to confirm numeric interaction',
+  },
+  {
     id: 'input-password',
     title: 'Input Password',
     tier: 'write',
@@ -245,14 +252,14 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     title: 'Key Value',
     tier: 'write',
     primaryScenario: 'HTTP header editing',
-    notes: 'Verify pre-populated rows are visible; add a row and verify it appears',
+    notes: 'Verify pre-populated rows are visible; add a row, fill key/value fields, and verify the new row appears',
   },
   {
     id: 'array-editor',
     title: 'Array Editor',
     tier: 'write',
     primaryScenario: 'Contact list with pre-populated scalar items',
-    notes: 'Verify pre-populated rows are visible',
+    notes: 'Verify pre-populated rows are visible; add a row, fill the new scalar value, and verify it appears',
   },
   {
     id: 'condition-builder',

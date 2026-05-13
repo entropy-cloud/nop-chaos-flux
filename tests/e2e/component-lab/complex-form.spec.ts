@@ -8,6 +8,27 @@
 import { test, expect } from '@playwright/test';
 import { ComponentLabHelper, scenarioSlug } from './helpers';
 
+test.describe('input-number renderer', () => {
+  test('write: required numeric field validates and stepper input accepts numeric edits', async ({
+    page,
+  }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('input-number');
+
+    const slug = scenarioSlug('Required numeric fields and stepper behavior');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+
+    await stage.getByRole('button', { name: 'Submit' }).click();
+    await expect(stage.getByText(/required/i)).toBeVisible({ timeout: 5_000 });
+
+    const stepInput = stage.getByLabel('Step Size');
+    await expect(stepInput).toHaveValue('10');
+    await stepInput.fill('15');
+    await expect(stepInput).toHaveValue('15');
+  });
+});
+
 // ---------------------------------------------------------------------------
 // input-tree
 // ---------------------------------------------------------------------------
@@ -108,7 +129,7 @@ test.describe('tag-list renderer', () => {
 // key-value
 // ---------------------------------------------------------------------------
 test.describe('key-value renderer', () => {
-  test('read: pre-populated HTTP headers are visible', async ({ page }) => {
+  test('write: pre-populated HTTP headers are visible and a new row can be added', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('key-value');
 
@@ -120,6 +141,14 @@ test.describe('key-value renderer', () => {
     // 'Content-Type' appears once; 'application/json' appears twice (rows 1 and 3).
     await expect(stage.locator('input[value="Content-Type"]')).toBeVisible({ timeout: 5_000 });
     await expect(stage.locator('input[value="application/json"]').first()).toBeVisible();
+
+    await stage.getByRole('button', { name: /添加|add/i }).click();
+    const keyInputs = stage.locator('input[placeholder="Key"], input[placeholder="VARIABLE_NAME"], input').filter({ hasNotText: '' });
+    const valueInputs = stage.locator('input[placeholder="Value"], input[placeholder="value"], input');
+    await keyInputs.nth(3).fill('X-Trace-Id');
+    await valueInputs.nth(4).fill('trace-123');
+    await expect(stage.locator('input[value="X-Trace-Id"]')).toBeVisible();
+    await expect(stage.locator('input[value="trace-123"]')).toBeVisible();
   });
 });
 
@@ -127,7 +156,7 @@ test.describe('key-value renderer', () => {
 // array-editor
 // ---------------------------------------------------------------------------
 test.describe('array-editor renderer', () => {
-  test('read: array-editor renders pre-populated scalar item values', async ({ page }) => {
+  test('write: array-editor renders pre-populated rows and supports adding a new item', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('array-editor');
 
@@ -141,9 +170,13 @@ test.describe('array-editor renderer', () => {
     await expect(stage.getByRole('button', { name: '删除' }).first()).toBeVisible({
       timeout: 5_000,
     });
-    await expect(
-      stage.getByRole('button', { name: '添加项' }).or(stage.getByRole('button', { name: /Add/ })),
-    ).toBeVisible();
+    const addButton = stage.getByRole('button', { name: '添加项' }).or(stage.getByRole('button', { name: /Add/ }));
+    await expect(addButton).toBeVisible();
+    await addButton.click();
+
+    const inputs = stage.locator('input');
+    await inputs.nth(2).fill('Charlie Brown <charlie@example.com>');
+    await expect(stage.locator('input[value="Charlie Brown <charlie@example.com>"]')).toBeVisible();
   });
 });
 
