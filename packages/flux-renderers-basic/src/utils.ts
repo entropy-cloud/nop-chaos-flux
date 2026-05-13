@@ -7,5 +7,7 @@ export function asReactNode(value: unknown): React.ReactNode {
 }
 
 export function resolveDirection(direction?: string) {
-  return direction === 'column' ? 'flex-col' : 'flex-row';
+  if (direction === 'column') return 'flex-col';
+  if (direction === 'row') return 'flex-row';
+  return undefined;
 }

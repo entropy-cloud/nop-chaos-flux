@@ -17,7 +17,7 @@ describe('basic renderer coverage gaps', () => {
     expect(classNames('alpha', undefined, false, 'beta')).toBe('alpha beta');
     expect(resolveDirection('column')).toBe('flex-col');
     expect(resolveDirection('row')).toBe('flex-row');
-    expect(resolveDirection()).toBe('flex-row');
+    expect(resolveDirection()).toBeUndefined();
     expect(resolveGap(undefined)).toEqual({});
     expect(resolveGap(12)).toEqual({ style: { gap: '12px' } });
     expect(resolveGap('sm')).toEqual({ className: 'gap-2' });
@@ -148,9 +148,10 @@ describe('basic renderer coverage gaps', () => {
     );
 
     flexRoot = screen.getByTestId('flex-root');
-    expect(flexRoot.className).toContain('flex-row');
     expect(flexRoot.className).toContain('items-start');
     expect(flexRoot.className).toContain('justify-start');
+    expect(flexRoot.className).not.toContain('flex-row');
+    expect(flexRoot.className).not.toContain('flex-col');
     expect(flexRoot.textContent).toContain('Items fallback');
 
     rerender(
@@ -212,7 +213,8 @@ describe('basic renderer coverage gaps', () => {
     );
 
     flexRoot = screen.getByTestId('flex-root');
-    expect(flexRoot.className).toContain('flex-row');
+    expect(flexRoot.className).not.toContain('flex-row');
+    expect(flexRoot.className).not.toContain('flex-col');
     expect(flexRoot.className).not.toContain('items-center');
     expect(flexRoot.className).not.toContain('justify-center');
     cleanup();

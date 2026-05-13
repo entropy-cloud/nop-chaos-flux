@@ -38,7 +38,7 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     expect(classList).toEqual(['nop-container']);
   });
 
-  it('flex root emits nop-flex and schema-driven direction classes only', () => {
+  it('flex root emits nop-flex and explicit semantic classes only', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
       <SchemaRenderer
@@ -62,6 +62,29 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     expect(classList).toContain('nop-flex');
     expect(classList).toContain('flex-col');
     expect(classList).toContain('gap-4');
+  });
+
+  it('flex root does not inject implicit row direction', () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://layout-contract"
+        schema={{
+          type: 'flex',
+          body: [
+            { type: 'text', text: 'A' },
+            { type: 'text', text: 'B' },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    const flex = container.querySelector('.nop-flex');
+    const classList = Array.from(flex?.classList ?? []);
+    expect(classList).toContain('nop-flex');
+    expect(classList).not.toContain('flex-row');
+    expect(classList).not.toContain('flex-col');
   });
 
   it('container bare body has no data-flex and no style attribute', () => {
@@ -104,6 +127,50 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     expect(bodyClasses).toContain('flex');
     expect(bodyClasses).toContain('flex-col');
     expect(bodyClasses).toContain('gap-2');
+  });
+
+  it('container gap-only path does not inject implicit row direction', () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://layout-contract"
+        schema={{
+          type: 'container',
+          gap: 'sm',
+          body: [{ type: 'text', text: 'A' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    const body = container.querySelector('[data-slot="container-body"]');
+    expect(body?.hasAttribute('data-flex')).toBe(true);
+    const bodyClasses = Array.from(body?.classList ?? []);
+    expect(bodyClasses).toContain('flex');
+    expect(bodyClasses).toContain('gap-2');
+    expect(bodyClasses).not.toContain('flex-row');
+    expect(bodyClasses).not.toContain('flex-col');
+  });
+
+  it('container with direction:row keeps explicit row override on semantic path', () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://layout-contract"
+        schema={{
+          type: 'container',
+          direction: 'row',
+          body: [{ type: 'text', text: 'A' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    const body = container.querySelector('[data-slot="container-body"]');
+    expect(body?.hasAttribute('data-flex')).toBe(true);
+    const bodyClasses = Array.from(body?.classList ?? []);
+    expect(bodyClasses).toContain('flex');
+    expect(bodyClasses).toContain('flex-row');
   });
 
   it('page applies className to root, not body', () => {

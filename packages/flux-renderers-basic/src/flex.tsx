@@ -6,7 +6,9 @@ import { resolveGap } from '@nop-chaos/flux-react';
 import type { FlexSchema } from './schemas.js';
 
 export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
-  const direction = props.props.direction === 'column' ? 'column' : 'row';
+  const direction = props.props.direction === 'column' || props.props.direction === 'row'
+    ? props.props.direction
+    : undefined;
   const wrap = props.props.wrap === true;
   const align =
     props.props.align === 'start' ||

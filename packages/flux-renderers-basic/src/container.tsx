@@ -7,7 +7,9 @@ import { asReactNode, resolveDirection } from './utils.js';
 
 export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
   const slotProps = props.props;
-  const direction = slotProps.direction === 'column' ? 'column' : 'row';
+  const direction = slotProps.direction === 'column' || slotProps.direction === 'row'
+    ? slotProps.direction
+    : undefined;
   const wrap = slotProps.wrap === true;
   const align =
     slotProps.align === 'start' ||
@@ -22,7 +24,7 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
   const bodyContent = asReactNode(props.regions.body?.render());
 
   const useFlexChild =
-    wrap || align !== undefined || gap.className || gap.style || direction !== 'row';
+    wrap || align !== undefined || gap.className || gap.style || direction !== undefined;
   return (
     <div
       className={cn('nop-container', props.meta.className)}
