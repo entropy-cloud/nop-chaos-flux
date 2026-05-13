@@ -322,6 +322,71 @@ describe('variant-field renderer selector behavior', () => {
     });
   });
 
+  it('clears hidden-branch external errors for named descendants nested under wrapper nodes', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      ...formAdvancedRendererDefinitions,
+      validationOwnerExternalErrorProbeRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-selector.test.tsx#3c"
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'validation-owner-external-error-probe' },
+            {
+              type: 'variant-field',
+              name: 'payload',
+              label: 'Payload',
+              defaultVariant: 'text',
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  content: [
+                    {
+                      type: 'container',
+                      body: [
+                        { type: 'input-text', name: 'value', label: 'Text Value', required: true },
+                      ],
+                    },
+                  ],
+                  initialValue: { value: '' },
+                },
+                {
+                  key: 'number',
+                  label: 'Number',
+                  content: [{ type: 'input-text', name: 'amount', label: 'Amount' }],
+                  initialValue: { amount: 0 },
+                },
+              ],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Text')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Inject external error'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('payload-value-errors').textContent).toContain('Server payload error');
+    });
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Number' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('payload-value-errors').textContent).toBe('');
+    });
+  });
+
   it('renders variant viewer in readOnly mode instead of content', async () => {
     cleanup();
     const SchemaRenderer = createFormSchemaRenderer();

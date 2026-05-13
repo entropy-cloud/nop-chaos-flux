@@ -93,6 +93,8 @@ function TreeOptionNode(props: {
           <Checkbox
             checked={checked}
             aria-label={props.option.label}
+            aria-hidden="true"
+            tabIndex={-1}
             className="pointer-events-none ml-1.5 mr-1.5 shrink-0"
           />
         ) : null}
@@ -186,6 +188,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   );
   const sourceError = getSourceErrorMessage(optionsSourceState);
   const searchLabel = `${t('flux.common.search')} ${String((props.props.label ?? name) || 'tree')}`;
+  const sourceErrorId = name ? `${name}-source-error` : undefined;
 
   return (
     <div
@@ -211,7 +214,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
         />
       </div>
       {sourceError ? (
-        <span data-slot="input-tree-source-error" role="alert">
+        <span id={sourceErrorId} data-slot="input-tree-source-error" role="alert">
           {sourceError}
         </span>
       ) : optionsSourceState?.loading === true ? (
@@ -244,6 +247,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const sourceError = getSourceErrorMessage(optionsSourceState);
   const fieldLabel = String(props.props.label ?? name);
   const searchLabel = `${t('flux.common.search')} ${fieldLabel || 'tree'}`;
+  const sourceErrorId = name ? `${name}-source-error` : undefined;
 
   return (
     <div
@@ -260,6 +264,9 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
                   type="button"
                   variant="outline"
                   aria-label={fieldLabel}
+                  aria-describedby={sourceError ? sourceErrorId : undefined}
+                  aria-errormessage={sourceError ? sourceErrorId : undefined}
+                  aria-invalid={sourceError ? true : undefined}
                   disabled={presentation.effectiveDisabled || presentation.readOnly || optionsSourceState?.loading === true}
                 >
                 <span
@@ -309,7 +316,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
         </PopoverContent>
       </Popover>
       {sourceError ? (
-        <span data-slot="tree-select-source-error" role="alert">
+        <span id={sourceErrorId} data-slot="tree-select-source-error" role="alert">
           {sourceError}
         </span>
       ) : optionsSourceState?.loading === true ? (

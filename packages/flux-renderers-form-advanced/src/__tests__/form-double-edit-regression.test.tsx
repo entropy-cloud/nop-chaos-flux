@@ -456,7 +456,7 @@ describe(
       });
     });
 
-    it('tag-list: unchecking a previously selected tag updates the array', async () => {
+  it('tag-list: unchecking a previously selected tag updates the array', async () => {
       cleanup();
       const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -490,6 +490,44 @@ describe(
       fireEvent.click(screen.getByText('Submit'));
       await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
       expect(submitCalls[0]).toMatchObject({ tags: ['beta'] });
+    });
+
+    it('tag-list: clicking the wrapped field shell does not toggle the first tag', async () => {
+      cleanup();
+      const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
+
+      render(
+        <SchemaRenderer
+          schemaUrl="test://flux-renderers-form-advanced/__tests__/form-double-edit-regression.test.tsx#11b"
+          schema={{
+            type: 'form',
+            id: 'tag-list-shell-form',
+            data: { tags: [] },
+            submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+            body: [
+              { type: 'tag-list', name: 'tags', label: 'Tags', tags: ['alpha', 'beta', 'gamma'] },
+            ],
+            actions: [
+              {
+                type: 'button',
+                label: 'Submit',
+                onClick: { action: 'submitForm' },
+              },
+            ],
+          }}
+          env={env}
+          formulaCompiler={sharedFormulaCompiler}
+        />,
+      );
+
+      const fieldShell = document.querySelector('.nop-field');
+      expect(fieldShell?.tagName).toBe('DIV');
+
+      fireEvent.click(fieldShell!);
+      fireEvent.click(screen.getByText('Submit'));
+
+      await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+      expect(submitCalls[0]).toMatchObject({ tags: [] });
     });
 
     it('key-value: user edits the same row value twice and submits the second value', async () => {

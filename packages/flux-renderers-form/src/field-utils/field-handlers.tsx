@@ -53,7 +53,7 @@ export function useBoundFieldValue(
   const scopeValue = useScopeSelector(
     (scopeData) => (name ? getIn(scopeData, name) : scopeData),
     eq,
-    { enabled: !currentForm, fallback: UNUSED_VALUE },
+    { enabled: !currentForm, fallback: UNUSED_VALUE, paths: name ? [name] : undefined },
   );
 
   return currentForm ? formValue : scopeValue;

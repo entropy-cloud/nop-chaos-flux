@@ -99,7 +99,15 @@ describe('input renderer source state branches', () => {
       />,
     );
 
-    expect(screen.getByText('Remote options unavailable')).toBeTruthy();
+    const error = screen.getByText('Remote options unavailable');
+    expect(error).toBeTruthy();
+    expect(error.getAttribute('id')).toBe('status-source-error');
+    expect(document.querySelector('[data-slot="radio-group-options"]')?.getAttribute('aria-describedby')).toBe(
+      'status-source-error',
+    );
+    expect(
+      document.querySelector('[data-slot="radio-group-options"]')?.getAttribute('aria-errormessage'),
+    ).toBe('status-source-error');
   });
 
   it('falls back to the default source error message for checkbox-group options', () => {

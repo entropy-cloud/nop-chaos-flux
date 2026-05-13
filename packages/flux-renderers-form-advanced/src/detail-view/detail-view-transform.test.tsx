@@ -190,6 +190,11 @@ describe('detail-view renderer transform behavior', () => {
       originalValue: { name: 'Original', status: 'draft' },
       readOnly: false,
     });
+    expect(calls[2]?.payload).toEqual({
+      value: { name: 'Edited Draft', status: 'draft' },
+      originalValue: { name: 'Original', status: 'draft' },
+      readOnly: false,
+    });
   });
 
   it('applies patch results returned from transformOutAction', async () => {
@@ -255,6 +260,76 @@ describe('detail-view renderer transform behavior', () => {
 
     await waitFor(() => expect(screen.queryByLabelText('Status')).toBeNull());
     await waitFor(() => expect(screen.getByTestId('viewer-status').textContent).toBe('patched'));
+  });
+
+  it('refreshes sibling viewer bindings after multi-field updates commit', async () => {
+    cleanup();
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => ({
+            ok: true,
+            data: {
+              updates: {
+                name: 'Changed Name',
+                status: 'published',
+              },
+            },
+          }),
+        }),
+      })),
+    };
+    const SchemaRenderer = createPageSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-transform.test.tsx#4b"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'form',
+              name: 'testForm',
+              data: { summary: { name: 'Original', status: 'draft' } },
+              body: [
+                {
+                  type: 'detail-view',
+                  name: 'summary',
+                  triggerLabel: 'Edit',
+                  'xui:imports': [{ from: 'detail-view-lib', as: 'detailViewLib' }],
+                  transformOutAction: { action: 'detailViewLib:toUpdates' },
+                  viewer: [
+                    { type: 'text', text: '${summary.name}', testid: 'viewer-name' },
+                    { type: 'text', text: '${summary.status}', testid: 'viewer-status' },
+                  ],
+                  content: [
+                    { type: 'input-text', name: 'name', label: 'Name' },
+                    { type: 'input-text', name: 'status', label: 'Status' },
+                  ],
+                },
+              ],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('viewer-name').textContent).toBe('Original'));
+    await waitFor(() => expect(screen.getByTestId('viewer-status').textContent).toBe('draft'));
+
+    fireEvent.click(screen.getByText('Edit'));
+    await waitFor(() => expect(screen.getByLabelText('Name')).toBeTruthy());
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => expect(screen.queryByLabelText('Name')).toBeNull());
+    expect(screen.getByTestId('viewer-name').textContent).toBe('Changed Name');
+    expect(screen.getByTestId('viewer-status').textContent).toBe('published');
+
+    await waitFor(() => expect(screen.getByTestId('viewer-name').textContent).toBe('Changed Name'));
+    await waitFor(() => expect(screen.getByTestId('viewer-status').textContent).toBe('published'));
   });
 
   it('drops stale open completions when a newer detail-view open request wins', async () => {

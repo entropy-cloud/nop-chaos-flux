@@ -82,8 +82,18 @@ describe('tree controls source state and picker branches', () => {
       />,
     );
 
-    expect(await screen.findByText('Input tree failed')).toBeTruthy();
-    expect(screen.getByText('Failed to load tree options.')).toBeTruthy();
+    const inputTreeError = await screen.findByText('Input tree failed');
+    const treeSelectError = screen.getByText('Failed to load tree options.');
+    expect(inputTreeError).toBeTruthy();
+    expect(treeSelectError).toBeTruthy();
+    expect(inputTreeError.getAttribute('id')).toBe('categoryIds-source-error');
+    expect(treeSelectError.getAttribute('id')).toBe('departmentId-source-error');
+    expect(screen.getByRole('button', { name: /Department/ }).getAttribute('aria-describedby')).toBe(
+      'departmentId-source-error',
+    );
+    expect(
+      screen.getByRole('button', { name: /Department/ }).getAttribute('aria-errormessage'),
+    ).toBe('departmentId-source-error');
   });
 
   it('filters searchable tree options by child path labels and keeps matching parents visible', async () => {
@@ -170,8 +180,8 @@ describe('tree controls source state and picker branches', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Departments/ }));
-    fireEvent.click(await screen.findByRole('checkbox', { name: 'Platform' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Design' }));
+    fireEvent.click(await screen.findByRole('treeitem', { name: 'Platform' }));
+    fireEvent.click(screen.getByRole('treeitem', { name: 'Design' }));
 
     await waitFor(() => {
       expect(screen.getByText('Platform, Design')).toBeTruthy();
@@ -179,6 +189,10 @@ describe('tree controls source state and picker branches', () => {
         JSON.parse(screen.getByTestId('form-state:departmentIds').textContent ?? 'null'),
       ).toEqual(['platform', 'design']);
     });
+
+    const checkboxes = document.querySelectorAll('[data-slot="tree-option-node"] [role="checkbox"]');
+    expect(Array.from(checkboxes).every((checkbox) => checkbox.getAttribute('tabindex') === '-1')).toBe(true);
+    expect(Array.from(checkboxes).every((checkbox) => checkbox.getAttribute('aria-hidden') === 'true')).toBe(true);
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
 

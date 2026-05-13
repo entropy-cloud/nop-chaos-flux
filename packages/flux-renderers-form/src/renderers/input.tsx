@@ -302,6 +302,7 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
   const loading = optionsSourceState?.loading === true;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
   const selectedValue = value as string;
+  const errorId = name ? `${name}-source-error` : undefined;
 
   return (
     <div
@@ -320,6 +321,8 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
         disabled={loading || presentation.effectiveDisabled}
         aria-required={props.props.required ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}
+        aria-describedby={errorMessage ? errorId : undefined}
+        aria-errormessage={errorMessage ? errorId : undefined}
         onFocus={handlers.onFocus}
         onValueChange={(nextValue) => handlers.onChange(nextValue)}
         onBlur={handlers.onBlur}
@@ -332,7 +335,7 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
         ))}
       </RadioGroup>
       {errorMessage ? (
-        <span data-slot="radio-group-error" role="alert">
+        <span id={errorId} data-slot="radio-group-error" role="alert">
           {errorMessage}
         </span>
       ) : null}

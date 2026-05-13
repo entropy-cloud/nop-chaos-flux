@@ -121,6 +121,27 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
 
     return parentForm ? formProjectedValue : scopeProjectedValue;
   }, [formProjectedValue, parentForm, scopeProjectedValue, staticData]);
+  const viewerRenderKey = React.useMemo(() => {
+    const baseKey = scopePath ?? 'root';
+
+    if (currentValue === undefined) {
+      return `${baseKey}:undefined`;
+    }
+
+    if (currentValue === null) {
+      return `${baseKey}:null`;
+    }
+
+    if (typeof currentValue === 'object') {
+      try {
+        return `${baseKey}:${JSON.stringify(currentValue)}`;
+      } catch {
+        return `${baseKey}:object`;
+      }
+    }
+
+    return `${baseKey}:${String(currentValue)}`;
+  }, [currentValue, scopePath]);
 
   const runAdaptationAction = useDetailAdaptationAction({
     helpers: props.helpers,
@@ -265,10 +286,12 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       if (scopePath) {
       if ('patch' in draftValues && Array.isArray(draftValues.patch)) {
         const patches = draftValues.patch as Array<{ path: string; value: unknown }>;
-        for (const p of patches) {
-          if (parentForm) {
-            parentForm.setValue(`${scopePath}.${p.path}`, p.value);
-          } else {
+        if (parentForm) {
+          parentForm.setValues(
+            Object.fromEntries(patches.map((patch) => [`${scopePath}.${patch.path}`, patch.value])),
+          );
+        } else {
+          for (const p of patches) {
             parentScope.update(`${scopePath}.${p.path}`, p.value);
           }
         }
@@ -278,10 +301,14 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         draftValues.updates !== null
       ) {
         const updates = draftValues.updates as Record<string, unknown>;
-        for (const [key, val] of Object.entries(updates)) {
-          if (parentForm) {
-            parentForm.setValue(`${scopePath}.${key}`, val);
-          } else {
+        if (parentForm) {
+          parentForm.setValues(
+            Object.fromEntries(
+              Object.entries(updates).map(([key, value]) => [`${scopePath}.${key}`, value]),
+            ),
+          );
+        } else {
+          for (const [key, val] of Object.entries(updates)) {
             parentScope.update(`${scopePath}.${key}`, val);
           }
         }
@@ -305,9 +332,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
           : commitValue;
 
       if (parentForm) {
-        for (const [key, val] of Object.entries(updates as Record<string, unknown>)) {
-          parentForm.setValue(key, val);
-        }
+        parentForm.setValues(updates as Record<string, unknown>);
         return await settleParentValidation();
       } else {
         parentScope.merge(updates as Record<string, unknown>);
@@ -416,7 +441,9 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       data-cid={props.meta.cid || undefined}
     >
       <FieldLabel content={labelContent} />
-      <div data-slot="detail-view-viewer">{viewerContent}</div>
+      <div key={viewerRenderKey} data-slot="detail-view-viewer">
+        {viewerContent}
+      </div>
       {!effectiveDisabled && (
         <Button
           type="button"

@@ -78,7 +78,7 @@ afterEach(() => {
 });
 
 describe('variant-field generic owner contracts', () => {
-  it('routes hidden paths, child contracts, and validation context through non-form owners', () => {
+  it('routes hidden paths and validation context through non-form owners without child contracts', () => {
     state.parentScope = {
       id: 'page-scope',
       path: '$page',
@@ -129,9 +129,7 @@ describe('variant-field generic owner contracts', () => {
     );
 
     expect(state.parentValidationOwner.notifyFieldHidden).toHaveBeenCalledWith('kind.amount', true);
-    expect(state.parentValidationOwner.registerChildContract).toHaveBeenCalledWith(
-      expect.objectContaining({ childOwnerId: 'page-owner:kind:variant-field', mode: 'recurse-submit' }),
-    );
+    expect(state.parentValidationOwner.registerChildContract).not.toHaveBeenCalled();
     expect(state.validationContextValue).toBe(state.projectedOwner);
   });
 });

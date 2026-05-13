@@ -97,6 +97,17 @@ function collectNamedChildPathsFromTemplateNode(
     if (typeof candidateName === 'string' && candidateName.length > 0) {
       names.add(candidateName);
     }
+
+    for (const region of Object.values(node.regions) as Array<{
+      node?:
+        | import('@nop-chaos/flux-core').TemplateNode
+        | readonly import('@nop-chaos/flux-core').TemplateNode[]
+        | null;
+    }>) {
+      for (const childName of collectNamedChildPathsFromTemplateNode(region?.node)) {
+        names.add(childName);
+      }
+    }
   }
 
   return Array.from(names);
@@ -173,6 +184,11 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   }, [matchedKey, userSelectedKey, detectedKey, initialKey]);
 
   React.useEffect(() => {
+    if (userSelectedKey && matchedKey && matchedKey !== userSelectedKey) {
+      setUserSelectedKey(undefined);
+      return;
+    }
+
     if (userSelectedKey && matchedKey === userSelectedKey) {
       setUserSelectedKey(undefined);
     }
@@ -408,8 +424,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   React.useEffect(() => {
     const owner = parentForm ?? parentValidationOwner;
     const childOwner = parentForm ? variantForm : variantValidationOwner;
+    const hasIndependentChildOwner = Boolean(parentForm);
 
-    if (!owner || !childOwner || !name) {
+    if (!owner || !childOwner || !name || !hasIndependentChildOwner) {
       return;
     }
 

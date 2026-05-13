@@ -284,7 +284,7 @@ export function createProjectedValidationRuntime(
       return parentOwner.validateSubtree(options.prefixPath(path), reason);
     },
     validateAll(reason) {
-      return parentOwner.validateAll(reason);
+      return parentOwner.validateSubtree(options.ownerRootPath ?? '', reason);
     },
     applyChangesAndRevalidate(input) {
       return parentOwner.applyChangesAndRevalidate({
