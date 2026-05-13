@@ -2,14 +2,10 @@ import type {
   CapabilityPublicationAttribution,
   HostCapabilityProjectionManifest,
   HostContractContext,
-  FluxValueShape,
 } from '@nop-chaos/flux-core';
 import type { SchemaCompilerDiagnosticsContext } from './diagnostics.js';
-import { appendJsonPointer, createSchemaCompilerDiagnosticsContext } from './diagnostics.js';
-
-function createSilentDiagnosticsContext(): SchemaCompilerDiagnosticsContext {
-  return createSchemaCompilerDiagnosticsContext({ diagnostics: { enabled: false } }, 'validate');
-}
+import { appendJsonPointer } from './diagnostics.js';
+import { validateFluxValueShape } from './flux-value-shape-validation.js';
 
 export interface HostActionValidationContext {
   manifest: HostCapabilityProjectionManifest;
@@ -115,12 +111,16 @@ export function validateHostAction(
 
   if (method.args && args !== undefined) {
     const argsPath = appendJsonPointer(path, 'args');
-    const validationResult = validateArgsShape(
+    const validationResult = validateFluxValueShape(
       args,
       method.args,
       argsPath,
       diagnostics,
-      manifest.family,
+      {
+        code: 'invalid-host-capability-args',
+        source: 'host-contract',
+        messagePrefix: `${manifest.family} capability args are invalid.`,
+      },
     );
     if (!validationResult) {
       return false;
@@ -138,155 +138,4 @@ export function validateHostAction(
   }
 
   return true;
-}
-
-function validateArgsShape(
-  value: unknown,
-  shape: FluxValueShape,
-  path: string,
-  diagnostics: SchemaCompilerDiagnosticsContext,
-  family: string,
-): boolean {
-  switch (shape.kind) {
-    case 'string':
-      if (typeof value !== 'string') {
-        diagnostics.emit({
-          code: 'invalid-host-capability-args',
-          path,
-          message: `${family} capability args: expected string.`,
-          source: 'host-contract',
-        });
-        return false;
-      }
-      return true;
-
-    case 'number':
-      if (typeof value !== 'number') {
-        diagnostics.emit({
-          code: 'invalid-host-capability-args',
-          path,
-          message: `${family} capability args: expected number.`,
-          source: 'host-contract',
-        });
-        return false;
-      }
-      return true;
-
-    case 'boolean':
-      if (typeof value !== 'boolean') {
-        diagnostics.emit({
-          code: 'invalid-host-capability-args',
-          path,
-          message: `${family} capability args: expected boolean.`,
-          source: 'host-contract',
-        });
-        return false;
-      }
-      return true;
-
-    case 'null':
-      if (value !== null) {
-        diagnostics.emit({
-          code: 'invalid-host-capability-args',
-          path,
-          message: `${family} capability args: expected null.`,
-          source: 'host-contract',
-        });
-        return false;
-      }
-      return true;
-
-    case 'object': {
-      if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        diagnostics.emit({
-          code: 'invalid-host-capability-args',
-          path,
-          message: `${family} capability args: expected object.`,
-          source: 'host-contract',
-        });
-        return false;
-      }
-
-      const record = value as Record<string, unknown>;
-      let valid = true;
-
-      for (const [fieldName, fieldShape] of Object.entries(shape.fields)) {
-        const fieldValue = record[fieldName];
-        const fieldPath = appendJsonPointer(path, fieldName);
-
-        if (fieldValue === undefined) {
-          if (!shape.optional?.includes(fieldName)) {
-            diagnostics.emit({
-              code: 'invalid-host-capability-args',
-              path: fieldPath,
-              message: `${family} capability args: missing required field "${fieldName}".`,
-              source: 'host-contract',
-            });
-            valid = false;
-          }
-        } else if (!validateArgsShape(fieldValue, fieldShape, fieldPath, diagnostics, family)) {
-          valid = false;
-        }
-      }
-
-      return valid;
-    }
-
-    case 'array': {
-      if (!Array.isArray(value)) {
-        diagnostics.emit({
-          code: 'invalid-host-capability-args',
-          path,
-          message: `${family} capability args: expected array.`,
-          source: 'host-contract',
-        });
-        return false;
-      }
-
-      let valid = true;
-      value.forEach((item, index) => {
-        if (
-          !validateArgsShape(item, shape.item, appendJsonPointer(path, index), diagnostics, family)
-        ) {
-          valid = false;
-        }
-      });
-      return valid;
-    }
-
-    case 'union': {
-      for (const variant of shape.anyOf) {
-        const silentDiagnostics = createSilentDiagnosticsContext();
-        if (validateArgsShape(value, variant, path, silentDiagnostics, family)) {
-          return true;
-        }
-      }
-
-      diagnostics.emit({
-        code: 'invalid-host-capability-args',
-        path,
-        message: `${family} capability args: value does not match any expected type in union.`,
-        source: 'host-contract',
-      });
-      return false;
-    }
-
-    case 'literal':
-      if (value !== shape.value) {
-        diagnostics.emit({
-          code: 'invalid-host-capability-args',
-          path,
-          message: `${family} capability args: expected literal ${JSON.stringify(shape.value)}.`,
-          source: 'host-contract',
-        });
-        return false;
-      }
-      return true;
-
-    case 'unknown':
-      return true;
-
-    default:
-      return true;
-  }
 }

@@ -26,6 +26,12 @@ export {
   type HostActionValidationContext,
 } from './schema-compiler/host-action-validation.js';
 export {
+  isDynamicallyAuthoredSchemaValue,
+  summarizeActualSchemaValue,
+  summarizeExpectedFluxValueShape,
+  validateFluxValueShape,
+} from './schema-compiler/flux-value-shape-validation.js';
+export {
   collectSchemaValidationRules,
   mergeValidationRules,
   compileValidationRules,

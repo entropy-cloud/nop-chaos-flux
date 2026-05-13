@@ -27,7 +27,7 @@ export interface BaseSchema extends SchemaObject {
   id?: string;
   name?: string;
   label?: string;
-  title?: string;
+  title?: string | SchemaInput;
   className?: string;
   frameClassName?: string;
   classAliases?: Record<string, string>;

@@ -542,7 +542,7 @@ describe('contract exploration: host contract validation', () => {
       expect.arrayContaining([
         expect.objectContaining({
           code: 'invalid-host-capability-args',
-          message: expect.stringContaining('missing required field'),
+          message: expect.stringContaining('Required field'),
         }),
       ]),
     );

@@ -323,4 +323,74 @@ describe('analyzeSchemaInput validation', () => {
       ]),
     );
   });
+
+  it('reports invalid finite prop values from propContracts', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      propContracts: {
+        variant: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'default' },
+              { kind: 'literal', value: 'outline' },
+            ],
+          },
+          displayName: 'Variant',
+        },
+      },
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ type: 'button', variant: 'primary' })).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-property-value',
+          path: '/variant',
+        }),
+      ]),
+    );
+  });
+
+  it('accepts valid finite prop values from propContracts', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      propContracts: {
+        variant: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'default' },
+              { kind: 'literal', value: 'outline' },
+            ],
+          },
+          displayName: 'Variant',
+        },
+      },
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ type: 'button', variant: 'outline' })).toEqual([]);
+  });
+
+  it('skips dynamic prop values during compile-time finite-value validation', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      propContracts: {
+        variant: {
+          shape: {
+            kind: 'union',
+            anyOf: [{ kind: 'literal', value: 'default' }],
+          },
+          displayName: 'Variant',
+        },
+      },
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ type: 'button', variant: '${expr}' } as any)).toEqual([]);
+  });
 });

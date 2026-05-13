@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
-import { validateSchema } from './index.js';
+import { createSchemaCompiler, validateSchema } from './index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 describe('schema compiler renderer contract integration', () => {
@@ -80,5 +80,40 @@ describe('schema compiler renderer contract integration', () => {
     });
 
     expect(diagnostics).toEqual([]);
+  });
+
+  it('skips invalid finite prop values from prop lowering during compile', () => {
+    const renderer: RendererDefinition = {
+      type: 'contract-button',
+      component: () => null,
+      propContracts: {
+        variant: {
+          shape: {
+            kind: 'union',
+            anyOf: [{ kind: 'literal', value: 'default' }],
+          },
+          displayName: 'Variant',
+        },
+      },
+    };
+
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([renderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = compiler.compile(
+      { type: 'contract-button', variant: 'primary' } as any,
+      {
+        diagnostics: { enabled: true, continueOnError: true },
+      },
+    );
+
+    const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    expect(root).toBeTruthy();
+    const propsProgram = root?.propsProgram as { kind: string; value?: Record<string, unknown> };
+    expect(root?.schema.variant).toBe('primary');
+    expect(propsProgram.kind).toBe('static');
+    expect(propsProgram.value).toEqual({ type: 'contract-button' });
   });
 });

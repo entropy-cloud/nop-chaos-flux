@@ -30,6 +30,10 @@ import {
   createHostActionValidationContext,
   type HostActionValidationContext,
 } from './host-action-validation.js';
+import {
+  isDynamicallyAuthoredSchemaValue,
+  validateFluxValueShape,
+} from './flux-value-shape-validation.js';
 
 function findNamespaceValidator(diagnostics: SchemaCompilerDiagnosticsContext, namespace: string) {
   return diagnostics.validation.namespaceValidators.find(
@@ -39,6 +43,35 @@ function findNamespaceValidator(diagnostics: SchemaCompilerDiagnosticsContext, n
 
 interface ValidationTraversalState {
   hostContext?: HostActionValidationContext;
+}
+
+function validateKnownPropValue(
+  schema: BaseSchema,
+  renderer: RendererDefinition,
+  key: string,
+  keyPath: string,
+  diagnostics: SchemaCompilerDiagnosticsContext,
+  skippedPropKeys: Set<string>,
+) {
+  const contract = renderer.propContracts?.[key];
+  if (!contract) {
+    return;
+  }
+
+  const value = schema[key];
+  if (value === undefined || isDynamicallyAuthoredSchemaValue(value)) {
+    return;
+  }
+
+  const valid = validateFluxValueShape(value, contract.shape, keyPath, diagnostics, {
+    code: 'invalid-property-value',
+    source: 'core',
+    messagePrefix: `Invalid value for property "${key}" on renderer type "${renderer.type}".`,
+  });
+
+  if (!valid) {
+    skippedPropKeys.add(key);
+  }
 }
 
 function resolveNodeHostContext(
@@ -208,6 +241,8 @@ export function inspectSchemaNodeFields(
       validateActionShape(value, keyPath, diagnostics, enabled, hostContext);
       continue;
     }
+
+    validateKnownPropValue(schema, renderer, key, keyPath, diagnostics, skippedPropKeys);
 
     const sourceCandidate = value as Record<string, unknown> | undefined;
 

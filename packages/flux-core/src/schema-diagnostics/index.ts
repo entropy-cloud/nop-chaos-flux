@@ -9,6 +9,7 @@ export type SchemaDiagnosticCode =
   | 'missing-required-field'
   | 'unknown-renderer-type'
   | 'unknown-property'
+  | 'invalid-property-value'
   | 'invalid-property-shape'
   | 'invalid-region-node'
   | 'invalid-action-shape'
