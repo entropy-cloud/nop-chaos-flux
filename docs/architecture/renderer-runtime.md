@@ -179,7 +179,15 @@ Those boundaries belong to the concrete creator path that introduces them.
 Renderer components receive:
 
 ```ts
-type RendererResolvedProps<S extends BaseSchema = BaseSchema> = Record<string, any> & Partial<S>;
+type RendererResolvedProps<S extends BaseSchema = BaseSchema> = Record<string, unknown> & {
+  type?: S['type'];
+  id?: string;
+  className?: string;
+  frameClassName?: string;
+  disabled?: boolean;
+  testid?: string;
+  cid?: number;
+};
 
 interface RendererComponentProps<
   S extends BaseSchema = BaseSchema,
@@ -201,13 +209,13 @@ interface RendererComponentProps<
 Meaning:
 
 - `schema` is the declared source shape
-- `props` may already include values resolved from `allowSource` fields, with any narrow loading/error summary exposed through the companion prop named by `sourceStateKey`
+- `props` is the final renderer-facing runtime prop bag for the current render
+- `props` includes evaluated renderer-declared prop fields, values resolved from `allowSource` fields, any companion source state named by `sourceStateKey`, and renderer-facing node-control projections such as `disabled`, `className`, `testid`, and `cid`
+- renderer-facing props are assembled as meta projection first and compiled prop values second, so an explicitly declared renderer prop wins over a projected node-control default for the same key
 - `templateNode` is the immutable structural definition produced at compile time; `templateNode.component` carries the resolved `RendererDefinition` directly
 - `node` is the live runtime `NodeInstance` for this mounted node; `node.cid` is the unique live mounted-node id used by DOM/debugger/registry lookup
-- `props` is the resolved runtime prop object for the current render
 - `RendererResolvedProps<S>` is intentionally wider than raw `S`: runtime prop bags may include only the resolved business fields a renderer consumes, while structural schema-only fields still remain on `schema`
-- `meta` is the resolved node meta such as visibility or disabled state
-- `meta.testid` is the resolved testid for `data-testid` attribute output on the root element
+- `meta` is the resolved node-control record used by `NodeRenderer` and frame/runtime plumbing for lifecycle, visibility, hidden-field participation, and wrapper behavior; concrete renderers should prefer `props` for renderable attributes
 - `schema.frameWrap` is the per-instance override for `RendererDefinition.wrap`; it can suppress wrapping or switch wrap-compatible renderers to grouped `<fieldset>` layout
 - `regions` is the map of precompiled child render handles
 - `events` is the map of runtime event handlers derived from declarative event fields
@@ -220,6 +228,32 @@ Meaning:
 
 - `helpers.evaluate(target, scope?)` for schema-authored ad hoc values that still need compile+evaluate behavior at the helper boundary
 - `helpers.evaluateCompiled(compiled, scope?)` for renderer paths that must execute an already-compiled runtime value from `TemplateNode` without falling back to runtime recompilation
+
+### Resolved Boolean Props
+
+Boolean-like authoring fields have two distinct shapes:
+
+- authoring schema may use a boolean literal or a `${expr}` expression string
+- renderer-facing resolved props and resolved meta use only `boolean | undefined`
+
+Validation mode rejects literal strings such as `"true"`, `"false"`, and `"!canUndo"` for boolean-like fields. Use `true`, `false`, or `${expr}`.
+
+If a valid `${expr}` expression evaluates to a non-boolean runtime value, the boolean-like field resolves to `undefined`. This is fail-closed: `undefined` means the renderer or frame uses its ordinary absence/default behavior, while host diagnostics may report the contract mismatch. Runtime does not apply JavaScript truthiness to strings, numbers, arrays, or objects.
+
+Runtime renderers must not coerce boolean-like props with JavaScript truthiness. They should pass through the resolved value:
+
+```tsx
+<Button disabled={props.props.disabled} />
+<Input readOnly={props.props.readOnly} aria-required={props.props.required || undefined} />
+```
+
+Do not write:
+
+```tsx
+<Button disabled={Boolean(props.props.disabled)} />
+```
+
+`Boolean("false")` is `true`, so renderer-side truthiness checks are contract bugs. The compiler/runtime boundary owns expression execution and boolean normalization.
 
 ## Renderer-Level Static Metadata
 
@@ -454,7 +488,7 @@ The input renderer typically consumes explicit node-local inputs from props:
 
 - `props.props.name`
 - `props.props.placeholder`
-- `props.meta.disabled`
+- `props.props.disabled`
 - `props.props.label` or a renderer-owned `regions.label` contract when that renderer models label as value-or-region
 
 But it reads ambient form/runtime services through hooks:

@@ -64,4 +64,4 @@ Review checks:
 ## Primary Architecture Anchors
 
 - `docs/index.md`
-- `docs/logs/index.md`
+- `docs/logs/00-log-writing-guide.md`

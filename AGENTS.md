@@ -38,13 +38,13 @@ Whenever e2e tests and unit tests both pass completely (full green), you MUST re
 
 ## Docs Maintenance
 
-**Docs live in `docs/`** and are the primary source of project knowledge. Always consult `docs/index.md` first for navigation. See `docs/logs/index.md` for log writing conventions and `docs/index.md` for directory roles.
+**Docs live in `docs/`** and are the primary source of project knowledge. Always consult `docs/index.md` first for navigation. See `docs/logs/00-log-writing-guide.md` for log writing conventions and `docs/index.md` for directory roles.
 
 ### Mandatory Updates
 
 After completing any significant **CODE CHANGE**, you MUST:
 
-1. **Update the daily dev log** at `docs/logs/{year}/{month}-{day}.md` (reverse chronological, see `docs/logs/index.md` for format).
+1. **Update the daily dev log** at `docs/logs/{year}/{month}-{day}.md` (reverse chronological, see `docs/logs/00-log-writing-guide.md` for format).
 2. **Update relevant architecture docs** when changing:
    - Package boundaries or ownership → `docs/architecture/flux-runtime-module-boundaries.md`
    - Form/validation logic → `docs/architecture/form-validation.md`
@@ -71,7 +71,7 @@ When creating, revising, executing, or auditing a file under `docs/plans/`, you 
 | Change CSS, Tailwind utilities, or design tokens              | `docs/architecture/styling-system.md` → "Renderer Styling Contract" section | `docs/architecture/renderer-markers-and-selectors.md`                                                    |
 | Work on Flow Designer canvas, nodes, edges, or interactions   | `docs/architecture/flow-designer/design.md`                                 | `docs/architecture/flow-designer/collaboration.md`, `docs/architecture/flow-designer/canvas-adapters.md` |
 | Work on Report Designer or Spreadsheet Editor                 | `docs/architecture/report-designer/design.md`                               | `docs/architecture/report-designer/contracts.md`                                                         |
-| Draft, execute, or audit a plan under `docs/plans/`           | `docs/plans/00-plan-authoring-and-execution-guide.md`                       | `docs/logs/index.md`                                                                                     |
+| Draft, execute, or audit a plan under `docs/plans/`           | `docs/plans/00-plan-authoring-and-execution-guide.md`                       | `docs/logs/00-log-writing-guide.md`                                                                      |
 | Change form validation, error display, or field participation | `docs/architecture/form-validation.md`                                      | `docs/architecture/flux-runtime-module-boundaries.md`                                                    |
 | Add new actions, event handlers, or `xui:import` usage        | `docs/architecture/action-scope-and-imports.md`                             | `docs/architecture/renderer-runtime.md`                                                                  |
 | Change package boundaries, create a new package, or move code | `docs/architecture/flux-runtime-module-boundaries.md`                       | `docs/architecture/frontend-baseline.md`                                                                 |

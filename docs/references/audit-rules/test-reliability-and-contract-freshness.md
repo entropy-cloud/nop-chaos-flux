@@ -70,4 +70,4 @@ Review checks:
 ## Primary Architecture Anchors
 
 - `AGENTS.md`
-- `docs/logs/index.md`
+- `docs/logs/00-log-writing-guide.md`

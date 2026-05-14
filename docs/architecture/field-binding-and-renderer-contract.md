@@ -61,6 +61,8 @@
 
 - `schema` 仍拥有结构性字段和 authoring-time 原始形态，例如 `type`、静态 region 壳层信息、或只有编译期才需要的结构信息。
 - `props` 拥有 renderer 当前这次 render 真正要消费的 resolved runtime value bag。
+- `props` 是 renderer 直接消费的最终结构。它包含已执行表达式后的 renderer prop，也包含可渲染的 node-control 投影，例如 `disabled`、`className`、`testid`、`cid`。
+- `props` 组装顺序是先投影 node-control meta，再覆盖 renderer 显式 prop，因此显式 prop 对同名字段有最终解释权。
 - 如果某个字段的意义是“当前运行时业务值”，优先从 `props` 读取；只有静态结构判断或编译后不会进入 runtime prop bag 的信息才应读取 `schema`。
 
 ## Rule 1: Expressions Use Ordinary Props
@@ -97,6 +99,34 @@
   "textExpr": "${user.name}"
 }
 ```
+
+### Boolean-Like Fields
+
+Boolean-like 字段遵循同一条普通字段规则，但 authoring 和 renderer runtime 的类型不同：
+
+- authoring schema 允许 `true` / `false` 或 `${expr}`。
+- validation 模式拒绝普通字符串 boolean，例如 `"true"`、`"false"`、`"!canUndo"`。
+- 编译/运行时执行后，renderer-facing `props` 中只能出现 `boolean | undefined`。
+- 合法 `${expr}` 如果运行时结果不是 boolean，则解析为 `undefined`，不做 truthiness coercion。`undefined` 表示字段缺省，必要时由 host diagnostics 报告表达式结果类型不匹配。
+
+Field-like shared authoring 字段也遵守这条规则。最终 authoring 类型应允许 `readOnly?: boolean | string` 与 `required?: boolean | string`，但 renderer runtime 类型仍只能是 `boolean | undefined`。
+
+因此 renderer 应直接消费 resolved prop：
+
+```tsx
+<Button disabled={props.props.disabled} />
+<Input readOnly={props.props.readOnly} aria-required={props.props.required || undefined} />
+```
+
+不要在 renderer 内写兼容性 coercion：
+
+```tsx
+Boolean(props.props.disabled);
+props.props.disabled === true;
+typeof props.props.disabled === 'string';
+```
+
+这些写法说明上游 contract 没有收敛。尤其 `Boolean("false") === true`，会把非法字符串泄漏变成错误 UI 状态。
 
 ## Rule 2: Editable Field Binding Is `name`-First
 
@@ -197,6 +227,8 @@
 
 `meta` 只应该承载节点控制态和外层 frame 语义，而不是业务绑定入口。
 
+Renderer-facing `props` 可以包含一份从 `meta` 投影出来的可渲染属性。这样 concrete renderer 可以只读 `props.props.disabled`、`props.props.className`、`props.props.testid`、`props.props.cid`，而 `NodeRenderer` 仍保留 `meta.visible`、`meta.hidden`、`meta.when` 来控制挂载、生命周期和 hidden-field participation。
+
 推荐的全局 `meta` 集合应尽量收窄到：
 
 - `id`
@@ -215,6 +247,8 @@
 - `id` 表示 node identity 或外层可观测标识，不表示字段绑定键
 - `disabled` 是运行时控制态，因此适合放在 `meta`
 - `visible` / `hidden` 是节点生存期和渲染控制态，因此适合放在 `meta`
+- `disabled` 同时会投影进 renderer-facing `props.disabled`，方便 concrete renderer 直接传给 UI primitive
+- `visible` / `hidden` / `when` 不应投影为普通 renderer prop；它们属于 `NodeRenderer` 的生存期控制职责
 
 `name` 不属于这一类，不应作为默认全局 meta 字段。
 
@@ -236,6 +270,7 @@
 
 - `BoundFieldSchemaBase` 应包含 `readOnly`
 - `BaseSchema` / node control 层继续保留 `disabled`
+- concrete field renderer 使用 `props.props.readOnly` 和 `props.props.disabled`。`readOnly` 来自 renderer prop，`disabled` 来自 node-control meta 投影，二者都已是 boolean runtime value。
 
 ## Rule 7: Renderer Metadata Owns Field Classification
 
@@ -290,8 +325,8 @@ interface BaseSchema extends NodeControlSchema {
 
 interface BoundFieldSchemaBase extends BaseSchema {
   name: string;
-  readOnly?: boolean;
-  required?: boolean;
+  readOnly?: boolean | string;
+  required?: boolean | string;
 }
 ```
 

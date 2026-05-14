@@ -90,6 +90,11 @@ interface SpreadsheetPageSchema {
 - 在 page-owned `ActionScope` 上注册 `spreadsheet:*` namespace
 - 通过 `statusPath` 向宿主发布窄只读状态摘要
 
+当前 live baseline 还要求：
+
+- 未提供自定义 `body` 时，renderer 必须挂载共享默认 host（toolbar/grid/tab surface），而不是仅显示 diagnostic fallback
+- `readOnly` 不只是 spreadsheet core command firewall；共享 toolbar、sheet tabs、inline edit、field-drop 和 keyboard mutation entry points 也必须在 UI 层被锁住
+
 ## 3. `report-designer-page` Schema
 
 Future target shape:

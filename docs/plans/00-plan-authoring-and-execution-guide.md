@@ -48,6 +48,7 @@
 17. 如果某个 Phase 改变了 live baseline、public contract、或 owner behavior，该 Phase 的 Exit Criteria 必须包含相应文档更新项。纯测试拆分、纯工具整理、纯内部重构可以显式写明 `No owner-doc update required`，但不能默默跳过文档裁定。
 18. **Checklist 打勾是 closure 的前置条件，不是附带动作。** 执行完一个 item 后必须立即将对应 `- [ ]` 改为 `- [x]`。标记 `Plan Status: completed` 时，文件内不得残留任何未勾选的 in-scope checklist item。如果存在未勾选项，要么完成它，要么显式移入 `Deferred But Adjudicated` 并写清原因。
 19. **标记 `completed` 前，必须做一次文本一致性核对。** 至少逐项确认以下五处彼此一致：`Plan Status`、每个 slice 的 `Status`、每个 slice 的 `Exit Criteria`、`Closure Gates`、以及对应 `docs/logs/` 收口记录。任何一处仍显示未完成，都不能把 plan 视为真正关闭。
+20. **已标记 `completed` 的历史计划默认视为历史记录，不因后续规范演进、模板变化、或后续代码演化而主动回写。** 只有在用户明确要求、需要修复事实性错误/损坏链接、或当前活跃计划明确且经用户确认以“修订历史计划文本”为交付物时，才允许修改这类计划。对历史计划的新审计发现，默认记录在新的 analysis / active plan / daily log 中，而不是为了追求模板一致性去重写旧计划。
 
 ## Anti-Slacking Rule
 
@@ -312,6 +313,7 @@ Follow-up:
 3. 非执行性的说明段落不用打完成状态。
 4. 如果只完成了类型/接口/方法壳，而语义或测试还没对齐，不要把 slice 标成 `completed`；这类情况通常应保持 `in progress` 或改成 `partially completed` 的 plan-level 状态。
 5. 如果某个项决定延期，先把它移到 `Deferred But Adjudicated` 或 `Non-Blocking Follow-ups`，并写清 `Why Not Blocking Closure`；不能只在 execution list 里放着不勾选。
+6. 执行当前 active plan 时，如果读到的是已 `completed` 的旧计划，默认把它当作历史证据而不是待修正文档；除非用户明确要求，否则不要顺手按新模板回写历史计划。
 
 ### When Closing The Plan
 

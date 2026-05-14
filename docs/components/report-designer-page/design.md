@@ -24,7 +24,7 @@
 
 - `document` 和 `designer` 是核心必填输入。
 - `profile` 和 `adapters` 是可选宿主扩展入口。
-- `toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body` 是主要 regions。
+- `toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body` 是主要 regions，可接收通用 region schema 输入，不限于 report-designer family 专用 renderer。
 - 目标设计中，如需让宿主外部读取 report designer host 摘要，应使用 `statusPath`，而不是把完整 host projection 提升到 page 全局 scope。
 - 左右工作台是否出现由 resolved `designer` config 决定；`fieldPanel` 与 `inspector` regions 是 override surfaces，不是 side-panel existence 的 canonical source。
 
@@ -107,7 +107,7 @@ host scope 向下投影一套 canonical contract，不再把 compatibility alias
 - `designer`、`spreadsheet`、`selectionTarget`、`reportDocument`、`workbook`、`activeSheet`、`activeCell`、`activeRange`、`inspector`、`inspectorPanels`、`meta` 属于 host scope 的 core projection contract。
 - `runtime`、`canUndo`、`canRedo`、`documentName`、`fieldSources`、`fieldCount`、`preview` 属于明确保留的 derived convenience projections。
 - 旧 `target` / `selection` 不再作为 canonical contract 记录，但当前仍作为 documented compatibility aliases 保留；`inspectorBody` 不是支持的 host projection 字段。
-- `workbook` / `spreadsheet.workbook` 必须与 `reportDocument.document.spreadsheet` 指向同一条 canonical workbook baseline；save/export/host projection 不支持各自读取不同 spreadsheet snapshot。
+- `workbook` / `spreadsheet.workbook` 必须与 `reportDocument.spreadsheet` 指向同一条 canonical workbook baseline；save/export/host projection 不支持各自读取不同 spreadsheet snapshot。
 - `runtime.dirty` 是对外发布给 `statusPath` 和 host scope 的聚合 dirty；初次挂载时内部 spreadsheet clone 不能被误发布成外部 dirty 变更。
 
 ## 8. 事件、动作与组件句柄能力

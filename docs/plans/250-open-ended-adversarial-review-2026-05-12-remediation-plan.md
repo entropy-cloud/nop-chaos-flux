@@ -49,7 +49,7 @@
 - `packages/flux-runtime/src/__tests__/hidden-field-policy.test.ts` and form renderer hidden-field tests as needed
 - `packages/flux-renderers-form-advanced/src/{tree-controls.tsx,tree-control-controllers.ts}` and focused tests
 - Owner docs likely affected: `docs/architecture/{table-row-identity-and-scope-performance.md,form-validation.md,field-binding-and-renderer-contract.md,renderer-runtime.md}` and relevant component docs if they contain impacted examples
-- `docs/logs/2026/05-12.md`; `docs/logs/index.md` is read-only guidance unless the daily-log index itself needs a maintenance update
+- `docs/logs/2026/05-12.md`; `docs/logs/00-log-writing-guide.md` is the format guide, while `docs/logs/index.md` only needs updates when the date index itself changes
 
 ### Out Of Scope
 

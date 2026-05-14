@@ -11,6 +11,12 @@ This document defines:
 
 `data-source` should not be treated as a special visual component category. It is a non-rendering named source declaration that publishes a derived value into the current scope.
 
+Structural publication contract:
+
+- `data-source.name` and `statusPath` are structural publication paths, not general runtime expressions
+- these fields are read once at owner registration time and define where the source publishes value/status
+- authoring must use literal structural paths; `${expr}` and template-like dynamic paths are invalid for these fields
+
 Under this model:
 
 - plain `${...}` expressions remain the preferred synchronous derived-value form

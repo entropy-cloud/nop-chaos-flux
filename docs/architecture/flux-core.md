@@ -59,6 +59,16 @@ All schema fields follow one primary rule:
 
 Which fields allow literals, templates, pure expressions, events, or renderable fragments is determined by schema typing plus renderer field metadata, not by proliferating alternate field names.
 
+Boolean-like fields have a stricter runtime contract:
+
+- authoring schema accepts boolean literals and `${expr}` expression strings
+- validation mode rejects plain string booleans such as `"true"`, `"false"`, and `"!canUndo"`
+- after compilation and runtime evaluation, renderer-facing props and meta expose only `boolean | undefined` for boolean-like fields
+- expression results that are not booleans resolve to `undefined` for boolean-like fields and may be reported through host diagnostics; runtime never applies JavaScript truthiness coercion to them
+- renderers must pass resolved booleans through instead of applying JavaScript truthiness coercion
+
+This keeps expression syntax ordinary while preventing invalid strings from surviving as runtime values.
+
 ### Whole value-tree compilation
 
 Schema values compile as one value tree.
