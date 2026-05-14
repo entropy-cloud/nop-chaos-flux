@@ -92,8 +92,8 @@ describe('createSchemaRenderer import-region reactivity', () => {
 
     await waitFor(() => expect(screen.getByTestId('import-probe-name').textContent).toBe('Changed Name'));
     await waitFor(() => expect(screen.getByTestId('import-probe-status').textContent).toBe('published'));
-    await waitFor(() => expect(screen.getByText('Changed Name')).toBeTruthy());
-    await waitFor(() => expect(screen.getByText('published')).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText('Changed Name').length).toBeGreaterThanOrEqual(2));
+    await waitFor(() => expect(screen.getAllByText('published').length).toBeGreaterThanOrEqual(2));
   });
 
   it('refreshes imported region children after combined local rerender and form setValues', async () => {
@@ -148,8 +148,8 @@ describe('createSchemaRenderer import-region reactivity', () => {
 
     await waitFor(() => expect(screen.getByTestId('import-probe-name').textContent).toBe('Changed Name'));
     await waitFor(() => expect(screen.getByTestId('import-probe-status').textContent).toBe('published'));
-    await waitFor(() => expect(screen.getByText('Changed Name')).toBeTruthy());
-    await waitFor(() => expect(screen.getByText('published')).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText('Changed Name').length).toBeGreaterThanOrEqual(2));
+    await waitFor(() => expect(screen.getAllByText('published').length).toBeGreaterThanOrEqual(2));
   });
 
   it('refreshes imported viewer region after detail-view-like confirm flow', async () => {
@@ -204,7 +204,7 @@ describe('createSchemaRenderer import-region reactivity', () => {
 
     await waitFor(() => expect(screen.getByTestId('import-probe-name').textContent).toBe('Changed Name'));
     await waitFor(() => expect(screen.getByTestId('import-probe-status').textContent).toBe('published'));
-    await waitFor(() => expect(screen.getByText('Changed Name')).toBeTruthy());
-    await waitFor(() => expect(screen.getByText('published')).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText('Changed Name').length).toBeGreaterThanOrEqual(2));
+    await waitFor(() => expect(screen.getAllByText('published').length).toBeGreaterThanOrEqual(2));
   });
 });

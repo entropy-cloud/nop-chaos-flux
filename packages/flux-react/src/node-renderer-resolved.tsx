@@ -122,7 +122,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
       next: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps },
     ) => {
       if (!prev) return false;
-      return prev.meta === next.meta && prev.resolvedProps === next.resolvedProps;
+      return prev.meta === next.meta && prev.resolvedProps.value === next.resolvedProps.value;
     },
   );
 
