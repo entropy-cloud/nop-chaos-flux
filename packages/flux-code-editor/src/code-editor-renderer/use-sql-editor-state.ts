@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ActionResult, ActionSchema, SchemaValue } from '@nop-chaos/flux-core';
+import { isAbortError, type ActionResult, type ActionSchema, type SchemaValue } from '@nop-chaos/flux-core';
 import type { EditorView } from '@codemirror/view';
 import { formatSQL } from '../extensions/sql/format.js';
 import type { SQLResultState } from '../sql-result-panel.js';
@@ -130,12 +130,15 @@ export function useSQLEditorState(
   const [variablePanelCollapsed, setVariablePanelCollapsed] = useState(false);
   const [sqlResult, setSqlResult] = useState<SQLResultState>({ status: 'idle' });
   const executeRequestIdRef = useRef(0);
+  const executeAbortControllerRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      executeAbortControllerRef.current?.abort();
+      executeAbortControllerRef.current = null;
       executeRequestIdRef.current += 1;
     };
   }, []);
@@ -171,6 +174,9 @@ export function useSQLEditorState(
   const handleExecuteSQL = useCallback(async () => {
     if (!sqlConfig?.execution?.enabled || !view) return;
 
+    executeAbortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    executeAbortControllerRef.current = abortController;
     const requestId = ++executeRequestIdRef.current;
 
     setSqlResult({ status: 'loading' });
@@ -183,7 +189,7 @@ export function useSQLEditorState(
       let result: ActionResult;
       if (executeAction) {
         const action = mergeExecutionData(executeAction, sqlText, executionParams);
-        result = await props.helpers.dispatch(action);
+        result = await props.helpers.dispatch(action, { signal: abortController.signal });
       } else {
         const action: ActionSchema = {
           action: 'ajax',
@@ -194,7 +200,11 @@ export function useSQLEditorState(
             data: { sql: sqlText },
           },
         };
-        result = await props.helpers.dispatch(action);
+        result = await props.helpers.dispatch(action, { signal: abortController.signal });
+      }
+
+      if (executeAbortControllerRef.current === abortController) {
+        executeAbortControllerRef.current = null;
       }
 
       if (!mountedRef.current || executeRequestIdRef.current !== requestId) {
@@ -203,6 +213,14 @@ export function useSQLEditorState(
 
       setSqlResult(mapExecutionResult(result, sqlConfig.execution.resultPath));
     } catch (err: unknown) {
+      if (executeAbortControllerRef.current === abortController) {
+        executeAbortControllerRef.current = null;
+      }
+
+      if (abortController.signal.aborted || isAbortError(err)) {
+        return;
+      }
+
       if (!mountedRef.current || executeRequestIdRef.current !== requestId) {
         return;
       }

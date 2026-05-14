@@ -34,6 +34,8 @@ export const codeEditorFieldRules: SchemaFieldRule[] = [
   { key: 'language', kind: 'prop' },
   { key: 'mode', kind: 'prop' },
   { key: 'placeholder', kind: 'prop' },
+  { key: 'readOnly', kind: 'prop', valueType: 'boolean' },
+  { key: 'required', kind: 'prop', valueType: 'boolean' },
   { key: 'expressionConfig', kind: 'prop' },
   { key: 'sqlConfig', kind: 'prop' },
   { key: 'editorTheme', kind: 'prop' },
@@ -54,7 +56,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
 
   const language = (props.props.language as EditorLanguage) ?? 'plaintext';
   const mode = props.props.mode as EditorMode | undefined;
-  const readOnly = Boolean(props.props.readOnly) || Boolean(props.meta.disabled);
+  const readOnly = props.props.readOnly || props.props.disabled || false;
   const placeholder = props.props.placeholder as string | undefined;
   const editorTheme = (props.props.editorTheme as 'light' | 'dark') ?? 'light';
   const lineNumbers =

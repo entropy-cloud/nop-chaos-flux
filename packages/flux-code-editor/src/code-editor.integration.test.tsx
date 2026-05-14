@@ -273,6 +273,8 @@ describe('code-editor integration', () => {
     });
 
     expect(screen.getByText('JSON Editor')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Enter fullscreen' }));
+    expect(screen.getByRole('button', { name: 'Exit fullscreen' })).toBeTruthy();
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
