@@ -13,6 +13,8 @@
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
     "src/**/__tests__",
+    "src/**/*.test-support.ts",
+    "src/**/*.test-support.tsx",
     "src/**/test-support*",
     "src/**/test-utils*",
     "src/**/*-test-utils*",
