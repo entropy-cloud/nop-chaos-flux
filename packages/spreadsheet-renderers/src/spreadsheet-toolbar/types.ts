@@ -19,6 +19,7 @@ export interface SpreadsheetToolbarProps {
   cellValue: string;
   frozen: boolean;
   hasSelection: boolean;
+  readOnly?: boolean;
   currentCellStyle?: {
     fontWeight?: string;
     fontStyle?: string;

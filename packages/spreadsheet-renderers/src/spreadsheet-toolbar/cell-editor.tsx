@@ -19,6 +19,8 @@ export function SpreadsheetCellEditor(props: SpreadsheetToolbarProps) {
         value={props.cellValue}
         onChange={(e) => props.onCellValueChange(e.target.value)}
         placeholder="Enter cell value"
+        readOnly={props.readOnly}
+        disabled={props.readOnly}
       />
       {props.showCommentInput ? (
         <div className="comment-editor">
@@ -29,12 +31,14 @@ export function SpreadsheetCellEditor(props: SpreadsheetToolbarProps) {
             value={props.commentText}
             onChange={(e) => props.onCommentTextChange(e.target.value)}
             placeholder="Add comment..."
+            readOnly={props.readOnly}
+            disabled={props.readOnly}
           />
-          <Button variant="ghost" size="xs" onClick={props.onAddComment}>
+          <Button variant="ghost" size="xs" onClick={props.onAddComment} disabled={props.readOnly}>
             {t('flux.spreadsheet.add')}
           </Button>
           {props.hasComment ? (
-            <Button variant="ghost" size="xs" onClick={props.onDeleteComment}>
+            <Button variant="ghost" size="xs" onClick={props.onDeleteComment} disabled={props.readOnly}>
               {t('flux.common.delete')}
             </Button>
           ) : null}

@@ -16,6 +16,9 @@ export function useEditing(
 
   const handleCellDoubleClick = useCallback(
     (row: number, col: number) => {
+      if (snapshot.runtime.readonly) {
+        return;
+      }
       const addr = cellAddress(row, col);
       const cell = snapshot.activeSheet?.cells?.[addr];
       const editCell = { row, col };
@@ -31,6 +34,13 @@ export function useEditing(
   const handleEditSave = useCallback(async () => {
     const currentEditCell = editingCellRef.current;
     if (!currentEditCell) return;
+    if (snapshot.runtime.readonly) {
+      editingCellRef.current = null;
+      editValueRef.current = '';
+      setEditingCell(null);
+      setEditValue('');
+      return;
+    }
     const currentEditValue = editValueRef.current;
     const addr = cellAddress(currentEditCell.row, currentEditCell.col);
     const result = await bridge.dispatch({
@@ -44,7 +54,7 @@ export function useEditing(
       editValueRef.current = '';
       setEditingCell(null);
     }
-  }, [bridge, sheetId]);
+  }, [bridge, sheetId, snapshot.runtime.readonly]);
 
   const handleEditCancel = useCallback(() => {
     editingCellRef.current = null;
@@ -59,6 +69,9 @@ export function useEditing(
 
   const handleCellValueSave = useCallback(async () => {
     if (!selectedCell) return;
+    if (snapshot.runtime.readonly) {
+      return;
+    }
     await bridge.dispatch({
       type: 'spreadsheet:setCellValue',
       cell: {
@@ -69,7 +82,7 @@ export function useEditing(
       },
       value: cellValue,
     });
-  }, [selectedCell, sheetId, bridge, cellValue]);
+  }, [selectedCell, sheetId, bridge, cellValue, snapshot.runtime.readonly]);
 
   return {
     editingCell,

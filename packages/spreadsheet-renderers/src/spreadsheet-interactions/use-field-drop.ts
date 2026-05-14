@@ -1,11 +1,14 @@
 import { useCallback, useRef, useState } from 'react';
 
-export function useFieldDrop(selectedCell: { row: number; col: number } | null) {
+export function useFieldDrop(selectedCell: { row: number; col: number } | null, readOnly?: boolean) {
   const [dropTargetCell, setDropTargetCell] = useState<{ row: number; col: number } | null>(null);
   const dropTargetCellRef = useRef<{ row: number; col: number } | null>(null);
 
   const handleFieldDrop = useCallback(
     async (cb: (target: { row: number; col: number }) => void | Promise<void>) => {
+      if (readOnly) {
+        return false;
+      }
       const targetCell = dropTargetCellRef.current || dropTargetCell || selectedCell;
       if (!targetCell) {
         return false;
@@ -15,14 +18,19 @@ export function useFieldDrop(selectedCell: { row: number; col: number } | null) 
       dropTargetCellRef.current = null;
       return true;
     },
-    [dropTargetCell, selectedCell],
+    [dropTargetCell, readOnly, selectedCell],
   );
 
   const handleFieldDragOver = useCallback((row: number, col: number) => {
+    if (readOnly) {
+      setDropTargetCell(null);
+      dropTargetCellRef.current = null;
+      return;
+    }
     const t = { row, col };
     setDropTargetCell(t);
     dropTargetCellRef.current = t;
-  }, []);
+  }, [readOnly]);
 
   const handleFieldDragLeave = useCallback(() => {
     setDropTargetCell(null);

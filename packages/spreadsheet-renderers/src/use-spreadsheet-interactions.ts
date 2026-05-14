@@ -145,6 +145,7 @@ export function useSpreadsheetInteractions(
 ): SpreadsheetInteractionsReturn {
   const { bridge, sheetId, onLog } = config;
   const snapshot = useSnapshot(bridge);
+  const readOnly = snapshot.runtime.readonly;
   const selectedCell = snapshot.activeCell
     ? { row: snapshot.activeCell.row, col: snapshot.activeCell.col }
     : null;
@@ -273,7 +274,7 @@ export function useSpreadsheetInteractions(
   } = useFindReplace(bridge, sheetId, selectionCell, addLog);
 
   const { showCommentInput, setShowCommentInput, handleAddComment, handleDeleteComment } =
-    useComments(bridge, sheetId, selectionCell, addLog, commentText, setCommentText);
+    useComments(bridge, sheetId, selectionCell, readOnly, addLog, commentText, setCommentText);
 
   const {
     dropTargetCell,
@@ -282,7 +283,7 @@ export function useSpreadsheetInteractions(
     handleFieldDrop,
     handleFieldDragOver,
     handleFieldDragLeave,
-  } = useFieldDrop(selectionCell);
+  } = useFieldDrop(selectionCell, readOnly);
 
   useKeyboard(
     selectionCell,
@@ -296,6 +297,8 @@ export function useSpreadsheetInteractions(
     handleCommandError,
     setShowFindReplace,
     setShowCommentInput,
+    gridRef,
+    readOnly,
   );
 
   const onCanvasMouseDown = useCallback(() => {
@@ -313,6 +316,7 @@ export function useSpreadsheetInteractions(
     sheetId,
     selectedCell: selectionCell,
     setCellValue,
+    readOnly,
   });
 
   const currentCell: SpreadsheetCell = selectionCell

@@ -70,6 +70,7 @@ export interface SpreadsheetGridProps {
   getCellMetadata?: (row: number, col: number) => unknown;
   onFieldDragOver?: (row: number, col: number) => void;
   onFieldDragLeave?: () => void;
+  readonly?: boolean;
 }
 
 export function SpreadsheetGrid({
@@ -107,6 +108,7 @@ export function SpreadsheetGrid({
   getCellMetadata,
   onFieldDragOver,
   onFieldDragLeave,
+  readonly,
 }: SpreadsheetGridProps) {
   const clampCell = useCallback(
     (row: number, col: number) => ({
@@ -312,6 +314,9 @@ export function SpreadsheetGrid({
         onMouseEnter={() => onCellMouseEnter(r, c)}
         onDragOver={(e) => {
           e.preventDefault();
+          if (readonly) {
+            return;
+          }
           onFieldDragOver?.(r, c);
         }}
         onDragLeave={() => onFieldDragLeave?.()}
@@ -324,6 +329,8 @@ export function SpreadsheetGrid({
             value={editValue}
             onChange={(e) => onEditValueChange(e.target.value)}
             onBlur={onEditSave}
+            readOnly={readonly}
+            disabled={readonly}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 onEditSave();
@@ -425,6 +432,9 @@ export function SpreadsheetGrid({
             return;
           }
           if (event.key === 'Enter') {
+            if (readonly) {
+              return;
+            }
             event.preventDefault();
             onCellDoubleClick(active.row, active.col);
             return;
@@ -435,6 +445,9 @@ export function SpreadsheetGrid({
             !event.metaKey &&
             !event.altKey
           ) {
+            if (readonly) {
+              return;
+            }
             event.preventDefault();
             onCellClick(active.row, active.col);
             onCellDoubleClick(active.row, active.col);
@@ -596,6 +609,7 @@ export function SpreadsheetGrid({
         canUseRowStructureActions={canUseRowStructureActions}
         canUseColumnStructureActions={canUseColumnStructureActions}
         hasActiveRowFilters={hasActiveRowFilters}
+        readOnly={readonly}
       />
     </ContextMenu>
   );

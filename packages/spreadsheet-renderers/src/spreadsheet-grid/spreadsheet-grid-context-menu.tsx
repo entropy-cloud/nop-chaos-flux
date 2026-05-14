@@ -20,6 +20,7 @@ export interface SpreadsheetGridContextMenuProps {
   canUseRowStructureActions: boolean;
   canUseColumnStructureActions: boolean;
   hasActiveRowFilters: boolean;
+  readOnly?: boolean;
 }
 
 export function SpreadsheetGridContextMenu({
@@ -35,6 +36,7 @@ export function SpreadsheetGridContextMenu({
   canUseRowStructureActions,
   canUseColumnStructureActions,
   hasActiveRowFilters,
+  readOnly,
 }: SpreadsheetGridContextMenuProps) {
   return (
     <ContextMenuContent>
@@ -44,7 +46,10 @@ export function SpreadsheetGridContextMenu({
           {t('flux.spreadsheet.copyShortcut').replace(/^.*\s/, '')}
         </ContextMenuShortcut>
       </ContextMenuItem>
-      <ContextMenuItem onClick={() => void actions.handleContextCut()} disabled={!selectedRange}>
+      <ContextMenuItem
+        onClick={() => void actions.handleContextCut()}
+        disabled={!selectedRange || readOnly}
+      >
         {t('flux.spreadsheet.cut')}
         <ContextMenuShortcut>
           {t('flux.spreadsheet.cutShortcut').replace(/^.*\s/, '')}
@@ -52,7 +57,7 @@ export function SpreadsheetGridContextMenu({
       </ContextMenuItem>
       <ContextMenuItem
         onClick={() => void actions.handleContextPaste()}
-        disabled={!selectionAnchorCell || !activeSheetId}
+        disabled={!selectionAnchorCell || !activeSheetId || readOnly}
       >
         {t('flux.spreadsheet.paste')}
         <ContextMenuShortcut>
@@ -62,7 +67,7 @@ export function SpreadsheetGridContextMenu({
       <ContextMenuItem
         data-testid="spreadsheet-context-clear"
         onClick={() => void actions.handleContextClear()}
-        disabled={!selectedRange}
+        disabled={!selectedRange || readOnly}
       >
         {t('flux.common.clear')}
         <ContextMenuShortcut>
@@ -73,28 +78,28 @@ export function SpreadsheetGridContextMenu({
       <ContextMenuItem
         data-testid="spreadsheet-context-sort-asc"
         onClick={() => void actions.handleContextSort('asc')}
-        disabled={!canSort}
+        disabled={!canSort || readOnly}
       >
         {t('flux.spreadsheet.sortAscending')}
       </ContextMenuItem>
       <ContextMenuItem
         data-testid="spreadsheet-context-sort-desc"
         onClick={() => void actions.handleContextSort('desc')}
-        disabled={!canSort}
+        disabled={!canSort || readOnly}
       >
         {t('flux.spreadsheet.sortDescending')}
       </ContextMenuItem>
       <ContextMenuItem
         data-testid="spreadsheet-context-filter-by-value"
         onClick={() => void actions.handleContextFilterBySelectedValue()}
-        disabled={!canFilter}
+        disabled={!canFilter || readOnly}
       >
         {t('flux.spreadsheet.filterBySelectedValue')}
       </ContextMenuItem>
       <ContextMenuItem
         data-testid="spreadsheet-context-clear-filter"
         onClick={() => void actions.handleContextClearFilter()}
-        disabled={!hasActiveRowFilters}
+        disabled={!hasActiveRowFilters || readOnly}
       >
         {t('flux.spreadsheet.clearFilter')}
       </ContextMenuItem>
@@ -102,28 +107,28 @@ export function SpreadsheetGridContextMenu({
       <ContextMenuItem
         data-testid="spreadsheet-context-merge"
         onClick={() => void actions.handleContextMerge()}
-        disabled={!canMerge}
+        disabled={!canMerge || readOnly}
       >
         {t('flux.spreadsheet.mergeCells')}
       </ContextMenuItem>
       <ContextMenuItem
         data-testid="spreadsheet-context-unmerge"
         onClick={() => void actions.handleContextUnmerge()}
-        disabled={!canUnmerge}
+        disabled={!canUnmerge || readOnly}
       >
         {t('flux.spreadsheet.unmergeCells')}
       </ContextMenuItem>
       <ContextMenuItem
         data-testid="spreadsheet-context-freeze"
         onClick={() => void actions.handleContextFreeze()}
-        disabled={!canFreeze}
+        disabled={!canFreeze || readOnly}
       >
         {t('flux.spreadsheet.freezePanes')}
       </ContextMenuItem>
       <ContextMenuItem
         data-testid="spreadsheet-context-unfreeze"
         onClick={() => void actions.handleContextUnfreeze()}
-        disabled={!activeSheetId}
+        disabled={!activeSheetId || readOnly}
       >
         {t('flux.spreadsheet.unfreezePanes')}
       </ContextMenuItem>
@@ -131,42 +136,42 @@ export function SpreadsheetGridContextMenu({
       <ContextMenuItem
         data-testid="spreadsheet-context-insert-row-above"
         onClick={() => void actions.handleContextInsertRow()}
-        disabled={!canUseRowStructureActions || !selectionAnchorCell || !activeSheetId}
+        disabled={!canUseRowStructureActions || !selectionAnchorCell || !activeSheetId || readOnly}
       >
         {t('flux.spreadsheet.insertRowAbove')}
       </ContextMenuItem>
       <ContextMenuItem
         data-testid="spreadsheet-context-insert-row-below"
         onClick={() => void actions.handleContextInsertRowBelow()}
-        disabled={!canUseRowStructureActions || !selectionAnchorCell || !activeSheetId}
+        disabled={!canUseRowStructureActions || !selectionAnchorCell || !activeSheetId || readOnly}
       >
         {t('flux.spreadsheet.insertRowBelow')}
       </ContextMenuItem>
       <ContextMenuItem
         data-testid="spreadsheet-context-delete-row"
         onClick={() => void actions.handleContextDeleteRow()}
-        disabled={!canUseRowStructureActions || !selectionAnchorCell || !activeSheetId}
+        disabled={!canUseRowStructureActions || !selectionAnchorCell || !activeSheetId || readOnly}
       >
         {t('flux.spreadsheet.deleteRow')}
       </ContextMenuItem>
       <ContextMenuItem
         data-testid="spreadsheet-context-insert-column-left"
         onClick={() => void actions.handleContextInsertColumn()}
-        disabled={!canUseColumnStructureActions || !selectionAnchorCell || !activeSheetId}
+        disabled={!canUseColumnStructureActions || !selectionAnchorCell || !activeSheetId || readOnly}
       >
         {t('flux.spreadsheet.insertColumnLeft')}
       </ContextMenuItem>
       <ContextMenuItem
         data-testid="spreadsheet-context-insert-column-right"
         onClick={() => void actions.handleContextInsertColumnRight()}
-        disabled={!canUseColumnStructureActions || !selectionAnchorCell || !activeSheetId}
+        disabled={!canUseColumnStructureActions || !selectionAnchorCell || !activeSheetId || readOnly}
       >
         {t('flux.spreadsheet.insertColumnRight')}
       </ContextMenuItem>
       <ContextMenuItem
         data-testid="spreadsheet-context-delete-column"
         onClick={() => void actions.handleContextDeleteColumn()}
-        disabled={!canUseColumnStructureActions || !selectionAnchorCell || !activeSheetId}
+        disabled={!canUseColumnStructureActions || !selectionAnchorCell || !activeSheetId || readOnly}
       >
         {t('flux.spreadsheet.deleteColumn')}
       </ContextMenuItem>

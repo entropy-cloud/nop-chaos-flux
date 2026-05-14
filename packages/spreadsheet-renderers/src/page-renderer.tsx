@@ -20,6 +20,8 @@ import {
 } from '@nop-chaos/spreadsheet-core';
 import { cn } from '@nop-chaos/ui';
 import { deriveHostSnapshot } from './bridge.js';
+import { createSpreadsheetBridge } from './bridge.js';
+import { DefaultSpreadsheetPageBody } from './default-page-body.js';
 import { createSpreadsheetActionProvider } from './host-action-provider.js';
 import {
   buildSpreadsheetStatusLabel,
@@ -110,6 +112,7 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
       ),
     [spreadsheetCore],
   );
+  const spreadsheetBridge = useMemo(() => createSpreadsheetBridge(spreadsheetCore), [spreadsheetCore]);
   const actionScope = useCurrentActionScope();
 
   useLayoutEffect(() => {
@@ -201,7 +204,16 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
       <main data-slot="spreadsheet-page-body">
         {hasRendererSlotContent(asReactNode(bodyContent))
           ? asReactNode(bodyContent)
-          : renderFallbackBody(snapshot)}
+          : spreadsheetBridge && snapshot.activeSheetId
+            ? (
+                <DefaultSpreadsheetPageBody
+                  bridge={spreadsheetBridge}
+                  snapshot={spreadsheet}
+                  config={resolvedConfig}
+                  showToolbar={!hasRendererSlotContent(asReactNode(toolbarContent))}
+                />
+              )
+            : renderFallbackBody(snapshot)}
       </main>
 
       {hasRendererSlotContent(asReactNode(dialogsContent)) ? (

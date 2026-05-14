@@ -36,4 +36,28 @@ describe('SheetTabBar', () => {
     expect(screen.getByRole('dialog', { name: '删除工作表' })).toBeTruthy();
     expect(onRemoveSheet).not.toHaveBeenCalled();
   });
+
+  it('disables sheet mutations when readOnly is true', () => {
+    render(
+      <SheetTabBar
+        sheets={[
+          { id: 'sheet-1', name: 'Summary', hidden: false },
+          { id: 'sheet-2', name: 'Details', hidden: false },
+        ] as any}
+        activeSheetId="sheet-1"
+        onSwitchSheet={vi.fn()}
+        onAddSheet={vi.fn()}
+        onRemoveSheet={vi.fn()}
+        onRenameSheet={vi.fn()}
+        canRemoveSheet
+        readOnly
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Summary' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Add sheet' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Remove sheet Summary' }).hasAttribute('disabled')).toBe(
+      true,
+    );
+  });
 });

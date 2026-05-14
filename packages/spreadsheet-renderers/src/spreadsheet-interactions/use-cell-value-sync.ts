@@ -7,10 +7,11 @@ export function useCellValueSync(input: {
   sheetId: string;
   selectedCell: { row: number; col: number } | null;
   setCellValue: React.Dispatch<React.SetStateAction<string>>;
+  readOnly: boolean;
 }) {
   return useCallback(
     (value: string) => {
-      if (!input.selectedCell) {
+      if (!input.selectedCell || input.readOnly) {
         return;
       }
 

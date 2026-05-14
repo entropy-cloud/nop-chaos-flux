@@ -6,6 +6,7 @@ export function useComments(
   bridge: SpreadsheetBridge,
   sheetId: string,
   selectedCell: { row: number; col: number } | null,
+  readOnly: boolean,
   addLog: (msg: string) => void,
   commentText: string,
   setCommentText: React.Dispatch<React.SetStateAction<string>>,
@@ -13,6 +14,7 @@ export function useComments(
   const [showCommentInput, setShowCommentInput] = useState(false);
 
   const handleAddComment = useCallback(async () => {
+    if (readOnly) return;
     if (!selectedCell || !commentText.trim()) return;
     await bridge.dispatch({
       type: 'spreadsheet:addComment',
@@ -26,9 +28,10 @@ export function useComments(
     });
     setShowCommentInput(false);
     addLog('Added comment');
-  }, [selectedCell, commentText, sheetId, bridge, addLog]);
+  }, [selectedCell, commentText, sheetId, bridge, addLog, readOnly]);
 
   const handleDeleteComment = useCallback(async () => {
+    if (readOnly) return;
     if (!selectedCell) return;
     await bridge.dispatch({
       type: 'spreadsheet:deleteComment',
@@ -41,7 +44,7 @@ export function useComments(
     });
     setCommentText('');
     addLog('Deleted comment');
-  }, [selectedCell, sheetId, bridge, addLog, setCommentText]);
+  }, [selectedCell, sheetId, bridge, addLog, setCommentText, readOnly]);
 
   return {
     showCommentInput,

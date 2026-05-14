@@ -35,10 +35,15 @@ export function SpreadsheetFindReplacePanel(props: SpreadsheetToolbarProps) {
           onChange={(e) => props.onReplaceTextChange(e.target.value)}
           placeholder="Replace with..."
         />
-        <Button variant="ghost" size="xs" onClick={props.onReplace} disabled={!props.hasSelection}>
+        <Button
+          variant="ghost"
+          size="xs"
+          onClick={props.onReplace}
+          disabled={!props.hasSelection || props.readOnly}
+        >
           {t('flux.spreadsheet.replaceBtn')}
         </Button>
-        <Button variant="ghost" size="xs" onClick={props.onReplaceAll}>
+        <Button variant="ghost" size="xs" onClick={props.onReplaceAll} disabled={props.readOnly}>
           {t('flux.spreadsheet.replaceAll')}
         </Button>
       </div>

@@ -126,4 +126,17 @@ describe('SpreadsheetToolbar', () => {
       0,
     );
   });
+
+  it('disables mutation controls in readOnly mode while keeping find available', async () => {
+    await setupI18n();
+    render(<SpreadsheetToolbar {...createProps({ readOnly: true })} />);
+
+    const undoButtons = screen.getAllByRole('button', { name: 'Undo Ctrl+Z' });
+    const cutButtons = screen.getAllByRole('button', { name: 'Cut Ctrl+X' });
+    const findButtons = screen.getAllByRole('button', { name: 'Find & Replace Ctrl+F' });
+
+    expect(undoButtons.some((button) => button.hasAttribute('disabled'))).toBe(true);
+    expect(cutButtons.some((button) => button.hasAttribute('disabled'))).toBe(true);
+    expect(findButtons.some((button) => !button.hasAttribute('disabled'))).toBe(true);
+  });
 });

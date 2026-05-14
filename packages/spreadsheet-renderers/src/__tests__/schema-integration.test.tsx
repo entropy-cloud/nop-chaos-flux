@@ -146,6 +146,13 @@ describe('spreadsheet-page schema integration', () => {
       />,
     );
 
+    await waitFor(
+      () => {
+        expect(screen.getByRole('button', { name: 'Set A1' })).toBeTruthy();
+      },
+      { timeout: 5000 },
+    );
+
     fireEvent.click(screen.getByRole('button', { name: 'Set A1' }));
 
     await waitFor(() => {
@@ -257,6 +264,35 @@ describe('spreadsheet-page schema integration', () => {
     expect(document.querySelector('.nop-spreadsheet-page')).toBeTruthy();
     expect(document.querySelector('[data-slot="spreadsheet-page-header"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="spreadsheet-page-body"]')).toBeTruthy();
+  });
+
+  it('renders the default spreadsheet host when body is omitted', async () => {
+    const sheetDocument = createEmptyDocument('default-body-spreadsheet');
+    const schema = defineSpreadsheetPageSchema({
+      type: 'spreadsheet-page',
+      document: sheetDocument,
+    });
+
+    const registry = createDefaultRegistry([]);
+    registerSpreadsheetRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://spreadsheet/default-body"
+        schema={schema}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="spreadsheet-default-host"]')).toBeTruthy();
+      expect(document.querySelector('[data-slot="spreadsheet-default-toolbar"]')).toBeTruthy();
+      expect(document.querySelector('[data-slot="spreadsheet-grid"]')).toBeTruthy();
+      expect(document.querySelector('.ss-sheet-bar')).toBeTruthy();
+    });
   });
 
   it('clears spreadsheet host status on unmount', async () => {

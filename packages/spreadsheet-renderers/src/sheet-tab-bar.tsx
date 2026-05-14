@@ -22,6 +22,7 @@ export interface SheetTabBarProps {
   onRemoveSheet?: (sheetId: string) => void;
   onRenameSheet?: (sheetId: string, name: string) => void;
   canRemoveSheet?: boolean;
+  readOnly?: boolean;
 }
 
 export function SheetTabBar({
@@ -32,6 +33,7 @@ export function SheetTabBar({
   onRemoveSheet,
   onRenameSheet,
   canRemoveSheet,
+  readOnly,
 }: SheetTabBarProps) {
   const [renamingSheetId, setRenamingSheetId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -44,19 +46,21 @@ export function SheetTabBar({
 
   const handleTabClick = useCallback(
     (sheetId: string) => {
+      if (readOnly) return;
       if (renamingSheetId === sheetId) return;
       onSwitchSheet(sheetId);
     },
-    [onSwitchSheet, renamingSheetId],
+    [onSwitchSheet, readOnly, renamingSheetId],
   );
 
   const handleTabDoubleClick = useCallback(
     (sheetId: string, currentName: string) => {
+      if (readOnly) return;
       if (!onRenameSheet) return;
       setRenamingSheetId(sheetId);
       setRenameValue(currentName);
     },
-    [onRenameSheet],
+    [onRenameSheet, readOnly],
   );
 
   const handleRenameSubmit = useCallback(() => {
@@ -82,6 +86,7 @@ export function SheetTabBar({
 
   const handleCloseClick = useCallback(
     (e: React.MouseEvent, sheetId: string, sheetName: string) => {
+      if (readOnly) return;
       e.stopPropagation();
       if (onRemoveSheet) {
         setPendingSheetId(sheetId);
@@ -89,7 +94,7 @@ export function SheetTabBar({
         setDeleteConfirmOpen(true);
       }
     },
-    [onRemoveSheet],
+    [onRemoveSheet, readOnly],
   );
 
   const handleConfirmDelete = useCallback(() => {
@@ -119,6 +124,8 @@ export function SheetTabBar({
                     onChange={(e) => setRenameValue(e.target.value)}
                     onBlur={handleRenameSubmit}
                     onKeyDown={handleRenameKeyDown}
+                    readOnly={readOnly}
+                    disabled={readOnly}
                     autoFocus
                     size="sm"
                   />
@@ -130,6 +137,7 @@ export function SheetTabBar({
                     data-active={isActive || undefined}
                     onClick={() => handleTabClick(sheet.id)}
                     onDoubleClick={() => handleTabDoubleClick(sheet.id, sheet.name)}
+                    disabled={readOnly}
                   >
                     {sheet.name}
                     {sheet.tabColor && (
@@ -149,6 +157,7 @@ export function SheetTabBar({
                     onClick={(e) => handleCloseClick(e, sheet.id, sheet.name)}
                     aria-label={`Remove sheet ${sheet.name}`}
                     title={`Remove sheet ${sheet.name}`}
+                    disabled={readOnly}
                   >
                     ×
                   </Button>
@@ -163,6 +172,7 @@ export function SheetTabBar({
           className="ss-sheet-add"
           onClick={onAddSheet}
           aria-label="Add sheet"
+          disabled={readOnly}
         >
           +
         </Button>
