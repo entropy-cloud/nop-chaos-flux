@@ -133,6 +133,7 @@ export interface ExpressionCompileOptions {
   libraryNames?: ReadonlySet<string>;
   symbolTable?: CompileSymbolTable;
   sourcePath?: string;
+  transform?: (value: unknown) => unknown;
   reportDiagnostic?: (issue: {
     code: import('../schema-diagnostics/index.js').SchemaDiagnosticCode;
     message: string;
@@ -242,6 +243,7 @@ export interface DynamicRuntimeValue<T = unknown> {
   kind: 'dynamic';
   isStatic: false;
   node: DynamicValueNode<T>;
+  transform?: (value: unknown) => unknown;
   createState(): RuntimeValueState<T>;
   exec(
     context: EvalContext,

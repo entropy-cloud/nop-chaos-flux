@@ -2,6 +2,7 @@ import type { ActionSchema, ActionShapeFields } from './actions.js';
 import type {
   CompileSymbolTable,
   CompiledRuntimeValue,
+  ExpressionCompileOptions,
   ExpressionCompiler,
 } from './compilation.js';
 import type { CompileSchemaOptions } from './renderer-compiler.js';
@@ -55,8 +56,8 @@ export interface FieldRemarkSchema extends SchemaObject {
 
 export interface BoundFieldSchemaBase extends BaseSchema {
   name: string;
-  readOnly?: boolean;
-  required?: boolean;
+  readOnly?: boolean | string;
+  required?: boolean | string;
   mode?: 'normal' | 'horizontal';
   labelAlign?: 'top' | 'left' | 'right' | 'inherit';
   labelWidth?: string | number;
@@ -69,6 +70,7 @@ export interface BoundFieldSchemaBase extends BaseSchema {
 export interface SchemaFieldRule {
   key: string;
   kind: SchemaFieldKind;
+  valueType?: 'boolean';
   regionKey?: string;
   allowSource?: boolean;
   sourceStateKey?: string;
@@ -106,7 +108,11 @@ export interface FieldCompileContext {
   expressionCompiler: ExpressionCompiler;
   symbolTable: CompileSymbolTable;
   sourcePath: string;
-  compileValue: <T = unknown>(input: T, sourcePath?: string) => CompiledRuntimeValue<T>;
+  compileValue: <T = unknown>(
+    input: T,
+    sourcePath?: string,
+    options?: Omit<ExpressionCompileOptions, 'sourcePath'>,
+  ) => CompiledRuntimeValue<T>;
   compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => unknown;
 }
 

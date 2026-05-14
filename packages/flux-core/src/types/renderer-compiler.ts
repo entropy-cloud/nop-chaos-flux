@@ -3,7 +3,13 @@ import type {
   SchemaCompileValidationOptions,
   SchemaDiagnostic,
 } from '../schema-diagnostics/index.js';
-import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy } from './schema.js';
+import type {
+  BaseSchema,
+  SchemaFieldRule,
+  SchemaInput,
+  SchemaPath,
+  ScopePolicy,
+} from './schema.js';
 import type { CompiledCidState } from '../compiled-cid.js';
 import type { CompiledTemplate } from './node-identity.js';
 import type { CompileSymbolTable } from './compilation.js';

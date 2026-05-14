@@ -84,6 +84,16 @@ type BivariantCallback<Args extends readonly unknown[], Result> = {
   bivarianceHack(...args: Args): Result;
 }['bivarianceHack'];
 
+type RemoveIndexSignature<T> = {
+  [K in keyof T as string extends K
+    ? never
+    : number extends K
+      ? never
+      : symbol extends K
+        ? never
+        : K]: T[K];
+};
+
 export interface RendererHelpers {
   render: (input: RenderNodeInput, options?: RenderFragmentOptions) => RendererRenderOutput;
   evaluate: <T = unknown>(target: unknown, scope?: ScopeRef) => T;
@@ -98,8 +108,22 @@ export interface RendererHelpers {
 
 export type RendererRenderOutput = unknown;
 
-export type RendererResolvedProps<S extends BaseSchema = BaseSchema> = Record<string, any> &
-  Partial<S>;
+export type RendererResolvedProps<S extends BaseSchema = BaseSchema> = {
+  [key: string]: unknown;
+} & Omit<
+  Partial<RemoveIndexSignature<S>>,
+  'when' | 'visible' | 'hidden' | 'disabled' | 'className' | 'frameClassName' | 'testid' | 'readOnly' | 'required'
+> & {
+  type?: S['type'];
+  id?: string;
+  className?: string;
+  frameClassName?: string;
+  disabled?: boolean;
+  testid?: string;
+  cid?: number;
+  readOnly?: boolean;
+  required?: boolean;
+};
 
 export interface ReactionDebugEntry {
   id: string;

@@ -151,6 +151,7 @@ export interface ActionResult {
   cancelled?: boolean;
   skipped?: boolean;
   timedOut?: boolean;
+  failureHandled?: boolean;
   data?: unknown;
   results?: ActionResult[];
   attempts?: number;
