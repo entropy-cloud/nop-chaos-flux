@@ -18,19 +18,25 @@ const mockState: {
   context: MockContext;
   snapshot: any;
   resolve: ReturnType<typeof vi.fn>;
+  notify: ReturnType<typeof vi.fn>;
 } = {
   context: undefined as unknown as MockContext,
   snapshot: undefined,
   resolve: vi.fn(),
+  notify: vi.fn(),
 };
 
-vi.mock('./designer-context', () => ({
-  useDesignerContext: () => mockState.context,
-  useDesignerFullSnapshot: () => mockState.snapshot,
-  useDesignerSnapshotSelector: (selector: (s: any) => any) => selector(mockState.snapshot),
-  useNodeTypeConfig: (typeId: string) =>
-    mockState.context.config.nodeTypes.find((nodeType: { id: string }) => nodeType.id === typeId),
-}));
+vi.mock('./designer-context', async () => {
+  const actual = await vi.importActual<typeof import('./designer-context')>('./designer-context');
+  return {
+    ...actual,
+    useDesignerContext: () => mockState.context,
+    useDesignerFullSnapshot: () => mockState.snapshot,
+    useDesignerSnapshotSelector: (selector: (s: any) => any) => selector(mockState.snapshot),
+    useNodeTypeConfig: (typeId: string) =>
+      mockState.context.config.nodeTypes.find((nodeType: { id: string }) => nodeType.id === typeId),
+  };
+});
 
 vi.mock('./designer-icon', () => ({
   DesignerIcon: (props: { icon: string; className?: string }) => (
@@ -42,7 +48,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentActionScope: () => ({
     resolve: mockState.resolve,
   }),
-  useRendererRuntime: () => ({}),
+  useRendererRuntime: () => ({ env: { notify: mockState.notify } }),
   useRenderScope: () => ({}),
 }));
 
@@ -71,6 +77,7 @@ describe('flow designer controls', () => {
   beforeEach(() => {
     cleanup();
     mockState.resolve = vi.fn();
+    mockState.notify = vi.fn();
     mockState.snapshot = createSnapshot();
     mockState.context = {
       config: { toolbar: { items: [] }, palette: { groups: [] }, nodeTypes: [] },
@@ -148,6 +155,24 @@ describe('flow designer controls', () => {
 
     expect(mockState.resolve).toHaveBeenCalledWith('designer:navigate-back');
     expect(invoke).toHaveBeenCalledWith('goBack', undefined, expect.any(Object));
+  });
+
+  it('notifies when back action rejects', async () => {
+    const invoke = vi.fn().mockRejectedValue(new Error('Back failed'));
+    mockState.resolve.mockReturnValue({ method: 'goBack', provider: { invoke } });
+    mockState.context.config = {
+      ...mockState.context.config,
+      toolbar: {
+        items: [{ type: 'back', label: 'Back', action: 'designer:navigate-back' }],
+      },
+    };
+
+    render(<DesignerToolbarContent />);
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    await vi.waitFor(() => {
+      expect(mockState.notify).toHaveBeenCalledWith('warning', 'Back failed');
+    });
   });
 
   it('dispatches addNode from palette item button click', () => {

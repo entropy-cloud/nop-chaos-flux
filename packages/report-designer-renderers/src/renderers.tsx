@@ -1,13 +1,34 @@
 import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
 import { registerRendererDefinitions } from '@nop-chaos/flux-core';
-import { ReportFieldPanelRenderer } from './field-panel-renderer.js';
-import { ReportInspectorShellRenderer } from './inspector-shell-renderer.js';
-import { ReportDesignerPageRenderer } from './page-renderer.js';
-import { ReportInspectorRenderer } from './report-designer-inspector.js';
-import { ReportToolbarRenderer } from './report-designer-toolbar.js';
+import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import { reportDesignerHostContract } from './report-designer-manifest.js';
-import type { ReportDesignerPageSchemaInput, ReportDesignerPageSchema } from './types.js';
+import type {
+  ReportDesignerPageSchemaInput,
+  ReportDesignerPageSchema,
+  ReportInspectorShellSchema,
+} from './types.js';
+import type {
+  ReportFieldPanelSchema,
+  ReportInspectorSchema,
+  ReportToolbarSchema,
+} from './schemas.js';
 export { defineReportDesignerPageSchema } from './types.js';
+
+const LazyReportFieldPanelRenderer = createLazyRendererComponent<ReportFieldPanelSchema>(
+  () => import('./field-panel-renderer.js').then((m) => m.ReportFieldPanelRenderer),
+);
+const LazyReportInspectorShellRenderer = createLazyRendererComponent<ReportInspectorShellSchema>(
+  () => import('./inspector-shell-renderer.js').then((m) => m.ReportInspectorShellRenderer),
+);
+const LazyReportDesignerPageRenderer = createLazyRendererComponent<ReportDesignerPageSchema>(
+  () => import('./page-renderer.js').then((m) => m.ReportDesignerPageRenderer),
+);
+const LazyReportInspectorRenderer = createLazyRendererComponent<ReportInspectorSchema>(
+  () => import('./report-designer-inspector.js').then((m) => m.ReportInspectorRenderer),
+);
+const LazyReportToolbarRenderer = createLazyRendererComponent<ReportToolbarSchema>(
+  () => import('./report-designer-toolbar.js').then((m) => m.ReportToolbarRenderer),
+);
 
 const actionIntentShape = {
   kind: 'union' as const,
@@ -26,7 +47,7 @@ export type { ReportDesignerPageSchemaInput, ReportDesignerPageSchema };
 export const reportDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'report-inspector-shell',
-    component: ReportInspectorShellRenderer,
+    component: LazyReportInspectorShellRenderer,
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'noSelectionLabel', kind: 'prop' },
@@ -35,7 +56,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'report-inspector',
-    component: ReportInspectorRenderer,
+    component: LazyReportInspectorRenderer,
     fields: [
       { key: 'body', kind: 'prop' },
       { key: 'emptyLabel', kind: 'prop' },
@@ -44,7 +65,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'report-field-panel',
-    component: ReportFieldPanelRenderer,
+    component: LazyReportFieldPanelRenderer,
       fields: [
         { key: 'title', kind: 'value-or-region', regionKey: 'title' },
         { key: 'fieldSources', kind: 'prop' },
@@ -56,7 +77,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
     },
   {
     type: 'report-designer-page',
-    component: ReportDesignerPageRenderer,
+    component: LazyReportDesignerPageRenderer,
     displayName: 'Report Designer Page',
     sourcePackage: '@nop-chaos/report-designer-renderers',
     rendererClass: 'domain-host-renderer',
@@ -113,7 +134,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'report-toolbar',
-    component: ReportToolbarRenderer,
+    component: LazyReportToolbarRenderer,
     propContracts: {
       itemsOverride: {
         shape: {

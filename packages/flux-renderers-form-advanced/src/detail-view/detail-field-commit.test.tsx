@@ -458,4 +458,53 @@ describe('detail-field renderer commit behavior', () => {
     expect(submitValues[0]).toMatchObject({ address: 'Alpha' });
   });
 
+  it('reports detail-field open transform failures through env.notify', async () => {
+    cleanup();
+    const notify = vi.fn();
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => {
+            throw new Error('detail field open failed');
+          },
+        }),
+      })),
+    };
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-commit.test.tsx#open-failure"
+        schema={{
+          type: 'form',
+          data: { address: 'Alpha' },
+          body: [
+            {
+              type: 'detail-field',
+              name: 'address',
+              triggerLabel: 'Edit Address',
+              'xui:imports': [{ from: 'detail-field-lib', as: 'detailFieldLib' }],
+              transformInAction: { action: 'detailFieldLib:toDraft' },
+              content: [{ type: 'input-text', name: 'street', label: 'Street' }],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, notify, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit Address'));
+
+    await waitFor(() =>
+      expect(notify).toHaveBeenCalledWith(
+        'warning',
+        '[flux] transformIn failed: Error: detail field open failed',
+      ),
+    );
+    expect(screen.queryByLabelText('Street')).toBeNull();
+  });
+
 });

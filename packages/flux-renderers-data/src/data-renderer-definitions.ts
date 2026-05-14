@@ -1,10 +1,15 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { ChartRenderer } from './chart-renderer.js';
+import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import { DataSourceRenderer } from './data-source-renderer.js';
 import { validateTableSchema } from './data-schema-validation.js';
 import { TableRenderer } from './table-renderer.js';
 import { TreeRenderer } from './tree-renderer.js';
 import { crudRendererDefinition } from './crud-renderer-definition.js';
+import type { ChartSchema } from './chart-schemas.js';
+
+const LazyChartRenderer = createLazyRendererComponent<ChartSchema>(
+  () => import('./chart-renderer.js').then((m) => m.ChartRenderer),
+);
 
 export { crudRendererDefinition } from './crud-renderer-definition.js';
 
@@ -148,12 +153,19 @@ export const dataRendererDefinitions: RendererDefinition[] = [
     displayName: 'Chart',
     category: 'data',
     sourcePackage: '@nop-chaos/flux-renderers-data',
-    component: ChartRenderer,
+    component: LazyChartRenderer,
     fields: [
+      { key: 'source', kind: 'prop' },
+      { key: 'series', kind: 'prop' },
+      { key: 'chartType', kind: 'prop' },
+      { key: 'title', kind: 'prop' },
+      { key: 'xAxis', kind: 'prop' },
+      { key: 'yAxis', kind: 'prop' },
+      { key: 'height', kind: 'prop' },
+      { key: 'loading', kind: 'prop' },
+      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
       { key: 'onClick', kind: 'event' },
       { key: 'onHover', kind: 'event' },
-      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-      { key: 'componentId', kind: 'prop' },
     ],
   },
   {

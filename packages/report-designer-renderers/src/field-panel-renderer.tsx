@@ -1,5 +1,5 @@
 import React from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { reportRuntimeHostIssue, type RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
@@ -17,6 +17,7 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
   const titleContent = resolveRendererSlotContent(props, 'title');
   const actionScope = useCurrentActionScope();
   const runtime = useRendererRuntime();
+  const env = runtime.env;
   const scopeData = useOwnScopeSelector(
     (data: Record<string, unknown>) => ({
       fieldSources: data.fieldSources,
@@ -96,6 +97,22 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
     );
   }
 
+  function handleKeyboardInsertError(error: unknown) {
+    reportRuntimeHostIssue({
+      env,
+      error,
+      phase: 'action',
+      path: props.path,
+      details: {
+        operation: 'report-field-panel-insert',
+      },
+    });
+    env.notify?.(
+      'warning',
+      error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
+    );
+  }
+
   return (
     <section
       className={cn('nop-report-designer', props.meta.className)}
@@ -146,7 +163,7 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
                               field: field.label,
                             })}
                             onClick={() => {
-                              void handleKeyboardInsert(source, field);
+                              void handleKeyboardInsert(source, field).catch(handleKeyboardInsertError);
                             }}
                           >
                             {t('flux.reportDesigner.insert')}

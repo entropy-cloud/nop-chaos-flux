@@ -7,6 +7,7 @@ import type {
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { actionAdapter, getIn, setIn } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
 import {
@@ -14,6 +15,7 @@ import {
   useCurrentValidationScope,
   useCurrentFormState,
   useRenderScope,
+  useRendererEnv,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import type { ObjectFieldSchema } from './composite-schemas.js';
@@ -123,6 +125,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const parentScope = useRenderScope();
   const parentForm = useCurrentForm();
   const parentValidationOwner = useCurrentValidationScope();
+  const env = useRendererEnv();
   const name = String(props.props.name ?? '');
   const readOnly = Boolean(props.props.readOnly);
   const schemaProps = props.props as ObjectFieldSchema;
@@ -286,6 +289,15 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
                 committedValue: resolvedCommittedValue,
                 parentScope,
                 parentValidationOwner,
+              }).catch((error: unknown) => {
+                if (!isTransformOutSequenceCurrent(transformOutOwner, sequence)) {
+                  return;
+                }
+
+                env.notify?.(
+                  'warning',
+                  error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
+                );
               });
             })
             .catch((error: unknown) => {
@@ -315,6 +327,11 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
           committedValue,
           parentScope,
           parentValidationOwner,
+        }).catch((error: unknown) => {
+          env.notify?.(
+            'warning',
+            error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
+          );
         });
         return;
       }
@@ -338,6 +355,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     },
     [
       name,
+      env,
       parentForm,
       parentScope,
       parentValidationOwner,

@@ -4,13 +4,18 @@ import {
   type RendererDefinition,
   type RendererRegistry,
 } from '@nop-chaos/flux-core';
-import { SpreadsheetPageRenderer } from './page-renderer.js';
+import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import { spreadsheetHostContract } from './spreadsheet-manifest.js';
+import type { SpreadsheetPageSchema } from './types.js';
+
+const LazySpreadsheetPageRenderer = createLazyRendererComponent<SpreadsheetPageSchema>(
+  () => import('./page-renderer.js').then((m) => m.SpreadsheetPageRenderer),
+);
 
 export const spreadsheetRendererDefinitions: RendererDefinition[] = [
   {
     type: 'spreadsheet-page',
-    component: SpreadsheetPageRenderer,
+    component: LazySpreadsheetPageRenderer,
     displayName: 'Spreadsheet Page',
     sourcePackage: '@nop-chaos/spreadsheet-renderers',
     rendererClass: 'domain-host-renderer',

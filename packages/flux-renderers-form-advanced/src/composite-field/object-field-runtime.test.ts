@@ -20,4 +20,26 @@ describe('object-field non-form commit helper', () => {
     expect(parentScope.update).toHaveBeenCalledWith('profile', { firstName: '' });
     expect(parentValidationOwner.validateSubtree).toHaveBeenCalledWith('profile', 'commit');
   });
+
+  it('rejects when projected owner revalidation fails', async () => {
+    const parentScope = {
+      update: vi.fn(),
+    };
+    const parentValidationOwner = {
+      validateSubtree: vi.fn(async () => {
+        throw new Error('Revalidation failed');
+      }),
+    };
+
+    await expect(
+      applyNonFormObjectFieldCommit({
+        name: 'profile',
+        committedValue: { firstName: '' },
+        parentScope,
+        parentValidationOwner,
+      }),
+    ).rejects.toThrow('Revalidation failed');
+
+    expect(parentScope.update).toHaveBeenCalledWith('profile', { firstName: '' });
+  });
 });

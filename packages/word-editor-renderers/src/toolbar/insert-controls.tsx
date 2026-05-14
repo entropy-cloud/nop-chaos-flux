@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { CanvasEditorBridge, DocChart, DocCode } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
+import { useRendererEnv } from '@nop-chaos/flux-react';
 import {
   Button,
   Dialog,
@@ -31,6 +32,7 @@ interface InsertControlsProps {
 }
 
 export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertControlsProps) {
+  const env = useRendererEnv();
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showChartDialog, setShowChartDialog] = useState(false);
   const [showCodeDialog, setShowCodeDialog] = useState(false);
@@ -39,17 +41,34 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
   const [hyperlinkUrl, setHyperlinkUrl] = useState('');
   const [hyperlinkDisplay, setHyperlinkDisplay] = useState('');
 
+  const notifyInsertFailure = (error: unknown) => {
+    env.notify?.(
+      'warning',
+      error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
+    );
+  };
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const dataUrl = reader.result as string;
-      bridge?.command?.executeImage({
-        value: dataUrl,
-        width: 0,
-        height: 0,
-      });
+      try {
+        const dataUrl = reader.result as string;
+        bridge?.command?.executeImage({
+          value: dataUrl,
+          width: 0,
+          height: 0,
+        });
+      } catch (error) {
+        notifyInsertFailure(error);
+      }
+    };
+    reader.onerror = () => {
+      notifyInsertFailure(reader.error ?? new Error('Image read failed'));
+    };
+    reader.onabort = () => {
+      notifyInsertFailure(new Error('Image read aborted'));
     };
     reader.readAsDataURL(file);
   };

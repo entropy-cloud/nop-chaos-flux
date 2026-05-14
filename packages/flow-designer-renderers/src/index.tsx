@@ -7,14 +7,28 @@ import {
   type RendererDefinition,
   type RendererRegistry,
 } from '@nop-chaos/flux-core';
+import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import type { ActionIntent } from '@nop-chaos/flow-designer-core';
-import {
-  DesignerPageRenderer,
-  DesignerCanvasRenderer,
-  DesignerPaletteRenderer,
-} from './designer-page.js';
-import { DesignerFieldRenderer } from './designer-field.js';
 import { designerHostContract } from './designer-manifest.js';
+import type {
+  DesignerPageSchema,
+  DesignerFieldSchema,
+  DesignerCanvasSchema,
+  DesignerPaletteSchema,
+} from './schemas.js';
+
+const LazyDesignerPageRenderer = createLazyRendererComponent<DesignerPageSchema>(
+  () => import('./designer-page.js').then((m) => m.DesignerPageRenderer),
+);
+const LazyDesignerCanvasRenderer = createLazyRendererComponent<DesignerCanvasSchema>(
+  () => import('./designer-page.js').then((m) => m.DesignerCanvasRenderer),
+);
+const LazyDesignerPaletteRenderer = createLazyRendererComponent<DesignerPaletteSchema>(
+  () => import('./designer-page.js').then((m) => m.DesignerPaletteRenderer),
+);
+const LazyDesignerFieldRenderer = createLazyRendererComponent<DesignerFieldSchema>(
+  () => import('./designer-field.js').then((m) => m.DesignerFieldRenderer),
+);
 
 function compileDesignerConfig(value: unknown, context: FieldCompileContext): unknown {
   if (!isPlainObject(value) && context.sourcePath.endsWith('.config')) {
@@ -110,7 +124,7 @@ function validateDesignerConfigToolbar(context: import('@nop-chaos/flux-core').R
 export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'designer-page',
-    component: DesignerPageRenderer,
+    component: LazyDesignerPageRenderer,
     displayName: 'Designer Page',
     sourcePackage: '@nop-chaos/flow-designer-renderers',
     rendererClass: 'domain-host-renderer',
@@ -178,7 +192,7 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'designer-field',
-    component: DesignerFieldRenderer,
+    component: LazyDesignerFieldRenderer,
     fields: [
       { key: 'label', kind: 'value-or-region', regionKey: 'label' },
       { key: 'name', kind: 'prop' },
@@ -188,12 +202,12 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'designer-canvas',
-    component: DesignerCanvasRenderer,
+    component: LazyDesignerCanvasRenderer,
     fields: [{ key: 'className', kind: 'prop' }],
   },
   {
     type: 'designer-palette',
-    component: DesignerPaletteRenderer,
+    component: LazyDesignerPaletteRenderer,
     fields: [{ key: 'className', kind: 'prop' }],
   },
 ];

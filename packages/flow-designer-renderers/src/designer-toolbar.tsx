@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import { shallowEqual } from '@nop-chaos/flux-core';
+import { reportRuntimeHostIssue, shallowEqual } from '@nop-chaos/flux-core';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
 import { DesignerIcon } from './designer-icon.js';
 import { useCurrentActionScope, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { Badge, Button, Label, Switch, cn } from '@nop-chaos/ui';
+import { notifyCommandFailure } from './designer-context.js';
 
 type ToolbarSnapshot = Pick<
   DesignerSnapshot,
@@ -121,6 +122,7 @@ export function DesignerToolbarContent(props: {
   const actionScope = useCurrentActionScope();
   const runtime = useRendererRuntime();
   const scope = useRenderScope();
+  const env = runtime.env;
 
   const invokeAction = useCallback(
     async (action: string) => {
@@ -135,6 +137,25 @@ export function DesignerToolbarContent(props: {
       });
     },
     [actionScope, runtime, scope],
+  );
+
+  const handleActionFailure = useCallback(
+    (action: string, error: unknown) => {
+      notifyCommandFailure({
+        notify: env.notify,
+        error: error instanceof Error ? error.message : undefined,
+      });
+      reportRuntimeHostIssue({
+        env,
+        error,
+        phase: 'action',
+        details: {
+          reason: 'designer-toolbar-action-failed',
+          action,
+        },
+      });
+    },
+    [env],
   );
 
   const items = useMemo(() => {
@@ -208,7 +229,8 @@ export function DesignerToolbarContent(props: {
               aria-label={item.label ?? 'Back'}
               className="shrink-0"
               onClick={() => {
-                void invokeAction(item.action ?? 'designer:navigate-back');
+                const action = item.action ?? 'designer:navigate-back';
+                void invokeAction(action).catch((error) => handleActionFailure(action, error));
               }}
             >
               <DesignerIcon icon="arrow-left" />

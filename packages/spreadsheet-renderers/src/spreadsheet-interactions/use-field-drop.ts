@@ -5,13 +5,15 @@ export function useFieldDrop(selectedCell: { row: number; col: number } | null) 
   const dropTargetCellRef = useRef<{ row: number; col: number } | null>(null);
 
   const handleFieldDrop = useCallback(
-    (cb: (target: { row: number; col: number }) => void) => {
+    async (cb: (target: { row: number; col: number }) => void | Promise<void>) => {
       const targetCell = dropTargetCellRef.current || dropTargetCell || selectedCell;
-      if (targetCell) {
-        cb(targetCell);
+      if (!targetCell) {
+        return false;
       }
+      await cb(targetCell);
       setDropTargetCell(null);
       dropTargetCellRef.current = null;
+      return true;
     },
     [dropTargetCell, selectedCell],
   );

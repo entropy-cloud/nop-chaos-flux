@@ -33,10 +33,6 @@ import {
 } from './detail-draft-controller.js';
 import { useCurrentValidationScope } from '@nop-chaos/flux-react';
 
-function logDetailViewAsyncError(action: 'open' | 'confirm', error: unknown) {
-  console.warn(`[detail-view] ${action} failed`, error);
-}
-
 export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchema>) {
   const parentForm = useCurrentForm();
   const runtime = useRendererRuntime();
@@ -55,7 +51,15 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     schemaProps.triggerLabel ?? t('flux.common.editItem', { item: labelText ?? t('flux.common.detail') }),
   );
   const validationMessage = t('flux.common.detailDraftValidationError');
+  const openFailureMessage = t('flux.common.saveFailed');
   const effectiveDisabled = Boolean(props.meta.disabled);
+
+  function reportOpenFailure(error: unknown) {
+    runtime.env.notify?.(
+      'warning',
+      error instanceof Error && error.message ? error.message : openFailureMessage,
+    );
+  }
 
   const formProjectedValue = useCurrentFormState(
     (state) => (scopePath ? getIn(state.values, scopePath) : state.values),
@@ -462,7 +466,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
           aria-label={triggerLabel}
           onClick={() => {
             handleOpen().catch((error) => {
-              logDetailViewAsyncError('open', error);
+              reportOpenFailure(error);
             });
           }}
         >
@@ -483,9 +487,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
             confirming={confirming}
             onCancel={handleCancel}
             onConfirm={() => {
-              handleConfirm().catch((error) => {
-                logDetailViewAsyncError('confirm', error);
-              });
+              handleConfirm().catch(() => undefined);
             }}
           />
         }

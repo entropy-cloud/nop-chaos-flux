@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ActionContext } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
@@ -233,6 +233,65 @@ describe('CRUD query and pagination', () => {
         query: {},
         params: { pageNo: 1, limit: 10 },
       });
+    });
+  });
+
+  it('notifies when query submit capability rejects', async () => {
+    cleanup();
+    const notify = vi.fn();
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-query-submit-reject"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'query-submit-reject-crud',
+              source: [{ id: '1', name: 'Alice' }],
+              queryForm: {
+                body: [{ type: 'input-text', name: 'keyword', label: 'Keyword' }],
+              },
+              columns: [{ name: 'name', label: 'Name' }],
+            },
+          ],
+        }}
+        env={{ ...env, notify }}
+        formulaCompiler={formulaCompiler}
+        onComponentRegistryChange={(registry) => {
+          if (!registry) {
+            return;
+          }
+
+          const queryHandle = registry.resolve({ componentId: 'query-submit-reject-crud-query-form' });
+          if (!queryHandle?.capabilities) {
+            return;
+          }
+
+          vi.spyOn(queryHandle.capabilities, 'invoke').mockImplementation((method) => {
+            if (method === 'validate') {
+              return Promise.resolve({ ok: true }) as never;
+            }
+            if (method === 'getValues') {
+              return Promise.reject(new Error('Query submit failed')) as never;
+            }
+            return Promise.resolve({ ok: true }) as never;
+          });
+        }}
+      />,
+    );
+
+    const queryControls = document.querySelector('[data-slot="crud-query-controls"]');
+    expect(queryControls).toBeTruthy();
+
+    fireEvent.click(
+      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }),
+    );
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('warning', 'Query submit failed');
     });
   });
 

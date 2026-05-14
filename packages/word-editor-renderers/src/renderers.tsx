@@ -3,15 +3,20 @@ import {
   type RendererDefinition,
   type RendererRegistry,
 } from '@nop-chaos/flux-core';
-import { WordEditorPage } from './word-editor-page.js';
+import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import { wordEditorHostContract } from './word-editor-manifest.js';
+import type { WordEditorPageSchema } from './types.js';
 export { defineWordEditorPageSchema } from './types.js';
 export type { WordEditorPageSchema, WordEditorPageSchemaInput } from './types.js';
+
+const LazyWordEditorPage = createLazyRendererComponent<WordEditorPageSchema>(
+  () => import('./word-editor-page.js').then((m) => m.WordEditorPage),
+);
 
 export const wordEditorRendererDefinitions: RendererDefinition[] = [
   {
     type: 'word-editor-page',
-    component: WordEditorPage,
+    component: LazyWordEditorPage,
     displayName: 'Word Editor Page',
     sourcePackage: '@nop-chaos/word-editor-renderers',
     rendererClass: 'domain-host-renderer',

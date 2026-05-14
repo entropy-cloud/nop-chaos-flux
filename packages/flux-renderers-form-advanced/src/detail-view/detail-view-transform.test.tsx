@@ -403,6 +403,61 @@ describe('detail-view renderer transform behavior', () => {
     expect((screen.getByLabelText('Status') as HTMLInputElement).value).toBe('published');
   });
 
+  it('reports detail-view open transform failures through env.notify', async () => {
+    cleanup();
+    const notify = vi.fn();
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => {
+            throw new Error('detail open failed');
+          },
+        }),
+      })),
+    };
+    const SchemaRenderer = createPageSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-transform.test.tsx#open-failure"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'form',
+              name: 'testForm',
+              data: { summary: { name: 'Original' } },
+              body: [
+                {
+                  type: 'detail-view',
+                  name: 'summary',
+                  triggerLabel: 'Edit',
+                  'xui:imports': [{ from: 'detail-view-lib', as: 'detailViewLib' }],
+                  transformInAction: { action: 'detailViewLib:toDraft' },
+                  content: [{ type: 'input-text', name: 'name', label: 'Name' }],
+                },
+              ],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, notify, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit')).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit'));
+
+    await waitFor(() =>
+      expect(notify).toHaveBeenCalledWith(
+        'warning',
+        '[flux] transformIn failed: Error: detail open failed',
+      ),
+    );
+    expect(screen.queryByLabelText('Name')).toBeNull();
+  });
+
   it('drops stale confirm completions after a newer detail-view reopen session wins', async () => {
     cleanup();
     const pendingCommits: Array<() => void> = [];

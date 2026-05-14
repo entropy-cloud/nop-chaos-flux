@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import '@nop-chaos/spreadsheet-renderers/canvas-styles.css';
+import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
+import { useRendererEnv } from '@nop-chaos/flux-react';
 import { cellAddress, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 import {
   SheetTabBar,
@@ -29,6 +32,7 @@ export function ReportSpreadsheetCanvas({
   spreadsheetBridge,
   spreadsheetSnapshot,
 }: ReportSpreadsheetCanvasProps) {
+  const env = useRendererEnv();
   const designerBridge = useMemo(
     () => createReportDesignerBridge(spreadsheetBridge, core),
     [spreadsheetBridge, core],
@@ -147,7 +151,9 @@ export function ReportSpreadsheetCanvas({
   const handleFieldDropOnCell = useCallback(() => {
     handleFieldDrop(async (targetCell) => {
       const dragState = core.getSnapshot().fieldDrag;
-      if (!dragState.active || !dragState.payload) return;
+      if (!dragState.active || !dragState.payload) {
+        return;
+      }
       const addr = cellAddress(targetCell.row, targetCell.col);
       await spreadsheetBridge.dispatch({
         type: 'spreadsheet:setCellValue',
@@ -162,8 +168,23 @@ export function ReportSpreadsheetCanvas({
           cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
         },
       });
+    }).catch((error: unknown) => {
+      reportRuntimeHostIssue({
+        env,
+        error,
+        phase: 'action',
+        path: 'report-designer.spreadsheet-canvas',
+        details: {
+          operation: 'report-field-drop',
+          sheetId,
+        },
+      });
+      env.notify?.(
+        'warning',
+        error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
+      );
     });
-  }, [handleFieldDrop, spreadsheetBridge, designerBridge, sheetId, core]);
+  }, [core, designerBridge, env, handleFieldDrop, sheetId, spreadsheetBridge]);
 
   return (
     <div

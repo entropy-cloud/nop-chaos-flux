@@ -134,7 +134,7 @@ export interface SpreadsheetInteractionsReturn {
   dropTargetCell: { row: number; col: number } | null;
   setDropTargetCell: React.Dispatch<React.SetStateAction<{ row: number; col: number } | null>>;
   dropTargetCellRef: React.RefObject<{ row: number; col: number } | null>;
-  handleFieldDrop: (cb: (target: { row: number; col: number }) => void) => void;
+  handleFieldDrop: (cb: (target: { row: number; col: number }) => void | Promise<void>) => Promise<boolean>;
   handleFieldDragOver: (row: number, col: number) => void;
   handleFieldDragLeave: () => void;
   handleCellValueSave: () => Promise<void>;
@@ -208,6 +208,15 @@ export function useSpreadsheetInteractions(
   const handleMouseUp = useCallback(() => {
     selectionMouseUp(resizeState.isResizing, endResize, getSelectedRange);
   }, [selectionMouseUp, resizeState.isResizing, endResize, getSelectedRange]);
+
+  const handleCommandError = useCallback(
+    (error: unknown) => {
+      if (!isAbortLike(error)) {
+        addLog(formatFailureMessage('Spreadsheet command failed', error));
+      }
+    },
+    [addLog],
+  );
 
   useMouseUpBinding(handleMouseUp);
 
@@ -284,6 +293,7 @@ export function useSpreadsheetInteractions(
     handleRedo,
     handleStyleTool,
     handleClear,
+    handleCommandError,
     setShowFindReplace,
     setShowCommentInput,
   );

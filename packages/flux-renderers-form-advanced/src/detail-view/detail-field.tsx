@@ -49,6 +49,14 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     schemaProps.triggerLabel ?? t('flux.common.editItem', { item: fieldLabel }),
   );
   const validationMessage = t('flux.common.detailDraftValidationError');
+  const openFailureMessage = t('flux.common.saveFailed');
+
+  function reportOpenFailure(error: unknown) {
+    runtime.env.notify?.(
+      'warning',
+      error instanceof Error && error.message ? error.message : openFailureMessage,
+    );
+  }
 
   const presentation = useFieldPresentation(name, parentForm, {
     disabled: props.meta.disabled,
@@ -273,6 +281,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
             onClick={() => {
               handleOpen().catch((error) => {
                 logDetailFieldAsyncError('open', error);
+                reportOpenFailure(error);
               });
             }}
           >

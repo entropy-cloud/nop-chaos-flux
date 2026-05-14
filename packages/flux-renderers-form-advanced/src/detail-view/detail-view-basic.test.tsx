@@ -290,4 +290,5 @@ describe('detail-view renderer basic behavior', () => {
 
     await waitFor(() => expect(screen.queryByText('Edit Settings')).toBeNull());
   });
+
 });

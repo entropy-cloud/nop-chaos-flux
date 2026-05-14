@@ -5,6 +5,7 @@ import {
   hasRendererSlotContent,
   useCurrentComponentRegistry,
   useRenderScope,
+  useRendererEnv,
   useSchemaProps,
 } from '@nop-chaos/flux-react';
 import { createReadonlyScopeBinding } from '@nop-chaos/flux-react/unstable';
@@ -49,6 +50,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   );
   const scope = useRenderScope();
   const componentRegistry = useCurrentComponentRegistry();
+  const env = useRendererEnv();
 
   const ownerPaths = useMemo(
     () => createCrudOwnerPaths({ id: props.id, cid: props.meta.cid, schema: normalizedSchema }),
@@ -422,6 +424,15 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     [paginationStatePath, scope],
   );
 
+  const handleQuerySubmitWithFeedback = useCallback(() => {
+    void handleQuerySubmit().catch((error) => {
+      env.notify?.(
+        'warning',
+        error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
+      );
+    });
+  }, [env, handleQuerySubmit]);
+
   return (
     <div
       className={cn('nop-crud', props.meta.className)}
@@ -434,7 +445,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
             props.helpers.render(queryFormSchema, { pathSuffix: 'queryForm', scope: crudScope }),
           )}
           <div className="mt-2 flex gap-2" data-slot="crud-query-controls">
-            <Button variant="outline" size="sm" onClick={() => void handleQuerySubmit()}>
+            <Button variant="outline" size="sm" onClick={handleQuerySubmitWithFeedback}>
               {t('flux.common.search')}
             </Button>
             <Button variant="outline" size="sm" onClick={handleQueryReset}>
