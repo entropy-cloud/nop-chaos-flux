@@ -6,11 +6,7 @@ import { createDefaultEnv, createSchemaRenderer } from '@nop-chaos/flux-react';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form/definitions';
-import { setI18nGetter } from '@nop-chaos/ui';
-import { t as fluxI18nT } from '@nop-chaos/flux-i18n';
 import './style.css';
-
-setI18nGetter(fluxI18nT);
 
 import type {
   FluxRendererEnv,

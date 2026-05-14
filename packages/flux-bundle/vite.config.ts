@@ -7,6 +7,9 @@ const hostOwnedExternal = [
   /^react-dom(\/.*)?$/,
   /^zustand(\/.*)?$/,
   /^lucide-react(\/.*)?$/,
+  /^recharts(\/.*)?$/,
+  /^i18next(\/.*)?$/,
+  /^react-i18next(\/.*)?$/,
   /^@nop-chaos\/ui(\/.*)?$/,
 ];
 

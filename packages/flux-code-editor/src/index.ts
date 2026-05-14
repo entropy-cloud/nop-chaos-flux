@@ -1,9 +1,15 @@
 import type { RendererRegistry } from '@nop-chaos/flux-core';
+import { createLazyRendererComponent } from '@nop-chaos/flux-react';
+import type { CodeEditorSchema } from './types.js';
 import {
   CodeEditorRenderer,
-  codeEditorRendererDefinition,
+  codeEditorRendererDefinition as _codeEditorRendererDefinition,
   codeEditorFieldRules,
 } from './code-editor-renderer.js';
+
+const LazyCodeEditorRenderer = createLazyRendererComponent<CodeEditorSchema>(
+  () => import('./code-editor-renderer.js').then((m) => m.CodeEditorRenderer),
+);
 
 export type {
   CodeEditorSchema,
@@ -51,7 +57,11 @@ export {
 export { useCodeMirror } from './use-code-mirror.js';
 export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror.js';
 
-export { CodeEditorRenderer, codeEditorRendererDefinition, codeEditorFieldRules };
+export { CodeEditorRenderer, codeEditorFieldRules };
+export const codeEditorRendererDefinition = {
+  ..._codeEditorRendererDefinition,
+  component: LazyCodeEditorRenderer,
+};
 export const codeEditorRendererDefinitions = [codeEditorRendererDefinition] as const;
 
 export function registerCodeEditorRenderers(registry: RendererRegistry) {
