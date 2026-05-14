@@ -37,6 +37,8 @@
     "check:audit-fieldframe-bypasses": "node scripts/audit/find-fieldframe-bypasses.mjs",
     "check:audit-test-global-leaks": "node scripts/audit/find-test-global-leaks.mjs",
     "check:audit-missing-renderer-markers": "node scripts/audit/find-missing-renderer-markers.mjs",
+    "check:audit-performance-suspects": "node scripts/audit/find-performance-suspects.mjs",
+    "check:audit-styling-suspects": "node scripts/audit/find-styling-suspects.mjs",
     "check:duplicates": "node scripts/check-duplicates.mjs",
     "check:duplicates:detail": "jscpd packages/ --config .jscpd.json",
     "lint": "node scripts/clean-src-artifacts.mjs && node scripts/verify-no-src-artifacts.mjs && node scripts/check-react19-legacy-apis.mjs && node scripts/check-active-doc-code-anchors.mjs && node scripts/check-package-css-exports.mjs && node scripts/check-renderer-definition-fields-only.mjs && node scripts/check-finite-prop-contracts.mjs && node scripts/check-i18n-keys.mjs && turbo run lint",

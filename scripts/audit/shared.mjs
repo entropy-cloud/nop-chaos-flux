@@ -7,7 +7,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export const rootDir = path.join(__dirname, '..', '..');
 export const scanRoots = ['apps', 'packages', 'tests'];
-export const scanExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
+export const scanExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.css']);
 export const ignoreDirectoryNames = new Set([
   '.git',
   '.turbo',
@@ -97,6 +97,134 @@ export function getLineStartIndices(content) {
     }
   }
   return starts;
+}
+
+function scanBalanced(content, startIndex, handlers) {
+  let inString = false;
+  let stringQuote = '';
+  let inLineComment = false;
+  let inBlockComment = false;
+  let parenDepth = 0;
+  let braceDepth = 0;
+  let bracketDepth = 0;
+
+  for (let index = startIndex; index < content.length; index += 1) {
+    const char = content[index];
+    const nextChar = content[index + 1] ?? '';
+
+    if (inLineComment) {
+      if (char === '\n') {
+        inLineComment = false;
+      }
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (char === '*' && nextChar === '/') {
+        inBlockComment = false;
+        index += 1;
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (char === '\\') {
+        index += 1;
+        continue;
+      }
+      if (char === stringQuote) {
+        inString = false;
+        stringQuote = '';
+      }
+      continue;
+    }
+
+    if (char === '/' && nextChar === '/') {
+      inLineComment = true;
+      index += 1;
+      continue;
+    }
+
+    if (char === '/' && nextChar === '*') {
+      inBlockComment = true;
+      index += 1;
+      continue;
+    }
+
+    if (char === "'" || char === '"' || char === '`') {
+      inString = true;
+      stringQuote = char;
+      continue;
+    }
+
+    if (char === '(') parenDepth += 1;
+    if (char === ')') parenDepth = Math.max(0, parenDepth - 1);
+    if (char === '{') braceDepth += 1;
+    if (char === '}') braceDepth = Math.max(0, braceDepth - 1);
+    if (char === '[') bracketDepth += 1;
+    if (char === ']') bracketDepth = Math.max(0, bracketDepth - 1);
+
+    const result = handlers.onToken?.({ char, index, parenDepth, braceDepth, bracketDepth });
+    if (result !== undefined) {
+      return result;
+    }
+  }
+
+  return handlers.fallback;
+}
+
+export function findMatchingParen(content, openIndex) {
+  let depth = 0;
+  return scanBalanced(content, openIndex, {
+    fallback: -1,
+    onToken: ({ char, index }) => {
+      if (char === '(') depth += 1;
+      if (char === ')') {
+        depth -= 1;
+        if (depth === 0) return index;
+      }
+      return undefined;
+    },
+  });
+}
+
+export function findMatchingBrace(content, openIndex) {
+  let depth = 0;
+  return scanBalanced(content, openIndex, {
+    fallback: -1,
+    onToken: ({ char, index }) => {
+      if (char === '{') depth += 1;
+      if (char === '}') {
+        depth -= 1;
+        if (depth === 0) return index;
+      }
+      return undefined;
+    },
+  });
+}
+
+export function findStatementEnd(content, startIndex) {
+  return scanBalanced(content, startIndex, {
+    fallback: content.length,
+    onToken: ({ char, index, parenDepth, braceDepth, bracketDepth }) => {
+      if (char === ';' && parenDepth === 0 && braceDepth === 0 && bracketDepth === 0) {
+        return index;
+      }
+      return undefined;
+    },
+  });
+}
+
+export function hasTopLevelComma(text) {
+  return scanBalanced(text, 0, {
+    fallback: false,
+    onToken: ({ char, parenDepth, braceDepth, bracketDepth }) => {
+      if (char === ',' && parenDepth === 0 && braceDepth === 0 && bracketDepth === 0) {
+        return true;
+      }
+      return undefined;
+    },
+  });
 }
 
 export function scanTopLevelLets({ rule, relativePath, content }) {
