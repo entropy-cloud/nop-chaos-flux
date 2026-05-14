@@ -85,4 +85,35 @@ describe('createSourceObserver', () => {
 
     observer.dispose();
   });
+
+  it('publishes transient error state when post-settlement processing throws', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler,
+    });
+    const page = runtime.createPageRuntime({});
+    const observer = createSourceObserver(runtime);
+    const listener = vi.fn(() => {
+      if (listener.mock.calls.length === 2) {
+        throw new Error('listener failed');
+      }
+    });
+
+    observer.subscribe(listener);
+    observer.run({
+      scope: page.scope,
+      entries: [{ key: 'value', stateKey: 'sourceState', source: { formula: '${1 + 1}' } as never }],
+    });
+
+    await vi.waitFor(() => {
+      expect(observer.getSnapshot().value.sourceState).toMatchObject({
+        loading: false,
+        status: 'error',
+      });
+      expect((observer.getSnapshot().value.sourceState as { error?: unknown }).error).toBeInstanceOf(Error);
+    });
+
+    observer.dispose();
+  });
 });

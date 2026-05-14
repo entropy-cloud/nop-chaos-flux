@@ -1,6 +1,8 @@
 export { createDefaultEnv, createDefaultRegistry } from './defaults.js';
 export { createSchemaRenderer } from './schema-renderer.js';
 export { createAutoRendererComponent, ensureRendererComponent } from './auto-renderer.js';
+export { createLazyRendererComponent } from './lazy-renderer-component.js';
+export type { LazyRendererOptions } from './lazy-renderer-component.js';
 export type {
   RenderRegionHandle,
   RendererDefinition,

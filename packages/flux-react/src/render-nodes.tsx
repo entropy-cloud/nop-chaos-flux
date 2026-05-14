@@ -275,6 +275,8 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const [fragmentScopeVersion, setFragmentScopeVersion] = useState(0);
   const [committedFragmentScopeVersion, setCommittedFragmentScopeVersion] = useState(0);
   const pendingFragmentScopeVersionRef = useRef<number | undefined>(undefined);
+  const fragmentScopeVersionRef = useRef(0);
+  const committedFragmentScopeVersionRef = useRef(0);
   const cachedFragmentScope = fragmentScopeCache.get(fragmentScopeCacheKey);
   const fragmentScopeEntry = matchesFragmentScopeEntry(cachedFragmentScope, fragmentScopeIdentity)
     ? cachedFragmentScope
@@ -285,6 +287,14 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const hasCommittedFragmentScope =
     !shouldUseFragmentScope ||
     (fragmentScope !== undefined && effectiveCommittedVersion === activeFragmentScopeVersion);
+
+  useEffect(() => {
+    fragmentScopeVersionRef.current = fragmentScopeVersion;
+  }, [fragmentScopeVersion]);
+
+  useEffect(() => {
+    committedFragmentScopeVersionRef.current = committedFragmentScopeVersion;
+  }, [committedFragmentScopeVersion]);
 
   useLayoutEffect(() => {
     if (!shouldUseFragmentScope || !fragmentBindings) {
@@ -330,49 +340,49 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     shouldUseFragmentScope,
   ]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!shouldUseFragmentScope || !fragmentBindings) {
       pendingFragmentScopeVersionRef.current = undefined;
       return;
     }
 
     if (!fragmentScope) {
-      const nextVersion = fragmentScopeVersion + 1;
+      const nextVersion = fragmentScopeVersionRef.current + 1;
       if (pendingFragmentScopeVersionRef.current !== nextVersion) {
         pendingFragmentScopeVersionRef.current = nextVersion;
-        queueMicrotask(() => {
-          setFragmentScopeVersion(nextVersion);
-          setCommittedFragmentScopeVersion(0);
-        });
+        fragmentScopeVersionRef.current = nextVersion;
+        committedFragmentScopeVersionRef.current = 0;
+        setFragmentScopeVersion(nextVersion);
+        setCommittedFragmentScopeVersion(0);
       }
       return;
     }
 
     const cachedEntry = fragmentScopeCache.get(fragmentScopeCacheKey);
     if (!matchesFragmentScopeEntry(cachedEntry, fragmentScopeIdentity)) {
-      const nextVersion = fragmentScopeVersion + 1;
+      const nextVersion = fragmentScopeVersionRef.current + 1;
       pendingFragmentScopeVersionRef.current = nextVersion;
-      queueMicrotask(() => {
-        setFragmentScopeVersion(nextVersion);
-        setCommittedFragmentScopeVersion(0);
-      });
+      fragmentScopeVersionRef.current = nextVersion;
+      committedFragmentScopeVersionRef.current = 0;
+      setFragmentScopeVersion(nextVersion);
+      setCommittedFragmentScopeVersion(0);
       return;
     }
 
     const pendingVersion = pendingFragmentScopeVersionRef.current;
-    if (pendingVersion !== undefined && committedFragmentScopeVersion !== pendingVersion) {
-      queueMicrotask(() => {
-        setCommittedFragmentScopeVersion(pendingVersion);
-      });
+    if (
+      pendingVersion !== undefined &&
+      committedFragmentScopeVersionRef.current !== pendingVersion
+    ) {
+      committedFragmentScopeVersionRef.current = pendingVersion;
+      setCommittedFragmentScopeVersion(pendingVersion);
     }
   }, [
-    committedFragmentScopeVersion,
     fragmentBindings,
     fragmentScopeCache,
     fragmentScopeCacheKey,
     fragmentScopeIdentity,
     fragmentScope,
-    fragmentScopeVersion,
     shouldUseFragmentScope,
   ]);
 

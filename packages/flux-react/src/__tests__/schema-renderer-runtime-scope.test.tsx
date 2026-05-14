@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '../hooks.js';
@@ -157,6 +157,51 @@ describe('createSchemaRenderer scope behavior', () => {
 
     await waitFor(() => expect(screen.getByTestId('own-child-value').textContent).toBe('child-b'));
     expect(screen.getByTestId('own-value').textContent).toBe('');
+  });
+
+  it('switches fragment scope commits without queueMicrotask scheduling in RenderNodes', async () => {
+    const originalQueueMicrotask = globalThis.queueMicrotask;
+    const queueMicrotaskSpy = vi.fn((callback: VoidFunction) => originalQueueMicrotask(callback));
+    globalThis.queueMicrotask = queueMicrotaskSpy;
+
+    try {
+      const pageStore = createRendererRuntime({
+        registry: createRendererRegistry([]),
+        env,
+        expressionCompiler: createExpressionCompiler(sharedFormulaCompiler),
+      }).createPageRuntime({ shared: 'parent-a', child: 'parent-child' }).store;
+      const SchemaRenderer = createSchemaRenderer([
+        fragmentScopeProbeHostRenderer,
+        scopeLayerProbeRenderer,
+        ownScopeValueProbeRenderer,
+      ]);
+
+      render(
+        <SchemaRenderer
+          schemaUrl="test://schema.json"
+          schema={
+            {
+              type: 'fragment-scope-probe-host',
+              body: [{ type: 'scope-layer-probe' }, { type: 'own-scope-value-probe' }],
+            } as any
+          }
+          data={{ shared: 'parent-a', child: 'parent-child' }}
+          env={env}
+          formulaCompiler={sharedFormulaCompiler}
+          pageStore={pageStore}
+        />,
+      );
+
+      await waitFor(() => expect(screen.getByTestId('own-child-value').textContent).toBe('child-a'));
+      queueMicrotaskSpy.mockClear();
+
+      fireEvent.click(screen.getByText('Refresh fragment 0'));
+
+      await waitFor(() => expect(screen.getByTestId('own-child-value').textContent).toBe('child-b'));
+      expect(queueMicrotaskSpy).not.toHaveBeenCalled();
+    } finally {
+      globalThis.queueMicrotask = originalQueueMicrotask;
+    }
   });
 
   it('updates page scope data without recreating the form runtime', async () => {

@@ -9,6 +9,13 @@ import type {
 } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 
+function isAbortLike(error: unknown): boolean {
+  return (
+    (error instanceof Error && error.name === 'AbortError') ||
+    ((error as { name?: string } | null | undefined)?.name === 'AbortError')
+  );
+}
+
 function sameInputs(left: readonly unknown[], right: readonly unknown[]) {
   return left.length === right.length && left.every((value, index) => Object.is(value, right[index]));
 }
@@ -80,37 +87,52 @@ export function createSourceObserver(runtime: RendererRuntime): SourceObserver {
         });
         return [entry, result] as const;
       }),
-    ).then((settled) => {
-      if (controller.signal.aborted) {
-        return;
-      }
-
-      const valuePatch: Record<string, unknown> = {};
-      const transientPatch: Record<string, SourceTransientState> = {};
-
-      for (const result of settled) {
-        if (result.status === 'fulfilled') {
-          const [entry, actionResult] = result.value;
-          valuePatch[entry.key] = actionResult.ok ? actionResult.data : undefined;
-          if (entry.stateKey) {
-            transientPatch[entry.stateKey] = buildResultState(actionResult);
-          }
-          continue;
+    )
+      .then((settled) => {
+        if (controller.signal.aborted) {
+          return;
         }
 
-        const error = result.reason;
-        for (const entry of input.entries) {
-          if (!(entry.key in valuePatch)) {
-            valuePatch[entry.key] = undefined;
+        const valuePatch: Record<string, unknown> = {};
+        const transientPatch: Record<string, SourceTransientState> = {};
+
+        for (const result of settled) {
+          if (result.status === 'fulfilled') {
+            const [entry, actionResult] = result.value;
+            valuePatch[entry.key] = actionResult.ok ? actionResult.data : undefined;
+            if (entry.stateKey) {
+              transientPatch[entry.stateKey] = buildResultState(actionResult);
+            }
+            continue;
           }
-          if (entry.stateKey && !(entry.stateKey in transientPatch)) {
-            transientPatch[entry.stateKey] = { loading: false, error, status: 'error' };
+
+          const error = result.reason;
+          for (const entry of input.entries) {
+            if (!(entry.key in valuePatch)) {
+              valuePatch[entry.key] = undefined;
+            }
+            if (entry.stateKey && !(entry.stateKey in transientPatch)) {
+              transientPatch[entry.stateKey] = { loading: false, error, status: 'error' };
+            }
           }
         }
-      }
 
-      updateSnapshot({ ...baseValue, ...valuePatch, ...transientPatch }, nextInputs);
-    });
+        updateSnapshot({ ...baseValue, ...valuePatch, ...transientPatch }, nextInputs);
+      })
+      .catch((error) => {
+        if (controller.signal.aborted || isAbortLike(error)) {
+          return;
+        }
+
+        const transientPatch = Object.fromEntries(
+          input.entries.flatMap((entry) =>
+            entry.stateKey
+              ? [[entry.stateKey, { loading: false, error, status: 'error' } satisfies SourceTransientState]]
+              : [],
+          ),
+        );
+        updateSnapshot({ ...baseValue, ...transientPatch }, nextInputs);
+      });
   }
 
   return {
