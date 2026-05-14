@@ -28,7 +28,7 @@ import {
   Textarea,
 } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
-import { formLabelFieldRule, useFormFieldController } from '../field-utils.js';
+import { formFieldRules, useFormFieldController } from '../field-utils.js';
 import type {
   CheckboxGroupSchema,
   CheckboxSchema,
@@ -50,9 +50,9 @@ export function createInputRenderer(inputType: string) {
     const name = String(props.props.name ?? '');
     const { value, handlers, presentation } = useFormFieldController(name, {
       adapter: stringAdapter(),
-      disabled: props.meta.disabled,
-      required: Boolean(props.props.required),
-      readOnly: Boolean(props.props.readOnly),
+      disabled: props.props.disabled,
+      required: props.props.required,
+      readOnly: props.props.readOnly,
     });
     const inputValue = value as string;
 
@@ -150,9 +150,9 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter: stringValueAdapter,
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
   });
   const options = Array.isArray(props.props.options) ? props.props.options : [];
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -205,9 +205,9 @@ function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter: stringValueAdapter,
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
   });
   const textareaValue = value as string;
 
@@ -234,9 +234,9 @@ function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter: booleanValueAdapter,
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
   });
   const option = props.props.option as CheckboxSchema['option'] | undefined;
   const optionLabel = option?.label;
@@ -263,9 +263,9 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter: booleanValueAdapter,
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
   });
   const option = props.props.option as SwitchSchema['option'] | undefined;
   const checked = value as boolean;
@@ -293,9 +293,9 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter: stringValueAdapter,
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
   });
   const options = Array.isArray(props.props.options) ? props.props.options : [];
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -347,9 +347,9 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter: checkboxGroupAdapter,
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
   });
   const selectedValues = value as unknown[];
   const options = Array.isArray(props.props.options) ? props.props.options : [];
@@ -439,9 +439,9 @@ function InputNumberRenderer(props: RendererComponentProps<InputNumberSchema>) {
 
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter: numericAdapter,
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
   });
 
   const numericValue = value as number | undefined;
@@ -521,7 +521,7 @@ function InputNumberRenderer(props: RendererComponentProps<InputNumberSchema>) {
           }}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          readOnly={Boolean(props.props.readOnly)}
+          readOnly={props.props.readOnly}
         />
         {suffix ? (
           <span data-slot="suffix" className="pointer-events-none absolute right-3 text-sm text-muted-foreground">
@@ -567,7 +567,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-text',
     component: createInputRenderer('text'),
-    fields: [formLabelFieldRule],
+    fields: formFieldRules,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     wrap: true,
@@ -575,7 +575,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-email',
     component: createInputRenderer('email'),
-    fields: [formLabelFieldRule],
+    fields: formFieldRules,
     validation: createFieldValidation(undefined, true),
     schemaValidator: validateInputFieldSchema,
     wrap: true,
@@ -583,7 +583,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-password',
     component: createInputRenderer('password'),
-    fields: [formLabelFieldRule],
+    fields: formFieldRules,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     wrap: true,
@@ -591,7 +591,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'select',
     fields: [
-      formLabelFieldRule,
+      ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
     ],
     validation: createFieldValidation(),
@@ -601,7 +601,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'textarea',
-    fields: [formLabelFieldRule],
+    fields: formFieldRules,
     component: TextareaRenderer,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
@@ -609,7 +609,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'checkbox',
-    fields: [formLabelFieldRule],
+    fields: formFieldRules,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     wrap: true,
@@ -617,7 +617,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'switch',
-    fields: [formLabelFieldRule],
+    fields: formFieldRules,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     wrap: true,
@@ -626,7 +626,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'radio-group',
     fields: [
-      formLabelFieldRule,
+      ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
     ],
     validation: createFieldValidation(),
@@ -637,7 +637,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'checkbox-group',
     fields: [
-      formLabelFieldRule,
+      ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
     ],
     validation: createFieldValidation(),
@@ -647,7 +647,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'input-number',
-    fields: [formLabelFieldRule],
+    fields: formFieldRules,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     wrap: true,

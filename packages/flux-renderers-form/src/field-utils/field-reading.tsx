@@ -13,6 +13,13 @@ export const formLabelFieldRule: SchemaFieldRule = {
   regionKey: 'label',
 };
 
+export const formBooleanFieldRules: SchemaFieldRule[] = [
+  { key: 'readOnly', kind: 'prop', valueType: 'boolean' },
+  { key: 'required', kind: 'prop', valueType: 'boolean' },
+];
+
+export const formFieldRules: SchemaFieldRule[] = [formLabelFieldRule, ...formBooleanFieldRules];
+
 export function resolveFieldLabelContent(
   props: Pick<RendererComponentProps, 'props' | 'meta' | 'regions'>,
 ) {

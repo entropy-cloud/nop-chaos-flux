@@ -1,45 +1,45 @@
-[data-slot='select-wrapper'] {
+.nop-form [data-slot='select-wrapper'] {
   display: grid;
   gap: 0.5rem;
 }
 
-[data-slot='select-wrapper'] [data-slot='select-trigger'] {
+.nop-form [data-slot='select-wrapper'] [data-slot='select-trigger'] {
   width: 100%;
 }
 
-[data-slot='select-wrapper'] [data-slot='select-error'] {
+.nop-form [data-slot='select-wrapper'] [data-slot='select-error'] {
   font-size: 0.875rem;
   color: hsl(var(--destructive));
 }
 
-[data-slot='checkbox-wrapper'] {
+.nop-form [data-slot='checkbox-wrapper'] {
   display: inline-flex;
   align-items: center;
   gap: 0.625rem;
 }
 
-[data-slot='checkbox-wrapper'] [data-slot='checkbox-label'] {
+.nop-form [data-slot='checkbox-wrapper'] [data-slot='checkbox-label'] {
   font-weight: 500;
 }
 
-[data-slot='switch-wrapper'] {
+.nop-form [data-slot='switch-wrapper'] {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-[data-slot='switch-wrapper'] [data-slot='switch-label'] {
+.nop-form [data-slot='switch-wrapper'] [data-slot='switch-label'] {
   font-weight: 600;
 }
 
-[data-slot='radio-group-wrapper'],
-[data-slot='checkbox-group-wrapper'] {
+.nop-form [data-slot='radio-group-wrapper'],
+.nop-form [data-slot='checkbox-group-wrapper'] {
   display: grid;
   gap: 0.625rem;
 }
 
-[data-slot='radio-group-wrapper'] [data-slot='radio-group-loading'],
-[data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-loading'] {
+.nop-form [data-slot='radio-group-wrapper'] [data-slot='radio-group-loading'],
+.nop-form [data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-loading'] {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -47,25 +47,25 @@
   color: hsl(var(--muted-foreground));
 }
 
-[data-slot='radio-group-wrapper'] [data-slot='radio-group-options'] {
+.nop-form [data-slot='radio-group-wrapper'] [data-slot='radio-group-options'] {
   display: grid;
   gap: 0.625rem;
 }
 
-[data-slot='radio-group-wrapper'] [data-slot='radio-group-item'],
-[data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-item'] {
+.nop-form [data-slot='radio-group-wrapper'] [data-slot='radio-group-item'],
+.nop-form [data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-item'] {
   display: inline-flex;
   align-items: center;
   gap: 0.625rem;
 }
 
-[data-slot='radio-group-wrapper'] [data-slot='radio-group-item-label'],
-[data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-item-label'] {
+.nop-form [data-slot='radio-group-wrapper'] [data-slot='radio-group-item-label'],
+.nop-form [data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-item-label'] {
   font-weight: 500;
 }
 
-[data-slot='radio-group-wrapper'] [data-slot='radio-group-error'],
-[data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-error'] {
+.nop-form [data-slot='radio-group-wrapper'] [data-slot='radio-group-error'],
+.nop-form [data-slot='checkbox-group-wrapper'] [data-slot='checkbox-group-error'] {
   font-size: 0.875rem;
   color: hsl(var(--destructive));
 }

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   getIn,
+  reportRuntimeHostIssue,
   type AdapterContext,
   type FormRuntime,
   type ScopeRef,
@@ -14,6 +15,7 @@ import {
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
+import { RuntimeContext } from '@nop-chaos/flux-react/unstable';
 import { shouldValidateOn, shouldValidateOnOwner } from './field-validation.js';
 import { useFieldPresentation } from './field-presentation.js';
 
@@ -65,8 +67,9 @@ export function createFieldHandlers(args: {
   currentValidationScope: ValidationScopeRuntime | undefined;
   setValue: (value: unknown) => void | Promise<void>;
   readOnly?: boolean;
+  onError?: (error: unknown, operation: string) => void;
 }) {
-  const { name, currentForm, currentValidationScope, setValue, readOnly } = args;
+  const { name, currentForm, currentValidationScope, setValue, readOnly, onError } = args;
   const validationOwnerWithFieldState = currentValidationScope as Partial<FormRuntime> | undefined;
 
   return {
@@ -92,6 +95,7 @@ export function createFieldHandlers(args: {
           }
         })().catch((error: unknown) => {
           console.warn('[field-utils] adapter.out failed in onChange', error);
+          onError?.(error, 'change');
         });
 
         return;
@@ -106,6 +110,7 @@ export function createFieldHandlers(args: {
           }
         })().catch((error: unknown) => {
           console.warn('[field-utils] adapter.out failed in onChange', error);
+          onError?.(error, 'change');
         });
 
         return;
@@ -115,6 +120,7 @@ export function createFieldHandlers(args: {
       if (isPromiseLike(result)) {
         void result.catch((error: unknown) => {
           console.warn('[field-utils] adapter.out failed in onChange', error);
+          onError?.(error, 'change');
         });
       } else {
         void result;
@@ -158,7 +164,31 @@ export function useFieldHandlers(args: {
 }) {
   const { name, currentForm, scope, toFormValue = identityValue, adapter, adapterContext } = args;
   const currentValidationScope = useCurrentValidationScope();
+  const runtime = useContext(RuntimeContext);
   const generationRef = useRef(0);
+
+  const handleAsyncFieldError = useMemo(
+    () => (error: unknown, operation: string) => {
+        if (!runtime) {
+          return;
+        }
+
+        reportRuntimeHostIssue({
+          env: runtime.env,
+          level: 'warning',
+          message:
+            error instanceof Error && error.message ? error.message : 'Field update failed',
+          error,
+          phase: 'action',
+          path: name,
+          details: {
+            operation: `field-${operation}`,
+            fieldName: name,
+          },
+        });
+      },
+    [name, runtime],
+  );
 
   return useMemo(
     () =>
@@ -168,6 +198,7 @@ export function useFieldHandlers(args: {
         currentForm,
         currentValidationScope,
         readOnly: adapterContext?.readOnly,
+        onError: handleAsyncFieldError,
         setValue(nextValue) {
           const convertedValue = adapter
             ? adapter.out(nextValue, adapterContext ?? { name, readOnly: false })
@@ -196,7 +227,16 @@ export function useFieldHandlers(args: {
         },
       }),
     /* eslint-enable react-hooks/refs */
-    [name, currentForm, currentValidationScope, scope, toFormValue, adapter, adapterContext],
+    [
+      name,
+      currentForm,
+      currentValidationScope,
+      scope,
+      toFormValue,
+      adapter,
+      adapterContext,
+      handleAsyncFieldError,
+    ],
   );
 }
 
@@ -275,7 +315,7 @@ export function useFormFieldController(
   const adapterContext = useMemo(
     () => ({
       name,
-      readOnly: Boolean(options?.readOnly),
+      readOnly: options?.readOnly ?? false,
     }),
     [name, options?.readOnly],
   );

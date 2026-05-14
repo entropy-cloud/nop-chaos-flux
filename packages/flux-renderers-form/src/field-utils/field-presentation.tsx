@@ -58,7 +58,7 @@ export function useFieldPresentation(
   );
   const ownerEffectiveRequired = useCurrentValidationValues(
     (values) =>
-      Boolean(options?.required) ||
+      (options?.required ?? false) ||
       isFieldEffectivelyRequired(currentValidationScope?.validation, name, values as Record<string, any>),
     Object.is,
     { enabled: !currentForm, path: name },
@@ -67,7 +67,7 @@ export function useFieldPresentation(
     ? currentPresentation
     : {
         ...fieldState,
-        effectiveDisabled: Boolean(options?.disabled),
+        effectiveDisabled: options?.disabled ?? false,
         effectiveRequired: ownerEffectiveRequired,
         showError: Boolean(
           fieldState.error &&
@@ -80,7 +80,7 @@ export function useFieldPresentation(
           }),
         ),
         interactive: !options?.disabled && !options?.readOnly,
-        readOnly: Boolean(options?.readOnly),
+        readOnly: options?.readOnly ?? false,
       };
 
   return {
