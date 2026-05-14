@@ -1,7 +1,7 @@
 # 240 jsdom → happy-dom 升级计划
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-10
+> Plan Status: completed
+> Last Reviewed: 2026-05-14
 > Source: `scripts/scan-jsdom-usage.mjs` 扫描结果，`dom-perf-test/benchmark.mjs` 性能基准
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`
 
@@ -11,14 +11,18 @@
 
 ## Current Baseline
 
-`scripts/scan-jsdom-usage.mjs` 在 `nop-chaos-flux` 根目录扫描结果（已排除 `node_modules`、`dist`、`.stryker-tmp` 等）：
+- 2026-05-11 已完成 jsdom → happy-dom 迁移；`docs/logs/2026/05-10.md` 记录了全量迁移结果、happy-dom compatibility polyfill、以及分包验证通过证据。
+- 2026-05-14 live re-audit 再次确认当前仓库没有剩余 jsdom baseline drift：`pnpm exec node scripts/scan-jsdom-usage.mjs` 仅命中扫描脚本自身的字符串检测逻辑，不存在真实 runtime/test config 残留。
+- `pnpm exec node scripts/validate-happy-dom-migration.mjs` 当前输出 `ALL CHECKS PASSED`，`vitest.shared.ts` 与 package-level `vitest.config.ts` 均已切到 `happy-dom`。
 
-| 类别                                          | 数量 | 位置                                                             |
-| --------------------------------------------- | ---- | ---------------------------------------------------------------- |
-| `package.json` 直接依赖 `jsdom`               | 2    | 根 `package.json`、`packages/word-editor-renderers/package.json` |
-| `vitest.config.*` 使用 `environment: 'jsdom'` | 10   | apps/playground + 9 个 packages                                  |
-| `vitest.shared.ts` 引用 `'jsdom'` / `isJSDOM` | 1    | 根 `vitest.shared.ts`                                            |
-| 测试文件 `@vitest-environment jsdom` pragma   | 47   | 各 package 下的测试文件                                          |
+`scripts/scan-jsdom-usage.mjs` 在 `nop-chaos-flux` 根目录的当前 live 扫描结果（已排除 `node_modules`、`dist`、`.stryker-tmp` 等）：
+
+| 类别                                          | 数量 | 位置 |
+| --------------------------------------------- | ---- | ---- |
+| `package.json` 直接依赖 `jsdom`               | 0    | 无   |
+| `vitest.config.*` 使用 `environment: 'jsdom'` | 0    | 无   |
+| `vitest.shared.ts` 引用 `'jsdom'` / `isJSDOM` | 0    | 无   |
+| 测试文件 `@vitest-environment jsdom` pragma   | 0    | 无   |
 
 ### 性能基准数据
 
@@ -75,87 +79,89 @@
 
 ### Phase 1 - 运行扫描脚本确认 baseline
 
-Status: planned
+Status: completed
 Targets: `scripts/scan-jsdom-usage.mjs`
 
 - Item Types: `Proof`
 
-- [ ] 执行 `node scripts/scan-jsdom-usage.mjs` 确认当前基线
-- [ ] 确认输出：2 package.json + 11 vitest configs + 47 test pragmas
+- [x] 执行 `node scripts/scan-jsdom-usage.mjs` 确认当前基线
+- [x] 确认当前输出为 live-closed baseline：0 package.json + 0 vitest configs/shared + 0 test pragmas
 
 Exit Criteria:
 
-- [ ] 扫描脚本输出与 Current Baseline 一致
-- [ ] No owner-doc update required
+- [x] 扫描脚本输出与 Current Baseline 一致
+- [x] No owner-doc update required
 
 ---
 
 ### Phase 2 - 使用迁移脚本自动替换
 
-Status: planned
+Status: completed
 Targets: `scripts/migrate-jsdom-to-happy-dom.mjs`, 所有 vitest 配置、测试文件、package.json
 
 - Item Types: `Fix`
 
-- [ ] 执行 `node scripts/migrate-jsdom-to-happy-dom.mjs --dry-run` 预览变更
-- [ ] 确认 dry-run 输出覆盖所有扫描项
-- [ ] 执行 `node scripts/migrate-jsdom-to-happy-dom.mjs` 实际替换
-- [ ] 手动检查 `vitest.shared.ts` 替换结果是否正确（类型、变量名、注释）
+- [x] 执行 `node scripts/migrate-jsdom-to-happy-dom.mjs --dry-run` 预览变更
+- [x] 确认 dry-run / live migration 覆盖了当时扫描项，并已在 2026-05-11 baseline 落地
+- [x] 执行 `node scripts/migrate-jsdom-to-happy-dom.mjs` 实际替换
+- [x] 手动检查 `vitest.shared.ts` 替换结果正确：当前 live baseline 使用 `'happy-dom'`、`isHappyDOM`
 
 Exit Criteria:
 
-- [ ] dry-run 输出覆盖 2 + 11 + 47 = 60 个文件
-- [ ] `vitest.shared.ts` 内容正确：`'happy-dom'`、`isHappyDOM`、注释已更新
-- [ ] No owner-doc update required
+- [x] dry-run / live migration 已覆盖原计划扫描项，并收敛到当前 0-residual baseline
+- [x] `vitest.shared.ts` 内容正确：`'happy-dom'`、`isHappyDOM`、相关 setup 已更新
+- [x] No owner-doc update required
 
 ---
 
 ### Phase 3 - 安装依赖并运行验证
 
-Status: planned
+Status: completed
 Targets: 全项目
 
 - Item Types: `Proof`
 
-- [ ] 执行 `pnpm install`
-- [ ] 执行 `node scripts/validate-happy-dom-migration.mjs` 验证无残留
-- [ ] 执行 `pnpm typecheck`
-- [ ] 执行 `pnpm build`
-- [ ] 执行 `pnpm test`（全量测试通过）
+- [x] 执行 `pnpm install`
+- [x] 执行 `node scripts/validate-happy-dom-migration.mjs` 验证无残留
+- [x] 执行 `pnpm typecheck`
+- [x] 执行 `pnpm build`
+- [x] 执行 `pnpm lint`
+- [x] 执行 `pnpm test`（全量测试通过）
 
 Exit Criteria:
 
-- [ ] `validate-happy-dom-migration.mjs` 输出 ALL CHECKS PASSED
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm build` 通过
-- [ ] `pnpm test` 全量通过（无新增失败）
-- [ ] No owner-doc update required
+- [x] `validate-happy-dom-migration.mjs` 输出 ALL CHECKS PASSED
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm build` 通过
+- [x] `pnpm lint` 通过
+- [x] `pnpm test` 全量通过（无新增失败）
+- [x] No owner-doc update required
 
 ---
 
 ### Phase 4 - 记录结果
 
-Status: planned
+Status: completed
 Targets: `docs/logs/`
 
 - Item Types: `Follow-up`
 
-- [ ] 更新 `docs/logs/2026/05-10.md` 记录迁移结果和测试数据
+- [x] 更新 `docs/logs/2026/05-10.md` 记录迁移结果和测试数据
 
 Exit Criteria:
 
-- [ ] 日志已更新
-- [ ] No owner-doc update required
+- [x] 日志已更新
+- [x] No owner-doc update required
 
 ## Closure Gates
 
-- [ ] 所有 `vitest.config.*` 的 `environment` 已改为 `'happy-dom'`
-- [ ] 所有 `@vitest-environment jsdom` pragma 已改为 `@vitest-environment happy-dom`
-- [ ] 所有 `package.json` 中 `jsdom` devDependency 已替换为 `happy-dom`
-- [ ] `vitest.shared.ts` 已适配（`isHappyDOM`、`'happy-dom'`）
-- [ ] `validate-happy-dom-migration.mjs` 全量 PASS
-- [ ] `pnpm typecheck && pnpm build && pnpm test` 通过
-- [ ] 不存在被静默降级到 deferred 的 in-scope 项
+- [x] 所有 `vitest.config.*` 的 `environment` 已改为 `'happy-dom'`
+- [x] 所有 `@vitest-environment jsdom` pragma 已改为 `@vitest-environment happy-dom`
+- [x] 所有 `package.json` 中 `jsdom` devDependency 已替换为 `happy-dom`
+- [x] `vitest.shared.ts` 已适配（`isHappyDOM`、`'happy-dom'`）
+- [x] `validate-happy-dom-migration.mjs` 全量 PASS
+- [x] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 通过
+- [x] 不存在被静默降级到 deferred 的 in-scope 项
 
 ## Deferred But Adjudicated
 
@@ -171,11 +177,6 @@ Exit Criteria:
 - Classification: `out-of-scope improvement`
 - Why Not Blocking Closure: `nop-chaos2`、`nop-mobile`、`templates/` 是独立项目，不在本 plan scope
 - Successor Required: no
-
-## Non-Blocking Follow-ups
-
-- 将同样的迁移流程应用到 `nop-chaos-flux-wt/`
-- 将同样的迁移流程应用到 `nop-chaos2`、`nop-mobile`
 
 ## Appendix: 脚本说明
 
@@ -213,14 +214,14 @@ node scripts/validate-happy-dom-migration.mjs
 
 ## Closure
 
-Status Note: (待迁移完成后填写)
+Status Note: 2026-05-14 live re-audit confirmed this plan was already fully landed and only the plan-state/checklist text remained stale. The current repo has no residual first-party jsdom config/pragma/direct-dependency drift, migration validation still passes, and the plan text now includes the full verification gates actually required for this code-changing closure.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: (待填写)
-- Evidence: (待填写)
+- Reviewer / Agent: `ses_1db6ddd42ffe4voeaaBk1AGbt9`
+- Evidence: independent audit confirmed the live repo is substantively migration-complete (`vitest.shared.ts` happy-dom-only, no first-party jsdom config/pragma/direct-dependency residue) and required only closure-text fixes: record explicit audit evidence and restore the missing `pnpm lint` gate. Historical verification evidence remains in `docs/logs/2026/05-10.md` and current live re-audit still shows `validate-happy-dom-migration.mjs` => `ALL CHECKS PASSED`.
 
 Follow-up:
 
-- worktree 迁移
-- 其他项目迁移
+- worktree 迁移（out of scope）
+- 其他项目迁移（out of scope）

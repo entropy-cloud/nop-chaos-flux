@@ -73,6 +73,19 @@ Exit Criteria:
 - [x] No confirmed live reactive/owner-boundary defect is silently deferred.
 - [x] Remaining work has explicit successor ownership or landed fixes.
 
+## Closure
+
+Status Note: completed. All in-scope retained reactive/owner-boundary items are now landed in code with focused proof, and the runtime-owned external publication boundary has been synced into the owner docs.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: independent closure audit recorded in `docs/logs/2026/05-13.md`
+- Evidence: the 2026-05-13 closure entry records that Plan `276` was closed after the final retained IDs were adjudicated, with landed fixes for `09-02`, `05-05`, `05-06`, `05-01`, `02-14`, `02-16`, `04-04`, `07-01`, and `07-02`, focused proof in the package test suites, and owner-doc sync in `docs/architecture/form-external-publication-and-reserved-bindings.md` and `docs/architecture/template-instantiation-and-node-identity.md`.
+
+Follow-up:
+
+- no remaining plan-owned work
+
 ## Closure Evidence
 
 - `07-01` / `07-02` now land in `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/form-runtime-types.ts`, `packages/flux-runtime/src/runtime-owned-factories.ts`, and `packages/flux-core/src/types/renderer-core.ts`: `statusPath` / `valuesPath` move into form runtime creation inputs and are published/cleared by the runtime-owned form lifecycle instead of renderer-owned React effects.

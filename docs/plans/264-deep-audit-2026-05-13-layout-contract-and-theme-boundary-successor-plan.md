@@ -1,7 +1,7 @@
 # 264 Deep Audit 2026-05-13 Layout Contract And Theme Boundary Successor Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-13
+> Plan Status: completed
+> Last Reviewed: 2026-05-14
 > Source: `docs/analysis/2026-05-12-deep-audit-full/09-renderer-contract.md`, `docs/analysis/2026-05-12-deep-audit-full/10-styling.md`, `docs/analysis/2026-05-12-deep-audit-full/11-ui-components.md`, `docs/analysis/2026-05-13-deep-audit-batch1/summary.md`
 > Related: `docs/plans/259-deep-audit-2026-05-12-styling-and-ui-primitive-cleanup-plan.md`, `docs/plans/00-plan-authoring-and-execution-guide.md`
 
@@ -41,32 +41,32 @@ Own the still-live layout-contract and theme-boundary cleanup after Plan 259 clo
 
 ### Phase 1 - Re-audit Layout And Theme Residuals
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/default-spacing.css`, `packages/flux-renderers-basic/src/{flex.tsx,container.tsx}`, `packages/word-editor-renderers/src/word-editor-page.tsx`, relevant owner docs
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] Re-audit the retained layout and theme findings against the live styling contract.
-- [ ] Decide explicit exception vs convergence paths for each in-scope item.
-- [ ] Land the first closure-ready slice with focused proof and doc updates.
+- [x] Re-audit the retained layout and theme findings against the live styling contract.
+- [x] Decide explicit exception vs convergence paths for each in-scope item.
+- [x] Land the first closure-ready slice with focused proof and doc updates.
 
 Exit Criteria:
 
-- [ ] Every in-scope retained ID has an explicit contract decision.
-- [ ] Any behavior-changing fix has focused verification and owner-doc updates.
-- [ ] Relevant owner docs are updated, or `No owner-doc update required` is recorded.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Every in-scope retained ID has an explicit contract decision.
+- [x] Any behavior-changing fix has focused verification and owner-doc updates.
+- [x] Relevant owner docs are updated, or `No owner-doc update required` is recorded.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ## Closure Gates
 
-- [ ] All in-scope retained findings are adjudicated.
-- [ ] No confirmed styling/theme drift is silently deferred.
-- [ ] Remaining exceptions are documented as supported contract, not implicit behavior.
-- [ ] Independent closure audit is completed and recorded with evidence.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All in-scope retained findings are adjudicated.
+- [x] No confirmed styling/theme drift is silently deferred.
+- [x] Remaining exceptions are documented as supported contract, not implicit behavior.
+- [x] Independent closure audit is completed and recorded with evidence.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -78,13 +78,13 @@ None yet.
 
 ## Closure
 
-Status Note: partially re-audited. `10-01` and `10-02` are already fixed, but `09-01`, `10-04`, and `10-05` remain live and block closure.
+Status Note: completed. This owner-successor plan finished its re-audit/successor-routing role: `10-01` and `10-02` were already fixed on the live baseline, and the remaining retained items were fully adjudicated under Plan `275` (`09-01`, `10-04`) or no longer live (`10-05`).
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: independent baseline re-audit subagent `ses_1ded2dc78ffePiZz96l9BE3Dqu`
-- Evidence: re-audit confirmed `flux-react` no longer uses the older BEM-style node-error/spacing classes for `10-01`/`10-02`, but `flux-renderers-basic` `flex.tsx` and `container.tsx` still emit hardcoded layout classes and `word-editor-page.tsx` still depends on app/theme variables.
+- Reviewer / Agent: independent closure-audit chain across Plans `264` and `275`
+- Evidence: this plan's re-audit established the retained execution set, and Plan `275` then rechecked code, focused proof, and owner docs; it confirmed `09-01` and `10-04` are closed in `flux-renderers-basic`, `10-05` is already satisfied by package-owned `--nop-*` fallback tokens, and full workspace closure gates were rerun green.
 
 Follow-up:
 
-- Remaining execution moved to Plan `275` and closed there; no Plan `264`-owned live work remains.
+- no remaining plan-owned work

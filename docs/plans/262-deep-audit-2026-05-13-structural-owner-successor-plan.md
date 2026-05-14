@@ -1,7 +1,7 @@
 # 262 Deep Audit 2026-05-13 Structural Owner Successor Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-13
+> Plan Status: completed
+> Last Reviewed: 2026-05-14
 > Source: `docs/analysis/2026-05-12-deep-audit-full/summary.md`, `docs/analysis/2026-05-12-deep-audit-full/02-module-responsibility.md`, `docs/analysis/2026-05-12-deep-audit-full/12-field-slot.md`, `docs/analysis/2026-05-13-deep-audit-batch1/summary.md`
 > Related: `docs/plans/256-deep-audit-2026-05-12-module-boundary-and-test-hygiene-plan.md`, `docs/plans/258-deep-audit-2026-05-12-renderer-slot-and-typing-follow-up-plan.md`, `docs/plans/00-plan-authoring-and-execution-guide.md`
 
@@ -15,7 +15,8 @@ Own the still-live structural owner-boundary hotspots that remained after Plans 
 - The remaining live structural work still spans compiler tables, runtime/renderer boundaries, and large-file ownership seams.
 - These items need a dedicated owner plan instead of remaining as open-ended residuals inside closure-ready successor plans.
 - Plan 267 now also routes the 2026-05-13 retained structural set here, so this plan owns both the carried legacy structural backlog and the current batch structural owner matrix.
-- Live re-audit on 2026-05-13 confirms `01-02` and `02-04` are already fixed and `02-03` no longer reproduces, while `02-01`, `02-02`, `12-03`, `02-07`, `02-08`, `02-09`, `02-11`, `02-12`, and `02-13` remain live structural hotspots.
+- Live re-audit on 2026-05-13 confirmed `01-02` and `02-04` as already fixed and `02-03` as no longer reproducing, while `02-01`, `02-02`, `12-03`, `02-07`, `02-08`, `02-09`, `02-11`, `02-12`, and `02-13` remained the successor-owned structural set at handoff time.
+- Follow-up execution under Plan `273` closed the only current hard-gate blocker (`02-01`) and explicitly re-adjudicated the remaining retained IDs as optimization candidates or watch-only structural residuals rather than still-live plan-owned defects.
 
 ## Goals
 
@@ -43,50 +44,50 @@ Own the still-live structural owner-boundary hotspots that remained after Plans 
 
 ### Phase 1 - Re-audit Structural Ownership Map
 
-Status: planned
+Status: completed
 Targets: `packages/report-designer-renderers/package.json`, `packages/flux-compiler/src/schema-compiler/*`, `packages/flux-renderers-form/src/renderers/input.tsx`, `scripts/{verify-no-src-artifacts,clean-src-artifacts}.mjs`, `packages/*/src/**/*.d.ts.map`
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] Re-audit the 2026-05-13 routed structural set `01-02`, `02-01`, `02-02`, `02-03`, `02-04`, `12-03` against the live baseline.
-- [ ] Separate immediate guard/large-file closure work from longer-lived structural reshapes.
-- [ ] Record the chosen fix/split path for each 2026-05-13 routed retained ID before touching the carried legacy backlog.
+- [x] Re-audit the 2026-05-13 routed structural set `01-02`, `02-01`, `02-02`, `02-03`, `02-04`, `12-03` against the live baseline.
+- [x] Separate immediate guard/large-file closure work from longer-lived structural reshapes.
+- [x] Record the chosen fix/split path for each 2026-05-13 routed retained ID before touching the carried legacy backlog.
 
 Exit Criteria:
 
-- [ ] Every 2026-05-13 routed retained ID has an explicit live-owner decision.
-- [ ] Closure-ready slices are separated from longer-term structural work.
-- [ ] Relevant owner docs are updated, or `No owner-doc update required` is recorded.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Every 2026-05-13 routed retained ID has an explicit live-owner decision.
+- [x] Closure-ready slices are separated from longer-term structural work.
+- [x] Relevant owner docs are updated, or `No owner-doc update required` is recorded.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ### Phase 2 - Re-audit Carried Legacy Structural Backlog
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/*`, `packages/flux-renderers-form-advanced/src/composite-field/*`, `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx`
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] Re-audit the carried legacy structural set `02-07`, `02-08`, `02-09`, `02-11`, `02-12`, `02-13` after the priority 2026-05-13 routed set has an execution path.
-- [ ] Group the legacy items into closure-ready slices instead of one monolithic rewrite.
-- [ ] Record the chosen ownership path for each legacy retained ID.
+- [x] Re-audit the carried legacy structural set `02-07`, `02-08`, `02-09`, `02-11`, `02-12`, `02-13` after the priority 2026-05-13 routed set has an execution path.
+- [x] Group the legacy items into closure-ready slices instead of one monolithic rewrite.
+- [x] Record the chosen ownership path for each legacy retained ID.
 
 Exit Criteria:
 
-- [ ] Every carried legacy retained ID has an explicit live-owner decision.
-- [ ] Legacy structural slices are separated from the 2026-05-13 priority set.
-- [ ] Relevant owner docs are updated, or `No owner-doc update required` is recorded.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Every carried legacy retained ID has an explicit live-owner decision.
+- [x] Legacy structural slices are separated from the 2026-05-13 priority set.
+- [x] Relevant owner docs are updated, or `No owner-doc update required` is recorded.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ## Closure Gates
 
-- [ ] All in-scope retained findings are adjudicated.
-- [ ] No confirmed live structural defect is silently deferred.
-- [ ] Each deferred slice has explicit successor ownership or a landed fix.
-- [ ] Independent closure audit is completed and recorded with evidence.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All in-scope retained findings are adjudicated.
+- [x] No confirmed live structural defect is silently deferred.
+- [x] Each deferred slice has explicit successor ownership or a landed fix.
+- [x] Independent closure audit is completed and recorded with evidence.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -98,13 +99,13 @@ None yet.
 
 ## Closure
 
-Status Note: partially re-audited. Some originally routed IDs (`01-02`, `02-03`, `02-04`) are already fixed/no longer live, but the remaining structural hotspots are still active and block closure.
+Status Note: completed. This owner-successor plan finished its re-audit/successor-routing role: the fixed/no-longer-live subset was adjudicated here, and the surviving structural set was executed and then fully re-adjudicated under Plan `273`.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: independent baseline re-audit subagent `ses_1ded2dc78ffePiZz96l9BE3Dqu`
-- Evidence: re-audit confirmed `01-02` fixed via `packages/report-designer-renderers/package.json`, `02-03` no longer live because no `src/**/*.d.ts.map` artifacts remain, and `02-04` fixed by `scripts/verify-no-src-artifacts.mjs`; the remaining large-file and ownership hotspots stay live.
+- Reviewer / Agent: independent closure audit task `ses_1db9dfb9dffeD2UEnCHWQAkcNA`
+- Evidence: the independent audit re-checked this plan, Plan `273`, the linked successor chain, and `docs/logs/2026/05-14.md`. It confirmed this plan's owner-routing/re-audit closure is text-consistent: `01-02`, `02-03`, and `02-04` are already adjudicated, `02-01` was truly executed under Plan `273`, and the remaining retained IDs are explicitly classified as watch-only residuals or optimization candidates rather than silently left live.
 
 Follow-up:
 
-- Remaining execution required for the still-live structural hotspots.
+- no remaining plan-owned work

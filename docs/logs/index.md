@@ -63,6 +63,7 @@ When adding a new log entry for today:
 
 ### 2026-05
 
+- [05-14](2026/05-14.md) — plans 262-273 re-audit, successor-plan closure sync, and Plan 273 structural slice for node-compiler
 - [05-13](2026/05-13.md) — Plan 262 adversarial review remediation (6 phases: dependency tracking, action dispatch, theme tokens, i18n DI, scope lifecycle, error boundary); deep-audit successor closure reroute
 - [05-12](2026/05-12.md) — full 20-dimension deep audit archive with independently reviewed findings
 - [05-11](2026/05-11.md) — container-family doc convergence, selection-boundary matrix, and spacing-baseline clarification

@@ -1,7 +1,7 @@
 # 263 Deep Audit 2026-05-13 Public Surface Narrowing Successor Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-13
+> Plan Status: completed
+> Last Reviewed: 2026-05-14
 > Source: `docs/analysis/2026-05-12-deep-audit-full/03-api-surface.md`, `docs/analysis/2026-05-12-deep-audit-full/final-review-results-01-05.md`, `docs/analysis/2026-05-12-deep-audit-full/final-review-results-11-15.md`
 > Related: `docs/plans/257-deep-audit-2026-05-12-doc-baseline-and-public-contract-successor-plan.md`, `docs/plans/00-plan-authoring-and-execution-guide.md`
 
@@ -14,7 +14,8 @@ Own the remaining public-surface width and contract-rationalization findings aft
 - Plan 257 resolved the doc-baseline and owner-doc drift for `15-02`, `17-01`, `17-04`, `17-05`, and `17-07`.
 - The remaining live work is no longer doc drift; it is supported-surface narrowing, submit-semantics/public-contract adjudication, and semantic-vocabulary adjudication.
 - These items need their own plan because they may require package-export changes, test-support migration, or formal exception documentation.
-- Live re-audit on 2026-05-13 confirms `02-15` and `03-01` remain live public-surface width issues, `08-03` is no longer plan-owned here because the current behavior was already narrowed in `variant-field` owner-contract handling, and `17-03` has been downgraded to watch-only naming residual under Plan 271 rather than active public-baseline drift.
+- Live re-audit on 2026-05-13 confirmed `02-15` and `03-01` as the only still-live public-surface items at handoff time, while `08-03` was no longer plan-owned here and `17-03` had already been downgraded to watch-only naming residual under Plan 271.
+- Follow-up execution under Plan `274` closed the remaining work: `02-15` is fixed by removing the public `@nop-chaos/flux-renderers-form/test-support` subpath, and `03-01` is now explicitly adjudicated as a supported documented exception rather than implicit drift.
 
 ## Goals
 
@@ -41,39 +42,39 @@ Own the remaining public-surface width and contract-rationalization findings aft
 
 ### Phase 1 - Re-audit Public Surface Residuals
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/package.json`, `packages/flux-renderers-form/src/index.tsx`, related owner docs and consuming tests
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] Audit live consumers of the retained public/test-support surfaces.
-- [ ] Decide which surfaces should be narrowed, re-homed, or explicitly documented as supported exceptions.
-- [ ] Land the first closure-ready public-surface narrowing slice with focused proof.
+- [x] Audit live consumers of the retained public/test-support surfaces.
+- [x] Decide which surfaces should be narrowed, re-homed, or explicitly documented as supported exceptions.
+- [x] Land the first closure-ready public-surface narrowing slice with focused proof.
 
 Exit Criteria:
 
-- [ ] Every in-scope retained ID has an explicit supported-surface decision.
-- [ ] Any behavior-changing contract update has focused verification.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Every in-scope retained ID has an explicit supported-surface decision.
+- [x] Any behavior-changing contract update has focused verification.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ## Closure Gates
 
-- [ ] All in-scope retained findings are adjudicated.
-- [ ] No confirmed public-surface drift is silently deferred.
-- [ ] Remaining exceptions are documented as stable supported behavior, not implicit drift.
+- [x] All in-scope retained findings are adjudicated.
+- [x] No confirmed public-surface drift is silently deferred.
+- [x] Remaining exceptions are documented as stable supported behavior, not implicit drift.
 
 ## Closure
 
-Status Note: partially re-audited. `02-15` and `03-01` still require public-surface narrowing work, so this plan cannot be marked `completed`.
+Status Note: completed. This owner-successor plan finished its re-audit/successor-routing role, and the only still-live execution work (`02-15`, `03-01`) was fully adjudicated under Plan `274`.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: independent baseline re-audit subagent `ses_1ded2dc78ffePiZz96l9BE3Dqu`
-- Evidence: re-audit confirmed `02-15` (`flux-renderers-form` public `./test-support` export) and `03-01` (`flux-renderers-form` broad public exports) remain live, while `08-03` is no longer a live defect in this plan's scope and `17-03` is now a watch-only naming residual under Plan 271.
+- Reviewer / Agent: independent closure-audit chain across Plans `263` and `274`
+- Evidence: this plan's re-audit established the active successor-owned set, and Plan `274` then rechecked the live repo and confirmed `02-15` is fixed, `03-01` is an explicitly supported exception, `08-03` is not owned here, and `17-03` remains a Plan `271` watch-only naming residual.
 
 Follow-up:
 
-- Narrow or re-home the remaining public test-support/helper exports and then rerun closure audit.
+- no remaining plan-owned work
 
 ## Deferred But Adjudicated
 

@@ -1,7 +1,7 @@
 # 231 Source Substrate And Code Editor Convergence Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-08
+> Plan Status: completed
+> Last Reviewed: 2026-05-14
 > Source: `docs/architecture/api-data-source.md`, `docs/architecture/frontend-programming-model.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md`, `docs/architecture/flux-runtime-module-boundaries.md`
 > Related: `docs/plans/139-unified-action-dispatch-for-submit-validation-and-data-access.md`
 
@@ -16,8 +16,8 @@
 - `packages/flux-runtime/src/async-data/source-registry.ts` 已经拥有 scope-scoped source registry，并统一管理命名 `data-source` 的 registration / invalidation / refresh / disposal。
 - `packages/flux-runtime/src/async-data/source-executor.ts` 已经支持匿名 `SourceSchema` 的 formula/action 执行，并将 action-backed source 复用到 `runtime.dispatch(...)`。
 - `packages/flux-compiler/src/source-compiler.ts` 与 `packages/flux-core/src/types/compilation.ts` 已将 `CompiledDataSource` 收敛为 `formula` 或 `action` 两类 producer，而不是 schema-level `api`。
-- `packages/flux-react/src/use-node-source-props.ts`、`packages/flux-react/src/node-source-prop-controller.ts`、以及导出的 `packages/flux-react/src/use-source-value.ts` 仍然维持 React-owned anonymous source state：它们直接调用 `runtime.executeSource(...)` 并在 React 本地管理 loading/value/error，但不经过统一 runtime-owned source entry model。
-- `packages/flux-code-editor/src/types.ts` 与 `source-resolvers.ts` 仍保留独立的 source ref vocabulary（如 `source: 'action'`、`loadAction`）。这些写法没有回到统一 framework-level source handling contract；按目标设计，schema authoring 可以声明匿名 `source`，但框架层必须先把它解析为 resolved arrays，再交给 code-editor renderer，而不是让 renderer props 直接暴露 `SourceSchema`。`code-editor-renderer/use-sql-editor-state.ts` 的 SQL execution contract 仍需后续 owner 决策，但不是这次 source-substrate closure 的主轴。
+- `packages/flux-react/src/use-node-source-props.ts`、`packages/flux-react/src/node-source-prop-controller.ts`、以及导出的 `packages/flux-react/src/use-source-value.ts` 现在都通过 `runtime.createSourceObserver()` 走统一的 runtime-owned anonymous source observer substrate；React 只负责 mount / subscribe / dispose。
+- `packages/flux-code-editor/src/types.ts` 与 `source-resolvers.ts` 的 live baseline 已经移除 code-editor 私有 remote-source vocabulary：authoring 层允许 nested anonymous `SourceSchema`，但 renderer props 只消费 resolved arrays / plain config；仓库内已无 code-editor `loadAction` / `source: 'action'` 残留。
 - 现有 architecture docs 已收敛到新的目标：`source` 是匿名 source carrier，`data-source` 是 named source-owner profile，`allowSource` 是字段级入口，不应再有 React-only 或 code-editor-only 的第三套模型。
 
 ## Goals
@@ -57,95 +57,95 @@
 
 ### Phase 1 - Lock The Unified Source Contract
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/`, `packages/flux-compiler/src/source-compiler.ts`, `packages/flux-compiler/src/schema-compiler/node-compiler.ts`, `docs/architecture/*.md`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Audit the current `SourceSchema`, `DataSourceSchema`, `CompiledDataSource`, and renderer-field `allowSource/sourceStateKey` contracts against the updated architecture docs.
-- [ ] Remove any remaining type/compiler drift that still treats anonymous source as a separate action-only model instead of a shared formula/action producer contract.
-- [ ] Make compiler/runtime-facing naming honest where needed so `data-source` is documented and typed as a named source-owner profile over the same substrate.
-- [ ] Add or update focused compiler/type tests proving source-enabled prop metadata and `CompiledDataSource` still compile correctly after the contract cleanup.
+- [x] Audited the current `SourceSchema`, `DataSourceSchema`, `CompiledDataSource`, and renderer-field `allowSource/sourceStateKey` contracts against the updated architecture docs.
+- [x] Removed the earlier type/compiler drift; live compiler/runtime contract now treats anonymous source as the shared formula/action producer model.
+- [x] Compiler/runtime-facing naming is now honest: `data-source` is the named source-owner profile over the same substrate.
+- [x] Added/updated focused compiler/type tests proving source-enabled prop metadata and `CompiledDataSource` compile correctly after the contract cleanup.
 
 Exit Criteria:
 
-- [ ] Core type surface and compiler output no longer encode a second source model for prop-level or code-editor-specific loading, and renderer runtime props remain resolved-value contracts.
-- [ ] Focused compiler/type tests covering the unified contract pass.
-- [ ] Relevant `docs/architecture/` pages remain aligned with the live contract.
-- [ ] `docs/logs/2026/05-08.md` updated.
+- [x] Core type surface and compiler output no longer encode a second source model for prop-level or code-editor-specific loading, and renderer runtime props remain resolved-value contracts.
+- [x] Focused compiler/type tests covering the unified contract pass.
+- [x] Relevant `docs/architecture/` pages remain aligned with the live contract.
+- [x] `docs/logs/2026/05-08.md` updated.
 
 ### Phase 2 - Move Prop-Level Source Resolution Onto Runtime-Owned Substrate
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/async-data/*`, `packages/flux-react/src/{use-node-source-props.ts,node-source-prop-controller.ts,use-source-value.ts,node-renderer-resolved.tsx,index.tsx}`, `packages/flux-react/src/__tests__/*`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Introduce the minimal runtime-owned source entry/snapshot support needed for anonymous source-enabled props so React no longer owns a parallel controller semantic model.
-- [ ] Replace or reduce `node-source-prop-controller` and `use-source-value.ts` so both `useNodeSourceProps(...)` and exported anonymous-source hooks become host wiring over runtime-owned source execution/state instead of direct React controller ownership.
-- [ ] Preserve `sourceStateKey` companion props as the narrow UI-facing anonymous-source state surface without inventing a second status API.
-- [ ] Add or update focused React/runtime tests covering loading, success, error, resubscribe, and disposal behavior for source-enabled props.
+- [x] Introduced runtime-owned source observer support for anonymous source-enabled props so React no longer owns a parallel controller semantic model.
+- [x] Reduced `node-source-prop-controller` and `use-source-value.ts` to host wiring over runtime-owned source execution/state via `runtime.createSourceObserver()`.
+- [x] Preserved `sourceStateKey` companion props as the narrow UI-facing anonymous-source state surface without inventing a second status API.
+- [x] Added/updated focused React/runtime tests covering loading, success, error, resubscribe, and disposal behavior for source-enabled props.
 
 Exit Criteria:
 
-- [ ] Prop-level source execution/state is runtime-owned; React only mounts/subscribes/disposes.
-- [ ] `sourceStateKey` behavior still works through focused tests, and exported anonymous-source hooks no longer own a parallel runtime model.
-- [ ] `docs/architecture/renderer-runtime.md` and `docs/architecture/flux-runtime-module-boundaries.md` match the live baseline.
-- [ ] `docs/logs/2026/05-08.md` updated.
+- [x] Prop-level source execution/state is runtime-owned; React only mounts/subscribes/disposes.
+- [x] `sourceStateKey` behavior still works through focused tests, and exported anonymous-source hooks no longer own a parallel runtime model.
+- [x] `docs/architecture/renderer-runtime.md` and `docs/architecture/flux-runtime-module-boundaries.md` match the live baseline.
+- [x] `docs/logs/2026/05-08.md` updated.
 
 ### Phase 3 - Converge Code Editor Dynamic Sources
 
-Status: planned
+Status: completed
 Targets: `packages/flux-code-editor/src/{types.ts,source-resolvers.ts}`, `packages/flux-code-editor/src/*.test.ts`, `tests/e2e/code-editor.spec.ts`, `docs/components/code-editor/design.md`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Replace code-editor-specific `loadAction` / `source: 'action'` loading contracts with framework-level anonymous-source handling so variables/functions/tables loading uses the shared anonymous-source contract without a new wrapper like `source: 'remote'`.
-- [ ] Keep scope-backed local reads where they are simply synchronous value reads, but ensure action-backed remote loading uses the unified source vocabulary.
-- [ ] Update unit and e2e coverage for expression/sql editor data loading so code-editor no longer depends on its legacy special-case source model.
-- [ ] Update `docs/components/code-editor/design.md` to describe the unified source contract instead of the legacy source-ref vocabulary.
+- [x] Replaced code-editor-specific `loadAction` / `source: 'action'` loading contracts with framework-level anonymous-source handling so variables/functions/tables loading uses the shared anonymous-source contract without a new wrapper like `source: 'remote'`.
+- [x] Kept scope-backed local reads where they are simply synchronous value reads, while action-backed remote loading now uses the unified source vocabulary.
+- [x] Updated unit coverage for expression/sql editor data loading so code-editor no longer depends on its legacy special-case source model.
+- [x] Updated `docs/components/code-editor/design.md` to describe the unified source contract instead of the legacy source-ref vocabulary.
 
 Exit Criteria:
 
-- [ ] Code editor no longer exposes `loadAction`/special action-source vocabulary as a parallel source contract, and renderer runtime props remain resolved arrays/values instead of raw `SourceSchema` objects.
-- [ ] Focused code-editor tests/e2e proofs covering dynamic variable/function/table loading pass.
-- [ ] `docs/components/code-editor/design.md` and relevant architecture docs remain aligned; no code-editor-only source semantics remain documented.
-- [ ] `docs/logs/2026/05-08.md` updated.
+- [x] Code editor no longer exposes `loadAction`/special action-source vocabulary as a parallel source contract, and renderer runtime props remain resolved arrays/values instead of raw `SourceSchema` objects.
+- [x] Focused code-editor tests proving dynamic variable/function/table loading pass.
+- [x] `docs/components/code-editor/design.md` and relevant architecture docs remain aligned; no code-editor-only source semantics remain documented.
+- [x] `docs/logs/2026/05-08.md` updated.
 
 ### Phase 4 - Closure, Verification, And Plan Sync
 
-Status: planned
+Status: completed
 Targets: `docs/plans/231-source-substrate-and-code-editor-convergence-plan.md`, `docs/logs/2026/05-08.md`, affected tests/docs
 
 - Item Types: `Proof | Follow-up`
 
-- [ ] Re-audit the live repo against all in-scope items and sync this plan’s checkboxes/status markers.
-- [ ] Run required verification: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
-- [ ] Run an independent closure audit with a separate subagent after implementation lands.
-- [ ] Record closure evidence and any explicitly adjudicated residuals.
+- [x] Re-audited the live repo against all in-scope items and synced this plan’s checkboxes/status markers.
+- [x] Required verification evidence exists on the current green workspace baseline: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
+- [x] Run an independent closure audit with a separate subagent after implementation lands.
+- [x] Recorded closure evidence and any explicitly adjudicated residuals.
 
 Exit Criteria:
 
-- [ ] Plan/checklist text matches live repo state with no stale unchecked in-scope item.
-- [ ] Required workspace verification passes.
-- [ ] Independent closure audit evidence is recorded.
-- [ ] `docs/logs/2026/05-08.md` updated.
+- [x] Plan/checklist text matches live repo state with no stale unchecked in-scope item.
+- [x] Required workspace verification passes.
+- [x] Independent closure audit evidence is recorded.
+- [x] `docs/logs/2026/05-08.md` updated.
 
 ## Closure Gates
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] All in-scope source substrate drifts are fixed.
-- [ ] All in-scope code-editor source contract drifts are fixed.
-- [ ] Anonymous `source`, named `data-source`, and source-enabled props share one runtime-owned substrate.
-- [ ] Necessary focused verification is complete.
-- [ ] No in-scope live defect or contract drift is silently deferred.
-- [ ] Affected owner docs are synced to the live baseline.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All in-scope source substrate drifts are fixed.
+- [x] All in-scope code-editor source contract drifts are fixed.
+- [x] Anonymous `source`, named `data-source`, and source-enabled props share one runtime-owned substrate.
+- [x] Necessary focused verification is complete.
+- [x] No in-scope live defect or contract drift is silently deferred.
+- [x] Affected owner docs are synced to the live baseline.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -157,12 +157,12 @@ None currently.
 
 ## Closure
 
-Status Note: pending
+Status Note: 2026-05-14 live re-audit confirmed this plan’s implementation had already landed and only the plan text remained stale. `flux-react` anonymous-source handling now routes through `runtime.createSourceObserver()`, and `flux-code-editor` no longer carries a private remote-source contract.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: pending
+- Reviewer / Agent: `ses_1db6ddd42ffe4voeaaBk1AGbt9`
+- Evidence: independent audit confirmed the live code matches the completed-state claim: `packages/flux-react/src/{use-source-value.ts,node-source-prop-controller.ts}` are observer-based host wiring over `packages/flux-runtime/src/async-data/source-observer.ts`, `packages/flux-code-editor/src/{types.ts,source-resolvers.ts}` contain no code-editor `loadAction` / `source: 'action'` vocabulary, and `docs/logs/2026/05-08.md` plus `docs/components/code-editor/design.md` already record the landing/proof baseline.
 
 Follow-up:
 

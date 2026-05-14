@@ -1,7 +1,7 @@
 # 221 Build, Public Surface, And Active Docs Convergence Plan
 
-> Plan Status: in progress
-> Last Reviewed: 2026-05-07
+> Plan Status: completed
+> Last Reviewed: 2026-05-14
 > Source: `docs/analysis/2026-05-07-deep-audit-full-8/{summary.md,01-dependency-graph.md,03-api-surface.md,16-doc-code-consistency.md,17-naming.md,18-cross-package.md}`
 > Related: `docs/plans/{220-cross-boundary-state-and-host-contract-closure-plan.md,222-large-file-and-owner-boundary-successor-plan.md,225-test-hardening-follow-up-plan.md,227-safety-and-performance-redlines-plan.md,228-styling-and-css-surface-cleanup-plan.md}`
 
@@ -136,7 +136,7 @@ Targets: in-scope packages/scripts/docs, this plan
 Exit Criteria:
 
 - [x] Focused verification is recorded for all plan-owned defect families.
-- [x] Workspace verification passes (typecheck, build, lint pass; test has 10 pre-existing detail-view failures in flux-renderers-form-advanced).
+- [x] Workspace verification passes (`pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`).
 - [x] Independent closure audit confirms no remaining in-scope blocker or silent scope drift.
 - [x] `docs/logs/` 对应日期条目已更新。
 
@@ -151,25 +151,24 @@ Exit Criteria:
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
-- [ ] `pnpm test` — 10 pre-existing detail-view test failures in `@nop-chaos/flux-renderers-form-advanced` remain unresolved. These failures existed before this plan and are not caused by changes in this plan.
+- [x] `pnpm test`
 
 ## Validation Checklist
 
-- [ ] Dist/package/build fixes are verified against the live repo rather than inferred from old notes.
-- [ ] Public export/example/doc changes reflect the final supported baseline, not temporary migration wording.
-- [ ] `220` owned host-contract correctness work is not accidentally reopened here.
-- [ ] All in-scope checklist items remain `Fix`, `Decision`, or `Proof`; none are silently demoted to vague follow-up.
+- [x] Dist/package/build fixes are verified against the live repo rather than inferred from old notes.
+- [x] Public export/example/doc changes reflect the final supported baseline, not temporary migration wording.
+- [x] `220` owned host-contract correctness work is not accidentally reopened here.
+- [x] All in-scope checklist items remain `Fix`, `Decision`, or `Proof`; none are silently demoted to vague follow-up.
 
 ## Closure
 
-Status Note: All four workstreams completed. `pnpm typecheck`, `pnpm build`, and `pnpm lint` pass cleanly. The plan remains `in progress` because 10 pre-existing detail-view test failures in `@nop-chaos/flux-renderers-form-advanced` need resolution or adjudication before the plan can be marked `completed`. These failures are not regressions from this plan's changes — they existed in the baseline prior to execution.
+Status Note: completed. All four workstreams are closed, the live repo still matches the build/public-surface/doc convergence baseline this plan owns, and the formerly blocking detail-view test failures are no longer present in the current workspace verification baseline.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: deep-audit remediation session 2026-05-07
-- Evidence: All in-scope build/publish, public surface, and active-doc defects remediated. Workspace typecheck, build, lint verified clean. Pre-existing detail-view test failures documented and tracked separately.
+- Reviewer / Agent: closure re-audit pass on 2026-05-14 plus fresh independent closure audit
+- Evidence: all in-scope workstreams remain completed in live code/docs, and the current workspace baseline is green for `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`, removing the stale test blocker that previously kept this plan open.
 
 Follow-up:
 
-- Resolve or adjudicate the 10 pre-existing `flux-renderers-form-advanced` detail-view test failures (likely needs a dedicated follow-up plan or bug note).
-- Once test suite passes, advance plan status from `in progress` to `completed`.
+- no remaining plan-owned work
