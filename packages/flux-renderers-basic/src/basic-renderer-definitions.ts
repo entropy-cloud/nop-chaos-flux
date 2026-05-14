@@ -123,6 +123,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'text', kind: 'prop', allowSource: true },
       { key: 'body', kind: 'prop' },
+      { key: 'tag', kind: 'prop' },
     ],
     staticCapable: true,
   },
@@ -200,7 +201,10 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       },
     },
     component: ButtonRenderer,
-    fields: [{ key: 'onClick', kind: 'event' }],
+    fields: [
+      { key: 'disabled', kind: 'meta' },
+      { key: 'onClick', kind: 'event' },
+    ],
   },
   {
     type: 'icon',

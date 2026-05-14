@@ -18,4 +18,10 @@ describe('basic renderer static contracts', () => {
     expect(tabs?.propContracts?.variant?.shape.kind).toBe('union');
     expect(tabs?.propContracts?.orientation?.shape.kind).toBe('union');
   });
+
+  it('registers text tag as a resolved prop field', () => {
+    const text = basicRendererDefinitions.find((definition) => definition.type === 'text');
+
+    expect(text?.fields?.map((field) => field.key)).toEqual(['text', 'body', 'tag']);
+  });
 });
