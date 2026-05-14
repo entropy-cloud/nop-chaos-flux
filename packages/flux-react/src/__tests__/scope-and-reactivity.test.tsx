@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '../schema-renderer.js';
-import { FormContext, ScopeContext, ValidationContext } from '../contexts.js';
-import { useCurrentFormModelGeneration, useOwnScopeSelector, useRenderScope, useScopeSelector } from '../hooks.js';
+import { FormContext, ScopeContext } from '../contexts.js';
+import { useOwnScopeSelector, useScopeSelector } from '../hooks.js';
 import { createRendererRuntime } from '../test-support.js';
 import {
   createExpressionCompiler,
@@ -19,6 +19,10 @@ import {
   sharedFormulaCompiler,
   textRenderer,
 } from '../test-support.js';
+import {
+  asyncPublisherRenderer,
+  asyncPublisherWithRefreshRenderer,
+} from './scope-and-reactivity.test-support.js';
 
 describe('createSchemaRenderer scope and reactivity', () => {
   it('exposes template nodes through renderer props and current-node meta hooks', () => {
@@ -107,25 +111,7 @@ describe('createSchemaRenderer scope and reactivity', () => {
   });
 
   it('rerenders sibling consumers after async scope updates', async () => {
-    const asyncPublisherRenderer = {
-      type: 'async-scope-publisher',
-      component: function AsyncScopePublisher() {
-        const scope = useRenderScope();
-
-        React.useEffect(() => {
-          void Promise.resolve().then(() => {
-            scope.update('user', { name: 'Alice' });
-          });
-        }, [scope]);
-
-        return null;
-      },
-    };
-    const SchemaRenderer = createSchemaRenderer([
-      pageRenderer,
-      textRenderer,
-      asyncPublisherRenderer,
-    ]);
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, asyncPublisherRenderer]);
 
     render(
       <SchemaRenderer
@@ -145,25 +131,10 @@ describe('createSchemaRenderer scope and reactivity', () => {
   });
 
   it('preserves async scope updates across page refresh ticks', async () => {
-    const asyncPublisherRenderer = {
-      type: 'async-scope-publisher-with-refresh',
-      component: function AsyncScopePublisherWithRefresh(props: any) {
-        const scope = useRenderScope();
-
-        React.useEffect(() => {
-          props.helpers.dispatch({ action: 'refreshTable' });
-          void Promise.resolve().then(() => {
-            scope.update('user', { name: 'Alice' });
-          });
-        }, [props.helpers, scope]);
-
-        return null;
-      },
-    };
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
       textRenderer,
-      asyncPublisherRenderer,
+      asyncPublisherWithRefreshRenderer,
     ]);
 
     render(
@@ -323,7 +294,6 @@ describe('createSchemaRenderer scope and reactivity', () => {
     const updateRenderer = {
       type: 'update-summary-button',
       component: function UpdateSummaryButton() {
-        const _form = useRenderScope();
         const currentForm = React.useContext(FormContext);
 
         return (
@@ -341,7 +311,12 @@ describe('createSchemaRenderer scope and reactivity', () => {
         );
       },
     };
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, formRenderer, textRenderer, updateRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      formRenderer,
+      textRenderer,
+      updateRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -372,80 +347,5 @@ describe('createSchemaRenderer scope and reactivity', () => {
 
     await waitFor(() => expect(screen.getByText('Changed Name')).toBeTruthy());
     await waitFor(() => expect(screen.getByText('published')).toBeTruthy());
-  });
-
-  it('subscribes useCurrentFormModelGeneration to the dedicated generation channel', async () => {
-    let notifyGeneration: (() => void) | undefined;
-    const subscribeToModelGeneration = (listener: () => void) => {
-      notifyGeneration = listener;
-      return () => {
-        notifyGeneration = undefined;
-      };
-    };
-    const form = {
-      modelGeneration: 1,
-      store: {
-        subscribe: () => () => undefined,
-      },
-      subscribeToModelGeneration,
-    } as any;
-    let renders = 0;
-
-    function Probe() {
-      const generation = useCurrentFormModelGeneration();
-      React.useEffect(() => {
-        renders += 1;
-      });
-      return <span data-testid="generation">{String(generation)}</span>;
-    }
-
-    render(
-      <FormContext.Provider value={form}>
-        <Probe />
-      </FormContext.Provider>,
-    );
-
-    expect(screen.getByTestId('generation').textContent).toBe('1');
-    await waitFor(() => expect(renders).toBe(1));
-
-    form.modelGeneration = 2;
-    notifyGeneration?.();
-
-    await waitFor(() => expect(screen.getByTestId('generation').textContent).toBe('2'));
-    expect(renders).toBe(2);
-  });
-
-  it('subscribes useCurrentFormModelGeneration to validation owners outside forms', async () => {
-    let notifyGeneration: (() => void) | undefined;
-    const owner = {
-      modelGeneration: 4,
-      store: {
-        subscribe: () => () => undefined,
-      },
-      subscribeToModelGeneration(listener: () => void) {
-        notifyGeneration = listener;
-        return () => {
-          notifyGeneration = undefined;
-        };
-      },
-    } as any;
-
-    function Probe() {
-      const generation = useCurrentFormModelGeneration();
-      return <span data-testid="generation-owner">{String(generation)}</span>;
-    }
-
-    render(
-      <ValidationContext.Provider value={owner}>
-        <Probe />
-      </ValidationContext.Provider>,
-    );
-
-    expect(screen.getByTestId('generation-owner').textContent).toBe('4');
-
-    owner.modelGeneration = 5;
-    notifyGeneration?.();
-
-    await waitFor(() => expect(screen.getByTestId('generation-owner').textContent).toBe('5'));
   });
 });

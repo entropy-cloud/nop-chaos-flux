@@ -1,4 +1,10 @@
-import type { RendererRuntime, ScopeRef, SourceObserver, TemplateNode } from '@nop-chaos/flux-core';
+import type {
+  RendererRuntime,
+  ResolvedNodeProps,
+  ScopeRef,
+  SourceObserver,
+  TemplateNode,
+} from '@nop-chaos/flux-core';
 import { setIn, shallowEqual, type SourceTransientState } from '@nop-chaos/flux-core';
 import { isSourceSchema } from './use-source-value.js';
 
@@ -20,7 +26,7 @@ function buildLoadingPatch(
 
 interface ControllerSnapshot {
   sourceInputs: readonly unknown[];
-  value: Readonly<Record<string, unknown>>;
+  value: ResolvedNodeProps['value'];
 }
 
 interface ResolvedSourceEntry {
@@ -65,7 +71,7 @@ function collectNestedSourceEntries(
 }
 
 function collectSourceEntries(
-  propsValue: Readonly<Record<string, unknown>>,
+  propsValue: ResolvedNodeProps['value'],
   sourcePropKeys: readonly string[],
   sourceStatePropKeys: Readonly<Record<string, string>>,
 ): ResolvedSourceEntry[] {
@@ -96,9 +102,9 @@ function collectSourceEntries(
 }
 
 function sanitizeSourceInputs(
-  propsValue: Readonly<Record<string, unknown>>,
+  propsValue: ResolvedNodeProps['value'],
   entries: readonly ResolvedSourceEntry[],
-): Readonly<Record<string, unknown>> {
+): ResolvedNodeProps['value'] {
   let nextValue = propsValue;
   for (const entry of entries) {
     nextValue = setIn(nextValue, entry.targetPath, undefined);
@@ -107,9 +113,9 @@ function sanitizeSourceInputs(
 }
 
 function materializeResolvedSources(
-  value: Readonly<Record<string, unknown>>,
+  value: ResolvedNodeProps['value'],
   entries: readonly ResolvedSourceEntry[],
-): Readonly<Record<string, unknown>> {
+): ResolvedNodeProps['value'] {
   let nextValue = value;
   let cleanedValue: Record<string, unknown> | undefined;
 
@@ -118,9 +124,10 @@ function materializeResolvedSources(
       nextValue = setIn(nextValue, entry.targetPath, nextValue[entry.key]);
     }
     if (entry.key !== entry.targetPath && entry.key in nextValue) {
-      cleanedValue ??= { ...nextValue };
-      delete cleanedValue[entry.key];
-      nextValue = cleanedValue;
+      const nextCleanedValue = cleanedValue ?? { ...nextValue };
+      delete nextCleanedValue[entry.key];
+      cleanedValue = nextCleanedValue;
+      nextValue = nextCleanedValue;
     }
   }
 
@@ -130,7 +137,7 @@ function materializeResolvedSources(
 export interface NodeSourcePropController {
   getSnapshot(): ControllerSnapshot;
   subscribe(listener: () => void): () => void;
-  run(propsValue: Readonly<Record<string, unknown>>, scope: ScopeRef): void;
+  run(propsValue: ResolvedNodeProps['value'], scope: ScopeRef): void;
   dispose(): void;
 }
 
@@ -145,17 +152,20 @@ export function createNodeSourcePropController(
 
   let currentSnapshot: ControllerSnapshot = {
     sourceInputs: [],
-    value: observer.getSnapshot().value,
+      value: observer.getSnapshot().value as ResolvedNodeProps['value'],
   };
 
   let cachedObserverSnapshot: unknown;
-  let cachedMaterializedValue: Readonly<Record<string, unknown>> | undefined;
+  let cachedMaterializedValue: ResolvedNodeProps['value'] | undefined;
 
-  function resolveMaterializedValue(): Readonly<Record<string, unknown>> {
+  function resolveMaterializedValue(): ResolvedNodeProps['value'] {
     const observerSnapshot = observer.getSnapshot();
     if (observerSnapshot !== cachedObserverSnapshot) {
       cachedObserverSnapshot = observerSnapshot;
-      cachedMaterializedValue = materializeResolvedSources(observerSnapshot.value, currentEntries);
+      cachedMaterializedValue = materializeResolvedSources(
+        observerSnapshot.value as ResolvedNodeProps['value'],
+        currentEntries,
+      );
     }
     return cachedMaterializedValue ?? {};
   }
@@ -171,7 +181,7 @@ export function createNodeSourcePropController(
     return true;
   }
 
-  function run(propsValue: Readonly<Record<string, unknown>>, scope: ScopeRef) {
+  function run(propsValue: ResolvedNodeProps['value'], scope: ScopeRef) {
     const sourceEntries = collectSourceEntries(propsValue, sourcePropKeys, sourceStatePropKeys);
     currentEntries = sourceEntries;
     cachedObserverSnapshot = undefined;

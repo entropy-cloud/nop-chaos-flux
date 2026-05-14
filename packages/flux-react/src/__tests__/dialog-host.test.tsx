@@ -182,7 +182,7 @@ describe('DialogHost', () => {
     expect(screen.getAllByTestId('dialog-body')).toHaveLength(2);
     expect(screen.getAllByTestId('dialog-root')[0]?.getAttribute('data-no-overlay')).toBe('true');
     expect(screen.getAllByTestId('dialog-root')[1]?.getAttribute('data-no-overlay')).toBe('false');
-    expect(mocks.useSurfaceScopeSnapshot).toHaveBeenCalledTimes(2);
+    expect(mocks.useSurfaceScopeSnapshot).not.toHaveBeenCalled();
     expect(mocks.resolveContainerElement).toHaveBeenNthCalledWith(1, 'page-modal', undefined);
     expect(mocks.resolveContainerElement).toHaveBeenNthCalledWith(2, 'surface-modal', undefined);
 

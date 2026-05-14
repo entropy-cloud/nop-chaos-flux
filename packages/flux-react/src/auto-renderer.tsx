@@ -23,10 +23,10 @@ export function createAutoRendererComponent<
 
     return React.createElement(ReactComponent, {
       ...(uiProps as P),
-      disabled: props.meta.disabled,
-      className: props.meta.className,
-      'data-testid': props.meta.testid || undefined,
-      'data-cid': props.meta.cid || undefined,
+      disabled: props.props.disabled,
+      className: props.props.className,
+      'data-testid': props.props.testid || undefined,
+      'data-cid': props.props.cid || undefined,
     } as P);
   };
 }

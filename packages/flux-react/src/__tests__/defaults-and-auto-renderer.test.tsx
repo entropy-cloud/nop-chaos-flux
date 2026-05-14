@@ -57,7 +57,13 @@ describe('defaults and auto renderer', () => {
       <Auto
         id="node-1"
         path="$.body[0]"
-        props={{ label: 'Run' }}
+        props={{
+          label: 'Run',
+          disabled: false,
+          className: 'x',
+          testid: 'auto-btn',
+          cid: 'cid-1',
+        }}
         schema={{ type: 'button' } as BaseSchema}
         meta={{ disabled: false, className: 'x', testid: 'auto-btn', cid: 'cid-1' } as any}
         events={{ onClick: click as RendererComponentProps['events'][string] }}
@@ -129,7 +135,7 @@ describe('defaults and auto renderer', () => {
       <Auto
         id="node-2"
         path="$.body[1]"
-        props={{ label: 'Idle' }}
+        props={{ label: 'Idle', disabled: false }}
         schema={{ type: 'button' } as BaseSchema}
         meta={{ disabled: false, className: undefined, testid: '', cid: '' } as any}
         events={{ onClick: undefined }}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
-import type { TemplateNode, ScopeRef } from '@nop-chaos/flux-core';
+import type { ResolvedNodeProps, ScopeRef, TemplateNode } from '@nop-chaos/flux-core';
 import { useRendererRuntime } from './hooks.js';
 import { isSourceSchema } from './use-source-value.js';
 import { createNodeSourcePropController } from './node-source-prop-controller.js';
@@ -8,9 +8,9 @@ export type { SourceTransientState } from '@nop-chaos/flux-core';
 
 export function useNodeSourceProps(
   node: TemplateNode,
-  propsValue: Readonly<Record<string, unknown>>,
+  propsValue: ResolvedNodeProps['value'],
   scope: ScopeRef,
-): Readonly<Record<string, unknown>> {
+): ResolvedNodeProps['value'] {
   const runtime = useRendererRuntime();
   const sourcePropKeys = node.sourcePropKeys;
   const hasSourceProps = useMemo(
@@ -57,6 +57,7 @@ export function useNodeSourceProps(
     () => sourcePropKeys.map((key) => propsValue[key]),
     [propsValue, sourcePropKeys],
   );
+  const sourceInputsKey = useMemo(() => JSON.stringify(sourceInputs), [sourceInputs]);
 
   const snapshot = useSyncExternalStore(
     controller.subscribe,
@@ -67,7 +68,7 @@ export function useNodeSourceProps(
   useEffect(() => {
     if (!hasSourceProps) return;
     controller.run(propsValueRef.current, scopeRef.current);
-  }, [controller, hasSourceProps, sourceInputs]);
+  }, [controller, hasSourceProps, sourceInputsKey]);
 
   useEffect(() => {
     return () => {

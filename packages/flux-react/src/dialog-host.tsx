@@ -4,7 +4,6 @@ import { useCurrentPage, useCurrentSurfaceRuntime } from './hooks.js';
 import {
   renderSurfaceNode,
   SurfaceScopeProviders,
-  useSurfaceScopeSnapshot,
 } from './dialog-host-surface.js';
 import {
   Dialog,
@@ -81,8 +80,6 @@ function DialogView(props: {
   surfaceRuntime: SurfaceRuntime;
   modalContainer?: string;
 }) {
-  useSurfaceScopeSnapshot(props.surface.scope);
-
   const { surface, surfaceRuntime } = props;
   const handleDeclarativeOpenChange = surface.surface.__handleOpenChange as
     | ((nextOpen: boolean) => void)
@@ -170,8 +167,6 @@ function DrawerView(props: {
   surfaceRuntime: SurfaceRuntime;
   modalContainer?: string;
 }) {
-  useSurfaceScopeSnapshot(props.surface.scope);
-
   const { surface, surfaceRuntime } = props;
   const handleDeclarativeOpenChange = surface.surface.__handleOpenChange as
     | ((nextOpen: boolean) => void)
