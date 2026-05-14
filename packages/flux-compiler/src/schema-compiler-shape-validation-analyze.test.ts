@@ -199,6 +199,43 @@ describe('analyzeSchemaInput validation', () => {
     );
   });
 
+  it('rejects dynamic structural data-source name and statusPath', () => {
+    const renderer: RendererDefinition = {
+      type: 'page',
+      component: () => null,
+      propSchema: { data: { type: 'object' } },
+      fields: [{ key: 'data', kind: 'prop' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    const diagnostics = compiler.validate?.({
+      type: 'page',
+      data: {
+        type: 'source',
+        formula: 1,
+        name: '${targetName}',
+        statusPath: 'status.${stage}',
+      },
+    });
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-source-shape',
+          path: '/data/name',
+          message:
+            'name must be a static structural path string. Dynamic expressions and templates are not supported.',
+        }),
+        expect.objectContaining({
+          code: 'invalid-source-shape',
+          path: '/data/statusPath',
+          message:
+            'statusPath must be a static structural path string. Dynamic expressions and templates are not supported.',
+        }),
+      ]),
+    );
+  });
+
   it('reports invalid dependsOn entries', () => {
     const renderer: RendererDefinition = {
       type: 'page',

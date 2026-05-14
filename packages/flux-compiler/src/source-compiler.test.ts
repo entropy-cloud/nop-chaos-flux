@@ -74,6 +74,26 @@ describe('compileDataSource', () => {
       expect(compiled.stopWhen).toBeDefined();
       expect(compiled.stopWhen?.isStatic).toBe(false);
     });
+
+    it('keeps structural publication paths static even when request args are dynamic', () => {
+      const schema: DataSourceSchema = {
+        type: 'data-source',
+        name: 'users.payload',
+        statusPath: 'users.status',
+        action: 'ajax',
+        args: {
+          url: '${"/api/users/" + userId}',
+        },
+      };
+
+      const compiled = compileDataSource('ds-structural', schema, expressionCompiler);
+
+      expect(compiled.targetPath?.isStatic).toBe(true);
+      expect(getStaticValue(compiled.targetPath)).toBe('users.payload');
+      expect(compiled.statusPath?.isStatic).toBe(true);
+      expect(getStaticValue(compiled.statusPath)).toBe('users.status');
+      expect(compiled.action?.isFullyStatic).toBe(false);
+    });
   });
 
   describe('formula data source', () => {

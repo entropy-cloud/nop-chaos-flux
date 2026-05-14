@@ -42,6 +42,24 @@ function compileOperationControl(schema: DataSourceSchema): CompiledOperationCon
   };
 }
 
+function compileStructuralPath(
+  value: string | undefined,
+): CompiledRuntimeValue<string> | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return {
+    kind: 'static',
+    isStatic: true,
+    node: {
+      kind: 'static-node',
+      value,
+    },
+    value,
+  };
+}
+
 export function compileDataSource(
   id: string,
   schema: DataSourceSchema,
@@ -58,10 +76,7 @@ export function compileDataSource(
   };
 
   if (schema.name !== undefined) {
-    compiled.targetPath = compiler.compileValue<string>(schema.name, {
-      ...options,
-      sourcePath: `${basePath}.name`,
-    });
+    compiled.targetPath = compileStructuralPath(schema.name);
   }
 
   if (isActionSource) {
@@ -129,10 +144,7 @@ export function compileDataSource(
   }
 
   if (schema.statusPath !== undefined) {
-    compiled.statusPath = compiler.compileValue<string>(schema.statusPath, {
-      ...options,
-      sourcePath: `${basePath}.statusPath`,
-    });
+    compiled.statusPath = compileStructuralPath(schema.statusPath);
   }
 
   if (schema.initialData !== undefined) {

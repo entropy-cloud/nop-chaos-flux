@@ -8,6 +8,12 @@ import type {
 } from '@nop-chaos/flux-core';
 import { META_FIELDS } from '@nop-chaos/flux-core';
 
+const BOOLEAN_META_FIELDS = new Set(['when', 'visible', 'hidden', 'disabled']);
+
+function normalizeBooleanLikeCandidate(candidate: unknown): boolean | undefined {
+  return typeof candidate === 'boolean' ? candidate : undefined;
+}
+
 export const DEFAULT_FIELD_RULES: Record<string, SchemaFieldRule> = {
   body: { key: 'body', kind: 'region', regionKey: 'body' },
   actions: { key: 'actions', kind: 'region', regionKey: 'actions' },
@@ -69,7 +75,11 @@ export function buildMetaProgram(
       case 'hidden':
       case 'disabled':
       case 'testid':
-        meta[key] = expressionCompiler.compileValue(value as any);
+        meta[key] = expressionCompiler.compileValue(value as any, {
+          transform: BOOLEAN_META_FIELDS.has(key)
+            ? normalizeBooleanLikeCandidate
+            : undefined,
+        });
         break;
     }
   }

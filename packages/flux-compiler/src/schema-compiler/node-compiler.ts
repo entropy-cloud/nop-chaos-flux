@@ -69,6 +69,10 @@ export function createCompileSingleNode(
   expressionCompiler: ExpressionCompiler,
   compileSchemaToTemplateNodes: CompileSchemaToTemplateNodesFn,
 ): CompileSingleNodeFn {
+  function normalizeBooleanLikeCandidate(candidate: unknown): boolean | undefined {
+    return typeof candidate === 'boolean' ? candidate : undefined;
+  }
+
   return function compileSingleNode(
     schema: BaseSchema,
     options: CompileNodeOptions,
@@ -207,11 +211,20 @@ export function createCompileSingleNode(
           expressionCompiler,
           symbolTable,
           sourcePath: `${path}.${key}`,
-          compileValue: <T = unknown>(input: T, sourcePathOverride?: string) =>
+          compileValue: <T = unknown>(
+            input: T,
+            sourcePathOverride?: string,
+            compileValueOptions?: Omit<
+              import('@nop-chaos/flux-core').ExpressionCompileOptions,
+              'sourcePath'
+            >,
+          ) =>
             expressionCompiler.compileValue(input, {
+              ...compileValueOptions,
               symbolTable,
               sourcePath: sourcePathOverride ?? `${path}.${key}`,
-              reportDiagnostic: (issue) => diagnostics.emit(issue),
+              reportDiagnostic:
+                compileValueOptions?.reportDiagnostic ?? ((issue) => diagnostics.emit(issue)),
             }),
           compileSchema: (input: SchemaInput, compileOptions?: CompileSchemaOptions) =>
             compileSchemaToTemplateNodes(
@@ -282,6 +295,7 @@ export function createCompileSingleNode(
       compiledPropEntries[key] = expressionCompiler.compileValue(normalizedValue, {
         symbolTable,
         sourcePath: `${path}.${key}`,
+        transform: rule.valueType === 'boolean' ? normalizeBooleanLikeCandidate : undefined,
         reportDiagnostic: (issue) => diagnostics.emit(issue),
       });
 

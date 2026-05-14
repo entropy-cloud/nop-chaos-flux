@@ -2,6 +2,48 @@ import { appendJsonPointer, type SchemaCompilerDiagnosticsContext } from './diag
 import { isPlainObject, normalizeRootPath } from '@nop-chaos/flux-core';
 import { validateHostAction, type HostActionValidationContext } from './host-action-validation.js';
 
+function isDynamicStructuralPath(value: string): boolean {
+  return value.includes('${') || value.includes('$@{');
+}
+
+export function validateStructuralPathField(input: {
+  value: unknown;
+  path: string;
+  field: 'name' | 'statusPath';
+  diagnostics: SchemaCompilerDiagnosticsContext;
+  enabled: boolean;
+  code: 'invalid-property-shape' | 'invalid-source-shape';
+}) {
+  if (input.value === undefined) {
+    return;
+  }
+
+  if (typeof input.value !== 'string' || input.value.length === 0) {
+    emitSchemaDiagnostic(
+      input.diagnostics,
+      {
+        code: input.code,
+        path: input.path,
+        message: `${input.field} must be a non-empty structural path string.`,
+      },
+      input.enabled,
+    );
+    return;
+  }
+
+  if (isDynamicStructuralPath(input.value)) {
+    emitSchemaDiagnostic(
+      input.diagnostics,
+      {
+        code: input.code,
+        path: input.path,
+        message: `${input.field} must be a static structural path string. Dynamic expressions and templates are not supported.`,
+      },
+      input.enabled,
+    );
+  }
+}
+
 export function emitSchemaDiagnostic(
   diagnostics: SchemaCompilerDiagnosticsContext,
   issue: {
@@ -247,6 +289,24 @@ export function validateSourceShape(
       enabled,
     );
   }
+
+  validateStructuralPathField({
+    value: value.name,
+    path: appendJsonPointer(path, 'name'),
+    field: 'name',
+    diagnostics,
+    enabled,
+    code: 'invalid-source-shape',
+  });
+
+  validateStructuralPathField({
+    value: value.statusPath,
+    path: appendJsonPointer(path, 'statusPath'),
+    field: 'statusPath',
+    diagnostics,
+    enabled,
+    code: 'invalid-source-shape',
+  });
 
   if (hasArgs) {
     validateApiSchemaShape(

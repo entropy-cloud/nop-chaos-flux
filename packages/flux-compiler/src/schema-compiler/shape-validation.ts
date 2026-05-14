@@ -32,8 +32,12 @@ import {
 } from './host-action-validation.js';
 import {
   isDynamicallyAuthoredSchemaValue,
+  summarizeActualSchemaValue,
   validateFluxValueShape,
 } from './flux-value-shape-validation.js';
+import { TABS_ITEM_BOOLEAN_FIELDS } from './tables.js';
+
+const BOOLEAN_META_KEYS = new Set(['when', 'visible', 'hidden', 'disabled']);
 
 function findNamespaceValidator(diagnostics: SchemaCompilerDiagnosticsContext, namespace: string) {
   return diagnostics.validation.namespaceValidators.find(
@@ -72,6 +76,64 @@ function validateKnownPropValue(
   if (!valid) {
     skippedPropKeys.add(key);
   }
+}
+
+function validateBooleanAuthoredValue(input: {
+  key: string;
+  value: unknown;
+  path: string;
+  diagnostics: SchemaCompilerDiagnosticsContext;
+  enabled: boolean;
+  source?: 'core' | 'renderer';
+}) {
+  if (
+    input.value === undefined ||
+    typeof input.value === 'boolean' ||
+    isDynamicallyAuthoredSchemaValue(input.value)
+  ) {
+    return;
+  }
+
+  emitSchemaDiagnostic(
+    input.diagnostics,
+    {
+      code: 'invalid-property-value',
+      path: input.path,
+      message: `Invalid boolean value for property "${input.key}". Use a boolean literal or a \${expr} expression, not ${summarizeActualSchemaValue(input.value)}.`,
+      source: input.source ?? 'core',
+    },
+    input.enabled,
+  );
+}
+
+function validateNestedBooleanFields(input: {
+  value: unknown;
+  path: string;
+  keys: readonly string[];
+  diagnostics: SchemaCompilerDiagnosticsContext;
+  enabled: boolean;
+}) {
+  if (!Array.isArray(input.value)) {
+    return;
+  }
+
+  input.value.forEach((item, index) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      return;
+    }
+
+    const record = item as Record<string, unknown>;
+    for (const key of input.keys) {
+      validateBooleanAuthoredValue({
+        key,
+        value: record[key],
+        path: appendJsonPointer(appendJsonPointer(input.path, index), key),
+        diagnostics: input.diagnostics,
+        enabled: input.enabled,
+        source: 'renderer',
+      });
+    }
+  });
 }
 
 function resolveNodeHostContext(
@@ -236,6 +298,36 @@ export function inspectSchemaNodeFields(
     }
 
     const rule = classifyField(renderer, key);
+
+    if (BOOLEAN_META_KEYS.has(key) && rule.kind === 'meta') {
+      validateBooleanAuthoredValue({
+        key,
+        value,
+        path: keyPath,
+        diagnostics,
+        enabled,
+        source: 'core',
+      });
+    } else if (rule.kind === 'prop' && rule.valueType === 'boolean') {
+      validateBooleanAuthoredValue({
+        key,
+        value,
+        path: keyPath,
+        diagnostics,
+        enabled,
+        source: 'renderer',
+      });
+    }
+
+    if (renderer.type === 'tabs' && key === 'items') {
+      validateNestedBooleanFields({
+        value,
+        path: keyPath,
+        keys: TABS_ITEM_BOOLEAN_FIELDS,
+        diagnostics,
+        enabled,
+      });
+    }
 
     if (rule.kind === 'event') {
       validateActionShape(value, keyPath, diagnostics, enabled, hostContext);

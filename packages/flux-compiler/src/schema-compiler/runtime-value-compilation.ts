@@ -9,6 +9,16 @@ import type {
 } from '@nop-chaos/flux-core';
 import { isPlainObject, shallowEqual } from '@nop-chaos/flux-core';
 
+type EvaluatedRuntimeTree<T> = T extends CompiledRuntimeValue<infer U>
+  ? U
+  : T extends readonly (infer I)[]
+    ? EvaluatedRuntimeTree<I>[]
+    : T extends (infer I)[]
+      ? EvaluatedRuntimeTree<I>[]
+      : T extends Record<string, unknown>
+        ? { [K in keyof T]: EvaluatedRuntimeTree<T[K]> }
+        : T;
+
 function isCompiledRuntimeValue(value: unknown): value is CompiledRuntimeValue<unknown> {
   return (
     typeof value === 'object' &&
@@ -60,16 +70,18 @@ function evaluateValueWithState<T>(
 
 export function compileRuntimeValueTree<T = unknown>(
   value: T,
-): CompiledRuntimeValue<T> {
+): CompiledRuntimeValue<EvaluatedRuntimeTree<T>> {
   if (isCompiledRuntimeValue(value)) {
-    return value as CompiledRuntimeValue<T>;
+    return value as CompiledRuntimeValue<EvaluatedRuntimeTree<T>>;
   }
 
   if (Array.isArray(value)) {
     const items = value.map((item) => compileRuntimeValueTree(item));
     if (items.every((item) => item.kind === 'static')) {
       const staticItems = items as Array<Extract<CompiledRuntimeValue<unknown>, { kind: 'static' }>>;
-      return createStaticRuntimeValue(staticItems.map((item) => item.value) as T);
+      return createStaticRuntimeValue(
+        staticItems.map((item) => item.value) as EvaluatedRuntimeTree<T>,
+      );
     }
 
     const arrayNode = {
@@ -142,7 +154,7 @@ export function compileRuntimeValueTree<T = unknown>(
           reusedReference: false,
         };
       },
-    } as CompiledRuntimeValue<T>;
+      } as CompiledRuntimeValue<EvaluatedRuntimeTree<T>>;
   }
 
   if (isPlainObject(value)) {
@@ -158,7 +170,7 @@ export function compileRuntimeValueTree<T = unknown>(
         Extract<CompiledRuntimeValue<unknown>, { kind: 'static' }>
       >;
       return createStaticRuntimeValue(
-        Object.fromEntries(keys.map((key) => [key, staticEntries[key].value])) as T,
+        Object.fromEntries(keys.map((key) => [key, staticEntries[key].value])) as EvaluatedRuntimeTree<T>,
       );
     }
 
@@ -243,8 +255,8 @@ export function compileRuntimeValueTree<T = unknown>(
           reusedReference: false,
         };
       },
-    } as CompiledRuntimeValue<T>;
+    } as CompiledRuntimeValue<EvaluatedRuntimeTree<T>>;
   }
 
-  return createStaticRuntimeValue(value);
+  return createStaticRuntimeValue(value as EvaluatedRuntimeTree<T>);
 }

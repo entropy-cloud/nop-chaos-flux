@@ -6,6 +6,15 @@ import type {
 } from '@nop-chaos/flux-core';
 import { extractNestedSchemaRegions } from './regions.js';
 
+function normalizeBooleanLikeField(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+  if (value === undefined) {
+    return;
+  }
+
+  record[key] = { __nopPreserveLiteral: true, value: value === true };
+}
+
 export const TABLE_COLUMN_REGION_FIELDS = [
   { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
   {
@@ -52,6 +61,8 @@ export const TABS_ITEM_REGION_FIELDS = [
     isolate: true,
   },
 ] as const;
+
+export const TABS_ITEM_BOOLEAN_FIELDS = ['disabled'] as const;
 
 export const VARIANT_ITEM_REGION_FIELDS = [
   { key: 'content', regionKeySuffix: 'content', compiledKey: 'contentRegionKey' },
@@ -118,14 +129,17 @@ function normalizeTabsItems(
       return item;
     }
 
-    return extractNestedSchemaRegions({
+    const normalized = extractNestedSchemaRegions({
       candidate: item as Record<string, unknown>,
       itemRegionPath: `${path}.items[${index}]`,
       itemRegionKeyPrefix: `items.${index}`,
       rules: TABS_ITEM_REGION_FIELDS,
       regions,
       compileSchema,
-    }).value;
+    }).value as Record<string, unknown>;
+
+    normalizeBooleanLikeField(normalized, 'disabled');
+    return normalized;
   });
 }
 

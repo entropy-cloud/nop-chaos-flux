@@ -116,4 +116,61 @@ describe('schema compiler renderer contract integration', () => {
     expect(propsProgram.kind).toBe('static');
     expect(propsProgram.value).toEqual({ type: 'contract-button' });
   });
+
+  it('accepts ${expr} for boolean props and normalizes non-boolean runtime results to undefined', () => {
+    const renderer: RendererDefinition = {
+      type: 'contract-boolean',
+      component: () => null,
+      fields: [{ key: 'disabled', kind: 'prop', valueType: 'boolean' }],
+    };
+
+    const diagnostics = validateSchema({
+      schema: {
+        type: 'contract-boolean',
+        disabled: '${flag}',
+      },
+      registry: createRendererRegistry([renderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    expect(diagnostics).toEqual([]);
+
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([renderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = compiler.compile({
+      type: 'contract-boolean',
+      disabled: '${flag}',
+    });
+    const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    expect(root.propsProgram.kind).toBe('dynamic');
+  });
+
+  it('rejects ordinary string literals for boolean props', () => {
+    const renderer: RendererDefinition = {
+      type: 'contract-boolean',
+      component: () => null,
+      fields: [{ key: 'disabled', kind: 'prop', valueType: 'boolean' }],
+    };
+
+    const diagnostics = validateSchema({
+      schema: {
+        type: 'contract-boolean',
+        disabled: 'false',
+      },
+      registry: createRendererRegistry([renderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-property-value',
+          path: '/disabled',
+        }),
+      ]),
+    );
+  });
 });
