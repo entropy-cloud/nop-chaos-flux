@@ -718,7 +718,7 @@
           "action": "designer:toggle-grid",
           "icon": "grid-3x3",
           "label": "网格",
-          "active": "gridEnabled"
+          "active": "${gridEnabled}"
         },
         {
           "type": "button",
@@ -731,21 +731,21 @@
           "action": "designer:undo",
           "icon": "rotate-ccw",
           "label": "撤销",
-          "disabled": "!canUndo"
+          "disabled": "${!canUndo}"
         },
         {
           "type": "button",
           "action": "designer:redo",
           "icon": "rotate-cw",
           "label": "重做",
-          "disabled": "!canRedo"
+          "disabled": "${!canRedo}"
         },
         {
           "type": "button",
           "action": "designer:restore",
           "icon": "download",
           "label": "恢复",
-          "disabled": "!isDirty"
+          "disabled": "${!isDirty}"
         },
         { "type": "button", "action": "designer:export", "icon": "file-json", "label": "JSON" },
         { "type": "spacer" },
@@ -755,7 +755,7 @@
           "icon": "save",
           "label": "保存",
           "variant": "default",
-          "disabled": "!isDirty"
+          "disabled": "${!isDirty}"
         }
       ]
     },

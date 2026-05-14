@@ -142,7 +142,7 @@ test.describe('input-email renderer', () => {
 // input-password
 // ---------------------------------------------------------------------------
 test.describe('input-password renderer', () => {
-  test('write: mismatched password fields keep the live masked values after submit', async ({
+  test('write: confirm-password example only claims masked-input behavior, not validator enforcement', async ({
     page,
   }) => {
     const lab = new ComponentLabHelper(page);
@@ -158,7 +158,11 @@ test.describe('input-password renderer', () => {
     await expect(newPasswordInput).toBeVisible();
     await expect(confirmPasswordInput).toBeVisible();
 
-    // Fill mismatched values and submit — custom validation may not fire in current runtime
+    await expect(stage).toContainText(
+      'validates stable masked input behavior rather than overclaiming richer validation UI',
+    );
+
+    // The current contract only guarantees masked inputs remain stable after submit.
     await newPasswordInput.fill('password123');
     await confirmPasswordInput.fill('different123');
     await expect(newPasswordInput).toHaveAttribute('type', 'password');
@@ -166,6 +170,7 @@ test.describe('input-password renderer', () => {
     await stage.getByRole('button', { name: 'Set Password' }).click();
     await expect(newPasswordInput).toHaveValue('password123');
     await expect(confirmPasswordInput).toHaveValue('different123');
+    await expect(stage.locator('[data-slot="field-error"]')).toHaveCount(0);
   });
 
   test('read: basic password field remains masked', async ({ page }) => {
