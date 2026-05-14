@@ -42,12 +42,13 @@ export function createExpressionCompiler(
         kind: 'dynamic',
         isStatic: false,
         node,
+        transform: options?.transform,
         createState() {
           return createStateFromNode(node);
         },
         exec(context: EvalContext, env: RendererEnv, state?: RuntimeValueState<T>) {
           const resolvedState = state ?? createStateFromNode(node);
-          return evaluateNode(node, context, env, resolvedState.root);
+          return evaluateNode(node, context, env, resolvedState.root, options?.transform);
         },
       } as DynamicRuntimeValue<T>;
     },

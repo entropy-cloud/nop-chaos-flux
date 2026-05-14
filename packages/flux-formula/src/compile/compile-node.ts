@@ -24,7 +24,12 @@ function withSourcePath(
     sourcePath: segment.startsWith('[')
       ? `${options.sourcePath}${segment}`
       : `${options.sourcePath}.${segment}`,
+    transform: undefined,
   };
+}
+
+function applyTransform<T>(value: T, options?: ExpressionCompileOptions): T {
+  return options?.transform ? (options.transform(value) as T) : value;
 }
 
 function compileNode<T>(
@@ -39,7 +44,7 @@ function compileNode<T>(
   ) {
     return {
       kind: 'static-node',
-      value: (input as Record<string, unknown>).value as T,
+      value: applyTransform((input as Record<string, unknown>).value as T, options),
     } as StaticValueNode<T>;
   }
 
@@ -47,7 +52,7 @@ function compileNode<T>(
     if (!formulaCompiler.hasExpression(input)) {
       return {
         kind: 'static-node',
-        value: input,
+        value: applyTransform(input, options),
       } as StaticValueNode<T>;
     }
 
@@ -59,7 +64,7 @@ function compileNode<T>(
         if (isStaticVal) {
           return {
             kind: 'static-node',
-            value: compiled.staticValue,
+            value: applyTransform(compiled.staticValue, options),
           } as StaticValueNode<T>;
         }
 
@@ -77,7 +82,7 @@ function compileNode<T>(
         });
         return {
           kind: 'static-node',
-          value: input,
+          value: applyTransform(input, options),
         } as StaticValueNode<T>;
       }
     }
@@ -87,7 +92,7 @@ function compileNode<T>(
       if (hasStaticValue(compiled)) {
         return {
           kind: 'static-node',
-          value: compiled.staticValue,
+          value: applyTransform(compiled.staticValue, options),
         } as StaticValueNode<T>;
       }
 
@@ -105,7 +110,7 @@ function compileNode<T>(
       });
       return {
         kind: 'static-node',
-        value: input,
+        value: applyTransform(input, options),
       } as StaticValueNode<T>;
     }
   }
@@ -118,7 +123,7 @@ function compileNode<T>(
     if (items.every((item) => item.kind === 'static-node')) {
       return {
         kind: 'static-node',
-        value: input,
+        value: applyTransform(input, options),
       } as StaticValueNode<T>;
     }
 
@@ -142,7 +147,7 @@ function compileNode<T>(
     if (!hasDynamic) {
       return {
         kind: 'static-node',
-        value: input,
+        value: applyTransform(input, options),
       } as StaticValueNode<T>;
     }
 
@@ -155,7 +160,7 @@ function compileNode<T>(
 
   return {
     kind: 'static-node',
-    value: input,
+    value: applyTransform(input, options),
   } as StaticValueNode<T>;
 }
 

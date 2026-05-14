@@ -79,18 +79,19 @@ function evaluateNode<T>(
   context: EvalContext,
   env: RendererEnv,
   stateNode: RuntimeValueStateNode,
+  transform?: (value: unknown) => unknown,
 ): ValueEvaluationResult<T> {
   switch (node.kind) {
     case 'static-node':
       return {
-        value: node.value,
+        value: transform ? (transform(node.value) as T) : node.value,
         changed: false,
         reusedReference: true,
       };
     case 'expression-node':
-      return evaluateLeaf(node, context, env, stateNode);
+      return evaluateLeaf(node, context, env, stateNode, transform);
     case 'template-node':
-      return evaluateLeaf(node, context, env, stateNode);
+      return evaluateLeaf(node, context, env, stateNode, transform);
     case 'array-node':
       return evaluateArray(node, context, env, stateNode) as ValueEvaluationResult<T>;
     case 'object-node':
@@ -103,6 +104,7 @@ function evaluateLeaf<T>(
   context: EvalContext,
   env: RendererEnv,
   stateNode: RuntimeValueStateNode,
+  transform?: (value: unknown) => unknown,
 ): ValueEvaluationResult<T> {
   if (stateNode.kind !== 'leaf-state') {
     throw new Error(`Invalid runtime state for ${node.kind}`);
@@ -114,6 +116,9 @@ function evaluateLeaf<T>(
   let value: T;
   try {
     value = node.compiled.exec(context, env);
+    if (transform) {
+      value = transform(value) as T;
+    }
   } finally {
     context.collector = prevCollector;
   }
