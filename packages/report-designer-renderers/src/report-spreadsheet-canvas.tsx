@@ -233,6 +233,7 @@ export function ReportSpreadsheetCanvas({
         getCellMetadata={getCellMetadata}
         onFieldDragOver={handleFieldDragOver}
         onFieldDragLeave={handleFieldDragLeave}
+        readonly={ssSnapshot.runtime.readonly}
       />
 
       <SheetTabBar
@@ -245,6 +246,7 @@ export function ReportSpreadsheetCanvas({
         onRemoveSheet={handleRemoveSheet}
         onRenameSheet={handleRenameSheet}
         canRemoveSheet={ssSnapshot.workbook.sheets.length > 1}
+        readOnly={ssSnapshot.runtime.readonly}
       />
     </div>
   );

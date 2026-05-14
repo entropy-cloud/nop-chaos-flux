@@ -45,6 +45,12 @@ export {
   useReportDesignerHostScope,
 } from './host-data.js';
 
+export {
+  createReportDesignerActionProvider,
+  REPORT_DESIGNER_HOST_METHODS,
+  toReportDesignerActionResult,
+} from './host-action-provider.js';
+
 export type { ReportInspectorShellSchema } from './types.js';
 
 export { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';

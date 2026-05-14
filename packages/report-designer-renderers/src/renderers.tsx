@@ -1,4 +1,4 @@
-import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
+import type { FieldCompileContext, RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
 import { registerRendererDefinitions } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import { reportDesignerHostContract } from './report-designer-manifest.js';
@@ -12,23 +12,41 @@ import type {
   ReportInspectorSchema,
   ReportToolbarSchema,
 } from './schemas.js';
+import { ReportFieldPanelRenderer } from './field-panel-renderer.js';
+import { ReportInspectorShellRenderer } from './inspector-shell-renderer.js';
+import { ReportDesignerPageRenderer } from './page-renderer.js';
+import { ReportInspectorRenderer } from './report-designer-inspector.js';
+import { ReportToolbarRenderer } from './report-designer-toolbar.js';
 export { defineReportDesignerPageSchema } from './types.js';
 
-const LazyReportFieldPanelRenderer = createLazyRendererComponent<ReportFieldPanelSchema>(
-  () => import('./field-panel-renderer.js').then((m) => m.ReportFieldPanelRenderer),
-);
-const LazyReportInspectorShellRenderer = createLazyRendererComponent<ReportInspectorShellSchema>(
-  () => import('./inspector-shell-renderer.js').then((m) => m.ReportInspectorShellRenderer),
-);
-const LazyReportDesignerPageRenderer = createLazyRendererComponent<ReportDesignerPageSchema>(
-  () => import('./page-renderer.js').then((m) => m.ReportDesignerPageRenderer),
-);
-const LazyReportInspectorRenderer = createLazyRendererComponent<ReportInspectorSchema>(
-  () => import('./report-designer-inspector.js').then((m) => m.ReportInspectorRenderer),
-);
-const LazyReportToolbarRenderer = createLazyRendererComponent<ReportToolbarSchema>(
-  () => import('./report-designer-toolbar.js').then((m) => m.ReportToolbarRenderer),
-);
+const useEagerRenderersInTests =
+  (globalThis as { process?: { env?: { VITEST?: string } } }).process?.env?.VITEST === 'true';
+
+const LazyReportFieldPanelRenderer = useEagerRenderersInTests
+  ? ReportFieldPanelRenderer
+  : createLazyRendererComponent<ReportFieldPanelSchema>(
+      () => import('./field-panel-renderer.js').then((m) => m.ReportFieldPanelRenderer),
+    );
+const LazyReportInspectorShellRenderer = useEagerRenderersInTests
+  ? ReportInspectorShellRenderer
+  : createLazyRendererComponent<ReportInspectorShellSchema>(
+      () => import('./inspector-shell-renderer.js').then((m) => m.ReportInspectorShellRenderer),
+    );
+const LazyReportDesignerPageRenderer = useEagerRenderersInTests
+  ? ReportDesignerPageRenderer
+  : createLazyRendererComponent<ReportDesignerPageSchema>(
+      () => import('./page-renderer.js').then((m) => m.ReportDesignerPageRenderer),
+    );
+const LazyReportInspectorRenderer = useEagerRenderersInTests
+  ? ReportInspectorRenderer
+  : createLazyRendererComponent<ReportInspectorSchema>(
+      () => import('./report-designer-inspector.js').then((m) => m.ReportInspectorRenderer),
+    );
+const LazyReportToolbarRenderer = useEagerRenderersInTests
+  ? ReportToolbarRenderer
+  : createLazyRendererComponent<ReportToolbarSchema>(
+      () => import('./report-designer-toolbar.js').then((m) => m.ReportToolbarRenderer),
+    );
 
 const actionIntentShape = {
   kind: 'union' as const,
@@ -41,6 +59,70 @@ const actionIntentShape = {
     { kind: 'literal' as const, value: 'info' },
   ],
 };
+
+function compileToolbarItemsOverride(
+  value: unknown,
+  context: FieldCompileContext,
+): unknown {
+  if (!Array.isArray(value)) {
+    return context.compileValue(value);
+  }
+
+  return value.map((item, index) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      return context.compileValue(item, `${context.sourcePath}[${index}]`);
+    }
+
+    return compileToolbarItem(item as Record<string, unknown>, context, index);
+  });
+}
+
+function validateReportToolbarItems(context: import('@nop-chaos/flux-core').RendererSchemaValidationContext<ReportToolbarSchema>) {
+  const items = context.schema.itemsOverride;
+  if (!Array.isArray(items)) {
+    return;
+  }
+
+  items.forEach((item, index) => {
+    for (const key of ['disabled', 'active', 'visible'] as const) {
+      const value = item[key];
+      if (value === undefined || typeof value === 'boolean') {
+        continue;
+      }
+      if (typeof value === 'string' && value.trim().startsWith('${') && value.trim().endsWith('}')) {
+        continue;
+      }
+
+      context.emit({
+        code: 'invalid-property-value',
+        path: `/itemsOverride/${index}/${key}`,
+        message: `Invalid boolean value for report toolbar item "${key}". Use a boolean literal or a \${expr} expression.`,
+      });
+    }
+  });
+}
+
+function compileToolbarItem(
+  item: Record<string, unknown>,
+  context: FieldCompileContext,
+  index: number,
+) {
+  const normalizeBooleanLikeCandidate = (candidate: unknown): boolean | undefined =>
+    typeof candidate === 'boolean' ? candidate : undefined;
+  const result: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(item)) {
+    const sourcePath = `${context.sourcePath}[${index}].${key}`;
+    result[key] = context.compileValue(value, sourcePath);
+    if (key === 'disabled' || key === 'active' || key === 'visible') {
+      result[key] = context.compileValue(value, sourcePath, {
+        transform: normalizeBooleanLikeCandidate,
+      });
+    }
+  }
+
+  return result;
+}
 
 export type { ReportDesignerPageSchemaInput, ReportDesignerPageSchema };
 
@@ -153,7 +235,8 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
         editorType: 'object-array',
       },
     },
-    fields: [{ key: 'itemsOverride', kind: 'prop' }],
+    schemaValidator: validateReportToolbarItems,
+    fields: [{ key: 'itemsOverride', kind: 'prop', compile: compileToolbarItemsOverride }],
   },
 ];
 

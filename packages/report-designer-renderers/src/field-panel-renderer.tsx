@@ -74,7 +74,7 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
     }
 
     const fieldPayload = createFieldPayload(source, field);
-    await resolved.provider.invoke(
+    const result = await resolved.provider.invoke(
       resolved.method,
       {
         field: fieldPayload,
@@ -95,6 +95,12 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
         actionScope,
       },
     );
+
+    if (!result.ok) {
+      throw result.error instanceof Error
+        ? result.error
+        : new Error(result.error ? String(result.error) : t('flux.common.saveFailed'));
+    }
   }
 
   function handleKeyboardInsertError(error: unknown) {

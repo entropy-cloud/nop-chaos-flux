@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useOwnScopeSelector } from '@nop-chaos/flux-react';
+import { reportRuntimeHostIssue, type RendererComponentProps } from '@nop-chaos/flux-core';
+import { useOwnScopeSelector, useRendererRuntime } from '@nop-chaos/flux-react';
 import { Badge, Button, Switch, cn } from '@nop-chaos/ui';
 import type { ReportToolbarSchema } from './schemas.js';
 import { DEFAULT_TOOLBAR_ITEMS } from './report-designer-toolbar-defaults.js';
 import {
-  evalBooleanExpr,
+  evalBooleanLike,
   evalTextTemplate,
   mergeToolbarItems,
   toCommand,
@@ -13,35 +13,59 @@ import {
 import type { ToolbarItem } from './report-designer-toolbar-helpers.js';
 
 export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolbarSchema>) {
+  const runtime = useRendererRuntime();
+  const scopeSnapshot = useOwnScopeSelector((data: Record<string, unknown>) => data, Object.is);
   const itemsOverride = props.props.itemsOverride as ToolbarItem[] | undefined;
-  const snapshot = useOwnScopeSelector(
-    (data: Record<string, unknown>) => ({
-      documentName: data.documentName,
-      dirty: data.dirty,
-      canUndo: data.canUndo,
-      canRedo: data.canRedo,
-      selectionTarget: data.selectionTarget,
-      runtime: data.runtime,
-      reportStatus: data.reportStatus,
-    }),
-    (a, b) =>
-      a.documentName === b.documentName &&
-      a.dirty === b.dirty &&
-      a.canUndo === b.canUndo &&
-      a.canRedo === b.canRedo &&
-      a.selectionTarget === b.selectionTarget &&
-      a.runtime === b.runtime &&
-      a.reportStatus === b.reportStatus,
-  ) as Record<string, unknown>;
   const items = useMemo(
     () => mergeToolbarItems(DEFAULT_TOOLBAR_ITEMS, itemsOverride),
     [itemsOverride],
   );
+  const runtimeSnapshot = useMemo(
+    () => ({ ...scopeSnapshot, ...props.props }),
+    [scopeSnapshot, props.props],
+  );
 
-  function handleButtonClick(item: ToolbarItem) {
+  async function handleButtonClick(item: ToolbarItem) {
     const command = toCommand(item.action);
     if (!command) return;
-    void props.helpers.dispatch(command);
+
+    try {
+      const result = await props.helpers.dispatch(command);
+      if (result.ok) {
+        return;
+      }
+
+      reportRuntimeHostIssue({
+        env: runtime.env,
+        level: 'warning',
+        message:
+          result.error instanceof Error && result.error.message
+            ? result.error.message
+            : 'Report toolbar action failed',
+        error: result.error,
+        phase: 'action',
+        path: props.path,
+        details: {
+          operation: 'report-toolbar-command',
+          itemId: item.id,
+          action: item.action,
+        },
+      });
+    } catch (error: unknown) {
+      reportRuntimeHostIssue({
+        env: runtime.env,
+        level: 'warning',
+        message: error instanceof Error && error.message ? error.message : 'Report toolbar action failed',
+        error,
+        phase: 'action',
+        path: props.path,
+        details: {
+          operation: 'report-toolbar-command',
+          itemId: item.id,
+          action: item.action,
+        },
+      });
+    }
   }
 
   return (
@@ -54,8 +78,8 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
       {items.map((item, index) => {
-        const visible = item.visible === undefined ? true : evalBooleanExpr(item.visible, snapshot);
-        if (!visible) {
+        const visible = evalBooleanLike(item.visible, runtimeSnapshot);
+        if (visible === false) {
           return null;
         }
         switch (item.type) {
@@ -64,7 +88,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
           case 'spacer':
             return <span key={item.id ?? `spacer-${index}`} className="flex-1" />;
           case 'title': {
-            const text = evalTextTemplate(item.text ?? item.body, snapshot);
+            const text = evalTextTemplate(item.text ?? item.body, runtimeSnapshot);
             return (
               <div key={item.id ?? `title-${index}`} className="font-semibold">
                 {text}
@@ -72,7 +96,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
             );
           }
           case 'badge': {
-            const text = evalTextTemplate(item.text ?? item.body, snapshot);
+            const text = evalTextTemplate(item.text ?? item.body, runtimeSnapshot);
             return (
               <Badge
                 key={item.id ?? `badge-${index}`}
@@ -83,7 +107,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
             );
           }
           case 'text': {
-            const text = evalTextTemplate(item.text ?? item.body, snapshot);
+            const text = evalTextTemplate(item.text ?? item.body, runtimeSnapshot);
             return (
               <span key={item.id ?? `text-${index}`} className="text-muted-foreground">
                 {text}
@@ -91,8 +115,8 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
             );
           }
           case 'button': {
-            const disabled = evalBooleanExpr(item.disabled, snapshot);
-            const active = evalBooleanExpr(item.active, snapshot);
+            const disabled = evalBooleanLike(item.disabled, runtimeSnapshot) === true;
+            const active = evalBooleanLike(item.active, runtimeSnapshot) === true;
             return (
               <Button
                 key={item.id ?? `button-${index}`}
@@ -101,15 +125,17 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
                 size="sm"
                 disabled={disabled}
                 data-active={active || undefined}
-                onClick={() => handleButtonClick(item)}
+                  onClick={() => {
+                    void handleButtonClick(item);
+                  }}
               >
                 {item.label}
               </Button>
             );
           }
           case 'switch': {
-            const checked = evalBooleanExpr(item.active, snapshot);
-            const disabled = evalBooleanExpr(item.disabled, snapshot);
+            const checked = evalBooleanLike(item.active, runtimeSnapshot) === true;
+            const disabled = evalBooleanLike(item.disabled, runtimeSnapshot) === true;
             const switchId = `report-toolbar-switch-${item.id ?? index}`;
             return (
               <span key={item.id ?? `switch-${index}`} className="flex items-center gap-1.5">
@@ -121,7 +147,9 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
                 <Switch
                   checked={checked}
                   disabled={disabled}
-                  onCheckedChange={() => handleButtonClick(item)}
+                   onCheckedChange={() => {
+                     void handleButtonClick(item);
+                   }}
                   aria-label={item.label ?? item.id ?? `switch-${index}`}
                   aria-labelledby={item.label ? switchId : undefined}
                 />

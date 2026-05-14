@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import type { BaseSchema } from '@nop-chaos/flux-core';
 import type { ToolbarItem, ReportToolbarSchema } from './schemas.js';
 import { defineReportDesignerPageSchema } from './types.js';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
@@ -117,8 +118,9 @@ describe('defineReportDesignerPageSchema with toolbar', () => {
     });
 
     expect(schema.type).toBe('report-designer-page');
-    expect(schema.toolbar?.type).toBe('report-toolbar');
-    expect(schema.toolbar?.itemsOverride).toHaveLength(3);
+    const toolbar = schema.toolbar as ReportToolbarSchema | undefined;
+    expect(toolbar?.type).toBe('report-toolbar');
+    expect(toolbar?.itemsOverride).toHaveLength(3);
   });
 
   it('should accept page schema without toolbar', () => {
@@ -129,5 +131,24 @@ describe('defineReportDesignerPageSchema with toolbar', () => {
     });
 
     expect(schema.toolbar).toBeUndefined();
+  });
+
+  it('accepts generic region schemas for toolbar, fieldPanel, and inspector', () => {
+    const toolbar: BaseSchema = { type: 'text', text: 'Toolbar override' } as BaseSchema;
+    const fieldPanel: BaseSchema = { type: 'text', text: 'Field panel override' } as BaseSchema;
+    const inspector: BaseSchema = { type: 'text', text: 'Inspector override' } as BaseSchema;
+
+    const schema = defineReportDesignerPageSchema({
+      type: 'report-designer-page',
+      document: doc,
+      designer: { kind: 'report-template' },
+      toolbar,
+      fieldPanel,
+      inspector,
+    });
+
+    expect(schema.toolbar).toEqual(toolbar);
+    expect(schema.fieldPanel).toEqual(fieldPanel);
+    expect(schema.inspector).toEqual(inspector);
   });
 });

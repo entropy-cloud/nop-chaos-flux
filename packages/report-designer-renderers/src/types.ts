@@ -5,11 +5,6 @@ import type {
   ReportDesignerProfile,
   ReportTemplateDocument,
 } from '@nop-chaos/report-designer-core';
-import type {
-  ReportFieldPanelSchema,
-  ReportInspectorSchema,
-  ReportToolbarSchema,
-} from './schemas.js';
 
 export type {
   ToolbarItem,
@@ -33,9 +28,9 @@ export interface ReportDesignerPageSchemaInput {
   profile?: ReportDesignerProfile;
   adapters?: Partial<ReportDesignerAdapterRegistry>;
   statusPath?: string;
-  toolbar?: ReportToolbarSchema;
-  fieldPanel?: ReportFieldPanelSchema;
-  inspector?: ReportInspectorSchema;
+  toolbar?: BaseSchema | BaseSchema[];
+  fieldPanel?: BaseSchema | BaseSchema[];
+  inspector?: BaseSchema | BaseSchema[];
   dialogs?: BaseSchema | BaseSchema[];
   body?: BaseSchema | BaseSchema[];
 }
@@ -51,7 +46,6 @@ export function defineReportDesignerPageSchema<T extends ReportDesignerPageSchem
 export interface ReportInspectorShellSchema extends BaseSchema {
   type: 'report-inspector-shell';
   title?: string | SchemaInput;
-  emptyLabel?: string;
   noSelectionLabel?: string;
   errorLabel?: string;
 }

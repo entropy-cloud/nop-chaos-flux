@@ -338,6 +338,58 @@ describe('ReportFieldPanelRenderer', () => {
     });
   });
 
+  it('notifies when keyboard insertion resolves ok:false', async () => {
+    const notify = vi.fn();
+    const invoke = vi.fn().mockResolvedValue({ ok: false, error: new Error('Resolved insert failed') });
+    const createScope = vi.fn(() => ({ id: 'field-scope' }));
+    mockActionScope = {
+      resolve: vi.fn(() => ({
+        method: 'dropFieldToTarget',
+        provider: { invoke },
+      })),
+    };
+    mockRuntime = { runtimeId: 'test-runtime', env: { notify } };
+    mockScopeData = {
+      selectionTarget: {
+        kind: 'cell',
+        cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+      },
+    };
+
+    render(
+      <ReportFieldPanelRenderer
+        {...({
+          id: 'field-panel',
+          path: 'page.body.0',
+          schema: { type: 'report-field-panel' },
+          templateNode: { validationOwnerPlan: undefined },
+          node: { scope: {} },
+          props: {
+            type: 'report-field-panel',
+            fieldSources: sampleFieldSources,
+            keyboardInsertEnabled: true,
+          },
+          meta: {},
+          regions: {},
+          events: {},
+          helpers: {
+            createScope,
+          },
+        } as any)}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: '将字段 User Name 插入到当前选择',
+      }),
+    );
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('warning', 'Resolved insert failed');
+    });
+  });
+
   it('ships package-owned field panel styling markers', () => {
     renderFieldPanel({ fieldSources: sampleFieldSources });
 

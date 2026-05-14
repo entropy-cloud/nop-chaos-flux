@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 import React from 'react';
-import { describe, expect, it, afterEach } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { describe, expect, it, afterEach, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
+import { RuntimeContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
@@ -11,14 +12,18 @@ import {
   type ReportDesignerConfig,
 } from '@nop-chaos/report-designer-core';
 import { defineReportDesignerPageSchema, registerReportDesignerRenderers } from './index.js';
+import { ReportToolbarRenderer } from './report-designer-toolbar.js';
+
+const notify = vi.fn();
 
 const env: RendererEnv = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
-  notify: () => undefined,
+  notify,
 };
 
 afterEach(() => {
   cleanup();
+  notify.mockReset();
 });
 
 function createRuntimeConfig(overrides?: Partial<ReportDesignerConfig>): ReportDesignerConfig {
@@ -100,5 +105,59 @@ describe('report-toolbar renderer', () => {
     renderToolbarInPage({});
 
     expect(screen.queryByText('Stop')).toBeNull();
+  });
+
+  it('notifies when toolbar dispatch resolves ok:false', async () => {
+    const dispatch = vi.fn().mockResolvedValue({ ok: false, error: new Error('Toolbar failed') });
+    const runtime = { env };
+    const ownScopeData = {};
+    const scope = {
+      id: 'scope',
+      path: '$',
+      readOwn: () => ownScopeData,
+      readVisible: () => ownScopeData,
+      materializeVisible: () => ownScopeData,
+      store: {
+        subscribe: () => () => undefined,
+        getSnapshot: () => ownScopeData,
+      },
+    } as any;
+
+    render(
+      <RuntimeContext.Provider value={runtime as any}>
+        <ScopeContext.Provider value={scope}>
+          <ReportToolbarRenderer
+            {...({
+              id: 'toolbar',
+              path: 'page.toolbar',
+              schema: { type: 'report-toolbar' },
+              templateNode: {},
+              node: {},
+              props: {
+                type: 'report-toolbar',
+                itemsOverride: [
+                  {
+                    id: 'custom-btn',
+                    type: 'button',
+                    label: 'Custom',
+                    action: 'report-designer:save',
+                  },
+                ],
+              },
+              meta: {},
+              regions: {},
+              events: {},
+              helpers: { dispatch },
+            } as any)}
+          />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Custom' }));
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('warning', 'Toolbar failed');
+    });
   });
 });
