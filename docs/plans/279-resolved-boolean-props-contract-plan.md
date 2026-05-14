@@ -1,6 +1,6 @@
 # 279 Resolved Boolean Props Contract Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-14
 > Source: `docs/architecture/renderer-runtime.md`, `docs/architecture/field-binding-and-renderer-contract.md`, `docs/architecture/flux-core.md`
 > Related: `docs/plans/183-renderer-props-and-host-neutral-typing-convergence-plan.md`, `docs/plans/209-renderer-definition-fields-only-convergence-plan.md`, `docs/plans/272-compile-prop-value-validation-and-variant-convergence-plan.md`
@@ -16,7 +16,7 @@
 - `packages/flux-runtime/src/node-runtime.ts` 现在在 owner/runtime 层完成 boolean-like normalization 与 meta projection：`visible` / `hidden` / `when` 继续由 `NodeRenderer` 持有，`disabled` / `className` / `frameClassName` / `testid` / `cid` / `readOnly` / `required` 投影进 `props.props`。
 - Concrete renderer consumers across `flux-renderers-form`, `flux-renderers-form-advanced`, `flux-renderers-data`, `flux-code-editor`, `report-designer-renderers`, and `flow-designer-renderers` now consume resolved boolean/meta props directly instead of renderer-side compatibility coercion.
 - Focused regressions found during rollout are fixed: `useFieldHandlers()` no longer requires `RendererRuntime` outside `SchemaRenderer`, form-owned `onSubmitError` / `onValidateError` no longer trigger duplicate fallback notifications, and the earlier `silent: true` data-source notify regression no longer reproduces in `flux-renderers-data` focused reruns.
-- Remaining closure blockers are outside this plan-owned slice: workspace `pnpm build` currently fails in `packages/flow-designer-renderers/src/designer-page.test-support.tsx`, workspace `pnpm lint` currently fails in `packages/flux-react/src/__tests__/hook-contracts.test.tsx`, full workspace `pnpm test` has not been rerun after those unrelated failures, and the independent closure audit is still pending.
+- The final closure pass also fixed two late verification blockers outside the original boolean contract mechanics but required for a clean green baseline: `packages/flux-renderers-form-advanced/tsconfig.build.json` now excludes `*.test-support.ts(x)` from declaration build input, and `packages/flux-react/src/node-renderer-resolved.tsx` now compares `resolvedProps.value` identity instead of the wrapper object identity so imported custom renderers that consume `props.props` refresh correctly after multi-field form writes.
 
 ## Goals
 
@@ -141,7 +141,7 @@ Exit Criteria:
 
 ### Phase 4 - Regression Coverage And Verification
 
-Status: in progress
+Status: completed
 Targets: compiler/runtime/react/renderer tests
 
 - Item Types: `Proof | Fix`
@@ -156,30 +156,36 @@ Exit Criteria:
 
 - [x] Focused compiler/runtime/renderer tests pass.
 - [x] `pnpm typecheck` passes.
-- [ ] `pnpm build` passes.
-- [ ] `pnpm lint` passes.
+- [x] `pnpm build` passes.
+- [x] `pnpm lint` passes.
 - [x] Relevant tests pass, with any skipped full-suite item explicitly explained.
 
-Verification note: plan-owned focused suites are green, including `@nop-chaos/flux-renderers-form` and `@nop-chaos/flux-renderers-data`. Workspace `pnpm build` is currently blocked by unrelated `@nop-chaos/flow-designer-renderers` test-support typing errors, and workspace `pnpm lint` is currently blocked by unrelated `@nop-chaos/flux-react` test purity lint failures. Full `pnpm test` has not been rerun after those unrelated workspace gate failures.
+Verification note: plan-owned focused suites are green, including `@nop-chaos/flux-renderers-form`, `@nop-chaos/flux-renderers-data`, `@nop-chaos/flux-react`, and `@nop-chaos/flux-renderers-form-advanced`. Workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` now all pass; the final `pnpm test` rerun completed with Turbo reporting `49 successful, 49 total`.
 
 ### Phase 5 - Closure Audit
 
-Status: planned
+Status: completed
 Targets: this plan, docs, code diff, verification output
 
 - Item Types: `Proof | Decision`
 
-- [ ] Run an independent subagent closure audit after implementation and verification.
-- [ ] Resolve all blocking findings or move non-blocking findings into `Deferred But Adjudicated` with explicit classification.
-- [ ] Confirm no in-scope live defect or contract drift remains silently deferred.
-- [ ] Confirm plan checkboxes, phase statuses, closure gates, and daily log are consistent before marking completed.
+- [x] Run an independent subagent closure audit after implementation and verification.
+- [x] Resolve all blocking findings or move non-blocking findings into `Deferred But Adjudicated` with explicit classification.
+- [x] Confirm no in-scope live defect or contract drift remains silently deferred.
+- [x] Confirm plan checkboxes, phase statuses, closure gates, and daily log are consistent before marking completed.
 
 Exit Criteria:
 
-- [ ] Independent closure audit finds no blocking issues.
-- [ ] Every in-scope item is completed or explicitly adjudicated.
-- [ ] Plan status remains no stronger than actual checklist state.
-- [ ] `docs/logs/2026/05-14.md` records closure evidence.
+- [x] Independent closure audit finds no blocking issues.
+- [x] Every in-scope item is completed or explicitly adjudicated.
+- [x] Plan status remains no stronger than actual checklist state.
+- [x] `docs/logs/2026/05-14.md` records closure evidence.
+
+Closure evidence:
+
+- Independent closure audit `ses_1d8f7b3cbffe4WoXwQ5qjUVg96` found no remaining code-level blockers after verification; it only required plan/log text to be updated to the live green baseline.
+- Final workspace verification baseline: `pnpm typecheck` passed, `pnpm build` passed, `pnpm lint` passed, and `pnpm test` passed with Turbo reporting `49 successful, 49 total`.
+- Final late-slice fixes recorded during closure: `packages/flux-renderers-form-advanced/tsconfig.build.json` excludes `*.test-support.ts(x)` from build inputs, and `packages/flux-react/src/node-renderer-resolved.tsx` now keys selector equality on `resolvedProps.value` so imported custom renderers consuming `props.props` refresh correctly after batched form writes.
 
 ## Plan Review Iterations
 
@@ -240,11 +246,11 @@ Status: planned if needed
 - [x] Renderer consumers rely on resolved props, not compatibility coercion.
 - [x] Required validation/runtime regression coverage exists and passes.
 - [x] No in-scope defect is moved to deferred/follow-up without explicit adjudication.
-- [ ] `docs/logs/2026/05-14.md` records design, plan, implementation, verification, and closure notes.
-- [ ] Independent closure audit completed and recorded.
+- [x] `docs/logs/2026/05-14.md` records design, plan, implementation, verification, and closure notes.
+- [x] Independent closure audit completed and recorded.
 - [x] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
+- [x] `pnpm build`
+- [x] `pnpm lint`
 - [x] Relevant tests
 
 ## Deferred But Adjudicated

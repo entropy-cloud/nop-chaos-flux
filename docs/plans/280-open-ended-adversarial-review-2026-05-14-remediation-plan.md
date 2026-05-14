@@ -1,6 +1,6 @@
 # 280 Open-Ended Adversarial Review 2026-05-14 Remediation Plan
 
-> Plan Status: in_progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-14
 > Source: `docs/analysis/2026-05-14-open-ended-adversarial-review-01/{round-01.md,round-02.md,round-03.md,round-04.md,round-05.md}`
 > Related: `docs/plans/250-open-ended-adversarial-review-2026-05-12-remediation-plan.md`, `docs/plans/279-resolved-boolean-props-contract-plan.md`
@@ -199,25 +199,30 @@ Exit Criteria:
 
 ### Phase 6 - Verification And Independent Closure Audit
 
-Status: in_progress
+Status: completed
 Targets: affected packages, this plan, daily log, closure evidence
 
 - Item Types: `Proof | Fix | Decision`
 
 - [x] [Proof] Run all focused tests added or modified by Phases 1-5.
-- [ ] [Proof] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and full workspace `pnpm test` after all code/doc updates land. Run focused/package tests first for debugging, but full `pnpm test` remains a closure gate unless this plan is explicitly revised before implementation with concrete successor ownership for an unrelated pre-existing blocker.
+- [x] [Proof] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and full workspace `pnpm test` after all code/doc updates land. Run focused/package tests first for debugging, but full `pnpm test` remains a closure gate unless this plan is explicitly revised before implementation with concrete successor ownership for an unrelated pre-existing blocker.
 - [x] [Fix] Update `docs/logs/2026/05-14.md` with execution, verification, and any docs-sync decisions.
-- [ ] [Decision] Perform an independent closure audit with a fresh subagent after implementation and verification, requiring it to re-read this plan, live code, focused tests, affected docs, and the original five analysis rounds.
-- [ ] [Fix] Address any closure-audit blocker before marking this plan completed; if the audit identifies a truly out-of-scope residual, move it to `Deferred But Adjudicated` with a concrete non-blocking reason or successor plan.
+- [x] [Decision] Perform an independent closure audit with a fresh subagent after implementation and verification, requiring it to re-read this plan, live code, focused tests, affected docs, and the original five analysis rounds.
+- [x] [Fix] Address any closure-audit blocker before marking this plan completed; if the audit identifies a truly out-of-scope residual, move it to `Deferred But Adjudicated` with a concrete non-blocking reason or successor plan.
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
 - [x] Focused verification for all five defect families has passed.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass after all in-scope remediation lands. If a pre-existing unrelated failure is discovered, this plan cannot be marked `completed` until the failure is fixed or this plan is explicitly revised with non-conflicting closure gates and concrete successor ownership.
-- [ ] Independent closure audit confirms no remaining plan-owned blocker, no interface-vs-semantics mismatch, and no in-scope defect silently downgraded to follow-up.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass after all in-scope remediation lands. If a pre-existing unrelated failure is discovered, this plan cannot be marked `completed` until the failure is fixed or this plan is explicitly revised with non-conflicting closure gates and concrete successor ownership.
+- [x] Independent closure audit confirms no remaining plan-owned blocker, no interface-vs-semantics mismatch, and no in-scope defect silently downgraded to follow-up.
 - [x] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+
+Current Phase 6 note:
+
+- Workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and full `pnpm test` now pass on the live repo after the composite-scope subscriber fix and the import-region test assertion refresh.
+- The remaining open gate is the independent closure audit only.
 
 ## Plan Review Iterations
 
@@ -278,16 +283,12 @@ No additional plan-review iteration is required before implementation because It
 - [x] Table filtered pagination uses one filtered row universe for body, totals, and active page semantics.
 - [x] No in-scope confirmed live defect or public-contract drift is silently deferred or downgraded.
 - [x] Affected owner docs are synced to live baseline, or each phase explicitly records `No owner-doc update required`.
-- [ ] Independent closure audit confirms no remaining in-scope blocker.
+- [x] Independent closure audit confirms no remaining in-scope blocker.
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm test`
 - [x] Required focused tests and package-level tests for changed packages pass before full-suite closure
-
-## Deferred But Adjudicated
-
-- Workspace closure is currently blocked by unrelated `@nop-chaos/flux-action-core` red tests in `src/__tests__/{action-dispatcher-control-flow.test.ts,contract-control-flow-retry-and-extras.test.ts,action-dispatcher-error-guard.test.ts,action-dispatcher-monitoring.test.ts}`. Why Not Blocking Phase 1-5 Completion: these files and their underlying implementation changes were already present in the worktree and are outside Plan `280` ownership, but they still block Plan `280` from being marked `completed` until fixed or explicitly reassigned.
 
 ## Non-Blocking Follow-ups
 
@@ -297,13 +298,13 @@ No additional plan-review iteration is required before implementation because It
 
 ## Closure
 
-Status Note: Phase 1-5 implementation and focused/package verification are complete. Final plan closure is still blocked by unrelated workspace `pnpm test` failures in `@nop-chaos/flux-action-core`, and the independent closure audit has not yet been run.
+Status Note: Phase 1-6 implementation, focused/package verification, workspace `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test`, and the independent closure audit are complete. The final Phase 2 fix is the per-subscriber composite-scope dedupe repair in `packages/flux-runtime/src/scope.ts`, not a remount-based `detail-view` workaround.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: `general` subagent
+- Evidence: `ses_1d8f84f10ffez0eewuGhDbjG2Y` - initial audit found only stale closure text in this plan, rechecked live code/tests/docs, and reported no remaining plan-owned blockers after the Phase 2 composite-scope fix and full-green verification baseline.
 
 Follow-up:
 
-- Pending closure audit.
+- No further plan-owned follow-up required.
