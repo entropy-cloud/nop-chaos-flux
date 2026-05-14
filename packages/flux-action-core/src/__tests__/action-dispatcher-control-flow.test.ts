@@ -93,6 +93,10 @@ describe('action-dispatcher control flow', () => {
 
     expect(result.ok).toBe(false);
     expect(order).toEqual(['setValue', 'showToast']);
+    expect((runtime.env.notify as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
+      'error',
+      'toast failed',
+    );
   });
 
   it('continues on failure when continueOnError is true', async () => {
@@ -175,6 +179,7 @@ describe('action-dispatcher control flow', () => {
 
     expect(order).toEqual(['setValue', 'showToast']);
     expect(result.ok).toBe(false);
+    expect((runtime.env.notify as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
   });
 
   it('runs then branch when action succeeds', async () => {

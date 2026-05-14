@@ -31,11 +31,15 @@ export function finishAction(
     ...(result.sourceScopeId !== undefined && { sourceScopeId: result.sourceScopeId }),
     ...(result.providerKind !== undefined && { providerKind: result.providerKind }),
   };
-  ctx.getEnv().monitor?.onActionEnd?.({
-    ...enrichedPayload,
-    durationMs: Date.now() - startedAt,
-    result,
-  });
+  try {
+    ctx.getEnv().monitor?.onActionEnd?.({
+      ...enrichedPayload,
+      durationMs: Date.now() - startedAt,
+      result,
+    });
+  } catch {
+    // Monitoring must not replace the primary action result.
+  }
   return result;
 }
 

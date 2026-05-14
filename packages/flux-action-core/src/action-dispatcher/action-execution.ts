@@ -34,6 +34,8 @@ import { finishAction } from './action-runners.js';
 import { runBuiltInAction } from './built-in-actions.js';
 import { runComponentAction, runNamespacedAction, runNamedAction } from './action-runners.js';
 
+const caughtFailureResults = new WeakSet<ActionResult>();
+
 function reportActionError(
   ctx: ActionDispatcherContext,
   error: unknown,
@@ -57,6 +59,64 @@ function reportActionError(
       // Plugin diagnostics are best-effort and must not mask the original failure.
     }
   }
+}
+
+function reportActionEnd(
+  ctx: ActionDispatcherContext,
+  actionPayload: ActionMonitorPayload,
+  durationMs: number,
+  result: ActionResult,
+): void {
+  try {
+    ctx.getEnv().monitor?.onActionEnd?.({
+      ...actionPayload,
+      durationMs,
+      result,
+    });
+  } catch {
+    // Monitoring must not replace the primary action result.
+  }
+}
+
+function reportUnhandledFailureClass(
+  ctx: ActionDispatcherContext,
+  actionCtx: ActionContext,
+  result: ActionResult,
+  handledByOnError: boolean,
+): void {
+  const eventType =
+    typeof (actionCtx.event as { type?: unknown } | undefined)?.type === 'string'
+      ? (actionCtx.event as { type: string }).type
+      : undefined;
+  const syntheticBranchEvent =
+    eventType === 'actionError' ||
+    eventType === 'actionSettled' ||
+    eventType === 'actionSettledError';
+
+  if (
+    handledByOnError ||
+    !isFailureClass(result) ||
+    result.failureHandled ||
+    syntheticBranchEvent ||
+    caughtFailureResults.has(result)
+  ) {
+    return;
+  }
+
+  const message =
+    result.error instanceof Error
+      ? result.error.message
+      : String(result.error ?? 'Action failed');
+
+  ctx.getEnv().notify('error', message);
+}
+
+function preserveCaughtFailureMarker(source: ActionResult | undefined, target: ActionResult): ActionResult {
+  if (source && caughtFailureResults.has(source)) {
+    caughtFailureResults.add(target);
+  }
+
+  return target;
 }
 
 async function runParallelActions(
@@ -198,9 +258,7 @@ async function runSingleAction(
   } catch (error) {
     if (isAbortError(error)) {
       const result = createCancelledResult(error);
-      ctx
-        .getEnv()
-        .monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+      reportActionEnd(ctx, actionPayload, Date.now() - startedAt, result);
       return result;
     }
 
@@ -210,9 +268,8 @@ async function runSingleAction(
       ok: false,
       error,
     };
-    ctx
-      .getEnv()
-      .monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+    caughtFailureResults.add(result);
+    reportActionEnd(ctx, actionPayload, Date.now() - startedAt, result);
     return result;
   }
 }
@@ -232,11 +289,7 @@ function runActionWithDebounce(
   const cancelledResult = createCancelledResult();
 
   if (cancelPendingDebounce<string, ActionResult>(ctx.pendingDebounces, key, cancelledResult)) {
-    ctx.getEnv().monitor?.onActionEnd?.({
-      ...buildActionMonitorPayload(action, actionCtx),
-      durationMs: 0,
-      result: cancelledResult,
-    });
+    reportActionEnd(ctx, buildActionMonitorPayload(action, actionCtx), 0, cancelledResult);
   }
 
   return scheduleDebounce<string, ActionResult>(ctx.pendingDebounces, key, debounceMs, () =>
@@ -256,7 +309,7 @@ async function runSingleActionWithRetry(
       | { attempts?: unknown; failureCount?: unknown }
       | undefined;
 
-    return {
+    return preserveCaughtFailureMarker(result, {
       ...result,
       attempts:
         typeof resultWithRetry.attempts === 'number'
@@ -270,7 +323,7 @@ async function runSingleActionWithRetry(
           : typeof errorWithRetry?.failureCount === 'number'
           ? errorWithRetry.failureCount
           : result.failureCount,
-    };
+    });
   }
 
   const retry = getRetryControl(action.control?.retry);
@@ -305,12 +358,12 @@ async function runSingleActionWithRetry(
           ? lastResultWithRetry.failureCount
           : failureCount;
 
-    return {
+    return preserveCaughtFailureMarker(lastResult, {
       ...(lastResult ?? { ok: false, error: new Error('Action failed without result') }),
       attempts: preservedAttempts,
       failureCount: preservedFailureCount,
       error: lastResult?.error ?? lastFailureReason,
-    };
+    });
   } catch (error) {
     if (isAbortError(error)) {
       const errorWithRetry = error as { attempts?: unknown; failureCount?: unknown };
@@ -422,6 +475,8 @@ async function dispatch(
         ctx.getEnv().notify('error', message);
       }
     }
+
+    reportUnhandledFailureClass(ctx, currentActionCtx, result, Boolean(normalizedAction.onError));
 
     if ((resultClass === 'success' || resultClass === 'failure' || resultClass === 'cancelled') && normalizedAction.onSettled) {
       const settledEventType = resultClass === 'failure' ? 'actionSettledError' : 'actionSettled';
