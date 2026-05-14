@@ -7,7 +7,7 @@ import type {
   EditorStoreApi,
   SavedDocumentData,
 } from '@nop-chaos/word-editor-core';
-import { saveDatasets, saveDocument } from '@nop-chaos/word-editor-core';
+import { captureDocumentSnapshot, persistSavedDocument, saveDatasets } from '@nop-chaos/word-editor-core';
 
 function ok(data?: unknown): ActionResult {
   return data === undefined ? { ok: true } : { ok: true, data };
@@ -46,7 +46,7 @@ export function createWordEditorActionProvider(input: {
           const codes = input.getCodes();
           let saved: SavedDocumentData;
           try {
-            saved = saveDocument(input.bridge, {
+            saved = captureDocumentSnapshot(input.bridge, {
               charts,
               codes,
             });
@@ -67,6 +67,16 @@ export function createWordEditorActionProvider(input: {
           }
           if (ctx.signal?.aborted) {
             return { ok: false, error: new Error('Word document save was aborted.') };
+          }
+          try {
+            persistSavedDocument(saved);
+          } catch (error) {
+            const normalizedError = error instanceof Error ? error : new Error(String(error));
+            return failWithError(
+              new Error('Unable to save word document.', {
+                cause: normalizedError,
+              }),
+            );
           }
           input.editorStore.setDirty(false);
           input.onDocumentSaved?.(saved);

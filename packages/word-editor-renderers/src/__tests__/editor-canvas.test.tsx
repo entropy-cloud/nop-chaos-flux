@@ -99,6 +99,8 @@ describe('EditorCanvas', () => {
     expect(savedArg.data.charts).not.toEqual([{ id: 'initial-chart', chartName: 'Initial' }]);
     expect(savedArg.data.codes).not.toEqual([{ id: 'initial-code', codeName: 'Initial' }]);
     expect(autosaveSpy).toHaveBeenCalledTimes(1);
+    expect(editorStore.setDirty).toHaveBeenCalledWith(true);
+    expect(editorStore.setDirty.mock.calls.at(-1)).toEqual([true]);
   });
 
   it('does not remount the editor bridge when charts and codes props change', async () => {

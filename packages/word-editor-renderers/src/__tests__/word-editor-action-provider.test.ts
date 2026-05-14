@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ActionContext, ActionResult } from '@nop-chaos/flux-core';
 import type {
   CanvasEditorBridge,
@@ -31,7 +31,8 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@nop-chaos/word-editor-core')>();
   return {
     ...actual,
-    saveDocument: vi.fn(() => savedDocument),
+    captureDocumentSnapshot: vi.fn(() => savedDocument),
+    persistSavedDocument: vi.fn(() => savedDocument),
     saveDatasets: vi.fn(),
   };
 });
@@ -64,6 +65,10 @@ function mockCode(overrides: Partial<DocCode> = {}): DocCode {
 }
 
 describe('createWordEditorActionProvider', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('keeps dirty state when host save fails', async () => {
     const editorStore: PartialEditorStoreApi = { setDirty: vi.fn() };
     const provider = createWordEditorActionProvider({
@@ -103,9 +108,11 @@ describe('createWordEditorActionProvider', () => {
     expect(result.ok).toBe(true);
     expect(editorStore.setDirty).toHaveBeenCalledWith(false);
     expect(onDocumentSaved).toHaveBeenCalledWith(savedDocument);
+    const { persistSavedDocument } = await import('@nop-chaos/word-editor-core');
+    expect(vi.mocked(persistSavedDocument)).toHaveBeenCalledWith(savedDocument);
   });
 
-  it('preserves saveDocument root cause through the returned action error', async () => {
+  it('preserves snapshot root cause through the returned action error', async () => {
     const editorStore: PartialEditorStoreApi = { setDirty: vi.fn() };
     const quotaError = new Error('quota exceeded');
     const provider = createWordEditorActionProvider({
@@ -118,8 +125,8 @@ describe('createWordEditorActionProvider', () => {
       setCodes: () => undefined,
     });
 
-    const { saveDocument } = await import('@nop-chaos/word-editor-core');
-    vi.mocked(saveDocument).mockImplementationOnce(() => {
+    const { captureDocumentSnapshot } = await import('@nop-chaos/word-editor-core');
+    vi.mocked(captureDocumentSnapshot).mockImplementationOnce(() => {
       throw quotaError;
     });
 
@@ -130,6 +137,29 @@ describe('createWordEditorActionProvider', () => {
     expect((result.error as Error).message).toBe('Unable to save word document.');
     expect((result.error as Error).cause).toBe(quotaError);
     expect(editorStore.setDirty).not.toHaveBeenCalledWith(false);
+  });
+
+  it('does not persist recovery baseline when host save fails', async () => {
+    const editorStore: PartialEditorStoreApi = { setDirty: vi.fn() };
+    const onDocumentSaved = vi.fn();
+    const provider = createWordEditorActionProvider({
+      bridge: {} as CanvasEditorBridge,
+      editorStore: editorStore as EditorStoreApi,
+      datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
+      getCharts: () => [mockChart()],
+      setCharts: () => undefined,
+      getCodes: () => [mockCode()],
+      setCodes: () => undefined,
+      saveEvent: async () => ({ ok: false, error: new Error('save failed') }),
+      onDocumentSaved,
+    });
+
+    const result = await provider.invoke('save', undefined, {} as ActionContext);
+    const { persistSavedDocument } = await import('@nop-chaos/word-editor-core');
+
+    expect(result.ok).toBe(false);
+    expect(vi.mocked(persistSavedDocument)).not.toHaveBeenCalled();
+    expect(onDocumentSaved).not.toHaveBeenCalled();
   });
 
   it('does not clear dirty state after saveEvent when the action signal is aborted', async () => {

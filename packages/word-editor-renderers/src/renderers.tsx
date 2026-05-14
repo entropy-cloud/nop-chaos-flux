@@ -6,12 +6,18 @@ import {
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import { wordEditorHostContract } from './word-editor-manifest.js';
 import type { WordEditorPageSchema } from './types.js';
+import { WordEditorPage } from './word-editor-page.js';
 export { defineWordEditorPageSchema } from './types.js';
 export type { WordEditorPageSchema, WordEditorPageSchemaInput } from './types.js';
 
-const LazyWordEditorPage = createLazyRendererComponent<WordEditorPageSchema>(
-  () => import('./word-editor-page.js').then((m) => m.WordEditorPage),
-);
+const useEagerRenderersInTests =
+  (globalThis as { process?: { env?: { VITEST?: string } } }).process?.env?.VITEST === 'true';
+
+const LazyWordEditorPage = useEagerRenderersInTests
+  ? WordEditorPage
+  : createLazyRendererComponent<WordEditorPageSchema>(
+      () => import('./word-editor-page.js').then((m) => m.WordEditorPage),
+    );
 
 export const wordEditorRendererDefinitions: RendererDefinition[] = [
   {

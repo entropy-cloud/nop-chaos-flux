@@ -150,11 +150,26 @@ describe('DatasetPanel', () => {
     const store = createMockStore(datasets);
     render(<DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={onEditDataset} />);
 
-    const datasetEl = screen.getByText('Users').closest('[class*="cursor-pointer"]');
-    if (datasetEl) {
-      await userEvent.click(datasetEl);
-      expect(onEditDataset).toHaveBeenCalledWith('ds1');
-    }
+    await userEvent.click(screen.getByRole('button', { name: /Users/i }));
+    expect(onEditDataset).toHaveBeenCalledWith('ds1');
+  });
+
+  it('lets keyboard users open a dataset from the primary card button', async () => {
+    const onEditDataset = vi.fn();
+    const datasets: Dataset[] = [
+      { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [] },
+    ];
+    const store = createMockStore(datasets);
+    render(<DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={onEditDataset} />);
+
+    const datasetButton = screen.getByRole('button', { name: /Users/i });
+
+    await userEvent.tab();
+    await userEvent.tab();
+    expect(document.activeElement).toBe(datasetButton);
+    await userEvent.keyboard('{Enter}');
+
+    expect(onEditDataset).toHaveBeenCalledWith('ds1');
   });
 
   it('shows "No description" when dataset has no description', () => {

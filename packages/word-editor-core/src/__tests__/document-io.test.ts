@@ -1,7 +1,10 @@
 import { afterEach, describe, it, expect, beforeEach, vi } from 'vitest';
 import {
+  captureDocumentSnapshot,
   createSavedDocumentData,
+  persistSavedDocument,
   SaveDocumentError,
+  setRecoveryLoadErrorHandler,
   saveDocument,
   loadDocument,
   clearDocument,
@@ -45,6 +48,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  setRecoveryLoadErrorHandler(undefined);
   vi.unstubAllGlobals();
 });
 
@@ -146,6 +150,42 @@ describe('saveDocument', () => {
       expect((error as SaveDocumentError).reason).toBe('storage-write-failed');
       expect((error as Error).cause).toBe(quotaError);
     }
+  });
+
+  it('captures a saved snapshot without persisting it yet', () => {
+    const mockBridge = {
+      getValue: vi.fn(() => ({ data: { header: [], main: [{ value: 'draft' }], footer: [] } })),
+      getPaperSettings: vi.fn(() => null),
+    } as any;
+
+    const saved = captureDocumentSnapshot(mockBridge, {
+      charts: [{ id: 'chart_1', chartName: 'Revenue', chartType: 'bar', showChartName: true, datasetId: 'ds', categoryField: 'month', valueField: ['value'] }],
+      codes: [{ id: 'code_1', codeName: 'QR', codeType: 'qrcode', datasetId: 'ds', valueField: 'id' }],
+    });
+
+    expect(saved.data.main).toEqual([{ value: 'draft' }]);
+    expect(saved.data.charts).toHaveLength(1);
+    expect(saved.data.codes).toHaveLength(1);
+    expect(localStorageState.current.setItem).not.toHaveBeenCalled();
+  });
+
+  it('persists a previously captured saved snapshot', () => {
+    const saved = createSavedDocumentData({
+      data: {
+        header: [],
+        main: [{ value: 'persisted' }],
+        footer: [],
+        charts: [],
+        codes: [],
+      },
+      paperSettings: null,
+      savedAt: '2026-05-14T00:00:00.000Z',
+    });
+
+    const result = persistSavedDocument(saved);
+
+    expect(result).toBe(saved);
+    expect(localStorageState.current.setItem).toHaveBeenCalledWith(STORAGE_KEY, JSON.stringify(saved));
   });
 
   it('normalizes saved document data with defaults', () => {
@@ -304,6 +344,36 @@ describe('loadDocument', () => {
       },
     ]);
   });
+
+  it('reports storage read failures without throwing', () => {
+    const onRecoveryError = vi.fn();
+    setRecoveryLoadErrorHandler(onRecoveryError);
+    const securityError = new DOMException('Blocked', 'SecurityError');
+    localStorageState.current.getItem.mockImplementation(() => {
+      throw securityError;
+    });
+
+    expect(loadDocument()).toBeNull();
+    expect(onRecoveryError).toHaveBeenCalledWith({
+      target: 'document',
+      reason: 'storage-read-failed',
+      error: securityError,
+    });
+  });
+
+  it('reports JSON parse failures without throwing', () => {
+    const onRecoveryError = vi.fn();
+    setRecoveryLoadErrorHandler(onRecoveryError);
+    localStorageState.current._store[STORAGE_KEY] = '{bad json';
+
+    expect(loadDocument()).toBeNull();
+    expect(onRecoveryError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: 'document',
+        reason: 'json-parse-failed',
+      }),
+    );
+  });
 });
 
 describe('clearDocument', () => {
@@ -359,6 +429,22 @@ describe('loadDatasets', () => {
     expect(loadDatasets()).toEqual([
       { id: 'good', name: 'Users', description: '', type: 'sql', columns: [] },
     ]);
+  });
+
+  it('reports dataset recovery read failures without throwing', () => {
+    const onRecoveryError = vi.fn();
+    setRecoveryLoadErrorHandler(onRecoveryError);
+    const securityError = new DOMException('Blocked', 'SecurityError');
+    localStorageState.current.getItem.mockImplementation(() => {
+      throw securityError;
+    });
+
+    expect(loadDatasets()).toEqual([]);
+    expect(onRecoveryError).toHaveBeenCalledWith({
+      target: 'datasets',
+      reason: 'storage-read-failed',
+      error: securityError,
+    });
   });
 });
 

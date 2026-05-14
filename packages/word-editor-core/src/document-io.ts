@@ -53,6 +53,31 @@ export class SaveDocumentError extends Error {
   }
 }
 
+export type RecoveryLoadTarget = 'document' | 'datasets';
+
+export type RecoveryLoadFailureReason =
+  | 'storage-unavailable'
+  | 'storage-read-failed'
+  | 'json-parse-failed';
+
+export interface RecoveryLoadError {
+  target: RecoveryLoadTarget;
+  reason: RecoveryLoadFailureReason;
+  error?: unknown;
+}
+
+let recoveryLoadErrorHandler: ((error: RecoveryLoadError) => void) | undefined;
+
+function reportRecoveryLoadError(error: RecoveryLoadError): void {
+  recoveryLoadErrorHandler?.(error);
+}
+
+export function setRecoveryLoadErrorHandler(
+  handler: ((error: RecoveryLoadError) => void) | undefined,
+): void {
+  recoveryLoadErrorHandler = handler;
+}
+
 function getStorage(): Storage | null {
   if (typeof localStorage === 'undefined') {
     return null;
@@ -207,15 +232,10 @@ export function createSavedDocumentData(input: {
   };
 }
 
-export function saveDocument(
+export function captureDocumentSnapshot(
   bridge: CanvasEditorBridge,
   extras?: { charts?: DocChart[]; codes?: DocCode[] },
 ): SavedDocumentData {
-  const storage = getStorage();
-  if (!storage) {
-    throw new SaveDocumentError('storage-unavailable', 'Local storage is unavailable.');
-  }
-
   let value: ReturnType<CanvasEditorBridge['getValue']>;
   let paperSettings: ReturnType<CanvasEditorBridge['getPaperSettings']>;
 
@@ -232,7 +252,7 @@ export function saveDocument(
     throw new SaveDocumentError('empty-document', 'The editor has no document to save.');
   }
 
-  const saved = createSavedDocumentData({
+  return createSavedDocumentData({
     data: {
       header: value.data.header ?? [],
       main: value.data.main,
@@ -242,6 +262,13 @@ export function saveDocument(
     },
     paperSettings,
   });
+}
+
+export function persistSavedDocument(saved: SavedDocumentData): SavedDocumentData {
+  const storage = getStorage();
+  if (!storage) {
+    throw new SaveDocumentError('storage-unavailable', 'Local storage is unavailable.');
+  }
 
   try {
     storage.setItem(STORAGE_KEY, JSON.stringify(saved));
@@ -254,27 +281,50 @@ export function saveDocument(
   return saved;
 }
 
+export function saveDocument(
+  bridge: CanvasEditorBridge,
+  extras?: { charts?: DocChart[]; codes?: DocCode[] },
+): SavedDocumentData {
+  return persistSavedDocument(captureDocumentSnapshot(bridge, extras));
+}
+
 export function loadDocument(): SavedDocumentData | null {
-  try {
-    const storage = getStorage();
-    if (!storage) return null;
-
-    const raw = storage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    const data = normalizeWordDocument(parsed.data);
-    if (!data) {
-      return null;
-    }
-
-    return {
-      data,
-      paperSettings: normalizePaperSettings(parsed.paperSettings),
-      savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : new Date(0).toISOString(),
-    };
-  } catch {
+  const storage = getStorage();
+  if (!storage) {
+    reportRecoveryLoadError({ target: 'document', reason: 'storage-unavailable' });
     return null;
   }
+
+  let raw: string | null;
+  try {
+    raw = storage.getItem(STORAGE_KEY);
+  } catch (error) {
+    reportRecoveryLoadError({ target: 'document', reason: 'storage-read-failed', error });
+    return null;
+  }
+
+  if (!raw) {
+    return null;
+  }
+
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(raw) as Record<string, unknown>;
+  } catch (error) {
+    reportRecoveryLoadError({ target: 'document', reason: 'json-parse-failed', error });
+    return null;
+  }
+
+  const data = normalizeWordDocument(parsed.data);
+  if (!data) {
+    return null;
+  }
+
+  return {
+    data,
+    paperSettings: normalizePaperSettings(parsed.paperSettings),
+    savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : new Date(0).toISOString(),
+  };
 }
 
 export function clearDocument(): void {
@@ -335,23 +385,39 @@ export function normalizeDataset(value: unknown): Dataset | null {
 }
 
 export function loadDatasets(): Dataset[] {
-  try {
-    const storage = getStorage();
-    if (!storage) return [];
-
-    const raw = storage.getItem(DATASET_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed
-      .map((dataset) => normalizeDataset(dataset))
-      .filter((dataset): dataset is Dataset => dataset !== null);
-  } catch {
+  const storage = getStorage();
+  if (!storage) {
+    reportRecoveryLoadError({ target: 'datasets', reason: 'storage-unavailable' });
     return [];
   }
+
+  let raw: string | null;
+  try {
+    raw = storage.getItem(DATASET_STORAGE_KEY);
+  } catch (error) {
+    reportRecoveryLoadError({ target: 'datasets', reason: 'storage-read-failed', error });
+    return [];
+  }
+
+  if (!raw) {
+    return [];
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    reportRecoveryLoadError({ target: 'datasets', reason: 'json-parse-failed', error });
+    return [];
+  }
+
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed
+    .map((dataset) => normalizeDataset(dataset))
+    .filter((dataset): dataset is Dataset => dataset !== null);
 }
 
 export function normalizeDatasets(value: unknown): Dataset[] {

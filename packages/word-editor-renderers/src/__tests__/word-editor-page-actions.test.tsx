@@ -12,7 +12,23 @@ import * as wordEditorActionProvider from '../word-editor-action-provider.js';
 import { WordEditorPage } from '../word-editor-page.js';
 
 const mockedCore = vi.hoisted(() => ({
-  saveDocumentMock: vi.fn(() => true),
+  captureDocumentSnapshotMock: vi.fn(() => ({
+    data: {
+      header: [],
+      main: [{ value: 'saved' }],
+      footer: [],
+      charts: [],
+      codes: [],
+    },
+    paperSettings: {
+      width: 595,
+      height: 842,
+      direction: 'vertical',
+      margins: [100, 120, 100, 120],
+    },
+    savedAt: '2026-05-14T00:00:00.000Z',
+  })),
+  persistSavedDocumentMock: vi.fn((saved) => saved),
   saveDatasetsMock: vi.fn(),
   loadDatasetsMock: vi.fn(() => []),
 }));
@@ -116,7 +132,8 @@ function resetMockStores() {
     selectedDatasetId: null,
   };
   editorStore.setDirty.mockClear();
-  mockedCore.saveDocumentMock.mockClear();
+  mockedCore.captureDocumentSnapshotMock.mockClear();
+  mockedCore.persistSavedDocumentMock.mockClear();
   mockedCore.saveDatasetsMock.mockClear();
   mockedCore.loadDatasetsMock.mockClear();
   mockState.shortcutOptions = undefined;
@@ -155,7 +172,8 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
     },
     createEditorStore: () => editorStore,
     createDatasetStore: () => datasetStore,
-    saveDocument: mockedCore.saveDocumentMock,
+    captureDocumentSnapshot: mockedCore.captureDocumentSnapshotMock,
+    persistSavedDocument: mockedCore.persistSavedDocumentMock,
     loadDocument: vi.fn(() => null),
     saveDatasets: mockedCore.saveDatasetsMock,
     loadDatasets: mockedCore.loadDatasetsMock,
@@ -231,6 +249,7 @@ function renderWordEditor(input?: {
 
 describe('WordEditorPage actions and events', () => {
   afterEach(() => {
+    cleanup();
     vi.useRealTimers();
   });
 
@@ -251,7 +270,8 @@ describe('WordEditorPage actions and events', () => {
     fireEvent.click(screen.getByRole('button', { name: '保存' }));
 
     await waitFor(() => {
-      expect(mockedCore.saveDocumentMock).toHaveBeenCalledTimes(1);
+      expect(mockedCore.captureDocumentSnapshotMock).toHaveBeenCalledTimes(1);
+      expect(mockedCore.persistSavedDocumentMock).toHaveBeenCalledTimes(1);
       expect(mockedCore.saveDatasetsMock).toHaveBeenCalledTimes(1);
       expect(editorStore.setDirty).toHaveBeenCalledWith(false);
       expect(notify).toHaveBeenCalledWith('info', 'save event fired');
@@ -267,7 +287,8 @@ describe('WordEditorPage actions and events', () => {
     mockState.shortcutOptions?.onSave?.();
 
     await waitFor(() => {
-      expect(mockedCore.saveDocumentMock).toHaveBeenCalledTimes(1);
+      expect(mockedCore.captureDocumentSnapshotMock).toHaveBeenCalledTimes(1);
+      expect(mockedCore.persistSavedDocumentMock).toHaveBeenCalledTimes(1);
       expect(mockedCore.saveDatasetsMock).toHaveBeenCalledTimes(1);
       expect(editorStore.setDirty).toHaveBeenCalledWith(false);
     });

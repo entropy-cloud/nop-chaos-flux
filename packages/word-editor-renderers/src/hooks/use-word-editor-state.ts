@@ -54,6 +54,16 @@ declare global {
 }
 
 export function useWordEditorState(props: RendererComponentProps<WordEditorPageSchema>) {
+  const emptyDocument = useMemo<WordDocument>(
+    () => ({
+      header: [],
+      main: [],
+      footer: [],
+      charts: [],
+      codes: [],
+    }),
+    [],
+  );
   const initialDocument = useMemo(() => {
     const normalized = normalizeWordDocument(props.props.initialDocument);
     return normalized ?? undefined;
@@ -162,18 +172,12 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
 
   const hostScopeData = useMemo(
     () => ({
-      document: savedDocument?.data ?? {
-        header: [],
-        main: [],
-        footer: [],
-        charts,
-        codes,
-      },
+      document: savedDocument?.data ?? emptyDocument,
       datasets,
       runtime: runtimeHostSummary,
       selection,
     }),
-    [charts, codes, datasets, runtimeHostSummary, savedDocument?.data, selection],
+    [datasets, emptyDocument, runtimeHostSummary, savedDocument?.data, selection],
   );
 
   const hostScope = useHostScope(hostScopeData, props.path, 'word-editor');

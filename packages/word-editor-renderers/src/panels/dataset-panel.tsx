@@ -91,41 +91,48 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset, showHeader = 
               {datasets.map((dataset) => (
                 <div
                   key={dataset.id}
-                  onClick={() => onEditDataset(dataset.id)}
                   className={cn(
-                    'group rounded-lg border p-3 cursor-pointer transition-all duration-160 outline-none focus:ring-2 focus:ring-[var(--nop-accent)] focus:ring-opacity-30',
+                    'group rounded-lg border p-3 transition-all duration-160',
                     selectedDatasetId === dataset.id
                       ? 'border-[var(--nop-accent)] bg-[var(--nop-surface-soft)]'
                       : 'border-[var(--nop-border)] hover:border-[var(--nop-accent)] hover:bg-[var(--nop-surface-soft)]',
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-sm font-medium text-[var(--nop-text-strong)] truncate">
-                          {dataset.name}
-                        </h3>
-                        <span
-                          className={cn(
-                            'px-1.5 py-0.5 text-[10px] font-medium rounded',
-                            getTypeColor(dataset.type),
-                          )}
-                        >
-                          {getTypeLabel(dataset.type)}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[var(--nop-body-copy)] line-clamp-2">
-                        {dataset.description || t('flux.wordEditor.noDescription')}
-                      </p>
-                      {dataset.columns.length > 0 && (
-                        <div className="mt-2 flex items-center gap-1 text-[10px] text-[var(--nop-body-copy)]">
-                          <Database className="w-3 h-3 opacity-70" />
-                          <span>
-                            {dataset.columns.length} column{dataset.columns.length !== 1 ? 's' : ''}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEditDataset(dataset.id)}
+                      className="h-auto min-w-0 flex-1 justify-start p-0 text-left hover:bg-transparent focus-visible:ring-[var(--nop-accent)]"
+                    >
+                      <span className="flex min-w-0 flex-1 flex-col items-start">
+                        <span className="mb-1 flex items-center gap-2">
+                          <span className="text-sm font-medium text-[var(--nop-text-strong)] truncate">
+                            {dataset.name}
                           </span>
-                        </div>
-                      )}
-                    </div>
+                          <span
+                            className={cn(
+                              'px-1.5 py-0.5 text-[10px] font-medium rounded',
+                              getTypeColor(dataset.type),
+                            )}
+                          >
+                            {getTypeLabel(dataset.type)}
+                          </span>
+                        </span>
+                        <span className="text-[11px] text-[var(--nop-body-copy)] line-clamp-2">
+                          {dataset.description || t('flux.wordEditor.noDescription')}
+                        </span>
+                        {dataset.columns.length > 0 && (
+                          <span className="mt-2 flex items-center gap-1 text-[10px] text-[var(--nop-body-copy)]">
+                            <Database className="w-3 h-3 opacity-70" />
+                            <span>
+                              {dataset.columns.length} column{dataset.columns.length !== 1 ? 's' : ''}
+                            </span>
+                          </span>
+                        )}
+                      </span>
+                    </Button>
                     <Button
                       type="button"
                       variant="ghost"

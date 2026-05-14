@@ -24,6 +24,8 @@ export type { EditorStoreApi, EditorSelectionState, EditorState } from './editor
 export { createDatasetStore } from './dataset-store.js';
 export type { DatasetStoreApi } from './dataset-store.js';
 export {
+  captureDocumentSnapshot,
+  persistSavedDocument,
   saveDocument,
   loadDocument,
   clearDocument,

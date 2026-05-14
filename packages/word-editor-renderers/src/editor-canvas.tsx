@@ -68,7 +68,6 @@ export function EditorCanvas({
           });
           localStorage.setItem('nop-word-editor-document', JSON.stringify(saved));
           onAutosaveRef.current?.(saved);
-          editorStore.setDirty(false);
         }
       }, 500);
     };
