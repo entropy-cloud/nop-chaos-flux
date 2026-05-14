@@ -141,6 +141,8 @@ describe('executeFormSubmit', () => {
       ok: false,
       error: [{ message: 'required' }],
       data: { name: 'required' },
+      failureHandled: true,
+      settledError: undefined,
     });
     expect(submitSetup.store.setSubmitAttempted).toHaveBeenCalledWith(true);
     expect(submitSetup.store.setSubmitting).toHaveBeenLastCalledWith(false);
@@ -529,6 +531,7 @@ describe('executeFormSubmit', () => {
       ok: false,
       error: [{ message: 'required' }],
       data: { name: 'required' },
+      failureHandled: true,
       settledError: undefined,
     });
   });
@@ -551,6 +554,7 @@ describe('executeFormSubmit', () => {
     await expect(executeFormSubmit(setup.input)).resolves.toEqual({
       ok: false,
       error: submitFailure,
+      failureHandled: true,
       settledError: undefined,
     });
   });

@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { executeSetValues } from '../form-runtime-values.js';
+import {
+  attachDependentRevalidationFailureHandler,
+  executeSetValues,
+} from '../form-runtime-values.js';
 import { createFormStore } from '../form-store.js';
 import { createScopeRef } from '../scope.js';
 import { createAsyncGovernanceStore } from '../async-data/async-governance.js';
@@ -220,6 +223,27 @@ describe('executeSetValues', () => {
         revalidateDependents: vi.fn().mockRejectedValue(new Error('boom')),
       },
       { a: 10 },
+    );
+
+    await Promise.resolve();
+
+    expect(warn).toHaveBeenCalledWith(
+      '[form-runtime] dependent revalidation failed for "a"',
+      expect.any(Error),
+    );
+
+    warn.mockRestore();
+  });
+
+  it('reports single-path dependent revalidation failures without throwing', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    attachDependentRevalidationFailureHandler(
+      'a',
+      Promise.reject(new Error('boom')),
+      (path, error) => {
+        console.warn(`[form-runtime] dependent revalidation failed for "${path}"`, error);
+      },
     );
 
     await Promise.resolve();

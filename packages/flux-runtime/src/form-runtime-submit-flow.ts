@@ -95,11 +95,15 @@ async function runFailureLifecycleHandler(
   try {
     const nextResult = await handler(result, options);
     if (!nextResult || nextResult.ok || nextResult.cancelled) {
-      return result;
+      return {
+        ...result,
+        failureHandled: true,
+      };
     }
 
     return {
       ...result,
+      failureHandled: true,
       settledError: nextResult.settledError ?? result.settledError,
     };
   } catch (error) {

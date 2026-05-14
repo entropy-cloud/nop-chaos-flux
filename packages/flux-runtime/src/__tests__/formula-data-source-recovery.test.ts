@@ -88,4 +88,48 @@ describe('createFormulaDataSourceController', () => {
     expect(controller.getState().status).toBe('success');
     expect(controller.getState().data).toBe(42);
   });
+
+  it('skips data writes and dataUpdatedAt churn when refreshed value is unchanged', async () => {
+    const scope = createMockScope();
+    const controller = createFormulaDataSourceController({
+      runtime: {
+        env: {
+          notify: vi.fn(),
+        },
+        expressionCompiler: {
+          compileValue: () => ({
+            isStatic: false,
+            kind: 'dynamic',
+            createState: () => ({
+              root: { kind: 'leaf-state', initialized: false },
+            }),
+          }),
+          evaluateWithState: () => ({ value: 42, changed: true, reusedReference: false }),
+          evaluateValue: () => 42,
+          createState: () => ({
+            root: { kind: 'leaf-state', initialized: false },
+          }),
+        },
+      } as unknown as RendererRuntime,
+      scope,
+      targetPath: 'result',
+      formula: '${someFormula}',
+    });
+
+    const updateSpy = vi.spyOn(scope, 'update');
+
+    controller.start();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const firstUpdatedAt = controller.getState().dataUpdatedAt;
+    expect(scope.get('result')).toBe(42);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+
+    await controller.refresh();
+
+    expect(scope.get('result')).toBe(42);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(controller.getState().dataUpdatedAt).toBe(firstUpdatedAt);
+  });
 });

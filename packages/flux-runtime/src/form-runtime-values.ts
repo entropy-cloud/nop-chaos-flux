@@ -15,22 +15,24 @@ export interface SetValuesContext {
     path: string,
     reason?: import('@nop-chaos/flux-core').ValidationReason,
   ) => Promise<void>;
+  reportDependentRevalidationFailure?: (path: string, error: unknown) => void;
 }
 
-function reportDependentRevalidationFailure(path: string, error: unknown): void {
+export function defaultReportDependentRevalidationFailure(path: string, error: unknown): void {
   console.warn(`[form-runtime] dependent revalidation failed for "${path}"`, error);
 }
 
-function attachDependentRevalidationFailureHandler(
+export function attachDependentRevalidationFailureHandler(
   path: string,
   result: Promise<void> | void,
+  reportFailure: (path: string, error: unknown) => void,
 ): void {
   if (!result || typeof (result as Promise<void>).catch !== 'function') {
     return;
   }
 
   result.catch((error: unknown) => {
-    reportDependentRevalidationFailure(path, error);
+    reportFailure(path, error);
   });
 }
 
@@ -42,6 +44,7 @@ export function executeSetValues(ctx: SetValuesContext, values: Record<string, u
     clearExternalErrorsForPath,
     rebuildStoreErrorsFromExternal,
     revalidateDependents,
+    reportDependentRevalidationFailure = defaultReportDependentRevalidationFailure,
   } = ctx;
   const { store, lifecycleState, validationRuns, initialFieldState } = sharedState;
 
@@ -121,6 +124,7 @@ export function executeSetValues(ctx: SetValuesContext, values: Record<string, u
     attachDependentRevalidationFailureHandler(
       changedPath,
       revalidateDependents(changedPath, 'change'),
+      reportDependentRevalidationFailure,
     );
   }
 }

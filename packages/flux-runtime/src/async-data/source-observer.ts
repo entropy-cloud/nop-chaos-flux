@@ -55,7 +55,7 @@ export function createSourceObserver(runtime: RendererRuntime): SourceObserver {
   function run(input: {
     scope: ScopeRef;
     entries: readonly AnonymousSourceEntry[];
-    baseValue?: Readonly<Record<string, unknown>>;
+      baseValue?: Readonly<Record<string, unknown>>;
   }) {
     const baseValue = input.baseValue ?? {};
     const nextInputs = input.entries.map((entry) => entry.source);

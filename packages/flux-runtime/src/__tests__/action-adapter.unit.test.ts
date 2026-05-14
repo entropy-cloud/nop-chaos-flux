@@ -546,10 +546,38 @@ describe('built-in scope-write and submit semantics', () => {
         'profile.lastName': 'Smith',
       },
     });
-    expect(form.setValue).toHaveBeenCalledTimes(2);
-    expect(form.setValue).toHaveBeenCalledWith('profile.firstName', 'Alice');
-    expect(form.setValue).toHaveBeenCalledWith('profile.lastName', 'Smith');
-    expect(form.setValues).not.toHaveBeenCalled();
+    expect(form.setValues).toHaveBeenCalledWith({
+      'profile.firstName': 'Alice',
+      'profile.lastName': 'Smith',
+    });
+    expect(form.setValue).not.toHaveBeenCalled();
+  });
+
+  it('setValues honors targetId inside the current form runtime with one batch update', async () => {
+    const adapter = createAdapter();
+    const form = { id: 'form-1', setValue: vi.fn(), setValues: vi.fn() };
+
+    const result = await adapter.invokeBuiltInAction(
+      createBuiltInInvocation(
+        'setValues',
+        { values: { firstName: 'Alice', lastName: 'Smith' } },
+        { targetId: 'profile' },
+      ),
+      createCtx({ form }),
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      data: {
+        'profile.firstName': 'Alice',
+        'profile.lastName': 'Smith',
+      },
+    });
+    expect(form.setValues).toHaveBeenCalledWith({
+      'profile.firstName': 'Alice',
+      'profile.lastName': 'Smith',
+    });
+    expect(form.setValue).not.toHaveBeenCalled();
   });
 
   it('submitForm returns error when there is no current form runtime', async () => {

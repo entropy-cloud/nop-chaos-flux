@@ -47,7 +47,11 @@ import {
   updateFieldRegistration,
 } from './form-runtime-field-ops.js';
 import { executeFormSubmit } from './form-runtime-submit-flow.js';
-import { executeSetValues } from './form-runtime-values.js';
+import {
+  executeSetValues,
+  attachDependentRevalidationFailureHandler,
+  defaultReportDependentRevalidationFailure,
+} from './form-runtime-values.js';
 import {
   appendValueOp,
   prependValueOp,
@@ -539,7 +543,11 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         store.batchUpdate({ fieldStates: updatedFieldStates });
       }
 
-      void ownerRuntime.revalidateDependents(name, 'change');
+      attachDependentRevalidationFailureHandler(
+        name,
+        ownerRuntime.revalidateDependents(name, 'change'),
+        defaultReportDependentRevalidationFailure,
+      );
     },
 
     setValues(values) {

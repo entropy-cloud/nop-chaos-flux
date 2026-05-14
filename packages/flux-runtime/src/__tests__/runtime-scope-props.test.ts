@@ -136,4 +136,73 @@ describe('createRendererRuntime', () => {
     expect(runtime.resolveNodeProps(nameNode, page.scope, nameState).value.text).toBe('Changed Name');
     expect(runtime.resolveNodeProps(statusNode, page.scope, statusState).value.text).toBe('published');
   });
+
+  it('projects meta disabled into renderer props and lets explicit props win', () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const projectedNode = runtime.compile({
+      type: 'text',
+      text: 'hello',
+      disabled: '${locked}',
+      className: '${klass}',
+      testid: '${tid}',
+    }).root as any;
+    const projectedPage = runtime.createPageRuntime({ locked: false, klass: 'alpha', tid: 'node-1' });
+    const projected = runtime.resolveNodeProps(projectedNode, projectedPage.scope).value;
+
+    expect(projected.disabled).toBe(false);
+    expect(projected.className).toBe('alpha');
+    expect(projected.testid).toBe('node-1');
+
+    const explicitNode = runtime.schemaCompiler.compileNode(
+      {
+        type: 'text',
+        text: 'hello',
+        disabled: true,
+      } as any,
+      {
+        path: '$',
+        renderer: {
+          ...registry.get('text')!,
+          fields: [
+            ...(registry.get('text')!.fields ?? []),
+            { key: 'disabled', kind: 'prop', valueType: 'boolean' },
+          ],
+        },
+      },
+    );
+    const explicitPage = runtime.createPageRuntime({});
+    const explicit = runtime.resolveNodeProps(explicitNode, explicitPage.scope).value;
+
+    expect(explicit.disabled).toBe(true);
+  });
+
+  it('normalizes non-boolean boolean-like expression results to undefined in props and meta defaults', () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = runtime.compile({
+      type: 'text',
+      text: 'hello',
+      disabled: '${rawDisabled}',
+      visible: '${rawVisible}',
+    });
+    const node = compiled.root as any;
+    const page = runtime.createPageRuntime({ rawDisabled: 'false', rawVisible: 'true' });
+    const meta = runtime.resolveNodeMeta(node, page.scope);
+    const props = runtime.resolveNodeProps(node, page.scope).value;
+
+    expect(props.disabled).toBeUndefined();
+    expect(meta.disabled).toBe(false);
+    expect(meta.visible).toBe(true);
+  });
 });

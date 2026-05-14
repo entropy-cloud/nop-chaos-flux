@@ -12,6 +12,25 @@ import type {
 } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 
+function normalizeBooleanLike(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
+}
+
+function projectRendererFacingMeta(input: {
+  disabled?: boolean;
+  className?: string;
+  frameClassName?: string;
+  testid?: string;
+}): Record<string, unknown> {
+  return {
+    disabled: input.disabled,
+    className: input.className,
+    frameClassName: input.frameClassName,
+    testid: input.testid,
+    cid: undefined,
+  };
+}
+
 function mergeDependencySets(
   sets: Array<ScopeDependencySet | undefined>,
 ): ScopeDependencySet | undefined {
@@ -167,36 +186,37 @@ export function createNodeRuntime(input: {
         env,
         state?.meta.frameClassName,
       ),
-      when: Boolean(
-        structuralWhen ?? true,
-      ),
-      visible: Boolean(
-        evaluateCompiledValue(
-          input.expressionCompiler,
-          meta.visible,
-          scope,
-          env,
-          state?.meta.visible,
+      when: normalizeBooleanLike(structuralWhen) ?? true,
+      visible:
+        normalizeBooleanLike(
+          evaluateCompiledValue(
+            input.expressionCompiler,
+            meta.visible,
+            scope,
+            env,
+            state?.meta.visible,
+          ),
         ) ?? true,
-      ),
-      hidden: Boolean(
-        evaluateCompiledValue(
-          input.expressionCompiler,
-          meta.hidden,
-          scope,
-          env,
-          state?.meta.hidden,
+      hidden:
+        normalizeBooleanLike(
+          evaluateCompiledValue(
+            input.expressionCompiler,
+            meta.hidden,
+            scope,
+            env,
+            state?.meta.hidden,
+          ),
         ) ?? false,
-      ),
-      disabled: Boolean(
-        evaluateCompiledValue(
-          input.expressionCompiler,
-          meta.disabled,
-          scope,
-          env,
-          state?.meta.disabled,
+      disabled:
+        normalizeBooleanLike(
+          evaluateCompiledValue(
+            input.expressionCompiler,
+            meta.disabled,
+            scope,
+            env,
+            state?.meta.disabled,
+          ),
         ) ?? false,
-      ),
       testid: evaluateCompiledValue(
         input.expressionCompiler,
         meta.testid,
@@ -247,21 +267,60 @@ export function createNodeRuntime(input: {
     }
 
     const result = execution;
+    const propsValue = result.value as Record<string, unknown>;
+    const projectedProps = projectRendererFacingMeta({
+      disabled: normalizeBooleanLike(
+        evaluateCompiledValue(
+          input.expressionCompiler,
+          node.metaProgram.disabled,
+          scope,
+          env,
+          state?.meta.disabled,
+        ),
+      ),
+      className: evaluateCompiledValue(
+        input.expressionCompiler,
+        node.metaProgram.className,
+        scope,
+        env,
+        state?.meta.className,
+      ),
+      frameClassName: evaluateCompiledValue(
+        input.expressionCompiler,
+        node.metaProgram.frameClassName,
+        scope,
+        env,
+        state?.meta.frameClassName,
+      ),
+      testid: evaluateCompiledValue(
+        input.expressionCompiler,
+        node.metaProgram.testid,
+        scope,
+        env,
+        state?.meta.testid,
+      ),
+    });
+    const finalValue = Object.assign({}, projectedProps, propsValue);
+    const lastProjectedValue = state?._lastPropsResult?.value as Record<string, unknown> | undefined;
+    const finalResult =
+      lastProjectedValue && shallowEqual(lastProjectedValue, finalValue)
+        ? { ...result, value: lastProjectedValue, changed: false, reusedReference: true }
+        : { ...result, value: finalValue };
 
     if (state) {
-      state.resolvedProps = result.value;
+      state.resolvedProps = finalResult.value;
       state.propsDependencies = mergeDependencySets([
         collectRuntimeDependencies(state.props),
         ...Object.values(node.structuralFields ?? {}).map((f) =>
           f.kind === 'dynamic' ? WILDCARD_DEPENDENCIES : undefined,
         ),
       ]);
-      if (!result.reusedReference) {
-        state._lastPropsResult = result;
+      if (!finalResult.reusedReference) {
+        state._lastPropsResult = finalResult;
       }
     }
 
-    return result;
+    return finalResult;
   }
 
   return {

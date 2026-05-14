@@ -190,6 +190,39 @@ describe('createRendererRuntime - dialog state', () => {
     expect(dialogState.scope.get('pageOnly')).toBe('root');
   });
 
+  it('snapshots parent scope values when opening action-driven dialogs', async () => {
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ currentUser: { name: 'Architect' } });
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    await runtime.dispatch(
+      {
+        action: 'openDialog',
+        args: {
+          title: { type: 'text', text: 'Dialog ${currentUser.name}' },
+          body: [{ type: 'text', text: 'Body ${currentUser.name}' }],
+        },
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime,
+      },
+    );
+
+    page.scope.update('currentUser.name', 'Operator');
+
+    const dialogState = surfaceRuntime.store.getState().entries[0];
+    expect(dialogState.scope.get('currentUser.name')).toBe('Architect');
+    expect(dialogState.scope.readVisible().currentUser).toEqual({ name: 'Architect' });
+  });
+
   it('stores ownerNodeInstance in dialog state when opened from a trigger node', async () => {
     const buttonRenderer: RendererDefinition = {
       type: 'button',

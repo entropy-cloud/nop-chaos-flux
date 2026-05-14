@@ -535,12 +535,14 @@ export function createRendererRuntime(input: {
     createSurfaceScope: (kind, ctx, patch) => {
       const ownerId = ctx.nodeInstance?.templateNode.id ?? ctx.scope.id;
       const pendingId = `${ownerId}-pending`;
+      const visibleSnapshot = ctx.scope.materializeVisible();
 
       return createScopeRef({
         id: `${ownerId}:${kind}-scope`,
         path: `${ctx.scope.path}.${kind}`,
         parent: ctx.scope,
         initialData: {
+          ...visibleSnapshot,
           dialogId: pendingId,
           ...(patch ?? {}),
           ...(kind === 'drawer' ? { drawerId: pendingId } : {}),

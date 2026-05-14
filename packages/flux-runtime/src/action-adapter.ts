@@ -107,13 +107,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             : values;
 
           if (ctx.form) {
-            if (basePath) {
-              for (const [targetPath, val] of Object.entries(resolvedValues)) {
-                ctx.form.setValue(targetPath, val);
-              }
-            } else {
-              ctx.form.setValues(values);
-            }
+            ctx.form.setValues(basePath ? resolvedValues : values);
 
             return { ok: true, data: resolvedValues };
           }

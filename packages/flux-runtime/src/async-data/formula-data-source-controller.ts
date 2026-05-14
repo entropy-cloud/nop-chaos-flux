@@ -85,6 +85,10 @@ export function createFormulaDataSourceController(input: {
     return state;
   }
 
+  function valuesEqual(left: unknown, right: unknown): boolean {
+    return Object.is(left, right);
+  }
+
   function publish(): void {
     if (stopped) {
       return;
@@ -129,6 +133,28 @@ export function createFormulaDataSourceController(input: {
     if (run && input.asyncGovernance && !input.asyncGovernance.isCurrentRun(run)) {
       input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
       updateState((current) => current);
+      return;
+    }
+
+    const currentData = state.data;
+    const unchangedValue = valuesEqual(currentData, nextValue);
+
+    if (unchangedValue) {
+      updateState((current) => ({
+        ...current,
+        status: 'success',
+        fetchStatus: 'idle',
+        stale: false,
+        error: undefined,
+        failureCount: 0,
+        failureReason: undefined,
+      }));
+
+      if (run && input.asyncGovernance) {
+        input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
+        updateState((current) => current);
+      }
+
       return;
     }
 
