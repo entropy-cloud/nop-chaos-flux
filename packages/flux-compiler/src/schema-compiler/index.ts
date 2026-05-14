@@ -13,3 +13,4 @@ export {
 } from './fields.js';
 
 export { collectValidationModel } from './validation-collection.js';
+export { compileRuntimeValueTree } from './runtime-value-compilation.js';
