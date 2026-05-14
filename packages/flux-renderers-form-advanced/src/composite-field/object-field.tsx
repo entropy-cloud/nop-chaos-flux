@@ -19,7 +19,7 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import type { ObjectFieldSchema } from './composite-schemas.js';
-import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
+import { formFieldRules, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { cn } from '@nop-chaos/ui';
 import { createProjectedInlineForm } from './projected-inline-form.js';
 import { createProjectedOwnerScope } from '../projected-owner-scope.js';
@@ -127,7 +127,8 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const parentValidationOwner = useCurrentValidationScope();
   const env = useRendererEnv();
   const name = String(props.props.name ?? '');
-  const readOnly = Boolean(props.props.readOnly);
+  const readOnly = props.props.readOnly ?? false;
+  const disabled = props.props.disabled ?? false;
   const schemaProps = props.props as ObjectFieldSchema;
 
   const formValue = useCurrentFormState(
@@ -182,7 +183,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     const ac = new AbortController();
     const nextValue = valueAdapter.in(rawValue, {
       name,
-      readOnly: readOnly || Boolean(props.meta.disabled),
+      readOnly: readOnly || disabled,
       scope: parentScope,
       form: parentForm ?? null,
     });
@@ -214,7 +215,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     name,
     parentForm,
     parentScope,
-    props.meta.disabled,
+    disabled,
     rawValue,
     readOnly,
     schemaProps.transformInAction,
@@ -223,7 +224,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   ]);
 
   const presentation = useFieldPresentation(name, parentForm, {
-    disabled: props.meta.disabled,
+    disabled: props.props.disabled,
     readOnly,
   });
 
@@ -264,7 +265,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
       if (schemaProps.transformOutAction) {
         const committedValue = valueAdapter.out(nextWorkingValue, {
           name,
-          readOnly: readOnly || Boolean(props.meta.disabled),
+          readOnly: readOnly || disabled,
           originalValue: rawValue,
           scope: parentScope,
           form: parentForm ?? null,
@@ -361,7 +362,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
       parentValidationOwner,
       pendingTransformOutOwner,
       projectedValue,
-      props.meta.disabled,
+      disabled,
       rawValue,
       readOnly,
       schemaProps.transformOutAction,
@@ -476,7 +477,7 @@ export const objectFieldRendererDefinition: RendererDefinition = {
   component: ObjectFieldRenderer,
   wrap: true,
   fields: [
-    formLabelFieldRule,
+    ...formFieldRules,
     { key: 'body', kind: 'region', regionKey: 'body' },
     { key: 'transformInAction', kind: 'prop' },
     { key: 'transformOutAction', kind: 'prop' },

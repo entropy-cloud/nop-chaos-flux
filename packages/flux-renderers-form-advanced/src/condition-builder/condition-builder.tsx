@@ -8,7 +8,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { useCurrentFormModelGeneration, useSchemaProps } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { formLabelFieldRule, useFormFieldController } from '@nop-chaos/flux-renderers-form';
+import { formFieldRules, useFormFieldController } from '@nop-chaos/flux-renderers-form';
 import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
 import type {
@@ -43,9 +43,9 @@ function getRequiredMessage(label: string): string {
 export function ConditionBuilderRenderer(props: RendererComponentProps<ConditionBuilderSchema>) {
   const name = String(props.props.name ?? '');
   const { currentForm, value, handlers, presentation } = useFormFieldController(name, {
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
     areValuesEqual: groupValuesEqual,
   });
 
@@ -193,7 +193,7 @@ function PickerModeContent({
 export const conditionBuilderRendererDefinition: RendererDefinition = {
   type: 'condition-builder',
   component: ConditionBuilderRenderer,
-  fields: [formLabelFieldRule],
+  fields: formFieldRules,
   validation: {
     kind: 'field',
     valueKind: 'scalar',

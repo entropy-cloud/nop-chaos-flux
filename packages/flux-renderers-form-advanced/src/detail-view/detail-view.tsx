@@ -13,7 +13,7 @@ import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DetailViewSchema } from '../composite-field/composite-schemas.js';
 import {
-  formLabelFieldRule,
+  formFieldRules,
   resolveFieldLabelContent,
   FieldLabel,
 } from '@nop-chaos/flux-renderers-form';
@@ -39,7 +39,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const parentScope = useRenderScope();
   const parentValidationOwner = useCurrentValidationScope();
   const schemaProps = props.props;
-  const readOnly = Boolean(schemaProps.readOnly);
+  const readOnly = schemaProps.readOnly ?? false;
   const scopePath =
     schemaProps.scopePath ?? (typeof schemaProps.name === 'string' ? schemaProps.name : undefined);
   const staticData = schemaProps.data as Record<string, unknown> | undefined;
@@ -52,7 +52,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   );
   const validationMessage = t('flux.common.detailDraftValidationError');
   const openFailureMessage = t('flux.common.saveFailed');
-  const effectiveDisabled = Boolean(props.meta.disabled);
+  const effectiveDisabled = props.props.disabled ?? false;
 
   function reportOpenFailure(error: unknown) {
     runtime.env.notify?.(
@@ -103,6 +103,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     openSequencer,
     confirmSequencer,
   } = useDetailDraftControllerState();
+  const [, bumpViewerRevision] = React.useReducer((value: number) => value + 1, 0);
 
   const childOwnerId = React.useMemo(
     () => `detail-view:${props.id}:${scopePath ?? 'root'}`,
@@ -125,28 +126,6 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
 
     return parentForm ? formProjectedValue : scopeProjectedValue;
   }, [formProjectedValue, parentForm, scopeProjectedValue, staticData]);
-  const viewerRenderKey = React.useMemo(() => {
-    const baseKey = scopePath ?? 'root';
-
-    if (currentValue === undefined) {
-      return `${baseKey}:undefined`;
-    }
-
-    if (currentValue === null) {
-      return `${baseKey}:null`;
-    }
-
-    if (typeof currentValue === 'object') {
-      try {
-        return `${baseKey}:${JSON.stringify(currentValue)}`;
-      } catch {
-        return `${baseKey}:object`;
-      }
-    }
-
-    return `${baseKey}:${String(currentValue)}`;
-  }, [currentValue, scopePath]);
-
   const runAdaptationAction = useDetailAdaptationAction({
     helpers: props.helpers,
     parentScope,
@@ -433,6 +412,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         return;
       }
 
+      bumpViewerRevision();
       closeDraft();
     } finally {
       if (confirmSequencer.isCurrent(confirmToken)) {
@@ -447,7 +427,6 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
 
   const viewerContent = resolveRendererSlotContent(props, 'viewer');
   const editContent = resolveRendererSlotContent(props, 'content');
-
   return (
     <div
       className={cn('nop-detail-view', props.meta.className)}
@@ -455,9 +434,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       data-cid={props.meta.cid || undefined}
     >
       <FieldLabel content={labelContent} />
-      <div key={viewerRenderKey} data-slot="detail-view-viewer">
-        {viewerContent}
-      </div>
+      <div data-slot="detail-view-viewer">{viewerContent}</div>
       {!effectiveDisabled && (
         <Button
           type="button"
@@ -507,7 +484,7 @@ export const detailViewRendererDefinition: RendererDefinition<DetailViewSchema> 
     { key: 'name', kind: 'prop' },
     { key: 'viewer', kind: 'region', regionKey: 'viewer' },
     { key: 'content', kind: 'region', regionKey: 'content' },
-    formLabelFieldRule,
+    ...formFieldRules,
     { key: 'scopePath', kind: 'prop' },
     { key: 'data', kind: 'prop' },
     { key: 'triggerLabel', kind: 'prop' },

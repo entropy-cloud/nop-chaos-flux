@@ -18,8 +18,7 @@ describe('condition-builder renderer', () => {
   it('has label field rule', () => {
     const def = formAdvancedRendererDefinitions.find((d) => d.type === 'condition-builder');
     expect(def!.fields).toBeDefined();
-    expect(def!.fields!).toHaveLength(1);
-    expect(def!.fields![0]!.key).toBe('label');
+    expect(def!.fields!.some((field) => field.key === 'label')).toBe(true);
   });
 
   it('has field validation kind', () => {

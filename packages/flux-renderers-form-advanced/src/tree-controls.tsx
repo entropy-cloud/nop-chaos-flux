@@ -15,7 +15,7 @@ import {
 import { ChevronRightIcon, ChevronsUpDownIcon, SearchIcon, XIcon } from 'lucide-react';
 import {
   createFieldValidation,
-  formLabelFieldRule,
+  formFieldRules,
   useFormFieldController,
   validateInputFieldSchema,
 } from '@nop-chaos/flux-renderers-form';
@@ -182,9 +182,9 @@ function TreeOptionList(props: {
 function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -238,9 +238,9 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
 function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -344,7 +344,7 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-tree',
     fields: [
-      formLabelFieldRule,
+      ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
     ],
     validation: createFieldValidation(),
@@ -355,7 +355,7 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
   {
     type: 'tree-select',
     fields: [
-      formLabelFieldRule,
+      ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
     ],
     validation: createFieldValidation(),

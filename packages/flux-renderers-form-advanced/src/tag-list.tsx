@@ -6,7 +6,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import {
-  formLabelFieldRule,
+  formFieldRules,
   resolveFieldLabelText,
   shouldValidateOn,
   shouldValidateOnOwner,
@@ -17,16 +17,16 @@ import { WrappedFieldAction } from './wrapped-field-action.js';
 
 export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const name = String(props.props.name ?? '');
-  const required = Boolean(props.props.required);
+  const required = props.props.required ?? false;
   const {
     currentForm,
     scope,
     value: boundValue,
     presentation,
   } = useFormFieldController(name, {
-    disabled: props.meta.disabled,
+    disabled: props.props.disabled,
     required,
-    readOnly: Boolean(props.props.readOnly),
+    readOnly: props.props.readOnly,
   });
   const value = Array.isArray(boundValue) ? boundValue.map((item) => String(item)) : [];
   const labelText = resolveFieldLabelText(props, name);
@@ -143,5 +143,5 @@ export const tagListRendererDefinition: RendererDefinition = {
   type: 'tag-list',
   component: TagListRenderer,
   wrap: true,
-  fields: [formLabelFieldRule],
+  fields: formFieldRules,
 };

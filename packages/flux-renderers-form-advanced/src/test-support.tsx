@@ -255,6 +255,6 @@ export function createFormSchemaRendererWithButton() {
   return createSchemaRenderer([...allFormDefs, buttonRenderer]);
 }
 
-export function createPageSchemaRenderer() {
-  return createSchemaRenderer([...basicRendererDefinitions, ...allFormDefs]);
+export function createPageSchemaRenderer(extraDefinitions: RendererDefinition[] = []) {
+  return createSchemaRenderer([...basicRendererDefinitions, ...allFormDefs, ...extraDefinitions]);
 }

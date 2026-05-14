@@ -17,7 +17,7 @@ import {
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
 import {
-  formLabelFieldRule,
+  formFieldRules,
   getChildFieldUiState,
   getFieldValidationBehavior,
   shouldValidateOn,
@@ -227,9 +227,9 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   const name = String(props.props.name ?? '');
   const hasName = name.length > 0;
   const { currentForm, scope, presentation } = useFormFieldController(name, {
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
   });
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const pairsRef = React.useRef<KeyValuePair[]>([]);
@@ -446,7 +446,7 @@ export const keyValueRendererDefinition: RendererDefinition = {
   type: 'key-value',
   component: KeyValueRenderer,
   wrap: true,
-  fields: [formLabelFieldRule],
+  fields: formFieldRules,
   validation: {
     kind: 'field',
     valueKind: 'array',

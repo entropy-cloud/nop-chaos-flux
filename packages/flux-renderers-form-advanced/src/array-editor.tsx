@@ -16,7 +16,7 @@ import {
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
 import {
-  formLabelFieldRule,
+  formFieldRules,
   getChildFieldUiState,
   getFieldValidationBehavior,
   shouldValidateOn,
@@ -173,9 +173,9 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   const name = String(props.props.name ?? '');
   const hasName = name.length > 0;
   const { currentForm, scope, presentation } = useFormFieldController(name, {
-    disabled: props.meta.disabled,
-    required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly),
+    disabled: props.props.disabled,
+    required: props.props.required,
+    readOnly: props.props.readOnly,
   });
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const itemsRef = React.useRef<ArrayEditorItem[]>([]);
@@ -399,7 +399,7 @@ export const arrayEditorRendererDefinition: RendererDefinition = {
   type: 'array-editor',
   component: ArrayEditorRenderer,
   wrap: true,
-  fields: [formLabelFieldRule],
+  fields: formFieldRules,
   validation: {
     kind: 'field',
     valueKind: 'array',

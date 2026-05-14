@@ -11,7 +11,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { Button, cn } from '@nop-chaos/ui';
 import type { DetailFieldSchema } from '../composite-field/composite-schemas.js';
-import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
+import { formFieldRules, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   publishValidateResultErrors,
@@ -41,7 +41,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const schemaProps = props.props;
   const name = String(schemaProps.name ?? '');
   const hasName = name.length > 0;
-  const readOnly = Boolean(schemaProps.readOnly);
+  const readOnly = schemaProps.readOnly ?? false;
   const surfaceMode = (schemaProps.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
   const surfaceTitle = (schemaProps.surface as { title?: string } | undefined)?.title ?? '';
   const fieldLabel = String((schemaProps.label ?? name) || t('flux.common.detail'));
@@ -59,7 +59,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   }
 
   const presentation = useFieldPresentation(name, parentForm, {
-    disabled: props.meta.disabled,
+    disabled: props.props.disabled,
     readOnly,
   });
 
@@ -326,7 +326,7 @@ export const detailFieldRendererDefinition: RendererDefinition<DetailFieldSchema
     { key: 'name', kind: 'prop' },
     { key: 'viewer', kind: 'region', regionKey: 'viewer' },
     { key: 'content', kind: 'region', regionKey: 'content' },
-    formLabelFieldRule,
+    ...formFieldRules,
     { key: 'triggerLabel', kind: 'prop' },
     { key: 'readOnly', kind: 'prop' },
     { key: 'surface', kind: 'prop' },

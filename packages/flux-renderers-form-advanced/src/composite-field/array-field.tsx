@@ -21,7 +21,7 @@ import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-re
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas.js';
-import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
+import { formFieldRules, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { createItemFormProxy, createItemScope } from './array-field-runtime.js';
 import { WrappedFieldAction } from '../wrapped-field-action.js';
 import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime.js';
@@ -267,14 +267,14 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       : undefined;
   const addable = props.props.addable !== false;
   const removable = props.props.removable !== false;
-  const readOnly = Boolean(props.props.readOnly);
+  const readOnly = props.props.readOnly ?? false;
   const itemRepeatedTemplateId = React.useMemo(
     () => createArrayFieldRepeatedTemplateId(props.templateNode.templateNodeId),
     [props.templateNode.templateNodeId],
   );
 
   const presentation = useFieldPresentation(name, parentForm, {
-    disabled: props.meta.disabled,
+    disabled: props.props.disabled === true,
     readOnly,
   });
 
@@ -555,7 +555,7 @@ export const arrayFieldRendererDefinition: RendererDefinition = {
   wrap: true,
   fields: [
     { key: 'name', kind: 'prop' },
-    formLabelFieldRule,
+    ...formFieldRules,
     { key: 'itemKind', kind: 'prop' },
     { key: 'itemKey', kind: 'prop' },
     { key: 'addable', kind: 'prop' },

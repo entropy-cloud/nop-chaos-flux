@@ -1,6 +1,6 @@
 import React from 'react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Input } from '@nop-chaos/ui';
+import { Button, Input } from '@nop-chaos/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@nop-chaos/ui';
 import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import { Badge } from '@nop-chaos/ui';
@@ -185,27 +185,18 @@ function MultiSelectInput({
         selected.map((v) => {
           const opt = options.find((o) => String(o.value) === v);
           return (
-            <Badge
+            <Button
               key={v}
+              type="button"
               variant="secondary"
-              className="text-[10px] px-1.5 py-0 cursor-pointer"
-              role="button"
-              tabIndex={disabled ? -1 : 0}
+              size="xs"
+              className="h-auto px-1.5 py-0 text-[10px]"
               aria-label={`Remove value ${opt?.label ?? v}`}
-              onClick={() => !disabled && toggle(v)}
-              onKeyDown={(event) => {
-                if (disabled) {
-                  return;
-                }
-
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  toggle(v);
-                }
-              }}
+              disabled={disabled}
+              onClick={() => toggle(v)}
             >
               {opt?.label ?? v} ×
-            </Badge>
+            </Button>
           );
         })
       ) : (

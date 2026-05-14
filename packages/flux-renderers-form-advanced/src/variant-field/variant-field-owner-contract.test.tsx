@@ -44,7 +44,7 @@ vi.mock('@nop-chaos/ui', () => ({
 }));
 
 vi.mock('@nop-chaos/flux-renderers-form', () => ({
-  formLabelFieldRule: undefined,
+  formFieldRules: [],
   resolveFieldLabelContent: () => undefined,
 }));
 

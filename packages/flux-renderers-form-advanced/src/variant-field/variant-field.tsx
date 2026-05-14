@@ -30,7 +30,7 @@ import {
   TabsTrigger,
 } from '@nop-chaos/ui';
 import type { VariantFieldSchema, VariantOption } from '../composite-field/composite-schemas.js';
-import { formLabelFieldRule, resolveFieldLabelContent } from '@nop-chaos/flux-renderers-form';
+import { formFieldRules, resolveFieldLabelContent } from '@nop-chaos/flux-renderers-form';
 import {
   detectMatchedVariant,
   extractDetectedVariant,
@@ -134,7 +134,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const parentScope = useRenderScope();
   const schemaProps = props.props;
   const name = String(schemaProps.name ?? '');
-  const readOnly = Boolean(schemaProps.readOnly);
+  const readOnly = schemaProps.readOnly === true;
   const variants = React.useMemo(
     () => ((schemaProps.variants ?? []) as VariantResolvedOption[]),
     [schemaProps.variants],
@@ -154,7 +154,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const currentValue = parentForm ? rawValue : scopeValue;
 
   const labelContent = resolveFieldLabelContent(props);
-  const effectiveDisabled = Boolean(props.meta.disabled);
+  const effectiveDisabled = props.props.disabled === true;
 
   const matchedKey = detectMatchedVariant(
     variants,
@@ -597,7 +597,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     <FieldFrame
       name={name || undefined}
       label={labelContent}
-      required={Boolean(schemaProps.required) || undefined}
+      required={schemaProps.required === true || undefined}
       hint={schemaProps.hint as string | undefined}
       description={schemaProps.description as string | undefined}
       remark={remarkValue}
@@ -620,7 +620,7 @@ export const variantFieldRendererDefinition: RendererDefinition<VariantFieldSche
   type: 'variant-field',
   component: VariantFieldRenderer,
   fields: [
-    formLabelFieldRule,
+    ...formFieldRules,
     { key: 'variants', kind: 'prop' },
     { key: 'selector', kind: 'prop' },
     { key: 'selectorMode', kind: 'prop' },
