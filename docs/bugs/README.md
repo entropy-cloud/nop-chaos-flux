@@ -67,3 +67,4 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/50-use-source-value-strictmode-unmount-stale-drop-fix.md`
 - `docs/bugs/51-structuralwhen-runtime-react-handoff-contract-fix.md`
 - `docs/bugs/52-variant-field-canonical-owner-selection-fix.md`
+- `docs/bugs/53-imported-region-composite-scope-shared-dedupe-fix.md`

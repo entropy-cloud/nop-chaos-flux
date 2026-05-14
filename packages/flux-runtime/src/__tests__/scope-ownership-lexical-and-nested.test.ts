@@ -167,6 +167,24 @@ describe('H12: composite store subscriptions', () => {
     parent.update('a', 99);
     expect(listener).toHaveBeenCalledTimes(1);
   });
+
+  it('notifies all child composite subscribers for one parent update', () => {
+    const parent = createTestScope({ summary: { name: 'Original', status: 'draft' } });
+    const child = createChildScope(parent, { detailViewLib: {} });
+    const first = vi.fn();
+    const second = vi.fn();
+    const third = vi.fn();
+
+    child.store?.subscribe(first);
+    child.store?.subscribe(second);
+    child.store?.subscribe(third);
+
+    parent.update('summary.name', 'Changed Name');
+
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(1);
+    expect(third).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('H13: replace edge cases', () => {

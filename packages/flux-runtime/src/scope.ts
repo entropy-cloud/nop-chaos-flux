@@ -228,7 +228,6 @@ function createCompositeScopeStore(
   scopeId: string,
 ): ScopeStore<Record<string, any>> {
   let lastChange = createDefaultChange(scopeId);
-  let lastVisibleForParent: Record<string, any> | undefined;
 
   return {
     getSnapshot: readVisible,
@@ -239,6 +238,8 @@ function createCompositeScopeStore(
       ownStore.setSnapshot(next, change);
     },
     subscribe(listener) {
+      let lastVisibleForParent: Record<string, any> | undefined;
+
       const unsubOwn = ownStore.subscribe((change) => {
         lastChange = change;
         lastVisibleForParent = readVisible();
