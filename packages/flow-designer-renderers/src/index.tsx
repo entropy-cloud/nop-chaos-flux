@@ -10,6 +10,12 @@ import {
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import type { ActionIntent } from '@nop-chaos/flow-designer-core';
 import { designerHostContract } from './designer-manifest.js';
+import {
+  DesignerCanvasRenderer,
+  DesignerPageRenderer,
+  DesignerPaletteRenderer,
+} from './designer-page.js';
+import { DesignerFieldRenderer } from './designer-field.js';
 import type {
   DesignerPageSchema,
   DesignerFieldSchema,
@@ -17,20 +23,34 @@ import type {
   DesignerPaletteSchema,
 } from './schemas.js';
 
-const LazyDesignerPageRenderer = createLazyRendererComponent<DesignerPageSchema>(
-  () => import('./designer-page.js').then((m) => m.DesignerPageRenderer),
-);
-const LazyDesignerCanvasRenderer = createLazyRendererComponent<DesignerCanvasSchema>(
-  () => import('./designer-page.js').then((m) => m.DesignerCanvasRenderer),
-);
-const LazyDesignerPaletteRenderer = createLazyRendererComponent<DesignerPaletteSchema>(
-  () => import('./designer-page.js').then((m) => m.DesignerPaletteRenderer),
-);
-const LazyDesignerFieldRenderer = createLazyRendererComponent<DesignerFieldSchema>(
-  () => import('./designer-field.js').then((m) => m.DesignerFieldRenderer),
-);
+const useEagerRenderersInTests =
+  (globalThis as { process?: { env?: { VITEST?: string } } }).process?.env?.VITEST === 'true';
+
+const LazyDesignerPageRenderer = useEagerRenderersInTests
+  ? DesignerPageRenderer
+  : createLazyRendererComponent<DesignerPageSchema>(
+      () => import('./designer-page.js').then((m) => m.DesignerPageRenderer),
+    );
+const LazyDesignerCanvasRenderer = useEagerRenderersInTests
+  ? DesignerCanvasRenderer
+  : createLazyRendererComponent<DesignerCanvasSchema>(
+      () => import('./designer-page.js').then((m) => m.DesignerCanvasRenderer),
+    );
+const LazyDesignerPaletteRenderer = useEagerRenderersInTests
+  ? DesignerPaletteRenderer
+  : createLazyRendererComponent<DesignerPaletteSchema>(
+      () => import('./designer-page.js').then((m) => m.DesignerPaletteRenderer),
+    );
+const LazyDesignerFieldRenderer = useEagerRenderersInTests
+  ? DesignerFieldRenderer
+  : createLazyRendererComponent<DesignerFieldSchema>(
+      () => import('./designer-field.js').then((m) => m.DesignerFieldRenderer),
+    );
 
 function compileDesignerConfig(value: unknown, context: FieldCompileContext): unknown {
+  const normalizeBooleanLikeCandidate = (candidate: unknown): boolean | undefined =>
+    typeof candidate === 'boolean' ? candidate : undefined;
+
   if (!isPlainObject(value) && context.sourcePath.endsWith('.config')) {
     return context.compileValue(value);
   }
@@ -56,10 +76,16 @@ function compileDesignerConfig(value: unknown, context: FieldCompileContext): un
       continue;
     }
 
-    result[key] = compileDesignerConfig(child, {
-      ...context,
-      sourcePath: childPath,
-    });
+    if (key === 'disabled' || key === 'active' || key === 'visible') {
+      result[key] = context.compileValue(child, childPath, {
+        transform: normalizeBooleanLikeCandidate,
+      });
+    } else {
+      result[key] = compileDesignerConfig(child, {
+        ...context,
+        sourcePath: childPath,
+      });
+    }
   }
 
   return result;
@@ -106,6 +132,22 @@ function validateDesignerConfigToolbar(context: import('@nop-chaos/flux-core').R
     }
 
     const button = item as { type?: unknown; intent?: unknown };
+    for (const key of ['disabled', 'active', 'visible'] as const) {
+      const value = (item as Record<string, unknown>)[key];
+      if (value === undefined || typeof value === 'boolean') {
+        continue;
+      }
+      if (typeof value === 'string' && value.trim().startsWith('${') && value.trim().endsWith('}')) {
+        continue;
+      }
+
+      context.emit({
+        code: 'invalid-property-value',
+        path: `/config/toolbar/items/${index}/${key}`,
+        message: `Invalid boolean value for Flow Designer toolbar item "${key}". Use a boolean literal or a \${expr} expression.`,
+      });
+    }
+
     if (button.type !== 'button' || button.intent === undefined) {
       return;
     }

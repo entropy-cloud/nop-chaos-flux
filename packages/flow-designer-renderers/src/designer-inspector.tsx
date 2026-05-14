@@ -124,29 +124,28 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
               <div
                 key={branch.id}
                 className={cn(
-                  'rounded-lg border p-3 cursor-pointer',
+                  'rounded-lg border p-3',
                   isFocused ? 'border-primary bg-primary/5' : 'border-border/70',
                 )}
-                role="button"
-                tabIndex={0}
-                aria-pressed={isFocused}
-                onClick={() =>
-                  dispatch({ type: 'selectBranch', nodeId: activeNode.id, branchId: branch.id })
-                }
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    dispatch({ type: 'selectBranch', nodeId: activeNode.id, branchId: branch.id });
-                  }
-                }}
               >
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <div>
-                    <div className="text-sm font-medium text-foreground">
-                      {t('flux.flowDesigner.inspector.branchLabel', { index: index + 1 })}
-                    </div>
-                    <div className="text-xs text-muted-foreground font-mono">{branch.id}</div>
-                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto flex-1 justify-start px-0 py-0 text-left hover:bg-transparent"
+                    aria-pressed={isFocused}
+                    onClick={() =>
+                      dispatch({ type: 'selectBranch', nodeId: activeNode.id, branchId: branch.id })
+                    }
+                  >
+                    <span className="flex flex-col items-start">
+                      <span className="text-sm font-medium text-foreground">
+                        {t('flux.flowDesigner.inspector.branchLabel', { index: index + 1 })}
+                      </span>
+                      <span className="text-xs text-muted-foreground font-mono">{branch.id}</span>
+                    </span>
+                  </Button>
                   <div className="flex items-center gap-1">
                     <Button
                       type="button"

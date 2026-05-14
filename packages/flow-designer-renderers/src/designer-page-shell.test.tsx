@@ -471,6 +471,26 @@ describe('DesignerPageRenderer basic rendering', () => {
     expect(view.getAllByText('Designer requires config prop').length).toBeGreaterThan(0);
   });
 
+  it('keeps root meta on fallback branches', () => {
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+    ]);
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/index-fallback-meta"
+        schema={{ type: 'designer-page', className: 'designer-fallback-root', testid: 'designer-fallback' }}
+        env={createRendererEnv() as RendererEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const fallback = view.getByTestId('designer-fallback');
+    expect(fallback.className).toContain('designer-fallback-root');
+    expect(fallback.textContent).toContain('Designer requires config prop');
+  });
+
   it('hides sides without resolved palette or inspector config', () => {
     const SchemaRenderer = createSchemaRenderer([
       ...basicTestRendererDefinitions,

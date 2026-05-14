@@ -37,18 +37,6 @@ function readState(name: string, snapshot: ToolbarSnapshot) {
   }
 }
 
-function evalBooleanExpr(value: boolean | string | undefined, snapshot: ToolbarSnapshot) {
-  if (typeof value === 'boolean') return value;
-  if (typeof value !== 'string') return false;
-  const trimmed = value.trim();
-  const expr =
-    trimmed.startsWith('${') && trimmed.endsWith('}') ? trimmed.slice(2, -1).trim() : trimmed;
-  if (expr.startsWith('!')) {
-    return !readState(expr.slice(1).trim(), snapshot);
-  }
-  return readState(expr, snapshot) === true;
-}
-
 function evalTextTemplate(template: string | undefined, snapshot: ToolbarSnapshot) {
   if (!template) return '';
 
@@ -241,10 +229,10 @@ export function DesignerToolbarContent(props: {
         if (item.type === 'button') {
           const command = toCommand(item.action);
           const disabled =
-            evalBooleanExpr(item.disabled, snapshot) ||
+            item.disabled === true ||
             (item.action === 'designer:autoLayout' && props.autoLayoutBusy === true);
           const active =
-            evalBooleanExpr(item.active, snapshot) ||
+            item.active === true ||
             (item.action === 'designer:export' && props.exportActive === true);
           const variant =
             item.intent === 'danger'
@@ -281,8 +269,8 @@ export function DesignerToolbarContent(props: {
 
         if (item.type === 'switch') {
           const command = toCommand(item.action);
-          const disabled = evalBooleanExpr(item.disabled, snapshot);
-          const checked = evalBooleanExpr(item.active, snapshot);
+          const disabled = item.disabled === true;
+          const checked = item.active === true;
           return (
             <Label
               key={key}

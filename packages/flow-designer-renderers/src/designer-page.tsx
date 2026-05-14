@@ -27,7 +27,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
   const config = readDesignerResolvedProp<DesignerConfig>(props, 'config');
 
   if (!config) {
-    return <div>{t('flux.flowDesigner.configRequired')}</div>;
+    return <div {...getRootMetaProps(props.meta)}>{t('flux.flowDesigner.configRequired')}</div>;
   }
 
   const documentMode = config.documentMode;
@@ -38,7 +38,7 @@ export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageS
 
   const document = readDesignerResolvedProp<GraphDocument>(props, 'document');
   if (!document) {
-    return <div>{t('flux.flowDesigner.documentRequired')}</div>;
+    return <div {...getRootMetaProps(props.meta)}>{t('flux.flowDesigner.documentRequired')}</div>;
   }
 
   return <DesignerPageInner rendererProps={props} document={document} config={config} />;

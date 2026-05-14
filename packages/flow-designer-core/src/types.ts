@@ -233,16 +233,16 @@ export type ToolbarItem =
       action: string;
       icon?: string;
       label?: string;
-      disabled?: string;
-      active?: string;
+      disabled?: boolean | string;
+      active?: boolean | string;
       intent?: ActionIntent;
     }
   | {
       type: 'switch';
       action?: string;
       label?: string;
-      disabled?: string;
-      active?: string;
+      disabled?: boolean | string;
+      active?: boolean | string;
     };
 
 export interface ToolbarConfig {

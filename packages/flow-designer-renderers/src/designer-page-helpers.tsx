@@ -205,7 +205,7 @@ export async function confirmCreateDialog(args: {
     });
 
     if (!result.ok) {
-      return { ok: false as const };
+      return { ok: false as const, error: result.error };
     }
 
     if (result.data && typeof result.data === 'object' && !Array.isArray(result.data)) {

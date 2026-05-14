@@ -24,7 +24,7 @@ describe('confirmCreateDialog', () => {
       dispatch,
     });
 
-    expect(result).toEqual({ ok: false });
+    expect(result).toEqual({ ok: false, error: expect.any(Error) });
     expect(dispatch).not.toHaveBeenCalled();
   });
 });

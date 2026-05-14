@@ -20,7 +20,7 @@ export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFiel
   const name = schemaProps.name as string;
   const fieldType = schemaProps.fieldType as string | undefined;
   const options = schemaProps.options as Array<{ label: string; value: string }> | undefined;
-  const disabled = props.meta.disabled === true;
+  const disabled = props.props.disabled === true;
   const { dispatch } = useDesignerContext();
   const activeNode = useDesignerSnapshotSelector((s) => s.activeNode);
   const activeEdge = useDesignerSnapshotSelector((s) => s.activeEdge);

@@ -92,13 +92,13 @@ describe('flow designer controls', () => {
       ...mockState.context.config,
       toolbar: {
         items: [
-          { type: 'button', label: 'Undo', action: 'designer:undo', disabled: '${!canUndo}' },
-          { type: 'button', label: 'Redo', action: 'designer:redo', disabled: '${!canRedo}' },
+          { type: 'button', label: 'Undo', action: 'designer:undo', disabled: false },
+          { type: 'button', label: 'Redo', action: 'designer:redo', disabled: true },
           {
             type: 'button',
             label: 'Grid',
             action: 'designer:toggle-grid',
-            active: '${gridEnabled}',
+            active: false,
           },
         ],
       },
@@ -354,8 +354,7 @@ describe('flow designer controls', () => {
 
     const branchButton = screen.getByRole('button', { name: /分支 3/ });
     expect(branchButton.getAttribute('aria-pressed')).toBe('false');
-    fireEvent.keyDown(branchButton, { key: 'Enter' });
-    fireEvent.keyDown(branchButton, { key: ' ' });
+    fireEvent.click(branchButton);
     expect(mockState.context.dispatch).toHaveBeenCalledWith({
       type: 'selectBranch',
       nodeId: 'node-1',
