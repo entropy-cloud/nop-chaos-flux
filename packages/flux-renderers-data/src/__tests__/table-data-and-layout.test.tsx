@@ -11,6 +11,7 @@ import {
   createRowScopePath,
   createTableRowRepeatedTemplateId,
   normalizeRowKey,
+  paginateTableData,
   processTableData,
   serializeInstancePath,
   toSelectionPayload,
@@ -98,8 +99,8 @@ describe('table-data helpers', () => {
     warnSpy.mockRestore();
   });
 
-  it('processes sorting, filtering, keyword search, null ordering, and pagination', () => {
-    const result = processTableData(
+  it('processes sorting, filtering, keyword search, and pagination in separate stages', () => {
+    const filtered = processTableData(
       [
         { id: 1, name: 'Bob', role: 'user' },
         { id: 2, name: null, role: 'admin' },
@@ -112,12 +113,17 @@ describe('table-data helpers', () => {
         role: { values: new Set(['admin']) },
         name: { values: new Set(), keyword: 'ali' },
       },
-      true,
-      1,
-      2,
     );
 
-    expect(result).toEqual([
+    expect(filtered).toEqual([
+      {
+        rowKey: '3',
+        sourceIndex: 2,
+        record: { id: 3, name: 'Alice', role: 'admin' },
+      },
+    ]);
+
+    expect(paginateTableData(filtered, true, 1, 2)).toEqual([
       {
         rowKey: '3',
         sourceIndex: 2,
@@ -135,9 +141,6 @@ describe('table-data helpers', () => {
       undefined,
       { column: 'score', direction: 'desc' },
       {},
-      false,
-      1,
-      10,
     );
 
     expect(desc.map((entry) => entry.rowKey)).toEqual(['2', '3', '1']);

@@ -23,6 +23,7 @@ import {
 import type { TableColumnSchema, TableSchema } from './schemas.js';
 import {
   createTableRowRepeatedTemplateId,
+  paginateTableData,
   processTableData,
   serializeInstancePath,
 } from './table-renderer/table-data.js';
@@ -180,7 +181,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     moveColumn,
   } = useTableVisibleColumns(tableSchemaProps, columns);
   const [inlineColumnSettingsOpen, setInlineColumnSettingsOpen] = useState(false);
-  const { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange } =
+  const { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage } =
     useTablePagination(tableSchemaProps, props.events.onPageChange, helpers);
   const { selectedRowKeys, allSelected, handleSelectAll, handleSelectRow, setSelectionExternal } =
     useTableSelection(tableSchemaProps, source, props.events.onSelectionChange, helpers);
@@ -194,6 +195,14 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     tableSchemaProps,
     props.events.onFilterChange,
     helpers,
+    (nextFilterState) => {
+      if (tableSchemaProps.paginationOwnership === 'controlled') {
+        return;
+      }
+
+      const nextFilteredRows = processTableData(source, schemaProps.rowKey, sortState, nextFilterState);
+      clampPage(1, nextFilteredRows.length);
+    },
   );
   const { expandedRowKeys, handleToggleExpand } = useTableExpand(tableSchemaProps);
 
@@ -211,18 +220,13 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     schemaProps.expandable?.expandRowByClick === true ||
     (responsiveExpandActive && schemaProps.responsive?.expandTrigger === 'row');
 
+  const filteredData = useMemo(
+    () => processTableData(source, schemaProps.rowKey, sortState, filterState),
+    [source, schemaProps.rowKey, sortState, filterState],
+  );
   const processedData = useMemo(
-    () =>
-      processTableData(
-        source,
-        schemaProps.rowKey,
-        sortState,
-        filterState,
-        paginationEnabled,
-        currentPage,
-        pageSize,
-      ),
-    [source, schemaProps.rowKey, sortState, filterState, paginationEnabled, currentPage, pageSize],
+    () => paginateTableData(filteredData, paginationEnabled, currentPage, pageSize),
+    [filteredData, paginationEnabled, currentPage, pageSize],
   );
   const fixedColumnLayout = useMemo(
     () => createFixedColumnLayout(tableSchemaProps, mainColumns, showExpandColumn),
@@ -245,8 +249,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
   const totalPages = useMemo(() => {
     if (!paginationEnabled) return 1;
-    return Math.ceil(source.length / pageSize);
-  }, [source.length, pageSize, paginationEnabled]);
+    return Math.max(1, Math.ceil(filteredData.length / pageSize));
+  }, [filteredData.length, pageSize, paginationEnabled]);
 
   const isLoading = schemaProps.loading === true;
   const isStriped = schemaProps.stripe === true;
@@ -421,7 +425,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             <TableHeaderRow
               props={props}
               columns={mainColumns}
-              sourceLength={source.length}
+              sourceLength={filteredData.length}
               sortState={sortState}
               filterState={filterState}
               allSelected={allSelected}
@@ -461,12 +465,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         {isLoading ? <TableLoadingOverlay loadingContent={loadingContent} /> : null}
       </div>
 
-      {paginationEnabled && source.length > 0 ? (
+      {paginationEnabled && filteredData.length > 0 ? (
         <TablePaginationBar
           currentPage={currentPage}
           pageSize={pageSize}
           totalPages={totalPages}
-          totalRows={source.length}
+          totalRows={filteredData.length}
           pageSizeOptions={schemaProps.pagination?.pageSizeOptions}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}

@@ -8,6 +8,7 @@ export function useTableFilter(
   schemaProps: TableSchema,
   onFilterChange: RendererComponentProps<TableSchema>['events']['onFilterChange'],
   helpers: RendererComponentProps<TableSchema>['helpers'],
+  onFilterStateChange?: (nextState: FilterState) => void,
 ) {
   const renderScope = useRenderScope();
   const filterOwnership = schemaProps.filterOwnership ?? 'local';
@@ -113,8 +114,9 @@ export function useTableFilter(
           { scopeKey: 'filter', pathSuffix: 'filter' },
         ),
       });
+      onFilterStateChange?.(newFilters);
     },
-    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope],
+    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, onFilterStateChange, renderScope],
   );
 
   const handleSearch = useCallback(
@@ -151,8 +153,9 @@ export function useTableFilter(
           { scopeKey: 'filter', pathSuffix: 'filter' },
         ),
       });
+      onFilterStateChange?.(newFilters);
     },
-    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope],
+    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, onFilterStateChange, renderScope],
   );
 
   const clearFilters = useCallback(
@@ -186,8 +189,9 @@ export function useTableFilter(
           { scopeKey: 'filter', pathSuffix: 'filter' },
         ),
       });
+      onFilterStateChange?.(newFilters);
     },
-    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope],
+    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, onFilterStateChange, renderScope],
   );
 
   return { filterState, handleFilter, handleSearch, clearFilters };

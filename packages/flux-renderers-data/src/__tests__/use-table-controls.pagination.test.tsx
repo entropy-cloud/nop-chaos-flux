@@ -108,4 +108,38 @@ describe('useTablePagination', () => {
       pageSize: 30,
     });
   });
+
+  it('clamps local pagination when filtered rows shrink to one page', () => {
+    const helpers = createHelpers();
+    const onPageChange = vi.fn();
+    let api: any;
+
+    render(
+      <PaginationProbe
+        schemaProps={{ pagination: { enabled: true, pageSize: 5 } }}
+        onPageChange={onPageChange}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handlePageChange(3);
+    });
+    expect(api.currentPage).toBe(3);
+
+    act(() => {
+      api.clampPage(1, 1);
+    });
+
+    expect(api.currentPage).toBe(1);
+    expect(onPageChange).toHaveBeenLastCalledWith(null, {
+      scope: {
+        value: { page: 1, pageSize: 5 },
+        options: { scopeKey: 'pagination', pathSuffix: 'pagination' },
+      },
+    });
+  });
 });

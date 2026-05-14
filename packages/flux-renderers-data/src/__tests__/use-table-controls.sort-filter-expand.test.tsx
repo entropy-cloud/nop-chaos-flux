@@ -122,16 +122,18 @@ describe('useTableFilter', () => {
   it('manages local filter values, search keywords, and clear behavior', () => {
     const helpers = createHelpers();
     const onFilterChange = vi.fn();
+    const onFilterStateChange = vi.fn();
     let api: any;
 
     render(
-      <FilterProbe
-        schemaProps={{}}
-        onFilterChange={onFilterChange}
-        helpers={helpers}
-        onReady={(value) => {
-          api = value;
-        }}
+        <FilterProbe
+          schemaProps={{}}
+          onFilterChange={onFilterChange}
+          helpers={helpers}
+          onFilterStateChange={onFilterStateChange}
+          onReady={(value) => {
+            api = value;
+          }}
       />,
     );
 
@@ -159,6 +161,7 @@ describe('useTableFilter', () => {
     });
     expect(api.filterState).toEqual({});
     expect(onFilterChange).toHaveBeenCalled();
+    expect(onFilterStateChange).toHaveBeenLastCalledWith({});
   });
 
   it('reads and updates scope-backed filter state', () => {

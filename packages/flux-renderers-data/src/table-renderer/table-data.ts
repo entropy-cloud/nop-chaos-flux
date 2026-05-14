@@ -71,9 +71,6 @@ export function processTableData(
   rowKeyField: string | undefined,
   sortState: SortState,
   filterState: FilterState,
-  paginationEnabled: boolean,
-  currentPage: number,
-  pageSize: number,
 ): TableRowEntry[] {
   let data = buildTableRowEntries(source, rowKeyField);
   warnOnDuplicateRowKeys(data);
@@ -105,12 +102,23 @@ export function processTableData(
     }
   });
 
+  return data;
+}
+
+export function paginateTableData(
+  data: TableRowEntry[],
+  paginationEnabled: boolean,
+  currentPage: number,
+  pageSize: number,
+): TableRowEntry[] {
+  let pagedData = data;
+
   if (paginationEnabled) {
     const startIndex = (currentPage - 1) * pageSize;
-    data = data.slice(startIndex, startIndex + pageSize);
+    pagedData = pagedData.slice(startIndex, startIndex + pageSize);
   }
 
-  return data.map((entry, viewIndex) => ({ ...entry, viewIndex }));
+  return pagedData.map((entry, viewIndex) => ({ ...entry, viewIndex }));
 }
 
 export { toPositiveNumber, toStringArray };

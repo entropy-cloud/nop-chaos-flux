@@ -358,6 +358,17 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     () => props.events as unknown as RendererComponentProps<TableSchema>['events'],
     [props.events],
   );
+  const tableResolvedProps = useMemo<RendererComponentProps<TableSchema>['props']>(
+    () => ({
+      ...tableSchema,
+      disabled: props.props.disabled,
+      className: props.props.className,
+      frameClassName: props.props.frameClassName,
+      testid: props.props.testid,
+      cid: props.props.cid,
+    }),
+    [tableSchema, props.props.cid, props.props.className, props.props.disabled, props.props.frameClassName, props.props.testid],
+  );
   const tableRendererProps = useMemo<RendererComponentProps<TableSchema>>(
     () =>
       ({
@@ -370,7 +381,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
           ...props.node,
           scope: crudScope,
         } as unknown as RendererComponentProps<TableSchema>['node'],
-        props: tableSchema,
+        props: tableResolvedProps,
         meta: {
           ...props.meta,
           cid: undefined,
@@ -381,7 +392,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         events: tableEvents,
         helpers: props.helpers,
       }) satisfies RendererComponentProps<TableSchema>,
-    [crudScope, props.helpers, props.id, props.meta, props.node, props.path, props.regions, props.templateNode, tableEvents, tableSchema],
+    [crudScope, props.helpers, props.id, props.meta, props.node, props.path, props.regions, props.templateNode, tableEvents, tableResolvedProps, tableSchema],
   );
 
   const queryFormSchema = useMemo<BaseSchema | null>(() => {

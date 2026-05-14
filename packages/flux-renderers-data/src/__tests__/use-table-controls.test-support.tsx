@@ -89,12 +89,14 @@ export function FilterProbe(props: {
   schemaProps: any;
   onFilterChange?: any;
   helpers?: any;
+  onFilterStateChange?: any;
   onReady: (value: any) => void;
 }) {
   const api = useTableFilter(
     props.schemaProps,
     props.onFilterChange,
     props.helpers ?? createHelpers(),
+    props.onFilterStateChange,
   );
   React.useEffect(() => {
     props.onReady(api);

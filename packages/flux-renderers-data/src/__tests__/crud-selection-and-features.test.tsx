@@ -11,7 +11,7 @@ function DisabledAwareButtonRenderer(props: RendererComponentProps) {
     <Button
       variant="ghost"
       size="sm"
-      disabled={props.meta.disabled}
+      disabled={props.props.disabled}
       onClick={() => void props.events.onClick?.()}
     >
       {String(props.props.label ?? 'Button')}

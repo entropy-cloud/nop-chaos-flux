@@ -88,5 +88,46 @@ export function useTablePagination(
     [paginationOwnership, paginationStatePath, onPageChange, helpers, renderScope],
   );
 
-  return { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange };
+  const clampPage = useCallback(
+    (nextPage: number, totalRows: number) => {
+      if (!paginationEnabled) {
+        return currentPage;
+      }
+
+      const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+      const clampedPage = Math.min(Math.max(1, nextPage), totalPages);
+
+      if (clampedPage === currentPage) {
+        return clampedPage;
+      }
+
+      startTransition(() => {
+        if (paginationOwnership === 'local') {
+          setLocalCurrentPage(clampedPage);
+        } else if (paginationOwnership === 'scope' && paginationStatePath) {
+          renderScope.update(paginationStatePath, { currentPage: clampedPage, pageSize });
+        }
+      });
+      onPageChange?.(null, {
+        scope: helpers.createScope(
+          { page: clampedPage, pageSize },
+          { scopeKey: 'pagination', pathSuffix: 'pagination' },
+        ),
+      });
+
+      return clampedPage;
+    },
+    [
+      currentPage,
+      helpers,
+      onPageChange,
+      pageSize,
+      paginationEnabled,
+      paginationOwnership,
+      paginationStatePath,
+      renderScope,
+    ],
+  );
+
+  return { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage };
 }
