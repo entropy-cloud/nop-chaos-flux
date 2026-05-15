@@ -170,8 +170,8 @@ describe('designer-page status publication', () => {
     function RegionProbe() {
       const summary = useScopeSelector((data: Record<string, unknown>) => {
         const selection = data.selection as { kind?: string } | undefined;
-        const runtime = data.runtime as { isDirty?: boolean } | undefined;
-        return `${selection?.kind ?? 'missing'}:${runtime?.isDirty ?? 'missing'}`;
+        const runtime = data.runtime as { dirty?: boolean } | undefined;
+        return `${selection?.kind ?? 'missing'}:${runtime?.dirty ?? 'missing'}`;
       });
       return <span data-testid="designer-region-probe">{String(summary)}</span>;
     }
@@ -343,6 +343,42 @@ describe('DesignerPageRenderer basic rendering', () => {
 
     const root = view.container.querySelector('.nop-designer-field');
     expect(root).toBeTruthy();
+  });
+
+  it('renders designer-field label regions when label is authored as schema input', () => {
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flow/index-designer-field-label-region"
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: createTestConfig(),
+          inspector: {
+            type: 'designer-field',
+            name: 'title',
+            label: { type: 'text', text: 'Region Label' },
+            fieldType: 'text',
+          },
+        }}
+        env={createRendererEnv() as RendererEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(screen.getByText('Region Label')).toBeTruthy();
   });
 
   it('passes meta.disabled through designer-field control variants', () => {

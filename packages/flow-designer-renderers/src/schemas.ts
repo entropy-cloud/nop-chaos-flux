@@ -3,7 +3,7 @@ import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flo
 
 export interface DesignerPageSchemaInput {
   type: 'designer-page';
-  config?: DesignerConfig;
+  config: DesignerConfig;
   document?: GraphDocument;
   treeDocument?: TreeDocument;
   statusPath?: string;

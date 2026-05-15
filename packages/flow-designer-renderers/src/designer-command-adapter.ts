@@ -67,6 +67,40 @@ export function createDesignerCommandAdapter(
     core.replaceDocument(projectTreeDocumentToGraph(nextTree, core.getConfig()), nextTree);
   }
 
+  function deleteSelectedSet(): DesignerCommandResult {
+    const snapshot = core.getSnapshot();
+    const selectedNodeIds = [...snapshot.selection.selectedNodeIds];
+    const selectedEdgeIds = [...snapshot.selection.selectedEdgeIds];
+
+    if (selectedNodeIds.length === 0 && selectedEdgeIds.length === 0) {
+      if (snapshot.activeNode?.id) {
+        return execute({ type: 'deleteNode', nodeId: snapshot.activeNode.id });
+      }
+      if (snapshot.activeEdge?.id) {
+        core.deleteEdge(snapshot.activeEdge.id);
+        relayoutAfterTreeMutation(core);
+        return createSuccess(core);
+      }
+      return createSuccess(core, { reason: 'unchanged' });
+    }
+
+    const txId = core.beginTransaction('delete-selection');
+    try {
+      for (const edgeId of selectedEdgeIds) {
+        core.deleteEdge(edgeId);
+      }
+      for (const nodeId of selectedNodeIds) {
+        execute({ type: 'deleteNode', nodeId });
+      }
+      relayoutAfterTreeMutation(core);
+      core.commitTransaction(txId);
+      return createSuccess(core);
+    } catch (error) {
+      core.rollbackTransaction(txId);
+      throw error;
+    }
+  }
+
   function execute(command: DesignerCommand): DesignerCommandResult {
     const graphResult =
       treeOwner?.config.documentMode === 'tree' && isTreeOwnedCommand(command)
@@ -143,16 +177,7 @@ export function createDesignerCommandAdapter(
         core.pasteClipboard();
         return createSuccess(core);
       case 'deleteSelection': {
-        const snapshot = core.getSnapshot();
-        if (snapshot.activeNode?.id) {
-          return execute({ type: 'deleteNode', nodeId: snapshot.activeNode.id });
-        }
-        if (snapshot.activeEdge?.id) {
-          core.deleteEdge(snapshot.activeEdge.id);
-          relayoutAfterTreeMutation(core);
-          return createSuccess(core);
-        }
-        return createSuccess(core, { reason: 'unchanged' });
+        return deleteSelectedSet();
       }
       case 'export': {
         const exported = core.exportDocument();

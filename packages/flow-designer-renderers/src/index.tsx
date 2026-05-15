@@ -245,12 +245,12 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'designer-canvas',
     component: LazyDesignerCanvasRenderer,
-    fields: [{ key: 'className', kind: 'prop' }],
+    fields: [],
   },
   {
     type: 'designer-palette',
     component: LazyDesignerPaletteRenderer,
-    fields: [{ key: 'className', kind: 'prop' }],
+    fields: [],
   },
 ];
 

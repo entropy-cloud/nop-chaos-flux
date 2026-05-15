@@ -126,7 +126,7 @@ const designerProjection: HostProjectionContract = {
       schema: {
         kind: 'object',
         fields: {
-          isDirty: { kind: 'boolean' },
+          dirty: { kind: 'boolean' },
           canUndo: { kind: 'boolean' },
           canRedo: { kind: 'boolean' },
           gridEnabled: { kind: 'boolean' },
@@ -242,6 +242,9 @@ const designerCapabilities: HostCapabilityContract = {
         },
       },
       description: 'Delete an edge from the graph',
+    },
+    deleteSelection: {
+      description: 'Delete the current selected nodes and edges',
     },
     duplicateNode: {
       args: {

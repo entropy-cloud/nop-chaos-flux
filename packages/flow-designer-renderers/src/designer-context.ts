@@ -159,7 +159,6 @@ export function buildDesignerScopeData(input: { snapshot: DesignerSnapshot }) {
       canUndo: snapshot.canUndo,
       canRedo: snapshot.canRedo,
       dirty: snapshot.isDirty,
-      isDirty: snapshot.isDirty,
       gridEnabled: snapshot.gridEnabled,
       zoom: snapshot.viewport.zoom,
       viewport: snapshot.viewport,

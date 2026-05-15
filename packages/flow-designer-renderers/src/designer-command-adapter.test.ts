@@ -290,4 +290,34 @@ describe('createDesignerCommandAdapter', () => {
     expect(replacedDoc.edges.filter((edge) => edge.source === 'task-1')).toHaveLength(2);
     expect(replacedDoc.edges.filter((edge) => edge.target === 'end-1')).toHaveLength(2);
   });
+
+  it('deleteSelection removes the selected node and edge set in one transaction', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+    const beginSpy = vi.spyOn(core, 'beginTransaction');
+    const commitSpy = vi.spyOn(core, 'commitTransaction');
+
+    core.setSelection(['start-1', 'task-1'], ['edge-2']);
+
+    const result = adapter.execute({ type: 'deleteSelection' });
+
+    expect(result).toMatchObject({ ok: true });
+    expect(beginSpy).toHaveBeenCalledWith('delete-selection');
+    expect(commitSpy).toHaveBeenCalledTimes(1);
+    expect(result.snapshot.doc.nodes.map((node) => node.id)).toEqual(['end-1']);
+    expect(result.snapshot.doc.edges).toEqual([]);
+    expect(result.snapshot.selection.selectedNodeIds).toEqual([]);
+    expect(result.snapshot.selection.selectedEdgeIds).toEqual([]);
+  });
+
+  it('deleteSelection falls back to unchanged when nothing is selected or active', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+
+    const result = adapter.execute({ type: 'deleteSelection' });
+
+    expect(result).toMatchObject({ ok: true, reason: 'unchanged' });
+    expect(result.snapshot.doc.nodes).toHaveLength(3);
+    expect(result.snapshot.doc.edges).toHaveLength(2);
+  });
 });

@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import { describe, expect, it, vi } from 'vitest';
 import { createDesignerActionProvider, flowDesignerRendererDefinitions } from './index.js';
 import { DesignerIcon } from './designer-icon.js';
@@ -183,6 +184,42 @@ describe('createDesignerActionProvider', () => {
     expect((result.error as Error).message).toBe('Edges must connect existing nodes.');
     expect(notify).toHaveBeenCalledWith('warning', 'Edges must connect existing nodes.');
   });
+
+  it('exposes deleteSelection and removes the selected set through the action provider', async () => {
+    const core = createDesignerCore(
+      {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [
+          { id: 'n1', type: 'task', position: { x: 0, y: 0 }, data: {} },
+          { id: 'n2', type: 'task', position: { x: 120, y: 0 }, data: {} },
+        ],
+        edges: [{ id: 'e1', type: 'default', source: 'n1', target: 'n2', data: {} }],
+        viewport: { x: 0, y: 0, zoom: 1 },
+      },
+      {
+        version: '1.0.0',
+        kind: 'flow',
+        nodeTypes: [{ id: 'task', label: 'Task', defaults: {} }],
+        edgeTypes: [{ id: 'default', label: 'Flow', defaults: {} }],
+        palette: { groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task'] }] },
+      },
+    );
+    core.setSelection(['n1', 'n2'], []);
+
+    const provider = createDesignerActionProvider(core);
+
+    expect(provider.listMethods()).toContain('deleteSelection');
+
+    const result = await provider.invoke('deleteSelection', undefined, {} as any);
+
+    expect(result).toMatchObject({ ok: true });
+    expect(core.getSnapshot().doc.nodes).toEqual([]);
+    expect(core.getSnapshot().doc.edges).toEqual([]);
+    expect(core.getSnapshot().selection.selectedNodeIds).toEqual([]);
+  });
 });
 
 describe('DesignerIcon markers', () => {
@@ -221,8 +258,8 @@ describe('flowDesignerRendererDefinitions', () => {
 
     expect(canvasDef?.component).toBeTruthy();
     expect(paletteDef?.component).toBeTruthy();
-    expect(canvasDef?.fields).toEqual([{ key: 'className', kind: 'prop' }]);
-    expect(paletteDef?.fields).toEqual([{ key: 'className', kind: 'prop' }]);
+    expect(canvasDef?.fields).toEqual([]);
+    expect(paletteDef?.fields).toEqual([]);
     expect(canvasDef?.component?.name).toBe('DesignerCanvasRenderer');
     expect(paletteDef?.component?.name).toBe('DesignerPaletteRenderer');
   });

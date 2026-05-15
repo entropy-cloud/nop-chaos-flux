@@ -24,6 +24,7 @@ export function createDesignerActionProvider(
         'deleteNode',
         'deleteBranch',
         'deleteEdge',
+        'deleteSelection',
         'duplicateNode',
         'moveNode',
         'moveBranch',
@@ -152,6 +153,10 @@ export function createDesignerActionProvider(
             type: 'deleteEdge',
             edgeId: String(payload?.edgeId ?? ''),
           });
+          return toActionResult(result);
+        }
+        case 'deleteSelection': {
+          const result = adapter.execute({ type: 'deleteSelection' });
           return toActionResult(result);
         }
         case 'duplicateNode': {
