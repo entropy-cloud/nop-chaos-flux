@@ -284,4 +284,53 @@ describe('formRendererDefinitions - relational and conditional field validation'
     expect(screen.getByText('Manage users')).toBeTruthy();
     expect(screen.getByText('Publish content')).toBeTruthy();
   });
+
+  it('updates non-form required markers when requiredWhen dependencies change', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/validation-rules#non-form-required-deps"
+        schema={{
+          type: 'form',
+          data: { role: 'viewer', adminCode: '' },
+          body: [
+            {
+              type: 'select',
+              name: 'role',
+              label: 'Role',
+              options: [
+                { label: 'Viewer', value: 'viewer' },
+                { label: 'Admin', value: 'admin' },
+              ],
+            },
+            {
+              type: 'input-text',
+              name: 'adminCode',
+              label: 'Admin Code',
+              requiredWhen: {
+                path: 'role',
+                equals: 'admin',
+                message: 'Admin code required',
+              },
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const getRequiredMarker = () =>
+      screen.getByText('Admin Code').closest('[data-slot="field-label"]')?.querySelector('[data-slot="field-required"]');
+
+    expect(getRequiredMarker()).toBeNull();
+
+    await selectOption('Role', 'Admin');
+
+    await waitFor(() => {
+      expect(getRequiredMarker()).toBeTruthy();
+    });
+  });
 });

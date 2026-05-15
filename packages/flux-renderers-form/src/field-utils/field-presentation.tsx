@@ -8,8 +8,24 @@ import {
   useOwnedFieldState,
 } from '@nop-chaos/flux-react';
 import { isFieldEffectivelyRequired } from '@nop-chaos/flux-react';
-import type { ValidationScopeRuntime } from '@nop-chaos/flux-core';
+import { getCompiledValidationField, type ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { getValidationBehaviorForOwner } from './field-validation.js';
+
+function getDynamicRequiredDependencyPaths(field: { rules: Array<{ rule: { kind?: string; path?: string } }> } | undefined): readonly string[] {
+  if (!field) {
+    return [];
+  }
+
+  const dependencies = new Set<string>();
+
+  for (const { rule } of field.rules) {
+    if ((rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless') && rule.path) {
+      dependencies.add(rule.path);
+    }
+  }
+
+  return [...dependencies];
+}
 
 function useFormFieldState(name: string) {
   return useOwnedFieldState(name);
@@ -31,6 +47,9 @@ export function useFieldPresentation(
   const fieldState = useFormFieldState(name);
   const currentForm = useCurrentForm();
   const behavior = getValidationBehaviorForOwner(name, currentValidationScope);
+  const validationField = getCompiledValidationField(currentValidationScope?.validation, name);
+  const dynamicRequiredDependencyPaths = getDynamicRequiredDependencyPaths(validationField);
+  const hasDynamicRequiredRule = dynamicRequiredDependencyPaths.length > 0;
   const currentPresentation = useCurrentFormState(
     (state) =>
       selectCurrentFormFieldPresentation(state, {
@@ -61,7 +80,10 @@ export function useFieldPresentation(
       (options?.required ?? false) ||
       isFieldEffectivelyRequired(currentValidationScope?.validation, name, values as Record<string, any>),
     Object.is,
-    { enabled: !currentForm, path: name },
+    {
+      enabled: !currentForm,
+      paths: hasDynamicRequiredRule ? dynamicRequiredDependencyPaths : [name],
+    },
   );
   const presentation = currentForm
     ? currentPresentation
