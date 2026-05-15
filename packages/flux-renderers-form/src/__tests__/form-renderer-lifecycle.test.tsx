@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
@@ -156,6 +158,7 @@ describe('FormRenderer lifecycle wiring', () => {
     const ownedForm = {
       scope: ownedScope,
       store: { getState: () => ({ values: { username: 'Alice' } }) },
+      dispose: vi.fn(),
       setLifecycleHandlers: vi.fn((handlers: unknown) => {
         lifecycleHandlers.push(handlers);
       }),
@@ -296,6 +299,7 @@ describe('FormRenderer lifecycle wiring', () => {
 
     unmount();
     expect(ownedForm.setLifecycleHandlers).toHaveBeenLastCalledWith(undefined);
+    expect(ownedForm.dispose).toHaveBeenCalledTimes(1);
     expect(registerCleanup).toHaveBeenCalledTimes(1);
   });
 
@@ -308,6 +312,7 @@ describe('FormRenderer lifecycle wiring', () => {
     const ownedForm = {
       scope: ownedScope,
       store: { getState: () => ({ values: {} }) },
+      dispose: vi.fn(),
       setLifecycleHandlers: vi.fn((handlers: unknown) => {
         lifecycleHandlers.push(handlers);
       }),
@@ -362,6 +367,7 @@ describe('FormRenderer lifecycle wiring', () => {
     const ownedForm = {
       scope: ownedScope,
       store: { getState: () => ({ values: { username: 'Alice' } }) },
+      dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
     } as any;
     const runtime = {
@@ -408,6 +414,64 @@ describe('FormRenderer lifecycle wiring', () => {
     expect(runtime.createFormRuntime).toHaveBeenCalledTimes(1);
   });
 
+  it('disposes the replaced owned form when publication paths change', async () => {
+    const parentScope = makeScope({ id: 'parent', visible: { parentValue: 'plain' } });
+    const firstOwnedForm = {
+      scope: makeScope({ id: 'owned-first', visible: {} }),
+      store: { getState: () => ({ values: { username: 'Alice' } }) },
+      dispose: vi.fn(),
+      setLifecycleHandlers: vi.fn(),
+    } as any;
+    const secondOwnedForm = {
+      scope: makeScope({ id: 'owned-second', visible: {} }),
+      store: { getState: () => ({ values: { username: 'Alice' } }) },
+      dispose: vi.fn(),
+      setLifecycleHandlers: vi.fn(),
+    } as any;
+    const runtime = {
+      getImportedExpressionBindings: vi.fn(() => ({})),
+      createFormRuntime: vi.fn()
+        .mockReturnValueOnce(firstOwnedForm)
+        .mockReturnValueOnce(secondOwnedForm),
+    } as any;
+
+    mocks.useRendererRuntime.mockReturnValue(runtime);
+    mocks.useCurrentActionScope.mockReturnValue(undefined);
+    mocks.useCurrentComponentRegistry.mockReturnValue(undefined);
+    mocks.useCurrentPage.mockReturnValue(undefined);
+    mocks.useRenderScope.mockReturnValue(parentScope);
+
+    const { rerender } = render(
+      <FormRenderer
+        {...buildProps({
+          regions: {},
+          templateNode: { validationPlan: undefined, importsPlan: undefined, schemaUrl: undefined },
+          node: { instancePath: [] },
+        })}
+      />,
+    );
+
+    rerender(
+      <FormRenderer
+        {...buildProps({
+          props: {
+            ...buildProps().props,
+            statusPath: 'ui.nextStatus',
+            valuesPath: 'ui.nextValues',
+          },
+          regions: {},
+          templateNode: { validationPlan: undefined, importsPlan: undefined, schemaUrl: undefined },
+          node: { instancePath: [] },
+        })}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(firstOwnedForm.dispose).toHaveBeenCalledTimes(1);
+    });
+    expect(secondOwnedForm.dispose).not.toHaveBeenCalled();
+  });
+
   it('cancels and catches fire-and-forget initAction work on cleanup', async () => {
     const parentScope = makeScope({ id: 'parent', visible: { parentValue: 'plain' } });
     const ownedScope = makeScope({ id: 'owned-init', visible: { localValue: 'plain-owned' } });
@@ -424,6 +488,7 @@ describe('FormRenderer lifecycle wiring', () => {
     const ownedForm = {
       scope: ownedScope,
       store: { getState: () => ({ values: {} }) },
+      dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
     } as any;
     const runtime = {
@@ -470,6 +535,7 @@ describe('FormRenderer lifecycle wiring', () => {
     const ownedForm = {
       scope: ownedScope,
       store: { getState: () => ({ values: {} }) },
+      dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
     } as any;
     const runtime = {

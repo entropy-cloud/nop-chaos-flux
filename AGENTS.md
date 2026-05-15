@@ -167,7 +167,8 @@ All renderer components MUST follow the `RendererComponentProps` pattern. Read d
 
 ### Package Structure and Imports
 
-- Each package: `src/index.ts` (exports), `index.test.ts` (tests), `tsconfig.json`, `tsconfig.build.json`, `package.json`.
+- Each package must expose a single source entry under `src/` such as `src/index.ts` or `src/index.tsx`, plus package config files like `tsconfig.json`, `tsconfig.build.json`, and `package.json`.
+- Tests may be colocated as `*.test.ts` / `*.test.tsx` or grouped under `src/__tests__/`; do not assume a single `index.test.ts` layout.
 - Use workspace protocol: `"@nop-chaos/flux-core": "workspace:*"`.
 - Internal imports use relative paths within the same package.
 

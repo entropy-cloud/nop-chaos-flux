@@ -51,6 +51,11 @@ const mockState: {
   },
 };
 
+const originalWindowConfirm = {
+  hasOwn: Object.prototype.hasOwnProperty.call(window, 'confirm'),
+  value: window.confirm,
+};
+
 const editorStoreState = {
   isReady: true,
   isDirty: false,
@@ -250,6 +255,11 @@ function renderWordEditor(input?: {
 describe('WordEditorPage actions and events', () => {
   afterEach(() => {
     cleanup();
+    if (originalWindowConfirm.hasOwn) {
+      window.confirm = originalWindowConfirm.value;
+    } else {
+      Reflect.deleteProperty(window, 'confirm');
+    }
     vi.useRealTimers();
   });
 

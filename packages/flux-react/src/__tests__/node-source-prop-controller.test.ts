@@ -174,6 +174,88 @@ describe('createNodeSourcePropController', () => {
     });
   });
 
+  it('refreshes resolved snapshots when only plain sibling props change', async () => {
+    const { observer } = createObserverMock();
+    const controller = createNodeSourcePropController(
+      {
+        sourcePropKeys: ['items'],
+        sourceStatePropKeys: { items: 'itemsState' },
+      } as any,
+      { createSourceObserver: () => observer } as any,
+    );
+
+    const scope = createScope();
+    controller.run({ items: { type: 'source', sourceType: 'api' }, plain: 'first' }, scope);
+    await flushAsync();
+
+    expect(controller.getSnapshot().value).toMatchObject({
+      items: 'resolved',
+      plain: 'first',
+    });
+
+    controller.run({ items: { type: 'source', sourceType: 'api' }, plain: 'second' }, scope);
+    await flushAsync();
+
+    expect(controller.getSnapshot().value).toMatchObject({
+      items: 'resolved',
+      plain: 'second',
+    });
+  });
+
+  it('rebinds the source observer when the lexical scope changes', () => {
+    const { observer } = createObserverMock();
+    const controller = createNodeSourcePropController(
+      {
+        sourcePropKeys: ['items'],
+        sourceStatePropKeys: { items: 'itemsState' },
+      } as any,
+      { createSourceObserver: () => observer } as any,
+    );
+
+    const firstScope = createScope();
+    const secondScope = { ...createScope(), id: 'scope-2' };
+
+    controller.run({ items: { type: 'source', sourceType: 'api' } }, firstScope);
+    controller.run({ items: { type: 'source', sourceType: 'api' } }, secondScope as any);
+
+    expect(observer.run).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ scope: firstScope }),
+    );
+    expect(observer.run).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ scope: secondScope }),
+    );
+  });
+
+  it('skips redundant observer runs when the scope wrapper changes but the execution plan does not', () => {
+    const { observer } = createObserverMock();
+    const controller = createNodeSourcePropController(
+      {
+        sourcePropKeys: ['items'],
+        sourceStatePropKeys: { items: 'itemsState' },
+      } as any,
+      { createSourceObserver: () => observer } as any,
+    );
+
+    const baseScope = createScope();
+    const wrappedScope = {
+      ...baseScope,
+      get: baseScope.get,
+      has: baseScope.has,
+      readOwn: baseScope.readOwn,
+      readVisible: baseScope.readVisible,
+      materializeVisible: baseScope.materializeVisible,
+      update: baseScope.update,
+      merge: baseScope.merge,
+    };
+
+    controller.run({ items: { type: 'source', sourceType: 'api' }, plain: 'keep' }, baseScope);
+    controller.run({ items: { type: 'source', sourceType: 'api' }, plain: 'keep' }, wrappedScope as any);
+
+    expect(observer.run).toHaveBeenCalledTimes(1);
+  });
+
   it('disposes the runtime-owned observer', async () => {
     const { observer } = createObserverMock();
     const controller = createNodeSourcePropController(

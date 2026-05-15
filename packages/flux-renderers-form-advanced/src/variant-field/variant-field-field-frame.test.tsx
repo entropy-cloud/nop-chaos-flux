@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support.js';
@@ -292,5 +294,44 @@ describe('variant-field FieldFrame attribute forwarding', () => {
     const container = document.querySelector('[data-active-variant]');
     expect(container?.getAttribute('data-frame-wrap')).toBe('group');
     expect(container?.classList.contains('nop-field')).toBe(true);
+  });
+
+  it('applies meta className on the wrapped FieldFrame root', async () => {
+    cleanup();
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-field-frame.test.tsx#wrapped-class"
+        schema={{
+          type: 'form',
+          data: { payload: null },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              label: 'Payload',
+              className: 'variant-wrapped-root',
+              defaultVariant: 'text',
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  content: [{ type: 'input-text', name: 'value', label: 'Value' }],
+                  initialValue: { value: '' },
+                },
+              ],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Payload')).toBeTruthy());
+
+    const fieldRoot = document.querySelector('.nop-field.variant-wrapped-root');
+    expect(fieldRoot).toBeTruthy();
   });
 });

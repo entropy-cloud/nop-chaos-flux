@@ -116,9 +116,9 @@ export function DesignerToolbarContent(props: {
     async (action: string) => {
       const resolved = actionScope?.resolve(action);
       if (!resolved) {
-        return;
+        return undefined;
       }
-      await resolved.provider.invoke(resolved.method, undefined, {
+      return resolved.provider.invoke(resolved.method, undefined, {
         runtime,
         scope,
         actionScope,
@@ -218,7 +218,13 @@ export function DesignerToolbarContent(props: {
               className="shrink-0"
               onClick={() => {
                 const action = item.action ?? 'designer:navigate-back';
-                void invokeAction(action).catch((error) => handleActionFailure(action, error));
+                void invokeAction(action)
+                  .then((result) => {
+                    if (result && !result.ok) {
+                      handleActionFailure(action, result.error ?? new Error('Action failed'));
+                    }
+                  })
+                  .catch((error) => handleActionFailure(action, error));
               }}
             >
               <DesignerIcon icon="arrow-left" />

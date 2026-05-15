@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import type { ResolvedNodeProps, ScopeRef, TemplateNode } from '@nop-chaos/flux-core';
 import { useRendererRuntime } from './hooks.js';
 import { isSourceSchema } from './use-source-value.js';
@@ -42,23 +42,6 @@ export function useNodeSourceProps(
 
   const controller = useMemo(() => createNodeSourcePropController(node, runtime), [node, runtime]);
 
-  const propsValueRef = useRef(propsValue);
-  const scopeRef = useRef(scope);
-
-  useEffect(() => {
-    propsValueRef.current = propsValue;
-  });
-
-  useEffect(() => {
-    scopeRef.current = scope;
-  });
-
-  const sourceInputs = useMemo(
-    () => sourcePropKeys.map((key) => propsValue[key]),
-    [propsValue, sourcePropKeys],
-  );
-  const sourceInputsKey = useMemo(() => JSON.stringify(sourceInputs), [sourceInputs]);
-
   const snapshot = useSyncExternalStore(
     controller.subscribe,
     controller.getSnapshot,
@@ -67,8 +50,8 @@ export function useNodeSourceProps(
 
   useEffect(() => {
     if (!hasSourceProps) return;
-    controller.run(propsValueRef.current, scopeRef.current);
-  }, [controller, hasSourceProps, sourceInputsKey]);
+    controller.run(propsValue, scope);
+  }, [controller, hasSourceProps, propsValue, scope]);
 
   useEffect(() => {
     return () => {

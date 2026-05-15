@@ -162,7 +162,7 @@
   line-height: 1rem;
 }
 
-.nop-flux-root .nop-node-error__message {
+.nop-flux-root .nop-node-error [data-slot='node-error-message'] {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -170,7 +170,7 @@
   white-space: nowrap;
 }
 
-.nop-flux-root .nop-node-error__retry {
+.nop-flux-root .nop-node-error [data-slot='node-error-retry'] {
   flex-shrink: 0;
   padding-inline: 0.25rem;
   font-size: 0.6875rem;

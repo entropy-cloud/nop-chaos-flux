@@ -10,6 +10,30 @@ export function useSheetCommands(
   getSelectedRange: () => SpreadsheetRange | null,
   addLog: (msg: string) => void,
 ) {
+  const reportCommandResult = useCallback(
+    (label: string, result: { ok?: boolean; cancelled?: boolean; error?: unknown } | void) => {
+      if (!result) {
+        addLog(label);
+        return;
+      }
+
+      if (result.ok === false) {
+        if (result.cancelled) {
+          addLog(`${label} cancelled`);
+          return;
+        }
+
+        const message =
+          result.error instanceof Error && result.error.message ? result.error.message : `${label} failed`;
+        addLog(message);
+        return;
+      }
+
+      addLog(label);
+    },
+    [addLog],
+  );
+
   const handleInsertRow = useCallback(async () => {
     if (!selectedCell) return;
     await bridge.dispatch({ type: 'spreadsheet:insertRow', sheetId, row: selectedCell.row });
@@ -122,14 +146,14 @@ export function useSheetCommands(
   }, [sheetId, bridge, addLog]);
 
   const handleUndo = useCallback(async () => {
-    await bridge.dispatch({ type: 'spreadsheet:undo' });
-    addLog('Undo');
-  }, [bridge, addLog]);
+    const result = await bridge.dispatch({ type: 'spreadsheet:undo' });
+    reportCommandResult('Undo', result as { ok?: boolean; cancelled?: boolean; error?: unknown });
+  }, [bridge, reportCommandResult]);
 
   const handleRedo = useCallback(async () => {
-    await bridge.dispatch({ type: 'spreadsheet:redo' });
-    addLog('Redo');
-  }, [bridge, addLog]);
+    const result = await bridge.dispatch({ type: 'spreadsheet:redo' });
+    reportCommandResult('Redo', result as { ok?: boolean; cancelled?: boolean; error?: unknown });
+  }, [bridge, reportCommandResult]);
 
   const getMergeInfo = useCallback(
     (

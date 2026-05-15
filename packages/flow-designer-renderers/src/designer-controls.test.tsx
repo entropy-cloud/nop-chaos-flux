@@ -175,6 +175,24 @@ describe('flow designer controls', () => {
     });
   });
 
+  it('notifies when back action resolves with ok:false', async () => {
+    const invoke = vi.fn().mockResolvedValue({ ok: false, error: new Error('Back failed softly') });
+    mockState.resolve.mockReturnValue({ method: 'goBack', provider: { invoke } });
+    mockState.context.config = {
+      ...mockState.context.config,
+      toolbar: {
+        items: [{ type: 'back', label: 'Back', action: 'designer:navigate-back' }],
+      },
+    };
+
+    render(<DesignerToolbarContent />);
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    await vi.waitFor(() => {
+      expect(mockState.notify).toHaveBeenCalledWith('warning', 'Back failed softly');
+    });
+  });
+
   it('dispatches addNode from palette item button click', () => {
     const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
     mockState.context.config = {

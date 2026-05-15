@@ -36,8 +36,35 @@ interface ResolvedSourceEntry {
   targetPath: string;
 }
 
+interface ControllerRunState {
+  scopeId: string | undefined;
+  scopePath: string | undefined;
+  scopeStore: ScopeRef['store'] | undefined;
+  entriesKey: string | undefined;
+  baseValueKey: string | undefined;
+}
+
 function createSyntheticSourceKey(path: string) {
   return `__source:${path}`;
+}
+
+function safeValueKey(value: unknown): string | undefined {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return undefined;
+  }
+}
+
+function createEntriesKey(entries: readonly ResolvedSourceEntry[]): string | undefined {
+  return safeValueKey(
+    entries.map((entry) => ({
+      key: entry.key,
+      stateKey: entry.stateKey,
+      targetPath: entry.targetPath,
+      source: entry.source,
+    })),
+  );
 }
 
 function collectNestedSourceEntries(
@@ -149,6 +176,7 @@ export function createNodeSourcePropController(
   const sourceStatePropKeys = node.sourceStatePropKeys;
   const observer: SourceObserver = runtime.createSourceObserver();
   let currentEntries: readonly ResolvedSourceEntry[] = [];
+  let currentRunState: ControllerRunState | undefined;
 
   let currentSnapshot: ControllerSnapshot = {
     sourceInputs: [],
@@ -183,11 +211,31 @@ export function createNodeSourcePropController(
 
   function run(propsValue: ResolvedNodeProps['value'], scope: ScopeRef) {
     const sourceEntries = collectSourceEntries(propsValue, sourcePropKeys, sourceStatePropKeys);
+    const baseValue = sanitizeSourceInputs(propsValue, sourceEntries);
+    const nextRunState: ControllerRunState = {
+      scopeId: scope.id,
+      scopePath: scope.path,
+      scopeStore: scope.store,
+      entriesKey: createEntriesKey(sourceEntries),
+      baseValueKey: safeValueKey(baseValue),
+    };
+
+    if (
+      currentRunState &&
+      currentRunState.scopeId === nextRunState.scopeId &&
+      currentRunState.scopePath === nextRunState.scopePath &&
+      currentRunState.scopeStore === nextRunState.scopeStore &&
+      currentRunState.baseValueKey === nextRunState.baseValueKey &&
+      currentRunState.entriesKey === nextRunState.entriesKey
+    ) {
+      return;
+    }
+
+    currentRunState = nextRunState;
     currentEntries = sourceEntries;
     cachedObserverSnapshot = undefined;
     cachedMaterializedValue = undefined;
     const sourceInputs = sourceEntries.map((entry) => entry.source);
-    const baseValue = sanitizeSourceInputs(propsValue, sourceEntries);
     const loadingValue = materializeResolvedSources(
       sourceEntries.length > 0 ? { ...baseValue, ...buildLoadingPatch(sourceEntries) } : baseValue,
       sourceEntries,

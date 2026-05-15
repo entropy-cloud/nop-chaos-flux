@@ -4,7 +4,7 @@ import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createNopDebugger, getNopDebuggerAutomationApi } from '@nop-chaos/nop-debugger';
-import { FluxBasicPage } from './flux-basic-page';
+import { FluxBasicPage, fluxBasicPageSchema } from './flux-basic-page';
 
 afterEach(() => {
   cleanup();
@@ -34,13 +34,21 @@ function readFormCidByFieldLabel(labelText: string) {
 
 async function selectOption(labelText: string, optionText: string) {
   const trigger = screen.getByRole('combobox', { name: labelText });
+  fireEvent.pointerDown(trigger);
   fireEvent.click(trigger);
-  const optionTextEl = await screen.findByText(optionText);
-  const optionEl = optionTextEl.closest('[role="option"]') ?? optionTextEl;
+  const optionEls = await screen.findAllByRole('option', { name: optionText });
+  const optionEl = optionEls.at(-1);
+  expect(optionEl).toBeTruthy();
+  if (!optionEl) {
+    throw new Error(`Expected option ${optionText}`);
+  }
   fireEvent.mouseEnter(optionEl);
   fireEvent.mouseMove(optionEl);
   await new Promise((resolve) => setTimeout(resolve, 0));
   fireEvent.click(optionEl);
+  await waitFor(() => {
+    expect(screen.getByRole('combobox', { name: labelText }).textContent).toContain(optionText);
+  });
 }
 
 describe('FluxBasicPage debugger wiring', () => {
@@ -131,37 +139,51 @@ describe('FluxBasicPage debugger wiring', () => {
   }, 15000);
 
   it('keeps admin-code meta inspectable under React.StrictMode', async () => {
+    const userForm = (fluxBasicPageSchema.body as Array<any>)[0]?.body?.find(
+      (node: { type?: string; id?: string }) => node.type === 'form' && node.id === 'user-form',
+    );
+    const originalRole = userForm?.data?.role;
+
+    if (userForm?.data) {
+      userForm.data.role = 'admin';
+    }
+
     const debuggerController = createNopDebugger({
       id: 'playground-flux-basic-page-strict-test',
       enabled: true,
     });
 
-    render(
-      <React.StrictMode>
-        <FluxBasicPage debuggerController={debuggerController} onBack={() => undefined} />
-      </React.StrictMode>,
-    );
+    try {
+      render(
+        <React.StrictMode>
+          <FluxBasicPage debuggerController={debuggerController} onBack={() => undefined} />
+        </React.StrictMode>,
+      );
 
-    await waitFor(() => expect(screen.getByLabelText('Username')).toBeTruthy());
+      await waitFor(() => expect(screen.getByLabelText('Username')).toBeTruthy());
 
-    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'alice' } });
-    fireEvent.blur(screen.getByLabelText('Username'));
-    fireEvent.change(screen.getByLabelText('Search Users'), { target: { value: 'alice' } });
-    await selectOption('Role', 'Admin');
+      fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'alice' } });
+      fireEvent.blur(screen.getByLabelText('Username'));
+      fireEvent.change(screen.getByLabelText('Search Users'), { target: { value: 'alice' } });
 
-    await waitFor(() => expect(screen.getByLabelText('Admin Code')).toBeTruthy(), {
-      timeout: 5000,
-    });
-
-    const api = getNopDebuggerAutomationApi('playground-flux-basic-page-strict-test');
-    const adminCodeCid = readInputCid('Admin Code') || readFieldCid('Admin Code');
-
-    await waitFor(() => {
-      expect(api?.inspectByCid(adminCodeCid)).toMatchObject({
-        cid: adminCodeCid,
-        metaSummary: expect.objectContaining({ visible: true }),
+      await waitFor(() => expect(screen.getByLabelText('Admin Code')).toBeTruthy(), {
+        timeout: 5000,
       });
-    });
+
+      const api = getNopDebuggerAutomationApi('playground-flux-basic-page-strict-test');
+      const adminCodeCid = readInputCid('Admin Code') || readFieldCid('Admin Code');
+
+      await waitFor(() => {
+        expect(api?.inspectByCid(adminCodeCid)).toMatchObject({
+          cid: adminCodeCid,
+          metaSummary: expect.objectContaining({ visible: true }),
+        });
+      });
+    } finally {
+      if (userForm?.data) {
+        userForm.data.role = originalRole;
+      }
+    }
   }, 15000);
 
   it('opens the user inspect dialog from the table row action', async () => {

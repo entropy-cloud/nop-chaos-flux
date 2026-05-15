@@ -15,6 +15,8 @@ describe('flow-designer-renderers public surface', () => {
     expect('DesignerContext' in flowDesigner).toBe(false);
     expect('useDesignerContext' in flowDesigner).toBe(false);
     expect('useNodeTypeConfig' in flowDesigner).toBe(false);
+    expect('compileDesignerConfig' in flowDesigner).toBe(false);
+    expect('validateDesignerConfigToolbar' in flowDesigner).toBe(false);
   });
 
   it('exposes renderer internals through the unstable entry', () => {

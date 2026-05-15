@@ -128,6 +128,7 @@ text: ${ui.profileFormStatus?.valid}
 - external readonly summary publication
 - 面向 parent / sibling / shell / page-level observers
 - publication 由 form runtime 生命周期负责首发、更新和 dispose cleanup，而不是由 renderer effect 单独挂接
+- 当前 live baseline 明确支持 dynamic rerouting：如果 `statusPath` 由运行时表达式解析并切换到新路径，form renderer 会重建 owner runtime，清理旧路径，再向新路径发布摘要；这属于 owner lifecycle event，而不是静默原地变更
 
 ### 5. External Values Publication
 
@@ -150,6 +151,7 @@ valuesPath: ui.profileDraft
 - 与 `statusPath` 分离
 - 明确作者意图
 - publication 由 form runtime 生命周期负责首发、更新和 dispose cleanup，而不是由 renderer effect 单独挂接
+- 当前 live baseline 同样支持 `valuesPath` dynamic rerouting；路径切换会重建 form owner，清理旧 values publication，再把当前 form owner 的新快照发布到新路径
 
 ## Common Principle Across Owners
 

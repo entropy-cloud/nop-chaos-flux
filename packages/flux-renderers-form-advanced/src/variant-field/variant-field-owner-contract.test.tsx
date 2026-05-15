@@ -1,6 +1,10 @@
+// @vitest-environment happy-dom
+
 import React from 'react';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+const TabsMockContext = React.createContext<((value: string) => void) | undefined>(undefined);
 
 const state = vi.hoisted(() => ({
   parentForm: undefined as any,
@@ -36,13 +40,25 @@ vi.mock('@nop-chaos/flux-react/unstable', () => ({
 vi.mock('@nop-chaos/ui', () => ({
   Select: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
   SelectContent: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-  SelectItem: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  SelectItem: ({ children }: { children?: React.ReactNode }) => <button type="button">{children}</button>,
   SelectTrigger: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
   SelectValue: () => null,
-  Tabs: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  Tabs: ({ children, onValueChange }: { children?: React.ReactNode; onValueChange?: (value: string) => void }) => (
+    <TabsMockContext.Provider value={onValueChange}>
+      <div>{children}</div>
+    </TabsMockContext.Provider>
+  ),
   TabsContent: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-  TabsList: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-  TabsTrigger: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  TabsList: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  TabsTrigger: ({ children, value }: { children?: React.ReactNode; value?: string }) => {
+    const onValueChange = React.useContext(TabsMockContext);
+    return (
+      <button type="button" role="tab" data-value={value} onClick={() => value && onValueChange?.(value)}>
+        {children}
+      </button>
+    );
+  },
+  cn: (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' '),
 }));
 
 vi.mock('@nop-chaos/flux-renderers-form', () => ({
@@ -81,6 +97,63 @@ afterEach(() => {
 });
 
 describe('variant-field generic owner contracts', () => {
+  it('writes the canonical variant value back to non-form owners when switching variants', async () => {
+    state.parentScope = {
+      id: 'page-scope',
+      path: '$page',
+      get: vi.fn((path?: string) => (path === 'kind' ? { value: 'alpha' } : undefined)),
+      has: vi.fn(() => true),
+      readOwn: vi.fn(() => ({ kind: { value: 'alpha' } })),
+      readVisible: vi.fn(() => ({ kind: { value: 'alpha' } })),
+      materializeVisible: vi.fn(() => ({ kind: { value: 'alpha' } })),
+      update: vi.fn(),
+      merge: vi.fn(),
+    };
+    state.parentValidationOwner = {
+      scopeId: 'page-owner',
+      notifyFieldHidden: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
+      getScopeState: vi.fn(() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
+      validateAll: vi.fn(async () => ({ ok: true, errors: [], fieldErrors: {} })),
+    };
+
+    render(
+      <VariantFieldRenderer
+        id="variant"
+        path="$.body[0]"
+        schema={{ type: 'variant-field', name: 'kind', variants: [] } as any}
+        templateNode={{ validationOwnerPlan: { boundary: 'inherit-owner' } } as any}
+        node={{} as any}
+        meta={{} as any}
+        props={{
+          name: 'kind',
+          selectorMode: 'tabs',
+          variants: [
+            { key: 'text', label: 'Text', content: [{ type: 'input-text', name: 'value' }], initialValue: { value: 'alpha' } },
+            { key: 'number', label: 'Number', content: [{ type: 'input-text', name: 'amount' }], initialValue: { amount: 1 } },
+          ],
+        }}
+        regions={{}}
+        events={{}}
+        helpers={{
+          evaluate: vi.fn(),
+          createScope: vi.fn(),
+          dispatch: vi.fn(),
+          render: vi.fn(),
+          evaluateCompiled: vi.fn(),
+          executeSource: vi.fn(),
+        } as any}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Number'));
+
+    await waitFor(() => {
+      expect(state.parentScope.update).toHaveBeenCalledWith('kind', { amount: 1 });
+    });
+  });
+
   it('does not register child contracts for default projected form ownership', () => {
     state.parentScope = {
       id: 'form-scope',
@@ -217,5 +290,22 @@ describe('variant-field generic owner contracts', () => {
     expect(state.parentValidationOwner.notifyFieldHidden).toHaveBeenCalledWith('kind.amount', true);
     expect(state.parentValidationOwner.registerChildContract).not.toHaveBeenCalled();
     expect(state.validationContextValue).toBe(state.projectedOwner);
+  });
+
+  it('keeps action-intent fields on the current prop channel baseline', async () => {
+    const { variantFieldRendererDefinition } = await import('./variant-field.js');
+
+    expect(
+      variantFieldRendererDefinition.fields?.find((field) => field.key === 'detectVariantAction'),
+    ).toMatchObject({ kind: 'prop' });
+    expect(
+      variantFieldRendererDefinition.fields?.find((field) => field.key === 'transformInAction'),
+    ).toMatchObject({ kind: 'prop' });
+    expect(
+      variantFieldRendererDefinition.fields?.find((field) => field.key === 'transformOutAction'),
+    ).toMatchObject({ kind: 'prop' });
+    expect(
+      variantFieldRendererDefinition.fields?.find((field) => field.key === 'validateValueAction'),
+    ).toMatchObject({ kind: 'prop' });
   });
 });

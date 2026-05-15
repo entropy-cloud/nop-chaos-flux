@@ -1,6 +1,6 @@
 # 304 Open-Ended Adversarial Review 2026-05-15 Detail-View Commit Atomicity Plan
 
-> Plan Status: in_progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-15
 > Source: `docs/analysis/2026-05-15-open-ended-adversarial-review-01/summary.md`, `docs/analysis/2026-05-15-deep-audit-full/summary.md`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/plans/301-open-ended-adversarial-review-2026-05-15-owner-routing-plan.md`, `docs/plans/289-open-ended-adversarial-review-2026-05-15-remediation-plan.md`
@@ -11,9 +11,10 @@
 
 ## Current Baseline
 
-- adversarial review 确认 `detail-view` staged commit 不是原子操作。
-- deep audit retained `04-02` 与该 surface 指向同一 parent-owner-before-validation residual。
-- 这两条当前应该由一份单-surface plan owning，而不是继续挂在 broad umbrella plan 下。
+- The atomic commit fix has already landed on the live baseline: rejected transformed writes are rolled back before the `detail-view` surface stays open with validation feedback, so rejected commits no longer leak into the parent owner.
+- Focused regression proof has already landed in the `flux-renderers-form-advanced` test suite, and `docs/logs/2026/05-15.md` records the landed slice plus focused package verification.
+- deep audit retained `04-02` and the adversarial-review item converge on the same parent-owner-before-validation surface, and this plan remains the single owner for that shared residual.
+- The plan is now closed on the live baseline: focused proof, repo-level hard-gate verification, and independent closure audit are all complete and synchronized in this file plus `docs/logs/2026/05-15.md`.
 
 ## Goals
 
@@ -67,37 +68,43 @@ Phase Notes:
 
 ### Phase 2 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: touched packages, docs, this plan
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] Run all focused tests added or modified in Phase 1.
-- [ ] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all in-scope changes land.
-- [ ] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-15.md`.
-- [ ] Run an independent closure audit with a fresh subagent that re-reads this plan, linked analysis files, live code/docs/tests, and verification output.
-- [ ] Fix any blocking closure-audit finding before marking this plan completed.
+- [x] Run all focused tests added or modified in Phase 1.
+- [x] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all in-scope changes land.
+- [x] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-15.md`.
+- [x] Run an independent closure audit with a fresh subagent that re-reads this plan, linked analysis files, live code/docs/tests, and verification output.
+- [x] Fix any blocking closure-audit finding before marking this plan completed.
 
 Exit Criteria:
 
-- [ ] Focused verification for the in-scope defect family has passed.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
-- [ ] Independent closure audit confirms no remaining plan-owned blocker and no unresolved same-file overlap conflict with historical Plan `280`.
-- [ ] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+- [x] Focused verification for the in-scope defect family has passed.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
+- [x] Independent closure audit confirms no remaining plan-owned blocker and no unresolved same-file overlap conflict with historical Plan `280`.
+- [x] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+
+Phase Notes:
+
+- Focused `detail-view` atomicity proof passed and is recorded in `docs/logs/2026/05-15.md`.
+- The live baseline later passed full workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`.
+- Independent closure audit passed after the final verification/log sync and confirmed there is no unresolved same-file overlap conflict with historical Plan `280`; see `Closure Audit Evidence`.
 
 ## Closure Gates
 
-- [ ] All in-scope confirmed live defects are fixed.
-- [ ] All in-scope confirmed contract drifts are converged.
-- [ ] Behavior and contract results are achieved.
-- [ ] Necessary focused verification is completed.
-- [ ] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
-- [ ] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
-- [ ] Independent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All in-scope confirmed live defects are fixed.
+- [x] All in-scope confirmed contract drifts are converged.
+- [x] Behavior and contract results are achieved.
+- [x] Necessary focused verification is completed.
+- [x] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
+- [x] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
+- [x] Independent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -109,12 +116,12 @@ None currently.
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Completed. The atomic commit fix and focused proof are landed on the live baseline, full workspace hard-gate verification passed, and independent closure audit found no remaining plan-owned blocker or overlap conflict with historical Plan `280`.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: Pending.
-- Evidence: Pending.
+- Reviewer / Agent: `ses_1d5eb88b1ffejXgdvQkR8uOO3h`
+- Evidence: Re-read this plan, the guide, and `docs/logs/2026/05-15.md` against the live repo. Confirmed `packages/flux-renderers-form-advanced/src/detail-view/detail-view.tsx` rolls back transformed parent writes on rejected commit, focused proof exists for the parent-owner-before-validation surface, deep-audit retained `04-02` is the same owned surface, historical Plan `280` remains limited to the separate viewer invalidation/remount defect family, and the workspace hard gates are green on the current baseline.
 
 Follow-up:
 

@@ -350,7 +350,7 @@ interface BoundFieldSchemaBase extends BaseSchema {
 
 当前已确认的 static structural fields：
 
-- `statusPath`：当文档已把它定义为 owner/source/surface 发布只读状态摘要的路径时，允许 renderer 或 runtime 按结构配置直读 raw schema
+- `data-source.statusPath`：当字段语义是 source publication registration path 且当前 baseline 明确禁止动态表达式时，允许 compiler/runtime 按结构配置直读 raw schema
 - `componentId`：当字段语义是“把 action 定向到某个已渲染组件实例”时，允许保留 raw schema 直读
 
 仍待按具体文档判定的例子：
@@ -414,11 +414,11 @@ export const META_FIELDS = new Set(['id', 'className', 'visible', 'hidden', 'dis
 
 以下字段可由 renderer 直接读取 raw `schema`，无需进入归一化通道：
 
-| Field         | Renderer(s)                                         | Justification                            |
-| ------------- | --------------------------------------------------- | ---------------------------------------- |
-| `statusPath`  | `page`, `form`, `dialog`, `drawer`, `tree-renderer` | 纯结构配置，不支持表达式，读取一次后不变 |
-| `componentId` | `chart-renderer`                                    | 纯结构配置，chart 实例标识               |
-| `frameWrap`   | `NodeFrameWrapper`                                  | 结构配置，不是业务值                     |
+| Field         | Renderer(s)        | Justification                            |
+| ------------- | ------------------ | ---------------------------------------- |
+| `statusPath`  | `data-source`      | 纯结构配置，不支持表达式，读取一次后不变 |
+| `componentId` | `chart-renderer`   | 纯结构配置，chart 实例标识               |
+| `frameWrap`   | `NodeFrameWrapper` | 结构配置，不是业务值                     |
 
 如果未来需要让这些字段支持表达式求值，必须显式迁移到 `props`，不得继续保留在 raw schema 直读路径中。
 

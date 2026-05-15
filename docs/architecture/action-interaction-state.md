@@ -99,6 +99,7 @@
 - `statusPath`：owner-level readonly summary DTO 的发布路径
 - `<axis>StatePath`：某一可写交互轴的持久化路径
 - 二者不能互相替代
+- Current live baseline for non-form owners: renderer-owned `statusPath` fields such as `page`, `tabs`, `tree`, and the workbench-host pages are resolved through normal prop evaluation rather than frozen raw-schema reads. If the resolved target path changes, the owner must clear the old target and republish to the new one instead of silently freezing the first path.
 
 例子：
 

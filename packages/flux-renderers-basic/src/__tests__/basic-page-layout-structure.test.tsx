@@ -1,6 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
+import { createExpressionCompiler } from '@nop-chaos/flux-formula';
+import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '../index.js';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
@@ -129,6 +132,111 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     );
     await waitFor(() => expect(screen.getByText('0')).toBeTruthy());
     cleanup();
+  });
+
+  it('reroutes dynamic page statusPath publications by clearing the old target and publishing the new target', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout-reroute"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button',
+              label: 'Switch page status path',
+              onClick: {
+                action: 'setValue',
+                args: {
+                  path: 'activeStatusKey',
+                  value: 'b',
+                },
+              },
+            },
+            {
+              type: 'page',
+              statusPath: 'ui.${activeStatusKey}',
+              body: [{ type: 'text', text: 'Inner page' }],
+            },
+            { type: 'text', text: '${ui.a?.refreshTick ?? "null"}' },
+            { type: 'text', text: '${ui.b?.refreshTick ?? "null"}' },
+          ],
+        }}
+        data={{ activeStatusKey: 'a' }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText('0')).toHaveLength(1);
+      expect(screen.getAllByText('null')).toHaveLength(1);
+    });
+
+    fireEvent.click(screen.getByText('Switch page status path'));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('0')).toHaveLength(1);
+      expect(screen.getAllByText('null')).toHaveLength(1);
+    });
+
+    const textNodes = screen.getAllByText(/^(0|null)$/).map((node) => node.textContent);
+    expect(textNodes).toEqual(['null', '0']);
+    cleanup();
+  });
+
+  it('treats page and tabs statusPath as resolved prop fields rather than static structural paths', () => {
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry(basicRendererDefinitions),
+      expressionCompiler: createExpressionCompiler(formulaCompiler),
+    });
+
+    expect(
+      compiler.validate?.({
+        type: 'page',
+        statusPath: '${pageStatusPath}',
+      } as any),
+    ).toEqual([]);
+
+    expect(
+      compiler.validate?.({
+        type: 'tabs',
+        statusPath: '${tabsStatusPath}',
+        items: [{ key: 'first', title: 'First' }],
+      } as any),
+    ).toEqual([]);
+
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry(basicRendererDefinitions),
+      env,
+      expressionCompiler: createExpressionCompiler(formulaCompiler),
+    });
+    const compiled = runtime.compile({
+      type: 'page',
+      body: [
+        {
+          type: 'tabs',
+          statusPath: '${tabsStatusPath}',
+          items: [{ key: 'first', title: 'First' }],
+        },
+      ],
+      statusPath: '${pageStatusPath}',
+    });
+    const resolved = runtime.resolveNodeProps(compiled.root as any, runtime.createPageRuntime({
+      pageStatusPath: 'ui.pageStatus',
+      tabsStatusPath: 'ui.tabsStatus',
+    }).scope);
+    const rootProps = resolved.value as Record<string, unknown>;
+    const tabsNode = Array.isArray((compiled.root as any).regions?.body)
+      ? (compiled.root as any).regions.body[0]
+      : undefined;
+    const resolvedTabs = runtime.resolveNodeProps(tabsNode, runtime.createPageRuntime({
+      pageStatusPath: 'ui.pageStatus',
+      tabsStatusPath: 'ui.tabsStatus',
+    }).scope);
+
+    expect(rootProps.statusPath).toBe('ui.pageStatus');
+    expect((resolvedTabs.value as Record<string, unknown>).statusPath).toBe('ui.tabsStatus');
   });
 
   it('publishes tabs status and supports scope ownership', async () => {

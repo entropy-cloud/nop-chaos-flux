@@ -21,6 +21,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
 import {
+  cn,
   Select,
   SelectContent,
   SelectItem,
@@ -369,6 +370,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 
         parentForm.setValue(name, nextValue);
         parentForm.touchField(name);
+      } else if (name) {
+        const nextValue = nextOption?.initialValue !== undefined ? nextOption.initialValue : null;
+        parentScope.update(name, nextValue);
       }
 
       if (!mountedRef.current || requestId !== switchRequestIdRef.current) {
@@ -663,7 +667,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       labelWidth={schemaProps.labelWidth as string | number | undefined}
       rootTag="div"
       layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
-      className={props.meta.frameClassName}
+      className={cn(props.meta.frameClassName, props.meta.className)}
       testid={props.meta.testid}
       cid={props.meta.cid}
       rootProps={{ 'data-active-variant': activeKey, 'data-frame-wrap': frameWrapMode }}

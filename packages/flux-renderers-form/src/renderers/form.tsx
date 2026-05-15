@@ -177,6 +177,12 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     ],
   );
 
+  useEffect(() => {
+    return () => {
+      ownedForm.dispose();
+    };
+  }, [ownedForm]);
+
   const baseLifecycleScope = ownedForm.scope;
   const lifecycleScope = useMemo(
     () =>

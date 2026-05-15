@@ -1,6 +1,6 @@
 # 302 Open-Ended Adversarial Review 2026-05-15 Action Dispatch Teardown Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-15
 > Source: `docs/analysis/2026-05-15-open-ended-adversarial-review-01/summary.md`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/plans/301-open-ended-adversarial-review-2026-05-15-owner-routing-plan.md`
@@ -13,7 +13,7 @@
 
 - The dispatcher teardown fix has already landed on the live baseline: dispatcher disposal now settles pending debounced dispatch promises with a cancellation result, and runtime disposal routes through dispatcher disposal.
 - Focused regression proof has already landed in the action-core and runtime test suites, and `docs/logs/2026/05-15.md` records the landed slice plus focused verification.
-- Remaining closure work for this plan is repo-level hard-gate verification, textual synchronization inside this plan, and independent closure audit.
+- The plan is now closed on the live baseline: focused proof, repo-level hard-gate verification, and independent closure audit are all complete and synchronized in this file plus `docs/logs/2026/05-15.md`.
 
 ## Goals
 
@@ -57,37 +57,43 @@ Exit Criteria:
 
 ### Phase 2 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: touched packages, docs, this plan
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] Run all focused tests added or modified in Phase 1.
-- [ ] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all in-scope changes land.
-- [ ] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-15.md`.
-- [ ] Run an independent closure audit with a fresh subagent that re-reads this plan, linked analysis files, live code/docs/tests, and verification output.
-- [ ] Fix any blocking closure-audit finding before marking this plan completed.
+- [x] Run all focused tests added or modified in Phase 1.
+- [x] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all in-scope changes land.
+- [x] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-15.md`.
+- [x] Run an independent closure audit with a fresh subagent that re-reads this plan, linked analysis files, live code/docs/tests, and verification output.
+- [x] Fix any blocking closure-audit finding before marking this plan completed.
 
 Exit Criteria:
 
-- [ ] Focused verification for the in-scope defect family has passed.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
-- [ ] Independent closure audit confirms no remaining plan-owned blocker.
-- [ ] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+- [x] Focused verification for the in-scope defect family has passed.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
+- [x] Independent closure audit confirms no remaining plan-owned blocker.
+- [x] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+
+Phase Notes:
+
+- Focused regression proof for the dispatcher/runtime teardown contract passed and is recorded in `docs/logs/2026/05-15.md`.
+- Full workspace hard gates later passed on the same live baseline via `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`.
+- Independent closure audit passed after the final verification/log sync; see `Closure Audit Evidence`.
 
 ## Closure Gates
 
-- [ ] All in-scope confirmed live defects are fixed.
-- [ ] All in-scope confirmed contract drifts are converged.
-- [ ] Behavior and contract results are achieved.
-- [ ] Necessary focused verification is completed.
-- [ ] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
-- [ ] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
-- [ ] Independent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All in-scope confirmed live defects are fixed.
+- [x] All in-scope confirmed contract drifts are converged.
+- [x] Behavior and contract results are achieved.
+- [x] Necessary focused verification is completed.
+- [x] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
+- [x] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
+- [x] Independent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -99,12 +105,12 @@ None currently.
 
 ## Closure
 
-Status Note: Implementation is landed and Phase 1 is complete. Remaining work is full hard-gate verification and independent closure audit.
+Status Note: Completed. The dispatcher teardown fix is landed, focused regression proof and full workspace hard-gate verification passed, and independent closure audit found no remaining plan-owned blocker.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: Pending.
-- Evidence: Pending.
+- Reviewer / Agent: `ses_1d5eb8b33ffeuk3noCm0IAAh9u`
+- Evidence: Re-read this plan, the guide, and `docs/logs/2026/05-15.md` against the live repo. Confirmed `packages/flux-action-core/src/action-dispatcher/action-execution.ts` settles pending debounced dispatches with `createCancelledResult()`, `packages/flux-runtime/src/runtime-factory.ts` routes `runtime.dispose()` through dispatcher disposal, focused regression proof exists in the action-core/runtime test suites, the workspace hard gates are green on the live baseline, and no remaining plan-owned teardown blocker remains.
 
 Follow-up:
 
