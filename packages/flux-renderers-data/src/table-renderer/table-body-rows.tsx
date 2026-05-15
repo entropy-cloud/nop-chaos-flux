@@ -128,10 +128,11 @@ function NonVirtualBody({
         </TableRow>
       ) : (
         processedData.map((entry) => {
-          const rowScope = rowScopeCache.get(entry.rowKey);
+          const cacheKey = entry.cacheKey ?? entry.rowKey;
+          const rowScope = rowScopeCache.get(cacheKey);
           if (!rowScope) return null;
 
-          const rowKey = entry.rowKey;
+          const rowKey = cacheKey;
           const rowInstancePath: InstanceFrame[] = [
             ...(props.node.instancePath ?? []),
             { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey },

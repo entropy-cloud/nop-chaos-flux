@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import type { TableSchema } from '../schemas.js';
 import type { TableRowEntry } from './types.js';
@@ -12,7 +12,6 @@ interface RowScopePayload {
 interface RowScopeCacheState {
   scopes: Map<string, ScopeRef>;
   snapshots: Map<string, RowScopePayload>;
-  version: number;
   listeners: Set<() => void>;
 }
 
@@ -34,16 +33,22 @@ function createRowScopeCacheState(): RowScopeCacheState {
   return {
     scopes: new Map<string, ScopeRef>(),
     snapshots: new Map<string, RowScopePayload>(),
-    version: 0,
     listeners: new Set(),
   };
 }
 
 function notifyListeners(state: RowScopeCacheState) {
-  state.version += 1;
   for (const listener of state.listeners) {
     listener();
   }
+}
+
+function disposeRowScope(disposeScope: (scopeId: string) => void, scope: ScopeRef | undefined) {
+  if (!scope) {
+    return;
+  }
+
+  disposeScope(scope.id);
 }
 
 function subscribeToCache(state: RowScopeCacheState, listener: () => void) {
@@ -93,24 +98,19 @@ export function useTableRowScopeCache(
 
   const rowScopeCache = cacheState.scopes;
   const rowScopeSnapshots = cacheState.snapshots;
+  const duplicateRowKeysRef = useRef<Set<string>>(new Set());
+  const structureVersionRef = useRef(0);
+  const createScopeRef = useRef(helpers.createScope);
+  const disposeScopeRef = useRef(helpers.disposeScope);
 
-  const version = useSyncExternalStore(
+  useLayoutEffect(() => {
+    createScopeRef.current = helpers.createScope;
+    disposeScopeRef.current = helpers.disposeScope;
+  }, [helpers.createScope, helpers.disposeScope]);
+
+  const structureVersion = useSyncExternalStore(
     (listener) => subscribeToCache(cacheState, listener),
-    () => cacheState.version,
-  );
-
-  const entries = useMemo(
-    () =>
-      processedData.map((entry) => ({
-        rowKey: entry.rowKey,
-        payload: { record: entry.record, index: entry.sourceIndex },
-      })),
-    [processedData],
-  );
-
-  const visibleKeys = useMemo(
-    () => new Set(processedData.map((entry) => entry.rowKey)),
-    [processedData],
+    () => structureVersionRef.current,
   );
 
   useLayoutEffect(() => {
@@ -118,37 +118,52 @@ export function useTableRowScopeCache(
 
     return () => {
       if (tableRowScopeCaches.get(cacheKey) === cacheState) {
+        for (const scope of rowScopeCache.values()) {
+          disposeRowScope(disposeScopeRef.current, scope);
+        }
         rowScopeCache.clear();
         rowScopeSnapshots.clear();
+        duplicateRowKeysRef.current.clear();
         tableRowScopeCaches.delete(cacheKey);
       }
     };
   }, [cacheKey, cacheState, rowScopeCache, rowScopeSnapshots]);
 
   useLayoutEffect(() => {
-    let changed = false;
+    let structureChanged = false;
+    const visibleKeys = new Set<string>();
+    const duplicateRowKeys = new Set<string>();
+    const seenRowKeys = new Set<string>();
 
-    for (const { rowKey, payload } of entries) {
-      const existingScope = rowScopeCache.get(rowKey);
+    for (const entry of processedData) {
+      const payload = { record: entry.record, index: entry.sourceIndex };
+      const cacheEntryKey = entry.cacheKey ?? entry.rowKey;
+      visibleKeys.add(cacheEntryKey);
+
+      if (seenRowKeys.has(entry.rowKey)) {
+        duplicateRowKeys.add(entry.rowKey);
+      } else {
+        seenRowKeys.add(entry.rowKey);
+      }
+
+      const existingScope = rowScopeCache.get(cacheEntryKey);
 
       if (!existingScope) {
-        const createdScope = helpers.createScope(payload, {
-          scopeKey: createRowScopeId(ownerKey, rowKey),
-          pathSuffix: createRowScopePath(path, rowKey),
+        const createdScope = createScopeRef.current(payload, {
+          scopeKey: createRowScopeId(ownerKey, cacheEntryKey),
+          pathSuffix: createRowScopePath(path, cacheEntryKey),
           isolate: true,
           source: 'row',
         });
-        rowScopeCache.set(rowKey, createdScope);
-        rowScopeSnapshots.set(rowKey, payload);
-        changed = true;
+        rowScopeCache.set(cacheEntryKey, createdScope);
+        rowScopeSnapshots.set(cacheEntryKey, payload);
+        structureChanged = true;
         continue;
       }
 
-      const previous = rowScopeSnapshots.get(rowKey);
-      const payloadChanged = !previous || previous.record !== payload.record || previous.index !== payload.index;
+      const previous = rowScopeSnapshots.get(cacheEntryKey);
       publishRowScopePayload(existingScope, payload, previous);
-      rowScopeSnapshots.set(rowKey, payload);
-      changed = changed || payloadChanged;
+      rowScopeSnapshots.set(cacheEntryKey, payload);
     }
 
     for (const key of Array.from(rowScopeCache.keys())) {
@@ -156,18 +171,28 @@ export function useTableRowScopeCache(
         continue;
       }
 
+      disposeRowScope(disposeScopeRef.current, rowScopeCache.get(key));
       rowScopeCache.delete(key);
       rowScopeSnapshots.delete(key);
-      changed = true;
+      structureChanged = true;
     }
 
-    if (changed) {
+    const duplicatesChanged =
+      duplicateRowKeys.size !== duplicateRowKeysRef.current.size ||
+      Array.from(duplicateRowKeys).some((key) => !duplicateRowKeysRef.current.has(key));
+
+    if (duplicatesChanged) {
+      duplicateRowKeysRef.current = duplicateRowKeys;
+      structureChanged = true;
+    }
+
+    if (structureChanged) {
+      structureVersionRef.current += 1;
       notifyListeners(cacheState);
     }
-  }, [cacheState, entries, helpers, ownerKey, path, rowScopeCache, rowScopeSnapshots, visibleKeys]);
+  }, [cacheState, ownerKey, path, processedData, rowScopeCache, rowScopeSnapshots]);
 
-  void version;
+  void structureVersion;
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization, react-hooks/exhaustive-deps -- intentionally re-create Map only when version changes to break React Compiler memoization
-  return useMemo(() => new Map(rowScopeCache), [version]);
+  return rowScopeCache;
 }

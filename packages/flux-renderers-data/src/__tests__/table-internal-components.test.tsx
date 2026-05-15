@@ -439,4 +439,53 @@ describe('table internal components', () => {
     expect(screen.getByText('Alice')).toBeTruthy();
     expect(document.querySelector('[data-slot="table-select-cell"]')).toBeNull();
   });
+
+  it('renders duplicate rowKey entries through distinct cacheKey row identities', () => {
+    const rowScopeCache = new Map<string, any>([
+      ['dup', makeRowScope({ name: 'Alice' }, 0)],
+      ['dup::dup:1', makeRowScope({ name: 'Bob' }, 1)],
+    ]);
+    const processedData = [
+      { rowKey: 'dup', cacheKey: 'dup', sourceIndex: 0, record: { name: 'Alice' } },
+      { rowKey: 'dup', cacheKey: 'dup::dup:1', sourceIndex: 1, record: { name: 'Bob' } },
+    ];
+
+    render(
+      <table>
+        <TableBodyRows
+          props={makeTableProps({ props: { expandable: {}, rowSelection: undefined }, events: {} })}
+          columns={[{ label: 'Name', name: 'name' } as any]}
+          responsiveHiddenColumns={[]}
+          processedData={processedData as any}
+          rowScopeCache={rowScopeCache}
+          rowRepeatedTemplateId="row"
+          expandedRowKeys={new Set(['dup::dup:1'])}
+          selectedRowKeys={new Set(['dup'])}
+          columnCount={1}
+          isStriped={false}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
+          emptyContent={null}
+          showExpandColumn={false}
+          expandRowByClick={false}
+          onToggleExpand={() => {}}
+          onSelectRow={() => {}}
+          virtualEnabled={false}
+        />
+      </table>,
+    );
+
+    const rows = Array.from(document.querySelectorAll('[data-slot="table-row"]'));
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.textContent).toContain('Alice');
+    expect(rows[1]?.textContent).toContain('Bob');
+    expect(rows[0]?.getAttribute('data-expanded')).toBeNull();
+    expect(rows[1]?.getAttribute('data-expanded')).toBe('true');
+    expect(document.querySelector('[data-slot="table-expanded-row"]')).toBeTruthy();
+  });
 });

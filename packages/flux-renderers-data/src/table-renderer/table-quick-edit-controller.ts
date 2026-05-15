@@ -37,9 +37,21 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saveError, setSaveError] = useState<unknown>(undefined);
   const savingRef = useRef(false);
+  const lastFieldRef = useRef(field);
+  const lastRecordValueRef = useRef(initialValue);
 
   useEffect(() => {
     const nextValue = toOptionalDraftValue(record, field);
+    const fieldChanged = lastFieldRef.current !== field;
+    const valueChanged = lastRecordValueRef.current !== nextValue;
+
+    lastFieldRef.current = field;
+    lastRecordValueRef.current = nextValue;
+
+    if (!fieldChanged && !valueChanged) {
+      return;
+    }
+
     setDraftValue(nextValue);
     setSavedValue(nextValue);
     setBodyDirty(false);
@@ -107,6 +119,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
       const nextSavedValue = field
         ? toOptionalDraftValue((rowScope.get('record') as Record<string, unknown>) ?? record, field)
         : draftValue;
+      lastRecordValueRef.current = nextSavedValue;
       setSavedValue(nextSavedValue);
       setDraftValue(nextSavedValue);
       setBodyDirty(false);

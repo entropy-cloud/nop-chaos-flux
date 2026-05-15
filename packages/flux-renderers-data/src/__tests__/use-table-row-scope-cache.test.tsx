@@ -66,11 +66,17 @@ function createTestScope(initial: { record: Record<string, unknown>; index: numb
 }
 
 function HookHarness(props: {
-  processedData: Array<{ rowKey: string; sourceIndex: number; record: Record<string, unknown> }>;
+  processedData: Array<{
+    rowKey: string;
+    cacheKey?: string;
+    sourceIndex: number;
+    record: Record<string, unknown>;
+  }>;
   ownerKey: string;
   path: string;
   onCache?: (cache: Map<string, ScopeRef>) => void;
   createScope?: (patch: Record<string, unknown>, options?: Record<string, unknown>) => ScopeRef;
+  disposeScope?: (scopeId: string) => void;
 }) {
   const cache = useTableRowScopeCache(
     props.processedData,
@@ -83,6 +89,7 @@ function HookHarness(props: {
             { record: patch.record as Record<string, unknown>, index: patch.index as number },
             String(options?.scopeKey ?? 'scope'),
           )),
+      disposeScope: props.disposeScope ?? (() => undefined),
     } as any,
     props.path,
   );
@@ -221,5 +228,96 @@ describe('useTableRowScopeCache', () => {
     rendered.unmount();
     expect(__getTableRowScopeCacheSizeForTests()).toBe(0);
     expect(__hasTableRowScopeCacheForTests(secondCacheKey)).toBe(false);
+  });
+
+  it('keeps the cache map reference stable when only row payloads change', async () => {
+    const cacheRefs: Array<Map<string, ScopeRef>> = [];
+    const { rerender } = render(
+      <HookHarness
+        processedData={[{ rowKey: 'r1', sourceIndex: 0, record: { name: 'Alice' } }]}
+        ownerKey="table-a"
+        path="$page.table"
+        onCache={(value) => {
+          cacheRefs.push(value);
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(cacheRefs[0]?.get('r1')).toBeTruthy());
+
+    rerender(
+      <HookHarness
+        processedData={[{ rowKey: 'r1', sourceIndex: 1, record: { name: 'Alice updated' } }]}
+        ownerKey="table-a"
+        path="$page.table"
+        onCache={(value) => {
+          cacheRefs.push(value);
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(cacheRefs).toHaveLength(2));
+    expect(cacheRefs[1]).toBe(cacheRefs[0]);
+  });
+
+  it('deduplicates colliding row keys into distinct cache entries', async () => {
+    let cache: Map<string, ScopeRef> | undefined;
+
+    render(
+      <HookHarness
+        processedData={[
+          { rowKey: 'dup', cacheKey: 'dup', sourceIndex: 0, record: { name: 'Alice' } },
+          {
+            rowKey: 'dup',
+            cacheKey: 'dup::dup:1',
+            sourceIndex: 1,
+            record: { name: 'Bob' },
+          },
+        ]}
+        ownerKey="table-a"
+        path="$page.table"
+        onCache={(value) => {
+          cache = value;
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(cache?.size).toBe(2));
+    expect(cache?.get('dup')).toBeTruthy();
+    expect(cache?.get('dup::dup:1')).toBeTruthy();
+    expect(cache?.get('dup')).not.toBe(cache?.get('dup::dup:1'));
+  });
+
+  it('disposes row scopes on eviction and unmount', async () => {
+    const disposeScope = vi.fn();
+    const { rerender, unmount } = render(
+      <HookHarness
+        processedData={[
+          { rowKey: 'r1', sourceIndex: 0, record: { name: 'Alice' } },
+          { rowKey: 'r2', sourceIndex: 1, record: { name: 'Bob' } },
+        ]}
+        ownerKey="table-a"
+        path="$page.table"
+        disposeScope={disposeScope}
+      />,
+    );
+
+    await waitFor(() => expect(disposeScope).toHaveBeenCalledTimes(0));
+
+    rerender(
+      <HookHarness
+        processedData={[{ rowKey: 'r1', sourceIndex: 0, record: { name: 'Alice' } }]}
+        ownerKey="table-a"
+        path="$page.table"
+        disposeScope={disposeScope}
+      />,
+    );
+
+    await waitFor(() => expect(disposeScope).toHaveBeenCalledTimes(1));
+    expect(disposeScope.mock.calls[0]?.[0]).toContain('r2');
+
+    unmount();
+    expect(disposeScope).toHaveBeenCalledTimes(2);
+    expect(disposeScope.mock.calls[1]?.[0]).toContain('r1');
   });
 });

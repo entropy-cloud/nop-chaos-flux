@@ -48,10 +48,11 @@ export function buildFlattenedItems(
   const items: FlattenedItem[] = [];
 
   for (const entry of processedData) {
-    const rowScope = rowScopeCache.get(entry.rowKey);
+    const cacheKey = entry.cacheKey ?? entry.rowKey;
+    const rowScope = rowScopeCache.get(cacheKey);
     if (!rowScope) continue;
 
-    const rowKey = entry.rowKey;
+    const rowKey = cacheKey;
     const rowInstancePath: InstanceFrame[] = [
       ...(parentProps.node.instancePath ?? []),
       { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey },

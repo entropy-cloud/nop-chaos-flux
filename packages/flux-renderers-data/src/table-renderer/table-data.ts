@@ -35,10 +35,16 @@ export function buildTableRowEntries(
   source: unknown[],
   rowKeyField?: string,
 ): TableRowEntry[] {
+  const duplicateCounts = new Map<string, number>();
+
   return source.map((value, sourceIndex) => {
     const record = toRowRecord(value);
+    const rowKey = normalizeRowKey(record, sourceIndex, rowKeyField);
+    const duplicateIndex = duplicateCounts.get(rowKey) ?? 0;
+    duplicateCounts.set(rowKey, duplicateIndex + 1);
     return {
-      rowKey: normalizeRowKey(record, sourceIndex, rowKeyField),
+      rowKey,
+      cacheKey: duplicateIndex === 0 ? rowKey : `${rowKey}::dup:${duplicateIndex}`,
       sourceIndex,
       record,
     };

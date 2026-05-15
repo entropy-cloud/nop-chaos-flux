@@ -68,8 +68,8 @@ describe('table-data helpers', () => {
 
   it('builds row entries, selection payloads, and scope ids', () => {
     expect(buildTableRowEntries([{ id: 1 }, { __rowKey: 'two' }])).toEqual([
-      { rowKey: '1', sourceIndex: 0, record: { id: 1 } },
-      { rowKey: 'two', sourceIndex: 1, record: { __rowKey: 'two' } },
+      { rowKey: '1', cacheKey: '1', sourceIndex: 0, record: { id: 1 } },
+      { rowKey: 'two', cacheKey: 'two', sourceIndex: 1, record: { __rowKey: 'two' } },
     ]);
 
     expect(Array.from(toSelectionPayload(['1', 2 as any]))).toEqual(['1', '2']);
@@ -82,6 +82,23 @@ describe('table-data helpers', () => {
       '[{"repeatedTemplateId":"table-row:1","instanceKey":"x"}]',
     );
     expect(serializeInstancePath(undefined)).toBe('root');
+  });
+
+  it('deduplicates colliding row keys into distinct cache keys during row entry normalization', () => {
+    expect(buildTableRowEntries([{ id: 1, name: 'Alice' }, { id: 1, name: 'Bob' }])).toEqual([
+      {
+        rowKey: '1',
+        cacheKey: '1',
+        sourceIndex: 0,
+        record: { id: 1, name: 'Alice' },
+      },
+      {
+        rowKey: '1',
+        cacheKey: '1::dup:1',
+        sourceIndex: 1,
+        record: { id: 1, name: 'Bob' },
+      },
+    ]);
   });
 
   it('warns on duplicate row keys when rows collide', () => {
@@ -118,6 +135,7 @@ describe('table-data helpers', () => {
     expect(filtered).toEqual([
       {
         rowKey: '3',
+        cacheKey: '3',
         sourceIndex: 2,
         record: { id: 3, name: 'Alice', role: 'admin' },
       },
@@ -126,6 +144,7 @@ describe('table-data helpers', () => {
     expect(paginateTableData(filtered, true, 1, 2)).toEqual([
       {
         rowKey: '3',
+        cacheKey: '3',
         sourceIndex: 2,
         viewIndex: 0,
         record: { id: 3, name: 'Alice', role: 'admin' },
@@ -229,6 +248,63 @@ describe('table row rendering helpers', () => {
     expect(flattened[1]).toEqual({ kind: 'expanded', rowKey: 'r1', columnCount: 3 });
   });
 
+  it('uses cacheKey for duplicate rows when building flattened items', () => {
+    const parentProps = makeParentProps();
+    const firstScope = makeRowScope({ name: 'Alice' }, 0);
+    const secondScope = makeRowScope({ name: 'Bob' }, 1);
+    const flattened = buildFlattenedItems(
+      [
+        { rowKey: 'dup', cacheKey: 'dup', sourceIndex: 0, record: { name: 'Alice' } },
+        {
+          rowKey: 'dup',
+          cacheKey: 'dup::dup:1',
+          sourceIndex: 1,
+          record: { name: 'Bob' },
+        },
+      ],
+      new Map([
+        ['dup', firstScope],
+        ['dup::dup:1', secondScope],
+      ]),
+      new Set(['dup::dup:1']),
+      new Set(['dup']),
+      2,
+      parentProps,
+      'table-row:unit',
+    );
+
+    expect(flattened).toHaveLength(3);
+    expect(flattened[0]).toMatchObject({
+      kind: 'data',
+      rowKey: 'dup',
+      rowScope: firstScope,
+      isSelected: true,
+      isExpanded: false,
+    });
+    expect(flattened[1]).toMatchObject({
+      kind: 'data',
+      rowKey: 'dup::dup:1',
+      rowScope: secondScope,
+      isSelected: false,
+      isExpanded: true,
+    });
+    expect(
+      (flattened[0] as import('../table-renderer/table-body-row-rendering.js').FlattenedRow)
+        .rowInstancePath,
+    ).toEqual([
+      { repeatedTemplateId: 'page', instanceKey: 'root' },
+      { repeatedTemplateId: 'table-row:unit', instanceKey: 'dup' },
+    ]);
+    expect(
+      (flattened[1] as import('../table-renderer/table-body-row-rendering.js').FlattenedRow)
+        .rowInstancePath,
+    ).toEqual([
+      { repeatedTemplateId: 'page', instanceKey: 'root' },
+      { repeatedTemplateId: 'table-row:unit', instanceKey: 'dup::dup:1' },
+    ]);
+    expect(flattened[2]).toEqual({ kind: 'expanded', rowKey: 'dup::dup:1', columnCount: 2 });
+  });
+
   it('renders clickable rows with expand, selection, operation buttons, and value cells', () => {
     const parentProps = makeParentProps({
       props: { expandable: {}, rowSelection: { type: 'checkbox' } },
@@ -320,6 +396,7 @@ describe('table row rendering helpers', () => {
               kind: 'data',
               entry: {
                 rowKey: 'r1',
+                cacheKey: 'r1',
                 sourceIndex: 0,
                 record: { name: 'Alice', email: 'alice@example.com' },
               },

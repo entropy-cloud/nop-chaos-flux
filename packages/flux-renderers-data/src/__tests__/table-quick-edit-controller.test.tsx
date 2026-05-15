@@ -260,4 +260,67 @@ describe('useTableQuickEditController', () => {
       expect(screen.getByTestId('dirty').textContent).toBe('false');
     });
   });
+
+  it('preserves draft state when record identity changes but field value stays the same', () => {
+    cleanup();
+    const rowScope = createRowScope({ name: 'Alice' });
+    const helpers = createHelpers();
+    const rendered = render(
+      <ControllerHarness
+        field="name"
+        record={{ name: 'Alice' }}
+        rowScope={rowScope}
+        helpers={helpers}
+        saveAction={{ action: 'save' }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'change' }));
+    expect(screen.getByTestId('dirty').textContent).toBe('true');
+    expect(screen.getByTestId('draft').textContent).toBe('Alicia');
+
+    rendered.rerender(
+      <ControllerHarness
+        field="name"
+        record={{ name: 'Alice' }}
+        rowScope={rowScope}
+        helpers={helpers}
+        saveAction={{ action: 'save' }}
+      />,
+    );
+
+    expect(screen.getByTestId('dirty').textContent).toBe('true');
+    expect(screen.getByTestId('draft').textContent).toBe('Alicia');
+  });
+
+  it('resets draft state when the field value actually changes', () => {
+    cleanup();
+    const rowScope = createRowScope({ name: 'Alice' });
+    const helpers = createHelpers();
+    const rendered = render(
+      <ControllerHarness
+        field="name"
+        record={{ name: 'Alice' }}
+        rowScope={rowScope}
+        helpers={helpers}
+        saveAction={{ action: 'save' }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'change' }));
+
+    rendered.rerender(
+      <ControllerHarness
+        field="name"
+        record={{ name: 'Server value' }}
+        rowScope={rowScope}
+        helpers={helpers}
+        saveAction={{ action: 'save' }}
+      />,
+    );
+
+    expect(screen.getByTestId('dirty').textContent).toBe('false');
+    expect(screen.getByTestId('dialog-open').textContent).toBe('false');
+    expect(screen.getByTestId('draft').textContent).toBe('Server value');
+  });
 });
