@@ -816,7 +816,6 @@ interface ToolbarScope {
     canUndo: boolean;
     canRedo: boolean;
     dirty: boolean;
-    isDirty: boolean;
     gridEnabled: boolean;
     zoom: number;
     viewport: { x: number; y: number; zoom: number };

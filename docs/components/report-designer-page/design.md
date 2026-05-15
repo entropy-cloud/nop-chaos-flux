@@ -8,7 +8,7 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前已落地 `document`、`designer`、`profile`、`adapters`、`toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body`。
+- 当前已落地 `document`、`config`、`profile`、`adapters`、`toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body`。
 - 这是领域宿主，不应退化为普通页面组合模板。
 - 如果问题涉及 spreadsheet/report family 分层、host abstraction、adapter contract 或平台扩展边界，应先回到 `docs/architecture/report-designer/README.md`。
 
@@ -18,21 +18,21 @@
 - `sourcePackage: '@nop-chaos/report-designer-renderers'`
 - `rendererClass: 'domain-host-renderer'`
 - `rendererTraits`: `workbench-shell`, `builder-facing`
-- 当前 definition fields: `title` 为 `value-or-region`；`statusPath`、`document`、`designer`、`profile`、`adapters` 为 `prop`；`toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body` 为 `region`
+- 当前 definition fields: `title` 为 `value-or-region`；`statusPath`、`document`、`config`、`profile`、`adapters` 为 `prop`；`toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body` 为 `region`
 
 ## 4. schema 设计
 
-- `document` 和 `designer` 是核心必填输入。
+- `document` 和 `config` 是核心必填输入。
 - `profile` 和 `adapters` 是可选宿主扩展入口。
 - `toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body` 是主要 regions，可接收通用 region schema 输入，不限于 report-designer family 专用 renderer。
 - 目标设计中，如需让宿主外部读取 report designer host 摘要，应使用 `statusPath`，而不是把完整 host projection 提升到 page 全局 scope。
-- 左右工作台是否出现由 resolved `designer` config 决定；`fieldPanel` 与 `inspector` regions 是 override surfaces，不是 side-panel existence 的 canonical source。
+- 左右工作台是否出现由 resolved `config` 决定；`fieldPanel` 与 `inspector` regions 是 override surfaces，不是 side-panel existence 的 canonical source。
 
 ## 5. 字段分类
 
 - Renderer definition fields:
 - `title`: `value-or-region`
-- `statusPath`、`document`、`designer`、`profile`、`adapters`: `prop`
+- `statusPath`、`document`、`config`、`profile`、`adapters`: `prop`
 - `toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body`: `region`
 
 ## 6. regions 与 slot 约定
@@ -41,8 +41,8 @@
 - `fieldPanel` 承接左侧字段源。
 - `inspector` 承接右侧属性面板。
 - `body` 承接中央 spreadsheet 或其他主工作区扩展。
-- 若 `designer.fieldSources` / provider / `designer.features.fieldPanel` 未解析出左侧内容，则左侧整体隐藏；page `fieldPanel` region 不会单独制造一个左侧空壳。
-- 若 `designer.inspector` / `designer.features.inspector` 未解析出右侧内容，则右侧整体隐藏；page `inspector` region 不会单独制造一个右侧空壳。
+- 若 `config.fieldSources` / provider / `config.features.fieldPanel` 未解析出左侧内容，则左侧整体隐藏；page `fieldPanel` region 不会单独制造一个左侧空壳。
+- 若 `config.inspector` / `config.features.inspector` 未解析出右侧内容，则右侧整体隐藏；page `inspector` region 不会单独制造一个右侧空壳。
 
 补充约束:
 
@@ -75,40 +75,39 @@ host scope 向下投影一套 canonical contract，不再把 compatibility alias
 
 **Canonical core fields**
 
-| 字段              | 类型   | 说明                                                                                                                                                                                                              |
-| ----------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `designer`        | object | 主投影：`kind`, `dirty`, `documentId`, `documentName`, `selectionTarget`, `selectionKind`, `inspector`, `inspectorPanels`, `fieldDrag`, `preview`, `activeMeta`, `fieldSources`, `fieldSourceCount`, `fieldCount` |
-| `spreadsheet`     | object | 嵌套 spreadsheet 投影：`workbook`, `activeSheet`, `selection`, `activeCell`, `activeRange`, `runtime`                                                                                                             |
-| `selectionTarget` | object | 当前选择目标                                                                                                                                                                                                      |
-| `reportDocument`  | object | 当前报表文档快照                                                                                                                                                                                                  |
-| `workbook`        | object | 当前工作簿                                                                                                                                                                                                        |
-| `activeSheet`     | object | 当前活跃 sheet                                                                                                                                                                                                    |
-| `activeCell`      | object | 当前活跃单元格                                                                                                                                                                                                    |
-| `activeRange`     | object | 当前活跃区域                                                                                                                                                                                                      |
-| `inspector`       | object | 当前 inspector 运行时状态                                                                                                                                                                                         |
-| `inspectorPanels` | object | 当前目标解析出的 inspector schema                                                                                                                                                                                 |
-| `meta`            | object | 当前选中目标的 metadata bag                                                                                                                                                                                       |
+| 字段              | 类型   | 说明                                                                                                                                                                                                                                                 |
+| ----------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `designer`        | object | 主投影：`kind`, `dirty`, `documentId`, `documentName`, `selectionTarget`, `selectionKind`, `inspector`, `inspectorPanels`, `fieldDrag`, `preview`, `activeMeta`, report-owned `canUndo`, `canRedo`, `fieldSources`, `fieldSourceCount`, `fieldCount` |
+| `spreadsheet`     | object | 嵌套 spreadsheet 投影：`workbook`, `activeSheet`, `selection`, `activeCell`, `activeRange`, `runtime`                                                                                                                                                |
+| `selectionTarget` | object | 当前选择目标                                                                                                                                                                                                                                         |
+| `reportDocument`  | object | 当前报表文档快照                                                                                                                                                                                                                                     |
+| `workbook`        | object | 当前工作簿                                                                                                                                                                                                                                           |
+| `activeSheet`     | object | 当前活跃 sheet                                                                                                                                                                                                                                       |
+| `activeCell`      | object | 当前活跃单元格                                                                                                                                                                                                                                       |
+| `activeRange`     | object | 当前活跃区域                                                                                                                                                                                                                                         |
+| `inspector`       | object | 当前 inspector 运行时状态                                                                                                                                                                                                                            |
+| `inspectorPanels` | object | 当前目标解析出的 inspector schema                                                                                                                                                                                                                    |
+| `meta`            | object | 当前选中目标的 metadata bag                                                                                                                                                                                                                          |
 
 **Derived convenience projections**
 
-| 字段           | 类型    | 说明                               |
-| -------------- | ------- | ---------------------------------- |
-| `runtime`      | object  | 运行时摘要                         |
-| `canUndo`      | boolean | `runtime.canUndo` 的便捷镜像       |
-| `canRedo`      | boolean | `runtime.canRedo` 的便捷镜像       |
-| `documentName` | string  | `designer.documentName` 的便捷镜像 |
-| `fieldSources` | array   | 已解析字段源快照的便捷顶层镜像     |
-| `fieldCount`   | number  | 已解析字段总数的便捷顶层镜像       |
-| `preview`      | object  | preview 状态便捷镜像               |
+| 字段           | 类型   | 说明                               |
+| -------------- | ------ | ---------------------------------- |
+| `runtime`      | object | 运行时摘要                         |
+| `documentName` | string | `designer.documentName` 的便捷镜像 |
+| `fieldSources` | array  | 已解析字段源快照的便捷顶层镜像     |
+| `fieldCount`   | number | 已解析字段总数的便捷顶层镜像       |
+| `preview`      | object | preview 状态便捷镜像               |
 
 约束：
 
 - 新 schema 和 owner doc 统一使用上表 vocabulary。
 - `designer`、`spreadsheet`、`selectionTarget`、`reportDocument`、`workbook`、`activeSheet`、`activeCell`、`activeRange`、`inspector`、`inspectorPanels`、`meta` 属于 host scope 的 core projection contract。
-- `runtime`、`canUndo`、`canRedo`、`documentName`、`fieldSources`、`fieldCount`、`preview` 属于明确保留的 derived convenience projections。
-- 旧 `target` / `selection` 不再作为 canonical contract 记录，但当前仍作为 documented compatibility aliases 保留；`inspectorBody` 不是支持的 host projection 字段。
+- `runtime`、`documentName`、`fieldSources`、`fieldCount`、`preview` 属于明确保留的 derived convenience projections。
+- `selectionTarget` 是唯一 canonical current-target surface；`target` / `selection` 不再属于支持的 host projection contract；`inspectorBody` 不是支持的 host projection 字段。
 - `workbook` / `spreadsheet.workbook` 必须与 `reportDocument.spreadsheet` 指向同一条 canonical workbook baseline；save/export/host projection 不支持各自读取不同 spreadsheet snapshot。
 - `runtime.dirty` 是对外发布给 `statusPath` 和 host scope 的聚合 dirty；初次挂载时内部 spreadsheet clone 不能被误发布成外部 dirty 变更。
+- report owner 的 undo/redo 可用态读取 `designer.canUndo` / `designer.canRedo`；聚合跨-owner历史只通过 `runtime.canUndo` / `runtime.canRedo` 对外发布。
 
 ## 8. 事件、动作与组件句柄能力
 

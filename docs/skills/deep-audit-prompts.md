@@ -229,86 +229,9 @@ Task(
 4. 只有通过独立复核的条目才允许进入最终汇总
 ```
 
-主 Agent（协调者）
-├── Task(subagent_type="explore") → 维度 01 初审
-├── Task(subagent_type="explore") → 维度 01 维度复核
-├── Task(subagent_type="explore") → 维度 01 子项 A 复核
-├── Task(subagent_type="explore") → 维度 01 子项 B 复核
-├── Task(subagent_type="explore") → 维度 02 初审
-├── Task(subagent_type="explore") → 维度 02 维度复核
-...
-└── Task(subagent_type="explore") → 维度 18 子项 N 复核
-
-```
-
-**调度方法**：
-
-1. 主 agent 读取本文档，选择要执行的维度。
-2. 主 agent 用“共享提示词前缀 + 该维度正文”拼接出完整 prompt，先派发**初审子 agent**。
-3. 初审完成后，主 agent 必须派发一个**独立的维度复核子 agent**，要求它重新读代码与文档，输出该维度下“保留 / 降级 / 驳回”的判断。
-4. 维度复核完成后，主 agent 必须对该维度下的高风险或不确定发现项，再派发**独立的子项复核子 agent**逐项验证；低风险项可按文件或按模式批量复核。
-5. 只有在“初审 + 维度复核 + 必要的子项复核”都完成后，该维度结果才允许进入最终汇总。
-6. 所有维度完成后，主 agent 汇总**已复核通过**的结果，生成「深度审核汇总报告」（格式见附录 A）。
-
-**并行策略**：
-
-- 同批次的**初审**维度可以并行派发。
-- 同一维度的**维度复核**必须在该维度初审完成后进行。
-- 同一维度的**子项复核**必须在该维度复核完成后进行。
-- 不同维度之间的复核可以并行。
-
-批次之间的初审依赖关系如下：
-
-| 批次   | 维度                   | 可否并行         |
-| ------ | ---------------------- | ---------------- |
-| 第一批 | 01, 04, 15             | 互相独立，可并行 |
-| 第二批 | 05, 06, 09             | 互相独立，可并行 |
-| 第三批 | 02, 07, 08, 14         | 互相独立，可并行 |
-| 第四批 | 03, 10, 13, 19         | 互相独立，可并行 |
-| 第五批 | 11, 12, 16, 17, 18, 20 | 互相独立，可并行 |
-
-**单次调度示例**（主 agent 视角）：
-
-```
-
-请用 Task tool 并行派发以下 3 个子 agent：
-
-1. subagent_type="explore", description="维度01: 依赖图与包边界"
-   prompt = （共享提示词前缀 + 下面维度 01 的正文）
-
-2. subagent_type="explore", description="维度04: 状态所有权"
-   prompt = （共享提示词前缀 + 下面维度 04 的正文）
-
-3. subagent_type="explore", description="维度15: 安全与性能红线"
-   prompt = （共享提示词前缀 + 下面维度 15 的正文）
-
-```
-
-**复核调度示例**（主 agent 视角）：
-
-```
-
-维度 01 初审完成后：
-
-1. 派发一个独立子 agent 做“维度01整体复核”
-   - 输入：维度01初审全文
-   - 要求：重新读 live code / 文档，输出“保留 / 降级 / 驳回”清单
-
-2. 对维度01中的高风险或不确定发现，再分别派发独立子 agent
-   - 输入：某一条发现全文 + 对应文件路径
-   - 要求：只复核这一条，输出“成立 / 降级 / 驳回”与原因
-
-3. 对低风险重复项，可按文件或模式做批量复核
-   - 输入：同一文件中的同类发现列表，或同一模式的多条发现
-   - 要求：输出逐条保留/降级/驳回结果，不得只给总评
-
-4. 只有通过独立复核的条目才允许进入最终汇总
-
-```
-
 ### 结果输出与归档
 
-每个维度的初审 + 复核完成后，所有已通过独立复核的结果必须保存到 `docs/analysis/` 目录下的专用子目录中。
+每个维度的迭代深挖 + 复核完成后，所有已通过独立复核的结果必须保存到 `docs/analysis/` 目录下的专用子目录中。
 
 **目录结构**：
 
@@ -372,7 +295,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 1. 共享提示词前缀（固定，所有维度相同）
 2. 维度正文（本维度目标 + 必读文档 + 执行步骤 + 额外输出要求）
 
-````
+```
 
 ### 共享提示词前缀
 
@@ -384,9 +307,10 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 执行前先阅读：
 1. docs/index.md（文档导航基线）
 2. AGENTS.md（代码规范、验证命令、agent 工作流）
-3. docs/references/deep-audit-calibration-patterns.md（项目特定的误报校准与举证门槛）
-4. docs/references/reopened-design-decisions-and-audit-adjudications.md（反复被重开的设计决定与裁定边界）
-5. 本维度列出的 owner 文档
+3. docs/references/audit-tooling.md（自动化硬门禁与启发式 suspect 脚本说明）
+4. docs/references/deep-audit-calibration-patterns.md（项目特定的误报校准与举证门槛）
+5. docs/references/reopened-design-decisions-and-audit-adjudications.md（反复被重开的设计决定与裁定边界）
+6. 本维度列出的 owner 文档
 
 注意：当前审计基线按 **v1 / 无兼容负担 / 不接受过渡态主路径** 执行。不得以“过渡结构”“兼容层”“future contract draft”“尚未完成的实现切片”“迁移中”作为降级或豁免理由。凡是 live code 已进入主路径、公开面、宿主读面、命令面、运行时 owner 面的设计，都必须直接按最终最优设计评判。
 
@@ -397,12 +321,12 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 4. 对低代码动态边界保持克制。any、Record<string, unknown>、动态 schema 对象在边界上可能是合理的。
 5. 对本仓库的零拷贝只读读面保持克制。`getState()` / `getSnapshot()` / host projection / capability read result 默认允许返回 by-reference readonly view；**不得仅因返回 live 引用就报告问题**。只有在发现真实 mutation 路径、明确 detached-copy 契约、或越过框架只读纪律边界时才可报告。
 6. 每个发现必须可定位：文件路径 + 行号范围 + 3-10 行证据片段。
-7. 区分已自动化 vs 需人工发现。已被 lint/check 覆盖的问题，只有在“自动化有漏洞”时才报告。
+7. 区分硬门禁、启发式 suspect、人工审计。已被 lint/check 硬门禁覆盖且当前通过的问题不得重复报告；启发式 suspect 只能作为候选线索，必须重新读 live code / owner docs 后确认。
 8. 初审输出只是线索，不是最终事实；最终结论必须经过独立复核。
 9. 命中 calibration patterns 的候选问题，必须按该文档要求执行 reject / downgrade / require-stronger-evidence 规则；但若问题依赖的唯一降级理由是“过渡中/兼容中/尚未收口”，在当前 v1 基线下不得据此降级。
 10. 如果某条发现看起来像历史上的高频误报模式，必须明确写出“为什么这次不是同类误报”。
 11. 如果某条发现看起来像已被反复重开的设计决定或 owner 裁定，必须先按 reopened-design-decisions 文档核对：这是同一个旧问题、已收口旧问题旁边的新 residual，还是一个真正新的 live defect。
-12. 文件大小规则：>500 行需评估是否拆分，>700 行默认必须拆分。
+12. 自动化优先规则：凡 `docs/references/audit-tooling.md` 已列出的硬门禁或 suspect 脚本，主 agent 应先运行或提供输出；子 agent 不应手工重复机械扫描，只应基于工具输出复核真实性、影响与 owner 归属。
 
 严重程度判级：
 - P0: 当前已构成错误行为、安全违约、核心数据损坏风险、或违反 CI/硬性架构红线。
@@ -418,8 +342,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 5. 每个发现条目最少 8 行（文件、行号、证据、严重程度、现状、风险、建议、误报排除），少于 8 行的条目视为不合格。
 6. 复核结论表是补充索引，不能替代发现正文。复核表中可以简要标注保留/降级/驳回，但发现条目的完整内容必须保留在上方的发现正文中。
 
-如果本维度需要命令输出（如 pnpm check、依赖图、文件行数基线），优先由主 agent 先生成基线，再把结果连同本 prompt 一起提供给你；不要假设你一定能直接运行命令。
-````
+如果本维度需要命令输出（如 `pnpm check:*`、依赖图、文件行数基线、audit suspect 输出），优先由主 agent 先生成基线，再把结果连同本 prompt 一起提供给你；不要假设你一定能直接运行命令。
+```
 
 维护规则：
 
@@ -572,20 +496,17 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 3. **不把"看起来不优雅"当问题**。必须有结构性原因或可量化风险。
 4. **对低代码动态边界保持克制**。`any`、`Record<string, unknown>`、动态 schema 对象在边界上是合理的。
 5. **每个发现必须可定位**：文件路径 + 行号范围 + 具体代码片段。
-6. **区分已自动化 vs 需人工发现**。已被 lint/check 覆盖的问题只在"自动化有漏洞"时才报告。
+6. **区分硬门禁 vs suspect vs 人工判断**。硬门禁通过时不得重复报告其覆盖的机械问题；硬门禁失败时引用命令输出即可。suspect 脚本输出只是候选，必须复核 live code 后才能进入发现列表。
 7. **所有结论都必须经过独立复核**。初审 agent 的输出只是线索，不是最终事实；维度级结论与每条发现都要由新的独立子 agent 二次核验。
 8. **命中 calibration patterns 的候选问题必须按校准文档抬高举证门槛**。没有越过证据门槛时，应驳回或降级，而不是直接进入 remediation backlog。
 9. **命中反复重开模式时必须先核对裁定文档**。如果候选问题与 `docs/references/reopened-design-decisions-and-audit-adjudications.md` 中的条目相似，必须先判断这是已裁定旧问题、旧问题旁边的新 residual，还是新的 live defect；不能只因表象相似就直接重报。
-10. **文件大小限额**。源代码文件超过 **500 行**需要仔细考虑是否要拆分（职责混合、多 owner、入口文件泄露实现）；超过 **700 行**必须拆分。报告时区分"超过 700 行必须拆"和"500-700 行需评估"两档。
+10. **自动化工具优先**。执行 deep audit 前先阅读 `docs/references/audit-tooling.md`。已列入硬门禁的内容不再手工重复检查；已列入 suspect 脚本的内容先消费工具输出，再做语义复核。
 
 **自动化执行工具**：
 
-| 层级    | 工具                                                                                | 阈值                        | 行为                                                                                                                         |
-| ------- | ----------------------------------------------------------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| CI 脚本 | `pnpm check:oversized-code-files`（源码：`scripts/check-oversized-code-files.mjs`） | 500 行警告 / 700 行报错退出 | 扫描所有 `apps/`、`packages/`、`scripts/`、`tests/` 下 git-tracked 代码文件，>700 行 `process.exit(1)`，>500 行 console.warn |
-| ESLint  | `max-lines` 规则（`eslint.config.js`）                                              | 700 行（跳过空行和注释）    | `pnpm lint` 时强制拦截超 700 行文件，作为 CI 二次防线                                                                        |
+完整工具清单维护在 `docs/references/audit-tooling.md`。本提示词只记录调度原则，避免与脚本事实漂移。
 
-子 agent 在维度 02 执行前，应先运行 `pnpm check:oversized-code-files` 获取当前超大文件基线，再深入分析每个文件的职责拆分点。
+主 agent 应在派发相关维度前运行对应命令并把输出交给子 agent；若未提供，子 agent 应明确标注“缺少工具基线”，不能把手工估算当确定事实。
 
 ---
 
@@ -678,26 +599,25 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 历史教训：本项目曾将 flux-core/src/index.ts(1183行)、flux-core/src/types.ts(904行)、use-spreadsheet-interactions.ts(918行)、table-renderer.tsx(906行) 成功拆分。"在第一轮提取后停下来，不要为了行数继续拆。"
 
-文件大小限额（项目强制规则）：
-- 源代码文件超过 **500 行**：需要仔细评估是否应该拆分
-- 源代码文件超过 **700 行**：必须拆分，不允许例外
-- orchestrator 文件（仅组装子模块调用）可适当放宽，但也应控制在 500 行以内
-- 自动化工具：运行 `pnpm check:oversized-code-files` 获取当前超大文件列表（500 行警告 / 700 行报错）
-- ESLint 防线：`max-lines: 700` 规则在 `pnpm lint` 时强制拦截超 700 行文件
+文件大小自动化基线：
+- 行数硬门禁和 warning 由 `pnpm check:oversized-code-files` / ESLint `max-lines` 覆盖，工具详情见 `docs/references/audit-tooling.md`。
+- 子 agent 不应手工重新统计全仓行数；必须使用主 agent 提供的工具输出作为基线。
+- `>700` 已是硬门禁失败，不需要再次作为“人工发现”证明；审计应只补充 owner、职责混合点、拆分建议。
+- `>500` 是人工评估入口，只有同时存在职责混合、多 owner、入口泄露、二次膨胀或 owner doc 漂移时才报告。
 
-基线要求：优先使用主 agent 提供的 `pnpm check:oversized-code-files` 输出、文件行数清单或等价基线。如果没有命令基线，也可以先根据代码搜索做结构审查，但必须把所有涉及“>500 行”或“>700 行”的判断标记为“待命令基线确认”，不要把缺少基线时的行数估计写成确定事实。
+基线要求：优先使用主 agent 提供的 `pnpm check:oversized-code-files` 输出、文件行数清单或等价基线。如果没有命令基线，必须把所有涉及“>500 行”或“>700 行”的判断标记为“缺少工具基线，待确认”，不得用手工估算替代工具结果。
 
 执行步骤：
 
-1. 运行 `pnpm check:oversized-code-files` 获取当前超大文件基线。
-2. 统计所有 packages/*/src/ 下非测试、非 .d.ts 文件的行数。列出超过 300 行的所有文件，按行数降序排列。对超过 500 行的文件标注为"需评估拆分"，超过 700 行的标注为"必须拆分"。
-3. 对每个超过 500 行的文件：
+1. 消费 `pnpm check:oversized-code-files` 输出；如果主 agent 未提供，先要求补充工具基线。
+2. 不重复统计全仓行数；只对工具输出中的 `>500` warning 和 `>700` error 文件做职责复核。
+3. 对每个需要复核的文件：
     a. 读取文件内容，识别其中的职责边界
     b. 用 "职责 A: 行 X-Y"、"职责 B: 行 Y-Z" 格式标注
     c. 判断哪些职责应该提取为独立模块
     d. 如果文件是 orchestrator（组装调用子模块），标注为可接受（但应控制在 500 行以内）
     e. 如果文件已做过拆分但重新吸入了实现细节，标注为"二次膨胀"
-    f. 超过 700 行的文件必须在输出中标注为 P0 或 P1 级别问题
+    f. 对 `>700` error 文件，只在补充职责拆分证据时报告；不要把“行数超过阈值”本身重复写成新的人工发现
 4. 检查每个包的 index.ts：
    a. 是否仅做 re-export（理想情况）
    b. 是否包含具体实现逻辑（应提取）
@@ -720,7 +640,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 - **历史模式对应**: 本仓库哪一类高频重构模式
 
 最后输出：
-1. 超大文件清单（带职责分析，按 500-700 行"需评估"和 >700 行"必须拆分"两档标注）
+1. 工具基线摘要（引用 `pnpm check:oversized-code-files` 输出，不重抄全量 warning）
 2. 入口文件问题清单
 3. 目录结构建议
 4. 文档-代码偏离清单
@@ -851,7 +771,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 执行步骤：
 
-1. 搜索所有 useScopeSelector 调用：
+0. 先消费 `pnpm check:audit-reactive-render-reads` 或 `pnpm check:audit-suspects` 中的 `reactive-render-read` / `broad-scope-selector` suspect 输出。工具输出不是结论；逐项确认是否真有热路径、过宽订阅或 stale snapshot 风险。
+1. 对工具未覆盖但 owner docs 指向的热点路径，检查 useScopeSelector 调用：
    a. selector 函数返回了什么（单个值 vs 对象 vs 数组）
    b. 如果返回对象/数组，是否每次调用都创建新引用
    c. 是否有 useSyncExternalStore 的 getSnapshot 返回新对象
@@ -861,9 +782,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 3. 检查 useEffect 依赖项：
    a. 依赖中是否包含大型对象（如 [form.values]、[scope.data]）
    b. 依赖中是否包含每次 render 都新建的引用（如 inline object/array）
-4. 检查 Context provider 的 value prop：
-   a. 是否每次 render 都创建新对象（违反 react/jsx-no-constructed-context-values）
-   b. 特别是 FormContext、ScopeContext、RuntimeContext 等
+4. Context provider 的 constructed value 已由 ESLint 覆盖；除非 `pnpm lint` 失败或发现绕过模式，否则不要把它作为人工发现重复报告。
 5. 检查 useFormFieldController 或类似 hook：
    a. 它订阅了多大范围的 form 数据
    b. 是否只订阅了当前字段的路径
@@ -910,7 +829,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 执行步骤：
 
-1. 搜索所有 async 函数（packages/ 下，非 test 文件）：
+0. 先消费 `pnpm check:audit-async-failure-paths` 或 `pnpm check:audit-suspects` 中的 `void-promise-no-catch`、`then-chain-no-catch`、`catch-without-structured-failure-path` suspect 输出。只把经过 live code 复核后仍会造成用户可见失败、状态卡死、错误丢失或 owner 漂移的候选写成发现。
+1. 对工具未覆盖的异步 owner 路径，检查 async 函数：
    a. 检查是否有 AbortController / AbortSignal 支持
    b. 检查是否使用了 cancelled / disposed / isMounted 等布尔标记（应迁移到 AbortController）
 2. 搜索所有 fetch / API 调用：
@@ -925,11 +845,9 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
    b. 在组件卸载时是否清理
    c. 轮询场景是否支持停止（如 dialog 关闭时停止轮询）
 5. 异常吞掉检查（Promise / catch / then 链）：
-   a. 搜索所有 `catch (` 和 `catch{` 块：检查 catch 体是否至少做了以下之一——日志输出（console.error/warn）、monitor 上报、rethrow、写入结构化错误状态/返回值。空 catch 体或仅含控制流（return/break/continue）而无任何错误处理的，标记为吞掉异常。
-   b. 搜索所有 `void ...then(...)` 模式（fire-and-forget）：检查是否有对应的 `.catch()`。缺少 `.catch()` 意味着 rejection 被静默丢弃。特别注意 `void promise.then(...).finally(...)` —— `.finally()` 不处理 rejection，错误仍会被丢弃。
-   c. 搜索所有 `.then(...)` 链（无 `void` 前缀）：检查链尾是否有 `.catch()`。无 `.catch()` 的链如果前面的 promise reject，异常消失。
-   d. 搜索所有 `new Promise(executor)`：检查 executor 内部是否有 try-catch 包裹可能抛出的同步逻辑。executor 中的同步异常会导致 promise 永远不 settle（既不 resolve 也不 reject）。
-   e. 对每个发现的异常吞掉，评估严重度：
+   a. 不手工全仓搜索 catch / then；优先使用 suspect 输出。
+   b. 复核 suspect 时，允许内部已经 fail-safe、双参数 `.then(resolve, reject)`、动态 import loader、测试/调试无害路径等情况被驳回。
+   c. 对每个确认成立的异常吞掉，评估严重度：
       - **高**：失败导致状态永久卡死（如数据源卡在 fetching、表单提交无反馈）
       - **中**：失败导致 UI 显示陈旧数据（如字段值不更新）
       - **低**：失败影响非关键装饰性功能（如字数统计、可选 UI 特性）
@@ -1159,6 +1077,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 执行步骤：
 
+0. 先消费 `pnpm check:audit-styling-suspects` 或 `pnpm check:audit-suspects` 中的 `bare-data-slot-selector` suspect 输出。裸 `[data-slot]` 候选必须结合 styling-system owner docs 判断是否确实发生包级样式泄漏；不能仅凭工具命中直接报告。
 1. Marker class 检查：
    a. 列出所有渲染器中使用的 nop-* marker class
    b. 检查是否有 marker class 带有隐式视觉样式（应为零样式纯标记）
@@ -1172,9 +1091,10 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
    a. 搜索 stack-* / hstack-* 别名的使用
    b. 检查是否有渲染器内部硬编码了 gap / padding / margin
    c. 检查 playground 的 styles-theme-utilities.css 中定义的别名是否覆盖了所有使用场景
-4. BEM 残留检查：
-   a. 搜索所有 __ 分隔符的 CSS class（如 .nop-button__icon）
-   b. 检查是否已迁移为 data-slot / data-* 属性
+4. BEM / `[data-slot]` 残留检查：
+   a. 对工具命中的裸 `[data-slot]` 逐项复核是否缺少包级/组件级作用域
+   b. 只在当前 selector 会跨包泄漏、违背 renderer marker contract、或与 owner docs 冲突时报告
+   c. 对 BEM `__` 类名可用文本搜索补充，但需证明它仍在 live path 中影响 styling contract
 5. 主题独立性检查：
    a. 是否有组件依赖 React ThemeProvider（应使用 CSS 变量）
    b. 是否有渲染器硬编码了颜色值（应使用 CSS 变量或 Tailwind 语义色）
@@ -1509,9 +1429,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 执行步骤：
 
 安全部分：
-1. 搜索所有 eval( 和 new Function( 使用：
-   a. 在 packages/**/src 或 apps/**/src 中出现即为违规（R2 规则）
-   b. 检查是否有动态代码生成的替代方案（如表达式编译器）
+1. `eval` / `new Function` 已由 ESLint `no-eval` / `no-new-func` 硬门禁覆盖。若 `pnpm lint` 通过，不要手工重复报告；只有发现非标准动态执行绕过、脚本未覆盖路径、或 lint 失败时才进入发现。
 2. 检查 fail-closed 行为：
    a. 权限检查 / 策略判断在异常时是否默认拒绝（而非默认允许）
    b. 条件分支中的 else / default 是否安全
@@ -1528,7 +1446,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
    b. 是否有 sort() / splice() 等原位修改操作
    c. Zustand store 的 set 是否正确使用 immer 或 spread
 6. 检查热路径性能（P1 规则）：
-   a. 是否有 JSON.stringify 用于变更检测（应使用 revision counter）
+   a. 先消费 `pnpm check:audit-performance-suspects` 或 `pnpm check:audit-suspects` 中的 `json-stringify-change-detection` 输出，再复核是否确实是热路径变更检测；序列化、日志、稳定 cache-key 不应机械报告
    b. 是否有全量数据对比用于渲染决策（应使用 per-path subscription）
 7. 检查观察性（P6 规则）：
    a. 性能敏感路径是否有 performance.mark/measure
@@ -1753,11 +1671,12 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 执行步骤：
 
 1. Bare catch 审查：
-   a. 搜索所有 catch 块（catch {、catch (e) {、.catch(）
-   b. 检查是否有 catch 块丢弃原始错误信息（不 re-throw、不保留 cause、返回通用消息）
-   c. 特别关注跨包边界上的 catch（adapter、dispatcher、runtime-factory）
-   d. 允许的模式：catch + 结构化日志 + re-throw/return with cause
-   e. 违规模式：catch + 返回硬编码错误消息（丢失原始 cause）
+   a. 先消费 `pnpm check:audit-async-failure-paths` 或 `pnpm check:audit-suspects` 中的 `catch-without-structured-failure-path` 输出
+   b. 不手工全仓重复搜索 catch；只对工具候选和 owner docs 指向的跨层错误边界做 live code 复核
+   c. 检查是否有 catch 块丢弃原始错误信息（不 re-throw、不保留 cause、返回通用消息）
+   d. 特别关注跨包边界上的 catch（adapter、dispatcher、runtime-factory）
+   e. 允许的模式：catch + 结构化日志 + re-throw/return with cause
+   f. 违规模式：catch + 返回硬编码错误消息（丢失原始 cause）
 
 2. Try/finally 保护审查：
    a. 搜索"保存-修改-恢复"模式（如 prev = x; x = new; ... x = prev）

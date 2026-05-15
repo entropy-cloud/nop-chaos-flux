@@ -262,6 +262,7 @@ Rules:
 Current implementation note:
 
 - dependency-triggered revalidation for untouched fields uses `reason: 'system'`; it does not clear stored errors just because the field has not been touched yet
+- dependent revalidation failures now report through the runtime owner diagnostics seam (`env.monitor?.onError?.(...)` plus `env.notify('error', ...)`) when the owner was created by the runtime factory, instead of remaining console-only fire-and-forget failures
 
 Debounce policy is not a separate owner-level authoring feature.
 

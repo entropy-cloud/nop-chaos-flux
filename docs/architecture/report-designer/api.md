@@ -97,7 +97,7 @@ interface SpreadsheetPageSchema {
 
 ## 3. `report-designer-page` Schema
 
-Future target shape:
+Family-level schema shape summary:
 
 ```ts
 interface ReportDesignerPageSchema {
@@ -105,8 +105,7 @@ interface ReportDesignerPageSchema {
   id?: string;
   title?: string;
   document: ReportTemplateDocumentInput;
-  spreadsheet?: SpreadsheetConfig;
-  designer: ReportDesignerConfig;
+  config: ReportDesignerConfig;
   profile?: ReportDesignerProfile;
   adapters?: ReportDesignerAdapterConfig;
   statusPath?: string;
@@ -127,6 +126,11 @@ interface ReportDesignerPageSchema {
 - 通过 `statusPath` 向宿主发布窄只读状态摘要
 
 Current live renderer contract remains owned by `docs/components/report-designer-page/design.md` plus live code in `@nop-chaos/report-designer-renderers`.
+
+Notes:
+
+- The canonical page-level config surface is `config`; legacy authored `designer` input is compatibility-only and normalized by the renderer authoring transform before runtime.
+- `report-designer-page` uses `document.spreadsheet` as the canonical spreadsheet document entry; there is no supported top-level `spreadsheet` field in the current renderer contract.
 
 Inspector 规范主路径：
 

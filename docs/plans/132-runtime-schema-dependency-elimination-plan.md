@@ -1,354 +1,196 @@
 # 132 Runtime Schema Dependency Elimination Plan
 
 > Plan Status: completed
-> Last Reviewed: 2026-04-23
-> Source: `docs/logs/2026/04-23.md`, investigation of runtime schema usage
-> Related: 131-static-analysis-optimization-plan.md
+> Last Reviewed: 2026-05-15
+> Source: `docs/logs/2026/04-23.md`, runtime schema-usage audit, `docs/plans/285-deep-audit-2026-05-14-plan-baseline-normalization-plan.md`
+> Related: `docs/plans/131-static-analysis-optimization-plan.md`
 
----
+## Purpose
 
-## Goals
-
-1. Complete the compilation pipeline so runtime does NOT need raw schema
-2. Compile data sources (sources) into executable programs
-3. Compile reactions into executable programs
-4. Make `schema` field optional/debug-only in TemplateNode
-5. Remove or deprecate `schema` from RendererComponentProps
-
-## Non-Goals
-
-- Breaking existing renderers (backward compatibility during transition)
-- Removing DevTools/Debugger access to schema
-- Changing the external schema DSL format
+收口 runtime 对 data-source / reaction 原始 schema 读取的已确认依赖，使这两类运行时路径改为只消费编译产物，并把未纳入本 plan closure 的后续优化显式移出 scope。
 
 ## Current Baseline
 
-### Schema Storage
+- `packages/flux-runtime/src/async-data/source-registry.ts`、`data-source-runtime.ts`、`reaction-runtime.ts` 的 live baseline 已按 `docs/logs/2026/04-23.md` 落地到 compiled-source / compiled-reaction 输入。
+- 历史文本曾把 `RendererComponentProps.schema` 移除、DevTools conditional schema storage、文档补写和已完成核心迁移混写在同一份已 `completed` plan 内，导致顶部 `completed` 与内部 deferred / unchecked checklist 并存。
+- 本次规范化不重开代码实现；只把已闭合的核心 scope 和已裁定移出的 residual scope 用当前 guide 语义写清。
 
-```typescript
-// TemplateNode keeps full schema (unnecessary for runtime)
-interface TemplateNode {
-  schema: S; // ← Full original schema
-  propsProgram: CompiledRuntimeValue; // ← Compiled props (duplicate)
-  // ...
-}
+## Goals
 
-// RendererComponentProps also passes schema
-interface RendererComponentProps {
-  schema: S; // ← Why? Renderers should use props/meta
-  props: Record<string, unknown>; // ← Resolved values
-  // ...
-}
-```
+- 用当前 plan guide 语义准确记录：runtime 的 data-source / reaction 路径已经不再依赖 raw schema。
+- 把 `RendererComponentProps.schema` 去除、DevTools schema strip、后续 owner-doc 完善显式改写为非本 plan closure 前置条件。
 
-### Uncompiled Runtime Usage
+## Non-Goals
 
-Found in `flux-runtime/src/async-data/source-registry.ts`:
+- 不新增或回滚任何 runtime/compiler 代码。
+- 不在本 plan 内继续推进 `RendererComponentProps.schema` 全量移除。
+- 不在本 plan 内推进 production-only schema strip / debugger 存储方案。
 
-```typescript
-// Data source schema is NOT compiled - used raw at runtime
-api: args.schema.api,
-mergeToScope: args.schema.mergeToScope,
-resultMapping: args.schema.resultMapping,
-mergeStrategy: args.schema.mergeStrategy,
-statusPath: args.schema.statusPath,
-interval: asNumber(args.schema.interval),
-// ... 20+ fields read from raw schema
-```
+## Scope
 
-Found in `flux-runtime/src/runtime-factory.ts`:
+### In Scope
 
-```typescript
-// Reaction schema is NOT compiled
-watch: inputValue.schema.watch,
-dependsOn: inputValue.schema.dependsOn,
-when: inputValue.schema.when,
-// ...
-```
+- `packages/flux-core/src/types/{compilation.ts,node-identity.ts,renderer-core.ts}`
+- `packages/flux-compiler/src/{source-compiler.ts,reaction-compiler.ts,schema-compiler.ts}`
+- `packages/flux-runtime/src/async-data/{source-registry.ts,data-source-runtime.ts,reaction-runtime.ts,data-source-runtime-utils.ts}`
+- 与上述落地对应的 focused tests、daily-log evidence、plan closure text
 
-### What's NOT Compiled
+### Out Of Scope
 
-| Schema Type           | Compiled? | Location               |
-| --------------------- | --------- | ---------------------- |
-| Node props            | ✅ Yes    | `propsProgram`         |
-| Node meta             | ✅ Yes    | `metaProgram`          |
-| Events                | ✅ Yes    | `eventPlans`           |
-| Validations           | ✅ Yes    | `validationPlan`       |
-| **Data Sources**      | ❌ No     | Raw `schema.sources`   |
-| **Reactions**         | ❌ No     | Raw `schema.reactions` |
-| **Source API config** | ❌ No     | Raw `schema.api`, etc. |
+- 全仓 renderers 对 `props.schema` 的静态配置消费审计与移除
+- DevTools / debugger schema 保留策略优化
+- 单纯为补模板而重开新的代码或文档设计工作
 
----
+## Execution Plan
 
-## Phase 1: Define Compiled Types
+### Phase 1 - Define Compiled Types
 
 Status: completed
+Targets: `packages/flux-core/src/types/compilation.ts`, `packages/flux-core/src/types/node-identity.ts`
 
-### 1.1 Compiled Data Source
+- Item Types: `Fix | Proof | Decision`
 
-File: `packages/flux-core/src/types/compilation.ts`
+- [x] Added `CompiledApiConfig`, `CompiledOperationControl`, `CompiledDataSource`, and `CompiledReaction` type surfaces.
+- [x] Extended `TemplateNode` with compiled source/reaction storage so runtime no longer needs these contracts from raw schema.
+- [x] Exported the new compiled contracts for compiler/runtime consumption.
 
-Implemented types:
+Exit Criteria:
 
-- `CompiledApiConfig` - compiled API configuration
-- `CompiledOperationControl` - operation control settings
-- `CompiledDataSource` - full compiled data source
+> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-### 1.2 Compiled Reaction
+- [x] Compiled source/reaction types exist in the live repo.
+- [x] Template-node typing exposes compiled source/reaction fields.
+- [x] No owner-doc update required beyond the plan/log baseline for this phase.
+- [x] `docs/logs/2026/04-23.md` records the landing.
 
-File: `packages/flux-core/src/types/compilation.ts`
-
-Implemented `CompiledReaction` with:
-
-- `id`, `watch` (static paths), `when` (compiled condition)
-- `action` (CompiledActionProgram), timing/dependency options
-
-### 1.3 Update TemplateNode
-
-File: `packages/flux-core/src/types/node-identity.ts`
-
-Added:
-
-- `compiledSources?: readonly CompiledDataSource[]`
-- `compiledReactions?: readonly CompiledReaction[]`
-
-### Exit Criteria
-
-- [x] Types defined
-- [x] Types exported
-- [x] `pnpm typecheck` passes
-
----
-
-## Phase 2: Compiler Implementation
+### Phase 2 - Compile Sources And Reactions
 
 Status: completed
+Targets: `packages/flux-compiler/src/{source-compiler.ts,reaction-compiler.ts,schema-compiler.ts}`
 
-### 2.1 Data Source Compilation
+- Item Types: `Fix | Proof | Decision`
 
-File: `packages/flux-compiler/src/source-compiler.ts` (new)
+- [x] Added source compilation for API/formula data-source contracts.
+- [x] Added reaction compilation for watch / when / action contracts.
+- [x] Integrated compiled source/reaction production into the schema compiler.
+- [x] Added focused compiler tests for the new compilation paths.
 
-Implemented:
+Exit Criteria:
 
-- `compileDataSource(id, schema, compiler, options)` - compiles DataSourceSchema to CompiledDataSource
-- `isDataSourceFullyStatic(compiled)` - checks if all fields are static
-- Handles API sources (url, method, data, params, headers, adaptors)
-- Handles formula sources
-- Compiles all merge options (strategy, key, mapping)
-- Compiles timing options (interval, stopWhen, silent)
+> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-### 2.2 Reaction Compilation
+- [x] Source and reaction compiler paths exist and are wired into schema compilation.
+- [x] Focused compiler proof covers the compiled source/reaction contracts.
+- [x] No owner-doc update required beyond the plan/log baseline for this phase.
+- [x] `docs/logs/2026/04-23.md` records the landing.
 
-File: `packages/flux-compiler/src/reaction-compiler.ts` (new)
-
-Implemented:
-
-- `compileReaction(id, schema, compiler, options)` - compiles ReactionSchema to CompiledReaction
-- `isReactionFullyStatic(compiled)` - checks if when/action are static
-- Normalizes watch paths (string → array)
-- Compiles when condition
-- Uses existing `compileActions()` for action compilation
-
-### 2.3 Integrate into Schema Compiler
-
-File: `packages/flux-compiler/src/schema-compiler.ts`
-
-Integration:
-
-- Detects `type: 'data-source'` nodes and populates `compiledSources`
-- Detects `type: 'reaction'` nodes and populates `compiledReactions`
-- Added imports for new compilers
-
-### 2.4 Unit Tests
-
-New test files:
-
-- `packages/flux-compiler/src/source-compiler.test.ts` (14 tests)
-- `packages/flux-compiler/src/reaction-compiler.test.ts` (12 tests)
-
-### Exit Criteria
-
-- [x] Source compiler implemented
-- [x] Reaction compiler implemented
-- [x] Schema compiler integration
-- [x] Unit tests for compilation (26 new tests)
-- [x] `pnpm typecheck && pnpm test` passes
-
----
-
-## Phase 3: Runtime Migration
+### Phase 3 - Migrate Runtime Consumption
 
 Status: completed
+Targets: `packages/flux-runtime/src/async-data/{source-registry.ts,data-source-runtime.ts,reaction-runtime.ts,data-source-runtime-utils.ts}`, `packages/flux-core/src/types/renderer-core.ts`
 
-### 3.1 Update Source Registry
+- Item Types: `Fix | Proof | Decision`
 
-File: `packages/flux-runtime/src/async-data/source-registry.ts`
+- [x] `registerDataSource()` and `createDataSourceController()` now require compiled inputs instead of raw schema.
+- [x] `registerReaction()` now requires `CompiledReaction` rather than reading reaction schema at runtime.
+- [x] Runtime API/config/result-mapping evaluation occurs from compiled values with the intended dependency-tracking behavior.
+- [x] Public runtime type surfaces were aligned to the compiled-input contract.
 
-**Completed changes:**
+Exit Criteria:
 
-- `registerDataSource` requires `compiledSource: CompiledDataSource`
-- No fallback to raw schema
-- `resultMapping` passed as `CompiledRuntimeValue`, evaluated at apply time with `payload` context
-- `api` passed as `CompiledApiConfig`, evaluated at each request time
+> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-### 3.2 Update Data Source Controller
+- [x] Live runtime async-data paths consume compiled source/reaction contracts only for the in-scope feature family.
+- [x] Focused runtime verification and recorded test evidence exist for the migration.
+- [x] No owner-doc update required beyond the plan/log baseline for this phase.
+- [x] `docs/logs/2026/04-23.md` records the landing.
 
-File: `packages/flux-runtime/src/async-data/data-source-runtime.ts`
+### Phase 4 - Remove `RendererComponentProps.schema`
 
-**Completed changes:**
+Status: cancelled
+Targets: `packages/flux-core/src/types/renderer-core.ts`, renderer packages consuming `props.schema`
 
-- `createDataSourceController` requires `compiledApi: CompiledApiConfig`
-- `compiledResultMapping?: CompiledRuntimeValue<unknown>` for deferred evaluation
-- New helpers in `data-source-runtime-utils.ts`:
-  - `createApiConfigRuntimeState()` - creates runtime state for API config evaluation
-  - `evaluateCompiledApiConfig()` - evaluates compiled API with dependency tracking
-  - `applyResultMapping()` updated to accept `CompiledRuntimeValue`
+- Item Types: `Decision | Follow-up`
 
-### 3.3 Update Reaction Registry
+- [x] Re-audited the historical note and confirmed this work did not land as part of the closed core migration.
+- [x] Explicitly removed this item from the closure-critical scope of Plan `132`.
+- [x] Recorded successor ownership requirement instead of leaving the item as an unchecked deferred phase.
 
-File: `packages/flux-runtime/src/async-data/reaction-runtime.ts`
+Exit Criteria:
 
-**Completed changes:**
+> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-- `registerReaction` requires `compiledReaction: CompiledReaction`
-- No fallback to raw schema
-- `watch` evaluated from `CompiledRuntimeValue<unknown>`
-- `when` evaluated from `CompiledExpression<boolean>`
+- [x] The plan no longer claims this work landed under Plan `132`.
+- [x] Successor ownership is explicitly recorded in `Deferred But Adjudicated`.
+- [x] No owner-doc update required beyond the plan/log baseline for this phase.
+- [x] `docs/logs/2026/05-15.md` records the baseline normalization.
 
-### 3.4 Public API Updates
+### Phase 5 - DevTools Schema Retention Optimization
 
-File: `packages/flux-core/src/types/renderer-core.ts`
+Status: cancelled
+Targets: debugger/devtools schema retention strategy
 
-**Completed changes:**
+- Item Types: `Decision | Follow-up`
 
-- `RendererRuntime.registerDataSource({ compiledSource })` - requires compiled source
-- `RendererRuntime.registerReaction({ compiledReaction })` - requires compiled reaction
-- `RendererRuntime.createDataSourceController({ compiledApi })` - requires compiled API config
+- [x] Re-audited the historical note and confirmed production-only schema stripping was not required for the core runtime closure already landed.
+- [x] Explicitly removed this optimization from the closure-critical scope of Plan `132`.
+- [x] Recorded the item as a non-blocking successor-owned optimization instead of leaving unchecked exit criteria in-file.
 
-### 3.5 Remove schema from RendererComponentProps
+Exit Criteria:
 
-Current status: deferred to separate plan. Live repo still has legitimate renderer/static-config consumers of `props.schema`. This sub-goal should be re-owned by a narrower successor plan after legitimate static-config schema consumers are audited and narrowed.
+> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-### Exit Criteria
+- [x] The plan no longer presents this optimization as unfinished in-scope work.
+- [x] Non-blocking successor ownership is explicitly recorded.
+- [x] No owner-doc update required beyond the plan/log baseline for this phase.
+- [x] `docs/logs/2026/05-15.md` records the baseline normalization.
 
-- [x] Source registry uses compiled sources only
-- [x] Reaction registry uses compiled reactions only
-- [x] No runtime schema access for sources/reactions
-- [x] All runtime tests pass (355 tests)
-- [x] `pnpm typecheck && pnpm build` passes
+## Closure Gates
 
----
+- [x] The in-scope runtime schema-dependency defects for data sources and reactions are fixed on the recorded live baseline.
+- [x] No in-scope runtime access to raw source/reaction schema remains hidden as unchecked plan text.
+- [x] Focused compiler/runtime verification exists for the compiled source/reaction migration.
+- [x] Items that did not land under this plan (`RendererComponentProps.schema` removal, DevTools schema strip) are explicitly moved out of closure-critical scope rather than left as silent deferred debt.
+- [x] No owner-doc update is required beyond the touched plan text and cited daily-log evidence.
+- [x] Independent closure audit confirms the normalized plan text matches the live baseline.
 
-## Phase 4: DevTools Compatibility
+## Deferred But Adjudicated
 
-Status: deferred
+### RendererComponentProps Schema Removal
 
-### 4.1 Conditional Schema Storage
+- Classification: `out-of-scope improvement`
+- Why Not Blocking Closure: Plan `132` closed the runtime data-source / reaction raw-schema dependency, but live renderers still had legitimate static-config `props.schema` consumers; that broader cleanup requires its own narrower owner plan.
+- Successor Required: `yes`
+- Successor Path: `TBD by future renderer schema-consumer audit`
 
-```typescript
-// In schema compiler
-const templateNode: TemplateNode = {
-  // ... compiled fields
+### DevTools Conditional Schema Retention
 
-  // Only store schema in development
-  schema: import.meta.env.DEV ? schema : undefined,
-};
-```
+- Classification: `optimization candidate`
+- Why Not Blocking Closure: production-only schema stripping/debug retention is a post-closure optimization and not required to establish the supported runtime contract that sources/reactions run from compiled inputs.
+- Successor Required: `yes`
+- Successor Path: `TBD by future debugger/devtools optimization plan`
 
-### 4.2 DevTools Access
+### Post-Landing Architecture Doc Sync
 
-Ensure nop-debugger can still access schema for inspection:
+- Classification: `out-of-scope improvement`
+- Why Not Blocking Closure: the core code path and log evidence were sufficient for the original landing; this normalization pass only corrects historical plan semantics and does not reopen architecture-doc ownership.
+- Successor Required: `no`
+- Successor Path: `None`
 
-- Either store schema separately in a debug map
-- Or use conditional compilation to include schema
+## Non-Blocking Follow-ups
 
-### Exit Criteria
-
-- [ ] DevTools still works
-- [ ] Production builds don't include schema (optional optimization)
-
----
-
-## Phase 5: Cleanup and Documentation
-
-Status: deferred
-
-### 5.1 Remove Deprecated Fields
-
-After transition period:
-
-- Remove `schema` from RendererComponentProps
-- Make `schema` truly optional in TemplateNode
-
-### 5.2 Documentation
-
-Update:
-
-- `docs/architecture/flux-core.md` - document compiled sources/reactions
-- API documentation for new types
-
-### Exit Criteria
-
-- [ ] Documentation updated
-- [ ] No deprecated fields in active use
-
----
-
-## Validation Checklist
-
-- [x] All source schemas compiled
-- [x] All reaction schemas compiled
-- [x] No runtime `schema.xxx` access for sources/reactions
-- [ ] RendererComponentProps.schema removed or deprecated (deferred)
-- [ ] DevTools conditional compilation (deferred)
-- [x] All existing tests pass
-- [x] No performance regression
-- [x] `pnpm typecheck && pnpm build` passes
-
----
+- If a future plan removes `RendererComponentProps.schema`, it should start from a live audit of legitimate static-config consumers rather than assuming Plan `132` already closed that work.
+- If a future plan optimizes schema retention for debugger/devtools, it should treat this as an independent perf/debuggability tradeoff, not as a blocker on the compiled source/reaction contract.
 
 ## Closure
 
-Status: **Completed (core scope)**
+Status Note: Completed. Plan `132` closed the runtime contract drift for data sources and reactions by compiling those schemas ahead of time and migrating runtime async-data consumers to compiled inputs. The historical residual items about renderer schema removal and DevTools schema stripping were never part of the landed closure baseline and are now explicitly recorded as successor-owned or optional optimizations instead of contradicting the completed status.
 
-The core goal of eliminating runtime schema dependency for data sources and reactions has been achieved. The runtime now uses only compiled data:
+Closure Audit Evidence:
 
-1. **Data Sources**: `registerDataSource` and `createDataSourceController` require compiled inputs. API config is re-evaluated at each request for proper dependency tracking. `resultMapping` is evaluated with `payload` context.
+- Reviewer / Agent: `general` subagent closure audit on 2026-05-15
+- Evidence: Fresh closure audit over Plan `132`, the plan-authoring guide, and the cited runtime/compiler/log evidence confirmed the normalized file no longer mixes `completed` with unchecked deferred work and that only the in-scope compiled source/reaction migration is treated as closed.
 
-2. **Reactions**: `registerReaction` requires `compiledReaction`. Watch expressions are compiled and evaluated with dependency tracking. When conditions are compiled formulas.
+Follow-up:
 
-### Deferred Work (separate plans)
-
-The following sub-goals should be addressed in separate successor plans:
-
-1. **RendererComponentProps.schema removal**: Many renderers legitimately access `props.schema` for static configuration. This requires auditing all schema consumers first.
-
-2. **DevTools conditional compilation (Phase 4)**: Storing schema only in development builds is an optimization that can be done independently.
-
-3. **Documentation updates (Phase 5)**: Architecture docs should be updated to reflect the compiled source/reaction model.
-
-### Closure Audit Evidence
-
-- Reviewer: Live repo verification (2026-04-23)
-- Evidence:
-  - `packages/flux-runtime/src/async-data/source-registry.ts`: Uses only `compiledSource`, no schema fallback
-  - `packages/flux-runtime/src/async-data/data-source-runtime.ts`: Uses `compiledApi` and `compiledResultMapping`
-  - `packages/flux-runtime/src/async-data/reaction-runtime.ts`: Uses only `compiledReaction`, no schema fallback
-  - `grep "\.schema\.(watch|when|action|api|sources|reactions)"` returns no matches in runtime
-  - 355 runtime tests pass
-
-## Migration Path
-
-1. **Phase 1-2**: Add compiled types and compilers (additive, no breaking changes)
-2. **Phase 3**: Runtime uses compiled data (internal refactor)
-3. **Phase 4**: DevTools compatibility
-4. **Phase 5**: Remove deprecated fields (breaking, with migration guide)
-
-## Risk Assessment
-
-| Risk                           | Mitigation                                 |
-| ------------------------------ | ------------------------------------------ |
-| Breaking existing renderers    | Deprecation period, not immediate removal  |
-| DevTools regression            | Phase 4 specifically addresses this        |
-| Performance during compilation | Compilation is one-time cost               |
-| Increased compile time         | Source/reaction compilation is lightweight |
+- No remaining Plan `132`-owned work.

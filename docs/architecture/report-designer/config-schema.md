@@ -28,7 +28,7 @@ interface ReportDesignerPageSchema {
   id?: string;
   title?: string;
   document: ReportTemplateDocumentInput;
-  designer: ReportDesignerConfig;
+  config: ReportDesignerConfig;
   profile?: ReportDesignerProfile;
   adapters?: ReportDesignerAdapterConfig;
   statusPath?: string;
@@ -46,7 +46,7 @@ interface ReportDesignerPageSchema {
 - `report-designer-page` 的 live renderer 当前支持 `toolbar` / `fieldPanel` / `inspector` / `dialogs` / `body` 五个 region；这些 page regions 是 override surfaces，不是左/右 panel existence 的 canonical source。
 - 两者当前都支持 `statusPath`，向宿主外部发布窄只读状态摘要。
 - `report-designer-page` 当前 live schema 使用 `document.spreadsheet` 作为 spreadsheet 文档入口；本文件不再把额外 top-level `spreadsheet?: SpreadsheetConfig` 写成当前 renderer contract。
-- 按 `docs/architecture/designer-workbench-shell.md` 的共享规则，左侧 field panel 与右侧 inspector 的 canonical source 来自 resolved `designer` config；无已解析 panel definition 时，对应侧直接隐藏。
+- 按 `docs/architecture/designer-workbench-shell.md` 的共享规则，左侧 field panel 与右侧 inspector 的 canonical source 来自 resolved `config`；无已解析 panel definition 时，对应侧直接隐藏。
 
 ## 2. SpreadsheetDocument
 

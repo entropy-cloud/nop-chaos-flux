@@ -251,7 +251,7 @@ props.helpers.render(props.regions.dialogs.templateNode, { scope: designerScope,
 - `activeNode`
 - `activeEdge`
 - `activeBranch`
-- `runtime`（含 `canUndo`、`canRedo`、`dirty`、`isDirty`、`gridEnabled`、`zoom`、`viewport`）
+- `runtime`（含 `canUndo`、`canRedo`、`dirty`、`gridEnabled`、`zoom`、`viewport`）
 
 注意边界: 这些字段只对通过 `helpers.render(..., { scope: designerScope, actionScope })` 挂载的 region 内部有效；`designer-page` 之外的 schema 全局 scope 不自动获得这些字段。
 
@@ -379,7 +379,7 @@ doc;
 selection; // { kind, count, nodeIds, edgeIds, activeNodeId, activeEdgeId }
 activeNode;
 activeEdge;
-runtime; // { canUndo, canRedo, dirty, isDirty, gridEnabled, zoom, viewport }
+runtime; // { canUndo, canRedo, dirty, gridEnabled, zoom, viewport }
 ```
 
 ## 9. 当前不应写成"已经存在"的能力
