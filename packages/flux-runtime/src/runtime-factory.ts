@@ -351,6 +351,10 @@ export function createRendererRuntime(input: {
         isolate: options?.isolate,
       });
     },
+    disposeScope(scopeId) {
+      sourceRegistryRef.current?.disposeScopeTree(scopeId);
+      reactionRegistryRef.current?.disposeScopeTree(scopeId);
+    },
     createHostProjectionScope({
       parentScope,
       projection,
@@ -487,6 +491,7 @@ export function createRendererRuntime(input: {
       }
 
       disposed = true;
+      actionDispatcher.dispose();
 
       for (const page of ownedPages) {
         sourceRegistryRef.current?.disposeScopeTree(page.scope.id);
@@ -519,7 +524,6 @@ export function createRendererRuntime(input: {
       importManager.dispose({ actionScopes: Array.from(ownedActionScopes) });
       importStack.dispose();
       ownedActionScopes.clear();
-      actionDispatcher.dispose();
       executeApiRequest.dispose?.();
       if (ownsModuleCache) {
         moduleCache.clear();

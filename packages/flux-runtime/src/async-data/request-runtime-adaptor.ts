@@ -74,6 +74,10 @@ export function createAdaptorScopeView(scope: ScopeRef): object {
             }
           }
 
+          if (current.isolate) {
+            break;
+          }
+
           current = current.parent;
         }
 

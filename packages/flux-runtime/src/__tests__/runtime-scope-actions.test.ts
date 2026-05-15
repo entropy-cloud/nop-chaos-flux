@@ -47,6 +47,51 @@ describe('createRendererRuntime', () => {
     }
   });
 
+  it('aborts in-flight dispatch work before runtime-owned resources tear down', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const fetcher = vi.fn(async (_api: { url: string }, ctx: { signal?: AbortSignal }) => {
+      await new Promise<void>((resolve) => {
+        ctx.signal?.addEventListener('abort', () => resolve(), { once: true });
+      });
+
+      const error = new Error('aborted');
+      (error as Error & { name: string }).name = 'AbortError';
+      throw error;
+    });
+    const runtime = createRendererRuntime({
+      registry,
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as typeof env.fetcher,
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ message: 'Hello' });
+
+    const resultPromise = runtime.dispatch(
+      {
+        action: 'ajax',
+        args: {
+          url: '/api/slow',
+        },
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+      },
+    );
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    runtime.dispose();
+
+    await expect(resultPromise).resolves.toMatchObject({ ok: false, cancelled: true });
+    expect(page.store.getState().data.message).toBe('Hello');
+  });
+
   it('updates page scope through setValue action', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
@@ -260,7 +305,11 @@ describe('createRendererRuntime', () => {
       );
 
       expect(result).toMatchObject({ ok: true, data: { submitted: true } });
-      expect(capturedSignal).toBe(controller.signal);
+      expect(capturedSignal).toBeInstanceOf(AbortSignal);
+      expect(capturedSignal?.aborted).toBe(false);
+
+      controller.abort(new Error('cancelled'));
+      expect(capturedSignal?.aborted).toBe(true);
     } finally {
       unregister();
     }

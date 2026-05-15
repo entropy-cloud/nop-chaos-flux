@@ -129,6 +129,68 @@ describe('request runtime adaptor helpers', () => {
     expect(Object.getOwnPropertyDescriptor(view, Symbol('x'))).toBeUndefined();
   });
 
+  it('stops enumerating parent keys across isolate boundaries', () => {
+    const grandparent = createScopeRef({
+      id: 'grandparent',
+      path: '$grandparent',
+      initialData: { grand: 'grandparent' },
+    });
+    const isolatedParent = createScopeRef({
+      id: 'isolated-parent',
+      path: '$isolated-parent',
+      parent: grandparent,
+      isolate: true,
+      initialData: { parentOnly: 'parent' },
+    });
+    const scope = createScopeRef({
+      id: 'child',
+      path: '$child',
+      parent: isolatedParent,
+      initialData: { token: 'abc', local: 1 },
+    });
+
+    const view = createAdaptorScopeView(scope) as Record<string, unknown>;
+    const keys = Object.keys(view);
+    const spread = { ...view };
+    const iterated: string[] = [];
+
+    for (const key in view) {
+      iterated.push(key);
+    }
+
+    expect(view.grand).toBeUndefined();
+    expect('grand' in view).toBe(false);
+    expect(keys).toEqual(expect.arrayContaining(['token', 'local', 'parentOnly']));
+    expect(keys).not.toContain('grand');
+    expect(Object.keys(spread)).toEqual(expect.arrayContaining(['token', 'local', 'parentOnly']));
+    expect(Object.keys(spread)).not.toContain('grand');
+    expect(iterated).toEqual(expect.arrayContaining(['token', 'local', 'parentOnly']));
+    expect(iterated).not.toContain('grand');
+    expect(Object.getOwnPropertyDescriptor(view, 'grand')).toBeUndefined();
+  });
+
+  it('continues enumerating through non-isolated parent chains', () => {
+    const parent = createScopeRef({
+      id: 'parent',
+      path: '$parent',
+      initialData: { shared: 'parent' },
+    });
+    const scope = createScopeRef({
+      id: 'child',
+      path: '$child',
+      parent,
+      initialData: { local: 'child' },
+    });
+
+    const view = createAdaptorScopeView(scope) as Record<string, unknown>;
+    const keys = Reflect.ownKeys(view);
+
+    expect(view.shared).toBe('parent');
+    expect(keys).toContain('local');
+    expect(keys).toContain('shared');
+    expect(Object.keys(view)).toEqual(expect.arrayContaining(['local', 'shared']));
+  });
+
   it('applies request adaptors only when they return plain objects', () => {
     const expressionCompiler = createExpressionCompiler();
     const scope = createScopeRef({ id: 'scope', path: '$scope', initialData: { token: 'secret' } });

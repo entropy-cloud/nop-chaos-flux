@@ -360,35 +360,51 @@ export function buildFormOwnerRuntime(input: {
 
     const fieldErrors: Record<string, ValidationError[]> = {};
     const errors: ValidationError[] = [];
-    const initialFieldStates = input.sharedState.store.getState().fieldStates;
     const validatedPaths = new Set<string>();
+    const pathsToPreserve = new Set<string>();
 
     const validationPaths = getCompiledValidationTraversalOrder(currentValidation);
 
-    const pathResults = await Promise.allSettled(
-      validationPaths.map(async (path) => {
-        validatedPaths.add(path);
-        return { path, result: await input.getThisForm().validateField(path, reason) };
-      }),
-    );
+    function captureSideEffectErrors(validatedPath: string) {
+      const currentFieldStates = input.sharedState.store.getState().fieldStates;
 
-    for (let index = 0; index < pathResults.length; index++) {
-      const settled = pathResults[index]!;
-      if (settled.status === 'rejected') {
-        const fieldPath = validationPaths[index];
-        console.error(`[flux-runtime] Field validation threw for path "${fieldPath}":`, settled.reason);
-        // Treat validator crash as validation failure rather than silently skipping
-        if (fieldPath) {
-          fieldErrors[fieldPath] = [{ path: fieldPath, message: 'Validation failed due to an internal error', rule: 'async' }];
-          errors.push({ path: fieldPath, message: 'Validation failed due to an internal error', rule: 'async' });
+      for (const [path, fs] of Object.entries(currentFieldStates)) {
+        const pathErrors = fs.errors;
+        if (!pathErrors || validatedPaths.has(path)) {
+          continue;
         }
-        continue;
+
+        if (path === validatedPath || path.startsWith(`${validatedPath}.`)) {
+          pathsToPreserve.add(path);
+        }
       }
-      const { path, result } = settled.value;
-      if (!result.ok) {
-        fieldErrors[path] = result.errors;
-        errors.push(...result.errors);
+    }
+
+    async function validateFormPath(path: string) {
+      validatedPaths.add(path);
+
+      try {
+        const result = await input.getThisForm().validateField(path, reason);
+        if (!result.ok) {
+          fieldErrors[path] = result.errors;
+          errors.push(...result.errors);
+        }
+      } catch (error) {
+        console.error(`[flux-runtime] Field validation threw for path "${path}":`, error);
+        const validationError = {
+          path,
+          message: 'Validation failed due to an internal error',
+          rule: 'async' as const,
+        };
+        fieldErrors[path] = [validationError];
+        errors.push(validationError);
       }
+
+      captureSideEffectErrors(path);
+    }
+
+    for (const path of validationPaths) {
+      await validateFormPath(path);
     }
 
     async function validateRegisteredChildren(
@@ -402,6 +418,7 @@ export function buildFormOwnerRuntime(input: {
           fieldErrors[childPath] = result.errors;
           errors.push(...result.errors);
         }
+        captureSideEffectErrors(childPath);
       }
     }
 
@@ -412,22 +429,20 @@ export function buildFormOwnerRuntime(input: {
 
       if (getCompiledValidationField(currentValidation, path)) {
         await validateRegisteredChildren(registration);
+        captureSideEffectErrors(path);
         continue;
       }
 
       if (!registration.validate) {
         await validateRegisteredChildren(registration);
+        captureSideEffectErrors(path);
         continue;
       }
 
-      const result = await input.getThisForm().validateField(path, reason);
-
-      if (!result.ok) {
-        fieldErrors[path] = result.errors;
-        errors.push(...result.errors);
-      }
+      await validateFormPath(path);
 
       await validateRegisteredChildren(registration);
+      captureSideEffectErrors(path);
     }
 
     const currentFieldStates = input.sharedState.store.getState().fieldStates;
@@ -437,7 +452,7 @@ export function buildFormOwnerRuntime(input: {
       const pathErrors = fs.errors;
       if (!pathErrors) continue;
 
-      if (!validatedPaths.has(path)) {
+      if (!validatedPaths.has(path) && !pathsToPreserve.has(path)) {
         preservedErrors[path] = pathErrors;
         continue;
       }
@@ -445,7 +460,10 @@ export function buildFormOwnerRuntime(input: {
       const nextFieldErrors = fieldErrors[path];
       if (nextFieldErrors) {
         preservedErrors[path] = nextFieldErrors;
+        continue;
       }
+
+      preservedErrors[path] = pathErrors;
     }
 
     const mergedErrors = {
@@ -479,20 +497,34 @@ export function buildFormOwnerRuntime(input: {
       input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
     }
 
-    for (const [path, fs] of Object.entries(currentFieldStates)) {
-      const pathErrors = fs.errors;
-      if (!pathErrors) continue;
+    const finalFieldStates = input.sharedState.store.getState().fieldStates;
 
+    for (const path of validatedPaths) {
       if (fieldErrors[path]) {
         continue;
       }
 
-      if (validationErrorsEqual(initialFieldStates[path]?.errors, pathErrors)) {
+      const pathErrors = finalFieldStates[path]?.errors;
+      if (!pathErrors || pathErrors.length === 0) {
         continue;
       }
 
-      fieldErrors[path] = pathErrors as ValidationError[];
-      errors.push(...(pathErrors as ValidationError[]));
+      fieldErrors[path] = pathErrors;
+      errors.push(...pathErrors);
+    }
+
+    for (const path of pathsToPreserve) {
+      if (fieldErrors[path]) {
+        continue;
+      }
+
+      const pathErrors = finalFieldStates[path]?.errors;
+      if (!pathErrors || pathErrors.length === 0) {
+        continue;
+      }
+
+      fieldErrors[path] = pathErrors;
+      errors.push(...pathErrors);
     }
 
     return {

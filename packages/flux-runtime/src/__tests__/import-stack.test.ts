@@ -201,6 +201,34 @@ describe('createImportStack', () => {
       expect(actionScope.listNamespaces()).toContain('myNs');
     });
 
+    it('rejects reserved import aliases for runtime bindings', async () => {
+      const { stack, scope } = createStackSetup();
+
+      await expect(
+        stack.push({
+          ownerNodeId: 'node-1',
+          imports: [{ from: 'lib', as: 'form' }],
+          scope,
+          schemaUrl: '/schema.json',
+        }),
+      ).rejects.toThrow('Import alias is reserved and cannot shadow runtime binding: $form');
+    });
+
+    it('rejects the reserved __xui_actions__ namespace alias', async () => {
+      const { stack, scope } = createStackSetup();
+
+      await expect(
+        stack.push({
+          ownerNodeId: 'node-1',
+          imports: [{ from: 'lib', as: '__xui_actions__' }],
+          scope,
+          schemaUrl: '/schema.json',
+        }),
+      ).rejects.toThrow(
+        'Import alias is reserved and cannot shadow runtime namespace: __xui_actions__',
+      );
+    });
+
     it('rolls back already-registered namespaces when a later import fails', async () => {
       const { moduleCache, scope } = createStackSetup();
       const actionScope = createMockActionScope();
@@ -456,6 +484,33 @@ describe('createImportStack', () => {
           scope,
         }),
       ).toThrow('Duplicate import alias in the same node boundary: dup');
+    });
+
+    it('rejects reserved aliases during prepared installation', () => {
+      const { stack, moduleCache, scope } = createStackSetup();
+      moduleCache.set(
+        '{"from":"lib","options":null}',
+        createMockModule({
+          createNamespace: vi.fn(() => ({
+            kind: 'import' as const,
+            invoke: async () => ({ ok: true }),
+          })),
+        }),
+      );
+
+      expect(() =>
+        stack.installPrepared({
+          ownerNodeId: 'node-1',
+          imports: [
+            {
+              schemaUrl: '/schema.json',
+              spec: { from: 'lib', as: 'page' },
+              resolvedSpec: { from: 'lib', as: 'page' },
+            } satisfies PreparedImportSpec,
+          ],
+          scope,
+        }),
+      ).toThrow('Import alias is reserved and cannot shadow runtime binding: $page');
     });
 
     it('rolls back prepared namespaces when a later prepared import fails', () => {

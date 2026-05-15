@@ -17,6 +17,7 @@ import {
   getCompiledValidationNode,
 } from '@nop-chaos/flux-core';
 import { createFormStore } from './form-store.js';
+import { createOwnedFormStore } from './form-store-owned.js';
 import { createAsyncGovernanceStore } from './async-data/async-governance.js';
 import { buildFormOwnerRuntime } from './form-runtime-owner.js';
 import {
@@ -86,8 +87,11 @@ function formStatusSummaryEqual(
 }
 
 export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInput): FormRuntime {
-  const store = inputValue.existingStore ?? createFormStore(inputValue.initialValues ?? {});
   const formId = inputValue.id ?? `${inputValue.parentScope?.id ?? 'scope'}-form`;
+  const store =
+    inputValue.existingStore !== undefined
+      ? createOwnedFormStore(inputValue.existingStore, formId)
+      : createFormStore(inputValue.initialValues ?? {});
   const formName = inputValue.name;
   const validationRuns = new Map<string, number>();
   const pendingValidationDebounces = new Map<
@@ -452,7 +456,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       if (!path) {
         const currentFieldStates = store.getState().fieldStates;
         const clearedFieldStates: Record<string, import('@nop-chaos/flux-core').FieldState> = {};
-        for (const [p, fs] of Object.entries(currentFieldStates)) {
+        for (const [p, fs] of Object.entries(currentFieldStates) as Array<
+          [string, import('@nop-chaos/flux-core').FieldState]
+        >) {
           if (fs.errors) {
             const { errors: _removed, ...rest } = fs;
             if (Object.keys(rest).length > 0) {

@@ -15,7 +15,17 @@ import type {
   ScopeRef,
   XuiImportSpec,
 } from '@nop-chaos/flux-core';
-import { reportImportFailure } from '@nop-chaos/flux-core';
+import { reportImportFailure, XUI_ACTIONS_NAMESPACE } from '@nop-chaos/flux-core';
+
+const RESERVED_IMPORT_ALIAS_NAMES = new Set([
+  'crud',
+  'designer',
+  'form',
+  'page',
+  'resource',
+  'slot',
+  'surface',
+]);
 
 function normalizeImportSpec(spec: XuiImportSpec): XuiImportSpec {
   return {
@@ -59,6 +69,20 @@ function createImportError(message: string, cause?: unknown): Error {
   }
 
   return error;
+}
+
+function assertImportAliasAllowed(alias: string): void {
+  if (alias === XUI_ACTIONS_NAMESPACE) {
+    throw createImportError(
+      `Import alias is reserved and cannot shadow runtime namespace: ${XUI_ACTIONS_NAMESPACE}`,
+    );
+  }
+
+  if (RESERVED_IMPORT_ALIAS_NAMES.has(alias)) {
+    throw createImportError(
+      `Import alias is reserved and cannot shadow runtime binding: $${alias}`,
+    );
+  }
 }
 
 function toErrorMessage(error: unknown): string {
@@ -234,6 +258,13 @@ export function createImportStack(input: {
           throw error;
         }
 
+        try {
+          assertImportAliasAllowed(spec.as);
+        } catch (error) {
+          notifyImportFailure(error as Error, spec);
+          throw error;
+        }
+
         if (args.actionScope?.listNamespaces().includes(spec.as)) {
           const parentFrame = args.parentFrameId ? framesById.get(args.parentFrameId) : undefined;
           const inherited = parentFrame
@@ -355,6 +386,13 @@ export function createImportStack(input: {
             `Duplicate import alias in the same node boundary: ${prepared.spec.as}`,
           );
           notifyImportFailure(error, prepared.spec);
+          throw error;
+        }
+
+        try {
+          assertImportAliasAllowed(prepared.spec.as);
+        } catch (error) {
+          notifyImportFailure(error as Error, prepared.spec);
           throw error;
         }
 

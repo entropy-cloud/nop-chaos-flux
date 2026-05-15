@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ScopeRef, ValidationError } from '@nop-chaos/flux-core';
 import { createManagedFormRuntime } from '../form-runtime.js';
+import { createFormStore } from '../form-store.js';
 
 function createStubScope(): ScopeRef {
   return {
@@ -400,5 +401,152 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
     expect(result.ok).toBe(true);
     expect(result.fieldErrors['name']).toBeUndefined();
     expect(form.store.getState().fieldStates['name']?.errors).toBeUndefined();
+  });
+
+  it('isolates field state when two form runtimes share an existing store', async () => {
+    const sharedStore = createFormStore({ name: '' });
+    const first = createManagedFormRuntime({
+      id: 'first-form',
+      existingStore: sharedStore,
+      initialValues: { name: '' },
+      parentScope: createStubScope(),
+      executeValidationRule: async () => undefined,
+      validateRule: () => undefined,
+    });
+    const second = createManagedFormRuntime({
+      id: 'second-form',
+      existingStore: sharedStore,
+      initialValues: { name: '' },
+      parentScope: createStubScope(),
+      executeValidationRule: async () => undefined,
+      validateRule: () => undefined,
+    });
+
+    first.store.setPathErrors('name', [err('name', 'First error')]);
+    second.store.setPathErrors('name', [err('name', 'Second error')]);
+
+    expect(first.getError('name')).toEqual([err('name', 'First error')]);
+    expect(second.getError('name')).toEqual([err('name', 'Second error')]);
+    expect(first.store.getState().fieldStates['name']?.errors).toEqual([err('name', 'First error')]);
+    expect(second.store.getState().fieldStates['name']?.errors).toEqual([err('name', 'Second error')]);
+  });
+
+  it('returns the final same-path error when validateForm is superseded by concurrent blur validation', async () => {
+    let resolveFormValidation: ((value: undefined) => void) | undefined;
+    let firstCall = true;
+
+    const form = createManagedFormRuntime({
+      id: 'race-form',
+      initialValues: { name: '' },
+      parentScope: createStubScope(),
+      validation: {
+        nodes: {
+          name: {
+            path: 'name',
+            kind: 'field',
+            controlType: 'input-text',
+            rules: [
+              {
+                id: 'name#0:async',
+                rule: { kind: 'async', action: { action: 'ajax' }, message: 'Name invalid' },
+                dependencyPaths: [],
+              },
+            ],
+            behavior: { triggers: ['blur', 'submit'], showErrorOn: ['touched', 'submit'] },
+            children: [],
+            parent: '',
+          },
+        },
+        order: ['name'],
+        behavior: { triggers: ['blur', 'submit'], showErrorOn: ['touched', 'submit'] },
+        dependents: {},
+      },
+      executeValidationRule: async () => {
+        if (firstCall) {
+          firstCall = false;
+          await new Promise<void>((resolve) => {
+            resolveFormValidation = resolve;
+          });
+          return undefined;
+        }
+
+        return err('name', 'Blur error', 'async');
+      },
+      validateRule: () => undefined,
+    });
+
+    const validateFormPromise = form.validateForm('submit');
+
+    while (!resolveFormValidation) {
+      await Promise.resolve();
+    }
+
+    const blurPromise = form.validateField('name', 'blur');
+    await expect(blurPromise).resolves.toMatchObject({ ok: false });
+
+    resolveFormValidation?.(undefined);
+
+    await expect(validateFormPromise).resolves.toMatchObject({
+      ok: false,
+      fieldErrors: {
+        name: [err('name', 'Blur error', 'async')],
+      },
+    });
+  });
+
+  it('does not fold unrelated concurrent store errors into validateForm results', async () => {
+    let releaseValidation: (() => void) | undefined;
+
+    const form = createManagedFormRuntime({
+      id: 'unrelated-race-form',
+      initialValues: { name: '' },
+      parentScope: createStubScope(),
+      validation: {
+        nodes: {
+          name: {
+            path: 'name',
+            kind: 'field',
+            controlType: 'input-text',
+            rules: [
+              {
+                id: 'name#0:async',
+                rule: { kind: 'async', action: { action: 'ajax' } },
+                dependencyPaths: [],
+              },
+            ],
+            behavior: { triggers: ['blur', 'submit'], showErrorOn: ['touched', 'submit'] },
+            children: [],
+            parent: '',
+          },
+        },
+        order: ['name'],
+        behavior: { triggers: ['blur', 'submit'], showErrorOn: ['touched', 'submit'] },
+        dependents: {},
+      },
+      executeValidationRule: async () => {
+        await new Promise<void>((resolve) => {
+          releaseValidation = resolve;
+        });
+        return undefined;
+      },
+      validateRule: () => undefined,
+    });
+
+    const resultPromise = form.validateForm('submit');
+
+    while (!releaseValidation) {
+      await Promise.resolve();
+    }
+
+    form.store.setPathErrors('other', [err('other', 'Unrelated concurrent error')]);
+    releaseValidation?.();
+
+    const result = await resultPromise;
+
+    expect(result.ok).toBe(true);
+    expect(result.fieldErrors['other']).toBeUndefined();
+    expect(form.store.getState().fieldStates['other']?.errors).toEqual([
+      err('other', 'Unrelated concurrent error'),
+    ]);
   });
 });
