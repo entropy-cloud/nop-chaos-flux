@@ -1099,6 +1099,7 @@ These behaviors are baseline architecture, not optional convenience details.
 - module loads are deduplicated by normalized module key
 - scope registrations are deduplicated and reference-counted per owning `ActionScope`
 - same-scope alias collisions fail fast instead of silently overriding another provider
+- import aliases must not shadow reserved runtime-owned bindings or namespaces. Current reserved aliases include the internal named-action namespace `__xui_actions__` plus the live `$...` runtime exports published by Flux owners such as `$form`, `$page`, `$crud`, `$designer`, `$slot`, `$surface`, and `$resource`.
 - unmount or boundary replacement releases the owned registration through the action-scope lifecycle
 - schema preparation resolves and preloads declared imports before template compilation, so ordinary node execution does not install per-node loading placeholders
 
@@ -1113,6 +1114,12 @@ The current preload-first behavior is especially important:
 - ordinary schema imports are either prepared before compile or fail before node execution begins
 - after a preload failure, the schema does not continue into node-local import execution with a partially ready namespace boundary
 - once prepared imports are installed, namespaced dispatch resolves against the synchronous imported namespace provider owned by that lexical boundary
+
+Reserved-alias rule:
+
+- `xui:imports` alias validation must reject reserved names before namespace collision checks run.
+- `__xui_actions__` is runtime-reserved for schema-local named actions and cannot be claimed by imports.
+- Expression-facing imported aliases (`$demo`) must remain disjoint from Flux-owned bindings (`$form`, `$page`, `$crud`, `$designer`, `$slot`, `$surface`, `$resource`). Imported helper visibility is lexical, but it is not allowed to override owner/runtime exports.
 
 ### Deduplication Rules
 

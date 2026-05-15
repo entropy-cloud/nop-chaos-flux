@@ -55,6 +55,7 @@ The runtime baseline carries this one step further for compiled node resolution:
 - wildcard or broad-access reads remain conservatively invalidated on any scope change
 - compile-time-owned structural fields that intentionally execute outside ordinary `propsProgram` resolution still have to participate in that invalidation contract; the current live baseline keeps node-level `when` on compiled structural fields and treats dynamic structural `loop` / `recurse` `itemData` conservatively as props invalidation inputs so repeated subtrees rerender when their parent lexical inputs change
 - runtime owners must expose explicit teardown for long-lived resources; the current `RendererRuntime` surface includes `dispose()` to stop owned data sources, reactions, imported namespace registrations, and in-flight requests when a host unmounts or replaces a runtime instance
+- runtime-owned teardown aborts action dispatch first. The current baseline requires `runtime.dispose()` to abort the action dispatcher root signal before forms, pages, surfaces, import frames, or other runtime-owned resources begin tearing down, so in-flight dispatch chains observe cancellation instead of continuing against partially disposed owners.
 
 ### Compile once, execute many times
 
@@ -228,6 +229,13 @@ Meaning:
 
 - `helpers.evaluate(target, scope?)` for schema-authored ad hoc values that still need compile+evaluate behavior at the helper boundary
 - `helpers.evaluateCompiled(compiled, scope?)` for renderer paths that must execute an already-compiled runtime value from `TemplateNode` without falling back to runtime recompilation
+- `helpers.createScope(patch, options?)` and `helpers.disposeScope(scopeId)` for renderer-owned child-scope lifecycles; long-lived renderer caches such as table row scopes must dispose owned scopes on eviction and unmount instead of only dropping local references
+
+Current helper lifecycle baseline:
+
+- `helpers.createScope(patch?, options?)` creates a child scope for renderer-owned local materialization needs
+- `helpers.disposeScope(scopeId)` is the matching explicit teardown hook for renderer-owned scope lifecycles such as table row-scope eviction or unmount cleanup
+- renderers that retain child scopes across renders must dispose those scopes explicitly when the owning renderer no longer materializes them
 
 ### Resolved Boolean Props
 
@@ -1006,6 +1014,7 @@ A table renderer is expected to:
 - create a row scope from `{ record, index }`
 - pass row-local scope into cell or button fragments
 - keep row rendering aligned with the same fragment and action infrastructure used elsewhere
+- dispose renderer-owned row scopes explicitly when a row leaves the materialized set or the owning table instance unmounts
 
 The current performance baseline further narrows that expectation:
 

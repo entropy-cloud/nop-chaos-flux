@@ -264,7 +264,7 @@ Save-time continuity rule:
 - `rowKey` must not be derived from the current array index
 - `rowKey` may originate from string or number source values, but runtime must normalize it to a stable string token before using it as React `key`, `instanceKey`, or scope-id fragment
 - `null`, `undefined`, and empty string are invalid `rowKey` values
-- duplicate `rowKey` values are invalid and must surface development diagnostics; conflicting rows must not silently share reused scopes, repeated identity, or row-local table UI state
+- duplicate `rowKey` values are invalid and must surface development diagnostics; the current live baseline still renders the conflicting turn but assigns an owner-local internal cache key to each duplicate entry so conflicting rows do not silently share reused scopes, repeated identity, or row-local table UI state
 - changing `rowKey` is semantically delete plus insert, not in-place update
 - unsaved client-side rows should receive and retain a generated hidden key such as `__rowKey` until the logical row leaves the collection or an explicit remap policy runs
 
@@ -302,7 +302,7 @@ Rules:
 
 - if a piece of table-owned UI state should follow the logical row across reorder, filter, pagination, save, or rematerialization, key it by `rowKey`
 - use `sourceIndex` only for source-array addressing or other transient position semantics
-- duplicate or invalid `rowKey` values must disable safe reuse for that conflicting turn rather than aliasing two rows onto one row-state bucket
+- duplicate or invalid `rowKey` values must disable plain `rowKey` reuse for that conflicting turn rather than aliasing two rows onto one row-state bucket; the supported fallback is an owner-local disambiguated cache key derived from the duplicate `rowKey`
 - all row-following table UI state should resolve from the same normalized `rowKey` token used by row-scope caching and repeated instance identity; do not mix `rowKey` for some features and raw `record.id` or `sourceIndex` for others in the same table owner
 
 Implementation note:
@@ -380,6 +380,7 @@ No publication fast path:
 Disposal rule:
 
 - evict the row scope when its `rowKey` is no longer materialized in the current table render output
+- call runtime-backed scope disposal before removing the cached row scope entry
 - do not retain hidden-page or filtered-out row scopes by default
 - also remove the owning table's module-level row-scope cache entry when that table instance unmounts or its owner-qualified cache key changes
 
