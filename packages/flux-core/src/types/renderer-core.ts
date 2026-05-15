@@ -99,6 +99,7 @@ export interface RendererHelpers {
   evaluate: <T = unknown>(target: unknown, scope?: ScopeRef) => T;
   evaluateCompiled: <T = unknown>(target: CompiledRuntimeValue<T>, scope?: ScopeRef) => T;
   createScope: (patch?: object, options?: CreateScopeOptions) => ScopeRef;
+  disposeScope: (scopeId: string) => void;
   dispatch: (
     action: ActionSchema | ActionSchema[] | CompiledActionProgram,
     ctx?: Partial<ActionContext>,
@@ -342,6 +343,7 @@ export interface RendererRuntime {
     state?: NodeRuntimeState,
   ): ResolvedNodeProps;
   createChildScope(parent: ScopeRef, patch?: object, options?: CreateScopeOptions): ScopeRef;
+  disposeScope(scopeId: string): void;
   createHostProjectionScope(input: {
     parentScope: ScopeRef;
     projection: Record<string, unknown>;

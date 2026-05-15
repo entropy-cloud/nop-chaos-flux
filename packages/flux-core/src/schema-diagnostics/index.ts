@@ -8,6 +8,7 @@ export type SchemaDiagnosticCode =
   | 'expected-object'
   | 'missing-required-field'
   | 'unknown-renderer-type'
+  | 'duplicate-schema-id'
   | 'unknown-property'
   | 'invalid-property-value'
   | 'invalid-property-shape'
