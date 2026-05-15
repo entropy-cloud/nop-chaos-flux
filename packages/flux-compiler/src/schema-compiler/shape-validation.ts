@@ -548,7 +548,10 @@ export function analyzeSchemaInput(
       continue;
     }
 
-    if (rule.kind === 'value-or-region' && isSchemaInput(value)) {
+    const isSourceCarrier =
+      !!value && typeof value === 'object' && !Array.isArray(value) && (value as { type?: unknown }).type === 'source';
+
+    if (rule.kind === 'value-or-region' && isSchemaInput(value) && !(rule.allowSource && isSourceCarrier)) {
       analyzeSchemaInput(
         value,
         `${path}.${rule.regionKey ?? key}`,

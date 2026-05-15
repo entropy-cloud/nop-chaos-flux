@@ -222,4 +222,33 @@ describe('action-dispatcher routing', () => {
     expect(() => dispatcher.dispose()).not.toThrow();
     expect(() => dispatcher.dispose()).not.toThrow();
   });
+
+  it('dispose() settles pending debounced dispatch promises with cancelled result', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const adapter = createMockAdapter();
+      const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+      const resultPromise = dispatcher.dispatch(
+        makeCompiledProgram([
+          {
+            action: 'setValue',
+            payload: { args: staticCompiled({ path: 'name', value: 'hello' }) },
+            targeting: {},
+            control: { debounce: 25 },
+            source: { action: 'setValue', args: { path: 'name', value: 'hello' }, debounce: 25 },
+          },
+        ]),
+        createActionCtx({ runtime }),
+      );
+
+      dispatcher.dispose();
+
+      await expect(resultPromise).resolves.toMatchObject({ ok: false, cancelled: true });
+      expect(adapter.invokeBuiltInAction).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

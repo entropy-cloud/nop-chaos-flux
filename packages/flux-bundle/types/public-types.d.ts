@@ -1,13 +1,11 @@
 import type { ComponentType } from 'react';
+import type { ActionContext, ApiRequestContext, RendererEnv, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
 
-export type FluxSchemaValue =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | FluxSchemaNode
-  | FluxSchemaValue[];
+export type FluxSchemaValue = SchemaValue;
+
+export interface FluxSchemaObject extends SchemaObject {
+  [key: string]: FluxSchemaValue;
+}
 
 export interface FluxSchemaNode {
   type: string;
@@ -23,12 +21,7 @@ export interface FluxApiRequest {
   headers?: Record<string, string>;
 }
 
-export interface FluxApiRequestContext {
-  signal?: AbortSignal;
-  interactionId?: string;
-  requestInstanceId?: string;
-  [key: string]: unknown;
-}
+export type FluxApiRequestContext = ApiRequestContext;
 
 export interface FluxApiResponse<T = unknown> {
   ok: boolean;
@@ -38,19 +31,11 @@ export interface FluxApiResponse<T = unknown> {
   raw?: unknown;
 }
 
-export interface FluxRendererEnv {
+export interface FluxRendererEnv extends Omit<RendererEnv, 'fetcher'> {
   fetcher: <T = unknown>(
     api: FluxApiRequest,
     ctx: FluxApiRequestContext,
   ) => Promise<FluxApiResponse<T>>;
-  notify: (level: 'info' | 'success' | 'warning' | 'error', message: string) => void;
-  navigate?: (to: string | number, options?: { replace?: boolean }) => void;
-  confirm?: (message: string, options?: unknown) => Promise<boolean>;
-  functions?: Record<string, (...args: any[]) => any>;
-  filters?: Record<string, (input: any, ...args: any[]) => any>;
-  importLoader?: unknown;
-  resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
-  monitor?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -74,7 +59,7 @@ export interface FluxSchemaRendererProps {
   env: FluxRendererEnv;
   data?: Record<string, unknown>;
   strictValidation?: boolean;
-  onActionError?: (error: unknown, ctx: unknown) => void;
+  onActionError?: (error: unknown, ctx: ActionContext) => void;
 }
 
 export type FluxSchemaRendererComponent = ComponentType<FluxSchemaRendererProps>;

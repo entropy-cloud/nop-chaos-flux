@@ -14,6 +14,7 @@ import {
   createTestCompiler,
 } from './schema-compiler-registry-fixtures.js';
 import { createSchemaCompiler } from './index.js';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 type CompiledNode = TemplateNode & {
   propsProgram: { kind: 'static'; value: Record<string, unknown> };
@@ -257,6 +258,61 @@ describe('createSchemaCompiler', () => {
     expect(typeof formNode.templateNodeId).toBe('number');
     expect(clickNode.targeting.componentId).toBe('user-form');
     expect(clickNode.targeting._targetCid).toBeUndefined();
+  });
+
+  it('keeps allowSource value-or-region source carriers on the value channel', () => {
+    const sourceAwareRenderer: RendererDefinition = {
+      type: 'source-title-probe',
+      component: () => null,
+      fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title', allowSource: true }],
+    };
+
+    const compiler = createTestCompiler([sourceAwareRenderer]);
+    const compiled = compiler.compile({
+      type: 'source-title-probe',
+      title: { type: 'source', action: 'loadTitle' },
+    } as any);
+    const node = compiled.root as TemplateNode;
+
+    expect(node.regions.title).toBeUndefined();
+    expect(node.sourcePropKeys).toContain('title');
+  });
+
+  it('lets field compile hooks override the compileValue symbolTable', () => {
+    const renderer: RendererDefinition = {
+      type: 'symbol-table-probe',
+      component: () => null,
+      fields: [
+        {
+          key: 'config',
+          kind: 'prop',
+          compile(value, context) {
+            return context.compileValue(value, context.sourcePath, {
+              symbolTable: context.symbolTable.push({
+                id: `${context.sourcePath}:locals`,
+                kind: 'region',
+                symbols: {
+                  localValue: { name: 'localValue', kind: 'ambient' },
+                },
+              }),
+            });
+          },
+        },
+      ],
+    };
+
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([renderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = compiler.compile({
+      type: 'symbol-table-probe',
+      config: '${localValue}',
+    });
+    const node = compiled.root as TemplateNode;
+
+    expect(node.propsProgram.kind).toBe('dynamic');
   });
 
   it('assigns template node identity to compiled nodes', () => {

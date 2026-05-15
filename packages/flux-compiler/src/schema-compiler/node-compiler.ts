@@ -69,6 +69,10 @@ export function createCompileSingleNode(
   expressionCompiler: ExpressionCompiler,
   compileSchemaToTemplateNodes: CompileSchemaToTemplateNodesFn,
 ): CompileSingleNodeFn {
+  function isSourceCarrier(value: unknown): value is { type: 'source' } {
+    return !!value && typeof value === 'object' && !Array.isArray(value) && (value as { type?: unknown }).type === 'source';
+  }
+
   function normalizeBooleanLikeCandidate(candidate: unknown): boolean | undefined {
     return typeof candidate === 'boolean' ? candidate : undefined;
   }
@@ -171,7 +175,10 @@ export function createCompileSingleNode(
         continue;
       }
 
-      if (rule.kind === 'region' || (rule.kind === 'value-or-region' && isSchemaInput(value))) {
+      const treatValueOrRegionAsRegion =
+        rule.kind === 'value-or-region' && isSchemaInput(value) && !(rule.allowSource && isSourceCarrier(value));
+
+      if (rule.kind === 'region' || treatValueOrRegionAsRegion) {
         const regionMeta =
           rule.kind === 'region' || isSchemaInput(value)
             ? { params: rule.params, isolate: rule.isolate }
@@ -221,7 +228,7 @@ export function createCompileSingleNode(
           ) =>
             expressionCompiler.compileValue(input, {
               ...compileValueOptions,
-              symbolTable,
+              symbolTable: compileValueOptions?.symbolTable ?? symbolTable,
               sourcePath: sourcePathOverride ?? `${path}.${key}`,
               reportDiagnostic:
                 compileValueOptions?.reportDiagnostic ?? ((issue) => diagnostics.emit(issue)),

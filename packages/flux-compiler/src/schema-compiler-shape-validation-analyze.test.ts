@@ -301,6 +301,21 @@ describe('analyzeSchemaInput validation', () => {
     ).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'unknown-property' })]));
   });
 
+  it('does not traverse source carriers on allowSource value-or-region fields', () => {
+    const renderer: RendererDefinition = {
+      type: 'card',
+      component: () => null,
+      fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title', allowSource: true }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(
+      compiler.validate?.({ type: 'card', title: { type: 'source', action: 'loadTitle' } } as any, {
+        validation: { unknownBarePropertyPolicy: 'warn' },
+      }),
+    ).toEqual([]);
+  });
+
   it('deduplicates diagnostic entries', () => {
     const renderer: RendererDefinition = {
       type: 'text',

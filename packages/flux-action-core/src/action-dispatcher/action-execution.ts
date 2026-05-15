@@ -551,8 +551,10 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
       actionCtx: ActionContext,
     ) => dispatch(ctx, action, actionCtx),
     dispose() {
+      const cancelledResult = createCancelledResult();
       for (const [, pending] of ctx.pendingDebounces) {
         if (pending.timer != null) clearTimeout(pending.timer);
+        pending.resolve(cancelledResult);
       }
       ctx.pendingDebounces.clear();
     },
