@@ -36,6 +36,44 @@ import { runComponentAction, runNamespacedAction, runNamedAction } from './actio
 
 const caughtFailureResults = new WeakSet<ActionResult>();
 
+function mergeAbortSignals(rootSignal: AbortSignal, actionSignal?: AbortSignal): AbortSignal {
+  if (!actionSignal || actionSignal === rootSignal) {
+    return rootSignal;
+  }
+
+  if (rootSignal.aborted) {
+    return rootSignal;
+  }
+
+  if (actionSignal.aborted) {
+    return actionSignal;
+  }
+
+  const controller = new AbortController();
+  const abortFrom = (signal: AbortSignal) => {
+    if (!controller.signal.aborted) {
+      controller.abort(signal.reason);
+    }
+  };
+
+  const onRootAbort = () => abortFrom(rootSignal);
+  const onActionAbort = () => abortFrom(actionSignal);
+
+  rootSignal.addEventListener('abort', onRootAbort, { once: true });
+  actionSignal.addEventListener('abort', onActionAbort, { once: true });
+
+  controller.signal.addEventListener(
+    'abort',
+    () => {
+      rootSignal.removeEventListener('abort', onRootAbort);
+      actionSignal.removeEventListener('abort', onActionAbort);
+    },
+    { once: true },
+  );
+
+  return controller.signal;
+}
+
 function reportActionError(
   ctx: ActionDispatcherContext,
   error: unknown,
@@ -405,15 +443,23 @@ async function dispatch(
   action: ActionSchema | ActionSchema[] | CompiledActionProgram,
   actionCtx: ActionContext,
 ): Promise<ActionResult> {
+  const mergedSignal = mergeAbortSignals(ctx.rootAbortController.signal, actionCtx.signal);
+  const baseActionCtx =
+    mergedSignal === actionCtx.signal ? actionCtx : { ...actionCtx, signal: mergedSignal };
   const actions = normalizeCompiledActionProgram(action, ctx).nodes;
   let previous: ActionResult = { ok: true };
 
   for (const current of actions) {
+    if (baseActionCtx.signal?.aborted) {
+      previous = createCancelledResult(baseActionCtx.signal.reason);
+      break;
+    }
+
     const currentActionCtx = {
-      ...actionCtx,
-      interactionId: actionCtx.interactionId ?? createInteractionId(),
+      ...baseActionCtx,
+      interactionId: baseActionCtx.interactionId ?? createInteractionId(),
       prevResult: previous,
-      evaluationBindings: actionCtx.evaluationBindings,
+      evaluationBindings: baseActionCtx.evaluationBindings,
     };
     const normalizedAction = applyActionControl(current, resolveActionControl(current));
     const result = await runActionWithDebounce(ctx, normalizedAction, currentActionCtx);
@@ -434,7 +480,7 @@ async function dispatch(
           isFullyStatic: false,
         },
         {
-          ...actionCtx,
+          ...baseActionCtx,
           interactionId: currentActionCtx.interactionId,
           prevResult: result,
           evaluationBindings: branchBindings,
@@ -453,12 +499,12 @@ async function dispatch(
             isFullyStatic: false,
           },
           {
-            ...actionCtx,
+            ...baseActionCtx,
             interactionId: currentActionCtx.interactionId,
             prevResult: result,
             event: {
-              ...(actionCtx.event && typeof actionCtx.event === 'object'
-                ? (actionCtx.event as Record<string, unknown>)
+              ...(baseActionCtx.event && typeof baseActionCtx.event === 'object'
+                ? (baseActionCtx.event as Record<string, unknown>)
                 : {}),
               type: eventType,
               result,
@@ -489,12 +535,12 @@ async function dispatch(
             isFullyStatic: false,
           },
           {
-            ...actionCtx,
+            ...baseActionCtx,
             interactionId: currentActionCtx.interactionId,
             prevResult: result,
             event: {
-              ...(actionCtx.event && typeof actionCtx.event === 'object'
-                ? (actionCtx.event as Record<string, unknown>)
+              ...(baseActionCtx.event && typeof baseActionCtx.event === 'object'
+                ? (baseActionCtx.event as Record<string, unknown>)
                 : {}),
               type: settledEventType,
               result,
@@ -543,6 +589,7 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
     runtime: config.runtime,
     compiledProgramCache: new WeakMap(),
     pendingDebounces: new Map(),
+    rootAbortController: new AbortController(),
   };
 
   return {
@@ -550,7 +597,13 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
       action: ActionSchema | ActionSchema[] | CompiledActionProgram,
       actionCtx: ActionContext,
     ) => dispatch(ctx, action, actionCtx),
+    getAbortSignal() {
+      return ctx.rootAbortController.signal;
+    },
     dispose() {
+      if (!ctx.rootAbortController.signal.aborted) {
+        ctx.rootAbortController.abort();
+      }
       const cancelledResult = createCancelledResult();
       for (const [, pending] of ctx.pendingDebounces) {
         if (pending.timer != null) clearTimeout(pending.timer);

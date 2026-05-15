@@ -33,4 +33,5 @@ export interface ActionDispatcherContext {
   runtime: RendererRuntime;
   compiledProgramCache: WeakMap<object, CompiledActionProgram>;
   pendingDebounces: Map<string, PendingDebounceEntry>;
+  rootAbortController: AbortController;
 }

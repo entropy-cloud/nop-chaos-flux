@@ -251,4 +251,88 @@ describe('action-dispatcher routing', () => {
       vi.useRealTimers();
     }
   });
+
+  it('dispose() aborts in-flight action signals', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    let releaseAction: (() => void) | undefined;
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: vi.fn(async (invocation) => {
+        capturedSignal = invocation.signal;
+        await new Promise<void>((resolve) => {
+          releaseAction = resolve;
+        });
+        if (invocation.signal?.aborted) {
+          return { ok: false, cancelled: true, error: invocation.signal.reason ?? new Error('aborted') };
+        }
+        return { ok: true };
+      }),
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    const resultPromise = dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'setValue',
+          payload: { args: staticCompiled({ path: 'name', value: 'hello' }) },
+          targeting: {},
+          control: {},
+          source: { action: 'setValue', args: { path: 'name', value: 'hello' } },
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    await Promise.resolve();
+    dispatcher.dispose();
+    expect(capturedSignal?.aborted).toBe(true);
+    releaseAction?.();
+
+    await expect(resultPromise).resolves.toMatchObject({ ok: false, cancelled: true });
+  });
+
+  it('stops later actions in a chain after dispose cancels the active step', async () => {
+    let releaseAction: (() => void) | undefined;
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: vi.fn(async (invocation) => {
+        if (invocation.action === 'setValue') {
+          await new Promise<void>((resolve) => {
+            releaseAction = resolve;
+          });
+          if (invocation.signal?.aborted) {
+            return { ok: false, cancelled: true, error: invocation.signal.reason };
+          }
+        }
+
+        return { ok: true };
+      }),
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    const resultPromise = dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'setValue',
+          payload: { args: staticCompiled({ path: 'name', value: 'hello' }) },
+          targeting: {},
+          control: {},
+          source: { action: 'setValue', args: { path: 'name', value: 'hello' } },
+        },
+        {
+          action: 'showToast',
+          payload: { args: staticCompiled({ message: 'should-not-run' }) },
+          targeting: {},
+          control: {},
+          source: { action: 'showToast', args: { message: 'should-not-run' } },
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    await Promise.resolve();
+    dispatcher.dispose();
+    releaseAction?.();
+
+    await expect(resultPromise).resolves.toMatchObject({ ok: false, cancelled: true });
+    expect(adapter.invokeBuiltInAction).toHaveBeenCalledTimes(1);
+  });
 });
