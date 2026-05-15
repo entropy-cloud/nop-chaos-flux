@@ -99,9 +99,9 @@ File: `packages/flux-react/src/default-spacing.css`
 
 ### Tabs content
 
-| Selector                     | Rules                                                                       |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `[data-slot="tabs-content"]` | `display: flex; flex-direction: column; gap: var(--space-tabs-content-gap)` |
+| Selector                                                                                                                                                           | Rules                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `.nop-flux-root [data-slot="tabs-content"], .nop-page [data-slot="tabs-content"], .nop-form [data-slot="tabs-content"], .nop-container [data-slot="tabs-content"]` | `display: flex; flex-direction: column; gap: var(--space-tabs-content-gap)` |
 
 ### FieldFrame
 
@@ -114,7 +114,7 @@ File: `packages/flux-react/src/default-spacing.css`
 
 ### Field label/error/hint styling
 
-Also in `default-spacing.css`: font-size, font-weight, color, and layout rules for `[data-slot="field-label"]`, `[data-slot="field-required"]`, `[data-slot="field-error"]`, `[data-slot="field-hint"]`, `[data-slot="field-description"]`, `[data-slot="field-remark"]`, `[data-slot="field-label-remark"]`, and `.nop-field[data-label-align="left"]` label/control layout.
+Also in `default-spacing.css`: font-size, font-weight, color, and layout rules for `.nop-field [data-slot="field-label"]`, `.nop-field [data-slot="field-required"]`, `.nop-field [data-slot="field-error"]`, `.nop-field [data-slot="field-hint"]`, `.nop-field [data-slot="field-description"]`, `.nop-field [data-slot="field-remark"]`, `.nop-field [data-slot="field-label-remark"]`, and `.nop-field[data-label-align="left"]` label/control layout. These selectors are scoped to Flux-owned field wrappers and must not fall back to bare shared `[data-slot]` selectors that could style plain `@nop-chaos/ui` components outside Flux-owned roots.
 
 ## Container `data-flex` Attribute
 

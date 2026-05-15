@@ -1,6 +1,6 @@
 # 290 Deep Audit 2026-05-15 Source Props Reactive And Lifecycle Convergence Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-15
 > Source: `docs/analysis/2026-05-15-deep-audit-full/{summary.md,05-reactive-precision.md,07-lifecycle.md,15-security-performance.md}`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/plans/286-deep-audit-2026-05-14-reactive-and-async-feedback-closure-plan.md`, `docs/plans/289-open-ended-adversarial-review-2026-05-15-remediation-plan.md`
@@ -59,77 +59,96 @@
 
 ### Phase 1 - Converge Source Rerun Trigger Contract
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/{use-node-source-props.ts,node-source-prop-controller.ts}`, focused tests
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] [Decision] Freeze the supported hook contract: source-enabled nodes must refresh their resolved prop snapshot when non-source props change, even when the source schema inputs themselves are unchanged.
-- [ ] [Decision] Freeze the rerun-trigger baseline for the same hook surface: change detection must not rely on `JSON.stringify(sourceInputs)` on the node hot path.
-- [ ] [Decision] Freeze whether recursively discovered nested source entries share the same supported rerun contract as top-level source props; because live code/tests already support nested entry materialization, closure should preserve that support unless a fresh repo-backed scope change explicitly removes it.
-- [ ] [Fix] Update the hook/controller run trigger so `controller.run(...)` receives fresh base props whenever the returned snapshot could otherwise keep stale ordinary resolved props, including nested-source config changes already supported by the controller path.
-- [ ] [Fix] Replace the current stringify-based trigger with a non-stringify rerun signal that still preserves the no-source fast path and stable source behavior.
-- [ ] [Proof] Add focused regression proof that a source-enabled prop bag refreshes when only a plain sibling prop changes, that nested source entry replacement also re-runs the observer on the supported path, and that the new trigger no longer depends on `JSON.stringify(sourceInputs)`.
+- [x] [Decision] Freeze the supported hook contract: source-enabled nodes must refresh their resolved prop snapshot when non-source props change, even when the source schema inputs themselves are unchanged.
+- [x] [Decision] Freeze the rerun-trigger baseline for the same hook surface: change detection must not rely on `JSON.stringify(sourceInputs)` on the node hot path.
+- [x] [Decision] Freeze whether recursively discovered nested source entries share the same supported rerun contract as top-level source props; because live code/tests already support nested entry materialization, closure should preserve that support unless a fresh repo-backed scope change explicitly removes it.
+- [x] [Fix] Update the hook/controller run trigger so `controller.run(...)` receives fresh base props whenever the returned snapshot could otherwise keep stale ordinary resolved props, including nested-source config changes already supported by the controller path.
+- [x] [Fix] Replace the current stringify-based trigger with a non-stringify rerun signal that still preserves the no-source fast path and stable source behavior.
+- [x] [Proof] Add focused regression proof that a source-enabled prop bag refreshes when only a plain sibling prop changes, that nested source entry replacement also re-runs the observer on the supported path, and that the new trigger no longer depends on `JSON.stringify(sourceInputs)`.
 
 Exit Criteria:
 
-- [ ] Retained `05-03` is fixed in live code, or a fresh live re-audit proves it is no longer live and the scope change is recorded in this plan before closure.
-- [ ] Retained `15-01` is fixed in live code, or a fresh live re-audit proves it is no longer live and the scope change is recorded in this plan before closure.
-- [ ] Focused proof covers the ordinary-prop refresh path that previously required a source input change to recover, the already-supported nested-source replacement path, and the non-stringify rerun trigger.
-- [ ] Relevant owner docs are updated, or `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-15.md` includes Phase 1 execution notes.
+- [x] Retained `05-03` is fixed in live code, or a fresh live re-audit proves it is no longer live and the scope change is recorded in this plan before closure.
+- [x] Retained `15-01` is fixed in live code, or a fresh live re-audit proves it is no longer live and the scope change is recorded in this plan before closure.
+- [x] Focused proof covers the ordinary-prop refresh path that previously required a source input change to recover, the already-supported nested-source replacement path, and the non-stringify rerun trigger.
+- [x] Relevant owner docs are updated, or `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-15.md` includes Phase 1 execution notes.
+
+Phase Notes:
+
+- `packages/flux-react/src/use-node-source-props.ts` now reruns from live `propsValue` and `scope` instead of a serialized source-input dependency key, so ordinary resolved props refresh even when source schemas themselves stay stable.
+- `packages/flux-react/src/node-source-prop-controller.ts` now keys reruns and scope-rebind behavior off current scope identity plus collected source entries/base props, which preserves the same supported rerun contract for top-level and recursively discovered nested source entries.
+- Focused proof now lives in `packages/flux-react/src/__tests__/node-source-prop-controller.test.ts` for plain-prop refresh, nested source config replacement, and top-level/nested scope rebinding.
+- No owner-doc update required beyond this plan and `docs/logs/2026/05-15.md`; `docs/architecture/renderer-runtime.md` already matched the supported runtime-owned source lifecycle baseline.
 
 ### Phase 2 - Rebind Source Observer On Scope Replacement
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/{use-node-source-props.ts,node-source-prop-controller.ts}`, focused tests/docs
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] [Decision] Freeze the lifecycle contract: source observer ownership follows the current lexical scope seen by `useNodeSourceProps`, and scope replacement must trigger a re-run/rebind even when source config stays identical.
-- [ ] [Fix] Update the hook/controller lifecycle so scope replacement cannot leave source execution bound to the previous scope for either top-level or recursively discovered nested source entries on the supported path.
-- [ ] [Proof] Add focused regression proof that swapping to a new scope re-runs the source observer with the new scope rather than only updating an internal ref, including nested-source coverage if that support remains in scope.
-- [ ] [Decision] Sync `docs/architecture/renderer-runtime.md` and `docs/architecture/api-data-source.md` only if the supported lifecycle wording changes; otherwise record `No owner-doc update required`.
+- [x] [Decision] Freeze the lifecycle contract: source observer ownership follows the current lexical scope seen by `useNodeSourceProps`, and scope replacement must trigger a re-run/rebind even when source config stays identical.
+- [x] [Fix] Update the hook/controller lifecycle so scope replacement cannot leave source execution bound to the previous scope for either top-level or recursively discovered nested source entries on the supported path.
+- [x] [Proof] Add focused regression proof that swapping to a new scope re-runs the source observer with the new scope rather than only updating an internal ref, including nested-source coverage if that support remains in scope.
+- [x] [Decision] Sync `docs/architecture/renderer-runtime.md` and `docs/architecture/api-data-source.md` only if the supported lifecycle wording changes; otherwise record `No owner-doc update required`.
 
 Exit Criteria:
 
-- [ ] Retained `07-01` is fixed in live code, or a fresh live re-audit proves it is no longer live and the scope change is recorded in this plan before closure.
-- [ ] Focused proof covers scope replacement and observer rebinding semantics on the shared hook surface for the supported top-level and nested-source paths.
-- [ ] Affected owner docs are updated, or `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-15.md` includes Phase 2 execution notes.
+- [x] Retained `07-01` is fixed in live code, or a fresh live re-audit proves it is no longer live and the scope change is recorded in this plan before closure.
+- [x] Focused proof covers scope replacement and observer rebinding semantics on the shared hook surface for the supported top-level and nested-source paths.
+- [x] Affected owner docs are updated, or `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-15.md` includes Phase 2 execution notes.
+
+Phase Notes:
+
+- `useNodeSourceProps(..., [controller, hasSourceProps, propsValue, scope])` now makes scope replacement part of the live rerun/rebind lifecycle, rather than only updating a ref.
+- Hook-level lifecycle proof remains in `packages/flux-react/src/__tests__/use-node-source-props.test.tsx`, including enable/disable/re-enable cleanup and full live controller path coverage for cyclic nested source graphs.
+- No owner-doc update required beyond the execution log because the supported lifecycle wording was already covered by the existing renderer-runtime baseline.
 
 ### Phase 3 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: touched packages, touched docs, this plan
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] [Proof] Run all focused tests added or modified in Phases 1-2.
-- [ ] [Proof] Run `pnpm --filter @nop-chaos/flux-react typecheck`, `pnpm --filter @nop-chaos/flux-react build`, `pnpm --filter @nop-chaos/flux-react lint`, and relevant `pnpm --filter @nop-chaos/flux-react test` coverage first, then workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all in-scope changes land.
-- [ ] [Fix] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-15.md`.
-- [ ] [Decision] Run an independent closure audit with a fresh subagent that re-reads this plan, the retained `05/07/15` analysis files, live `flux-react` source/tests/docs, and verification output.
-- [ ] [Fix] Address any closure-audit blocker before marking this plan completed.
+- [x] [Proof] Run all focused tests added or modified in Phases 1-2.
+- [x] [Proof] Run `pnpm --filter @nop-chaos/flux-react typecheck`, `pnpm --filter @nop-chaos/flux-react build`, `pnpm --filter @nop-chaos/flux-react lint`, and relevant `pnpm --filter @nop-chaos/flux-react test` coverage first, then workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all in-scope changes land.
+- [x] [Fix] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-15.md`.
+- [x] [Decision] Run an independent closure audit with a fresh subagent that re-reads this plan, the retained `05/07/15` analysis files, live `flux-react` source/tests/docs, and verification output.
+- [x] [Fix] Address any closure-audit blocker before marking this plan completed.
 
 Exit Criteria:
 
-- [ ] Focused verification for all in-scope retained defect families has passed.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass after all in-scope changes land.
-- [ ] Independent closure audit confirms no remaining plan-owned blocker and no overlap conflict with Plans `286` or `289`.
-- [ ] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+- [x] Focused verification for all in-scope retained defect families has passed.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass after all in-scope changes land.
+- [x] Independent closure audit confirms no remaining plan-owned blocker and no overlap conflict with Plans `286` or `289`.
+- [x] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+
+Phase Notes:
+
+- Focused verification passed via `pnpm --filter @nop-chaos/flux-react exec vitest run src/__tests__/node-source-prop-controller.test.ts src/__tests__/use-node-source-props.test.tsx`, plus package `pnpm --filter @nop-chaos/flux-react typecheck`, `build`, and `lint`.
+- Fresh workspace hard gates also passed via `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`, with the latest green `pnpm test` output saved at `C:\Users\a758371\.local\share\opencode\tool-output\tool_e2b4ca192001NVjp6fzrHZFpoI`.
+- Independent closure audit passed via `ses_1d4a5ae78ffeJDTYHOFLtbVEDF`.
 
 ## Closure Gates
 
-- [ ] All in-scope confirmed live defects (`05-03`, `07-01`, `15-01`) are fixed.
-- [ ] Source-enabled prop refresh, scope-rebind, and rerun-trigger semantics are converged to one supported baseline on the shared `useNodeSourceProps` surface, including an explicit adjudication for the already-supported nested-source path.
-- [ ] Necessary focused verification exists for all in-scope defect families.
-- [ ] No in-scope live defect is silently downgraded to deferred/follow-up.
-- [ ] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All in-scope confirmed live defects (`05-03`, `07-01`, `15-01`) are fixed.
+- [x] Source-enabled prop refresh, scope-rebind, and rerun-trigger semantics are converged to one supported baseline on the shared `useNodeSourceProps` surface, including an explicit adjudication for the already-supported nested-source path.
+- [x] Necessary focused verification exists for all in-scope defect families.
+- [x] No in-scope live defect is silently downgraded to deferred/follow-up.
+- [x] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -141,12 +160,12 @@ None currently.
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Completed. The shared `useNodeSourceProps` surface now refreshes ordinary resolved props, rebinding follows lexical scope replacement for both top-level and nested source entries, the hook no longer relies on `JSON.stringify(sourceInputs)` change detection, focused verification is complete, and independent closure audit found no remaining plan-owned blocker.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: Pending.
-- Evidence: Pending.
+- Reviewer / Agent: `ses_1d4a5ae78ffeJDTYHOFLtbVEDF`
+- Evidence: Re-read this plan, the retained `05/07/15` analysis files, `docs/logs/2026/05-15.md`, `packages/flux-react/src/use-node-source-props.ts`, `packages/flux-react/src/node-source-prop-controller.ts`, `packages/flux-react/src/__tests__/node-source-prop-controller.test.ts`, `packages/flux-react/src/__tests__/use-node-source-props.test.tsx`, and `docs/architecture/renderer-runtime.md`. Confirmed live reruns now follow `propsValue` and `scope` instead of a serialized source-input key, nested source replacement and nested scope rebinding are directly proven, no additional owner-doc update is required, and fresh workspace verification is green.
 
 Follow-up:
 
