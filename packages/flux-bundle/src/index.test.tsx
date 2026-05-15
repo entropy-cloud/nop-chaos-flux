@@ -59,6 +59,10 @@ describe('@nop-chaos/flux public entry contract', () => {
   it('keeps facade stylesheet selectors scoped to the flux root', () => {
     expect(styles).toContain(`.${FLUX_ROOT_CLASS} {`);
     expect(styles).toContain(`.${FLUX_ROOT_CLASS} [data-slot='select-wrapper']`);
+    expect(styles).toContain(`.${FLUX_ROOT_CLASS} .nop-node-error [data-slot='node-error-message']`);
+    expect(styles).toContain(`.${FLUX_ROOT_CLASS} .nop-node-error [data-slot='node-error-retry']`);
+    expect(styles).not.toContain('.nop-node-error__message');
+    expect(styles).not.toContain('.nop-node-error__retry');
     expect(styles).not.toContain('\n[data-slot=\'select-wrapper\']');
     expect(styles).not.toContain('\nhtml {');
     expect(styles).not.toContain('\nbody {');
