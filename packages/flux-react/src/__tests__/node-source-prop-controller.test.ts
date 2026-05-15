@@ -202,6 +202,68 @@ describe('createNodeSourcePropController', () => {
     });
   });
 
+  it('reruns nested source entries when nested source config changes', async () => {
+    const { observer } = createObserverMock();
+    const controller = createNodeSourcePropController(
+      {
+        sourcePropKeys: [],
+        sourceStatePropKeys: {},
+      } as any,
+      { createSourceObserver: () => observer } as any,
+    );
+
+    const scope = createScope();
+    controller.run(
+      {
+        expressionConfig: {
+          variables: { type: 'source', sourceType: 'api', path: '/first' },
+        },
+        plain: 'keep',
+      },
+      scope,
+    );
+    await flushAsync();
+
+    controller.run(
+      {
+        expressionConfig: {
+          variables: { type: 'source', sourceType: 'api', path: '/second' },
+        },
+        plain: 'keep',
+      },
+      scope,
+    );
+    await flushAsync();
+
+    expect(observer.run).toHaveBeenCalledTimes(2);
+    expect(observer.run).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        scope,
+        entries: [
+          expect.objectContaining({
+            key: '__source:expressionConfig.variables',
+            targetPath: 'expressionConfig.variables',
+            source: { type: 'source', sourceType: 'api', path: '/first' },
+          }),
+        ],
+      }),
+    );
+    expect(observer.run).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        scope,
+        entries: [
+          expect.objectContaining({
+            key: '__source:expressionConfig.variables',
+            targetPath: 'expressionConfig.variables',
+            source: { type: 'source', sourceType: 'api', path: '/second' },
+          }),
+        ],
+      }),
+    );
+  });
+
   it('rebinds the source observer when the lexical scope changes', () => {
     const { observer } = createObserverMock();
     const controller = createNodeSourcePropController(
@@ -225,6 +287,54 @@ describe('createNodeSourcePropController', () => {
     expect(observer.run).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({ scope: secondScope }),
+    );
+  });
+
+  it('rebinds nested source entries when the lexical scope changes', () => {
+    const { observer } = createObserverMock();
+    const controller = createNodeSourcePropController(
+      {
+        sourcePropKeys: [],
+        sourceStatePropKeys: {},
+      } as any,
+      { createSourceObserver: () => observer } as any,
+    );
+
+    const firstScope = createScope();
+    const secondScope = { ...createScope(), id: 'scope-2' };
+    const propsValue = {
+      expressionConfig: {
+        variables: { type: 'source', sourceType: 'api', path: '/nested' },
+      },
+      plain: 'keep',
+    };
+
+    controller.run(propsValue, firstScope);
+    controller.run(propsValue, secondScope as any);
+
+    expect(observer.run).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        scope: firstScope,
+        entries: [
+          expect.objectContaining({
+            key: '__source:expressionConfig.variables',
+            targetPath: 'expressionConfig.variables',
+          }),
+        ],
+      }),
+    );
+    expect(observer.run).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        scope: secondScope,
+        entries: [
+          expect.objectContaining({
+            key: '__source:expressionConfig.variables',
+            targetPath: 'expressionConfig.variables',
+          }),
+        ],
+      }),
     );
   });
 
