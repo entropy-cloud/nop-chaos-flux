@@ -21,6 +21,7 @@ import {
 
 export interface ReportDesignerInternalState {
   document: ReportTemplateDocument;
+  savedDocument: ReportTemplateDocument;
   spreadsheetSyncSource?: ReportTemplateDocument['spreadsheet'];
   selectionTarget: ReportSelectionTarget | undefined;
   inspector: InspectorRuntimeState;
@@ -244,6 +245,7 @@ export async function dispatchReportDesignerCommand(
             ...current,
             ...ctx.pushUndoEntry(current),
             document: imported,
+            savedDocument: imported,
             selectionTarget: undefined,
             inspector: {
               ...current.inspector,
@@ -317,7 +319,12 @@ export async function dispatchReportDesignerCommand(
       }
 
       case 'report-designer:save': {
-        const exported = cloneDocument(store.getState().document);
+        const current = store.getState();
+        const exported = cloneDocument(current.document);
+        store.setState((state) => ({
+          ...state,
+          savedDocument: current.document,
+        }));
         return { ok: true, changed: false, data: exported };
       }
 

@@ -29,6 +29,7 @@ export type { ReportDesignerInternalState };
 export interface ReportDesignerCore {
   getSnapshot(): ReportDesignerRuntimeSnapshot;
   subscribe(listener: () => void): () => void;
+  initialize(): Promise<void>;
   dispatch(command: ReportDesignerCommand): Promise<ReportDesignerCommandResult>;
   getMetadata(target: ReportSelectionTarget): MetadataBag | undefined;
   setMetadata(target: ReportSelectionTarget, nextMeta: MetadataBag): void;
@@ -60,7 +61,7 @@ function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntim
   return {
     document: state.document,
     spreadsheetSyncSource: state.spreadsheetSyncSource,
-    dirty: state.undoStack.length > 0,
+    dirty: state.document !== state.savedDocument,
     selectionTarget: state.selectionTarget,
     activeMeta: meta,
     inspector: state.inspector,
@@ -97,6 +98,7 @@ export function createReportDesignerCore(
 
   const store = createStore<ReportDesignerInternalState>(() => ({
     document: initialDocument,
+    savedDocument: initialDocument,
     spreadsheetSyncSource: undefined,
     selectionTarget: initialSelectionTarget,
     inspector: {
@@ -119,6 +121,7 @@ export function createReportDesignerCore(
   let cachedSnapshot = buildSnapshot(cachedState);
   let disposed = false;
   let refreshDerivedStateController: AbortController | undefined;
+  let initializePromise: Promise<void> | undefined;
   let refreshFieldSourcesController: AbortController | undefined;
   let refreshFieldSourcesPromise: Promise<FieldSourceSnapshot[]> | undefined;
   let refreshFieldSourcesInput:
@@ -273,6 +276,39 @@ export function createReportDesignerCore(
     await refreshDerivedState();
   }
 
+  function initialize() {
+    if (disposed) {
+      return Promise.resolve();
+    }
+    if (initializePromise) {
+      return initializePromise;
+    }
+
+    store.setState((current) => ({
+      ...current,
+      inspector: {
+        ...current.inspector,
+        loading: true,
+        error: undefined,
+      },
+    }));
+
+    const promise = refreshDerivedState()
+      .then(() => {
+        const error = store.getState().inspector.error;
+        if (error !== undefined) {
+          throw error;
+        }
+      })
+      .finally(() => {
+        if (initializePromise === promise) {
+          initializePromise = undefined;
+        }
+      });
+    initializePromise = promise;
+    return promise;
+  }
+
   function pushUndoEntry(
     current: ReportDesignerInternalState,
   ): Partial<ReportDesignerInternalState> {
@@ -371,10 +407,6 @@ export function createReportDesignerCore(
     return promise;
   }
 
-  void refreshDerivedState().catch((error) => {
-    onError?.(error, { phase: 'refresh-derived-state', selectionTarget: store.getState().selectionTarget });
-  });
-
   return {
     getSnapshot() {
       const state = store.getState();
@@ -388,6 +420,8 @@ export function createReportDesignerCore(
     subscribe(listener: () => void) {
       return store.subscribe(listener);
     },
+
+    initialize,
 
     dispatch,
 

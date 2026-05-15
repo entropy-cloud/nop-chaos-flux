@@ -198,6 +198,67 @@ describe('createReportDesignerCore async behavior', () => {
     expect(asyncCore.getSnapshot().fieldSources).toEqual([{ id: 'initial', label: 'Initial', groups: [] }]);
   });
 
+  it('does not start async field-source loading during construction', () => {
+    const fieldSourceProvider: FieldSourceProvider = {
+      id: 'async-provider',
+      load: vi.fn(async () => []),
+    };
+
+    void createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        fieldSources: [{ id: 'remote', label: 'Remote', provider: 'async-provider', groups: [] }],
+      },
+      adapters: {
+        fieldSources: new Map([[fieldSourceProvider.id, fieldSourceProvider]]),
+      },
+    });
+
+    expect(fieldSourceProvider.load).not.toHaveBeenCalled();
+  });
+
+  it('initializes derived state explicitly and reuses one in-flight startup refresh', async () => {
+    let resolveLoad: ((value: FieldSourceSnapshot[]) => void) | undefined;
+    const fieldSourceProvider: FieldSourceProvider = {
+      id: 'async-provider',
+      load: vi.fn(
+        () =>
+          new Promise<FieldSourceSnapshot[]>((resolve) => {
+            resolveLoad = resolve;
+          }),
+      ),
+    };
+
+    const asyncCore = createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        fieldSources: [{ id: 'remote', label: 'Remote', provider: 'async-provider', groups: [] }],
+      },
+      adapters: {
+        fieldSources: new Map([[fieldSourceProvider.id, fieldSourceProvider]]),
+      },
+    });
+
+    expect(asyncCore.getSnapshot().inspector.loading).toBe(false);
+
+    const first = asyncCore.initialize();
+    const second = asyncCore.initialize();
+
+    expect(asyncCore.getSnapshot().inspector.loading).toBe(true);
+    expect(fieldSourceProvider.load).toHaveBeenCalledTimes(1);
+
+    resolveLoad?.([{ id: 'remote', label: 'Remote', groups: [] }]);
+
+    await expect(Promise.all([first, second])).resolves.toEqual([undefined, undefined]);
+    expect(fieldSourceProvider.load).toHaveBeenCalledTimes(1);
+    expect(asyncCore.getSnapshot().inspector.loading).toBe(false);
+    expect(asyncCore.getSnapshot().fieldSources).toEqual([
+      { id: 'remote', label: 'Remote', groups: [] },
+    ]);
+  });
+
   it('reuses the same in-flight field-source refresh during startup and explicit refresh', async () => {
     let resolveLoad: ((value: FieldSourceSnapshot[]) => void) | undefined;
     const fieldSourceProvider: FieldSourceProvider = {
@@ -221,6 +282,7 @@ describe('createReportDesignerCore async behavior', () => {
       },
     });
 
+    void asyncCore.initialize();
     const refreshPromise = asyncCore.refreshFieldSources();
     expect(fieldSourceProvider.load).toHaveBeenCalledTimes(1);
 
@@ -286,7 +348,9 @@ describe('createReportDesignerCore async behavior', () => {
         fieldSources: new Map([[fieldSourceProvider.id, fieldSourceProvider]]),
       },
       onError,
-    });
+    })
+      .initialize()
+      .catch(() => undefined);
 
     await vi.waitFor(() => {
       expect(onError).toHaveBeenCalledWith(
