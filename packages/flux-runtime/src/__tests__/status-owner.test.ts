@@ -109,6 +109,17 @@ describe('createReadonlyScopeBinding', () => {
       expect(callCount).toBe(2);
     });
 
+    it('reuses cached overlay when object summary is shallow-equal but a new reference', () => {
+      let current = { valid: true, errorCount: 0 };
+      const { binding } = createBinding('status', {}, () => current);
+
+      const vis1 = binding.readVisible();
+      current = { valid: true, errorCount: 0 };
+      const vis2 = binding.readVisible();
+
+      expect(vis2).toBe(vis1);
+    });
+
     it('reflects multiple sibling parent updates through the overlay scope', () => {
       const scope = createScopeRef({
         id: 'parent',
@@ -146,6 +157,17 @@ describe('createReadonlyScopeBinding', () => {
       expect(callCount).toBe(2);
     });
 
+    it('reuses cached materialized snapshot when object summary is shallow-equal but a new reference', () => {
+      let current = { valid: true, errorCount: 0 };
+      const { binding } = createBinding('status', {}, () => current);
+
+      const mat1 = binding.materializeVisible();
+      current = { valid: true, errorCount: 0 };
+      const mat2 = binding.materializeVisible();
+
+      expect(mat2).toBe(mat1);
+    });
+
     it('produces new cache when summary changes', () => {
       let val = 1;
       const { binding } = createBinding('s', {}, () => val);
@@ -172,6 +194,17 @@ describe('createReadonlyScopeBinding', () => {
       scope.update('x', 2);
       expect(listener).toHaveBeenCalled();
       unsub?.();
+    });
+
+    it('reuses projected store snapshot when object summary is shallow-equal but a new reference', () => {
+      let current = { valid: true, errorCount: 0 };
+      const { binding } = createBinding('status', {}, () => current);
+
+      const snapshot1 = binding.store?.getSnapshot();
+      current = { valid: true, errorCount: 0 };
+      const snapshot2 = binding.store?.getSnapshot();
+
+      expect(snapshot2).toBe(snapshot1);
     });
   });
 });

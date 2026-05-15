@@ -374,6 +374,7 @@ export function notifyFieldHidden(
   hidden: boolean,
   currentValidation: import('@nop-chaos/flux-core').CompiledFormValidationModel | undefined,
   setValue: (path: string, value: unknown) => void,
+  revalidateSubtree?: (path: string, reason?: import('@nop-chaos/flux-core').ValidationReason) => Promise<unknown>,
 ): void {
   const wasHidden = sharedState.hiddenFields.has(path);
 
@@ -391,6 +392,7 @@ export function notifyFieldHidden(
     }
   } else {
     sharedState.hiddenFields.delete(path);
+    void revalidateSubtree?.(path, 'system');
   }
 }
 

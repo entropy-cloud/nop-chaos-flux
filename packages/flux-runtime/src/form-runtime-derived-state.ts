@@ -54,6 +54,7 @@ export function buildArrayMutationContext(args: {
   formId: string;
   setLastChange: (change: import('@nop-chaos/flux-core').ScopeChange) => void;
   revalidateDependents: ArrayMutationContext['revalidateDependents'];
+  reportDependentRevalidationFailure?: ArrayMutationContext['reportDependentRevalidationFailure'];
 }): ArrayMutationContext {
   return {
     sharedState: args.sharedState,
@@ -64,5 +65,6 @@ export function buildArrayMutationContext(args: {
       return getIn(args.store.getState().values, path);
     },
     revalidateDependents: args.revalidateDependents,
+    reportDependentRevalidationFailure: args.reportDependentRevalidationFailure,
   };
 }

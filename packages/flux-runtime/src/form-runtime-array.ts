@@ -8,6 +8,10 @@ import type {
   FormRuntimeValidationRunState,
 } from './form-runtime-types.js';
 import type { ExternalErrorEntry } from './form-runtime-types.js';
+import {
+  attachDependentRevalidationFailureHandler,
+  defaultReportDependentRevalidationFailure,
+} from './form-runtime-values.js';
 
 type ArrayMutationState = FormRuntimeStoreScopeState &
   FormRuntimeInitialStateSlice &
@@ -23,6 +27,7 @@ export function remapValidationRunState(
   cancelValidationDebounce: (path: string) => void,
 ) {
   const prefix = `${arrayPath}.`;
+  const validationAbortControllers = sharedState.validationAbortControllers;
 
   for (const path of Array.from(sharedState.validationRuns.keys())) {
     if (!path.startsWith(prefix)) {
@@ -68,6 +73,37 @@ export function remapValidationRunState(
       sharedState.pendingValidationDebounces.delete(path);
       sharedState.pendingValidationDebounces.set(nextPath, pending);
     }
+  }
+
+  if (!validationAbortControllers) {
+    return;
+  }
+
+  for (const path of Array.from(validationAbortControllers.keys())) {
+    if (!path.startsWith(prefix)) {
+      continue;
+    }
+
+    const nextPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
+    const controller = validationAbortControllers.get(path);
+
+    if (!controller) {
+      continue;
+    }
+
+    validationAbortControllers.delete(path);
+
+    if (!nextPath) {
+      controller.abort();
+      continue;
+    }
+
+    if (nextPath === path) {
+      validationAbortControllers.set(path, controller);
+      continue;
+    }
+
+    validationAbortControllers.set(nextPath, controller);
   }
 }
 
@@ -184,6 +220,7 @@ export function executeArrayMutation(ctx: {
     path: string,
     reason?: import('@nop-chaos/flux-core').ValidationReason,
   ) => Promise<void>;
+  reportDependentRevalidationFailure?: (path: string, error: unknown) => void;
 }): void {
   const currentValue = ctx.getArrayValue(ctx.arrayPath);
   const currentArray = Array.isArray(currentValue) ? currentValue : [];
@@ -220,5 +257,9 @@ export function executeArrayMutation(ctx: {
   remapInitialFieldState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform);
   remapHiddenFields(ctx.sharedState.hiddenFields, ctx.arrayPath, ctx.indexTransform);
   remapExternalErrors(ctx.sharedState.externalErrors, ctx.arrayPath, ctx.indexTransform);
-  void ctx.revalidateDependents(ctx.arrayPath, 'change');
+  attachDependentRevalidationFailureHandler(
+    ctx.arrayPath,
+    ctx.revalidateDependents(ctx.arrayPath, 'change'),
+    ctx.reportDependentRevalidationFailure ?? defaultReportDependentRevalidationFailure,
+  );
 }

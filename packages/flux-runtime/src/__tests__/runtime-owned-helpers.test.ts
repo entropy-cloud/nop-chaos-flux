@@ -279,6 +279,7 @@ describe('createRuntimeOwnedFactories', () => {
     });
 
     const page = factories.createPageRuntime({ fallback: 'local' });
+    (page as PageRuntime & { __attachExternalPageStoreSync?: () => () => void }).__attachExternalPageStoreSync?.();
     const pageListener = vi.fn();
     const unsubscribe = page.store.subscribe(pageListener);
 
@@ -302,11 +303,14 @@ describe('createRuntimeOwnedFactories', () => {
   it('creates validation, surface, and form runtimes with runtime-owned hooks', async () => {
     const ownedPages = new Set<PageRuntime>();
     const ownedSurfaceRuntimes = new Set<SurfaceRuntime>();
+    const notify = vi.fn();
+    const onError = vi.fn();
     const dispatchAction = vi
       .fn()
       .mockResolvedValue({ data: { valid: false, message: 'invalid' } });
     const disposeScopeTree = vi.fn();
     const factories = createRuntimeOwnedFactories({
+      getEnv: () => ({ notify, monitor: { onError } }) as any,
       ownedPages,
       ownedSurfaceRuntimes,
       createValidationScopeRuntime: vi.fn(),
@@ -325,8 +329,10 @@ describe('createRuntimeOwnedFactories', () => {
     const parentScope = createScopeRef({ id: 'parent-scope', path: '$parent', initialData: {} });
     const validation: CompiledFormValidationModel = {
       behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
-      order: ['email'],
-      dependents: {},
+      order: ['email', 'confirm'],
+      dependents: {
+        email: ['confirm'],
+      },
       rootPath: '',
       nodes: {
         '': {
@@ -348,6 +354,16 @@ describe('createRuntimeOwnedFactories', () => {
               dependencyPaths: [],
             },
           ],
+          children: [],
+          parent: '',
+        },
+        confirm: {
+          path: 'confirm',
+          kind: 'field',
+          controlType: 'input-text',
+          label: 'Confirm',
+          behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+          rules: [],
           children: [],
           parent: '',
         },
@@ -383,6 +399,25 @@ describe('createRuntimeOwnedFactories', () => {
     expect(ownedSurfaceRuntimes.has(surfaceRuntime)).toBe(true);
     surfaceRuntime.close(surfaceId);
     expect(disposeScopeTree).toHaveBeenCalledWith('surface-scope');
+
+    form.validateField = vi.fn(async (path: string) => {
+      if (path === 'confirm') {
+        throw new Error('dependent validation failed');
+      }
+
+      return { ok: true, errors: [] } as any;
+    }) as typeof form.validateField;
+    form.setValue('email', 'next@example.com');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: 'action',
+        details: expect.objectContaining({ operation: 'dependent-revalidation', path: 'email' }),
+      }),
+    );
+    expect(notify).toHaveBeenCalledWith('error', 'Dependent revalidation failed for "email".');
   });
 });
 

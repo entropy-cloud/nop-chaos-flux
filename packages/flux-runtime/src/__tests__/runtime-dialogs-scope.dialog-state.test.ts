@@ -71,7 +71,7 @@ describe('createRendererRuntime - dialog state', () => {
     expect(dialogState.validationOwner?.scopeId).toBe(`${dialogState.id}-validation`);
   });
 
-  it('keeps action-opened surface validation owners active even without a compiled validation plan', async () => {
+  it('keeps action-opened surface validation owners bootstrapping until a compiled validation plan exists', async () => {
     const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
@@ -100,10 +100,10 @@ describe('createRendererRuntime - dialog state', () => {
     expect(result.ok).toBe(true);
     const dialogState = surfaceRuntime.store.getState().entries[0];
     expect(dialogState.validationOwner?.getScopeState()).toMatchObject({
-      lifecycleState: 'active',
-      ready: true,
+      lifecycleState: 'bootstrapping',
+      ready: false,
     });
-    await expect(dialogState.validationOwner?.validateAll('submit')).resolves.toMatchObject({ ok: true });
+    expect(dialogState.validationOwner?.validation).toBeUndefined();
   });
 
   it('activates action-opened surface validation owners when the opened body compiles a validation plan', async () => {

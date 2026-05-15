@@ -303,4 +303,55 @@ describe('owner validation lifecycle contracts', () => {
       ],
     });
   });
+
+  it('direct commit validateSubtree supersedes lower-priority async validation in the same subtree', async () => {
+    let releaseBlur: ((error: ReturnType<typeof realValidateRule> | undefined) => void) | undefined;
+    const executeValidationRule = vi.fn().mockImplementation(async (_compiledRule, _rule, field, _scope, signal) => {
+      return await new Promise((resolve, reject) => {
+        const release = (value: ReturnType<typeof realValidateRule> | undefined) => {
+          if (signal?.aborted) {
+            const error = new Error('aborted');
+            (error as Error & { name: string }).name = 'AbortError';
+            reject(error);
+            return;
+          }
+
+          resolve(value);
+        };
+
+        if (field.path === 'profile.name' && !releaseBlur) {
+          releaseBlur = release;
+        } else {
+          resolve(undefined);
+        }
+      });
+    });
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      parentScope: createStubScope({ profile: { name: 'Alice' } }),
+      initialValues: { profile: { name: 'Alice' } },
+      validation: makeFormModel({
+        profile: makeNode('profile'),
+        'profile.name': makeNode('profile.name', { async: true }),
+      }),
+      validateRule: realValidateRule,
+      executeValidationRule,
+    });
+
+    const blurPromise = runtime.validateField('profile.name', 'blur');
+    await Promise.resolve();
+    expect(runtime.getScopeState()).toMatchObject({ validating: true, ready: false });
+
+    const commitPromise = runtime.validateSubtree('profile', 'commit');
+    await Promise.resolve();
+
+    releaseBlur?.({ path: 'profile.name', rule: 'async', message: 'stale blur error' } as any);
+    await Promise.resolve();
+
+    expect(runtime.getFieldState('profile.name').errors).toEqual([]);
+
+    await expect(blurPromise).rejects.toMatchObject({ name: 'AbortError' });
+    await expect(commitPromise).resolves.toMatchObject({ ok: true, errors: [] });
+    expect(runtime.getFieldState('profile.name').errors).toEqual([]);
+  });
 });

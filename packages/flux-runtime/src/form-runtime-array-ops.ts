@@ -21,6 +21,7 @@ export interface ArrayMutationContext {
     path: string,
     reason?: import('@nop-chaos/flux-core').ValidationReason,
   ) => Promise<void>;
+  reportDependentRevalidationFailure?: (path: string, error: unknown) => void;
 }
 
 export function appendValueOp(ctx: ArrayMutationContext, path: string, value: unknown): void {
@@ -35,6 +36,7 @@ export function appendValueOp(ctx: ArrayMutationContext, path: string, value: un
     indexTransform: (index) => index,
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
     revalidateDependents: ctx.revalidateDependents,
+    reportDependentRevalidationFailure: ctx.reportDependentRevalidationFailure,
   });
 }
 
@@ -50,6 +52,7 @@ export function prependValueOp(ctx: ArrayMutationContext, path: string, value: u
     indexTransform: (index) => index + 1,
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
     revalidateDependents: ctx.revalidateDependents,
+    reportDependentRevalidationFailure: ctx.reportDependentRevalidationFailure,
   });
 }
 
@@ -73,6 +76,7 @@ export function insertValueOp(
     indexTransform: (candidate) => (candidate >= insertIndex ? candidate + 1 : candidate),
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
     revalidateDependents: ctx.revalidateDependents,
+    reportDependentRevalidationFailure: ctx.reportDependentRevalidationFailure,
   });
 }
 
@@ -101,6 +105,7 @@ export function removeValueOp(ctx: ArrayMutationContext, path: string, index: nu
     },
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
     revalidateDependents: ctx.revalidateDependents,
+    reportDependentRevalidationFailure: ctx.reportDependentRevalidationFailure,
   });
 }
 
@@ -148,6 +153,7 @@ export function moveValueOp(
     },
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
     revalidateDependents: ctx.revalidateDependents,
+    reportDependentRevalidationFailure: ctx.reportDependentRevalidationFailure,
   });
 }
 
@@ -186,6 +192,7 @@ export function swapValueOp(ctx: ArrayMutationContext, path: string, a: number, 
     },
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
     revalidateDependents: ctx.revalidateDependents,
+    reportDependentRevalidationFailure: ctx.reportDependentRevalidationFailure,
   });
 }
 

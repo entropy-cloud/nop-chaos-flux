@@ -207,6 +207,7 @@ export function createRendererRuntime(input: {
   } = {};
   const runtimeOwnedFactories = createRuntimeOwnedFactories({
     pageStore: input.pageStore,
+    getEnv,
     ownedPages,
     ownedSurfaceRuntimes,
     ownedValidationScopes,
@@ -518,6 +519,7 @@ export function createRendererRuntime(input: {
       importManager.dispose({ actionScopes: Array.from(ownedActionScopes) });
       importStack.dispose();
       ownedActionScopes.clear();
+      actionDispatcher.dispose();
       executeApiRequest.dispose?.();
       if (ownsModuleCache) {
         moduleCache.clear();

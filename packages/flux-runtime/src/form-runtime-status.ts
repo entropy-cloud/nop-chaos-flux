@@ -7,6 +7,46 @@ import type {
 import { validationErrorsEqual } from '@nop-chaos/flux-core';
 import { createReadonlyScopeBinding } from './status-owner.js';
 
+type FormStoreStateWithSummary = FormStoreState & {
+  summary?: {
+    errorCount: number;
+    dirtyCount: number;
+    touchedCount: number;
+    visitedCount: number;
+    validatingCount: number;
+  };
+};
+
+function summarizeFieldStates(
+  fieldStates: FormStoreState['fieldStates'],
+): NonNullable<FormStoreStateWithSummary['summary']> {
+  let errorCount = 0;
+  let dirtyCount = 0;
+  let touchedCount = 0;
+  let visitedCount = 0;
+  let validatingCount = 0;
+
+  for (const fieldState of Object.values(fieldStates)) {
+    errorCount += fieldState.errors?.length ?? 0;
+    if (fieldState.dirty) dirtyCount += 1;
+    if (fieldState.touched) touchedCount += 1;
+    if (fieldState.visited) visitedCount += 1;
+    if (fieldState.validating) validatingCount += 1;
+  }
+
+  return {
+    errorCount,
+    dirtyCount,
+    touchedCount,
+    visitedCount,
+    validatingCount,
+  };
+}
+
+function getFormStoreSummary(state: FormStoreState): NonNullable<FormStoreStateWithSummary['summary']> {
+  return (state as FormStoreStateWithSummary).summary ?? summarizeFieldStates(state.fieldStates);
+}
+
 export function hasPendingValidationWork(
   state: FormStoreState,
   pendingValidationDebounceCount = 0,
@@ -15,7 +55,7 @@ export function hasPendingValidationWork(
     return true;
   }
 
-  return Object.values(state.fieldStates).some((fieldState) => fieldState.validating === true);
+  return getFormStoreSummary(state).validatingCount > 0;
 }
 
 export { validationErrorsEqual };
@@ -26,19 +66,11 @@ export function buildFormStatusSummary(
   name: string | undefined,
   pendingValidationDebounceCount = 0,
 ): FormStatusSummary {
-  let errorCount = 0;
-  let dirty = false;
-  let touched = false;
-  let visited = false;
-
-  for (const fieldState of Object.values(state.fieldStates)) {
-    if (fieldState.errors) {
-      errorCount += fieldState.errors.length;
-    }
-    if (fieldState.dirty) dirty = true;
-    if (fieldState.touched) touched = true;
-    if (fieldState.visited) visited = true;
-  }
+  const summaryState = getFormStoreSummary(state);
+  const errorCount = summaryState.errorCount;
+  const dirty = summaryState.dirtyCount > 0;
+  const touched = summaryState.touchedCount > 0;
+  const visited = summaryState.visitedCount > 0;
 
   const validating = hasPendingValidationWork(state, pendingValidationDebounceCount);
   const hasErrors = errorCount > 0;

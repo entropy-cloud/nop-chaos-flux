@@ -10,6 +10,43 @@ import {
 import { textRenderer, env } from './test-fixtures.js';
 
 describe('createRendererRuntime', () => {
+  it('settles pending debounced dispatch promises when runtime is disposed', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const registry = createRendererRegistry([textRenderer]);
+      const runtime = createRendererRuntime({
+        registry,
+        env,
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+      });
+      const page = runtime.createPageRuntime({ message: 'Hello' });
+
+      const resultPromise = runtime.dispatch(
+        {
+          action: 'setValue',
+          args: {
+            path: 'message',
+            value: 'World',
+          },
+          debounce: 25,
+        },
+        {
+          runtime,
+          scope: page.scope,
+          page,
+        },
+      );
+
+      runtime.dispose();
+
+      await expect(resultPromise).resolves.toMatchObject({ ok: false, cancelled: true });
+      expect(page.store.getState().data.message).toBe('Hello');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('updates page scope through setValue action', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({

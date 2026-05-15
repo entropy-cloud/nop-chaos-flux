@@ -18,14 +18,81 @@ export function createReadonlyScopeBinding<TSummary>(
   bindingKey: string,
   getSummary: () => TSummary,
 ): ScopeRef {
-  const getSummaryVersion = (summary: TSummary) => {
+  type SummaryVersion =
+    | TSummary
+    | {
+        keys: readonly string[];
+        values: readonly unknown[];
+      };
 
+  const summaryVersionEqual = (left: SummaryVersion, right: SummaryVersion): boolean => {
+    if (Object.is(left, right)) {
+      return true;
+    }
+
+    if (!left || !right || typeof left !== 'object' || typeof right !== 'object') {
+      return false;
+    }
+
+    const leftRecord = left as { keys?: readonly string[]; values?: readonly unknown[] };
+    const rightRecord = right as { keys?: readonly string[]; values?: readonly unknown[] };
+    if (!leftRecord.keys || !rightRecord.keys || !leftRecord.values || !rightRecord.values) {
+      return false;
+    }
+
+    if (leftRecord.keys.length !== rightRecord.keys.length) {
+      return false;
+    }
+
+    for (let index = 0; index < leftRecord.keys.length; index += 1) {
+      if (leftRecord.keys[index] !== rightRecord.keys[index]) {
+        return false;
+      }
+      if (!Object.is(leftRecord.values[index], rightRecord.values[index])) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const buildSummaryVersion = (summary: TSummary): SummaryVersion => {
     if (!summary || typeof summary !== 'object') {
       return summary;
     }
 
     const record = summary as Record<string, unknown>;
-    return JSON.stringify(Object.keys(record).sort().map((key) => [key, record[key]]));
+    const keys = Object.keys(record).sort();
+    return {
+      keys,
+      values: keys.map((key) => record[key]),
+    };
+  };
+
+  let lastVersionedSummary: TSummary | undefined;
+  let lastStableSummaryVersion: SummaryVersion | undefined;
+
+  const getSummaryVersion = (summary: TSummary): SummaryVersion => {
+    if (
+      lastStableSummaryVersion !== undefined &&
+      lastVersionedSummary !== undefined &&
+      Object.is(lastVersionedSummary, summary)
+    ) {
+      return lastStableSummaryVersion;
+    }
+
+    const nextVersion = buildSummaryVersion(summary);
+    if (
+      lastStableSummaryVersion !== undefined &&
+      summaryVersionEqual(lastStableSummaryVersion, nextVersion)
+    ) {
+      lastVersionedSummary = summary;
+      return lastStableSummaryVersion;
+    }
+
+    lastVersionedSummary = summary;
+    lastStableSummaryVersion = nextVersion;
+    return nextVersion;
   };
   const buildOwnSnapshot = () => ({
     ...scope.readOwn(),
@@ -83,7 +150,11 @@ export function createReadonlyScopeBinding<TSummary>(
       const parentVisible = scope.readVisible();
       const summary = getSummary();
       const summaryVersion = getSummaryVersion(summary);
-      if (cachedVisible && lastParentVisible === parentVisible && lastSummaryVersionForVisible === summaryVersion) {
+      if (
+        cachedVisible &&
+        lastParentVisible === parentVisible &&
+        summaryVersionEqual(lastSummaryVersionForVisible as SummaryVersion, summaryVersion)
+      ) {
         return cachedVisible;
       }
       lastParentVisible = parentVisible;
@@ -97,7 +168,11 @@ export function createReadonlyScopeBinding<TSummary>(
       const parentMat = scope.materializeVisible();
       const summary = getSummary();
       const summaryVersion = getSummaryVersion(summary);
-      if (cachedMat && lastParentMat === parentMat && lastSummaryVersionForMat === summaryVersion) {
+      if (
+        cachedMat &&
+        lastParentMat === parentMat &&
+        summaryVersionEqual(lastSummaryVersionForMat as SummaryVersion, summaryVersion)
+      ) {
         return cachedMat;
       }
       lastParentMat = parentMat;

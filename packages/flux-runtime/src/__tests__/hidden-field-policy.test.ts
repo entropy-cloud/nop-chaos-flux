@@ -265,6 +265,28 @@ describe('hidden field validation participation', () => {
     expect(validate).not.toHaveBeenCalled();
   });
 
+  it('revalidates a revealed field subtree with system reason when hidden participation is restored', async () => {
+    const model = makeFormModel({
+      email: makeNode('email', { required: true }),
+    });
+    const { runtime, validateRule } = makeRuntime(model, {});
+
+    validateRule.mockReturnValue({
+      path: 'email',
+      message: 'Required',
+      rule: 'required',
+    });
+
+    runtime.notifyFieldHidden('email', true);
+    runtime.notifyFieldHidden('email', false);
+
+    await vi.waitFor(() => {
+      expect(runtime.getError('email')).toEqual([
+        expect.objectContaining({ path: 'email', rule: 'required' }),
+      ]);
+    });
+  });
+
   it('validateForm skips hidden fields with default policy', async () => {
     const model = makeFormModel({
       name: makeNode('name', { required: true }),

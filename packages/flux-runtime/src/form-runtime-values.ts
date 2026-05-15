@@ -22,6 +22,30 @@ export function defaultReportDependentRevalidationFailure(path: string, error: u
   console.warn(`[form-runtime] dependent revalidation failed for "${path}"`, error);
 }
 
+export function createDependentRevalidationFailureHandler(input: {
+  notify?: (level: 'info' | 'success' | 'warning' | 'error', message: string) => void;
+  onError?: (payload: import('@nop-chaos/flux-core').ErrorMonitorPayload) => void;
+  source?: string;
+}): (path: string, error: unknown) => void {
+  return (path, error) => {
+    const message = `Dependent revalidation failed for "${path}".`;
+    input.onError?.({
+      phase: 'action',
+      error,
+      details: {
+        source: input.source ?? 'form-runtime',
+        operation: 'dependent-revalidation',
+        path,
+      },
+    });
+    input.notify?.('error', message);
+
+    if (!input.onError && !input.notify) {
+      defaultReportDependentRevalidationFailure(path, error);
+    }
+  };
+}
+
 export function attachDependentRevalidationFailureHandler(
   path: string,
   result: Promise<void> | void,

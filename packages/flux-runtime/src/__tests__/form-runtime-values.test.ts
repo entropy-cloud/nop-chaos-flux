@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   attachDependentRevalidationFailureHandler,
+  createDependentRevalidationFailureHandler,
   executeSetValues,
 } from '../form-runtime-values.js';
 import { createFormStore } from '../form-store.js';
@@ -254,6 +255,29 @@ describe('executeSetValues', () => {
     );
 
     warn.mockRestore();
+  });
+
+  it('routes dependent revalidation failures into monitor and notify when a formal handler exists', async () => {
+    const notify = vi.fn();
+    const onError = vi.fn();
+    const reportFailure = createDependentRevalidationFailureHandler({ notify, onError });
+
+    attachDependentRevalidationFailureHandler('a', Promise.reject(new Error('boom')), reportFailure);
+
+    await Promise.resolve();
+
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: 'action',
+        error: expect.any(Error),
+        details: expect.objectContaining({
+          operation: 'dependent-revalidation',
+          path: 'a',
+          source: 'form-runtime',
+        }),
+      }),
+    );
+    expect(notify).toHaveBeenCalledWith('error', 'Dependent revalidation failed for "a".');
   });
 
   it('clears external errors and rebuilds store errors', () => {

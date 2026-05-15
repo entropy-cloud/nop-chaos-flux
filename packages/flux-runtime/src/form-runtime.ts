@@ -228,6 +228,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       formId,
       setLastChange,
       revalidateDependents: ownerRuntime.revalidateDependents,
+      reportDependentRevalidationFailure: inputValue.reportDependentRevalidationFailure,
     });
   }
 
@@ -403,6 +404,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     notifyFieldHidden(path, hidden) {
       notifyFieldHidden(sharedState, path, hidden, currentValidation, (p, v) =>
         thisForm.setValue(p, v),
+        (targetPath, reason) => thisForm.validateSubtree(targetPath, reason),
       );
     },
 
@@ -546,7 +548,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       attachDependentRevalidationFailureHandler(
         name,
         ownerRuntime.revalidateDependents(name, 'change'),
-        defaultReportDependentRevalidationFailure,
+        inputValue.reportDependentRevalidationFailure ?? defaultReportDependentRevalidationFailure,
       );
     },
 
@@ -559,6 +561,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           clearExternalErrorsForPath: ownerRuntime.clearExternalErrorsForPath,
           rebuildStoreErrorsFromExternal: ownerRuntime.rebuildStoreErrorsFromExternal,
           revalidateDependents: ownerRuntime.revalidateDependents,
+          reportDependentRevalidationFailure: inputValue.reportDependentRevalidationFailure,
         },
         values,
       );

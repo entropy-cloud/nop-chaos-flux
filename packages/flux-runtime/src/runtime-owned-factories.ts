@@ -17,6 +17,7 @@ import { createManagedPageRuntime } from './page-runtime.js';
 import { createManagedSurfaceRuntime } from './surface-runtime.js';
 import { executeRuntimeValidationRule } from './runtime-action-helpers.js';
 import { validateRule } from './validation-runtime.js';
+import { createDependentRevalidationFailureHandler } from './form-runtime-values.js';
 
 function createValidationStoreView(
   store: import('@nop-chaos/flux-core').FormStoreApi,
@@ -85,6 +86,7 @@ function createManagedValidationScopeRuntime(formRuntime: FormRuntime): Validati
 
 export function createRuntimeOwnedFactories(input: {
   pageStore?: PageStoreApi;
+  getEnv?: () => import('@nop-chaos/flux-core').RendererEnv;
   ownedPages: Set<PageRuntime>;
   ownedSurfaceRuntimes: Set<SurfaceRuntime>;
   ownedValidationScopes?: Set<ValidationScopeRuntime>;
@@ -110,6 +112,73 @@ export function createRuntimeOwnedFactories(input: {
   const ownedFormRuntimes = input.ownedFormRuntimes ?? new Set<FormRuntime>();
   const pageStoreSyncCleanups = new Map<PageRuntime, Array<() => void>>();
 
+  function attachPageRuntime(page: PageRuntime) {
+    if (pageStoreSyncCleanups.has(page)) {
+      return () => undefined;
+    }
+
+    const externalPageStore = input.pageStore;
+    const syncCleanups: Array<() => void> = [];
+
+    if (externalPageStore) {
+      const pageStore = page.store;
+      const externalData = externalPageStore.getState().data;
+      if (externalData !== pageStore.getState().data) {
+        pageStore.setData(externalData);
+      }
+
+      let syncingFromPage = false;
+      let syncingFromExternalPageStore = false;
+
+      const syncExternalPageStoreToPage = () => {
+        if (syncingFromPage) {
+          return;
+        }
+
+        const nextExternalData = externalPageStore.getState().data;
+        if (nextExternalData === pageStore.getState().data) {
+          return;
+        }
+
+        syncingFromExternalPageStore = true;
+        try {
+          pageStore.setData(nextExternalData);
+        } finally {
+          syncingFromExternalPageStore = false;
+        }
+      };
+
+      const syncPageToExternalPageStore = () => {
+        if (syncingFromExternalPageStore) {
+          return;
+        }
+
+        const pageData = pageStore.getState().data;
+        if (pageData === externalPageStore.getState().data) {
+          return;
+        }
+
+        syncingFromPage = true;
+        try {
+          externalPageStore.setData(pageData);
+        } finally {
+          syncingFromPage = false;
+        }
+      };
+
+      syncCleanups.push(externalPageStore.subscribe(syncExternalPageStoreToPage));
+      syncCleanups.push(pageStore.subscribe(syncPageToExternalPageStore));
+    }
+
+    pageStoreSyncCleanups.set(page, syncCleanups);
+    return () => {
+      for (const cleanup of pageStoreSyncCleanups.get(page) ?? []) {
+        cleanup();
+      }
+      pageStoreSyncCleanups.delete(page);
+    };
+  }
+
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
     const externalPageStore = input.pageStore;
     const initialData = externalPageStore?.getState().data ?? data;
@@ -119,11 +188,10 @@ export function createRuntimeOwnedFactories(input: {
       scopePath: '$page',
       initialValues: initialData,
       existingStore: validationStore,
-      initialLifecycleState: 'active',
+      initialLifecycleState: 'bootstrapping',
     });
     let refreshTick = 0;
     const refreshListeners = new Set<() => void>();
-    const syncCleanups: Array<() => void> = [];
     const pageStore: PageStoreApi = {
       getState() {
         return {
@@ -153,64 +221,16 @@ export function createRuntimeOwnedFactories(input: {
       },
     };
 
-    let syncingFromValidation = false;
-    let syncingFromExternalPageStore = false;
-
-    if (externalPageStore) {
-      const externalData = externalPageStore.getState().data;
-      if (externalData !== validationStore.getState().values) {
-        validationStore.setValues(externalData);
-      }
-
-      const syncExternalPageStoreToValidation = () => {
-        if (syncingFromValidation) {
-          return;
-        }
-
-        const pageData = externalPageStore.getState().data;
-        if (pageData === validationStore.getState().values) {
-          return;
-        }
-
-        syncingFromExternalPageStore = true;
-        try {
-          validationStore.setValues(pageData);
-        } finally {
-          syncingFromExternalPageStore = false;
-        }
-      };
-
-      const syncValidationToExternalPageStore = () => {
-        if (syncingFromExternalPageStore) {
-          return;
-        }
-
-        const validationData = validationStore.getState().values;
-        if (validationData === externalPageStore.getState().data) {
-          return;
-        }
-
-        syncingFromValidation = true;
-        try {
-          externalPageStore.setData(validationData);
-        } finally {
-          syncingFromValidation = false;
-        }
-      };
-
-      syncCleanups.push(externalPageStore.subscribe(syncExternalPageStoreToValidation));
-      syncCleanups.push(validationStore.subscribe(syncValidationToExternalPageStore));
-    }
-
     const page = createManagedPageRuntime({
       data: initialData,
       pageStore,
       validationOwner: pageValidation,
       scope: pageValidation.scope,
     });
+    (page as PageRuntime & { __attachExternalPageStoreSync?: () => () => void }).__attachExternalPageStoreSync =
+      () => attachPageRuntime(page);
 
     input.ownedPages.add(page);
-    pageStoreSyncCleanups.set(page, syncCleanups);
     return page;
   }
 
@@ -273,8 +293,15 @@ export function createRuntimeOwnedFactories(input: {
     statusPath?: string;
     valuesPath?: string;
   }): FormRuntime {
+    const reportDependentRevalidationFailure = createDependentRevalidationFailureHandler({
+      notify: input.getEnv?.().notify,
+      onError: input.getEnv?.().monitor?.onError,
+      source: 'form-runtime',
+    });
+
     const formRuntime = createManagedFormRuntime({
       ...inputValue,
+      reportDependentRevalidationFailure,
       executeValidationRule: (compiledRule, rule, field, scope, signal) =>
         executeRuntimeValidationRule(compiledRule, rule, field, scope, signal, {
           dispatch: (action, ctx) => input.dispatchAction(action, ctx),

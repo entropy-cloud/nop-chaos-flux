@@ -224,6 +224,43 @@ describe('buildFormStatusSummary edge cases', () => {
     );
   });
 
+  it('prefers incremental summary counters over broad field-state scanning when available', () => {
+    const fieldStates = new Proxy(
+      {},
+      {
+        ownKeys() {
+          throw new Error('should not enumerate fieldStates');
+        },
+      },
+    ) as FormStoreState['fieldStates'];
+
+    const summaryWithCounters = buildFormStatusSummary(
+      {
+        ...makeState({ fieldStates } as Partial<FormStoreState>),
+        summary: {
+          errorCount: 2,
+          dirtyCount: 1,
+          touchedCount: 0,
+          visitedCount: 1,
+          validatingCount: 1,
+        },
+      } as FormStoreState,
+      'f1',
+      'profile',
+    );
+
+    expect(summaryWithCounters).toEqual(
+      expect.objectContaining({
+        errorCount: 2,
+        hasErrors: true,
+        dirty: true,
+        touched: false,
+        visited: true,
+        validating: true,
+      }),
+    );
+  });
+
   it('submitAttempted from state is NOT propagated to summary', () => {
     const summary = buildFormStatusSummary(
       makeState({ submitAttempted: true }),

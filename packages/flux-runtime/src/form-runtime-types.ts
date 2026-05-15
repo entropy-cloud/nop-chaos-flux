@@ -44,6 +44,7 @@ export interface CreateManagedFormRuntimeInput {
     field: CompiledFormValidationField,
     scope: ScopeRef,
   ) => ValidationError | undefined;
+  reportDependentRevalidationFailure?: (path: string, error: unknown) => void;
 }
 
 export interface InitialFieldState {

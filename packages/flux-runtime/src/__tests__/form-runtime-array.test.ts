@@ -63,6 +63,53 @@ describe('remapValidationRunState', () => {
     expect(pendingDebounces.has('items.2.field')).toBe(false);
   });
 
+  it('remaps validation abort controllers with shifted array paths', () => {
+    const validationRuns = new Map<string, number>();
+    const pendingDebounces = new Map<string, PendingValidationDebounce>();
+    const validationAbortControllers = new Map<string, AbortController>([
+      ['items.1.field', new AbortController()],
+      ['items.2.field', new AbortController()],
+    ]);
+
+    remapValidationRunState(
+      {
+        validationRuns,
+        pendingValidationDebounces: pendingDebounces,
+        validationAbortControllers,
+      } as FormRuntimeValidationRunState,
+      'items',
+      (i) => i - 1,
+      vi.fn(),
+    );
+
+    expect(validationAbortControllers.has('items.0.field')).toBe(true);
+    expect(validationAbortControllers.has('items.1.field')).toBe(true);
+    expect(validationAbortControllers.has('items.2.field')).toBe(false);
+  });
+
+  it('aborts validation controllers when the remapped array path is removed', () => {
+    const validationRuns = new Map<string, number>();
+    const pendingDebounces = new Map<string, PendingValidationDebounce>();
+    const removedController = new AbortController();
+    const validationAbortControllers = new Map<string, AbortController>([
+      ['items.2.field', removedController],
+    ]);
+
+    remapValidationRunState(
+      {
+        validationRuns,
+        pendingValidationDebounces: pendingDebounces,
+        validationAbortControllers,
+      } as FormRuntimeValidationRunState,
+      'items',
+      () => undefined,
+      vi.fn(),
+    );
+
+    expect(removedController.signal.aborted).toBe(true);
+    expect(validationAbortControllers.size).toBe(0);
+  });
+
   it('cancels debounces when transform returns undefined', () => {
     const validationRuns = new Map<string, number>();
     const cancelFn = vi.fn();
@@ -409,6 +456,32 @@ describe('executeArrayMutation', () => {
     });
 
     expect(Array.from(shared.hiddenFields)).toEqual(['items.1.name']);
+  });
+
+  it('remaps validation controllers when array indices shift', () => {
+    const shared = createMutationState({ items: ['a', 'b', 'c'] });
+    const shiftedController = new AbortController();
+    const removedController = new AbortController();
+    shared.validationAbortControllers.set('items.1.name', shiftedController);
+    shared.validationAbortControllers.set('items.2.name', removedController);
+
+    executeArrayMutation({
+      sharedState: shared,
+      scope: shared.scope,
+      formId: 'test-form',
+      setLastChange: vi.fn(),
+      getArrayValue: (path) => shared.store.getState().values[path],
+      arrayPath: 'items',
+      arrayOperation: (arr) => [...arr.slice(0, 1), ...arr.slice(2)],
+      indexTransform: (i) => (i < 1 ? i : i > 1 ? i - 1 : undefined),
+      cancelValidationDebounce: vi.fn(),
+      revalidateDependents: vi.fn(),
+    });
+
+    expect(shiftedController.signal.aborted).toBe(true);
+    expect(removedController.signal.aborted).toBe(false);
+    expect(shared.validationAbortControllers.has('items.1.name')).toBe(true);
+    expect(shared.validationAbortControllers.has('items.2.name')).toBe(false);
   });
 
   it('remaps external errors when array indices shift', () => {

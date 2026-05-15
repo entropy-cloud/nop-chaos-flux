@@ -210,9 +210,13 @@ export function buildFormOwnerRuntime(input: {
     return computeScopeState();
   }
 
-  function supersedeLowerPriorityWork(): void {
+  function supersedeLowerPriorityWork(prefix?: string): void {
     const allPaths = Array.from(input.sharedState.validationRuns.keys());
     for (const path of allPaths) {
+      if (prefix && path !== prefix && !path.startsWith(`${prefix}.`)) {
+        continue;
+      }
+
       input.sharedState.validationRuns.set(
         path,
         (input.sharedState.validationRuns.get(path) ?? 0) + 1,
@@ -333,6 +337,10 @@ export function buildFormOwnerRuntime(input: {
   }
 
   async function validateForm(reason?: ValidationReason) {
+    if (reason === 'submit' || reason === 'commit') {
+      supersedeLowerPriorityWork();
+    }
+
     const currentValidation = input.getCurrentValidation();
 
     if (!currentValidation) {
@@ -495,6 +503,10 @@ export function buildFormOwnerRuntime(input: {
   }
 
   async function validateSubtree(path: string, reason?: ValidationReason) {
+    if (reason === 'submit' || reason === 'commit') {
+      supersedeLowerPriorityWork(path);
+    }
+
     const currentValidation = input.getCurrentValidation();
 
     if (!currentValidation) {

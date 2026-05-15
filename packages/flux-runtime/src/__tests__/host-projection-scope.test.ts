@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '../index.js';
@@ -64,5 +64,41 @@ describe('createRendererRuntime host projection scope', () => {
       host: { status: 'ready' },
       local: { note: 'ok' },
     });
+  });
+
+  it('publishes nested changed paths when replacing projected host snapshots', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ pageValue: 'root' });
+    const hostScope = runtime.createHostProjectionScope({
+      parentScope: page.scope,
+      projection: {
+        designer: {
+          selection: { kind: 'node', id: 'n1' },
+          status: 'ready',
+        },
+      },
+      path: '$.body[0]',
+      scopeLabel: 'host',
+    });
+    const listener = vi.fn<(change: any) => void>();
+    hostScope.store?.subscribe(listener);
+
+    hostScope.replace?.({
+      designer: {
+        selection: { kind: 'edge', id: 'e1' },
+        status: 'ready',
+      },
+    });
+
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'replace',
+        paths: ['designer.selection.id', 'designer.selection.kind'],
+      }),
+    );
   });
 });
