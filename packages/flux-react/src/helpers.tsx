@@ -161,6 +161,9 @@ export function createHelpers(input: {
     createScope(patch, options) {
       return input.runtime.createChildScope(input.scope, patch, options);
     },
+    disposeScope(scopeId) {
+      input.runtime.disposeScope(scopeId);
+    },
     dispatch,
     executeSource(source, options) {
       return input.runtime.executeSource({

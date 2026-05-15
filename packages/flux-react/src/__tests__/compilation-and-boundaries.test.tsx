@@ -133,6 +133,109 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     consoleSpy.mockRestore();
   });
 
+  it('rejects __xui_actions__ imports without pre-registering a shared-scope placeholder', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        importLoader: {
+          load: vi.fn(async () => ({
+            createNamespace: () => ({
+              kind: 'import' as const,
+              invoke: async () => ({ ok: true }),
+            }),
+          })),
+        },
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const actionScope = createActionScope({ id: 'root-import-scope' });
+    const compiled = runtime.compile({
+      type: 'text',
+      text: 'Imports',
+      'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+    } as any);
+    const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <NodeRenderer node={root} scope={page.scope} actionScope={actionScope} />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    expect(screen.getByText('Imports')).toBeTruthy();
+    expect(actionScope.listNamespaces()).not.toContain('__xui_actions__');
+  });
+
+  it('keeps ancestor named actions visible across import-owned subtrees', async () => {
+    const dispatchSpy = vi.fn(async () => ({ ok: true as const }));
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => ({ ok: true }),
+        }),
+      })),
+    };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: { ...env, importLoader },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const rootActionScope = createActionScope({ id: 'root-action-scope' });
+    const parentProvider = fluxCore.createNamedActionProvider(
+      {
+        inheritedAction: {
+          nodes: [
+            {
+              action: 'showToast',
+              payload: {},
+              targeting: {},
+              control: {},
+              source: { action: 'showToast' },
+            },
+          ],
+          isFullyStatic: false,
+        },
+      },
+      rootActionScope.parent,
+      dispatchSpy,
+    );
+    rootActionScope.registerNamespace('__xui_actions__', parentProvider);
+    const compiled = runtime.compile({
+      type: 'text',
+      text: 'Imports',
+      'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+    } as any);
+    const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+
+    render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <NodeRenderer node={root} scope={page.scope} actionScope={rootActionScope} />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Imports')).toBeTruthy();
+    });
+
+    const resolved = rootActionScope.resolve('__xui_actions__:inheritedAction');
+    expect(resolved).toBeTruthy();
+
+    await resolved!.provider.invoke('inheritedAction', undefined, {
+      runtime,
+      scope: page.scope,
+      actionScope: rootActionScope,
+    });
+
+    expect(dispatchSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps the no-class-alias path off alias merge and resolution work', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),

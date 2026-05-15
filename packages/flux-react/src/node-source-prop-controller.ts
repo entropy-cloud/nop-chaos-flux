@@ -71,6 +71,7 @@ function collectNestedSourceEntries(
   value: unknown,
   path: string,
   entries: ResolvedSourceEntry[],
+  visited: Set<object>,
 ) {
   if (isSourceSchema(value)) {
     entries.push({
@@ -85,15 +86,20 @@ function collectNestedSourceEntries(
     return;
   }
 
+  if (visited.has(value)) {
+    return;
+  }
+  visited.add(value);
+
   if (Array.isArray(value)) {
     for (let index = 0; index < value.length; index += 1) {
-      collectNestedSourceEntries(value[index], `${path}.${index}`, entries);
+      collectNestedSourceEntries(value[index], `${path}.${index}`, entries, visited);
     }
     return;
   }
 
   for (const [key, child] of Object.entries(value)) {
-    collectNestedSourceEntries(child, `${path}.${key}`, entries);
+    collectNestedSourceEntries(child, `${path}.${key}`, entries, visited);
   }
 }
 
@@ -118,11 +124,12 @@ function collectSourceEntries(
   });
 
   const topLevelSourceKeys = new Set(entries.map((entry) => entry.key));
+  const visited = new Set<object>();
   for (const [key, value] of Object.entries(propsValue)) {
     if (topLevelSourceKeys.has(key)) {
       continue;
     }
-    collectNestedSourceEntries(value, key, entries);
+    collectNestedSourceEntries(value, key, entries, visited);
   }
 
   return entries;

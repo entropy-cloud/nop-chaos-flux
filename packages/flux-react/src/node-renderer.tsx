@@ -13,7 +13,7 @@ import type {
   ScopeRef,
   TemplateNode,
 } from '@nop-chaos/flux-core';
-import { createNamedActionProvider } from '@nop-chaos/flux-core';
+import { createNamedActionProvider, XUI_ACTIONS_NAMESPACE } from '@nop-chaos/flux-core';
 import { NodeErrorBoundary } from './node-error-boundary.js';
 import {
   useRenderInstancePath,
@@ -173,7 +173,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       (program, ctx) => ctx.runtime.dispatch(program, ctx),
     );
 
-    return resolvedActionScope.registerNamespace('__xui_actions__', provider);
+    return resolvedActionScope.registerNamespace(XUI_ACTIONS_NAMESPACE, provider);
   }, [namedActionPlans, resolvedActionScope]);
   const importBindings = useMemo(
     () => (importFrame ? runtime.importStack.currentBindings(importFrame.id) : undefined),

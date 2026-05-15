@@ -28,7 +28,18 @@ function renderErrorMessage(error: unknown, fallback: string) {
     return error.message;
   }
 
-  const message = String(error ?? '');
+  let message = '';
+
+  if (typeof error === 'symbol') {
+    message = error.toString();
+  } else {
+    try {
+      message = String(error ?? '');
+    } catch {
+      message = '';
+    }
+  }
+
   return message || fallback;
 }
 

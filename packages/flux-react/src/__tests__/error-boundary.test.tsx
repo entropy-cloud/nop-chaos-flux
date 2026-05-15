@@ -1,7 +1,11 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { NodeErrorBoundary, SchemaRootErrorBoundary } from '../node-error-boundary.js';
+import {
+  NodeErrorBoundary,
+  SchemaRootErrorBoundary,
+  SchemaRootError,
+} from '../node-error-boundary.js';
 
 afterEach(() => {
   cleanup();
@@ -62,6 +66,48 @@ describe('NodeErrorBoundary', () => {
     );
     const alert = document.querySelector('[data-slot="node-error"]');
     expect(alert?.textContent).toContain('String error message');
+    consoleSpy.mockRestore();
+  });
+
+  it('keeps symbol throw values inside the node fallback', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(
+      <SchemaRootErrorBoundary>
+        <NodeErrorBoundary nodeId="symbol-error">
+          <ThrowingComponent error={Symbol('boom')} />
+        </NodeErrorBoundary>
+      </SchemaRootErrorBoundary>,
+    );
+
+    expect(document.querySelector('[data-slot="schema-root-error"]')).toBeNull();
+    const alert = document.querySelector('[data-slot="node-error"]');
+    expect(alert?.textContent).toContain('symbol-error');
+    expect(alert?.textContent).toContain('Symbol(boom)');
+
+    consoleSpy.mockRestore();
+  });
+
+  it('falls back safely for throw values that String() cannot coerce', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    function ThrowNullPrototypeObject(): React.ReactElement | null {
+      throw Object.create(null);
+    }
+
+    render(
+      <SchemaRootErrorBoundary>
+        <NodeErrorBoundary nodeId="object-error">
+          <ThrowNullPrototypeObject />
+        </NodeErrorBoundary>
+      </SchemaRootErrorBoundary>,
+    );
+
+    expect(document.querySelector('[data-slot="schema-root-error"]')).toBeNull();
+    const alert = document.querySelector('[data-slot="node-error"]');
+    expect(alert?.textContent).toContain('object-error');
+    expect(alert?.textContent).toContain('Render error');
+
     consoleSpy.mockRestore();
   });
 
@@ -144,5 +190,12 @@ describe('SchemaRootErrorBoundary', () => {
     expect(alert?.textContent).toContain('Root renderer failed');
 
     consoleSpy.mockRestore();
+  });
+
+  it('renders symbol errors safely in root fallback helpers', () => {
+    render(<SchemaRootError error={Symbol('root-boom')} />);
+
+    const alert = document.querySelector('[data-slot="schema-root-error"]');
+    expect(alert?.textContent).toContain('Symbol(root-boom)');
   });
 });
