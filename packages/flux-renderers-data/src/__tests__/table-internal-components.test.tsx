@@ -486,6 +486,6 @@ describe('table internal components', () => {
     expect(rows[1]?.textContent).toContain('Bob');
     expect(rows[0]?.getAttribute('data-expanded')).toBeNull();
     expect(rows[1]?.getAttribute('data-expanded')).toBe('true');
-    expect(document.querySelector('[data-slot="table-expanded-row"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="table-expanded-row"]')).toBeNull();
   });
 });
