@@ -108,7 +108,7 @@ export function createSchemaCompiler(input: {
         })
         .filter((node): node is TemplateNode => node != null);
 
-      const nodes = enrichTemplateNodeIds(compiled, cidState);
+      const nodes = enrichTemplateNodeIds(compiled, cidState, diagnostics);
       const template: CompiledTemplate = applyAfterCompilePlugins({
         root: nodes,
         repeatedTemplates: new Map(),
@@ -146,6 +146,7 @@ export function createSchemaCompiler(input: {
         depth,
       ),
       cidState,
+      diagnostics,
     );
 
     const template: CompiledTemplate = applyAfterCompilePlugins({

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createRendererRegistry,
+  getCompiledCidState,
   type RendererDefinition,
   type TemplateNode,
 } from '@nop-chaos/flux-core';
@@ -392,5 +393,78 @@ describe('createSchemaCompiler', () => {
 
     expect(buttonNode.eventPlans.onClick.nodes[0].targeting.componentId).toBe('dup-form');
     expect(buttonNode.eventPlans.onClick.nodes[0].targeting._targetCid).toBeUndefined();
+  });
+
+  it('populates compiled cid lookup state from unique schema ids', () => {
+    const compiler = createTestCompiler([pageRenderer, formRenderer, actionButtonRenderer]);
+
+    const compiled = compiler.compile({
+      type: 'page',
+      id: 'page-root',
+      body: [
+        { type: 'form', id: 'user-form' },
+        { type: 'action-button', id: 'save-button' },
+      ],
+    });
+    const root = compiled.root as TemplateNode;
+    const cidState = getCompiledCidState(root);
+
+    expect(cidState?.byId.get('page-root')).toBe(root.templateNodeId);
+    expect(cidState?.idPaths.get('page-root')).toEqual(['$']);
+    expect(cidState?.duplicateIds.size).toBe(0);
+
+    const bodyNodes = Array.isArray(root.regions.body.node)
+      ? root.regions.body.node
+      : [root.regions.body.node];
+
+    expect(cidState?.byId.get('user-form')).toBe(bodyNodes[0].templateNodeId);
+    expect(cidState?.idPaths.get('user-form')).toEqual(['$.body[0]']);
+    expect(cidState?.byId.get('save-button')).toBe(bodyNodes[1].templateNodeId);
+    expect(cidState?.idPaths.get('save-button')).toEqual(['$.body[1]']);
+  });
+
+  it('tracks duplicate schema ids and emits diagnostics during compile', () => {
+    const compiler = createTestCompiler([pageRenderer, formRenderer]);
+
+    const compiled = compiler.compile(
+      {
+        type: 'page',
+        body: [
+          { type: 'form', id: 'dup-form' },
+          { type: 'form', id: 'dup-form' },
+        ],
+      },
+      { diagnostics: { enabled: true } },
+    );
+    const root = compiled.root as TemplateNode;
+    const cidState = getCompiledCidState(root);
+
+    expect(cidState?.byId.get('dup-form')).toBe(
+      (root.regions.body.node as readonly TemplateNode[])[0].templateNodeId,
+    );
+    expect(cidState?.idPaths.get('dup-form')).toEqual(['$.body[0]', '$.body[1]']);
+    expect(cidState?.duplicateIds.has('dup-form')).toBe(true);
+
+    const diagnostics = compiler.validate?.(
+      {
+        type: 'page',
+        body: [
+          { type: 'form', id: 'dup-form' },
+          { type: 'form', id: 'dup-form' },
+        ],
+      },
+      { diagnostics: { enabled: true } },
+    );
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'duplicate-schema-id',
+          severity: 'warning',
+          path: '$.body[1]',
+          message: expect.stringContaining('dup-form'),
+        }),
+      ]),
+    );
   });
 });
