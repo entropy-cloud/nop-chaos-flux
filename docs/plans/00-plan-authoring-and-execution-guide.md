@@ -15,7 +15,7 @@
 
 ## Lessons From History
 
-从 `docs/logs/` 看，最常见的问题只有 5 类：
+从 `docs/logs/` 看，最常见的问题主要有 7 类：
 
 1. 没先审 current baseline，直接沿用旧计划或旧 completion note。
 2. 一个计划过宽，后面不得不重写或拆分。
@@ -317,7 +317,7 @@ Follow-up:
 
 ### When Closing The Plan
 
-关闭前必须做 7 件事：
+关闭前必须做 8 件事：
 
 1. 从头重读整份 plan，不只看最近 landing 的部分。
 2. 逐条核对每个 slice 的 `Exit Criteria`。
