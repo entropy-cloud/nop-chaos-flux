@@ -507,4 +507,61 @@ describe('detail-field renderer commit behavior', () => {
     expect(screen.queryByLabelText('Street')).toBeNull();
   });
 
+  it('reports detail-field confirm failures through draft error and env.notify', async () => {
+    cleanup();
+    const notify = vi.fn();
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async (method: string) => {
+            if (method === 'toDraft') {
+              return { ok: true, data: { street: 'Alpha' } };
+            }
+
+            throw new Error('detail field confirm failed');
+          },
+        }),
+      })),
+    };
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-commit.test.tsx#confirm-failure"
+        schema={{
+          type: 'form',
+          data: { address: 'Alpha' },
+          body: [
+            {
+              type: 'detail-field',
+              name: 'address',
+              triggerLabel: 'Edit Address',
+              'xui:imports': [{ from: 'detail-field-lib', as: 'detailFieldLib' }],
+              transformInAction: { action: 'detailFieldLib:toDraft' },
+              transformOutAction: { action: 'detailFieldLib:toValue' },
+              content: [{ type: 'input-text', name: 'street', label: 'Street' }],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, notify, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit Address'));
+    await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith(
+        'warning',
+        '[flux] transformOut failed: Error: detail field confirm failed',
+      );
+      expect(screen.getByText('[flux] transformOut failed: Error: detail field confirm failed')).toBeTruthy();
+      expect(screen.getByLabelText('Street')).toBeTruthy();
+    });
+  });
+
 });

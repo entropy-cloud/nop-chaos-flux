@@ -462,4 +462,136 @@ describe('variant-field renderer detection behavior', () => {
     const container = document.querySelector('[data-active-variant]');
     expect(container?.getAttribute('data-active-variant')).toBe('second');
   });
+
+  it('reports detectVariantAction failures through env.notify', async () => {
+    cleanup();
+    const notify = vi.fn();
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => {
+            throw new Error('variant detect failed');
+          },
+        }),
+      })),
+    };
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-detection.test.tsx#detect-failure"
+        schema={{
+          type: 'form',
+          data: {
+            payload: { raw: true },
+          },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              defaultVariant: 'first',
+              'xui:imports': [{ from: 'variant-lib', as: 'variantLib' }],
+              detectVariantAction: { action: 'variantLib:detect' },
+              variants: [
+                {
+                  key: 'first',
+                  label: 'First',
+                  content: [{ type: 'input-text', name: 'value', label: 'First Value' }],
+                },
+                {
+                  key: 'second',
+                  label: 'Second',
+                  content: [{ type: 'input-text', name: 'value', label: 'Second Value' }],
+                },
+              ],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, notify, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('warning', 'variant detect failed');
+      const container = document.querySelector('[data-active-variant]');
+      expect(container?.getAttribute('data-active-variant')).toBe('first');
+    });
+  });
+
+  it('aborts the previous detectVariantAction request when a newer detection starts', async () => {
+    cleanup();
+    const signals: AbortSignal[] = [];
+    const pendingDetects: Array<(result: { ok: true; data: { variant: string } }) => void> = [];
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async (_method: string, _payload: Record<string, unknown> | undefined, ctx: { signal?: AbortSignal }) => {
+            if (ctx.signal) {
+              signals.push(ctx.signal);
+            }
+
+            return await new Promise<{ ok: true; data: { variant: string } }>((resolve) => {
+              pendingDetects.push(resolve);
+            });
+          },
+        }),
+      })),
+    };
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-detection.test.tsx#detect-abort"
+        schema={{
+          type: 'form',
+          data: {
+            payload: 'alpha',
+          },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              defaultVariant: 'first',
+              'xui:imports': [{ from: 'variant-lib', as: 'variantLib' }],
+              detectVariantAction: { action: 'variantLib:detect' },
+              variants: [
+                {
+                  key: 'first',
+                  label: 'First',
+                  content: [{ type: 'input-text', name: '', label: 'Payload Value' }],
+                },
+                {
+                  key: 'second',
+                  label: 'Second',
+                  content: [{ type: 'input-text', name: '', label: 'Payload Value' }],
+                },
+              ],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByLabelText('Payload Value')).toBeTruthy());
+    await waitFor(() => expect(pendingDetects).toHaveLength(1));
+
+    fireEvent.change(screen.getByLabelText('Payload Value'), { target: { value: 'beta' } });
+
+    await waitFor(() => expect(pendingDetects).toHaveLength(2));
+    expect(signals).toHaveLength(2);
+    expect(signals[0]?.aborted).toBe(true);
+    expect(signals[1]?.aborted).toBe(false);
+
+    pendingDetects[1]!({ ok: true, data: { variant: 'second' } });
+
+    await waitFor(() => {
+      const container = document.querySelector('[data-active-variant]');
+      expect(container?.getAttribute('data-active-variant')).toBe('second');
+    });
+  });
 });

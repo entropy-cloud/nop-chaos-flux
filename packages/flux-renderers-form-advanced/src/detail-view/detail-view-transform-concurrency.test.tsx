@@ -4,6 +4,7 @@ import {
   baseEnv,
   createPageSchemaRenderer,
   formulaCompiler,
+  scopeStateProbeRenderer,
 } from '../test-support.js';
 
 describe('detail-view renderer concurrency behavior', () => {
@@ -23,7 +24,7 @@ describe('detail-view renderer concurrency behavior', () => {
         }),
       })),
     };
-    const SchemaRenderer = createPageSchemaRenderer();
+    const SchemaRenderer = createPageSchemaRenderer([scopeStateProbeRenderer]);
 
     render(
       <SchemaRenderer
@@ -91,7 +92,7 @@ describe('detail-view renderer concurrency behavior', () => {
         }),
       })),
     };
-    const SchemaRenderer = createPageSchemaRenderer();
+    const SchemaRenderer = createPageSchemaRenderer([scopeStateProbeRenderer]);
 
     render(
       <SchemaRenderer
@@ -162,7 +163,7 @@ describe('detail-view renderer concurrency behavior', () => {
         }),
       })),
     };
-    const SchemaRenderer = createPageSchemaRenderer();
+    const SchemaRenderer = createPageSchemaRenderer([scopeStateProbeRenderer]);
 
     render(
       <SchemaRenderer
@@ -228,7 +229,7 @@ describe('detail-view renderer concurrency behavior', () => {
     expect(screen.getByTestId('viewer-status').textContent).toBe('draft');
   });
 
-  it('keeps page-scope detail-view open when async transformOut commits an invalid final value', async () => {
+  it('keeps form-owned sibling observers unchanged when async transformOut returns an invalid final value', async () => {
     cleanup();
     let resolveCommit: ((value: { ok: true; data: { updates: { title: string } } }) => void) | undefined;
     const importLoader = {
@@ -242,32 +243,40 @@ describe('detail-view renderer concurrency behavior', () => {
         }),
       })),
     };
-    const SchemaRenderer = createPageSchemaRenderer();
+    const SchemaRenderer = createPageSchemaRenderer([scopeStateProbeRenderer]);
 
     render(
-      <SchemaRenderer
-        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-transform-concurrency.test.tsx#3"
-        schema={{
-          type: 'page',
-          data: { summary: { title: 'Original' } },
-          body: [
-            {
-              type: 'detail-view',
-              scopePath: 'summary',
-              triggerLabel: 'Edit Summary',
-              surface: { mode: 'dialog', title: 'Edit Summary' },
-              'xui:imports': [{ from: 'detail-view-lib', as: 'detailViewLib' }],
-              transformOutAction: { action: 'detailViewLib:toUpdates' },
-              content: [{ type: 'input-text', name: 'title', label: 'Title', required: true }],
-            },
-          ],
-        }}
-        env={{ ...baseEnv, importLoader }}
-        formulaCompiler={formulaCompiler}
-      />,
-    );
+        <SchemaRenderer
+          schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-transform-concurrency.test.tsx#3"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'form',
+                name: 'testForm',
+                data: { summary: { title: 'Original' } },
+                body: [
+                  {
+                    type: 'detail-view',
+                    name: 'summary',
+                    triggerLabel: 'Edit Summary',
+                    surface: { mode: 'dialog', title: 'Edit Summary' },
+                    'xui:imports': [{ from: 'detail-view-lib', as: 'detailViewLib' }],
+                    transformOutAction: { action: 'detailViewLib:toUpdates' },
+                    content: [{ type: 'input-text', name: 'title', label: 'Title', required: true }],
+                  },
+                  { type: 'scope-state-probe', name: 'summary' },
+                ],
+              },
+            ],
+          }}
+          env={{ ...baseEnv, importLoader }}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
 
     await waitFor(() => expect(screen.getByText('Edit Summary')).toBeTruthy());
+    expect(screen.getByTestId('scope-state:summary').textContent).toContain('"title":"Original"');
 
     fireEvent.click(screen.getByText('Edit Summary'));
     await waitFor(() => expect(screen.getByLabelText('Title')).toBeTruthy());
@@ -281,5 +290,7 @@ describe('detail-view renderer concurrency behavior', () => {
       expect(screen.getByLabelText('Title')).toBeTruthy();
       expect(screen.getByText(/required/i)).toBeTruthy();
     });
+
+    expect(screen.getByTestId('scope-state:summary').textContent).toContain('"title":"Original"');
   });
 });

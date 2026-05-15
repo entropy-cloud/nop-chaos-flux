@@ -188,6 +188,94 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       : { __value: commitValue };
   }
 
+  function buildCommittedWrites(draftValues: Record<string, unknown>): Record<string, unknown> {
+    const commitValue = Object.prototype.hasOwnProperty.call(draftValues, '__value')
+      ? draftValues.__value
+      : draftValues;
+
+    if (scopePath) {
+      if ('patch' in draftValues && Array.isArray(draftValues.patch)) {
+        return Object.fromEntries(
+          (draftValues.patch as Array<{ path: string; value: unknown }>).map((patch) => [
+            `${scopePath}.${patch.path}`,
+            patch.value,
+          ]),
+        );
+      }
+
+      if (
+        'updates' in draftValues &&
+        typeof draftValues.updates === 'object' &&
+        draftValues.updates !== null
+      ) {
+        return Object.fromEntries(
+          Object.entries(draftValues.updates as Record<string, unknown>).map(([key, value]) => [
+            `${scopePath}.${key}`,
+            value,
+          ]),
+        );
+      }
+
+      return { [scopePath]: commitValue };
+    }
+
+    const updates =
+      draftValues.updates !== undefined ? (draftValues.updates as Record<string, unknown>) : commitValue;
+
+    return updates as Record<string, unknown>;
+  }
+
+  function readCurrentValueAtPath(path: string): unknown {
+    if (parentForm?.store) {
+      return getIn(parentForm.store.getState().values, path);
+    }
+
+    if (scopePath) {
+      if (path === scopePath) {
+        return currentValue;
+      }
+
+      if (path.startsWith(`${scopePath}.`) && currentValue && typeof currentValue === 'object') {
+        return getIn(currentValue as Record<string, unknown>, path.slice(scopePath.length + 1));
+      }
+    }
+
+    return parentScope.get(path);
+  }
+
+  function applyCommittedWrites(writes: Record<string, unknown>) {
+    if (parentForm) {
+      const entries = Object.entries(writes);
+      if (entries.length === 1) {
+        const [path, value] = entries[0]!;
+        parentForm.setValue(path, value);
+      } else if (entries.length > 1) {
+        parentForm.setValues(writes);
+      }
+      return;
+    }
+
+    const entries = Object.entries(writes);
+    if (!scopePath && entries.length > 1) {
+      parentScope.merge(writes);
+      return;
+    }
+
+    for (const [path, value] of entries) {
+      parentScope.update(path, value);
+    }
+  }
+
+  async function rollbackCommittedWrites(previousValues: Record<string, unknown>) {
+    applyCommittedWrites(previousValues);
+
+    if (parentForm) {
+      await settleParentValidation();
+    } else if (hasUsableParentValidationOwner()) {
+      await settleParentValidation();
+    }
+  }
+
   async function validateCommittedDraftLocally(
     draftValues: Record<string, unknown>,
   ): Promise<boolean> {
@@ -262,79 +350,41 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   }
 
   async function applyCommitResult(draftValues: Record<string, unknown>): Promise<boolean> {
-    const commitValue = Object.prototype.hasOwnProperty.call(draftValues, '__value')
-      ? draftValues.__value
-      : draftValues;
+    const writes = buildCommittedWrites(draftValues);
+    const previousValues = Object.fromEntries(
+      Object.keys(writes).map((path) => [path, readCurrentValueAtPath(path)]),
+    );
 
-      if (scopePath) {
-      if ('patch' in draftValues && Array.isArray(draftValues.patch)) {
-        const patches = draftValues.patch as Array<{ path: string; value: unknown }>;
-        if (parentForm) {
-          parentForm.setValues(
-            Object.fromEntries(patches.map((patch) => [`${scopePath}.${patch.path}`, patch.value])),
-          );
-        } else {
-          for (const p of patches) {
-            parentScope.update(`${scopePath}.${p.path}`, p.value);
-          }
-        }
-      } else if (
-        'updates' in draftValues &&
-        typeof draftValues.updates === 'object' &&
-        draftValues.updates !== null
-      ) {
-        const updates = draftValues.updates as Record<string, unknown>;
-        if (parentForm) {
-          parentForm.setValues(
-            Object.fromEntries(
-              Object.entries(updates).map(([key, value]) => [`${scopePath}.${key}`, value]),
-            ),
-          );
-        } else {
-          for (const [key, val] of Object.entries(updates)) {
-            parentScope.update(`${scopePath}.${key}`, val);
-          }
-        }
-      } else {
-        if (parentForm) {
-          parentForm.setValue(scopePath, commitValue);
-        } else {
-          parentScope.update(scopePath, commitValue);
-        }
+    applyCommittedWrites(writes);
+
+    if (parentForm) {
+      const settled = await settleParentValidation();
+      if (!settled) {
+        await rollbackCommittedWrites(previousValues);
+        return false;
       }
 
-      if (parentForm) {
-        return await settleParentValidation();
+      const draftValid = await validateCommittedDraftLocally(draftValues);
+      if (!draftValid) {
+        await rollbackCommittedWrites(previousValues);
+        return false;
       }
 
-      if (hasUsableParentValidationOwner()) {
-        const settled = await settleParentValidation();
-        if (!settled) {
-          return false;
-        }
+      return true;
+    }
+
+    if (hasUsableParentValidationOwner()) {
+      const settled = await settleParentValidation();
+      if (!settled) {
+        await rollbackCommittedWrites(previousValues);
+        return false;
       }
+    }
 
-      return await validateCommittedDraftLocally(draftValues);
-    } else {
-      const updates =
-        draftValues.updates !== undefined
-          ? (draftValues.updates as Record<string, unknown>)
-          : commitValue;
-
-      if (parentForm) {
-        parentForm.setValues(updates as Record<string, unknown>);
-        return await settleParentValidation();
-      } else {
-        parentScope.merge(updates as Record<string, unknown>);
-        if (hasUsableParentValidationOwner()) {
-          const settled = await settleParentValidation();
-          if (!settled) {
-            return false;
-          }
-        }
-
-        return await validateCommittedDraftLocally(draftValues);
-      }
+    const draftValid = await validateCommittedDraftLocally(draftValues);
+    if (!draftValid) {
+      await rollbackCommittedWrites(previousValues);
+      return false;
     }
 
     return true;

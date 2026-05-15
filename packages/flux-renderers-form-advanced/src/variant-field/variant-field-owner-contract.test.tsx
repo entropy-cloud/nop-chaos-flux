@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({
   parentValidationOwner: undefined as any,
   parentScope: undefined as any,
   projectedOwner: undefined as any,
+  runtime: { env: { notify: vi.fn() } } as any,
   validationContextValue: undefined as any,
 }));
 
@@ -15,6 +16,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentForm: () => state.parentForm,
   useCurrentValidationScope: () => state.parentValidationOwner,
   useRenderScope: () => state.parentScope,
+  useRendererRuntime: () => state.runtime,
   useScopeSelector: () => ({ kind: 'text', value: 'alpha' }),
   useCurrentFormState: () => undefined,
   toFieldRemarkProps: () => undefined,
@@ -73,6 +75,7 @@ afterEach(() => {
   state.parentValidationOwner = undefined;
   state.parentScope = undefined;
   state.projectedOwner = undefined;
+  state.runtime.env.notify.mockReset();
   state.validationContextValue = undefined;
   vi.clearAllMocks();
 });

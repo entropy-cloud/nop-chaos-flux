@@ -46,6 +46,9 @@ describe('tree controls - UI markers, slots, and collapse/expand', () => {
     expect(inputTreeField?.querySelector('[data-slot="field-label"]')?.textContent).toContain(
       'Categories',
     );
+    expect(inputTreeField?.querySelector('[data-slot="input-tree-control"]')?.className).toContain(
+      'nop-input-tree',
+    );
     expect(inputTreeField?.querySelector('[data-slot="input-tree-control"]')).toBeTruthy();
     expect(inputTreeField?.querySelector('[data-slot="input-tree-options"]')).toBeTruthy();
     expect(inputTreeField?.querySelector('[data-slot="tree-option-list"]')).toBeTruthy();
@@ -57,6 +60,9 @@ describe('tree controls - UI markers, slots, and collapse/expand', () => {
     expect(treeSelectField).toBeTruthy();
     expect(treeSelectField?.querySelector('[data-slot="field-label"]')?.textContent).toContain(
       'Department',
+    );
+    expect(treeSelectField?.querySelector('[data-slot="tree-select-control"]')?.className).toContain(
+      'nop-tree-select',
     );
     expect(treeSelectField?.querySelector('[data-slot="tree-select-control"]')).toBeTruthy();
     expect(treeSelectField?.querySelector('[data-slot="tree-select-value"]')).toBeTruthy();

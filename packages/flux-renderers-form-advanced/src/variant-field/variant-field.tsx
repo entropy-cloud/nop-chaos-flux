@@ -4,6 +4,7 @@ import type {
   ActionSchema,
   BaseSchema,
   RendererComponentProps,
+  RendererEnv,
   RendererDefinition,
   SchemaObject,
 } from '@nop-chaos/flux-core';
@@ -13,6 +14,7 @@ import {
   useCurrentForm,
   useCurrentValidationScope,
   useRenderScope,
+  useRendererRuntime,
   useScopeSelector,
   useCurrentFormState,
   toFieldRemarkProps,
@@ -128,7 +130,23 @@ function injectDetectVariantArgs(
   return actionSchema.args === undefined ? { ...actionSchema, args: schemaPayload } : actionSchema;
 }
 
+function reportVariantFieldFailure(
+  notify: RendererEnv['notify'] | undefined,
+  error: unknown,
+) {
+  const message = error instanceof Error && error.message ? error.message : 'Variant field update failed';
+  notify?.('warning', message);
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === 'AbortError') ||
+    (error instanceof Error && error.name === 'AbortError')
+  );
+}
+
 export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldSchema>) {
+  const runtime = useRendererRuntime();
   const parentForm = useCurrentForm();
   const parentValidationOwner = useCurrentValidationScope();
   const parentScope = useRenderScope();
@@ -175,6 +193,8 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const [detectedKey, setDetectedKey] = React.useState<string | undefined>(undefined);
   const detectRequestIdRef = React.useRef(0);
   const switchRequestIdRef = React.useRef(0);
+  const detectAbortControllerRef = React.useRef<AbortController | null>(null);
+  const switchAbortControllerRef = React.useRef<AbortController | null>(null);
 
   const activeKey = React.useMemo(() => {
     if (matchedKey) return matchedKey;
@@ -200,12 +220,17 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   React.useEffect(() => {
     mountedRef.current = true;
     return () => {
+      detectAbortControllerRef.current?.abort();
+      switchAbortControllerRef.current?.abort();
       mountedRef.current = false;
     };
   }, []);
 
   const runDetectVariantAction = React.useCallback(async () => {
     const requestId = ++detectRequestIdRef.current;
+    detectAbortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    detectAbortControllerRef.current = abortController;
 
     if (!schemaProps.detectVariantAction || matchedKey) {
       if (mountedRef.current && requestId === detectRequestIdRef.current) {
@@ -225,8 +250,13 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
           form: parentForm ?? undefined,
           page: undefined,
           nodeInstance: props.node as BaseNodeInstance,
+          signal: abortController.signal,
         },
       );
+
+      if (detectAbortControllerRef.current === abortController) {
+        detectAbortControllerRef.current = null;
+      }
 
       if (!mountedRef.current || requestId !== detectRequestIdRef.current) {
         return;
@@ -234,6 +264,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 
       if (!result.ok) {
         setDetectedKey(undefined);
+        reportVariantFieldFailure(runtime.env.notify, result.error);
         return;
       }
 
@@ -242,12 +273,21 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
         nextKey && variants.some((variant) => variant.key === nextKey) ? nextKey : undefined,
       );
     } catch (error: unknown) {
+      if (detectAbortControllerRef.current === abortController) {
+        detectAbortControllerRef.current = null;
+      }
+
+      if (abortController.signal.aborted || isAbortError(error)) {
+        return;
+      }
+
       if (!mountedRef.current || requestId !== detectRequestIdRef.current) {
         return;
       }
 
       setDetectedKey(undefined);
       console.warn('[variant-field] detectVariantAction failed', error);
+      reportVariantFieldFailure(runtime.env.notify, error);
     }
   }, [
     currentValue,
@@ -257,6 +297,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     props.helpers,
     props.node,
     schemaProps.detectVariantAction,
+    runtime,
     variants,
   ]);
 
@@ -275,6 +316,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       if (key === activeKey) return;
 
       const requestId = ++switchRequestIdRef.current;
+      switchAbortControllerRef.current?.abort();
+      const abortController = new AbortController();
+      switchAbortControllerRef.current = abortController;
 
       if (parentForm) {
         parentForm.clearErrors(name);
@@ -291,6 +335,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
               form: ctx?.form ?? parentForm,
               page: undefined,
               nodeInstance: props.node as BaseNodeInstance,
+              signal: abortController.signal,
             });
 
           const adapter = actionAdapter(
@@ -306,6 +351,10 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
             scope: parentScope,
             form: parentForm,
           });
+
+          if (switchAbortControllerRef.current === abortController) {
+            switchAbortControllerRef.current = null;
+          }
 
           if (!mountedRef.current || requestId !== switchRequestIdRef.current) {
             return;
@@ -326,6 +375,10 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
         return;
       }
 
+      if (switchAbortControllerRef.current === abortController) {
+        switchAbortControllerRef.current = null;
+      }
+
       setUserSelectedKey(key);
     },
     [
@@ -344,10 +397,14 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const triggerVariantSwitch = React.useCallback(
     (key: string) => {
       handleVariantSwitch(key).catch((error: unknown) => {
+        if (isAbortError(error)) {
+          return;
+        }
         console.warn('[variant-field] variant switch failed', error);
+        reportVariantFieldFailure(runtime.env.notify, error);
       });
     },
-    [handleVariantSwitch],
+    [handleVariantSwitch, runtime],
   );
 
   const activeContentRegion =

@@ -198,7 +198,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
 
   return (
     <div
-      className={props.meta.className}
+      className={cn('nop-input-tree', props.meta.className)}
       data-slot="input-tree-control"
       data-testid={props.meta.testid}
       data-cid={props.meta.cid}
@@ -260,7 +260,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
 
   return (
     <div
-      className={props.meta.className}
+      className={cn('nop-tree-select', props.meta.className)}
       data-slot="tree-select-control"
       data-testid={props.meta.testid}
       data-cid={props.meta.cid}

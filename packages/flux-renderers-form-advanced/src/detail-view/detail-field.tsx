@@ -33,6 +33,10 @@ function logDetailFieldAsyncError(action: 'open' | 'confirm', error: unknown) {
   console.warn(`[detail-field] ${action} failed`, error);
 }
 
+function toAsyncFailureMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSchema>) {
   const parentForm = useCurrentForm();
   const runtime = useRendererRuntime();
@@ -50,12 +54,16 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   );
   const validationMessage = t('flux.common.detailDraftValidationError');
   const openFailureMessage = t('flux.common.saveFailed');
+  const confirmFailureMessage = t('flux.common.saveFailed');
 
   function reportOpenFailure(error: unknown) {
-    runtime.env.notify?.(
-      'warning',
-      error instanceof Error && error.message ? error.message : openFailureMessage,
-    );
+    runtime.env.notify?.('warning', toAsyncFailureMessage(error, openFailureMessage));
+  }
+
+  function reportConfirmFailure(error: unknown) {
+    const message = toAsyncFailureMessage(error, confirmFailureMessage);
+    setDraftErrorSafe(message);
+    runtime.env.notify?.('warning', message);
   }
 
   const presentation = useFieldPresentation(name, parentForm, {
@@ -305,6 +313,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
             onConfirm={() => {
               handleConfirm().catch((error) => {
                 logDetailFieldAsyncError('confirm', error);
+                reportConfirmFailure(error);
               });
             }}
           />
