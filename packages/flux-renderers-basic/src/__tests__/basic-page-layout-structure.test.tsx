@@ -1,10 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRegistry, getIn, type RendererDefinition } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '../index.js';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
@@ -27,6 +27,18 @@ const formRendererDefinitions: RendererDefinition[] = [
     ),
   },
 ];
+
+function ScopeStateProbe(props: any) {
+  const path = String(props.props.name ?? '');
+  const value = useScopeSelector((scopeData) => (path ? getIn(scopeData, path) : scopeData));
+  return <pre data-testid={`scope-state:${path}`}>{JSON.stringify(value ?? null)}</pre>;
+}
+
+const scopeStateProbeRenderer: RendererDefinition = {
+  type: 'scope-state-probe',
+  component: ScopeStateProbe,
+  fields: [{ key: 'name', kind: 'prop' }],
+};
 
 describe('basicRendererDefinitions page and layout behavior', () => {
   it('renders page title from a plain value', () => {
@@ -135,7 +147,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
   });
 
   it('reroutes dynamic page statusPath publications by clearing the old target and publishing the new target', async () => {
-    const SchemaRenderer = createBasicSchemaRenderer();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, scopeStateProbeRenderer]);
     render(
       <SchemaRenderer
         schemaUrl="test://basic/page-layout-reroute"
@@ -158,30 +170,27 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               statusPath: 'ui.${activeStatusKey}',
               body: [{ type: 'text', text: 'Inner page' }],
             },
-            { type: 'text', text: '${ui.a?.refreshTick ?? "null"}' },
-            { type: 'text', text: '${ui.b?.refreshTick ?? "null"}' },
+            { type: 'scope-state-probe', name: 'ui.a' },
+            { type: 'scope-state-probe', name: 'ui.b' },
           ],
         }}
-        data={{ activeStatusKey: 'a' }}
+        data={{ activeStatusKey: 'a', ui: {} }}
         env={env}
         formulaCompiler={formulaCompiler}
       />,
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText('0')).toHaveLength(1);
-      expect(screen.getAllByText('null')).toHaveLength(1);
+      expect(screen.getByTestId('scope-state:ui.a').textContent).toBe('{"refreshTick":0}');
+      expect(screen.getByTestId('scope-state:ui.b').textContent).toBe('null');
     });
 
     fireEvent.click(screen.getByText('Switch page status path'));
 
     await waitFor(() => {
-      expect(screen.getAllByText('0')).toHaveLength(1);
-      expect(screen.getAllByText('null')).toHaveLength(1);
+      expect(screen.getByTestId('scope-state:ui.a').textContent).toBe('null');
+      expect(screen.getByTestId('scope-state:ui.b').textContent).toBe('{"refreshTick":0}');
     });
-
-    const textNodes = screen.getAllByText(/^(0|null)$/).map((node) => node.textContent);
-    expect(textNodes).toEqual(['null', '0']);
     cleanup();
   });
 
@@ -211,29 +220,22 @@ describe('basicRendererDefinitions page and layout behavior', () => {
       env,
       expressionCompiler: createExpressionCompiler(formulaCompiler),
     });
-    const compiled = runtime.compile({
+    const pageCompiled = runtime.compile({
       type: 'page',
-      body: [
-        {
-          type: 'tabs',
-          statusPath: '${tabsStatusPath}',
-          items: [{ key: 'first', title: 'First' }],
-        },
-      ],
       statusPath: '${pageStatusPath}',
     });
-    const resolved = runtime.resolveNodeProps(compiled.root as any, runtime.createPageRuntime({
+    const tabsCompiled = runtime.compile({
+      type: 'tabs',
+      statusPath: '${tabsStatusPath}',
+      items: [{ key: 'first', title: 'First' }],
+    });
+    const pageScope = runtime.createPageRuntime({
       pageStatusPath: 'ui.pageStatus',
       tabsStatusPath: 'ui.tabsStatus',
-    }).scope);
-    const rootProps = resolved.value as Record<string, unknown>;
-    const tabsNode = Array.isArray((compiled.root as any).regions?.body)
-      ? (compiled.root as any).regions.body[0]
-      : undefined;
-    const resolvedTabs = runtime.resolveNodeProps(tabsNode, runtime.createPageRuntime({
-      pageStatusPath: 'ui.pageStatus',
-      tabsStatusPath: 'ui.tabsStatus',
-    }).scope);
+    }).scope;
+    const rootProps = runtime.resolveNodeProps(pageCompiled.root as any, pageScope)
+      .value as Record<string, unknown>;
+    const resolvedTabs = runtime.resolveNodeProps(tabsCompiled.root as any, pageScope);
 
     expect(rootProps.statusPath).toBe('ui.pageStatus');
     expect((resolvedTabs.value as Record<string, unknown>).statusPath).toBe('ui.tabsStatus');
