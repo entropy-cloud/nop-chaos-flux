@@ -161,6 +161,14 @@ function resolveReportDesignerConfig(value: unknown): ReportDesignerConfig {
   return isRecord(value) ? (value as ReportDesignerConfig) : {};
 }
 
+function hasValidReportTemplateDocument(value: unknown): boolean {
+  return isReportTemplateDocument(value);
+}
+
+function hasValidReportDesignerConfig(value: unknown): boolean {
+  return isRecord(value);
+}
+
 function resolveReportDesignerProfile(value: unknown): ReportDesignerProfile | undefined {
   if (!isRecord(value) || typeof value.id !== 'string' || typeof value.kind !== 'string') {
     return undefined;
@@ -275,13 +283,16 @@ export function ReportDesignerPageRenderer(
   props: RendererComponentProps<ReportDesignerPageSchema>,
 ) {
   const titleContent = resolveRendererSlotContent(props, 'title');
+  const env = useRendererEnv();
+  const documentInputValid = hasValidReportTemplateDocument(props.props.document);
+  const configInputValid = hasValidReportDesignerConfig(props.props.config);
   const resolvedDocument = useMemo(
     () => resolveReportTemplateDocument(props.props.document),
     [props.props.document],
   );
   const resolvedDesigner = useMemo(
-    () => resolveReportDesignerConfig(props.props.designer),
-    [props.props.designer],
+    () => resolveReportDesignerConfig(props.props.config),
+    [props.props.config],
   );
   const resolvedProfile = useMemo(
     () => resolveReportDesignerProfile(props.props.profile),
@@ -322,7 +333,34 @@ export function ReportDesignerPageRenderer(
     [core],
   );
   const actionScope = useCurrentActionScope();
-  const env = useRendererEnv();
+
+  useEffect(() => {
+    if (documentInputValid && configInputValid) {
+      return;
+    }
+
+    const issues: string[] = [];
+    if (!documentInputValid) {
+      issues.push('document');
+    }
+    if (!configInputValid) {
+      issues.push('config');
+    }
+
+    const error = new Error(`report-designer-page received invalid required prop(s): ${issues.join(', ')}`);
+    reportRuntimeHostIssue({
+      env,
+      error,
+      phase: 'render',
+      path: props.path,
+      details: {
+        schemaPath: props.path,
+        operation: 'resolveReportDesignerPageInputs',
+        invalidProps: issues,
+      },
+    });
+    env.notify?.('warning', error.message);
+  }, [configInputValid, documentInputValid, env, props.path]);
 
   useLayoutEffect(() => {
     if (!actionScope) {
@@ -341,7 +379,7 @@ export function ReportDesignerPageRenderer(
   }, [actionScope, spreadsheetProvider]);
 
   useEffect(() => {
-    void core.refreshFieldSources().catch((error) => {
+    void core.initialize().catch((error) => {
       reportRuntimeHostIssue({
         env,
         error,
@@ -349,7 +387,7 @@ export function ReportDesignerPageRenderer(
         path: props.path,
         details: {
           schemaPath: props.path,
-          operation: 'refreshFieldSources',
+          operation: 'initializeReportDesigner',
         },
       });
       env.notify?.(

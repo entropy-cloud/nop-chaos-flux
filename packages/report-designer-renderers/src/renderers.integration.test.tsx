@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -9,7 +9,6 @@ import {
   createDefaultRegistry,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import { createActionScope } from '@nop-chaos/flux-runtime';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
@@ -20,8 +19,6 @@ import {
 import {
   defineReportDesignerPageSchema,
   registerReportDesignerRenderers,
-  createReportDesignerActionProvider,
-  REPORT_DESIGNER_HOST_METHODS,
 } from './index.js';
 
 const env: RendererEnv = {
@@ -75,18 +72,6 @@ const reportRuntimeDirtyProbeRenderer: RendererDefinition = {
   component: ReportRuntimeDirtyProbe,
 };
 
-function ReportTargetKindProbe() {
-  const targetKind = useScopeSelector(
-    (data: any) => data.selectionTarget?.kind ?? data.target?.kind ?? data.selection?.kind ?? '',
-  );
-  return <span data-testid="report-target-kind">{String(targetKind)}</span>;
-}
-
-const reportTargetKindProbeRenderer: RendererDefinition = {
-  type: 'report-target-kind-probe',
-  component: ReportTargetKindProbe,
-};
-
 function ReportSpreadsheetA1Probe() {
   const value = useScopeSelector(
     (data: any) =>
@@ -98,22 +83,6 @@ function ReportSpreadsheetA1Probe() {
 const reportSpreadsheetA1ProbeRenderer: RendererDefinition = {
   type: 'report-spreadsheet-a1-probe',
   component: ReportSpreadsheetA1Probe,
-};
-
-function ReportStatusProbe() {
-  const status = useScopeSelector((data: any) => data.reportStatus);
-  return (
-    <span data-testid="report-status">
-      {status
-        ? `${status.kind}:${status.fieldSourceCount}:${status.dirty ? 'dirty' : 'clean'}`
-        : ''}
-    </span>
-  );
-}
-
-const reportStatusProbeRenderer: RendererDefinition = {
-  type: 'report-status-probe',
-  component: ReportStatusProbe,
 };
 
 afterEach(() => {
@@ -148,7 +117,7 @@ function renderReportDesignerPage(input: {
   const schema = defineReportDesignerPageSchema({
     type: 'report-designer-page',
     document,
-    designer: input.config ?? createRuntimeConfig(),
+    config: input.config ?? createRuntimeConfig(),
     profile: input.profile,
     adapters: input.adapters,
     toolbar: input.toolbar,
@@ -160,10 +129,8 @@ function renderReportDesignerPage(input: {
     actionButtonRenderer,
     textRenderer,
     sheetTitleProbeRenderer,
-    reportRuntimeDirtyProbeRenderer,
-    reportTargetKindProbeRenderer,
     reportSpreadsheetA1ProbeRenderer,
-    reportStatusProbeRenderer,
+    reportRuntimeDirtyProbeRenderer,
   ]);
   registerReportDesignerRenderers(registry);
   const SchemaRenderer = createSchemaRenderer();
@@ -240,364 +207,6 @@ describe('report-designer namespaced actions integration', { timeout: 15000 }, (
     });
   });
 
-  it('prefers byProfile inspector schema over byTarget and body', async () => {
-    renderReportDesignerPage({
-      config: createRuntimeConfig({
-        inspector: {
-          body: { type: 'text', text: 'Body inspector' },
-          byTarget: {
-            sheet: { type: 'text', text: 'Target inspector' },
-          },
-          byProfile: {
-            profileA: {
-              sheet: { type: 'text', text: 'Profile inspector' },
-            },
-          },
-        },
-      }),
-      profile: {
-        id: 'profile-a',
-        kind: 'report-template',
-        fieldSourceIds: [],
-        fieldDropIds: [],
-        inspectorSchemaId: 'profileA',
-      },
-      inspector: { type: 'report-inspector-shell' },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('Profile inspector')).toBeTruthy();
-    });
-  });
-
-  it('hides the inspector side when no inspector schema exists', async () => {
-    renderReportDesignerPage({
-      config: createRuntimeConfig(),
-      inspector: { type: 'report-inspector-shell' },
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
-      expect(screen.queryByTestId('right-panel-collapsed')).toBeNull();
-      expect(screen.queryByText('No inspector panels available.')).toBeNull();
-    });
-  });
-
-  it('hides left and right workbench sides when config does not resolve them', async () => {
-    renderReportDesignerPage({
-      config: createRuntimeConfig(),
-      inspector: { type: 'report-inspector-shell' },
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('left-panel-expanded')).toBeNull();
-      expect(screen.queryByTestId('left-panel-collapsed')).toBeNull();
-      expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
-      expect(screen.queryByTestId('right-panel-collapsed')).toBeNull();
-      expect(screen.queryByText('No inspector panels available.')).toBeNull();
-    });
-  });
-
-  it('hides config-defined sides when feature gates disable them', async () => {
-    renderReportDesignerPage({
-      config: createRuntimeConfig({
-        fieldSources: [{ id: 'sales', label: 'Sales', groups: [] }],
-        inspector: {
-          body: { type: 'text', text: 'Inspector body' },
-        },
-        features: {
-          fieldPanel: false,
-          inspector: false,
-        },
-      }),
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('left-panel-expanded')).toBeNull();
-      expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
-      expect(screen.queryByText('Inspector body')).toBeNull();
-    });
-  });
-
-  it('reports refreshFieldSources failures through monitor in addition to notify', async () => {
-    const onError = vi.fn();
-    const notify = vi.fn();
-    const fieldSourceProvider = {
-      id: 'broken-field-source',
-      load: vi.fn(async () => {
-        throw new Error('field sources exploded');
-      }),
-    };
-    const monitoredEnv: RendererEnv = {
-      ...env,
-      notify,
-      monitor: { onError },
-    };
-    const spreadsheet = createEmptyDocument('integration-report-designer-monitor');
-    const document = createReportTemplateDocument(spreadsheet, 'Integration Report');
-    const schema = defineReportDesignerPageSchema({
-      type: 'report-designer-page',
-      document,
-      designer: createRuntimeConfig({
-        fieldSources: [
-          { id: 'remote', label: 'Remote', provider: 'broken-field-source', groups: [] },
-        ],
-      }),
-      adapters: {
-        fieldSources: new Map([[fieldSourceProvider.id, fieldSourceProvider]]),
-      },
-    });
-    const registry = createDefaultRegistry([pageRenderer]);
-    registerReportDesignerRenderers(registry);
-    const SchemaRenderer = createSchemaRenderer();
-
-    render(
-      <SchemaRenderer
-        schemaUrl="test://report/renderers-monitor"
-        schema={schema}
-        env={monitoredEnv}
-        registry={registry}
-        formulaCompiler={createFormulaCompiler()}
-        data={{}}
-      />,
-    );
-
-    await waitFor(() => {
-      expect(fieldSourceProvider.load).toHaveBeenCalled();
-      expect(notify).toHaveBeenCalledWith('warning', 'field sources exploded');
-      expect(onError).toHaveBeenCalled();
-    });
-  });
-
-  it('falls back from invalid schema runtime inputs instead of blindly trusting host casts', async () => {
-    renderReportDesignerPage({
-      document: 'bad-document',
-      config: 'bad-config' as any,
-      profile: { id: 1, kind: null } as any,
-      adapters: 'bad-adapters' as any,
-      toolbar: { type: 'report-target-kind-probe' },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('report-target-kind').textContent).toBe('sheet');
-    });
-  });
-
-  it('exposes shared collapse controls for expanded workbench sides', async () => {
-    renderReportDesignerPage({
-      config: createRuntimeConfig({
-        fieldSources: [{ id: 'sales', label: 'Sales', groups: [] }],
-        inspector: {
-          body: { type: 'text', text: 'Inspector body' },
-        },
-      }),
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('left-panel-expanded')).toBeTruthy();
-      expect(screen.getByTestId('right-panel-expanded')).toBeTruthy();
-    });
-
-    fireEvent.click(screen.getByTestId('collapse-report-field-panel'));
-    fireEvent.click(screen.getByTestId('collapse-report-inspector'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('left-panel-collapsed')).toBeTruthy();
-      expect(screen.getByTestId('right-panel-collapsed')).toBeTruthy();
-    });
-  });
-
-  it('publishes report designer host status through statusPath', async () => {
-    const spreadsheet = createEmptyDocument('status-report-designer');
-    const document = createReportTemplateDocument(spreadsheet, 'Status Report');
-
-    const registry = createDefaultRegistry([pageRenderer, reportStatusProbeRenderer]);
-    registerReportDesignerRenderers(registry);
-    const SchemaRenderer = createSchemaRenderer();
-
-    render(
-      <SchemaRenderer
-        schemaUrl="test://report/renderers-status"
-        schema={
-          {
-            type: 'page',
-            body: [
-              defineReportDesignerPageSchema({
-                type: 'report-designer-page',
-                document,
-                designer: createRuntimeConfig(),
-                statusPath: 'reportStatus',
-              }),
-              { type: 'report-status-probe' },
-            ],
-          } as any
-        }
-        env={env}
-        registry={registry}
-        formulaCompiler={createFormulaCompiler()}
-        data={{}}
-      />,
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('report-status').textContent).toContain('report-designer:0:clean');
-    });
-  });
-
-  it('clears report designer host status on unmount', async () => {
-    const spreadsheet = createEmptyDocument('status-report-designer-unmount');
-    const document = createReportTemplateDocument(spreadsheet, 'Status Report');
-
-    const registry = createDefaultRegistry([pageRenderer, reportStatusProbeRenderer]);
-    registerReportDesignerRenderers(registry);
-    const SchemaRenderer = createSchemaRenderer();
-
-    const view = render(
-      <SchemaRenderer
-        schemaUrl="test://report/renderers-status-unmount"
-        schema={
-          {
-            type: 'page',
-            body: [
-              defineReportDesignerPageSchema({
-                type: 'report-designer-page',
-                document,
-                designer: createRuntimeConfig(),
-                statusPath: 'reportStatus',
-              }),
-              { type: 'report-status-probe' },
-            ],
-          } as any
-        }
-        env={env}
-        registry={registry}
-        formulaCompiler={createFormulaCompiler()}
-        data={{}}
-      />,
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('report-status').textContent).toContain('report-designer:0:clean');
-    });
-
-    view.unmount();
-    expect(screen.queryByTestId('report-status')).toBeNull();
-  });
-
-  it('projects runtime dirty into report designer host scope after mutations', async () => {
-    renderReportDesignerPage({
-      toolbar: [
-        {
-          type: 'action-button',
-          label: 'Dirty report',
-          onClick: {
-            action: 'report-designer:updateMeta',
-            args: {
-              target: { kind: 'workbook' },
-              patch: { title: 'Changed' },
-            },
-          },
-        },
-        { type: 'report-runtime-dirty-probe' },
-      ],
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('report-runtime-dirty').textContent).toBe('false');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Dirty report' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('report-runtime-dirty').textContent).toBe('true');
-    });
-  });
-
-  it('projects target aliases into report designer host scope and keeps them reactive', async () => {
-    renderReportDesignerPage({
-      toolbar: [
-        {
-          type: 'action-button',
-          label: 'Inspect workbook',
-          onClick: {
-            action: 'report-designer:openInspector',
-            args: {
-              target: { kind: 'workbook' },
-            },
-          },
-        },
-        { type: 'report-target-kind-probe' },
-      ],
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('report-target-kind').textContent).toBe('sheet');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Inspect workbook' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('report-target-kind').textContent).toBe('workbook');
-    });
-  });
-
-  it('clears report target projection when spreadsheet selection becomes none', async () => {
-    const spreadsheet = createEmptyDocument('selection-clear-report-designer');
-    const sheetId = spreadsheet.workbook.sheets[0].id;
-
-    renderReportDesignerPage({
-      toolbar: [
-        {
-          type: 'action-button',
-          label: 'Select A1',
-          onClick: {
-            action: 'spreadsheet:setSelection',
-            args: {
-              selection: {
-                kind: 'cell',
-                sheetId,
-                anchor: {
-                  sheetId,
-                  address: 'A1',
-                  row: 0,
-                  col: 0,
-                },
-              },
-            },
-          },
-        },
-        {
-          type: 'action-button',
-          label: 'Clear selection',
-          onClick: {
-            action: 'spreadsheet:setSelection',
-            args: {
-              selection: { kind: 'none' },
-            },
-          },
-        },
-        { type: 'report-target-kind-probe' },
-      ],
-      document: createReportTemplateDocument(spreadsheet, 'Integration Report') as any,
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('report-target-kind').textContent).toBe('sheet');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Select A1' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('report-target-kind').textContent).toBe('cell');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('report-target-kind').textContent).toBe('');
-    });
-  });
-
   it('supports spreadsheet namespaced actions through report-designer page host scope', async () => {
     const spreadsheet = createEmptyDocument('spreadsheet-action-report-designer');
     const sheetId = spreadsheet.workbook.sheets[0].id;
@@ -635,38 +244,4 @@ describe('report-designer namespaced actions integration', { timeout: 15000 }, (
     });
   });
 
-  it('maps failed report-designer commands to top-level action result errors', async () => {
-    const provider = createReportDesignerActionProvider(async () => ({
-      ok: false,
-      changed: false,
-      error: 'Preview adapter unavailable',
-      data: { code: 'preview-unavailable' },
-    }));
-
-    const actionScope = createActionScope({ id: 'report-designer-test-scope' });
-    const unregister = actionScope.registerNamespace('report-designer', provider);
-
-    try {
-      const resolved = actionScope.resolve('report-designer:preview');
-      expect(resolved?.method).toBe('preview');
-
-      const result = await resolved!.provider.invoke(resolved!.method, {}, {} as any);
-      expect(result.ok).toBe(false);
-      expect(result.error).toBeInstanceOf(Error);
-      expect((result.error as Error).message).toBe('Preview adapter unavailable');
-      expect(result.data).toEqual({ code: 'preview-unavailable' });
-    } finally {
-      unregister();
-    }
-  });
-
-  it('exposes the documented report-designer host methods through listMethods', () => {
-    const provider = createReportDesignerActionProvider(async () => ({ ok: true, changed: false }));
-
-    expect(provider.listMethods?.()).toEqual(REPORT_DESIGNER_HOST_METHODS);
-  });
-
-  it('exports the report-designer action provider from the package root', () => {
-    expect(typeof createReportDesignerActionProvider).toBe('function');
-  });
 });

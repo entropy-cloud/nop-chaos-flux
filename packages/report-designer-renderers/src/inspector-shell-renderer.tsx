@@ -31,12 +31,18 @@ export function ReportInspectorShellRenderer(
   const inspectorErrorLabel = inspector?.error != null ? String(inspector.error) : undefined;
   const inspectorProps: RendererComponentProps<ReportInspectorSchema | ReportInspectorShellSchema> = {
     ...props,
+    meta: {
+      visible: true,
+      hidden: false,
+      disabled: false,
+      changed: false,
+    },
     props: { ...props.props, body: inspector?.resolvedSchema },
   };
 
   return (
     <section
-      className={cn('nop-report-designer', props.meta.className)}
+      className={cn('nop-report-inspector-shell', props.meta.className)}
       data-slot="report-designer-inspector-shell"
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}

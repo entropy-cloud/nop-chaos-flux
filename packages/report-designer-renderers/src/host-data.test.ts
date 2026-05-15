@@ -39,17 +39,24 @@ describe('buildReportDesignerScopeData', () => {
     });
 
     const scopeData = buildReportDesignerScopeData(core, core.getSnapshot());
-    const designer = scopeData.designer as { inspectorPanels?: unknown; fieldSources?: unknown[] };
+    const designer = scopeData.designer as {
+      inspectorPanels?: unknown;
+      fieldSources?: unknown[];
+      canUndo?: boolean;
+      canRedo?: boolean;
+    };
 
     expect(scopeData).toHaveProperty('selectionTarget');
-    expect(scopeData).toHaveProperty('selection');
-    expect(scopeData).toHaveProperty('target');
     expect(scopeData).toHaveProperty('reportDocument');
     expect(scopeData).toHaveProperty('fieldSources');
     expect(scopeData).toHaveProperty('preview');
     expect(scopeData).toHaveProperty('inspectorPanels');
+    expect(scopeData).not.toHaveProperty('canUndo');
+    expect(scopeData).not.toHaveProperty('canRedo');
     expect(scopeData).not.toHaveProperty('inspectorBody');
     expect(designer).toHaveProperty('inspectorPanels');
+    expect(designer).toHaveProperty('canUndo', false);
+    expect(designer).toHaveProperty('canRedo', false);
     expect(Array.isArray(designer.fieldSources)).toBe(true);
   });
 });

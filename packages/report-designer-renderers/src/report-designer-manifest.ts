@@ -119,6 +119,8 @@ const reportDesignerProjection: HostProjectionContract = {
           fieldDrag: { kind: 'object', fields: {} },
           preview: previewShape,
           activeMeta: { kind: 'unknown' },
+          canUndo: { kind: 'boolean' },
+          canRedo: { kind: 'boolean' },
           fieldSources: fieldSourcesShape,
           fieldSourceCount: { kind: 'number' },
           fieldCount: { kind: 'number' },
@@ -169,14 +171,6 @@ const reportDesignerProjection: HostProjectionContract = {
     activeRange: {
       schema: { kind: 'union', anyOf: [{ kind: 'null' }, { kind: 'object', fields: {} }] },
       description: 'Current active range.',
-    },
-    canUndo: {
-      schema: { kind: 'boolean' },
-      description: 'Whether undo is available.',
-    },
-    canRedo: {
-      schema: { kind: 'boolean' },
-      description: 'Whether redo is available.',
     },
     documentName: {
       schema: { kind: 'string' },

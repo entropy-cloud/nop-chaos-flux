@@ -102,7 +102,7 @@ describe('ReportFieldPanelRenderer', () => {
     expect(screen.getByText('Total Sales')).toBeTruthy();
     const shell = document.querySelector('[data-slot="report-field-panel-shell"]');
     expect(shell).toBeTruthy();
-    expect(shell?.className).toContain('nop-report-designer');
+    expect(shell?.className).toContain('nop-report-field-panel');
     expect(shell?.querySelector('[data-slot="report-field-panel-stack"]')).toBeTruthy();
     expect(shell?.querySelector('[data-slot="report-field-panel-source"]')).toBeTruthy();
     expect(shell?.querySelector('[data-slot="report-field-panel-group"]')).toBeTruthy();

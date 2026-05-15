@@ -121,7 +121,7 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
 
   return (
     <section
-      className={cn('nop-report-designer', props.meta.className)}
+      className={cn('nop-report-field-panel', props.meta.className)}
       data-slot="report-field-panel-shell"
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}

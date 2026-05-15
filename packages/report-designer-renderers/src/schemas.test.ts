@@ -106,7 +106,7 @@ describe('defineReportDesignerPageSchema with toolbar', () => {
     const schema = defineReportDesignerPageSchema({
       type: 'report-designer-page',
       document: doc,
-      designer: { kind: 'report-template' },
+      config: { kind: 'report-template' },
         toolbar: {
           type: 'report-toolbar',
           itemsOverride: [
@@ -127,7 +127,7 @@ describe('defineReportDesignerPageSchema with toolbar', () => {
     const schema = defineReportDesignerPageSchema({
       type: 'report-designer-page',
       document: doc,
-      designer: { kind: 'report-template' },
+      config: { kind: 'report-template' },
     });
 
     expect(schema.toolbar).toBeUndefined();
@@ -141,7 +141,7 @@ describe('defineReportDesignerPageSchema with toolbar', () => {
     const schema = defineReportDesignerPageSchema({
       type: 'report-designer-page',
       document: doc,
-      designer: { kind: 'report-template' },
+      config: { kind: 'report-template' },
       toolbar,
       fieldPanel,
       inspector,

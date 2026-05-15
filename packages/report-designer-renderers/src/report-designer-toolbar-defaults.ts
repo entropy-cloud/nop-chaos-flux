@@ -9,7 +9,7 @@ export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
     label: 'Undo',
     icon: 'undo',
     action: 'report-designer:undo',
-    disabled: '${!canUndo}',
+    disabled: '${!designer.canUndo}',
   },
   {
     id: 'redo',
@@ -17,7 +17,7 @@ export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
     label: 'Redo',
     icon: 'redo',
     action: 'report-designer:redo',
-    disabled: '${!canRedo}',
+    disabled: '${!designer.canRedo}',
   },
   { id: 'divider-edit', type: 'divider' },
   {

@@ -74,6 +74,8 @@ export interface ReportDesignerHostData {
     fieldDrag: ReportDesignerRuntimeSnapshot['fieldDrag'];
     preview: ReportDesignerRuntimeSnapshot['preview'];
     activeMeta: ReportDesignerRuntimeSnapshot['activeMeta'];
+    canUndo: boolean;
+    canRedo: boolean;
     fieldSources: FieldSourceSnapshot[];
     fieldSourceCount: number;
     fieldCount: number;
@@ -84,8 +86,6 @@ export interface ReportDesignerHostData {
   activeSheet:
     | ReportDesignerRuntimeSnapshot['document']['spreadsheet']['workbook']['sheets'][number]
     | undefined;
-  canUndo: boolean;
-  canRedo: boolean;
   documentName: string;
   fieldCount: number;
 }
@@ -118,6 +118,8 @@ export function createHostData(
       fieldDrag: snapshot.fieldDrag,
       preview: snapshot.preview,
       activeMeta: snapshot.activeMeta,
+      canUndo: snapshot.canUndo,
+      canRedo: snapshot.canRedo,
       fieldSources: snapshot.fieldSources,
       fieldSourceCount: snapshot.fieldSources.length,
       fieldCount,
@@ -126,8 +128,6 @@ export function createHostData(
     reportDocument,
     workbook: reportDocument.spreadsheet.workbook,
     activeSheet: getActiveSheet(snapshot, snapshot.selectionTarget),
-    canUndo: snapshot.canUndo,
-    canRedo: snapshot.canRedo,
     documentName: snapshot.document.name,
     fieldCount,
   };
@@ -165,6 +165,8 @@ export function buildReportDesignerScopeData(
       fieldDrag: snapshot.fieldDrag,
       preview: snapshot.preview,
       activeMeta: snapshot.activeMeta,
+      canUndo: snapshot.canUndo,
+      canRedo: snapshot.canRedo,
       fieldSources: snapshot.fieldSources,
       fieldSourceCount: snapshot.fieldSources.length,
       fieldCount,
@@ -178,15 +180,11 @@ export function buildReportDesignerScopeData(
     },
     spreadsheet,
     selectionTarget: snapshot.selectionTarget,
-    selection: snapshot.selectionTarget,
-    target: snapshot.selectionTarget,
     reportDocument,
     workbook,
     activeSheet,
     activeCell: spreadsheet?.activeCell,
     activeRange: spreadsheet?.activeRange,
-    canUndo: runtimeCanUndo,
-    canRedo: runtimeCanRedo,
     documentName: snapshot.document.name,
     fieldSources: snapshot.fieldSources,
     fieldCount,

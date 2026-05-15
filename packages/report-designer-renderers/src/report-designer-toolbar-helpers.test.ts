@@ -99,11 +99,11 @@ describe('toCommand', () => {
 
 describe('readState', () => {
   it('reads canUndo from snapshot', () => {
-    expect(readState('canUndo', { canUndo: true })).toBe(true);
+    expect(readState('canUndo', { designer: { canUndo: true } })).toBe(true);
   });
 
   it('reads canRedo from snapshot', () => {
-    expect(readState('canRedo', { canRedo: true })).toBe(true);
+    expect(readState('canRedo', { designer: { canRedo: true } })).toBe(true);
   });
 
   it('reads isDirty from snapshot directly', () => {
@@ -153,7 +153,7 @@ describe('readState', () => {
   });
 
   it('returns undefined for unknown state name with populated snapshot', () => {
-    expect(readState('unknownField', { canUndo: true, canRedo: false })).toBeUndefined();
+    expect(readState('unknownField', { designer: { canUndo: true, canRedo: false } })).toBeUndefined();
   });
 
   it('reads arbitrary keys from snapshot for unknown names', () => {
@@ -258,7 +258,7 @@ describe('mergeToolbarItems', () => {
         label: 'Undo',
         icon: 'undo',
         action: 'report-designer:undo',
-        disabled: '${!canUndo}',
+        disabled: '${!designer.canUndo}',
       },
     ];
     const overrides: ToolbarItem[] = [{ id: 'undo', type: 'button', label: 'Undo Custom' }];
@@ -269,7 +269,7 @@ describe('mergeToolbarItems', () => {
       label: 'Undo Custom',
       icon: 'undo',
       action: 'report-designer:undo',
-      disabled: '${!canUndo}',
+      disabled: '${!designer.canUndo}',
     });
   });
 

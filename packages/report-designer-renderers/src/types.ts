@@ -24,7 +24,7 @@ export interface ReportDesignerPageSchemaInput {
   hidden?: boolean | string;
   disabled?: boolean | string;
   document: ReportTemplateDocument;
-  designer: ReportDesignerConfig;
+  config: ReportDesignerConfig;
   profile?: ReportDesignerProfile;
   adapters?: Partial<ReportDesignerAdapterRegistry>;
   statusPath?: string;

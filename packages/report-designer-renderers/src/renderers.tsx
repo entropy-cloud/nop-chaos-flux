@@ -1,4 +1,5 @@
-import type { FieldCompileContext, RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
+import type { BaseSchema, FieldCompileContext, RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
+import type { RendererAuthoringTransformContext } from '@nop-chaos/flux-core';
 import { registerRendererDefinitions } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import { reportDesignerHostContract } from './report-designer-manifest.js';
@@ -7,6 +8,7 @@ import type {
   ReportDesignerPageSchema,
   ReportInspectorShellSchema,
 } from './types.js';
+import type { ReportDesignerConfig } from '@nop-chaos/report-designer-core';
 import type {
   ReportFieldPanelSchema,
   ReportInspectorSchema,
@@ -18,6 +20,17 @@ import { ReportDesignerPageRenderer } from './page-renderer.js';
 import { ReportInspectorRenderer } from './report-designer-inspector.js';
 import { ReportToolbarRenderer } from './report-designer-toolbar.js';
 export { defineReportDesignerPageSchema } from './types.js';
+
+function authoringTransformReportDesignerPage(
+  context: RendererAuthoringTransformContext<BaseSchema>,
+): BaseSchema {
+  const next = { ...context.schema } as BaseSchema & { config?: ReportDesignerConfig; designer?: ReportDesignerConfig };
+  if (next.config === undefined && next.designer !== undefined) {
+    next.config = next.designer;
+    delete next.designer;
+  }
+  return next;
+}
 
 const useEagerRenderersInTests =
   (globalThis as { process?: { env?: { VITEST?: string } } }).process?.env?.VITEST === 'true';
@@ -160,6 +173,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'report-designer-page',
     component: LazyReportDesignerPageRenderer,
+    authoringTransform: authoringTransformReportDesignerPage,
     displayName: 'Report Designer Page',
     sourcePackage: '@nop-chaos/report-designer-renderers',
     rendererClass: 'domain-host-renderer',
@@ -178,9 +192,9 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
         editorType: 'object',
         required: true,
       },
-      designer: {
+      config: {
         shape: { kind: 'object', fields: {} },
-        displayName: 'Designer',
+        displayName: 'Config',
         description: 'Report designer runtime config.',
         editorType: 'object',
         required: true,
@@ -202,7 +216,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'statusPath', kind: 'prop' },
       { key: 'document', kind: 'prop' },
-      { key: 'designer', kind: 'prop' },
+      { key: 'config', kind: 'prop' },
       { key: 'profile', kind: 'prop' },
       { key: 'adapters', kind: 'prop' },
       { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },

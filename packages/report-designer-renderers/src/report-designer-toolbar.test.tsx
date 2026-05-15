@@ -36,7 +36,7 @@ function renderToolbarInPage(overrides: { itemsOverride?: any[] }) {
   const schema = defineReportDesignerPageSchema({
     type: 'report-designer-page',
     document,
-    designer: createRuntimeConfig(),
+    config: createRuntimeConfig(),
     toolbar: {
       type: 'report-toolbar',
       itemsOverride: overrides.itemsOverride,
