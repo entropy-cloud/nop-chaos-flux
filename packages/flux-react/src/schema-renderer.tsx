@@ -24,6 +24,10 @@ import { SchemaRootError, SchemaRootErrorBoundary, SchemaRootStatus } from './no
 
 const EMPTY_PREPARED_IMPORTS = new Map<string, import('@nop-chaos/flux-core').PreparedImportSpec>();
 
+type PageRuntimeWithExternalSync = import('@nop-chaos/flux-core').PageRuntime & {
+  __attachExternalPageStoreSync?: () => () => void;
+};
+
 function getSingleRootNode(
   template: import('@nop-chaos/flux-core').CompiledTemplate | null,
 ): import('@nop-chaos/flux-core').TemplateNode | undefined {
@@ -164,6 +168,15 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const initialDataAppliedRef = useRef(false);
     const page = useMemo(() => runtime.createPageRuntime(initialPageDataRef.current), [runtime]);
     const ownedSurfaceRuntime = useMemo(() => runtime.createSurfaceRuntime(), [runtime]);
+
+    useEffect(() => {
+      const attachExternalPageStoreSync = (page as PageRuntimeWithExternalSync).__attachExternalPageStoreSync;
+      if (!attachExternalPageStoreSync) {
+        return;
+      }
+
+      return attachExternalPageStoreSync();
+    }, [page]);
 
     useEffect(() => {
       const schemaInput = props.schema;

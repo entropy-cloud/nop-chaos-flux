@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import React, { useLayoutEffect } from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { createRendererRegistry, type ScopeRef } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -121,5 +121,41 @@ describe('useHostScope', () => {
       host: { status: 'ready' },
       local: { note: 'ok' },
     });
+  });
+
+  it('publishes nested changed paths when host projection data changes', () => {
+    const view = renderProbe({
+      host: {
+        selection: { kind: 'node', id: 'n1' },
+        status: 'ready',
+      },
+    });
+    const listener = vi.fn<(change: any) => void>();
+    testState.capturedScope?.store?.subscribe(listener);
+
+    view.rerender(
+      <RuntimeContext.Provider value={view.runtime}>
+        <ScopeContext.Provider value={view.page.scope}>
+          <HostScopeProbe
+            scopeData={{
+              host: {
+                selection: { kind: 'edge', id: 'e1' },
+                status: 'ready',
+              },
+            }}
+            onCapture={(scope) => {
+              testState.capturedScope = scope;
+            }}
+          />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'replace',
+        paths: ['host.selection.id', 'host.selection.kind'],
+      }),
+    );
   });
 });

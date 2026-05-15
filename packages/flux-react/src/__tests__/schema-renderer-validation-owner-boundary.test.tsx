@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import type { ScopeValidationStateSnapshot, ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -115,8 +115,8 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
 
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('page-root-validation');
     expect(testState.firstPublishedScopeState).toMatchObject({
-      lifecycleState: 'active',
-      ready: true,
+      lifecycleState: 'bootstrapping',
+      ready: false,
     });
 
     rerender(
@@ -135,7 +135,7 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('');
   });
 
-  it('keeps the page-root owner active after the root validation plan attaches', async () => {
+  it('activates the page-root owner only after the root validation plan attaches', async () => {
     testState.firstPublishedScopeState = undefined;
     testState.latestValidationOwner = undefined;
 
@@ -164,8 +164,8 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
 
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('page-root-validation');
     expect(testState.firstPublishedScopeState).toMatchObject({
-      lifecycleState: 'active',
-      ready: true,
+      lifecycleState: 'bootstrapping',
+      ready: false,
     });
 
     await waitFor(() => {
@@ -216,7 +216,7 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
     });
   });
 
-  it('keeps managed surface-root owners active when the opened body has no compiled validation plan', () => {
+  it('keeps managed surface-root owners bootstrapping when the opened body has no compiled validation plan', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([pageRenderer, validationOwnerProbeRenderer]),
       env,
@@ -237,9 +237,44 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
 
     const entry = surfaceRuntime.store.getState().entries.find((item) => item.id === surfaceId);
     expect(entry?.validationOwner?.getScopeState()).toMatchObject({
-      lifecycleState: 'active',
-      ready: true,
+      lifecycleState: 'bootstrapping',
+      ready: false,
     });
     expect(entry?.validationOwner?.validation).toBeUndefined();
+  });
+
+  it('does not attach external page-store subscriptions during render construction', () => {
+    const subscribe = vi.fn(() => () => undefined);
+    const pageStore = {
+      getState: () => ({ data: { shared: 'external' }, refreshTick: 0 }),
+      subscribe,
+      setData: vi.fn(),
+      updateData: vi.fn(),
+      refresh: vi.fn(),
+    } as any;
+
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([pageRenderer]),
+      env,
+      expressionCompiler: createFormulaCompiler() as any,
+      pageStore,
+    });
+    runtime.createPageRuntime({ shared: 'local' });
+
+    expect(subscribe).not.toHaveBeenCalled();
+
+    const SchemaRenderer = createSchemaRenderer([pageRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema-page-store-attach"
+        schema={{ type: 'page', body: [] }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        pageStore={pageStore}
+      />,
+    );
+
+    expect(subscribe).toHaveBeenCalledTimes(1);
   });
 });

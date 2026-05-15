@@ -17,6 +17,8 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const footerContent = resolveRendererSlotContent(props, 'footer');
   const refreshTick = useScopeSelector((scopeData) =>
     Number((scopeData as Record<string, unknown>)?.refreshTick ?? 0),
+    Object.is,
+    { paths: ['refreshTick'] },
   );
   const summary = useMemo<PageStatusSummary>(
     () => ({
