@@ -259,7 +259,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
           pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value,
       );
     },
-    { enabled: Boolean(!currentForm && hasName), fallback: undefined },
+    { enabled: Boolean(!currentForm && hasName), fallback: undefined, paths: hasName ? [name] : undefined },
   );
   const externalValue = currentForm ? formExternalValue : scopeExternalValue;
   const pairs = externalValue ?? EMPTY_KEY_VALUE_PAIRS;

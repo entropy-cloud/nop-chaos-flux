@@ -66,7 +66,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     runtime.env.notify?.('warning', message);
   }
 
-  const presentation = useFieldPresentation(name, parentForm, {
+  const presentation = useFieldPresentation(name, parentValidationOwner, {
     disabled: props.props.disabled,
     readOnly,
   });
@@ -74,12 +74,12 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const currentValue = useCurrentFormState(
     (state) => (hasName ? (state.values as Record<string, unknown>)[name] : undefined),
     Object.is,
-    { enabled: hasName, path: hasName ? name : undefined },
+    { enabled: Boolean(parentForm && hasName), path: hasName ? name : undefined },
   );
   const scopeValue = useScopeSelector(
     (data) => (hasName ? getIn(data as Record<string, unknown>, name) : undefined),
     Object.is,
-    { enabled: hasName, fallback: undefined },
+    { enabled: !parentForm && hasName, fallback: undefined, paths: hasName ? [name] : undefined },
   );
   const fieldValue = parentForm ? currentValue : scopeValue;
 
@@ -209,15 +209,17 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
       if (parentForm) {
         publishValidateResultErrors(validation, name, parentForm);
-      } else if (parentValidationOwner && validation.issues?.length) {
+      } else if (parentValidationOwner) {
         parentValidationOwner.applyExternalErrors({
           sourceId: `value-adaptation:${name}`,
-          errors: validation.issues.map((issue) => ({
-            path: issue.path ? `${name}.${issue.path}` : name,
-            message: issue.message,
-            rule: 'async',
-            sourceKind: 'runtime-overlay',
-          })),
+          errors: validation.valid
+            ? []
+            : (validation.issues ?? []).map((issue) => ({
+                path: issue.path ? `${name}.${issue.path}` : name,
+                message: issue.message,
+                rule: 'async',
+                sourceKind: 'runtime-overlay',
+              })),
           replace: true,
         });
       }

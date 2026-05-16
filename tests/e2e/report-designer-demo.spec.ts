@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
 // This route-heavy spec shares one cold-started designer host and stays serial intentionally.
 test.describe.configure({ mode: 'serial' });
@@ -10,6 +10,7 @@ async function openReportDesignerDemo(page: import('@playwright/test').Page) {
     page.getByRole('heading', { name: 'Report Designer Playground', level: 1 }),
   ).toBeVisible({ timeout: 30000 });
   await expect(page.locator('.report-designer-demo')).toBeVisible({ timeout: 15000 });
+  await assertTrackedPageErrors(page);
 }
 
 test('renders the core report designer surfaces', async ({ page }) => {

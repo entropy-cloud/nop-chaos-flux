@@ -202,7 +202,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       if (!a || !b || a.length !== b.length) return false;
       return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
     },
-    { enabled: Boolean(!currentForm && hasName), fallback: undefined },
+    { enabled: Boolean(!currentForm && hasName), fallback: undefined, paths: hasName ? [name] : undefined },
   );
   const externalValue = currentForm ? formExternalValue : scopeExternalValue;
   const items = externalValue ?? EMPTY_ARRAY_EDITOR_ITEMS;

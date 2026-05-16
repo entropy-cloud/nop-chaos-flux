@@ -95,7 +95,11 @@ export function publishValidateResultErrors(
   form: FormRuntime,
 ): void {
   if (result.valid) {
-    form.clearErrors(fieldPath);
+    form.applyExternalErrors({
+      sourceId: `value-adaptation:${fieldPath}`,
+      errors: [],
+      replace: true,
+    });
     return;
   }
 

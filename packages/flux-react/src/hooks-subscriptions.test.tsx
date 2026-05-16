@@ -37,10 +37,12 @@ describe('hook subscription helpers', () => {
   it('uses per-path subscriptions for useCurrentFormState path mode', () => {
     const subscribe = vi.fn(() => () => undefined);
     const subscribeToPath = vi.fn(() => () => undefined);
+    const subscribeToSubmitting = vi.fn(() => () => undefined);
     const form = {
       store: {
         subscribe,
         subscribeToPath,
+        subscribeToSubmitting,
         getState: () => EMPTY_FORM_STORE_STATE,
       },
     } as any;
@@ -52,6 +54,7 @@ describe('hook subscription helpers', () => {
     );
 
     expect(subscribeToPath).toHaveBeenCalledWith('profile.email', expect.any(Function));
+    expect(subscribeToSubmitting).toHaveBeenCalledWith(expect.any(Function));
     expect(subscribe).not.toHaveBeenCalled();
   });
 
@@ -106,10 +109,12 @@ describe('hook subscription helpers', () => {
   it('uses path-scoped subscription for field presentation via useCurrentFormState', () => {
     const subscribe = vi.fn(() => () => undefined);
     const subscribeToPath = vi.fn(() => () => undefined);
+    const subscribeToSubmitting = vi.fn(() => () => undefined);
     const form = {
       store: {
         subscribe,
         subscribeToPath,
+        subscribeToSubmitting,
         getState: () => EMPTY_FORM_STORE_STATE,
       },
     } as any;
@@ -121,6 +126,7 @@ describe('hook subscription helpers', () => {
     );
 
     expect(subscribeToPath).toHaveBeenCalledWith('address.city', expect.any(Function));
+    expect(subscribeToSubmitting).toHaveBeenCalledWith(expect.any(Function));
     expect(subscribe).not.toHaveBeenCalled();
   });
 
@@ -128,11 +134,13 @@ describe('hook subscription helpers', () => {
     const subscribe = vi.fn(() => () => undefined);
     const subscribeToPath = vi.fn(() => () => undefined);
     const subscribeToPaths = vi.fn(() => () => undefined);
+    const subscribeToSubmitting = vi.fn(() => () => undefined);
     const form = {
       store: {
         subscribe,
         subscribeToPath,
         subscribeToPaths,
+        subscribeToSubmitting,
         getState: () => EMPTY_FORM_STORE_STATE,
       },
     } as any;
@@ -147,6 +155,7 @@ describe('hook subscription helpers', () => {
       ['profile.email', 'profile.name'],
       expect.any(Function),
     );
+    expect(subscribeToSubmitting).toHaveBeenCalledWith(expect.any(Function));
     expect(subscribeToPath).not.toHaveBeenCalled();
     expect(subscribe).not.toHaveBeenCalled();
   });

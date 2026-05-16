@@ -23,7 +23,10 @@ export interface SubmitFormInput {
   getCurrentValidation: () =>
     | import('@nop-chaos/flux-core').CompiledFormValidationModel
     | undefined;
-  validateForm: (reason?: ValidationReason) => Promise<FormValidationResult>;
+  validateForm: (
+    reason?: ValidationReason,
+    options?: { signal?: AbortSignal },
+  ) => Promise<FormValidationResult>;
 }
 
 export type { FormValidationResult };
@@ -226,7 +229,7 @@ export async function executeFormSubmit(
     const validation =
       !currentValidation && runtimeFieldRegistrations.size === 0
         ? ({ ok: true, errors: [], fieldErrors: {} } as FormValidationResult)
-        : await validateForm('submit');
+        : await validateForm('submit', { signal: options?.signal });
 
     const lifecycleHandlers = getLifecycleHandlers();
 
@@ -263,10 +266,22 @@ export async function executeFormSubmit(
         }
 
         summaryGatePromises.push(
-          awaitWithAbort(contract.triggerValidation(), options?.signal).then((result) => ({
+          Promise.resolve({
             childOwnerId: contract.childOwnerId,
-            result,
-          })),
+            result: {
+              ok: childState.valid,
+              errors: childState.valid
+                ? []
+                : [
+                    {
+                      path: contract.childOwnerId,
+                      message: `Submit blocked by child scope: ${contract.childOwnerId}`,
+                      rule: 'required',
+                      sourceKind: 'external',
+                    },
+                  ],
+            },
+          }),
         );
       }
     }

@@ -8,7 +8,8 @@
  *   await expect(stage).toBeVisible();
  */
 
-import { type Page, type Locator, expect } from '@playwright/test';
+import { type Locator } from '@playwright/test';
+import { expect, type Page, assertTrackedPageErrors } from '../fixtures.js';
 import { COMPONENT_LAB_COVERAGE_MANIFEST, COVERED_RENDERER_IDS } from './coverage-manifest';
 
 export { COMPONENT_LAB_COVERAGE_MANIFEST, COVERED_RENDERER_IDS };
@@ -28,6 +29,7 @@ export async function openRendererDirect(page: Page, rendererId: string): Promis
   await expect(page.getByTestId(`component-lab-renderer-${rendererId}`)).toBeVisible({
     timeout: COMPONENT_LAB_RENDERER_TIMEOUT,
   });
+  await assertTrackedPageErrors(page);
 }
 
 /**
@@ -38,6 +40,7 @@ export async function openLabHome(page: Page): Promise<void> {
   await expect(page.getByTestId('component-lab')).toBeVisible({
     timeout: COMPONENT_LAB_BOOT_TIMEOUT,
   });
+  await assertTrackedPageErrors(page);
 }
 
 /**

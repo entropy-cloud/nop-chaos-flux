@@ -416,8 +416,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       return validatePath(sharedState, path, reason);
     },
 
-    async validateForm(reason?) {
-      return ownerRuntime.validateForm(reason);
+    async validateForm(reason?, options?) {
+      return ownerRuntime.validateForm(reason, options);
     },
 
     async validateSubtree(path, reason?) {
@@ -488,9 +488,10 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           },
           getLifecycleHandlers: () => lifecycleHandlers,
           getCurrentValidation: () => currentValidation,
-          validateForm: (reason) =>
+          validateForm: (reason, submitOptions) =>
             thisForm.validateForm(
               reason as import('@nop-chaos/flux-core').ValidationReason | undefined,
+              submitOptions,
             ),
         },
         options,

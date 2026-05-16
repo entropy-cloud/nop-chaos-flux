@@ -210,6 +210,33 @@ describe('owner validation lifecycle contracts', () => {
     expect(validateRule).toHaveBeenCalledTimes(1);
   });
 
+  it('re-reads the compiled validation model after activation before resolving validateSubtree', async () => {
+    const initialModel = undefined;
+    const refreshedModel = makeFormModel({
+      profile: makeNode('profile'),
+      'profile.name': makeNode('profile.name', { required: true }),
+    });
+    const validateRule = vi.fn().mockReturnValue(undefined);
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      parentScope: createStubScope({ profile: { name: '' } }),
+      initialValues: { profile: { name: '' } },
+      validation: initialModel,
+      initialLifecycleState: 'bootstrapping',
+      validateRule,
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const validationPromise = runtime.validateSubtree('profile', 'commit');
+    await Promise.resolve();
+    expect(validateRule).not.toHaveBeenCalled();
+
+    runtime.refreshCompiledModel(refreshedModel);
+
+    await expect(validationPromise).resolves.toMatchObject({ ok: true, errors: [] });
+    expect(validateRule).toHaveBeenCalledTimes(1);
+  });
+
   it('treats scheduled debounced async validation as owner-level pending work', async () => {
     vi.useFakeTimers();
 

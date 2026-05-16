@@ -134,9 +134,12 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const formValue = useCurrentFormState(
     (state) => (name ? getIn(state.values, name) : state.values),
     Object.is,
-    { path: name || undefined },
+    { enabled: Boolean(parentForm), path: name || undefined },
   );
-  const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is);
+  const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is, {
+    enabled: !parentForm,
+    paths: name ? [name] : undefined,
+  });
   const rawValue = parentForm ? formValue : scopeValue;
   const usesWorkingValue = Boolean(schemaProps.transformInAction || schemaProps.transformOutAction);
 
@@ -223,7 +226,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     valueAdapter,
   ]);
 
-  const presentation = useFieldPresentation(name, parentForm, {
+  const presentation = useFieldPresentation(name, parentValidationOwner, {
     disabled: props.props.disabled,
     readOnly,
   });

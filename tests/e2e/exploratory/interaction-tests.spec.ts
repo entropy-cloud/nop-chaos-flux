@@ -1,29 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from '../fixtures.js';
 import { ComponentLabHelper, scenarioSlug } from '../component-lab/helpers';
-
-function collectPageErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(`[console.error] ${msg.text()}`);
-  });
-  page.on('pageerror', (err) => {
-    errors.push(`[pageerror] ${err.message}`);
-  });
-  return errors;
-}
-
-function filterKnownNoise(errors: string[]): string[] {
-  return errors.filter(
-    (e) =>
-      !e.includes('favicon') &&
-      !e.includes('Download the React DevTools') &&
-      !e.includes('WebSocket connection'),
-  );
-}
-
-function assertZeroErrors(errors: string[]) {
-  expect(filterKnownNoise(errors)).toEqual([]);
-}
 
 async function assertDebuggerZeroErrors(page: Page) {
   const debuggerErrors = await page.evaluate(() => {
@@ -35,7 +11,6 @@ async function assertDebuggerZeroErrors(page: Page) {
 
 test.describe.skip('Exploratory: form interactions', () => {
   test('form: empty submit shows validation errors, then fill and submit succeeds', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('form');
@@ -57,12 +32,10 @@ test.describe.skip('Exploratory: form interactions', () => {
 
     await expect(stage.getByText('testuser')).toBeVisible({ timeout: 5_000 }).catch(() => {});
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('input-text: empty submit then fill and resubmit clears validation', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('input-text');
@@ -78,12 +51,10 @@ test.describe.skip('Exploratory: form interactions', () => {
 
     await stage.getByRole('button', { name: /submit/i }).click();
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('select: choose option and verify bound value updates', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('select');
@@ -97,12 +68,10 @@ test.describe.skip('Exploratory: form interactions', () => {
       await page.getByRole('option').first().click().catch(() => {});
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('checkbox: toggle checkbox updates state', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('checkbox');
@@ -117,12 +86,10 @@ test.describe.skip('Exploratory: form interactions', () => {
       await checkbox.click();
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('switch: toggle switch twice and verify zero errors', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('switch');
@@ -137,12 +104,10 @@ test.describe.skip('Exploratory: form interactions', () => {
       await switchEl.click();
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('radio-group: select different options', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('radio-group');
@@ -158,14 +123,12 @@ test.describe.skip('Exploratory: form interactions', () => {
       await radios.nth(0).click();
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 });
 
 test.describe.skip('Exploratory: dialog/drawer lifecycle', () => {
   test('dialog: open, fill form, confirm, verify writeback', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('dialog');
@@ -192,12 +155,10 @@ test.describe.skip('Exploratory: dialog/drawer lifecycle', () => {
       await page.waitForTimeout(500);
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('dialog: open and close via Escape key', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('dialog');
@@ -217,12 +178,10 @@ test.describe.skip('Exploratory: dialog/drawer lifecycle', () => {
       }
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('drawer: open, type, save, verify writeback', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('drawer');
@@ -247,14 +206,12 @@ test.describe.skip('Exploratory: dialog/drawer lifecycle', () => {
       await page.waitForTimeout(500);
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 });
 
 test.describe.skip('Exploratory: tabs switching', () => {
   test('tabs: switch between all tabs', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('tabs');
@@ -273,14 +230,12 @@ test.describe.skip('Exploratory: tabs switching', () => {
       }
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 });
 
 test.describe.skip('Exploratory: dynamic renderer switching', () => {
   test('dynamic-renderer: rapid schema switching has no errors', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('dynamic-renderer');
@@ -295,14 +250,12 @@ test.describe.skip('Exploratory: dynamic renderer switching', () => {
       await page.waitForTimeout(200);
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 });
 
 test.describe.skip('Exploratory: reaction watched field', () => {
   test('reaction: counter increment and derived value update', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('reaction');
@@ -318,14 +271,12 @@ test.describe.skip('Exploratory: reaction watched field', () => {
       }
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 });
 
 test.describe.skip('Exploratory: complex form fields', () => {
   test('array-field: add row, fill, remove', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('array-field');
@@ -345,12 +296,10 @@ test.describe.skip('Exploratory: complex form fields', () => {
       }
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('condition-builder: change a rule value', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('condition-builder');
@@ -368,12 +317,10 @@ test.describe.skip('Exploratory: complex form fields', () => {
       }
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('variant-field: switch between string and list modes', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('variant-field');
@@ -396,12 +343,10 @@ test.describe.skip('Exploratory: complex form fields', () => {
       }
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('detail-field: open edit dialog, change field, confirm', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('detail-field');
@@ -429,7 +374,6 @@ test.describe.skip('Exploratory: complex form fields', () => {
       }
     }
 
-    assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 });

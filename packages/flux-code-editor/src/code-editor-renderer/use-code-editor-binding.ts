@@ -18,12 +18,12 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
   const formValue = useCurrentFormState(
     (state) => (hasName ? getIn(state.values, name) : undefined),
     Object.is,
-    { enabled: hasName, path: hasName ? name : undefined },
+    { enabled: Boolean(currentForm && hasName), path: hasName ? name : undefined },
   );
   const scopeValue = useScopeSelector(
     (data) => (hasName ? getIn(data, name) : undefined),
     Object.is,
-    { enabled: hasName, fallback: undefined },
+    { enabled: !currentForm && hasName, fallback: undefined, paths: hasName ? [name] : undefined },
   );
 
   let value: string;

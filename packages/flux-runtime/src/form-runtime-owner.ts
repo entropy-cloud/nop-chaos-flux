@@ -23,6 +23,7 @@ import {
 } from './form-runtime-owner-external-errors.js';
 import { mergeFieldStateErrors } from './form-runtime-owner-field-states.js';
 import { disposeOwnerState, refreshCompiledModelState } from './form-runtime-owner-lifecycle.js';
+import { isAbortError } from './error-utils.js';
 import { collectSubtreeValidationTargets } from './form-runtime-subtree.js';
 import {
   cancelValidationDebounce,
@@ -336,18 +337,20 @@ export function buildFormOwnerRuntime(input: {
     return input.getThisForm().validateForm(reason);
   }
 
-  async function validateForm(reason?: ValidationReason) {
+  async function validateForm(reason?: ValidationReason, options?: { signal?: AbortSignal }) {
     if (reason === 'submit' || reason === 'commit') {
       supersedeLowerPriorityWork();
     }
 
-    const currentValidation = input.getCurrentValidation();
+    let currentValidation = input.getCurrentValidation();
 
     if (!currentValidation) {
       const lifecycleActive = await waitForActiveLifecycle(input.sharedState);
       if (!lifecycleActive) {
         return createLifecycleBlockedValidationResult();
       }
+
+      currentValidation = input.getCurrentValidation();
     }
 
     if (!currentValidation && input.sharedState.runtimeFieldRegistrations.size === 0) {
@@ -384,12 +387,20 @@ export function buildFormOwnerRuntime(input: {
       validatedPaths.add(path);
 
       try {
-        const result = await input.getThisForm().validateField(path, reason);
+        if (options?.signal?.aborted) {
+          throw Object.assign(new Error('Validation aborted'), { name: 'AbortError' });
+        }
+
+        const result = await validatePath(input.sharedState, path, reason, options);
         if (!result.ok) {
           fieldErrors[path] = result.errors;
           errors.push(...result.errors);
         }
       } catch (error) {
+        if (isAbortError(error)) {
+          throw error;
+        }
+
         console.error(`[flux-runtime] Field validation threw for path "${path}":`, error);
         const validationError = {
           path,
@@ -413,7 +424,7 @@ export function buildFormOwnerRuntime(input: {
       if (!registration.validateChild || !registration.childPaths?.length) return;
       for (const childPath of registration.childPaths) {
         validatedPaths.add(childPath);
-        const result = await input.getThisForm().validateField(childPath, reason);
+        const result = await validatePath(input.sharedState, childPath, reason, options);
         if (!result.ok) {
           fieldErrors[childPath] = result.errors;
           errors.push(...result.errors);
@@ -426,6 +437,10 @@ export function buildFormOwnerRuntime(input: {
       const { registration } = entry;
       const path = registration.path;
       validatedPaths.add(path);
+
+      if (options?.signal?.aborted) {
+        throw Object.assign(new Error('Validation aborted'), { name: 'AbortError' });
+      }
 
       if (getCompiledValidationField(currentValidation, path)) {
         await validateRegisteredChildren(registration);
@@ -539,13 +554,15 @@ export function buildFormOwnerRuntime(input: {
       supersedeLowerPriorityWork(path);
     }
 
-    const currentValidation = input.getCurrentValidation();
+    let currentValidation = input.getCurrentValidation();
 
     if (!currentValidation) {
       const lifecycleActive = await waitForActiveLifecycle(input.sharedState);
       if (!lifecycleActive) {
         return createLifecycleBlockedValidationResult();
       }
+
+      currentValidation = input.getCurrentValidation();
 
       const targetPaths = collectSubtreeValidationTargets(input.sharedState, path);
       if (targetPaths.length === 0) {

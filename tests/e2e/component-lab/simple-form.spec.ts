@@ -4,7 +4,7 @@
  * select, checkbox, switch, radio-group, checkbox-group
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures.js';
 import { ComponentLabHelper, scenarioSlug } from './helpers';
 
 // ---------------------------------------------------------------------------

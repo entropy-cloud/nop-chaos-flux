@@ -213,7 +213,6 @@ export function useCrudHandle(
 
 export function useCrudRuntimeState(args: {
   scope: ScopeRef | undefined;
-  ownerStatePath: string;
   queryStatePath: string;
   paginationStatePath: string;
   sortStatePath: string;
@@ -224,7 +223,6 @@ export function useCrudRuntimeState(args: {
 }) {
   const {
     scope,
-    ownerStatePath,
     queryStatePath,
     paginationStatePath,
     sortStatePath,
@@ -236,59 +234,38 @@ export function useCrudRuntimeState(args: {
 
   const queryState = useScopeSelector(
     (scopeData) => {
-      const owner = toRecord(getIn(scopeData, ownerStatePath));
-      const ownerQuery = toRecord(owner.query);
       const query = toRecord(getIn(scopeData, queryStatePath));
       return {
-        values:
-          isRecord(query) && isRecord(query.values)
-            ? toRecord(query.values)
-            : isRecord(ownerQuery.values)
-              ? toRecord(ownerQuery.values)
-              : defaultQuery,
-        refreshCount: isRecord(query)
-          ? toPositiveNumber(query.refreshCount, 0)
-          : toPositiveNumber(ownerQuery.refreshCount, 0),
+        values: isRecord(query) && isRecord(query.values) ? toRecord(query.values) : defaultQuery,
+        refreshCount: isRecord(query) ? toPositiveNumber(query.refreshCount, 0) : 0,
       } satisfies CrudQueryState;
     },
     (a, b) => a.refreshCount === b.refreshCount && shallowEqualRecords(a.values, b.values),
-    { paths: [ownerStatePath, queryStatePath] },
+    { paths: [queryStatePath] },
   );
 
   const paginationState = useScopeSelector(
-    (scopeData) => {
-      const owner = toRecord(getIn(scopeData, ownerStatePath));
-      const pagination = getIn(scopeData, paginationStatePath);
-      return normalizePagination(pagination ?? owner.pagination, fallbackPageSize);
-    },
+    (scopeData) => normalizePagination(getIn(scopeData, paginationStatePath), fallbackPageSize),
     (a, b) => a.currentPage === b.currentPage && a.pageSize === b.pageSize,
-    { paths: [ownerStatePath, paginationStatePath] },
+    { paths: [paginationStatePath] },
   );
 
   const sortState = useScopeSelector(
-    (scopeData) => {
-      const owner = toRecord(getIn(scopeData, ownerStatePath));
-      const sort = getIn(scopeData, sortStatePath);
-      return normalizeSort(sort ?? owner.sort);
-    },
+    (scopeData) => normalizeSort(getIn(scopeData, sortStatePath)),
     (a, b) => a.column === b.column && a.direction === b.direction,
-    { paths: [ownerStatePath, sortStatePath] },
+    { paths: [sortStatePath] },
   );
 
-  const filterState = useScopeSelector((scopeData) => {
-    const owner = toRecord(getIn(scopeData, ownerStatePath));
-    const filters = getIn(scopeData, filterStatePath);
-    return toRecord(filters ?? owner.filters);
-  }, shallowEqualRecords, { paths: [ownerStatePath, filterStatePath] });
+  const filterState = useScopeSelector(
+    (scopeData) => toRecord(getIn(scopeData, filterStatePath)),
+    shallowEqualRecords,
+    { paths: [filterStatePath] },
+  );
 
   const selectedRowKeys = useScopeSelector(
-    (scopeData) => {
-      const owner = toRecord(getIn(scopeData, ownerStatePath));
-      const selection = getIn(scopeData, selectionStatePath);
-      return toStringArray(selection ?? owner.selection);
-    },
+    (scopeData) => toStringArray(getIn(scopeData, selectionStatePath)),
     (a, b) => a.length === b.length && a.every((value, index) => value === b[index]),
-    { paths: [ownerStatePath, selectionStatePath] },
+    { paths: [selectionStatePath] },
   );
 
   useEffect(() => {

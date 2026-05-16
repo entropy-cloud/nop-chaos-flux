@@ -292,20 +292,133 @@ describe('variant-field generic owner contracts', () => {
     expect(state.validationContextValue).toBe(state.projectedOwner);
   });
 
-  it('keeps action-intent fields on the current prop channel baseline', async () => {
+  it('models detectVariantAction on the event channel and leaves top-level adaptation actions out of props', async () => {
     const { variantFieldRendererDefinition } = await import('./variant-field.js');
 
     expect(
       variantFieldRendererDefinition.fields?.find((field) => field.key === 'detectVariantAction'),
-    ).toMatchObject({ kind: 'prop' });
+    ).toMatchObject({ kind: 'event' });
     expect(
       variantFieldRendererDefinition.fields?.find((field) => field.key === 'transformInAction'),
-    ).toMatchObject({ kind: 'prop' });
+    ).toMatchObject({ kind: 'ignored' });
     expect(
       variantFieldRendererDefinition.fields?.find((field) => field.key === 'transformOutAction'),
-    ).toMatchObject({ kind: 'prop' });
+    ).toMatchObject({ kind: 'ignored' });
     expect(
       variantFieldRendererDefinition.fields?.find((field) => field.key === 'validateValueAction'),
-    ).toMatchObject({ kind: 'prop' });
+    ).toMatchObject({ kind: 'ignored' });
+  });
+
+  it('uses the authored nested transformInAction schema instead of the resolved variant copy', async () => {
+    state.parentScope = {
+      id: 'form-scope',
+      path: '$form',
+      get: vi.fn((path?: string) => (path === 'payload' ? 'alpha' : undefined)),
+      has: vi.fn(() => true),
+      readOwn: vi.fn(() => ({ payload: 'alpha' })),
+      readVisible: vi.fn(() => ({ payload: 'alpha' })),
+      materializeVisible: vi.fn(() => ({ payload: 'alpha' })),
+      update: vi.fn(),
+      merge: vi.fn(),
+    };
+    state.parentForm = {
+      scopeId: 'form-owner',
+      id: 'form-1',
+      name: 'demo',
+      store: { getState: vi.fn(() => ({ values: { payload: 'alpha' } })) },
+      getScopeState: vi.fn(() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
+      validateAll: vi.fn(async () => ({ ok: true, errors: [], fieldErrors: {} })),
+      notifyFieldHidden: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
+      setValue: vi.fn(),
+      setValues: vi.fn(),
+      getFieldState: vi.fn(),
+      validateAt: vi.fn(),
+      validateField: vi.fn(),
+      validateForm: vi.fn(),
+      getField: vi.fn(),
+      getDependents: vi.fn(() => []),
+      findByPrefix: vi.fn(() => []),
+      getChildren: vi.fn(() => []),
+      getError: vi.fn(),
+      isValidating: vi.fn(() => false),
+      isTouched: vi.fn(() => false),
+      isDirty: vi.fn(() => false),
+      isVisited: vi.fn(() => false),
+      touchField: vi.fn(),
+      clearErrors: vi.fn(),
+      submit: vi.fn(),
+      reset: vi.fn(),
+    } as any;
+    const dispatch = vi.fn(async () => ({ ok: true, data: { amount: 12 } }));
+
+    render(
+      <VariantFieldRenderer
+        id="variant"
+        path="$.body[0]"
+        schema={{ type: 'variant-field', name: 'payload', variants: [] } as any}
+        templateNode={{
+          schema: {
+            type: 'variant-field',
+            name: 'payload',
+            variants: [
+              { key: 'text', label: 'Text', content: [] },
+              {
+                key: 'number',
+                label: 'Number',
+                content: [],
+                transformInAction: { action: 'variantLib:authored', args: { reason: 'authored' } },
+              },
+            ],
+          },
+          validationOwnerPlan: { boundary: 'inherit-owner' },
+          eventPlans: {},
+        } as any}
+        node={{} as any}
+        meta={{} as any}
+        props={{
+          name: 'payload',
+          selectorMode: 'tabs',
+          defaultVariant: 'text',
+          variants: [
+            { key: 'text', label: 'Text', content: [], initialValue: 'alpha' },
+            {
+              key: 'number',
+              label: 'Number',
+              content: [],
+              initialValue: { amount: 0 },
+              transformInAction: { action: 'variantLib:resolved', args: { reason: 'resolved' } },
+            },
+          ],
+        }}
+        regions={{}}
+        events={{}}
+        helpers={{
+          evaluate: vi.fn(),
+          createScope: vi.fn(),
+          dispatch,
+          render: vi.fn(),
+          evaluateCompiled: vi.fn(),
+          executeSource: vi.fn(),
+        } as any}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Number'));
+
+    await waitFor(() => {
+      expect(dispatch).toHaveBeenCalled();
+    });
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'variantLib:authored', args: { reason: 'authored' } }),
+      expect.objectContaining({ form: state.parentForm, scope: state.parentScope }),
+    );
+    expect(dispatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'variantLib:resolved' }),
+      expect.anything(),
+    );
+    expect(state.parentForm.setValue).toHaveBeenCalledWith('payload', { amount: 12 });
+    expect(state.parentForm.touchField).toHaveBeenCalledWith('payload');
   });
 });

@@ -1,28 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
-
-function collectPageErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(`[console.error] ${msg.text()}`);
-  });
-  page.on('pageerror', (err) => {
-    errors.push(`[pageerror] ${err.message}`);
-  });
-  return errors;
-}
-
-function filterKnownNoise(errors: string[]): string[] {
-  return errors.filter(
-    (e) =>
-      !e.includes('favicon') &&
-      !e.includes('Download the React DevTools') &&
-      !e.includes('WebSocket connection'),
-  );
-}
-
-function assertZeroPageErrors(errors: string[]) {
-  expect(filterKnownNoise(errors)).toEqual([]);
-}
+import { expect, test, type Page, assertTrackedPageErrors } from '../fixtures.js';
 
 async function clearDebugger(page: Page) {
   await page.evaluate(() => {
@@ -54,6 +30,7 @@ async function openPerformanceTable(page: Page) {
     timeout: 45_000,
   });
   await expect(page.getByRole('button', { name: 'Run 20 Host Mutations' })).toBeVisible();
+  await assertTrackedPageErrors(page);
 }
 
 test.describe.configure({ mode: 'serial' });
@@ -62,8 +39,6 @@ test.describe('Exploratory run-02: performance table deep state', () => {
   test('scope-owned selection and pagination stay coherent across page size and page changes', async ({
     page,
   }) => {
-    const errors = collectPageErrors(page);
-
     await openPerformanceTable(page);
     await page.getByRole('button', { name: 'Full Stress' }).click();
     await expect(page.getByText('Scenario C: Scope-owned selection and pagination')).toBeVisible({
@@ -96,13 +71,10 @@ test.describe('Exploratory run-02: performance table deep state', () => {
     await pagination.getByLabel('Go to next page').click();
     await expect(pageSummaryText).toContainText('Selected: 1 | Page: 2');
 
-    assertZeroPageErrors(errors);
     await assertDebuggerHealthy(page);
   });
 
   test('sorting and row action updates keep scope state and debugger failures clean', async ({ page }) => {
-    const errors = collectPageErrors(page);
-
     await openPerformanceTable(page);
     await page.getByRole('button', { name: 'Full Stress' }).click();
     await expect(page.getByText('Scenario C: Scope-owned selection and pagination')).toBeVisible({
@@ -125,7 +97,6 @@ test.describe('Exploratory run-02: performance table deep state', () => {
     await expect(lastActionText).toContainText('ping:');
     await expect(pageSummaryText).toContainText('Page: 1');
 
-    assertZeroPageErrors(errors);
     await assertDebuggerHealthy(page);
   });
 });

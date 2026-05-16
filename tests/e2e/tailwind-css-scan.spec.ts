@@ -1,10 +1,11 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
 async function gotoFlowDesigner(page: import('@playwright/test').Page) {
   await page.goto('/');
   await page.locator('button', { hasText: 'Visual Workflow' }).click();
   await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 30000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+  await assertTrackedPageErrors(page);
 }
 
 async function collectGeneratedCSS(page: import('@playwright/test').Page): Promise<string[]> {

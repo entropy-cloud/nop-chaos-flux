@@ -3,6 +3,7 @@ import type {
   AdapterDispatch,
   ActionSchema,
   BaseSchema,
+  CompiledActionProgram,
   RendererComponentProps,
   RendererEnv,
   RendererDefinition,
@@ -66,6 +67,34 @@ type VariantResolvedOption = VariantOption & {
   contentRegionKey?: string;
   viewerRegionKey?: string;
 };
+
+function getAuthoredVariantOption(
+  schema: VariantFieldSchema | undefined,
+  key: string,
+  index: number,
+): VariantOption | undefined {
+  const authoredVariants = Array.isArray(schema?.variants) ? schema.variants : [];
+  return authoredVariants.find((variant) => variant.key === key) ?? authoredVariants[index];
+}
+
+function isCompiledActionProgram(value: unknown): value is CompiledActionProgram {
+  return Boolean(
+    value && typeof value === 'object' && 'nodes' in value && Array.isArray((value as { nodes?: unknown }).nodes),
+  );
+}
+
+function getAuthoredActionSchema(value: unknown): ActionSchema | ActionSchema[] | undefined {
+  if (!isCompiledActionProgram(value)) {
+    return undefined;
+  }
+
+  const authoredActions = value.nodes.map((node) => node.source).filter(Boolean);
+  if (authoredActions.length === 0) {
+    return undefined;
+  }
+
+  return authoredActions.length === 1 ? authoredActions[0] : authoredActions;
+}
 
 function collectNamedChildPaths(input: VariantOption['content']): string[] {
   const nodes = Array.isArray(input) ? input : [input];
@@ -162,14 +191,24 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     (schemaProps.selector as { mode?: string } | undefined)?.mode ??
     schemaProps.selectorMode ??
     'tabs';
+  const authoredSchema = props.templateNode.schema as VariantFieldSchema | undefined;
   const defaultVariant = schemaProps.defaultVariant;
+  const detectVariantPlan = (props.templateNode as { eventPlans?: Record<string, unknown> } | undefined)
+    ?.eventPlans?.detectVariantAction;
+  const detectVariantAction = React.useMemo(
+    () => getAuthoredActionSchema(detectVariantPlan),
+    [detectVariantPlan],
+  );
 
   const rawValue = useCurrentFormState(
     (state) => (name ? getIn(state.values, name) : state.values),
     Object.is,
-    { path: name || undefined },
+    { enabled: Boolean(parentForm), path: name || undefined },
   );
-  const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is);
+  const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is, {
+    enabled: !parentForm,
+    paths: name ? [name] : undefined,
+  });
   const currentValue = parentForm ? rawValue : scopeValue;
 
   const labelContent = resolveFieldLabelContent(props);
@@ -233,7 +272,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     const abortController = new AbortController();
     detectAbortControllerRef.current = abortController;
 
-    if (!schemaProps.detectVariantAction || matchedKey) {
+    if (!detectVariantAction || matchedKey) {
       if (mountedRef.current && requestId === detectRequestIdRef.current) {
         setDetectedKey(undefined);
       }
@@ -242,7 +281,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 
     try {
       const result = await props.helpers.dispatch(
-        injectDetectVariantArgs(schemaProps.detectVariantAction, {
+        injectDetectVariantArgs(detectVariantAction, {
           value: currentValue,
           variants: variants.map((variant) => variant.key),
         }),
@@ -297,7 +336,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     parentScope,
     props.helpers,
     props.node,
-    schemaProps.detectVariantAction,
+    detectVariantAction,
     runtime,
     variants,
   ]);
@@ -325,11 +364,14 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
         parentForm.clearErrors(name);
       }
 
-      const nextOption = variants.find((v) => v.key === key);
+      const nextOptionIndex = variants.findIndex((v) => v.key === key);
+      const nextOption = nextOptionIndex >= 0 ? variants[nextOptionIndex] : undefined;
+      const authoredNextOption =
+        nextOptionIndex >= 0 ? getAuthoredVariantOption(authoredSchema, key, nextOptionIndex) : undefined;
       if (nextOption && parentForm && name) {
         let nextValue = nextOption.initialValue !== undefined ? nextOption.initialValue : null;
 
-        if (nextOption.transformInAction) {
+        if (authoredNextOption?.transformInAction) {
           const dispatchAction: AdapterDispatch = (action, ctx) =>
             props.helpers.dispatch(action, {
               scope: ctx?.scope ?? parentScope,
@@ -340,7 +382,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
             });
 
           const adapter = actionAdapter(
-            nextOption.transformInAction,
+            authoredNextOption.transformInAction,
             undefined,
             undefined,
             dispatchAction,
@@ -389,6 +431,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       activeKey,
       currentValue,
       name,
+      authoredSchema,
       parentForm,
       parentScope,
       props.helpers,
@@ -633,7 +676,11 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const frameWrapMode = resolveVariantFrameWrap(schemaProps.frameWrap);
 
   const body = (
-    <div data-slot="variant-field-body" data-active-variant={activeKey}>
+    <div
+      data-slot="variant-field-body"
+      data-active-variant={activeKey}
+      className={cn('nop-variant-field', props.meta.className)}
+    >
       {renderSelector()}
       {renderReadOnlyContent()}
     </div>
@@ -644,7 +691,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       <div
         data-slot="variant-field-body"
         data-active-variant={activeKey}
-        className={props.meta.className}
+        className={cn('nop-variant-field', props.meta.className)}
         data-testid={props.meta.testid}
         data-cid={props.meta.cid}
       >
@@ -667,7 +714,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       labelWidth={schemaProps.labelWidth as string | number | undefined}
       rootTag="div"
       layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
-      className={cn(props.meta.frameClassName, props.meta.className)}
+      className={props.meta.frameClassName}
       testid={props.meta.testid}
       cid={props.meta.cid}
       rootProps={{ 'data-active-variant': activeKey, 'data-frame-wrap': frameWrapMode }}
@@ -686,10 +733,10 @@ export const variantFieldRendererDefinition: RendererDefinition<VariantFieldSche
     { key: 'selector', kind: 'prop' },
     { key: 'selectorMode', kind: 'prop' },
     { key: 'defaultVariant', kind: 'prop' },
-    { key: 'detectVariantAction', kind: 'prop' },
-    { key: 'transformInAction', kind: 'prop' },
-    { key: 'transformOutAction', kind: 'prop' },
-    { key: 'validateValueAction', kind: 'prop' },
+    { key: 'detectVariantAction', kind: 'event' },
+    { key: 'transformInAction', kind: 'ignored' },
+    { key: 'transformOutAction', kind: 'ignored' },
+    { key: 'validateValueAction', kind: 'ignored' },
   ],
   validation: {
     kind: 'field',

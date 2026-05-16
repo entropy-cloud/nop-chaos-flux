@@ -245,4 +245,34 @@ describe('detail renderer revalidation handling', () => {
       expect(state.draftState.closeDraft).not.toHaveBeenCalled();
     });
   });
+
+  it('clears non-form owner value-adaptation overlays after successful validation', async () => {
+    state.draftState = createDraftState();
+    state.runtime = { createFormRuntime: vi.fn() };
+    state.parentForm = undefined;
+    state.renderScope = { update: vi.fn(), merge: vi.fn() };
+    state.parentValidationOwner = {
+      validateSubtree: vi.fn(async () => ({ ok: true, errors: [], fieldErrors: {} })),
+      applyExternalErrors: vi.fn(),
+    };
+    state.runTransformOutResult = '';
+
+    render(
+      <DetailFieldRenderer
+        {...createBaseProps()}
+        props={{ name: 'address', triggerLabel: 'Edit Address', surface: { mode: 'dialog' } }}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => {
+      expect(state.parentValidationOwner.applyExternalErrors).toHaveBeenCalledWith({
+        sourceId: 'value-adaptation:address',
+        errors: [],
+        replace: true,
+      });
+      expect(state.draftState.closeDraft).toHaveBeenCalled();
+    });
+  });
 });

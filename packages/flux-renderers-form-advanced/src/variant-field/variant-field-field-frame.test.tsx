@@ -296,7 +296,7 @@ describe('variant-field FieldFrame attribute forwarding', () => {
     expect(container?.classList.contains('nop-field')).toBe(true);
   });
 
-  it('applies meta className on the wrapped FieldFrame root', async () => {
+  it('applies meta className on the wrapped canonical control root', async () => {
     cleanup();
     const SchemaRenderer = createFormSchemaRenderer();
 
@@ -332,6 +332,86 @@ describe('variant-field FieldFrame attribute forwarding', () => {
     await waitFor(() => expect(screen.getByText('Payload')).toBeTruthy());
 
     const fieldRoot = document.querySelector('.nop-field.variant-wrapped-root');
-    expect(fieldRoot).toBeTruthy();
+    expect(fieldRoot).toBeNull();
+
+    const controlRoot = document.querySelector('[data-slot="variant-field-body"].variant-wrapped-root');
+    expect(controlRoot).toBeTruthy();
+    expect(controlRoot?.classList.contains('nop-variant-field')).toBe(true);
+  });
+
+  it('keeps wrapped and unwrapped control roots on the same className contract', async () => {
+    cleanup();
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-field-frame.test.tsx#root-parity"
+        schema={{
+          type: 'form',
+          data: { payload: null },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              label: 'Payload',
+              className: 'variant-root-parity',
+              defaultVariant: 'text',
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  content: [{ type: 'input-text', name: 'value', label: 'Value' }],
+                  initialValue: { value: '' },
+                },
+              ],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Payload')).toBeTruthy());
+
+    let controlRoot = document.querySelector('[data-slot="variant-field-body"].variant-root-parity');
+    expect(controlRoot).toBeTruthy();
+    expect(document.querySelector('.nop-field.variant-root-parity')).toBeNull();
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-field-frame.test.tsx#root-parity-none"
+        schema={{
+          type: 'form',
+          data: { payload: null },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              label: 'Payload',
+              frameWrap: 'none',
+              className: 'variant-root-parity',
+              defaultVariant: 'text',
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  content: [{ type: 'input-text', name: 'value', label: 'Value' }],
+                  initialValue: { value: '' },
+                },
+              ],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.queryByText('Payload')).toBeNull());
+
+    controlRoot = document.querySelector('[data-slot="variant-field-body"].variant-root-parity');
+    expect(controlRoot).toBeTruthy();
+    expect(controlRoot?.classList.contains('nop-variant-field')).toBe(true);
   });
 });

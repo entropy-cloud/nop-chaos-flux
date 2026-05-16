@@ -11,7 +11,7 @@
  * clear test failure rather than a silent skip.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures.js';
 import { openRendererDirect, COMPONENT_LAB_COVERAGE_MANIFEST, scenarioSlug } from './helpers';
 
 for (const entry of COMPONENT_LAB_COVERAGE_MANIFEST) {

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
 async function openFlowDesigner(page: import('@playwright/test').Page) {
   await page.goto('/#/flow-designer');
@@ -8,6 +8,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   // Wait for Vite HMR to settle on first server start
   await page.waitForURL('**/#/flow-designer', { timeout: 5000 }).catch(() => {});
   await page.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => {});
+  await assertTrackedPageErrors(page);
 }
 
 test.skip('debug snapshot via React fiber tree', async ({ page }) => {

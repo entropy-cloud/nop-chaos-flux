@@ -1,9 +1,10 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
 async function openFlowDesigner(page: import('@playwright/test').Page) {
   await page.goto('/#/flow-designer', { waitUntil: 'commit' });
   await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 45_000 });
   await expect(page.locator('.react-flow')).toBeVisible();
+  await assertTrackedPageErrors(page);
 }
 
 test('creates a new edge through handle drag interaction', async ({ page }) => {

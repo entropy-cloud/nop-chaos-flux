@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
 async function openFlowDesigner(page: import('@playwright/test').Page) {
   await page.goto('/');
@@ -24,6 +24,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 15000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
   await page.waitForTimeout(1000);
+  await assertTrackedPageErrors(page);
 }
 
 test.describe('Flow designer node and edge text rendering', () => {

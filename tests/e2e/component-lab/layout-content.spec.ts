@@ -4,7 +4,7 @@
  * text, icon, badge
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures.js';
 import { ComponentLabHelper, scenarioSlug } from './helpers';
 
 // ---------------------------------------------------------------------------

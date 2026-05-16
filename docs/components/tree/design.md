@@ -174,3 +174,12 @@ tree node scope = parent lexical visibility + { node, index, depth, optional key
 - 当 `expandOnClickNode: true` 且节点存在子节点时，真实可聚焦、可交互的节点元素同时承担展开/收起交互与 `aria-expanded` 状态发布。
 - 不允许把焦点放在内层交互目标上、却把 `aria-expanded` 挂在外层非焦点元素上。
 - 无子节点时不发布 `aria-expanded`。
+
+## 14. Tree Keyboard Contract
+
+- `tree` renderer 在 default 模式与 `expandOnClickNode: true` 模式下共享同一套 `role="tree"` / `role="treeitem"` 键盘基线。
+- 可见 `treeitem` 使用 roving `tabIndex`；键盘入口落在节点行本身，而不是只落在内部 chevron trigger。
+- 支持的导航键包括 `ArrowUp`、`ArrowDown`、`Home`、`End`。
+- 对带子节点的项：`ArrowRight` 负责展开并在已展开时进入第一个子节点；`ArrowLeft` 负责折叠并在已折叠时返回父节点。
+- default 模式与 `expandOnClickNode: true` 模式都允许父节点 `treeitem` 通过 `Enter` / `Space` 触发展开收起；两者共享同一套键盘交互与焦点归属。
+- `expandOnClickNode: true` 只额外把整行点击也纳入展开/收起交互，不改变整棵树的焦点与导航模型。

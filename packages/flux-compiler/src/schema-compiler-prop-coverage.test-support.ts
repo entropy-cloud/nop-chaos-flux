@@ -250,10 +250,10 @@ export const variantFieldRenderer: RendererDefinition = {
     { key: 'selector', kind: 'prop' },
     { key: 'selectorMode', kind: 'prop' },
     { key: 'defaultVariant', kind: 'prop' },
-    { key: 'detectVariantAction', kind: 'prop' },
-    { key: 'transformInAction', kind: 'prop' },
-    { key: 'transformOutAction', kind: 'prop' },
-    { key: 'validateValueAction', kind: 'prop' },
+    { key: 'detectVariantAction', kind: 'event' },
+    { key: 'transformInAction', kind: 'ignored' },
+    { key: 'transformOutAction', kind: 'ignored' },
+    { key: 'validateValueAction', kind: 'ignored' },
   ],
 };
 

@@ -64,12 +64,13 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const formProjectedValue = useCurrentFormState(
     (state) => (scopePath ? getIn(state.values, scopePath) : state.values),
     Object.is,
-    { enabled: Boolean(parentForm), path: scopePath || undefined },
+    { enabled: Boolean(parentForm && scopePath), path: scopePath || undefined },
   );
 
   const scopeProjectedValue = useScopeSelector(
     (data) => (scopePath ? getIn(data as Record<string, unknown>, scopePath) : undefined),
     Object.is,
+    { enabled: Boolean(!parentForm && scopePath), paths: scopePath ? [scopePath] : undefined },
   );
 
   function getInitialValues(): Record<string, unknown> {

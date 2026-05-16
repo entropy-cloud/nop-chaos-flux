@@ -1,9 +1,10 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
 async function openFlowDesigner(page: import('@playwright/test').Page) {
   await page.goto('/#/flow-designer');
   await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 15000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+  await assertTrackedPageErrors(page);
 }
 
 test('diagnoses layout CSS: height chain from viewport to ReactFlow', async ({ page }) => {

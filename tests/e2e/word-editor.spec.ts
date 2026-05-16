@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
 async function waitForIdleFrame(page: import('@playwright/test').Page) {
   await page.evaluate(
@@ -34,6 +34,7 @@ async function openWordEditor(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: 'Word Editor' }).click();
 
   await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 30000 });
+  await assertTrackedPageErrors(page);
 }
 
 test.describe('Word Editor Page', () => {

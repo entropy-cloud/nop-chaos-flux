@@ -273,7 +273,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
     [props.templateNode.templateNodeId],
   );
 
-  const presentation = useFieldPresentation(name, parentForm, {
+  const presentation = useFieldPresentation(name, parentValidationOwner, {
     disabled: props.props.disabled === true,
     readOnly,
   });
@@ -296,6 +296,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       if (!a || !b || a.length !== b.length) return false;
       return a.every((item, i) => item === b[i]);
     },
+    { enabled: !parentForm, paths: name ? [name] : undefined },
   );
 
   const items = React.useMemo(

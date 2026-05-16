@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, assertTrackedPageErrors } from './fixtures.js';
 import { DOMAIN_RENDERER_ROUTES } from '../../apps/playground/src/route-model';
 
 type RouteAssertion = (page: Page) => Promise<void>;
@@ -71,5 +71,6 @@ for (const route of DOMAIN_RENDERER_ROUTES) {
   test(`playground entry page smoke: ${route.id}`, async ({ page }) => {
     await openDomainRoute(page, route.id);
     await ROUTE_ASSERTIONS[route.id]?.(page);
+    await assertTrackedPageErrors(page);
   });
 }

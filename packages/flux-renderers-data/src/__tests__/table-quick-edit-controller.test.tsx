@@ -15,6 +15,10 @@ function createRowScope(record: Record<string, unknown>) {
       return undefined;
     },
     update(path: string, value: unknown) {
+      if (path === 'record' && value && typeof value === 'object') {
+        state.record = { ...(value as Record<string, unknown>) };
+        return;
+      }
       if (path.startsWith('record.')) {
         state.record[path.slice('record.'.length)] = value;
       }
@@ -58,6 +62,9 @@ function ControllerHarness(props: {
       <button type="button" onClick={() => controller.handleInlineValueChange('Alicia')}>
         change
       </button>
+      <button type="button" onClick={() => controller.draftRowScope.update('record.name', 'Changed')}>
+        change-custom
+      </button>
       <button type="button" onClick={controller.markBodyDirty}>
         mark-body-dirty
       </button>
@@ -96,7 +103,7 @@ describe('useTableQuickEditController', () => {
     expect(screen.getByTestId('dirty').textContent).toBe('false');
     fireEvent.click(screen.getByRole('button', { name: 'change' }));
     expect(screen.getByTestId('dirty').textContent).toBe('true');
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alicia' });
+    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
 
     fireEvent.click(screen.getByRole('button', { name: 'save' }));
 
@@ -104,10 +111,37 @@ describe('useTableQuickEditController', () => {
       expect(dispatch).toHaveBeenCalledTimes(1);
     });
 
+    expect((dispatch.mock.calls[0] as any)?.[1]?.scope.get('record')).toMatchObject({
+      name: 'Alicia',
+    });
+
     await waitFor(() => {
       expect(screen.getByTestId('dirty').textContent).toBe('false');
       expect(screen.getByTestId('draft').textContent).toBe('Alicia');
     });
+
+    expect(rowScope.get('record')).toMatchObject({ name: 'Alicia' });
+  });
+
+  it('keeps unsaved inline draft changes out of the shared row scope', () => {
+    cleanup();
+    const rowScope = createRowScope({ name: 'Alice' });
+
+    render(
+      <ControllerHarness
+        field="name"
+        record={{ name: 'Alice' }}
+        rowScope={rowScope}
+        helpers={createHelpers()}
+        saveAction={{ action: 'save' }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'change' }));
+
+    expect(screen.getByTestId('dirty').textContent).toBe('true');
+    expect(screen.getByTestId('draft').textContent).toBe('Alicia');
+    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
   });
 
   it('marks custom-body edits dirty and restores saved value on close', () => {
@@ -125,7 +159,7 @@ describe('useTableQuickEditController', () => {
       />,
     );
 
-    rowScope.update('record.name', 'Changed');
+    fireEvent.click(screen.getByRole('button', { name: 'change-custom' }));
     fireEvent.click(screen.getByRole('button', { name: 'mark-body-dirty' }));
     expect(screen.getByTestId('dirty').textContent).toBe('true');
 

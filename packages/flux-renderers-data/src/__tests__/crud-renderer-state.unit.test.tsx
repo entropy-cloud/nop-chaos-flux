@@ -272,7 +272,6 @@ describe('useCrudRuntimeState', () => {
       <RuntimeStateProbe
         args={{
           scope,
-          ownerStatePath: 'owner',
           queryStatePath: 'query',
           paginationStatePath: 'pagination',
           sortStatePath: 'sort',
@@ -287,11 +286,11 @@ describe('useCrudRuntimeState', () => {
       />,
     );
 
-    expect(runtimeState.queryState).toEqual({ values: { role: 'admin' }, refreshCount: 0 });
-    expect(runtimeState.paginationState).toEqual({ currentPage: 4, pageSize: 25 });
-    expect(runtimeState.sortState).toEqual({ column: 'name', direction: 'desc' });
-    expect(runtimeState.filterState).toEqual({ status: 'active' });
-    expect(runtimeState.selectedRowKeys).toEqual(['r2']);
+    expect(runtimeState.queryState).toEqual({ values: { role: 'user' }, refreshCount: 0 });
+    expect(runtimeState.paginationState).toEqual({ currentPage: 1, pageSize: 10 });
+    expect(runtimeState.sortState).toEqual({ column: undefined, direction: undefined });
+    expect(runtimeState.filterState).toEqual({});
+    expect(runtimeState.selectedRowKeys).toEqual([]);
     expect(update).toHaveBeenCalledWith('query', { values: { role: 'user' }, refreshCount: 0 });
     expect(update).toHaveBeenCalledWith('pagination', { currentPage: 1, pageSize: 10 });
     expect(update).toHaveBeenCalledWith('sort', {});
@@ -326,7 +325,6 @@ describe('useCrudRuntimeState', () => {
       <RuntimeStateProbe
         args={{
           scope,
-          ownerStatePath: 'owner',
           queryStatePath: 'query',
           paginationStatePath: 'pagination',
           sortStatePath: 'sort',
@@ -343,6 +341,91 @@ describe('useCrudRuntimeState', () => {
 
     expect(runtimeState.queryState).toEqual({ values: { role: 'scope' }, refreshCount: 7 });
     expect(runtimeState.paginationState).toEqual({ currentPage: 2, pageSize: 15 });
+    expect(runtimeState.sortState).toEqual({ column: 'scopeField', direction: 'desc' });
+    expect(runtimeState.filterState).toEqual({ status: 'scope' });
+    expect(runtimeState.selectedRowKeys).toEqual(['scope-key']);
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('does not subscribe through ownerStatePath fallbacks once slice paths exist', () => {
+    mockState.scopeData = {
+      owner: {
+        query: { values: { role: 'owner' }, refreshCount: 9 },
+        pagination: { currentPage: 9, pageSize: 99 },
+        sort: { field: 'ownerField', order: 'asc' },
+        filters: { status: 'owner' },
+        selection: ['owner-key'],
+      },
+      query: { values: { role: 'scope' }, refreshCount: 2 },
+      pagination: { currentPage: 3, pageSize: 20 },
+      sort: { field: 'scopeField', order: 'desc' },
+      filters: { status: 'scope' },
+      selection: ['scope-key'],
+    };
+
+    const update = vi.fn();
+    const scope = {
+      update,
+      readVisible: () => mockState.scopeData,
+    };
+    let runtimeState: any;
+
+    const view = render(
+      <RuntimeStateProbe
+        args={{
+          scope,
+          queryStatePath: 'query',
+          paginationStatePath: 'pagination',
+          sortStatePath: 'sort',
+          filterStatePath: 'filters',
+          selectionStatePath: 'selection',
+          defaultQuery: {},
+          fallbackPageSize: 10,
+        }}
+        onReady={(value) => {
+          runtimeState = value;
+        }}
+      />,
+    );
+
+    expect(runtimeState.queryState).toEqual({ values: { role: 'scope' }, refreshCount: 2 });
+
+    mockState.scopeData = {
+      ...mockState.scopeData,
+      owner: {
+        query: { values: { role: 'owner-updated' }, refreshCount: 11 },
+        pagination: { currentPage: 5, pageSize: 15 },
+        sort: { field: 'ownerOnly', order: 'asc' },
+        filters: { status: 'owner-updated' },
+        selection: ['owner-updated'],
+      },
+      query: { values: { role: 'scope' }, refreshCount: 2 },
+      pagination: { currentPage: 3, pageSize: 20 },
+      sort: { field: 'scopeField', order: 'desc' },
+      filters: { status: 'scope' },
+      selection: ['scope-key'],
+    };
+
+    view.rerender(
+      <RuntimeStateProbe
+        args={{
+          scope,
+          queryStatePath: 'query',
+          paginationStatePath: 'pagination',
+          sortStatePath: 'sort',
+          filterStatePath: 'filters',
+          selectionStatePath: 'selection',
+          defaultQuery: {},
+          fallbackPageSize: 10,
+        }}
+        onReady={(value) => {
+          runtimeState = value;
+        }}
+      />,
+    );
+
+    expect(runtimeState.queryState).toEqual({ values: { role: 'scope' }, refreshCount: 2 });
+    expect(runtimeState.paginationState).toEqual({ currentPage: 3, pageSize: 20 });
     expect(runtimeState.sortState).toEqual({ column: 'scopeField', direction: 'desc' });
     expect(runtimeState.filterState).toEqual({ status: 'scope' });
     expect(runtimeState.selectedRowKeys).toEqual(['scope-key']);

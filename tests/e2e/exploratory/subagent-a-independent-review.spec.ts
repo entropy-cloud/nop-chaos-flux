@@ -1,29 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, assertTrackedPageErrors } from '../fixtures.js';
 import { DOMAIN_RENDERER_ROUTES } from '../../../apps/playground/src/route-model';
-
-function collectPageErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(`[console.error] ${msg.text()}`);
-  });
-  page.on('pageerror', (err) => {
-    errors.push(`[pageerror] ${err.message}`);
-  });
-  return errors;
-}
-
-function filterKnownNoise(errors: string[]): string[] {
-  return errors.filter(
-    (e) =>
-      !e.includes('favicon') &&
-      !e.includes('Download the React DevTools') &&
-      !e.includes('WebSocket connection'),
-  );
-}
-
-async function assertZeroErrors(errors: string[]) {
-  expect(filterKnownNoise(errors)).toEqual([]);
-}
 
 async function assertDebuggerZeroErrors(page: Page) {
   const debuggerErrors = await page.evaluate(() => {
@@ -47,11 +23,11 @@ async function _getDebuggerApi(page: Page) {
 
 test.describe.skip('Subagent-A: Debugger API deep inspection across pages', () => {
   test('getNodeDiagnostics returns well-formed result on flux-basic page', async ({ page }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/flux-basic', { waitUntil: 'load' });
     await expect(
       page.getByRole('heading', { name: 'Renderer Playground', level: 1 }),
     ).toBeVisible({ timeout: 15_000 });
+    await assertTrackedPageErrors(page);
 
     const diag = await page.evaluate(() => {
       const api = (window as any).__NOP_DEBUGGER_API__;
@@ -69,18 +45,17 @@ test.describe.skip('Subagent-A: Debugger API deep inspection across pages', () =
       expect(Array.isArray(diag.recentEvents)).toBe(true);
     }
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('getNodeAnomalies returns undefined or valid summary on code-editor page', async ({
     page,
   }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/code-editor', { waitUntil: 'load' });
     await expect(
       page.getByRole('heading', { name: 'Code Editor Playground', level: 1 }),
     ).toBeVisible({ timeout: 15_000 });
+    await assertTrackedPageErrors(page);
 
     const anomaly = await page.evaluate(() => {
       const api = (window as any).__NOP_DEBUGGER_API__;
@@ -96,16 +71,15 @@ test.describe.skip('Subagent-A: Debugger API deep inspection across pages', () =
       expect(Array.isArray(anomaly.hints)).toBe(true);
     }
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('getRecentFailures returns empty array on clean debugger-lab page', async ({ page }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/debugger-lab', { waitUntil: 'load' });
     await expect(page.getByRole('heading', { name: 'Debugger Lab' })).toBeVisible({
       timeout: 15_000,
     });
+    await assertTrackedPageErrors(page);
 
     const failures = await page.evaluate(() => {
       const api = (window as any).__NOP_DEBUGGER_API__;
@@ -115,18 +89,17 @@ test.describe.skip('Subagent-A: Debugger API deep inspection across pages', () =
 
     expect(failures).toEqual([]);
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('createDiagnosticReport returns well-formed report on performance-table page', async ({
     page,
   }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/performance-table', { waitUntil: 'load' });
     await expect(
       page.getByRole('heading', { name: 'Table Performance Playground', level: 1 }),
     ).toBeVisible({ timeout: 15_000 });
+    await assertTrackedPageErrors(page);
 
     const report = await page.evaluate(() => {
       const api = (window as any).__NOP_DEBUGGER_API__;
@@ -142,16 +115,15 @@ test.describe.skip('Subagent-A: Debugger API deep inspection across pages', () =
       expect(typeof report.generatedAt).toBe('number');
     }
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('inspectByCid returns component info on condition-builder page', async ({ page }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/condition-builder', { waitUntil: 'load' });
     await expect(page.getByRole('heading', { name: '条件构建器测试', level: 1 })).toBeVisible({
       timeout: 15_000,
     });
+    await assertTrackedPageErrors(page);
 
     const inspectResult = await page.evaluate(() => {
       const api = (window as any).__NOP_DEBUGGER_API__;
@@ -168,7 +140,6 @@ test.describe.skip('Subagent-A: Debugger API deep inspection across pages', () =
       expect(inspectResult).toHaveProperty('type');
     }
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 });
@@ -178,7 +149,6 @@ test.describe.skip('Subagent-A: Cross-page navigation stress', () => {
     page,
   }) => {
     test.setTimeout(120_000);
-    const errors = collectPageErrors(page);
 
     const routeIds = DOMAIN_RENDERER_ROUTES.map((r) => r.id);
     expect(routeIds).toHaveLength(9);
@@ -201,6 +171,7 @@ test.describe.skip('Subagent-A: Cross-page navigation stress', () => {
       if (heading) {
         await page.getByText(heading).first().waitFor({ state: 'visible', timeout: 30_000 });
       }
+      await assertTrackedPageErrors(page);
       await page.waitForTimeout(200);
     }
 
@@ -210,29 +181,27 @@ test.describe.skip('Subagent-A: Cross-page navigation stress', () => {
       if (heading) {
         await page.getByText(heading).first().waitFor({ state: 'visible', timeout: 30_000 });
       }
+      await assertTrackedPageErrors(page);
       await page.waitForTimeout(200);
     }
-
-    await assertZeroErrors(errors);
   });
 
   test('rapid ping-pong between heavy pages (flow-designer <-> report-designer) is clean', async ({
     page,
   }) => {
     test.setTimeout(90_000);
-    const errors = collectPageErrors(page);
 
     for (let i = 0; i < 3; i++) {
       await page.goto('/#/flow-designer', { waitUntil: 'domcontentloaded' });
       await expect(page.getByRole('tab', { name: '工作流' })).toBeVisible({ timeout: 30_000 });
+      await assertTrackedPageErrors(page);
 
       await page.goto('/#/report-designer', { waitUntil: 'domcontentloaded' });
       await expect(
         page.getByRole('heading', { name: 'Report Designer Playground', level: 1 }),
       ).toBeVisible({ timeout: 30_000 });
+      await assertTrackedPageErrors(page);
     }
-
-    await assertZeroErrors(errors);
     const failures = await page.evaluate(() => {
       const api = (window as any).__NOP_DEBUGGER_API__;
       return api ? api.getRecentFailures({ limit: 5 }) : [];
@@ -245,10 +214,10 @@ test.describe.skip('Subagent-A: Flow Designer interaction stress', () => {
   test('click multiple canvas nodes sequentially and verify inspector updates', async ({
     page,
   }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/flow-designer', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('tab', { name: '工作流' })).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 30_000 });
+    await assertTrackedPageErrors(page);
 
     const nodeCount = await page.locator('.react-flow__node').count();
     expect(nodeCount).toBeGreaterThanOrEqual(3);
@@ -259,14 +228,13 @@ test.describe.skip('Subagent-A: Flow Designer interaction stress', () => {
       await page.waitForTimeout(300);
     }
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('add node from palette, click it, delete it — no errors', async ({ page }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/flow-designer', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 30_000 });
+    await assertTrackedPageErrors(page);
 
     const initialCount = await page.locator('.react-flow__node').count();
 
@@ -295,7 +263,6 @@ test.describe.skip('Subagent-A: Flow Designer interaction stress', () => {
       }
     }
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 });
@@ -303,11 +270,11 @@ test.describe.skip('Subagent-A: Flow Designer interaction stress', () => {
 test.describe.skip('Subagent-A: Concurrency stress — rapid button clicking', () => {
   test('rapidly click Search Directory button 5 times on flux-basic', async ({ page }) => {
     test.setTimeout(60_000);
-    const errors = collectPageErrors(page);
     await page.goto('/#/flux-basic', { waitUntil: 'load' });
     await expect(
       page.getByRole('heading', { name: 'Renderer Playground', level: 1 }),
     ).toBeVisible({ timeout: 15_000 });
+    await assertTrackedPageErrors(page);
 
     await page.getByLabel('Username').fill('alice');
     await page.getByLabel('Username').blur();
@@ -321,17 +288,16 @@ test.describe.skip('Subagent-A: Concurrency stress — rapid button clicking', (
       await page.waitForTimeout(2000);
     }
 
-    await assertZeroErrors(errors);
   });
 
   test('rapidly open and close dialog on lab renderer', async ({ page }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/lab/dialog', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
     await expect(page.getByTestId('component-lab')).toBeVisible({ timeout: 45_000 });
     await expect(page.getByTestId('component-lab-renderer-dialog')).toBeVisible({
       timeout: 30_000,
     });
+    await assertTrackedPageErrors(page);
 
     const stage = page.getByTestId('scenario-stage-dialog-with-form-fields-and-writeback');
     if (await stage.isVisible().catch(() => false)) {
@@ -349,19 +315,18 @@ test.describe.skip('Subagent-A: Concurrency stress — rapid button clicking', (
       }
     }
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 });
 
 test.describe.skip('Subagent-A: Form field edge cases — rapid fill, clear, submit', () => {
   test('rapidly fill and clear input-text field 5 times', async ({ page }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/lab/input-text', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
     await expect(page.getByTestId('component-lab-renderer-input-text')).toBeVisible({
       timeout: 30_000,
     });
+    await assertTrackedPageErrors(page);
 
     const stage = page.getByTestId(
       'scenario-stage-basic-required-and-optional-fields',
@@ -378,19 +343,18 @@ test.describe.skip('Subagent-A: Form field edge cases — rapid fill, clear, sub
       }
     }
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('submit form with empty required fields, then fill and resubmit — repeat 3 times', async ({
     page,
   }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/lab/form', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
     await expect(page.getByTestId('component-lab-renderer-form')).toBeVisible({
       timeout: 30_000,
     });
+    await assertTrackedPageErrors(page);
 
     const stage = page.getByTestId(
       'scenario-stage-form-with-visible-submit-success-state',
@@ -419,19 +383,18 @@ test.describe.skip('Subagent-A: Form field edge cases — rapid fill, clear, sub
       }
     }
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 });
 
 test.describe.skip('Subagent-A: Report Designer basic interaction', () => {
   test('click 5 different cells, verify inspector updates, no errors', async ({ page }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/report-designer', { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('heading', { name: 'Report Designer Playground', level: 1 }),
     ).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('.ss-cell').first()).toBeVisible({ timeout: 15_000 });
+    await assertTrackedPageErrors(page);
 
     const cells = page.locator('.ss-cell');
     const count = await cells.count();
@@ -443,14 +406,13 @@ test.describe.skip('Subagent-A: Report Designer basic interaction', () => {
     const inspector = page.locator('[data-slot="workbench-right-panel"]');
     await expect(inspector).toContainText('Inspector');
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('toolbar buttons are all clickable without errors', async ({ page }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/report-designer', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('.rd-toolbar')).toBeVisible({ timeout: 30_000 });
+    await assertTrackedPageErrors(page);
 
     const toolbarButtons = page.locator('.rd-toolbar button');
     const count = await toolbarButtons.count();
@@ -466,7 +428,6 @@ test.describe.skip('Subagent-A: Report Designer basic interaction', () => {
     }
 
     if (!page.isClosed()) {
-      await assertZeroErrors(errors);
       await assertDebuggerZeroErrors(page);
     }
   });
@@ -474,11 +435,11 @@ test.describe.skip('Subagent-A: Report Designer basic interaction', () => {
 
 test.describe.skip('Subagent-A: Word Editor basic interaction', () => {
   test('click canvas, type, click formatting buttons — no errors', async ({ page }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/word-editor', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({
       timeout: 30_000,
     });
+    await assertTrackedPageErrors(page);
 
     const canvasEl = page.locator('canvas').first();
     if (await canvasEl.isVisible().catch(() => false)) {
@@ -506,16 +467,15 @@ test.describe.skip('Subagent-A: Word Editor basic interaction', () => {
       await page.waitForTimeout(500);
     }
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 
   test('open and close dialogs (hyperlink, expression) without errors', async ({ page }) => {
-    const errors = collectPageErrors(page);
     await page.goto('/#/word-editor', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({
       timeout: 30_000,
     });
+    await assertTrackedPageErrors(page);
 
     const hyperlinkBtn = page.getByTitle('Insert Hyperlink');
     if (await hyperlinkBtn.isVisible().catch(() => false)) {
@@ -536,7 +496,6 @@ test.describe.skip('Subagent-A: Word Editor basic interaction', () => {
       await page.waitForTimeout(300);
     }
 
-    await assertZeroErrors(errors);
     await assertDebuggerZeroErrors(page);
   });
 });

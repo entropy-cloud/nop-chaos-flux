@@ -119,4 +119,66 @@ describe('owner submit contracts', () => {
       expect.objectContaining({ path: 'name', rule: 'required' }),
     ]);
   });
+
+  it('forwards submit abort signals through the real runtime validateForm path', async () => {
+    const runtime = makeRuntime({ initialValues: { name: 'ready' } });
+    const controller = new AbortController();
+    const originalValidateForm = runtime.validateForm.bind(runtime);
+    const validateFormSpy = vi.spyOn(runtime, 'validateForm');
+
+    validateFormSpy.mockImplementation((reason, options) => originalValidateForm(reason, options));
+
+    await runtime.submit({ signal: controller.signal });
+
+    expect(validateFormSpy).toHaveBeenCalledWith('submit', { signal: controller.signal });
+  });
+
+  it('cancels in-flight async field validation when submit aborts', async () => {
+    let releaseValidation: (() => void) | undefined;
+    const parentStore = createScopeStore({ name: '' });
+    const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      parentScope,
+      initialValues: { name: 'ready' },
+      validation: makeModel({
+        name: {
+          ...makeNode('name', false),
+          rules: [
+            {
+              id: 'name#async',
+              rule: { kind: 'async', action: { actionType: 'noop' } as any },
+              dependencyPaths: [],
+            },
+          ],
+        },
+      }),
+      initialLifecycleState: 'active',
+      validateRule: realValidateRule,
+      executeValidationRule: vi.fn(
+        async (_compiledRule, _rule, _field, _scope, signal) =>
+          await new Promise((resolve, reject) => {
+            releaseValidation = () => {
+              if (signal?.aborted) {
+                reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+                return;
+              }
+              resolve(undefined);
+            };
+          }),
+      ) as any,
+    });
+    const controller = new AbortController();
+
+    const submitPromise = runtime.submit({ signal: controller.signal });
+    await Promise.resolve();
+    expect(runtime.store.getState().submitAttempted).toBe(true);
+
+    controller.abort();
+    releaseValidation?.();
+
+    await expect(submitPromise).resolves.toMatchObject({ ok: false, cancelled: true });
+    expect(runtime.store.getState().submitting).toBe(false);
+    expect(runtime.getScopeState()).toMatchObject({ validating: false });
+  });
 });

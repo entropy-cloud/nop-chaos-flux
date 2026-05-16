@@ -129,4 +129,20 @@ describe('detail value adaptation helpers', () => {
       replace: true,
     });
   });
+
+  it('clears only the value-adaptation overlay source on success', () => {
+    const form = {
+      clearErrors: vi.fn(),
+      applyExternalErrors: vi.fn(),
+    } as any;
+
+    publishValidateResultErrors({ valid: true }, 'profile', form);
+
+    expect(form.clearErrors).not.toHaveBeenCalled();
+    expect(form.applyExternalErrors).toHaveBeenCalledWith({
+      sourceId: 'value-adaptation:profile',
+      errors: [],
+      replace: true,
+    });
+  });
 });

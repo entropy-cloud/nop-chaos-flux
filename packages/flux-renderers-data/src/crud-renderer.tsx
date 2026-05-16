@@ -44,6 +44,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const onRefresh = props.events.onRefresh;
   const nodeScope = props.node.scope;
   const schemaProps = useSchemaProps(props);
+  const authoredSchema = props.templateNode.schema as CrudSchema | undefined;
   const normalizedSchema = useMemo(
     () => normalizeCrudSchema(schemaProps as CrudSchema),
     [schemaProps],
@@ -72,7 +73,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const { queryState, paginationState, sortState, filterState, selectedRowKeys } =
     useCrudRuntimeState({
       scope,
-      ownerStatePath: ownerPaths.ownerStatePath,
       queryStatePath: ownerPaths.queryStatePath,
       paginationStatePath: ownerPaths.paginationStatePath,
       sortStatePath: ownerPaths.sortStatePath,
@@ -125,6 +125,9 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     normalizedSchema.clientMode?.loadDataOnce === true
       ? normalizedSchema.clientMode.fetchOnFilter === true
       : true;
+  const quickSaveAction = normalizedSchema.quickSaveAction ?? authoredSchema?.quickSaveAction;
+  const quickSaveItemAction =
+    normalizedSchema.quickSaveItemAction ?? authoredSchema?.quickSaveItemAction;
   const defaultColumnNames = useMemo(
     () =>
       (normalizedSchema.columns ?? [])
@@ -308,8 +311,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         showSizeChanger: true,
       },
       empty: tableEmpty,
-      quickSaveAction: normalizedSchema.quickSaveAction,
-      quickSaveItemAction: normalizedSchema.quickSaveItemAction,
+      quickSaveAction,
+      quickSaveItemAction,
     };
 
     if (normalizedSchema.selection) {
@@ -340,8 +343,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     normalizedSchema.columns,
     normalizedSchema.onRefresh,
     normalizedSchema.onRowClick,
-    normalizedSchema.quickSaveAction,
-    normalizedSchema.quickSaveItemAction,
+    quickSaveAction,
+    quickSaveItemAction,
     normalizedSchema.responsive,
     normalizedSchema.rowKey,
     normalizedSchema.selection,

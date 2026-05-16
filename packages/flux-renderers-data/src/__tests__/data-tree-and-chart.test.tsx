@@ -459,4 +459,116 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
       expect(screen.getByText('Child')).toBeTruthy();
     });
   });
+
+  it('keeps default-mode tree keyboard entry on the treeitem instead of the chevron button', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-default-a11y"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tree',
+              data: '${nodes}',
+              initiallyExpanded: false,
+            },
+          ],
+        }}
+        data={{
+          nodes: [
+            {
+              id: 'parent',
+              label: 'Parent',
+              children: [{ id: 'child', label: 'Child', children: [] }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />, 
+    );
+
+    const parentNode = await screen.findByRole('treeitem', { name: 'Parent' });
+    const trigger = document.querySelector('[data-slot="tree-node"] [aria-label]');
+    expect(parentNode.getAttribute('tabindex')).toBe('0');
+    expect(trigger?.getAttribute('tabindex')).toBe('-1');
+
+    parentNode.focus();
+    expect(document.activeElement).toBe(parentNode);
+
+    fireEvent.keyDown(parentNode, { key: 'ArrowRight' });
+
+    await waitFor(() => {
+      expect(parentNode.getAttribute('aria-expanded')).toBe('true');
+      expect(screen.getByText('Child')).toBeTruthy();
+    });
+  });
+
+  it('supports tree roving-focus navigation in expandOnClickNode mode', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-expand-on-click-keyboard-nav"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tree',
+              data: '${nodes}',
+              initiallyExpanded: true,
+              expandOnClickNode: true,
+            },
+          ],
+        }}
+        data={{
+          nodes: [
+            {
+              id: 'parent',
+              label: 'Parent',
+              children: [
+                { id: 'child-a', label: 'Child A', children: [] },
+                { id: 'child-b', label: 'Child B', children: [] },
+              ],
+            },
+            {
+              id: 'sibling',
+              label: 'Sibling',
+              children: [],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />, 
+    );
+
+    const parentNode = await screen.findByRole('treeitem', { name: 'Parent' });
+    const childA = await screen.findByRole('treeitem', { name: 'Child A' });
+    const childB = await screen.findByRole('treeitem', { name: 'Child B' });
+    const sibling = await screen.findByRole('treeitem', { name: 'Sibling' });
+
+    parentNode.focus();
+    expect(document.activeElement).toBe(parentNode);
+
+    fireEvent.keyDown(parentNode, { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(childA);
+
+    fireEvent.keyDown(childA, { key: 'End' });
+    expect(document.activeElement).toBe(sibling);
+
+    fireEvent.keyDown(sibling, { key: 'Home' });
+    expect(document.activeElement).toBe(parentNode);
+
+    fireEvent.keyDown(parentNode, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(childA);
+
+    fireEvent.keyDown(childA, { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(childB);
+
+    fireEvent.keyDown(childB, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(parentNode);
+  });
 });

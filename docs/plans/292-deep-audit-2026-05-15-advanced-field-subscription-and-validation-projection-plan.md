@@ -1,7 +1,7 @@
 # 292 Deep Audit 2026-05-15 Advanced Field Subscription And Validation Projection Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-15
+> Plan Status: completed
+> Last Reviewed: 2026-05-16
 > Source: `docs/analysis/2026-05-15-deep-audit-full/{summary.md,05-reactive-precision.md,08-validation.md}`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/plans/291-deep-audit-2026-05-15-variant-field-contract-convergence-plan.md`
 
@@ -51,74 +51,74 @@
 
 ### Phase 1 - Subscription Precision Closure
 
-Status: planned
+Status: completed
 Targets: advanced-field renderers, `field-presentation.tsx`, focused tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Fix `05-01` and `05-02` so advanced-field, `variant-field`, and same-pattern code-editor scope fallbacks subscribe only when needed and carry the narrow `paths` they actually read.
-- [ ] Fix `05-04` so field presentation refreshes on dynamic required dependencies and submit-state changes, not only the field path itself.
-- [ ] Add focused proof for form-owner and non-form-owner subscription precision on touched paths.
-- [ ] Update affected owner docs, or explicitly record `No owner-doc update required`.
+- [x] Fix `05-01` and `05-02` so advanced-field, `variant-field`, and same-pattern code-editor scope fallbacks subscribe only when needed and carry the narrow `paths` they actually read.
+- [x] Fix `05-04` so field presentation refreshes on dynamic required dependencies and submit-state changes, not only the field path itself.
+- [x] Add focused proof for form-owner and non-form-owner subscription precision on touched paths.
+- [x] Update affected owner docs, or explicitly record `No owner-doc update required`.
 
 Exit Criteria:
 
-- [ ] Retained `05-01`, `05-02`, and `05-04` are fixed in live code, or a fresh live re-audit proves a given item is no longer live and the scope change is recorded in this plan before closure.
-- [ ] Focused proof covers the narrowed path subscriptions for advanced-field, `variant-field`, and code-editor same-pattern fallbacks, plus dynamic required / submit-state refresh semantics.
-- [ ] Affected owner docs are updated, or `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-15.md` includes Phase 1 execution notes.
+- [x] Retained `05-01`, `05-02`, and `05-04` are fixed in live code, or a fresh live re-audit proves a given item is no longer live and the scope change is recorded in this plan before closure.
+- [x] Focused proof covers the narrowed path subscriptions for advanced-field, `variant-field`, and code-editor same-pattern fallbacks, plus dynamic required / submit-state refresh semantics.
+- [x] Affected owner docs are updated, or `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-15.md` includes Phase 1 execution notes.
 
 ### Phase 2 - Validation Owner Projection And Overlay Cleanup
 
-Status: planned
+Status: completed
 Targets: advanced-field validation helpers/renderers, focused tests/docs
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Fix `08-03` so advanced fields read the current `ValidationScopeRuntime` on supported non-form owner paths.
-- [ ] Fix `08-05` so value-adaptation success only clears the current source-local overlay instead of the whole path bucket.
-- [ ] Add focused proof for non-form owner validation presentation and source-local overlay cleanup semantics.
-- [ ] Update affected owner docs, or explicitly record `No owner-doc update required`.
+- [x] Fix `08-03` so advanced fields read the current `ValidationScopeRuntime` on supported non-form owner paths.
+- [x] Fix `08-05` so value-adaptation success only clears the current source-local overlay instead of the whole path bucket.
+- [x] Add focused proof for non-form owner validation presentation and source-local overlay cleanup semantics.
+- [x] Update affected owner docs, or explicitly record `No owner-doc update required`.
 
 Exit Criteria:
 
-- [ ] Retained `08-03` and `08-05` are fixed in live code, or a fresh live re-audit proves a given item is no longer live and the scope change is recorded in this plan before closure.
-- [ ] Focused proof covers validation-owner projection and source-local external overlay cleanup.
-- [ ] Affected owner docs are updated, or `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-15.md` includes Phase 2 execution notes.
+- [x] Retained `08-03` and `08-05` are fixed in live code, or a fresh live re-audit proves a given item is no longer live and the scope change is recorded in this plan before closure.
+- [x] Focused proof covers validation-owner projection and source-local external overlay cleanup.
+- [x] Affected owner docs are updated, or `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-15.md` includes Phase 2 execution notes.
 
 ### Phase 3 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: touched packages, docs, this plan
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] Run all focused tests added or modified in Phases 1-2.
-- [ ] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all in-scope changes land.
-- [ ] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-15.md`.
-- [ ] Run an independent closure audit with a fresh subagent that re-reads this plan, linked analysis files, live code/docs/tests, and verification output.
-- [ ] Fix any blocking closure-audit finding before marking this plan completed.
+- [x] Run all focused tests added or modified in Phases 1-2.
+- [x] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after all in-scope changes land.
+- [x] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-15.md`.
+- [x] Run an independent closure audit with a fresh subagent that re-reads this plan, linked analysis files, live code/docs/tests, and verification output.
+- [x] Fix any blocking closure-audit finding before marking this plan completed.
 
 Exit Criteria:
 
-- [ ] Focused verification for all in-scope defect families has passed.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
-- [ ] Independent closure audit confirms no remaining plan-owned blocker.
-- [ ] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+- [x] Focused verification for all in-scope defect families has passed.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
+- [x] Independent closure audit confirms no remaining plan-owned blocker.
+- [x] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
 
 ## Closure Gates
 
-- [ ] All in-scope confirmed live defects (`05-01`, `05-02`, `05-04`, `08-03`, `08-05`) are fixed.
-- [ ] Advanced-field subscription and validation projection semantics converge to one supported baseline.
-- [ ] Necessary focused verification exists for every touched defect family.
-- [ ] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
-- [ ] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All in-scope confirmed live defects (`05-01`, `05-02`, `05-04`, `08-03`, `08-05`) are fixed.
+- [x] Advanced-field subscription and validation projection semantics converge to one supported baseline.
+- [x] Necessary focused verification exists for every touched defect family.
+- [x] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
+- [x] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -130,12 +130,12 @@ None currently.
 
 ## Closure
 
-Status Note: Pending implementation, verification, and independent closure audit.
+Status Note: Code, focused proof, workspace hard gates, and independent closure audit are complete.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: Pending.
-- Evidence: Pending.
+- Reviewer / Agent: independent subagent `ses_1d3249dc0ffefgEavd8X1mvHE4`.
+- Evidence: Final focused proof is green via `pnpm --filter @nop-chaos/flux-react exec vitest run src/hooks-subscriptions.test.tsx`, `pnpm --filter @nop-chaos/flux-renderers-form exec vitest run src/__tests__/field-utils.unit.test.tsx`, `pnpm --filter @nop-chaos/flux-code-editor exec vitest run src/code-editor-renderer/use-code-editor-binding.test.tsx`, and `pnpm --filter @nop-chaos/flux-renderers-form-advanced exec vitest run src/detail-view/value-adaptation-helper.test.ts src/detail-view/detail-revalidation.test.tsx src/variant-field/variant-field-owner-contract.test.tsx`; the final closure pass also added and passed focused proof in `packages/flux-code-editor/src/code-editor-renderer/use-code-editor-binding.test.tsx` and `packages/flux-renderers-form-advanced/src/detail-view/detail-revalidation.test.tsx`. Touched-package `typecheck` / `build` / `lint` are green for `@nop-chaos/flux-react`, `@nop-chaos/flux-renderers-form`, `@nop-chaos/flux-code-editor`, and `@nop-chaos/flux-renderers-form-advanced`; workspace hard gates are green via fresh `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` reruns, with the final workspace test output saved at `C:\Users\a758371\.local\share\opencode\tool-output\tool_e2ccecd63001Xvak230yPmU0l7`. Owner-doc decision: `No owner-doc update required`.
 
 Follow-up:
 

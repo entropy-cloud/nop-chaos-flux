@@ -80,6 +80,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
   const mode = config?.mode ?? 'inline';
   const {
     draftValue,
+    draftRowScope,
     saving,
     dialogOpen,
     dirty,
@@ -108,14 +109,14 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
     quickEditBodyRegion
       ? asReactNode(
           quickEditBodyRegion.render({
-            scope: rowScope,
+            scope: draftRowScope,
             pathSuffix: `quickEdit.${field ?? 'custom'}`,
           }),
         )
       : config?.body
         ? asReactNode(
             helpers.render(config.body, {
-              scope: rowScope,
+              scope: draftRowScope,
               pathSuffix: `quickEdit.${field ?? 'custom'}`,
             }),
           )

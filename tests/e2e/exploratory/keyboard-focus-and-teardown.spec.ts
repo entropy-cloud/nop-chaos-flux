@@ -1,29 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, assertTrackedPageErrors } from '../fixtures.js';
 import { ComponentLabHelper, scenarioSlug } from '../component-lab/helpers';
-
-function collectPageErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(`[console.error] ${msg.text()}`);
-  });
-  page.on('pageerror', (err) => {
-    errors.push(`[pageerror] ${err.message}`);
-  });
-  return errors;
-}
-
-function filterKnownNoise(errors: string[]): string[] {
-  return errors.filter(
-    (e) =>
-      !e.includes('favicon') &&
-      !e.includes('Download the React DevTools') &&
-      !e.includes('WebSocket connection'),
-  );
-}
-
-function assertZeroPageErrors(errors: string[]) {
-  expect(filterKnownNoise(errors)).toEqual([]);
-}
 
 async function clearDebugger(page: Page) {
   await page.evaluate(() => {
@@ -51,7 +27,6 @@ async function assertDebuggerHealthy(page: Page) {
 
 test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
   test('dialog: Enter opens dialog, Escape closes, focus returns to trigger', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('dialog');
@@ -73,12 +48,10 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
     await expect(dialog).toHaveCount(0);
     await expect(trigger).toBeFocused();
 
-    assertZeroPageErrors(errors);
     await assertDebuggerHealthy(page);
   });
 
   test('drawer: keyboard open/close keeps focus stable and zero errors', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('drawer');
@@ -100,12 +73,10 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
     await expect(dialog).toHaveCount(0);
     await expect(trigger).toBeFocused();
 
-    assertZeroPageErrors(errors);
     await assertDebuggerHealthy(page);
   });
 
   test('tabs: keyboard navigation moves focus and Enter activates next tab without errors', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('tabs');
@@ -126,12 +97,10 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
     await expect(teamTab).toHaveAttribute('aria-selected', 'true');
     await expect(stage.getByText('Alice Johnson')).toBeVisible();
 
-    assertZeroPageErrors(errors);
     await assertDebuggerHealthy(page);
   });
 
   test('select: keyboard selection updates scope-debug and no runtime failures', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('select');
@@ -152,12 +121,10 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
     await expect(trigger).toContainText('United Kingdom');
     await expect(scopeDebug).toContainText('"country": "uk"');
 
-    assertZeroPageErrors(errors);
     await assertDebuggerHealthy(page);
   });
 
   test('tree-select: keyboard opens popover and selects a tree item without errors', async ({ page }) => {
-    const errors = collectPageErrors(page);
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('tree-select');
@@ -182,15 +149,13 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
     await expect(stage.locator('[data-slot="tree-select-value"]')).toContainText('Platform');
     await expect(scopeDebug).toContainText('"team": "platform"');
 
-    assertZeroPageErrors(errors);
     await assertDebuggerHealthy(page);
   });
 
   test('code-editor: keyboard typing and Escape-driven panels keep debugger clean', async ({ page }) => {
-    const errors = collectPageErrors(page);
-
     await page.goto('/#/code-editor', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Code Editor Playground', level: 1 })).toBeVisible({ timeout: 30_000 });
+    await assertTrackedPageErrors(page);
     await clearDebugger(page);
 
     const plainField = page.locator('.nop-field').filter({ hasText: 'Plain Text' }).first();
@@ -208,15 +173,13 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
     await expect(page.locator('[data-slot="code-editor-snippet-dropdown"]').first()).toBeVisible();
     await page.keyboard.press('Escape');
 
-    assertZeroPageErrors(errors);
     await assertDebuggerHealthy(page);
   });
 
   test('word-editor: keyboard typing and Escape dialog close produce no failures', async ({ page }) => {
-    const errors = collectPageErrors(page);
-
     await page.goto('/#/word-editor', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 30_000 });
+    await assertTrackedPageErrors(page);
     await clearDebugger(page);
 
     const canvas = page.locator('canvas').first();
@@ -231,16 +194,14 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
     await page.keyboard.press('Escape');
     await expect(page.getByText('插入模板表达式')).toHaveCount(0);
 
-    assertZeroPageErrors(errors);
     await assertDebuggerHealthy(page);
   });
 
   test('cross-page teardown: open dialog then navigate across heavy routes with no lingering failures', async ({ page }) => {
-    const errors = collectPageErrors(page);
-
     await page.goto('/#/lab/dialog', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
     await expect(page.getByTestId('component-lab-renderer-dialog')).toBeVisible({ timeout: 30_000 });
+    await assertTrackedPageErrors(page);
     await clearDebugger(page);
 
     const stage = page.getByTestId('scenario-stage-dialog-with-form-fields-and-writeback');
@@ -249,16 +210,18 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
 
     await page.goto('/#/code-editor', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Code Editor Playground', level: 1 })).toBeVisible({ timeout: 30_000 });
+    await assertTrackedPageErrors(page);
 
     await page.goto('/#/flow-designer', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('tab', { name: '工作流' })).toBeVisible({ timeout: 30_000 });
+    await assertTrackedPageErrors(page);
 
     await page.goto('/#/lab/dialog', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
     await expect(page.getByTestId('component-lab-renderer-dialog')).toBeVisible({ timeout: 30_000 });
+    await assertTrackedPageErrors(page);
     await expect(page.getByRole('dialog')).toHaveCount(0);
 
-    assertZeroPageErrors(errors);
     await assertDebuggerHealthy(page);
   });
 });

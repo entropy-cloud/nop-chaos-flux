@@ -255,6 +255,8 @@ export const crudRendererDefinition: RendererDefinition = {
   component: CrudRenderer,
   fields: [
     { key: 'name', kind: 'prop' },
+    { key: 'quickSaveAction', kind: 'event' },
+    { key: 'quickSaveItemAction', kind: 'event' },
     { key: 'queryForm', kind: 'prop' },
     { key: 'toolbar', kind: 'region' },
     { key: 'listActions', kind: 'region' },

@@ -215,7 +215,7 @@ function ChildContractHarness(props: {
 }
 
 describe('useDetailChildValidationContract', () => {
-  it('registers and unregisters an active child contract', () => {
+  it('registers and unregisters an active child contract', async () => {
     const parentValidationOwner = {
       registerChildContract: vi.fn(),
       unregisterChildContract: vi.fn(),
@@ -245,6 +245,8 @@ describe('useDetailChildValidationContract', () => {
       mode: 'summary-gate',
       active: true,
     });
+    await expect(registration.triggerValidation()).resolves.toMatchObject({ ok: true, errors: [] });
+    expect(draftForm.validateAll).toHaveBeenCalledWith('submit');
 
     unmount();
 

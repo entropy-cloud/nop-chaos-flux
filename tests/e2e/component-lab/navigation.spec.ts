@@ -10,7 +10,7 @@
  * - Coverage-manifest completeness check
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures.js';
 import {
   ComponentLabHelper,
   openLabHome,

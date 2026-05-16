@@ -1,8 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const styles = readFileSync(resolve(import.meta.dirname, '../default-spacing.css'), 'utf8');
+const styles = readFileSync('src/default-spacing.css', 'utf8');
 
 describe('default-spacing.css contract', () => {
   it('scopes tabs and field slot defaults to Flux-owned roots instead of bare shared slots', () => {

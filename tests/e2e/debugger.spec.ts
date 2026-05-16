@@ -1,15 +1,4 @@
-import { test, expect, filterNoise } from './fixtures.js';
-
-function collectConsoleErrors(page: import('@playwright/test').Page): string[] {
-  const errors: string[] = [];
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(msg.text());
-  });
-  page.on('pageerror', (err) => {
-    errors.push(err.message);
-  });
-  return errors;
-}
+import { test, expect, assertTrackedPageErrors } from './fixtures.js';
 
 async function waitForDebuggerPanel(page: import('@playwright/test').Page) {
   await expect(page.locator('.nop-debugger')).toBeVisible();
@@ -33,6 +22,7 @@ async function prepareFreshPage(page: import('@playwright/test').Page): Promise<
     timeout: 45000,
   });
   await getLauncher(page).waitFor({ state: 'visible', timeout: 45000 });
+  await assertTrackedPageErrors(page);
 }
 
 async function openFluxBasicPage(page: import('@playwright/test').Page): Promise<void> {
@@ -40,6 +30,20 @@ async function openFluxBasicPage(page: import('@playwright/test').Page): Promise
   await page
     .getByRole('heading', { name: 'Renderer Playground', level: 1 })
     .waitFor({ state: 'visible', timeout: 15000 });
+  await assertTrackedPageErrors(page);
+}
+
+async function selectRoleOption(
+  page: import('@playwright/test').Page,
+  labelText: string,
+  optionText: string,
+): Promise<void> {
+  const trigger = page.getByRole('combobox', { name: labelText });
+  await trigger.click();
+  const option = page.getByRole('option', { name: optionText }).last();
+  await expect(option).toBeVisible({ timeout: 5_000 });
+  await option.click();
+  await expect(trigger).toContainText(optionText);
 }
 
 async function seedFluxBasicExplanationFixture(page: import('@playwright/test').Page): Promise<{
@@ -52,17 +56,46 @@ async function seedFluxBasicExplanationFixture(page: import('@playwright/test').
   await page.getByLabel('Username').fill('alice');
   await page.getByLabel('Username').blur();
   await page.getByLabel('Search Users').fill('alice');
-  await page.getByLabel('Role').click();
-  await page.getByRole('option', { name: 'Admin' }).click();
+  await selectRoleOption(page, 'Role', 'Admin');
   await page.evaluate(() => {
     const api = (window as unknown as { __NOP_DEBUGGER_API__?: { clear(): void } }).__NOP_DEBUGGER_API__;
     api?.clear();
   });
 
-  await page.getByRole('button', { name: 'Search Directory' }).click();
+  const searchButton = page.getByRole('button', { name: 'Search Directory' });
+  await expect.poll(async () => await searchButton.isEnabled(), { timeout: 10_000 }).toBe(true);
+
+  await searchButton.click();
   await page.waitForTimeout(450);
-  await page.getByRole('button', { name: 'Search Directory' }).click();
-  await page.waitForTimeout(2200);
+  await searchButton.click();
+
+  await expect
+    .poll(
+      async () =>
+        await page.evaluate(() => {
+          const api = (window as any).__NOP_DEBUGGER_API__;
+          if (!api) return { searchEventCount: 0, hasAbort: false, hasEnd: false };
+          const events = api
+            .getSnapshot()
+            .events.filter(
+              (event: any) =>
+                event.summary?.includes('/api/search') || event.detail?.includes('/api/search'),
+            );
+          return {
+            searchEventCount: events.length,
+            hasAbort: events.some((event: any) => event.kind === 'api:abort'),
+            hasEnd: events.some((event: any) => event.kind === 'api:end'),
+          };
+        }),
+      { timeout: 5_000 },
+    )
+    .toMatchObject({
+      searchEventCount: expect.any(Number),
+      hasAbort: true,
+      hasEnd: true,
+    });
+
+  await expect(page.getByLabel('Admin Code')).toBeVisible({ timeout: 5_000 });
 
   const cids = await page.evaluate(() => {
     const labels = Array.from(document.querySelectorAll('[data-slot="field-label"]'));
@@ -108,16 +141,13 @@ async function seedFluxBasicExplanationFixture(page: import('@playwright/test').
 test.describe('Nop Debugger', () => {
   test('launcher renders on home page with zero console errors', async ({ page }) => {
     test.setTimeout(60_000);
-    const errors = collectConsoleErrors(page);
     await prepareFreshPage(page);
 
     await expect(getLauncher(page)).toBeVisible();
-    expect(filterNoise(errors)).toEqual([]);
   });
 
   test('clicking launcher opens the full debugger panel', async ({ page }) => {
     test.setTimeout(60_000);
-    const errors = collectConsoleErrors(page);
     await prepareFreshPage(page);
 
     await getLauncher(page).click();
@@ -134,7 +164,6 @@ test.describe('Nop Debugger', () => {
     });
     expect(tooltips).toEqual(['Pause', 'Clear', 'Pick element', 'Minimize']);
 
-    expect(filterNoise(errors)).toEqual([]);
   });
 
   test('automation API (window.__NOP_DEBUGGER_API__) is available', async ({ page }) => {
@@ -161,22 +190,19 @@ test.describe('Nop Debugger', () => {
   });
 
   test('debugger launcher renders on FluxBasicPage', async ({ page }) => {
-    const errors = collectConsoleErrors(page);
     await openFluxBasicPage(page);
 
     await expect(getLauncher(page)).toBeVisible();
-    expect(filterNoise(errors)).toEqual([]);
   });
 
   test('debugger launcher renders on DebuggerLabPage', async ({ page }) => {
-    const errors = collectConsoleErrors(page);
     await page.goto('/#/debugger-lab');
     await page
       .getByRole('heading', { name: 'Debugger Lab' })
       .waitFor({ state: 'visible', timeout: 15000 });
+    await assertTrackedPageErrors(page);
 
     await expect(getLauncher(page)).toBeVisible();
-    expect(filterNoise(errors)).toEqual([]);
   });
 
   test('DebuggerLabPage controls fire events and query diagnostics', async ({ page }) => {
@@ -184,6 +210,7 @@ test.describe('Nop Debugger', () => {
     await page
       .getByRole('heading', { name: 'Debugger Lab' })
       .waitFor({ state: 'visible', timeout: 15000 });
+    await assertTrackedPageErrors(page);
 
     const outputPanel = page.locator('pre').first();
 
@@ -311,23 +338,15 @@ test.describe('Nop Debugger', () => {
   });
 
   test('no console errors on any page', async ({ page }) => {
-    const errors = collectConsoleErrors(page);
     await prepareFreshPage(page);
 
-    const errors1 = [...errors];
-
     await openFluxBasicPage(page);
-    const errors2 = [...errors];
 
     await page.goto('/#/debugger-lab');
     await page
       .getByRole('heading', { name: 'Debugger Lab' })
       .waitFor({ state: 'visible', timeout: 15000 });
-    const errors3 = [...errors];
-
-    expect(filterNoise(errors1)).toEqual([]);
-    expect(filterNoise(errors2)).toEqual([]);
-    expect(filterNoise(errors3)).toEqual([]);
+    await assertTrackedPageErrors(page);
   });
 
   test('panel open/minimize state persists across reloads', async ({ page }) => {
@@ -449,11 +468,18 @@ test.describe('Nop Debugger', () => {
     await expect(bar.locator('.ndbg-minimized-badge')).toContainText('0');
   });
 
-  test('minimized bar shows error count badge when errors exist', async ({ page }) => {
+  test('minimized bar shows error count badge when errors exist', async ({
+    page,
+    allowConsoleErrors,
+    allowPageErrors,
+  }) => {
+    allowConsoleErrors(1);
+    allowPageErrors(1);
     await page.goto('/#/debugger-lab');
     await page
       .getByRole('heading', { name: 'Debugger Lab' })
       .waitFor({ state: 'visible', timeout: 15000 });
+    await assertTrackedPageErrors(page);
 
     await getLauncher(page).click();
     await waitForDebuggerPanel(page);

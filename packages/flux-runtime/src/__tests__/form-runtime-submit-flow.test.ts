@@ -284,7 +284,7 @@ describe('executeFormSubmit', () => {
     expect(submitAction).not.toHaveBeenCalled();
   });
 
-  it('allows submit when summary-gate child is ready and valid', async () => {
+  it('allows submit when summary-gate child is ready and valid without recursively triggering child submit validation', async () => {
     const submitAction = vi.fn().mockResolvedValue({ ok: true, data: {} });
     const validState = { ready: true, validating: false, valid: true, hasErrors: false };
     const triggerValidation = vi.fn().mockResolvedValue({ ok: true, errors: [] });
@@ -314,8 +314,30 @@ describe('executeFormSubmit', () => {
     await expect(executeFormSubmit(setup.input)).resolves.toMatchObject({
       ok: true,
     });
-    expect(triggerValidation).toHaveBeenCalledTimes(1);
+    expect(triggerValidation).not.toHaveBeenCalled();
     expect(submitAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes the submit abort signal through to validation', async () => {
+    const controller = new AbortController();
+    const validateForm = vi.fn().mockImplementation(async (_reason, options) => {
+      expect(options?.signal).toBe(controller.signal);
+      return { ok: true, errors: [], fieldErrors: {} };
+    });
+    const setup = createSubmitInput({
+      sharedState: {
+        store: createSubmitInput().store,
+        lifecycleState: 'active',
+        runtimeFieldRegistrations: new Map([['name', { registration: { path: 'name' } }]]),
+        childContracts: new Map(),
+      },
+      input: {
+        validateForm,
+      },
+    });
+
+    await expect(executeFormSubmit(setup.input, { signal: controller.signal })).resolves.toMatchObject({ ok: true });
+    expect(validateForm).toHaveBeenCalledWith('submit', { signal: controller.signal });
   });
 
   it('aborts a hanging recurse-submit child validation and clears submitting state', async () => {

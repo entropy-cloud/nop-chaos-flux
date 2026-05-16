@@ -369,7 +369,10 @@ export interface FormRuntime extends ValidationScopeRuntime {
   readonly allTouched: boolean;
   setLifecycleHandlers(handlers?: FormLifecycleHandlers): void;
   validateField(path: string, reason?: ValidationReason): Promise<ValidationResult>;
-  validateForm(reason?: ValidationReason): Promise<FormValidationResult>;
+  validateForm(
+    reason?: ValidationReason,
+    options?: { signal?: AbortSignal },
+  ): Promise<FormValidationResult>;
   getError(path: string): ValidationError[] | undefined;
   isValidating(path: string): boolean;
   isTouched(path: string): boolean;

@@ -1,4 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, assertTrackedPageErrors } from './fixtures.js';
+
+async function selectRoleOption(
+  page: import('@playwright/test').Page,
+  labelText: string,
+  optionText: string,
+): Promise<void> {
+  const trigger = page.getByRole('combobox', { name: labelText });
+  await trigger.click();
+  const option = page.getByRole('option', { name: optionText }).last();
+  await expect(option).toBeVisible({ timeout: 5_000 });
+  await option.click();
+  await expect(trigger).toContainText(optionText);
+}
 
 test('diagnose admin code meta explanation on live flux-basic page', async ({ page }) => {
   await page.goto('/#/flux-basic');
@@ -6,12 +19,12 @@ test('diagnose admin code meta explanation on live flux-basic page', async ({ pa
     state: 'visible',
     timeout: 15000,
   });
+  await assertTrackedPageErrors(page);
 
   await page.getByLabel('Username').fill('alice');
   await page.getByLabel('Username').blur();
   await page.getByLabel('Search Users').fill('alice');
-  await page.getByLabel('Role').click();
-  await page.getByRole('option', { name: 'Admin' }).click();
+  await selectRoleOption(page, 'Role', 'Admin');
   await page.waitForTimeout(1200);
 
   const result = await page.evaluate(() => {

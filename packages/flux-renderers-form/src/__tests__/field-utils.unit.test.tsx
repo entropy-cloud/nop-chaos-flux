@@ -466,10 +466,12 @@ describe('useFieldPresentation subscription precision', () => {
     const subscribe = vi.fn(() => () => undefined);
     const subscribeToPath = vi.fn(() => () => undefined);
     const subscribeToSubmitting = vi.fn(() => () => undefined);
+    const subscribeToPaths = vi.fn(() => () => undefined);
     const form = {
       store: {
         subscribe,
         subscribeToPath,
+        subscribeToPaths,
         subscribeToSubmitting,
         getState: () => ({
           values: { email: 'a@b.com' },
@@ -506,7 +508,9 @@ describe('useFieldPresentation subscription precision', () => {
       </FormContext.Provider>,
     );
 
+    expect(subscribeToPaths).toHaveBeenCalledWith(['email'], expect.any(Function));
     expect(subscribeToPath).toHaveBeenCalledWith('email', expect.any(Function));
+    expect(subscribeToSubmitting).toHaveBeenCalledWith(expect.any(Function));
     expect(subscribe).not.toHaveBeenCalled();
   });
 });

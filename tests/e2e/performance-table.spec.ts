@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
 // This measurement page mutates one shared host/runtime and is intentionally serialized.
 test.describe.configure({ mode: 'serial' });
@@ -7,6 +7,7 @@ async function openPerformanceTable(page: import('@playwright/test').Page) {
   await page.goto('/#/performance-table', { waitUntil: 'commit' });
   await expect(page.getByText('Performance Table Playground')).toBeVisible({ timeout: 45_000 });
   await expect(page.getByRole('button', { name: 'Run 20 Host Mutations' })).toBeVisible();
+  await assertTrackedPageErrors(page);
 }
 
 test.describe('Performance Table Page', () => {

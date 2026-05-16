@@ -255,6 +255,7 @@ async function validateCompiledField(
   path: string,
   field: CompiledFormValidationField,
   reason?: ValidationReason,
+  options?: { signal?: AbortSignal },
 ): Promise<ValidationResult> {
   const runtimeTarget = findRuntimeRegistration(sharedState, path);
   const runtimeRegistration = runtimeTarget.entry?.registration;
@@ -280,10 +281,21 @@ async function validateCompiledField(
   const validatingDelay = sharedState.inputValue.validatingDelay ?? 0;
   let validatingTimer: ReturnType<typeof setTimeout> | undefined;
   let validationAbortController: AbortController | undefined;
+  let detachAbortListener: (() => void) | undefined;
 
   if (hasAsyncRules) {
     validationAbortController = new AbortController();
     sharedState.validationAbortControllers.set(path, validationAbortController);
+
+    if (options?.signal) {
+      if (options.signal.aborted) {
+        validationAbortController.abort();
+      } else {
+        const abortValidation = () => validationAbortController?.abort();
+        options.signal.addEventListener('abort', abortValidation, { once: true });
+        detachAbortListener = () => options.signal?.removeEventListener('abort', abortValidation);
+      }
+    }
 
     if (validatingDelay > 0) {
       validatingTimer = setTimeout(() => {
@@ -430,6 +442,8 @@ async function validateCompiledField(
       validatingTimer = undefined;
     }
 
+    detachAbortListener?.();
+
     if (
       validationAbortController &&
       sharedState.validationAbortControllers.get(path) === validationAbortController
@@ -456,6 +470,7 @@ export async function validatePath(
   sharedState: FormRuntimeValidationState,
   path: string,
   reason?: ValidationReason,
+  options?: { signal?: AbortSignal },
 ): Promise<ValidationResult> {
   if (sharedState.lifecycleState === 'disposed') {
     return createBlockedValidationResult(sharedState.lifecycleState);
@@ -511,7 +526,7 @@ export async function validatePath(
   }
 
   try {
-    return await validateCompiledField(sharedState, path, field, reason);
+    return await validateCompiledField(sharedState, path, field, reason, options);
   } catch (error) {
     if (error === VALIDATION_CANCELLED) {
       return sharedState.lifecycleState === 'active'

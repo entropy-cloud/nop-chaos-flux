@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
 test.setTimeout(60_000);
 
@@ -6,6 +6,7 @@ async function openWordEditor(page: import('@playwright/test').Page) {
   await page.goto('/#/word-editor', { waitUntil: 'commit' });
   await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 45_000 });
   await expect(page.getByRole('button', { name: '保存' })).toBeVisible();
+  await assertTrackedPageErrors(page);
 }
 
 async function readWordCount(page: import('@playwright/test').Page) {
@@ -54,6 +55,7 @@ test('saves a document marker that survives a reload', async ({ page }) => {
 
   await page.reload({ waitUntil: 'commit' });
   await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 45_000 });
+  await assertTrackedPageErrors(page);
   await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(marker);
   await expect.poll(() => readRecoveredMainText(page), { timeout: 10_000 }).toContain(marker);
   await expect.poll(() => readWordCount(page), { timeout: 10_000 }).toBeGreaterThanOrEqual(initialWordCount);

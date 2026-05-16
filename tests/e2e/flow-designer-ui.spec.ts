@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -27,6 +27,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 30000 });
   await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 30000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+  await assertTrackedPageErrors(page);
 }
 
 test.skip('captures node and hover toolbar html', async ({ page }, testInfo) => {

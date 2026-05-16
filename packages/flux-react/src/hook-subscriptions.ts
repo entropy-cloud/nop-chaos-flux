@@ -129,11 +129,27 @@ export function createFormStoreSubscribe(
     }
 
     if (paths && paths.length > 0 && typeof store.subscribeToPaths === 'function') {
-      return store.subscribeToPaths(paths, listener);
+      const unsubPaths = store.subscribeToPaths(paths, listener);
+      const unsubSubmitting =
+        typeof store.subscribeToSubmitting === 'function'
+          ? store.subscribeToSubmitting(listener)
+          : emptyUnsubscribe;
+      return () => {
+        unsubPaths();
+        unsubSubmitting();
+      };
     }
 
     if (path && typeof store.subscribeToPath === 'function') {
-      return store.subscribeToPath(path, listener);
+      const unsubPath = store.subscribeToPath(path, listener);
+      const unsubSubmitting =
+        typeof store.subscribeToSubmitting === 'function'
+          ? store.subscribeToSubmitting(listener)
+          : emptyUnsubscribe;
+      return () => {
+        unsubPath();
+        unsubSubmitting();
+      };
     }
 
     return store.subscribe(listener);

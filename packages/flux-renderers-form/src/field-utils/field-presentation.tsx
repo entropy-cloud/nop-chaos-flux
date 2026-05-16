@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   shouldShowFieldError,
   selectCurrentFormFieldPresentation,
@@ -45,11 +46,21 @@ export function useFieldPresentation(
   },
 ) {
   const fieldState = useFormFieldState(name);
-  const currentForm = useCurrentForm();
   const behavior = getValidationBehaviorForOwner(name, currentValidationScope);
   const validationField = getCompiledValidationField(currentValidationScope?.validation, name);
   const dynamicRequiredDependencyPaths = getDynamicRequiredDependencyPaths(validationField);
   const hasDynamicRequiredRule = dynamicRequiredDependencyPaths.length > 0;
+  const currentForm = useCurrentForm();
+  const presentationPaths = useMemo(() => {
+    const paths = new Set<string>();
+    if (name) {
+      paths.add(name);
+    }
+    for (const path of dynamicRequiredDependencyPaths) {
+      paths.add(path);
+    }
+    return Array.from(paths);
+  }, [dynamicRequiredDependencyPaths, name]);
   const currentPresentation = useCurrentFormState(
     (state) =>
       selectCurrentFormFieldPresentation(state, {
@@ -73,7 +84,7 @@ export function useFieldPresentation(
       left.showError === right.showError &&
       left.interactive === right.interactive &&
       left.readOnly === right.readOnly,
-    { path: name },
+    { paths: presentationPaths },
   );
   const ownerEffectiveRequired = useCurrentValidationValues(
     (values) =>

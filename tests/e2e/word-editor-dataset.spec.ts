@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
 // This suite mutates one localStorage-backed word-editor state surface and stays serial intentionally.
 test.describe.configure({ mode: 'serial' });
@@ -13,6 +13,7 @@ async function openWordEditor(page: import('@playwright/test').Page) {
   await page.reload({ waitUntil: 'commit' });
   await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 45000 });
   await expect(page.getByRole('tab', { name: '数据集' })).toBeVisible({ timeout: 15000 });
+  await assertTrackedPageErrors(page);
 }
 
 async function openDatasetDialog(page: import('@playwright/test').Page) {

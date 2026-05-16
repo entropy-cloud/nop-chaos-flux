@@ -18,6 +18,10 @@ function createRowScope(record: Record<string, unknown>) {
       return undefined;
     },
     update(path: string, value: unknown) {
+      if (path === 'record' && value && typeof value === 'object') {
+        state.record = { ...(value as Record<string, unknown>) };
+        return;
+      }
       if (path.startsWith('record.')) {
         state.record[path.slice('record.'.length)] = value;
       }
@@ -110,15 +114,17 @@ describe('TableQuickEditCell', () => {
 
     expect(input.value).toBe('Alice');
     expect(saveButton.hasAttribute('disabled')).toBe(true);
+    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
 
     fireEvent.change(input, { target: { value: 'Alicia' } });
     expect(saveButton.hasAttribute('disabled')).toBe(false);
-    expect(rowScope.get('record')).toMatchObject({ name: 'Alicia' });
+    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
 
     fireEvent.click(saveButton);
     await waitFor(() => {
       expect(helpers.dispatch).toHaveBeenCalledTimes(1);
     });
+    expect(rowScope.get('record')).toMatchObject({ name: 'Alicia' });
 
     rerender(
       wrapWithProviders(
@@ -177,15 +183,17 @@ describe('TableQuickEditCell', () => {
     const customInput = screen.getByRole('textbox', { name: 'Custom body' }) as HTMLInputElement;
     const saveButton = screen.getByRole('button', { name: t('flux.common.save') });
     expect(saveButton.hasAttribute('disabled')).toBe(true);
+    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
 
     fireEvent.change(customInput, { target: { value: 'changed' } });
     expect(saveButton.hasAttribute('disabled')).toBe(false);
-    expect(rowScope.get('record')).toMatchObject({ name: 'changed' });
+    expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
 
     fireEvent.click(saveButton);
     await waitFor(() => {
       expect(customHelpers.dispatch).toHaveBeenCalledTimes(1);
     });
+    expect(rowScope.get('record')).toMatchObject({ name: 'changed' });
   });
 
   it('renders compiled quickEdit body regions when quickEditBodyRegionKey is provided', async () => {
