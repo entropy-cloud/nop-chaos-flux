@@ -513,6 +513,18 @@ describe('contract: parser edge cases', () => {
     const ast = parseFormula('a.b ?? c');
     expect(ast.type).toBe('NullCoalesceExpression');
   });
+
+  it('decodes single-quoted standard escapes the same as double quotes', () => {
+    expect((parseFormula("'a\\nb'") as any).value).toBe('a\nb');
+    expect((parseFormula("'a\\tb'") as any).value).toBe('a\tb');
+    expect((parseFormula("'\\u4f60\\u597d'") as any).value).toBe('你好');
+    expect((parseFormula("'it\\'s'") as any).value).toBe("it's");
+    expect((parseFormula(`'say "hi"'`) as any).value).toBe('say "hi"');
+  });
+
+  it('rejects invalid single-quoted escapes', () => {
+    expect(() => parseFormula("'\\x'")).toThrow();
+  });
 });
 
 describe('contract: binary operator type coercion', () => {
