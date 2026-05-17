@@ -21,13 +21,14 @@
 
 ## 4. schema 设计
 
-- 关键字段是 `document`、`config`、`toolbar`、`inspector`、`dialogs`。
-- `document` 和 `config` 是必填宿主输入，不应通过隐式全局单例获取。
-- 目标设计中，如需让宿主外部读取 designer 状态摘要，应增加 `statusPath`，而不是把 host projection 直接提升到 page 全局 scope。
+- 关键字段是 `title`、`className`、`visible`、`hidden`、`disabled`、`document`、`treeDocument`、`statusPath`、`config`、`toolbar`、`inspector`、`dialogs`。
+- `document` / `treeDocument` 与 `config` 是宿主输入；当前 live baseline 要求至少提供一种文档输入与 `config`，不通过隐式全局单例获取。
+- `statusPath` 是当前支持的宿主外部摘要发布入口，而不是 future-only 设计草案。
+- `$designer` 是刻意保留的 additive host-summary export，用于给 page 内 schema 片段读取只读 designer 摘要；它不替代 host manifest projection，也不提升为通用 page 全局数据别名。
 
 ## 5. 字段分类
 
-- `document`、`config`: `value`
+- `title`、`className`、`visible`、`hidden`、`disabled`、`document`、`treeDocument`、`statusPath`、`config`: `value`
 - `toolbar`、`inspector`、`dialogs`: `region`
 
 ## 6. regions 与 slot 约定

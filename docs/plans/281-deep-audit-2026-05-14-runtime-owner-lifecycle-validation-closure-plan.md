@@ -1,7 +1,7 @@
 # 281 Deep Audit 2026-05-14 Runtime Owner Lifecycle Validation Closure Plan
 
 > Plan Status: completed
-> Last Reviewed: 2026-05-14
+> Last Reviewed: 2026-05-17
 > Source: `docs/analysis/2026-05-14-deep-audit-batch1/{summary.md,04-state-ownership.md,07-lifecycle.md,08-validation.md}`
 > Related: `docs/plans/279-resolved-boolean-props-contract-plan.md`, `docs/plans/280-open-ended-adversarial-review-2026-05-14-remediation-plan.md`, `docs/plans/00-plan-authoring-and-execution-guide.md`
 
@@ -62,7 +62,7 @@ Targets: `packages/word-editor-renderers/src/**`, `packages/report-designer-rend
 
 Exit Criteria:
 
-- [ ] Retained IDs `04-01/02/03/04/06/08` are fixed in live code, or a fresh live re-audit proves a given item is no longer live and the scope change is recorded in this plan before closure.
+- [x] Retained IDs `04-01/02/03/04/06/08` are fixed in live code, or a fresh live re-audit proves a given item is no longer live and the scope change is recorded in this plan before closure.
 - [x] Focused tests covering dirty/history/recovery truth surfaces exist in the touched package suites and pass.
 - [x] Affected owner docs are updated, or `No owner-doc update required` is explicit.
 - [x] `docs/logs/2026/05-14.md` includes Phase 1 execution notes.

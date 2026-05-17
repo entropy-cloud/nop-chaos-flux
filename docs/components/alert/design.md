@@ -7,7 +7,7 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 对应 AMIS `alert`，但 Flux 正式契约应优先使用当前 UI primitive 语言，如 `variant`、`title`、`body`、`actions`。
+- 对应 AMIS `alert`，但 Flux 正式契约应优先使用当前 severity 词汇，如 `level`、`title`、`body`、`actions`。
 - 复杂确认、阻塞式交互仍应交给 `dialog` / `drawer`。
 
 ## 3. Flux 中的 renderer/type 定义
@@ -17,12 +17,12 @@
 
 ## 4. schema 设计
 
-- 建议正式字段为 `variant`、`title`、`body`、`actions`、`icon`、`closable`。
+- 建议正式字段为 `level`、`title`、`body`、`actions`、`icon`、`closable`。
 - 标题和内容都应允许简单值或区域表达。
 
 ## 5. 字段分类
 
-- `variant`、`icon`、`closable`: `value`
+- `level`、`icon`、`closable`: `value`
 - `title`、`body`: `value-or-region`
 - `actions`: `region`
 - `onClose`: `event`

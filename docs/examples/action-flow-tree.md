@@ -476,7 +476,7 @@ Tree → `ActionSchema` JSON 的编译规则：
             "type": "text",
             "body": "${data.when != null ? 'Guard: ' + data.when : ''}",
             "className": "nop-af-node__badge",
-            "visibleOn": "data.when != null"
+            "visible": "${data.when != null}"
           }
         ]
       },

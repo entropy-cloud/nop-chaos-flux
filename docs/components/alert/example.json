@@ -1,6 +1,6 @@
 {
   "type": "alert",
-  "variant": "warning",
+  "level": "warning",
   "title": "配额即将耗尽",
   "body": [
     {

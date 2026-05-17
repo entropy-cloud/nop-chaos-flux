@@ -394,13 +394,13 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
               "type": "input-number",
               "name": "data.term",
               "label": "超时(小时)",
-              "visibleOn": "data.termAuto === true"
+              "visible": "${data.termAuto === true}"
             },
             {
               "type": "select",
               "name": "data.termMode",
               "label": "超时动作",
-              "visibleOn": "data.termAuto === true",
+              "visible": "${data.termAuto === true}",
               "options": [
                 { "label": "自动通过", "value": 0 },
                 { "label": "自动拒绝", "value": 1 }

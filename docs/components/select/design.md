@@ -50,7 +50,8 @@
 
 ## 10. 样式与 DOM marker 约定
 
-- 根节点保留 `nop-select` marker。
+- 根节点保留 `nop-select-wrapper` marker and `data-slot="select-wrapper"` marker.
+- 当前表单 `type: 'select'` 单选 renderer uses `@nop-chaos/ui` `NativeSelect` as the stable browser-interaction baseline; popup/headless select remains a UI primitive for richer future modes.
 - 视觉层复用 `@nop-chaos/ui` Select 或 NativeSelect，不再引入第二套 mode 命名。
 
 ### `NativeSelect` public contract baseline

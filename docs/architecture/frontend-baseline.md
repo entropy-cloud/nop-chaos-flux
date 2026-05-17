@@ -201,4 +201,4 @@ Treat the following as stable defaults unless there is a strong reason to change
 
 - Core architecture: `docs/architecture/flux-core.md`
 - Runtime design: `docs/architecture/renderer-runtime.md`
-- Delivery planning: `docs/archive/plans/02-development-plan.md`
+- Delivery planning workflow: `docs/plans/00-plan-authoring-and-execution-guide.md`

@@ -248,8 +248,8 @@ Review:
 
 Examples:
 
-- changes in future `packages/spreadsheet-*` packages
-- changes in future `packages/report-designer-*` packages
+- changes in the live `packages/spreadsheet-*` packages
+- changes in the live `packages/report-designer-*` packages
 - changed workbook editor boundaries, report field drag-drop behavior, or inspector customization contracts
 - changed expression editor adapter boundary for report-designer properties
 
@@ -257,7 +257,7 @@ Review:
 
 - `docs/architecture/report-designer/design.md`
 - `docs/architecture/report-designer/config-schema.md`
-- `docs/architecture/report-designer/api.md` if the future package/API target also changes
+- `docs/architecture/report-designer/api.md` only when reviewing or updating the target/reference package/API contract
 - `docs/index.md` if the recommended entry point changes
 
 ## 11. Security boundary or dynamic execution changes

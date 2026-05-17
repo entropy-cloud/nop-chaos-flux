@@ -68,3 +68,5 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/51-structuralwhen-runtime-react-handoff-contract-fix.md`
 - `docs/bugs/52-variant-field-canonical-owner-selection-fix.md`
 - `docs/bugs/53-imported-region-composite-scope-shared-dedupe-fix.md`
+- `docs/bugs/56-dynamic-renderer-ad-hoc-fragment-identity-fix.md`
+- `docs/bugs/57-performance-table-row-scope-cache-snapshot-fix.md`

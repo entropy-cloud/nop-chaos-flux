@@ -56,6 +56,7 @@ The runtime baseline carries this one step further for compiled node resolution:
 - compile-time-owned structural fields that intentionally execute outside ordinary `propsProgram` resolution still have to participate in that invalidation contract; the current live baseline keeps node-level `when` on compiled structural fields and treats dynamic structural `loop` / `recurse` `itemData` conservatively as props invalidation inputs so repeated subtrees rerender when their parent lexical inputs change
 - runtime owners must expose explicit teardown for long-lived resources; the current `RendererRuntime` surface includes `dispose()` to stop owned data sources, reactions, imported namespace registrations, and in-flight requests when a host unmounts or replaces a runtime instance
 - runtime-owned teardown aborts action dispatch first. The current baseline requires `runtime.dispose()` to abort the action dispatcher root signal before forms, pages, surfaces, import frames, or other runtime-owned resources begin tearing down, so in-flight dispatch chains observe cancellation instead of continuing against partially disposed owners.
+- React-owned runtime cleanup must be StrictMode-safe: renderer-owned runtimes created during render, such as `FormRenderer` owned form runtimes, must not be synchronously disposed by the first effect cleanup pass if React dev StrictMode immediately replays the effect for the same still-current owner. Cleanup should defer disposal long enough to distinguish true unmount/replacement from StrictMode effect replay.
 
 ### Compile once, execute many times
 
@@ -761,7 +762,7 @@ function EmptyStateWrapper(props: RendererComponentProps<EmptyWrapperSchema>) {
 }
 ```
 
-Precompiled regions remain the preferred path; ad hoc rendering exists as a supplement.
+Precompiled regions remain the preferred path; ad hoc rendering exists as a supplement. When an ad hoc fragment can swap between independently compiled schemas at the same call site, the caller should pass a stable distinguishing `pathSuffix`, and the React render path must key the child node by compiled template identity so stale compiled children are not reused across schema swaps.
 
 ## Slot And Field Semantics
 
