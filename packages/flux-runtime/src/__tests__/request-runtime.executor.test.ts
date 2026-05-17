@@ -88,6 +88,105 @@ describe('executeApiSchema error path', () => {
     expect(error.attempts).toBe(3);
     expect(error.failureCount).toBe(3);
   });
+
+  it('aborts request execution when control.timeout expires', async () => {
+    const scope = createTestScope({});
+    let capturedSignal: AbortSignal | undefined;
+    const env = {
+      fetcher: vi.fn(
+        (_api: ApiSchema, options?: { signal?: AbortSignal }) =>
+          new Promise((_resolve, reject) => {
+            capturedSignal = options?.signal;
+            options?.signal?.addEventListener(
+              'abort',
+              () => reject(options.signal?.reason ?? new DOMException('aborted', 'AbortError')),
+              { once: true },
+            );
+          }),
+      ),
+      notify: vi.fn(),
+    } as unknown as RendererEnv;
+
+    await expect(
+      executeApiSchema({ url: '/api/slow', type: 'test' }, scope, env, expressionCompiler, {
+        control: { timeout: 5 },
+      }),
+    ).rejects.toMatchObject({ name: 'TimeoutError', message: 'Request timed out after 5ms' });
+    expect(capturedSignal?.aborted).toBe(true);
+  });
+
+  it('retries timeout failures before surfacing the final timeout', async () => {
+    const scope = createTestScope({});
+    let attempts = 0;
+    const env = {
+      fetcher: vi.fn(
+        (_api: ApiSchema, options?: { signal?: AbortSignal }) =>
+          new Promise((_resolve, reject) => {
+            attempts += 1;
+            options?.signal?.addEventListener(
+              'abort',
+              () => reject(options.signal?.reason ?? new DOMException('aborted', 'AbortError')),
+              { once: true },
+            );
+          }),
+      ),
+      notify: vi.fn(),
+    } as unknown as RendererEnv;
+
+    const error = await executeApiSchema(
+      { url: '/api/slow', type: 'test' },
+      scope,
+      env,
+      expressionCompiler,
+      {
+        control: { timeout: 5, retry: { times: 2, delay: 0 } },
+      },
+    ).catch((caught) => caught);
+
+    expect(attempts).toBe(3);
+    expect(error).toMatchObject({
+      name: 'TimeoutError',
+      message: 'Request timed out after 5ms',
+      attempts: 3,
+      failureCount: 3,
+    });
+  });
+
+  it('honors parent abort before timeout completion', async () => {
+    const scope = createTestScope({});
+    const controller = new AbortController();
+    const env = {
+      fetcher: vi.fn(
+        (_api: ApiSchema, options?: { signal?: AbortSignal }) =>
+          new Promise((_resolve, reject) => {
+            options?.signal?.addEventListener(
+              'abort',
+              () => reject(options.signal?.reason ?? new DOMException('aborted', 'AbortError')),
+              { once: true },
+            );
+          }),
+      ),
+      notify: vi.fn(),
+    } as unknown as RendererEnv;
+
+    const pending = executeApiSchema(
+      { url: '/api/slow', type: 'test' },
+      scope,
+      env,
+      expressionCompiler,
+      {
+        signal: controller.signal,
+        control: { timeout: 50 },
+      },
+    );
+
+    controller.abort(new DOMException('Parent cancelled', 'AbortError'));
+
+    await expect(pending).rejects.toMatchObject({
+      name: 'AbortError',
+      message: 'Parent cancelled',
+    });
+  });
 });
 
 describe('createApiRequestExecutor', () => {

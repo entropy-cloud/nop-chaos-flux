@@ -11,7 +11,7 @@ import type {
   SchemaValue,
 } from '@nop-chaos/flux-core';
 import { isPlainObject } from '@nop-chaos/flux-core';
-import { withRetry, type RetryResult } from '@nop-chaos/flux-action-core';
+import { withRetry, withTimeout, type RetryResult } from '@nop-chaos/flux-action-core';
 import { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor.js';
 import { stableStringify } from './api-cache.js';
 
@@ -31,6 +31,19 @@ export interface ApiRequestExecutor {
 export interface ApiRequestExecutionResult<T> {
   response: ApiResponse<T>;
   retry: RetryResult<ApiResponse<T>>;
+}
+
+interface RequestTimeoutFailure {
+  __timeout: true;
+  error: DOMException;
+}
+
+function isRequestTimeoutFailure<T>(value: ApiResponse<T> | RequestTimeoutFailure): value is RequestTimeoutFailure {
+  return typeof value === 'object' && value !== null && '__timeout' in value;
+}
+
+function normalizeTimeout(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
 function createApiResponseError(
@@ -59,15 +72,34 @@ function createApiResponseError(
 }
 
 export async function executeRequestWithControl<T>(input: {
-  execute: () => Promise<ApiResponse<T>>;
+  execute: (signal?: AbortSignal) => Promise<ApiResponse<T>>;
   control?: OperationControlConfig;
   signal?: AbortSignal;
   shouldStop?: (response: ApiResponse<T>) => boolean;
   onFailedAttempt?: (failureCount: number, error: unknown) => void;
 }): Promise<ApiRequestExecutionResult<T>> {
   const retry = input.control?.retry;
-  const retryResult = await withRetry(
-    input.execute,
+  const timeout = normalizeTimeout(input.control?.timeout);
+  const executeAttempt: () => Promise<ApiResponse<T> | RequestTimeoutFailure> = timeout
+    ? () =>
+        withTimeout<ApiResponse<T> | RequestTimeoutFailure>(
+          (signal) => input.execute(signal),
+          timeout,
+          () =>
+            ({
+              __timeout: true,
+              error: new DOMException(`Request timed out after ${timeout}ms`, 'TimeoutError'),
+            }) as RequestTimeoutFailure,
+          input.signal,
+        )
+    : () => input.execute(input.signal);
+  const shouldStop = (result: ApiResponse<T> | RequestTimeoutFailure) =>
+    isRequestTimeoutFailure(result)
+      ? false
+      : (input.shouldStop ? input.shouldStop(result) : Boolean(result.ok));
+
+  const retryResult = await withRetry<ApiResponse<T> | RequestTimeoutFailure>(
+    executeAttempt,
     {
       times: retry?.times ?? 0,
       delay: retry?.delay ?? 0,
@@ -76,12 +108,20 @@ export async function executeRequestWithControl<T>(input: {
       onFailedAttempt: input.onFailedAttempt,
       signal: input.signal,
     },
-    input.shouldStop ?? ((response) => Boolean(response.ok)),
+    shouldStop,
   );
+
+  if (isRequestTimeoutFailure(retryResult.result)) {
+    throw Object.assign(retryResult.result.error, {
+      attempts: retryResult.attempts,
+      failureCount: retryResult.failureCount,
+      lastFailureReason: retryResult.lastFailureReason,
+    });
+  }
 
   return {
     response: retryResult.result,
-    retry: retryResult,
+    retry: retryResult as RetryResult<ApiResponse<T>>,
   };
 }
 
@@ -293,7 +333,7 @@ export async function executeApiSchema(
     evaluate?: <T = unknown>(target: unknown, scope: ScopeRef) => T;
     preparedRequest?: PreparedApiRequest;
     onPreparedRequest?: (api: ExecutableApiRequest) => void;
-    executor?: <T>(adaptedApi: ExecutableApiRequest) => Promise<ApiResponse<T>>;
+    executor?: <T>(adaptedApi: ExecutableApiRequest, signal?: AbortSignal) => Promise<ApiResponse<T>>;
     control?: OperationControlConfig;
   },
 ): Promise<{
@@ -311,10 +351,10 @@ export async function executeApiSchema(
   const executableApi = preparedRequest.request;
   options?.onPreparedRequest?.(executableApi);
   const execution = await executeRequestWithControl({
-    execute: () =>
+    execute: (signal) =>
       options?.executor
-        ? options.executor(executableApi)
-        : env.fetcher(executableApi, { scope, env, signal: options?.signal }),
+        ? options.executor(executableApi, signal)
+        : env.fetcher(executableApi, { scope, env, signal: signal ?? options?.signal }),
     control: options?.control,
     signal: options?.signal,
   });
