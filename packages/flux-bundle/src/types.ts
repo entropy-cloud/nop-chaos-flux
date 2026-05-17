@@ -1,5 +1,14 @@
 import type { ComponentType } from 'react';
-import type { ActionContext, ApiRequestContext, RendererEnv, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+import type {
+  ActionContext,
+  ApiRequestContext,
+  RendererDefinition,
+  RendererEnv,
+  RendererRegistry,
+  SchemaObject,
+  SchemaRendererProps,
+  SchemaValue,
+} from '@nop-chaos/flux-core';
 
 export type FluxSchemaValue = SchemaValue;
 
@@ -39,26 +48,14 @@ export interface FluxRendererEnv extends Omit<RendererEnv, 'fetcher'> {
   [key: string]: unknown;
 }
 
-export interface FluxRendererDefinition {
-  type: string;
-  component?: (...args: any[]) => unknown;
-  reactComponent?: (...args: any[]) => unknown;
-  [key: string]: unknown;
-}
+export type FluxRendererDefinition = RendererDefinition;
 
-export interface FluxRendererRegistry {
-  register(definition: FluxRendererDefinition, options?: { override?: boolean }): void;
-  get(type: string): FluxRendererDefinition | undefined;
-  has(type: string): boolean;
-  list(): FluxRendererDefinition[];
-}
+export type FluxRendererRegistry = RendererRegistry;
 
-export interface FluxSchemaRendererProps {
+export interface FluxSchemaRendererProps
+  extends Omit<SchemaRendererProps, 'schema' | 'env' | 'onActionError' | 'formulaCompiler'> {
   schema: FluxSchema;
-  schemaUrl: string;
   env: FluxRendererEnv;
-  data?: Record<string, unknown>;
-  strictValidation?: boolean;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }
 

@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
 import {
   FLUX_ROOT_CLASS,
   createDefaultFluxEnv,
@@ -39,6 +40,14 @@ describe('@nop-chaos/flux public entry contract', () => {
     expect(registry.has('form')).toBe(true);
     expect(registry.has('table')).toBe(true);
     expect(registerDefaultFluxRenderers(registry)).toBe(registry);
+  });
+
+  it('uses the core renderer contract at the facade boundary', () => {
+    const registry = createFluxRendererRegistry();
+    const definition: RendererDefinition | undefined = registry.get('page');
+
+    expect(definition?.type).toBe('page');
+    expect(typeof definition?.component).toBe('function');
   });
 
   it('renders the default schema stack through the facade wrapper', async () => {
