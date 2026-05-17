@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react';
+import { afterAll, beforeAll, beforeEach } from 'vitest';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { Button } from '@nop-chaos/ui';
 import type {
@@ -24,22 +25,57 @@ import { formAdvancedRendererDefinitions } from './index.js';
 import { Input } from '@nop-chaos/ui';
 import { useFieldHandlers } from '@nop-chaos/flux-renderers-form';
 
-if (!Element.prototype.scrollIntoView) {
-  Element.prototype.scrollIntoView = () => undefined;
-}
+type PointerEventCtor = typeof globalThis.PointerEvent;
 
-if (typeof PointerEvent === 'undefined') {
-  class PointerEvent extends MouseEvent {
-    constructor(
-      type: string,
-      props: MouseEventInit & { pointerId?: number; pressure?: number } = {},
-    ) {
-      super(type, props);
-    }
+export function installTestDomPolyfills(): () => void {
+  const originalScrollIntoView = Element.prototype.scrollIntoView;
+  const hadOwnScrollIntoView = Object.prototype.hasOwnProperty.call(Element.prototype, 'scrollIntoView');
+  const originalPointerEvent = globalThis.PointerEvent;
+  const hadPointerEvent = typeof originalPointerEvent !== 'undefined';
+
+  if (!Element.prototype.scrollIntoView) {
+    Element.prototype.scrollIntoView = () => undefined;
   }
 
-  globalThis.PointerEvent = PointerEvent as any;
+  if (typeof globalThis.PointerEvent === 'undefined') {
+    class TestPointerEvent extends MouseEvent {
+      constructor(
+        type: string,
+        props: MouseEventInit & { pointerId?: number; pressure?: number } = {},
+      ) {
+        super(type, props);
+      }
+    }
+
+    globalThis.PointerEvent = TestPointerEvent as PointerEventCtor;
+  }
+
+  return () => {
+    if (hadOwnScrollIntoView) {
+      Element.prototype.scrollIntoView = originalScrollIntoView;
+    } else {
+      delete (Element.prototype as { scrollIntoView?: typeof Element.prototype.scrollIntoView })
+        .scrollIntoView;
+    }
+
+    if (hadPointerEvent) {
+      globalThis.PointerEvent = originalPointerEvent;
+    } else {
+      delete (globalThis as { PointerEvent?: PointerEventCtor }).PointerEvent;
+    }
+  };
 }
+
+let restoreDomPolyfills: (() => void) | undefined;
+
+beforeAll(() => {
+  restoreDomPolyfills = installTestDomPolyfills();
+});
+
+afterAll(() => {
+  restoreDomPolyfills?.();
+  restoreDomPolyfills = undefined;
+});
 
 resetFluxI18n();
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
@@ -86,6 +122,54 @@ export interface FormTestHarness {
   reset(): void;
 }
 
+function createForwardingArrayProxy<T>(getCurrent: () => T[]): T[] {
+  return new Proxy([], {
+    get(_target, property, receiver) {
+      const value = Reflect.get(getCurrent(), property, receiver);
+      return typeof value === 'function' ? value.bind(getCurrent()) : value;
+    },
+    set(_target, property, value, receiver) {
+      return Reflect.set(getCurrent(), property, value, receiver);
+    },
+    deleteProperty(_target, property) {
+      return Reflect.deleteProperty(getCurrent(), property);
+    },
+    has(_target, property) {
+      return Reflect.has(getCurrent(), property);
+    },
+    ownKeys() {
+      return Reflect.ownKeys(getCurrent());
+    },
+    getOwnPropertyDescriptor(_target, property) {
+      return Object.getOwnPropertyDescriptor(getCurrent(), property);
+    },
+  }) as T[];
+}
+
+function createForwardingObjectProxy<T extends object>(getCurrent: () => T): T {
+  return new Proxy({} as T, {
+    get(_target, property, receiver) {
+      const value = Reflect.get(getCurrent(), property, receiver);
+      return typeof value === 'function' ? value.bind(getCurrent()) : value;
+    },
+    set(_target, property, value, receiver) {
+      return Reflect.set(getCurrent(), property, value, receiver);
+    },
+    deleteProperty(_target, property) {
+      return Reflect.deleteProperty(getCurrent(), property);
+    },
+    has(_target, property) {
+      return Reflect.has(getCurrent(), property);
+    },
+    ownKeys() {
+      return Reflect.ownKeys(getCurrent());
+    },
+    getOwnPropertyDescriptor(_target, property) {
+      return Object.getOwnPropertyDescriptor(getCurrent(), property);
+    },
+  });
+}
+
 function createFormTestHarness(): FormTestHarness {
   const submitCalls: Array<Record<string, any>> = [];
   const notifyCalls: Array<{ level: string; message: string }> = [];
@@ -108,11 +192,38 @@ function createFormTestHarness(): FormTestHarness {
   };
 }
 
-export const formTestHarness = createFormTestHarness();
-export const submitCalls = formTestHarness.submitCalls;
-export const notifyCalls = formTestHarness.notifyCalls;
-export const formStateProbeRenderCounts = formTestHarness.formStateProbeRenderCounts;
-export const handlerIdentitySnapshots = formTestHarness.handlerIdentitySnapshots;
+let currentFormTestHarness = createFormTestHarness();
+
+export const submitCalls = createForwardingArrayProxy(() => currentFormTestHarness.submitCalls);
+export const notifyCalls = createForwardingArrayProxy(() => currentFormTestHarness.notifyCalls);
+export const formStateProbeRenderCounts = createForwardingObjectProxy(
+  () => currentFormTestHarness.formStateProbeRenderCounts,
+);
+export const handlerIdentitySnapshots = createForwardingArrayProxy(
+  () => currentFormTestHarness.handlerIdentitySnapshots,
+);
+
+export const formTestHarness: FormTestHarness = {
+  get submitCalls() {
+    return submitCalls;
+  },
+  get notifyCalls() {
+    return notifyCalls;
+  },
+  get formStateProbeRenderCounts() {
+    return formStateProbeRenderCounts;
+  },
+  get handlerIdentitySnapshots() {
+    return handlerIdentitySnapshots;
+  },
+  reset() {
+    currentFormTestHarness = createFormTestHarness();
+  },
+};
+
+beforeEach(() => {
+  formTestHarness.reset();
+});
 
 export function makeCapturingFetcher(submitValues: Record<string, unknown>[]) {
   return async function <T>(
@@ -136,11 +247,11 @@ export const buttonRenderer = {
 
 export const env: RendererEnv = {
   fetcher: async function <T>(_api: unknown, ctx: ApiRequestContext) {
-    formTestHarness.submitCalls.push(ctx.scope.readOwn() as Record<string, any>);
+    currentFormTestHarness.submitCalls.push(ctx.scope.readOwn() as Record<string, any>);
     return { ok: true, status: 200, data: ctx.scope.readOwn() as T };
   },
   notify: (level, message) => {
-    formTestHarness.notifyCalls.push({ level, message });
+    currentFormTestHarness.notifyCalls.push({ level, message });
   },
 };
 
@@ -213,8 +324,8 @@ function FormStateProbeRenderer(props: RendererComponentProps) {
   );
 
   React.useEffect(() => {
-    formTestHarness.formStateProbeRenderCounts[path] =
-      (formTestHarness.formStateProbeRenderCounts[path] ?? 0) + 1;
+    currentFormTestHarness.formStateProbeRenderCounts[path] =
+      (currentFormTestHarness.formStateProbeRenderCounts[path] ?? 0) + 1;
   });
 
   return <pre data-testid={`form-state:${path}`}>{JSON.stringify(value ?? null)}</pre>;
@@ -244,7 +355,7 @@ function HandlerIdentityProbeRenderer(props: RendererComponentProps) {
   const handlers = useFieldHandlers({ name, currentForm: form, scope });
 
   React.useEffect(() => {
-    formTestHarness.handlerIdentitySnapshots.push(handlers);
+    currentFormTestHarness.handlerIdentitySnapshots.push(handlers);
   }, [handlers]);
 
   return <span data-testid="handler-identity-probe">{name}</span>;

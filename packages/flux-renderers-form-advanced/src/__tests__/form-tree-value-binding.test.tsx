@@ -14,7 +14,6 @@ import { allFormDefs } from './tree-checkbox-fields-test-helpers.js';
 
 describe('tree controls - value binding and form integration', () => {
   it('submits input-tree values through the shared form field path', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 

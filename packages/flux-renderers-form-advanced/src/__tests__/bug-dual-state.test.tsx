@@ -94,7 +94,6 @@ function PlainScopeKeyValueHost() {
 
 describe('bug: dual state in array-editor and key-value renderers', () => {
   beforeEach(() => {
-    submitCalls.length = 0;
     cleanup();
   });
 

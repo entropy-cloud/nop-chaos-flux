@@ -113,7 +113,6 @@ describe('formRendererDefinitions - array and key-value validation', () => {
   });
 
   it('preserves remaining array-editor values after removing a middle item', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...allFormDefs,
@@ -490,7 +489,6 @@ describe('formRendererDefinitions - array and key-value validation', () => {
   });
 
   it('removes the middle key-value row and preserves the remaining entries', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...allFormDefs,

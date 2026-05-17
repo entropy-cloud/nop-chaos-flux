@@ -16,7 +16,6 @@ import {
 
 describe('checkbox-group values and scope-debug', () => {
   it('preserves non-string checkbox-group values in form state and submit payloads', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...formRendererDefinitions,

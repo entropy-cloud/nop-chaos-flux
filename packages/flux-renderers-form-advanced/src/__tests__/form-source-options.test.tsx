@@ -17,7 +17,6 @@ const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefiniti
 
 describe('formRendererDefinitions - source-backed options', () => {
   it('resolves source-backed select options before interaction', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -80,7 +79,6 @@ describe('formRendererDefinitions - source-backed options', () => {
   });
 
   it('shows loading state while source-backed select options are resolving', async () => {
-    submitCalls.length = 0;
     cleanup();
     let resolveOptions:
       | ((value: {
@@ -155,7 +153,6 @@ describe('formRendererDefinitions - source-backed options', () => {
   });
 
   it('shows loading state while source-backed radio-group options are resolving', async () => {
-    submitCalls.length = 0;
     cleanup();
     let resolveOptions:
       | ((value: {
@@ -227,7 +224,6 @@ describe('formRendererDefinitions - source-backed options', () => {
   });
 
   it('shows loading state while source-backed checkbox-group options are resolving', async () => {
-    submitCalls.length = 0;
     cleanup();
     let resolveOptions:
       | ((value: {

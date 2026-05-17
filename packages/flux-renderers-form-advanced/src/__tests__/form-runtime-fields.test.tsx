@@ -15,7 +15,6 @@ initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 describe('formRendererDefinitions - runtime-registered composite fields', () => {
   it('validates a runtime-registered complex field and blocks submit', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -84,7 +83,6 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
   });
 
   it('submits and validates a runtime-registered key-value editor', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -155,7 +153,6 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
   });
 
   it('renders child validation state for runtime-registered key-value cells', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -209,7 +206,6 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
   });
 
   it('submits and validates a runtime-registered array editor', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -273,7 +269,6 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
   });
 
   it('tracks runtime-registered array editor child interaction state', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 

@@ -14,7 +14,6 @@ import {
 
 describe('tree controls - value handling and form integration', () => {
   it('submits input-tree values through the shared form field path', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
