@@ -37,6 +37,7 @@ export function useNodeScopes(
   activeComponentRegistry: ComponentHandleRegistry | undefined;
 } {
   const mountedRef = useRef(false);
+  const activeNodeActionScopeRef = useRef<ActionScope | undefined>(undefined);
   const activeNodeComponentRegistryRef = useRef<ComponentHandleRegistry | undefined>(undefined);
   const nodeActionScope = useMemo(() => {
     if (input.actionScopePolicy !== 'new') {
@@ -65,6 +66,24 @@ export function useNodeScopes(
       mountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    activeNodeActionScopeRef.current = nodeActionScope;
+
+    return () => {
+      const disposedScope = nodeActionScope;
+
+      queueMicrotask(() => {
+        if (!disposedScope) {
+          return;
+        }
+
+        if (!mountedRef.current || activeNodeActionScopeRef.current !== disposedScope) {
+          runtime.releaseActionScope(disposedScope);
+        }
+      });
+    };
+  }, [nodeActionScope, runtime]);
 
   useEffect(() => {
     activeNodeComponentRegistryRef.current = nodeComponentRegistry;

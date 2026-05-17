@@ -81,6 +81,17 @@ function extractTemplateNodes(template: CompiledTemplate): TemplateNode | readon
   return template.root;
 }
 
+function disposeFragmentScopeEntry(
+  runtime: RendererRuntime,
+  entry: FragmentScopeCacheEntry | undefined,
+): void {
+  if (!entry) {
+    return;
+  }
+
+  runtime.disposeScope(entry.scope.id);
+}
+
 type FragmentScopeCacheEntry = {
   scope: ScopeRef;
   parent: ScopeRef;
@@ -161,7 +172,7 @@ export function normalizeNodeInput(
       return extractTemplateNodes(compiled);
     }
 
-    return input as TemplateNode[];
+    return null;
   }
 
   if (isTemplateNode(input)) {
@@ -228,6 +239,7 @@ export function hasRendererSlotContent(content: React.ReactNode): boolean {
 }
 
 export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFragmentOptions }) {
+  'use no memo';
   const runtime = useRendererRuntime();
   const currentScope = useRenderScope();
   const currentActionScope = useCurrentActionScope();
@@ -304,6 +316,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
 
     let nextEntry = fragmentScopeCache.get(fragmentScopeCacheKey);
     if (!matchesFragmentScopeEntry(nextEntry, fragmentScopeIdentity)) {
+      disposeFragmentScopeEntry(runtime, nextEntry);
       nextEntry = {
         scope: runtime.createChildScope(currentScope, fragmentBindings, {
           isolate,
@@ -389,7 +402,10 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   useEffect(() => {
     return () => {
       pendingFragmentScopeVersionRef.current = undefined;
-      getFragmentScopeCache(runtime).delete(fragmentScopeCacheKey);
+      const cache = getFragmentScopeCache(runtime);
+      const cachedEntry = cache.get(fragmentScopeCacheKey);
+      cache.delete(fragmentScopeCacheKey);
+      disposeFragmentScopeEntry(runtime, cachedEntry);
     };
   }, [fragmentScopeCacheKey, runtime]);
 
@@ -411,7 +427,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     return (
       <RenderInstancePathContext.Provider value={instancePath}>
         <>
-          {(compiled as TemplateNode[]).map((node) => (
+          {compiled.map((node) => (
             <NodeRenderer
               key={node.id}
               node={node}
@@ -425,10 +441,15 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     );
   }
 
+  if (!isTemplateNode(compiled)) {
+    return null;
+  }
+
   return (
     <RenderInstancePathContext.Provider value={instancePath}>
       <NodeRenderer
-        node={compiled as TemplateNode}
+        key={compiled.templateNodeId}
+        node={compiled}
         scope={scope}
         actionScope={actionScope}
         componentRegistry={componentRegistry}

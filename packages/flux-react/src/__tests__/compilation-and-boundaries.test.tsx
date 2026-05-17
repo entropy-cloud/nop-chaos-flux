@@ -485,4 +485,60 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     });
     expect(createChildScopeSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('disposes fragment child scopes when fragment identity changes', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const disposeScopeSpy = vi.spyOn(runtime, 'disposeScope');
+
+    const rendered = render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <RenderNodes
+            input={{ type: 'text', text: '${child}' } as any}
+            options={{ bindings: { child: 'first' }, pathSuffix: 'fragment-a', scopeKey: 'first' }}
+          />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    await waitFor(() => expect(screen.getByText('first')).toBeTruthy());
+
+    rendered.rerender(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <RenderNodes
+            input={{ type: 'text', text: '${child}' } as any}
+            options={{ bindings: { child: 'second' }, pathSuffix: 'fragment-b', scopeKey: 'second' }}
+          />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    await waitFor(() => expect(screen.getByText('second')).toBeTruthy());
+    expect(disposeScopeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns null for invalid render-node arrays instead of falling through to TemplateNode casts', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+
+    const { container } = render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <RenderNodes input={[{ invalid: true }] as never} />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    expect(container.textContent).toBe('');
+  });
 });

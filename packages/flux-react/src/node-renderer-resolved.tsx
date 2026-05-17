@@ -63,6 +63,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   importFrame?: import('@nop-chaos/flux-core').ImportFrame;
   mountedCid: number;
 }) {
+  'use no memo';
   const runtime = useRendererRuntime();
   const instancePath = useRenderInstancePath();
   const parentClassAliases = useContext(ClassAliasesContext);

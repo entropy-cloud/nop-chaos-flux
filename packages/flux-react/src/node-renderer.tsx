@@ -180,15 +180,42 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     [runtime, importFrame],
   );
   const renderScope = useMemo(
-    () =>
-      !importBindings || Object.keys(importBindings).length === 0
-        ? props.scope
-        : runtime.createChildScope(props.scope, importBindings, {
-            pathSuffix: 'imports',
-            scopeKey: `${props.node.id}:imports`,
-          }),
+    () => {
+      if (!importBindings || Object.keys(importBindings).length === 0) {
+        return props.scope;
+      }
+
+      return runtime.createChildScope(props.scope, importBindings, {
+        pathSuffix: 'imports',
+        scopeKey: `${props.node.id}:imports`,
+      });
+    },
     [runtime, props.scope, importBindings, props.node.id],
   );
+  const importBindingsScopeRef = useRef<ScopeRef | undefined>(undefined);
+  useLayoutEffect(() => {
+    const previousImportBindingsScope = importBindingsScopeRef.current;
+    const nextImportBindingsScope = renderScope === props.scope ? undefined : renderScope;
+
+    importBindingsScopeRef.current = nextImportBindingsScope;
+
+    if (
+      previousImportBindingsScope &&
+      previousImportBindingsScope !== nextImportBindingsScope
+    ) {
+      runtime.disposeScope(previousImportBindingsScope.id);
+    }
+
+    return () => {
+      if (importBindingsScopeRef.current === nextImportBindingsScope) {
+        importBindingsScopeRef.current = undefined;
+      }
+
+      if (nextImportBindingsScope) {
+        runtime.disposeScope(nextImportBindingsScope.id);
+      }
+    };
+  }, [runtime, renderScope, props.scope]);
 
   if (nodeImports?.length && !importFrame) {
     return null;

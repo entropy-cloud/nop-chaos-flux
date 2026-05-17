@@ -7,7 +7,7 @@ import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux
 import { Button } from '@nop-chaos/ui';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '../schema-renderer.js';
-import { useCurrentComponentRegistry } from '../hooks.js';
+import { useCurrentActionScope, useCurrentComponentRegistry } from '../hooks.js';
 import * as fluxRuntime from '@nop-chaos/flux-runtime';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { env, pageRenderer, textRenderer } from '../test-support-core.js';
@@ -100,6 +100,83 @@ describe('SchemaRenderer callbacks', () => {
     unmount();
     await waitFor(() => expect(onActionScopeChange).toHaveBeenCalledTimes(2));
     expect(onActionScopeChange.mock.calls[1][0]).toBeNull();
+  });
+
+  it('releases owned root action scopes on unmount', async () => {
+    const onRuntimeChange = vi.fn();
+    const onActionScopeChange = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([textRenderer]);
+    const { unmount } = render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'text', text: 'Scope release' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        onRuntimeChange={onRuntimeChange}
+        onActionScopeChange={onActionScopeChange}
+      />,
+    );
+
+    await waitFor(() => expect(onRuntimeChange).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onActionScopeChange).toHaveBeenCalledTimes(1));
+
+    const runtime = onRuntimeChange.mock.calls[0][0];
+    const actionScope = onActionScopeChange.mock.calls[0][0];
+    const releaseSpy = vi.spyOn(runtime, 'releaseActionScope');
+
+    unmount();
+
+    await waitFor(() => expect(releaseSpy).toHaveBeenCalledWith(actionScope));
+  });
+
+  it('releases the previous owned root action scope when a caller swaps actionScope on the same runtime', async () => {
+    const providedActionScope = {
+      id: 'provided-action-scope',
+      dispatch: vi.fn(),
+      listNamespaces: vi.fn(() => []),
+      registerNamespace: vi.fn(),
+      unregisterNamespace: vi.fn(),
+      hasMethod: vi.fn(),
+      invoke: vi.fn(),
+      invokeWithSignal: vi.fn(),
+    } as any;
+    const onRuntimeChange = vi.fn();
+    const onActionScopeChange = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([textRenderer]);
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'text', text: 'Scope replacement' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        onRuntimeChange={onRuntimeChange}
+        onActionScopeChange={onActionScopeChange}
+      />,
+    );
+
+    await waitFor(() => expect(onRuntimeChange).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onActionScopeChange).toHaveBeenCalledTimes(1));
+
+    const runtime = onRuntimeChange.mock.calls[0][0];
+    const ownedActionScope = onActionScopeChange.mock.calls[0][0];
+    const releaseSpy = vi.spyOn(runtime, 'releaseActionScope');
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'text', text: 'Scope replacement' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        actionScope={providedActionScope}
+        onRuntimeChange={onRuntimeChange}
+        onActionScopeChange={onActionScopeChange}
+      />,
+    );
+
+    await waitFor(() => expect(onActionScopeChange).toHaveBeenCalledTimes(3));
+    expect(onActionScopeChange.mock.calls[1][0]).toBeNull();
+    expect(onActionScopeChange.mock.calls[2][0]).toBe(providedActionScope);
+    await waitFor(() => expect(releaseSpy).toHaveBeenCalledWith(ownedActionScope));
   });
 });
 
@@ -442,6 +519,58 @@ describe('SchemaRenderer debug data gating', () => {
     unmount();
 
     await waitFor(() => expect(disposeSpy).toHaveBeenCalledTimes(1));
+  });
+
+  it('releases node-owned action scopes on unmount', async () => {
+    function ActionScopeProbe() {
+      const actionScope = useCurrentActionScope();
+      return <span data-testid="action-scope-probe">{actionScope?.id ?? ''}</span>;
+    }
+
+    const scopeOwnerRenderer = {
+      type: 'scope-owner',
+      component: (props: any) => <>{props.regions.body?.render()}</>,
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+      actionScopePolicy: 'new' as const,
+    };
+    const actionScopeProbeRenderer = {
+      type: 'action-scope-probe',
+      component: ActionScopeProbe,
+    };
+    const onRuntimeChange = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([
+      scopeOwnerRenderer as never,
+      actionScopeProbeRenderer as never,
+    ]);
+    const { unmount } = render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'scope-owner',
+          body: [{ type: 'action-scope-probe' }],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        onRuntimeChange={onRuntimeChange}
+      />,
+    );
+
+    let nestedActionScopeId = '';
+    await waitFor(() => {
+      nestedActionScopeId = screen.getByTestId('action-scope-probe').textContent ?? '';
+      expect(nestedActionScopeId).toContain(':action-scope');
+    });
+
+    const runtime = onRuntimeChange.mock.calls[0][0] as { releaseActionScope: (scope: { id?: string }) => void };
+    const releaseSpy = vi.spyOn(runtime, 'releaseActionScope');
+
+    unmount();
+
+    await waitFor(() =>
+      expect(
+        releaseSpy.mock.calls.some(([scope]) => (scope as { id?: string } | undefined)?.id === nestedActionScopeId),
+      ).toBe(true),
+    );
   });
 
   it('provides node-owned component registries to descendant regions', async () => {

@@ -136,6 +136,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const activeRuntimeRef = useRef<import('@nop-chaos/flux-core').RendererRuntime | null>(null);
     const activeRootComponentRegistryRef =
       useRef<import('@nop-chaos/flux-core').ComponentHandleRegistry | null>(null);
+    const activeRootActionScopeRef = useRef<import('@nop-chaos/flux-core').ActionScope | null>(null);
     const onActionErrorRef = useRef(props.onActionError);
     onActionErrorRef.current = props.onActionError;
     const runtime = useMemo(() => {
@@ -241,6 +242,28 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       [props.componentRegistry, runtime],
     );
     const ownsRootComponentRegistry = props.componentRegistry == null;
+
+    useEffect(() => {
+      activeRootActionScopeRef.current = rootActionScope;
+
+      return () => {
+        if (!ownsRootActionScope) {
+          return;
+        }
+
+        const disposedScope = rootActionScope;
+
+        queueMicrotask(() => {
+          if (!disposedScope) {
+            return;
+          }
+
+          if (!mountedRef.current || activeRootActionScopeRef.current !== disposedScope) {
+            runtime.releaseActionScope(disposedScope);
+          }
+        });
+      };
+    }, [ownsRootActionScope, rootActionScope, runtime]);
 
     useEffect(() => {
       activeRootComponentRegistryRef.current = rootComponentRegistry;
