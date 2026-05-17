@@ -20,13 +20,11 @@ export type RegionCompileSchema = (
   regionMeta?: { params?: readonly string[]; isolate?: boolean },
 ) => TemplateNode | TemplateNode[];
 
-const RESERVED_SLOT_PARAM_NAMES = new Set(['$parent', '$name', '$key', '$depth']);
-
 export function validateRegionParams(params: readonly string[], regionPath: string): void {
   const seen = new Set<string>();
 
   for (const name of params) {
-    if (RESERVED_SLOT_PARAM_NAMES.has(name)) {
+    if (name.startsWith('$')) {
       throw new Error(
         `Region ${regionPath} declares reserved param name "${name}". ` +
           'Names starting with "$" are reserved for slot-frame metadata.',
@@ -114,4 +112,36 @@ export function extractNestedSchemaRegions(input: {
     value: changed ? nextValue : input.candidate,
     changed,
   };
+}
+
+export function visitNestedSchemaRegions(input: {
+  candidate: Record<string, unknown>;
+  itemRegionPath: string;
+  rules: readonly NestedRegionFieldRule[];
+  visitRegion: (region: {
+    key: string;
+    path: string;
+    value: SchemaInput;
+    params?: readonly string[];
+    isolate?: boolean;
+  }) => void;
+}) {
+  for (const rule of input.rules) {
+    const fieldValue = input.candidate[rule.key];
+
+    if (!isSchemaInput(fieldValue)) {
+      continue;
+    }
+
+    const regionKey = rule.regionKeySuffix;
+    const regionPath = `${input.itemRegionPath}.${rule.regionKeySuffix}`;
+    validateRegionParams(rule.params ?? [], regionPath);
+    input.visitRegion({
+      key: regionKey,
+      path: regionPath,
+      value: fieldValue,
+      params: rule.params,
+      isolate: rule.isolate,
+    });
+  }
 }

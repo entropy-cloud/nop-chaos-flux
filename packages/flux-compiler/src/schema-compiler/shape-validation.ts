@@ -36,6 +36,13 @@ import {
   validateFluxValueShape,
 } from './flux-value-shape-validation.js';
 import { TABS_ITEM_BOOLEAN_FIELDS } from './tables.js';
+import {
+  DEEP_FIELD_NORMALIZERS,
+  TABLE_COLUMN_REGION_FIELDS,
+  TABS_ITEM_REGION_FIELDS,
+  VARIANT_ITEM_REGION_FIELDS,
+} from './tables.js';
+import { validateRegionParams, visitNestedSchemaRegions } from './regions.js';
 
 const BOOLEAN_META_KEYS = new Set(['when', 'visible', 'hidden', 'disabled']);
 
@@ -224,6 +231,175 @@ function createChildTraversalState(
       currentRegion: regionKey,
     },
   };
+}
+
+function createRegionTraversalState(
+  state: ValidationTraversalState,
+  regionKey: string,
+  params: readonly string[] | undefined,
+  startsHostBoundary: boolean,
+): ValidationTraversalState {
+  const nextState = createChildTraversalState(state, regionKey, startsHostBoundary);
+
+  if (!params?.length) {
+    return nextState;
+  }
+
+  return {
+    ...nextState,
+    hostContext: nextState.hostContext,
+  };
+}
+
+function analyzeDeepSchemaField(input: {
+  renderer: RendererDefinition;
+  key: string;
+  value: unknown;
+  path: string;
+  registry: RendererRegistry;
+  plugins: readonly RendererPlugin[] | undefined;
+  diagnostics: SchemaCompilerDiagnosticsContext;
+  traversalState: ValidationTraversalState;
+  startsHostBoundary: boolean;
+}): boolean {
+  if (!(input.key in (DEEP_FIELD_NORMALIZERS[input.renderer.type] ?? {}))) {
+    return false;
+  }
+
+  if (input.renderer.type === 'table' || input.renderer.type === 'crud') {
+    if (input.key === 'columns' && Array.isArray(input.value)) {
+      input.value.forEach((column, index) => {
+        if (!column || typeof column !== 'object' || Array.isArray(column)) {
+          return;
+        }
+
+        visitNestedSchemaRegions({
+          candidate: column as Record<string, unknown>,
+          itemRegionPath: `${input.path}.columns[${index}]`,
+          rules: TABLE_COLUMN_REGION_FIELDS,
+          visitRegion(region) {
+            analyzeSchemaInput(
+              region.value,
+              region.path,
+              input.registry,
+              input.plugins,
+              input.diagnostics,
+              createRegionTraversalState(
+                input.traversalState,
+                region.key,
+                region.params,
+                input.startsHostBoundary,
+              ),
+            );
+          },
+        });
+      });
+
+      return true;
+    }
+
+    if (input.renderer.type === 'table' && input.key === 'expandable') {
+      const expandable = input.value;
+      if (!expandable || typeof expandable !== 'object' || Array.isArray(expandable)) {
+        return true;
+      }
+
+      visitNestedSchemaRegions({
+        candidate: expandable as Record<string, unknown>,
+        itemRegionPath: `${input.path}.expandable`,
+        rules: [
+          {
+            key: 'expandedRow',
+            regionKeySuffix: 'expandedRow',
+            compiledKey: 'expandedRowRegionKey',
+            params: ['record', 'index'] as readonly string[],
+            isolate: true,
+          },
+        ],
+        visitRegion(region) {
+          analyzeSchemaInput(
+            region.value,
+            region.path,
+            input.registry,
+            input.plugins,
+            input.diagnostics,
+            createRegionTraversalState(
+              input.traversalState,
+              region.key,
+              region.params,
+              input.startsHostBoundary,
+            ),
+          );
+        },
+      });
+
+      return true;
+    }
+  }
+
+  if (input.renderer.type === 'tabs' && input.key === 'items' && Array.isArray(input.value)) {
+    input.value.forEach((item, index) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        return;
+      }
+
+      visitNestedSchemaRegions({
+        candidate: item as Record<string, unknown>,
+        itemRegionPath: `${input.path}.items[${index}]`,
+        rules: TABS_ITEM_REGION_FIELDS,
+        visitRegion(region) {
+          analyzeSchemaInput(
+            region.value,
+            region.path,
+            input.registry,
+            input.plugins,
+            input.diagnostics,
+            createRegionTraversalState(
+              input.traversalState,
+              region.key,
+              region.params,
+              input.startsHostBoundary,
+            ),
+          );
+        },
+      });
+    });
+
+    return true;
+  }
+
+  if (input.renderer.type === 'variant-field' && input.key === 'variants' && Array.isArray(input.value)) {
+    input.value.forEach((item, index) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        return;
+      }
+
+      visitNestedSchemaRegions({
+        candidate: item as Record<string, unknown>,
+        itemRegionPath: `${input.path}.variants[${index}]`,
+        rules: VARIANT_ITEM_REGION_FIELDS,
+        visitRegion(region) {
+          analyzeSchemaInput(
+            region.value,
+            region.path,
+            input.registry,
+            input.plugins,
+            input.diagnostics,
+            createRegionTraversalState(
+              input.traversalState,
+              region.key,
+              region.params,
+              input.startsHostBoundary,
+            ),
+          );
+        },
+      });
+    });
+
+    return true;
+  }
+
+  return true;
 }
 
 export function inspectSchemaNodeFields(
@@ -519,10 +695,28 @@ export function analyzeSchemaInput(
     const value = schema[key];
     const rule = classifyField(wrappedRenderer, key);
 
+    if (
+      analyzeDeepSchemaField({
+        renderer: wrappedRenderer,
+        key,
+        value,
+        path,
+        registry,
+        plugins,
+        diagnostics,
+        traversalState: nodeTraversal,
+        startsHostBoundary: nodeTraversal.startsHostBoundary,
+      })
+    ) {
+      continue;
+    }
+
     if (rule.kind === 'region') {
       if (value === undefined) {
         continue;
       }
+
+      validateRegionParams(rule.params ?? [], `${path}.${rule.regionKey ?? key}`);
 
       if (!isSchemaInput(value)) {
         diagnostics.emit({
@@ -539,9 +733,10 @@ export function analyzeSchemaInput(
         registry,
         plugins,
         diagnostics,
-        createChildTraversalState(
+        createRegionTraversalState(
           nodeTraversal,
           rule.regionKey ?? key,
+          rule.params,
           nodeTraversal.startsHostBoundary,
         ),
       );
@@ -552,15 +747,17 @@ export function analyzeSchemaInput(
       !!value && typeof value === 'object' && !Array.isArray(value) && (value as { type?: unknown }).type === 'source';
 
     if (rule.kind === 'value-or-region' && isSchemaInput(value) && !(rule.allowSource && isSourceCarrier)) {
+      validateRegionParams(rule.params ?? [], `${path}.${rule.regionKey ?? key}`);
       analyzeSchemaInput(
         value,
         `${path}.${rule.regionKey ?? key}`,
         registry,
         plugins,
         diagnostics,
-        createChildTraversalState(
+        createRegionTraversalState(
           nodeTraversal,
           rule.regionKey ?? key,
+          rule.params,
           nodeTraversal.startsHostBoundary,
         ),
       );

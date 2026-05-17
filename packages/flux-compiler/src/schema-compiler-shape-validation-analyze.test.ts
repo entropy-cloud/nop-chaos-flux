@@ -316,6 +316,61 @@ describe('analyzeSchemaInput validation', () => {
     ).toEqual([]);
   });
 
+  it('rejects any $-prefixed param names on direct regions during validation', () => {
+    const renderer: RendererDefinition = {
+      type: 'card',
+      component: () => null,
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body', params: ['$record'] }],
+    };
+    const compiler = makeCompiler([renderer, { type: 'text', component: () => null }]);
+
+    expect(compiler.validate?.({ type: 'card', body: { type: 'text' } })).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'unhandled-compilation-error',
+          message: expect.stringContaining('Names starting with "$" are reserved for slot-frame metadata.'),
+        }),
+      ]),
+    );
+  });
+
+  it('traverses deep extracted table regions during validation', () => {
+    const tableRenderer: RendererDefinition = {
+      type: 'table',
+      component: () => null,
+    };
+    const textRenderer: RendererDefinition = {
+      type: 'text',
+      component: () => null,
+      propSchema: { text: { type: 'string' } },
+    };
+    const compiler = makeCompiler([tableRenderer, textRenderer]);
+
+    const diagnostics = compiler.validate?.(
+      {
+        type: 'table',
+        columns: [
+          {
+            name: 'name',
+            cell: { type: 'text', unknownProp: 'value', text: 'User ${$slot.record.name}' },
+          },
+        ],
+      } as any,
+      {
+        validation: { unknownBarePropertyPolicy: 'warn' },
+      },
+    );
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'unknown-property',
+          path: '/columns/0/cell/unknownProp',
+        }),
+      ]),
+    );
+  });
+
   it('deduplicates diagnostic entries', () => {
     const renderer: RendererDefinition = {
       type: 'text',
