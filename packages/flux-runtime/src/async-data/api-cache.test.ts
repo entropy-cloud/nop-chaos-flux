@@ -236,16 +236,85 @@ describe('createApiCacheStore', () => {
       expect(stableStringify(huge)).toContain('[MaxNodesExceeded]');
     });
 
-    it('does not collide different payloads truncated at MaxNodesExceeded', () => {
-      const payload1 = Array.from({ length: 2505 }, (_, i) => ({ index: i }));
-      const payload2 = Array.from({ length: 2505 }, (_, i) => ({ index: i, extra: true }));
+    it('keeps distinct default cache keys when node-budget overflow truncates to the same sentinel', () => {
+      const payload1 = Array.from({ length: 2505 }, (_, index) => index);
+      const payload2 = [...payload1];
+      payload2[payload2.length - 1] = 999_999;
 
-      const key1 = stableStringify(payload1);
-      const key2 = stableStringify(payload2);
+      expect(stableStringify(payload1)).toContain('[MaxNodesExceeded]');
+      expect(stableStringify(payload2)).toContain('[MaxNodesExceeded]');
+      expect(stableStringify(payload1)).toBe(stableStringify(payload2));
 
-      expect(key1).toContain('[MaxNodesExceeded]');
-      expect(key2).toContain('[MaxNodesExceeded]');
+      const key1 = generateCacheKey({ method: 'post', url: '/api/test', data: payload1 as any });
+      const key2 = generateCacheKey({ method: 'post', url: '/api/test', data: payload2 as any });
+
       expect(key1).not.toBe(key2);
+      expect(key1).toContain('#[fnv1a64:');
+      expect(key2).toContain('#[fnv1a64:');
+    });
+
+    it('keeps distinct default cache keys when depth-budget overflow truncates to the same sentinel', () => {
+      const nestedLeaf = (terminal: string) => ({
+        value: {
+          value: {
+            value: {
+              value: {
+                value: {
+                  value: {
+                    value: {
+                      value: {
+                        value: {
+                          value: {
+                            value: {
+                              value: {
+                                value: terminal,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const payload1 = nestedLeaf('one');
+      const payload2 = nestedLeaf('two');
+
+      expect(stableStringify(payload1)).toContain('[MaxDepthExceeded]');
+      expect(stableStringify(payload2)).toContain('[MaxDepthExceeded]');
+      expect(stableStringify(payload1)).toBe(stableStringify(payload2));
+
+      const key1 = resolveCacheKey({ method: 'post', url: '/api/test', data: payload1 }, { cacheTTL: 1000 });
+      const key2 = resolveCacheKey({ method: 'post', url: '/api/test', data: payload2 }, { cacheTTL: 1000 });
+
+      expect(key1).not.toBe(key2);
+      expect(key1).toContain('#[fnv1a64:');
+      expect(key2).toContain('#[fnv1a64:');
+    });
+
+    it('keeps distinct default cache keys for oversized circular payloads', () => {
+      const payload1: Array<Record<string, unknown>> = Array.from({ length: 2505 }, (_, index) => ({ index }));
+      const payload2: Array<Record<string, unknown>> = Array.from({ length: 2505 }, (_, index) => ({ index }));
+
+      payload1[0]!.self = payload1;
+      payload2[0]!.self = payload2;
+      payload2[payload2.length - 1]!.marker = 'changed';
+
+      expect(stableStringify(payload1)).toContain('[MaxNodesExceeded]');
+      expect(stableStringify(payload2)).toContain('[MaxNodesExceeded]');
+      expect(stableStringify(payload1)).toBe(stableStringify(payload2));
+
+      const key1 = generateCacheKey({ method: 'post', url: '/api/test', data: payload1 as any });
+      const key2 = generateCacheKey({ method: 'post', url: '/api/test', data: payload2 as any });
+
+      expect(key1).not.toBe(key2);
+      expect(key1).toContain('#[fnv1a64:');
+      expect(key2).toContain('#[fnv1a64:');
     });
   });
 

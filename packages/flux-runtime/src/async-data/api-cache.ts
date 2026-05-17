@@ -25,55 +25,122 @@ interface LRUNode {
   next: LRUNode | null;
 }
 
+interface StableStringifyResult {
+  value: string;
+  bounded: boolean;
+}
+
 function stableStringifyInternal(
   value: unknown,
   seen: WeakSet<object>,
   depth: number,
   budget: { remaining: number },
-): string {
+): StableStringifyResult {
   budget.remaining -= 1;
   if (budget.remaining < 0) {
-    return '"[MaxNodesExceeded]"';
+    return { value: '"[MaxNodesExceeded]"', bounded: true };
   }
 
   if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value);
+    return { value: JSON.stringify(value), bounded: false };
   }
 
   if (depth >= MAX_STRINGIFY_DEPTH) {
-    return '"[MaxDepthExceeded]"';
+    return { value: '"[MaxDepthExceeded]"', bounded: true };
   }
 
   if (seen.has(value)) {
-    return '"[Circular]"';
+    return { value: '"[Circular]"', bounded: false };
   }
 
   seen.add(value);
 
   if (Array.isArray(value)) {
-    const result = `[${value
-      .map((entry) => stableStringifyInternal(entry, seen, depth + 1, budget))
-      .join(',')}]`;
+    const entries = value.map((entry) => stableStringifyInternal(entry, seen, depth + 1, budget));
+    const result = `[${entries.map((entry) => entry.value).join(',')}]`;
     seen.delete(value);
-    return result;
+    return {
+      value: result,
+      bounded: entries.some((entry) => entry.bounded),
+    };
   }
 
   const record = value as Record<string, unknown>;
   const keys = Object.keys(record).sort();
-  const result = `{${keys
-    .map(
-      (key) =>
-        `${JSON.stringify(key)}:${stableStringifyInternal(record[key], seen, depth + 1, budget)}`,
-    )
+  const entries = keys.map((key) => ({
+    key,
+    result: stableStringifyInternal(record[key], seen, depth + 1, budget),
+  }));
+  const result = `{${entries
+    .map((entry) => `${JSON.stringify(entry.key)}:${entry.result.value}`)
     .join(',')}}`;
   seen.delete(value);
-  return result;
+  return {
+    value: result,
+    bounded: entries.some((entry) => entry.result.bounded),
+  };
 }
 
 export function stableStringify(value: unknown): string {
   return stableStringifyInternal(value, new WeakSet<object>(), 0, {
     remaining: MAX_STRINGIFY_NODES,
+  }).value;
+}
+
+function stableStringifyForIdentity(value: unknown): string {
+  const result = stableStringifyInternal(value, new WeakSet<object>(), 0, {
+    remaining: MAX_STRINGIFY_NODES,
   });
+
+  if (!result.bounded) {
+    return result.value;
+  }
+
+  return `${result.value}#[fnv1a64:${hashValue64(value)}]`;
+}
+
+function hashString64(input: string): string {
+  let hash = 0xcbf29ce484222325n;
+  const prime = 0x100000001b3n;
+
+  for (let index = 0; index < input.length; index += 1) {
+    hash ^= BigInt(input.charCodeAt(index));
+    hash = (hash * prime) & 0xffffffffffffffffn;
+  }
+
+  return hash.toString(16).padStart(16, '0');
+}
+
+function hashValue64(value: unknown): string {
+  const seen = new Map<object, number>();
+  let nextId = 0;
+
+  const visit = (current: unknown): string => {
+    if (current === null || typeof current !== 'object') {
+      return `primitive:${JSON.stringify(current)}`;
+    }
+
+    const existingId = seen.get(current);
+    if (existingId !== undefined) {
+      return `ref:${existingId}`;
+    }
+
+    const currentId = nextId;
+    nextId += 1;
+    seen.set(current, currentId);
+
+    if (Array.isArray(current)) {
+      return `array:${currentId}:[${current.map((entry) => visit(entry)).join(',')}]`;
+    }
+
+    const record = current as Record<string, unknown>;
+    const keys = Object.keys(record).sort();
+    return `object:${currentId}:{${keys
+      .map((key) => `${JSON.stringify(key)}:${visit(record[key])}`)
+      .join(',')}}`;
+  };
+
+  return hashString64(visit(value));
 }
 
 export function createApiCacheStore(): ApiCacheStore {
@@ -169,8 +236,8 @@ export function generateCacheKey(api: ExecutableApiRequest): string {
   const method = api.method ?? 'get';
   const url = api.url;
 
-  const dataStr = api.data !== undefined ? stableStringify(api.data) : '';
-  const headersStr = api.headers !== undefined ? stableStringify(api.headers) : '';
+  const dataStr = api.data !== undefined ? stableStringifyForIdentity(api.data) : '';
+  const headersStr = api.headers !== undefined ? stableStringifyForIdentity(api.headers) : '';
 
   return `${method}:${url}:${headersStr}:${dataStr}`;
 }
