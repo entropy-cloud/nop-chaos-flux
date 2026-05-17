@@ -89,6 +89,13 @@ export function DesignerXyflowNode(props: NodeProps) {
     [dispatch, props.id, isDeletable],
   );
 
+  const handleNodeKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      dispatch({ type: 'selectNode', nodeId: props.id });
+    }
+  };
+
   function showToolbarNow() {
     if (hideToolbarTimeoutRef.current) {
       clearTimeout(hideToolbarTimeoutRef.current);
@@ -142,11 +149,14 @@ export function DesignerXyflowNode(props: NodeProps) {
   if (!nodeType?.body || !isSchemaInput(nodeType.body)) {
     return (
       <div
+        role="button"
+        tabIndex={0}
         className={cn('nop-designer-node', nodeType?.appearance?.className)}
         style={appearanceStyle}
         data-selected={props.selected ? '' : undefined}
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
+        onKeyDown={handleNodeKeyDown}
       >
         {renderPorts(nodeType?.ports, isTreeMode)}
         <strong>{data.label}</strong>
@@ -178,12 +188,15 @@ export function DesignerXyflowNode(props: NodeProps) {
   return (
     <>
       <div
+        role="button"
+        tabIndex={0}
         className={cn('nop-designer-node', 'relative', nodeType.appearance?.className)}
         style={appearanceStyle}
         data-selected={props.selected ? '' : undefined}
         data-branch-focused={data.__fdBranchFocused ? '' : undefined}
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
+        onKeyDown={handleNodeKeyDown}
       >
         {renderPorts(nodeType.ports, isTreeMode)}
         {isTreeMode ? (
@@ -255,10 +268,18 @@ export function DesignerXyflowNode(props: NodeProps) {
       {(hasQuickActions || showToolbar) && (
         <NodeToolbar isVisible={showToolbar} position={Position.Top}>
           <div
+            role="toolbar"
+            tabIndex={0}
             className="flex items-center gap-1.5 p-1 rounded-xl bg-popover/96 border border-border shadow-lg"
             data-slot="designer-node-toolbar"
             onMouseEnter={showToolbarNow}
             onMouseLeave={scheduleHideToolbar}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                dispatch({ type: 'selectNode', nodeId: props.id });
+              }
+            }}
           >
             {hasQuickActions ? (
               <ClassAliasesContext.Provider value={config.classAliases}>

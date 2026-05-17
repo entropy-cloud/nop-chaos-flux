@@ -139,28 +139,32 @@ export function TableHeaderRow({
           >
             {isSortable || isFilterable || isSearchable ? (
               <div className="flex items-center gap-1">
-                <span
-                  className={isSortable ? 'cursor-pointer hover:text-primary' : ''}
-                  role={isSortable ? 'button' : undefined}
-                  tabIndex={isSortable ? 0 : undefined}
-                  onClick={() => isSortable && column.name && onSort(column.name)}
-                  onKeyDown={(e) => {
-                    if (isSortable && (e.key === 'Enter' || e.key === ' ') && column.name) {
-                      e.preventDefault();
-                      onSort(column.name);
-                    }
-                  }}
-                >
-                  {labelContent}
-                  {isSortable && (
-                    <ArrowUpDownIcon
-                      className={cn(
-                        'inline ml-1 size-3',
-                        currentSort ? 'text-primary' : 'text-muted-foreground',
-                      )}
-                    />
-                  )}
-                </span>
+                {isSortable ? (
+                  <span
+                    className="cursor-pointer hover:text-primary"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => { if (column.name) onSort(column.name); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (column.name) onSort(column.name);
+                      }
+                    }}
+                  >
+                    {labelContent}
+                  </span>
+                ) : (
+                  <span>{labelContent}</span>
+                )}
+                {isSortable && (
+                  <ArrowUpDownIcon
+                    className={cn(
+                      'inline ml-1 size-3',
+                      currentSort ? 'text-primary' : 'text-muted-foreground',
+                    )}
+                  />
+                )}
 
                 {(isFilterable || isSearchable) && (
                   <DropdownMenu>

@@ -283,20 +283,16 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           data-slot="chart-canvas"
           ref={chartRef}
           style={{ width: '100%', height: '100%' }}
-          role={props.events.onClick ? 'button' : undefined}
-          tabIndex={props.events.onClick ? 0 : undefined}
+          role="button"
+          tabIndex={0}
           aria-label={chartAccessibleName}
           onClick={(event) => void props.events.onClick?.(event, {})}
-          onKeyDown={
-            props.events.onClick
-              ? (event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    void props.events.onClick?.(event, {});
-                  }
-                }
-              : undefined
-          }
+          onKeyDown={(event) => {
+            if (props.events.onClick && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault();
+              void props.events.onClick?.(event, {});
+            }
+          }}
           onMouseEnter={(event) => void props.events.onHover?.(event, {})}
         >
           <div className="sr-only" data-slot="chart-data-equivalent">

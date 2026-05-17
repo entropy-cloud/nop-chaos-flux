@@ -13,6 +13,7 @@
     "audit:knip:playground": "knip --config knip.json --workspace ./apps/playground",
     "audit:mutants": "stryker run stryker.runtime.conf.mjs --plugins @stryker-mutator/vitest-runner",
     "audit:semgrep": "semgrep --config .semgrep.yml .",
+    "audit:react-doctor": "npx react-doctor@latest . --verbose -y",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "tsc": "tsgo",
@@ -72,11 +73,13 @@
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-i18next": "^6.1.4",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-compiler": "19.1.0-rc.2",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-unicorn": "^64.0.0",
     "globals": "^17.4.0",
+    "happy-dom": "^15.11.0",
     "husky": "^9.1.7",
     "i18next": "^26.0.5",
     "jscpd": "^4.0.9",
@@ -90,8 +93,7 @@
     "turbo": "^2.9.6",
     "typescript-eslint": "^8.58.0",
     "vite": "^8.0.3",
-    "vitest": "^4.1.2",
-    "happy-dom": "^15.11.0"
+    "vitest": "^4.1.2"
   },
   "lint-staged": {
     "*.{ts,tsx}": "eslint --fix",

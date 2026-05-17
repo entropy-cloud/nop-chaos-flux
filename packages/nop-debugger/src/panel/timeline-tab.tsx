@@ -147,7 +147,15 @@ export function TimelineTab(props: {
       <article
         key={event.id}
         className="ndbg-entry"
+        role="button"
+        tabIndex={0}
         onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setExpandedId(expandedId === event.id ? null : event.id);
+          }
+        }}
       >
         <div className="ndbg-entry-topline">
           <span
@@ -167,7 +175,15 @@ export function TimelineTab(props: {
         {expandedId === event.id ? (
           <div
             className="ndbg-entry-expanded"
+            role="button"
+            tabIndex={0}
             onClick={(clickEvent) => clickEvent.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
           >
             {event.detail ? <code className="ndbg-entry-detail">{event.detail}</code> : null}
             {event.network ? (
@@ -266,11 +282,19 @@ export function TimelineTab(props: {
                 </span>
                 <time>{formatClock(group.latestTimestamp)}</time>
               </div>
-              <strong
+               <strong
                 className="ndbg-entry-summary"
+                role="button"
+                tabIndex={0}
                 onClick={() =>
                   setErrorGroupExpanded(errorGroupExpanded === group.source ? null : group.source)
                 }
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setErrorGroupExpanded(errorGroupExpanded === group.source ? null : group.source);
+                  }
+                }}
               >
                 {group.source} ({group.count})
               </strong>

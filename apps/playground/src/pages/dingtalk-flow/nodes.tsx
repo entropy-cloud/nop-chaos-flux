@@ -63,14 +63,23 @@ function ApprovalNodeInner({ id, data }: NodeProps) {
         </div>
         <div className="p-[15px] text-[13px] text-[#666]">{d.desc}</div>
       </div>
-      <Handle type="source" position={Position.Bottom} className="!opacity-0" />
+       <Handle type="source" position={Position.Bottom} className="!opacity-0" />
       {d.showAddBtn && (
         <div
+          role="button"
+          tabIndex={0}
           className="absolute left-1/2 -translate-x-1/2 z-[2]"
           style={{ bottom: -BTN_DIST }}
           onClick={(e) => {
             e.stopPropagation();
             onPlusClick?.(id, e.clientX, e.clientY);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              onPlusClick?.(id, 0, 0);
+            }
           }}
         >
           <AddBtn />
@@ -97,14 +106,23 @@ function CondNodeInner({ id, data }: NodeProps) {
         </div>
         <div className="pt-[10px] text-[13px] text-[#666]">{d.desc}</div>
       </div>
-      <Handle type="source" position={Position.Bottom} className="!opacity-0" />
+       <Handle type="source" position={Position.Bottom} className="!opacity-0" />
       {d.showAddBtn && (
         <div
+          role="button"
+          tabIndex={0}
           className="absolute left-1/2 -translate-x-1/2 z-[2]"
           style={{ bottom: -BTN_DIST }}
           onClick={(e) => {
             e.stopPropagation();
             onPlusClick?.(id, e.clientX, e.clientY);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              onPlusClick?.(id, 0, 0);
+            }
           }}
         >
           <AddBtn />

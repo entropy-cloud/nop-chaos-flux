@@ -116,6 +116,8 @@ export function DefaultSpreadsheetPageBody(props: {
     <div
       ref={gridRef}
       data-slot="spreadsheet-default-host"
+      role="region"
+      tabIndex={-1}
       onMouseDown={(event) => {
         if (editingCellRef.current && (event.target as HTMLElement).tagName !== 'INPUT') {
           void handleEditSave();

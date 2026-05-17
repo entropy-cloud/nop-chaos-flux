@@ -198,6 +198,7 @@ export function renderDataRow(
                 fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
               }
             >
+              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- onClick is stopPropagation only; real interaction is the inner <Button> elements */}
               <div
                 data-slot="table-actions"
                 className="flex flex-wrap gap-3"

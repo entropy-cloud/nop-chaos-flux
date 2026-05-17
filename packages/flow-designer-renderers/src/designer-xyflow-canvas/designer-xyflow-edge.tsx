@@ -52,6 +52,13 @@ export function DesignerXyflowEdge(props: EdgeProps) {
     dispatch({ type: 'selectEdge', edgeId: props.id });
   };
 
+  const handleLabelKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      dispatch({ type: 'selectEdge', edgeId: props.id });
+    }
+  };
+
   const handleDeleteEdge = (e: React.MouseEvent) => {
     e.stopPropagation();
     dispatch({ type: 'deleteEdge', edgeId: props.id });
@@ -94,6 +101,8 @@ export function DesignerXyflowEdge(props: EdgeProps) {
       {hasBody && (
         <EdgeLabelRenderer>
           <div
+            role="button"
+            tabIndex={0}
             className={cn(
               'fd-edge-label px-3 py-1.5 rounded-full border border-border text-sm font-medium text-muted-foreground shadow-sm',
               props.selected && 'border-primary text-foreground',
@@ -104,6 +113,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
               pointerEvents: 'all',
             }}
             onClick={handleLabelClick}
+            onKeyDown={handleLabelKeyDown}
           >
             <RenderNodes
               input={edgeType!.body!}
@@ -120,6 +130,8 @@ export function DesignerXyflowEdge(props: EdgeProps) {
       {showQuickActions && (
         <EdgeLabelRenderer>
           <div
+            role="toolbar"
+            tabIndex={0}
             data-slot="designer-edge-actions"
             className="fd-edge-actions inline-flex items-center gap-1.5 p-1 rounded-[10px] border border-border"
             style={{
@@ -128,6 +140,12 @@ export function DesignerXyflowEdge(props: EdgeProps) {
               pointerEvents: 'all',
             }}
             onMouseDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                dispatch({ type: 'selectEdge', edgeId: props.id });
+              }
+            }}
           >
             <Button
               type="button"

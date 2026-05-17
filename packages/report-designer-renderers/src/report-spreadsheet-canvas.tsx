@@ -231,6 +231,8 @@ export function ReportSpreadsheetCanvas({
     <div
       ref={gridRef}
       data-slot="report-designer-spreadsheet-canvas"
+      role="region"
+      tabIndex={-1}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleFieldDropOnCell}
       onMouseDown={(e) => {

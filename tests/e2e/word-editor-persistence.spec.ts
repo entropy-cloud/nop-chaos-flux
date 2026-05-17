@@ -44,6 +44,8 @@ test('saves a document marker that survives a reload', async ({ page }) => {
   await expect(canvasElement).toBeVisible({ timeout: 15_000 });
   const initialWordCount = await readWordCount(page);
   await canvasElement.click();
+  // Wait for canvas editor to fully acquire focus before typing
+  await page.waitForTimeout(500);
   await page.keyboard.type(marker);
 
   await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(marker);

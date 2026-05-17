@@ -126,7 +126,6 @@ export function SheetTabBar({
                     onKeyDown={handleRenameKeyDown}
                     readOnly={readOnly}
                     disabled={readOnly}
-                    autoFocus
                     size="sm"
                   />
                 ) : (

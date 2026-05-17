@@ -31,13 +31,21 @@ export function NetworkTab(props: {
       {mergedRequests.length === 0 ? (
         <p className="ndbg-empty">{t('flux.debugger.noNetworkEvents')}</p>
       ) : null}
-      {mergedRequests.map((request) => (
+       {mergedRequests.map((request) => (
         <article
           key={request.key}
           className="ndbg-entry"
+          role="button"
+          tabIndex={0}
           onClick={() =>
             setNetworkExpandedKey(networkExpandedKey === request.key ? null : request.key)
           }
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setNetworkExpandedKey(networkExpandedKey === request.key ? null : request.key);
+            }
+          }}
         >
           <div className="ndbg-entry-topline">
             <span className={getStatusClassName(request.status)} data-group="api">
@@ -54,8 +62,19 @@ export function NetworkTab(props: {
                 ? 'pending...'
                 : ''}
           </span>
-          {networkExpandedKey === request.key ? (
-            <div className="ndbg-entry-expanded" onClick={(event) => event.stopPropagation()}>
+           {networkExpandedKey === request.key ? (
+            <div
+              className="ndbg-entry-expanded"
+              role="button"
+              tabIndex={0}
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }}
+            >
               {request.startEvent?.network ? (
                 <div>
                   <span className="ndbg-json-key">{t('flux.debugger.request')}</span>

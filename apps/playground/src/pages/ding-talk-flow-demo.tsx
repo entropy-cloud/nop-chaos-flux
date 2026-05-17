@@ -183,9 +183,18 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
                       'bg-white border border-[#b3e19d]',
                       'text-[#67c23a] text-xs cursor-pointer whitespace-nowrap',
                     )}
+                    role="button"
+                    tabIndex={0}
                     onClick={(e) => {
                       e.stopPropagation();
                       onPlusClick?.(o.sourceId, e.clientX, e.clientY);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onPlusClick?.(o.sourceId, 0, 0);
+                      }
                     }}
                   >
                     Add Condition
@@ -194,9 +203,18 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
                   <div
                     className="flex items-center justify-center cursor-pointer rounded-full bg-[#3296fa] text-white shadow-[0_2px_4px_rgba(50,150,250,0.4)]"
                     style={{ width: BTN_DIAMETER, height: BTN_DIAMETER }}
+                    role="button"
+                    tabIndex={0}
                     onClick={(e) => {
                       e.stopPropagation();
                       onPlusClick?.(o.sourceId, e.clientX, e.clientY);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onPlusClick?.(o.sourceId, 0, 0);
+                      }
                     }}
                   >
                     <Plus size={16} />

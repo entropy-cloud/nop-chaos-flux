@@ -5,6 +5,7 @@ const reactHooks = require('eslint-plugin-react-hooks');
 const reactCompiler = require('eslint-plugin-react-compiler');
 const i18next = require('eslint-plugin-i18next');
 const unicorn = require('eslint-plugin-unicorn').default;
+const jsxAlly = require('eslint-plugin-jsx-a11y');
 const globals = require('globals');
 const eslintConfigPrettier = require('eslint-config-prettier');
 
@@ -58,6 +59,7 @@ module.exports = [
     plugins: {
       react,
       unicorn,
+      'jsx-a11y': jsxAlly,
       ...reactHooksLatest.plugins,
       'react-compiler': reactCompiler,
     },
@@ -101,7 +103,21 @@ module.exports = [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-      'no-restricted-imports': ['error', { paths: react19RestrictedImports }],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [...react19RestrictedImports],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'ImportDeclaration[source.value="react"] > ImportSpecifier[imported.name="forwardRef"]',
+          message:
+            'forwardRef is no longer needed in React 19. Pass ref as a regular prop instead.',
+        },
+      ],
       'no-restricted-properties': [
         'error',
         {
@@ -141,6 +157,21 @@ module.exports = [
           ignore: [/^[a-z]{2}-[A-Z]{2}(\.\w+)?$/, /^App\.tsx$/],
         },
       ],
+      'jsx-a11y/click-events-have-key-events': 'error',
+      'jsx-a11y/no-static-element-interactions': 'error',
+      'jsx-a11y/no-autofocus': 'error',
+      'jsx-a11y/no-redundant-roles': 'error',
+      'jsx-a11y/label-has-associated-control': 'error',
+    },
+  },
+  // a11y: relax rules in test files
+  {
+    files: ['**/*.test.{ts,tsx}', '**/__tests__/**', '**/test-support*.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    rules: {
+      'jsx-a11y/click-events-have-key-events': 'off',
+      'jsx-a11y/no-static-element-interactions': 'off',
+      'jsx-a11y/no-autofocus': 'off',
+      'jsx-a11y/label-has-associated-control': 'off',
     },
   },
   // i18n: 检测组件库中的硬编码字符串 (排除 playground、test、apps)

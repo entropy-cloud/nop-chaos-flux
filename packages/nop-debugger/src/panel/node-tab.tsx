@@ -231,12 +231,20 @@ export function NodeTab(props: {
                 .filter(Boolean)
                 .join(' ');
 
-              return (
+               return (
                 <div
                   key={item.cid}
                   className={itemClassName}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => inspectTreeItem(item)}
                   style={{ paddingLeft: `${item.depth * 16 + 8}px` }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      inspectTreeItem(item);
+                    }
+                  }}
                 >
                   <span className="ndbg-tree-item-id">
                     #{item.cid}
@@ -329,11 +337,19 @@ export function NodeTab(props: {
                   );
                 })()}
               </div>
-              {nodeDiagnostics.recentEvents.map((event) => (
+               {nodeDiagnostics.recentEvents.map((event) => (
                 <article
                   key={event.id}
                   className="ndbg-entry"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpandedId(expandedId === event.id ? null : event.id);
+                    }
+                  }}
                 >
                   <div className="ndbg-entry-topline">
                     <span className="ndbg-badge" data-group={event.group}>
@@ -345,8 +361,19 @@ export function NodeTab(props: {
                   {event.durationMs != null ? (
                     <span className="ndbg-entry-meta">{event.durationMs}ms</span>
                   ) : null}
-                  {expandedId === event.id ? (
-                    <div className="ndbg-entry-expanded" onClick={(e) => e.stopPropagation()}>
+                   {expandedId === event.id ? (
+                    <div
+                      className="ndbg-entry-expanded"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
+                    >
                       {event.detail ? (
                         <code className="ndbg-entry-detail">{event.detail}</code>
                       ) : null}

@@ -56,7 +56,15 @@ export function FlowDesignerPalette({
             <div key={group.id} data-slot="flow-designer-palette-group">
               <div
                 data-slot="flow-designer-palette-group-header"
+                role="button"
+                tabIndex={0}
                 onClick={() => onToggleGroup(group.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onToggleGroup(group.id);
+                  }
+                }}
               >
                 <span data-slot="flow-designer-palette-group-toggle">
                   {expandedGroups.has(group.id) ? '▼' : '▶'}

@@ -22,7 +22,18 @@ export function AddNodeMenu({ popover, onSelect, onClose }: AddNodeMenuProps) {
 
   return (
     <>
-      <div className="fixed inset-0 z-[100]" onClick={onClose} />
+      <div
+        role="button"
+        tabIndex={0}
+        className="fixed inset-0 z-[100]"
+        onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClose();
+          }
+        }}
+      />
       <div
         className="fixed z-[101] flex gap-4 bg-white rounded-lg shadow-lg px-5 py-3"
         style={{ left: popover.screenX - 100, top: popover.screenY - 110 }}

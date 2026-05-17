@@ -21,7 +21,6 @@ export function SpreadsheetFindReplacePanel(props: SpreadsheetToolbarProps) {
           value={props.findQuery}
           onChange={(e) => props.onFindQueryChange(e.target.value)}
           placeholder="Search text..."
-          autoFocus
         />
         <Button variant="ghost" size="xs" onClick={props.onFind}>
           {t('flux.spreadsheet.findNext')}

@@ -8,7 +8,15 @@ export function createFlowNodeTypes(onSelect: (nodeId: string | null) => void) {
         <div
           data-slot="flow-node"
           data-selected={selected ? '' : undefined}
+          role="button"
+          tabIndex={0}
           onClick={() => onSelect(id)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onSelect(id);
+            }
+          }}
         >
           <Handle
             type="target"

@@ -102,9 +102,17 @@ export function FlowDesignerCanvas({
   return (
     <div
       data-slot="flow-designer-canvas-shell"
+      role="button"
+      tabIndex={0}
       onClick={onPaneClick}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onPaneClick();
+        }
+      }}
     >
       <div data-slot="flow-designer-canvas-surface">
         <div data-slot="flow-designer-canvas-nodes">
@@ -119,9 +127,17 @@ export function FlowDesignerCanvas({
                 left: node.position.x,
                 top: node.position.y,
               }}
+              role="button"
+              tabIndex={0}
               onClick={(e) => onNodeClick(node.id, e)}
               onMouseEnter={() => onNodeHover?.(node.id)}
               onMouseLeave={() => onNodeHover?.(null)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onNodeClick(node.id, e as unknown as React.MouseEvent);
+                }
+              }}
             >
               <div data-slot="flow-designer-node-header">
                 <span data-slot="flow-designer-node-icon">{getNodeIcon(node.type)}</span>

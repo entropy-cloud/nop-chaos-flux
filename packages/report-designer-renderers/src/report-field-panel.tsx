@@ -27,6 +27,8 @@ export function ReportFieldPanel({
                   <div
                     key={field.id}
                     data-slot="report-field-panel-item"
+                    role="button"
+                    tabIndex={0}
                     draggable
                     onDragStart={() => onFieldDragStart(source.id, field.id, field.label)}
                   >

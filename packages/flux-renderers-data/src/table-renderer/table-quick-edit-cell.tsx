@@ -132,7 +132,11 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
 
   if (mode === 'dialog') {
     return (
-      <div data-slot="table-quick-edit" onClick={(event) => event.stopPropagation()}>
+      /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- onClick is stopPropagation only; real interaction is the inner <Button> */
+      <div
+        data-slot="table-quick-edit"
+        onClick={(event) => event.stopPropagation()}
+      >
         <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
           <Button type="button" variant="outline" size="sm" onClick={openDialog}>
             {typeof column.label === 'string' ? column.label : t('flux.common.save')}
@@ -163,6 +167,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
   }
 
   return (
+    /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- onClick is stopPropagation only; real interaction is the inner <Input>/<Button> */
     <div
       ref={containerRef}
       className="flex items-center gap-2"

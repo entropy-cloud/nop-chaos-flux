@@ -286,7 +286,6 @@ export function SpreadsheetGrid({
         className={cellStyle.className}
         style={style}
         tabIndex={isSelected ? 0 : -1}
-        role="gridcell"
         aria-selected={isSelected || inRange || undefined}
         data-row={r}
         data-col={c}
@@ -341,7 +340,6 @@ export function SpreadsheetGrid({
                 onEditCancel();
               }
             }}
-            autoFocus
           />
         ) : (
           <>
@@ -349,8 +347,11 @@ export function SpreadsheetGrid({
             {isFillHandleCell && (
               <div
                 className="ss-fill-handle"
+                role="button"
+                tabIndex={-1}
                 onMouseDown={(e) => onFillHandleMouseDown(r, c, e)}
                 onDoubleClick={() => onFillHandleDoubleClick()}
+                aria-label="Fill handle"
               />
             )}
           </>
@@ -539,6 +540,8 @@ export function SpreadsheetGrid({
                     <div
                       className="ss-col-resize-handle"
                       data-slot="spreadsheet-column-resize-handle"
+                      role="separator"
+                      aria-orientation="vertical"
                       onMouseDown={(e) => onColumnResizeStart(c, e)}
                     />
                   </th>
@@ -590,6 +593,8 @@ export function SpreadsheetGrid({
                     <div
                       className="ss-row-resize-handle"
                       data-slot="spreadsheet-row-resize-handle"
+                      role="separator"
+                      aria-orientation="horizontal"
                       onMouseDown={(e) => onRowResizeStart(r, e)}
                     />
                   </td>
