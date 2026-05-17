@@ -213,6 +213,7 @@ export type SpreadsheetCommand =
 export interface SpreadsheetCommandResult {
   ok: boolean;
   changed: boolean;
+  cancelled?: boolean;
   error?: unknown;
   data?: unknown;
 }

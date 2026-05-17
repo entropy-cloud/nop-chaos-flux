@@ -55,6 +55,7 @@ export interface SpreadsheetInteractionsReturn {
   getSelectedRange: ReturnType<typeof useSelection>['getSelectedRange'];
   editingCell: { row: number; col: number } | null;
   editValue: string;
+  editSaveState: ReturnType<typeof useEditing>['editSaveState'];
   editingCellRef: React.RefObject<{ row: number; col: number } | null>;
   editValueRef: React.RefObject<string>;
   handleEditSave: () => Promise<void>;
@@ -156,6 +157,7 @@ export function useSpreadsheetInteractions(
     editingCell,
     setEditingCell,
     editValue,
+    editSaveState,
     editingCellRef,
     editValueRef,
     handleCellDoubleClick,
@@ -333,6 +335,7 @@ export function useSpreadsheetInteractions(
     getSelectedRange,
     editingCell,
     editValue,
+    editSaveState,
     editingCellRef,
     editValueRef,
     handleEditSave,

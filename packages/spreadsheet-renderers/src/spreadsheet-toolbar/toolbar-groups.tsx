@@ -28,7 +28,7 @@ import { ToolbarButton } from './toolbar-button.js';
 import type { SpreadsheetToolbarProps } from './types.js';
 
 function Separator() {
-  return <span className="rd-toolbar-separator" />;
+  return <span className="rd-toolbar-separator" data-slot="spreadsheet-toolbar-separator" />;
 }
 
 export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
@@ -40,7 +40,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
 
   return (
     <>
-      <div className="rd-toolbar-group">
+      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.undoShortcut"
           icon={<Undo2 />}
@@ -55,7 +55,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group">
+      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.copyShortcut"
           icon={<Copy />}
@@ -82,7 +82,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group">
+      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.boldShortcut"
           icon={<Bold />}
@@ -109,7 +109,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group">
+      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.alignLeft"
           icon={<AlignLeft />}
@@ -136,58 +136,58 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group">
+      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.bgYellow"
           onClick={() => props.onStyleTool('bg-yellow')}
           disabled={!props.hasSelection || mutationDisabled}
-          className="bg-btn bg-yellow"
+          className="ss-style-swatch ss-style-swatch-bg-yellow"
         />
         <ToolbarButton
           label="flux.spreadsheet.bgGreen"
           onClick={() => props.onStyleTool('bg-green')}
           disabled={!props.hasSelection || mutationDisabled}
-          className="bg-btn bg-green"
+          className="ss-style-swatch ss-style-swatch-bg-green"
         />
         <ToolbarButton
           label="flux.spreadsheet.bgBlue"
           onClick={() => props.onStyleTool('bg-blue')}
           disabled={!props.hasSelection || mutationDisabled}
-          className="bg-btn bg-blue"
+          className="ss-style-swatch ss-style-swatch-bg-blue"
         />
         <ToolbarButton
           label="flux.spreadsheet.bgNone"
           onClick={() => props.onStyleTool('bg-none')}
           disabled={!props.hasSelection || mutationDisabled}
-          className="bg-btn bg-none"
+          className="ss-style-swatch ss-style-swatch-bg-none"
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group">
+      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.fontRed"
           icon={<Type />}
           onClick={() => props.onStyleTool('font-color-red')}
           disabled={!props.hasSelection || mutationDisabled}
-          className="color-btn color-red"
+          className="ss-style-swatch ss-style-swatch-font-red"
         />
         <ToolbarButton
           label="flux.spreadsheet.fontBlue"
           icon={<Type />}
           onClick={() => props.onStyleTool('font-color-blue')}
           disabled={!props.hasSelection || mutationDisabled}
-          className="color-btn color-blue"
+          className="ss-style-swatch ss-style-swatch-font-blue"
         />
         <ToolbarButton
           label="flux.spreadsheet.fontBlack"
           icon={<Type />}
           onClick={() => props.onStyleTool('font-color-black')}
           disabled={!props.hasSelection || mutationDisabled}
-          className="color-btn color-black"
+          className="ss-style-swatch ss-style-swatch-font-black"
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group">
+      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.mergeCells"
           icon={<TableCellsMerge />}
@@ -208,7 +208,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group">
+      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.fillDown"
           icon={<ArrowDown />}
@@ -223,7 +223,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group">
+      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.insertRow"
           icon={<Plus />}
@@ -250,7 +250,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group">
+      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.comment"
           icon={<MessageSquare />}
@@ -264,7 +264,7 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
         />
       </div>
       <Separator />
-      <div className="rd-toolbar-group">
+      <div className="rd-toolbar-group" data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.freezePanes"
           icon={<Snowflake />}

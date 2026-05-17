@@ -11,11 +11,12 @@ export function SpreadsheetFindReplacePanel(props: SpreadsheetToolbarProps) {
   const replaceInputId = 'spreadsheet-replace-text';
 
   return (
-    <div className="find-replace-panel">
-      <div className="find-row">
+    <div className="find-replace-panel" data-slot="spreadsheet-find-replace-panel">
+      <div className="find-row" data-slot="spreadsheet-find-row">
         <Label htmlFor={findInputId}>{t('flux.spreadsheet.find')}</Label>
         <Input
           id={findInputId}
+          data-slot="spreadsheet-find-input"
           size="sm"
           value={props.findQuery}
           onChange={(e) => props.onFindQueryChange(e.target.value)}
@@ -26,10 +27,11 @@ export function SpreadsheetFindReplacePanel(props: SpreadsheetToolbarProps) {
           {t('flux.spreadsheet.findNext')}
         </Button>
       </div>
-      <div className="find-row">
+      <div className="find-row" data-slot="spreadsheet-find-row">
         <Label htmlFor={replaceInputId}>{t('flux.spreadsheet.replace')}</Label>
         <Input
           id={replaceInputId}
+          data-slot="spreadsheet-replace-input"
           size="sm"
           value={props.replaceText}
           onChange={(e) => props.onReplaceTextChange(e.target.value)}
@@ -47,7 +49,11 @@ export function SpreadsheetFindReplacePanel(props: SpreadsheetToolbarProps) {
           {t('flux.spreadsheet.replaceAll')}
         </Button>
       </div>
-      {props.findResults ? <div className="find-results">{props.findResults}</div> : null}
+      {props.findResults ? (
+        <div className="find-results" data-slot="spreadsheet-find-results">
+          {props.findResults}
+        </div>
+      ) : null}
     </div>
   );
 }

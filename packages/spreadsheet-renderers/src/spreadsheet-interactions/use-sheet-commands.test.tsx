@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useSheetCommands } from './use-sheet-commands.js';
@@ -81,5 +82,29 @@ describe('useSheetCommands', () => {
     expect(dispatch).toHaveBeenNthCalledWith(2, { type: 'spreadsheet:redo' });
     expect(addLog).toHaveBeenNthCalledWith(1, 'Redo cancelled');
     expect(addLog).toHaveBeenNthCalledWith(2, 'Redo');
+  });
+
+  it('does not report insert row success after a resolved failure result', async () => {
+    const dispatch = vi.fn().mockResolvedValueOnce({ ok: false, changed: false, error: new Error('Insert rejected') });
+    const addLog = vi.fn();
+
+    const { result } = renderHook(() =>
+      useSheetCommands(
+        createSnapshot(),
+        createBridge(dispatch),
+        'sheet-1',
+        { row: 2, col: 0 },
+        () => null,
+        addLog,
+      ),
+    );
+
+    await act(async () => {
+      await result.current.handleInsertRow();
+    });
+
+    expect(dispatch).toHaveBeenCalledWith({ type: 'spreadsheet:insertRow', sheetId: 'sheet-1', row: 2 });
+    expect(addLog).toHaveBeenCalledWith('Insert rejected');
+    expect(addLog).not.toHaveBeenCalledWith('Inserted row at 3');
   });
 });

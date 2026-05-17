@@ -407,8 +407,8 @@ describe('spreadsheet context menu operations', () => {
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
     const columnHeaders = container.querySelectorAll('th[data-slot="spreadsheet-column-header"]');
-    const firstHeader = columnHeaders[0] as HTMLElement | undefined;
-    const secondHeader = columnHeaders[1] as HTMLElement | undefined;
+    const firstHeader = columnHeaders[0]?.querySelector('[data-slot="spreadsheet-header-button"]') as HTMLElement | undefined;
+    const secondHeader = columnHeaders[1]?.querySelector('[data-slot="spreadsheet-header-button"]') as HTMLElement | undefined;
 
     expect(firstHeader).toBeTruthy();
     expect(secondHeader).toBeTruthy();
@@ -469,8 +469,8 @@ describe('spreadsheet context menu operations', () => {
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
     const columnHeaders = container.querySelectorAll('th[data-slot="spreadsheet-column-header"]');
-    const secondHeader = columnHeaders[1] as HTMLElement | undefined;
-    const thirdHeader = columnHeaders[2] as HTMLElement | undefined;
+    const secondHeader = columnHeaders[1]?.querySelector('[data-slot="spreadsheet-header-button"]') as HTMLElement | undefined;
+    const thirdHeader = columnHeaders[2]?.querySelector('[data-slot="spreadsheet-header-button"]') as HTMLElement | undefined;
 
     expect(secondHeader).toBeTruthy();
     expect(thirdHeader).toBeTruthy();
@@ -656,7 +656,7 @@ describe('spreadsheet context menu operations', () => {
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
-    const corner = container.querySelector('th[data-slot="spreadsheet-corner-header"]') as HTMLElement | null;
+    const corner = container.querySelector('[data-slot="spreadsheet-corner-header"] [data-slot="spreadsheet-header-button"]') as HTMLElement | null;
     expect(corner).toBeTruthy();
 
     fireEvent.click(corner!);

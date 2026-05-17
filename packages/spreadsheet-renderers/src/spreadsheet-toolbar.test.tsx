@@ -66,15 +66,22 @@ function createProps(overrides?: Partial<SpreadsheetToolbarProps>): SpreadsheetT
 describe('SpreadsheetToolbar', () => {
   it('renders toolbar groups and status through the split shell', async () => {
     await setupI18n();
-    render(<SpreadsheetToolbar {...createProps({ frozen: true })} />);
+    const { container } = render(<SpreadsheetToolbar {...createProps({ frozen: true })} />);
 
     expect(screen.getByLabelText('A1')).toBeTruthy();
     expect(screen.getByText('Frozen')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-toolbar"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-toolbar-group"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-toolbar-status"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-toolbar-cell-address"]')?.textContent).toBe('A1');
+    expect(container.querySelector('[data-slot="spreadsheet-toolbar-frozen-badge"]')?.textContent).toBe(
+      'Frozen',
+    );
   });
 
   it('renders find and replace controls when enabled', async () => {
     await setupI18n();
-    render(
+    const { container } = render(
       <SpreadsheetToolbar
         {...createProps({ showFindReplace: true, findQuery: 'foo', replaceText: 'bar' })}
       />,
@@ -84,11 +91,15 @@ describe('SpreadsheetToolbar', () => {
     expect(screen.getByDisplayValue('bar')).toBeTruthy();
     expect(screen.getByText('Find Next')).toBeTruthy();
     expect(screen.getByText('Replace All')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-find-replace-panel"]')).toBeTruthy();
+    expect(container.querySelectorAll('[data-slot="spreadsheet-find-row"]')).toHaveLength(2);
+    expect(container.querySelector('[data-slot="spreadsheet-find-input"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-replace-input"]')).toBeTruthy();
   });
 
   it('renders cell and comment editors when a cell and comment input are active', async () => {
     await setupI18n();
-    render(
+    const { container } = render(
       <SpreadsheetToolbar
         {...createProps({ showCommentInput: true, commentText: 'note', hasComment: true })}
       />,
@@ -97,6 +108,10 @@ describe('SpreadsheetToolbar', () => {
     expect(screen.getAllByDisplayValue('hello').length).toBeGreaterThan(0);
     expect(screen.getByDisplayValue('note')).toBeTruthy();
     expect(screen.getByText('Delete')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-cell-editor"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-cell-value-input"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-comment-editor"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-comment-input"]')).toBeTruthy();
   });
 
   it('keeps style and auxiliary actions wired through the shell', async () => {

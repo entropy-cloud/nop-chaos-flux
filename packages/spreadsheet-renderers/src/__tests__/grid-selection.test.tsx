@@ -33,6 +33,7 @@ function SpreadsheetGridHarness(props: {
       selection={interactions.snapshot.selection}
       editingCell={interactions.editingCell}
       editValue={interactions.editValue}
+      editSaveState={interactions.editSaveState}
       fillHandleState={interactions.fillHandleState}
       isInRange={interactions.isInRange}
       isFillPreview={interactions.isFillPreview}
@@ -97,7 +98,9 @@ describe('spreadsheet grid selection', () => {
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
     const columnHeaders = container.querySelectorAll('th[data-slot="spreadsheet-column-header"]');
-    const secondHeader = columnHeaders[1] as HTMLElement | undefined;
+    const secondHeader = columnHeaders[1]?.querySelector(
+      'button[data-slot="spreadsheet-header-button"]',
+    ) as HTMLElement | undefined;
 
     expect(secondHeader).toBeTruthy();
     fireEvent.click(secondHeader!);
@@ -154,8 +157,12 @@ describe('spreadsheet grid selection', () => {
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
     const columnHeaders = container.querySelectorAll('th[data-slot="spreadsheet-column-header"]');
-    const secondHeader = columnHeaders[1] as HTMLElement | undefined;
-    const fourthHeader = columnHeaders[3] as HTMLElement | undefined;
+    const secondHeader = columnHeaders[1]?.querySelector(
+      'button[data-slot="spreadsheet-header-button"]',
+    ) as HTMLElement | undefined;
+    const fourthHeader = columnHeaders[3]?.querySelector(
+      'button[data-slot="spreadsheet-header-button"]',
+    ) as HTMLElement | undefined;
 
     expect(secondHeader).toBeTruthy();
     expect(fourthHeader).toBeTruthy();
@@ -279,7 +286,55 @@ describe('spreadsheet grid selection', () => {
       expect((container.querySelector('input.ss-cell-edit-input') as HTMLInputElement).value).toBe(
         'draft',
       );
+      expect(screen.getByRole('alert').textContent).toBe('Cell save failed: save failed');
     });
+  });
+
+  it('shows an explicit cancelled status when edit-save resolves as cancelled', async () => {
+    const documentModel = createEmptyDocument('edit-cancelled-status');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    vi.spyOn(bridge, 'dispatch').mockResolvedValueOnce({
+      ok: false,
+      changed: false,
+      cancelled: true,
+    });
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+
+    fireEvent.doubleClick(firstCell!);
+
+    await waitFor(() => {
+      expect(container.querySelector('input.ss-cell-edit-input')).toBeTruthy();
+    });
+
+    const input = container.querySelector('input.ss-cell-edit-input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'draft' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(container.querySelector('input.ss-cell-edit-input')).toBeTruthy();
+      expect(screen.getByRole('status').textContent).toBe('Cell save cancelled');
+    });
+  });
+
+  it('uses header buttons inside semantic header cells', () => {
+    const documentModel = createEmptyDocument('header-button-primitives');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const cornerHeader = container.querySelector('th[data-slot="spreadsheet-corner-header"]');
+    const columnHeader = container.querySelector('th[data-slot="spreadsheet-column-header"]');
+    const rowHeader = container.querySelector('[data-slot="spreadsheet-row-header"]');
+
+    expect(cornerHeader?.querySelector('button[data-slot="spreadsheet-header-button"]')).toBeTruthy();
+    expect(columnHeader?.querySelector('button[data-slot="spreadsheet-header-button"]')).toBeTruthy();
+    expect(rowHeader?.querySelector('button[data-slot="spreadsheet-header-button"]')).toBeTruthy();
   });
 
   it('commits column resize to spreadsheet core state on mouseup', async () => {
@@ -298,8 +353,10 @@ describe('spreadsheet grid selection', () => {
     fireEvent.mouseMove(window, { clientX: 150, buttons: 1 });
 
     await waitFor(() => {
-      const header = screen.getByLabelText('Select column A');
-      expect((header as HTMLElement).style.width).toBe('130px');
+      const headerCell = container.querySelector(
+        'th[data-slot="spreadsheet-column-header"]',
+      ) as HTMLElement | null;
+      expect(headerCell?.style.width).toBe('130px');
     });
 
     fireEvent.mouseUp(window);

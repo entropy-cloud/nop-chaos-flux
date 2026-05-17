@@ -35,6 +35,7 @@ export interface SpreadsheetGridProps {
   selection: SpreadsheetHostSnapshot['selection'];
   editingCell: { row: number; col: number } | null;
   editValue: string;
+  editSaveState?: { status: 'idle' | 'saving' | 'cancelled' | 'failed'; message?: string };
   fillHandleState: {
     isFilling: boolean;
     startRow: number;
@@ -84,6 +85,7 @@ export function SpreadsheetGrid({
   selection,
   editingCell,
   editValue,
+  editSaveState,
   fillHandleState,
   isInRange,
   isFillPreview,
@@ -325,6 +327,7 @@ export function SpreadsheetGrid({
           <Input
             type="text"
             className="ss-cell-edit-input"
+            data-slot="spreadsheet-cell-editor-input"
             size="sm"
             value={editValue}
             onChange={(e) => onEditValueChange(e.target.value)}
@@ -472,53 +475,67 @@ export function SpreadsheetGrid({
             <thead>
               <tr>
                 <th
-                  className="ss-row-header ss-header-corner"
+                  className="ss-header-corner"
                   data-slot="spreadsheet-corner-header"
+                  data-sheet-header-active={selection.kind === 'sheet' || undefined}
                   style={{ width: ROW_HEADER_WIDTH }}
-                  tabIndex={0}
-                  aria-label="Select entire sheet"
-                  onClick={onSelectAll}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      onSelectAll();
-                    }
-                  }}
                   onContextMenu={() => {
                     if (selection.kind !== 'sheet') {
                       onSelectAll();
                     }
                   }}
-                ></th>
+                >
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ss-header-button"
+                    data-slot="spreadsheet-header-button"
+                    aria-label="Select entire sheet"
+                    onClick={onSelectAll}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        onSelectAll();
+                      }
+                    }}
+                  />
+                </th>
                 {leftSpacerWidth > 0 && <th style={{ width: leftSpacerWidth, padding: 0 }} />}
                 {visibleColIndices.map((c) => (
                   <th
                     key={c}
                     style={{ width: columnWidths[c] ?? DEFAULT_COL_WIDTH }}
-                    className="ss-col-header"
                     data-slot="spreadsheet-column-header"
-                    tabIndex={0}
-                    aria-label={`Select column ${cellAddress(0, c).replace(/[0-9]/g, '')}`}
                     data-col-header-active={
                       selection.kind === 'column' && selection.columns?.includes(c)
                         ? true
                         : undefined
                     }
                     data-col-filtered={filteredColumnSet.has(c) || undefined}
-                    onClick={(event) => onSelectColumn(c, event.shiftKey)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        onSelectColumn(c, event.shiftKey);
-                      }
-                    }}
                     onContextMenu={() => {
                       if (selection.kind !== 'column' || !selection.columns?.includes(c)) {
                         onSelectColumn(c);
                       }
                     }}
+                  >
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="ss-header-button"
+                      data-slot="spreadsheet-header-button"
+                      aria-label={`Select column ${cellAddress(0, c).replace(/[0-9]/g, '')}`}
+                      onClick={(event) => onSelectColumn(c, event.shiftKey)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          onSelectColumn(c, event.shiftKey);
+                        }
+                      }}
                     >
-                    {cellAddress(0, c).replace(/[0-9]/g, '')}
+                      {cellAddress(0, c).replace(/[0-9]/g, '')}
+                    </Button>
                     <div
                       className="ss-col-resize-handle"
                       data-slot="spreadsheet-column-resize-handle"
@@ -549,7 +566,6 @@ export function SpreadsheetGrid({
                   className={frozen && r < (frozen.row ?? 0) ? 'frozen-row' : ''}
                 >
                   <td
-                    className="ss-row-header"
                     data-slot="spreadsheet-row-header"
                     data-row-header-active={
                       selection.kind === 'row' && selection.rows?.includes(r) ? true : undefined
@@ -561,7 +577,9 @@ export function SpreadsheetGrid({
                     }}
                   >
                     <Button
+                      type="button"
                       className="ss-row-header-button"
+                      data-slot="spreadsheet-header-button"
                       variant="ghost"
                       size="sm"
                       aria-label={`Select row ${r + 1}`}
@@ -596,6 +614,17 @@ export function SpreadsheetGrid({
           </table>
         </div>
       </ContextMenuTrigger>
+      {editingCell && editSaveState && editSaveState.status !== 'idle' ? (
+        <div
+          className="ss-edit-status"
+          data-slot="spreadsheet-edit-status"
+          data-status={editSaveState.status}
+          role={editSaveState.status === 'failed' ? 'alert' : 'status'}
+          aria-live="polite"
+        >
+          {editSaveState.message}
+        </div>
+      ) : null}
       <SpreadsheetGridContextMenu
         actions={contextActions}
         selectedRange={selectedRange}

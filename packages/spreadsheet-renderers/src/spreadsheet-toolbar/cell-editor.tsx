@@ -11,10 +11,11 @@ export function SpreadsheetCellEditor(props: SpreadsheetToolbarProps) {
   const commentInputId = `spreadsheet-cell-comment-${props.cellAddress}`;
 
   return (
-    <div className="cell-editor">
+    <div className="cell-editor" data-slot="spreadsheet-cell-editor">
       <Label htmlFor={cellValueInputId}>{props.cellAddress}</Label>
       <Input
         id={cellValueInputId}
+        data-slot="spreadsheet-cell-value-input"
         size="sm"
         value={props.cellValue}
         onChange={(e) => props.onCellValueChange(e.target.value)}
@@ -23,10 +24,11 @@ export function SpreadsheetCellEditor(props: SpreadsheetToolbarProps) {
         disabled={props.readOnly}
       />
       {props.showCommentInput ? (
-        <div className="comment-editor">
+        <div className="comment-editor" data-slot="spreadsheet-comment-editor">
           <Label htmlFor={commentInputId}>{t('flux.spreadsheet.comment')}</Label>
           <Input
             id={commentInputId}
+            data-slot="spreadsheet-comment-input"
             size="sm"
             value={props.commentText}
             onChange={(e) => props.onCommentTextChange(e.target.value)}
