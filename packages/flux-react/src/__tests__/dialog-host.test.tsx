@@ -2,6 +2,10 @@ import React from 'react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
+function ThrowOnRender(props: { message: string }): never {
+  throw new Error(props.message);
+}
+
 const mocks = vi.hoisted(() => {
   return {
     useCurrentPage: vi.fn(),
@@ -9,6 +13,10 @@ const mocks = vi.hoisted(() => {
     renderSurfaceNode: vi.fn((node: unknown) => {
       if (node === 'dialog-title' || node === 'drawer-title') {
         return <span>{String(node)}</span>;
+      }
+
+      if (node === 'dialog-crash' || node === 'drawer-crash') {
+        return <ThrowOnRender message={`boom:${String(node)}`} />;
       }
 
       if (node === 'dialog-close-body') {
@@ -91,6 +99,14 @@ vi.mock('@nop-chaos/ui', () => ({
   DrawerBody: ({ children }: any) => <div data-testid="drawer-body">{children}</div>,
   DrawerHeader: ({ children }: any) => <div data-testid="drawer-header">{children}</div>,
   DrawerTitle: ({ children }: any) => <div data-testid="drawer-title">{children}</div>,
+  Alert: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  AlertAction: ({ children }: any) => <div>{children}</div>,
+  AlertDescription: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  Button: ({ children, ...props }: any) => (
+    <button type="button" {...props}>
+      {children}
+    </button>
+  ),
 }));
 
 import { DialogHost } from '../dialog-host.js';
@@ -270,5 +286,61 @@ describe('DialogHost', () => {
 
     expect(surfaceRuntime.close).toHaveBeenCalledWith('drawer-left');
     expect(surfaceRuntime.close).toHaveBeenCalledWith('drawer-right');
+  });
+
+  it('contains dialog body render failures inside a local node boundary', () => {
+    const scope = makeScope();
+    mocks.useCurrentPage.mockReturnValue({ modalContainer: 'page-modal' });
+    mocks.useCurrentSurfaceRuntime.mockReturnValue(
+      makeSurfaceRuntime([
+        {
+          id: 'dialog-crash-surface',
+          kind: 'dialog',
+          scope,
+          validationOwner: { scopeId: 'dialog-validation' },
+          actionScope: undefined,
+          componentRegistry: undefined,
+          ownerNodeInstance: undefined,
+          title: 'dialog-title',
+          body: 'dialog-crash',
+          surface: { body: 'dialog-crash' },
+        },
+      ]),
+    );
+
+    const { container } = render(<DialogHost />);
+
+    expect(container.querySelector('[data-slot="node-error-message"]')?.textContent).toContain(
+      'dialog-crash-surface:body',
+    );
+    expect(container.querySelector('[data-testid="dialog-title"]')?.textContent).toBe('dialog-title');
+  });
+
+  it('contains drawer body render failures inside a local node boundary', () => {
+    const scope = makeScope();
+    mocks.useCurrentPage.mockReturnValue({ modalContainer: 'page-modal' });
+    mocks.useCurrentSurfaceRuntime.mockReturnValue(
+      makeSurfaceRuntime([
+        {
+          id: 'drawer-crash-surface',
+          kind: 'drawer',
+          scope,
+          validationOwner: { scopeId: 'drawer-validation' },
+          actionScope: undefined,
+          componentRegistry: undefined,
+          ownerNodeInstance: undefined,
+          title: 'drawer-title',
+          body: 'drawer-crash',
+          surface: { body: 'drawer-crash' },
+        },
+      ]),
+    );
+
+    const { container } = render(<DialogHost />);
+
+    expect(container.querySelector('[data-slot="node-error-message"]')?.textContent).toContain(
+      'drawer-crash-surface:body',
+    );
+    expect(container.querySelector('[data-testid="drawer-title"]')?.textContent).toBe('drawer-title');
   });
 });

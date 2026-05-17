@@ -21,7 +21,12 @@ import {
   cn,
 } from '@nop-chaos/ui';
 import { resolveContainerElement } from './container-hooks.js';
+import { NodeErrorBoundary } from './node-error-boundary.js';
 import { useSyncExternalStoreWithSelector } from './use-sync-external-store-with-selector.js';
+
+function SurfaceBodyBoundary(props: { surfaceId: string; children: React.ReactNode }) {
+  return <NodeErrorBoundary nodeId={`${props.surfaceId}:body`}>{props.children}</NodeErrorBoundary>;
+}
 
 function sameSurfaces(left: SurfaceEntry[], right: SurfaceEntry[]) {
   if (left === right) {
@@ -153,7 +158,9 @@ function DialogView(props: {
             </DialogHeader>
           )}
           <DialogBody>
-            {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
+            <SurfaceBodyBoundary surfaceId={surface.id}>
+              {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
+            </SurfaceBodyBoundary>
           </DialogBody>
           {actionsNode ? <DialogFooter>{actionsNode}</DialogFooter> : null}
         </SurfaceScopeProviders>
@@ -248,7 +255,9 @@ function DrawerView(props: {
             </DrawerHeader>
           )}
           <DrawerBody>
-            {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
+            <SurfaceBodyBoundary surfaceId={surface.id}>
+              {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
+            </SurfaceBodyBoundary>
           </DrawerBody>
           {actionsNode ? <DrawerFooter>{actionsNode}</DrawerFooter> : null}
         </SurfaceScopeProviders>
