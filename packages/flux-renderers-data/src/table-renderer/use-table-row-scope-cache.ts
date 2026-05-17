@@ -12,10 +12,11 @@ interface RowScopePayload {
 interface RowScopeCacheState {
   scopes: Map<string, ScopeRef>;
   snapshots: Map<string, RowScopePayload>;
-  listeners: Set<() => void>;
 }
 
 const tableRowScopeCaches = new Map<string, RowScopeCacheState>();
+const tableRowScopeVersions = new Map<string, number>();
+const tableRowScopeListeners = new Map<string, Set<() => void>>();
 
 export function __getTableRowScopeCacheSizeForTests() {
   return tableRowScopeCaches.size;
@@ -33,14 +34,45 @@ function createRowScopeCacheState(): RowScopeCacheState {
   return {
     scopes: new Map<string, ScopeRef>(),
     snapshots: new Map<string, RowScopePayload>(),
-    listeners: new Set(),
   };
 }
 
-function notifyListeners(state: RowScopeCacheState) {
-  for (const listener of state.listeners) {
+function notifyListeners(cacheKey: string) {
+  for (const listener of tableRowScopeListeners.get(cacheKey) ?? []) {
     listener();
   }
+}
+
+function subscribeToCache(cacheKey: string, listener: () => void) {
+  let listeners = tableRowScopeListeners.get(cacheKey);
+  if (!listeners) {
+    listeners = new Set();
+    tableRowScopeListeners.set(cacheKey, listeners);
+  }
+
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0) {
+      tableRowScopeListeners.delete(cacheKey);
+    }
+  };
+}
+
+function getCacheVersion(cacheKey: string) {
+  return tableRowScopeVersions.get(cacheKey) ?? 0;
+}
+
+function bumpCacheVersion(cacheKey: string) {
+  tableRowScopeVersions.set(cacheKey, getCacheVersion(cacheKey) + 1);
+  notifyListeners(cacheKey);
+}
+
+function createRowScopeCacheSnapshot(
+  rowScopeCache: Map<string, ScopeRef>,
+  _structureVersion: number,
+): Map<string, ScopeRef> {
+  return new Map(rowScopeCache);
 }
 
 function disposeRowScope(disposeScope: (scopeId: string) => void, scope: ScopeRef | undefined) {
@@ -49,13 +81,6 @@ function disposeRowScope(disposeScope: (scopeId: string) => void, scope: ScopeRe
   }
 
   disposeScope(scope.id);
-}
-
-function subscribeToCache(state: RowScopeCacheState, listener: () => void) {
-  state.listeners.add(listener);
-  return () => {
-    state.listeners.delete(listener);
-  };
 }
 
 function publishRowScopePayload(
@@ -99,19 +124,18 @@ export function useTableRowScopeCache(
   const rowScopeCache = cacheState.scopes;
   const rowScopeSnapshots = cacheState.snapshots;
   const duplicateRowKeysRef = useRef<Set<string>>(new Set());
-  const structureVersionRef = useRef(0);
   const createScopeRef = useRef(helpers.createScope);
   const disposeScopeRef = useRef(helpers.disposeScope);
+
+  const structureVersion = useSyncExternalStore(
+    (listener) => subscribeToCache(cacheKey, listener),
+    () => getCacheVersion(cacheKey),
+  );
 
   useLayoutEffect(() => {
     createScopeRef.current = helpers.createScope;
     disposeScopeRef.current = helpers.disposeScope;
   }, [helpers.createScope, helpers.disposeScope]);
-
-  const structureVersion = useSyncExternalStore(
-    (listener) => subscribeToCache(cacheState, listener),
-    () => structureVersionRef.current,
-  );
 
   useLayoutEffect(() => {
     tableRowScopeCaches.set(cacheKey, cacheState);
@@ -125,6 +149,7 @@ export function useTableRowScopeCache(
         rowScopeSnapshots.clear();
         duplicateRowKeysRef.current.clear();
         tableRowScopeCaches.delete(cacheKey);
+        tableRowScopeVersions.delete(cacheKey);
       }
     };
   }, [cacheKey, cacheState, rowScopeCache, rowScopeSnapshots]);
@@ -187,12 +212,9 @@ export function useTableRowScopeCache(
     }
 
     if (structureChanged) {
-      structureVersionRef.current += 1;
-      notifyListeners(cacheState);
+      bumpCacheVersion(cacheKey);
     }
-  }, [cacheState, ownerKey, path, processedData, rowScopeCache, rowScopeSnapshots]);
+  }, [cacheKey, cacheState, ownerKey, path, processedData, rowScopeCache, rowScopeSnapshots]);
 
-  void structureVersion;
-
-  return rowScopeCache;
+  return createRowScopeCacheSnapshot(rowScopeCache, structureVersion);
 }

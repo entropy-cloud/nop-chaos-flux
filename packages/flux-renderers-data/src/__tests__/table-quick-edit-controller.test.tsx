@@ -168,6 +168,42 @@ describe('useTableQuickEditController', () => {
     expect(screen.getByTestId('dirty').textContent).toBe('false');
   });
 
+  it('preserves whole-row custom-body drafts when the configured field snapshot is unchanged', () => {
+    cleanup();
+    const rowScope = createRowScope({ name: 'Alice', status: 'draft' });
+    const helpers = createHelpers();
+    const rendered = render(
+      <ControllerHarness
+        field="name"
+        record={{ name: 'Alice', status: 'draft' }}
+        rowScope={rowScope}
+        helpers={helpers}
+        hasCustomBody
+        saveAction={{ action: 'save' }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'change-custom' }));
+    fireEvent.click(screen.getByRole('button', { name: 'mark-body-dirty' }));
+
+    expect((rowScope.get('record') as Record<string, unknown>).status).toBe('draft');
+    expect((screen.getByTestId('dirty').textContent)).toBe('true');
+
+    rendered.rerender(
+      <ControllerHarness
+        field="name"
+        record={{ name: 'Alice', status: 'draft' }}
+        rowScope={rowScope}
+        helpers={helpers}
+        hasCustomBody
+        saveAction={{ action: 'save' }}
+      />,
+    );
+
+    expect(screen.getByTestId('dirty').textContent).toBe('true');
+    expect((rowScope.get('record') as Record<string, unknown>).status).toBe('draft');
+  });
+
   it('opens dialog with saved value and ignores close while saving', async () => {
     cleanup();
     let resolveSave: (() => void) | undefined;

@@ -2,6 +2,47 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ActionSchema, RendererComponentProps, ScopeChange, ScopeRef, ScopeStore } from '@nop-chaos/flux-core';
 import type { TableSchema } from '../schemas.js';
 
+function areRecordsEqual(left: Record<string, unknown>, right: Record<string, unknown>): boolean {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  return leftKeys.every((key) => {
+    const leftValue = left[key];
+    const rightValue = right[key];
+
+    if (leftValue === rightValue) {
+      return true;
+    }
+
+    if (
+      leftValue &&
+      rightValue &&
+      typeof leftValue === 'object' &&
+      typeof rightValue === 'object' &&
+      !Array.isArray(leftValue) &&
+      !Array.isArray(rightValue)
+    ) {
+      return areRecordsEqual(
+        leftValue as Record<string, unknown>,
+        rightValue as Record<string, unknown>,
+      );
+    }
+
+    if (Array.isArray(leftValue) && Array.isArray(rightValue)) {
+      return (
+        leftValue.length === rightValue.length &&
+        leftValue.every((item, index) => Object.is(item, rightValue[index]))
+      );
+    }
+
+    return Object.is(leftValue, rightValue);
+  });
+}
+
 function setRecordPath(
   record: Record<string, unknown>,
   path: string,
@@ -111,6 +152,8 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
   const savingRef = useRef(false);
   const lastFieldRef = useRef(field);
   const lastRecordValueRef = useRef(initialValue);
+  const lastRecordRef = useRef<Record<string, unknown>>({ ...record });
+  const savedRecordRef = useRef<Record<string, unknown>>({ ...record });
   const draftRecordRef = useRef<Record<string, unknown>>({ ...record });
   const draftScopeStore = useMemo(
     () =>
@@ -207,24 +250,27 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     const nextValue = toOptionalDraftValue(record, field);
     const fieldChanged = lastFieldRef.current !== field;
     const valueChanged = lastRecordValueRef.current !== nextValue;
+    const recordChanged = !areRecordsEqual(lastRecordRef.current, record);
+    const honestReset = fieldChanged || (!hasCustomBody && valueChanged) || recordChanged;
 
     lastFieldRef.current = field;
     lastRecordValueRef.current = nextValue;
+    lastRecordRef.current = { ...record };
 
-    if (!fieldChanged && !valueChanged) {
-      draftRecordRef.current = { ...record };
+    if (!honestReset) {
       draftScopeStore.publish({ paths: field ? [`record.${field}`, 'record'] : ['record'], kind: 'update' });
       return;
     }
 
     draftRecordRef.current = { ...record };
+    savedRecordRef.current = { ...record };
     draftScopeStore.publish({ paths: field ? [`record.${field}`, 'record'] : ['record'], kind: 'update' });
     setDraftValue(nextValue);
     setSavedValue(nextValue);
     setBodyDirty(false);
     setDialogOpen(false);
     setSaveError(undefined);
-  }, [draftScopeStore, field, record]);
+  }, [draftScopeStore, field, hasCustomBody, record]);
 
   const dirty = hasCustomBody ? bodyDirty : draftValue !== savedValue;
 
@@ -235,7 +281,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
   }, [hasCustomBody]);
 
   const restoreSavedValue = useCallback(() => {
-    draftRecordRef.current = { ...record };
+    draftRecordRef.current = { ...savedRecordRef.current };
     draftScopeStore.publish({ paths: field ? [`record.${field}`, 'record'] : ['record'], kind: 'update' });
 
     if (hasCustomBody) {
@@ -244,14 +290,14 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     }
 
     setDraftValue(savedValue);
-  }, [draftScopeStore, field, hasCustomBody, record, savedValue]);
+  }, [draftScopeStore, field, hasCustomBody, savedValue]);
 
   const openDialog = useCallback(() => {
     setDraftValue(savedValue);
-    draftRecordRef.current = { ...record };
+    draftRecordRef.current = { ...savedRecordRef.current };
     draftScopeStore.publish({ paths: field ? [`record.${field}`, 'record'] : ['record'], kind: 'update' });
     setDialogOpen(true);
-  }, [draftScopeStore, field, record, savedValue]);
+  }, [draftScopeStore, field, savedValue]);
 
   const closeDialog = useCallback(() => {
     restoreSavedValue();
@@ -289,6 +335,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
       rowScope.update('record', committedRecord);
       const nextSavedValue = field ? toOptionalDraftValue(committedRecord, field) : draftValue;
       lastRecordValueRef.current = nextSavedValue;
+      savedRecordRef.current = { ...committedRecord };
       setSavedValue(nextSavedValue);
       setDraftValue(nextSavedValue);
       setBodyDirty(false);

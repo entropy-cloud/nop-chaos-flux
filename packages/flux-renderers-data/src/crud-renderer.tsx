@@ -104,10 +104,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     sortState,
   ]);
 
-  const resolvedSource = useMemo(
-    () => normalizeCrudSourceValue(schemaProps.source),
-    [schemaProps.source],
-  );
+  const resolvedSource = normalizeCrudSourceValue(schemaProps.source);
   const source = resolvedSource.rows.length > 0 ? resolvedSource.rows : EMPTY_ROWS;
   const effectiveQuery = queryState.refreshCount > 0 ? queryState.values : defaultQuery;
   const filteredRows = useMemo(

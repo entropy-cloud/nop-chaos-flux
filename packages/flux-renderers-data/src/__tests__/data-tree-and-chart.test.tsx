@@ -73,6 +73,32 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
     );
   });
 
+  it('adds an accessible name to the data tree root', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-and-chart-a11y-name"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tree',
+              title: 'Project tree',
+              data: [{ id: '1', label: 'Node 1' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('tree', { name: 'Project tree' })).toBeTruthy();
+    });
+  });
+
   it('publishes tree nodes through slot markers instead of internal nop region classes', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer();

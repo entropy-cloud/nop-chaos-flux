@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useMemo } from 'react';
+import { startTransition, useCallback, useMemo, useRef } from 'react';
 import { getIn, toRecord, type RendererEventHandler, type ScopeRef } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import type { CrudSchema } from './crud-schema.js';
@@ -127,9 +127,14 @@ export function useCrudQueryBridge(args: {
     onQuerySubmit,
     onQueryReset,
   } = args;
+  const submitSequenceRef = useRef(0);
 
   const submitQueryValues = useCallback(
-    (nextValues: Record<string, unknown>) => {
+    (nextValues: Record<string, unknown>, sequence = submitSequenceRef.current) => {
+      if (sequence !== submitSequenceRef.current) {
+        return false;
+      }
+
       if (scope) {
         scope.update(queryStatePath, {
           values: nextValues,
@@ -137,12 +142,14 @@ export function useCrudQueryBridge(args: {
         });
       }
 
-      if (shouldFetchOnQueryChange) {
+      if (shouldFetchOnQueryChange && sequence === submitSequenceRef.current) {
         onQuerySubmit?.(undefined, {
           scope,
           evaluationBindings: { query: nextValues },
         });
       }
+
+      return true;
     },
     [onQuerySubmit, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange],
   );
@@ -187,6 +194,8 @@ export function useCrudQueryBridge(args: {
   ]);
 
   const handleQuerySubmit = useCallback(async () => {
+    const submitSequence = submitSequenceRef.current + 1;
+    submitSequenceRef.current = submitSequence;
     const draftQuery = queryDraftStatePath ? toRecord(scope?.get?.(queryDraftStatePath)) : {};
     const handle = componentRegistry?.resolve({ componentId: queryFormId });
     if (handle?.capabilities?.hasMethod?.('getValues')) {
@@ -194,7 +203,7 @@ export function useCrudQueryBridge(args: {
         const validateResult = (await Promise.resolve(
           handle.capabilities.invoke('validate', undefined, {} as never),
         )) as { ok?: boolean };
-        if (!validateResult?.ok) {
+        if (submitSequence !== submitSequenceRef.current || !validateResult?.ok) {
           return;
         }
       }
@@ -202,13 +211,20 @@ export function useCrudQueryBridge(args: {
       const valuesResult = (await Promise.resolve(
         handle.capabilities.invoke('getValues', undefined, {} as never),
       )) as { ok?: boolean; data?: unknown };
+      if (submitSequence !== submitSequenceRef.current) {
+        return;
+      }
+
       if (valuesResult.ok && valuesResult.data && typeof valuesResult.data === 'object') {
-        submitQueryValues(toRecord(valuesResult.data));
+        submitQueryValues(toRecord(valuesResult.data), submitSequence);
         return;
       }
     }
 
-    submitQueryValues(Object.keys(draftQuery).length > 0 ? draftQuery : queryState.values);
+    submitQueryValues(
+      Object.keys(draftQuery).length > 0 ? draftQuery : queryState.values,
+      submitSequence,
+    );
   }, [componentRegistry, queryDraftStatePath, queryFormId, queryState.values, scope, submitQueryValues]);
 
   return {

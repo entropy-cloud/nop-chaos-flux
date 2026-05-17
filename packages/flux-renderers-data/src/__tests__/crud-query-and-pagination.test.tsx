@@ -3,6 +3,41 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ActionContext } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
+import { useCrudQueryBridge } from '../crud-renderer-ownership.js';
+
+function CrudQueryBridgeHarness(props: {
+  componentRegistry: {
+    resolve(args: { componentId: string }): {
+      capabilities?: {
+        hasMethod?(method: string): boolean;
+        invoke(method: string, args?: unknown, ctx?: unknown): unknown;
+      };
+    } | undefined;
+  };
+  scope: { get?(path: string): unknown; update(path: string, value: unknown): void };
+  onQuerySubmit?: ReturnType<typeof vi.fn>;
+}) {
+  const { handleQuerySubmit } = useCrudQueryBridge({
+    componentRegistry: props.componentRegistry,
+    queryFormId: 'query-form',
+    scope: props.scope as any,
+    queryStatePath: '$._query',
+    queryDraftStatePath: '$._query.$draft',
+    paginationStatePath: '$._pagination',
+    queryState: { values: {}, refreshCount: 2 },
+    paginationState: { currentPage: 1, pageSize: 10 },
+    defaultQuery: {},
+    shouldFetchOnQueryChange: true,
+    onQuerySubmit: props.onQuerySubmit as any,
+    onQueryReset: undefined,
+  });
+
+  return (
+    <button type="button" onClick={() => void handleQuerySubmit()}>
+      submit query
+    </button>
+  );
+}
 
 describe('CRUD query and pagination', () => {
   it('updates $crud query and visible rows after search and reset actions', async () => {
@@ -292,6 +327,75 @@ describe('CRUD query and pagination', () => {
 
     await waitFor(() => {
       expect(notify).toHaveBeenCalledWith('warning', 'Query submit failed');
+    });
+  });
+
+  it('applies only the latest query submit result when submits overlap', async () => {
+    cleanup();
+    const update = vi.fn();
+    const onQuerySubmit = vi.fn();
+    const validateResolvers: Array<() => void> = [];
+    const getValuesResolvers: Array<() => void> = [];
+    let validateCallCount = 0;
+
+    const componentRegistry = {
+      resolve: () => ({
+        capabilities: {
+          hasMethod(method: string) {
+            return method === 'validate' || method === 'getValues';
+          },
+          invoke(method: string) {
+            if (method === 'validate') {
+              validateCallCount += 1;
+              return new Promise<{ ok: boolean }>((resolve) => {
+                validateResolvers.push(() => resolve({ ok: true }));
+              });
+            }
+
+            return new Promise<{ ok: boolean; data: Record<string, unknown> }>((resolve) => {
+              getValuesResolvers.push(() =>
+                resolve({
+                  ok: true,
+                  data: { keyword: validateCallCount === 1 ? 'first' : 'second' },
+                }),
+              );
+            });
+          },
+        },
+      }),
+    };
+
+    render(
+      <CrudQueryBridgeHarness
+        componentRegistry={componentRegistry}
+        scope={{ get: () => undefined, update } as any}
+        onQuerySubmit={onQuerySubmit}
+      />,
+    );
+
+    const submitButton = screen.getByRole('button', { name: 'submit query' });
+    fireEvent.click(submitButton);
+    fireEvent.click(submitButton);
+
+    validateResolvers[0]?.();
+    validateResolvers[1]?.();
+
+    await waitFor(() => {
+      expect(getValuesResolvers).toHaveLength(1);
+    });
+
+    getValuesResolvers[0]?.();
+
+    await waitFor(() => {
+      expect(update).toHaveBeenCalledTimes(1);
+      expect(update).toHaveBeenCalledWith('$._query', {
+        values: { keyword: 'second' },
+        refreshCount: 3,
+      });
+      expect(onQuerySubmit).toHaveBeenCalledTimes(1);
+      expect((onQuerySubmit.mock.calls[0] as any)?.[1]?.evaluationBindings).toEqual({
+        query: { keyword: 'second' },
+      });
     });
   });
 

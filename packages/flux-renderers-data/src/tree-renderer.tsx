@@ -333,6 +333,7 @@ function TreeNodeRenderer(props: {
 
 export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const schemaProps = props.props as TreeSchema;
+  const authoredSchema = props.templateNode.schema as TreeSchema | undefined;
   const data = toTreeNodes(schemaProps.data);
   const childrenKey =
     typeof schemaProps.childrenKey === 'string' && schemaProps.childrenKey
@@ -350,6 +351,10 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const emptyContent = resolveRendererSlotContent(props, 'empty', {
     fallback: t('flux.common.noData'),
   });
+  const treeLabel = String(
+    (schemaProps.label ?? authoredSchema?.label ?? authoredSchema?.title ?? props.id ?? 'Tree') ||
+      'Tree',
+  );
   const statusPath =
     typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;
   const repeatedTemplateId = createTreeNodeRepeatedTemplateId(props.id);
@@ -454,6 +459,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}
         role="tree"
+        aria-label={treeLabel}
       >
         {hasRendererSlotContent(emptyContent) ? (
           <div data-slot="tree-empty">{emptyContent}</div>
@@ -469,6 +475,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       role="tree"
+      aria-label={treeLabel}
     >
       {data.map((node, index) => (
         <TreeNodeRenderer

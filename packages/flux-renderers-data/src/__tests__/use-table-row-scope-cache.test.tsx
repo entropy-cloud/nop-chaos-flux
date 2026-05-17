@@ -230,7 +230,7 @@ describe('useTableRowScopeCache', () => {
     expect(__hasTableRowScopeCacheForTests(secondCacheKey)).toBe(false);
   });
 
-  it('keeps the cache map reference stable when only row payloads change', async () => {
+  it('keeps existing row scopes stable when only row payloads change', async () => {
     const cacheRefs: Array<Map<string, ScopeRef>> = [];
     const { rerender } = render(
       <HookHarness
@@ -243,7 +243,9 @@ describe('useTableRowScopeCache', () => {
       />,
     );
 
-    await waitFor(() => expect(cacheRefs[0]?.get('r1')).toBeTruthy());
+    await waitFor(() => expect(cacheRefs.at(-1)?.get('r1')).toBeTruthy());
+    const populatedCacheRef = cacheRefs.at(-1);
+    const populatedScope = populatedCacheRef?.get('r1');
 
     rerender(
       <HookHarness
@@ -256,8 +258,9 @@ describe('useTableRowScopeCache', () => {
       />,
     );
 
-    await waitFor(() => expect(cacheRefs).toHaveLength(2));
-    expect(cacheRefs[1]).toBe(cacheRefs[0]);
+    await waitFor(() => expect(cacheRefs.length).toBeGreaterThan(1));
+    expect(cacheRefs.at(-1)).not.toBe(populatedCacheRef);
+    expect(cacheRefs.at(-1)?.get('r1')).toBe(populatedScope);
   });
 
   it('deduplicates colliding row keys into distinct cache entries', async () => {
