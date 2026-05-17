@@ -10,6 +10,7 @@ import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { registerWordEditorRenderers, defineWordEditorPageSchema } from '../index.js';
 import * as wordEditorActionProvider from '../word-editor-action-provider.js';
 import { WordEditorPage } from '../word-editor-page.js';
+import { RuntimeContext, ScopeContext } from '../../../flux-react/src/contexts.js';
 
 const mockedCore = vi.hoisted(() => ({
   captureDocumentSnapshotMock: vi.fn(() => ({
@@ -449,24 +450,41 @@ describe('WordEditorPage actions and events', () => {
     const onBack = vi.fn(async () => ({ ok: true }));
 
     render(
-      <WordEditorPage
-        id="word-editor"
-        path="$.body[0]"
-        schema={{ type: 'word-editor-page' } as any}
-        templateNode={{ validationOwnerPlan: undefined } as any}
-        node={{ scope: { parent: null } } as any}
-        props={{} as any}
-        meta={{} as any}
-        regions={{} as any}
-        events={{ onBack }}
-        helpers={{
-          render: vi.fn(),
-          evaluate: vi.fn(),
-          createScope: vi.fn(),
-          dispatch: vi.fn(),
-          executeSource: vi.fn(),
-        } as any}
-      />,
+      <RuntimeContext.Provider value={{ env: { notify: vi.fn() } } as any}>
+        <ScopeContext.Provider
+          value={{
+            id: 'word-editor-scope',
+            path: '$.body[0]',
+            value: {},
+            get: () => undefined,
+            has: () => false,
+            readOwn: () => ({}),
+            readVisible: () => ({}),
+            materializeVisible: () => ({}),
+            update: () => undefined,
+            merge: () => undefined,
+          } as any}
+        >
+          <WordEditorPage
+            id="word-editor"
+            path="$.body[0]"
+            schema={{ type: 'word-editor-page' } as any}
+            templateNode={{ validationOwnerPlan: undefined } as any}
+            node={{ scope: { parent: null } } as any}
+            props={{} as any}
+            meta={{} as any}
+            regions={{} as any}
+            events={{ onBack }}
+            helpers={{
+              render: vi.fn(),
+              evaluate: vi.fn(),
+              createScope: vi.fn(),
+              dispatch: vi.fn(),
+              executeSource: vi.fn(),
+            } as any}
+          />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: '返回' }));
@@ -528,6 +546,92 @@ describe('WordEditorPage actions and events', () => {
     expect(consoleError).not.toHaveBeenCalled();
 
     consoleError.mockRestore();
+    providerSpy.mockRestore();
+  });
+
+  it('notifies when save resolves ok:false', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    const notify = vi.fn();
+    const invoke = vi.fn(async () => ({ ok: false, error: new Error('Save rejected') }));
+    const providerSpy = vi
+      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
+      .mockReturnValue({
+        kind: 'host',
+        listMethods() {
+          return ['save'];
+        },
+        invoke,
+      } as any);
+
+    renderWordEditor({ env: createEnv(notify) });
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('warning', 'Save rejected');
+    });
+
+    providerSpy.mockRestore();
+  });
+
+  it('notifies when save throws', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    const notify = vi.fn();
+    const invoke = vi.fn(async () => {
+      throw new Error('Save crashed');
+    });
+    const providerSpy = vi
+      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
+      .mockReturnValue({
+        kind: 'host',
+        listMethods() {
+          return ['save'];
+        },
+        invoke,
+      } as any);
+
+    renderWordEditor({ env: createEnv(notify) });
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('warning', 'Save crashed');
+    });
+
+    providerSpy.mockRestore();
+  });
+
+  it('does not notify when save aborts with AbortError', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    const notify = vi.fn();
+    const invoke = vi.fn(async () => {
+      throw new DOMException('aborted', 'AbortError');
+    });
+    const providerSpy = vi
+      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
+      .mockReturnValue({
+        kind: 'host',
+        listMethods() {
+          return ['save'];
+        },
+        invoke,
+      } as any);
+
+    renderWordEditor({ env: createEnv(notify) });
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+
+    await waitFor(() => {
+      expect(invoke).toHaveBeenCalledTimes(1);
+    });
+    expect(notify).not.toHaveBeenCalled();
+
     providerSpy.mockRestore();
   });
 

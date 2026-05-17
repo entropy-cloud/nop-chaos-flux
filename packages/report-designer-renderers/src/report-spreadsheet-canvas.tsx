@@ -16,6 +16,10 @@ import type {
 } from '@nop-chaos/report-designer-core';
 import { createReportDesignerBridge } from './bridge.js';
 
+function getFailureMessage(error: unknown) {
+  return error instanceof Error && error.message ? error.message : t('flux.common.saveFailed');
+}
+
 const ROWS = 30;
 const COLS = 10;
 
@@ -53,6 +57,7 @@ export function ReportSpreadsheetCanvas({
     selectedCell,
     editingCell,
     editValue,
+    editSaveState,
     editingCellRef,
     fillHandleState,
     isFillPreview,
@@ -155,12 +160,23 @@ export function ReportSpreadsheetCanvas({
         return;
       }
       const addr = cellAddress(targetCell.row, targetCell.col);
-      await spreadsheetBridge.dispatch({
+      const previousCellValue = ssSnapshot.activeSheet?.cells?.[addr]?.value;
+      const spreadsheetResult = await spreadsheetBridge.dispatch({
         type: 'spreadsheet:setCellValue',
         cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
         value: `\${${dragState.payload.fieldId}}`,
       });
-      await designerBridge.dispatchDesigner({
+
+      if (spreadsheetResult.cancelled) {
+        throw new Error('Field drop cancelled');
+      }
+      if (!spreadsheetResult.ok) {
+        throw spreadsheetResult.error instanceof Error
+          ? spreadsheetResult.error
+          : new Error('Field drop failed before designer update');
+      }
+
+      const designerResult = await designerBridge.dispatchDesigner({
         type: 'report-designer:dropFieldToTarget',
         field: dragState.payload,
         target: {
@@ -168,6 +184,31 @@ export function ReportSpreadsheetCanvas({
           cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
         },
       });
+
+      if (designerResult.cancelled || !designerResult.ok) {
+        const rollbackResult =
+          previousCellValue == null
+            ? await spreadsheetBridge.dispatch({
+                type: 'spreadsheet:clearCells',
+                target: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
+                clearValues: true,
+              })
+            : await spreadsheetBridge.dispatch({
+                type: 'spreadsheet:setCellValue',
+                cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
+                value: previousCellValue,
+              });
+
+        if (!rollbackResult.ok) {
+          throw rollbackResult.error instanceof Error
+            ? rollbackResult.error
+            : new Error('Field drop rollback failed');
+        }
+
+        throw designerResult.error instanceof Error
+          ? designerResult.error
+          : new Error(designerResult.cancelled ? 'Field drop cancelled' : 'Field drop failed');
+      }
     }).catch((error: unknown) => {
       reportRuntimeHostIssue({
         env,
@@ -181,10 +222,10 @@ export function ReportSpreadsheetCanvas({
       });
       env.notify?.(
         'warning',
-        error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
+        getFailureMessage(error),
       );
     });
-  }, [core, designerBridge, env, handleFieldDrop, sheetId, spreadsheetBridge]);
+  }, [core, designerBridge, env, handleFieldDrop, sheetId, spreadsheetBridge, ssSnapshot.activeSheet?.cells]);
 
   return (
     <div
@@ -209,6 +250,7 @@ export function ReportSpreadsheetCanvas({
         selection={ssSnapshot.selection}
         editingCell={editingCell}
         editValue={editValue}
+        editSaveState={editSaveState}
         fillHandleState={fillHandleState}
         isInRange={isInRange}
         isFillPreview={isFillPreview}

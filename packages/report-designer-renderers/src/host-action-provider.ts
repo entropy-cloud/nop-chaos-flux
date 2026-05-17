@@ -64,9 +64,11 @@ export function createReportDesignerActionProvider(
         return toReportDesignerActionResult(result);
       } catch (error) {
         console.warn(`[report-designer] action ${method} failed`, error);
+        const normalizedError = toActionError(error);
         return {
           ok: false,
-          error: toActionError(error),
+          error: normalizedError,
+          cause: error,
         } satisfies ActionResult;
       }
     },

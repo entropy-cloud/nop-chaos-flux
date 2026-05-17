@@ -40,4 +40,17 @@ describe('report designer host action provider', () => {
   it('exports the report-designer action provider from the package root', () => {
     expect(typeof createReportDesignerActionProvider).toBe('function');
   });
+
+  it('preserves thrown error objects as both error and cause fidelity', async () => {
+    const thrown = new Error('Host dispatch crashed');
+    const provider = createReportDesignerActionProvider(async () => {
+      throw thrown;
+    });
+
+    const result = await provider.invoke('save', {}, {} as any);
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe(thrown);
+    expect((result as { cause?: unknown }).cause).toBe(thrown);
+  });
 });

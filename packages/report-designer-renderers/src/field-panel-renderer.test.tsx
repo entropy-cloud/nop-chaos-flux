@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
+import * as FluxCore from '@nop-chaos/flux-core';
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
 import { registerReportDesignerRenderers } from './index.js';
 import { ReportFieldPanelRenderer } from './field-panel-renderer.js';
@@ -287,6 +288,7 @@ describe('ReportFieldPanelRenderer', () => {
   });
 
   it('notifies when keyboard insertion fails', async () => {
+    const reportRuntimeHostIssueSpy = vi.spyOn(FluxCore, 'reportRuntimeHostIssue');
     const notify = vi.fn();
     const invoke = vi.fn().mockRejectedValue(new Error('Insert failed'));
     const createScope = vi.fn(() => ({ id: 'field-scope' }));
@@ -335,10 +337,21 @@ describe('ReportFieldPanelRenderer', () => {
 
     await waitFor(() => {
       expect(notify).toHaveBeenCalledWith('warning', 'Insert failed');
+      expect(reportRuntimeHostIssueSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(Error),
+          phase: 'action',
+          path: 'page.body.0',
+          details: { operation: 'report-field-panel-insert' },
+        }),
+      );
     });
+
+    reportRuntimeHostIssueSpy.mockRestore();
   });
 
   it('notifies when keyboard insertion resolves ok:false', async () => {
+    const reportRuntimeHostIssueSpy = vi.spyOn(FluxCore, 'reportRuntimeHostIssue');
     const notify = vi.fn();
     const invoke = vi.fn().mockResolvedValue({ ok: false, error: new Error('Resolved insert failed') });
     const createScope = vi.fn(() => ({ id: 'field-scope' }));
@@ -387,7 +400,17 @@ describe('ReportFieldPanelRenderer', () => {
 
     await waitFor(() => {
       expect(notify).toHaveBeenCalledWith('warning', 'Resolved insert failed');
+      expect(reportRuntimeHostIssueSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(Error),
+          phase: 'action',
+          path: 'page.body.0',
+          details: { operation: 'report-field-panel-insert' },
+        }),
+      );
     });
+
+    reportRuntimeHostIssueSpy.mockRestore();
   });
 
   it('ships package-owned field panel styling markers', () => {

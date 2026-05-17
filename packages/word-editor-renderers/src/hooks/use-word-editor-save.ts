@@ -1,6 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import type { ActionNamespaceProvider } from '@nop-chaos/flux-core';
-import { useRendererEnv } from '@nop-chaos/flux-react';
+import type { ActionContext, ActionNamespaceProvider } from '@nop-chaos/flux-core';
+import {
+  useCurrentActionScope,
+  useCurrentComponentRegistry,
+  useCurrentPage,
+  useCurrentSurfaceRuntime,
+  useRenderScope,
+  useRendererEnv,
+  useRendererRuntime,
+} from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 
 type RendererEnv = ReturnType<typeof useRendererEnv>;
@@ -16,6 +24,12 @@ export function useWordEditorSave({ actionProvider, env, mountedRef }: UseWordEd
   const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingRef = useRef(false);
   const saveAbortRef = useRef<AbortController | null>(null);
+  const runtime = useRendererRuntime();
+  const scope = useRenderScope();
+  const actionScope = useCurrentActionScope();
+  const componentRegistry = useCurrentComponentRegistry();
+  const page = useCurrentPage();
+  const surfaceRuntime = useCurrentSurfaceRuntime();
 
   useEffect(() => {
     return () => {
@@ -31,8 +45,17 @@ export function useWordEditorSave({ actionProvider, env, mountedRef }: UseWordEd
     saveAbortRef.current?.abort();
     const controller = new AbortController();
     saveAbortRef.current = controller;
+    const actionContext: ActionContext = {
+      runtime,
+      scope,
+      signal: controller.signal,
+      actionScope,
+      componentRegistry,
+      page,
+      surfaceRuntime,
+    };
     try {
-      const result = await actionProvider.invoke('save', undefined, { signal: controller.signal } as any);
+      const result = await actionProvider.invoke('save', undefined, actionContext);
       if (!mountedRef.current) return;
 
       if (result.ok) {
@@ -73,7 +96,17 @@ export function useWordEditorSave({ actionProvider, env, mountedRef }: UseWordEd
       }
       isSavingRef.current = false;
     }
-  }, [actionProvider, env, mountedRef]);
+  }, [
+    actionProvider,
+    actionScope,
+    componentRegistry,
+    env,
+    mountedRef,
+    page,
+    runtime,
+    scope,
+    surfaceRuntime,
+  ]);
 
   return { handleSave, saveMessage };
 }
