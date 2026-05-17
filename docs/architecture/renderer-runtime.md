@@ -92,6 +92,7 @@ The following are architecture-level constraints distilled from historical regre
 - Scope identity and lifecycle must stay stable. Fragment/dialog render paths should avoid unnecessary scope recreation and must preserve parent-child reactivity when parent scope data changes.
 - React host effects should not republish owner summaries that already belong to runtime owners. For example, `DialogHost` may render the mounted surface tree, but `statusPath` publication belongs to `SurfaceRuntime` so React rendering does not create a second source of truth or write to the wrong scope.
 - Surface-family cleanup follows the same runtime-owned summary contract for both declarative and action-opened entries: close/unmount writes the closed summary `{ open: false, active: false, opening: false, closing: false }` through `SurfaceRuntime`, not `undefined`.
+- Surface body rendering must preserve local crash containment. Dialog/drawer body content should be wrapped in a node-level error boundary so one failing surface body cannot collapse the root schema tree or sibling surfaces.
 
 Use `docs/references/architecture-guardrails-from-bugs.md` for concrete anti-patterns, regression examples, and verification checks.
 

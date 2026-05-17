@@ -111,6 +111,7 @@ Two additional field-level concerns are now part of the design:
 
 - **`lazyEval`**: the field value is compiled into `TemplateNode.structuralFields` instead of `propsProgram`, and the renderer evaluates it at runtime via `helpers.evaluateCompiled()` with a custom scope. This is the correct mechanism for repeated-item data payloads (e.g. `loop.itemData`) where the field has a single fixed set of runtime params.
 - **`compile` (custom compilation function)**: a renderer-provided function that takes over compilation for a specific field. The external compiler passes the raw value and a compilation context; the renderer definition decides which sub-paths to compile, which to leave as raw schema, and how the result is structured. This is the correct mechanism for "schema-within-a-prop" fields where the prop contains nested template schemas that should not be expression-evaluated at the parent scope.
+- if `SchemaFieldRule.compile` throws, the failure is part of the current node's compile contract rather than a recoverable field omission: strict compilation throws a real compile failure, while tolerant `continueOnError` compilation replaces the current node with an explicit compile-failure surface instead of rendering the original renderer with a partially missing prop bag
 
 ### When to use `lazyEval` vs `compile` vs neither
 

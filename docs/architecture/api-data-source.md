@@ -261,6 +261,8 @@ Current baseline note:
 - request preparation is split into explicit helpers, but the runtime now converges those helpers into one canonical executable request shape before fetch
 - dedup and runtime-local cache coordination are keyed by that final executable request semantics rather than only by the original declarative `ApiSchema`
 - executable request canonicalization normalizes `params` into the final URL and removes `params` from the fetcher-facing request object so equivalent `url + params` forms share the same identity
+- request-side `OperationControl.timeout` is now enforced by `executeRequestWithControl(...)`; timeout composes with the parent abort signal, retries rerun fresh timed attempts, and the final timeout surfaces as a `TimeoutError` instead of a silent hang
+- default cache identity now keeps bounded stringify cost limits without accepting silent collisions: when request `data` or `headers` exceed the stringify depth/node budget, cache-key generation appends a collision-resistant digest rather than aliasing on the raw sentinel alone
 - adaptor expressions and object-shaped runtime values are now cached by source/object identity on the hot path so repeated dispatch/request execution avoids ad hoc recompilation where schema identity is stable
 - ajax-side API monitor callbacks should observe the final executable request shape, not the pre-canonical declarative request object, so diagnostics line up with what fetch/dedup/cache actually execute
 - current source-runtime baseline now includes a runtime-owned source registry scoped by `ScopeRef.id`; `DataSourceRenderer` only registers/disposes entries while runtime owns controller start/stop and replacement semantics

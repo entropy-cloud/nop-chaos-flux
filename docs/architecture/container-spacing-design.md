@@ -16,6 +16,11 @@ Three layers, each independently overridable:
 2. **Default spacing CSS** — `flux-react/default-spacing.css` in `@layer base`, consuming the tokens. Tailwind utilities (`@layer utilities`) always override.
 3. **Renderer integration** — `gap` semantic prop on Form/FieldSet and Container, with `data-flex` on Container marking the semantic flex-child path while default spacing still stays CSS-owned.
 
+Facade bundle note:
+
+- `@nop-chaos/flux` facade styling now composes the canonical package CSS sources via `@import '@nop-chaos/flux-react/default-spacing.css'` and `@import '@nop-chaos/flux-renderers-form/form-renderers.css'` instead of maintaining a hand-copied duplicate selector set
+- facade-local CSS should stay limited to bundle-only root wrappers or truly facade-specific rules; field/form spacing selectors continue to be owned by the canonical package stylesheets above
+
 ## Spacing Tokens
 
 Defined in `packages/theme-tokens/src/styles.css` `:root` block:
