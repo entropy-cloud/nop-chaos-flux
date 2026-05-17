@@ -4,7 +4,6 @@ import type { CodeEditorSchema } from './types.js';
 import {
   CodeEditorRenderer,
   codeEditorRendererDefinition as _codeEditorRendererDefinition,
-  codeEditorFieldRules,
 } from './code-editor-renderer.js';
 
 const LazyCodeEditorRenderer = createLazyRendererComponent<CodeEditorSchema>(
@@ -57,7 +56,7 @@ export {
 export { useCodeMirror } from './use-code-mirror.js';
 export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror.js';
 
-export { CodeEditorRenderer, codeEditorFieldRules };
+export { CodeEditorRenderer };
 export const codeEditorRendererDefinition = {
   ..._codeEditorRendererDefinition,
   component: LazyCodeEditorRenderer,

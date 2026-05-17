@@ -182,6 +182,38 @@ describe('controller inspector advanced DOM and registry lookup', () => {
     expect(ctrl.inspectByCid(702)).toBeUndefined();
   });
 
+  it('inspectByCid preserves observable trace when capability-store enrichment throws', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-enrichment-failure', enabled: true });
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    ctrl.setComponentRegistry({
+      id: 'reg-enrichment',
+      getHandleByCid: () => ({
+        id: 'handle-800',
+        name: 'form',
+        type: 'form',
+        capabilities: {
+          store: {
+            getState() {
+              throw new Error('store exploded');
+            },
+          },
+        },
+      }),
+      getHandleDebugData: () => undefined,
+    } as never);
+
+    const result = ctrl.inspectByCid(800);
+
+    expect(result).toMatchObject({ cid: 800, mounted: true, handleId: 'handle-800' });
+    expect(consoleWarn).toHaveBeenCalledWith(
+      '[nop-debugger] inspector enrichment failed',
+      expect.any(Error),
+    );
+
+    consoleWarn.mockRestore();
+  });
+
   it('getComponentTree enumerates mounted registry snapshot entries even without matching DOM elements', () => {
     const ctrl = createNopDebugger({ id: 'inspect-component-tree', enabled: true });
     const mockRegistry = {

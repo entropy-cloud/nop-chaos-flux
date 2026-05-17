@@ -12,6 +12,14 @@ import type {
   NopExpressionEvaluationResult,
 } from './types.js';
 
+function reportInspectorDiagnostic(error: unknown) {
+  try {
+    console.warn('[nop-debugger] inspector enrichment failed', error);
+  } catch {
+    void 0;
+  }
+}
+
 function pickRecord(source: Record<string, unknown> | undefined, keys: readonly string[]) {
   if (!source) {
     return undefined;
@@ -175,8 +183,8 @@ export function buildInspectResult(
         submitting: state.submitting ?? false,
       };
       result.scopeData = state.values ?? {};
-    } catch {
-      void 0;
+    } catch (error) {
+      reportInspectorDiagnostic(error);
     }
   }
 
