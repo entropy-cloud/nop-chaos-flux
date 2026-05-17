@@ -1,5 +1,18 @@
 import type { ComponentType } from 'react';
-import type { ActionContext, ApiRequestContext, RendererEnv, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+import type {
+  ActionContext,
+  ApiRequestContext,
+  ApiResponse,
+  BaseSchema,
+  ExecutableApiRequest,
+  RendererDefinition,
+  RendererEnv,
+  RendererRegistry,
+  SchemaInput,
+  SchemaObject,
+  SchemaRendererProps,
+  SchemaValue,
+} from '@nop-chaos/flux-core';
 
 export type FluxSchemaValue = SchemaValue;
 
@@ -7,59 +20,27 @@ export interface FluxSchemaObject extends SchemaObject {
   [key: string]: FluxSchemaValue;
 }
 
-export interface FluxSchemaNode {
-  type: string;
-  [key: string]: FluxSchemaValue;
-}
+export type FluxSchemaNode = BaseSchema;
 
-export type FluxSchema = FluxSchemaNode | FluxSchemaNode[];
+export type FluxSchema = SchemaInput;
 
-export interface FluxApiRequest {
-  url: string;
-  method?: string;
-  data?: FluxSchemaValue;
-  headers?: Record<string, string>;
-}
+export type FluxApiRequest = ExecutableApiRequest;
 
 export type FluxApiRequestContext = ApiRequestContext;
 
-export interface FluxApiResponse<T = unknown> {
-  ok: boolean;
-  status: number;
-  data: T;
-  headers?: Record<string, string>;
-  raw?: unknown;
-}
+export type FluxApiResponse<T = unknown> = ApiResponse<T>;
 
-export interface FluxRendererEnv extends Omit<RendererEnv, 'fetcher'> {
-  fetcher: <T = unknown>(
-    api: FluxApiRequest,
-    ctx: FluxApiRequestContext,
-  ) => Promise<FluxApiResponse<T>>;
-  [key: string]: unknown;
-}
+export type FluxRendererEnv = RendererEnv;
 
-export interface FluxRendererDefinition {
-  type: string;
-  component?: (...args: any[]) => unknown;
-  reactComponent?: (...args: any[]) => unknown;
-  [key: string]: unknown;
-}
+export type FluxRendererDefinition = RendererDefinition;
 
-export interface FluxRendererRegistry {
-  register(definition: FluxRendererDefinition, options?: { override?: boolean }): void;
-  get(type: string): FluxRendererDefinition | undefined;
-  has(type: string): boolean;
-  list(): FluxRendererDefinition[];
-}
+export type FluxRendererRegistry = RendererRegistry;
 
-export interface FluxSchemaRendererProps {
+export interface FluxSchemaRendererProps
+  extends Omit<SchemaRendererProps, 'schema' | 'env' | 'onActionError' | 'formulaCompiler' | 'registry'> {
   schema: FluxSchema;
-  schemaUrl: string;
-  env: FluxRendererEnv;
-  data?: Record<string, unknown>;
-  strictValidation?: boolean;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
+  env: FluxRendererEnv;
 }
 
 export type FluxSchemaRendererComponent = ComponentType<FluxSchemaRendererProps>;

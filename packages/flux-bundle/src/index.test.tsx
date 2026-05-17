@@ -52,6 +52,15 @@ describe('@nop-chaos/flux public entry contract', () => {
     expect(typeof definition?.component).toBe('function');
   });
 
+  it('ships narrowed public type declarations for env and registry bridges', () => {
+    const publicTypes = readFileSync('types/public-types.d.ts', 'utf8');
+
+    expect(publicTypes).toContain('export type FluxRendererEnv = RendererEnv;');
+    expect(publicTypes).toContain('export type FluxRendererRegistry = RendererRegistry;');
+    expect(publicTypes).toContain('export type FluxApiRequest = ExecutableApiRequest;');
+    expect(publicTypes).not.toContain('as unknown as');
+  });
+
   it('renders the default schema stack through the facade wrapper', async () => {
     const SchemaRenderer = createFluxSchemaRenderer();
 

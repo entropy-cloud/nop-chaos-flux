@@ -1,6 +1,5 @@
 import React from 'react';
-import { createRendererRegistry, type RendererRegistry, type SchemaInput } from '@nop-chaos/flux-core';
-import type { ActionContext, RendererEnv } from '@nop-chaos/flux-core';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createDefaultEnv, createSchemaRenderer } from '@nop-chaos/flux-react';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
@@ -31,24 +30,19 @@ export type {
 
 export const FLUX_ROOT_CLASS = 'nop-flux-root';
 
-function asRendererRegistry(registry: FluxRendererRegistry): RendererRegistry {
-  return registry as RendererRegistry;
-}
-
 export function registerDefaultFluxRenderers(registry: FluxRendererRegistry): FluxRendererRegistry {
-  const resolvedRegistry = asRendererRegistry(registry);
-  registerBasicRenderers(resolvedRegistry);
-  registerFormRenderers(resolvedRegistry);
-  registerDataRenderers(resolvedRegistry);
+  registerBasicRenderers(registry);
+  registerFormRenderers(registry);
+  registerDataRenderers(registry);
   return registry;
 }
 
 export function createFluxRendererRegistry(): FluxRendererRegistry {
-  return registerDefaultFluxRenderers(createRendererRegistry() as FluxRendererRegistry);
+  return registerDefaultFluxRenderers(createRendererRegistry());
 }
 
 export function createDefaultFluxEnv(input?: Partial<FluxRendererEnv>): FluxRendererEnv {
-  return createDefaultEnv(input as unknown as Partial<RendererEnv>) as unknown as FluxRendererEnv;
+  return createDefaultEnv(input);
 }
 
 export function createFluxSchemaRendererWithRegistry(
@@ -56,20 +50,19 @@ export function createFluxSchemaRendererWithRegistry(
 ): FluxSchemaRendererComponent {
   const SchemaRenderer = createSchemaRenderer();
   const formulaCompiler = createFormulaCompiler();
-  const resolvedRegistry = asRendererRegistry(registry);
 
   return function FluxSchemaRenderer(props: FluxSchemaRendererProps) {
     return (
       <div className={FLUX_ROOT_CLASS}>
         <SchemaRenderer
-          schema={props.schema as SchemaInput}
+          schema={props.schema}
           schemaUrl={props.schemaUrl}
-          env={props.env as unknown as RendererEnv}
+          env={props.env}
           data={props.data}
           formulaCompiler={formulaCompiler}
-          registry={resolvedRegistry}
+          registry={registry}
           strictValidation={props.strictValidation}
-          onActionError={props.onActionError as ((error: unknown, ctx: ActionContext) => void) | undefined}
+          onActionError={props.onActionError}
         />
       </div>
     );
