@@ -241,6 +241,14 @@ describe('createValidationError', () => {
     expect(err.ownerPath).toBe('form.root');
   });
 
+  it('allows preserving an original failure cause via overrides', () => {
+    const cause = { code: 'E_VALIDATION' };
+    const err = createValidationError(field, compiledRule, 'Required', {
+      cause,
+    });
+    expect(err.cause).toBe(cause);
+  });
+
   it('allows setting relatedPaths via overrides', () => {
     const err = createValidationError(field, compiledRule, 'Required', {
       relatedPaths: ['password'],

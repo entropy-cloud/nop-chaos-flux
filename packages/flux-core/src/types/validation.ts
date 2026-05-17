@@ -30,6 +30,7 @@ export interface ValidationError {
   rule: ValidationRule['kind'];
   ruleId?: string;
   ownerPath?: string;
+  cause?: unknown;
   sourceKind?:
     | 'field'
     | 'object'

@@ -44,13 +44,13 @@ export async function executeRuntimeValidationRule(
     }
 
     if (result.ok === false) {
+      const message =
+        result.error == null
+          ? `${field.label ?? field.path} failed async validation`
+          : String(result.error);
       throw result.error instanceof Error
         ? result.error
-        : new Error(
-            result.error == null
-              ? `${field.label ?? field.path} failed async validation`
-              : String(result.error),
-          );
+        : new Error(message, result.error == null ? undefined : { cause: result.error });
     }
 
     const adaptedData = result.data;

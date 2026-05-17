@@ -230,7 +230,7 @@ export function buildFormOwnerRuntime(input: {
     inputValue: ApplyScopeChangesInput,
   ): Promise<FormValidationResult> {
     if (input.sharedState.lifecycleState === 'disposed') {
-      return { ok: true, errors: [], fieldErrors: {} };
+      return createLifecycleBlockedValidationResult();
     }
 
     const { writes, changedPaths, reason } = inputValue;
@@ -404,8 +404,11 @@ export function buildFormOwnerRuntime(input: {
         console.error(`[flux-runtime] Field validation threw for path "${path}":`, error);
         const validationError = {
           path,
+          ownerPath: path,
           message: 'Validation failed due to an internal error',
           rule: 'async' as const,
+          sourceKind: 'form' as const,
+          cause: error,
         };
         fieldErrors[path] = [validationError];
         errors.push(validationError);

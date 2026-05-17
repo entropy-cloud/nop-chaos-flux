@@ -430,7 +430,8 @@ async function validateCompiledField(
       throw error;
     }
 
-    const normalizedError = error instanceof Error ? error : new Error(String(error));
+    const normalizedError =
+      error instanceof Error ? error : new Error(String(error), { cause: error });
     if (validationRun) {
       sharedState.validationAsyncGovernance.settleRun(validationRun, {
         outcome: 'failed',

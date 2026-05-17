@@ -8,6 +8,7 @@ import type {
   CreateManagedFormRuntimeInput,
 } from '../form-runtime-types.js';
 import type { ValidationError } from '@nop-chaos/flux-core';
+import { buildFormOwnerRuntime } from '../form-runtime-owner.js';
 
 function createSharedState(
   overrides: Partial<ManagedFormRuntimeSharedState> = {},
@@ -224,5 +225,65 @@ describe('disposeOwnerState', () => {
 
     disposeOwnerState({ sharedState, formId: 'form-1', setLastChange });
     expect(setLastChange).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('buildFormOwnerRuntime error fidelity', () => {
+  it('preserves the original thrown cause on synthetic field validation errors', async () => {
+    const thrown = { code: 'E_FIELD', reason: 'unexpected' };
+    const sharedState = createSharedState({
+      inputValue: {
+        executeValidationRule: async () => undefined,
+        validateRule: () => {
+          throw thrown;
+        },
+        validation: {
+          order: ['name'],
+          behavior: { triggers: ['blur'], showErrorOn: ['touched'] },
+          dependents: {},
+          nodes: {
+            name: {
+              path: 'name',
+              kind: 'field',
+              controlType: 'input-text',
+              label: 'Name',
+              rules: [{ id: 'name#required', rule: { kind: 'required' }, dependencyPaths: [] }],
+              behavior: { triggers: ['blur'], showErrorOn: ['touched'] },
+              children: [],
+              parent: '',
+            },
+          },
+        },
+      } as CreateManagedFormRuntimeInput,
+    });
+
+    const runtimeApi = {
+      isPathOwned: vi.fn(() => true),
+      validateField: vi.fn().mockRejectedValue(thrown),
+      validateForm: vi.fn(),
+    } as any;
+
+    const owner = buildFormOwnerRuntime({
+      sharedState,
+      formId: 'form-1',
+      getCurrentValidation: () => sharedState.inputValue.validation as any,
+      setCurrentValidation: vi.fn(),
+      getIsSubmitting: () => false,
+      getThisForm: () => runtimeApi,
+      setLastChange: vi.fn(),
+    });
+
+    await expect(owner.validateForm('submit')).resolves.toMatchObject({
+      ok: false,
+      fieldErrors: {
+        name: [
+          expect.objectContaining({
+            cause: expect.objectContaining({ cause: thrown }),
+            sourceKind: 'form',
+            ownerPath: 'name',
+          }),
+        ],
+      },
+    });
   });
 });

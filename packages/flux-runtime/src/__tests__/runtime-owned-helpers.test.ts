@@ -111,6 +111,17 @@ describe('executeRuntimeValidationRule', () => {
       }),
     ).rejects.toThrow('validation action failed');
   });
+
+  it('preserves non-Error async validation action payloads as error cause', async () => {
+    await expect(
+      executeRuntimeValidationRule(compiledRule, rule, field, scope, undefined, {
+        dispatch: vi.fn().mockResolvedValue({ ok: false, error: { code: 'E_REMOTE', detail: 'bad' } }),
+      }),
+    ).rejects.toMatchObject({
+      message: '[object Object]',
+      cause: { code: 'E_REMOTE', detail: 'bad' },
+    });
+  });
 });
 
 describe('executeRuntimeAjaxAction', () => {

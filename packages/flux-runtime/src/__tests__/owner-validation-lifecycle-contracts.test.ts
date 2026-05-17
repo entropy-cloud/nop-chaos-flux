@@ -129,6 +129,30 @@ describe('owner validation lifecycle contracts', () => {
     });
   });
 
+  it('returns a blocked result when applyChangesAndRevalidate runs after disposal', async () => {
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      parentScope: createStubScope({ name: '' }),
+      initialValues: { name: '' },
+      validation: makeFormModel({ name: makeNode('name', { required: true }) }),
+      validateRule: vi.fn().mockReturnValue(undefined),
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    runtime.dispose();
+
+    await expect(
+      runtime.applyChangesAndRevalidate({
+        writes: { name: 'Alice' },
+        changedPaths: ['name'],
+        reason: 'change',
+      }),
+    ).resolves.toMatchObject({
+      ok: false,
+      errors: [expect.objectContaining({ message: expect.stringContaining('disposed') })],
+    });
+  });
+
   it('publishes sync validation errors before async validation settles', async () => {
     let resolveAsyncRule:
       | ((value: ReturnType<typeof realValidateRule> | undefined) => void)
