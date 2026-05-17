@@ -148,6 +148,7 @@ export type XuiActionDefinitions = Record<string, ActionSchema>;
 
 export interface ActionResult {
   ok: boolean;
+  cause?: unknown;
   cancelled?: boolean;
   skipped?: boolean;
   timedOut?: boolean;
@@ -157,6 +158,7 @@ export interface ActionResult {
   attempts?: number;
   failureCount?: number;
   error?: unknown;
+  onErrorError?: unknown;
   componentId?: string;
   componentName?: string;
   componentType?: string;

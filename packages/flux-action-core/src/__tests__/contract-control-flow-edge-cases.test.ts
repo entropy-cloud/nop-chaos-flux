@@ -207,6 +207,48 @@ describe('contract: onError branch result handling', () => {
     expect(actionsSeen).toEqual(['setValue', 'setValue', 'showToast']);
     expect(result.ok).toBe(false);
   });
+
+  it('attaches secondary onError dispatch throws to the returned failure result', async () => {
+    const originalError = new Error('primary-fail');
+    const secondaryError = new Error('onError-fail');
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: async (inv) => {
+        if (inv.action === 'setValue') {
+          return { ok: false, error: originalError };
+        }
+
+        throw secondaryError;
+      },
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'setValue',
+          payload: { args: staticCompiled({ path: 'x', value: 1 }) },
+          targeting: {},
+          control: {},
+          source: { action: 'setValue', args: { path: 'x', value: 1 } },
+          onError: [
+            {
+              action: 'showToast',
+              payload: { args: staticCompiled({ message: 'recover' }) },
+              targeting: {},
+              control: {},
+              source: { action: 'showToast', args: { message: 'recover' } },
+            },
+          ],
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe(originalError);
+    expect((result as { onErrorError?: unknown }).onErrorError).toBe(secondaryError);
+    expect((runtime.env.notify as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+  });
 });
 
 describe('contract: skipped action (when=false) branch behavior', () => {
@@ -675,4 +717,3 @@ describe('contract: abort/cancel via signal propagation', () => {
     }
   });
 });
-

@@ -514,11 +514,20 @@ async function dispatch(
             evaluationBindings: branchBindings,
           },
         );
+
+        if (classifyActionResult(previous) === 'failure') {
+          previous = {
+            ...result,
+            onErrorError: previous.error,
+          };
+        }
       } catch (error) {
         reportActionError(ctx, error, currentActionCtx);
 
-        const message = error instanceof Error ? error.message : String(error);
-        ctx.getEnv().notify('error', message);
+        previous = {
+          ...result,
+          onErrorError: error,
+        };
       }
     }
 
@@ -572,7 +581,7 @@ async function dispatch(
     }
 
     if (resultClass === 'failure' && !normalizedAction.control?.continueOnError) {
-      return result;
+      return (previous as { onErrorError?: unknown }).onErrorError !== undefined ? previous : result;
     }
   }
 
