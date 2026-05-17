@@ -244,6 +244,12 @@ export function createRuntimeOwnedFactories(input: {
     existingScope?: ScopeRef;
     initialLifecycleState?: import('@nop-chaos/flux-core').ValidationOwnerLifecycleState;
   }): ValidationScopeRuntime {
+    const reportDependentRevalidationFailure = createDependentRevalidationFailureHandler({
+      notify: input.getEnv?.().notify,
+      onError: input.getEnv?.().monitor?.onError,
+      source: 'validation-scope-runtime',
+    });
+
     const formRuntime = createManagedFormRuntime({
       id: inputValue.id,
       parentScope: inputValue.parentScope,
@@ -254,6 +260,7 @@ export function createRuntimeOwnedFactories(input: {
       scopePath: inputValue.scopePath,
       scopeBinding: 'none',
       initialLifecycleState: inputValue.initialLifecycleState,
+      reportDependentRevalidationFailure,
       executeValidationRule: (compiledRule, rule, field, validationScope, signal) =>
         executeRuntimeValidationRule(compiledRule, rule, field, validationScope, signal, {
           dispatch: (action, ctx) => input.dispatchAction(action, ctx),

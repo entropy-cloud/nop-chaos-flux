@@ -195,6 +195,21 @@ describe('createApiCacheStore', () => {
       expect(keyA).toBe(keyB);
     });
 
+    it('produces different keys for different headers', () => {
+      const keyA = generateCacheKey({
+        method: 'get',
+        url: '/api/users',
+        headers: { Authorization: 'Bearer one' },
+      });
+      const keyB = generateCacheKey({
+        method: 'get',
+        url: '/api/users',
+        headers: { Authorization: 'Bearer two' },
+      });
+
+      expect(keyA).not.toBe(keyB);
+    });
+
     it('guards circular and deep cache key payloads with bounded sentinels', () => {
       const cyclic: Record<string, unknown> = { name: 'root' };
       cyclic.self = cyclic;
@@ -272,7 +287,20 @@ describe('createApiCacheStore', () => {
     it('generates key from request when no custom key is provided', () => {
       expect(
         resolveCacheKey({ url: '/api/test', method: 'post', data: { a: 1 } }, { cacheTTL: 1000 }),
-      ).toBe('post:/api/test:{"a":1}');
+      ).toBe('post:/api/test::{"a":1}');
+    });
+
+    it('includes headers in generated keys when no custom key is provided', () => {
+      expect(
+        resolveCacheKey(
+          {
+            url: '/api/test',
+            method: 'get',
+            headers: { Authorization: 'Bearer token' },
+          },
+          { cacheTTL: 1000 },
+        ),
+      ).toBe('get:/api/test:{"Authorization":"Bearer token"}:');
     });
   });
 });

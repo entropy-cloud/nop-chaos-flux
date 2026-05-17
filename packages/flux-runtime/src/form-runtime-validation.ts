@@ -13,7 +13,10 @@ import {
   validationErrorsEqual,
 } from '@nop-chaos/flux-core';
 import { findRuntimeRegistration, syncRegisteredFieldValue } from './form-runtime-registration.js';
-import { collectSubtreeNodePaths, collectSubtreePaths } from './form-runtime-subtree.js';
+import {
+  collectSubtreeNodePaths,
+  collectSubtreeValidationTargets,
+} from './form-runtime-subtree.js';
 import type { FormRuntimeValidationState } from './form-runtime-types.js';
 import { scheduleDebounce } from '@nop-chaos/flux-core';
 import { normalizeRuntimeValidationErrors } from './validation/index.js';
@@ -553,7 +556,7 @@ export async function validateSubtreeByNode(
     return undefined;
   }
 
-  const remainingRuntimeTargets = new Set(collectSubtreePaths(sharedState, path));
+  const remainingRuntimeTargets = new Set(collectSubtreeValidationTargets(sharedState, path));
   const errors: ValidationError[] = [];
   const fieldErrors: Record<string, ValidationError[]> = {};
 

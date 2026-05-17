@@ -1,5 +1,6 @@
 import {
   buildCompiledValidationOrder,
+  getCompiledValidationDependents,
   getCompiledValidationNode,
   getCompiledValidationNodeMap,
   getCompiledValidationRootPath,
@@ -93,12 +94,46 @@ export function collectSubtreeValidationTargets(
   sharedState: SubtreeCollectionState,
   path: string,
 ): string[] {
-  const ordered = collectSubtreeNodePaths(sharedState, path);
-  const targets = new Set<string>(ordered);
+  const orderedTargets: string[] = [];
+  const targets = new Set<string>();
 
-  for (const candidatePath of collectSubtreePaths(sharedState, path)) {
+  function addTarget(candidatePath: string) {
+    if (targets.has(candidatePath)) {
+      return;
+    }
+
     targets.add(candidatePath);
+    orderedTargets.push(candidatePath);
   }
 
-  return Array.from(targets);
+  for (const candidatePath of collectSubtreeNodePaths(sharedState, path)) {
+    addTarget(candidatePath);
+  }
+
+  for (const candidatePath of collectSubtreePaths(sharedState, path)) {
+    addTarget(candidatePath);
+  }
+
+  const queue = [...orderedTargets];
+  while (queue.length > 0) {
+    const candidatePath = queue.shift();
+
+    if (!candidatePath) {
+      continue;
+    }
+
+    for (const dependentPath of getCompiledValidationDependents(
+      sharedState.inputValue.validation,
+      candidatePath,
+    )) {
+      if (targets.has(dependentPath)) {
+        continue;
+      }
+
+      addTarget(dependentPath);
+      queue.push(dependentPath);
+    }
+  }
+
+  return orderedTargets;
 }

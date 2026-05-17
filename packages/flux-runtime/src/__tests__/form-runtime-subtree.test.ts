@@ -220,4 +220,31 @@ describe('collectSubtreeValidationTargets', () => {
     const count = targets.filter((t) => t === 'g.x').length;
     expect(count).toBe(1);
   });
+
+  it('includes dependent closure outside the edited subtree', () => {
+    const validation = {
+      ...createValidationModel(
+        {
+          summary: { kind: 'container', children: ['summary.title'] },
+          'summary.title': { kind: 'field', children: [] },
+          slug: { kind: 'field', children: [] },
+          seo: { kind: 'field', children: [] },
+        },
+        ['summary', 'summary.title', 'slug', 'seo'],
+        'summary',
+      ),
+      dependents: {
+        'summary.title': ['slug'],
+        slug: ['seo'],
+      },
+    } as CompiledFormValidationModel;
+    const state = createSharedState(validation);
+
+    const targets = collectSubtreeValidationTargets(state, 'summary');
+
+    expect(targets).toContain('summary');
+    expect(targets).toContain('summary.title');
+    expect(targets).toContain('slug');
+    expect(targets).toContain('seo');
+  });
 });

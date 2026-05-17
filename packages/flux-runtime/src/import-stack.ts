@@ -171,16 +171,25 @@ type InternalImportFrame = ImportFrame & {
   releaseMap: Map<string, () => void>;
   controllerMap: Map<string, AbortController>;
   ownsActionScope: boolean;
+  ownedActionScope?: ActionScope;
 };
 
-function rollbackPartialFrameInstall(frame: Pick<InternalImportFrame, 'releaseMap' | 'controllerMap'>) {
-  for (const [key, release] of frame.releaseMap.entries()) {
-    frame.controllerMap.get(key)?.abort();
+function rollbackPartialFrameInstall(inputValue: {
+  frame: Pick<InternalImportFrame, 'releaseMap' | 'controllerMap'>;
+  runtime?: RendererRuntime;
+  ownedActionScope?: ActionScope;
+}) {
+  for (const [key, release] of inputValue.frame.releaseMap.entries()) {
+    inputValue.frame.controllerMap.get(key)?.abort();
     release();
   }
 
-  frame.releaseMap.clear();
-  frame.controllerMap.clear();
+  inputValue.frame.releaseMap.clear();
+  inputValue.frame.controllerMap.clear();
+
+  if (inputValue.runtime && inputValue.ownedActionScope) {
+    inputValue.runtime.releaseActionScope(inputValue.ownedActionScope);
+  }
 }
 
 export function createImportStack(input: {
@@ -338,7 +347,11 @@ export function createImportStack(input: {
         };
       }
     } catch (error) {
-      rollbackPartialFrameInstall({ releaseMap, controllerMap });
+      rollbackPartialFrameInstall({
+        frame: { releaseMap, controllerMap },
+        runtime: ownedActionScope ? input.getRuntime() : undefined,
+        ownedActionScope,
+      });
       throw error;
     }
 
@@ -351,6 +364,7 @@ export function createImportStack(input: {
       releaseMap,
       controllerMap,
       ownsActionScope: !args.actionScope,
+      ownedActionScope,
     };
 
     framesById.set(frameId, frame);
@@ -470,7 +484,11 @@ export function createImportStack(input: {
         };
       }
     } catch (error) {
-      rollbackPartialFrameInstall({ releaseMap, controllerMap });
+      rollbackPartialFrameInstall({
+        frame: { releaseMap, controllerMap },
+        runtime: ownedActionScope ? input.getRuntime() : undefined,
+        ownedActionScope,
+      });
       throw error;
     }
 
@@ -484,6 +502,7 @@ export function createImportStack(input: {
       releaseMap,
       controllerMap,
       ownsActionScope: !args.actionScope,
+      ownedActionScope,
     };
 
     framesById.set(frameId, frame);
@@ -498,10 +517,11 @@ export function createImportStack(input: {
       return;
     }
 
-    rollbackPartialFrameInstall(frame);
-    if (frame.ownsActionScope && frame.actionScope) {
-      input.getRuntime().releaseActionScope(frame.actionScope);
-    }
+    rollbackPartialFrameInstall({
+      frame,
+      runtime: frame.ownsActionScope ? input.getRuntime() : undefined,
+      ownedActionScope: frame.ownedActionScope,
+    });
     framesById.delete(frameId);
     const index = orderedFrames.findIndex((candidate) => candidate.id === frameId);
     if (index >= 0) {

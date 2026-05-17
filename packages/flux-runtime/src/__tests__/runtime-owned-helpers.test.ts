@@ -419,6 +419,89 @@ describe('createRuntimeOwnedFactories', () => {
     );
     expect(notify).toHaveBeenCalledWith('error', 'Dependent revalidation failed for "email".');
   });
+
+  it('wires dependent revalidation diagnostics for runtime-owned validation scopes', async () => {
+    vi.resetModules();
+
+    const createManagedFormRuntime = vi.fn((inputValue: any) => ({
+      scopeId: inputValue.id,
+      rootPath: inputValue.scopePath ?? '',
+      lifecycleState: 'active',
+      modelGeneration: 1,
+      store: {
+        getState: () => ({ values: {} }),
+        subscribe: () => () => undefined,
+        subscribeToPath: () => () => undefined,
+        subscribeToPaths: () => () => undefined,
+        subscribeToSubmitting: () => () => undefined,
+        getPathState: () => undefined,
+        getFieldState: () => undefined,
+      },
+      scope: createScopeRef({ id: inputValue.id ?? 'validation-scope', path: '$scope', initialData: {} }),
+      validation: inputValue.validation,
+      validateAt: vi.fn(),
+      validateSubtree: vi.fn(),
+      validateAll: vi.fn(),
+      applyChangesAndRevalidate: vi.fn(),
+      applyExternalErrors: vi.fn(),
+      getFieldState: vi.fn(),
+      getScopeState: vi.fn(),
+      getAsyncOwnerDebugSnapshot: vi.fn(() => ({ owners: [] })),
+      getScopeRootErrors: vi.fn(() => []),
+      isPathOwned: vi.fn(() => true),
+      registerField: vi.fn(),
+      updateFieldRegistration: vi.fn(),
+      notifyFieldHidden: vi.fn(),
+      touchField: vi.fn(),
+      visitField: vi.fn(),
+      refreshCompiledModel: vi.fn(),
+      dispose: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
+    }));
+
+    vi.doMock('../form-runtime.js', () => ({
+      createManagedFormRuntime,
+    }));
+
+    const { createRuntimeOwnedFactories: createMockedFactories } = await import(
+      '../runtime-owned-factories.js'
+    );
+
+    const notify = vi.fn();
+    const onError = vi.fn();
+    const factories = createMockedFactories({
+      getEnv: () => ({ notify, monitor: { onError } }) as any,
+      ownedPages: new Set<PageRuntime>(),
+      ownedSurfaceRuntimes: new Set<SurfaceRuntime>(),
+      createValidationScopeRuntime: vi.fn(),
+      dispatchAction: vi.fn(),
+      validationRegistry: {} as any,
+      disposeScopeTree: vi.fn(),
+    });
+
+    factories.createValidationScopeRuntime({ id: 'validation-scope' });
+
+    const inputValue = createManagedFormRuntime.mock.calls[0]?.[0];
+    expect(inputValue?.reportDependentRevalidationFailure).toBeTypeOf('function');
+
+    inputValue.reportDependentRevalidationFailure('email', new Error('boom'));
+
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: 'action',
+        details: expect.objectContaining({
+          source: 'validation-scope-runtime',
+          operation: 'dependent-revalidation',
+          path: 'email',
+        }),
+      }),
+    );
+    expect(notify).toHaveBeenCalledWith('error', 'Dependent revalidation failed for "email".');
+
+    vi.doUnmock('../form-runtime.js');
+    vi.resetModules();
+  });
 });
 
 describe('createFormComponentHandle', () => {

@@ -560,6 +560,7 @@ describe('createImportStack', () => {
       expect(stack.frames).toHaveLength(0);
       expect(stack.resolveAlias('good')).toBeUndefined();
     });
+
   });
 
   describe('pop', () => {
