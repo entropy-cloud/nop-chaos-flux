@@ -21,6 +21,8 @@ const packageJsonFromCwd = JSON.parse(readFileSync('package.json', 'utf8')) as {
 };
 
 const styles = readFileSync('src/style.css', 'utf8');
+const defaultSpacingStyles = readFileSync('../flux-react/src/default-spacing.css', 'utf8');
+const formRendererStyles = readFileSync('../flux-renderers-form/src/form-renderers.css', 'utf8');
 
 describe('@nop-chaos/flux public entry contract', () => {
   it('exposes the root stylesheet export and host-owned peers', () => {
@@ -65,16 +67,15 @@ describe('@nop-chaos/flux public entry contract', () => {
     expect(document.querySelector(`.${FLUX_ROOT_CLASS}`)).toBeTruthy();
   });
 
-  it('keeps facade stylesheet selectors scoped to the flux root', () => {
+  it('composes facade styling from canonical package stylesheets', () => {
     expect(styles).toContain(`.${FLUX_ROOT_CLASS} {`);
-    expect(styles).toContain(`.${FLUX_ROOT_CLASS} [data-slot='select-wrapper']`);
-    expect(styles).toContain(`.${FLUX_ROOT_CLASS} .nop-node-error [data-slot='node-error-message']`);
-    expect(styles).toContain(`.${FLUX_ROOT_CLASS} .nop-node-error [data-slot='node-error-retry']`);
-    expect(styles).not.toContain('.nop-node-error__message');
-    expect(styles).not.toContain('.nop-node-error__retry');
-    expect(styles).not.toContain('\n[data-slot=\'select-wrapper\']');
-    expect(styles).not.toContain('\nhtml {');
-    expect(styles).not.toContain('\nbody {');
-    expect(styles).not.toContain('\n:root {');
+    expect(styles).toContain("@import '@nop-chaos/flux-react/default-spacing.css';");
+    expect(styles).toContain("@import '@nop-chaos/flux-renderers-form/form-renderers.css';");
+    expect(defaultSpacingStyles).toContain(".nop-field [data-slot='field-label']");
+    expect(defaultSpacingStyles).toContain(".nop-schema-root-fallback[data-mode='loading']");
+    expect(defaultSpacingStyles).toContain(".nop-schema-root-fallback [data-slot='schema-root-fallback-message']");
+    expect(formRendererStyles).toContain(".nop-form [data-slot='radio-group-wrapper']");
+    expect(styles).not.toContain(`.${FLUX_ROOT_CLASS} [data-slot='field-label']`);
+    expect(styles).not.toContain(`.${FLUX_ROOT_CLASS} [data-slot='select-wrapper']`);
   });
 });
