@@ -329,4 +329,45 @@ describe('tree controls - DOM structure, markers, and expand/collapse', () => {
       expect(trees.some((tree) => tree.querySelector('[role="group"]'))).toBe(true);
     });
   });
+
+  it('adds accessible names to input-tree and tree-select tree roots', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/tree-structure.test.tsx#7"
+        schema={
+          {
+            type: 'form',
+            body: [
+              {
+                type: 'input-tree',
+                name: 'teams',
+                label: 'Teams',
+                treeMode: 'checkbox',
+                options: [{ label: 'Engineering', value: 'eng' }],
+              },
+              {
+                type: 'tree-select',
+                name: 'department',
+                label: 'Department',
+                options: [{ label: 'Operations', value: 'ops' }],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    expect(screen.getByRole('tree', { name: 'Teams' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /Department/ }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('tree', { name: 'Department' })).toBeTruthy();
+    });
+  });
 });

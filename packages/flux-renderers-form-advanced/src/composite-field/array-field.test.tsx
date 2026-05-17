@@ -5,10 +5,13 @@ import '../test-support';
 import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { createSchemaRenderer, useRenderScope } from '@nop-chaos/flux-react';
-import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
-import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
+import { createDefaultRegistry, createSchemaRenderer, useRenderScope } from '@nop-chaos/flux-react';
+import { basicRendererDefinitions, registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
+import { formRendererDefinitions, registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index.js';
+import { attachScopeDebugToSchema } from '../../../../apps/playground/src/component-lab/scope-debug.js';
+import { registerFormAdvancedRenderers } from '../index.js';
+import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 
@@ -582,4 +585,70 @@ describe('array-field renderer (object itemKind)', () => {
       expect(nextBobText).toContain('contact-b');
     });
   });
+
+  it('matches the playground registry path and still renders object item children', async () => {
+    cleanup();
+    const registry = createDefaultRegistry();
+    registerBasicRenderers(registry);
+    registerFormRenderers(registry);
+    registerFormAdvancedRenderers(registry);
+    registerDataRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#12"
+        schema={attachScopeDebugToSchema(
+          {
+            type: 'page',
+            body: [
+              {
+                type: 'form',
+                name: 'arrayFieldForm',
+                data: {
+                  members: [
+                    { name: 'Alice', role: 'admin' },
+                    { name: 'Bob', role: 'editor' },
+                  ],
+                },
+                body: [
+                  {
+                    type: 'array-field',
+                    name: 'members',
+                    label: 'Team Members',
+                    itemKind: 'object',
+                    item: [
+                      { type: 'input-text', name: 'name', label: 'Name', required: true },
+                      {
+                        type: 'select',
+                        name: 'role',
+                        label: 'Role',
+                        options: [
+                          { label: 'Admin', value: 'admin' },
+                          { label: 'Editor', value: 'editor' },
+                          { label: 'Viewer', value: 'viewer' },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+                actions: [{ type: 'button', label: 'Save Team', onClick: { action: 'submit' } }],
+              },
+            ],
+          } as any,
+          'Team members with name and role Scope',
+        )}
+        data={{}}
+        env={env}
+        registry={registry}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getAllByLabelText('Name')).toHaveLength(2));
+    const nameInputs = screen.getAllByLabelText('Name') as HTMLInputElement[];
+    expect(nameInputs[0].value).toBe('Alice');
+    expect(nameInputs[1].value).toBe('Bob');
+  });
+
 });

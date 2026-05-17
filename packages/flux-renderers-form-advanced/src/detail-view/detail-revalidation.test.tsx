@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   draftState: undefined as any,
   runTransformOutResult: undefined as unknown,
   renderScope: undefined as any,
+  scopeValue: undefined as unknown,
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
@@ -16,7 +17,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentForm: () => state.parentForm,
   useRendererRuntime: () => state.runtime,
   useRenderScope: () => state.renderScope,
-  useScopeSelector: () => undefined,
+  useScopeSelector: () => state.scopeValue,
   useCurrentValidationScope: () => state.parentValidationOwner,
   useCurrentFormState: () => 'initial',
 }));
@@ -82,6 +83,7 @@ afterEach(() => {
   state.parentForm = undefined;
   state.parentValidationOwner = undefined;
   state.renderScope = undefined;
+  state.scopeValue = undefined;
   vi.clearAllMocks();
 });
 
@@ -144,6 +146,10 @@ describe('detail renderer revalidation handling', () => {
       expect(state.draftState.setDraftErrorSafe).toHaveBeenCalledWith('Address is required');
       expect(state.draftState.closeDraft).not.toHaveBeenCalled();
     });
+
+    expect(state.parentForm.setValue).toHaveBeenNthCalledWith(1, 'address', '');
+    expect(state.parentForm.setValue).toHaveBeenNthCalledWith(2, 'address', 'initial');
+    expect(state.parentForm.touchField).not.toHaveBeenCalled();
   });
 
   it('keeps detail-view open when parent validateSubtree fails after writeback', async () => {
@@ -176,12 +182,15 @@ describe('detail renderer revalidation handling', () => {
       expect(state.draftState.setDraftErrorSafe).toHaveBeenCalledWith('Title is required');
       expect(state.draftState.closeDraft).not.toHaveBeenCalled();
     });
+
+    expect(state.parentForm.validateSubtree).toHaveBeenCalledWith('summary', 'commit');
   });
 
   it('keeps detail-view open when non-form owner validateSubtree fails after scope writeback', async () => {
     state.draftState = createDraftState();
     state.runtime = { createFormRuntime: vi.fn() };
     state.parentForm = undefined;
+    state.scopeValue = 'initial';
     state.renderScope = { update: vi.fn(), merge: vi.fn() };
     state.parentValidationOwner = {
       validateSubtree: vi.fn(async () => ({
@@ -216,6 +225,7 @@ describe('detail renderer revalidation handling', () => {
     state.draftState = createDraftState();
     state.runtime = { createFormRuntime: vi.fn() };
     state.parentForm = undefined;
+    state.scopeValue = 'initial';
     state.renderScope = { update: vi.fn(), merge: vi.fn() };
     state.parentValidationOwner = {
       validateSubtree: vi.fn(async () => ({
@@ -239,7 +249,8 @@ describe('detail renderer revalidation handling', () => {
     fireEvent.click(screen.getByText('Confirm'));
 
     await waitFor(() => {
-      expect(state.renderScope.update).toHaveBeenCalledWith('address', '');
+      expect(state.renderScope.update).toHaveBeenNthCalledWith(1, 'address', '');
+      expect(state.renderScope.update).toHaveBeenNthCalledWith(2, 'address', 'initial');
       expect(state.parentValidationOwner.validateSubtree).toHaveBeenCalledWith('address', 'commit');
       expect(state.draftState.setDraftErrorSafe).toHaveBeenCalledWith('Street is required');
       expect(state.draftState.closeDraft).not.toHaveBeenCalled();
@@ -250,6 +261,7 @@ describe('detail renderer revalidation handling', () => {
     state.draftState = createDraftState();
     state.runtime = { createFormRuntime: vi.fn() };
     state.parentForm = undefined;
+    state.scopeValue = 'initial';
     state.renderScope = { update: vi.fn(), merge: vi.fn() };
     state.parentValidationOwner = {
       validateSubtree: vi.fn(async () => ({ ok: true, errors: [], fieldErrors: {} })),

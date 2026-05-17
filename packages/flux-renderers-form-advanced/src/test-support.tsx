@@ -55,13 +55,23 @@ export const formulaCompiler = createFormulaCompiler();
 export const sharedFormulaCompiler = formulaCompiler;
 
 export async function selectOption(labelText: string, optionText: string) {
+  const nativeSelect = screen.queryByLabelText(labelText, { selector: 'select' });
+
+  if (nativeSelect instanceof HTMLSelectElement) {
+    const matchingOption = Array.from(nativeSelect.options).find((option) => option.text === optionText);
+    if (!matchingOption) {
+      throw new Error(`Expected option ${optionText}`);
+    }
+    fireEvent.change(nativeSelect, { target: { value: matchingOption.value } });
+    return;
+  }
+
   const trigger =
     screen.queryByRole('combobox', { name: labelText }) ??
     screen.queryByRole('button', { name: labelText }) ??
     screen.getByLabelText(labelText, { selector: 'button' });
   fireEvent.click(trigger);
-  const optionTextEl = await screen.findByText(optionText);
-  const optionEl = optionTextEl.closest('[role="option"]') ?? optionTextEl;
+  const optionEl = await screen.findByRole('option', { name: optionText });
   fireEvent.mouseEnter(optionEl);
   fireEvent.mouseMove(optionEl);
   await new Promise((resolve) => setTimeout(resolve, 0));

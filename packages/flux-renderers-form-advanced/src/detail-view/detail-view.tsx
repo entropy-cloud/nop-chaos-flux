@@ -330,7 +330,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   async function settleParentValidation(): Promise<boolean> {
     const result = parentForm
       ? scopePath
-        ? await parentForm.validateSubtree(scopePath)
+        ? await parentForm.validateSubtree(scopePath, 'commit')
         : await parentForm.validateAll('commit')
       : hasUsableParentValidationOwner()
         ? scopePath

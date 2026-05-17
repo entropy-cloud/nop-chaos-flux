@@ -100,7 +100,9 @@ function ArrayItem(props: {
   readOnly: boolean;
   removable: boolean;
   onRemove: (index: number) => void;
-  renderItem: () => React.ReactNode;
+  item: unknown;
+  itemInstancePath: readonly InstanceFrame[];
+  itemRegion: RendererComponentProps<ArrayFieldSchema>['regions']['item'];
 }) {
   const {
     itemIdentity,
@@ -113,7 +115,9 @@ function ArrayItem(props: {
     readOnly,
     removable,
     onRemove,
-    renderItem,
+    item,
+    itemInstancePath,
+    itemRegion,
   } = props;
 
   const itemScope = React.useMemo(
@@ -140,13 +144,24 @@ function ArrayItem(props: {
       },
     });
   }, [arrayPath, index, itemKind, parentValidationOwner]);
+  const itemContent = React.useMemo(
+    () =>
+      asReactNode(
+        itemRegion?.render({
+          scope: itemScope,
+          bindings: { index, value: item },
+          instancePath: itemInstancePath,
+        }),
+      ) ?? null,
+    [index, item, itemInstancePath, itemRegion, itemScope],
+  );
 
   return (
     <div data-slot="array-field-item">
       <div data-slot="array-field-item-body">
         <FormContext.Provider value={itemForm ?? undefined}>
           <ScopeContext.Provider value={itemScope}>
-            <ValidationContext.Provider value={itemValidationOwner}>{renderItem()}</ValidationContext.Provider>
+            <ValidationContext.Provider value={itemValidationOwner}>{itemContent}</ValidationContext.Provider>
           </ScopeContext.Provider>
         </FormContext.Provider>
       </div>
@@ -529,14 +544,9 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
               readOnly={readOnly || presentation.effectiveDisabled}
               removable={removable && !readOnly && !presentation.effectiveDisabled}
               onRemove={handleRemove}
-              renderItem={() =>
-                asReactNode(
-                  props.regions.item?.render({
-                    bindings: { index, value: item },
-                    instancePath: itemInstancePath,
-                  }),
-                ) ?? null
-              }
+              item={item}
+              itemInstancePath={itemInstancePath}
+              itemRegion={props.regions.item}
             />
           );
         })}

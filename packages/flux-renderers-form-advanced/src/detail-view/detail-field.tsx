@@ -57,13 +57,13 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const confirmFailureMessage = t('flux.common.saveFailed');
 
   function reportOpenFailure(error: unknown) {
-    runtime.env.notify?.('warning', toAsyncFailureMessage(error, openFailureMessage));
+    runtime?.env?.notify?.('warning', toAsyncFailureMessage(error, openFailureMessage));
   }
 
   function reportConfirmFailure(error: unknown) {
     const message = toAsyncFailureMessage(error, confirmFailureMessage);
     setDraftErrorSafe(message);
-    runtime.env.notify?.('warning', message);
+    runtime?.env?.notify?.('warning', message);
   }
 
   const presentation = useFieldPresentation(name, parentValidationOwner, {
@@ -139,6 +139,35 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     }
 
     return true;
+  }
+
+  function readCurrentParentValue(): unknown {
+    if (parentForm?.store) {
+      return (parentForm.store.getState().values as Record<string, unknown>)[name];
+    }
+
+    if (typeof parentScope?.get === 'function') {
+      return parentScope.get(name);
+    }
+
+    return fieldValue;
+  }
+
+  function applyParentWriteback(value: unknown) {
+    if (parentForm) {
+      parentForm.setValue(name, value);
+      return;
+    }
+
+    parentScope?.update(name, value);
+  }
+
+  async function rollbackParentWriteback(previousValue: unknown) {
+    applyParentWriteback(previousValue);
+
+    if (parentForm || parentValidationOwner) {
+      await settleParentValidation();
+    }
   }
 
   async function handleOpen() {
@@ -242,20 +271,23 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
       if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
 
-      if (parentForm) {
-        parentForm.setValue(name, writeback);
-        parentForm.touchField(name);
-      } else {
-        parentScope.update(name, writeback);
-      }
+      const previousValue = readCurrentParentValue();
+
+      applyParentWriteback(writeback);
 
       const fieldValidationResult = await settleParentValidation();
 
       if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
 
       if (!fieldValidationResult) {
+        await rollbackParentWriteback(previousValue);
+
+        if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
+
         return;
       }
+
+      parentForm?.touchField(name);
 
       closeDraft();
     } finally {

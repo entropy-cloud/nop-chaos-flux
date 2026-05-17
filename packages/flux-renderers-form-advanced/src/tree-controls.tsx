@@ -131,6 +131,7 @@ function TreeOptionList(props: {
   searchable: boolean;
   disabled: boolean;
   onChange: (value: unknown) => void;
+  ariaLabel: string;
   searchLabel: string;
   describedBy?: string;
   errorMessage?: string;
@@ -158,6 +159,7 @@ function TreeOptionList(props: {
       <div
         data-slot="tree-option-items"
         role="tree"
+        aria-label={props.ariaLabel}
         aria-multiselectable={props.multiple || undefined}
         aria-describedby={props.describedBy}
         aria-errormessage={props.errorMessage}
@@ -193,7 +195,8 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
     getTreeOptionConfig(props.props as InputTreeSchema),
   );
   const sourceError = getSourceErrorMessage(optionsSourceState);
-  const searchLabel = `${t('flux.common.search')} ${String((props.props.label ?? name) || 'tree')}`;
+  const fieldLabel = String((props.props.label ?? name) || 'tree');
+  const searchLabel = `${t('flux.common.search')} ${fieldLabel}`;
   const sourceErrorId = name ? `${name}-source-error` : undefined;
 
   return (
@@ -216,6 +219,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
             optionsSourceState?.loading === true
           }
           onChange={(nextValue) => handlers.onChange(nextValue)}
+          ariaLabel={fieldLabel}
           searchLabel={searchLabel}
           describedBy={sourceError ? sourceErrorId : undefined}
           errorMessage={sourceError ? sourceErrorId : undefined}
@@ -320,6 +324,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
               optionsSourceState?.loading === true
             }
             onChange={(nextValue) => handlers.onChange(nextValue)}
+            ariaLabel={fieldLabel}
             searchLabel={searchLabel}
             describedBy={sourceError ? sourceErrorId : undefined}
             errorMessage={sourceError ? sourceErrorId : undefined}
