@@ -173,4 +173,66 @@ describe('schema compiler renderer contract integration', () => {
       ]),
     );
   });
+
+  it('throws in strict mode when custom field compilation fails', () => {
+    const renderer: RendererDefinition = {
+      type: 'custom-compile',
+      component: () => null,
+      fields: [
+        {
+          key: 'config',
+          kind: 'prop',
+          compile: () => {
+            throw new Error('broken compiler');
+          },
+        },
+      ],
+    };
+
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([renderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    expect(() => compiler.compile({ type: 'custom-compile', config: { enabled: true } } as any)).toThrow(
+      'Custom field compilation failed: broken compiler',
+    );
+  });
+
+  it('replaces the node with an explicit failure surface in continueOnError mode', () => {
+    const renderer: RendererDefinition = {
+      type: 'custom-compile',
+      component: () => null,
+      fields: [
+        {
+          key: 'config',
+          kind: 'prop',
+          compile: () => {
+            throw new Error('broken compiler');
+          },
+        },
+      ],
+    };
+
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([renderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = compiler.compile(
+      { type: 'custom-compile', config: { enabled: true } } as any,
+      { diagnostics: { enabled: true, continueOnError: true } },
+    );
+
+    const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    expect(root.rendererType).toBe('__compile-failure__');
+    expect(root.schema.type).toBe('custom-compile');
+    expect(root.propsProgram).toMatchObject({
+      kind: 'static',
+      value: expect.objectContaining({
+        message: 'Custom field compilation failed: broken compiler',
+        originalType: 'custom-compile',
+      }),
+    });
+  });
 });

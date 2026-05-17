@@ -10,6 +10,7 @@ import type {
   FieldCompileContext,
   PreparedImportSpec,
   ReactionSchema,
+  RendererDefinition,
   SchemaInput,
   ScopePlan,
   TemplateNode,
@@ -69,12 +70,55 @@ export function createCompileSingleNode(
   expressionCompiler: ExpressionCompiler,
   compileSchemaToTemplateNodes: CompileSchemaToTemplateNodesFn,
 ): CompileSingleNodeFn {
+  const compileFailureRenderer: RendererDefinition = {
+    type: '__compile-failure__',
+    component: (props) => String(props.props.message ?? 'Schema compilation failed'),
+  };
+
   function isSourceCarrier(value: unknown): value is { type: 'source' } {
     return !!value && typeof value === 'object' && !Array.isArray(value) && (value as { type?: unknown }).type === 'source';
   }
 
   function normalizeBooleanLikeCandidate(candidate: unknown): boolean | undefined {
     return typeof candidate === 'boolean' ? candidate : undefined;
+  }
+
+  function createCompileFailureNode(input: {
+    schema: BaseSchema;
+    path: string;
+    message: string;
+    schemaUrl?: string;
+  }): TemplateNode {
+    return {
+      templateNodeId: 0,
+      id: createNodeId(input.path, input.schema),
+      type: input.schema.type,
+      schema: input.schema,
+      templatePath: input.path,
+      schemaUrl: input.schemaUrl,
+      rendererType: compileFailureRenderer.type,
+      component: compileFailureRenderer,
+      propsProgram: compileRuntimeValueTree({
+        message: input.message,
+        originalType: input.schema.type,
+      }) as CompiledRuntimeValue<Record<string, unknown>>,
+      metaProgram: {},
+      eventPlans: {},
+      regions: {},
+      providerPlan: {
+        actionScope: false,
+        componentRegistry: false,
+        classAliases: false,
+      },
+      providerWrap: buildWrapProvidersClosure({
+        actionScope: false,
+        componentRegistry: false,
+        classAliases: false,
+      }),
+      scopePlan: { kind: 'inherit' },
+      sourcePropKeys: [],
+      sourceStatePropKeys: {},
+    };
   }
 
   return function compileSingleNode(
@@ -249,14 +293,26 @@ export function createCompileSingleNode(
         try {
           compiledPropEntries[key] = compileRuntimeValueTree(rule.compile(value, fieldContext));
         } catch (error) {
+          const message =
+            error instanceof Error
+              ? `Custom field compilation failed: ${error.message}`
+              : 'Custom field compilation failed.';
           diagnostics.emit({
             code: 'invalid-schema' as import('@nop-chaos/flux-core').SchemaDiagnosticCode,
             path: `${path}.${key}`,
-            message:
-              error instanceof Error
-                ? `Custom field compilation failed: ${error.message}`
-                : 'Custom field compilation failed.',
+            message,
             severity: 'error',
+          });
+
+          if (!diagnostics.continueOnError) {
+            throw new Error(message, { cause: error });
+          }
+
+          return createCompileFailureNode({
+            schema,
+            path,
+            message,
+            schemaUrl: (options as CompileNodeOptions & { schemaUrl?: string }).schemaUrl,
           });
         }
         continue;
