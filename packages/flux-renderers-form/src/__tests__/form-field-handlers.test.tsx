@@ -1,5 +1,5 @@
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -15,10 +15,6 @@ import {
 const { handlerIdentitySnapshots, submitCalls } = formTestHarness;
 
 describe('formRendererDefinitions - input types and field handlers', () => {
-  afterEach(() => {
-    formTestHarness.reset();
-  });
-
   it('allows appending multiple characters in input-email fields', () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);

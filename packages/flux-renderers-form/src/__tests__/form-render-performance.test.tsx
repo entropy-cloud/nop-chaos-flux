@@ -1,5 +1,5 @@
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -9,10 +9,6 @@ import { buttonRenderer, env, formTestHarness, formStateProbeRenderer } from './
 const { formStateProbeRenderCounts } = formTestHarness;
 
 describe('form render performance optimization', () => {
-  afterEach(() => {
-    formTestHarness.reset();
-  });
-
   it('changing one field does not trigger NodeRenderer re-renders for other fields', async () => {
     const onRenderStart = vi.fn();
     const onRenderEnd = vi.fn();

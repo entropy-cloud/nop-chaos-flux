@@ -18,7 +18,6 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-  formTestHarness.reset();
   resetFluxI18n();
 });
 

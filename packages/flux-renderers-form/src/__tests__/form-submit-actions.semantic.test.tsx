@@ -1,5 +1,5 @@
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -16,10 +16,6 @@ import {
 const { notifyCalls, submitCalls } = formTestHarness;
 
 describe('formRendererDefinitions - submit and init actions', () => {
-  afterEach(() => {
-    formTestHarness.reset();
-  });
-
   it('runs form-owned submitAction and follow-up branches through component:submit', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -8,15 +8,10 @@ import { formRendererDefinitions } from '../index.js';
 import {
   env,
   formStateProbeRenderer,
-  formTestHarness,
   scopeStateProbeRenderer,
 } from './form-test-support.js';
 
 describe('formRendererDefinitions - form.data expression lifecycle', () => {
-  afterEach(() => {
-    formTestHarness.reset();
-  });
-
   it('evaluates form.data expressions once into initial form values', async () => {
     cleanup();
     const formulaCompiler = createFormulaCompiler();

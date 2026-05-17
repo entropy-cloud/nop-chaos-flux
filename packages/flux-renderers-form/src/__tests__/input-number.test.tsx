@@ -16,7 +16,6 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  formTestHarness.reset();
   resetFluxI18n();
 });
 

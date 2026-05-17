@@ -1,17 +1,13 @@
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '../index.js';
-import { env, formTestHarness, scopeStateProbeRenderer } from './form-test-support.js';
+import { env, scopeStateProbeRenderer } from './form-test-support.js';
 
 describe('formRendererDefinitions - valuesPath and data expressions', () => {
-  afterEach(() => {
-    formTestHarness.reset();
-  });
-
   it('publishes initial form values through valuesPath to the parent scope', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
