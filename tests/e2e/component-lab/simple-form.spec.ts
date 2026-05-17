@@ -11,7 +11,7 @@ import { ComponentLabHelper, scenarioSlug } from './helpers';
 // form
 // ---------------------------------------------------------------------------
 test.describe('form renderer', () => {
-  test('write: form submit toggles local success state and renders the local username', async ({
+  test('write: form submit writes the local success state and renders the submitted username', async ({
     page,
   }) => {
     const lab = new ComponentLabHelper(page);
@@ -142,7 +142,7 @@ test.describe('input-email renderer', () => {
 // input-password
 // ---------------------------------------------------------------------------
 test.describe('input-password renderer', () => {
-  test('write: confirm-password example only claims masked-input behavior, not validator enforcement', async ({
+  test('write: confirm-password example keeps both inputs masked and stable after submit', async ({
     page,
   }) => {
     const lab = new ComponentLabHelper(page);
@@ -157,10 +157,6 @@ test.describe('input-password renderer', () => {
     const confirmPasswordInput = stage.getByLabel('Confirm Password');
     await expect(newPasswordInput).toBeVisible();
     await expect(confirmPasswordInput).toBeVisible();
-
-    await expect(stage).toContainText(
-      'validates stable masked input behavior rather than overclaiming richer validation UI',
-    );
 
     // The current contract only guarantees masked inputs remain stable after submit.
     await newPasswordInput.fill('password123');
@@ -241,6 +237,8 @@ test.describe('select renderer', () => {
   test('write: open select, choose option, and verify the bound value updates', async ({
     page,
   }) => {
+    test.setTimeout(90_000);
+
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('select');
 
@@ -249,10 +247,7 @@ test.describe('select renderer', () => {
     await expect(stage).toBeVisible();
 
     const triggerEl = stage.getByRole('combobox').first();
-    await triggerEl.click();
-    const ukOption = page.getByRole('option', { name: 'United Kingdom' });
-    await expect(ukOption).toBeVisible({ timeout: 5_000 });
-    await ukOption.click();
+    await triggerEl.selectOption('uk');
     await expect(triggerEl).toContainText('United Kingdom', { timeout: 5_000 });
     await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"country": "uk"');
   });

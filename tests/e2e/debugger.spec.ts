@@ -39,11 +39,8 @@ async function selectRoleOption(
   optionText: string,
 ): Promise<void> {
   const trigger = page.getByRole('combobox', { name: labelText });
-  await trigger.click();
-  const option = page.getByRole('option', { name: optionText }).last();
-  await expect(option).toBeVisible({ timeout: 5_000 });
-  await option.click();
-  await expect(trigger).toContainText(optionText);
+  await trigger.selectOption({ label: optionText });
+  await expect(trigger).toContainText(optionText, { timeout: 5_000 });
 }
 
 async function seedFluxBasicExplanationFixture(page: import('@playwright/test').Page): Promise<{

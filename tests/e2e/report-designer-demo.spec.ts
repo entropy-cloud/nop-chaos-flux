@@ -26,8 +26,8 @@ test('renders the core report designer surfaces', async ({ page }) => {
   await expect(page.locator('[data-slot="report-field-panel-source"]').first()).toBeVisible();
   await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible();
   await expect(page.locator('.ss-sheet-tab[data-active]')).toBeVisible();
-  await expect(page.locator('.ss-row-header').first()).toBeVisible();
-  await expect(page.locator('.ss-col-header').first()).toBeVisible();
+  await expect(page.locator('[data-slot="spreadsheet-row-header"]').first()).toBeVisible();
+  await expect(page.locator('[data-slot="spreadsheet-column-header"]').first()).toBeVisible();
 });
 
 test('verifies field items and inspector elements are visible', async ({ page }) => {
@@ -72,10 +72,10 @@ test('verifies field items and inspector elements are visible', async ({ page })
 test('spreadsheet grid exposes row and column headers', async ({ page }) => {
   await openReportDesignerDemo(page);
 
-  await expect(page.locator('.ss-row-header')).toHaveCount(31);
-  await expect(page.locator('.ss-col-header')).toHaveCount(10);
-  await expect(page.locator('.ss-row-header').nth(1)).toContainText('1');
-  await expect(page.locator('.ss-col-header').first()).toContainText('A');
+  await expect(page.locator('[data-slot="spreadsheet-row-header"]')).toHaveCount(30);
+  await expect(page.locator('[data-slot="spreadsheet-column-header"]')).toHaveCount(10);
+  await expect(page.locator('[data-slot="spreadsheet-row-header"]').first()).toContainText('1');
+  await expect(page.locator('[data-slot="spreadsheet-column-header"]').first()).toContainText('A');
 
   await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible();
 });

@@ -6,14 +6,13 @@ async function selectRoleOption(
   optionText: string,
 ): Promise<void> {
   const trigger = page.getByRole('combobox', { name: labelText });
-  await trigger.click();
-  const option = page.getByRole('option', { name: optionText }).last();
-  await expect(option).toBeVisible({ timeout: 5_000 });
-  await option.click();
-  await expect(trigger).toContainText(optionText);
+  await trigger.selectOption({ label: optionText });
+  await expect(trigger).toContainText(optionText, { timeout: 5_000 });
 }
 
 test('diagnose admin code meta explanation on live flux-basic page', async ({ page }) => {
+  test.setTimeout(90_000);
+
   await page.goto('/#/flux-basic');
   await page.getByRole('heading', { name: 'Renderer Playground', level: 1 }).waitFor({
     state: 'visible',

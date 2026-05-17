@@ -240,6 +240,20 @@ test.describe('object-field renderer', () => {
 // array-field
 // ---------------------------------------------------------------------------
 test.describe('array-field renderer', () => {
+  test('read: preloaded object rows render their child controls and values', async ({ page }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('array-field');
+
+    const slug = scenarioSlug('Team members with name and role');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+    await expect(stage.getByLabel('Name').first()).toHaveValue('Alice');
+    await expect(stage.getByLabel('Name').nth(1)).toHaveValue('Bob');
+    await expect(stage.getByLabel('Role').first()).toHaveValue('admin');
+    await expect(stage.getByLabel('Role').nth(1)).toHaveValue('editor');
+    await expect(stage.getByText('删除')).toHaveCount(2);
+  });
+
   test('write: add a contact row and verify the array scope grows by one item', async ({
     page,
   }) => {

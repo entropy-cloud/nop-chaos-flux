@@ -5,9 +5,15 @@ test.describe.configure({ mode: 'serial' });
 
 async function openPerformanceTable(page: import('@playwright/test').Page) {
   await page.goto('/#/performance-table', { waitUntil: 'commit' });
-  await expect(page.getByText('Performance Table Playground')).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByRole('heading', { name: 'Table Performance Playground', level: 1 })).toBeVisible({ timeout: 45_000 });
   await expect(page.getByRole('button', { name: 'Run 20 Host Mutations' })).toBeVisible();
   await assertTrackedPageErrors(page);
+}
+
+async function waitForTableRows(page: import('@playwright/test').Page) {
+  await expect(page.locator('table tbody tr[data-slot="table-row"]').first()).toBeVisible({
+    timeout: 45_000,
+  });
 }
 
 test.describe('Performance Table Page', () => {
@@ -80,24 +86,26 @@ test.describe('Performance Table Page', () => {
   }) => {
     test.setTimeout(120_000);
     await openPerformanceTable(page);
+    await waitForTableRows(page);
 
     const firstRow = await page.evaluate(() => {
-      const rows = Array.from(document.querySelectorAll('table tbody tr'));
-      const dataRow = rows.find((row) => row.querySelectorAll('td').length > 2);
+      const rows = Array.from(document.querySelectorAll('table tbody tr[data-slot="table-row"]'));
+      const dataRow = rows.find((row) => row.querySelectorAll('td').length >= 10);
       if (!dataRow) return null;
       const cells = dataRow.querySelectorAll('td');
       const profile = cells[2]?.textContent?.trim();
       const badge = cells[3]?.textContent?.trim();
       const status = cells[4]?.textContent?.trim();
       const selectBtn = cells[5]?.querySelector('button[role="combobox"]');
-      const checkbox = cells[6]?.querySelector('[role="checkbox"]');
+      const selectEl = cells[5]?.querySelector('select') as HTMLSelectElement | null;
+      const checkbox = cells[6]?.querySelector('[data-slot="checkbox"]');
       const sw = cells[7]?.querySelector('[role="switch"]');
       const textarea = cells[8]?.querySelector('textarea');
       return {
         profile,
         badge,
         status,
-        select: selectBtn?.textContent?.trim(),
+        select: selectBtn?.textContent?.trim() ?? selectEl?.selectedOptions[0]?.textContent?.trim(),
         checkboxChecked: checkbox?.getAttribute('aria-checked'),
         switchChecked: sw?.getAttribute('aria-checked'),
         notes: textarea?.value?.trim(),
@@ -128,18 +136,15 @@ test.describe('Performance Table Page', () => {
     await expect
       .poll(() =>
         page.evaluate(() => {
-          const rows = Array.from(document.querySelectorAll('table tbody tr'));
+          const rows = Array.from(document.querySelectorAll('table tbody tr[data-slot="table-row"]'));
           return rows
-            .filter((row) => row.querySelectorAll('td').length > 2)
             .some((row) => row.textContent?.includes('951'));
         }),
       )
       .toBe(true);
 
     const lastPageFirstRow = await page.evaluate(() => {
-      const rows = Array.from(document.querySelectorAll('table tbody tr')).filter(
-        (row) => row.querySelectorAll('td').length > 2,
-      );
+      const rows = Array.from(document.querySelectorAll('table tbody tr[data-slot="table-row"]'));
       for (let i = 0; i < rows.length; i++) {
         const cells = rows[i].querySelectorAll('td');
         const profile = cells[2]?.textContent?.trim();
@@ -154,15 +159,13 @@ test.describe('Performance Table Page', () => {
     expect(lastPageFirstRow!.profile).toContain('951');
 
     const lastRow = await page.evaluate(() => {
-      const rows = Array.from(document.querySelectorAll('table tbody tr')).filter(
-        (row) => row.querySelectorAll('td').length > 2,
-      );
+      const rows = Array.from(document.querySelectorAll('table tbody tr[data-slot="table-row"]'));
       for (let i = rows.length - 1; i >= 0; i--) {
         const cells = rows[i].querySelectorAll('td');
         const profile = cells[2]?.textContent?.trim();
         if (profile && profile.includes('1000')) {
           const sw = cells[7]?.querySelector('[role="switch"]');
-          const cb = cells[6]?.querySelector('[role="checkbox"]');
+          const cb = cells[6]?.querySelector('[data-slot="checkbox"]');
           return {
             profile,
             switchChecked: sw?.getAttribute('aria-checked'),
@@ -181,6 +184,7 @@ test.describe('Performance Table Page', () => {
   test('keeps tag-list validation local to the edited row', async ({ page }) => {
     test.setTimeout(120_000);
     await openPerformanceTable(page);
+    await waitForTableRows(page);
 
     const firstTagButton = page.getByRole('button', { name: 'tag-1' }).first();
     await expect(firstTagButton).toBeVisible();

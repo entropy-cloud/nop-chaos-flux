@@ -11,6 +11,7 @@ import { ComponentLabPage } from './component-lab';
 import { CodeEditorPage } from './pages/code-editor-page';
 import { FlowDesignerPage } from './pages/flow-designer-page';
 import { DingTalkFlowDemo } from './pages/ding-talk-flow-demo';
+import { PerformanceTablePage } from './pages/performance-table-page';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { Spinner } from '@nop-chaos/ui';
@@ -27,10 +28,6 @@ const LazyConditionBuilderPage = lazy(() =>
 const LazyWordEditorPage = lazy(() =>
   import('./pages/word-editor-page').then((m) => ({ default: m.WordEditorPage })),
 );
-const LazyPerformanceTablePage = lazy(() =>
-  import('./pages/performance-table-page').then((m) => ({ default: m.PerformanceTablePage })),
-);
-
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
@@ -111,7 +108,7 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
         case 'word-editor':
           return <LazyWordEditorPage onBack={goHome} />;
         case 'performance-table':
-          return <LazyPerformanceTablePage onBack={goHome} />;
+          return <PerformanceTablePage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

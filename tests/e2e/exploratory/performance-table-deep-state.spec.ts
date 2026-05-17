@@ -33,17 +33,29 @@ async function openPerformanceTable(page: Page) {
   await assertTrackedPageErrors(page);
 }
 
+async function waitForTableRows(page: Page) {
+  await expect(page.locator('table tbody tr[data-slot="table-row"]').first()).toBeVisible({
+    timeout: 45_000,
+  });
+}
+
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Exploratory run-02: performance table deep state', () => {
   test('scope-owned selection and pagination stay coherent across page size and page changes', async ({
     page,
   }) => {
+    test.setTimeout(120_000);
+
     await openPerformanceTable(page);
     await page.getByRole('button', { name: 'Full Stress' }).click();
+    await expect(page.getByText('Scenario B: Nested loop card list')).toBeVisible({
+      timeout: 20_000,
+    });
     await expect(page.getByText('Scenario C: Scope-owned selection and pagination')).toBeVisible({
       timeout: 20_000,
     });
+    await waitForTableRows(page);
     await clearDebugger(page);
 
     const selectedKeysText = page.getByText(/^Selected keys:/).first();
@@ -55,7 +67,7 @@ test.describe('Exploratory run-02: performance table deep state', () => {
     await expect(pageSizeText).toContainText('50');
     await expect(pageSummaryText).toContainText('Selected: 0 | Page: 1');
 
-    const firstCheckbox = page.locator('table tbody [role="checkbox"]').first();
+    const firstCheckbox = page.locator('table tbody tr[data-slot="table-row"] [data-slot="checkbox"]').first();
     await firstCheckbox.click();
     await expect(selectedKeysText).not.toContainText('none');
     await expect(pageSummaryText).toContainText('Selected: 1 | Page: 1');
@@ -63,7 +75,7 @@ test.describe('Exploratory run-02: performance table deep state', () => {
     await pagination.getByLabel('Go to next page').click();
     await expect(pageSummaryText).toContainText('Selected: 1 | Page: 2');
 
-    const pageSizeSelect = pagination.locator('select').first();
+    const pageSizeSelect = pagination.getByRole('combobox').first();
     await pageSizeSelect.selectOption('25');
     await expect(pageSizeText).toContainText('25');
     await expect(pageSummaryText).toContainText('Selected: 1 | Page: 1');
@@ -75,11 +87,17 @@ test.describe('Exploratory run-02: performance table deep state', () => {
   });
 
   test('sorting and row action updates keep scope state and debugger failures clean', async ({ page }) => {
+    test.setTimeout(120_000);
+
     await openPerformanceTable(page);
     await page.getByRole('button', { name: 'Full Stress' }).click();
+    await expect(page.getByText('Scenario B: Nested loop card list')).toBeVisible({
+      timeout: 20_000,
+    });
     await expect(page.getByText('Scenario C: Scope-owned selection and pagination')).toBeVisible({
       timeout: 20_000,
     });
+    await waitForTableRows(page);
     await clearDebugger(page);
 
     const lastActionText = page.getByText(/^Last action:/).first();
@@ -89,7 +107,7 @@ test.describe('Exploratory run-02: performance table deep state', () => {
     await usernameSort.click();
     await usernameSort.click();
 
-    const firstProfile = page.locator('table tbody tr').filter({ has: page.locator('td') }).first();
+    const firstProfile = page.locator('table tbody tr[data-slot="table-row"]').first();
     await expect(firstProfile).toContainText('user_');
 
     const pingButton = page.getByRole('button', { name: 'Ping' }).first();

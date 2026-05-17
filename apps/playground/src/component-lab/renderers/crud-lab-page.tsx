@@ -436,7 +436,7 @@ export function CrudLabPage() {
           description:
             'Shows the landed upstream owner cooperation path: CRUD consumes a data-source result object and `component:refresh` re-enters the source owner through `refreshSource` instead of inventing a CRUD-private fetch protocol.',
           schema: requestOwnedCrud,
-          data: { records },
+          data: { pagedRecords: { items: records, total: 42 }, records },
           env: crudLabEnv,
         },
         {

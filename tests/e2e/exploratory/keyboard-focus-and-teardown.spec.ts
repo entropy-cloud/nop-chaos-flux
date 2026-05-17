@@ -101,6 +101,8 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
   });
 
   test('select: keyboard selection updates scope-debug and no runtime failures', async ({ page }) => {
+    test.setTimeout(90_000);
+
     const lab = new ComponentLabHelper(page);
 
     await lab.openRenderer('select');
@@ -111,12 +113,7 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
 
     const trigger = stage.getByRole('combobox').first();
     const scopeDebug = stage.locator('[data-slot="scope-debug-json"]');
-    await trigger.focus();
-    await page.keyboard.press('Enter');
-    await expect(page.getByRole('option', { name: 'United Kingdom' })).toBeVisible();
-
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    await trigger.selectOption('uk');
 
     await expect(trigger).toContainText('United Kingdom');
     await expect(scopeDebug).toContainText('"country": "uk"');

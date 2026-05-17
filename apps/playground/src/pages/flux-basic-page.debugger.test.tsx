@@ -33,21 +33,26 @@ function readFormCidByFieldLabel(labelText: string) {
 }
 
 async function selectOption(labelText: string, optionText: string) {
-  const trigger = screen.getByRole('combobox', { name: labelText });
-  fireEvent.pointerDown(trigger);
-  fireEvent.click(trigger);
-  const optionEls = await screen.findAllByRole('option', { name: optionText });
-  const optionEl = optionEls.at(-1);
-  expect(optionEl).toBeTruthy();
-  if (!optionEl) {
-    throw new Error(`Expected option ${optionText}`);
+  const nativeSelect = screen.queryByLabelText(labelText, { selector: 'select' });
+
+  if (nativeSelect instanceof HTMLSelectElement) {
+    const matchingOption = Array.from(nativeSelect.options).find((option) => option.text === optionText);
+    expect(matchingOption).toBeTruthy();
+    fireEvent.change(nativeSelect, { target: { value: matchingOption!.value } });
+    await waitFor(() => {
+      expect((screen.getByLabelText(labelText) as HTMLSelectElement).value).toBe(matchingOption!.value);
+    });
+    return;
   }
-  fireEvent.mouseEnter(optionEl);
-  fireEvent.mouseMove(optionEl);
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  fireEvent.click(optionEl);
+
+  const trigger = screen.getByRole('combobox', { name: labelText });
+  fireEvent.click(trigger);
+  const option = await screen.findByRole('option', { name: optionText });
+  fireEvent.mouseEnter(option);
+  fireEvent.mouseMove(option);
+  fireEvent.click(option);
   await waitFor(() => {
-    expect(screen.getByRole('combobox', { name: labelText }).textContent).toContain(optionText);
+    expect(screen.getByRole('combobox', { name: labelText }).textContent ?? '').toContain(optionText);
   });
 }
 

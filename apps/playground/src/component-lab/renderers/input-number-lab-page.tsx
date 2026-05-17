@@ -6,6 +6,7 @@ const basicNumberInputs = {
     {
       type: 'form',
       name: 'inputNumberForm',
+      data: { stepper: 10 },
       body: [
         {
           type: 'input-number',

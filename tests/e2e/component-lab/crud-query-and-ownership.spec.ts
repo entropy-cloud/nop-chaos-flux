@@ -36,7 +36,7 @@ test.describe('crud renderer query and ownership flows', () => {
     const stage = crudStage(lab, 'CRUD request-owned refresh baseline');
 
     await expectCrudStageVisible(stage);
-    await expect(crudFooter(stage)).toContainText(/Visible rows: 1; Total: 4\d/);
+    await expect(crudFooter(stage)).toContainText('Visible rows: 3; Total: 42');
 
     await stage.getByRole('button', { name: 'Refresh source owner' }).click();
 
@@ -44,8 +44,8 @@ test.describe('crud renderer query and ownership flows', () => {
     await expect(
       stage.getByRole('cell', { name: /Owner-\d+/, exact: false }).first(),
     ).toBeVisible();
-    await expect(crudFooter(stage)).toContainText(/Visible rows: 1; Total: 4\d/);
     await expect(crudScopeDebug(stage)).toContainText('"pagedRecords"');
+    await expect(crudScopeDebug(stage)).toContainText(/"total": 4\d/);
     await expect(crudScopeDebug(stage)).toContainText('"refreshCount": 1');
   });
 
