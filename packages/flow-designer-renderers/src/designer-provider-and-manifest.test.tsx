@@ -275,6 +275,7 @@ describe('flowDesignerRendererDefinitions', () => {
       expect.arrayContaining(['workbench-shell', 'builder-facing']),
     );
     expect(designerPageDef?.propContracts?.config?.required).toBe(true);
+    expect(designerPageDef?.propContracts?.statusPath).toBeTruthy();
     expect(designerPageDef?.scopeExportContracts?.$designer?.kind).toBe('object');
     expect(designerPageDef?.scopeExportContracts?.$designer?.fields).toMatchObject({
       kind: { kind: 'literal', value: 'designer' },

@@ -32,4 +32,38 @@ describe('flow-designer-renderers public surface', () => {
     expect(typeof flowDesignerUnstable.useDesignerContext).toBe('function');
     expect(typeof flowDesignerUnstable.useNodeTypeConfig).toBe('function');
   });
+
+  it('exports the peer-style designer page schema helper and host-page inputs', () => {
+    expect(typeof flowDesigner.defineDesignerPageSchema).toBe('function');
+
+    const schema = flowDesigner.defineDesignerPageSchema({
+      type: 'designer-page',
+      title: 'Designer',
+      className: 'designer-page',
+      visible: '${showDesigner}',
+      hidden: '${hideDesigner}',
+      disabled: '${busy}',
+      statusPath: 'designerStatus',
+      document: {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Flow',
+        version: '1.0.0',
+        nodes: [],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 },
+      },
+      config: { nodeTypes: [], edgeTypes: [], palette: { groups: [] } },
+    });
+
+    expect(schema).toMatchObject({
+      type: 'designer-page',
+      title: 'Designer',
+      className: 'designer-page',
+      visible: '${showDesigner}',
+      hidden: '${hideDesigner}',
+      disabled: '${busy}',
+      statusPath: 'designerStatus',
+    });
+  });
 });

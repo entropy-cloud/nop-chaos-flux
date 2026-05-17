@@ -38,6 +38,7 @@ export function DesignerPaletteContent(props: {
   );
 
   const nodeTypes = config.nodeTypes;
+  const nodeTypesById = new Map(nodeTypes.map((nodeType) => [nodeType.id, nodeType] as const));
   const paletteGroups = config.palette?.groups ?? [];
 
   const toggleGroup = useCallback((groupId: string) => {
@@ -115,7 +116,7 @@ export function DesignerPaletteContent(props: {
             {expandedGroups.has(group.id) && (
               <div id={`designer-palette-group-${group.id}`}>
                 {group.nodeTypes.map((ntId) => {
-                  const nt = nodeTypes.find((n) => n.id === ntId);
+                  const nt = nodeTypesById.get(ntId);
                   if (!nt) return null;
                   const isSelected = activeNodeType === nt.id;
                   return (

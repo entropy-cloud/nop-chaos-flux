@@ -3,6 +3,14 @@ import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flo
 
 export interface DesignerPageSchemaInput {
   type: 'designer-page';
+  id?: string;
+  name?: string;
+  label?: string;
+  title?: string | SchemaInput;
+  className?: string;
+  visible?: boolean | string;
+  hidden?: boolean | string;
+  disabled?: boolean | string;
   config: DesignerConfig;
   document?: GraphDocument;
   treeDocument?: TreeDocument;
@@ -13,6 +21,12 @@ export interface DesignerPageSchemaInput {
 }
 
 export type DesignerPageSchema = BaseSchema & DesignerPageSchemaInput;
+
+export function defineDesignerPageSchema<T extends DesignerPageSchemaInput>(
+  schema: T,
+): DesignerPageSchema {
+  return schema as unknown as DesignerPageSchema;
+}
 
 export interface DesignerFieldSchema extends BaseSchema {
   type: 'designer-field';
