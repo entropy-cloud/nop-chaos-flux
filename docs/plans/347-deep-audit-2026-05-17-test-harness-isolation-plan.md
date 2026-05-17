@@ -1,6 +1,6 @@
 # 347 Deep Audit 2026-05-17 Test Harness Isolation Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-17
 > Source: `docs/analysis/2026-05-17-deep-audit-full/{14-test-coverage.md,summary.md}`, live code verification of `packages/flux-renderers-form-advanced/src/test-support.tsx`, `packages/flux-renderers-form/src/test-dom-polyfills.ts`, `docs/plans/343-deep-audit-2026-05-17-review-completion-and-owner-routing-plan.md`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/plans/167-test-quality-and-reliability-improvement-plan.md`, `docs/plans/297-deep-audit-2026-05-15-test-isolation-and-source-resolver-proof-plan.md`
@@ -53,71 +53,71 @@
 
 ### Phase 1 - Freeze Test Harness Isolation Baseline
 
-Status: planned
+Status: completed
 Targets: touched harness files, affected tests
 
 - Item Types: `Decision | Proof`
 
-- [ ] Re-audit the shared mutable harness exports and global DOM patch sites in both renderer-form packages, then record one supported isolation baseline for the touched test families.
-- [ ] Identify the smallest focused proof set that demonstrates harness state isolation and DOM patch restore semantics.
+- [x] Re-audit the shared mutable harness exports and global DOM patch sites in both renderer-form packages, then record one supported isolation baseline for the touched test families.
+- [x] Identify the smallest focused proof set that demonstrates harness state isolation and DOM patch restore semantics.
 
 Exit Criteria:
 
-- [ ] The plan records a clean boundary against Plans `167` and `297`.
-- [ ] The in-scope shared-state and global-patch surfaces are explicitly enumerated.
-- [ ] `No owner-doc update required` is explicit unless a repository test-guide doc truly needs updating.
-- [ ] `docs/logs/2026/05-17.md` records the baseline decision.
+- [x] The plan records a clean boundary against Plans `167` and `297`.
+- [x] The in-scope shared-state and global-patch surfaces are explicitly enumerated.
+- [x] `No owner-doc update required` is explicit unless a repository test-guide doc truly needs updating.
+- [x] `docs/logs/2026/05-17.md` records the baseline decision.
 
 ### Phase 2 - Land Test Harness Isolation Fixes
 
-Status: planned
+Status: completed
 Targets: touched harness files and affected tests
 
 - Item Types: `Fix | Proof`
 
-- [ ] Replace the singleton mutable harness pattern with an isolation-safe setup/reset path for the touched suites in both renderer-form packages.
-- [ ] Move the in-scope DOM polyfills to an install/restore pattern that does not leak global mutations across files.
-- [ ] Update affected tests to use the supported harness baseline instead of manual `submitCalls.length = 0` resets.
+- [x] Replace the singleton mutable harness pattern with an isolation-safe setup/reset path for the touched suites in both renderer-form packages.
+- [x] Move the in-scope DOM polyfills to an install/restore pattern that does not leak global mutations across files.
+- [x] Update affected tests to use the supported harness baseline instead of manual `submitCalls.length = 0` resets.
 
 Exit Criteria:
 
-- [ ] The in-scope test suites no longer depend on shared module-level mutable state across files.
-- [ ] The in-scope DOM polyfills have a supported restore path.
-- [ ] Focused proof is green for both harness reset semantics and global patch cleanup.
-- [ ] `No owner-doc update required` remains explicit unless a test-guide update becomes necessary.
-- [ ] `docs/logs/2026/05-17.md` records the landed fix.
+- [x] The in-scope test suites no longer depend on shared module-level mutable state across files.
+- [x] The in-scope DOM polyfills have a supported restore path.
+- [x] Focused proof is green for both harness reset semantics and global patch cleanup.
+- [x] `No owner-doc update required` remains explicit unless a test-guide update becomes necessary.
+- [x] `docs/logs/2026/05-17.md` records the landed fix.
 
 ### Phase 3 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: touched tests, docs, this plan
 
 - Item Types: `Proof | Decision | Fix`
 
-- [ ] Run all focused tests added or modified in Phases 1-2.
-- [ ] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after the in-scope fixes land.
-- [ ] Record execution, verification, and evidence in `docs/logs/2026/05-17.md`.
-- [ ] Run an independent closure audit with a fresh subagent that re-reads this plan, Plans `167` / `297`, linked analysis, live code/tests, and verification output.
+- [x] Run all focused tests added or modified in Phases 1-2.
+- [x] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after the in-scope fixes land.
+- [x] Record execution, verification, and evidence in `docs/logs/2026/05-17.md`.
+- [x] Run an independent closure audit with a fresh subagent that re-reads this plan, Plans `167` / `297`, linked analysis, live code/tests, and verification output.
 
 Exit Criteria:
 
-- [ ] Focused verification for `2026-05-17/14-01` / `2026-05-17/14-02` has passed.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
-- [ ] Independent closure audit confirms no remaining test-harness isolation blocker.
-- [ ] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+- [x] Focused verification for `2026-05-17/14-01` / `2026-05-17/14-02` has passed.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
+- [x] Independent closure audit confirms no remaining test-harness isolation blocker.
+- [x] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
 
 ## Closure Gates
 
-- [ ] The in-scope confirmed live defects (`2026-05-17/14-01`, `2026-05-17/14-02`) are fixed.
-- [ ] Renderer-form test harness isolation converges to one supported baseline.
-- [ ] Necessary focused verification exists for the touched shared-state and global-patch paths.
-- [ ] No in-scope live defect is silently downgraded to deferred/follow-up.
-- [ ] `No owner-doc update required` is explicit, or affected owner docs are synced to the live baseline.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope confirmed live defects (`2026-05-17/14-01`, `2026-05-17/14-02`) are fixed.
+- [x] Renderer-form test harness isolation converges to one supported baseline.
+- [x] Necessary focused verification exists for the touched shared-state and global-patch paths.
+- [x] No in-scope live defect is silently downgraded to deferred/follow-up.
+- [x] `No owner-doc update required` is explicit, or affected owner docs are synced to the live baseline.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -129,13 +129,13 @@ None currently.
 
 ## Closure
 
-Status Note: <<fill when completed>>
+Status Note: Completed. Renderer-form test support now uses per-test backing state instead of cross-file singleton arrays, and the suite-owned DOM polyfills have direct install/restore regression proof in both form packages.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<fill when completed>>
-- Evidence: <<fill when completed>>
+- Reviewer / Agent: `ses_1c9c98c7dffeT2tkRiULA7FBJX` (`general` subagent)
+- Evidence: Final independent closure audit found no remaining `14-01`/`14-02` blocker after direct DOM polyfill restore tests were added; focused harness/polyfill proof and final workspace verification stayed green (`tool_e362d7ff6001MPuSig14CcdoVo`).
 
 Follow-up:
 
-- <<fill when completed if needed>>
+- None.

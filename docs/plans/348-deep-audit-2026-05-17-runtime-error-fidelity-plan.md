@@ -1,6 +1,6 @@
 # 348 Deep Audit 2026-05-17 Runtime Error Fidelity Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-17
 > Source: `docs/analysis/2026-05-17-deep-audit-full/{19-error-propagation.md,summary.md}`, live code verification of `packages/flux-runtime/src/{form-runtime-owner.ts,form-runtime-validation.ts,runtime-action-helpers.ts}`, `docs/plans/343-deep-audit-2026-05-17-review-completion-and-owner-routing-plan.md`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/plans/160-swallowed-exception-remediation-plan.md`, `docs/plans/331-deep-audit-2026-05-16-action-error-fidelity-and-debugger-observability-plan.md`
@@ -54,72 +54,72 @@
 
 ### Phase 1 - Freeze Runtime Error-Fidelity Baseline
 
-Status: planned
+Status: completed
 Targets: touched runtime/core files, focused tests/docs
 
 - Item Types: `Decision | Proof`
 
-- [ ] Re-audit the three in-scope `2026-05-17` failure paths and record one supported baseline for cause preservation in runtime validation results and async validation actions.
-- [ ] Decide explicitly whether the supported fix requires exported type changes (`ValidationError`, result shapes) or can stay internal without contract dishonesty.
-- [ ] Define focused proof for each in-scope path.
+- [x] Re-audit the three in-scope `2026-05-17` failure paths and record one supported baseline for cause preservation in runtime validation results and async validation actions.
+- [x] Decide explicitly whether the supported fix requires exported type changes (`ValidationError`, result shapes) or can stay internal without contract dishonesty.
+- [x] Define focused proof for each in-scope path.
 
 Exit Criteria:
 
-- [ ] The plan records a clean boundary against Plans `160` and `331`.
-- [ ] Each in-scope path has an explicit target fidelity contract.
-- [ ] Affected owner docs are updated if exported contracts change; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-17.md` records the baseline decision.
+- [x] The plan records a clean boundary against Plans `160` and `331`.
+- [x] Each in-scope path has an explicit target fidelity contract.
+- [x] Affected owner docs are updated if exported contracts change; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-17.md` records the baseline decision.
 
 ### Phase 2 - Land Runtime Error-Fidelity Fixes
 
-Status: planned
+Status: completed
 Targets: touched runtime/core files, focused tests
 
 - Item Types: `Fix | Proof`
 
-- [ ] Preserve the original cause/payload in `form-runtime-owner.ts` field-validation failure reporting.
-- [ ] Preserve the original cause/payload when `form-runtime-validation.ts` normalizes thrown non-`Error` failures.
-- [ ] Preserve the original cause/payload when `runtime-action-helpers.ts` adapts failed async validation actions.
-- [ ] Add or update focused tests proving the retained cause chain on the supported baseline.
+- [x] Preserve the original cause/payload in `form-runtime-owner.ts` field-validation failure reporting.
+- [x] Preserve the original cause/payload when `form-runtime-validation.ts` normalizes thrown non-`Error` failures.
+- [x] Preserve the original cause/payload when `runtime-action-helpers.ts` adapts failed async validation actions.
+- [x] Add or update focused tests proving the retained cause chain on the supported baseline.
 
 Exit Criteria:
 
-- [ ] All in-scope runtime error paths preserve a truthful cause chain or equivalent supported diagnostics payload.
-- [ ] Focused proof is green for `2026-05-17/19-01`, `2026-05-17/19-03`, and `2026-05-17/19-04`.
-- [ ] `docs/architecture/form-validation.md` and, if needed, `docs/references/form-validation-runtime-types.md` match the final baseline; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-17.md` records the landed fix.
+- [x] All in-scope runtime error paths preserve a truthful cause chain or equivalent supported diagnostics payload.
+- [x] Focused proof is green for `2026-05-17/19-01`, `2026-05-17/19-03`, and `2026-05-17/19-04`.
+- [x] `docs/architecture/form-validation.md` and, if needed, `docs/references/form-validation-runtime-types.md` match the final baseline; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-17.md` records the landed fix.
 
 ### Phase 3 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: touched runtime/core files/tests/docs, this plan
 
 - Item Types: `Proof | Decision | Fix`
 
-- [ ] Run all focused tests added or modified in Phases 1-2.
-- [ ] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after the in-scope fixes land.
-- [ ] Record execution, verification, and evidence in `docs/logs/2026/05-17.md`.
-- [ ] Run an independent closure audit with a fresh subagent that re-reads this plan, Plans `160` / `331`, linked analysis, live code/tests/docs, and verification output.
+- [x] Run all focused tests added or modified in Phases 1-2.
+- [x] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after the in-scope fixes land.
+- [x] Record execution, verification, and evidence in `docs/logs/2026/05-17.md`.
+- [x] Run an independent closure audit with a fresh subagent that re-reads this plan, Plans `160` / `331`, linked analysis, live code/tests/docs, and verification output.
 
 Exit Criteria:
 
-- [ ] Focused verification for `2026-05-17/19-01`, `2026-05-17/19-03`, and `2026-05-17/19-04` has passed.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
-- [ ] Independent closure audit confirms no remaining runtime error-fidelity blocker.
-- [ ] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+- [x] Focused verification for `2026-05-17/19-01`, `2026-05-17/19-03`, and `2026-05-17/19-04` has passed.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
+- [x] Independent closure audit confirms no remaining runtime error-fidelity blocker.
+- [x] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
 
 ## Closure Gates
 
-- [ ] The in-scope confirmed live defects (`2026-05-17/19-01`, `2026-05-17/19-03`, `2026-05-17/19-04`) are fixed.
-- [ ] Runtime error fidelity converges to one supported cause-preserving baseline.
-- [ ] Necessary focused verification exists for every touched failure path.
-- [ ] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
-- [ ] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope confirmed live defects (`2026-05-17/19-01`, `2026-05-17/19-03`, `2026-05-17/19-04`) are fixed.
+- [x] Runtime error fidelity converges to one supported cause-preserving baseline.
+- [x] Necessary focused verification exists for every touched failure path.
+- [x] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
+- [x] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -131,13 +131,13 @@ None currently.
 
 ## Closure
 
-Status Note: <<fill when completed>>
+Status Note: Completed. Runtime validation and async validation action adaptation now preserve original failure causes through exported result/error surfaces, and the owner docs reflect the updated baseline.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<fill when completed>>
-- Evidence: <<fill when completed>>
+- Reviewer / Agent: `ses_1c9c98c7dffeT2tkRiULA7FBJX` (`general` subagent)
+- Evidence: Final independent closure audit found no remaining runtime error-fidelity blocker; focused cause-preservation proof and final full verification remained green (`tool_e362d7ff6001MPuSig14CcdoVo`).
 
 Follow-up:
 
-- <<fill when completed if needed>>
+- None.

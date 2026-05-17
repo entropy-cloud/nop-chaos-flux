@@ -1,6 +1,6 @@
 # 346 Deep Audit 2026-05-17 Flux Bundle API Typing Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-17
 > Source: `docs/analysis/2026-05-17-deep-audit-full/{13-type-safety.md,summary.md}`, live code verification of `packages/flux-bundle/src/{index.tsx,types.ts}`, `docs/plans/343-deep-audit-2026-05-17-review-completion-and-owner-routing-plan.md`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/plans/320-deep-audit-2026-05-16-bundle-facade-contract-plan.md`
@@ -51,69 +51,69 @@
 
 ### Phase 1 - Freeze Bundle API Bridge Typing Baseline
 
-Status: planned
+Status: completed
 Targets: `packages/flux-bundle/src/{index.tsx,types.ts}`, focused tests/docs
 
 - Item Types: `Decision | Proof`
 
-- [ ] Re-audit the remaining env/schema/action callback bridge cast sites together with `types/public-types.d.ts`, and record which ones are true unsupported type erasure versus acceptable boundary adaptation on the shipped declaration surface.
-- [ ] Define one supported bundle API bridge baseline that is narrower than raw `unknown` casting and explicitly bounded against Plan `320`'s renderer-definition closure.
+- [x] Re-audit the remaining env/schema/action callback bridge cast sites together with `types/public-types.d.ts`, and record which ones are true unsupported type erasure versus acceptable boundary adaptation on the shipped declaration surface.
+- [x] Define one supported bundle API bridge baseline that is narrower than raw `unknown` casting and explicitly bounded against Plan `320`'s renderer-definition closure.
 
 Exit Criteria:
 
-- [ ] The plan records a clean boundary against Plan `320`.
-- [ ] Each in-scope cast site is adjudicated as `remove`, `replace with explicit adapter type`, or `retain with explicit boundary rationale`.
-- [ ] Affected owner docs are updated if the public facade typing contract changes; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-17.md` records the baseline decision.
+- [x] The plan records a clean boundary against Plan `320`.
+- [x] Each in-scope cast site is adjudicated as `remove`, `replace with explicit adapter type`, or `retain with explicit boundary rationale`.
+- [x] Affected owner docs are updated if the public facade typing contract changes; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-17.md` records the baseline decision.
 
 ### Phase 2 - Land Bundle API Typing Fixes
 
-Status: planned
+Status: completed
 Targets: `packages/flux-bundle/src/{index.tsx,types.ts}`, focused tests
 
 - Item Types: `Fix | Proof`
 
-- [ ] Replace the in-scope env/schema/action callback type-erasure bridge points with explicit facade typing or a narrower supported adapter surface across both source bridge code and shipped declaration output.
-- [ ] Add or update focused proof for the touched bundle API bridge contract, including the shipped declaration surface.
+- [x] Replace the in-scope env/schema/action callback type-erasure bridge points with explicit facade typing or a narrower supported adapter surface across both source bridge code and shipped declaration output.
+- [x] Add or update focused proof for the touched bundle API bridge contract, including the shipped declaration surface.
 
 Exit Criteria:
 
-- [ ] The supported bundle API and shipped declaration surface no longer depend on unjustified `as unknown as` / over-wide bridge points for the in-scope surface.
-- [ ] Focused proof is green for the final facade typing baseline.
-- [ ] Affected owner docs match the final baseline, or `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-17.md` records the landed fix.
+- [x] The supported bundle API and shipped declaration surface no longer depend on unjustified `as unknown as` / over-wide bridge points for the in-scope surface.
+- [x] Focused proof is green for the final facade typing baseline.
+- [x] Affected owner docs match the final baseline, or `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-17.md` records the landed fix.
 
 ### Phase 3 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: touched bundle files/tests/docs, this plan
 
 - Item Types: `Proof | Decision | Fix`
 
-- [ ] Run all focused tests added or modified in Phases 1-2.
-- [ ] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after the in-scope fix lands.
-- [ ] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-17.md`.
-- [ ] Run an independent closure audit with a fresh subagent that re-reads this plan, Plan `320`, linked analysis, live code/tests/docs, and verification output.
+- [x] Run all focused tests added or modified in Phases 1-2.
+- [x] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after the in-scope fix lands.
+- [x] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-17.md`.
+- [x] Run an independent closure audit with a fresh subagent that re-reads this plan, Plan `320`, linked analysis, live code/tests/docs, and verification output.
 
 Exit Criteria:
 
-- [ ] Focused verification for `2026-05-17/13-01` has passed.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
-- [ ] Independent closure audit confirms no remaining bundle API typing blocker.
-- [ ] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+- [x] Focused verification for `2026-05-17/13-01` has passed.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
+- [x] Independent closure audit confirms no remaining bundle API typing blocker.
+- [x] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
 
 ## Closure Gates
 
-- [ ] The in-scope confirmed live defect (`2026-05-17/13-01` bundle bridge-typing residual) is fixed.
-- [ ] Flux bundle facade typing converges to one supported API bridge baseline.
-- [ ] Necessary focused verification exists for the touched facade typing surface.
-- [ ] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
-- [ ] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope confirmed live defect (`2026-05-17/13-01` bundle bridge-typing residual) is fixed.
+- [x] Flux bundle facade typing converges to one supported API bridge baseline.
+- [x] Necessary focused verification exists for the touched facade typing surface.
+- [x] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
+- [x] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -125,13 +125,13 @@ None currently.
 
 ## Closure
 
-Status Note: <<fill when completed>>
+Status Note: Completed. The flux bundle facade now exposes the supported env/schema/action typing surface directly in both source and shipped declaration output, with no remaining in-scope `unknown` bridge residual.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<fill when completed>>
-- Evidence: <<fill when completed>>
+- Reviewer / Agent: `ses_1c9c98c7dffeT2tkRiULA7FBJX` (`general` subagent)
+- Evidence: Final independent closure audit found no remaining bundle facade typing blocker; focused facade proof and final workspace verification remained green (`tool_e362d7ff6001MPuSig14CcdoVo`).
 
 Follow-up:
 
-- <<fill when completed if needed>>
+- None.

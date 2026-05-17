@@ -1,7 +1,7 @@
 # Form Validation Runtime Types Reference
 
 > Reference Status: Active
-> Last Updated: 2026-05-12
+> Last Updated: 2026-05-17
 > Owner Doc: `docs/architecture/form-validation.md`
 
 This document is the live-code reference for the exported validation runtime types.
@@ -35,6 +35,7 @@ interface ValidationError {
   rule: ValidationRule['kind'];
   ruleId?: string;
   ownerPath?: string;
+  cause?: unknown;
   sourceKind?:
     | 'field'
     | 'object'
@@ -73,6 +74,11 @@ Current return-shape baseline:
 - `ValidationScopeRuntime.validateAll()` returns `Promise<FormValidationResult>`
 - `ValidationScopeRuntime.applyChangesAndRevalidate()` returns `Promise<FormValidationResult>`
 - `FormRuntime.submit()` returns `Promise<ActionResult>`
+
+Current result-fidelity note:
+
+- lifecycle-blocked validation entry points, including disposed `applyChangesAndRevalidate(...)`, return `ok: false` blocked results instead of ordinary clean success
+- `ValidationError.cause` is the exported escape hatch for preserving original unexpected failure payloads when runtime validation has to synthesize an error record
 
 `FormErrorQuery` is the public filter shape used by React form-state hooks such as
 `useCurrentFormErrors(query)`, `useCurrentFormError(query)`, and

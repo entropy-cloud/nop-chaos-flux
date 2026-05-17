@@ -1,6 +1,6 @@
 # 345 Deep Audit 2026-05-17 Spreadsheet Theme Tokenization Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-17
 > Source: `docs/analysis/2026-05-17-deep-audit-full/{10-styling.md,summary.md}`, live code verification of `packages/spreadsheet-renderers/src/canvas-styles.css`, `docs/plans/343-deep-audit-2026-05-17-review-completion-and-owner-routing-plan.md`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/plans/324-deep-audit-2026-05-16-spreadsheet-shell-styling-and-header-interaction-plan.md`, `docs/architecture/{styling-system.md,theme-compatibility.md}`
@@ -50,69 +50,69 @@
 
 ### Phase 1 - Freeze Spreadsheet Shell Token Baseline
 
-Status: planned
+Status: completed
 Targets: `packages/spreadsheet-renderers/src/canvas-styles.css`, relevant styling docs, focused tests
 
 - Item Types: `Decision | Proof`
 
-- [ ] Re-audit the exact in-scope selectors still using hard-coded colors and record the supported token mapping for each touched surface: `spreadsheet-find-replace-panel`, `spreadsheet-cell-editor`, `spreadsheet-comment-editor`, `spreadsheet-find-input`, `spreadsheet-replace-input`, `spreadsheet-find-results`.
-- [ ] Define mandatory focused proof for the tokenized selectors, including why Plan `324` remains closed for selector/header ownership while its `10-01` token-closure claim is superseded by this successor.
+- [x] Re-audit the exact in-scope selectors still using hard-coded colors and record the supported token mapping for each touched surface: `spreadsheet-find-replace-panel`, `spreadsheet-cell-editor`, `spreadsheet-comment-editor`, `spreadsheet-find-input`, `spreadsheet-replace-input`, `spreadsheet-find-results`.
+- [x] Define mandatory focused proof for the tokenized selectors, including why Plan `324` remains closed for selector/header ownership while its `10-01` token-closure claim is superseded by this successor.
 
 Exit Criteria:
 
-- [ ] The plan records a clean boundary against Plan `324`.
-- [ ] The touched shell selectors have an explicit token baseline.
-- [ ] Affected styling docs are updated if the live token contract needs clarification; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-17.md` records the baseline decision.
+- [x] The plan records a clean boundary against Plan `324`.
+- [x] The touched shell selectors have an explicit token baseline.
+- [x] Affected styling docs are updated if the live token contract needs clarification; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-17.md` records the baseline decision.
 
 ### Phase 2 - Land Spreadsheet Theme Tokenization Fixes
 
-Status: planned
+Status: completed
 Targets: `packages/spreadsheet-renderers/src/canvas-styles.css`, focused tests
 
 - Item Types: `Fix | Proof`
 
-- [ ] Replace the in-scope hard-coded colors with supported CSS variables for border, surface, focus, and secondary text roles on the enumerated selectors only.
-- [ ] Add or update focused proof that the spreadsheet shell paths no longer depend on package-private RGB literals.
+- [x] Replace the in-scope hard-coded colors with supported CSS variables for border, surface, focus, and secondary text roles on the enumerated selectors only.
+- [x] Add or update focused proof that the spreadsheet shell paths no longer depend on package-private RGB literals.
 
 Exit Criteria:
 
-- [ ] The enumerated in-scope spreadsheet shell selectors read supported token variables instead of hard-coded RGB values.
-- [ ] Focused proof is green for the touched shell styling paths.
-- [ ] Affected styling docs match the final baseline, or `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-17.md` records the landed fix.
+- [x] The enumerated in-scope spreadsheet shell selectors read supported token variables instead of hard-coded RGB values.
+- [x] Focused proof is green for the touched shell styling paths.
+- [x] Affected styling docs match the final baseline, or `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-17.md` records the landed fix.
 
 ### Phase 3 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: touched stylesheet/tests/docs, this plan
 
 - Item Types: `Proof | Decision | Fix`
 
-- [ ] Run all focused tests added or modified in Phases 1-2.
-- [ ] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after the in-scope fix lands.
-- [ ] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-17.md`.
-- [ ] Run an independent closure audit with a fresh subagent that re-reads this plan, Plan `324`, linked analysis, live code/tests/docs, and verification output.
+- [x] Run all focused tests added or modified in Phases 1-2.
+- [x] Run `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` after the in-scope fix lands.
+- [x] Record execution, verification, and doc-sync evidence in `docs/logs/2026/05-17.md`.
+- [x] Run an independent closure audit with a fresh subagent that re-reads this plan, Plan `324`, linked analysis, live code/tests/docs, and verification output.
 
 Exit Criteria:
 
-- [ ] Focused verification for the enumerated `2026-05-17/10-01` selectors has passed.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
-- [ ] Independent closure audit confirms no remaining spreadsheet shell theme-token blocker.
-- [ ] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
+- [x] Focused verification for the enumerated `2026-05-17/10-01` selectors has passed.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
+- [x] Independent closure audit confirms no remaining spreadsheet shell theme-token blocker.
+- [x] This plan's statuses, checklists, closure gates, and daily log evidence are textually consistent.
 
 ## Closure Gates
 
-- [ ] The in-scope confirmed live defect (`2026-05-17/10-01` on the enumerated selectors) is fixed.
-- [ ] The enumerated spreadsheet shell selectors converge to one supported token baseline.
-- [ ] Necessary focused verification exists for the touched shell selectors.
-- [ ] No in-scope live defect is silently downgraded to deferred/follow-up.
-- [ ] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope confirmed live defect (`2026-05-17/10-01` on the enumerated selectors) is fixed.
+- [x] The enumerated spreadsheet shell selectors converge to one supported token baseline.
+- [x] Necessary focused verification exists for the touched shell selectors.
+- [x] No in-scope live defect is silently downgraded to deferred/follow-up.
+- [x] Affected owner docs are synced to the live baseline, or `No owner-doc update required` is explicit.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -124,13 +124,13 @@ None currently.
 
 ## Closure
 
-Status Note: <<fill when completed>>
+Status Note: Completed. The in-scope spreadsheet shell panel/editor/result selectors now read the shared `--nop-*` token baseline without retained RGB fallbacks, and focused/workspace verification stayed green.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<fill when completed>>
-- Evidence: <<fill when completed>>
+- Reviewer / Agent: `ses_1c9c98c7dffeT2tkRiULA7FBJX` (`general` subagent)
+- Evidence: Final independent closure audit found no remaining spreadsheet shell token blocker; focused proof now covers runtime toolbar rendering and direct stylesheet contract, with full verification green in `tool_e362d7ff6001MPuSig14CcdoVo`.
 
 Follow-up:
 
-- <<fill when completed if needed>>
+- None.

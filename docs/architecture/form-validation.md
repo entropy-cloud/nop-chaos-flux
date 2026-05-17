@@ -137,13 +137,13 @@ The validation runtime model has three core abstractions:
 
 ### Key Types Summary
 
-| Type                           | Purpose                                                          |
-| ------------------------------ | ---------------------------------------------------------------- |
-| `ValidationError`              | Single validation error with path, rule, message, and sourceKind |
-| `ValidationResult`             | Current exported result for single-path validation               |
-| `FormValidationResult`         | Current exported result for subtree/scope validation             |
-| `ActionResult`                 | Current exported result for `FormRuntime.submit()`               |
-| `ScopeValidationStateSnapshot` | Scope-wide validation state summary                              |
+| Type                           | Purpose                                                                                   |
+| ------------------------------ | ----------------------------------------------------------------------------------------- |
+| `ValidationError`              | Single validation error with path, rule, message, sourceKind, and optional original cause |
+| `ValidationResult`             | Current exported result for single-path validation                                        |
+| `FormValidationResult`         | Current exported result for subtree/scope validation                                      |
+| `ActionResult`                 | Current exported result for `FormRuntime.submit()`                                        |
+| `ScopeValidationStateSnapshot` | Scope-wide validation state summary                                                       |
 
 ### ValidationScopeRuntime
 
@@ -184,7 +184,8 @@ Rules:
 5. `disposed` owners must reject new validation and registration requests
 6. owners in `bootstrapping` or `refreshing` may delay ordinary validation requests until the owner becomes `active`, but they must not execute validation against a `null` model
 7. ordinary validation requests in `bootstrapping` or `refreshing` currently wait for the owner to become `active`; they must not resolve immediately as an ordinary clean-success path that is indistinguishable from "no errors"
-8. `submit()` follows a different live baseline: if the owner is still `bootstrapping` or `refreshing`, it returns an explicit failure result before mutating touched or submitting state
+8. `applyChangesAndRevalidate(...)` follows the same honesty rule as other validation entry points: when the owner is `disposed`, it returns an explicit lifecycle-blocked validation result instead of a clean-success result
+9. `submit()` follows a different live baseline: if the owner is still `bootstrapping` or `refreshing`, it returns an explicit failure result before mutating touched or submitting state
 
 `compiledModel: null` therefore does not mean “registration-only validation mode”.
 
@@ -496,6 +497,11 @@ Each `ValidationError` must include a `sourceKind` that distinguishes at least:
 6. `external`
 7. `runtime-overlay`
 8. `runtime-opaque`
+
+Current error-fidelity baseline:
+
+- when runtime validation adapts an unexpected internal failure into a `ValidationError`, the exported error record may carry the original thrown payload on `ValidationError.cause`
+- non-`Error` failures normalized inside validation/runtime helpers must preserve the original payload through `Error.cause` instead of flattening it away
 
 ### Aggregate And Root Error Attach Points
 
@@ -854,6 +860,7 @@ Rules:
 3. its atomic publish guarantee covers only the current owner's value writes, field validation state, and scope summary state
 4. cross-owner coordination must be modeled as explicit parent/child orchestration rather than one `applyChangesAndRevalidate(...)` call spanning multiple owners
 5. for `reason: 'change'`, the changed path itself remains part of the supported revalidation baseline; owners must not revalidate only dependents while skipping the directly changed path
+6. if the owner is `disposed`, the call must return an explicit lifecycle-blocked result rather than an ordinary clean-success result
 
 ## Large Inline Tables And Aggregate Rules
 
