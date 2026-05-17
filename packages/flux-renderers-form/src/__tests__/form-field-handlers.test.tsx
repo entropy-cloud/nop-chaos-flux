@@ -56,6 +56,41 @@ describe('formRendererDefinitions - input types and field handlers', () => {
     expect((screen.getByLabelText(/Email/) as HTMLInputElement).value).toBe('abc@example.com');
   });
 
+  it('keeps input-text writable under React StrictMode effect replay', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <React.StrictMode>
+        <SchemaRenderer
+          schemaUrl="test://form/strictmode-field-handlers"
+          schema={{
+            type: 'form',
+            data: {
+              name: '',
+            },
+            body: [
+              {
+                type: 'input-text',
+                name: 'name',
+                label: 'Name',
+              },
+            ],
+          }}
+          env={env}
+          formulaCompiler={sharedFormulaCompiler}
+        />
+      </React.StrictMode>,
+    );
+
+    const input = screen.getByLabelText(/Name/) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'Jane Doe' } });
+
+    await waitFor(() => {
+      expect((screen.getByLabelText(/Name/) as HTMLInputElement).value).toBe('Jane Doe');
+    });
+  });
+
   it('keeps field handler object identity stable across host rerenders when inputs are unchanged', () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([

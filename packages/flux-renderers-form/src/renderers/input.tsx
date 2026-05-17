@@ -16,13 +16,10 @@ import {
   cn,
   Input,
   Label,
+  NativeSelect,
+  NativeSelectOption,
   RadioGroup,
   RadioGroupItem,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Spinner,
   Switch,
   Textarea,
@@ -158,42 +155,40 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const ariaLabel = String(props.props.label ?? name);
   const loading = optionsSourceState?.loading === true;
-  const placeholder = loading ? 'Loading...' : undefined;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
   const selectedValue = value as string;
-  const selectedLabel = options.find((option) => option.value === selectedValue)?.label;
+  const errorId = errorMessage && name ? `${name}-source-error` : undefined;
 
   return (
     <div className={cn('nop-select-wrapper', props.meta.className)} data-slot="select-wrapper">
-      <Select
+      <NativeSelect
+        id={name ? `${name}-control` : undefined}
+        name={name || undefined}
         value={selectedValue}
-        onValueChange={(nextValue) => handlers.onChange(nextValue)}
+        aria-label={ariaLabel}
+        aria-required={props.props.required ? true : undefined}
+        aria-invalid={presentation.showError ? true : undefined}
+        aria-describedby={errorId}
+        aria-errormessage={errorId}
         disabled={loading || presentation.effectiveDisabled}
+        onFocus={handlers.onFocus}
+        onChange={(event) => handlers.onChange(event.target.value)}
+        onBlur={handlers.onBlur}
       >
-        <SelectTrigger
-          id={name ? `${name}-control` : undefined}
-          data-slot="select-trigger"
-          aria-label={ariaLabel}
-          aria-required={props.props.required ? true : undefined}
-          aria-invalid={presentation.showError ? true : undefined}
-          aria-describedby={errorMessage && name ? `${name}-source-error` : undefined}
-          aria-errormessage={errorMessage && name ? `${name}-source-error` : undefined}
-          onFocus={handlers.onFocus}
-          onBlur={handlers.onBlur}
-        >
-          {loading ? <Spinner className="size-4 text-muted-foreground" aria-hidden="true" /> : null}
-          <SelectValue placeholder={placeholder}>{selectedLabel}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {options?.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        {loading ? <NativeSelectOption value="">{t('flux.common.loading')}</NativeSelectOption> : null}
+        {options?.map((option) => (
+          <NativeSelectOption key={option.value} value={option.value}>
+            {option.label}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>
+      {loading ? (
+        <span data-slot="select-loading" role="status">
+          {t('flux.common.loading')}
+        </span>
+      ) : null}
       {errorMessage ? (
-        <span data-slot="select-error" id={name ? `${name}-source-error` : undefined} role="alert">
+        <span data-slot="select-error" id={errorId} role="alert">
           {errorMessage}
         </span>
       ) : null}
@@ -303,6 +298,7 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
   const errorMessage = getSourceErrorMessage(optionsSourceState);
   const selectedValue = value as string;
   const errorId = name ? `${name}-source-error` : undefined;
+  const groupLabel = String((props.props.label ?? name) || '') || undefined;
 
   return (
     <div
@@ -319,6 +315,7 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
         data-slot="radio-group-options"
         value={selectedValue}
         disabled={loading || presentation.effectiveDisabled}
+        aria-label={groupLabel}
         aria-required={props.props.required ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}
         aria-describedby={errorMessage ? errorId : undefined}
@@ -357,12 +354,14 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
   const loading = optionsSourceState?.loading === true;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
   const errorId = name ? `${name}-source-error` : undefined;
+  const groupLabel = String((props.props.label ?? name) || '') || undefined;
 
   return (
     <div
       className={cn('nop-checkbox-group-wrapper', props.meta.className)}
       data-slot="checkbox-group-wrapper"
       role="group"
+      aria-label={groupLabel}
       aria-required={props.props.required ? true : undefined}
       aria-describedby={errorMessage ? errorId : undefined}
     >

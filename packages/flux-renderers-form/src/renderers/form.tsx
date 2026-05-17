@@ -152,6 +152,8 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       ? (props.props.data as Record<string, unknown>)
       : undefined;
   const initialValuesRef = useRef(initialValues);
+  const mountedFormRef = useRef(false);
+  const activeOwnedFormRef = useRef<ReturnType<typeof runtime.createFormRuntime> | null>(null);
 
   const ownedForm = useMemo(
     () =>
@@ -178,8 +180,18 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   );
 
   useEffect(() => {
+    mountedFormRef.current = true;
+    activeOwnedFormRef.current = ownedForm;
+
     return () => {
-      ownedForm.dispose();
+      mountedFormRef.current = false;
+      const disposedForm = ownedForm;
+
+      queueMicrotask(() => {
+        if (!mountedFormRef.current || activeOwnedFormRef.current !== disposedForm) {
+          disposedForm.dispose();
+        }
+      });
     };
   }, [ownedForm]);
 

@@ -299,8 +299,10 @@ describe('FormRenderer lifecycle wiring', () => {
 
     unmount();
     expect(ownedForm.setLifecycleHandlers).toHaveBeenLastCalledWith(undefined);
-    expect(ownedForm.dispose).toHaveBeenCalledTimes(1);
-    expect(registerCleanup).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(ownedForm.dispose).toHaveBeenCalledTimes(1);
+      expect(registerCleanup).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('reuses raw scopes when there are no imports and skips optional registration paths', async () => {

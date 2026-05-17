@@ -314,7 +314,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
     fireEvent.change(usernameInput, { target: { value: 'Bob' } });
     await selectOption('Role', 'Editor');
     await waitFor(() => {
-      expect(screen.getByRole('combobox', { name: 'Role' }).textContent).toContain('Editor');
+      expect((screen.getByRole('combobox', { name: 'Role' }) as HTMLSelectElement).value).toBe('editor');
     });
     fireEvent.click(screen.getByText('Submit profile'));
 

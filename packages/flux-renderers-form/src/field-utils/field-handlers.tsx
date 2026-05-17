@@ -91,7 +91,7 @@ export function createFieldHandlers(args: {
           await setValue(nextValue);
 
           if (shouldValidateOn(name, currentForm, 'change')) {
-            await currentForm.validateField(name);
+            await currentForm.validateField(name, 'change');
           }
         })().catch((error: unknown) => {
           console.warn('[field-utils] adapter.out failed in onChange', error);
@@ -132,7 +132,7 @@ export function createFieldHandlers(args: {
 
         if (shouldValidateOn(name, currentForm, 'blur')) {
           attachValidationRejectionHandler(
-            currentForm.validateField(name),
+            currentForm.validateField(name, 'blur'),
             '[field-utils] validateField failed in onBlur',
           );
         }

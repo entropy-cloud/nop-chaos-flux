@@ -160,6 +160,8 @@ describe('createFieldHandlers', () => {
       expect(setValue).toHaveBeenCalledWith('Alice');
       expect(currentForm.validateField).toHaveBeenCalledTimes(2);
     });
+    expect(currentForm.validateField).toHaveBeenCalledWith('name', 'change');
+    expect(currentForm.validateField).toHaveBeenCalledWith('name', 'blur');
     expect(currentForm.visitField).toHaveBeenCalledWith('name');
     expect(currentForm.touchField).toHaveBeenCalledWith('name');
   });
@@ -187,7 +189,7 @@ describe('createFieldHandlers', () => {
     handlers.onChange('Alice');
 
     await waitFor(() => {
-      expect(currentForm.validateField).toHaveBeenCalledWith('name');
+      expect(currentForm.validateField).toHaveBeenCalledWith('name', 'change');
     });
   });
 

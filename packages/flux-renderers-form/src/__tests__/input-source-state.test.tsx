@@ -46,7 +46,7 @@ describe('input renderer source state branches', () => {
     expect(trigger.getAttribute('aria-errormessage')).toBe(alert.id);
   });
 
-  it('publishes required semantics on select triggers', () => {
+  it('publishes required semantics on select controls', () => {
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
 
     render(
@@ -70,6 +70,45 @@ describe('input renderer source state branches', () => {
     );
 
     expect(screen.getByRole('combobox', { name: 'Role' }).getAttribute('aria-required')).toBe('true');
+  });
+
+  it('updates form state when a select option is chosen in the browser contract path', async () => {
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/input-source-state#select-change"
+        schema={{
+          type: 'form',
+          data: {
+            role: 'viewer',
+          },
+          body: [
+            {
+              type: 'select',
+              name: 'role',
+              label: 'Role',
+              options: [
+                { label: 'Viewer', value: 'viewer' },
+                { label: 'Admin', value: 'admin' },
+              ],
+            },
+            {
+              type: 'form-state-probe',
+              name: 'role',
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Role' }), { target: { value: 'admin' } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('form-state:role').textContent).toBe('"admin"');
+    });
   });
 
   it('renders an object message source error for radio-group options', () => {
@@ -143,6 +182,38 @@ describe('input renderer source state branches', () => {
     expect(document.querySelector('[data-slot="checkbox-group-wrapper"]')?.getAttribute('aria-describedby')).toBe(
       'tags-source-error',
     );
+  });
+
+  it('adds programmatic group names to radio-group and checkbox-group roots', () => {
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/input-source-state#group-names"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'radio-group',
+              name: 'status',
+              label: 'Status',
+              options: [{ label: 'Draft', value: 'draft' }],
+            },
+            {
+              type: 'checkbox-group',
+              name: 'tags',
+              label: 'Tags',
+              options: [{ label: 'Stable', value: 'stable' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    expect(screen.getByRole('radiogroup', { name: 'Status' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Tags' })).toBeTruthy();
   });
 
   it('removes checkbox-group values when an already-selected option is unchecked', async () => {
