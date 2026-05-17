@@ -323,6 +323,39 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     cleanup();
   });
 
+  it('keeps disabled tabs non-interactive after compiler normalization', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout-tabs-disabled"
+        schema={{
+          type: 'tabs',
+          items: [
+            { key: 'overview', title: 'Overview', body: [{ type: 'text', text: 'Overview body' }] },
+            { key: 'settings', title: 'Settings', disabled: true, body: [{ type: 'text', text: 'Settings body' }] },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: 'Settings' }).getAttribute('aria-disabled')).toBe('true');
+      expect(screen.getByText('Overview body')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Settings' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: 'Overview' }).getAttribute('aria-selected')).toBe('true');
+      expect(screen.getByRole('tab', { name: 'Settings' }).getAttribute('aria-selected')).toBe('false');
+      expect(screen.getByText('Overview body')).toBeTruthy();
+    });
+
+    cleanup();
+  });
+
   it('keeps nested form values when switching tabs', async () => {
     const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
     render(

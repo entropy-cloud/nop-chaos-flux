@@ -17,6 +17,19 @@ import { asReactNode } from './utils.js';
 
 const EMPTY_ITEMS: TabsItemSchema[] = [];
 
+function isTabDisabled(input: unknown): boolean {
+  if (input === true) {
+    return true;
+  }
+
+  if (!input || typeof input !== 'object') {
+    return false;
+  }
+
+  const candidate = input as { __nopPreserveLiteral?: unknown; value?: unknown };
+  return candidate.__nopPreserveLiteral === true && candidate.value === true;
+}
+
 function getItemValue(item: TabsItemSchema, index: number): string {
   const candidate = item.value ?? item.key;
   return String(candidate ?? index);
@@ -153,7 +166,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
         const titleContent =
           asReactNode(titleRegion?.render(regionOptions)) ?? item.title ?? item.label ?? value;
         return (
-          <TabsTrigger key={value} value={value} disabled={item.disabled === true}>
+          <TabsTrigger key={value} value={value} disabled={isTabDisabled(item.disabled)}>
             {titleContent}
           </TabsTrigger>
         );

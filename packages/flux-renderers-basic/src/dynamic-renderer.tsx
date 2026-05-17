@@ -21,15 +21,27 @@ function isBaseSchemaLike(value: unknown): value is BaseSchema {
 }
 
 type DynamicRendererState = {
-  loadAction?: DynamicRendererSchema['loadAction'];
+  loadActionKey?: string;
   loading: boolean;
   error: unknown;
   schema: BaseSchema | null;
 };
 
+function getLoadActionKey(loadAction?: DynamicRendererSchema['loadAction']): string | undefined {
+  if (!loadAction) {
+    return undefined;
+  }
+
+  try {
+    return JSON.stringify(loadAction);
+  } catch {
+    return String(loadAction);
+  }
+}
+
 function createDynamicRendererState(loadAction?: DynamicRendererSchema['loadAction']): DynamicRendererState {
   return {
-    loadAction,
+    loadActionKey: getLoadActionKey(loadAction),
     loading: Boolean(loadAction),
     error: loadAction ? undefined : 'loadAction is required',
     schema: null,
@@ -37,10 +49,12 @@ function createDynamicRendererState(loadAction?: DynamicRendererSchema['loadActi
 }
 
 export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSchema>) {
+  'use no memo';
+
   const loadAction = props.props.loadAction;
-  const dispatch = props.helpers.dispatch;
+  const loadActionKey = getLoadActionKey(loadAction);
   const [state, setState] = useState<DynamicRendererState>(() => createDynamicRendererState(loadAction));
-  const visibleState = state.loadAction === loadAction ? state : createDynamicRendererState(loadAction);
+  const visibleState = state.loadActionKey === loadActionKey ? state : createDynamicRendererState(loadAction);
 
   useEffect(() => {
     if (!loadAction) {
@@ -51,7 +65,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
     const loadSchema = async () => {
       try {
-        const result = await dispatch(loadAction, {
+        const result = await props.helpers.dispatch(loadAction, {
           signal: controller.signal,
         });
 
@@ -59,7 +73,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
         if (!result.ok) {
           setState({
-            loadAction,
+            loadActionKey,
             loading: false,
             error: result.error ?? new Error('dynamic-renderer loadAction failed'),
             schema: null,
@@ -71,7 +85,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
         if (!isBaseSchemaLike(nextSchema)) {
           setState({
-            loadAction,
+            loadActionKey,
             loading: false,
             error: 'Invalid schema received from action',
             schema: null,
@@ -79,10 +93,10 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
           return;
         }
 
-        setState({ loadAction, loading: false, error: undefined, schema: nextSchema });
+        setState({ loadActionKey, loading: false, error: undefined, schema: nextSchema });
       } catch (err) {
         if (controller.signal.aborted) return;
-        setState({ loadAction, loading: false, error: err, schema: null });
+        setState({ loadActionKey, loading: false, error: err, schema: null });
       }
     };
 
@@ -91,7 +105,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     return () => {
       controller.abort();
     };
-  }, [dispatch, loadAction]);
+  }, [loadAction, loadActionKey, props.helpers]);
 
   if (visibleState.error) {
     return (
@@ -114,7 +128,11 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}
       >
-        {asReactNode(props.helpers.render(visibleState.schema))}
+        {asReactNode(
+          props.helpers.render(visibleState.schema, {
+            pathSuffix: `dynamic.${loadActionKey ?? 'schema'}`,
+          }),
+        )}
       </div>
     );
   }

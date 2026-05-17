@@ -23,6 +23,7 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
+    "@nop-chaos/flux-compiler": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
     "lucide-react": "^1.7.0",
