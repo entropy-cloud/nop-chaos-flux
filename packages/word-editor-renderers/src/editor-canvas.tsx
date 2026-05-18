@@ -110,6 +110,9 @@ export function EditorCanvas({
           editorStore.setDirty(true);
         },
         onRangeStyleChange: (payload) => {
+          if (!payload) {
+            return;
+          }
           editorStore.setSelection({
             bold: payload.bold,
             italic: payload.italic,

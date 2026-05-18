@@ -180,6 +180,7 @@ export function PageControls({ bridge, store }: PageControlsProps) {
                 <span className="text-sm text-muted-foreground w-14">{label}</span>
                 <Input
                   type="number"
+                  aria-label={`${label} margin`}
                   value={margins[i]}
                   onChange={(e) => {
                     const newMargins = [...margins] as [number, number, number, number];
@@ -218,6 +219,7 @@ export function PageControls({ bridge, store }: PageControlsProps) {
           </DialogHeader>
           <DialogBody>
             <Input
+              aria-label="Watermark text"
               placeholder="Watermark text"
               value={watermarkText}
               onChange={(e) => setWatermarkText(e.target.value)}

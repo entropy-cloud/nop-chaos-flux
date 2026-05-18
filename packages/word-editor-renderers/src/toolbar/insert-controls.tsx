@@ -137,12 +137,14 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
           </DialogHeader>
           <DialogBody className="space-y-3">
             <Input
+              aria-label="Display text"
               placeholder="Display text"
               value={hyperlinkDisplay}
               onChange={(e) => setHyperlinkDisplay(e.target.value)}
               size="sm"
             />
             <Input
+              aria-label="URL"
               placeholder="URL (https://...)"
               value={hyperlinkUrl}
               onChange={(e) => setHyperlinkUrl(e.target.value)}

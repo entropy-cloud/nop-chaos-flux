@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { PageControls } from './page-controls.js';
@@ -51,6 +51,7 @@ function createStore(overrides?: {
 
 describe('PageControls', () => {
   it('hydrates page margins from current store state on open and writes back on apply', async () => {
+    cleanup();
     resetFluxI18n();
     initFluxI18n();
 
@@ -105,6 +106,7 @@ describe('PageControls', () => {
   });
 
   it('toggles page mode through the shared editor store', async () => {
+    cleanup();
     resetFluxI18n();
     initFluxI18n();
 
@@ -127,9 +129,45 @@ describe('PageControls', () => {
 
     render(<PageControls bridge={bridge} store={store as any} />);
 
-    fireEvent.click(screen.getByTitle('Toggle Page Mode'));
+    fireEvent.click(screen.getAllByTitle('Toggle Page Mode')[0]!);
 
     expect(store.setPageMode).toHaveBeenCalledWith('continuity');
     expect(executePageMode).toHaveBeenCalledWith('continuity');
+  });
+
+  it('gives page-margin and watermark dialogs stable accessible names', async () => {
+    cleanup();
+    resetFluxI18n();
+    initFluxI18n();
+
+    const store = createStore();
+    const bridge = {
+      command: {
+        executePageScaleAdd: vi.fn(),
+        executePageScaleMinus: vi.fn(),
+        executePageScaleRecovery: vi.fn(),
+        executePageMode: vi.fn(),
+        executePaperSize: vi.fn(),
+        executePaperDirection: vi.fn(),
+        executeSetPaperMargin: vi.fn(),
+        executeAddWatermark: vi.fn(),
+        executeDeleteWatermark: vi.fn(),
+        executePrint: vi.fn(),
+      },
+    } as any;
+
+    render(<PageControls bridge={bridge} store={store as any} />);
+
+    fireEvent.click(screen.getAllByTitle('Set Margins')[0]!);
+    const marginDialog = await screen.findByRole('dialog');
+    expect(within(marginDialog).getByRole('spinbutton', { name: 'Top margin' })).toBeTruthy();
+    expect(within(marginDialog).getByRole('spinbutton', { name: 'Right margin' })).toBeTruthy();
+    expect(within(marginDialog).getByRole('spinbutton', { name: 'Bottom margin' })).toBeTruthy();
+    expect(within(marginDialog).getByRole('spinbutton', { name: 'Left margin' })).toBeTruthy();
+
+    fireEvent.click(within(marginDialog).getByRole('button', { name: '取消' }));
+    fireEvent.click(screen.getAllByTitle('Watermark')[0]!);
+    const watermarkDialog = await screen.findByRole('dialog');
+    expect(within(watermarkDialog).getByRole('textbox', { name: 'Watermark text' })).toBeTruthy();
   });
 });

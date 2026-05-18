@@ -1,13 +1,14 @@
 // @vitest-environment happy-dom
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import * as FluxReact from '@nop-chaos/flux-react';
 import { InsertControls } from '../toolbar/insert-controls.js';
 
 describe('InsertControls', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    cleanup();
   });
 
   it('notifies when image read fails', () => {
@@ -36,6 +37,7 @@ describe('InsertControls', () => {
   });
 
   it('notifies when image insertion command throws', () => {
+    cleanup();
     const notify = vi.fn();
     vi.spyOn(FluxReact, 'useRendererEnv').mockReturnValue({ notify } as any);
 
@@ -68,5 +70,17 @@ describe('InsertControls', () => {
     fireEvent.change(input, { target: { files: [new File(['x'], 'x.png', { type: 'image/png' })] } });
 
     expect(notify).toHaveBeenCalledWith('warning', 'Insert image failed');
+  });
+
+  it('gives hyperlink dialog inputs stable accessible names', () => {
+    cleanup();
+    vi.spyOn(FluxReact, 'useRendererEnv').mockReturnValue({ notify: vi.fn() } as any);
+
+    render(<InsertControls bridge={null} />);
+
+    fireEvent.click(screen.getAllByTitle('Insert Hyperlink')[0]!);
+
+    expect(screen.getByRole('textbox', { name: 'Display text' })).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: 'URL' })).toBeTruthy();
   });
 });

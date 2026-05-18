@@ -22,31 +22,41 @@ interface FontControlsProps {
 const FONTS = ['Microsoft YaHei', 'SimSun', 'SimHei', 'Arial', 'Times New Roman', 'Courier New'];
 const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
 
+function runCommand(action: () => void) {
+  try {
+    action();
+  } catch {
+    // canvas-editor may reject style commands when no editable range is active yet
+  }
+}
+
 export function FontControls({ bridge, selection }: FontControlsProps) {
+  const command = bridge?.command;
+
   return (
     <ToolbarGroup>
       <ToolbarButton
         icon={Undo2}
-        onClick={() => bridge?.command?.executeUndo()}
+        onClick={() => runCommand(() => command?.executeUndo())}
         disabled={!selection.undo}
         title="Undo"
       />
       <ToolbarButton
         icon={Redo2}
-        onClick={() => bridge?.command?.executeRedo()}
+        onClick={() => runCommand(() => command?.executeRedo())}
         disabled={!selection.redo}
         title="Redo"
       />
       <ToolbarSeparator />
       <ToolbarButton
         icon={Paintbrush}
-        onClick={() => bridge?.command?.executePainter({ isDblclick: false })}
+        onClick={() => runCommand(() => command?.executePainter({ isDblclick: false }))}
         title="Format Painter"
       />
       <ToolbarSeparator />
       <NativeSelect
         value={selection.font || 'Microsoft YaHei'}
-        onChange={(e) => bridge?.command?.executeFont(e.target.value)}
+        onChange={(e) => runCommand(() => command?.executeFont(e.target.value))}
         title="Font"
         size="xs"
         className="flex-shrink-0 max-w-[130px]"
@@ -59,7 +69,7 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
       </NativeSelect>
       <NativeSelect
         value={selection.size}
-        onChange={(e) => bridge?.command?.executeSize(Number(e.target.value))}
+        onChange={(e) => runCommand(() => command?.executeSize(Number(e.target.value)))}
         title="Font Size"
         size="xs"
         className="flex-shrink-0 w-14"
@@ -72,37 +82,37 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
       </NativeSelect>
       <ToolbarButton
         icon={Bold}
-        onClick={() => bridge?.command?.executeBold()}
+        onClick={() => runCommand(() => command?.executeBold())}
         active={selection.bold}
         title="Bold"
       />
       <ToolbarButton
         icon={Italic}
-        onClick={() => bridge?.command?.executeItalic()}
+        onClick={() => runCommand(() => command?.executeItalic())}
         active={selection.italic}
         title="Italic"
       />
       <ToolbarButton
         icon={Underline}
-        onClick={() => bridge?.command?.executeUnderline()}
+        onClick={() => runCommand(() => command?.executeUnderline())}
         active={selection.underline}
         title="Underline"
       />
       <ToolbarButton
         icon={Strikethrough}
-        onClick={() => bridge?.command?.executeStrikeout()}
+        onClick={() => runCommand(() => command?.executeStrikeout())}
         active={selection.strikeout}
         title="Strikethrough"
       />
       <ToolbarButton
         icon={Superscript}
-        onClick={() => bridge?.command?.executeSuperscript()}
+        onClick={() => runCommand(() => command?.executeSuperscript())}
         active={selection.superscript}
         title="Superscript"
       />
       <ToolbarButton
         icon={Subscript}
-        onClick={() => bridge?.command?.executeSubscript()}
+        onClick={() => runCommand(() => command?.executeSubscript())}
         active={selection.subscript}
         title="Subscript"
       />
@@ -110,7 +120,7 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
       <Input
         type="color"
         value={selection.color || '#000000'}
-        onChange={(e) => bridge?.command?.executeColor(e.target.value)}
+        onChange={(e) => runCommand(() => command?.executeColor(e.target.value))}
         className={cn('w-7 h-7 cursor-pointer flex-shrink-0 border rounded')}
         title="Text Color"
         aria-label="Text Color"
@@ -118,7 +128,7 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
       <Input
         type="color"
         value={selection.highlight || '#ffff00'}
-        onChange={(e) => bridge?.command?.executeHighlight(e.target.value)}
+        onChange={(e) => runCommand(() => command?.executeHighlight(e.target.value))}
         className={cn('w-7 h-7 cursor-pointer flex-shrink-0 border rounded')}
         title="Highlight Color"
         aria-label="Highlight Color"
