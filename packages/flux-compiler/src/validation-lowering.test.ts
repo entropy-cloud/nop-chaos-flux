@@ -256,6 +256,26 @@ describe('validation-lowering', () => {
       expect(rule.dependencyPaths).toEqual(['other']);
     });
 
+    it('merges schema-level dependsOn with rule dependencies', () => {
+      const [rule] = compileValidationRules(
+        'field',
+        [{ kind: 'requiredWhen', path: 'role', equals: 'admin' }],
+        ['tenant'],
+      );
+
+      expect(rule.dependencyPaths).toEqual(['tenant', 'role']);
+    });
+
+    it('uses schema-level dependsOn for async rules', () => {
+      const [rule] = compileValidationRules(
+        'field',
+        [{ kind: 'async', action: { action: 'ajax', args: { url: '/check' } } }],
+        ['username'],
+      );
+
+      expect(rule.dependencyPaths).toEqual(['username']);
+    });
+
     it('returns empty dependency paths for rules without deps', () => {
       const [rule] = compileValidationRules('field', [{ kind: 'required' }]);
       expect(rule.dependencyPaths).toEqual([]);

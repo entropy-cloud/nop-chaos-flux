@@ -17,6 +17,17 @@ import {
 import { createSchemaCompiler } from './index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
+function createSimplePageSchema() {
+  return {
+    type: 'page',
+    id: 'page-root',
+    body: [
+      { type: 'form', id: 'user-form' },
+      { type: 'action-button', id: 'save-button' },
+    ],
+  } as const;
+}
+
 type CompiledNode = TemplateNode & {
   propsProgram: { kind: 'static'; value: Record<string, unknown> };
 };
@@ -466,5 +477,28 @@ describe('createSchemaCompiler', () => {
         }),
       ]),
     );
+  });
+
+  it('keeps repeated compile deterministic without mutating prior cid state', () => {
+    const compiler = createTestCompiler([pageRenderer, formRenderer, actionButtonRenderer]);
+
+    const first = compiler.compile(createSimplePageSchema());
+    const second = compiler.compile(createSimplePageSchema());
+
+    const firstRoot = first.root as TemplateNode;
+    const secondRoot = second.root as TemplateNode;
+    const firstBody = firstRoot.regions.body.node as readonly TemplateNode[];
+    const secondBody = secondRoot.regions.body.node as readonly TemplateNode[];
+
+    expect(firstRoot.templateNodeId).toBe(secondRoot.templateNodeId);
+    expect(firstBody[0].templateNodeId).toBe(secondBody[0].templateNodeId);
+    expect(firstBody[1].templateNodeId).toBe(secondBody[1].templateNodeId);
+
+    const firstCidState = getCompiledCidState(firstRoot);
+    const secondCidState = getCompiledCidState(secondRoot);
+
+    expect(firstCidState?.nextTemplateNodeId).toBe(secondCidState?.nextTemplateNodeId);
+    expect(firstCidState?.idPaths.get('user-form')).toEqual(['$.body[0]']);
+    expect(secondCidState?.idPaths.get('user-form')).toEqual(['$.body[0]']);
   });
 });

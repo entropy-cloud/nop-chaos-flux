@@ -180,26 +180,32 @@ export function normalizeValidationVisibilityTriggers(
   return normalized.length > 0 ? Array.from(new Set(normalized)) : fallback;
 }
 
-function collectValidationDependencyPaths(rule: ValidationRule): string[] {
+function collectValidationDependencyPaths(
+  rule: ValidationRule,
+  extraDependencyPaths?: readonly string[],
+): string[] {
+  const explicitDependencies = extraDependencyPaths ? [...extraDependencyPaths] : [];
+
   switch (rule.kind) {
     case 'equalsField':
     case 'notEqualsField':
     case 'requiredWhen':
     case 'requiredUnless':
-      return [rule.path];
+      return Array.from(new Set([...explicitDependencies, rule.path]));
     default:
-      return [];
+      return explicitDependencies;
   }
 }
 
 export function compileValidationRules(
   path: string,
   rules: ValidationRule[],
+  extraDependencyPaths?: readonly string[],
 ): CompiledValidationRule[] {
   return rules.map((rule, index) => ({
     id: `${path}#${index}:${rule.kind}`,
     rule,
-    dependencyPaths: collectValidationDependencyPaths(rule),
+    dependencyPaths: collectValidationDependencyPaths(rule, extraDependencyPaths),
     precompiled:
       rule.kind === 'pattern'
         ? compilePatternPrecompiled(rule.value as string, path, index)

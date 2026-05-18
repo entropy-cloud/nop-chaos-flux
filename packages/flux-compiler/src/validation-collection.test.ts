@@ -3,6 +3,7 @@ import type {
   RendererDefinition,
   TemplateNode,
   CompiledValidationNode,
+  SchemaValue,
 } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -100,6 +101,31 @@ const childPrefixRenderer: RendererDefinition = {
     },
   },
 };
+
+const containerRenderer: RendererDefinition = {
+  type: 'container',
+  component: () => null,
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+  validation: {
+    kind: 'container',
+  },
+};
+
+function createContainerBranch(depth: number, breadth: number, prefix: string): SchemaValue {
+  if (depth === 0) {
+    return {
+      type: 'input-text',
+      name: `${prefix}.value`,
+    };
+  }
+
+  return {
+    type: 'container',
+    body: Array.from({ length: breadth }, (_, index) =>
+      createContainerBranch(depth - 1, breadth, `${prefix}.${index}`),
+    ),
+  };
+}
 
 describe('collectValidationModel', () => {
   it('returns undefined for null input', () => {
@@ -533,5 +559,61 @@ describe('collectValidationModel', () => {
     const nodes = root.validationPlan!.nodes as Record<string, CompiledValidationNode>;
 
     expect(nodes['a'].behavior).toBe(nodes['b'].behavior);
+  });
+
+  it('does not regress to shift/unshift queue traversal on large root inputs', () => {
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([formRenderer, containerRenderer, inputRenderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = compiler.compile({
+      type: 'form',
+      body: Array.from({ length: 40 }, (_, index) =>
+        createContainerBranch(2, 3, `section${index}`),
+      ),
+    });
+
+    const root = compiled.root as TemplateNode;
+    const rootInput = (Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node])
+      .filter((node): node is TemplateNode => Boolean(node))
+      .map((node) => [node]);
+
+    let shiftCalls = 0;
+    let unshiftCalls = 0;
+    const originalShift = Array.prototype.shift;
+    const originalUnshift = Array.prototype.unshift;
+
+    Object.defineProperty(Array.prototype, 'shift', {
+      configurable: true,
+      value: function patchedShift(this: unknown[]) {
+        shiftCalls += 1;
+        return originalShift.call(this);
+      },
+    });
+
+    Object.defineProperty(Array.prototype, 'unshift', {
+      configurable: true,
+      value: function patchedUnshift(this: unknown[], ...items: unknown[]) {
+        unshiftCalls += 1;
+        return originalUnshift.apply(this, items);
+      },
+    });
+
+    try {
+      const model = collectValidationModel(rootInput);
+      expect(Object.keys(model?.nodes ?? {})).toHaveLength(1 + 40 * 9);
+      expect(shiftCalls).toBe(0);
+      expect(unshiftCalls).toBe(0);
+    } finally {
+      Object.defineProperty(Array.prototype, 'shift', {
+        configurable: true,
+        value: originalShift,
+      });
+      Object.defineProperty(Array.prototype, 'unshift', {
+        configurable: true,
+        value: originalUnshift,
+      });
+    }
   });
 });

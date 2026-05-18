@@ -49,16 +49,18 @@ export function collectValidationModel(
 
   const nodes: TemplateNode[] = [];
   const queue: Array<TemplateNode | TemplateNode[]> = Array.isArray(node) ? [...node] : [node];
+  let queueIndex = 0;
 
-  while (queue.length > 0) {
-    const current = queue.shift();
+  while (queueIndex < queue.length) {
+    const current = queue[queueIndex];
+    queueIndex += 1;
 
     if (!current) {
       continue;
     }
 
     if (Array.isArray(current)) {
-      queue.unshift(...current);
+      queue.push(...current);
       continue;
     }
 
@@ -123,12 +125,19 @@ export function collectValidationModel(
         : undefined;
 
       if (fieldPath) {
+        const schemaDependencyPaths = Array.isArray(entry.schema.dependsOn)
+          ? entry.schema.dependsOn.filter(
+              (dependency): dependency is string =>
+                typeof dependency === 'string' && dependency.length > 0,
+            )
+          : undefined;
         const compiledRules = compileValidationRules(
           fieldPath,
           mergeValidationRules(
             collectSchemaValidationRules(entry.schema),
             contributor.collectRules?.(entry.schema, ctx),
           ),
+          schemaDependencyPaths,
         );
         const parentPath = fieldPath.includes('.')
           ? fieldPath.split('.').slice(0, -1).join('.')

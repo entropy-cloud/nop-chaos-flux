@@ -202,6 +202,18 @@ export function validateActionShape(
     );
   }
 
+  if (value.when !== undefined && typeof value.when !== 'boolean' && typeof value.when !== 'string') {
+    emitSchemaDiagnostic(
+      diagnostics,
+      {
+        code: 'invalid-action-shape',
+        path: appendJsonPointer(path, 'when'),
+        message: 'Action when must be a boolean or expression string when provided.',
+      },
+      enabled,
+    );
+  }
+
   if (value.parallel !== undefined && !Array.isArray(value.parallel)) {
     emitSchemaDiagnostic(
       diagnostics,
@@ -236,6 +248,16 @@ export function validateActionShape(
     validateActionShape(
       value.onError,
       appendJsonPointer(path, 'onError'),
+      diagnostics,
+      enabled,
+      hostContext,
+    );
+  }
+
+  if (value.onSettled !== undefined) {
+    validateActionShape(
+      value.onSettled,
+      appendJsonPointer(path, 'onSettled'),
       diagnostics,
       enabled,
       hostContext,

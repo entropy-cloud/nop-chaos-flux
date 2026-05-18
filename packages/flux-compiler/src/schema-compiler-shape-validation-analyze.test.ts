@@ -161,6 +161,54 @@ describe('analyzeSchemaInput validation', () => {
     );
   });
 
+  it('reports invalid onSettled action shape', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      fields: [{ key: 'onClick', kind: 'event' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(
+      compiler.validate?.({
+        type: 'button',
+        onClick: { action: 'test', onSettled: 'not-an-action' },
+      }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-action-shape',
+          path: '/onClick/onSettled',
+          message: 'Action entries must be objects.',
+        }),
+      ]),
+    );
+  });
+
+  it('reports invalid action when shape for when field', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      fields: [{ key: 'onClick', kind: 'event' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(
+      compiler.validate?.({
+        type: 'button',
+        onClick: { action: 'test', when: { bad: true } },
+      }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-action-shape',
+          path: '/onClick/when',
+          message: 'Action when must be a boolean or expression string when provided.',
+        }),
+      ]),
+    );
+  });
+
   it('reports invalid source shape', () => {
     const renderer: RendererDefinition = {
       type: 'page',

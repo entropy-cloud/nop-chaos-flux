@@ -58,33 +58,38 @@ export function enrichTemplateNodeIds(
   cidState: CompiledCidState,
   diagnostics?: SchemaCompilerDiagnosticsContext,
 ): TemplateNode | readonly TemplateNode[] {
+  let nextTemplateNodeId = cidState.nextTemplateNodeId;
+  const nextById = new Map(cidState.byId);
+  const nextIdPaths = new Map<string, string[]>(
+    Array.from(cidState.idPaths.entries(), ([key, value]) => [key, [...value]]),
+  );
+  const nextDuplicateIds = new Set(cidState.duplicateIds);
   const nodes: TemplateNode[] = [];
   collectAllTemplateNodes(compiled, nodes);
 
   for (const node of nodes) {
-    cidState.nextTemplateNodeId += 1;
-    (node as { templateNodeId: number }).templateNodeId = cidState.nextTemplateNodeId;
-    attachCompiledCidState(node, cidState);
+    nextTemplateNodeId += 1;
+    (node as { templateNodeId: number }).templateNodeId = nextTemplateNodeId;
 
     if (!node.id) {
       continue;
     }
 
-    const firstTemplateNodeId = cidState.byId.get(node.id);
-    const duplicatePaths = cidState.idPaths.get(node.id);
+    const firstTemplateNodeId = nextById.get(node.id);
+    const duplicatePaths = nextIdPaths.get(node.id);
 
     if (firstTemplateNodeId == null) {
-      cidState.byId.set(node.id, node.templateNodeId);
-      cidState.idPaths.set(node.id, [node.templatePath]);
+      nextById.set(node.id, node.templateNodeId);
+      nextIdPaths.set(node.id, [node.templatePath]);
       continue;
     }
 
     if (!duplicatePaths) {
-      cidState.idPaths.set(node.id, [node.templatePath]);
+      nextIdPaths.set(node.id, [node.templatePath]);
       continue;
     }
 
-    cidState.duplicateIds.add(node.id);
+    nextDuplicateIds.add(node.id);
 
     if (!duplicatePaths.includes(node.templatePath)) {
       duplicatePaths.push(node.templatePath);
@@ -98,6 +103,18 @@ export function enrichTemplateNodeIds(
         message: `Duplicate schema id "${node.id}" detected at ${duplicatePaths.join(', ')}. The first occurrence remains bound to ${duplicatePaths[0]}.`,
       });
     }
+  }
+
+  const nextCidState: CompiledCidState = {
+    nextCid: cidState.nextCid,
+    nextTemplateNodeId,
+    byId: nextById,
+    idPaths: nextIdPaths,
+    duplicateIds: nextDuplicateIds,
+  };
+
+  for (const node of nodes) {
+    attachCompiledCidState(node, nextCidState);
   }
 
   return compiled;
