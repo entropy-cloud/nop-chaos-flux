@@ -22,4 +22,18 @@ describe('Button', () => {
     const button = container.querySelector('[data-slot="button"]');
     expect(button?.className).toContain('destructive');
   });
+
+  it('defaults to type button', () => {
+    render(<Button>Safe button</Button>);
+
+    const button = screen.getByRole('button', { name: 'Safe button' });
+    expect(button.getAttribute('type')).toBe('button');
+  });
+
+  it('preserves explicit submit type', () => {
+    render(<Button type="submit">Submit</Button>);
+
+    const button = screen.getByRole('button', { name: 'Submit' });
+    expect(button.getAttribute('type')).toBe('submit');
+  });
 });
