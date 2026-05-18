@@ -315,5 +315,69 @@ describe('flow-designer manifest', () => {
     expect(activeEdgeFields.targetPort).toBeTruthy();
     expect((fields.runtime.schema as any).fields.gridEnabled).toBeTruthy();
     expect((fields.runtime.schema as any).fields.gridVisible).toBeUndefined();
+    expect((fields.runtime.schema as any).fields.viewport).toBeTruthy();
+    expect((fields.doc.schema as any).fields.nodeCount).toBeTruthy();
+    expect((fields.doc.schema as any).fields.nodes).toBeUndefined();
+    expect(fields.activeBranch).toBeTruthy();
+  });
+
+  it('buildDesignerScopeData stays aligned with the published manifest projection', async () => {
+    const { buildDesignerScopeData } = await import('./designer-context.js');
+    const { FLOW_DESIGNER_MANIFEST_V1 } = await import('./designer-manifest.js');
+    const scopeData = buildDesignerScopeData({
+      snapshot: {
+        doc: {
+          id: 'doc-1',
+          kind: 'flow',
+          name: 'Example',
+          version: '1.0.0',
+          nodes: [{ id: 'n1' }],
+          edges: [{ id: 'e1' }],
+          viewport: { x: 10, y: 20, zoom: 1.25 },
+        },
+        selection: {
+          selectedNodeIds: ['n1'],
+          selectedEdgeIds: [],
+          activeNodeId: 'n1',
+          activeEdgeId: null,
+          activeBranchId: 'b1',
+        },
+        activeNode: { id: 'n1', type: 'task', position: { x: 0, y: 0 }, data: {} },
+        activeEdge: null,
+        activeBranch: { id: 'b1', childId: 'n2', label: 'Yes' },
+        canUndo: true,
+        canRedo: false,
+        isDirty: true,
+        gridEnabled: true,
+        viewport: { x: 10, y: 20, zoom: 1.25 },
+      } as any,
+    });
+
+    expect(Object.keys(FLOW_DESIGNER_MANIFEST_V1.projection.fields).sort()).toEqual(
+      ['activeBranch', 'activeEdge', 'activeNode', 'doc', 'runtime', 'selection'],
+    );
+    expect(scopeData.doc).toEqual({
+      id: 'doc-1',
+      kind: 'flow',
+      name: 'Example',
+      version: '1.0.0',
+      viewport: { x: 10, y: 20, zoom: 1.25 },
+      nodeCount: 1,
+      edgeCount: 1,
+    });
+    expect(scopeData.selection).toMatchObject({
+      kind: 'branch',
+      count: 1,
+      selectedNodeIds: ['n1'],
+      activeBranchId: 'b1',
+    });
+    expect(scopeData.runtime).toEqual({
+      canUndo: true,
+      canRedo: false,
+      dirty: true,
+      gridEnabled: true,
+      zoom: 1.25,
+      viewport: { x: 10, y: 20, zoom: 1.25 },
+    });
   });
 });

@@ -55,7 +55,7 @@ export function commitTransactionState(
   }
 
   if (index === 0) {
-    const txn = stack[stack.length - 1];
+    const txn = stack[0];
     return {
       stack: [],
       committedId: txn.id,

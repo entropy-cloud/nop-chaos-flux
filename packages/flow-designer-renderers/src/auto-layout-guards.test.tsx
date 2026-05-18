@@ -21,9 +21,13 @@ import {
 const testState: {
   layoutResolvers: Array<(positions: Map<string, { x: number; y: number }>) => void>;
   rejectNextTreeLayout: boolean;
+  treeLayoutOwners: unknown[];
+  invalidatedOwnerIds: number[];
 } = {
   layoutResolvers: [],
   rejectNextTreeLayout: false,
+  treeLayoutOwners: [],
+  invalidatedOwnerIds: [],
 };
 
 vi.mock('@nop-chaos/flow-designer-core', async () => {
@@ -31,9 +35,37 @@ vi.mock('@nop-chaos/flow-designer-core', async () => {
     '@nop-chaos/flow-designer-core',
   );
 
+  let nextOwnerId = 0;
+
   return {
     ...actual,
-    layoutTreeWithElk: vi.fn(async () => {
+    createElkLayoutOwner: vi.fn(() => {
+      const ownerId = nextOwnerId + 1;
+      nextOwnerId = ownerId;
+      let requestId = 0;
+      let invalidated = false;
+
+      return {
+        nextRequestId() {
+          if (invalidated) {
+            throw new Error(`ELK owner ${ownerId} was reused after cleanup`);
+          }
+
+          requestId += 1;
+          return requestId;
+        },
+        isActive(activeRequestId: number) {
+          return !invalidated && activeRequestId === requestId;
+        },
+        invalidate() {
+          invalidated = true;
+          requestId += 1;
+          testState.invalidatedOwnerIds.push(ownerId);
+        },
+      };
+    }),
+    layoutTreeWithElk: vi.fn(async (_nodes, _edges, _treeConfig, _nodeTypes, owner) => {
+      testState.treeLayoutOwners.push(owner);
       if (testState.rejectNextTreeLayout) {
         testState.rejectNextTreeLayout = false;
         throw new Error('ELK failed');
@@ -130,6 +162,8 @@ describe('DesignerPage auto layout guards', () => {
   beforeEach(() => {
     testState.layoutResolvers = [];
     testState.rejectNextTreeLayout = false;
+    testState.treeLayoutOwners = [];
+    testState.invalidatedOwnerIds = [];
   });
 
   it('ignores stale auto-layout results after switching documents', async () => {
@@ -300,6 +334,84 @@ describe('DesignerPage auto layout guards', () => {
         'ELK failed',
       );
     });
+  });
+
+  it('recreates the ELK owner after cleanup before tree remount work resumes', async () => {
+    const firstView = render(
+      <SchemaRenderer
+        schema={{
+          type: 'designer-page',
+          treeDocument: {
+            id: 'doc-remount-1',
+            kind: 'test-tree',
+            name: 'Remount 1',
+            version: '1.0.0',
+            root: {
+              id: 'node-1',
+              type: 'task',
+              data: { label: 'Task 1' },
+            },
+          },
+          config: {
+            ...createTestConfig(),
+            documentMode: 'tree',
+            treeConfig: {
+              layout: { direction: 'TB', nodeSpacing: 80, layerSpacing: 120 },
+              showGatewayNodes: true,
+              showMergeNodes: true,
+              autoLayout: true,
+            },
+          },
+        } as any}
+        env={testEnv as any}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(testState.treeLayoutOwners).toHaveLength(1);
+    });
+
+    const firstOwner = testState.treeLayoutOwners[0];
+    firstView.unmount();
+    expect(testState.invalidatedOwnerIds).toHaveLength(1);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'designer-page',
+          treeDocument: {
+            id: 'doc-remount-2',
+            kind: 'test-tree',
+            name: 'Remount 2',
+            version: '1.0.0',
+            root: {
+              id: 'node-2',
+              type: 'task',
+              data: { label: 'Task 2' },
+            },
+          },
+          config: {
+            ...createTestConfig(),
+            documentMode: 'tree',
+            treeConfig: {
+              layout: { direction: 'TB', nodeSpacing: 80, layerSpacing: 120 },
+              showGatewayNodes: true,
+              showMergeNodes: true,
+              autoLayout: true,
+            },
+          },
+        } as any}
+        env={testEnv as any}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(testState.treeLayoutOwners).toHaveLength(2);
+    });
+
+    expect(testState.treeLayoutOwners[1]).not.toBe(firstOwner);
   });
 
   it('keeps plus-button handlers isolated per designer instance', () => {

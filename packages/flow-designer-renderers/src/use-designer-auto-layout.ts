@@ -14,7 +14,18 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
   const [layoutError, setLayoutError] = useState<string | null>(null);
   const layoutRequestRef = useRef(0);
   const initialTreeAutolayoutDoneRef = useRef(false);
-  const elkOwnerRef = useRef(createElkLayoutOwner());
+  const elkOwnerRef = useRef<ReturnType<typeof createElkLayoutOwner> | null>(null);
+
+  const getElkOwner = useCallback(() => {
+    const currentOwner = elkOwnerRef.current;
+    if (currentOwner) {
+      return currentOwner;
+    }
+
+    const nextOwner = createElkLayoutOwner();
+    elkOwnerRef.current = nextOwner;
+    return nextOwner;
+  }, []);
 
   const handleAutoLayout = useCallback(async () => {
     const requestId = layoutRequestRef.current + 1;
@@ -41,7 +52,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
           doc.edges,
           treeConfig,
           normalizedCfg.nodeTypes,
-          elkOwnerRef.current,
+          getElkOwner(),
         );
         if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
           return;
@@ -56,7 +67,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
         doc.edges,
         core.getConfig().nodeTypes,
         undefined,
-        elkOwnerRef.current,
+        getElkOwner(),
       );
       if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
         return;
@@ -72,7 +83,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
         setLayoutBusy(false);
       }
     }
-  }, [config.documentMode, core]);
+  }, [config.documentMode, core, getElkOwner]);
 
   useEffect(() => {
     if (config.documentMode !== 'tree') {
@@ -102,7 +113,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
       doc.edges,
       treeConfig,
       normalizedCfg.nodeTypes,
-      elkOwnerRef.current,
+      getElkOwner(),
     )
       .then((layoutedNodes) => {
         if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
@@ -125,13 +136,12 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
           setLayoutBusy(false);
         }
       });
-  }, [config.documentMode, core]);
+  }, [config.documentMode, core, getElkOwner]);
 
   useEffect(() => {
-    const elkOwner = elkOwnerRef.current;
-
     return () => {
-      elkOwner.invalidate();
+      elkOwnerRef.current?.invalidate();
+      elkOwnerRef.current = null;
     };
   }, []);
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import type { DesignerConfig, TreeDocument } from '@nop-chaos/flow-designer-core';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
@@ -20,13 +20,8 @@ export function TreeModeLayoutWrapper(
   const { config } = props;
   const inputTreeDocument = readDesignerResolvedProp<TreeDocument>(props, 'treeDocument');
   const [initialTreeDocument] = useState(() => inputTreeDocument);
-  const [treeDocument, setTreeDocument] = useState<TreeDocument | undefined>(
-    inputTreeDocument,
-  );
-
-  useEffect(() => {
-    setTreeDocument(inputTreeDocument);
-  }, [inputTreeDocument]);
+  const [treeDocument, setTreeDocument] = useState<TreeDocument | undefined>(inputTreeDocument);
+  const [hasLocalTreeEdits, setHasLocalTreeEdits] = useState(false);
 
   const [core] = useState(() =>
     createDesignerCore(
@@ -36,19 +31,18 @@ export function TreeModeLayoutWrapper(
       config,
     ),
   );
-  const lastSyncedInputRef = useRef<TreeDocument | undefined>(inputTreeDocument);
+  const effectiveTreeDocument = hasLocalTreeEdits ? treeDocument : inputTreeDocument;
 
   useEffect(() => {
-    if (inputTreeDocument === lastSyncedInputRef.current) {
+    if (hasLocalTreeEdits) {
       return;
     }
-    lastSyncedInputRef.current = inputTreeDocument;
     if (inputTreeDocument) {
       core.replaceDocument(computeTreeModeDocument(inputTreeDocument, config), inputTreeDocument);
     }
-  }, [config, core, inputTreeDocument]);
+  }, [config, core, hasLocalTreeEdits, inputTreeDocument]);
 
-  if (!treeDocument) {
+  if (!effectiveTreeDocument) {
     return <div>{t('flux.flowDesigner.treeDocumentRequired')}</div>;
   }
 
@@ -57,8 +51,11 @@ export function TreeModeLayoutWrapper(
       rendererProps={props}
       config={config}
       core={core}
-      treeDocument={treeDocument}
-      setTreeDocument={setTreeDocument}
+      treeDocument={effectiveTreeDocument}
+      setTreeDocument={(next) => {
+        setTreeDocument(next);
+        setHasLocalTreeEdits(next !== inputTreeDocument);
+      }}
     />
   );
 }

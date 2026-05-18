@@ -11,6 +11,7 @@ import type {
 } from '@nop-chaos/flow-designer-core';
 import type { DesignerCommandAdapter } from './designer-command-adapter.js';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
+import { buildDesignerHostProjection } from './designer-host-projection.js';
 
 /**
  * Stable context value that does not change when snapshot updates.
@@ -114,6 +115,7 @@ export function toActionResult(result: import('./designer-command-adapter.js').D
 
 export function buildDesignerScopeData(input: { snapshot: DesignerSnapshot }) {
   const { snapshot } = input;
+  const projection = buildDesignerHostProjection({ snapshot });
   const selectionKind = snapshot.activeBranch
     ? 'branch'
     : snapshot.activeNode
@@ -132,37 +134,7 @@ export function buildDesignerScopeData(input: { snapshot: DesignerSnapshot }) {
     canRedo: snapshot.canRedo,
     selectionKind,
     selectionCount: nodeIds.length + edgeIds.length,
-    doc: {
-      id: snapshot.doc.id,
-      kind: snapshot.doc.kind,
-      name: snapshot.doc.name,
-      version: snapshot.doc.version,
-      viewport: snapshot.doc.viewport,
-      nodeCount: snapshot.doc.nodes.length,
-      edgeCount: snapshot.doc.edges.length,
-    },
-    selection: {
-      kind: selectionKind,
-      count: nodeIds.length + edgeIds.length,
-      nodeIds,
-      edgeIds,
-      selectedNodeIds: nodeIds,
-      selectedEdgeIds: edgeIds,
-      activeNodeId: snapshot.selection.activeNodeId,
-      activeEdgeId: snapshot.selection.activeEdgeId,
-      activeBranchId: snapshot.selection.activeBranchId,
-    },
-    activeNode: snapshot.activeNode,
-    activeEdge: snapshot.activeEdge,
-    activeBranch: snapshot.activeBranch,
-    runtime: {
-      canUndo: snapshot.canUndo,
-      canRedo: snapshot.canRedo,
-      dirty: snapshot.isDirty,
-      gridEnabled: snapshot.gridEnabled,
-      zoom: snapshot.viewport.zoom,
-      viewport: snapshot.viewport,
-    },
+    ...projection,
   };
 }
 

@@ -11,11 +11,11 @@
 import type {
   HostCapabilityProjectionManifest,
   HostCapabilityContract,
-  HostProjectionContract,
   FluxValueShape,
   RendererHostContract,
   CapabilityPublicationAttribution,
 } from '@nop-chaos/flux-core';
+import { DESIGNER_HOST_PROJECTION } from './designer-host-projection.js';
 
 const positionShape: FluxValueShape = {
   kind: 'object',
@@ -54,89 +54,6 @@ const nodeIdArrayShape: FluxValueShape = {
 const edgeIdArrayShape: FluxValueShape = {
   kind: 'array',
   item: { kind: 'string' },
-};
-
-const designerProjection: HostProjectionContract = {
-  fields: {
-    doc: {
-      schema: {
-        kind: 'object',
-        fields: {
-          id: { kind: 'string' },
-          kind: { kind: 'string' },
-          name: { kind: 'string' },
-          version: { kind: 'string' },
-          nodes: { kind: 'array', item: { kind: 'object', fields: {} } },
-          edges: { kind: 'array', item: { kind: 'object', fields: {} } },
-        },
-      },
-      description: 'Current graph document',
-    },
-    selection: {
-      schema: {
-        kind: 'object',
-        fields: {
-          selectedNodeIds: nodeIdArrayShape,
-          selectedEdgeIds: edgeIdArrayShape,
-        },
-      },
-      description: 'Current selection state',
-    },
-    activeNode: {
-      schema: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'null' },
-          {
-            kind: 'object',
-            fields: {
-              id: { kind: 'string' },
-              type: { kind: 'string' },
-              position: positionShape,
-              data: nodeDataShape,
-            },
-          },
-        ],
-      },
-      description: 'Currently active node (single selection)',
-    },
-    activeEdge: {
-      schema: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'null' },
-          {
-            kind: 'object',
-            fields: {
-              id: { kind: 'string' },
-              type: { kind: 'string' },
-              source: { kind: 'string' },
-              target: { kind: 'string' },
-              sourcePort: { kind: 'string' },
-              targetPort: { kind: 'string' },
-              data: edgeDataShape,
-            },
-            optional: ['sourcePort', 'targetPort'],
-          },
-        ],
-      },
-      description: 'Currently active edge (single selection)',
-    },
-    runtime: {
-      schema: {
-        kind: 'object',
-        fields: {
-          dirty: { kind: 'boolean' },
-          canUndo: { kind: 'boolean' },
-          canRedo: { kind: 'boolean' },
-          gridEnabled: { kind: 'boolean' },
-          paletteCollapsed: { kind: 'boolean' },
-          inspectorCollapsed: { kind: 'boolean' },
-        },
-      },
-      description: 'Readonly runtime state summary',
-    },
-  },
 };
 
 const designerCapabilities: HostCapabilityContract = {
@@ -459,7 +376,7 @@ const designerCapabilities: HostCapabilityContract = {
 export const FLOW_DESIGNER_MANIFEST_V1: HostCapabilityProjectionManifest = {
   family: 'designer',
   version: '1.0',
-  projection: designerProjection,
+  projection: DESIGNER_HOST_PROJECTION,
   capabilities: designerCapabilities,
   metadata: {
     title: 'Flow Designer',

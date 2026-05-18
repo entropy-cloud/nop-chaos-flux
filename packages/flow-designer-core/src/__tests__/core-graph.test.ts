@@ -357,4 +357,25 @@ describe('createDesignerCore - graph operations', () => {
     expect(core.getSnapshot().activeNode?.id).toBe('gateway-1');
     expect(core.getSnapshot().activeBranch).toMatchObject({ id: 'b2', childId: 'child-2' });
   });
+
+  it('commits the requested outer transaction when the target index is 0', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+
+    const outerId = core.beginTransaction('outer');
+    core.updateNode('task-1', { label: 'Outer Edit' });
+    const innerId = core.beginTransaction('inner');
+    core.updateNode('end-1', { label: 'Inner Edit' });
+
+    core.commitTransaction(outerId);
+
+    expect(core.isInTransaction()).toBe(false);
+    expect(core.getSnapshot().canUndo).toBe(true);
+
+    core.undo();
+
+    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe('Task');
+    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'end-1')?.data.label).toBe('End');
+
+    expect(innerId).toBeTruthy();
+  });
 });
