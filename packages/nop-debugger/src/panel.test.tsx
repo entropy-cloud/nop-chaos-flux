@@ -372,6 +372,53 @@ describe('NopDebuggerPanel', () => {
     expect(treeItem?.classList.contains('selected')).toBe(true);
   });
 
+  it('keeps the prior selection when pick-element hits a foreign-runtime node', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'node';
+    const controller = createController(snapshot);
+    const inspectByElement = vi.fn(() => undefined);
+
+    const localRuntimeRoot = document.createElement('div');
+    localRuntimeRoot.setAttribute('data-runtime-id', 'runtime-local');
+    const localElement = document.createElement('div');
+    localElement.setAttribute('data-cid', '41');
+    localRuntimeRoot.appendChild(localElement);
+
+    const foreignRuntimeRoot = document.createElement('div');
+    foreignRuntimeRoot.setAttribute('data-runtime-id', 'runtime-foreign');
+    const foreignElement = document.createElement('div');
+    foreignElement.setAttribute('data-cid', '98');
+    foreignRuntimeRoot.appendChild(foreignElement);
+
+    document.body.appendChild(localRuntimeRoot);
+    document.body.appendChild(foreignRuntimeRoot);
+
+    controller.getComponentTree = () => [
+      {
+        cid: 41,
+        type: 'form',
+        label: 'user-form',
+        depth: 0,
+        mounted: true,
+      },
+    ];
+    controller.inspectByCid = vi.fn(() => ({ cid: 41, mounted: true, handleType: 'form' }));
+    controller.inspectByElement = inspectByElement;
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    const treeItem = screen.getByText('user-form').closest('.ndbg-tree-item');
+    fireEvent.click(screen.getByText('user-form'));
+    expect(treeItem?.classList.contains('selected')).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pick element' }));
+    fireEvent.click(foreignElement);
+
+    expect(inspectByElement).toHaveBeenCalledWith(foreignElement);
+    expect(treeItem?.classList.contains('selected')).toBe(true);
+    expect(screen.getByDisplayValue('41')).toBeTruthy();
+  });
+
   it('opens launcher on click without drag', () => {
     const snapshot = { ...createSnapshot(), panelOpen: false };
     const controller = createController(snapshot);

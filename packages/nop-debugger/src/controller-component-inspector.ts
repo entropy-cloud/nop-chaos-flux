@@ -200,6 +200,22 @@ export function findInspectableOwner(element: HTMLElement): HTMLElement | null {
   return element.closest('[data-cid]');
 }
 
+function isWithinRuntimeRoot(
+  runtime: RendererRuntime | undefined,
+  element: HTMLElement | null | undefined,
+): element is HTMLElement {
+  if (!element) {
+    return false;
+  }
+
+  const runtimeRoot = getRuntimeRoot(runtime);
+  if (!runtimeRoot) {
+    return runtime == null;
+  }
+
+  return runtimeRoot instanceof Element && runtimeRoot.contains(element);
+}
+
 function compareOptionalText(left: string | undefined, right: string | undefined) {
   return (left ?? '').localeCompare(right ?? '');
 }
@@ -321,6 +337,9 @@ export function buildInspectByElement(
   return (element: HTMLElement): NopComponentInspectResult | undefined => {
     const runtime = getRuntime?.();
     const owner = findInspectableOwner(element);
+    if (!isWithinRuntimeRoot(runtime, owner)) {
+      return undefined;
+    }
     const cidAttr = owner?.getAttribute('data-cid');
     if (!cidAttr) return undefined;
     const cid = Number(cidAttr);

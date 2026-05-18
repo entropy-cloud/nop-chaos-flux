@@ -94,13 +94,16 @@ export function useInspectMode(args: {
 
   const inspectElement = useCallback(
     (element: HTMLElement) => {
-      const cid = element.getAttribute('data-cid') || '0';
+      const inspectResult = args.controller.inspectByElement(element);
+      if (!inspectResult) {
+        return;
+      }
+
+      const cid = String(inspectResult.cid);
       setSelectedElement(element);
       setInspectMode(false);
       args.controller.setActiveTab('node');
       args.setNodeIdInput(cid);
-
-      const inspectResult = args.controller.inspectByElement(element);
       setInspectData(inspectResult ?? null);
       args.setFormTab('values');
       args.setEvalResult(null);

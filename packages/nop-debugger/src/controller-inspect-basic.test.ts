@@ -50,6 +50,37 @@ describe('controller inspector — basic lookup', () => {
     });
   });
 
+  it('inspectByElement returns undefined for foreign-runtime elements', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-foreign-runtime-element', enabled: true });
+
+    const localRoot = document.createElement('div');
+    localRoot.setAttribute('data-runtime-id', 'runtime-local');
+    const localOwner = document.createElement('div');
+    localOwner.setAttribute('data-cid', '98');
+    localOwner.className = 'local-owner';
+    localRoot.appendChild(localOwner);
+
+    const foreignRoot = document.createElement('div');
+    foreignRoot.setAttribute('data-runtime-id', 'runtime-foreign');
+    const foreignOwner = document.createElement('div');
+    foreignOwner.setAttribute('data-cid', '98');
+    foreignOwner.className = 'foreign-owner';
+    foreignRoot.appendChild(foreignOwner);
+
+    document.body.appendChild(localRoot);
+    document.body.appendChild(foreignRoot);
+
+    ctrl.setRuntime({ runtimeId: 'runtime-local' } as never);
+    ctrl.setComponentRegistry({ id: 'reg-foreign-runtime', getHandleByCid: () => undefined } as never);
+
+    expect(ctrl.inspectByElement(foreignOwner)).toBeUndefined();
+    expect(ctrl.inspectByElement(localOwner)).toMatchObject({
+      cid: 98,
+      mounted: true,
+      className: 'local-owner',
+    });
+  });
+
   it('inspectByCid requires setComponentRegistry to find elements', () => {
     const ctrl = createNopDebugger({ id: 'inspect-reg-required', enabled: true });
     const div = document.createElement('div');
