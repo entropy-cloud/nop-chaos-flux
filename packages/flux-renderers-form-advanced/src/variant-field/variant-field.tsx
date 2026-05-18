@@ -9,7 +9,7 @@ import type {
   RendererDefinition,
   SchemaObject,
 } from '@nop-chaos/flux-core';
-import { actionAdapter, getIn } from '@nop-chaos/flux-core';
+import { actionAdapter, getIn, isAbortError } from '@nop-chaos/flux-core';
 import {
   FieldFrame,
   useCurrentForm,
@@ -166,13 +166,6 @@ function reportVariantFieldFailure(
 ) {
   const message = error instanceof Error && error.message ? error.message : 'Variant field update failed';
   notify?.('warning', message);
-}
-
-function isAbortError(error: unknown): boolean {
-  return (
-    (error instanceof DOMException && error.name === 'AbortError') ||
-    (error instanceof Error && error.name === 'AbortError')
-  );
 }
 
 export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldSchema>) {

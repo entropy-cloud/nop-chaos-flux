@@ -405,7 +405,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         type: 'form',
         id: queryFormId,
         data: queryState.values,
-        valuesPath: queryDraftStatePath,
         body: queryForm.body,
         mode: queryForm.layout === 'horizontal' ? 'horizontal' : 'normal',
       };
@@ -419,7 +418,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     }
 
     return base as BaseSchema;
-  }, [normalizedSchema.queryForm, queryDraftStatePath, queryFormId, queryState.values]);
+  }, [normalizedSchema.queryForm, queryFormId, queryState.values]);
 
   const handleToolbarPageChange = useCallback(
     (page: number) => {

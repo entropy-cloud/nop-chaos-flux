@@ -215,6 +215,45 @@ describe('array-field renderer (scalar)', () => {
     );
   });
 
+  it('publishes parameterized item region bindings through $slot while preserving owner scope', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#slot"
+        schema={{
+          type: 'form',
+          data: {
+            tags: ['alpha'],
+          },
+          body: [
+            {
+              type: 'array-field',
+              name: 'tags',
+              itemKind: 'scalar',
+              item: [
+                {
+                  type: 'text',
+                  text: 'slot:${$slot ? $slot.index : "missing"}:${$slot ? $slot.value : "missing"}|owner:${value}:${index}',
+                  testid: 'array-slot-scope',
+                },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('array-slot-scope').textContent).toBe(
+        'slot:0:alpha|owner:alpha:0',
+      );
+    });
+  });
+
   it('does not trigger add-item when the wrapped field shell is clicked', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
