@@ -23,6 +23,16 @@ describe('collectValidationDependencyPaths', () => {
     expect(collectValidationDependencyPaths(rule)).toEqual(['isExempt']);
   });
 
+  it('merges extra dependency paths with cross-field rule dependencies', () => {
+    const rule: ValidationRule = { kind: 'requiredWhen', path: 'role', equals: 'admin' };
+    expect(collectValidationDependencyPaths(rule, ['tenant'])).toEqual(['tenant', 'role']);
+  });
+
+  it('returns extra dependency paths for async rules', () => {
+    const rule: ValidationRule = { kind: 'async', action: { action: 'ajax', args: { url: '/check' } } };
+    expect(collectValidationDependencyPaths(rule, ['username'])).toEqual(['username']);
+  });
+
   const noDepKinds: ValidationRule[] = [
     { kind: 'required' },
     { kind: 'minLength', value: 3 },

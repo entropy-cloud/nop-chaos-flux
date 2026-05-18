@@ -191,6 +191,11 @@ export function registerField(
           }
         }
       }
+
+      clearRegisteredSubtreeFieldStates(sharedState, [
+        entry.registration.path,
+        ...(entry.registration.childPaths ?? []),
+      ]);
     },
   };
 }
@@ -238,6 +243,46 @@ export function updateFieldRegistration(
     ...entry,
     registration: { ...entry.registration, ...patch },
   });
+}
+
+function clearRegisteredSubtreeFieldStates(
+  sharedState: ManagedFormRuntimeSharedState,
+  paths: readonly string[],
+) {
+  if (paths.length === 0) {
+    return;
+  }
+
+  const fieldStates = sharedState.store.getState().fieldStates;
+  let changed = false;
+  const nextFieldStates: Record<string, FieldState> = { ...fieldStates };
+
+  for (const registeredPath of paths) {
+    for (const [fieldPath, existingFieldState] of Object.entries(fieldStates)) {
+      if (fieldPath !== registeredPath && !fieldPath.startsWith(`${registeredPath}.`)) {
+        continue;
+      }
+
+      if (!existingFieldState?.errors && !existingFieldState?.validating) {
+        continue;
+      }
+
+      changed = true;
+      const nextFieldState: FieldState = { ...existingFieldState };
+      delete nextFieldState.errors;
+      delete nextFieldState.validating;
+
+      if (Object.keys(nextFieldState).length > 0) {
+        nextFieldStates[fieldPath] = nextFieldState;
+      } else {
+        delete nextFieldStates[fieldPath];
+      }
+    }
+  }
+
+  if (changed) {
+    sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
+  }
 }
 
 function isHiddenPath(sharedState: ManagedFormRuntimeSharedState, path: string): boolean {

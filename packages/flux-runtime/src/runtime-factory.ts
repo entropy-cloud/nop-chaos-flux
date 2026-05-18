@@ -120,6 +120,7 @@ export function createRendererRuntime(input: {
   let componentRegistryCounter = 0;
   let nextMountedCid = defaultCidState.nextCid;
   const ownedActionScopes = new Set<ActionScope>();
+  const ownedScopeDisposers = new Map<string, () => void>();
   const runtimeRef: { current?: RendererRuntime } = {};
   const nodeRuntime = createNodeRuntime({
     expressionCompiler,
@@ -342,16 +343,26 @@ export function createRendererRuntime(input: {
     createChildScope(parent, patch, options) {
       const data = toRecord(patch);
       const store = createScopeStore(data);
-
-      return createScopeRef({
-        id: options?.scopeKey ?? `${parent.id}:${options?.pathSuffix ?? 'child'}`,
+      const scopeId = options?.scopeKey ?? `${parent.id}:${options?.pathSuffix ?? 'child'}`;
+      const scope = createScopeRef({
+        id: scopeId,
         path: options?.pathSuffix ? `${parent.path}.${options.pathSuffix}` : `${parent.path}.child`,
         parent,
         store,
         isolate: options?.isolate,
+        onDispose: () => {
+          ownedScopeDisposers.delete(scopeId);
+        },
       });
+
+      ownedScopeDisposers.set(scopeId, () => {
+        (scope as ScopeRef & { dispose?: () => void }).dispose?.();
+      });
+
+      return scope;
     },
     disposeScope(scopeId) {
+      ownedScopeDisposers.get(scopeId)?.();
       sourceRegistryRef.current?.disposeScopeTree(scopeId);
       reactionRegistryRef.current?.disposeScopeTree(scopeId);
     },
@@ -541,14 +552,17 @@ export function createRendererRuntime(input: {
     createSurfaceScope: (kind, ctx, patch) => {
       const ownerId = ctx.nodeInstance?.templateNode.id ?? ctx.scope.id;
       const pendingId = `${ownerId}-pending`;
-      const visibleSnapshot = ctx.scope.materializeVisible();
+      const openingScope = createScopeRef({
+        id: `${ownerId}:${kind}-opening-scope`,
+        path: `${ctx.scope.path}.${kind}.opening`,
+        parent: ctx.scope,
+      });
 
       return createScopeRef({
         id: `${ownerId}:${kind}-scope`,
         path: `${ctx.scope.path}.${kind}`,
-        parent: ctx.scope,
+        parent: openingScope,
         initialData: {
-          ...visibleSnapshot,
           dialogId: pendingId,
           ...(patch ?? {}),
           ...(kind === 'drawer' ? { drawerId: pendingId } : {}),

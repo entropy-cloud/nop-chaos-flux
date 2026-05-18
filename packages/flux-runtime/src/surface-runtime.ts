@@ -36,7 +36,7 @@ export function createManagedSurfaceRuntime(
   function publishSurfaceStatus(entry: SurfaceEntry, active: boolean) {
     const statusPath =
       typeof entry.surface.statusPath === 'string' ? entry.surface.statusPath : undefined;
-    const ownerScope = entry.scope.parent ?? entry.scope;
+    const ownerScope = entry.ownerScope ?? entry.scope.parent ?? entry.scope;
     publishOwnerStatus(ownerScope, statusPath, {
       id: entry.id,
       kind: entry.kind,
@@ -54,7 +54,7 @@ export function createManagedSurfaceRuntime(
 
     const statusPath =
       typeof entry.surface.statusPath === 'string' ? entry.surface.statusPath : undefined;
-    const ownerScope = entry.scope.parent ?? entry.scope;
+    const ownerScope = entry.ownerScope ?? entry.scope.parent ?? entry.scope;
     publishOwnerStatus(ownerScope, statusPath, {
       id: entry.id,
       kind: entry.kind,
@@ -134,6 +134,7 @@ export function createManagedSurfaceRuntime(
         kind,
         surface,
         scope,
+        ownerScope: options?.ownerScope,
         validationOwner,
         actionScope: options?.actionScope,
         componentRegistry: options?.componentRegistry,

@@ -228,8 +228,18 @@ function createCompositeScopeStore(
   scopeId: string,
 ): ScopeStore<Record<string, any>> {
   let lastChange = createDefaultChange(scopeId);
+  let disposed = false;
+  const activeUnsubscribers = new Set<() => void>();
 
-  return {
+  function cleanupSubscription(unsubscribe: () => void) {
+    if (!activeUnsubscribers.delete(unsubscribe)) {
+      return;
+    }
+
+    unsubscribe();
+  }
+
+  const store: ScopeStore<Record<string, any>> & { dispose?: () => void } = {
     getSnapshot: readVisible,
     getLastChange() {
       return lastChange;
@@ -238,6 +248,10 @@ function createCompositeScopeStore(
       ownStore.setSnapshot(next, change);
     },
     subscribe(listener) {
+      if (disposed) {
+        return () => {};
+      }
+
       let lastVisibleForParent: Record<string, any> | undefined;
 
       const unsubOwn = ownStore.subscribe((change) => {
@@ -256,12 +270,31 @@ function createCompositeScopeStore(
           listener(change);
         }) ?? (() => {});
 
-      return () => {
+      const unsubscribe = () => {
         unsubOwn();
         unsubParent();
       };
+
+      activeUnsubscribers.add(unsubscribe);
+
+      return () => {
+        cleanupSubscription(unsubscribe);
+      };
+    },
+    dispose() {
+      if (disposed) {
+        return;
+      }
+
+      disposed = true;
+
+      for (const unsubscribe of Array.from(activeUnsubscribers)) {
+        cleanupSubscription(unsubscribe);
+      }
     },
   };
+
+  return store;
 }
 
 function hasOwnPathValue(input: Record<string, any>, path: string): boolean {
@@ -350,9 +383,11 @@ export function createScopeRef(input: {
   store?: ScopeStore<Record<string, any>>;
   isolate?: boolean;
   update?: (path: string, value: unknown, scope: ScopeRef) => void;
+  onDispose?: () => void;
 }): ScopeRef {
   const ownStore = input.store ?? createScopeStore(input.initialData ?? {});
   (ownStore as ScopeStore<Record<string, any>> & { __scopeId__?: string }).__scopeId__ = input.id;
+  let disposed = false;
   const { readVisible, materializeVisible } = createVisibleViewHelpers(
     input.parent,
     ownStore,
@@ -364,6 +399,15 @@ export function createScopeRef(input: {
       ? createCompositeScopeStore(ownStore, input.parent, readVisible, input.id)
       : ownStore;
 
+  const disposeScopeStore = () => {
+    if (disposed) {
+      return;
+    }
+
+    disposed = true;
+    (exposedStore as ScopeStore<Record<string, any>> & { dispose?: () => void }).dispose?.();
+  };
+
   const scope: ScopeRef = {
     id: input.id,
     path: input.path,
@@ -371,20 +415,52 @@ export function createScopeRef(input: {
     isolate: input.isolate,
     store: exposedStore,
     get value() {
+      if (disposed) {
+        return {};
+      }
+
       return readVisible();
     },
     get(path) {
+      if (disposed) {
+        return undefined;
+      }
+
       return resolveScopePath(this, path);
     },
     has(path) {
+      if (disposed) {
+        return false;
+      }
+
       return hasScopePath(this, path);
     },
     readOwn() {
+      if (disposed) {
+        return {};
+      }
+
       return ownStore.getSnapshot();
     },
-    readVisible,
-    materializeVisible,
+    readVisible() {
+      if (disposed) {
+        return {};
+      }
+
+      return readVisible();
+    },
+    materializeVisible() {
+      if (disposed) {
+        return {};
+      }
+
+      return materializeVisible();
+    },
     update(path, value) {
+      if (disposed) {
+        return;
+      }
+
       if (path && isDangerousPathHead(path)) {
         return;
       }
@@ -402,6 +478,10 @@ export function createScopeRef(input: {
       });
     },
     merge(data) {
+      if (disposed) {
+        return;
+      }
+
       const sanitized = sanitizeSnapshot(data);
       const current = ownStore.getSnapshot();
       const keys = Object.keys(sanitized);
@@ -433,6 +513,10 @@ export function createScopeRef(input: {
       );
     },
     replace(data) {
+      if (disposed) {
+        return;
+      }
+
       const next = toRecord(sanitizeSnapshot(toRecord(data)));
       const current = ownStore.getSnapshot();
 
@@ -471,6 +555,15 @@ export function createScopeRef(input: {
       });
     },
   };
+
+  if (input.onDispose) {
+    (scope as ScopeRef & { dispose?: () => void }).dispose = () => {
+      disposeScopeStore();
+      input.onDispose?.();
+    };
+  } else {
+    (scope as ScopeRef & { dispose?: () => void }).dispose = disposeScopeStore;
+  }
 
   return scope;
 }

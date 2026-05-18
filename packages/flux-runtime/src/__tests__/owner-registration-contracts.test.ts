@@ -195,4 +195,32 @@ describe('owner registration containment contracts', () => {
       expect.objectContaining({ path: 'tags.1', message: 'Tag is required' }),
     ]);
   });
+
+  it('clears stale registration errors when a runtime field unregisters', async () => {
+    const runtime = makeRuntime('');
+    const handle = runtime.registerField({
+      path: 'email',
+      getValue() {
+        return '';
+      },
+      validate() {
+        return [{ path: 'email', rule: 'required', message: 'Email is invalid' }];
+      },
+    });
+
+    const firstResult = await runtime.validateForm('submit');
+    expect(firstResult.fieldErrors.email).toMatchObject([
+      expect.objectContaining({ path: 'email', message: 'Email is invalid' }),
+    ]);
+
+    handle.unregister();
+
+    expect(runtime.getFieldState('email').errors).toEqual([]);
+
+    const secondResult = await runtime.validateForm('submit');
+    expect(secondResult.fieldErrors.email).toBeUndefined();
+    expect(secondResult.errors).not.toContainEqual(
+      expect.objectContaining({ path: 'email', message: 'Email is invalid' }),
+    );
+  });
 });

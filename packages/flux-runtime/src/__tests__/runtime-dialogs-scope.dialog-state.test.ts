@@ -190,7 +190,7 @@ describe('createRendererRuntime - dialog state', () => {
     expect(dialogState.scope.get('pageOnly')).toBe('root');
   });
 
-  it('snapshots parent scope values when opening action-driven dialogs', async () => {
+  it('inherits parent scope values for action-driven dialogs instead of copying them', async () => {
     const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({
       registry,
@@ -219,8 +219,10 @@ describe('createRendererRuntime - dialog state', () => {
     page.scope.update('currentUser.name', 'Operator');
 
     const dialogState = surfaceRuntime.store.getState().entries[0];
-    expect(dialogState.scope.get('currentUser.name')).toBe('Architect');
-    expect(dialogState.scope.readVisible().currentUser).toEqual({ name: 'Architect' });
+    expect(dialogState.scope.readOwn()).toEqual({ dialogId: dialogState.id });
+    expect(dialogState.scope.parent?.readOwn()).toEqual({});
+    expect(dialogState.scope.get('currentUser.name')).toBe('Operator');
+    expect(dialogState.scope.readVisible().currentUser).toEqual({ name: 'Operator' });
   });
 
   it('stores ownerNodeInstance in dialog state when opened from a trigger node', async () => {

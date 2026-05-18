@@ -178,6 +178,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             scope: dialogScope,
             runtime,
             options: {
+              ownerScope: ctx.scope,
               actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
               componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
               validationPlan: validation.plan,
@@ -237,6 +238,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             scope: drawerScope,
             runtime,
             options: {
+              ownerScope: ctx.scope,
               actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
               componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
               validationPlan: validation.plan,

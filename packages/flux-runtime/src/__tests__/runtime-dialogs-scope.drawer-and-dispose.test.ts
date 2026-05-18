@@ -137,6 +137,47 @@ describe('createRendererRuntime - drawer and teardown behavior', () => {
     expect(drawerState.scope.get('pageOnly')).toBe('root');
   });
 
+  it('keeps parent data inherited instead of copied into drawer own scope', async () => {
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ pageOnly: 'root' });
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    await runtime.dispatch(
+      {
+        action: 'openDrawer',
+        args: {
+          title: 'Drawer with inherited page data',
+          data: { recordId: 99 },
+          body: [{ type: 'text', text: 'Body' }],
+        },
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime,
+      },
+    );
+
+    const drawerState = surfaceRuntime.store.getState().entries[0];
+    expect(drawerState.scope.readOwn()).toEqual({
+      dialogId: drawerState.id,
+      drawerId: drawerState.id,
+      recordId: 99,
+    });
+    expect(drawerState.scope.parent?.readOwn()).toEqual({});
+    expect(drawerState.scope.get('pageOnly')).toBe('root');
+
+    page.scope.update('pageOnly', 'updated');
+
+    expect(drawerState.scope.get('pageOnly')).toBe('updated');
+  });
+
   it('disposes open surface entries during runtime teardown', async () => {
     const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const runtime = createRendererRuntime({

@@ -72,18 +72,33 @@ export function createHostProjectionScope(input: {
       return this.readVisible();
     },
     get(targetPath: string) {
+      if (disposed) {
+        return undefined;
+      }
       return hostScope.get(targetPath);
     },
     has(targetPath: string) {
+      if (disposed) {
+        return false;
+      }
       return hostScope.has(targetPath);
     },
     readOwn() {
+      if (disposed) {
+        return {};
+      }
       return hostScope.readOwn();
     },
     readVisible() {
+      if (disposed) {
+        return {};
+      }
       return hostScope.readVisible();
     },
     materializeVisible() {
+      if (disposed) {
+        return {};
+      }
       return hostScope.materializeVisible();
     },
     update(targetPath: string, value: unknown) {
@@ -126,6 +141,7 @@ export function createHostProjectionScope(input: {
     },
     dispose() {
       disposed = true;
+      (hostScope as ScopeRef & { dispose?: () => void }).dispose?.();
     },
   };
 }
