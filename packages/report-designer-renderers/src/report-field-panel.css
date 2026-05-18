@@ -43,12 +43,25 @@
   border: 1px solid var(--nop-border, rgb(226 232 240));
   border-radius: 10px;
   background: var(--nop-surface, rgb(255 255 255));
-  cursor: grab;
 }
 
 [data-slot='report-field-panel-item']:hover {
   border-color: var(--nop-border-hover, rgb(148 163 184));
   background: var(--nop-surface-hover, rgb(248 250 252));
+}
+
+[data-slot='report-field-panel-drag-handle'] {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: grab;
+  text-align: left;
 }
 
 [data-slot='report-field-panel-item-type'] {
@@ -65,6 +78,7 @@
 }
 
 [data-slot='report-field-panel-item-label'] {
+  flex: 1 1 auto;
   font-size: 13px;
   color: var(--nop-text-strong, rgb(15 23 42));
 }
