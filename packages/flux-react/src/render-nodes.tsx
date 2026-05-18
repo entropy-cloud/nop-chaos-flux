@@ -272,17 +272,18 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     () => normalizeNodeInput(runtime, props.input, compileOptions),
     [runtime, props.input, compileOptions],
   );
-  const shouldUseFragmentScope = !explicitScope && !!fragmentBindings;
+  const fragmentScopeParent = explicitScope ?? currentScope;
+  const shouldUseFragmentScope = !!fragmentBindings;
   const fragmentScopeCache = useMemo(() => getFragmentScopeCache(runtime), [runtime]);
   const fragmentScopeIdentity = useMemo(
     () => ({
-      parent: currentScope,
+      parent: fragmentScopeParent,
       runtime,
       isolate,
       pathSuffix,
       scopeKey,
     }),
-    [currentScope, runtime, isolate, pathSuffix, scopeKey],
+    [fragmentScopeParent, runtime, isolate, pathSuffix, scopeKey],
   );
   const [fragmentScopeVersion, setFragmentScopeVersion] = useState(0);
   const [committedFragmentScopeVersion, setCommittedFragmentScopeVersion] = useState(0);
@@ -318,13 +319,13 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
     if (!matchesFragmentScopeEntry(nextEntry, fragmentScopeIdentity)) {
       disposeFragmentScopeEntry(runtime, nextEntry);
       nextEntry = {
-        scope: runtime.createChildScope(currentScope, fragmentBindings, {
+        scope: runtime.createChildScope(fragmentScopeParent, fragmentBindings, {
           isolate,
           pathSuffix,
           scopeKey,
           source: 'fragment',
         }),
-        parent: currentScope,
+        parent: fragmentScopeParent,
         runtime,
         isolate,
         pathSuffix,
@@ -341,7 +342,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
       }
     }
   }, [
-    currentScope,
+    fragmentScopeParent,
     fragmentBindings,
     fragmentScopeCache,
     fragmentScopeCacheKey,
@@ -411,7 +412,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
 
   const actionScope = options?.actionScope ?? currentActionScope;
   const componentRegistry = options?.componentRegistry ?? currentComponentRegistry;
-  const scope = explicitScope ?? fragmentScope ?? currentScope;
+  const scope = fragmentScope ?? explicitScope ?? currentScope;
   const instancePath =
     options?.instancePath ?? ownerNodeInstance?.instancePath ?? currentInstancePath;
 

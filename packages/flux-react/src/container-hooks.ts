@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import type { ComponentHandleRegistry } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry } from './hooks.js';
 
@@ -17,23 +17,53 @@ export function useContainerDomRegistration(
   elementRef: React.RefObject<HTMLElement | null>,
 ) {
   const componentRegistry = useCurrentComponentRegistry();
+  const registeredRef = useRef<{
+    containerId: string | undefined;
+    componentRegistry: ComponentHandleRegistry | undefined;
+    element: HTMLElement | null;
+  }>({
+    containerId: undefined,
+    componentRegistry: undefined,
+    element: null,
+  });
 
-  useEffect(() => {
-    if (!containerId || !componentRegistry || !elementRef.current) {
+  useLayoutEffect(() => {
+    const element = elementRef.current;
+
+    if (!containerId || !componentRegistry || !element) {
+      registeredRef.current = {
+        containerId: undefined,
+        componentRegistry: undefined,
+        element: null,
+      };
       return;
     }
+
+    if (
+      registeredRef.current.containerId === containerId &&
+      registeredRef.current.componentRegistry === componentRegistry &&
+      registeredRef.current.element === element
+    ) {
+      return;
+    }
+
+    registeredRef.current = {
+      containerId,
+      componentRegistry,
+      element,
+    };
 
     return componentRegistry.register({
       id: containerId,
       type: 'container',
-      ref: elementRef.current,
+      ref: element,
       capabilities: {
         invoke() {
           return { ok: true };
         },
       },
     });
-  }, [containerId, componentRegistry, elementRef]);
+  });
 }
 
 export function resolveContainerElement(

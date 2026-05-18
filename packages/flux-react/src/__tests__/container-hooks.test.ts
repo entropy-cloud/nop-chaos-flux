@@ -1,6 +1,10 @@
+// @vitest-environment happy-dom
+import React from 'react';
 import { describe, expect, it } from 'vitest';
+import { render, waitFor } from '@testing-library/react';
 import { createComponentHandleRegistry } from '@nop-chaos/flux-runtime';
-import { resolveContainerElement } from '../container-hooks.js';
+import { ComponentRegistryContext } from '../contexts.js';
+import { useContainerDomRegistration, resolveContainerElement } from '../container-hooks.js';
 
 describe('resolveContainerElement', () => {
   it('returns null for undefined containerId', () => {
@@ -98,5 +102,50 @@ describe('resolveContainerElement', () => {
     const result = resolveContainerElement('target', registry);
     expect(result).toBe(byIdElement);
     expect(result?.getAttribute('data-via')).toBe('id');
+  });
+});
+
+describe('useContainerDomRegistration', () => {
+  it('re-registers when the mounted DOM element changes', async () => {
+    const registry = createComponentHandleRegistry({ id: 'test' });
+
+    function Probe(props: { marker: string }) {
+      const elementRef = React.useRef<HTMLDivElement | null>(null);
+      React.useLayoutEffect(() => {
+        elementRef.current = document.querySelector<HTMLDivElement>(
+          `[data-marker="${props.marker}"]`,
+        );
+      }, [props.marker]);
+      useContainerDomRegistration('workspace-area', elementRef);
+
+      return React.createElement('div', {
+        key: props.marker,
+        'data-marker': props.marker,
+      });
+    }
+
+    const { rerender } = render(
+      React.createElement(
+        ComponentRegistryContext.Provider,
+        { value: registry },
+        React.createElement(Probe, { marker: 'first' }),
+      ),
+    );
+
+    await waitFor(() => {
+      expect(resolveContainerElement('workspace-area', registry)?.dataset.marker).toBe('first');
+    });
+
+    rerender(
+      React.createElement(
+        ComponentRegistryContext.Provider,
+        { value: registry },
+        React.createElement(Probe, { marker: 'second' }),
+      ),
+    );
+
+    await waitFor(() => {
+      expect(resolveContainerElement('workspace-area', registry)?.dataset.marker).toBe('second');
+    });
   });
 });

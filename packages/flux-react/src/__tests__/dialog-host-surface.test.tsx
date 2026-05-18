@@ -1,6 +1,7 @@
+// @vitest-environment happy-dom
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, renderHook } from '@testing-library/react';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import { ActionScopeContext, ComponentRegistryContext, ScopeContext } from '../contexts.js';
 import {
@@ -161,6 +162,35 @@ describe('SurfaceScopeProviders', () => {
 });
 
 describe('useSurfaceScopeSnapshot', () => {
+  it('returns the current visible snapshot value', () => {
+    const snapshot = { value: 'current', nested: { enabled: true } };
+    const scope = makeScope({
+      readVisible: () => snapshot,
+    });
+
+    const { result } = renderHook(() => useSurfaceScopeSnapshot(scope));
+
+    expect(result.current).toEqual({ value: 'current', nested: { enabled: true } });
+  });
+
+  it('returns selected path values when paths are provided', () => {
+    const snapshot = {
+      a: 1,
+      nested: { enabled: true },
+      ignored: 'skip',
+    };
+    const scope = makeScope({
+      readVisible: () => snapshot,
+    });
+
+    const { result } = renderHook(() => useSurfaceScopeSnapshot(scope, ['a', 'nested.enabled']));
+
+    expect(result.current).toEqual({
+      a: 1,
+      'nested.enabled': true,
+    });
+  });
+
   it('subscribes to scope store and renders', () => {
     function Probe() {
       useSurfaceScopeSnapshot(makeScope());

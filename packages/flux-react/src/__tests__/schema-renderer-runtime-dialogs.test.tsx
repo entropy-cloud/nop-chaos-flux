@@ -378,7 +378,7 @@ describe('createSchemaRenderer dialog and provider behavior', () => {
     expect(await screen.findByText('Inspect record')).toBeTruthy();
   });
 
-  it('preserves dialog form state across host rerenders and page data updates', async () => {
+  it('preserves dialog form state while dialog content keeps inheriting page data updates', async () => {
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
       textRenderer,
@@ -432,8 +432,8 @@ describe('createSchemaRenderer dialog and provider behavior', () => {
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'alice@example.com' } });
     fireEvent.click(canvas.getByText('Rerender host 0'));
     fireEvent.click(canvas.getByText('Rename user'));
-    expect(await screen.findByText('Dialog Architect')).toBeTruthy();
-    expect(screen.getByText('Dialog user Architect')).toBeTruthy();
+    expect(await screen.findByText('Dialog Operator')).toBeTruthy();
+    expect(screen.getByText('Dialog user Operator')).toBeTruthy();
     expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('alice@example.com');
   });
 

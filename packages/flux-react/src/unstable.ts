@@ -22,6 +22,7 @@ export {
   publishOwnerStatus,
   createFormComponentHandle,
   executeApiObject,
+  createProjectedScopeStore as createProjectedScopeHelpers,
   createProjectedScopeStore,
   createReadonlyScopeBinding,
 } from '@nop-chaos/flux-runtime';
