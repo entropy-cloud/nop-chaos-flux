@@ -8,6 +8,7 @@ import type {
 import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import {
   evaluateActionArgs,
+  normalizeActionResult,
   resolveSetValuePayload,
   resolveSetValuesPayload,
   type ActionEvaluator,
@@ -243,6 +244,10 @@ export async function runBuiltInAction(
       return undefined;
   }
 
-  const result = await internals.adapter.invokeBuiltInAction(invocation!, ctx);
+  if (!invocation) {
+    return undefined;
+  }
+
+  const result = normalizeActionResult(await internals.adapter.invokeBuiltInAction(invocation, ctx));
   return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
 }

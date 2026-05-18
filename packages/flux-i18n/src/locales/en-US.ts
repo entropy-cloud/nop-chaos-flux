@@ -191,6 +191,8 @@ export const enUS: Resource = {
       insertColumnLeft: 'Insert Column Left',
       insertColumnRight: 'Insert Column Right',
       deleteColumn: 'Delete Column',
+      rowHeight: 'Row Height',
+      columnWidth: 'Column Width',
       comment: 'Comment',
       findReplaceShortcut: 'Find & Replace Ctrl+F',
       freezePanes: 'Freeze Panes',
@@ -343,6 +345,7 @@ export const enUS: Resource = {
       collapseInspector: 'Collapse inspector',
       expandInspector: 'Expand inspector',
       insert: 'Insert',
+      dragField: 'Drag field {{field}}',
       insertFieldToSelection: 'Insert field {{field}} into the current selection',
     },
     wordEditor: {

@@ -187,6 +187,7 @@ export interface OwnedSurfaceStateBase {
   id: string;
   kind: 'dialog' | 'drawer' | 'sheet';
   scope: ScopeRef;
+  ownerScope?: ScopeRef;
   validationOwner?: ValidationScopeRuntime;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
@@ -244,6 +245,7 @@ export interface SurfaceRuntime {
     runtime: RendererRuntime;
     surfaceId?: string;
     options?: {
+      ownerScope?: ScopeRef;
       actionScope?: ActionScope;
       componentRegistry?: ComponentHandleRegistry;
       validationPlan?: CompiledFormValidationModel;

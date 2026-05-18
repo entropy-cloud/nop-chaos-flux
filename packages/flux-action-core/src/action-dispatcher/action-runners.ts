@@ -87,7 +87,7 @@ export async function runComponentAction(
     target,
     payload,
   };
-  const result = await internals.adapter.invokeComponentAction(invocation, ctx);
+  const result = normalizeActionResult(await internals.adapter.invokeComponentAction(invocation, ctx));
   return finishAction(
     internals,
     { ...actionPayload, dispatchMode: 'component', method },

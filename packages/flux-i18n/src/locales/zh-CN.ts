@@ -190,6 +190,8 @@ export const zhCN: Resource = {
       insertColumnLeft: '插入左侧列',
       insertColumnRight: '插入右侧列',
       deleteColumn: '删除列',
+      rowHeight: '行高',
+      columnWidth: '列宽',
       comment: '批注',
       findReplaceShortcut: '查找替换 Ctrl+F',
       freezePanes: '冻结窗格',
@@ -342,6 +344,7 @@ export const zhCN: Resource = {
       collapseInspector: '收起检查器',
       expandInspector: '展开检查器',
       insert: '插入',
+      dragField: '拖拽字段 {{field}}',
       insertFieldToSelection: '将字段 {{field}} 插入到当前选择',
     },
     wordEditor: {

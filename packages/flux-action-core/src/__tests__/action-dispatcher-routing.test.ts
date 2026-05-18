@@ -110,6 +110,50 @@ describe('action-dispatcher routing', () => {
     expect(invocation.method).toBe('doStuff');
   });
 
+  it('normalizes undefined component action results before classification', async () => {
+    const adapter = createMockAdapter({
+      invokeComponentAction: vi.fn(async () => undefined as any),
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'component:doStuff',
+          payload: {},
+          targeting: { componentId: 'my-comp' },
+          control: {},
+          source: { action: 'component:doStuff', componentId: 'my-comp' },
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(result).toMatchObject({ ok: true, data: undefined });
+  });
+
+  it('normalizes undefined built-in action results before classification', async () => {
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: vi.fn(async () => undefined as any),
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'setValue',
+          payload: { args: staticCompiled({ path: 'name', value: 'hello' }) },
+          targeting: {},
+          control: {},
+          source: { action: 'setValue', args: { path: 'name', value: 'hello' } },
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(result).toMatchObject({ ok: true, data: undefined });
+  });
+
   it('dispatches parallel actions and combines results', async () => {
     const adapter = createMockAdapter({
       invokeBuiltInAction: async (invocation) => ({ ok: true, data: invocation.action }),
