@@ -229,18 +229,18 @@ typeof props.props.disabled === 'string';
 
 Renderer-facing `props` 可以包含一份从 `meta` 投影出来的可渲染属性。这样 concrete renderer 可以只读 `props.props.disabled`、`props.props.className`、`props.props.testid`、`props.props.cid`，而 `NodeRenderer` 仍保留 `meta.visible`、`meta.hidden`、`meta.when` 来控制挂载、生命周期和 hidden-field participation。
 
-推荐的全局 `meta` 集合应尽量收窄到：
+当前 live baseline 的全局 `meta` 集合是：
 
 - `id`
 - `className`
+- `frameClassName`
+- `when`
 - `visible`
 - `hidden`
 - `disabled`
 - `testid`
 
-这里说的是目标 baseline，而不是当前实现现状。
-
-规范上，默认全局 `META_FIELDS` 应收窄为上述 6 个字段，并把 `name`、`label`、`title` 等交回 renderer metadata 或普通 `props` 通道。
+这不是目标态草案，而是当前 `packages/flux-core/src/constants.ts` 的真实冻结集合。`name`、`label`、`title` 已不属于默认全局 meta 字段，但 `frameClassName` 与 `when` 仍然属于 live `META_FIELDS`。
 
 其中：
 
@@ -395,17 +395,26 @@ interface BoundFieldSchemaBase extends BaseSchema {
 | `title`                                              | `props.title` 或 `regions.title` | 由 renderer metadata 决定；不再硬编码为全局 meta                                                                                            |
 | `disabled`                                           | `meta.disabled`                  | runtime 节点控制态，保留在 meta                                                                                                             |
 | `visible` / `hidden`                                 | `meta.*`                         | runtime 节点可见性，保留在 meta                                                                                                             |
-| `className` / `testid` / `id`                        | `meta.*`                         | 外层 wrapper / observability，保留在 meta                                                                                                   |
+| `className` / `testid` / `id`                        | `meta.*`                         | 节点级 wrapper / observability，保留在 meta；其中 `className` 对 field-like widget 还需下沉到 canonical control root                        |
 | `text`, `data`, `options`, `items`, `placeholder`, … | `props.*`                        | 语义化内容字段，保留命名，通过 renderer metadata 进入 props；owner `data` 默认表示 one-time evaluated initial snapshot，而不是 live binding |
 | `body`, `header`, `footer`, `actions`, `toolbar`     | `regions.*`                      | 子 schema 片段，由 renderer metadata 分类为 region                                                                                          |
 | `onClick`, `onSubmit`, `onChange`, …                 | `events.*`                       | declarative action，保留 on\* 命名                                                                                                          |
 
 ### Global META_FIELDS Frozen Set
 
-以下是冻结后的 `META_FIELDS` 最小集合：
+以下是当前 live `META_FIELDS` 冻结集合：
 
 ```ts
-export const META_FIELDS = new Set(['id', 'className', 'visible', 'hidden', 'disabled', 'testid']);
+export const META_FIELDS = new Set([
+  'id',
+  'className',
+  'frameClassName',
+  'when',
+  'visible',
+  'hidden',
+  'disabled',
+  'testid',
+]);
 ```
 
 移除的字段：`name`、`label`、`title`。这三个字段改由各 renderer 的 `fields` metadata 明确分类。
@@ -441,19 +450,20 @@ export const META_FIELDS = new Set(['id', 'className', 'visible', 'hidden', 'dis
 
 ## Recommended Channel Mapping
 
-| Concern                   | Author-Facing Field                | Normalized Channel               | Notes                        |
-| ------------------------- | ---------------------------------- | -------------------------------- | ---------------------------- |
-| Editable binding path     | `name`                             | `props.name`                     | 唯一双向绑定入口             |
-| Field read-only semantics | `readOnly`                         | `props.readOnly`                 | 业务编辑语义                 |
-| Field required semantics  | `required`                         | `props.required`                 | 字段级业务语义               |
-| Outer-frame label         | `label`                            | `props.label` or `regions.label` | 由 renderer metadata 决定    |
-| Title-like content        | `title`                            | `props.title` or `regions.title` | 不应默认为全局 meta          |
-| Semantic display content  | `text`, `data`, `options`, `items` | `props.*`                        | 表达式直接写在普通字段上     |
-| Node disabled state       | `disabled`                         | `meta.disabled`                  | runtime control state        |
-| Node visibility           | `visible`, `hidden`                | `meta.*`                         | runtime control state        |
-| Node class/test identity  | `className`, `testid`, `id`        | `meta.*`                         | 外层 wrapper / observability |
+| Concern                   | Author-Facing Field                | Normalized Channel               | Notes                                  |
+| ------------------------- | ---------------------------------- | -------------------------------- | -------------------------------------- |
+| Editable binding path     | `name`                             | `props.name`                     | 唯一双向绑定入口                       |
+| Field read-only semantics | `readOnly`                         | `props.readOnly`                 | 业务编辑语义                           |
+| Field required semantics  | `required`                         | `props.required`                 | 字段级业务语义                         |
+| Outer-frame label         | `label`                            | `props.label` or `regions.label` | 由 renderer metadata 决定              |
+| Title-like content        | `title`                            | `props.title` or `regions.title` | 不应默认为全局 meta                    |
+| Semantic display content  | `text`, `data`, `options`, `items` | `props.*`                        | 表达式直接写在普通字段上               |
+| Node disabled state       | `disabled`                         | `meta.disabled`                  | runtime control state                  |
+| Node visibility           | `visible`, `hidden`                | `meta.*`                         | runtime control state                  |
+| Node class/test identity  | `className`, `testid`, `id`        | `meta.*`                         | 节点级 wrapper / observability         |
+| Node DOM inspect bridge   | `cid`                              | `meta.cid`                       | mounted inspectable node root identity |
 
-对于 `input-text`、`textarea`、`input-number`、`input-tree`、`tree-select` 这类 field renderer，当前 live baseline 额外要求：`meta.className` 必须落在用户实际可命中的 control root，而不是只保留在更外层的 field chrome 上。
+对于 `input-text`、`textarea`、`input-number`、`input-tree`、`tree-select` 这类 field renderer，当前 live baseline 额外要求：`meta.className` 必须落在用户实际可命中的 control root，而不是只保留在更外层的 field chrome 上。`meta.testid` 与 `meta.cid` 默认仍跟随 mounted node root；对 `wrap: true` 字段，这个 root 通常就是 `FieldFrame`，不要求机械复制到原始控件根。
 | Child schema fragments | `body`, `item`, `header`, `footer`, `label` | `regions.*` | 由 field metadata 定义 |
 | Declarative events | `onClick`, `onSubmit`, `onChange` | `events.*` | 保留 declarative action 语义 |
 
@@ -502,7 +512,7 @@ export const META_FIELDS = new Set(['id', 'className', 'visible', 'hidden', 'dis
 5. 不为了复用而制造巨型 base renderer；共享应优先落在 schema base、field helper、wrapper helper 上。
 6. 不把 semantic display props 统一重命名成 `value`。
 7. 不允许普通 editable field 同时支持 `name` 和 `value` 两套双向绑定语义。
-8. `META_FIELDS` 应收窄为 `{id, className, visible, hidden, disabled, testid}`；`name` / `label` / `title` 不再被默认视为全局 meta 字段。
+8. 当前 `META_FIELDS` 冻结为 `{id, className, frameClassName, when, visible, hidden, disabled, testid}`；`name` / `label` / `title` 不再被默认视为全局 meta 字段。
 
 ## Related Documents
 

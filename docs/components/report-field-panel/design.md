@@ -40,6 +40,14 @@
 
 - 主要交互是拖拽到 spreadsheet canvas 或触发字段插入动作。
 
+## 8.1 Standalone Public Contract
+
+- `ReportFieldPanel` 既是 renderer family 的内部组件，也是 `@nop-chaos/report-designer-renderers` 暴露的 standalone/public 组件 surface。
+- public row contract 现在固定为“drag plus non-drag insert path”双通道：字段行本身保留 `draggable`，但不再把 drag item 伪装成 button 语义。
+- 同一字段行必须提供明确可聚焦的插入按钮，作为 keyboard-accessible non-drag insert path。
+- standalone public props 以当前 live code 为准：`onFieldDragStart` 负责拖拽入口，`onFieldInsert?` 负责 canonical insert callback，`canInsertField?` 负责在无合法 target 时给出 disabled/unavailable 状态。
+- 当 `onFieldInsert` 缺失，或 `canInsertField(sourceId, fieldId)` 返回 `false` 时，插入按钮必须 disabled；不得把该状态藏在纯视觉提示里。
+
 ## 9. 数据源、表达式、导入能力接入点
 
 - 字段源来自 profile 或 adapter 注册结果，不由 renderer 直接请求。

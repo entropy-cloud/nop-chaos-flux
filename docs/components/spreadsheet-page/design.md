@@ -54,6 +54,10 @@
 
 - 顶层交互通过 `spreadsheet:*` 命名空间动作进行。
 - 页面本体可以长期保持无专用 imperative ref，统一走动作通道。
+- 当前 row/column resize 的支持基线是 shared-context-menu size-edit path，而不是 keyboard-focusable resize handle。
+- keyboard path 固定为：row/column header button 聚焦后，使用 `Context Menu` key 或 `Shift+F10` 打开共享 context menu；grid 先把 selection/anchor 归一化到对应单行或单列，再决定 row-height / column-width action 的启用状态。
+- `row-height` / `column-width` 仅在 exactly-one row 或 exactly-one column 选择时启用；多选 header 时对应 action 必须 disabled。
+- 最终尺寸变更通过 canonical `spreadsheet:resizeRow` / `spreadsheet:resizeColumn` command surface 提交。旧 mouse-drag handle 仍可保留，但它不再暴露 interactive `role="separator"` / focus target 语义。
 
 ## 9. 数据源、表达式、导入能力接入点
 

@@ -164,6 +164,18 @@ interface ArrayFieldSchema extends BaseSchema {
 - runtime canonical path 仍是 parent owner 下的 `${name}.${index}`
 - `value` 只是 projected alias，不是新的值地址层
 
+### Parameterized Item Region Slot Contract
+
+`array-field.item` 还是普通 region 字段，但当前 live baseline 已固定支持 `params: ['index', 'value']`。
+
+这条 contract 的运行时规则是：
+
+- item owner scope 继续承载 `value`、`index`、`readOnly` 等 projected owner payload
+- parameterized region bindings 另外通过保留 `$slot` frame 发布，而不是覆盖 owner scope
+- 因此 item region 内部的 supported authoring path 同时包括 `${$slot.index}` / `${$slot.value}` 和 owner-facing `${value}` / `${index}`
+
+这也是当前 `array-field` focused regression proof 固定的 baseline：parameterized region bindings 与 owner scope 必须同时可见。
+
 ### Object Item
 
 推荐内部建立 item-root 编辑上下文，使子字段名相对当前 item：

@@ -17,6 +17,8 @@ The required shared implementation lives in `tests/e2e/fixtures.ts`.
 - Import `test` and `expect` from `tests/e2e/fixtures.ts`, not directly from `@playwright/test`.
 - Use `assertTrackedPageErrors(page)` after page-entry helpers finish their ready checks.
 - Keep the default zero-error allowance unless the test intentionally verifies an error surface.
+- Supported specs must use the fixture-managed `page` from `tests/e2e/fixtures.ts` when calling `assertTrackedPageErrors(page)`.
+- Do not create an extra page with `browser.newContext().newPage()` or popup-like flows and then call `assertTrackedPageErrors(page)` on that untracked page; this now fails loudly to prevent false-positive gate coverage.
 
 ## Allowed Exceptions
 
@@ -41,6 +43,7 @@ Do not assert zero errors before the page's supported ready signal is visible.
 - Do not hand-roll `page.on('console')` and `page.on('pageerror')` in each spec unless the test is doing diagnostics beyond the shared baseline.
 - Do not keep standalone "zero console errors" tests for pages already covered by the shared page-entry gate.
 - Do not weaken the gate with broad noise filters beyond the shared fixture-level known-noise list.
+- Do not simulate compliance by calling `assertTrackedPageErrors(page)` on an untracked page object.
 
 ## References
 

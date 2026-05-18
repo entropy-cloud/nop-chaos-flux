@@ -282,7 +282,13 @@ For a future `type: 'loop'`:
 
 ### templateNodeId global counter
 
-`RendererRuntime` holds one shared `CompiledCidState` for its lifetime. All `compile()` calls use this shared counter by default. Compilation calls that explicitly pass their own `cidState` (such as dialog body compilation reusing the owner node's cidState) are still correct because the counter they draw from is the same runtime-level monotone.
+Each `compile()` call owns its `CompiledCidState` unless the caller explicitly passes one through `CompileSchemaOptions`.
+
+The compiler must treat that state as caller-owned input, not as shared mutable runtime-global state:
+
+- a plain repeated `compile()` of the same schema starts from a fresh `CompiledCidState`
+- repeated compile of the same schema therefore stays deterministic on `templateNodeId`
+- when a caller explicitly passes `cidState`, enrichment may derive a next state from it, but must not mutate the caller's original state in place
 
 This means:
 
@@ -344,6 +350,7 @@ Required rules:
 - `NodeState` exists only for a currently materialized runtime instance
 - component-handle registry entries exist only while the corresponding live instance is materialized and registered
 - debugger and action resolution must distinguish `notMaterialized` from `notFound`
+- the DOM node carrying `data-cid` is the mounted inspectable node root; for wrapped field nodes this may be the `FieldFrame` root rather than the innermost input element
 
 ### Resolution result categories
 

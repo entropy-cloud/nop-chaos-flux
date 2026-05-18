@@ -257,21 +257,21 @@ Common examples:
 
 This requires a separate registry for component handles.
 
-Normative shape:
+Current live shape:
 
 ```ts
 interface ComponentHandleRegistry {
-  register(handle: ComponentHandle): void;
+  id: string;
+  parent?: ComponentHandleRegistry;
   unregister(handle: ComponentHandle): void;
-  resolve(
-    target: ComponentTarget,
-  ):
-    | { kind: 'found'; handle: ComponentHandle }
-    | { kind: 'not-found' }
-    | { kind: 'ambiguous'; matches: readonly ComponentHandle[] };
+  register(handle: ComponentHandle, options?: { cid?: number }): () => void;
+  resolve(target: ComponentTarget): ComponentHandle | undefined;
+  inspectCid?(cid: number): InspectResult;
+  getHandleByCid?(cid: number): ComponentHandle | undefined;
 }
 
 interface ComponentTarget {
+  _targetCid?: number;
   componentId?: string;
   componentName?: string;
 }
@@ -296,7 +296,7 @@ interface ComponentCapabilities {
 }
 ```
 
-`store` is optional metadata, not the public contract. The public contract is the explicitly exposed capability surface.
+`store` is optional metadata, not the public contract. The public contract is the explicitly exposed capability surface. `_targetCid` is a runtime/debugger-oriented direct mounted-instance target and exists alongside the human-authored `componentId` / `componentName` path instead of replacing them.
 
 ### Shared Contract Language Versus Runtime Lookup
 

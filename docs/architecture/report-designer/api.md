@@ -396,7 +396,7 @@ interface ReportDesignerBridge extends SpreadsheetBridge {
 其中:
 
 - `spreadsheet-canvas` 负责 canvas 与 DOM overlay editor 的集成
-- `report-field-panel` 负责字段源展示与拖拽
+- `report-field-panel` 负责字段源展示，并同时提供拖拽与当前选择上的非拖拽插入路径
 - inspector 内部表单仍优先使用已有 form renderer
 
 ## 9. ExpressionEditorAdapter API

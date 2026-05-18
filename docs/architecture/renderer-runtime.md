@@ -73,6 +73,13 @@ Normative compile model:
 - `NodeLocator` is a retired transitional wrapper and must not remain in runtime-facing contracts
 - repeated structure remains available through `instancePath`, but mounted lookup/debugger/registry entry is `cid`
 
+`cid` belongs on the mounted inspectable node root, not mechanically on the innermost interactive element.
+
+- when a renderer owns its DOM root directly, that renderer root emits `data-cid`
+- when a field renderer is wrapped by `FieldFrame`, the mounted inspectable node root is the `FieldFrame` root, so `data-cid` lives there
+- debugger lookup climbs to the nearest ancestor with `data-cid`, so descendants do not need duplicate `data-cid` markers
+- do not duplicate the same `cid` onto both `FieldFrame` and the inner control root unless a future owner doc explicitly introduces a different bridge contract
+
 ### Static fast path and identity reuse are mandatory
 
 - no expression means original-reference return
@@ -395,6 +402,13 @@ This split matches actual ownership and change frequency better than either "eve
 - `meta` contains node control state and outer-frame information such as `visible`, `hidden`, `disabled`, `className`, `testid`, or `cid`
 
 For field-like widget renderers, `props.meta.className` must land on the canonical control root that consumers actually target for styling. It must not be silently dropped or left only on an unrelated outer frame when the supported override surface is the widget root itself.
+
+`testid` and `cid` follow a different rule from `className`.
+
+- `testid` is the stable node-level test anchor unless a component contract explicitly defines a more specific control-level anchor
+- `cid` is the node-level DOM/debugger bridge token and must remain on the mounted inspectable node root
+- for `wrap: true` field renderers, the mounted node root is normally `FieldFrame`, so `props.meta.testid` and `props.meta.cid` belong on `FieldFrame`
+- inner controls may define their own dedicated test hooks when needed, but they should not blindly mirror the node-level `testid` or `cid`
 
 Quick rule:
 

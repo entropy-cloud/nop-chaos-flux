@@ -281,6 +281,8 @@ Current live registration containment baseline:
 1. owner runtimes reject runtime field registrations whose root `path` falls outside the current owner subtree
 2. owner runtimes reject runtime field registrations whose `childPaths` fall outside the current owner subtree
 3. rejected registrations must not mutate owner-local participation maps before returning `accepted: false`
+4. schema-level `dependsOn` roots contribute to the same compiled/runtime dependency graph used by cross-field validation, including async rules that do not carry an inline `path` field of their own
+5. unregistering a runtime field clears owner-local `errors` and `validating` state for that registration subtree before later `validateForm()` aggregation, so removed runtime validators cannot leave phantom field errors behind
 
 ## What Counts As A Validation Scope
 
