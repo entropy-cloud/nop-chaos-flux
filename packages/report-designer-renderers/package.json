@@ -37,7 +37,7 @@
     "react": "^19.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node -e \"fs.cpSync('src/report-field-panel.css','dist/report-field-panel.css')\"",
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/report-field-panel.css dist/report-field-panel.css",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"

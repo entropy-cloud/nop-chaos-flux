@@ -207,6 +207,7 @@ export function renderDataRow(
                 {buttonRegion
                   ? asReactNode(
                       buttonRegion.render({
+                        scope: rowScope,
                         bindings: { record: entry.record, index: entry.sourceIndex },
                         instancePath: rowInstancePath,
                         pathSuffix: `buttons.${columnIndex}`,
@@ -244,6 +245,7 @@ export function renderDataRow(
             >
               {asReactNode(
                 cellRegion.render({
+                  scope: rowScope,
                   bindings: { record: entry.record, index: entry.sourceIndex },
                   instancePath: rowInstancePath,
                   pathSuffix: `cells.${columnIndex}`,
@@ -355,6 +357,7 @@ export function renderExpandedRow(
                     {cellRegion
                       ? asReactNode(
                           cellRegion.render({
+                            scope: rowScope,
                             bindings: {
                               record: rowScope.get('record'),
                               index: rowScope.get('index'),
@@ -379,6 +382,7 @@ export function renderExpandedRow(
         {regionKey && parentProps.regions[regionKey]
           ? asReactNode(
               parentProps.regions[regionKey].render({
+                scope: rowScope,
                 bindings: {
                   record: rowScope.get('record'),
                   index: rowScope.get('index'),

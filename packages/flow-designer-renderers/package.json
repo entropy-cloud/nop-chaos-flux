@@ -22,7 +22,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node -e \"fs.cpSync('src/designer-theme.css','dist/designer-theme.css')\"",
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/designer-theme.css dist/designer-theme.css",
     "typecheck": "tsc -p tsconfig.json",
     "test": "set NODE_OPTIONS=--max-old-space-size=8192 && vitest run --passWithNoTests src/designer-controls.test.tsx src/designer-page-shell.test.tsx src/designer-page.tree.test.tsx src/index.xyflow.test.tsx src/edge-label-expression.test.tsx src/auto-layout-guards.test.tsx && vitest run --passWithNoTests src/designer-provider-and-manifest.test.tsx src/canvas-bridge.test.tsx src/edge-label-xyflow.test.tsx src/designer-command-adapter.test.ts src/designer-command-adapter.tree.test.ts src/designer-page.resolved-props.test.ts src/designer-page-helpers.test.ts src/public-surface.test.ts && vitest run --passWithNoTests src/dingflow/ding-flow-add-branch-overlay.test.tsx src/dingflow/dingflow-overlays.test.ts src/dingflow/dingflow-command-dispatch.test.ts src/designer-xyflow-canvas/use-xyflow-sync.test.tsx src/designer-xyflow-canvas/xyflow-utils.test.ts",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"

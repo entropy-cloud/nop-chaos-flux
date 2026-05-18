@@ -230,6 +230,31 @@ describe('useTableRowScopeCache', () => {
     expect(__hasTableRowScopeCacheForTests(secondCacheKey)).toBe(false);
   });
 
+  it('does not dispose row scopes during StrictMode effect replay', async () => {
+    const disposeScope = vi.fn();
+    let cache: Map<string, ScopeRef> | undefined;
+
+    render(
+      <React.StrictMode>
+        <HookHarness
+          processedData={[{ rowKey: 'r1', sourceIndex: 0, record: { name: 'Alice' } }]}
+          ownerKey="table-a"
+          path="$page.table"
+          disposeScope={disposeScope}
+          onCache={(value) => {
+            cache = value;
+          }}
+        />
+      </React.StrictMode>,
+    );
+
+    await waitFor(() => expect(cache?.get('r1')).toBeTruthy());
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+
+    expect(disposeScope).not.toHaveBeenCalled();
+    expect(cache?.get('r1')?.get('record')).toEqual({ name: 'Alice' });
+  });
+
   it('keeps existing row scopes stable when only row payloads change', async () => {
     const cacheRefs: Array<Map<string, ScopeRef>> = [];
     const { rerender } = render(
@@ -320,7 +345,7 @@ describe('useTableRowScopeCache', () => {
     expect(disposeScope.mock.calls[0]?.[0]).toContain('r2');
 
     unmount();
-    expect(disposeScope).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(disposeScope).toHaveBeenCalledTimes(2));
     expect(disposeScope.mock.calls[1]?.[0]).toContain('r1');
   });
 });

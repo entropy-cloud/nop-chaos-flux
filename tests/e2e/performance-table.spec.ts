@@ -43,12 +43,16 @@ test.describe('Performance Table Page', () => {
     await expect(page.getByText('Scenario B: Nested loop card list')).toBeVisible({
       timeout: 20_000,
     });
+    await expect(page.getByText('Primary: editor-offline').first()).toBeVisible({
+      timeout: 20_000,
+    });
     await expect(page.getByText('Scenario C: Scope-owned selection and pagination')).toBeVisible({
       timeout: 20_000,
     });
     await expect(page.getByText('Scenario D: Editable subset form')).toBeVisible({
       timeout: 20_000,
     });
+    await assertTrackedPageErrors(page);
 
     await page.getByRole('button', { name: 'Run 20 Host Mutations' }).click();
     await expect(page.getByText('Last Measurement')).toBeVisible({ timeout: 90_000 });
@@ -67,6 +71,10 @@ test.describe('Performance Table Page', () => {
     await expect(page.getByText(/Scheduling \+ settle:/)).toBeVisible({ timeout: 90_000 });
     await expect(page.getByText(/Commit count:/)).toBeVisible({ timeout: 90_000 });
     await expect(page.getByText(/Total commit duration:/)).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByText('Primary: editor-offline').first()).toBeVisible({
+      timeout: 20_000,
+    });
+    await assertTrackedPageErrors(page);
   });
 
   test('resets the measurement panel after a host benchmark run', async ({ page }) => {

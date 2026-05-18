@@ -290,6 +290,9 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const pendingFragmentScopeVersionRef = useRef<number | undefined>(undefined);
   const fragmentScopeVersionRef = useRef(0);
   const committedFragmentScopeVersionRef = useRef(0);
+  const activeFragmentScopeOwnerRef = useRef<
+    { runtime: RendererRuntime; cacheKey: string } | undefined
+  >(undefined);
   const cachedFragmentScope = fragmentScopeCache.get(fragmentScopeCacheKey);
   const fragmentScopeEntry = matchesFragmentScopeEntry(cachedFragmentScope, fragmentScopeIdentity)
     ? cachedFragmentScope
@@ -401,12 +404,33 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   ]);
 
   useEffect(() => {
+    activeFragmentScopeOwnerRef.current = { runtime, cacheKey: fragmentScopeCacheKey };
+
     return () => {
-      pendingFragmentScopeVersionRef.current = undefined;
-      const cache = getFragmentScopeCache(runtime);
-      const cachedEntry = cache.get(fragmentScopeCacheKey);
-      cache.delete(fragmentScopeCacheKey);
-      disposeFragmentScopeEntry(runtime, cachedEntry);
+      const disposedRuntime = runtime;
+      const disposedCacheKey = fragmentScopeCacheKey;
+      const cache = getFragmentScopeCache(disposedRuntime);
+      const cachedEntry = cache.get(disposedCacheKey);
+
+      activeFragmentScopeOwnerRef.current = undefined;
+
+      queueMicrotask(() => {
+        const activeOwner = activeFragmentScopeOwnerRef.current;
+        if (
+          activeOwner?.runtime === disposedRuntime &&
+          activeOwner.cacheKey === disposedCacheKey
+        ) {
+          return;
+        }
+
+        pendingFragmentScopeVersionRef.current = undefined;
+        if (cache.get(disposedCacheKey) !== cachedEntry) {
+          return;
+        }
+
+        cache.delete(disposedCacheKey);
+        disposeFragmentScopeEntry(disposedRuntime, cachedEntry);
+      });
     };
   }, [fragmentScopeCacheKey, runtime]);
 

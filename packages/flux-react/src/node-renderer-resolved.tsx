@@ -72,9 +72,13 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const currentPage = useCurrentPage();
   const currentSurfaceRuntime = useCurrentSurfaceRuntime();
   const mountedCid = props.mountedCid;
+  const instanceStateKey = useMemo(
+    () => JSON.stringify(instancePath ?? []),
+    [instancePath],
+  );
   const nodeState = useMemo<NodeRuntimeState>(
-    () => createTemplateNodeRuntimeState(props.node),
-    [props.node],
+    () => createTemplateNodeRuntimeState(props.node, instanceStateKey),
+    [props.node, instanceStateKey],
   );
 
   const propsProgram = props.node.propsProgram;
@@ -225,6 +229,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
           (event?: unknown, eventContext?: Partial<import('@nop-chaos/flux-core').ActionContext>) =>
             helpers.dispatch(action, {
               ...eventContext,
+              scope: eventContext?.scope ?? nodeInstance.scope,
               nodeInstance: eventContext?.nodeInstance ?? nodeInstance,
               event: createNormalizedActionEvent(event),
             }),
@@ -243,8 +248,9 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
           const rawBindings = options?.bindings;
 
           if (params && params.length > 0 && rawBindings) {
+            const parentScope = options?.scope ?? renderScope;
             const currentScopeData =
-              (renderScope.readVisible?.() as Record<string, unknown> | undefined) ?? {};
+              (parentScope.readVisible?.() as Record<string, unknown> | undefined) ?? {};
             const outerSlotFrame = readSlotFrame(currentScopeData);
             const slotFrame = buildSlotFrame(rawBindings, outerSlotFrame);
             return renderRegionNode(region.node, {

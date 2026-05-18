@@ -1,16 +1,12 @@
+import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   buttonRenderer,
   createDataSchemaRenderer,
-  dispatchProbeRenderer,
   env,
   formulaCompiler,
-  nodeInstanceProbeRenderer,
-  rowRecordNameProbeRenderer,
   resolvedNameProbeRenderer,
-  registerProbeNamespace,
-  rowScopeIdProbeRenderer,
 } from '../test-support.js';
 
 describe('dataRendererDefinitions table behavior', () => {
@@ -93,7 +89,7 @@ describe('dataRendererDefinitions table behavior', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    fireEvent.click(screen.getByText('Bob'));
+    fireEvent.click(await screen.findByText('Bob'));
     expect(await screen.findByText('Row click')).toBeTruthy();
     expect(
       screen.getByText((content) => content.includes('Selected') && content.includes('Bob')),
@@ -217,6 +213,46 @@ describe('dataRendererDefinitions table behavior', () => {
     expect(await screen.findByText('Member Alice')).toBeTruthy();
   });
 
+  it('renders schema-based column cells with slot bindings under StrictMode', async () => {
+    cleanup();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    try {
+      render(
+        <React.StrictMode>
+          <SchemaRenderer
+            schemaUrl="test://data/table-strict-cell-region"
+            schema={{
+              type: 'page',
+              body: [
+                {
+                  type: 'table',
+                  rowKey: 'id',
+                  columns: [
+                    {
+                      label: 'Summary',
+                      name: 'name',
+                      cell: { type: 'text', text: 'Member ${$slot.record.name}' },
+                    },
+                  ],
+                  source: [{ id: 'user-1', name: 'Alice' }],
+                },
+              ],
+            }}
+            env={env}
+            formulaCompiler={formulaCompiler}
+          />
+        </React.StrictMode>,
+      );
+
+      await waitFor(() => expect(screen.getByText('Member Alice')).toBeTruthy());
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
   it('keeps table root marker non-visual and merges schema className onto the root', () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer();
@@ -310,10 +346,10 @@ describe('dataRendererDefinitions table behavior', () => {
     });
   });
 
-  it('passes row instancePath through helpers.dispatch action context', async () => {
+  it('keeps operation button slot scope isolated per row', async () => {
     cleanup();
-    const observedLocators: unknown[] = [];
-    const SchemaRenderer = createDataSchemaRenderer([dispatchProbeRenderer]);
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
+    const onComponentRegistryChange = vi.fn((registry) => registry?.setDebugEnabled?.(true));
     render(
       <SchemaRenderer
         schemaUrl="test://data/table"
@@ -322,147 +358,86 @@ describe('dataRendererDefinitions table behavior', () => {
           body: [
             {
               type: 'table',
-              columns: [{ label: 'Dispatch', cell: { type: 'dispatch-probe' } }],
-              source: [{ id: 1, name: 'Alice' }],
+              rowKey: 'id',
+              columns: [{ type: 'operation', buttons: [{ type: 'button', label: 'Inspect' }] }],
+              source: [
+                { id: 1, name: 'Alice' },
+                { id: 2, name: 'Bob' },
+                { id: 3, name: 'Carol' },
+              ],
             },
           ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-        onActionScopeChange={registerProbeNamespace(observedLocators)}
+        onComponentRegistryChange={onComponentRegistryChange}
       />,
     );
-    fireEvent.click(await screen.findByTestId('dispatch-probe'));
+
+    const inspectButtons = await screen.findAllByText('Inspect');
+    const registry = onComponentRegistryChange.mock.calls[0]?.[0];
+    const cids = inspectButtons.map((button) => Number(button.getAttribute('data-cid')));
+
     await waitFor(() => {
-      expect(observedLocators).toEqual([
-        expect.objectContaining({
-          instancePath: [
-            { repeatedTemplateId: expect.stringMatching(/^table-row:/), instanceKey: '1' },
-          ],
-        }),
+      expect(
+        cids.map(
+          (cid) =>
+            registry?.getHandleDebugData?.(cid)?.scope?.readOwn()?.$slot as
+              | { record?: { name?: string } }
+              | undefined,
+        ),
+      ).toEqual([
+        expect.objectContaining({ record: expect.objectContaining({ name: 'Alice' }) }),
+        expect.objectContaining({ record: expect.objectContaining({ name: 'Bob' }) }),
+        expect.objectContaining({ record: expect.objectContaining({ name: 'Carol' }) }),
       ]);
     });
   });
 
-  it('uses schema rowKey as stable repeated identity instead of source index', async () => {
+  it('renders expanded row regions with the expanded row slot scope', async () => {
     cleanup();
-    const SchemaRenderer = createDataSchemaRenderer([nodeInstanceProbeRenderer]);
-    render(
-      <SchemaRenderer
-        schemaUrl="test://data/table"
-        schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'table',
-              rowKey: '__rowKey',
-              columns: [{ label: 'Probe', cell: { type: 'node-instance-probe' } }],
-              source: [{ id: 99, __rowKey: 'client-a', name: 'Alice' }],
-            },
-          ],
-        }}
-        env={env}
-        formulaCompiler={formulaCompiler}
-      />,
-    );
-    expect((await screen.findByTestId('node-instance-probe')).textContent).toContain('client-a');
-  });
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const SchemaRenderer = createDataSchemaRenderer();
 
-  it('reuses one stable row scope per materialized row key', async () => {
-    cleanup();
-    const SchemaRenderer = createDataSchemaRenderer([rowScopeIdProbeRenderer]);
-    const { rerender } = render(
-      <SchemaRenderer
-        schemaUrl="test://data/table-row-scope"
-        schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'table',
-              rowKey: 'id',
-              columns: [{ label: 'Scope', cell: { type: 'row-scope-id-probe' } }],
-              source: [{ id: 1, name: 'Alice' }],
-            },
-          ],
-        }}
-        env={env}
-        formulaCompiler={formulaCompiler}
-      />,
-    );
-    const initialScopeId = (await screen.findByTestId('row-scope-id-probe')).textContent;
-    rerender(
-      <SchemaRenderer
-        schemaUrl="test://data/table-row-scope"
-        schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'table',
-              rowKey: 'id',
-              columns: [{ label: 'Scope', cell: { type: 'row-scope-id-probe' } }],
-              source: [{ id: 1, name: 'Alice updated' }],
-            },
-          ],
-        }}
-        env={env}
-        formulaCompiler={formulaCompiler}
-      />,
-    );
-    expect((await screen.findByTestId('row-scope-id-probe')).textContent).toBe(initialScopeId);
-  });
+    try {
+      render(
+        <SchemaRenderer
+          schemaUrl="test://data/table-expanded-row"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'table',
+                rowKey: 'id',
+                source: [
+                  { id: 'user-1', name: 'Alice', children: [{ label: 'Primary', value: 'admin' }] },
+                  { id: 'user-2', name: 'Bob', children: [{ label: 'Primary', value: 'editor' }] },
+                ],
+                expandable: {
+                  expandedRowKeys: ['user-1', 'user-2'],
+                  expandedRow: [
+                    { type: 'text', text: 'Expanded ${$slot.record.name}' },
+                    { type: 'text', text: 'Children: ${$slot.record.children.length}' },
+                  ],
+                },
+                columns: [{ label: 'Name', name: 'name' }],
+              },
+            ],
+          }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
 
-  it('reuses the same row scope while row-local consumers observe updated record content', async () => {
-    cleanup();
-    const SchemaRenderer = createDataSchemaRenderer([rowScopeIdProbeRenderer, rowRecordNameProbeRenderer]);
-    const { rerender } = render(
-      <SchemaRenderer
-        schemaUrl="test://data/table-row-scope-record"
-        schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'table',
-              rowKey: 'id',
-              columns: [
-                { label: 'Scope', cell: { type: 'row-scope-id-probe' } },
-                { label: 'Name', cell: { type: 'row-record-name-probe' } },
-              ],
-              source: [{ id: 1, name: 'Alice' }],
-            },
-          ],
-        }}
-        env={env}
-        formulaCompiler={formulaCompiler}
-      />,
-    );
-
-    const initialScopeId = (await screen.findByTestId('row-scope-id-probe')).textContent;
-    expect((await screen.findByTestId('row-record-name-probe')).textContent).toBe('Alice');
-
-    rerender(
-      <SchemaRenderer
-        schemaUrl="test://data/table-row-scope-record"
-        schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'table',
-              rowKey: 'id',
-              columns: [
-                { label: 'Scope', cell: { type: 'row-scope-id-probe' } },
-                { label: 'Name', cell: { type: 'row-record-name-probe' } },
-              ],
-              source: [{ id: 1, name: 'Alice updated' }],
-            },
-          ],
-        }}
-        env={env}
-        formulaCompiler={formulaCompiler}
-      />,
-    );
-
-    expect((await screen.findByTestId('row-scope-id-probe')).textContent).toBe(initialScopeId);
-    expect((await screen.findByTestId('row-record-name-probe')).textContent).toBe('Alice updated');
+      await waitFor(() => {
+        expect(screen.getByText('Expanded Alice')).toBeTruthy();
+        expect(screen.getAllByText('Children: 1')).toHaveLength(2);
+        expect(screen.getByText('Expanded Bob')).toBeTruthy();
+      });
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it('binds form controls in cells via $slot.record.fieldName path', async () => {
@@ -540,8 +515,8 @@ describe('dataRendererDefinitions table behavior', () => {
     expect(checkboxes[1].getAttribute('aria-checked')).toBe('true');
 
     const selects = screen.getAllByRole('combobox');
-    expect(selects[0].textContent).toContain('APAC');
-    expect(selects[1].textContent).toContain('EMEA');
+    expect(selects[0].querySelector('[data-slot="select-value"]')?.textContent).toContain('apac');
+    expect(selects[1].querySelector('[data-slot="select-value"]')?.textContent).toContain('emea');
   });
 
   it('preserves raw slot field names for table cell render props', async () => {

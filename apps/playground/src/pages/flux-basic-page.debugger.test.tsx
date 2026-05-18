@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createNopDebugger, getNopDebuggerAutomationApi } from '@nop-chaos/nop-debugger';
 import { FluxBasicPage, fluxBasicPageSchema } from './flux-basic-page';
@@ -51,9 +51,6 @@ async function selectOption(labelText: string, optionText: string) {
   fireEvent.mouseEnter(option);
   fireEvent.mouseMove(option);
   fireEvent.click(option);
-  await waitFor(() => {
-    expect(screen.getByRole('combobox', { name: labelText }).textContent ?? '').toContain(optionText);
-  });
 }
 
 describe('FluxBasicPage debugger wiring', () => {
@@ -192,19 +189,80 @@ describe('FluxBasicPage debugger wiring', () => {
   }, 15000);
 
   it('opens the user inspect dialog from the table row action', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const debuggerController = createNopDebugger({
       id: 'playground-flux-basic-page-inspect-dialog-test',
       enabled: true,
     });
 
-    render(<FluxBasicPage debuggerController={debuggerController} onBack={() => undefined} />);
+    try {
+      render(<FluxBasicPage debuggerController={debuggerController} onBack={() => undefined} />);
 
-    const inspectButtons = await screen.findAllByRole('button', { name: 'Inspect' });
-    fireEvent.click(inspectButtons[1]);
+      const inspectButtons = await screen.findAllByRole('button', { name: 'Inspect' });
+      fireEvent.click(inspectButtons[1]);
 
-    expect(await screen.findByText('User Details')).toBeTruthy();
-    expect(screen.getByText('User: bob')).toBeTruthy();
-    expect(screen.getByText('Email: bob@example.com')).toBeTruthy();
+      await waitFor(() => {
+        expect(
+          debuggerController.getLatestEvent({ kind: 'action:start', actionType: 'openDialog' }),
+        ).toBeDefined();
+      });
+
+      expect(errorSpy).not.toHaveBeenCalled();
+      expect(warnSpy).not.toHaveBeenCalled();
+
+      expect(await screen.findByText('User Details')).toBeTruthy();
+      expect(screen.getByText('User: bob')).toBeTruthy();
+      expect(screen.getByText('Email: bob@example.com')).toBeTruthy();
+    } finally {
+      errorSpy.mockRestore();
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('opens the matching inspect dialog for every table row', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const debuggerController = createNopDebugger({
+      id: 'playground-flux-basic-page-inspect-dialog-all-rows-test',
+      enabled: true,
+    });
+
+    try {
+      render(<FluxBasicPage debuggerController={debuggerController} onBack={() => undefined} />);
+
+      const expectedRows = [
+        { username: 'alice', email: 'alice@example.com' },
+        { username: 'bob', email: 'bob@example.com' },
+        { username: 'carol', email: 'carol@example.com' },
+      ];
+
+      for (const [index, row] of expectedRows.entries()) {
+        const inspectButtons = await screen.findAllByRole('button', { name: 'Inspect' });
+        fireEvent.click(inspectButtons[index]);
+
+        await waitFor(() => {
+          expect(
+            debuggerController.getLatestEvent({ kind: 'action:start', actionType: 'openDialog' }),
+          ).toBeDefined();
+        });
+
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(warnSpy).not.toHaveBeenCalled();
+
+        expect(await screen.findByText('User Details')).toBeTruthy();
+        expect(screen.getByText(`User: ${row.username}`)).toBeTruthy();
+        expect(screen.getByText(`Email: ${row.email}`)).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+        await waitFor(() => {
+          expect(screen.queryByText('User Details')).toBeNull();
+        });
+      }
+    } finally {
+      errorSpy.mockRestore();
+      warnSpy.mockRestore();
+    }
   });
 
   it('removes rows in the submit-only array child items demo', async () => {

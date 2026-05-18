@@ -47,13 +47,13 @@ function RecurseProvider(props: RecurseProviderProps) {
       depth: props.depth,
     }),
     [
-        props.loopContext,
-        props.bindings,
-        props.itemData,
-        props.evaluateItemData,
-        props.keyBy,
-        props.instancePath,
-        props.depth,
+      props.loopContext,
+      props.bindings,
+      props.itemData,
+      props.evaluateItemData,
+      props.keyBy,
+      props.instancePath,
+      props.depth,
     ],
   );
 

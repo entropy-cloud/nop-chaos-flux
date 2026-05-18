@@ -1,5 +1,5 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   createBasicSchemaRenderer,
   env,
@@ -84,6 +84,120 @@ describe('basicRendererDefinitions structural rendering', () => {
       expect(text).toContain('Alice:admin');
     });
     cleanup();
+  });
+
+  it('keeps nested loop slot scopes isolated per repeated item', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const SchemaRenderer = createBasicSchemaRenderer([scopeProbeRenderer]);
+
+    try {
+      const view = render(
+        <SchemaRenderer
+          schemaUrl="test://basic/nested-loop-slots"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'loop',
+                items: '${rows}',
+                itemName: 'row',
+                body: {
+                  type: 'container',
+                  body: [
+                    { type: 'text', text: '${$slot.row.name}' },
+                    {
+                      type: 'loop',
+                      items: '${$slot.row.children}',
+                      itemName: 'child',
+                      body: { type: 'text', text: '${$slot.child.label}: ${$slot.child.value}' },
+                    },
+                  ],
+                },
+              },
+            ],
+          }}
+          data={{
+            rows: [
+              {
+                name: 'first',
+                children: [
+                  { label: 'Primary', value: 'editor-offline' },
+                  { label: 'Region', value: 'emea' },
+                ],
+              },
+              {
+                name: 'second',
+                children: [{ label: 'Primary', value: 'viewer-online' }],
+              },
+            ],
+          }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('first')).toBeTruthy();
+        expect(screen.getByText('Primary: editor-offline')).toBeTruthy();
+        expect(screen.getByText('Region: emea')).toBeTruthy();
+        expect(screen.getByText('second')).toBeTruthy();
+        expect(screen.getByText('Primary: viewer-online')).toBeTruthy();
+      });
+
+      view.rerender(
+        <SchemaRenderer
+          schemaUrl="test://basic/nested-loop-slots"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'loop',
+                items: '${rows}',
+                itemName: 'row',
+                body: {
+                  type: 'container',
+                  body: [
+                    { type: 'text', text: '${$slot.row.name}' },
+                    {
+                      type: 'loop',
+                      items: '${$slot.row.children}',
+                      itemName: 'child',
+                      body: { type: 'text', text: '${$slot.child.label}: ${$slot.child.value}' },
+                    },
+                  ],
+                },
+              },
+            ],
+          }}
+          data={{
+            rows: [
+              {
+                name: 'first',
+                children: [
+                  { label: 'Primary', value: 'admin-busy' },
+                  { label: 'Region', value: 'apac' },
+                ],
+              },
+              {
+                name: 'second',
+                children: [{ label: 'Primary', value: 'viewer-online' }],
+              },
+            ],
+          }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Primary: admin-busy')).toBeTruthy();
+        expect(screen.getByText('Region: apac')).toBeTruthy();
+      });
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+      cleanup();
+    }
   });
 
   it('renders loop empty region when items are empty', () => {
@@ -203,6 +317,7 @@ describe('basicRendererDefinitions structural rendering', () => {
 
   it('inherits enclosing loop bindings for recurse when not overridden', async () => {
     const SchemaRenderer = createBasicSchemaRenderer([scopeProbeRenderer]);
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     render(
       <SchemaRenderer
         schemaUrl="test://basic/structural"
@@ -249,6 +364,8 @@ describe('basicRendererDefinitions structural rendering', () => {
       expect(texts.some((text) => text.includes('Root:0:root'))).toBe(true);
       expect(texts.some((text) => text.includes('Child:0:child'))).toBe(true);
     });
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
     cleanup();
   });
 

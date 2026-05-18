@@ -550,7 +550,14 @@ export function createRendererRuntime(input: {
     executeApiRequest,
     runtime,
     createSurfaceScope: (kind, ctx, patch) => {
-      const ownerId = ctx.nodeInstance?.templateNode.id ?? ctx.scope.id;
+      const ownerInstanceKey = ctx.nodeInstance?.instancePath?.length
+        ? ctx.nodeInstance.instancePath
+            .map((frame) => `${frame.repeatedTemplateId}:${frame.instanceKey}`)
+            .join('/')
+        : undefined;
+      const ownerId = ownerInstanceKey
+        ? `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}:${ownerInstanceKey}`
+        : (ctx.nodeInstance?.templateNode.id ?? ctx.scope.id);
       const pendingId = `${ownerId}-pending`;
       const openingScope = createScopeRef({
         id: `${ownerId}:${kind}-opening-scope`,

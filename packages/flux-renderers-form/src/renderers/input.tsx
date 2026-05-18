@@ -16,10 +16,13 @@ import {
   cn,
   Input,
   Label,
-  NativeSelect,
-  NativeSelectOption,
   RadioGroup,
   RadioGroupItem,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Spinner,
   Switch,
   Textarea,
@@ -158,30 +161,37 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const errorMessage = getSourceErrorMessage(optionsSourceState);
   const selectedValue = value as string;
   const errorId = errorMessage && name ? `${name}-source-error` : undefined;
+  const placeholder = props.props.placeholder ? String(props.props.placeholder) : undefined;
 
   return (
     <div className={cn('nop-select-wrapper', props.meta.className)} data-slot="select-wrapper">
-      <NativeSelect
-        id={name ? `${name}-control` : undefined}
-        name={name || undefined}
+      <Select
         value={selectedValue}
-        aria-label={ariaLabel}
-        aria-required={props.props.required ? true : undefined}
-        aria-invalid={presentation.showError ? true : undefined}
-        aria-describedby={errorId}
-        aria-errormessage={errorId}
         disabled={loading || presentation.effectiveDisabled}
-        onFocus={handlers.onFocus}
-        onChange={(event) => handlers.onChange(event.target.value)}
-        onBlur={handlers.onBlur}
+        onValueChange={(nextValue) => handlers.onChange(nextValue)}
       >
-        {loading ? <NativeSelectOption value="">{t('flux.common.loading')}</NativeSelectOption> : null}
-        {options?.map((option) => (
-          <NativeSelectOption key={option.value} value={option.value}>
-            {option.label}
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
+        <SelectTrigger
+          id={name ? `${name}-control` : undefined}
+          aria-label={ariaLabel}
+          aria-required={props.props.required ? true : undefined}
+          aria-invalid={presentation.showError ? true : undefined}
+          aria-describedby={errorId}
+          aria-errormessage={errorId}
+          className="w-full"
+          disabled={loading || presentation.effectiveDisabled}
+          onFocus={handlers.onFocus}
+          onBlur={handlers.onBlur}
+        >
+          <SelectValue placeholder={loading ? t('flux.common.loading') : placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       {loading ? (
         <span data-slot="select-loading" role="status">
           {t('flux.common.loading')}

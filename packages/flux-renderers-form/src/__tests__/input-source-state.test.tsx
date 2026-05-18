@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { formRendererDefinitions } from '../index.js';
-import { env, formStateProbeRenderer } from './form-test-support.js';
+import { env, formStateProbeRenderer, selectOption } from './form-test-support.js';
 
 afterEach(() => {
   cleanup();
@@ -104,7 +104,7 @@ describe('input renderer source state branches', () => {
       />,
     );
 
-    fireEvent.change(screen.getByRole('combobox', { name: 'Role' }), { target: { value: 'admin' } });
+    await selectOption('Role', 'Admin');
 
     await waitFor(() => {
       expect(screen.getByTestId('form-state:role').textContent).toBe('"admin"');

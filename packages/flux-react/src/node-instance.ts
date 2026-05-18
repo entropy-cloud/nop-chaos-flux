@@ -19,7 +19,10 @@ function toNodeState(state: NodeRuntimeState, mounted: boolean): NodeState {
   };
 }
 
-export function createTemplateNodeRuntimeState(templateNode: TemplateNode): NodeRuntimeState {
+export function createTemplateNodeRuntimeState(
+  templateNode: TemplateNode,
+  _instanceKey?: string,
+): NodeRuntimeState {
   const metaEntries: Record<string, any> = {};
   const meta = templateNode.metaProgram;
 

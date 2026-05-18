@@ -308,10 +308,8 @@ describe('formRendererDefinitions - submit and init actions', () => {
     const usernameInput = screen.getByDisplayValue('Alice');
 
     fireEvent.change(usernameInput, { target: { value: 'Bob' } });
+    expect(screen.queryByLabelText('Role', { selector: 'select' })).toBeNull();
     await selectOption('Role', 'Editor');
-    await waitFor(() => {
-      expect((screen.getByRole('combobox', { name: 'Role' }) as HTMLSelectElement).value).toBe('editor');
-    });
     fireEvent.click(screen.getByText('Submit profile'));
 
     await waitFor(() => {

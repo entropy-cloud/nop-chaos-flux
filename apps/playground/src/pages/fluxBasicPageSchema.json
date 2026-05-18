@@ -371,12 +371,16 @@
                   "onClick": {
                     "action": "openDialog",
                     "args": {
+                      "data": {
+                        "username": "${$slot.record.username}",
+                        "email": "${$slot.record.email}"
+                      },
                       "title": "User Details",
                       "body": {
                         "type": "container",
                         "body": [
-                          { "type": "text", "text": "User: ${$slot.record.username}" },
-                          { "type": "text", "text": "Email: ${$slot.record.email}" },
+                          { "type": "text", "text": "User: ${username}" },
+                          { "type": "text", "text": "Email: ${email}" },
                           {
                             "type": "button",
                             "label": "Close",

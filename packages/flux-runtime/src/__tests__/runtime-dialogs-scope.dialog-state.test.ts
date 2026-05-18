@@ -335,4 +335,80 @@ describe('createRendererRuntime - dialog state', () => {
     expect(dialogState.title).toEqual({ type: 'text', text: 'Compiled title' });
     expect(dialogState.body).toEqual([{ type: 'text', text: 'Compiled body' }]);
   });
+
+  it('creates distinct dialog scope ids for repeated row instances that share one template node', async () => {
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+    const sharedTemplateNode = {
+      templateNodeId: 42,
+      id: 'table-inspect-button',
+      type: 'button',
+      schema: { type: 'button' },
+      templatePath: 'page.body.0.columns.4.buttons.0',
+      rendererType: 'button',
+      propsProgram: {},
+      metaProgram: {},
+      eventPlans: {},
+      regions: {},
+      scopePlan: { kind: 'inherit' },
+    } as any;
+
+    await runtime.dispatch(
+      {
+        action: 'openDialog',
+        args: {
+          title: 'Admin row',
+          body: [{ type: 'text', text: 'Admin body' }],
+        },
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime,
+        nodeInstance: {
+          cid: 101,
+          templateNode: sharedTemplateNode,
+          scope: page.scope,
+          instancePath: [{ repeatedTemplateId: 'table-row:unit', instanceKey: 'admin' }],
+          state: { metaState: {}, mounted: true },
+        } as any,
+      },
+    );
+
+    await runtime.dispatch(
+      {
+        action: 'openDialog',
+        args: {
+          title: 'Editor row',
+          body: [{ type: 'text', text: 'Editor body' }],
+        },
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime,
+        nodeInstance: {
+          cid: 102,
+          templateNode: sharedTemplateNode,
+          scope: page.scope,
+          instancePath: [{ repeatedTemplateId: 'table-row:unit', instanceKey: 'editor' }],
+          state: { metaState: {}, mounted: true },
+        } as any,
+      },
+    );
+
+    const entries = surfaceRuntime.store.getState().entries;
+    expect(entries).toHaveLength(2);
+    expect(entries[0]?.scope.id).not.toBe(entries[1]?.scope.id);
+    expect(entries[0]?.scope.id).toContain('table-row:unit:admin');
+    expect(entries[1]?.scope.id).toContain('table-row:unit:editor');
+  });
 });

@@ -523,6 +523,47 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     expect(disposeScopeSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('waits for fragment binding commits before rendering descendants', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    function FragmentBindingHost({ child }: { child: string }) {
+      return (
+        <RenderNodes
+          input={{ type: 'text', text: '${child}' } as any}
+          options={{ bindings: { child }, pathSuffix: 'fragment' }}
+        />
+      );
+    }
+
+    const rendered = render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <FragmentBindingHost child="first" />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    await waitFor(() => expect(screen.getByText('first')).toBeTruthy());
+
+    rendered.rerender(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <FragmentBindingHost child="second" />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    await waitFor(() => expect(screen.getByText('second')).toBeTruthy());
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
   it('returns null for invalid render-node arrays instead of falling through to TemplateNode casts', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),

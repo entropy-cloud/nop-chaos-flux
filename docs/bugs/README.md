@@ -70,3 +70,7 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/53-imported-region-composite-scope-shared-dedupe-fix.md`
 - `docs/bugs/56-dynamic-renderer-ad-hoc-fragment-identity-fix.md`
 - `docs/bugs/57-performance-table-row-scope-cache-snapshot-fix.md`
+- `docs/bugs/58-custom-field-compile-failure-surface-fix.md`
+- `docs/bugs/59-api-cache-bounded-key-digest-fix.md`
+- `docs/bugs/60-table-operation-slot-scope-isolation-fix.md`
+- `docs/bugs/61-performance-table-strictmode-row-scope-runtime-key-fix.md`

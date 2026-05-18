@@ -3,6 +3,7 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
+  useRendererRuntime,
   useSchemaProps,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -137,11 +138,15 @@ function useIsBelowResponsiveBreakpoint(breakpoint: number) {
   return isBelow;
 }
 
-function createTableOwnerKey(props: RendererComponentProps<TableSchema>): string {
-  return `${props.node.templateNode.templateNodeId ?? props.meta.cid ?? props.id}:${serializeInstancePath(props.node.instancePath)}`;
+function createTableOwnerKey(
+  props: RendererComponentProps<TableSchema>,
+  runtimeId: string,
+): string {
+  return `${runtimeId}:${props.node.scope.id}:${props.node.templateNode.templateNodeId ?? props.meta.cid ?? props.id}:${serializeInstancePath(props.node.instancePath)}`;
 }
 
 export function TableRenderer(props: RendererComponentProps<TableSchema>) {
+  const runtime = useRendererRuntime();
   const schemaProps = useSchemaProps(props);
   const tableSchemaProps = schemaProps as TableSchema;
   const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : EMPTY_TABLE_COLUMNS;
@@ -166,7 +171,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const loadingContent = resolveRendererSlotContent(props, 'loadingSlot');
 
   const templateNodeId = props.node.templateNode.templateNodeId;
-  const ownerKey = createTableOwnerKey(props);
+  const ownerKey = createTableOwnerKey(props, runtime.runtimeId);
   const rowRepeatedTemplateId = useMemo(
     () => createTableRowRepeatedTemplateId(templateNodeId),
     [templateNodeId],

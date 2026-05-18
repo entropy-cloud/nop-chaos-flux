@@ -415,9 +415,12 @@ The scope should have a stable id derived from `rowKey` and the full owning tabl
 
 Row scope ids must also be namespaced by the owning table instance, including the table's own repeated-instance path when the table can appear inside another repeated owner.
 
+When a table is mounted through a React-owned `SchemaRenderer`, the owner-qualified row-scope key must also include the `RendererRuntime.runtimeId` or an equivalent runtime-instance token. Page/root validation scopes can use stable ids such as `page-root-validation` across keyed remounts, so they are not sufficient by themselves to separate row-scope caches between replaced runtime instances.
+
 Good examples:
 
 - `table:${tableTemplateNodeId}:${serializedTableInstancePath ?? 'root'}:row:${rowKey}`
+- `table:${runtimeId}:${tableTemplateNodeId}:${serializedTableInstancePath ?? 'root'}:row:${rowKey}`
 - another equivalent owner-qualified form derived from the full owning table locator
 
 - optional debug path suffix derived from `rowKey`

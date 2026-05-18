@@ -28,6 +28,8 @@ export function __hasTableRowScopeCacheForTests(cacheKey: string) {
 
 export function __resetTableRowScopeCachesForTests() {
   tableRowScopeCaches.clear();
+  tableRowScopeVersions.clear();
+  tableRowScopeListeners.clear();
 }
 
 function createRowScopeCacheState(): RowScopeCacheState {
@@ -126,6 +128,10 @@ export function useTableRowScopeCache(
   const duplicateRowKeysRef = useRef<Set<string>>(new Set());
   const createScopeRef = useRef(helpers.createScope);
   const disposeScopeRef = useRef(helpers.disposeScope);
+  const activeCacheOwnerRef = useRef<
+    { cacheKey: string; cacheState: RowScopeCacheState } | undefined
+  >(undefined);
+  const processedCacheKeyRef = useRef(cacheKey);
 
   const structureVersion = useSyncExternalStore(
     (listener) => subscribeToCache(cacheKey, listener),
@@ -138,19 +144,30 @@ export function useTableRowScopeCache(
   }, [helpers.createScope, helpers.disposeScope]);
 
   useLayoutEffect(() => {
+    activeCacheOwnerRef.current = { cacheKey, cacheState };
     tableRowScopeCaches.set(cacheKey, cacheState);
 
     return () => {
+      activeCacheOwnerRef.current = undefined;
+
       if (tableRowScopeCaches.get(cacheKey) === cacheState) {
+        tableRowScopeCaches.delete(cacheKey);
+      }
+
+      queueMicrotask(() => {
+        const activeOwner = activeCacheOwnerRef.current;
+        if (activeOwner?.cacheState === cacheState) {
+          return;
+        }
+
         for (const scope of rowScopeCache.values()) {
           disposeRowScope(disposeScopeRef.current, scope);
         }
         rowScopeCache.clear();
         rowScopeSnapshots.clear();
         duplicateRowKeysRef.current.clear();
-        tableRowScopeCaches.delete(cacheKey);
         tableRowScopeVersions.delete(cacheKey);
-      }
+      });
     };
   }, [cacheKey, cacheState, rowScopeCache, rowScopeSnapshots]);
 
@@ -159,6 +176,17 @@ export function useTableRowScopeCache(
     const visibleKeys = new Set<string>();
     const duplicateRowKeys = new Set<string>();
     const seenRowKeys = new Set<string>();
+
+    if (processedCacheKeyRef.current !== cacheKey) {
+      for (const scope of rowScopeCache.values()) {
+        disposeRowScope(disposeScopeRef.current, scope);
+      }
+      rowScopeCache.clear();
+      rowScopeSnapshots.clear();
+      duplicateRowKeysRef.current.clear();
+      processedCacheKeyRef.current = cacheKey;
+      structureChanged = true;
+    }
 
     for (const entry of processedData) {
       const payload = { record: entry.record, index: entry.sourceIndex };
@@ -212,7 +240,10 @@ export function useTableRowScopeCache(
     }
 
     if (structureChanged) {
-      bumpCacheVersion(cacheKey);
+      const activeOwner = activeCacheOwnerRef.current;
+      if (activeOwner?.cacheKey === cacheKey && activeOwner.cacheState === cacheState) {
+        bumpCacheVersion(cacheKey);
+      }
     }
   }, [cacheKey, cacheState, ownerKey, path, processedData, rowScopeCache, rowScopeSnapshots]);
 
