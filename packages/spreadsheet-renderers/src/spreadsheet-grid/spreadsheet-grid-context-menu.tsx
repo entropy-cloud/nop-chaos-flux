@@ -19,8 +19,12 @@ export interface SpreadsheetGridContextMenuProps {
   canFreeze: boolean;
   canUseRowStructureActions: boolean;
   canUseColumnStructureActions: boolean;
+  canResizeRow: boolean;
+  canResizeColumn: boolean;
   hasActiveRowFilters: boolean;
   readOnly?: boolean;
+  onResizeRowRequest: () => void;
+  onResizeColumnRequest: () => void;
 }
 
 export function SpreadsheetGridContextMenu({
@@ -35,8 +39,12 @@ export function SpreadsheetGridContextMenu({
   canFreeze,
   canUseRowStructureActions,
   canUseColumnStructureActions,
+  canResizeRow,
+  canResizeColumn,
   hasActiveRowFilters,
   readOnly,
+  onResizeRowRequest,
+  onResizeColumnRequest,
 }: SpreadsheetGridContextMenuProps) {
   return (
     <ContextMenuContent>
@@ -131,6 +139,21 @@ export function SpreadsheetGridContextMenu({
         disabled={!activeSheetId || readOnly}
       >
         {t('flux.spreadsheet.unfreezePanes')}
+      </ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem
+        data-testid="spreadsheet-context-resize-row"
+        onClick={onResizeRowRequest}
+        disabled={!canResizeRow || readOnly}
+      >
+        {t('flux.spreadsheet.rowHeight')}
+      </ContextMenuItem>
+      <ContextMenuItem
+        data-testid="spreadsheet-context-resize-column"
+        onClick={onResizeColumnRequest}
+        disabled={!canResizeColumn || readOnly}
+      >
+        {t('flux.spreadsheet.columnWidth')}
       </ContextMenuItem>
       <ContextMenuSeparator />
       <ContextMenuItem

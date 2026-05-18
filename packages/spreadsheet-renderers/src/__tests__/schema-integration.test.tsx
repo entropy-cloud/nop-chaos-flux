@@ -15,8 +15,9 @@ import {
   createSpreadsheetActionProvider,
   defineSpreadsheetPageSchema,
   registerSpreadsheetRenderers,
+  SPREADSHEET_MANIFEST_V1,
 } from '../index.js';
-import { SPREADSHEET_HOST_METHODS } from '../host-action-provider.js';
+import { SPREADSHEET_HOST_METHODS } from '../spreadsheet-manifest.js';
 
 const env: RendererEnv = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
@@ -360,5 +361,6 @@ describe('spreadsheet-page schema integration', () => {
     const provider = createSpreadsheetActionProvider(async () => ({ ok: true, changed: false }));
 
     expect(provider.listMethods?.()).toEqual(SPREADSHEET_HOST_METHODS);
+    expect(Object.keys(SPREADSHEET_MANIFEST_V1.capabilities.methods)).toEqual(SPREADSHEET_HOST_METHODS);
   });
 });

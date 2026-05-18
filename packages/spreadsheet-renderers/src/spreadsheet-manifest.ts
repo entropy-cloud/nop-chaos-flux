@@ -112,9 +112,7 @@ const spreadsheetProjection: HostProjectionContract = {
   },
 };
 
-const spreadsheetCapabilities: HostCapabilityContract = {
-  namespace: 'spreadsheet',
-  methods: {
+export const SPREADSHEET_HOST_METHOD_CONTRACTS: HostCapabilityContract['methods'] = {
     setActiveSheet: {
       args: {
         kind: 'object',
@@ -268,7 +266,156 @@ const spreadsheetCapabilities: HostCapabilityContract = {
     redo: {
       description: 'Redo last spreadsheet operation.',
     },
-  },
+    copyCells: {
+      description: 'Copy the current selection.',
+    },
+    cutCells: {
+      description: 'Cut the current selection.',
+    },
+    pasteCells: {
+      description: 'Paste clipboard content at the current target.',
+    },
+    clearCells: {
+      description: 'Clear the current selection.',
+    },
+    insertRow: {
+      description: 'Insert one or more rows.',
+    },
+    insertColumn: {
+      description: 'Insert one or more columns.',
+    },
+    deleteRow: {
+      description: 'Delete one or more rows.',
+    },
+    deleteColumn: {
+      description: 'Delete one or more columns.',
+    },
+    renameSheet: {
+      description: 'Rename a worksheet.',
+    },
+    moveSheet: {
+      description: 'Move a worksheet.',
+    },
+    copySheet: {
+      description: 'Copy a worksheet.',
+    },
+    setSheetTabColor: {
+      description: 'Set a worksheet tab color.',
+    },
+    hideSheet: {
+      description: 'Hide or show a worksheet.',
+    },
+    protectSheet: {
+      description: 'Protect or unprotect a worksheet.',
+    },
+    selectAll: {
+      description: 'Select the entire sheet.',
+    },
+    selectRow: {
+      description: 'Select one or more rows.',
+    },
+    selectColumn: {
+      description: 'Select one or more columns.',
+    },
+    setCellFontFamily: {
+      description: 'Set the cell font family.',
+    },
+    setCellFontSize: {
+      description: 'Set the cell font size.',
+    },
+    setCellFontWeight: {
+      description: 'Set the cell font weight.',
+    },
+    setCellFontStyle: {
+      description: 'Set the cell font style.',
+    },
+    setCellTextDecoration: {
+      description: 'Set the cell text decoration.',
+    },
+    setCellFontColor: {
+      description: 'Set the cell font color.',
+    },
+    setCellBackgroundColor: {
+      description: 'Set the cell background color.',
+    },
+    setCellBorder: {
+      description: 'Set the cell border.',
+    },
+    setCellTextAlign: {
+      description: 'Set the cell text alignment.',
+    },
+    setCellVerticalAlign: {
+      description: 'Set the cell vertical alignment.',
+    },
+    setCellWrapText: {
+      description: 'Set cell wrapping.',
+    },
+    setCellNumberFormat: {
+      description: 'Set the cell number format.',
+    },
+    fillDown: {
+      description: 'Fill downward from the current selection.',
+    },
+    fillRight: {
+      description: 'Fill right from the current selection.',
+    },
+    fillSeries: {
+      description: 'Fill a generated series from the current selection.',
+    },
+    addComment: {
+      description: 'Add a cell comment.',
+    },
+    editComment: {
+      description: 'Edit a cell comment.',
+    },
+    deleteComment: {
+      description: 'Delete a cell comment.',
+    },
+    autoFitRow: {
+      description: 'Auto-fit a row height.',
+    },
+    autoFitColumn: {
+      description: 'Auto-fit a column width.',
+    },
+    mergeCellsCenter: {
+      description: 'Merge cells and center the value.',
+    },
+    freezePanes: {
+      description: 'Freeze panes at the current anchor.',
+    },
+    unfreezePanes: {
+      description: 'Unfreeze panes.',
+    },
+    sortRange: {
+      description: 'Sort the current range.',
+    },
+    filterRowsByCellValue: {
+      description: 'Filter rows by the selected cell value.',
+    },
+    clearRowFilters: {
+      description: 'Clear row filters.',
+    },
+    find: {
+      description: 'Find text in the workbook.',
+    },
+    findNext: {
+      description: 'Advance to the next find result.',
+    },
+    replace: {
+      description: 'Replace the current find result.',
+    },
+    replaceAll: {
+      description: 'Replace all matching results.',
+    },
+};
+
+export const SPREADSHEET_HOST_METHODS = Object.freeze(
+  Object.keys(SPREADSHEET_HOST_METHOD_CONTRACTS),
+) as readonly string[];
+
+const spreadsheetCapabilities: HostCapabilityContract = {
+  namespace: 'spreadsheet',
+  methods: SPREADSHEET_HOST_METHOD_CONTRACTS,
 };
 
 export const SPREADSHEET_MANIFEST_V1: HostCapabilityProjectionManifest = {

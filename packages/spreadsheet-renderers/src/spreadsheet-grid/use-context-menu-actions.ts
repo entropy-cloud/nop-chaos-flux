@@ -35,6 +35,8 @@ export interface ContextMenuActions {
   handleContextSort: (direction: 'asc' | 'desc') => Promise<void>;
   handleContextFilterBySelectedValue: () => Promise<void>;
   handleContextClearFilter: () => Promise<void>;
+  handleContextResizeRow: (height: number) => Promise<void>;
+  handleContextResizeColumn: (width: number) => Promise<void>;
 }
 
 export function useContextMenuActions(params: UseContextMenuActionsParams): ContextMenuActions {
@@ -252,6 +254,38 @@ export function useContextMenuActions(params: UseContextMenuActionsParams): Cont
     await bridge.dispatch({ type: 'spreadsheet:clearRowFilters', sheetId: activeSheetId });
   }, [activeSheetId, bridge]);
 
+  const handleContextResizeRow = useCallback(
+    async (height: number) => {
+      if (!activeSheetId || selectedRowInfo?.count !== 1) {
+        return;
+      }
+
+      await bridge.dispatch({
+        type: 'spreadsheet:resizeRow',
+        sheetId: activeSheetId,
+        row: selectedRowInfo.start,
+        height,
+      });
+    },
+    [activeSheetId, bridge, selectedRowInfo],
+  );
+
+  const handleContextResizeColumn = useCallback(
+    async (width: number) => {
+      if (!activeSheetId || selectedColumnInfo?.count !== 1) {
+        return;
+      }
+
+      await bridge.dispatch({
+        type: 'spreadsheet:resizeColumn',
+        sheetId: activeSheetId,
+        col: selectedColumnInfo.start,
+        width,
+      });
+    },
+    [activeSheetId, bridge, selectedColumnInfo],
+  );
+
   return {
     handleContextCopy,
     handleContextCut,
@@ -270,5 +304,7 @@ export function useContextMenuActions(params: UseContextMenuActionsParams): Cont
     handleContextSort,
     handleContextFilterBySelectedValue,
     handleContextClearFilter,
+    handleContextResizeRow,
+    handleContextResizeColumn,
   };
 }

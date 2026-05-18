@@ -4,7 +4,11 @@ import {
   type SpreadsheetRange,
   type SpreadsheetFrozenPane,
 } from '@nop-chaos/spreadsheet-core';
-import { Button, ContextMenu, ContextMenuTrigger, Input } from '@nop-chaos/ui';
+import {
+  Button,
+  ContextMenu,
+  ContextMenuTrigger,
+} from '@nop-chaos/ui';
 import type { SpreadsheetHostSnapshot, SpreadsheetBridge } from './bridge.js';
 import { mapCellStyle } from './cell-style-map.js';
 import {
@@ -22,7 +26,8 @@ import {
   expandSortRangeToUsedColumns,
 } from './spreadsheet-grid/constants.js';
 import { useContextMenuActions } from './spreadsheet-grid/use-context-menu-actions.js';
-import { SpreadsheetGridContextMenu } from './spreadsheet-grid/spreadsheet-grid-context-menu.js';
+import { SpreadsheetCellEditor, SpreadsheetEditStatus } from './spreadsheet-grid/inline-controls.js';
+import { SpreadsheetGridOverlayControls } from './spreadsheet-grid/overlay-controls.js';
 
 export interface SpreadsheetGridProps {
   snapshot: SpreadsheetHostSnapshot;
@@ -130,6 +135,8 @@ export function SpreadsheetGrid({
     selection.kind === 'cell' || selection.kind === 'range' || selection.kind === 'row';
   const canUseColumnStructureActions =
     selection.kind === 'cell' || selection.kind === 'range' || selection.kind === 'column';
+  const canResizeRow = selection.kind === 'row' && selectedRowInfo?.count === 1;
+  const canResizeColumn = selection.kind === 'column' && selectedColumnInfo?.count === 1;
   const canSort = !!selectedRange && canUseColumnStructureActions;
   const canFilter = !!selectionAnchorCell && !!activeSheetId && selection.kind === 'cell';
   const sortRange = useMemo(
@@ -165,6 +172,16 @@ export function SpreadsheetGrid({
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pendingKeyboardContextMenuRef = useRef<
+    | { axis: 'row'; index: number; element: HTMLElement }
+    | { axis: 'column'; index: number; element: HTMLElement }
+    | null
+  >(null);
+  const [resizeDialog, setResizeDialog] = useState<
+    | { axis: 'row'; index: number; size: string }
+    | { axis: 'column'; index: number; size: string }
+    | null
+  >(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(600);
@@ -174,6 +191,53 @@ export function SpreadsheetGrid({
   useEffect(() => {
     keyboardCellRef.current = selectedCell ?? { row: 0, col: 0 };
   }, [selectedCell]);
+
+  useEffect(() => {
+    const pending = pendingKeyboardContextMenuRef.current;
+    if (!pending) {
+      return;
+    }
+
+    const ready =
+      pending.axis === 'row'
+        ? selection.kind === 'row' && selectedRowInfo?.count === 1 && selectedRowInfo.start === pending.index
+        : selection.kind === 'column' && selectedColumnInfo?.count === 1 && selectedColumnInfo.start === pending.index;
+
+    if (!ready) {
+      return;
+    }
+
+    pendingKeyboardContextMenuRef.current = null;
+    pending.element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+  }, [selectedColumnInfo, selectedRowInfo, selection.kind]);
+
+  const openResizeDialog = useCallback(
+    (axis: 'row' | 'column', index: number) => {
+      const currentSize =
+        axis === 'row' ? String(rowHeights[index] ?? DEFAULT_ROW_HEIGHT) : String(columnWidths[index] ?? DEFAULT_COL_WIDTH);
+      setResizeDialog({ axis, index, size: currentSize });
+    },
+    [columnWidths, rowHeights],
+  );
+
+  const submitResizeDialog = useCallback(async () => {
+    if (!resizeDialog) {
+      return;
+    }
+
+    const nextSize = Number(resizeDialog.size);
+    if (!Number.isFinite(nextSize) || nextSize <= 0) {
+      return;
+    }
+
+    if (resizeDialog.axis === 'row') {
+      await contextActions.handleContextResizeRow(nextSize);
+    } else {
+      await contextActions.handleContextResizeColumn(nextSize);
+    }
+
+    setResizeDialog(null);
+  }, [contextActions, resizeDialog]);
 
   const moveSelection = useCallback(
     (nextRow: number, nextCol: number) => {
@@ -323,23 +387,12 @@ export function SpreadsheetGrid({
         onDragLeave={() => onFieldDragLeave?.()}
       >
         {isEditing ? (
-          <Input
-            type="text"
-            className="ss-cell-edit-input"
-            data-slot="spreadsheet-cell-editor-input"
-            size="sm"
+          <SpreadsheetCellEditor
             value={editValue}
-            onChange={(e) => onEditValueChange(e.target.value)}
-            onBlur={onEditSave}
             readOnly={readonly}
-            disabled={readonly}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                onEditSave();
-              } else if (e.key === 'Escape') {
-                onEditCancel();
-              }
-            }}
+            onChange={onEditValueChange}
+            onSave={onEditSave}
+            onCancel={onEditCancel}
           />
         ) : (
           <>
@@ -532,6 +585,16 @@ export function SpreadsheetGrid({
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault();
                           onSelectColumn(c, event.shiftKey);
+                          return;
+                        }
+                        if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+                          event.preventDefault();
+                          onSelectColumn(c);
+                          pendingKeyboardContextMenuRef.current = {
+                            axis: 'column',
+                            index: c,
+                            element: event.currentTarget,
+                          };
                         }
                       }}
                     >
@@ -540,8 +603,7 @@ export function SpreadsheetGrid({
                     <div
                       className="ss-col-resize-handle"
                       data-slot="spreadsheet-column-resize-handle"
-                      role="separator"
-                      aria-orientation="vertical"
+                      aria-hidden="true"
                       onMouseDown={(e) => onColumnResizeStart(c, e)}
                     />
                   </th>
@@ -587,14 +649,29 @@ export function SpreadsheetGrid({
                       size="sm"
                       aria-label={`Select row ${r + 1}`}
                       onClick={(event) => onSelectRow(r, event.shiftKey)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          onSelectRow(r, event.shiftKey);
+                          return;
+                        }
+                        if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+                          event.preventDefault();
+                          onSelectRow(r);
+                          pendingKeyboardContextMenuRef.current = {
+                            axis: 'row',
+                            index: r,
+                            element: event.currentTarget,
+                          };
+                        }
+                      }}
                     >
                       {r + 1}
                     </Button>
                     <div
                       className="ss-row-resize-handle"
                       data-slot="spreadsheet-row-resize-handle"
-                      role="separator"
-                      aria-orientation="horizontal"
+                      aria-hidden="true"
                       onMouseDown={(e) => onRowResizeStart(r, e)}
                     />
                   </td>
@@ -619,19 +696,9 @@ export function SpreadsheetGrid({
           </table>
         </div>
       </ContextMenuTrigger>
-      {editingCell && editSaveState && editSaveState.status !== 'idle' ? (
-        <div
-          className="ss-edit-status"
-          data-slot="spreadsheet-edit-status"
-          data-status={editSaveState.status}
-          role={editSaveState.status === 'failed' ? 'alert' : 'status'}
-          aria-live="polite"
-        >
-          {editSaveState.message}
-        </div>
-      ) : null}
-      <SpreadsheetGridContextMenu
-        actions={contextActions}
+      {editingCell ? <SpreadsheetEditStatus state={editSaveState} /> : null}
+      <SpreadsheetGridOverlayControls
+        contextActions={contextActions}
         selectedRange={selectedRange}
         selectionAnchorCell={selectionAnchorCell}
         activeSheetId={activeSheetId}
@@ -642,9 +709,17 @@ export function SpreadsheetGrid({
         canFreeze={canFreeze}
         canUseRowStructureActions={canUseRowStructureActions}
         canUseColumnStructureActions={canUseColumnStructureActions}
+        canResizeRow={canResizeRow}
+        canResizeColumn={canResizeColumn}
         hasActiveRowFilters={hasActiveRowFilters}
         readOnly={readonly}
+        selectedRowInfo={selectedRowInfo}
+        selectedColumnInfo={selectedColumnInfo}
+        resizeDialog={resizeDialog}
+        setResizeDialog={setResizeDialog}
+        openResizeDialog={openResizeDialog}
+        submitResizeDialog={submitResizeDialog}
       />
-    </ContextMenu>
-  );
+      </ContextMenu>
+    );
 }
