@@ -24,7 +24,18 @@ test('diagnose admin code meta explanation on live flux-basic page', async ({ pa
   await page.getByLabel('Username').blur();
   await page.getByLabel('Search Users').fill('alice');
   await selectRoleOption(page, 'Role', 'Admin');
-  await page.waitForTimeout(1200);
+
+  await expect
+    .poll(
+      async () =>
+        await page.evaluate(() => {
+          const input = document.querySelector('[aria-label="Admin Code"]') as HTMLElement | null;
+          const field = input?.closest('.nop-field') as HTMLElement | null;
+          return Number(field?.getAttribute('data-cid')) || 0;
+        }),
+      { timeout: 10_000 },
+    )
+    .toBeGreaterThan(0);
 
   const result = await page.evaluate(() => {
     const api = (
@@ -39,23 +50,38 @@ test('diagnose admin code meta explanation on live flux-basic page', async ({ pa
     const input = document.querySelector('[aria-label="Admin Code"]') as HTMLElement | null;
     const field = input?.closest('.nop-field') as HTMLElement | null;
     const fieldCid = Number(field?.getAttribute('data-cid'));
-    const inputClosestCid = Number(input?.closest('[data-cid]')?.getAttribute('data-cid'));
 
     return {
       fieldCid,
-      inputClosestCid,
       inspect: api?.inspectByCid(fieldCid),
-      inputInspect: api?.inspectByCid(inputClosestCid),
       meta: api?.explainNodeMeta({ cid: fieldCid, field: 'visible' }),
-      inputMeta: api?.explainNodeMeta({ cid: inputClosestCid, field: 'visible' }),
-      nearby: Array.from({ length: 8 }, (_, index) => fieldCid - 3 + index).map((cid) => ({
-        cid,
-        inspect: api?.inspectByCid(cid),
-        meta: api?.explainNodeMeta({ cid, field: 'visible' }),
-      })),
     };
   });
 
-  console.log(JSON.stringify(result, null, 2));
   expect(result.fieldCid).toBeGreaterThan(0);
+  expect(result.inspect).toMatchObject({
+    cid: result.fieldCid,
+    metaSummary: {
+      visible: true,
+    },
+  });
+  expect(result.meta).toMatchObject({
+    kind: 'meta',
+    confidence: 'high',
+    truncated: false,
+    subject: {
+      cid: result.fieldCid,
+      field: 'visible',
+    },
+    data: {
+      field: 'visible',
+      source: 'resolved-meta',
+      value: true,
+      dependencyPaths: ['role'],
+    },
+  });
+  expect(result.meta.answer).toContain('${role === "admin"}');
+  expect(result.meta.limitations).toEqual([]);
+  expect(Array.isArray(result.meta.evidenceRefs)).toBe(true);
+  expect(result.meta.evidenceRefs.length).toBeGreaterThan(0);
 });

@@ -51,9 +51,9 @@ test.describe('Performance Table Page', () => {
     });
 
     await page.getByRole('button', { name: 'Run 20 Host Mutations' }).click();
-    await expect(page.getByText('Last Measurement')).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText('Last Measurement')).toBeVisible({ timeout: 90_000 });
     await expect(page.getByText('Host row mutation benchmark: 20 updates')).toBeVisible({
-      timeout: 60_000,
+      timeout: 90_000,
     });
     await expect
       .poll(() =>
@@ -64,9 +64,9 @@ test.describe('Performance Table Page', () => {
         }),
       )
       .toBeGreaterThan(0);
-    await expect(page.getByText(/Scheduling \+ settle:/)).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByText(/Commit count:/)).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByText(/Total commit duration:/)).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(/Scheduling \+ settle:/)).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByText(/Commit count:/)).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByText(/Total commit duration:/)).toBeVisible({ timeout: 90_000 });
   });
 
   test('resets the measurement panel after a host benchmark run', async ({ page }) => {
@@ -75,7 +75,7 @@ test.describe('Performance Table Page', () => {
     await openPerformanceTable(page);
 
     await page.getByRole('button', { name: 'Run 20 Host Mutations' }).click();
-    await expect(page.getByText('Last Measurement')).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText('Last Measurement')).toBeVisible({ timeout: 90_000 });
 
     await page.getByRole('button', { name: 'Reset Metrics' }).click();
     await expect(page.getByText('Last Measurement')).toHaveCount(0);

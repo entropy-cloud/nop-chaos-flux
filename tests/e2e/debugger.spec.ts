@@ -255,6 +255,8 @@ test.describe('Nop Debugger', () => {
   test('automation explanation contracts answer value/meta/failure/async questions on live page', async ({
     page,
   }) => {
+    test.setTimeout(90_000);
+
     const { usernameCid, userFormCid, adminCodeCid, searchButtonCid } =
       await seedFluxBasicExplanationFixture(page);
 

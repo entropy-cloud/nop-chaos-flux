@@ -8,10 +8,10 @@ test.setTimeout(60000);
 
 async function openCodeEditor(page: import('@playwright/test').Page) {
   await page.goto('/#/code-editor', { waitUntil: 'commit' });
-  await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Code Editor Playground', level: 1 })).toBeVisible({
     timeout: 45000,
   });
-  await expect(page.getByRole('heading', { name: 'Code Editor Playground', level: 1 })).toBeVisible({
+  await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible({
     timeout: 45000,
   });
   await expect(findEditorByLabel(page, 'Plain Text')).toBeVisible({ timeout: 45000 });
@@ -186,9 +186,8 @@ test('variable panel insert inserts templated text', async ({ page }) => {
   expect(afterContent).toContain('</if>');
 });
 
-test('variable panel copy copies value to clipboard', async ({ browser }) => {
-  const context = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'] });
-  const page = await context.newPage();
+test('variable panel copy copies value to clipboard', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await openCodeEditor(page);
 
   const field = findEditorByLabel(page, 'SQL Editor (Format + Snippets + Variables + Execution)');
@@ -204,8 +203,6 @@ test('variable panel copy copies value to clipboard', async ({ browser }) => {
 
   const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
   expect(clipboardText).toBe('userId');
-
-  await context.close();
 });
 
 test('variable panel collapse hides panel content', async ({ page }) => {

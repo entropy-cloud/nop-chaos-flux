@@ -22,7 +22,7 @@ const COMPONENT_LAB_RENDERER_TIMEOUT = 30_000;
  * Does not go through the home page — faster and more reliable for smoke tests.
  */
 export async function openRendererDirect(page: Page, rendererId: string): Promise<void> {
-  await page.goto(`/#/lab/${rendererId}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`/#/lab/${rendererId}`, { waitUntil: 'commit' });
   await expect(page.getByTestId('component-lab')).toBeVisible({
     timeout: COMPONENT_LAB_BOOT_TIMEOUT,
   });
@@ -36,7 +36,7 @@ export async function openRendererDirect(page: Page, rendererId: string): Promis
  * Navigate to the component lab home page (no renderer selected).
  */
 export async function openLabHome(page: Page): Promise<void> {
-  await page.goto('/#/lab', { waitUntil: 'domcontentloaded' });
+  await page.goto('/#/lab', { waitUntil: 'commit' });
   await expect(page.getByTestId('component-lab')).toBeVisible({
     timeout: COMPONENT_LAB_BOOT_TIMEOUT,
   });

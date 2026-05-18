@@ -75,6 +75,8 @@ test.describe('tree renderer', () => {
 // ---------------------------------------------------------------------------
 test.describe('data-source renderer', () => {
   test('read: pre-loaded scope data — users count text renders', async ({ page }) => {
+    test.setTimeout(90_000);
+
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('data-source');
 

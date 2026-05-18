@@ -310,30 +310,89 @@ export function ReportDesignerDemo() {
     }
   }, [designerCore, selectedCell, sheetId, snapshot.selection]);
 
+  const insertFieldAtCell = useCallback(
+    async (field: { sourceId: string; fieldId: string; label: string }, targetCell: { row: number; col: number }) => {
+      const addr = cellAddress(targetCell.row, targetCell.col);
+      const previousCellValue = snapshot.activeSheet?.cells?.[addr]?.value;
+      const spreadsheetResult = await spreadsheetBridge.dispatch({
+        type: 'spreadsheet:setCellValue',
+        cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
+        value: `\${${field.fieldId}}`,
+      });
+
+      if (spreadsheetResult.cancelled) {
+        return;
+      }
+
+      if (!spreadsheetResult.ok) {
+        throw spreadsheetResult.error instanceof Error
+          ? spreadsheetResult.error
+          : new Error('Field insert failed before designer update');
+      }
+
+      const designerResult = await designerBridge.dispatchDesigner({
+        type: 'report-designer:dropFieldToTarget',
+        field: {
+          type: 'report-field',
+          sourceId: field.sourceId,
+          fieldId: field.fieldId,
+          data: { label: field.label },
+        },
+        target: {
+          kind: 'cell',
+          cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
+        },
+      });
+
+      if (!designerResult.ok || designerResult.cancelled) {
+        const rollbackResult =
+          previousCellValue == null
+            ? await spreadsheetBridge.dispatch({
+                type: 'spreadsheet:clearCells',
+                target: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
+                clearValues: true,
+              })
+            : await spreadsheetBridge.dispatch({
+                type: 'spreadsheet:setCellValue',
+                cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
+                value: previousCellValue,
+              });
+
+        if (!rollbackResult.ok) {
+          throw rollbackResult.error instanceof Error
+            ? rollbackResult.error
+            : new Error('Field insert rollback failed');
+        }
+
+        throw designerResult.error instanceof Error
+          ? designerResult.error
+          : new Error(designerResult.cancelled ? 'Field insert cancelled' : 'Field insert failed');
+      }
+    },
+    [designerBridge, sheetId, snapshot.activeSheet?.cells, spreadsheetBridge],
+  );
+
   const handleFieldDrop = useCallback(async () => {
     const targetCell = dropTargetCell || selectedCell;
     if (!draggingField || !targetCell) return;
-    const addr = cellAddress(targetCell.row, targetCell.col);
-    await spreadsheetBridge.dispatch({
-      type: 'spreadsheet:setCellValue',
-      cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
-      value: `\${${draggingField.fieldId}}`,
-    });
-    await designerBridge.dispatchDesigner({
-      type: 'report-designer:dropFieldToTarget',
-      field: {
-        type: 'report-field',
-        sourceId: draggingField.sourceId,
-        fieldId: draggingField.fieldId,
-        data: { label: draggingField.label },
-      },
-      target: {
-        kind: 'cell',
-        cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
-      },
-    });
-    setDraggingField(null);
-  }, [draggingField, dropTargetCell, selectedCell, spreadsheetBridge, designerBridge, sheetId]);
+    try {
+      await insertFieldAtCell(draggingField, targetCell);
+    } finally {
+      setDraggingField(null);
+    }
+  }, [draggingField, dropTargetCell, insertFieldAtCell, selectedCell]);
+
+  const canInsertField = useCallback(() => Boolean(selectedCell), [selectedCell]);
+
+  const handleFieldInsert = useCallback(
+    async (sourceId: string, fieldId: string, label: string) => {
+      if (!selectedCell) {
+        return;
+      }
+      await insertFieldAtCell({ sourceId, fieldId, label }, selectedCell);
+    },
+    [insertFieldAtCell, selectedCell],
+  );
 
   const frozen = snapshot.activeSheet?.frozen;
 
@@ -431,6 +490,10 @@ export function ReportDesignerDemo() {
                 onFieldDragStart={(sourceId, fieldId, label) =>
                   setDraggingField({ sourceId, fieldId, label })
                 }
+                onFieldInsert={(sourceId, fieldId, label) => {
+                  void handleFieldInsert(sourceId, fieldId, label);
+                }}
+                canInsertField={canInsertField}
               />
             </div>
           </div>

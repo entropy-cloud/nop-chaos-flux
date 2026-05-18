@@ -1,4 +1,5 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Page } from '../fixtures.js';
+import type { Locator } from '@playwright/test';
 import { ComponentLabHelper, scenarioSlug } from './helpers';
 
 export async function openCrudLab(page: Page) {
