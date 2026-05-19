@@ -1,6 +1,6 @@
 # 410 Open-Ended Adversarial Review 2026-05-19 Flow-Designer Host Contract Plan
 
-> Plan Status: planned
+> Plan Status: partially completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-open-ended-adversarial-review-01/{round-03.md,round-06.md}`
 > Related: `docs/plans/406-open-ended-adversarial-review-2026-05-19-25-round-remediation-routing-plan.md`, `docs/architecture/flow-designer/{design.md,runtime-snapshot.md,api.md}`, `docs/components/designer-page/design.md`, `docs/architecture/capability-projection-manifest.md`
@@ -46,21 +46,21 @@
 
 ### Phase 1 - Unify Flow-Designer Host Summary And Action Path
 
-Status: planned
+Status: in progress
 Targets: flow-designer summary publication, toolbar path, focused tests, owner docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Make all host summary surfaces publish one consistent selection / busy / canUndo / canRedo baseline.
+- [x] Make all host summary surfaces publish one consistent selection / busy / canUndo / canRedo baseline.
 - [ ] Route built-in toolbar actions through the same supported `designer:*` / `ActionScope` path used by schema fragments, or explicitly narrow the supported contract and update docs accordingly.
 - [ ] Add focused proof for host summary publication and toolbar write path.
-- [ ] Update `docs/architecture/flow-designer/{design.md,runtime-snapshot.md,api.md}` and `docs/components/designer-page/design.md` for the final supported baseline.
+- [x] Update `docs/architecture/flow-designer/{design.md,runtime-snapshot.md,api.md}` and `docs/components/designer-page/design.md` for the final supported baseline.
 
 Exit Criteria:
 
 - [ ] `R03-01` and `R03-02` are fixed.
 - [ ] Focused proof covers summary publication and built-in toolbar action routing.
-- [ ] `docs/architecture/flow-designer/{design.md,runtime-snapshot.md,api.md}` and `docs/components/designer-page/design.md` are updated.
+- [x] `docs/architecture/flow-designer/{design.md,runtime-snapshot.md,api.md}` and `docs/components/designer-page/design.md` are updated.
 - [ ] `docs/logs/2026/05-19.md` is updated.
 
 ### Phase 2 - Close Manifest Publication Drift

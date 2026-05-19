@@ -1,6 +1,6 @@
 # 407 Open-Ended Adversarial Review 2026-05-19 Runtime Validation And Packaging Fidelity Plan
 
-> Plan Status: planned
+> Plan Status: partially completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-open-ended-adversarial-review-01/{round-01.md}`
 > Related: `docs/plans/406-open-ended-adversarial-review-2026-05-19-25-round-remediation-routing-plan.md`, `docs/architecture/form-validation.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/frontend-baseline.md`
@@ -53,40 +53,40 @@
 
 ### Phase 1 - Restore Validation Owner And Scope Identity Fidelity
 
-Status: planned
+Status: in progress
 Targets: `packages/flux-react/src/`, `packages/flux-runtime/src/`, focused tests, owner docs if required
 
 - Item Types: `Fix | Proof`
 
 - [ ] Fix schema replacement so page-root validation owners cannot keep using stale compiled models after refresh.
-- [ ] Restore stable separation between `scopeKey` and canonical `scope.id` so repeated child scopes cannot collide or dispose each other.
+- [x] Restore stable separation between `scopeKey` and canonical `scope.id` so repeated child scopes cannot collide or dispose each other.
 - [ ] Add focused proof for schema replacement, owner refresh, and repeated child-scope disposal behavior.
-- [ ] Update `docs/architecture/form-validation.md` only if the supported owner lifecycle wording changes; otherwise record `No owner-doc update required` explicitly.
+- [x] `docs/architecture/form-validation.md`: No owner-doc update required; the supported owner lifecycle wording did not change in this slice.
 
 Exit Criteria:
 
 - [ ] `R01-01` and `R01-02` are fixed.
 - [ ] Focused proof covers validation-owner refresh and repeated child-scope identity/disposal semantics.
-- [ ] `docs/architecture/form-validation.md` and/or `docs/architecture/flux-runtime-module-boundaries.md` are updated if the supported owner baseline changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/architecture/form-validation.md` and/or `docs/architecture/flux-runtime-module-boundaries.md` are updated if the supported owner baseline changed; otherwise `No owner-doc update required` is explicit.
 - [ ] `docs/logs/2026/05-19.md` is updated.
 
 ### Phase 2 - Unify Compile/Validate Plugin Semantics And Packed-Tarball Proof
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/src/`, `scripts/check-flux-bundle-pack.mjs`, focused tests/docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Make validation and normal compile paths use one supported `beforeCompile` execution semantics instead of validate-only double execution.
-- [ ] Make `check-flux-bundle-pack` read and compare the real packed tarball stylesheet payload rather than workspace source CSS.
-- [ ] Add focused proof for compile/validate plugin parity and packed-artifact CSS verification.
-- [ ] Update `docs/architecture/frontend-baseline.md` only if the supported pack-proof contract wording changes; otherwise record `No owner-doc update required` explicitly.
+- [x] Make validation and normal compile paths use one supported `beforeCompile` execution semantics instead of validate-only double execution.
+- [x] Make `check-flux-bundle-pack` read and compare the real packed tarball stylesheet payload rather than workspace source CSS.
+- [x] Add focused proof for compile/validate plugin parity and packed-artifact CSS verification.
+- [x] `docs/architecture/frontend-baseline.md`: No owner-doc update required; the supported pack-proof contract wording did not change in this slice.
 
 Exit Criteria:
 
-- [ ] `R01-03` and `R01-05` are fixed.
-- [ ] Focused proof covers plugin execution parity and real tarball payload verification.
-- [ ] `docs/architecture/frontend-baseline.md` is updated if the supported release-proof baseline changed; otherwise `No owner-doc update required` is explicit.
+- [x] `R01-03` and `R01-05` are fixed.
+- [x] Focused proof covers plugin execution parity and real tarball payload verification.
+- [x] `docs/architecture/frontend-baseline.md` is updated if the supported release-proof baseline changed; otherwise `No owner-doc update required` is explicit.
 - [ ] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates

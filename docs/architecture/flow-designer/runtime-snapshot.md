@@ -35,7 +35,7 @@
 ### Current Projection Matrix
 
 - retained canonical schema-visible fields:
-  - `$designer` as the compact host summary export (`kind`, `dirty`, `busy`, `canUndo`, `canRedo`, `selectionKind`, `selectionCount`)
+  - `$designer` as the compact host summary export (`kind`, `dirty`, `canUndo`, `canRedo`, `selectionKind`, `selectionCount`)
   - `doc` as a narrowed summary DTO (`id`, `kind`, `name`, `version`, `viewport`, `nodeCount`, `edgeCount`)
   - `selection`
   - `activeNode`

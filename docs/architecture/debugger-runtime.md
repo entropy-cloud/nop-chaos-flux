@@ -315,4 +315,5 @@ The main remaining quality issue in the documentation area is not architecture d
 
 - `docs/architecture/template-instantiation-and-node-identity.md`
 - `docs/architecture/playground-experience.md`
+- `docs/architecture/performance-diagnostics-and-e2e-design.md`
 - `docs/analysis/2026-03-21-framework-debugger-design.md`

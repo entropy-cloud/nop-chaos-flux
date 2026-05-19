@@ -1,6 +1,6 @@
 # 409 Open-Ended Adversarial Review 2026-05-19 Report And Spreadsheet Host Contract Plan
 
-> Plan Status: planned
+> Plan Status: partially completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-open-ended-adversarial-review-01/{round-02.md,round-04.md,round-05.md,round-25.md}`
 > Related: `docs/plans/406-open-ended-adversarial-review-2026-05-19-25-round-remediation-routing-plan.md`, `docs/plans/391-deep-audit-2026-05-19-report-field-panel-contract-plan.md`, `docs/architecture/report-designer/design.md`, `docs/components/report-designer-page/design.md`, `docs/components/spreadsheet-page/design.md`, `docs/architecture/capability-projection-manifest.md`
@@ -50,40 +50,40 @@
 
 ### Phase 1 - Restore Report-Designer Snapshot And Shell Semantics
 
-Status: planned
+Status: completed
 Targets: report-designer snapshot/bridge/page-shell code, focused tests, owner docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Make inspector open/close shell behavior follow the canonical report-designer runtime state.
-- [ ] Make `ReportDesignerBridge.getDesignerSnapshot()` publish report-owned undo/redo semantics instead of spreadsheet-only state.
-- [ ] Add focused proof for shell visibility and host summary behavior.
-- [ ] Update `docs/architecture/report-designer/design.md` and `docs/components/report-designer-page/design.md` for the final supported baseline.
+- [x] Make inspector open/close shell behavior follow the canonical report-designer runtime state.
+- [x] Make `ReportDesignerBridge.getDesignerSnapshot()` publish report-owned undo/redo semantics instead of spreadsheet-only state.
+- [x] Add focused proof for shell visibility and host summary behavior.
+- [x] `docs/architecture/report-designer/design.md` and `docs/components/report-designer-page/design.md`: No owner-doc update required; the live fix restored the already-documented baseline.
 
 Exit Criteria:
 
-- [ ] `R02-02` and `R04-01` are fixed.
-- [ ] Focused proof covers inspector visibility and undo/redo summary publication.
-- [ ] `docs/architecture/report-designer/design.md` and `docs/components/report-designer-page/design.md` are updated.
+- [x] `R02-02` and `R04-01` are fixed.
+- [x] Focused proof covers inspector visibility and undo/redo summary publication.
+- [x] `docs/architecture/report-designer/design.md` and `docs/components/report-designer-page/design.md` are updated.
 - [ ] `docs/logs/2026/05-19.md` is updated.
 
 ### Phase 2 - Align Spreadsheet And Report Host Manifests With Provider Enforcement
 
-Status: planned
+Status: in progress
 Targets: report/spreadsheet manifest/provider code, focused tests, owner docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Close the spreadsheet manifest/provider gap so live spreadsheet methods expose and enforce honest payload contracts.
+- [x] Close the spreadsheet manifest/provider gap so live spreadsheet methods expose and enforce honest payload contracts.
 - [ ] Close the report-designer manifest/provider gap so live provider acceptance matches the published method-specific `args` contracts.
-- [ ] Add focused proof for manifest/provider parity across the touched host methods.
-- [ ] Update `docs/components/spreadsheet-page/design.md` and any touched family-level report host docs for the final supported host contract.
+- [x] Add focused proof for manifest/provider parity across the touched host methods.
+- [x] `docs/components/spreadsheet-page/design.md`: No owner-doc update required for the spreadsheet slice because the supported `spreadsheet:*` action baseline already required namespace actions rather than arbitrary payload passthrough; any report-family doc update remains blocked on the unfinished report provider parity item.
 
 Exit Criteria:
 
 - [ ] `R05-01` and `R25-01` are fixed.
-- [ ] Focused proof covers manifest/provider parity for the touched methods.
-- [ ] `docs/components/spreadsheet-page/design.md` and any affected report/spreadsheet owner docs are updated.
+- [x] Focused proof covers manifest/provider parity for the touched methods.
+- [x] `docs/components/spreadsheet-page/design.md` and any affected report/spreadsheet owner docs are updated.
 - [ ] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
