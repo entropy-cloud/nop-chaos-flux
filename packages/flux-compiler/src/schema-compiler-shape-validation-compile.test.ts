@@ -36,6 +36,29 @@ describe('compile and validate integration', () => {
     expect(node.propsProgram.value.text).toBe('HELLO');
   });
 
+  it('runs beforeCompile once during validate, matching compile semantics', () => {
+    const textRenderer: RendererDefinition = { type: 'text', component: () => null };
+    let beforeCompileCalls = 0;
+    const plugin: RendererPlugin = {
+      name: 'count-before-compile',
+      beforeCompile(schema) {
+        beforeCompileCalls += 1;
+        return schema;
+      },
+    };
+
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([textRenderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+      plugins: [plugin],
+    });
+
+    const diagnostics = compiler.validate?.({ type: 'text', text: 'hello' }) ?? [];
+
+    expect(diagnostics).toEqual([]);
+    expect(beforeCompileCalls).toBe(1);
+  });
+
   it('reports host contract family mismatch', () => {
     const renderer: RendererDefinition = {
       type: 'host-mismatch',

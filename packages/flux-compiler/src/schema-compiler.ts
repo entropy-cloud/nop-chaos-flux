@@ -159,7 +159,6 @@ export function createSchemaCompiler(input: {
   const validateSchemaInput = createValidateSchemaInput(
     input.registry,
     input.plugins,
-    applyBeforeCompilePlugins,
     compileSchemaToTemplateNodes,
   );
 

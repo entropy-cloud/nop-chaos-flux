@@ -22,7 +22,6 @@ export type ValidateSchemaInputFn = (
 export function createValidateSchemaInput(
   registry: RendererRegistry,
   plugins: RendererPlugin[] | undefined,
-  applyBeforeCompilePlugins: (schema: SchemaInput) => SchemaInput,
   compileSchemaToTemplateNodes: CompileSchemaToTemplateNodesFn,
 ): ValidateSchemaInputFn {
   return function validateSchemaInput(schema: SchemaInput, options: CompileSchemaOptions = {}) {
@@ -31,10 +30,9 @@ export function createValidateSchemaInput(
       'validate',
       options.schemaUrl,
     );
-    const prepared = applyBeforeCompilePlugins(schema);
     const schemaUrl = options.schemaUrl ?? '$';
 
-    if (!isSchemaInput(prepared)) {
+    if (!isSchemaInput(schema)) {
       diagnostics.emit({
         code: 'invalid-root',
         path: schemaPathToJsonPointer(options.basePath ?? '$'),
@@ -44,7 +42,7 @@ export function createValidateSchemaInput(
     }
 
     const canonicalPrepared = canonicalizeSchemaInput(
-      prepared,
+      schema,
       {
         basePath: options.basePath ?? '$',
         schemaUrl,
