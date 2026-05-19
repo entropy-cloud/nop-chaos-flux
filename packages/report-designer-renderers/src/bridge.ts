@@ -72,12 +72,16 @@ export function deriveDesignerHostSnapshot(
   designer: ReportDesignerRuntimeSnapshot,
 ): ReportDesignerHostSnapshot {
   const runtimeDirty = designer.dirty || spreadsheet.runtime.dirty;
+  const runtimeCanUndo = designer.canUndo || spreadsheet.runtime.canUndo;
+  const runtimeCanRedo = designer.canRedo || spreadsheet.runtime.canRedo;
 
   return {
     ...spreadsheet,
     runtime: {
       ...spreadsheet.runtime,
       dirty: runtimeDirty,
+      canUndo: runtimeCanUndo,
+      canRedo: runtimeCanRedo,
     },
     designer: {
       kind: designer.document.kind,

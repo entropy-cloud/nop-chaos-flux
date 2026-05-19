@@ -135,6 +135,21 @@ describe('deriveDesignerHostSnapshot', () => {
     expect(host.designer.dirty).toBe(false);
   });
 
+  it('should merge report and spreadsheet undo redo state into runtime summary', async () => {
+    await spreadsheetCore.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId: spreadsheetCore.getSnapshot().activeSheetId, address: 'A1', row: 0, col: 0 },
+      value: 'changed',
+    });
+
+    const spreadsheet = spreadsheetBridge.getSnapshot();
+    const designer = designerCore.getSnapshot();
+    const host = deriveDesignerHostSnapshot(spreadsheet, designer);
+
+    expect(host.runtime.canUndo).toBe(true);
+    expect(host.runtime.canRedo).toBe(false);
+  });
+
   it('should expose metadata-only dirty state through designer.dirty', async () => {
     await designerCore.dispatch({
       type: 'report-designer:updateMeta',

@@ -189,6 +189,36 @@ describe('ReportDesignerPageRenderer', { timeout: 15000 }, () => {
     });
   });
 
+  it('lets runtime close the inspector side after the configured shell seeded it open', async () => {
+    renderReportDesignerPage({
+      config: createRuntimeConfig({
+        inspector: {
+          body: { type: 'text', text: 'Inspector body' },
+        },
+      }),
+      toolbar: [
+        {
+          type: 'action-button',
+          label: 'Close inspector',
+          onClick: {
+            action: 'report-designer:closeInspector',
+          },
+        },
+      ],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('right-panel-expanded')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close inspector' }));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
+      expect(screen.queryByTestId('right-panel-collapsed')).toBeNull();
+    });
+  });
+
   it('hides left and right workbench sides when config does not resolve them', async () => {
     renderReportDesignerPage({
       config: createRuntimeConfig(),

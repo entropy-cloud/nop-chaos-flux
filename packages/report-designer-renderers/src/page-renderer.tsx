@@ -398,6 +398,28 @@ export function ReportDesignerPageRenderer(
   }, [core, env, props.path]);
 
   useEffect(() => {
+    if (!hasConfiguredInspector(resolvedDesigner)) {
+      return;
+    }
+    if (core.getSnapshot().inspector.open) {
+      return;
+    }
+
+    void core.dispatch({ type: 'report-designer:openInspector' }).catch((error) => {
+      reportRuntimeHostIssue({
+        env,
+        error,
+        phase: 'render',
+        path: props.path,
+        details: {
+          schemaPath: props.path,
+          operation: 'seedReportInspectorOpenState',
+        },
+      });
+    });
+  }, [core, env, props.path, resolvedDesigner]);
+
+  useEffect(() => {
     return () => {
       core.dispose();
     };
@@ -513,7 +535,7 @@ export function ReportDesignerPageRenderer(
     adapters: resolvedAdapters,
     resolvedFieldSources: snapshot.fieldSources,
   });
-  const showInspectorPanel = hasConfiguredInspector(resolvedDesigner);
+  const showInspectorPanel = hasConfiguredInspector(resolvedDesigner) && snapshot.inspector.open;
 
   useStatusPathPublication<ReportDesignerHostStatusSummary>(
     props.node.scope.parent ?? props.node.scope,

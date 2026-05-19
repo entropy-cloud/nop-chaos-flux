@@ -1,8 +1,14 @@
-import type { ActionNamespaceProvider, ActionResult } from '@nop-chaos/flux-core';
+import type {
+  ActionNamespaceProvider,
+  ActionResult,
+  FluxValueShape,
+  HostCapabilityContract,
+} from '@nop-chaos/flux-core';
 import type {
   ReportDesignerCommand,
   ReportDesignerCommandResult,
 } from '@nop-chaos/report-designer-core';
+import { REPORT_DESIGNER_MANIFEST_V1 } from './report-designer-manifest.js';
 
 export const REPORT_DESIGNER_HOST_METHODS = [
   'dropFieldToTarget',
@@ -37,6 +43,78 @@ function toActionError(error: unknown): Error | undefined {
   return error == null ? undefined : new Error(String(error));
 }
 
+function matchesShape(value: unknown, shape: FluxValueShape): boolean {
+  switch (shape.kind) {
+    case 'unknown':
+      return true;
+    case 'string':
+      return typeof value === 'string';
+    case 'number':
+      return typeof value === 'number' && Number.isFinite(value);
+    case 'boolean':
+      return typeof value === 'boolean';
+    case 'null':
+      return value === null;
+    case 'literal':
+      return value === shape.value;
+    case 'array':
+      return Array.isArray(value) && value.every((item) => matchesShape(item, shape.item));
+    case 'union':
+      return shape.anyOf.some((variant) => matchesShape(value, variant));
+    case 'object': {
+      if (!isCommandRecord(value)) {
+        return false;
+      }
+      const optional = new Set(shape.optional ?? []);
+      for (const [key, fieldShape] of Object.entries(shape.fields)) {
+        if (!(key in value)) {
+          if (!optional.has(key)) {
+            return false;
+          }
+          continue;
+        }
+        if (!matchesShape(value[key], fieldShape)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    default:
+      return false;
+  }
+}
+
+function validateMethodPayload(
+  method: string,
+  payload: unknown,
+): { ok: true; args: CommandRecord } | { ok: false; error: Error } {
+  const contract = (REPORT_DESIGNER_MANIFEST_V1.capabilities.methods as HostCapabilityContract['methods'])[method];
+  if (!contract?.args) {
+    if (payload === undefined) {
+      return { ok: true, args: {} };
+    }
+    if (isCommandRecord(payload)) {
+      return { ok: true, args: payload };
+    }
+    return {
+      ok: false,
+      error: new Error(`report-designer:${method} does not accept a non-object payload.`),
+    };
+  }
+
+  const args = payload === undefined ? {} : payload;
+  if (!matchesShape(args, contract.args)) {
+    return {
+      ok: false,
+      error: new Error(
+        `report-designer:${method} payload does not match the published host args contract.`,
+      ),
+    };
+  }
+
+  return { ok: true, args: args as CommandRecord };
+}
+
 export function toReportDesignerActionResult(response: ReportDesignerCommandResult): ActionResult {
   return {
     ok: response.ok,
@@ -55,11 +133,18 @@ export function createReportDesignerActionProvider(
       return REPORT_DESIGNER_HOST_METHODS;
     },
     async invoke(method, payload) {
-      const args = isCommandRecord(payload) ? payload : {};
+      const validation = validateMethodPayload(method, payload);
+      if (!validation.ok) {
+        return {
+          ok: false,
+          error: validation.error,
+        };
+      }
+
       try {
         const result = await dispatch({
           type: `report-designer:${method}`,
-          ...args,
+          ...validation.args,
         } as ReportDesignerCommand);
         return toReportDesignerActionResult(result);
       } catch (error) {

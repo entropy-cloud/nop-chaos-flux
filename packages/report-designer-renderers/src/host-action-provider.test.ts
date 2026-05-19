@@ -21,7 +21,7 @@ describe('report designer host action provider', () => {
       const resolved = actionScope.resolve('report-designer:preview');
       expect(resolved?.method).toBe('preview');
 
-      const result = await resolved!.provider.invoke(resolved!.method, {}, {} as any);
+      const result = await resolved!.provider.invoke(resolved!.method, { mode: 'inline' }, {} as any);
       expect(result.ok).toBe(false);
       expect(result.error).toBeInstanceOf(Error);
       expect((result.error as Error).message).toBe('Preview adapter unavailable');
@@ -52,5 +52,17 @@ describe('report designer host action provider', () => {
     expect(result.ok).toBe(false);
     expect(result.error).toBe(thrown);
     expect((result as { cause?: unknown }).cause).toBe(thrown);
+  });
+
+  it('rejects payloads that do not match the published report-designer host args contract', async () => {
+    const dispatch = async () => ({ ok: true, changed: false } as const);
+    const provider = createReportDesignerActionProvider(dispatch);
+
+    const result = await provider.invoke('openInspector', { target: 'workbook' }, {} as any);
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe(
+      'report-designer:openInspector payload does not match the published host args contract.',
+    );
   });
 });
