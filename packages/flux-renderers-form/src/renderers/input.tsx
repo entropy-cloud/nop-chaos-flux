@@ -193,8 +193,9 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
         </SelectContent>
       </Select>
       {loading ? (
-        <span data-slot="select-loading" role="status">
-          {t('flux.common.loading')}
+        <span data-slot="select-loading" role="status" className="flex items-center gap-1.5">
+          <Spinner className="size-4" aria-hidden="true" />
+          <span>{t('flux.common.loading')}</span>
         </span>
       ) : null}
       {errorMessage ? (
@@ -248,19 +249,19 @@ function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
   const checked = value as boolean;
 
   return (
-    <span className={cn('nop-checkbox-wrapper', props.meta.className)} data-slot="checkbox-wrapper">
+    <Label className={cn('nop-checkbox-wrapper', props.meta.className)} data-slot="checkbox-wrapper">
       <Checkbox
         id={name ? `${name}-control` : undefined}
         checked={checked}
         disabled={presentation.effectiveDisabled}
         aria-invalid={presentation.showError ? true : undefined}
-        aria-label={optionLabel}
+        aria-label={optionLabel ?? name}
         onFocus={handlers.onFocus}
         onCheckedChange={(checked) => handlers.onChange(Boolean(checked))}
         onBlur={handlers.onBlur}
       />
       {optionLabel ? <span data-slot="checkbox-label">{optionLabel}</span> : null}
-    </span>
+    </Label>
   );
 }
 
@@ -276,7 +277,7 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   const checked = value as boolean;
 
   return (
-    <span className={cn('nop-switch-wrapper', props.meta.className)} data-slot="switch-wrapper">
+    <Label className={cn('nop-switch-wrapper', props.meta.className)} data-slot="switch-wrapper">
       <Switch
         id={name ? `${name}-control` : undefined}
         checked={checked}
@@ -290,7 +291,7 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
       <span data-slot="switch-label">
         {checked ? (option?.onLabel ?? 'On') : (option?.offLabel ?? 'Off')}
       </span>
-    </span>
+    </Label>
   );
 }
 
