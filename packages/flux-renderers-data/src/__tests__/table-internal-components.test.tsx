@@ -85,9 +85,11 @@ describe('table internal components', () => {
       target: { value: '20' },
     });
 
-    expect(onPageChange).toHaveBeenCalledWith(1);
-    expect(onPageChange).toHaveBeenCalledWith(3);
-    expect(onPageSizeChange).toHaveBeenCalledWith(20);
+    expect(onPageChange.mock.calls.some(([page, event]) => page === 1 && event)).toBe(true);
+    expect(onPageChange.mock.calls.some(([page, event]) => page === 3 && event)).toBe(true);
+    expect(onPageSizeChange.mock.calls.some(([pageSize, event]) => pageSize === 20 && event)).toBe(
+      true,
+    );
     expect(screen.getByText('11-20 of 25')).toBeTruthy();
     expect(screen.getByRole('combobox', { name: /Rows per page/i })).toBeTruthy();
   });

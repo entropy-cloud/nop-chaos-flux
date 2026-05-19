@@ -236,7 +236,7 @@ describe('runtime factory utilities', () => {
       { local: true },
       { pathSuffix: 'child', scopeKey: 'child-scope', isolate: true },
     );
-    expect(childScope.id).toBe('child-scope');
+    expect(childScope.id).toMatch(/^child-scope:/);
     expect(childScope.path).toBe('$page.child');
     expect(childScope.readVisible()).toEqual({ local: true });
 

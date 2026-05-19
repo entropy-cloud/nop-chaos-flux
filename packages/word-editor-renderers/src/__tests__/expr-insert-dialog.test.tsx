@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
+import type { TemplateExpr } from '@nop-chaos/word-editor-core';
 import { ExprInsertDialog } from '../dialogs/expr-insert-dialog.js';
 
 vi.mock('@nop-chaos/ui', () => {
@@ -69,34 +70,50 @@ afterEach(() => {
 });
 
 describe('ExprInsertDialog', () => {
+  function renderDialog(overrides?: {
+    onInsertExpr?: (expr: string) => void;
+    onInsertTag?: (expr: TemplateExpr) => void;
+    onClose?: () => void;
+    open?: boolean;
+  }) {
+    return render(
+      <ExprInsertDialog
+        open={overrides?.open ?? true}
+        onClose={overrides?.onClose ?? vi.fn()}
+        onInsertExpr={overrides?.onInsertExpr ?? vi.fn()}
+        onInsertTag={overrides?.onInsertTag ?? vi.fn()}
+      />,
+    );
+  }
+
   it('renders dialog when open', () => {
-    render(<ExprInsertDialog open={true} onClose={vi.fn()} onInsert={vi.fn()} />);
+    renderDialog();
     expect(screen.getByTestId('dialog')).toBeInTheDocument();
   });
 
   it('does not render when closed', () => {
-    render(<ExprInsertDialog open={false} onClose={vi.fn()} onInsert={vi.fn()} />);
+    renderDialog({ open: false });
     expect(screen.queryByTestId('dialog')).not.toBeInTheDocument();
   });
 
   it('renders title', () => {
-    render(<ExprInsertDialog open={true} onClose={vi.fn()} onInsert={vi.fn()} />);
+    renderDialog();
     expect(screen.getByText('Insert Template Expression')).toBeInTheDocument();
   });
 
   it('renders EL Expression and XPL Tag tabs', () => {
-    render(<ExprInsertDialog open={true} onClose={vi.fn()} onInsert={vi.fn()} />);
+    renderDialog();
     expect(screen.getByText('EL Expression')).toBeInTheDocument();
     expect(screen.getByText('XPL Tag')).toBeInTheDocument();
   });
 
   it('renders textarea for EL expression by default', () => {
-    render(<ExprInsertDialog open={true} onClose={vi.fn()} onInsert={vi.fn()} />);
+    renderDialog();
     expect(screen.getByTestId('textarea')).toBeInTheDocument();
   });
 
   it('switches to XPL Tag view when clicking XPL Tag tab', async () => {
-    render(<ExprInsertDialog open={true} onClose={vi.fn()} onInsert={vi.fn()} />);
+    renderDialog();
 
     const triggers = screen.getAllByTestId('tabs-trigger');
     const xplTrigger = triggers.find((t) => t.textContent?.includes('XPL Tag'));
@@ -107,8 +124,8 @@ describe('ExprInsertDialog', () => {
   });
 
   it('calls onInsert with EL expression format', async () => {
-    const onInsert = vi.fn();
-    render(<ExprInsertDialog open={true} onClose={vi.fn()} onInsert={onInsert} />);
+    const onInsertExpr = vi.fn();
+    renderDialog({ onInsertExpr });
 
     const textarea = screen.getByTestId('textarea');
     await userEvent.type(textarea, 'entity.name');
@@ -116,24 +133,48 @@ describe('ExprInsertDialog', () => {
     const insertButtons = screen.getAllByText('Confirm');
     await userEvent.click(insertButtons[0]);
 
-    expect(onInsert).toHaveBeenCalledWith('${entity.name}');
+    expect(onInsertExpr).toHaveBeenCalledWith('${entity.name}');
   });
 
   it('calls onClose when Cancel is clicked', async () => {
     const onClose = vi.fn();
-    render(<ExprInsertDialog open={true} onClose={onClose} onInsert={vi.fn()} />);
+    renderDialog({ onClose });
 
     await userEvent.click(screen.getByText('Cancel'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('does not insert empty EL expression', async () => {
-    const onInsert = vi.fn();
-    render(<ExprInsertDialog open={true} onClose={vi.fn()} onInsert={onInsert} />);
+    const onInsertExpr = vi.fn();
+    renderDialog({ onInsertExpr });
 
     const insertButtons = screen.getAllByText('Confirm');
     await userEvent.click(insertButtons[0]);
 
-    expect(onInsert).not.toHaveBeenCalled();
+    expect(onInsertExpr).not.toHaveBeenCalled();
+  });
+
+  it('inserts c:out as a self-closing template tag', async () => {
+    const onInsertTag = vi.fn();
+    renderDialog({ onInsertTag });
+
+    const triggers = screen.getAllByTestId('tabs-trigger');
+    const xplTrigger = triggers.find((t) => t.textContent?.includes('XPL Tag'));
+    if (xplTrigger) {
+      await userEvent.click(xplTrigger);
+    }
+
+    const select = screen.getByTestId('native-select');
+    await userEvent.selectOptions(select, 'c:out');
+    const valueInput = screen.getByLabelText('value');
+    fireEvent.change(valueInput, { target: { value: '${order.total}' } });
+    await userEvent.click(screen.getAllByText('Confirm')[0]);
+
+    expect(onInsertTag).toHaveBeenCalledWith({
+      kind: 'tag-selfclose',
+      expr: '<c:out value="${order.total}" />',
+      tagName: 'c:out',
+      attrs: { value: '${order.total}' },
+    });
   });
 });

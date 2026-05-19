@@ -1,14 +1,20 @@
 import { useState } from 'react';
 import { Code2, GitBranch, Repeat, FileOutput } from 'lucide-react';
+import type { TemplateExpr } from '@nop-chaos/word-editor-core';
 import { ToolbarButton, ToolbarGroup } from './shared.js';
 import { ExprInsertDialog } from '../dialogs/expr-insert-dialog.js';
 
 interface TemplateControlsProps {
   onInsertExpr: (expr: string) => void;
   onInsertTag: (tagName: string) => void;
+  onInsertTemplateTag?: (expr: TemplateExpr) => void;
 }
 
-export function TemplateControls({ onInsertExpr, onInsertTag }: TemplateControlsProps) {
+export function TemplateControls({
+  onInsertExpr,
+  onInsertTag,
+  onInsertTemplateTag,
+}: TemplateControlsProps) {
   const [showExprDialog, setShowExprDialog] = useState(false);
 
   return (
@@ -26,8 +32,16 @@ export function TemplateControls({ onInsertExpr, onInsertTag }: TemplateControls
       <ExprInsertDialog
         open={showExprDialog}
         onClose={() => setShowExprDialog(false)}
-        onInsert={(expr) => {
+        onInsertExpr={(expr) => {
           onInsertExpr(expr);
+          setShowExprDialog(false);
+        }}
+        onInsertTag={(expr) => {
+          if (onInsertTemplateTag) {
+            onInsertTemplateTag(expr);
+          } else if (expr.tagName) {
+            onInsertTag(expr.tagName);
+          }
           setShowExprDialog(false);
         }}
       />

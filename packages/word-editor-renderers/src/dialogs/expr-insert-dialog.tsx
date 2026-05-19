@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { findTagDefinition } from '@nop-chaos/word-editor-core';
+import { buildTagOpenString, buildTagSelfcloseString } from '@nop-chaos/word-editor-core';
+import type { TemplateExpr } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
@@ -19,16 +20,23 @@ import {
   TabsContent,
   Textarea,
 } from '@nop-chaos/ui';
+import { findInsertableTagDefinition } from '../template-tag-helpers.js';
 
 interface ExprInsertDialogProps {
   open: boolean;
   onClose: () => void;
-  onInsert: (expr: string) => void;
+  onInsertExpr: (expr: string) => void;
+  onInsertTag: (expr: TemplateExpr) => void;
 }
 
 type ExprType = 'el' | 'xpl';
 
-export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogProps) {
+export function ExprInsertDialog({
+  open,
+  onClose,
+  onInsertExpr,
+  onInsertTag,
+}: ExprInsertDialogProps) {
   const [exprType, setExprType] = useState<ExprType>('el');
   const [expression, setExpression] = useState('');
   const [selectedTag, setSelectedTag] = useState('c:if');
@@ -37,27 +45,25 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
   const handleInsert = () => {
     if (exprType === 'el') {
       if (!expression.trim()) return;
-      onInsert(`\${${expression.trim()}}`);
+      onInsertExpr(`\${${expression.trim()}}`);
     } else {
-      const tagDef = findTagDefinition(selectedTag, 'tag-open');
+      const tagDef = findInsertableTagDefinition(selectedTag);
       if (!tagDef) return;
 
-      const attrs = tagDef.defaultAttrs || {};
-      const attrPairs = Object.entries({
-        ...attrs,
+      const attrs = {
+        ...(tagDef.defaultAttrs || {}),
         ...tagAttrs,
-      })
-        .filter(([, value]) => value.trim())
-        .map(([key, value]) => `${key}="${value.trim()}"`)
-        .join(' ');
+      };
 
-      if (tagDef.kind === 'tag-selfclose') {
-        onInsert(`<${selectedTag}${attrPairs ? ' ' + attrPairs : ''} />`);
-      } else {
-        onInsert(
-          `<${selectedTag}${attrPairs ? ' ' + attrPairs : ''}>${selectedTag}</${selectedTag}>`,
-        );
-      }
+      onInsertTag({
+        kind: tagDef.kind,
+        expr:
+          tagDef.kind === 'tag-selfclose'
+            ? buildTagSelfcloseString(selectedTag, attrs)
+            : buildTagOpenString(selectedTag, attrs),
+        tagName: selectedTag,
+        attrs,
+      });
     }
     onClose();
   };
@@ -72,7 +78,7 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
     'c:set',
     'c:out',
   ];
-  const currentTagDef = findTagDefinition(selectedTag, 'tag-open');
+  const currentTagDef = findInsertableTagDefinition(selectedTag);
   const expressionInputId = 'expr-insert-expression';
   const tagNameInputId = 'expr-insert-tag-name';
 

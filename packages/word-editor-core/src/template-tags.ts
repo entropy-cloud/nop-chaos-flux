@@ -107,7 +107,7 @@ export const BUILTIN_TEMPLATE_TAGS: TemplateTag[] = [
 
 export function findTagDefinition(
   name: string,
-  kind: 'tag-open' | 'tag-close',
+  kind: TemplateTag['kind'],
 ): TemplateTag | undefined {
   return BUILTIN_TEMPLATE_TAGS.find((tag) => tag.name === name && tag.kind === kind);
 }

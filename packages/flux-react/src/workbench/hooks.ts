@@ -67,9 +67,9 @@ export function useHostScope(
 
   useLayoutEffect(() => {
     const current = store.current;
-    const expectedId = `${path}:${scopeLabel}-host`;
+    const expectedIdPrefix = `${path}:${scopeLabel}-host:`;
 
-    if (current.parent === parentScope && current.id === expectedId) {
+    if (current.parent === parentScope && current.id.startsWith(expectedIdPrefix)) {
       return;
     }
 

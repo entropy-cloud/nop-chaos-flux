@@ -3,255 +3,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import * as FluxReact from '@nop-chaos/flux-react';
-import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/flux-react';
-import type { ActionResult, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
-import { registerWordEditorRenderers, defineWordEditorPageSchema } from '../index.js';
+import type { ActionResult } from '@nop-chaos/flux-core';
+import {
+  createEnv,
+  datasetStore,
+  editorStore,
+  mockState,
+  mockedCore,
+  originalWindowConfirm,
+  renderWordEditor,
+  resetWordEditorActionMocks,
+} from './word-editor-page-actions.test-support.js';
 import * as wordEditorActionProvider from '../word-editor-action-provider.js';
 import { WordEditorPage } from '../word-editor-page.js';
 import { RuntimeContext, ScopeContext } from '../../../flux-react/src/contexts.js';
-
-const mockedCore = vi.hoisted(() => ({
-  captureDocumentSnapshotMock: vi.fn(() => ({
-    data: {
-      header: [],
-      main: [{ value: 'saved' }],
-      footer: [],
-      charts: [],
-      codes: [],
-    },
-    paperSettings: {
-      width: 595,
-      height: 842,
-      direction: 'vertical',
-      margins: [100, 120, 100, 120],
-    },
-    savedAt: '2026-05-14T00:00:00.000Z',
-  })),
-  persistSavedDocumentMock: vi.fn((saved) => saved),
-  saveDatasetsMock: vi.fn(),
-  loadDatasetsMock: vi.fn(() => []),
-}));
-
-const mockState: {
-  shortcutOptions: { onSave?: () => void } | undefined;
-  lastEditorCanvasProps: any;
-  lastDatasetDialogProps: any;
-  datasetState: {
-    datasets: Array<{ id: string; name: string }>;
-    selectedDatasetId: string | null;
-  };
-} = {
-  shortcutOptions: undefined,
-  lastEditorCanvasProps: undefined,
-  lastDatasetDialogProps: undefined,
-  datasetState: {
-    datasets: [],
-    selectedDatasetId: null,
-  },
-};
-
-const originalWindowConfirm = {
-  hasOwn: Object.prototype.hasOwnProperty.call(window, 'confirm'),
-  value: window.confirm,
-};
-
-const editorStoreState = {
-  isReady: true,
-  isDirty: false,
-  wordCount: 0,
-  currentPage: 1,
-  totalPages: 1,
-  scale: 1,
-  selection: {
-    bold: false,
-    italic: false,
-    underline: false,
-    strikeout: false,
-    superscript: false,
-    subscript: false,
-    font: null,
-    size: 16,
-    color: null,
-    highlight: null,
-    rowFlex: null,
-    level: null,
-    listType: null,
-    listStyle: null,
-    rowMargin: 0,
-    undo: false,
-    redo: false,
-  },
-};
-
-const editorStore = {
-  subscribe: () => () => undefined,
-  getState: () => editorStoreState,
-  setDirty: vi.fn(),
-};
-
-const datasetListeners = new Set<() => void>();
-
-const datasetStore = {
-  subscribe: (listener: () => void) => {
-    datasetListeners.add(listener);
-    return () => datasetListeners.delete(listener);
-  },
-  getState: () => mockState.datasetState,
-  load: vi.fn((datasets: Array<{ id: string; name: string }>) => {
-    mockState.datasetState = { ...mockState.datasetState, datasets };
-    for (const listener of datasetListeners) listener();
-  }),
-  getAll: vi.fn(() => mockState.datasetState.datasets),
-  getById: vi.fn(
-    (id: string) => mockState.datasetState.datasets.find((dataset) => dataset.id === id) ?? null,
-  ),
-  add: vi.fn((dataset: { name: string }) => {
-    const next = { id: `dataset-${mockState.datasetState.datasets.length + 1}`, ...dataset };
-    mockState.datasetState = {
-      ...mockState.datasetState,
-      datasets: [...mockState.datasetState.datasets, next],
-    };
-    for (const listener of datasetListeners) listener();
-    return next;
-  }),
-  update: vi.fn((id: string, updates: { name?: string }) => {
-    const current = mockState.datasetState.datasets.find((dataset) => dataset.id === id);
-    if (!current) {
-      return null;
-    }
-
-    const next = { ...current, ...updates };
-    mockState.datasetState = {
-      ...mockState.datasetState,
-      datasets: mockState.datasetState.datasets.map((dataset) => (dataset.id === id ? next : dataset)),
-    };
-    for (const listener of datasetListeners) listener();
-    return next;
-  }),
-};
-
-function resetMockStores() {
-  mockState.datasetState = {
-    datasets: [],
-    selectedDatasetId: null,
-  };
-  editorStore.setDirty.mockClear();
-  mockedCore.captureDocumentSnapshotMock.mockClear();
-  mockedCore.persistSavedDocumentMock.mockClear();
-  mockedCore.saveDatasetsMock.mockClear();
-  mockedCore.loadDatasetsMock.mockClear();
-  mockState.shortcutOptions = undefined;
-  datasetStore.load.mockClear();
-  datasetStore.getAll.mockClear();
-  datasetStore.getById.mockClear();
-  datasetStore.add.mockClear();
-  datasetStore.update.mockClear();
-  mockState.lastEditorCanvasProps = undefined;
-  mockState.lastDatasetDialogProps = undefined;
-}
-
-vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@nop-chaos/word-editor-core')>();
-  class CanvasEditorBridge {}
-  return {
-    ...actual,
-    CanvasEditorBridge,
-    RowFlex: actual.RowFlex ?? {
-      LEFT: 'left',
-      CENTER: 'center',
-      RIGHT: 'right',
-      JUSTIFY: 'justify',
-    },
-    TitleLevel: actual.TitleLevel ?? {
-      FIRST: 'first',
-      SECOND: 'second',
-      THIRD: 'third',
-      FOURTH: 'fourth',
-      FIFTH: 'fifth',
-      SIXTH: 'sixth',
-    },
-    ListType: actual.ListType ?? {
-      UL: 'ul',
-      OL: 'ol',
-    },
-    createEditorStore: () => editorStore,
-    createDatasetStore: () => datasetStore,
-    captureDocumentSnapshot: mockedCore.captureDocumentSnapshotMock,
-    persistSavedDocument: mockedCore.persistSavedDocumentMock,
-    loadDocument: vi.fn(() => null),
-    saveDatasets: mockedCore.saveDatasetsMock,
-    loadDatasets: mockedCore.loadDatasetsMock,
-  };
-});
-
-vi.mock('../editor-canvas.js', () => ({
-  EditorCanvas: (props: any) => {
-    mockState.lastEditorCanvasProps = props;
-    return <div data-testid="editor-canvas" />;
-  },
-}));
-
-vi.mock('../toolbar/ribbon-toolbar.js', () => ({
-  RibbonToolbar: () => <div data-testid="ribbon-toolbar" />,
-}));
-
-vi.mock('../panels/outline-panel.js', () => ({
-  OutlinePanel: () => <div data-testid="outline-panel" />,
-}));
-
-vi.mock('../panels/dataset-panel.js', () => ({
-  DatasetPanel: () => <div data-testid="dataset-panel" />,
-}));
-
-vi.mock('../panels/field-list.js', () => ({
-  FieldList: () => <div data-testid="field-list" />,
-}));
-
-vi.mock('../dialogs/dataset-dialog.js', () => ({
-  DatasetDialog: (props: any) => {
-    mockState.lastDatasetDialogProps = props;
-    return <div data-testid="dataset-dialog" />;
-  },
-}));
-
-vi.mock('../hooks/use-word-editor-shortcuts.js', () => ({
-  useWordEditorShortcuts: (options: { onSave?: () => void }) => {
-    mockState.shortcutOptions = options;
-  },
-}));
-
-function createEnv(notify: RendererEnv['notify'] = () => undefined): RendererEnv {
-  return {
-    fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
-    notify,
-  };
-}
-
-function renderWordEditor(input?: {
-  schema?: Parameters<typeof defineWordEditorPageSchema>[0];
-  extraRenderers?: RendererDefinition[];
-  env?: RendererEnv;
-}) {
-  const registry = createDefaultRegistry(input?.extraRenderers ?? []);
-  registerWordEditorRenderers(registry);
-  const SchemaRenderer = createSchemaRenderer();
-
-  render(
-    <SchemaRenderer
-      schemaUrl="test://word-editor/page"
-      schema={defineWordEditorPageSchema({
-        type: 'word-editor-page',
-        ...(input?.schema ?? {}),
-      })}
-      env={input?.env ?? createEnv()}
-      registry={registry}
-      formulaCompiler={createFormulaCompiler()}
-      data={{}}
-    />,
-  );
-}
 
 describe('WordEditorPage actions and events', () => {
   afterEach(() => {
@@ -265,9 +30,7 @@ describe('WordEditorPage actions and events', () => {
   });
 
   it('saves through the word-editor action provider and forwards onSave', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+    resetWordEditorActionMocks();
     const notify = vi.fn();
 
     renderWordEditor({
@@ -290,9 +53,7 @@ describe('WordEditorPage actions and events', () => {
   });
 
   it('wires shortcut save through the same save handler', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+    resetWordEditorActionMocks();
 
     renderWordEditor();
     mockState.shortcutOptions?.onSave?.();
@@ -305,10 +66,8 @@ describe('WordEditorPage actions and events', () => {
     });
   });
 
-  it('persists datasets immediately after creating one from the dialog flow', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+  it('keeps dataset dialog edits in memory until explicit save succeeds', async () => {
+    resetWordEditorActionMocks();
 
     renderWordEditor();
 
@@ -324,6 +83,14 @@ describe('WordEditorPage actions and events', () => {
 
     await waitFor(() => {
       expect(datasetStore.add).toHaveBeenCalledTimes(1);
+      expect(editorStore.setDirty).toHaveBeenCalledWith(true);
+    });
+
+    expect(mockedCore.saveDatasetsMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+
+    await waitFor(() => {
       expect(mockedCore.saveDatasetsMock).toHaveBeenCalledTimes(1);
       expect(mockedCore.saveDatasetsMock).toHaveBeenCalledWith([
         expect.objectContaining({ name: 'Orders', description: 'Order dataset', type: 'static' }),
@@ -332,9 +99,7 @@ describe('WordEditorPage actions and events', () => {
   });
 
   it('passes an AbortSignal into word-editor save actions', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+    resetWordEditorActionMocks();
 
     const invoke = vi.fn(async () => ({ ok: true }));
     const providerSpy = vi
@@ -361,9 +126,7 @@ describe('WordEditorPage actions and events', () => {
   });
 
   it('ignores concurrent save triggers while a save is already running', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+    resetWordEditorActionMocks();
 
     let resolveSave: ((value: { ok: boolean }) => void) | undefined;
     const saveProviderResult = new Promise<{ ok: boolean }>((resolve) => {
@@ -400,9 +163,7 @@ describe('WordEditorPage actions and events', () => {
   });
 
   it('invokes onBack directly without local confirm handling', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+    resetWordEditorActionMocks();
     const notify = vi.fn();
     if (!window.confirm) window.confirm = vi.fn(() => true);
     const confirmSpy = vi.spyOn(window, 'confirm');
@@ -425,9 +186,7 @@ describe('WordEditorPage actions and events', () => {
   });
 
   it('forwards the click event through onBack', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+    resetWordEditorActionMocks();
     const useHostScopeSpy = vi.spyOn(FluxReact, 'useHostScope').mockReturnValue({} as any);
     const useCurrentActionScopeSpy = vi
       .spyOn(FluxReact, 'useCurrentActionScope')
@@ -505,9 +264,7 @@ describe('WordEditorPage actions and events', () => {
   });
 
   it('does not publish save message updates after unmount', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+    resetWordEditorActionMocks();
     vi.useFakeTimers();
 
     let resolveSave: ((value: { ok: boolean }) => void) | undefined;
@@ -552,9 +309,7 @@ describe('WordEditorPage actions and events', () => {
   });
 
   it('notifies when save resolves ok:false', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+    resetWordEditorActionMocks();
 
     const notify = vi.fn();
     const invoke = vi.fn(async () => ({ ok: false, error: new Error('Save rejected') }));
@@ -579,9 +334,7 @@ describe('WordEditorPage actions and events', () => {
   });
 
   it('notifies when save throws', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+    resetWordEditorActionMocks();
 
     const notify = vi.fn();
     const invoke = vi.fn(async () => {
@@ -608,9 +361,7 @@ describe('WordEditorPage actions and events', () => {
   });
 
   it('does not notify when save aborts with AbortError', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+    resetWordEditorActionMocks();
 
     const notify = vi.fn();
     const invoke = vi.fn(async () => {
@@ -638,9 +389,7 @@ describe('WordEditorPage actions and events', () => {
   });
 
   it('publishes busy status while a save is in flight', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
+    resetWordEditorActionMocks();
 
     let resolveSave: ((value: ActionResult) => void) | undefined;
     const statusCalls: Array<{ busy: boolean; dirty: boolean }> = [];

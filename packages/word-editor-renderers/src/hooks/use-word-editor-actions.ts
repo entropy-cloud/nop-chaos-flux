@@ -4,13 +4,16 @@ import type {
   DatasetStoreApi,
   DatasetSourceType,
   DataColumnInput,
+  EditorStoreApi,
 } from '@nop-chaos/word-editor-core';
 import type { Dataset, DocChart, DocCode } from '@nop-chaos/word-editor-core';
-import { saveDatasets } from '@nop-chaos/word-editor-core';
+import { validateDocChart, validateDocCode } from '@nop-chaos/word-editor-core';
+import { findInsertableTagDefinition } from '../template-tag-helpers.js';
 
 interface UseWordEditorActionsParams {
   bridge: CanvasEditorBridge;
   datasetStore: DatasetStoreApi;
+  editorStore: EditorStoreApi;
   editingDatasetId: string | null;
   setDatasetDialogOpen: (value: boolean) => void;
   setEditingDatasetId: (value: string | null) => void;
@@ -22,6 +25,7 @@ interface UseWordEditorActionsParams {
 export function useWordEditorActions({
   bridge,
   datasetStore,
+  editorStore,
   editingDatasetId,
   setDatasetDialogOpen,
   setEditingDatasetId,
@@ -69,11 +73,11 @@ export function useWordEditorActions({
       } else {
         datasetStore.add(datasetData);
       }
-      saveDatasets(datasetStore.getAll());
+      editorStore.setDirty(true);
       setDatasetDialogOpen(false);
       setEditingDatasetId(null);
     },
-    [editingDatasetId, datasetStore, setDatasetDialogOpen, setEditingDatasetId],
+    [editingDatasetId, datasetStore, editorStore, setDatasetDialogOpen, setEditingDatasetId],
   );
 
   const handleFieldClick = useCallback(
@@ -95,10 +99,15 @@ export function useWordEditorActions({
 
   const handleInsertTag = useCallback(
     (tagName: string) => {
+      const tagDef = findInsertableTagDefinition(tagName);
+      if (!tagDef) {
+        return;
+      }
       bridge.insertTemplateExpression({
-        kind: 'tag-open',
+        kind: tagDef.kind,
         expr: '',
         tagName,
+        attrs: tagDef.defaultAttrs,
       });
     },
     [bridge],
@@ -106,6 +115,9 @@ export function useWordEditorActions({
 
   const handleChartSave = useCallback(
     (_chart: DocChart) => {
+      if (!validateDocChart(_chart).valid) {
+        return;
+      }
       bridge.insertChart(_chart);
       setCharts((current) => [...current, _chart]);
     },
@@ -114,6 +126,9 @@ export function useWordEditorActions({
 
   const handleCodeSave = useCallback(
     (_code: DocCode) => {
+      if (!validateDocCode(_code).valid) {
+        return;
+      }
       bridge.insertCode(_code);
       setCodes((current) => [...current, _code]);
     },

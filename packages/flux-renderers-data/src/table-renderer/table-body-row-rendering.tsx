@@ -36,6 +36,51 @@ export interface FlattenedExpandedRow {
 
 export type FlattenedItem = FlattenedRow | FlattenedExpandedRow;
 
+type DataRowRenderProps = {
+  item: FlattenedRow;
+  schemaProps: TableSchema;
+  columns: import('../schemas.js').TableColumnSchema[];
+  helpers: RendererComponentProps<TableSchema>['helpers'];
+  parentProps: RendererComponentProps<TableSchema>;
+  fixedColumnLayout: FixedColumnLayout;
+  showExpandColumn: boolean;
+  expandRowByClick: boolean;
+  onToggleExpand: (rowKey: string) => void;
+  onSelectRow: (rowKey: string, checked: boolean) => void;
+  isStriped: boolean;
+};
+
+function areColumnsRenderEquivalent(
+  prev: import('../schemas.js').TableColumnSchema[],
+  next: import('../schemas.js').TableColumnSchema[],
+) {
+  if (prev === next) {
+    return true;
+  }
+
+  if (prev.length !== next.length) {
+    return false;
+  }
+
+  return prev.every((column, index) => {
+    const nextColumn = next[index];
+    if (!nextColumn) {
+      return false;
+    }
+
+    return (
+      column === nextColumn ||
+      (column.name === nextColumn.name &&
+        column.type === nextColumn.type &&
+        column.width === nextColumn.width &&
+        column.fixed === nextColumn.fixed &&
+        column.cellRegionKey === nextColumn.cellRegionKey &&
+        column.buttonsRegionKey === nextColumn.buttonsRegionKey &&
+        column.labelRegionKey === nextColumn.labelRegionKey)
+    );
+  });
+}
+
 export function buildFlattenedItems(
   processedData: TableRowEntry[],
   rowScopeCache: Map<string, ScopeRef>,
@@ -78,19 +123,19 @@ export function buildFlattenedItems(
   return items;
 }
 
-export function renderDataRow(
-  item: FlattenedRow,
-  schemaProps: TableSchema,
-  columns: import('../schemas.js').TableColumnSchema[],
-  helpers: RendererComponentProps<TableSchema>['helpers'],
-  parentProps: RendererComponentProps<TableSchema>,
-  fixedColumnLayout: FixedColumnLayout,
-  showExpandColumn: boolean,
-  expandRowByClick: boolean,
-  onToggleExpand: (rowKey: string) => void,
-  onSelectRow: (rowKey: string, checked: boolean) => void,
-  isStriped: boolean,
-) {
+function DataRowView({
+  item,
+  schemaProps,
+  columns,
+  helpers,
+  parentProps,
+  fixedColumnLayout,
+  showExpandColumn,
+  expandRowByClick,
+  onToggleExpand,
+  onSelectRow,
+  isStriped,
+}: DataRowRenderProps) {
   const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
   const hasRowClickHandler = Boolean(parentProps.events.onRowClick);
   const isRowClickable = hasRowClickHandler || expandRowByClick;
@@ -291,6 +336,61 @@ export function renderDataRow(
         );
       })}
     </TableRow>
+  );
+}
+
+const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
+  return (
+    prev.item.entry.record === next.item.entry.record &&
+    prev.item.rowScope === next.item.rowScope &&
+    prev.item.rowKey === next.item.rowKey &&
+    prev.item.isExpanded === next.item.isExpanded &&
+    prev.item.isSelected === next.item.isSelected &&
+    prev.item.isEven === next.item.isEven &&
+    Boolean(prev.schemaProps.rowSelection) === Boolean(next.schemaProps.rowSelection) &&
+    prev.schemaProps.rowSelection?.type === next.schemaProps.rowSelection?.type &&
+    prev.schemaProps.quickSaveAction === next.schemaProps.quickSaveAction &&
+    prev.schemaProps.quickSaveItemAction === next.schemaProps.quickSaveItemAction &&
+    areColumnsRenderEquivalent(prev.columns, next.columns) &&
+    prev.helpers === next.helpers &&
+    prev.parentProps.events.onRowClick === next.parentProps.events.onRowClick &&
+    prev.parentProps.regions === next.parentProps.regions &&
+    prev.parentProps.node.instancePath === next.parentProps.node.instancePath &&
+    prev.showExpandColumn === next.showExpandColumn &&
+    prev.expandRowByClick === next.expandRowByClick &&
+    prev.onToggleExpand === next.onToggleExpand &&
+    prev.onSelectRow === next.onSelectRow &&
+    prev.isStriped === next.isStriped
+  );
+});
+
+export function renderDataRow(
+  item: FlattenedRow,
+  schemaProps: TableSchema,
+  columns: import('../schemas.js').TableColumnSchema[],
+  helpers: RendererComponentProps<TableSchema>['helpers'],
+  parentProps: RendererComponentProps<TableSchema>,
+  fixedColumnLayout: FixedColumnLayout,
+  showExpandColumn: boolean,
+  expandRowByClick: boolean,
+  onToggleExpand: (rowKey: string) => void,
+  onSelectRow: (rowKey: string, checked: boolean) => void,
+  isStriped: boolean,
+) {
+  return (
+    <MemoizedDataRow
+      item={item}
+      schemaProps={schemaProps}
+      columns={columns}
+      helpers={helpers}
+      parentProps={parentProps}
+      fixedColumnLayout={fixedColumnLayout}
+      showExpandColumn={showExpandColumn}
+      expandRowByClick={expandRowByClick}
+      onToggleExpand={onToggleExpand}
+      onSelectRow={onSelectRow}
+      isStriped={isStriped}
+    />
   );
 }
 

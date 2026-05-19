@@ -85,11 +85,15 @@ function DrawerOverlay({
   className,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Backdrop>) {
+  const { containerElement } = React.useContext(DrawerContext);
+  const isContained = containerElement != null;
+
   return (
     <DrawerPrimitive.Backdrop
       data-slot="drawer-overlay"
       className={cn(
-        'fixed inset-0 z-40 bg-black/10 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+        'z-40 bg-black/10 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+        isContained ? 'absolute inset-0' : 'fixed inset-0',
         className,
       )}
       {...props}
@@ -103,16 +107,20 @@ function DrawerContent({
   showMask = true,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content> & { showMask?: boolean }) {
-  const { direction } = React.useContext(DrawerContext);
+  const { direction, containerElement } = React.useContext(DrawerContext);
+  const isContained = containerElement != null;
 
-  return (
-    <DrawerPortal>
+  const layers = (
+    <>
       {showMask && <DrawerOverlay />}
-      <DrawerPrimitive.Viewport className="fixed inset-0 z-50 pointer-events-none">
+      <DrawerPrimitive.Viewport
+        className={cn('inset-0 z-50 pointer-events-none', isContained ? 'absolute' : 'fixed')}
+      >
         <DrawerPrimitive.Popup
           data-slot="drawer-popup"
           className={cn(
-            'pointer-events-auto fixed flex h-auto flex-col bg-popover text-sm text-popover-foreground outline-none',
+            'pointer-events-auto flex h-auto flex-col bg-popover text-sm text-popover-foreground outline-none',
+            isContained ? 'absolute' : 'fixed',
             'data-[swipe-direction=down]:inset-x-0 data-[swipe-direction=down]:bottom-0 data-[swipe-direction=down]:mt-24 data-[swipe-direction=down]:max-h-[80vh] data-[swipe-direction=down]:rounded-t-xl data-[swipe-direction=down]:border-t data-[swipe-direction=down]:translate-y-[calc(var(--drawer-snap-point-offset,0px)+var(--drawer-swipe-movement-y,0px))] data-[swipe-direction=down]:data-starting-style:translate-y-full data-[swipe-direction=down]:data-ending-style:translate-y-full',
             'data-[swipe-direction=up]:inset-x-0 data-[swipe-direction=up]:top-0 data-[swipe-direction=up]:mb-24 data-[swipe-direction=up]:max-h-[80vh] data-[swipe-direction=up]:rounded-b-xl data-[swipe-direction=up]:border-b data-[swipe-direction=up]:-translate-y-[calc(var(--drawer-snap-point-offset,0px)+var(--drawer-swipe-movement-y,0px))] data-[swipe-direction=up]:data-starting-style:-translate-y-full data-[swipe-direction=up]:data-ending-style:-translate-y-full',
             'data-[swipe-direction=left]:inset-y-0 data-[swipe-direction=left]:left-0 data-[swipe-direction=left]:w-3/4 data-[swipe-direction=left]:rounded-r-xl data-[swipe-direction=left]:border-r data-[swipe-direction=left]:sm:max-w-sm data-[swipe-direction=left]:-translate-x-[var(--drawer-swipe-movement-x,0px)] data-[swipe-direction=left]:data-starting-style:-translate-x-full data-[swipe-direction=left]:data-ending-style:-translate-x-full',
@@ -132,6 +140,18 @@ function DrawerContent({
           </DrawerPrimitive.Content>
         </DrawerPrimitive.Popup>
       </DrawerPrimitive.Viewport>
+    </>
+  );
+
+  return (
+    <DrawerPortal>
+      {isContained ? (
+        <div data-slot="drawer-contained-root" className="relative block size-full">
+          {layers}
+        </div>
+      ) : (
+        layers
+      )}
     </DrawerPortal>
   );
 }

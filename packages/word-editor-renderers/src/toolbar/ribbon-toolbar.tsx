@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { Search } from 'lucide-react';
-import type { CanvasEditorBridge, DocChart, DocCode } from '@nop-chaos/word-editor-core';
+import type { CanvasEditorBridge, DocChart, DocCode, TemplateExpr } from '@nop-chaos/word-editor-core';
 import type { EditorStoreApi } from '@nop-chaos/word-editor-core';
 import { FontControls } from './font-controls.js';
 import { ParagraphControls } from './paragraph-controls.js';
@@ -16,6 +16,7 @@ interface RibbonToolbarProps {
   store: EditorStoreApi;
   onInsertExpr: (expr: string) => void;
   onInsertTag: (tagName: string) => void;
+  onInsertTemplateTag?: (expr: TemplateExpr) => void;
   onChartSave?: (chart: DocChart) => void;
   onCodeSave?: (code: DocCode) => void;
 }
@@ -25,6 +26,7 @@ export function RibbonToolbar({
   store,
   onInsertExpr,
   onInsertTag,
+  onInsertTemplateTag,
   onChartSave,
   onCodeSave,
 }: RibbonToolbarProps) {
@@ -46,7 +48,11 @@ export function RibbonToolbar({
         <ToolbarSeparator />
         <InsertControls bridge={bridge} onChartSave={onChartSave} onCodeSave={onCodeSave} />
         <ToolbarSeparator />
-        <TemplateControls onInsertExpr={onInsertExpr} onInsertTag={onInsertTag} />
+        <TemplateControls
+          onInsertExpr={onInsertExpr}
+          onInsertTag={onInsertTag}
+          onInsertTemplateTag={onInsertTemplateTag}
+        />
         <ToolbarSeparator />
         <PageControls bridge={bridge} store={store} />
         <ToolbarSeparator />

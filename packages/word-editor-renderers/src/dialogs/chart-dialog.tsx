@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { validateDocChart } from '@nop-chaos/word-editor-core';
 import type { DocChart, ChartType } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
@@ -56,29 +57,32 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
   const [valueField, setValueField] = useState(() => initialData?.valueField?.join(', ') ?? '');
   const [seriesField, setSeriesField] = useState(() => initialData?.seriesField?.join(', ') ?? '');
   const [showChartName, setShowChartName] = useState(() => initialData?.showChartName ?? true);
+  const [draftId] = useState(() => initialData?.id || `chart_${Date.now()}`);
+
+  const nextChart: DocChart = {
+    id: draftId,
+    chartName: chartName.trim(),
+    chartType,
+    showChartName,
+    datasetId: datasetId.trim() || '',
+    categoryField: categoryField.trim() || '',
+    valueField: valueField
+      .split(',')
+      .map((v) => v.trim())
+      .filter((v) => v),
+    seriesField: seriesField
+      .split(',')
+      .map((v) => v.trim())
+      .filter((v) => v),
+  };
+  const canSave = validateDocChart(nextChart).valid;
 
   const handleSave = () => {
-    if (!chartName.trim()) {
+    if (!canSave) {
       return;
     }
 
-    onSave({
-      id: initialData?.id || `chart_${Date.now()}`,
-      chartName: chartName.trim(),
-      chartType,
-      showChartName,
-      datasetId: datasetId.trim() || '',
-      categoryField: categoryField.trim() || '',
-      valueField: valueField
-        .split(',')
-        .map((v) => v.trim())
-        .filter((v) => v),
-      seriesField:
-        seriesField
-          .split(',')
-          .map((v) => v.trim())
-          .filter((v) => v) || undefined,
-    });
+    onSave(nextChart);
     onClose();
   };
 
@@ -278,7 +282,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
           <Button variant="ghost" size="sm" onClick={onClose}>
             {t('flux.common.cancel')}
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={!chartName.trim()}>
+          <Button size="sm" onClick={handleSave} disabled={!canSave}>
             {t('flux.common.save')}
           </Button>
         </DialogFooter>

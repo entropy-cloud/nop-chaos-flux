@@ -80,16 +80,7 @@ function CompiledSchemaTree(props: {
 
   useEffect(() => {
     const rootNode = getSingleRootNode(compiledRoot);
-    if (!rootNode) {
-      return;
-    }
-
-    const validationPlan = rootNode.validationPlan;
-    if (!validationPlan) {
-      return;
-    }
-
-    props.page.validationOwner?.refreshCompiledModel(validationPlan);
+    props.page.validationOwner?.refreshCompiledModel(rootNode?.validationPlan);
   }, [compiledRoot, props.page]);
 
   if (!compiledRoot) {

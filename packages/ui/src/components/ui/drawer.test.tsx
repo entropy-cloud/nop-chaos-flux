@@ -36,4 +36,41 @@ describe('Drawer', () => {
       'Handle-only drawer body',
     );
   });
+
+  it('uses contained geometry when containerElement is provided', () => {
+    cleanup();
+
+    const container = document.createElement('div');
+    container.setAttribute('data-testid', 'drawer-container');
+    document.body.appendChild(container);
+
+    const { unmount } = render(
+      <Drawer open containerElement={container}>
+        <DrawerContent>
+          <DrawerHeader>Contained drawer</DrawerHeader>
+          <div>Contained body</div>
+        </DrawerContent>
+      </Drawer>,
+    );
+
+    const overlay = container.querySelector('[data-slot="drawer-overlay"]');
+    const containedRoot = container.querySelector('[data-slot="drawer-contained-root"]');
+    const popup = container.querySelector('[data-slot="drawer-popup"]');
+    const viewport = popup?.parentElement;
+
+    expect(containedRoot?.className).toContain('relative');
+    expect(overlay?.className).toContain('absolute inset-0');
+    expect(overlay?.className).not.toContain('fixed inset-0');
+    expect(viewport?.className).toContain('absolute');
+    expect(viewport?.className).not.toContain('fixed');
+    expect(popup?.className).toContain('absolute');
+    expect(popup?.className).not.toContain('fixed');
+    expect(container.textContent).toContain('Contained body');
+
+    unmount();
+
+    expect(container.querySelector('[data-slot="drawer-contained-root"]')).toBeNull();
+
+    container.remove();
+  });
 });

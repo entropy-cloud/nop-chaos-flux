@@ -32,7 +32,7 @@ export function refreshCompiledModelState(args: {
   sharedState: ManagedFormRuntimeSharedState;
   getCurrentValidation: () => FormRuntime['validation'];
   setCurrentValidation: (validation: FormRuntime['validation']) => void;
-  newModel: NonNullable<FormRuntime['validation']>;
+  newModel: FormRuntime['validation'];
   formId: string;
   setLastChange: (change: ScopeChange) => void;
 }) {
@@ -78,7 +78,9 @@ export function refreshCompiledModelState(args: {
         currentErrors[path] = fs.errors;
       }
     }
-    const retainedErrors = computeRefreshErrorRetention(oldModel, args.newModel, currentErrors);
+    const retainedErrors = args.newModel
+      ? computeRefreshErrorRetention(oldModel, args.newModel, currentErrors)
+      : {};
 
     const nextFieldStates = { ...currentFieldStates };
     for (const path of Object.keys(currentFieldStates)) {

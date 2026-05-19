@@ -135,7 +135,7 @@ describe('PageControls', () => {
     expect(executePageMode).toHaveBeenCalledWith('continuity');
   });
 
-  it('gives page-margin and watermark dialogs stable accessible names', async () => {
+  it('gives page-margin dialog stable accessible names and removes unsupported watermark authoring surface', async () => {
     cleanup();
     resetFluxI18n();
     initFluxI18n();
@@ -150,8 +150,6 @@ describe('PageControls', () => {
         executePaperSize: vi.fn(),
         executePaperDirection: vi.fn(),
         executeSetPaperMargin: vi.fn(),
-        executeAddWatermark: vi.fn(),
-        executeDeleteWatermark: vi.fn(),
         executePrint: vi.fn(),
       },
     } as any;
@@ -164,10 +162,6 @@ describe('PageControls', () => {
     expect(within(marginDialog).getByRole('spinbutton', { name: 'Right margin' })).toBeTruthy();
     expect(within(marginDialog).getByRole('spinbutton', { name: 'Bottom margin' })).toBeTruthy();
     expect(within(marginDialog).getByRole('spinbutton', { name: 'Left margin' })).toBeTruthy();
-
-    fireEvent.click(within(marginDialog).getByRole('button', { name: '取消' }));
-    fireEvent.click(screen.getAllByTitle('Watermark')[0]!);
-    const watermarkDialog = await screen.findByRole('dialog');
-    expect(within(watermarkDialog).getByRole('textbox', { name: 'Watermark text' })).toBeTruthy();
+    expect(screen.queryByTitle('Watermark')).toBeNull();
   });
 });

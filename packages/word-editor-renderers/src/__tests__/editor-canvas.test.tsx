@@ -201,4 +201,40 @@ describe('EditorCanvas', () => {
       expect.any(Object),
     );
   });
+
+  it('does not expose watermark-only commands through the persisted autosave snapshot', async () => {
+    let onContentChange: (() => void) | undefined;
+    const bridge = {
+      mount: vi.fn((_container, _editorData, callbacks) => {
+        onContentChange = callbacks.onContentChange;
+      }),
+      unmount: vi.fn(),
+      getValue: vi.fn(() => ({ data: { header: [], main: [{ value: 'draft' }], footer: [] } })),
+      getPaperSettings: vi.fn(() => null),
+      getWordCount: vi.fn(() => Promise.resolve(0)),
+      command: {
+        executeAddWatermark: vi.fn(),
+      },
+    };
+    const editorStore = {
+      setDirty: vi.fn(),
+      setBridge: vi.fn(),
+      setReady: vi.fn(),
+      setPaperSettings: vi.fn(),
+      setWordCount: vi.fn(),
+      setSelection: vi.fn(),
+      setTotalPages: vi.fn(),
+      setScale: vi.fn(),
+    };
+
+    render(<EditorCanvas editorStore={editorStore as any} bridge={bridge as any} />);
+
+    bridge.command.executeAddWatermark({ data: 'draft' });
+    onContentChange?.();
+    await vi.advanceTimersByTimeAsync(500);
+    await Promise.resolve();
+
+    const savedArg = mockedCore.createSavedDocumentDataMock.mock.calls.at(-1)?.[0];
+    expect(savedArg.data.watermark).toBeUndefined();
+  });
 });

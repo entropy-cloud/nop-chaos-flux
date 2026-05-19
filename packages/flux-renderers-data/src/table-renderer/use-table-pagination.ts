@@ -1,5 +1,5 @@
 import { startTransition, useCallback, useState } from 'react';
-import { getIn, shallowEqual, type RendererComponentProps } from '@nop-chaos/flux-core';
+import { getIn, shallowEqual, type FluxActionEvent, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { toPositiveNumber } from './table-data.js';
@@ -8,7 +8,7 @@ function createPaginationEventContext(args: {
   helpers: RendererComponentProps<TableSchema>['helpers'];
   page: number;
   pageSize: number;
-  uiEvent?: unknown;
+  uiEvent?: FluxActionEvent;
 }) {
   const payload = {
     type: 'table:page-change',
@@ -86,7 +86,12 @@ export function useTablePagination(
       });
       onPageChange?.(
         uiEvent,
-        createPaginationEventContext({ helpers, page, pageSize, uiEvent }),
+        createPaginationEventContext({
+          helpers,
+          page,
+          pageSize,
+          uiEvent: uiEvent as FluxActionEvent | undefined,
+        }),
       );
     },
     [paginationOwnership, paginationStatePath, pageSize, onPageChange, helpers, renderScope],
@@ -104,7 +109,12 @@ export function useTablePagination(
       });
       onPageChange?.(
         uiEvent,
-        createPaginationEventContext({ helpers, page: 1, pageSize: newPageSize, uiEvent }),
+        createPaginationEventContext({
+          helpers,
+          page: 1,
+          pageSize: newPageSize,
+          uiEvent: uiEvent as FluxActionEvent | undefined,
+        }),
       );
     },
     [paginationOwnership, paginationStatePath, onPageChange, helpers, renderScope],
@@ -132,7 +142,12 @@ export function useTablePagination(
       });
       onPageChange?.(
         uiEvent,
-        createPaginationEventContext({ helpers, page: clampedPage, pageSize, uiEvent }),
+        createPaginationEventContext({
+          helpers,
+          page: clampedPage,
+          pageSize,
+          uiEvent: uiEvent as FluxActionEvent | undefined,
+        }),
       );
 
       return clampedPage;

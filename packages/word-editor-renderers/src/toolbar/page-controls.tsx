@@ -53,11 +53,9 @@ export function PageControls({ bridge, store }: PageControlsProps) {
   );
 
   const [showMarginDialog, setShowMarginDialog] = useState(false);
-  const [showWatermarkDialog, setShowWatermarkDialog] = useState(false);
   const [margins, setMargins] = useState<[number, number, number, number]>(() =>
     cloneMargins(paperSettings),
   );
-  const [watermarkText, setWatermarkText] = useState('');
 
   const handleZoomIn = () => bridge?.command?.executePageScaleAdd();
   const handleZoomOut = () => bridge?.command?.executePageScaleMinus();
@@ -103,20 +101,6 @@ export function PageControls({ bridge, store }: PageControlsProps) {
     setShowMarginDialog(false);
   };
 
-  const handleAddWatermark = () => {
-    if (watermarkText.trim()) {
-      bridge?.command?.executeAddWatermark({ data: watermarkText.trim() });
-    }
-    setShowWatermarkDialog(false);
-    setWatermarkText('');
-  };
-
-  const handleDeleteWatermark = () => {
-    bridge?.command?.executeDeleteWatermark();
-    setShowWatermarkDialog(false);
-    setWatermarkText('');
-  };
-
   return (
     <ToolbarGroup>
       <ToolbarButton icon={FileText} onClick={handlePageModeToggle} title="Toggle Page Mode" />
@@ -157,11 +141,6 @@ export function PageControls({ bridge, store }: PageControlsProps) {
         title="Set Margins"
       />
       <ToolbarSeparator />
-      <ToolbarButton
-        icon={FileText}
-        onClick={() => setShowWatermarkDialog(true)}
-        title="Watermark"
-      />
       <ToolbarButton icon={Printer} onClick={() => bridge?.command?.executePrint()} title="Print" />
 
       <Dialog
@@ -204,48 +183,6 @@ export function PageControls({ bridge, store }: PageControlsProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={showWatermarkDialog}
-        onOpenChange={(open) => {
-          if (!open) {
-            setShowWatermarkDialog(false);
-            setWatermarkText('');
-          }
-        }}
-      >
-        <DialogContent size="sm">
-          <DialogHeader>
-            <DialogTitle>{t('flux.wordEditor.watermark')}</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <Input
-              aria-label="Watermark text"
-              placeholder="Watermark text"
-              value={watermarkText}
-              onChange={(e) => setWatermarkText(e.target.value)}
-              size="sm"
-            />
-          </DialogBody>
-          <DialogFooter className="bg-transparent">
-            <Button variant="destructive" size="sm" onClick={handleDeleteWatermark}>
-              {t('flux.common.delete')}
-            </Button>
-            <Button size="sm" onClick={handleAddWatermark} disabled={!watermarkText.trim()}>
-              {t('flux.common.confirm')}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setShowWatermarkDialog(false);
-                setWatermarkText('');
-              }}
-            >
-              {t('flux.common.cancel')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </ToolbarGroup>
   );
 }

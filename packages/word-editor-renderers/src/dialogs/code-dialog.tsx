@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { validateDocCode } from '@nop-chaos/word-editor-core';
 import type { DocCode } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
@@ -36,19 +37,23 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
   );
   const [datasetId, setDatasetId] = useState(() => initialData?.datasetId ?? '');
   const [valueField, setValueField] = useState(() => initialData?.valueField ?? '');
+  const [draftId] = useState(() => initialData?.id ?? `code_${Date.now()}`);
+
+  const nextCode: DocCode = {
+    id: draftId,
+    codeName: codeName.trim(),
+    codeType,
+    datasetId: datasetId.trim(),
+    valueField: valueField.trim(),
+  };
+  const canSave = validateDocCode(nextCode).valid;
 
   const handleSave = () => {
-    if (!codeName.trim() || !valueField.trim()) {
+    if (!canSave) {
       return;
     }
 
-    onSave({
-      id: initialData?.id ?? `code_${Date.now()}`,
-      codeName: codeName.trim(),
-      codeType,
-      datasetId: datasetId.trim(),
-      valueField: valueField.trim(),
-    });
+    onSave(nextCode);
     onClose();
   };
 
@@ -179,7 +184,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           <Button variant="ghost" size="sm" onClick={onClose}>
             {t('flux.common.cancel')}
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={!codeName.trim() || !valueField.trim()}>
+          <Button size="sm" onClick={handleSave} disabled={!canSave}>
             {t('flux.common.save')}
           </Button>
         </DialogFooter>

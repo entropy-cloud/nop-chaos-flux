@@ -621,7 +621,7 @@ export function buildFormOwnerRuntime(input: {
     } as FormValidationResult;
   }
 
-  function refreshCompiledModel(newModel: NonNullable<FormRuntime['validation']>) {
+  function refreshCompiledModel(newModel: FormRuntime['validation']) {
     refreshCompiledModelState({
       sharedState: input.sharedState,
       getCurrentValidation: input.getCurrentValidation,

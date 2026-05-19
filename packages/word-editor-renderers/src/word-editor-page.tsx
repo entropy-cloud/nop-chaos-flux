@@ -68,6 +68,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   const actions = useWordEditorActions({
     bridge,
     datasetStore,
+    editorStore,
     editingDatasetId,
     setDatasetDialogOpen,
     setEditingDatasetId,
@@ -129,14 +130,15 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           }),
         )
       ) : (
-        <RibbonToolbar
-          bridge={bridge}
-          store={editorStore}
-          onInsertExpr={actions.handleInsertExpr}
-          onInsertTag={actions.handleInsertTag}
-          onChartSave={actions.handleChartSave}
-          onCodeSave={actions.handleCodeSave}
-        />
+          <RibbonToolbar
+            bridge={bridge}
+            store={editorStore}
+            onInsertExpr={actions.handleInsertExpr}
+            onInsertTag={actions.handleInsertTag}
+            onInsertTemplateTag={(expr) => bridge.insertTemplateExpression(expr)}
+            onChartSave={actions.handleChartSave}
+            onCodeSave={actions.handleCodeSave}
+          />
       )}
     </div>
   );

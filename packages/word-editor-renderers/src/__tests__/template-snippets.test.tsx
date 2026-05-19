@@ -76,4 +76,17 @@ describe('TemplateSnippets', () => {
       expect(onInsertTag).toHaveBeenCalledWith('c:if');
     }
   });
+
+  it('keeps self-closing tags available in the snippets list', async () => {
+    const onInsertTag = vi.fn();
+    render(<TemplateSnippets onInsertTag={onInsertTag} />);
+
+    const outputButton = screen.getAllByTestId('button').find((btn) =>
+      btn.textContent?.includes('Output Value'),
+    );
+    if (outputButton) {
+      await userEvent.click(outputButton);
+      expect(onInsertTag).toHaveBeenCalledWith('c:out');
+    }
+  });
 });

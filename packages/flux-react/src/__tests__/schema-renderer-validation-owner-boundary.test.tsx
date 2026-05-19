@@ -178,6 +178,61 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
     await screen.findByTestId('field-probe');
   });
 
+  it('clears the page-root owner model when schema replacement removes the root validation plan', async () => {
+    testState.firstPublishedScopeState = undefined;
+    testState.latestValidationOwner = undefined;
+
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      validationOwnerProbeRenderer,
+      validationOwnerStateProbeRenderer,
+      fieldProbeRenderer,
+    ]);
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'validation-owner-probe' },
+            { type: 'validation-owner-state-probe' },
+            { type: 'field-probe', name: 'email' },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(testState.latestValidationOwner?.validation?.nodes?.email).toBeDefined();
+      expect(testState.latestValidationOwner?.getScopeState()).toMatchObject({
+        lifecycleState: 'active',
+        ready: true,
+      });
+    });
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          body: [{ type: 'validation-owner-probe' }, { type: 'validation-owner-state-probe' }],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(testState.latestValidationOwner?.validation).toBeUndefined();
+      expect(testState.latestValidationOwner?.getScopeState()).toMatchObject({
+        lifecycleState: 'active',
+        ready: true,
+      });
+    });
+  });
+
   it('prefers the current form owner over an ancestor validation owner', async () => {
     nestedOwnerProbeState.validationOwnerScopeId = undefined;
     nestedOwnerProbeState.currentFormScopeId = undefined;

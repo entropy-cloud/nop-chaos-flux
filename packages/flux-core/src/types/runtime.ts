@@ -354,7 +354,7 @@ export interface ValidationScopeRuntime {
   touchField?(path: string): void;
   visitField?(path: string): void;
 
-  refreshCompiledModel(newModel: CompiledFormValidationModel): void;
+  refreshCompiledModel(newModel: CompiledFormValidationModel | undefined): void;
   dispose(): void;
 
   registerChildContract(contract: ChildValidationContractRegistration): void;
