@@ -116,21 +116,24 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
       throw new Error('abort render');
     }
 
-    expect(() =>
-      render(
-        <RuntimeContext.Provider value={runtime}>
-          <ScopeContext.Provider value={page.scope}>
-            <>
-              <NodeRenderer node={root} scope={page.scope} />
-              <CrashOnRender />
-            </>
-          </ScopeContext.Provider>
-        </RuntimeContext.Provider>,
-      ),
-    ).toThrow('abort render');
+    try {
+      expect(() =>
+        render(
+          <RuntimeContext.Provider value={runtime}>
+            <ScopeContext.Provider value={page.scope}>
+              <>
+                <NodeRenderer node={root} scope={page.scope} />
+                <CrashOnRender />
+              </>
+            </ScopeContext.Provider>
+          </RuntimeContext.Provider>,
+        ),
+      ).toThrow('abort render');
 
-    expect(installPreparedSpy).not.toHaveBeenCalled();
-    consoleSpy.mockRestore();
+      expect(installPreparedSpy).not.toHaveBeenCalled();
+    } finally {
+      consoleSpy.mockRestore();
+    }
   });
 
   it('rejects __xui_actions__ imports without pre-registering a shared-scope placeholder', () => {

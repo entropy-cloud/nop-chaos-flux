@@ -100,14 +100,14 @@ describe('createNodeSourcePropController', () => {
     const scope = createScope();
 
     controller.subscribe(listener);
-    controller.run({ items: { type: 'source', sourceType: 'api' }, plain: 'keep' }, scope);
+    controller.run({ items: { type: 'source', action: 'loadItems' }, plain: 'keep' }, scope);
 
     expect(observer.run).toHaveBeenCalledWith({
       scope,
       entries: [
         {
           key: 'items',
-          source: { type: 'source', sourceType: 'api' },
+          source: { type: 'source', action: 'loadItems' },
           stateKey: 'itemsState',
           targetPath: 'items',
         },
@@ -117,7 +117,7 @@ describe('createNodeSourcePropController', () => {
     await flushAsync();
 
     expect(controller.getSnapshot()).toEqual({
-      sourceInputs: [{ type: 'source', sourceType: 'api' }],
+      sourceInputs: [{ type: 'source', action: 'loadItems' }],
       value: {
         items: 'resolved',
         plain: 'keep',
@@ -185,7 +185,7 @@ describe('createNodeSourcePropController', () => {
     );
 
     const scope = createScope();
-    controller.run({ items: { type: 'source', sourceType: 'api' }, plain: 'first' }, scope);
+    controller.run({ items: { type: 'source', action: 'loadItems' }, plain: 'first' }, scope);
     await flushAsync();
 
     expect(controller.getSnapshot().value).toMatchObject({
@@ -193,7 +193,7 @@ describe('createNodeSourcePropController', () => {
       plain: 'first',
     });
 
-    controller.run({ items: { type: 'source', sourceType: 'api' }, plain: 'second' }, scope);
+    controller.run({ items: { type: 'source', action: 'loadItems' }, plain: 'second' }, scope);
     await flushAsync();
 
     expect(controller.getSnapshot().value).toMatchObject({
@@ -216,7 +216,7 @@ describe('createNodeSourcePropController', () => {
     controller.run(
       {
         expressionConfig: {
-          variables: { type: 'source', sourceType: 'api', path: '/first' },
+          variables: { type: 'source', action: 'loadItems', path: '/first' },
         },
         plain: 'keep',
       },
@@ -227,7 +227,7 @@ describe('createNodeSourcePropController', () => {
     controller.run(
       {
         expressionConfig: {
-          variables: { type: 'source', sourceType: 'api', path: '/second' },
+          variables: { type: 'source', action: 'loadItems', path: '/second' },
         },
         plain: 'keep',
       },
@@ -244,7 +244,7 @@ describe('createNodeSourcePropController', () => {
           expect.objectContaining({
             key: '__source:expressionConfig.variables',
             targetPath: 'expressionConfig.variables',
-            source: { type: 'source', sourceType: 'api', path: '/first' },
+            source: { type: 'source', action: 'loadItems', path: '/first' },
           }),
         ],
       }),
@@ -257,7 +257,7 @@ describe('createNodeSourcePropController', () => {
           expect.objectContaining({
             key: '__source:expressionConfig.variables',
             targetPath: 'expressionConfig.variables',
-            source: { type: 'source', sourceType: 'api', path: '/second' },
+            source: { type: 'source', action: 'loadItems', path: '/second' },
           }),
         ],
       }),
@@ -277,8 +277,8 @@ describe('createNodeSourcePropController', () => {
     const firstScope = createScope();
     const secondScope = { ...createScope(), id: 'scope-2' };
 
-    controller.run({ items: { type: 'source', sourceType: 'api' } }, firstScope);
-    controller.run({ items: { type: 'source', sourceType: 'api' } }, secondScope as any);
+    controller.run({ items: { type: 'source', action: 'loadItems' } }, firstScope);
+    controller.run({ items: { type: 'source', action: 'loadItems' } }, secondScope as any);
 
     expect(observer.run).toHaveBeenNthCalledWith(
       1,
@@ -304,7 +304,7 @@ describe('createNodeSourcePropController', () => {
     const secondScope = { ...createScope(), id: 'scope-2' };
     const propsValue = {
       expressionConfig: {
-        variables: { type: 'source', sourceType: 'api', path: '/nested' },
+        variables: { type: 'source', action: 'loadItems', path: '/nested' },
       },
       plain: 'keep',
     };
@@ -360,8 +360,8 @@ describe('createNodeSourcePropController', () => {
       merge: baseScope.merge,
     };
 
-    controller.run({ items: { type: 'source', sourceType: 'api' }, plain: 'keep' }, baseScope);
-    controller.run({ items: { type: 'source', sourceType: 'api' }, plain: 'keep' }, wrappedScope as any);
+    controller.run({ items: { type: 'source', action: 'loadItems' }, plain: 'keep' }, baseScope);
+    controller.run({ items: { type: 'source', action: 'loadItems' }, plain: 'keep' }, wrappedScope as any);
 
     expect(observer.run).toHaveBeenCalledTimes(1);
   });

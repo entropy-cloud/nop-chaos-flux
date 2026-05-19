@@ -100,7 +100,7 @@ describe('hasSourcePropsInValue', () => {
   });
 
   it('still finds nested source schemas inside cyclic graphs', () => {
-    const source = { type: 'source', sourceType: 'api' };
+    const source = { type: 'source', action: 'loadItems' };
     const value: Record<string, unknown> = { nested: { source } };
     value.self = value;
 
@@ -123,7 +123,7 @@ describe('useNodeSourceProps', () => {
       <RuntimeContext.Provider value={runtime}>
         <Probe
           node={node}
-          propsValue={{ items: { type: 'source', sourceType: 'api' }, plain: 'first' }}
+          propsValue={{ items: { type: 'source', action: 'loadItems' }, plain: 'first' }}
           scope={scope}
         />
       </RuntimeContext.Provider>,
@@ -147,7 +147,7 @@ describe('useNodeSourceProps', () => {
       <RuntimeContext.Provider value={runtime}>
         <Probe
           node={node}
-          propsValue={{ items: { type: 'source', sourceType: 'api' }, plain: 'second' }}
+          propsValue={{ items: { type: 'source', action: 'loadItems' }, plain: 'second' }}
           scope={scope}
         />
       </RuntimeContext.Provider>,
@@ -171,7 +171,7 @@ describe('useNodeSourceProps', () => {
       <RuntimeContext.Provider value={runtime}>
         <Probe
           node={node}
-          propsValue={{ items: { type: 'source', sourceType: 'api' }, plain: 'first' }}
+          propsValue={{ items: { type: 'source', action: 'loadItems' }, plain: 'first' }}
           scope={scope}
         />
       </RuntimeContext.Provider>,
@@ -181,7 +181,7 @@ describe('useNodeSourceProps', () => {
       <RuntimeContext.Provider value={runtime}>
         <Probe
           node={node}
-          propsValue={{ items: { type: 'source', sourceType: 'api' }, plain: 'second' }}
+          propsValue={{ items: { type: 'source', action: 'loadItems' }, plain: 'second' }}
           scope={scope}
         />
       </RuntimeContext.Provider>,
@@ -201,7 +201,7 @@ describe('useNodeSourceProps', () => {
       sourceStatePropKeys: {},
     };
     const nested: Record<string, unknown> = {
-      source: { type: 'source', sourceType: 'api' },
+      source: { type: 'source', action: 'loadItems' },
     };
     const propsValue: Record<string, unknown> = { nested, plain: 'kept' };
     nested.self = propsValue;
@@ -232,7 +232,7 @@ describe('useNodeSourceProps', () => {
       <RuntimeContext.Provider value={runtime}>
         <Probe
           node={node}
-          propsValue={{ items: { type: 'source', sourceType: 'api' }, plain: 'first' }}
+          propsValue={{ items: { type: 'source', action: 'loadItems' }, plain: 'first' }}
           scope={scope}
         />
       </RuntimeContext.Provider>,
@@ -248,7 +248,7 @@ describe('useNodeSourceProps', () => {
       <RuntimeContext.Provider value={runtime}>
         <Probe
           node={node}
-          propsValue={{ items: { type: 'source', sourceType: 'api' }, plain: 'second' }}
+          propsValue={{ items: { type: 'source', action: 'loadItems' }, plain: 'second' }}
           scope={scope}
         />
       </RuntimeContext.Provider>,

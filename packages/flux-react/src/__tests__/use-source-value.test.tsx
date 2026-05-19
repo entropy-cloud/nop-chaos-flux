@@ -109,7 +109,7 @@ describe('useSourceValue', () => {
     const { rerender } = render(
       <RuntimeContext.Provider value={runtime as any}>
         <ScopeContext.Provider value={makeScope()}>
-          <Probe source={{ type: 'source', sourceType: 'api' }} />
+          <Probe source={{ type: 'source', action: 'loadValue' }} />
         </ScopeContext.Provider>
       </RuntimeContext.Provider>,
     );
@@ -122,7 +122,7 @@ describe('useSourceValue', () => {
     rerender(
       <RuntimeContext.Provider value={runtime as any}>
         <ScopeContext.Provider value={makeScope()}>
-          <Probe source={{ type: 'source', sourceType: 'api', id: 'b' }} />
+          <Probe source={{ type: 'source', action: 'loadValue', id: 'b' }} />
         </ScopeContext.Provider>
       </RuntimeContext.Provider>,
     );
@@ -190,7 +190,7 @@ describe('useSourceValue', () => {
     const { rerender } = render(
       <RuntimeContext.Provider value={runtime as any}>
         <ScopeContext.Provider value={makeScope()}>
-          <Probe source={{ type: 'source', sourceType: 'api', id: 'first' }} />
+          <Probe source={{ type: 'source', action: 'loadValue', id: 'first' }} />
         </ScopeContext.Provider>
       </RuntimeContext.Provider>,
     );
@@ -200,7 +200,7 @@ describe('useSourceValue', () => {
     rerender(
       <RuntimeContext.Provider value={runtime as any}>
         <ScopeContext.Provider value={makeScope()}>
-          <Probe source={{ type: 'source', sourceType: 'api', id: 'second' }} />
+          <Probe source={{ type: 'source', action: 'loadValue', id: 'second' }} />
         </ScopeContext.Provider>
       </RuntimeContext.Provider>,
     );
@@ -262,7 +262,7 @@ describe('useSourceValue', () => {
     };
 
     function Probe() {
-      const state = useSourceValue<string>({ type: 'source', sourceType: 'api', id: 'strict' });
+      const state = useSourceValue<string>({ type: 'source', action: 'loadValue', id: 'strict' });
 
       React.useEffect(() => {
         setStateCalls.push(`${state.loading}:${state.value ?? 'none'}`);
