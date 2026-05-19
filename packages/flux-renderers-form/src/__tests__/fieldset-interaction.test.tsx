@@ -83,6 +83,9 @@ describe('fieldset collapsible interaction', () => {
     expect(legend.getAttribute('tabindex')).toBe('0');
     expect(legend.getAttribute('aria-expanded')).toBe('false');
     expect(legend.getAttribute('aria-controls')).toBe('42-body');
+
+    const icon = document.querySelector('[data-slot="fieldset-collapse-icon"]') as SVGElement;
+    expect(icon).toBeTruthy();
   });
 
   it('toggles collapsed state on click', () => {
@@ -169,5 +172,46 @@ describe('fieldset collapsible interaction', () => {
     expect(legend.getAttribute('role')).toBeNull();
     expect(legend.getAttribute('tabindex')).toBeNull();
     expect(legend.getAttribute('aria-expanded')).toBeNull();
+    expect(document.querySelector('[data-slot="fieldset-collapse-icon"]')).toBeNull();
+  });
+
+  it('shows chevron-right when collapsed and chevron-down when expanded', () => {
+    cleanup();
+    const props = makeProps({
+      title: 'Toggle Me',
+      collapsible: true,
+      collapsed: true,
+    });
+
+    render(
+      wrapWithProviders(
+        <FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />,
+      ),
+    );
+
+    const legend = screen.getByText('Toggle Me');
+    const icon = document.querySelector('[data-slot="fieldset-collapse-icon"]') as SVGElement;
+    expect(icon.tagName.toLowerCase()).toBe('svg');
+
+    fireEvent.click(legend);
+
+    const updatedIcon = document.querySelector('[data-slot="fieldset-collapse-icon"]') as SVGElement;
+    expect(updatedIcon).toBeTruthy();
+  });
+
+  it('does not render collapse icon when collapsible is false', () => {
+    cleanup();
+    const props = makeProps({
+      title: 'No Icon',
+      collapsible: false,
+    });
+
+    render(
+      wrapWithProviders(
+        <FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />,
+      ),
+    );
+
+    expect(document.querySelector('[data-slot="fieldset-collapse-icon"]')).toBeNull();
   });
 });

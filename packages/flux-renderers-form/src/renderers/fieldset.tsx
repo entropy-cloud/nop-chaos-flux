@@ -3,6 +3,7 @@ import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@no
 import { resolveRendererSlotContent, hasRendererSlotContent } from '@nop-chaos/flux-react';
 import { resolveGap } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
+import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 
 export interface FieldsetSchema extends BaseSchema {
   type: 'fieldset';
@@ -52,7 +53,10 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
       {title ? (
         <legend
           data-slot="fieldset-title"
-          className={cn(slotProps.titleClassName)}
+          className={cn(
+            collapsible && 'flex items-center gap-1',
+            slotProps.titleClassName,
+          )}
           onClick={toggle}
           onKeyDown={collapsible ? handleKeyDown : undefined}
           tabIndex={collapsible ? 0 : undefined}
@@ -61,6 +65,19 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
           aria-controls={collapsible ? `${props.meta.cid}-body` : undefined}
           style={collapsible ? { cursor: 'pointer' } : undefined}
         >
+          {collapsible ? (
+            collapsed ? (
+              <ChevronRightIcon
+                data-slot="fieldset-collapse-icon"
+                className="size-4 shrink-0 text-muted-foreground"
+              />
+            ) : (
+              <ChevronDownIcon
+                data-slot="fieldset-collapse-icon"
+                className="size-4 shrink-0 text-muted-foreground"
+              />
+            )
+          ) : null}
           {title}
         </legend>
       ) : null}

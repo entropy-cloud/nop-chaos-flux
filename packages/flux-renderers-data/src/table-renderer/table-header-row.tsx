@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { ArrowUpDownIcon, ChevronDownIcon } from 'lucide-react';
+import { ArrowUpDownIcon, ArrowUpIcon, ArrowDownIcon, ChevronDownIcon } from 'lucide-react';
 import type { TableColumnSchema, TableSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import type { FilterState, SortState } from './types.js';
@@ -158,12 +158,13 @@ export function TableHeaderRow({
                   <span>{labelContent}</span>
                 )}
                 {isSortable && (
-                  <ArrowUpDownIcon
-                    className={cn(
-                      'inline ml-1 size-3',
-                      currentSort ? 'text-primary' : 'text-muted-foreground',
-                    )}
-                  />
+                  currentSort === 'asc' ? (
+                    <ArrowUpIcon className="inline ml-1 size-3 text-primary" />
+                  ) : currentSort === 'desc' ? (
+                    <ArrowDownIcon className="inline ml-1 size-3 text-primary" />
+                  ) : (
+                    <ArrowUpDownIcon className="inline ml-1 size-3 text-muted-foreground/40" />
+                  )
                 )}
 
                 {(isFilterable || isSearchable) && (

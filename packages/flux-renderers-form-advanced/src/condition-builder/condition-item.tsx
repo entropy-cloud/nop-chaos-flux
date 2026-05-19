@@ -151,7 +151,7 @@ export function ConditionItem({
         <WrappedFieldAction
           variant="ghost"
           size="icon-xs"
-          className="text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-destructive transition-opacity"
+          className="ml-auto text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-destructive transition-opacity"
           onClick={onRemove}
           aria-label={t('conditionBuilder.removeCondition')}
         >

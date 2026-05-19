@@ -57,10 +57,12 @@ describe('FieldsetRenderer', () => {
     expect(fieldset.dataset.collapsible).toBe('true');
     expect(fieldset.dataset.collapsed).toBe('true');
     expect(body.style.display).toBe('none');
+    expect(document.querySelector('[data-slot="fieldset-collapse-icon"]')).toBeTruthy();
 
     fireEvent.click(legend);
     expect(fieldset.dataset.collapsed).toBeUndefined();
     expect(body.style.display).toBe('');
+    expect(document.querySelector('[data-slot="fieldset-collapse-icon"]')).toBeTruthy();
   });
 
   it('does not toggle when not collapsible and hides missing title/body content', () => {

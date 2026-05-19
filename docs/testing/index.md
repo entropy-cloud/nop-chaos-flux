@@ -24,7 +24,7 @@ docs/testing/
 
 ### 2026-05
 
-- [05-19](2026/05-19.md) — Performance Table Full Stress 在 StrictMode host mutations 后出现 `$slot.record` 渲染错误
+- [05-19](2026/05-19.md) — Performance Table StrictMode `$slot.record` 渲染错误；Collapsible fieldset 无展开/收缩图标
 - [05-18](2026/05-18.md) — flux basic 表格前几行 Inspect 按钮无法稳定弹出对话框
 - [05-11](2026/05-11.md) — tabs with form 值丢失、flux basic Inspect 对话框未打开、array child items 删除无效、Report Designer 面板无收起按钮、字段面板无 margin、sheet tab 抖动与样式不统一
 - [05-10](2026/05-10.md) — key-value 控件的删除操作不起作用

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { PlusIcon, GroupIcon } from 'lucide-react';
+import { PlusIcon, GroupIcon, Trash2Icon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import {
@@ -248,21 +248,8 @@ export function ConditionGroup({
         </div>
       )}
 
-      <div className="relative rounded-lg border border-border bg-card pl-0">
-        {depth > 0 && onRemove && (
-          <WrappedFieldAction
-            variant="outline"
-            size="icon-xs"
-            className="absolute -right-2 -top-2 z-10 rounded-full text-muted-foreground hover:text-destructive hover:border-destructive shadow-sm"
-            onClick={onRemove}
-            title={removeGroupLabel}
-            aria-label={removeGroupLabel}
-          >
-            ×
-          </WrappedFieldAction>
-        )}
-
-        {(showAndOr || showNot) && (
+      <div className="rounded-lg border border-border bg-card pl-0">
+        {(showAndOr || showNot || (depth > 0 && onRemove && !disabled)) && (
           <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border bg-muted/30 rounded-t-lg">
             {showAndOr && !isSimple ? (
               <div className="flex items-center rounded-full border border-border p-0.5 bg-background">
@@ -297,9 +284,9 @@ export function ConditionGroup({
                   {t('conditionBuilder.or')}
                 </WrappedFieldAction>
               </div>
-            ) : (
+            ) : showAndOr ? (
               <span className="text-xs font-medium text-muted-foreground">{conjunctionLabel}</span>
-            )}
+            ) : null}
 
             {showNot && (
               <WrappedFieldAction
@@ -316,6 +303,19 @@ export function ConditionGroup({
                 disabled={disabled}
               >
                 {value.not ? t('conditionBuilder.notActive') : t('conditionBuilder.not')}
+              </WrappedFieldAction>
+            )}
+
+            {depth > 0 && onRemove && !disabled && (
+              <WrappedFieldAction
+                variant="ghost"
+                size="icon-xs"
+                className="ml-auto text-muted-foreground hover:text-destructive transition-colors"
+                onClick={onRemove}
+                title={removeGroupLabel}
+                aria-label={removeGroupLabel}
+              >
+                <Trash2Icon className="size-3.5" />
               </WrappedFieldAction>
             )}
           </div>
