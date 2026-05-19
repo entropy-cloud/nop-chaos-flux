@@ -180,6 +180,7 @@ describe('schema compiler renderer contract integration', () => {
       component: () => null,
       scopePolicy: 'form',
       validation: {
+        kind: 'container',
         ownerResolution: 'inherit-owner',
         childContractMode: 'summary-gate',
       },
