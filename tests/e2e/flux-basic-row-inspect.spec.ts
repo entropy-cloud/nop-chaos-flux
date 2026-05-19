@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures.js';
+import { assertTrackedPageErrors, test, expect } from './fixtures.js';
 
 test('flux-basic table Inspect opens the matching row dialog without browser errors', async ({
   page,
@@ -8,6 +8,7 @@ test('flux-basic table Inspect opens the matching row dialog without browser err
     state: 'visible',
     timeout: 15000,
   });
+  await assertTrackedPageErrors(page);
 
   const expectedRows = [
     { username: 'alice', email: 'alice@example.com' },
