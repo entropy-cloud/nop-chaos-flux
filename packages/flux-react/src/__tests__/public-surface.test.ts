@@ -14,6 +14,7 @@ describe('flux-react public surface', () => {
 
   it('exposes stable publication helpers on the root entry', () => {
     expect(typeof fluxReact.StructuralLoopProvider).toBe('function');
+    expect(typeof fluxReact.useCurrentImportFrame).toBe('function');
     expect(typeof fluxReact.usePublishedFormStatus).toBe('function');
     expect(typeof fluxReact.usePublishedFormValues).toBe('function');
   });
@@ -23,6 +24,7 @@ describe('flux-react public surface', () => {
     expect(typeof fluxReactUnstable.createHelpers).toBe('function');
     expect(typeof fluxReactUnstable.mergeActionContext).toBe('function');
     expect(typeof fluxReactUnstable.rendererHooks).toBe('object');
+    expect(typeof fluxReactUnstable.rendererHooks.useCurrentImportFrame).toBe('function');
     expect(fluxReactUnstable.FormContext).toBeTruthy();
     expect(typeof fluxReactUnstable.publishOwnerStatus).toBe('function');
   });

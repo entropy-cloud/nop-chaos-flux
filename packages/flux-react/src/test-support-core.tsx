@@ -46,6 +46,24 @@ export const pageRenderer: RendererDefinition = {
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
+export const fragmentRenderer: RendererDefinition = {
+  type: 'fragment',
+  component: (props) =>
+    asReactNode(
+      props.regions.body?.render({
+        bindings: props.props.data as Record<string, unknown> | undefined,
+        isolate: props.props.isolate === true,
+        pathSuffix: 'body',
+        scopeKey: `${props.id}:body`,
+      }),
+    ),
+  fields: [
+    { key: 'body', kind: 'region', regionKey: 'body' },
+    { key: 'data', kind: 'prop' },
+    { key: 'isolate', kind: 'prop' },
+  ],
+};
+
 function FormStub(props: RendererComponentProps) {
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();

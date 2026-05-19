@@ -1,5 +1,5 @@
 import type { ActionContext, ActionScope } from './actions.js';
-import type { FormulaCompiler, ModuleCache } from './compilation.js';
+import type { FormulaCompiler, ImportFrame, ModuleCache } from './compilation.js';
 import type { CompiledTemplate, InstanceFrame, NodeInstance, TemplateNode } from './node-identity.js';
 import type { ComponentHandleRegistry } from './renderer-component.js';
 import type { RendererEnv } from './renderer-api.js';
@@ -126,10 +126,11 @@ export interface RendererHookApi {
   useRenderInstancePath(): readonly InstanceFrame[] | undefined;
   useCurrentActionScope(): ActionScope | undefined;
   useCurrentComponentRegistry(): ComponentHandleRegistry | undefined;
+  useCurrentImportFrame(): ImportFrame | undefined;
   useScopeSelector<T, S = Record<string, unknown>>(
     selector: (scopeData: S) => T,
     equalityFn?: (a: T, b: T) => boolean,
-    options?: { enabled?: boolean; fallback?: T },
+    options?: { enabled?: boolean; fallback?: T; paths?: readonly string[] },
   ): T;
   useOwnScopeSelector<T, S = Record<string, unknown>>(
     selector: (scopeData: S) => T,

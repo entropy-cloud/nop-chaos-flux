@@ -21,6 +21,7 @@ export {
   useRenderInstancePath,
   useCurrentActionScope,
   useCurrentComponentRegistry,
+  useCurrentImportFrame,
   useRendererEnv,
   useScopeSelector,
   useOwnScopeSelector,

@@ -246,6 +246,7 @@ export const rendererHooks = {
   useRenderInstancePath,
   useCurrentActionScope,
   useCurrentComponentRegistry,
+  useCurrentImportFrame,
   useScopeSelector,
   useOwnScopeSelector,
   useRendererEnv,

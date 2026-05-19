@@ -3,9 +3,16 @@ import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import { createDefaultRegistry } from '../defaults.js';
-import { env, formRenderer, probeInputRenderer, sharedFormulaCompiler, textRenderer } from '../test-support-core.js';
+import {
+  env,
+  formRenderer,
+  fragmentRenderer,
+  pageRenderer,
+  probeInputRenderer,
+  sharedFormulaCompiler,
+  textRenderer,
+} from '../test-support-core.js';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 
 function RegionBindingsHost(props: RendererComponentProps) {
   return (
@@ -85,8 +92,7 @@ describe('SchemaRenderer form behavior in StrictMode', () => {
   });
 
   it('keeps fragment body rendering when using a prebuilt registry', async () => {
-    const registry = createDefaultRegistry();
-    registerBasicRenderers(registry);
+    const registry = createDefaultRegistry([pageRenderer, textRenderer, fragmentRenderer]);
     const SchemaRenderer = createSchemaRenderer();
 
     render(
