@@ -89,7 +89,7 @@ function buildObjectArrayItemKeys(
   };
 }
 
-function ArrayItem(props: {
+type ArrayItemProps = {
   itemIdentity: string;
   index: number;
   arrayPath: string;
@@ -103,7 +103,9 @@ function ArrayItem(props: {
   item: unknown;
   itemInstancePath: readonly InstanceFrame[];
   itemRegion: RendererComponentProps<ArrayFieldSchema>['regions']['item'];
-}) {
+};
+
+function ArrayItemView(props: ArrayItemProps) {
   const {
     itemIdentity,
     index,
@@ -173,6 +175,23 @@ function ArrayItem(props: {
     </div>
   );
 }
+
+const ArrayItem = React.memo(ArrayItemView, (prev, next) => {
+  return (
+    prev.itemIdentity === next.itemIdentity &&
+    prev.index === next.index &&
+    prev.arrayPath === next.arrayPath &&
+    prev.itemKind === next.itemKind &&
+    prev.parentScope === next.parentScope &&
+    prev.parentForm === next.parentForm &&
+    prev.parentValidationOwner === next.parentValidationOwner &&
+    prev.readOnly === next.readOnly &&
+    prev.removable === next.removable &&
+    prev.onRemove === next.onRemove &&
+    prev.item === next.item &&
+    prev.itemRegion === next.itemRegion
+  );
+});
 
 function getScalarItemFieldSchema(itemSchema: ArrayFieldSchema['item'] | undefined): BaseSchema | undefined {
   const item = Array.isArray(itemSchema) ? itemSchema[0] : itemSchema;
@@ -414,7 +433,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
     }
   }
 
-  function handleRemove(index: number) {
+  const handleRemove = React.useCallback((index: number) => {
     if (parentForm) {
       if (itemKind === 'scalar') {
         setCompatibilityItemKeys((current) =>
@@ -425,7 +444,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       parentForm.removeValue(name, index);
       void parentForm.validateSubtree(name);
     }
-  }
+  }, [itemKind, name, parentForm]);
 
   React.useLayoutEffect(() => {
     if (!parentForm || !name || itemKind !== 'scalar' || scalarChildPaths.length === 0) {

@@ -317,7 +317,8 @@ describe('flow-designer manifest', () => {
     expect((fields.runtime.schema as any).fields.gridVisible).toBeUndefined();
     expect((fields.runtime.schema as any).fields.viewport).toBeTruthy();
     expect((fields.doc.schema as any).fields.nodeCount).toBeTruthy();
-    expect((fields.doc.schema as any).fields.nodes).toBeUndefined();
+    expect((fields.doc.schema as any).fields.nodes).toBeTruthy();
+    expect((fields.doc.schema as any).fields.edges).toBeTruthy();
     expect(fields.activeBranch).toBeTruthy();
     expect(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods['navigate-back']).toBeTruthy();
   });
@@ -332,7 +333,7 @@ describe('flow-designer manifest', () => {
           kind: 'flow',
           name: 'Example',
           version: '1.0.0',
-          nodes: [{ id: 'n1' }],
+          nodes: [{ id: 'n1', type: 'task', position: { x: 0, y: 0 } }],
           edges: [{ id: 'e1' }],
           viewport: { x: 10, y: 20, zoom: 1.25 },
         },
@@ -365,6 +366,8 @@ describe('flow-designer manifest', () => {
       viewport: { x: 10, y: 20, zoom: 1.25 },
       nodeCount: 1,
       edgeCount: 1,
+      nodes: [{ id: 'n1', type: 'task', position: { x: 0, y: 0 } }],
+      edges: [{ id: 'e1', source: undefined, target: undefined, sourcePort: undefined, taskflowEdgeKind: undefined }],
     });
     expect(scopeData.selection).toMatchObject({
       kind: 'branch',
