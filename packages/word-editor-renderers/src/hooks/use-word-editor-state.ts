@@ -94,6 +94,7 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
   const [activePanel, setActivePanel] = useState<'datasets' | 'fields'>('datasets');
   const [datasetDialogOpen, setDatasetDialogOpen] = useState(false);
   const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleDocumentSaved = useCallback((saved: SavedDocumentData) => {
     setSavedDocument(saved);
@@ -221,17 +222,17 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
   useStatusPathPublication<WordEditorHostStatusSummary>(
     props.node.scope.parent ?? props.node.scope,
     statusPath,
-    {
-      kind: 'word-editor',
-      dirty: editorRuntime.dirty,
-      busy: false,
-      canUndo: editorRuntime.canUndo,
-      canRedo: editorRuntime.canRedo,
-      wordCount: editorRuntime.wordCount,
+      {
+        kind: 'word-editor',
+        dirty: editorRuntime.dirty,
+        busy: isSaving,
+        canUndo: editorRuntime.canUndo,
+        canRedo: editorRuntime.canRedo,
+        wordCount: editorRuntime.wordCount,
       datasetCount: datasets.length,
-      chartCount: charts.length,
-      codeCount: codes.length,
-    },
+        chartCount: charts.length,
+        codeCount: codes.length,
+      },
   );
 
   const editingDataset = editingDatasetId
@@ -294,5 +295,7 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
     editingDatasetId,
     setEditingDatasetId,
     editingDataset,
+    isSaving,
+    setIsSaving,
   };
 }

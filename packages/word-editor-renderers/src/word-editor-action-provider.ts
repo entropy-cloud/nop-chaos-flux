@@ -7,7 +7,13 @@ import type {
   EditorStoreApi,
   SavedDocumentData,
 } from '@nop-chaos/word-editor-core';
-import { captureDocumentSnapshot, persistSavedDocument, saveDatasets } from '@nop-chaos/word-editor-core';
+import {
+  captureDocumentSnapshot,
+  persistSavedDocument,
+  saveDatasets,
+  validateDocChart,
+  validateDocCode,
+} from '@nop-chaos/word-editor-core';
 
 function ok(data?: unknown): ActionResult {
   return data === undefined ? { ok: true } : { ok: true, data };
@@ -30,7 +36,7 @@ export function createWordEditorActionProvider(input: {
   getCodes(): DocCode[];
   setCodes(next: DocCode[]): void;
   saveEvent?:
-    | ((event?: unknown, ctx?: Partial<ActionContext>) => Promise<ActionResult>)
+    | ((event?: SavedDocumentData, ctx?: Partial<ActionContext>) => Promise<ActionResult>)
     | undefined;
   onDocumentSaved?: (saved: SavedDocumentData) => void;
 }): ActionNamespaceProvider {
@@ -58,9 +64,8 @@ export function createWordEditorActionProvider(input: {
               }),
             );
           }
-          saveDatasets(input.datasetStore.getAll());
           if (input.saveEvent) {
-            const result = await input.saveEvent(undefined, ctx);
+            const result = await input.saveEvent(saved, ctx);
             if (!result.ok) {
               return result;
             }
@@ -70,6 +75,7 @@ export function createWordEditorActionProvider(input: {
           }
           try {
             persistSavedDocument(saved);
+            saveDatasets(input.datasetStore.getAll());
           } catch (error) {
             const normalizedError = error instanceof Error ? error : new Error(String(error));
             return failWithError(
@@ -91,7 +97,8 @@ export function createWordEditorActionProvider(input: {
         }
         case 'insertChart': {
           const chart = payload as DocChart | undefined;
-          if (!chart?.id || !chart.chartName) {
+          const validation = validateDocChart(chart ?? {});
+          if (!chart?.id || !validation.valid) {
             return fail('insertChart requires a complete chart payload.');
           }
           input.bridge.insertChart(chart);
@@ -100,7 +107,8 @@ export function createWordEditorActionProvider(input: {
         }
         case 'insertCode': {
           const code = payload as DocCode | undefined;
-          if (!code?.id || !code.codeName) {
+          const validation = validateDocCode(code ?? {});
+          if (!code?.id || !validation.valid) {
             return fail('insertCode requires a complete code payload.');
           }
           input.bridge.insertCode(code);

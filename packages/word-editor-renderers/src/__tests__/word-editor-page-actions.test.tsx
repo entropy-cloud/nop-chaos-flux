@@ -6,7 +6,7 @@ import * as FluxReact from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/flux-react';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { ActionResult, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { registerWordEditorRenderers, defineWordEditorPageSchema } from '../index.js';
 import * as wordEditorActionProvider from '../word-editor-action-provider.js';
 import { WordEditorPage } from '../word-editor-page.js';
@@ -635,6 +635,103 @@ describe('WordEditorPage actions and events', () => {
     expect(notify).not.toHaveBeenCalled();
 
     providerSpy.mockRestore();
+  });
+
+  it('publishes busy status while a save is in flight', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    let resolveSave: ((value: ActionResult) => void) | undefined;
+    const statusCalls: Array<{ busy: boolean; dirty: boolean }> = [];
+    const useHostScopeSpy = vi.spyOn(FluxReact, 'useHostScope').mockReturnValue({} as any);
+    const useCurrentActionScopeSpy = vi
+      .spyOn(FluxReact, 'useCurrentActionScope')
+      .mockReturnValue(undefined as any);
+    const useNamespaceRegistrationSpy = vi
+      .spyOn(FluxReact, 'useNamespaceRegistration')
+      .mockImplementation(() => undefined);
+    const useRendererEnvSpy = vi
+      .spyOn(FluxReact, 'useRendererEnv')
+      .mockReturnValue({ notify: vi.fn() } as any);
+    const useStatusPathPublicationSpy = vi
+      .spyOn(FluxReact, 'useStatusPathPublication')
+      .mockImplementation((_scope, _statusPath, summary: any) => {
+        statusCalls.push({ busy: Boolean(summary?.busy), dirty: Boolean(summary?.dirty) });
+      });
+    const hasRendererSlotContentSpy = vi
+      .spyOn(FluxReact, 'hasRendererSlotContent')
+      .mockReturnValue(false);
+    const resolveRendererSlotContentSpy = vi
+      .spyOn(FluxReact, 'resolveRendererSlotContent')
+      .mockReturnValue(undefined);
+    const onSave = vi.fn(
+      () =>
+        new Promise<ActionResult>((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+
+    render(
+      <RuntimeContext.Provider value={{ env: { notify: vi.fn() } } as any}>
+        <ScopeContext.Provider
+          value={{
+            id: 'word-editor-scope',
+            path: '$.body[0]',
+            value: {},
+            get: () => undefined,
+            has: () => false,
+            readOwn: () => ({}),
+            readVisible: () => ({}),
+            materializeVisible: () => ({}),
+            update: () => undefined,
+            merge: () => undefined,
+          } as any}
+        >
+          <WordEditorPage
+            id="word-editor"
+            path="$.body[0]"
+            schema={{ type: 'word-editor-page' } as any}
+            templateNode={{ validationOwnerPlan: undefined } as any}
+            node={{ scope: { parent: {} } } as any}
+            props={{ statusPath: 'wordEditorStatus' } as any}
+            meta={{} as any}
+            regions={{} as any}
+            events={{ onSave }}
+            helpers={{
+              render: vi.fn(),
+              evaluate: vi.fn(),
+              createScope: vi.fn(),
+              dispatch: vi.fn(),
+              executeSource: vi.fn(),
+            } as any}
+          />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(statusCalls.some((call) => call.busy)).toBe(true);
+    });
+
+    resolveSave?.({ ok: true });
+
+    await waitFor(() => {
+      expect(statusCalls.at(-1)).toEqual({ busy: false, dirty: false });
+    });
+
+    useHostScopeSpy.mockRestore();
+    useCurrentActionScopeSpy.mockRestore();
+    useNamespaceRegistrationSpy.mockRestore();
+    useRendererEnvSpy.mockRestore();
+    useStatusPathPublicationSpy.mockRestore();
+    hasRendererSlotContentSpy.mockRestore();
+    resolveRendererSlotContentSpy.mockRestore();
   });
 
 });

@@ -39,6 +39,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     hostScope,
     initialDocument,
     isDirty,
+    isSaving,
     leftCollapsed,
     mountedRef,
     recoveredState,
@@ -54,12 +55,14 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     setSavedDocument,
     titleContent,
     wordCount,
+    setIsSaving,
   } = useWordEditorState(props);
 
   const { handleSave, saveMessage } = useWordEditorSave({
     actionProvider,
     env,
     mountedRef,
+    setSaving: setIsSaving,
   });
 
   const actions = useWordEditorActions({
@@ -108,10 +111,11 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         </div>
         <Button
           type="button"
-          variant={isDirty ? 'default' : 'outline'}
+          variant={isDirty || isSaving ? 'default' : 'outline'}
           size="sm"
           onClick={() => void handleSave()}
           className="rounded-full"
+          disabled={isSaving}
         >
           <Save className="w-4 h-4" />
           {saveMessage || t('flux.wordEditor.save')}

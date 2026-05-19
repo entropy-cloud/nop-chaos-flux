@@ -17,9 +17,15 @@ interface UseWordEditorSaveParams {
   actionProvider: ActionNamespaceProvider;
   env: RendererEnv;
   mountedRef: React.RefObject<boolean>;
+  setSaving?(saving: boolean): void;
 }
 
-export function useWordEditorSave({ actionProvider, env, mountedRef }: UseWordEditorSaveParams) {
+export function useWordEditorSave({
+  actionProvider,
+  env,
+  mountedRef,
+  setSaving,
+}: UseWordEditorSaveParams) {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingRef = useRef(false);
@@ -42,6 +48,7 @@ export function useWordEditorSave({ actionProvider, env, mountedRef }: UseWordEd
     if (isSavingRef.current) return;
 
     isSavingRef.current = true;
+    setSaving?.(true);
     saveAbortRef.current?.abort();
     const controller = new AbortController();
     saveAbortRef.current = controller;
@@ -95,6 +102,7 @@ export function useWordEditorSave({ actionProvider, env, mountedRef }: UseWordEd
         saveAbortRef.current = null;
       }
       isSavingRef.current = false;
+      setSaving?.(false);
     }
   }, [
     actionProvider,
@@ -104,6 +112,7 @@ export function useWordEditorSave({ actionProvider, env, mountedRef }: UseWordEd
     mountedRef,
     page,
     runtime,
+    setSaving,
     scope,
     surfaceRuntime,
   ]);

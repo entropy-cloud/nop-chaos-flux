@@ -26,6 +26,7 @@ import {
 
 function SaveProbe(props: {
   actionProvider: ActionNamespaceProvider;
+  setSaving?: (saving: boolean) => void;
 }) {
   const mountedRef = React.useRef(true);
   const { handleSave, saveMessage } = useWordEditorSave({
@@ -35,6 +36,7 @@ function SaveProbe(props: {
       notify: vi.fn(),
     } satisfies RendererEnv,
     mountedRef,
+    setSaving: props.setSaving,
   });
 
   return (
@@ -45,7 +47,7 @@ function SaveProbe(props: {
 }
 
 describe('useWordEditorSave', () => {
-  it('passes a real action context to the save provider', async () => {
+  function createRuntimeContexts() {
     const runtime = { env: {} } as RendererRuntime;
     const scope = {
       id: 'word-editor-scope',
@@ -76,6 +78,13 @@ describe('useWordEditorSave', () => {
       closeTop: vi.fn(),
       dispose: vi.fn(),
     } as unknown as SurfaceRuntime;
+
+    return { runtime, scope, actionScope, componentRegistry, page, surfaceRuntime };
+  }
+
+  it('passes a real action context to the save provider', async () => {
+    const { runtime, scope, actionScope, componentRegistry, page, surfaceRuntime } =
+      createRuntimeContexts();
     const invoke = vi.fn(async (_method: string, _payload: undefined, ctx: ActionContext) => ({
       ok: true as const,
       data: ctx,
@@ -110,5 +119,46 @@ describe('useWordEditorSave', () => {
       surfaceRuntime,
     });
     expect(invoke.mock.calls[0][2].signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('toggles saving state around the async save lifecycle', async () => {
+    const { runtime, scope, actionScope, componentRegistry, page, surfaceRuntime } =
+      createRuntimeContexts();
+    let resolveSave: ((value: { ok: true }) => void) | undefined;
+    const setSaving = vi.fn();
+    const invoke = vi.fn(
+      () =>
+        new Promise<{ ok: true }>((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+    const actionProvider: ActionNamespaceProvider = { invoke };
+
+    render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={scope}>
+          <ActionScopeContext.Provider value={actionScope}>
+            <ComponentRegistryContext.Provider value={componentRegistry}>
+              <PageContext.Provider value={page}>
+                <SurfaceContext.Provider value={surfaceRuntime}>
+                  <SaveProbe actionProvider={actionProvider} setSaving={setSaving} />
+                </SurfaceContext.Provider>
+              </PageContext.Provider>
+            </ComponentRegistryContext.Provider>
+          </ActionScopeContext.Provider>
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => expect(invoke).toHaveBeenCalledTimes(1));
+    expect(setSaving).toHaveBeenCalledWith(true);
+
+    resolveSave?.({ ok: true });
+
+    await waitFor(() => {
+      expect(setSaving).toHaveBeenLastCalledWith(false);
+    });
   });
 });

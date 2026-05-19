@@ -34,6 +34,19 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
     captureDocumentSnapshot: vi.fn(() => savedDocument),
     persistSavedDocument: vi.fn(() => savedDocument),
     saveDatasets: vi.fn(),
+    validateDocChart: vi.fn((chart) => ({
+      valid:
+        Boolean(chart?.chartName) &&
+        Boolean(chart?.datasetId) &&
+        Boolean(chart?.categoryField) &&
+        Array.isArray(chart?.valueField) &&
+        chart.valueField.length > 0,
+      errors: [],
+    })),
+    validateDocCode: vi.fn((code) => ({
+      valid: Boolean(code?.codeName) && Boolean(code?.datasetId) && Boolean(code?.valueField),
+      errors: [],
+    })),
   };
 });
 
@@ -64,6 +77,10 @@ function mockCode(overrides: Partial<DocCode> = {}): DocCode {
   };
 }
 
+function createMinimalEditorStore(): EditorStoreApi {
+  return { setDirty: vi.fn() } as unknown as EditorStoreApi;
+}
+
 describe('createWordEditorActionProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -90,6 +107,7 @@ describe('createWordEditorActionProvider', () => {
 
   it('updates saved extras only after successful host save', async () => {
     const onDocumentSaved = vi.fn();
+    const saveEvent = vi.fn(async (): Promise<ActionResult> => ({ ok: true }));
     const editorStore: PartialEditorStoreApi = { setDirty: vi.fn() };
     const provider = createWordEditorActionProvider({
       bridge: {} as CanvasEditorBridge,
@@ -99,13 +117,14 @@ describe('createWordEditorActionProvider', () => {
       setCharts: () => undefined,
       getCodes: () => [mockCode()],
       setCodes: () => undefined,
-      saveEvent: async (): Promise<ActionResult> => ({ ok: true }),
+      saveEvent,
       onDocumentSaved,
     });
 
     const result = await provider.invoke('save', undefined, {} as ActionContext);
 
     expect(result.ok).toBe(true);
+    expect(saveEvent).toHaveBeenCalledWith(savedDocument, expect.anything());
     expect(editorStore.setDirty).toHaveBeenCalledWith(false);
     expect(onDocumentSaved).toHaveBeenCalledWith(savedDocument);
     const { persistSavedDocument } = await import('@nop-chaos/word-editor-core');
@@ -155,11 +174,44 @@ describe('createWordEditorActionProvider', () => {
     });
 
     const result = await provider.invoke('save', undefined, {} as ActionContext);
-    const { persistSavedDocument } = await import('@nop-chaos/word-editor-core');
+    const { persistSavedDocument, saveDatasets } = await import('@nop-chaos/word-editor-core');
 
     expect(result.ok).toBe(false);
     expect(vi.mocked(persistSavedDocument)).not.toHaveBeenCalled();
+    expect(vi.mocked(saveDatasets)).not.toHaveBeenCalled();
     expect(onDocumentSaved).not.toHaveBeenCalled();
+  });
+
+  it('persists datasets only after the save succeeds', async () => {
+    const events: string[] = [];
+    const editorStore: PartialEditorStoreApi = { setDirty: vi.fn(() => events.push('dirty:false')) };
+    const { persistSavedDocument, saveDatasets } = await import('@nop-chaos/word-editor-core');
+    vi.mocked(persistSavedDocument).mockImplementationOnce(() => {
+      events.push('persist');
+      return savedDocument;
+    });
+    vi.mocked(saveDatasets).mockImplementationOnce(() => {
+      events.push('datasets');
+    });
+    const saveEvent = vi.fn(async (): Promise<ActionResult> => {
+      events.push('save-event');
+      return { ok: true };
+    });
+    const provider = createWordEditorActionProvider({
+      bridge: {} as CanvasEditorBridge,
+      editorStore: editorStore as EditorStoreApi,
+      datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
+      getCharts: () => [mockChart()],
+      setCharts: () => undefined,
+      getCodes: () => [mockCode()],
+      setCodes: () => undefined,
+      saveEvent,
+    });
+
+    const result = await provider.invoke('save', undefined, {} as ActionContext);
+
+    expect(result.ok).toBe(true);
+    expect(events).toEqual(['save-event', 'persist', 'datasets', 'dirty:false']);
   });
 
   it('does not clear dirty state after saveEvent when the action signal is aborted', async () => {
@@ -187,5 +239,55 @@ describe('createWordEditorActionProvider', () => {
     expect((result.error as Error).message).toBe('Word document save was aborted.');
     expect(editorStore.setDirty).not.toHaveBeenCalledWith(false);
     expect(onDocumentSaved).not.toHaveBeenCalled();
+  });
+
+  it('rejects insertChart when manifest-required fields are missing', async () => {
+    const bridge = { insertChart: vi.fn() } as unknown as CanvasEditorBridge;
+    const provider = createWordEditorActionProvider({
+      bridge,
+      editorStore: createMinimalEditorStore(),
+      datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
+      getCharts: () => [],
+      setCharts: () => undefined,
+      getCodes: () => [],
+      setCodes: () => undefined,
+    });
+
+    const result = await provider.invoke('insertChart', {
+      id: 'chart-1',
+      chartName: 'Chart',
+      chartType: 'bar',
+      showChartName: true,
+      datasetId: '',
+      categoryField: '',
+      valueField: [],
+    } as unknown as Record<string, unknown>, {} as ActionContext);
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe('insertChart requires a complete chart payload.');
+  });
+
+  it('rejects insertCode when manifest-required fields are missing', async () => {
+    const bridge = { insertCode: vi.fn() } as unknown as CanvasEditorBridge;
+    const provider = createWordEditorActionProvider({
+      bridge,
+      editorStore: createMinimalEditorStore(),
+      datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
+      getCharts: () => [],
+      setCharts: () => undefined,
+      getCodes: () => [],
+      setCodes: () => undefined,
+    });
+
+    const result = await provider.invoke('insertCode', {
+      id: 'code-1',
+      codeName: 'Code',
+      codeType: 'barcode',
+      datasetId: '',
+      valueField: '',
+    } as unknown as Record<string, unknown>, {} as ActionContext);
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe('insertCode requires a complete code payload.');
   });
 });
