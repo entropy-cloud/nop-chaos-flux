@@ -1,6 +1,6 @@
 # 377 Deep Audit 2026-05-19 SchemaRenderer Suite Decomposition Plan
 
-> Plan Status: planned
+> Plan Status: partially completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -39,26 +39,26 @@
 
 ### Phase 1 - Split Mixed-Contract SchemaRenderer Tests
 
-Status: planned
+Status: completed
 Targets: `schema-renderer` test surface
 
 - Item Types: `Fix | Proof`
-- [ ] Split the oversized suite by contract owner.
-- [ ] Keep focused proof for each resulting surface.
+- [x] Split the oversized suite by contract owner.
+- [x] Keep focused proof for each resulting surface.
 
 Exit Criteria:
 
-- [ ] `02-05` and `14-03` are fixed.
-- [ ] The touched suite no longer violates the oversized hard gate.
-- [ ] `No owner-doc update required`.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `02-05` and `14-03` are fixed.
+- [x] The touched suite no longer violates the oversized hard gate.
+- [x] `No owner-doc update required`.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] `No owner-doc update required`.
+- [x] The in-scope retained findings are fixed.
+- [x] `No owner-doc update required`.
 - [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
+- [x] Independent subagent closure audit is completed and recorded.
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
@@ -66,9 +66,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Pending.
+Status Note: The in-scope test-surface split and focused proof landed, but repo-wide closure gates remain blocked by unrelated workspace failures, so the plan stays `partially completed`.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: independent general subagent `ses_1bfccaf68ffe9ARbI0y9NFyyzn`
+- Evidence:
+  - `packages/flux-react/src/__tests__/schema-renderer.test.tsx` now keeps the root callback/import-preparation surface only.
+  - `packages/flux-react/src/__tests__/schema-renderer-registry-debug.test.tsx` now owns the registry/debug/surface-runtime seam coverage.
+  - Focused verification passed: `pnpm exec vitest run src/__tests__/schema-renderer.test.tsx src/__tests__/schema-renderer-registry-debug.test.tsx` in `packages/flux-react` (`2` files / `19` tests).
+  - `pnpm --filter @nop-chaos/flux-react typecheck`, `build`, and `lint` passed.
+  - `pnpm check:oversized-code-files` no longer reports any `packages/flux-react/src/__tests__/schema-renderer*.test.tsx` hard-gate offender; the remaining hard-gate files are unrelated (`apps/playground/src/pages/performance-table-page.tsx`, `packages/word-editor-renderers/src/__tests__/word-editor-page-actions.test.tsx`).

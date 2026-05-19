@@ -1,6 +1,6 @@
 # 380 Deep Audit 2026-05-19 Input Renderer Decomposition And Stepper Accessibility Plan
 
-> Plan Status: planned
+> Plan Status: partially completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -43,28 +43,28 @@
 
 ### Phase 1 - Split Input Renderer Owners And Restore Stepper Keyboard Access
 
-Status: planned
+Status: completed
 Targets: `input.tsx`, extracted modules, owner docs
 
 - Item Types: `Fix | Proof`
-- [ ] Split `input.tsx` so the root file no longer carries all control implementations.
-- [ ] Restore keyboard focus access for input-number stepper controls.
-- [ ] Update the owner docs named in Plan `371` if the supported renderer structure changes.
+- [x] Split `input.tsx` so the root file no longer carries all control implementations.
+- [x] Restore keyboard focus access for input-number stepper controls.
+- [x] Update the owner docs named in Plan `371` if the supported renderer structure changes.
 
 Exit Criteria:
 
-- [ ] `02-08` and `20-01` are fixed.
-- [ ] The touched surface no longer sits at the oversized hotspot boundary.
-- [ ] Focused proof covers the supported stepper keyboard path.
-- [ ] `docs/architecture/renderer-runtime.md` and `docs/architecture/styling-system.md` are updated, or `No change required` is explicitly adjudicated.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `02-08` and `20-01` are fixed.
+- [x] The touched surface no longer sits at the oversized hotspot boundary.
+- [x] Focused proof covers the supported stepper keyboard path.
+- [x] `docs/architecture/renderer-runtime.md` and `docs/architecture/styling-system.md` are updated, or `No change required` is explicitly adjudicated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed.
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed.
 - [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
+- [x] Independent subagent closure audit is completed and recorded.
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
@@ -72,9 +72,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Pending.
+Status Note: The in-scope renderer decomposition and stepper accessibility fix landed, but repo-wide closure gates remain blocked by unrelated workspace failures, so the plan stays `partially completed`.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: independent general subagent `ses_1bfccaf68ffe9ARbI0y9NFyyzn`
+- Evidence:
+  - Split `packages/flux-renderers-form/src/renderers/input.tsx` into a thinner root registry file plus `packages/flux-renderers-form/src/renderers/input-choice-renderers.tsx` and `packages/flux-renderers-form/src/renderers/input-number-renderer.tsx`.
+  - Restored keyboard-focusable stepper buttons by removing the negative tab index from `input-number` stepper controls.
+  - Focused proof passed in `packages/flux-renderers-form/src/__tests__/input-number.test.tsx` and `packages/flux-renderers-form/src/__tests__/input-classname-contract.test.tsx` (`2` files / `22` tests).
+  - `pnpm --filter @nop-chaos/flux-renderers-form typecheck`, `build`, and `lint` passed.
+  - Owner-doc adjudication: `docs/architecture/renderer-runtime.md` and `docs/architecture/styling-system.md` already describe the supported widget/root-className baseline; `No change required` is honest for this internal file split.

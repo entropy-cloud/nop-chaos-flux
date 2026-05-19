@@ -1,6 +1,6 @@
 # 411 Open-Ended Adversarial Review 2026-05-19 Word-Editor Truth Surface And Host Contract Plan
 
-> Plan Status: planned
+> Plan Status: in progress
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-open-ended-adversarial-review-01/{round-02.md,round-03.md,round-20.md,round-21.md,round-22.md,round-23.md,round-24.md}`
 > Related: `docs/plans/406-open-ended-adversarial-review-2026-05-19-25-round-remediation-routing-plan.md`, `docs/architecture/word-editor/design.md`, `docs/components/word-editor-page/design.md`, `docs/architecture/capability-projection-manifest.md`
@@ -50,23 +50,23 @@
 
 ### Phase 1 - Restore Save Envelope And Status Publication Truthfulness
 
-Status: planned
+Status: completed
 Targets: save/status code, focused tests, owner docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Make explicit save deliver the supported saved envelope to the host callback.
-- [ ] Make `statusPath` publish honest save busy state.
-- [ ] Prevent dataset persistence from committing ahead of save success / abort adjudication.
-- [ ] Add focused proof for explicit save, busy-state publication, and dataset-persistence sequencing.
-- [ ] Update `docs/architecture/word-editor/design.md` and `docs/components/word-editor-page/design.md` for the final supported save/status baseline.
+- [x] Make explicit save deliver the supported saved envelope to the host callback.
+- [x] Make `statusPath` publish honest save busy state.
+- [x] Prevent dataset persistence from committing ahead of save success / abort adjudication.
+- [x] Add focused proof for explicit save, busy-state publication, and dataset-persistence sequencing.
+- [x] Update `docs/architecture/word-editor/design.md` and `docs/components/word-editor-page/design.md` for the final supported save/status baseline.
 
 Exit Criteria:
 
-- [ ] `R02-01`, `R03-03`, and `R03-04` are fixed.
-- [ ] Focused proof covers save callback payload, busy-state publication, and no partial-commit dataset write.
-- [ ] `docs/architecture/word-editor/design.md` and `docs/components/word-editor-page/design.md` are updated.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `R02-01`, `R03-03`, and `R03-04` are fixed.
+- [x] Focused proof covers save callback payload, busy-state publication, and no partial-commit dataset write.
+- [x] `docs/architecture/word-editor/design.md` and `docs/components/word-editor-page/design.md` are updated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ### Phase 2 - Restore Template Insertion And Persisted Truth Surface Integrity
 
@@ -91,20 +91,20 @@ Exit Criteria:
 
 ### Phase 3 - Align Word-Editor Manifest With Provider Enforcement
 
-Status: planned
+Status: completed
 Targets: host manifest/provider code, focused tests, owner docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Make provider enforcement match the published `insertChart` / `insertCode` payload contract, or narrow the published contract and document that decision.
-- [ ] Add focused proof for manifest/provider parity.
+- [x] Make provider enforcement match the published `insertChart` / `insertCode` payload contract, or narrow the published contract and document that decision.
+- [x] Add focused proof for manifest/provider parity.
 
 Exit Criteria:
 
-- [ ] `R24-01` is fixed.
-- [ ] Focused proof covers final manifest/provider parity.
-- [ ] `docs/architecture/word-editor/design.md` and `docs/components/word-editor-page/design.md` are updated if the public contract changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `R24-01` is fixed.
+- [x] Focused proof covers final manifest/provider parity.
+- [x] `docs/architecture/word-editor/design.md` and `docs/components/word-editor-page/design.md` are updated if the public contract changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 
@@ -119,7 +119,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Pending.
+Status Note: In progress. Phase 1 and Phase 3 are complete; Phase 2 (`R20-01`, `R21-01`, `R22-01`, `R23-01`) remains open.
 
 Closure Audit Evidence:
 

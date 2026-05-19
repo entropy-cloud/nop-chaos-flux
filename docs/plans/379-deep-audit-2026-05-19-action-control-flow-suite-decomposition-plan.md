@@ -1,6 +1,6 @@
 # 379 Deep Audit 2026-05-19 Action Control-Flow Suite Decomposition Plan
 
-> Plan Status: planned
+> Plan Status: partially completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -39,26 +39,26 @@
 
 ### Phase 1 - Split And Simplify Action Edge-Case Tests
 
-Status: planned
+Status: completed
 Targets: action control-flow tests and helpers
 
 - Item Types: `Fix | Proof`
-- [ ] Split the oversized suite into narrower owner-shaped test files.
-- [ ] Reduce repeated compiled-node boilerplate through shared helpers or fixtures.
+- [x] Split the oversized suite into narrower owner-shaped test files.
+- [x] Reduce repeated compiled-node boilerplate through shared helpers or fixtures.
 
 Exit Criteria:
 
-- [ ] `02-07` and `14-05` are fixed.
-- [ ] The touched suite no longer violates the oversized hard gate.
-- [ ] `No owner-doc update required`.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `02-07` and `14-05` are fixed.
+- [x] The touched suite no longer violates the oversized hard gate.
+- [x] `No owner-doc update required`.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] `No owner-doc update required`.
+- [x] The in-scope retained findings are fixed.
+- [x] `No owner-doc update required`.
 - [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
+- [x] Independent subagent closure audit is completed and recorded.
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
@@ -66,9 +66,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Pending.
+Status Note: The in-scope split and helper extraction landed, but repo-wide closure gates remain blocked by unrelated workspace failures, so the plan stays `partially completed`.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: independent general subagent `ses_1bfccaf68ffe9ARbI0y9NFyyzn`
+- Evidence:
+  - Replaced `packages/flux-action-core/src/__tests__/contract-control-flow-edge-cases.test.ts` with narrower suites: `contract-control-flow-branches.test.ts`, `contract-control-flow-parallel.test.ts`, and `contract-control-flow-timeout-cancel.test.ts`.
+  - Extracted shared compiled-node fixtures into `packages/flux-action-core/src/__tests__/control-flow-test-fixtures.ts` to reduce repeated boilerplate.
+  - Focused verification passed: `pnpm exec vitest run src/__tests__/contract-control-flow-branches.test.ts src/__tests__/contract-control-flow-parallel.test.ts src/__tests__/contract-control-flow-timeout-cancel.test.ts` in `packages/flux-action-core` (`3` files / `19` tests).
+  - `pnpm --filter @nop-chaos/flux-action-core typecheck`, `build`, and `lint` passed.
+  - `pnpm check:oversized-code-files` no longer reports the old action control-flow hard-gate suite; remaining hard-gate files are unrelated.

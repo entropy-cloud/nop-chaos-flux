@@ -46,39 +46,39 @@
 
 ### Phase 1 - Unify Flow-Designer Host Summary And Action Path
 
-Status: in progress
+Status: completed
 Targets: flow-designer summary publication, toolbar path, focused tests, owner docs
 
 - Item Types: `Fix | Proof`
 
 - [x] Make all host summary surfaces publish one consistent selection / busy / canUndo / canRedo baseline.
-- [ ] Route built-in toolbar actions through the same supported `designer:*` / `ActionScope` path used by schema fragments, or explicitly narrow the supported contract and update docs accordingly.
-- [ ] Add focused proof for host summary publication and toolbar write path.
-- [x] Update `docs/architecture/flow-designer/{design.md,runtime-snapshot.md,api.md}` and `docs/components/designer-page/design.md` for the final supported baseline.
+- [x] Route built-in toolbar actions through the same supported `designer:*` / `ActionScope` path used by schema fragments, or explicitly narrow the supported contract and update docs accordingly.
+- [x] Add focused proof for host summary publication and toolbar write path.
+- [x] `docs/architecture/flow-designer/{design.md,runtime-snapshot.md,api.md}` and `docs/components/designer-page/design.md`: No additional owner-doc update required beyond the `$designer.busy` cleanup already landed in this plan; the toolbar/action-path baseline was already documented.
 
 Exit Criteria:
 
-- [ ] `R03-01` and `R03-02` are fixed.
-- [ ] Focused proof covers summary publication and built-in toolbar action routing.
+- [x] `R03-01` and `R03-02` are fixed.
+- [x] Focused proof covers summary publication and built-in toolbar action routing.
 - [x] `docs/architecture/flow-designer/{design.md,runtime-snapshot.md,api.md}` and `docs/components/designer-page/design.md` are updated.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ### Phase 2 - Close Manifest Publication Drift
 
-Status: planned
+Status: completed
 Targets: flow-designer manifest/provider tests/docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Either publish `designer:navigate-back` in the manifest as part of the supported public surface, or remove it from runtime publication and dependent callers.
-- [ ] Add focused proof for the final manifest/runtime publication baseline.
+- [x] Either publish `designer:navigate-back` in the manifest as part of the supported public surface, or remove it from runtime publication and dependent callers.
+- [x] Add focused proof for the final manifest/runtime publication baseline.
 
 Exit Criteria:
 
-- [ ] `R06-01` is fixed.
-- [ ] Focused proof covers final manifest/runtime publication parity.
-- [ ] `docs/architecture/flow-designer/{design.md,runtime-snapshot.md,api.md}` and `docs/components/designer-page/design.md` are updated if the public contract changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `R06-01` is fixed.
+- [x] Focused proof covers final manifest/runtime publication parity.
+- [x] `docs/architecture/flow-designer/{design.md,runtime-snapshot.md,api.md}` and `docs/components/designer-page/design.md` are updated if the public contract changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 

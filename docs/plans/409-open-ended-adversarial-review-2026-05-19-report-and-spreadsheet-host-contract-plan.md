@@ -69,22 +69,22 @@ Exit Criteria:
 
 ### Phase 2 - Align Spreadsheet And Report Host Manifests With Provider Enforcement
 
-Status: in progress
+Status: completed
 Targets: report/spreadsheet manifest/provider code, focused tests, owner docs
 
 - Item Types: `Fix | Proof`
 
 - [x] Close the spreadsheet manifest/provider gap so live spreadsheet methods expose and enforce honest payload contracts.
-- [ ] Close the report-designer manifest/provider gap so live provider acceptance matches the published method-specific `args` contracts.
+- [x] Close the report-designer manifest/provider gap so live provider acceptance matches the published method-specific `args` contracts.
 - [x] Add focused proof for manifest/provider parity across the touched host methods.
-- [x] `docs/components/spreadsheet-page/design.md`: No owner-doc update required for the spreadsheet slice because the supported `spreadsheet:*` action baseline already required namespace actions rather than arbitrary payload passthrough; any report-family doc update remains blocked on the unfinished report provider parity item.
+- [x] `docs/components/spreadsheet-page/design.md` and report-family owner docs: No owner-doc update required; the live fixes restored the already-documented namespace/payload baseline.
 
 Exit Criteria:
 
-- [ ] `R05-01` and `R25-01` are fixed.
+- [x] `R05-01` and `R25-01` are fixed.
 - [x] Focused proof covers manifest/provider parity for the touched methods.
 - [x] `docs/components/spreadsheet-page/design.md` and any affected report/spreadsheet owner docs are updated.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 

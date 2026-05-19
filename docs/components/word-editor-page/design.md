@@ -62,6 +62,8 @@ interface WordEditorConfig {
 - `initialCharts` / `initialCodes` 允许宿主直接注入初始占位符元数据
 - `onSave` 是可选持久化回调
 - `statusPath` 用于向宿主外部发布窄只读摘要 DTO
+- `onSave` 在显式保存时接收完整 `SavedDocumentData` envelope，供宿主按同一已保存快照做持久化或校验
+- `statusPath.busy` 表示显式保存是否进行中，而不只是静态 shell 摘要
 
 ## 5. 字段分类
 
@@ -119,16 +121,18 @@ host scope 向下投影四个只读字段：
 - `runtime` 中 `datasetCount`/`chartCount`/`codeCount` 不从 editor-store selector 内读取，而是由独立订阅聚合，避免跨 store 热路径污染。
 - 若存在 recovered persisted state，则 `document` 应先发布 recovered persisted snapshot，而不是继续停留在 schema `initialDocument`。
 - `datasets` 的 schema 输入只作为首次 seed；一旦存在 recovered persisted datasets，remount 后 host projection 继续发布 persisted datasets，而不是被 schema `datasets` 重置。
+- `statusPath.busy` 必须在显式保存进行中发布 `true`，保存完成或失败后再回落到 `false`。
+- datasets recovery baseline 只应在显式保存成功后提交；失败或 abort 的 save 不得提前写入 partial-commit datasets。
 
 ## 8. 事件、动作与组件句柄能力
 
-| 动作       | 命名空间                                | 说明                                            |
-| ---------- | --------------------------------------- | ----------------------------------------------- |
-| 保存文档   | `word-editor:save`                      | 序列化并持久化当前文档                          |
-| 插入字段   | `word-editor:insertField`               | 在光标位置插入数据字段                          |
-| 插入图表   | `word-editor:insertChart`               | 插入 `nop:chart` 自闭合模板占位符并持久化元数据 |
-| 插入代码块 | `word-editor:insertCode`                | 插入 `nop:code` 自闭合模板占位符并持久化元数据  |
-| 撤销/重做  | `word-editor:undo` / `word-editor:redo` | 历史操作                                        |
+| 动作       | 命名空间                                | 说明                                                                                            |
+| ---------- | --------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 保存文档   | `word-editor:save`                      | 序列化并持久化当前文档；成功路径向 `onSave` 交付完整 `SavedDocumentData` envelope               |
+| 插入字段   | `word-editor:insertField`               | 在光标位置插入数据字段                                                                          |
+| 插入图表   | `word-editor:insertChart`               | 仅在 payload 满足 manifest/core validator 契约时插入 `nop:chart` 自闭合模板占位符并持久化元数据 |
+| 插入代码块 | `word-editor:insertCode`                | 仅在 payload 满足 manifest/core validator 契约时插入 `nop:code` 自闭合模板占位符并持久化元数据  |
+| 撤销/重做  | `word-editor:undo` / `word-editor:redo` | 历史操作                                                                                        |
 
 - 页面自身不应暴露大而全的 imperative ref。
 

@@ -160,14 +160,18 @@ Save and autosave truth rules:
 
 - local dirty state is cleared only after the renderer-local save succeeds and the host `saveEvent` also returns success
 - a failed host save keeps the editor dirty so close protection, status publication, and host integrations still see unsaved work
+- explicit save passes the full `SavedDocumentData` envelope to the host `saveEvent(saved, ctx)` callback instead of a blank event payload
+- `statusPath.busy` tracks the renderer-local explicit save lifecycle, so external hosts can distinguish idle from in-flight save state
 - autosave must build `SavedDocumentData` from the current runtime `charts` / `codes`, not from `initialDocument`
 - when an explicit save succeeds, the persisted host projection updates its saved `charts` / `codes` extras from the same runtime values used for the save
 - explicit save now treats `SavedDocumentData` as the single persisted truth surface for the renderer-owned save path: the success callback receives the full saved envelope, and host projection `document` refreshes from `saved.data` in that same envelope
+- dataset persistence is part of the successful save commit only; datasets must not be written ahead of host save success / abort adjudication
 - async save completion must not recreate local UI state after unmount; save-success banners and timers are renderer-local affordances only while the page is still mounted
 - in-repo live renderer call sites use the canonical `flux.wordEditor.*` i18n namespace; legacy unprefixed forms are not the current source baseline
 - document/dataset persistence helpers are browser-optional: in SSR or non-browser environments they must return explicit safe fallbacks (`false`, `null`, `[]`) instead of touching `localStorage`
 - mount-time recovery is persisted-first: when recovered saved state exists, host projection `document` should hydrate from that recovered persisted snapshot instead of continuing to expose schema `initialDocument`
 - `datasets` are also persisted-first on remount: schema `datasets` seed the initial store only when no recovered dataset state exists, and must not overwrite later persisted user edits on every mount
+- `word-editor:insertChart` / `word-editor:insertCode` provider enforcement now matches the published manifest contract and rejects payloads the core validators would later discard
 
 ### With nop-entropy Backend
 
