@@ -166,6 +166,9 @@ export function createRendererRuntime(input: {
   }
 
   function releaseOwnedActionScope(actionScope: ActionScope) {
+    for (const namespace of actionScope.listNamespaces()) {
+      actionScope.unregisterNamespace(namespace);
+    }
     ownedActionScopes.delete(actionScope);
   }
 
@@ -535,6 +538,9 @@ export function createRendererRuntime(input: {
       ownedFormRuntimes.clear();
       importManager.dispose({ actionScopes: Array.from(ownedActionScopes) });
       importStack.dispose();
+      for (const actionScope of Array.from(ownedActionScopes)) {
+        releaseOwnedActionScope(actionScope);
+      }
       ownedActionScopes.clear();
       executeApiRequest.dispose?.();
       if (ownsModuleCache) {

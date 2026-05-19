@@ -403,7 +403,10 @@ async function validateCompiledField(
     ) {
       finalErrors = [];
       if (validationRun) {
-        sharedState.validationAsyncGovernance.settleRun(validationRun, { outcome: 'succeeded' });
+        sharedState.validationAsyncGovernance.settleRun(validationRun, {
+          outcome: 'cancelled',
+          cancelled: true,
+        });
       }
       return createValidationResult([]);
     }

@@ -409,7 +409,7 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
     const env = getEnv();
 
     if (previousPromise) {
-      if (dedupStrategy === 'ignore-new') {
+      if (dedupStrategy === 'ignore-new' && !previousController?.signal.aborted) {
         return previousPromise as Promise<ApiResponse<T>>;
       }
 
@@ -419,11 +419,16 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
     }
 
     const controller = new AbortController();
+    let detachParentAbortListener: (() => void) | undefined;
     if (options?.signal) {
       if (options.signal.aborted) {
         controller.abort();
       } else {
-        options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+        const abortFromParent = () => controller.abort();
+        options.signal.addEventListener('abort', abortFromParent, { once: true });
+        detachParentAbortListener = () => {
+          options.signal?.removeEventListener('abort', abortFromParent);
+        };
       }
     }
 
@@ -442,6 +447,7 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
     try {
       return await requestPromise;
     } finally {
+      detachParentAbortListener?.();
       if (activeControllers.get(requestKey) === controller) {
         activeControllers.delete(requestKey);
       }

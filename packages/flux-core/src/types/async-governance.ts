@@ -5,6 +5,8 @@ export type AsyncRunOutcome = 'running' | 'succeeded' | 'failed' | 'cancelled' |
 export interface AsyncErrorSummary {
   name?: string;
   message: string;
+  stack?: string;
+  cause?: unknown;
 }
 
 export interface AsyncOwnerRunDebugEntry {

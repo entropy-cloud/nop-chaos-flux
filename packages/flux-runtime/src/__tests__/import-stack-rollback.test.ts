@@ -1,97 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createImportStack } from '../import-stack.js';
-import type {
-  ActionScope,
-  ImportedLibraryModule,
-  ModuleCache,
-  PreparedImportSpec,
-  RendererEnv,
-  RendererRuntime,
-  XuiImportSpec,
-} from '@nop-chaos/flux-core';
-import { createScopeRef } from '../scope.js';
-
-function createMockModule(mod?: Partial<ImportedLibraryModule>): ImportedLibraryModule {
-  return {
-    createNamespace: vi.fn(async () => ({
-      kind: 'import' as const,
-      invoke: async () => ({ ok: true }),
-    })),
-    createExpressionHelpers: mod?.createExpressionHelpers,
-    ...mod,
-  };
-}
-
-function createModuleCache(): ModuleCache {
-  const cache = new Map<string, ImportedLibraryModule>();
-  const pending = new Map<string, Promise<ImportedLibraryModule>>();
-  return {
-    get: (key: string) => cache.get(key),
-    set: (key: string, mod: ImportedLibraryModule) => {
-      cache.set(key, mod);
-    },
-    has: (key: string) => cache.has(key),
-    getPending: (key: string) => pending.get(key),
-    setPending: (key: string, p: Promise<ImportedLibraryModule>) => {
-      pending.set(key, p);
-    },
-    removePending: (key: string) => {
-      pending.delete(key);
-    },
-    clear() {
-      cache.clear();
-      pending.clear();
-    },
-  };
-}
-
-function createMockActionScope(namespaces: string[] = []): ActionScope {
-  const ns = new Set(namespaces);
-  const releaseMap = new Map<string, () => void>();
-  return {
-    id: 'mock-action-scope',
-    listNamespaces: () => Array.from(ns),
-    registerNamespace: (alias: string) => {
-      ns.add(alias);
-      const key = `ns-${alias}`;
-      const release = () => {
-        ns.delete(alias);
-        releaseMap.delete(key);
-      };
-      releaseMap.set(key, release);
-      return release;
-    },
-    dispatch: async () => ({ ok: true }),
-    getNamespace: () => undefined,
-  } as unknown as ActionScope;
-}
-
-function createMockRuntime(): RendererRuntime {
-  const releaseActionScope = vi.fn();
-  return {
-    createActionScope: () => createMockActionScope(),
-    releaseActionScope,
-  } as unknown as RendererRuntime;
-}
-
-function createMockEnv(): RendererEnv {
-  return {
-    fetcher: async <T>() => ({ ok: true as const, status: 200, data: null as T }),
-    notify: () => {},
-  };
-}
-
-function createStackSetup() {
-  const moduleCache = createModuleCache();
-  const runtime = createMockRuntime();
-  const scope = createScopeRef({ id: 'test-scope', path: '$test', initialData: {} });
-
-  return {
-    moduleCache,
-    runtime,
-    scope,
-  };
-}
+import type { PreparedImportSpec, XuiImportSpec } from '@nop-chaos/flux-core';
+import {
+  createMockEnv,
+  createMockModule,
+  createStackSetup,
+} from './import-stack-test-support.js';
 
 describe('createImportStack rollback', () => {
   it('releases auto-owned action scopes when push rollback fails after scope creation', async () => {
