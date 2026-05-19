@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { SpreadsheetFrozenPane } from '@nop-chaos/spreadsheet-core';
 import { ContextMenu, ContextMenuTrigger } from '@nop-chaos/ui';
 import {
@@ -57,19 +57,16 @@ export function SpreadsheetGrid({
   onFieldDragLeave,
   readonly,
 }: SpreadsheetGridProps) {
-  const clampCell = useCallback(
-    (row: number, col: number) => ({
+  const clampCell = (row: number, col: number) => ({
       row: Math.max(0, Math.min(rows - 1, row)),
       col: Math.max(0, Math.min(cols - 1, col)),
-    }),
-    [cols, rows],
-  );
+    });
   const frozen: SpreadsheetFrozenPane | undefined = snapshot.activeSheet?.frozen;
   const activeSheetId = snapshot.activeSheet?.id ?? '';
   const selectedRange = getSelectedRange();
-  const selectionAnchorCell = useMemo(() => getAnchorCellFromSelection(selection), [selection]);
-  const selectedRowInfo = useMemo(() => getSelectedAxisInfo(selection, 'row'), [selection]);
-  const selectedColumnInfo = useMemo(() => getSelectedAxisInfo(selection, 'column'), [selection]);
+  const selectionAnchorCell = getAnchorCellFromSelection(selection);
+  const selectedRowInfo = getSelectedAxisInfo(selection, 'row');
+  const selectedColumnInfo = getSelectedAxisInfo(selection, 'column');
   const canUseRowStructureActions =
     selection.kind === 'cell' || selection.kind === 'range' || selection.kind === 'row';
   const canUseColumnStructureActions =
@@ -78,13 +75,9 @@ export function SpreadsheetGrid({
   const canResizeColumn = selection.kind === 'column' && selectedColumnInfo?.count === 1;
   const canSort = !!selectedRange && canUseColumnStructureActions;
   const canFilter = !!selectionAnchorCell && !!activeSheetId && selection.kind === 'cell';
-  const sortRange = useMemo(
-    () =>
-      selectedRange
+  const sortRange = selectedRange
         ? expandSortRangeToUsedColumns(selectedRange, snapshot.activeSheet?.cells)
-        : null,
-    [selectedRange, snapshot.activeSheet?.cells],
-  );
+        : null;
   const canMerge =
     !!selectedRange &&
     (selectedRange.startRow !== selectedRange.endRow ||
@@ -94,10 +87,7 @@ export function SpreadsheetGrid({
     (snapshot.activeSheet?.merges ?? []).some((merge) => rangesEqual(selectedRange, merge));
   const canFreeze = !!selectionAnchorCell && !!activeSheetId && selection.kind !== 'sheet';
   const hasActiveRowFilters = (snapshot.activeSheet?.filters?.columns?.length ?? 0) > 0;
-  const filteredColumnSet = useMemo(
-    () => new Set((snapshot.activeSheet?.filters?.columns ?? []).map((entry) => entry.col)),
-    [snapshot.activeSheet?.filters?.columns],
-  );
+  const filteredColumnSet = new Set((snapshot.activeSheet?.filters?.columns ?? []).map((entry) => entry.col));
 
   const contextActions = useContextMenuActions({
     bridge,
@@ -146,16 +136,13 @@ export function SpreadsheetGrid({
     pending.element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
   }, [selectedColumnInfo, selectedRowInfo, selection.kind]);
 
-  const openResizeDialog = useCallback(
-    (axis: 'row' | 'column', index: number) => {
+  const openResizeDialog = (axis: 'row' | 'column', index: number) => {
       const currentSize =
         axis === 'row' ? String(rowHeights[index] ?? DEFAULT_ROW_HEIGHT) : String(columnWidths[index] ?? DEFAULT_COL_WIDTH);
       setResizeDialog({ axis, index, size: currentSize });
-    },
-    [columnWidths, rowHeights],
-  );
+    };
 
-  const submitResizeDialog = useCallback(async () => {
+  const submitResizeDialog = async () => {
     if (!resizeDialog) {
       return;
     }
@@ -172,10 +159,9 @@ export function SpreadsheetGrid({
     }
 
     setResizeDialog(null);
-  }, [contextActions, resizeDialog]);
+  };
 
-  const moveSelection = useCallback(
-    (nextRow: number, nextCol: number) => {
+  const moveSelection = (nextRow: number, nextCol: number) => {
       const next = clampCell(nextRow, nextCol);
       keyboardCellRef.current = next;
       onCellClick(next.row, next.col);
@@ -185,22 +171,18 @@ export function SpreadsheetGrid({
         ) as HTMLElement | null;
         cell?.focus();
       });
-    },
-    [clampCell, onCellClick],
-  );
+    };
 
-  const handleScroll = useCallback(() => {
+  const handleScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
     setScrollTop(el.scrollTop);
     setScrollLeft(el.scrollLeft);
     if (el.clientHeight !== viewportHeight) setViewportHeight(el.clientHeight);
     if (el.clientWidth !== viewportWidth) setViewportWidth(el.clientWidth);
-  }, [viewportHeight, viewportWidth]);
+  };
 
-  const viewport = useMemo(
-    () =>
-      buildSpreadsheetGridViewport({
+  const viewport = buildSpreadsheetGridViewport({
         rows,
         cols,
         columnWidths,
@@ -213,22 +195,7 @@ export function SpreadsheetGrid({
         scrollLeft,
         viewportHeight,
         viewportWidth,
-      }),
-    [
-      rows,
-      cols,
-      columnWidths,
-      rowHeights,
-      selection,
-      snapshot,
-      selectedCell,
-      frozen,
-      scrollTop,
-      scrollLeft,
-      viewportHeight,
-      viewportWidth,
-    ],
-  );
+      });
 
   const isDraggingRef = useRef(false);
   const lastDragCellRef = useRef<{ row: number; col: number } | null>(null);

@@ -394,6 +394,6 @@ export interface DesignerHostStatusSummary extends DomainHostStatusSummary {
   error?: string | null;
   canUndo: boolean;
   canRedo: boolean;
-  selectionKind: 'node' | 'edge' | 'none';
+  selectionKind: 'branch' | 'node' | 'edge' | 'none';
   selectionCount: number;
 }

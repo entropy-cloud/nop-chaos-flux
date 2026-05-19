@@ -1,4 +1,3 @@
-import React, { useMemo } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button, cn } from '@nop-chaos/ui';
@@ -26,6 +25,25 @@ const PANEL_CARD = 'min-h-0 overflow-hidden rounded-xl border border-border shad
 const COLLAPSED_RAIL =
   'h-full w-full rounded-xl border border-border shadow-sm px-1.5 text-muted-foreground hover:text-foreground';
 
+function resolveWorkbenchGridCols(
+  hasLeft: boolean,
+  hasRight: boolean,
+  leftCollapsed: boolean,
+  rightCollapsed: boolean,
+): string {
+  if (!hasLeft && !hasRight) return 'grid-cols-1';
+  if (hasLeft && !hasRight) {
+    return leftCollapsed ? 'grid-cols-[2rem_minmax(0,1fr)]' : 'grid-cols-[15rem_minmax(0,1fr)]';
+  }
+  if (!hasLeft && hasRight) {
+    return rightCollapsed ? 'grid-cols-[minmax(0,1fr)_2rem]' : 'grid-cols-[minmax(0,1fr)_22rem]';
+  }
+  if (leftCollapsed && rightCollapsed) return 'grid-cols-[2rem_minmax(0,1fr)_2rem]';
+  if (leftCollapsed) return 'grid-cols-[2rem_minmax(0,1fr)_22rem]';
+  if (rightCollapsed) return 'grid-cols-[15rem_minmax(0,1fr)_2rem]';
+  return 'grid-cols-[15rem_minmax(0,1fr)_22rem]';
+}
+
 export function WorkbenchShell({
   className,
   style,
@@ -48,19 +66,7 @@ export function WorkbenchShell({
   const hasRight = rightPanel !== undefined;
   const hasBoth = hasLeft && hasRight;
 
-  const gridColsClass = useMemo(() => {
-    if (!hasLeft && !hasRight) return 'grid-cols-1';
-    if (hasLeft && !hasRight) {
-      return leftCollapsed ? 'grid-cols-[2rem_minmax(0,1fr)]' : 'grid-cols-[15rem_minmax(0,1fr)]';
-    }
-    if (!hasLeft && hasRight) {
-      return rightCollapsed ? 'grid-cols-[minmax(0,1fr)_2rem]' : 'grid-cols-[minmax(0,1fr)_22rem]';
-    }
-    if (leftCollapsed && rightCollapsed) return 'grid-cols-[2rem_minmax(0,1fr)_2rem]';
-    if (leftCollapsed) return 'grid-cols-[2rem_minmax(0,1fr)_22rem]';
-    if (rightCollapsed) return 'grid-cols-[15rem_minmax(0,1fr)_2rem]';
-    return 'grid-cols-[15rem_minmax(0,1fr)_22rem]';
-  }, [hasLeft, hasRight, leftCollapsed, rightCollapsed]);
+  const gridColsClass = resolveWorkbenchGridCols(hasLeft, hasRight, leftCollapsed, rightCollapsed);
 
   return (
     <div

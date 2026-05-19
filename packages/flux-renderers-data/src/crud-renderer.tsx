@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
@@ -45,30 +45,17 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const nodeScope = props.node.scope;
   const schemaProps = useSchemaProps(props);
   const authoredSchema = props.templateNode.schema as CrudSchema | undefined;
-  const normalizedSchema = useMemo(
-    () => normalizeCrudSchema(schemaProps as CrudSchema),
-    [schemaProps],
-  );
+  const normalizedSchema = normalizeCrudSchema(schemaProps as CrudSchema);
   const scope = useRenderScope();
   const componentRegistry = useCurrentComponentRegistry();
   const env = useRendererEnv();
 
-  const ownerPaths = useMemo(
-    () => createCrudOwnerPaths({ id: props.id, cid: props.meta.cid, schema: normalizedSchema }),
-    [normalizedSchema, props.id, props.meta.cid],
-  );
-  const defaultQuery = useMemo(
-    () => ({
-      ...toRecord(normalizedSchema.defaultParams),
-      ...toRecord(normalizedSchema.queryForm?.defaultParams),
-      ...toRecord(normalizedSchema.queryForm?.data),
-    }),
-    [
-      normalizedSchema.defaultParams,
-      normalizedSchema.queryForm?.data,
-      normalizedSchema.queryForm?.defaultParams,
-    ],
-  );
+  const ownerPaths = createCrudOwnerPaths({ id: props.id, cid: props.meta.cid, schema: normalizedSchema });
+  const defaultQuery = {
+    ...toRecord(normalizedSchema.defaultParams),
+    ...toRecord(normalizedSchema.queryForm?.defaultParams),
+    ...toRecord(normalizedSchema.queryForm?.data),
+  };
 
   const { queryState, paginationState, sortState, filterState, selectedRowKeys } =
     useCrudRuntimeState({
@@ -107,10 +94,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const resolvedSource = normalizeCrudSourceValue(schemaProps.source);
   const source = resolvedSource.rows.length > 0 ? resolvedSource.rows : EMPTY_ROWS;
   const effectiveQuery = queryState.refreshCount > 0 ? queryState.values : defaultQuery;
-  const filteredRows = useMemo(
-    () => applyQueryToRows(source, effectiveQuery),
-    [effectiveQuery, source],
-  );
+  const filteredRows = applyQueryToRows(source, effectiveQuery);
   const internalTableRef = useRef<InternalTableHandle>({});
   const queryStatePath = ownerPaths.queryStatePath;
   const queryDraftStatePath = `${queryStatePath}.$draft`;
@@ -125,13 +109,9 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const quickSaveAction = normalizedSchema.quickSaveAction ?? authoredSchema?.quickSaveAction;
   const quickSaveItemAction =
     normalizedSchema.quickSaveItemAction ?? authoredSchema?.quickSaveItemAction;
-  const defaultColumnNames = useMemo(
-    () =>
-      (normalizedSchema.columns ?? [])
-        .filter((column) => column.hidden !== true)
-        .map((column, index) => column.name ?? `column-${index}`),
-    [normalizedSchema.columns],
-  );
+  const defaultColumnNames = (normalizedSchema.columns ?? [])
+    .filter((column) => column.hidden !== true)
+    .map((column, index) => column.name ?? `column-${index}`);
   const visibleColumnNames = useCrudVisibleColumnNames({
     schema: normalizedSchema,
     defaultColumnNames,
@@ -139,38 +119,23 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     orderedColumnsStatePath: ownerPaths.orderedColumnsStatePath,
   });
 
-  const summary = useMemo<CrudStatusSummary>(
-    () => ({
-      loading: false,
-      refreshing: false,
-      itemCount: filteredRows.length,
-      total: resolvedSource.total,
-      hasSelection: selectedRowKeys.length > 0,
-      selectionCount: selectedRowKeys.length,
-      selectedRowKeys,
-      query: effectiveQuery,
-      pagination: paginationState,
-      sort: sortState,
-      filters: filterState,
-      visibleColumnNames,
-    }),
-    [
-      effectiveQuery,
-      filterState,
-      filteredRows.length,
-      paginationState,
-      resolvedSource.total,
-      selectedRowKeys,
-      sortState,
-      visibleColumnNames,
-    ],
-  );
-  const crudScope = useMemo(
-    () => createReadonlyScopeBinding(scope, '$crud', () => summary),
-    [scope, summary],
-  );
+  const summary: CrudStatusSummary = {
+    loading: false,
+    refreshing: false,
+    itemCount: filteredRows.length,
+    total: resolvedSource.total,
+    hasSelection: selectedRowKeys.length > 0,
+    selectionCount: selectedRowKeys.length,
+    selectedRowKeys,
+    query: effectiveQuery,
+    pagination: paginationState,
+    sort: sortState,
+    filters: filterState,
+    visibleColumnNames,
+  };
+  const crudScope = createReadonlyScopeBinding(scope, '$crud', () => summary);
 
-  const handleRefresh = useCallback((ctx?: CrudRefreshContext) => {
+  const handleRefresh = (ctx?: CrudRefreshContext) => {
     internalTableRef.current?.refreshSource?.();
     if (normalizedSchema.autoClearSelectionOnRefresh) {
       internalTableRef.current?.clearSelection?.();
@@ -207,18 +172,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         $crud: summary,
       },
     });
-  }, [
-    normalizedSchema.autoClearSelectionOnRefresh,
-    nodeScope,
-    onRefresh,
-    queryState.refreshCount,
-    queryState.values,
-    queryStatePath,
-    scope,
-    selectedRowKeys,
-    selectionStatePath,
-    summary,
-  ]);
+  };
 
   const queryFormId = `${props.id}-query-form`;
   const { handleQuerySubmit, handleQueryReset } = useCrudQueryBridge({
@@ -273,19 +227,13 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const emptyContent = resolveCrudSlotContent('empty', { fallback: defaultEmptyLabel });
   const tableEmpty = typeof emptyContent === 'string' ? emptyContent : defaultEmptyLabel;
 
-  const headerBlocks = useMemo(
-    () => normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header'),
-    [normalizedSchema.toolbarLayout],
-  );
-  const footerBlocks = useMemo(
-    () => normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer'),
-    [normalizedSchema.toolbarLayout],
-  );
+  const headerBlocks = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header');
+  const footerBlocks = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer');
   const hasToolbar = hasRendererSlotContent(asReactNode(toolbarContent));
   const hasListActions = hasRendererSlotContent(asReactNode(listActionsContent));
   const hasFooterToolbar = hasRendererSlotContent(asReactNode(footerToolbarContent));
 
-  const tableSchema = useMemo<TableSchema>(() => {
+  const tableSchema: TableSchema = (() => {
     const base: Record<string, unknown> = {
       type: 'table',
       id: `${props.id}-table`,
@@ -333,69 +281,40 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     }
 
     return base as TableSchema;
-  }, [
-    filterStatePath,
-    filteredRows,
-    normalizedSchema.columnSettings,
-    normalizedSchema.columns,
-    normalizedSchema.onRefresh,
-    normalizedSchema.onRowClick,
-    quickSaveAction,
-    quickSaveItemAction,
-    normalizedSchema.responsive,
-    normalizedSchema.rowKey,
-    normalizedSchema.selection,
-    paginationState.currentPage,
-    paginationState.pageSize,
-    paginationStatePath,
-    props.id,
-    selectedRowKeys,
-    selectionStatePath,
-    sortStatePath,
-    tableEmpty,
-  ]);
-  const tableEvents = useMemo<RendererComponentProps<TableSchema>['events']>(
-    () => props.events as unknown as RendererComponentProps<TableSchema>['events'],
-    [props.events],
-  );
-  const tableResolvedProps = useMemo<RendererComponentProps<TableSchema>['props']>(
-    () => ({
-      ...tableSchema,
-      disabled: props.props.disabled,
-      className: props.props.className,
-      frameClassName: props.props.frameClassName,
-      testid: props.props.testid,
-      cid: props.props.cid,
-    }),
-    [tableSchema, props.props.cid, props.props.className, props.props.disabled, props.props.frameClassName, props.props.testid],
-  );
-  const tableRendererProps = useMemo<RendererComponentProps<TableSchema>>(
-    () =>
-      ({
-        id: `${props.id}-table`,
-        path: `${props.path}.table`,
-        schema: tableSchema,
-        templateNode:
-          props.templateNode as unknown as RendererComponentProps<TableSchema>['templateNode'],
-        node: {
-          ...props.node,
-          scope: crudScope,
-        } as unknown as RendererComponentProps<TableSchema>['node'],
-        props: tableResolvedProps,
-        meta: {
-          ...props.meta,
-          cid: undefined,
-          className: undefined,
-          testid: undefined,
-        },
-        regions: props.regions as RendererComponentProps<TableSchema>['regions'],
-        events: tableEvents,
-        helpers: props.helpers,
-      }) satisfies RendererComponentProps<TableSchema>,
-    [crudScope, props.helpers, props.id, props.meta, props.node, props.path, props.regions, props.templateNode, tableEvents, tableResolvedProps, tableSchema],
-  );
+  })();
+  const tableEvents = props.events as unknown as RendererComponentProps<TableSchema>['events'];
+  const tableResolvedProps: RendererComponentProps<TableSchema>['props'] = {
+    ...tableSchema,
+    disabled: props.props.disabled,
+    className: props.props.className,
+    frameClassName: props.props.frameClassName,
+    testid: props.props.testid,
+    cid: props.props.cid,
+  };
+  const tableRendererProps: RendererComponentProps<TableSchema> =
+    ({
+      id: `${props.id}-table`,
+      path: `${props.path}.table`,
+      schema: tableSchema,
+      templateNode:
+        props.templateNode as unknown as RendererComponentProps<TableSchema>['templateNode'],
+      node: {
+        ...props.node,
+        scope: crudScope,
+      } as unknown as RendererComponentProps<TableSchema>['node'],
+      props: tableResolvedProps,
+      meta: {
+        ...props.meta,
+        cid: undefined,
+        className: undefined,
+        testid: undefined,
+      },
+      regions: props.regions as RendererComponentProps<TableSchema>['regions'],
+      events: tableEvents,
+      helpers: props.helpers,
+    }) satisfies RendererComponentProps<TableSchema>;
 
-  const queryFormSchema = useMemo<BaseSchema | null>(() => {
+  const queryFormSchema: BaseSchema | null = (() => {
     const queryForm = normalizedSchema.queryForm;
     if (!queryForm?.body) {
       return null;
@@ -418,30 +337,24 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     }
 
     return base as BaseSchema;
-  }, [normalizedSchema.queryForm, queryFormId, queryState.values]);
+  })();
 
-  const handleToolbarPageChange = useCallback(
-    (page: number) => {
-      scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });
-    },
-    [paginationState.pageSize, paginationStatePath, scope],
-  );
+  const handleToolbarPageChange = (page: number) => {
+    scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });
+  };
 
-  const handleToolbarPageSizeChange = useCallback(
-    (pageSize: number) => {
-      scope?.update(paginationStatePath, { currentPage: 1, pageSize });
-    },
-    [paginationStatePath, scope],
-  );
+  const handleToolbarPageSizeChange = (pageSize: number) => {
+    scope?.update(paginationStatePath, { currentPage: 1, pageSize });
+  };
 
-  const handleQuerySubmitWithFeedback = useCallback(() => {
+  const handleQuerySubmitWithFeedback = () => {
     void handleQuerySubmit().catch((error) => {
       env.notify?.(
         'warning',
         error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
       );
     });
-  }, [env, handleQuerySubmit]);
+  };
 
   return (
     <div

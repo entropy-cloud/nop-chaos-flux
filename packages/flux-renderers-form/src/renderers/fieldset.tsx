@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, hasRendererSlotContent } from '@nop-chaos/flux-react';
 import { resolveGap } from '@nop-chaos/flux-react';
@@ -24,21 +24,18 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
   const [collapsed, setCollapsed] = useState(Boolean(slotProps.collapsed) && collapsible);
   const fieldsetGap = resolveGap(slotProps.gap as number | string | undefined);
 
-  const toggle = useCallback(() => {
+  const toggle = () => {
     if (collapsible) {
       setCollapsed((prev) => !prev);
     }
-  }, [collapsible]);
+  };
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
       if (collapsible && (e.key === 'Enter' || e.key === ' ')) {
         e.preventDefault();
         setCollapsed((prev) => !prev);
       }
-    },
-    [collapsible],
-  );
+    };
 
   const bodyStyle = collapsed ? { display: 'none', ...fieldsetGap.style } : fieldsetGap.style;
 

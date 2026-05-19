@@ -31,13 +31,13 @@ type DataViewerProps = {
 function DataViewer({ data, defaultExpand = true, className }: DataViewerProps) {
   const [format, setFormat] = React.useState<'json' | 'yaml'>('json');
 
-  const yamlText = React.useMemo(() => {
+  const yamlText = (() => {
     try {
       return stringify(data, { lineWidth: 0 });
     } catch {
       return '';
     }
-  }, [data]);
+  })();
 
   return (
     <div className={cn('flex flex-col', className)}>

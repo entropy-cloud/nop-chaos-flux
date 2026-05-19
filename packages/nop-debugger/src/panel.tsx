@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
 import { Button } from '@nop-chaos/ui';
@@ -145,7 +145,7 @@ function matchesSearchQuery(event: import('./types.js').NopDebugEvent, rawQuery:
 }
 
 export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
-  const filterLabels = useMemo(() => getFilterLabels(), []);
+  const filterLabels = getFilterLabels();
   const chrome = useDebuggerSnapshot(
     props.controller,
     (snapshot) => ({
@@ -165,10 +165,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     (snapshot) => snapshot.filters,
     equalFilters,
   );
-  const handlePanelTap = useMemo(
-    () => (chrome.minimized ? () => props.controller.unminimize() : undefined),
-    [props.controller, chrome.minimized],
-  );
+  const handlePanelTap = chrome.minimized ? () => props.controller.unminimize() : undefined;
   const { position, bind: dragBind } = useDraggablePosition(
     props.controller,
     chrome.position,
@@ -225,39 +222,33 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     );
   };
 
-  const filteredEvents = useMemo(
-    () => events.filter((event) => filters.includes(event.group)),
-    [events, filters],
-  );
+  const filteredEvents = events.filter((event) => filters.includes(event.group));
 
-  const searchedEvents = useMemo(() => {
+  const searchedEvents = (() => {
     if (!deferredSearchText.trim()) return filteredEvents;
     return filteredEvents.filter((event) => matchesSearchQuery(event, deferredSearchText));
-  }, [deferredSearchText, filteredEvents]);
+  })();
 
-  const networkEvents = useMemo(
-    () => filteredEvents.filter((event) => event.group === 'api'),
-    [filteredEvents],
-  );
+  const networkEvents = filteredEvents.filter((event) => event.group === 'api');
 
-  const mergedRequests = useMemo(() => mergeNetworkRequests(networkEvents), [networkEvents]);
+  const mergedRequests = mergeNetworkRequests(networkEvents);
 
-  const errorGroups = useMemo(() => groupErrors(events), [events]);
+  const errorGroups = groupErrors(events);
 
-  const overview = useMemo(() => buildOverview(events), [events]);
-  const latestTrace = useMemo(() => {
+  const overview = buildOverview(events);
+  const latestTrace = (() => {
     void events;
     return props.controller.createDiagnosticReport({
       eventLimit: 20,
       includeLatestInteractionTrace: true,
     }).latestInteractionTrace;
-  }, [props.controller, events]);
-  const latestTraceSummary = useMemo(() => formatTraceSummary(latestTrace), [latestTrace]);
+  })();
+  const latestTraceSummary = formatTraceSummary(latestTrace);
 
-  const nodeDiagnostics = useMemo(() => {
+  const nodeDiagnostics = (() => {
     if (!nodeIdInput.trim()) return null;
     return props.controller.getNodeDiagnostics({ nodeId: nodeIdInput.trim() });
-  }, [props.controller, nodeIdInput]);
+  })();
 
   const toggleErrorsOnly = () => {
     if (errorsOnly) {

@@ -1,5 +1,5 @@
 import './code-editor-styles.css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useRenderScope } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
@@ -70,7 +70,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   const name = String(props.props.name ?? '');
   const labelContent = resolveRendererSlotContent(props, 'label');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const toggleFullscreen = useCallback(() => setIsFullscreen((value) => !value), []);
+  const toggleFullscreen = () => setIsFullscreen((value) => !value);
 
   const { value, handleChange, handleFocus, handleBlur } = useCodeEditorBinding(props, name);
 
@@ -78,7 +78,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   const resolvedFunctions = useResolvedFunctions(expressionConfig);
   const resolvedTables = useResolvedTables(sqlConfig, scope);
 
-  const completionConfig = useMemo(() => {
+  const completionConfig = (() => {
     if (language === 'expression' && expressionConfig) {
       return {
         variables: resolvedVariables,
@@ -91,11 +91,9 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
       };
     }
     return undefined;
-  }, [language, expressionConfig, sqlConfig, resolvedVariables, resolvedFunctions, resolvedTables]);
+  })();
 
-  const extensions = useMemo(
-    () =>
-      createBaseExtensions({
+  const extensions = createBaseExtensions({
         language,
         mode,
         lineNumbers,
@@ -107,20 +105,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
         lintConfig: language === 'expression' ? expressionConfig?.lint : undefined,
         showFriendlyNames:
           language === 'expression' ? expressionConfig?.showFriendlyNames : undefined,
-      }),
-    [
-      language,
-      mode,
-      lineNumbers,
-      folding,
-      autoHeight,
-      editorTheme,
-      sqlConfig?.dialect,
-      completionConfig,
-      expressionConfig?.lint,
-      expressionConfig?.showFriendlyNames,
-    ],
-  );
+      });
 
   const height = (props.props.height as number | string | undefined) ?? getDefaultHeight(language);
   const width = (props.props.width as number | string | undefined) ?? '100%';

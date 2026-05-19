@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import {
   BarChart,
@@ -42,17 +42,10 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
 
   const chartType = (props.props.chartType as ChartType) ?? 'bar';
   const title = props.props.title as string | undefined;
-  const source = useMemo(
-    () =>
-      Array.isArray(props.props.source)
-        ? (props.props.source as Array<Record<string, unknown>>)
-        : [],
-    [props.props.source],
-  );
-  const series = useMemo<ChartSeriesSchema[]>(
-    () => (Array.isArray(props.props.series) ? (props.props.series as ChartSeriesSchema[]) : []),
-    [props.props.series],
-  );
+  const source = Array.isArray(props.props.source)
+    ? (props.props.source as Array<Record<string, unknown>>)
+    : [];
+  const series = Array.isArray(props.props.series) ? (props.props.series as ChartSeriesSchema[]) : [];
   const componentId =
     typeof props.props.componentId === 'string' ? props.props.componentId : props.id;
   const xAxis = props.props.xAxis as { dataKey?: string; label?: string } | undefined;
@@ -68,7 +61,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const xKey = xAxis?.dataKey;
   const hasMultipleSeries = series.length > 1;
 
-  const chartConfig = useMemo<ChartConfig>(() => {
+  const chartConfig: ChartConfig = (() => {
     const config: ChartConfig = {};
     series.forEach((s, i) => {
       if (s.name) {
@@ -79,9 +72,9 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       config.value = { label: title ?? 'Value', color: COLORS[0] };
     }
     return config;
-  }, [series, title]);
+  })();
 
-  const pieData = useMemo(() => {
+  const pieData = (() => {
     if (source.length > 0 && xKey) {
       return source.map((item, i) => ({
         name: String(item[xKey] ?? ''),
@@ -97,9 +90,9 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       }));
     }
     return [];
-  }, [source, xKey, series]);
+  })();
 
-  const cartesianData = useMemo(() => {
+  const cartesianData = (() => {
     if (source.length > 0) {
       return source;
     }
@@ -112,14 +105,14 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       });
     }
     return [];
-  }, [source, series]);
+  })();
 
   const chartHeight = typeof height === 'number' ? `${height}px` : height || '400px';
   const chartAccessibleName = title?.trim() || t('flux.common.chart');
   const resolvedChartType = (
     series.length > 0 ? (series[0].type ?? chartType) : chartType
   ) as ChartType;
-  const chartDataSummary = useMemo(() => {
+  const chartDataSummary = (() => {
     if (resolvedChartType === 'pie') {
       return pieData.map((item) => `${item.name}: ${item.value}`);
     }
@@ -135,39 +128,36 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         .join(', ');
       return `${label}: ${seriesList}`;
     });
-  }, [cartesianData, pieData, resolvedChartType, series, xKey]);
+  })();
 
-  const handleResize = useCallback(() => {
+  const handleResize = () => {
     void chartRef.current;
-  }, []);
+  };
 
-  const chartHandle = useMemo<ComponentHandle>(
-    () => ({
-      id: componentId,
-      type: 'chart',
-      get ref() {
-        return chartRef.current;
+  const chartHandle: ComponentHandle = useMemo(() => ({
+    id: componentId,
+    type: 'chart',
+    get ref() {
+      return chartRef.current;
+    },
+    capabilities: {
+      invoke(method, _payload) {
+        switch (method) {
+          case 'resize':
+            handleResize();
+            return { ok: true };
+          default:
+            return { ok: false, error: new Error(`Unsupported chart handle method: ${method}`) };
+        }
       },
-      capabilities: {
-        invoke(method, _payload) {
-          switch (method) {
-            case 'resize':
-              handleResize();
-              return { ok: true };
-            default:
-              return { ok: false, error: new Error(`Unsupported chart handle method: ${method}`) };
-          }
-        },
-        hasMethod(method) {
-          return method === 'resize';
-        },
-        listMethods() {
-          return ['resize'];
-        },
+      hasMethod(method) {
+        return method === 'resize';
       },
-    }),
-    [componentId, handleResize],
-  );
+      listMethods() {
+        return ['resize'];
+      },
+    },
+  }), [componentId]);
 
   useEffect(() => {
     if (!componentRegistry) return;

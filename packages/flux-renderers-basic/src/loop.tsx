@@ -69,10 +69,7 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
   const itemName = schemaProps.itemName;
   const indexName = schemaProps.indexName;
   const keyName = schemaProps.keyName;
-  const bindings = useMemo(
-    () => resolveLoopBindings({ itemName, indexName, keyName }),
-    [itemName, indexName, keyName],
-  );
+  const bindings = resolveLoopBindings({ itemName, indexName, keyName });
   const repeatedTemplateId = createStructuralRepeatedTemplateId(props.id);
 
   return (

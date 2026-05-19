@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import {
   getIn,
   reportRuntimeHostIssue,
@@ -167,8 +167,7 @@ export function useFieldHandlers(args: {
   const runtime = useContext(RuntimeContext);
   const generationRef = useRef(0);
 
-  const handleAsyncFieldError = useMemo(
-    () => (error: unknown, operation: string) => {
+  const handleAsyncFieldError = (error: unknown, operation: string) => {
         if (!runtime) {
           return;
         }
@@ -186,14 +185,10 @@ export function useFieldHandlers(args: {
             fieldName: name,
           },
         });
-      },
-    [name, runtime],
-  );
+      };
 
-  return useMemo(
-    () =>
-      /* eslint-disable react-hooks/refs */
-      createFieldHandlers({
+  /* eslint-disable react-hooks/refs */
+  return createFieldHandlers({
         name,
         currentForm,
         currentValidationScope,
@@ -225,19 +220,8 @@ export function useFieldHandlers(args: {
 
           scope.update(name, convertedValue);
         },
-      }),
-    /* eslint-enable react-hooks/refs */
-    [
-      name,
-      currentForm,
-      currentValidationScope,
-      scope,
-      toFormValue,
-      adapter,
-      adapterContext,
-      handleAsyncFieldError,
-    ],
-  );
+      });
+  /* eslint-enable react-hooks/refs */
 }
 
 function useAdaptedFieldValue(
@@ -312,13 +296,10 @@ export function useFormFieldController(
   const currentForm = useCurrentForm();
   const currentValidationScope = useCurrentValidationScope();
   const rawValue = useBoundFieldValue(name, currentForm, options?.areValuesEqual);
-  const adapterContext = useMemo(
-    () => ({
-      name,
-      readOnly: options?.readOnly ?? false,
-    }),
-    [name, options?.readOnly],
-  );
+  const adapterContext = {
+    name,
+    readOnly: options?.readOnly ?? false,
+  };
   const value = useAdaptedFieldValue(rawValue, options?.adapter, adapterContext);
   const presentation = useFieldPresentation(name, currentValidationScope, {
     disabled: options?.disabled,

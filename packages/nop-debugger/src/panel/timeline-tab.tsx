@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, KeyboardEvent } from 'react';
 import { Button, Input } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -122,7 +122,7 @@ export function TimelineTab(props: {
     }
   }, [resetKey]);
 
-  const virtualWindow = useMemo(() => {
+  const virtualWindow = (() => {
     if (!virtualizationEnabled) {
       return null;
     }
@@ -138,7 +138,7 @@ export function TimelineTab(props: {
       totalHeight: activeTimelineEvents.length * VIRTUAL_ROW_HEIGHT,
       events: activeTimelineEvents.slice(startIndex, endIndex),
     };
-  }, [activeTimelineEvents, scrollTop, viewportHeight, virtualizationEnabled]);
+  })();
 
   const renderEventEntry = (event: NopDebugEvent) => {
     const isSlowRender =

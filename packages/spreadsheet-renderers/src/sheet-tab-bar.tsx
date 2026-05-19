@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { WorksheetDocument } from '@nop-chaos/spreadsheet-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
@@ -44,35 +44,28 @@ export function SheetTabBar({
 
   const visibleSheets = sheets.filter((s) => !s.hidden);
 
-  const handleTabClick = useCallback(
-    (sheetId: string) => {
+  const handleTabClick = (sheetId: string) => {
       if (readOnly) return;
       if (renamingSheetId === sheetId) return;
       onSwitchSheet(sheetId);
-    },
-    [onSwitchSheet, readOnly, renamingSheetId],
-  );
+    };
 
-  const handleTabDoubleClick = useCallback(
-    (sheetId: string, currentName: string) => {
+  const handleTabDoubleClick = (sheetId: string, currentName: string) => {
       if (readOnly) return;
       if (!onRenameSheet) return;
       setRenamingSheetId(sheetId);
       setRenameValue(currentName);
-    },
-    [onRenameSheet, readOnly],
-  );
+    };
 
-  const handleRenameSubmit = useCallback(() => {
+  const handleRenameSubmit = () => {
     if (renamingSheetId && onRenameSheet && renameValue.trim()) {
       onRenameSheet(renamingSheetId, renameValue.trim());
     }
     setRenamingSheetId(null);
     setRenameValue('');
-  }, [renamingSheetId, renameValue, onRenameSheet]);
+  };
 
-  const handleRenameKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         handleRenameSubmit();
@@ -80,12 +73,9 @@ export function SheetTabBar({
         setRenamingSheetId(null);
         setRenameValue('');
       }
-    },
-    [handleRenameSubmit],
-  );
+    };
 
-  const handleCloseClick = useCallback(
-    (e: React.MouseEvent, sheetId: string, sheetName: string) => {
+  const handleCloseClick = (e: React.MouseEvent, sheetId: string, sheetName: string) => {
       if (readOnly) return;
       e.stopPropagation();
       if (onRemoveSheet) {
@@ -93,18 +83,16 @@ export function SheetTabBar({
         setPendingSheetName(sheetName);
         setDeleteConfirmOpen(true);
       }
-    },
-    [onRemoveSheet, readOnly],
-  );
+    };
 
-  const handleConfirmDelete = useCallback(() => {
+  const handleConfirmDelete = () => {
     if (pendingSheetId && onRemoveSheet) {
       onRemoveSheet(pendingSheetId);
     }
     setDeleteConfirmOpen(false);
     setPendingSheetId(null);
     setPendingSheetName('');
-  }, [pendingSheetId, onRemoveSheet]);
+  };
 
   return (
     <>

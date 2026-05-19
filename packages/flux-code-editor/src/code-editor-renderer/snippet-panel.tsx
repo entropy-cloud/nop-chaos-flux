@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
 import type { CodeSnippetTemplate } from '../types.js';
 import { ToolbarButton } from './toolbar-button.js';
@@ -9,12 +9,9 @@ interface SnippetPanelProps {
 }
 
 export function SnippetPanel({ snippets, onInsert }: SnippetPanelProps) {
-  const handleSelect = useCallback(
-    (template: string) => {
+  const handleSelect = (template: string) => {
       onInsert(template);
-    },
-    [onInsert],
-  );
+    };
 
   if (snippets.length === 0) return null;
 

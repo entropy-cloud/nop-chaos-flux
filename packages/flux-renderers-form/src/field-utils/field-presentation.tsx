@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import {
   shouldShowFieldError,
   selectCurrentFormFieldPresentation,
@@ -51,7 +50,7 @@ export function useFieldPresentation(
   const dynamicRequiredDependencyPaths = getDynamicRequiredDependencyPaths(validationField);
   const hasDynamicRequiredRule = dynamicRequiredDependencyPaths.length > 0;
   const currentForm = useCurrentForm();
-  const presentationPaths = useMemo(() => {
+  const presentationPaths = (() => {
     const paths = new Set<string>();
     if (name) {
       paths.add(name);
@@ -60,7 +59,7 @@ export function useFieldPresentation(
       paths.add(path);
     }
     return Array.from(paths);
-  }, [dynamicRequiredDependencyPaths, name]);
+  })();
   const currentPresentation = useCurrentFormState(
     (state) =>
       selectCurrentFormFieldPresentation(state, {

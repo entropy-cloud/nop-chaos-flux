@@ -69,15 +69,11 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
   const itemName = props.props.itemName as string | undefined;
   const indexName = props.props.indexName as string | undefined;
   const keyName = props.props.keyName as string | undefined;
-  const bindings = useMemo(
-    () =>
-      resolveLoopBindings({
+  const bindings = resolveLoopBindings({
         itemName: itemName?.trim() || inheritedBindings.itemName,
         indexName: indexName?.trim() || inheritedBindings.indexName,
         keyName: keyName?.trim() || inheritedBindings.keyName,
-      }),
-    [inheritedBindings, itemName, indexName, keyName],
-  );
+      });
 
   if (!loopContext) {
     return null;

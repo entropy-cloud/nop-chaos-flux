@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
@@ -106,8 +106,7 @@ export function OutlinePanel({ bridge, showHeader = true }: OutlinePanelProps) {
   void outlineRevision;
   const outline = applyExpandedState(readOutline(bridge), expandedState);
 
-  const toggleExpanded = useCallback(
-    (itemIndex: number) => {
+  const toggleExpanded = (itemIndex: number) => {
       setExpandedState((prev) => {
         const item = outline[itemIndex];
         if (!item) {
@@ -119,9 +118,7 @@ export function OutlinePanel({ bridge, showHeader = true }: OutlinePanelProps) {
           [item.id]: !item.expanded,
         };
       });
-    },
-    [outline],
-  );
+    };
 
   useEffect(() => {
     if (!bridge) return;
@@ -141,8 +138,7 @@ export function OutlinePanel({ bridge, showHeader = true }: OutlinePanelProps) {
     };
   }, [bridge]);
 
-  const navigateToHeading = useCallback(
-    (item: HeadingItem) => {
+  const navigateToHeading = (item: HeadingItem) => {
       if (!bridge?.command?.executeLocationCatalog) return;
 
       try {
@@ -150,9 +146,7 @@ export function OutlinePanel({ bridge, showHeader = true }: OutlinePanelProps) {
       } catch (error) {
         console.error('[word-editor] outline navigation failed', error);
       }
-    },
-    [bridge],
-  );
+    };
 
   const getLevelTextSize = (level: string) => {
     const levelMap: Record<string, string> = {
