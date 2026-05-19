@@ -40,6 +40,39 @@ const edgeIdArrayShape: FluxValueShape = {
   item: { kind: 'string' },
 };
 
+const nodeSummaryShape: FluxValueShape = {
+  kind: 'object',
+  fields: {
+    id: { kind: 'string' },
+    type: { kind: 'string' },
+    position: positionShape,
+  },
+  description: 'Node summary for domain export',
+};
+
+const nodesArrayShape: FluxValueShape = {
+  kind: 'array',
+  item: nodeSummaryShape,
+};
+
+const edgeSummaryShape: FluxValueShape = {
+  kind: 'object',
+  fields: {
+    id: { kind: 'string' },
+    source: { kind: 'string' },
+    target: { kind: 'string' },
+    sourcePort: { kind: 'string' },
+    taskflowEdgeKind: { kind: 'string' },
+  },
+  optional: ['sourcePort', 'taskflowEdgeKind'],
+  description: 'Edge summary for domain export',
+};
+
+const edgesArrayShape: FluxValueShape = {
+  kind: 'array',
+  item: edgeSummaryShape,
+};
+
 export const DESIGNER_HOST_PROJECTION_FIELDS: HostProjectionContract['fields'] = {
   doc: {
     schema: {
@@ -52,9 +85,11 @@ export const DESIGNER_HOST_PROJECTION_FIELDS: HostProjectionContract['fields'] =
         viewport: viewportShape,
         nodeCount: { kind: 'number' },
         edgeCount: { kind: 'number' },
+        nodes: nodesArrayShape,
+        edges: edgesArrayShape,
       },
     },
-    description: 'Current graph document summary',
+    description: 'Current graph document summary with nodes/edges for domain export',
   },
   selection: {
     schema: {
@@ -163,6 +198,20 @@ export function buildDesignerHostProjection(input: { snapshot: DesignerSnapshot 
         ? 'edge'
         : 'none';
 
+  const nodes = snapshot.doc.nodes.map((n) => ({
+    id: n.id,
+    type: n.type,
+    position: { x: n.position.x, y: n.position.y },
+  }));
+
+  const edges = snapshot.doc.edges.map((e) => ({
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    sourcePort: e.sourcePort,
+    taskflowEdgeKind: (e.data?.taskflowEdgeKind as string | undefined),
+  }));
+
   return {
     doc: {
       id: snapshot.doc.id,
@@ -172,6 +221,8 @@ export function buildDesignerHostProjection(input: { snapshot: DesignerSnapshot 
       viewport: snapshot.doc.viewport,
       nodeCount: snapshot.doc.nodes.length,
       edgeCount: snapshot.doc.edges.length,
+      nodes,
+      edges,
     },
     selection: {
       kind: selectionKind,
