@@ -142,8 +142,8 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   }
 
   function readCurrentParentValue(): unknown {
-    if (parentForm?.store) {
-      return (parentForm.store.getState().values as Record<string, unknown>)[name];
+    if (parentForm) {
+      return currentValue;
     }
 
     if (typeof parentScope?.get === 'function') {
@@ -306,7 +306,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
   return (
     <>
-      <div className={cn('nop-detail-field')} data-slot="field-control">
+      <div className={cn('nop-detail-field', props.meta.className)} data-slot="field-control">
         <div data-slot="detail-field-viewer">
           {viewerContent ?? (
             <span>

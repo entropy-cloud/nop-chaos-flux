@@ -181,7 +181,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   });
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const itemsRef = React.useRef<ArrayEditorItem[]>([]);
-  const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
+  const registrationRef = React.useRef<{ registrationId: string } | undefined>(undefined);
   const modelGeneration = useCurrentFormModelGeneration();
   const inputRefs = React.useRef<Map<string, HTMLInputElement | null>>(new Map());
   const addButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -221,9 +221,9 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
   React.useEffect(() => {
     if (registrationRef.current) {
-      registrationRef.current.childPaths = childPaths;
+      currentForm?.updateFieldRegistration(registrationRef.current.registrationId, { childPaths });
     }
-  }, [childPaths]);
+  }, [childPaths, currentForm]);
 
   React.useEffect(() => {
     const pending = pendingFocusRef.current;
@@ -326,8 +326,9 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       },
     };
 
-    registrationRef.current = registration;
-    return currentForm.registerField(registration).unregister;
+    const handle = currentForm.registerField(registration);
+    registrationRef.current = handle.accepted ? { registrationId: handle.registrationId } : undefined;
+    return handle.unregister;
   }, [childPaths, currentForm, modelGeneration, name, props.props.itemLabel]);
 
   return (

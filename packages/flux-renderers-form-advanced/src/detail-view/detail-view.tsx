@@ -227,8 +227,23 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   }
 
   function readCurrentValueAtPath(path: string): unknown {
-    if (parentForm?.store) {
-      return getIn(parentForm.store.getState().values, path);
+    if (parentForm) {
+      if (!scopePath) {
+        return path ? getIn(formProjectedValue as Record<string, unknown>, path) : formProjectedValue;
+      }
+
+      if (path === scopePath) {
+        return formProjectedValue;
+      }
+
+      if (path.startsWith(`${scopePath}.`)) {
+        return getIn(
+          formProjectedValue as Record<string, unknown>,
+          path.slice(scopePath.length + 1),
+        );
+      }
+
+      return getIn(parentScope.get(''), path);
     }
 
     if (scopePath) {

@@ -18,7 +18,20 @@ export const formBooleanFieldRules: SchemaFieldRule[] = [
   { key: 'required', kind: 'prop', valueType: 'boolean' },
 ];
 
-export const formFieldRules: SchemaFieldRule[] = [formLabelFieldRule, ...formBooleanFieldRules];
+export const formFieldChromeRules: SchemaFieldRule[] = [
+  { key: 'hint', kind: 'value-or-region', regionKey: 'hint' },
+  { key: 'description', kind: 'value-or-region', regionKey: 'description' },
+  { key: 'remark', kind: 'prop' },
+  { key: 'labelRemark', kind: 'prop' },
+  { key: 'labelAlign', kind: 'prop' },
+  { key: 'labelWidth', kind: 'prop' },
+];
+
+export const formFieldRules: SchemaFieldRule[] = [
+  formLabelFieldRule,
+  ...formBooleanFieldRules,
+  ...formFieldChromeRules,
+];
 
 export function resolveFieldLabelContent(
   props: Pick<RendererComponentProps, 'props' | 'meta' | 'regions'>,

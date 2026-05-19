@@ -235,7 +235,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   });
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const pairsRef = React.useRef<KeyValuePair[]>([]);
-  const registrationRef = React.useRef<RuntimeFieldRegistration | undefined>(undefined);
+  const registrationRef = React.useRef<{ registrationId: string } | undefined>(undefined);
   const removeButtonRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
   const modelGeneration = useCurrentFormModelGeneration();
 
@@ -278,9 +278,9 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
   React.useEffect(() => {
     if (registrationRef.current) {
-      registrationRef.current.childPaths = childPaths;
+      currentForm?.updateFieldRegistration(registrationRef.current.registrationId, { childPaths });
     }
-  }, [childPaths]);
+  }, [childPaths, currentForm]);
 
   const syncField = React.useCallback(
     (nextPairs: KeyValuePair[]) => {
@@ -384,8 +384,9 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       },
     };
 
-    registrationRef.current = registration;
-    return currentForm.registerField(registration).unregister;
+    const handle = currentForm.registerField(registration);
+    registrationRef.current = handle.accepted ? { registrationId: handle.registrationId } : undefined;
+    return handle.unregister;
   }, [childPaths, currentForm, modelGeneration, name]);
 
   return (
