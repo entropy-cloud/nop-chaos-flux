@@ -14,6 +14,7 @@ import { DingTalkFlowDemo } from './pages/ding-talk-flow-demo';
 import { PerformanceTablePage } from './pages/performance-table-page';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
+import { readDiagnosticsEnabled } from './route-model';
 import { Spinner } from '@nop-chaos/ui';
 
 const LazyReportDesignerPage = lazy(() =>
@@ -59,6 +60,8 @@ function PageFallback() {
 
 function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
   const goHome = () => navigate({ kind: 'home' });
+  const diagnosticsEnabled =
+    typeof window !== 'undefined' ? readDiagnosticsEnabled(window.location.search) : false;
 
   switch (route.kind) {
     case 'home':
@@ -108,7 +111,13 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
         case 'word-editor':
           return <LazyWordEditorPage onBack={goHome} />;
         case 'performance-table':
-          return <PerformanceTablePage onBack={goHome} />;
+          return (
+            <PerformanceTablePage
+              debuggerController={debuggerController}
+              diagnosticsEnabled={diagnosticsEnabled}
+              onBack={goHome}
+            />
+          );
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

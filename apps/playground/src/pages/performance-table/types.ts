@@ -42,6 +42,13 @@ export type PerfRow = {
   children: Array<{ id: string; label: string; value: string }>;
 };
 
+export type PerfLineItem = {
+  itemKey: string;
+  sku: string;
+  qty: number;
+  note: string;
+};
+
 export const INITIAL_METRICS: RenderMetrics = {
   commitCount: 0,
   totalActualDuration: 0,
@@ -87,6 +94,15 @@ export function createRow(index: number): PerfRow {
 
 export function createRows(count: number): PerfRow[] {
   return Array.from({ length: count }, (_, index) => createRow(index + 1));
+}
+
+export function createLineItems(count: number): PerfLineItem[] {
+  return Array.from({ length: count }, (_, index) => ({
+    itemKey: `line-${index + 1}`,
+    sku: `SKU-${String(index + 1).padStart(3, '0')}`,
+    qty: (index % 5) + 1,
+    note: `Line item ${index + 1}`,
+  }));
 }
 
 export function createBatchTransform() {

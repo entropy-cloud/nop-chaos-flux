@@ -413,6 +413,11 @@ export type RouteSpec =
   | { kind: 'lab-renderer'; rendererId: string }
   | { kind: 'domain'; domainId: string };
 
+export function readDiagnosticsEnabled(search: string): boolean {
+  const normalized = search.startsWith('?') ? search.slice(1) : search;
+  return new URLSearchParams(normalized).get('diagnostics') === '1';
+}
+
 export function parseRoute(hash: string): RouteSpec {
   const path = hash.startsWith('#') ? hash.slice(1) : hash;
   const segments = path.split('/').filter(Boolean);
