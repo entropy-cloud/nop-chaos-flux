@@ -21,7 +21,7 @@ export { SheetTabBar } from './sheet-tab-bar.js';
 export type { SpreadsheetToolbarProps, StyleToolType } from './spreadsheet-toolbar.js';
 export { SpreadsheetToolbar } from './spreadsheet-toolbar.js';
 
-export type { SpreadsheetGridProps } from './spreadsheet-grid.js';
+export type { SpreadsheetGridProps } from './spreadsheet-grid/types.js';
 export { SpreadsheetGrid } from './spreadsheet-grid.js';
 
 export type {

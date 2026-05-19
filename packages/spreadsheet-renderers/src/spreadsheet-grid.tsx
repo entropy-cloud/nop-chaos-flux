@@ -1,16 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { cellAddress } from '@nop-chaos/spreadsheet-core';
+import type { SpreadsheetFrozenPane } from '@nop-chaos/spreadsheet-core';
+import { ContextMenu, ContextMenuTrigger } from '@nop-chaos/ui';
 import {
-  Button,
-  ContextMenu,
-  ContextMenuTrigger,
-} from '@nop-chaos/ui';
-import { mapCellStyle } from './cell-style-map.js';
-import {
-  DEFAULT_ROW_HEIGHT,
   DEFAULT_COL_WIDTH,
-  ROW_HEADER_WIDTH,
-  isCellWithinSelection,
+  DEFAULT_ROW_HEIGHT,
   getAnchorCellFromSelection,
   getSelectedAxisInfo,
   rangesEqual,
@@ -19,8 +12,12 @@ import {
 import type { SpreadsheetGridProps } from './spreadsheet-grid/types.js';
 import { buildSpreadsheetGridViewport } from './spreadsheet-grid/viewport.js';
 import { useContextMenuActions } from './spreadsheet-grid/use-context-menu-actions.js';
-import { SpreadsheetCellEditor, SpreadsheetEditStatus } from './spreadsheet-grid/inline-controls.js';
+import { SpreadsheetEditStatus } from './spreadsheet-grid/inline-controls.js';
 import { SpreadsheetGridOverlayControls } from './spreadsheet-grid/overlay-controls.js';
+import {
+  SpreadsheetGridTableShell,
+  type PendingKeyboardContextMenuRequest,
+} from './spreadsheet-grid/table-shell.js';
 
 export function SpreadsheetGrid({
   snapshot,
@@ -71,7 +68,6 @@ export function SpreadsheetGrid({
   const activeSheetId = snapshot.activeSheet?.id ?? '';
   const selectedRange = getSelectedRange();
   const selectionAnchorCell = useMemo(() => getAnchorCellFromSelection(selection), [selection]);
-  const _selectedCellAddress = selectedCell ? cellAddress(selectedCell.row, selectedCell.col) : null;
   const selectedRowInfo = useMemo(() => getSelectedAxisInfo(selection, 'row'), [selection]);
   const selectedColumnInfo = useMemo(() => getSelectedAxisInfo(selection, 'column'), [selection]);
   const canUseRowStructureActions =
@@ -115,11 +111,7 @@ export function SpreadsheetGrid({
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const pendingKeyboardContextMenuRef = useRef<
-    | { axis: 'row'; index: number; element: HTMLElement }
-    | { axis: 'column'; index: number; element: HTMLElement }
-    | null
-  >(null);
+  const pendingKeyboardContextMenuRef = useRef<PendingKeyboardContextMenuRequest | null>(null);
   const [resizeDialog, setResizeDialog] = useState<
     | { axis: 'row'; index: number; size: string }
     | { axis: 'column'; index: number; size: string }
@@ -238,99 +230,6 @@ export function SpreadsheetGrid({
     ],
   );
 
-  function renderCell(r: number, c: number) {
-    const addr = cellAddress(r, c);
-    const cell = snapshot.activeSheet?.cells?.[addr];
-    const isSelected = selectedCell?.row === r && selectedCell?.col === c;
-    const inRange = isInRange(r, c);
-    const hasComment = !!cell?.comment;
-    const hasBinding = getCellMetadata ? getCellMetadata(r, c) : undefined;
-    const isFrozenCell = frozen && (r < (frozen.row ?? 0) || c < (frozen.col ?? 0));
-    const mergeInfo = getMergeInfo(r, c);
-    const isEditing = editingCell?.row === r && editingCell?.col === c;
-    const isDropTarget = dropTargetCell?.row === r && dropTargetCell?.col === c && !!draggingField;
-
-    const isFillHandleCell =
-      selectedRange && r === selectedRange.endRow && c === selectedRange.endCol && !isEditing;
-
-    if (mergeInfo.isMerged && !mergeInfo.isTopLeft) {
-      return null;
-    }
-
-    const cellStyle = mapCellStyle(cell?.style);
-    const style: React.CSSProperties = {
-      ...cellStyle.style,
-      width: columnWidths[c] ?? DEFAULT_COL_WIDTH,
-    };
-
-    return (
-      <td
-        key={c}
-        id={`spreadsheet-cell-${addr}`}
-        className={cellStyle.className}
-        style={style}
-        tabIndex={isSelected ? 0 : -1}
-        aria-selected={isSelected || inRange || undefined}
-        data-row={r}
-        data-col={c}
-        data-cell-active={isSelected || undefined}
-        data-cell-selected={isSelected || undefined}
-        data-range-highlight={inRange || undefined}
-        data-cell-bound={hasBinding || undefined}
-        data-cell-comment={hasComment || undefined}
-        data-cell-frozen={isFrozenCell || undefined}
-        data-cell-merged={mergeInfo.isMerged || undefined}
-        data-cell-editing={isEditing || undefined}
-        data-cell-drop-target={isDropTarget || undefined}
-        data-cell-fill-preview={isFillPreview(r, c) || undefined}
-        rowSpan={mergeInfo.rowSpan > 1 ? mergeInfo.rowSpan : undefined}
-        colSpan={mergeInfo.colSpan > 1 ? mergeInfo.colSpan : undefined}
-        onClick={() => onCellClick(r, c)}
-        onDoubleClick={() => onCellDoubleClick(r, c)}
-        onMouseDown={(e) => onCellMouseDown(r, c, e)}
-        onContextMenu={() => {
-          if (!activeSheetId) {
-            return;
-          }
-          if (!isCellWithinSelection(selection, r, c, activeSheetId)) {
-            onCellClick(r, c);
-          }
-        }}
-        onMouseEnter={() => onCellMouseEnter(r, c)}
-        onDragOver={(e) => {
-          e.preventDefault();
-          if (readonly) {
-            return;
-          }
-          onFieldDragOver?.(r, c);
-        }}
-        onDragLeave={() => onFieldDragLeave?.()}
-      >
-        {isEditing ? (
-          <SpreadsheetCellEditor
-            value={editValue}
-            readOnly={readonly}
-            onChange={onEditValueChange}
-            onSave={onEditSave}
-            onCancel={onEditCancel}
-          />
-        ) : (
-          <>
-            {cell?.value != null ? String(cell.value) : ''}
-            {isFillHandleCell && (
-              <div
-                className="ss-fill-handle"
-                aria-hidden="true"
-                onMouseDown={(e) => onFillHandleMouseDown(r, c, e)}
-                onDoubleClick={() => onFillHandleDoubleClick()}
-              />
-            )}
-          </>
-        )}
-      </td>
-    );
-  }
-
   const isDraggingRef = useRef(false);
   const lastDragCellRef = useRef<{ row: number; col: number } | null>(null);
 
@@ -436,183 +335,45 @@ export function SpreadsheetGrid({
           }
         }}
       >
-        <div
-          style={{
-            width: viewport.totalWidth + ROW_HEADER_WIDTH,
-            height: viewport.totalHeight,
-            position: 'relative',
+        <SpreadsheetGridTableShell
+          snapshot={snapshot}
+          viewport={viewport}
+          activeSheetId={activeSheetId}
+          selectedCell={selectedCell}
+          selection={selection}
+          selectedRange={selectedRange}
+          editingCell={editingCell}
+          editValue={editValue}
+          columnWidths={columnWidths}
+          rowHeights={rowHeights}
+          filteredColumnSet={filteredColumnSet}
+          dropTargetCell={dropTargetCell}
+          draggingField={draggingField}
+          readonly={readonly}
+          getMergeInfo={getMergeInfo}
+          getCellMetadata={getCellMetadata}
+          isInRange={isInRange}
+          isFillPreview={isFillPreview}
+          onCellClick={onCellClick}
+          onCellDoubleClick={onCellDoubleClick}
+          onCellMouseDown={onCellMouseDown}
+          onCellMouseEnter={onCellMouseEnter}
+          onSelectRow={onSelectRow}
+          onSelectColumn={onSelectColumn}
+          onSelectAll={onSelectAll}
+          onColumnResizeStart={onColumnResizeStart}
+          onRowResizeStart={onRowResizeStart}
+          onFillHandleMouseDown={onFillHandleMouseDown}
+          onFillHandleDoubleClick={onFillHandleDoubleClick}
+          onEditValueChange={onEditValueChange}
+          onEditSave={onEditSave}
+          onEditCancel={onEditCancel}
+          onFieldDragOver={onFieldDragOver}
+          onFieldDragLeave={onFieldDragLeave}
+          onKeyboardContextMenuRequest={(request) => {
+            pendingKeyboardContextMenuRef.current = request;
           }}
-        >
-          <table key={activeSheetId}>
-            <thead>
-              <tr>
-                <th
-                  className="ss-header-corner"
-                  data-slot="spreadsheet-corner-header"
-                  data-sheet-header-active={selection.kind === 'sheet' || undefined}
-                  style={{ width: ROW_HEADER_WIDTH }}
-                  onContextMenu={() => {
-                    if (selection.kind !== 'sheet') {
-                      onSelectAll();
-                    }
-                  }}
-                >
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="ss-header-button"
-                    data-slot="spreadsheet-header-button"
-                    aria-label="Select entire sheet"
-                    onClick={onSelectAll}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        onSelectAll();
-                      }
-                    }}
-                  />
-                </th>
-                {viewport.leftSpacerWidth > 0 && <th style={{ width: viewport.leftSpacerWidth, padding: 0 }} />}
-                {viewport.visibleColIndices.map((c) => (
-                  <th
-                    key={c}
-                    style={{ width: columnWidths[c] ?? DEFAULT_COL_WIDTH }}
-                    data-slot="spreadsheet-column-header"
-                    data-col-header-active={
-                      selection.kind === 'column' && selection.columns?.includes(c)
-                        ? true
-                        : undefined
-                    }
-                    data-col-filtered={filteredColumnSet.has(c) || undefined}
-                    onContextMenu={() => {
-                      if (selection.kind !== 'column' || !selection.columns?.includes(c)) {
-                        onSelectColumn(c);
-                      }
-                    }}
-                  >
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="ss-header-button"
-                      data-slot="spreadsheet-header-button"
-                      aria-label={`Select column ${cellAddress(0, c).replace(/[0-9]/g, '')}`}
-                      onClick={(event) => onSelectColumn(c, event.shiftKey)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          onSelectColumn(c, event.shiftKey);
-                          return;
-                        }
-                        if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
-                          event.preventDefault();
-                          onSelectColumn(c);
-                          pendingKeyboardContextMenuRef.current = {
-                            axis: 'column',
-                            index: c,
-                            element: event.currentTarget,
-                          };
-                        }
-                      }}
-                    >
-                      {cellAddress(0, c).replace(/[0-9]/g, '')}
-                    </Button>
-                    <div
-                      className="ss-col-resize-handle"
-                      data-slot="spreadsheet-column-resize-handle"
-                      aria-hidden="true"
-                      onMouseDown={(e) => onColumnResizeStart(c, e)}
-                    />
-                  </th>
-                ))}
-                {viewport.rightSpacerWidth > 0 && <th style={{ width: viewport.rightSpacerWidth, padding: 0 }} />}
-              </tr>
-            </thead>
-            <tbody>
-              {viewport.topSpacerHeight > 0 && (
-                <tr style={{ height: viewport.topSpacerHeight }}>
-                  <td
-                    colSpan={
-                      viewport.visibleColIndices.length +
-                      1 +
-                      (viewport.leftSpacerWidth > 0 ? 1 : 0) +
-                      (viewport.rightSpacerWidth > 0 ? 1 : 0)
-                    }
-                  />
-                </tr>
-              )}
-              {viewport.visibleRowIndices.map((r) => (
-                <tr
-                  key={r}
-                  style={{ height: rowHeights[r] ?? DEFAULT_ROW_HEIGHT }}
-                  className={frozen && r < (frozen.row ?? 0) ? 'frozen-row' : ''}
-                >
-                  <td
-                    data-slot="spreadsheet-row-header"
-                    data-row-header-active={
-                      selection.kind === 'row' && selection.rows?.includes(r) ? true : undefined
-                    }
-                    onContextMenu={() => {
-                      if (selection.kind !== 'row' || !selection.rows?.includes(r)) {
-                        onSelectRow(r);
-                      }
-                    }}
-                  >
-                    <Button
-                      type="button"
-                      className="ss-row-header-button"
-                      data-slot="spreadsheet-header-button"
-                      variant="ghost"
-                      size="sm"
-                      aria-label={`Select row ${r + 1}`}
-                      onClick={(event) => onSelectRow(r, event.shiftKey)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          onSelectRow(r, event.shiftKey);
-                          return;
-                        }
-                        if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
-                          event.preventDefault();
-                          onSelectRow(r);
-                          pendingKeyboardContextMenuRef.current = {
-                            axis: 'row',
-                            index: r,
-                            element: event.currentTarget,
-                          };
-                        }
-                      }}
-                    >
-                      {r + 1}
-                    </Button>
-                    <div
-                      className="ss-row-resize-handle"
-                      data-slot="spreadsheet-row-resize-handle"
-                      aria-hidden="true"
-                      onMouseDown={(e) => onRowResizeStart(r, e)}
-                    />
-                  </td>
-                  {viewport.leftSpacerWidth > 0 && <td style={{ width: viewport.leftSpacerWidth, padding: 0 }} />}
-                  {viewport.visibleColIndices.map((c) => renderCell(r, c))}
-                  {viewport.rightSpacerWidth > 0 && <td style={{ width: viewport.rightSpacerWidth, padding: 0 }} />}
-                </tr>
-              ))}
-              {viewport.bottomSpacerHeight > 0 && (
-                <tr style={{ height: viewport.bottomSpacerHeight }}>
-                  <td
-                    colSpan={
-                      viewport.visibleColIndices.length +
-                      1 +
-                      (viewport.leftSpacerWidth > 0 ? 1 : 0) +
-                      (viewport.rightSpacerWidth > 0 ? 1 : 0)
-                    }
-                  />
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        />
       </ContextMenuTrigger>
       {editingCell ? <SpreadsheetEditStatus state={editSaveState} /> : null}
       <SpreadsheetGridOverlayControls

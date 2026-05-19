@@ -91,6 +91,31 @@ describe('spreadsheet context menu fill and range commands', () => {
     });
   });
 
+  it('keeps the fill handle presentational instead of exposing faux button semantics', async () => {
+    const documentModel = createEmptyDocument('fill-handle-presentational');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 1,
+    });
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+
+    fireEvent.click(firstCell!);
+
+    const fillHandle = container.querySelector('.ss-fill-handle') as HTMLElement | null;
+    expect(fillHandle).toBeTruthy();
+    expect(fillHandle?.getAttribute('aria-hidden')).toBe('true');
+    expect(fillHandle?.hasAttribute('role')).toBe(false);
+    expect(fillHandle?.hasAttribute('tabindex')).toBe(false);
+    expect(screen.queryByRole('button', { name: /fill handle/i })).toBeNull();
+  });
+
   it('merges the selected range from the shared context menu', async () => {
     const documentModel = createEmptyDocument('contextmenu-merge-cells');
     const core = createSpreadsheetCore({ document: documentModel });
