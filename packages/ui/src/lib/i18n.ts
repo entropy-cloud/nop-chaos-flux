@@ -12,15 +12,32 @@ const messages: Record<string, string> = {
   'flux.sidebar.toggle': 'Toggle sidebar',
 };
 
-let i18nGetter: ((key: string) => string) | null = null;
+const UI_I18N_BRIDGE_KEY = Symbol.for('nop.ui.i18nBridge');
+
+type UiI18nBridge = {
+  getter: ((key: string) => string) | null;
+};
+
+function getUiI18nBridge(): UiI18nBridge {
+  const globalState = globalThis as typeof globalThis & {
+    [UI_I18N_BRIDGE_KEY]?: UiI18nBridge;
+  };
+
+  if (!globalState[UI_I18N_BRIDGE_KEY]) {
+    globalState[UI_I18N_BRIDGE_KEY] = { getter: null };
+  }
+
+  return globalState[UI_I18N_BRIDGE_KEY]!;
+}
 
 export function setI18nGetter(getter: ((key: string) => string) | null) {
-  i18nGetter = getter;
+  getUiI18nBridge().getter = getter;
 }
 
 export function t(key: string) {
-  if (i18nGetter) {
-    return i18nGetter(key);
+  const translated = getUiI18nBridge().getter?.(key);
+  if (translated && translated !== key) {
+    return translated;
   }
   return messages[key] ?? key;
 }

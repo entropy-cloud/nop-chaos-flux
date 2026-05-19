@@ -25,6 +25,7 @@ export const enUS: Resource = {
       detailDraftValidationError: 'Please fix validation errors before confirming.',
       detail: 'detail',
       editItem: 'Edit {{item}}',
+      edit: 'Edit',
       saveFailed: 'Save failed',
     },
     pagination: {

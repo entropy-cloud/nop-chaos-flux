@@ -17,10 +17,34 @@ const defaultResources: Resource = {
   'en-US': enUS,
 };
 
+const UI_I18N_BRIDGE_KEY = Symbol.for('nop.ui.i18nBridge');
+
+type UiI18nBridge = {
+  getter: ((key: string) => string) | null;
+};
+
+function getUiI18nBridge(): UiI18nBridge {
+  const globalState = globalThis as typeof globalThis & {
+    [UI_I18N_BRIDGE_KEY]?: UiI18nBridge;
+  };
+
+  if (!globalState[UI_I18N_BRIDGE_KEY]) {
+    globalState[UI_I18N_BRIDGE_KEY] = { getter: null };
+  }
+
+  return globalState[UI_I18N_BRIDGE_KEY]!;
+}
+
 let fluxI18nInstance: i18n | null = null;
 
 function normalizeTranslationKey(key: string): string {
   return key.startsWith(`${FLUX_NAMESPACE}.`) ? key.slice(FLUX_NAMESPACE.length + 1) : key;
+}
+
+function bindUiI18n(instance: i18n | null): void {
+  getUiI18nBridge().getter = instance
+    ? (key: string) => instance.t(normalizeTranslationKey(key))
+    : null;
 }
 
 export interface FluxI18nOptions {
@@ -66,6 +90,7 @@ export function initFluxI18n(options: FluxI18nOptions = {}): i18n {
   instance.init(initOptions);
 
   setMessageFormatter((key, params) => instance.t(normalizeTranslationKey(key), params));
+  bindUiI18n(instance);
 
   fluxI18nInstance = instance;
   return instance;
@@ -81,6 +106,7 @@ export function getFluxI18n(): i18n {
 export function resetFluxI18n(): void {
   fluxI18nInstance = null;
   setMessageFormatter((key) => key);
+  bindUiI18n(null);
 }
 
 export async function changeLanguage(lng: SupportedLanguage): Promise<void> {

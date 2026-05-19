@@ -9,6 +9,11 @@ import {
   t,
 } from './i18n.js';
 
+async function getUiT() {
+  const uiI18n = await import('../../ui/src/lib/i18n.js');
+  return uiI18n.t;
+}
+
 describe('i18n sink contracts', () => {
   afterEach(() => {
     resetFluxI18n();
@@ -41,6 +46,20 @@ describe('i18n sink contracts', () => {
     expect(getMessageFormatter()('flux.common.save')).toBe('Save');
     resetFluxI18n();
     expect(getMessageFormatter()('flux.common.save')).toBe('flux.common.save');
+  });
+
+  it('routes ui fallback keys through the current flux i18n instance', async () => {
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+    await changeLanguage('en-US');
+    const uiT = await getUiT();
+    expect(uiT('flux.common.close')).toBe('Close');
+  });
+
+  it('falls back to ui local defaults when flux i18n has no matching key', async () => {
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+    await changeLanguage('en-US');
+    const uiT = await getUiT();
+    expect(uiT('flux.sidebar.toggle')).toBe('Toggle Sidebar');
   });
 });
 

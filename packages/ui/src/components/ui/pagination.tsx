@@ -56,7 +56,7 @@ function PaginationLink({ className, isActive, size = 'icon', ...props }: Pagina
 
 function PaginationPrevious({
   className,
-  text = 'Previous',
+  text = t('flux.pagination.previous'),
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
@@ -74,7 +74,7 @@ function PaginationPrevious({
 
 function PaginationNext({
   className,
-  text = 'Next',
+  text = t('flux.pagination.next'),
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
