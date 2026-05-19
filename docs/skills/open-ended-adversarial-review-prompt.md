@@ -2,6 +2,8 @@
 
 这个项目的背景资料在 `AGENTS.md`、`docs/index.md` 中，请先阅读；如果你遇到看起来像历史上反复被重开的设计问题，还要回查 `docs/references/reopened-design-decisions-and-audit-adjudications.md`。
 
+React 19 最佳实践和项目特定约束（包括 React Compiler 自动记忆化规则）定义在 `docs/skills/react19-best-practices-review.md`；最终核查发现时必须对照此文档，特别关注是否有新引入的手写 React.memo / useCallback / useMemo（React Compiler 已自动处理，手写是冗余）。
+
 你的唯一任务是：发现任何值得报告的问题、矛盾、风险或改进机会。
 
 ## 定位
@@ -92,7 +94,7 @@
 
 ## 执行方式
 
-1. 先读 `AGENTS.md`、`docs/index.md`，再快速扫一眼 `docs/analysis/` 中已有的对抗性审查报告；如果命中历史上反复被 reopen 的模式，再回查 `docs/references/reopened-design-decisions-and-audit-adjudications.md`。
+1. 先读 `AGENTS.md`、`docs/index.md`、`docs/skills/react19-best-practices-review.md`，再快速扫一眼 `docs/analysis/` 中已有的对抗性审查报告；如果命中历史上反复被 reopen 的模式，再回查 `docs/references/reopened-design-decisions-and-audit-adjudications.md`。
 2. 花时间读代码，不要急着给结论。你读得越多，越有可能发现别人没看到的东西。
 3. 允许跳跃式探索，并在发现高价值线索时沿着影响范围继续深挖。
 4. 充分利用子 agent 去独立调研或做对抗性检查，但不要把它变成按固定维度派工的 deep-audit 流程。

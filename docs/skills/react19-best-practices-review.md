@@ -178,6 +178,30 @@
 - 不要把“出现 `any` / `unknown` / `Record<string, unknown>`”本身当成问题
 - 要关注的是：边界是否清晰、是否有收敛、是否把危险断言扩散到了业务核心路径
 
+## React Compiler 自动记忆化
+
+本项目已启用 React Compiler（`babel-plugin-react-compiler` + `eslint-plugin-react-compiler`），配置为 error 级别。
+
+### 核心结论
+
+**React Compiler 会自动分析组件的 props 和依赖，注入等价的 `React.memo`、`useCallback`、`useMemo` 优化。** 手写这些 API 是冗余的——Compiler 的自动推导通常比手写更精确，因为它能分析整个组件树的依赖关系，而不仅限于单个组件。
+
+### 具体规则
+
+1. **不要为新代码引入手写 `React.memo`。** 如果需要行级渲染控制，应优先考虑数据结构优化（stable references、per-path subscription），而非手工 memo。
+2. **不要为新代码引入手写 `useCallback`。** Compiler 会自动稳定化回调引用。
+3. **不要为新代码引入手写 `useMemo`。** Compiler 会自动缓存计算结果。
+4. **已有的手写 memo 不需要立即删除。** 如果 `react-compiler/react-compiler` ESLint 规则没有报错，说明 Compiler 认可这些写法不会产生反模式，只是多余。
+5. **禁止为了"显式表达意图"而手写 memo。** 在 Compiler 启用的项目里，手写 memo 传达的信号是"这里 Compiler 无法处理"，而不是"这里需要优化"。如果 Compiler 确实无法处理某处（如使用了 `eslint-disable-next-line react-compiler/react-compiler`），才应该手写并附带注释说明原因。
+
+### Review 时如何判断
+
+当 review 中遇到手写 `React.memo`、`useCallback`、`useMemo` 时：
+
+- 如果该文件没有 `eslint-disable-next-line react-compiler/react-compiler` 注释 → 标记为冗余，建议移除
+- 如果该文件有 `eslint-disable` 注释且有充分理由（如 Compiler 已知的边界限制）→ 保留
+- 不要把"移除冗余 memo"当成高优先级重构任务；它不影响正确性，只是代码风格收敛
+
 ## 已由自动化覆盖，不必重复做人工 review 的问题
 
 以下结论以 `pnpm lint` 和 `pnpm check` 都已运行完成为前提：
@@ -259,7 +283,7 @@
 - 非紧急更新是否应使用 `startTransition` / `useTransition`
 - 大型派生结果是否适合 `useDeferredValue`
 - 长列表是否应虚拟化或至少使用 `content-visibility`
-- 当前不报 lint 但明显低价值的 `useMemo` / `useCallback`
+- 当前不报 lint 但明显低价值的 `useMemo` / `useCallback`（React Compiler 已自动处理，手写是冗余；详见本文"React Compiler 自动记忆化"章节）
 
 ### P1: React 19 模式迁移
 

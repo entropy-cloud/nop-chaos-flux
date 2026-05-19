@@ -1,6 +1,6 @@
 # 410 Open-Ended Adversarial Review 2026-05-19 Flow-Designer Host Contract Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-open-ended-adversarial-review-01/{round-03.md,round-06.md}`
 > Related: `docs/plans/406-open-ended-adversarial-review-2026-05-19-25-round-remediation-routing-plan.md`, `docs/architecture/flow-designer/{design.md,runtime-snapshot.md,api.md}`, `docs/components/designer-page/design.md`, `docs/architecture/capability-projection-manifest.md`
@@ -82,20 +82,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Completed. Flow-designer host summary publication, toolbar action routing, and manifest publication now share one supported contract: `statusPath` and `$designer` both preserve branch selection semantics, `$designer.busy` is no longer advertised in the static scope contract, `designer:navigate-back` is published in the manifest, focused flow-designer proof is green, and repo-wide `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green. No remaining plan-owned work remains.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: `general` subagent `ses_1bf184934ffeei8wx3yTJyTdPP`
+- Evidence: Initial audit blocked closure on a live `R03-01` contract drift: `statusPath` collapsed active branch selection to `none`, while `$designer` and focused manifest tests already preserved `branch`, and renderer definitions still advertised removed `$designer.busy`. The live repo is now corrected in `packages/flow-designer-core/src/types.ts`, `packages/flow-designer-renderers/src/designer-context.ts`, `packages/flow-designer-renderers/src/designer-page-body.tsx`, and `packages/flow-designer-renderers/src/renderer-definitions.ts`, with focused proof in `packages/flow-designer-renderers/src/designer-page-shell.test.tsx`, `src/designer-provider-and-manifest.test.tsx`, and `src/designer-controls.test.tsx`, plus green workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`.

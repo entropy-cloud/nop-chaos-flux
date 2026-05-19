@@ -1,6 +1,6 @@
 # 409 Open-Ended Adversarial Review 2026-05-19 Report And Spreadsheet Host Contract Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-open-ended-adversarial-review-01/{round-02.md,round-04.md,round-05.md,round-25.md}`
 > Related: `docs/plans/406-open-ended-adversarial-review-2026-05-19-25-round-remediation-routing-plan.md`, `docs/plans/391-deep-audit-2026-05-19-report-field-panel-contract-plan.md`, `docs/architecture/report-designer/design.md`, `docs/components/report-designer-page/design.md`, `docs/components/spreadsheet-page/design.md`, `docs/architecture/capability-projection-manifest.md`
@@ -65,7 +65,7 @@ Exit Criteria:
 - [x] `R02-02` and `R04-01` are fixed.
 - [x] Focused proof covers inspector visibility and undo/redo summary publication.
 - [x] `docs/architecture/report-designer/design.md` and `docs/components/report-designer-page/design.md` are updated.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ### Phase 2 - Align Spreadsheet And Report Host Manifests With Provider Enforcement
 
@@ -88,20 +88,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Completed. Report-designer shell visibility and snapshot semantics now follow the canonical runtime state, spreadsheet/report host providers enforce the published manifest payload contracts, focused proof remains green, and repo-wide `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green. No remaining plan-owned work remains.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: `general` subagent `ses_1bf184934ffeei8wx3yTJyTdPP`
+- Evidence: Independent closure audit returned acceptable for closure with no remaining in-scope semantic gaps. Evidence paths include `packages/report-designer-renderers/src/page-renderer.tsx`, `packages/report-designer-renderers/src/bridge.ts`, `packages/report-designer-renderers/src/host-action-provider.ts`, `packages/spreadsheet-renderers/src/host-action-provider.ts`, focused proof in `packages/report-designer-renderers/src/page-renderer.test.tsx`, `packages/report-designer-renderers/src/bridge.test.ts`, `packages/report-designer-renderers/src/host-action-provider.test.ts`, `packages/spreadsheet-renderers/src/__tests__/schema-integration.test.tsx`, and green workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`.

@@ -1,7 +1,7 @@
 # 408 Open-Ended Adversarial Review 2026-05-19 Supported E2E Truthfulness Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-19
+> Plan Status: completed
+> Last Reviewed: 2026-05-20
 > Source: `docs/analysis/2026-05-19-open-ended-adversarial-review-01/{round-02.md,round-05.md,round-07.md,round-08.md,round-09.md,round-10.md,round-11.md,round-12.md,round-13.md,round-14.md,round-15.md,round-16.md,round-17.md,round-18.md,round-19.md}`
 > Related: `docs/plans/406-open-ended-adversarial-review-2026-05-19-25-round-remediation-routing-plan.md`, `docs/testing/e2e-standards.md`
 
@@ -47,56 +47,74 @@
 
 ### Phase 1 - Remove Shortcut And Presence-Only Coverage
 
-Status: planned
+Status: completed
 Targets: flow-designer, report-designer, code-editor, word-editor E2Es and helpers
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix `R02-04`, `R02-05`, `R05-02`, `R07-01`, `R10-01`, `R18-01`, `R19-01` so tests exercise the claimed user path and assert the claimed end result.
-- [ ] Remove or replace test-only shortcuts such as synthetic connect events and DOM `click()` bypasses where the title claims real interaction coverage.
-- [ ] Tighten scenario titles when the supported path is intentionally narrower than the previous wording.
+- [x] Fix `R02-04`, `R02-05`, `R05-02`, `R07-01`, `R10-01`, `R18-01`, `R19-01` so tests exercise the claimed user path and assert the claimed end result.
+- [x] Remove or replace test-only shortcuts such as synthetic connect events and DOM `click()` bypasses where the title claims real interaction coverage.
+- [x] Tighten scenario titles when the supported path is intentionally narrower than the previous wording.
 
 Exit Criteria:
 
-- [ ] The in-scope non-Component-Lab suites no longer pass on presence-only, no-op, autosave-only, or test-hook shortcut coverage.
-- [ ] Focused proof covers the final user-visible result for each touched scenario.
-- [ ] `docs/testing/e2e-standards.md` is updated if the supported proof rule changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] The in-scope non-Component-Lab suites no longer pass on presence-only, no-op, autosave-only, or test-hook shortcut coverage.
+- [x] Focused proof covers the final user-visible result for each touched scenario.
+- [x] `docs/testing/e2e-standards.md` is updated if the supported proof rule changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-19.md` is updated.
+
+Phase Notes:
+
+- Updated supported truthfulness coverage in `tests/e2e/code-editor.spec.ts`, `tests/e2e/flow-designer-edge-creation.spec.ts`, `tests/e2e/flow-designer-ui.spec.ts`, `tests/e2e/report-designer-demo.spec.ts`, `tests/e2e/word-editor.spec.ts`, `tests/e2e/word-editor-persistence.spec.ts`, and `tests/e2e/word-editor-template-expr.spec.ts` so titles/assertions match the live supported UI surface.
+- Replaced shortcut or overclaimed end-state assertions with honest user-visible outcomes: real edge-count updates, dialog/panel open-state proof, localized toolbar visibility, persisted document markers, and live editor/value visibility.
+- While validating `report-designer-demo.spec.ts`, fixed a live rerender loop in `apps/playground/src/pages/report-designer-demo.tsx` by memoizing the spreadsheet core, report core, and bridges instead of recreating them each render.
+- `docs/testing/e2e-standards.md`: No owner-doc update required.
 
 ### Phase 2 - Restore Component-Lab End-State Assertions
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/*.spec.ts`, component-lab helpers if needed
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix `R08-01`, `R09-01`, `R11-01`, `R12-01`, `R13-01`, `R14-01`, `R15-01`, `R16-01`, `R17-01` so each test asserts the promised user-visible end state rather than debug-only state or shell close.
-- [ ] Keep scenario wording and assertions aligned when a page exposes explicit result text, toasts, or persisted summary surfaces.
-- [ ] Re-audit touched specs for any remaining title/behavior mismatch before closing the phase.
+- [x] Fix `R08-01`, `R09-01`, `R11-01`, `R12-01`, `R13-01`, `R14-01`, `R15-01`, `R16-01`, `R17-01` so each test asserts the promised user-visible end state rather than debug-only state or shell close.
+- [x] Keep scenario wording and assertions aligned when a page exposes explicit result text, toasts, or persisted summary surfaces.
+- [x] Re-audit touched specs for any remaining title/behavior mismatch before closing the phase.
 
 Exit Criteria:
 
-- [ ] The in-scope Component-Lab suites assert the promised final visible result.
-- [ ] No touched spec still relies on `scope-debug-json` or teardown-only proof when the title promises a stronger supported outcome.
-- [ ] `docs/testing/e2e-standards.md` is updated if the supported proof rule changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] The in-scope Component-Lab suites assert the promised final visible result.
+- [x] No touched spec still relies on `scope-debug-json` or teardown-only proof when the title promises a stronger supported outcome.
+- [x] `docs/testing/e2e-standards.md` is updated if the supported proof rule changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-19.md` is updated.
+
+Phase Notes:
+
+- Updated `tests/e2e/component-lab/navigation.spec.ts`, `tests/e2e/component-lab/simple-form.spec.ts`, `tests/e2e/component-lab/complex-form.spec.ts`, `tests/e2e/component-lab/layout-content.spec.ts`, and `tests/e2e/component-lab/crud-editing-and-selection.spec.ts` so hidden checkbox-like controls are exercised through visible labels/wrappers and scenario titles/assertions no longer promise unsupported parent writeback or debug-only state.
+- Removed unnecessary `scope-debug-json` dependence where the page already exposes visible result text, and narrowed remaining cases to live visible value retention, dialog/drawer close behavior, or active-stage visibility.
+- `docs/testing/e2e-standards.md`: No owner-doc update required.
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed, or each phase explicitly records `No owner-doc update required`.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed, or each phase explicitly records `No owner-doc update required`.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Completed. In-scope supported E2E truthfulness findings are closed and independently audited.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: independent closure audit (`ses_1bebe33f5ffePhm3ZPgYy3ISLw`)
+- Evidence:
+  - Focused rerun passed: `pnpm test:e2e -- code-editor.spec.ts flow-designer-edge-creation.spec.ts flow-designer-ui.spec.ts report-designer-demo.spec.ts word-editor-persistence.spec.ts word-editor-template-expr.spec.ts --workers=1`
+  - Focused rerun passed: `pnpm test:e2e -- component-lab/navigation.spec.ts component-lab/simple-form.spec.ts component-lab/complex-form.spec.ts component-lab/layout-content.spec.ts component-lab/crud-editing-and-selection.spec.ts --workers=1`
+  - Final exact-file proof passed: `pnpm exec playwright test "tests/e2e/code-editor.spec.ts" "tests/e2e/flow-designer-edge-creation.spec.ts" "tests/e2e/flow-designer-ui.spec.ts" "tests/e2e/report-designer-demo.spec.ts" "tests/e2e/word-editor.spec.ts" "tests/e2e/word-editor-persistence.spec.ts" "tests/e2e/word-editor-template-expr.spec.ts" "tests/e2e/component-lab/navigation.spec.ts" "tests/e2e/component-lab/simple-form.spec.ts" "tests/e2e/component-lab/complex-form.spec.ts" "tests/e2e/component-lab/layout-content.spec.ts" "tests/e2e/component-lab/crud-editing-and-selection.spec.ts" --workers=1` (`111` passed, `2` skipped)
+  - Workspace/package gates already green on the live repo: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`, plus `pnpm --filter @nop-chaos/flux-playground typecheck`
+  - Independent closure audit result: `Verdict: acceptable`, `Findings: none`, `Plan 408 can be marked completed now: yes`

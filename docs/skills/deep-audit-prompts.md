@@ -310,7 +310,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 3. docs/references/audit-tooling.md（自动化硬门禁与启发式 suspect 脚本说明）
 4. docs/references/deep-audit-calibration-patterns.md（项目特定的误报校准与举证门槛）
 5. docs/references/reopened-design-decisions-and-audit-adjudications.md（反复被重开的设计决定与裁定边界）
-6. 本维度列出的 owner 文档
+6. docs/skills/react19-best-practices-review.md（React 19 最佳实践与项目特定约束；最终核查发现时必须对照此文档）
+7. 本维度列出的 owner 文档
 
 注意：当前审计基线按 **v1 / 无兼容负担 / 不接受过渡态主路径** 执行。不得以“过渡结构”“兼容层”“future contract draft”“尚未完成的实现切片”“迁移中”作为降级或豁免理由。凡是 live code 已进入主路径、公开面、宿主读面、命令面、运行时 owner 面的设计，都必须直接按最终最优设计评判。
 
@@ -797,10 +798,10 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 6. 检查 NodeRenderer / RenderNodes：
    a. 子组件重渲染时父组件是否也被迫重渲染
    b. regions.render() 是否每次返回新 React 元素引用
-7. 搜索 useMemo / useCallback 使用：
-   a. 是否有 "void useMemo"（返回值未使用）的痕迹
-   b. 是否有 React Compiler 已能处理但仍手动 memo 的位置
-   c. 是否有缺少 memo 但有明显性能问题的位置
+ 7. 搜索 useMemo / useCallback 使用（对照 `docs/skills/react19-best-practices-review.md` "React Compiler 自动记忆化"章节）：
+    a. 是否有 "void useMemo"（返回值未使用）的痕迹
+    b. 是否有 React Compiler 已能处理但仍手动 memo 的位置（标记为冗余，建议移除）
+    c. 是否有缺少 memo 但有明显性能问题的位置
 
 输出格式：
 
@@ -1464,9 +1465,10 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
    a. 性能敏感路径是否有 performance.mark/measure
    b. 错误路径是否有结构化日志
    c. 异步失败是否有 telemetry 支持
-8. 检查 React Compiler 兼容性：
-   a. 是否有不必要移除 useMemo/useCallback 的情况（必须有 profiling 证据）
-   b. startTransition 的使用是否合理（仅用于非紧急更新）
+ 8. 检查 React Compiler 兼容性（对照 `docs/skills/react19-best-practices-review.md` "React Compiler 自动记忆化"章节）：
+    a. 是否有不必要移除 useMemo/useCallback 的情况（必须有 profiling 证据）
+    b. startTransition 的使用是否合理（仅用于非紧急更新）
+    c. 是否有手写 React.memo/useCallback/useMemo 且无 `eslint-disable` 注释的位置（标记为冗余）
 9. 检查虚拟化需求：
    a. 长列表渲染（如 table、select options、tree）是否使用了虚拟化
    b. 大型数据集的渲染是否有 content-visibility 或懒加载
@@ -1877,6 +1879,11 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 ## 建议新增的自动化检查
 [list]
+
+## React 19 最佳实践合规性
+- 最终核查时必须对照 `docs/skills/react19-best-practices-review.md` 逐项检查
+- 特别关注：是否有新引入的手写 React.memo / useCallback / useMemo（React Compiler 已自动处理，手写是冗余）
+- 不合规项应列入上方 P1/P2 清单或可暂缓项，而非单独成一节
 
 ## 可暂缓项（有问题但 ROI 暂时不高）
 [list]
