@@ -274,6 +274,9 @@ const designerCapabilities: HostCapabilityContract = {
     restore: {
       description: 'Restore last saved document state',
     },
+    'navigate-back': {
+      description: 'Invoke the upstream navigation-back handler when the designer host exposes one.',
+    },
     beginTransaction: {
       args: {
         kind: 'object',

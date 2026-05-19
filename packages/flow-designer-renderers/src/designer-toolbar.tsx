@@ -66,38 +66,13 @@ function evalTextTemplate(template: string | undefined, snapshot: ToolbarSnapsho
   });
 }
 
-function toCommand(
-  action: string | undefined,
-): import('./designer-command-adapter.js').DesignerCommand | null {
-  switch (action) {
-    case 'designer:undo':
-      return { type: 'undo' };
-    case 'designer:redo':
-      return { type: 'redo' };
-    case 'designer:toggle-grid':
-      return { type: 'toggleGrid' };
-    case 'designer:toggle-palette':
-      return { type: 'togglePalette' };
-    case 'designer:toggle-inspector':
-      return { type: 'toggleInspector' };
-    case 'designer:restore':
-      return { type: 'restore' };
-    case 'designer:save':
-      return { type: 'save' };
-    case 'designer:export':
-      return { type: 'export' };
-    default:
-      return null;
-  }
-}
-
 export function DesignerToolbarContent(props: {
   onExportToggle?: () => void;
   exportActive?: boolean;
   onAutoLayout?: () => void;
   autoLayoutBusy?: boolean;
 }) {
-  const { config, dispatch } = useDesignerContext();
+  const { config } = useDesignerContext();
   const snapshot = useDesignerSnapshotSelector<ToolbarSnapshot>((state) => ({
     canUndo: state.canUndo,
     canRedo: state.canRedo,
@@ -233,7 +208,6 @@ export function DesignerToolbarContent(props: {
         }
 
         if (item.type === 'button') {
-          const command = toCommand(item.action);
           const disabled =
             item.disabled === true ||
             (item.action === 'designer:autoLayout' && props.autoLayoutBusy === true);
@@ -258,13 +232,21 @@ export function DesignerToolbarContent(props: {
                   props.onAutoLayout?.();
                   return;
                 }
-                if (command) {
-                  if (command.type === 'export' && props.onExportToggle) {
-                    props.onExportToggle();
-                    return;
-                  }
-                  dispatch(command);
+                if (item.action === 'designer:export' && props.onExportToggle) {
+                  props.onExportToggle();
+                  return;
                 }
+                const action = item.action;
+                if (!action) {
+                  return;
+                }
+                void invokeAction(action)
+                  .then((result) => {
+                    if (result && !result.ok) {
+                      handleActionFailure(action, result.error ?? new Error('Action failed'));
+                    }
+                  })
+                  .catch((error) => handleActionFailure(action, error));
               }}
             >
               {item.icon ? <DesignerIcon icon={item.icon} /> : null}
@@ -274,7 +256,6 @@ export function DesignerToolbarContent(props: {
         }
 
         if (item.type === 'switch') {
-          const command = toCommand(item.action);
           const disabled = item.disabled === true;
           const checked = item.active === true;
           return (
@@ -292,7 +273,17 @@ export function DesignerToolbarContent(props: {
                 checked={checked}
                 disabled={disabled}
                 onCheckedChange={() => {
-                  if (command) dispatch(command);
+                  const action = item.action;
+                  if (!action) {
+                    return;
+                  }
+                  void invokeAction(action)
+                    .then((result) => {
+                      if (result && !result.ok) {
+                        handleActionFailure(action, result.error ?? new Error('Action failed'));
+                      }
+                    })
+                    .catch((error) => handleActionFailure(action, error));
                 }}
               />
             </Label>

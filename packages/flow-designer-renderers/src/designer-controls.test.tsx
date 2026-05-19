@@ -87,7 +87,9 @@ describe('flow designer controls', () => {
     };
   });
 
-  it('dispatches toolbar commands for action buttons', () => {
+  it('routes built-in toolbar buttons through ActionScope for supported designer actions', async () => {
+    const invoke = vi.fn().mockResolvedValue({ ok: true });
+    mockState.resolve.mockReturnValue({ method: 'undo', provider: { invoke } });
     mockState.context.config = {
       ...mockState.context.config,
       toolbar: {
@@ -111,17 +113,20 @@ describe('flow designer controls', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(mockState.context.dispatch).toHaveBeenCalledWith({ type: 'undo' });
+    expect(mockState.resolve).toHaveBeenCalledWith('designer:undo');
+    expect(invoke).toHaveBeenCalledWith('undo', undefined, expect.any(Object));
 
     const redoButton = screen.getByRole('button', { name: 'Redo' });
     expect((redoButton as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(redoButton);
-    expect(mockState.context.dispatch).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledTimes(1);
 
     const gridButton = screen.getByRole('button', { name: 'Grid' });
     expect((gridButton as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(gridButton);
-    expect(mockState.context.dispatch).toHaveBeenCalledWith({ type: 'toggleGrid' });
+    await vi.waitFor(() => {
+      expect(mockState.resolve).toHaveBeenCalledWith('designer:toggle-grid');
+    });
   });
 
   it('uses export toggle callback for JSON toolbar button', () => {
@@ -138,6 +143,27 @@ describe('flow designer controls', () => {
 
     expect(onExportToggle).toHaveBeenCalledTimes(1);
     expect(mockState.context.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('routes built-in toolbar switches through ActionScope', async () => {
+    const invoke = vi.fn().mockResolvedValue({ ok: true });
+    mockState.resolve.mockReturnValue({ method: 'toggleGrid', provider: { invoke } });
+    mockState.context.config = {
+      ...mockState.context.config,
+      toolbar: {
+        items: [
+          { type: 'switch', label: 'Grid', action: 'designer:toggle-grid', active: true },
+        ],
+      },
+    };
+
+    render(<DesignerToolbarContent />);
+    fireEvent.click(screen.getByRole('switch'));
+
+    await vi.waitFor(() => {
+      expect(mockState.resolve).toHaveBeenCalledWith('designer:toggle-grid');
+      expect(invoke).toHaveBeenCalledWith('toggleGrid', undefined, expect.any(Object));
+    });
   });
 
   it('invokes upstream action for back button', async () => {

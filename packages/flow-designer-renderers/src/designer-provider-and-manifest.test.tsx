@@ -319,6 +319,7 @@ describe('flow-designer manifest', () => {
     expect((fields.doc.schema as any).fields.nodeCount).toBeTruthy();
     expect((fields.doc.schema as any).fields.nodes).toBeUndefined();
     expect(fields.activeBranch).toBeTruthy();
+    expect(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods['navigate-back']).toBeTruthy();
   });
 
   it('buildDesignerScopeData stays aligned with the published manifest projection', async () => {
@@ -379,5 +380,6 @@ describe('flow-designer manifest', () => {
       zoom: 1.25,
       viewport: { x: 10, y: 20, zoom: 1.25 },
     });
+    expect(scopeData).not.toHaveProperty('busy');
   });
 });

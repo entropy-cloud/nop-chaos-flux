@@ -129,7 +129,6 @@ export function buildDesignerScopeData(input: { snapshot: DesignerSnapshot }) {
   return {
     kind: 'designer',
     dirty: snapshot.isDirty,
-    busy: false,
     canUndo: snapshot.canUndo,
     canRedo: snapshot.canRedo,
     selectionKind,
