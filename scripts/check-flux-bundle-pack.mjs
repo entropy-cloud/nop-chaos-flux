@@ -1,4 +1,4 @@
-import { readdir, readFile } from 'fs/promises';
+import { readdir } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { execFile } from 'child_process';
@@ -103,7 +103,10 @@ async function main() {
     throw new Error('Packed manifest does not export ./style.css');
   }
 
-  const styles = await readFile(path.join(packageDir, 'src', 'style.css'), 'utf8');
+  const { stdout: styles } = await execFileAsync('tar', ['-xOf', tarballName, 'package/dist/style.css'], {
+    cwd: distPackagesDir,
+    maxBuffer: 10 * 1024 * 1024,
+  });
   if (styles.includes('\nhtml {') || styles.includes('\nbody {') || styles.includes('\n:root {')) {
     throw new Error('Facade stylesheet contains unscoped global selectors');
   }
