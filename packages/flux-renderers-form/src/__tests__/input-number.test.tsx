@@ -196,6 +196,26 @@ describe('input-number renderer', () => {
     expect(screen.getByLabelText('Increase')).toBeTruthy();
   });
 
+  it('keeps stepper buttons keyboard-focusable', () => {
+    renderNumberField({
+      type: 'form',
+      data: { count: 5 },
+      body: [{ type: 'input-number', name: 'count', label: 'Count' }],
+    });
+
+    const increase = screen.getByLabelText('Increase');
+    const decrease = screen.getByLabelText('Decrease');
+
+    expect((increase as HTMLButtonElement).tabIndex).not.toBe(-1);
+    expect((decrease as HTMLButtonElement).tabIndex).not.toBe(-1);
+
+    increase.focus();
+    expect(document.activeElement).toBe(increase);
+
+    decrease.focus();
+    expect(document.activeElement).toBe(decrease);
+  });
+
   it('hides stepper buttons when showStepper is false', () => {
     renderNumberField({
       type: 'form',
