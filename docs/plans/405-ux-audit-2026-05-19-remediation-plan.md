@@ -60,13 +60,13 @@ Targets: `packages/flux-renderers-form-advanced/src/array-editor.tsx`, `packages
 - Item Types: `Fix`
 
 - [x] **array-editor.tsx:126-141**：将删除按钮从 `variant="destructive"` + 纯文本 `{t('flux.form.remove')}` 改为 `variant="ghost"` + `Trash2Icon` + `hover:text-destructive`，保留 `aria-label` 文本
-- [x] **array-field.tsx:169-171**：将 `WrappedFieldAction variant="destructive"` 改为 `variant="ghost"` + `Trash2Icon` + `hover:text-destructive`，添加 `aria-label={t('flux.form.remove')}`
-- [x] 验证两处修改后删除按钮视觉与 `key-value.tsx:187-198` 和 `condition-item.tsx:150-159` 一致
+- [x] **array-field.tsx:169-171**：将 `WrappedFieldAction variant="destructive"` 改为 `variant="ghost"` + 文字 `{t('flux.form.remove')}` + `hover:text-destructive`，添加 `aria-label={t('flux.form.remove')}`（注：array-field 为卡片列表布局，删除按钮单独占一整行，纯图标显得单薄，使用文字按钮提供足够的视觉重量；array-editor 为行内紧凑布局，保持纯图标）
+- [x] 验证删除按钮在 `key-value.tsx`（行内图标）、`condition-item.tsx`（行内图标）、`array-editor`（行内图标）、`array-field`（卡片文字按钮）各布局语境下视觉合理且风格统一
 
 Exit Criteria:
 
-- [x] `array-editor` 和 `array-field` 删除按钮使用 `ghost` + `Trash2Icon` + `hover:text-destructive`
-- [x] 同一语义操作（行级删除）在 4 个组件中视觉一致
+- [x] `array-editor` 使用 `ghost` + `Trash2Icon` + `hover:text-destructive`（行内紧凑布局），`array-field` 使用 `ghost` + 文字 + `hover:text-destructive`（卡片列表布局）
+- [x] 同一语义操作（行级删除）在各布局语境下视觉合理且风格统一（行内用图标，卡片用文字）
 - [x] No owner-doc update required
 - [x] `docs/logs/` 对应日期条目已更新
 
