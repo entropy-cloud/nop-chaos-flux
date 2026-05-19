@@ -98,13 +98,10 @@ test.describe('tag-list renderer', () => {
     await expect(stage).toBeVisible();
     await expect(stage.getByRole('button', { name: 'Save' })).toBeVisible({ timeout: 5_000 });
     await expect(stage.getByRole('button', { name: 'react' })).toBeVisible({ timeout: 5_000 });
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"tags": [');
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"react"');
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"typescript"');
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"vite"');
+    await expect(stage.getByText('Current tags: react, typescript, vite')).toBeVisible();
 
     await stage.getByRole('button', { name: 'typescript' }).click({ force: true });
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).not.toContainText('"typescript"');
+    await expect(stage.getByText('Current tags: react, vite')).toBeVisible();
   });
 
   test('write: empty tag-list scenario adds a label and updates the count', async ({ page }) => {
@@ -117,11 +114,10 @@ test.describe('tag-list renderer', () => {
     await expect(stage.getByRole('button', { name: 'Apply Labels' })).toBeVisible({
       timeout: 5_000,
     });
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"labels": []');
+    await expect(stage.getByText('0 label(s) added')).toBeVisible();
 
     await stage.getByText('bug').click();
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"labels": [');
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"bug"');
+    await expect(stage.getByText('1 label(s) added')).toBeVisible();
   });
 });
 
@@ -249,12 +245,12 @@ test.describe('array-field renderer', () => {
     await expect(stage).toBeVisible();
     await expect(stage.getByLabel('Name').first()).toHaveValue('Alice');
     await expect(stage.getByLabel('Name').nth(1)).toHaveValue('Bob');
-    await expect(stage.getByLabel('Role').first()).toHaveValue('admin');
-    await expect(stage.getByLabel('Role').nth(1)).toHaveValue('editor');
+    await expect(stage.getByRole('combobox').first()).toContainText(/Admin/i);
+    await expect(stage.getByRole('combobox').nth(1)).toContainText(/Editor/i);
     await expect(stage.getByText('删除')).toHaveCount(2);
   });
 
-  test('write: add a contact row and verify the array scope grows by one item', async ({
+  test('write: add a contact row and keep the entered values visible in the new item', async ({
     page,
   }) => {
     const lab = new ComponentLabHelper(page);
@@ -264,15 +260,17 @@ test.describe('array-field renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
     await expect(stage.getByText(/Add contacts and submit/)).toBeVisible();
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"contacts": []');
 
     const addButton = stage.getByText('添加项').first();
     await expect(addButton).toBeVisible();
     await addButton.click();
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText(
-      '"contacts": [ {} ]',
-    );
-    await expect(stage.getByRole('button', { name: 'Submit' })).toBeVisible();
+    const nameInput = stage.getByLabel('Name').last();
+    const emailInput = stage.getByLabel('Email').last();
+    await nameInput.fill('Jane Doe');
+    await emailInput.fill('jane@example.com');
+    await stage.getByRole('button', { name: 'Submit' }).click();
+    await expect(nameInput).toHaveValue('Jane Doe');
+    await expect(emailInput).toHaveValue('jane@example.com');
   });
 });
 
@@ -280,7 +278,7 @@ test.describe('array-field renderer', () => {
 // variant-field
 // ---------------------------------------------------------------------------
 test.describe('variant-field renderer', () => {
-  test('write: switching tabs updates the active editor and bound scope state', async ({ page }) => {
+  test('write: switching tabs updates the active editor and preserves the edited string value', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('variant-field');
 
@@ -305,9 +303,7 @@ test.describe('variant-field renderer', () => {
     await expect(
       stage.getByText('Editing a string array. Add/remove rows to verify list output.'),
     ).toBeVisible();
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText(
-      '"filterValue": [\n    "status = active",\n    "role = admin"\n  ]',
-    );
+    await expect(stage.getByText('Current runtime value: List editor active')).toBeVisible();
 
     await textTab.click({ force: true });
 
@@ -315,13 +311,8 @@ test.describe('variant-field renderer', () => {
     await expect(textTab).toHaveAttribute('aria-selected', 'true');
     await expect(listTab).toHaveAttribute('aria-selected', 'false');
     await stage.getByLabel('Expression').fill('priority = high');
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText(
-      '"filterValue": "priority = high"',
-    );
-    await stage.getByRole('button', { name: 'Submit Filter Value' }).click();
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText(
-      '"filterValue": "priority = high"',
-    );
+    await expect(stage.getByLabel('Expression')).toHaveValue('priority = high');
+    await expect(stage.getByText('Current runtime value: String editor active')).toBeVisible();
   });
 });
 

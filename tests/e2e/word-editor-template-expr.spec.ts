@@ -106,4 +106,16 @@ test.describe('Template Expression Insertion', () => {
 
     await expect(page.getByText('插入模板表达式')).toHaveCount(0);
   });
+
+  test('confirming an EL expression closes the dialog after input is provided', async ({ page }) => {
+    await openWordEditor(page);
+
+    const marker = `customer.name_${Date.now()}`;
+    await page.locator('canvas').first().click();
+    await page.getByTitle('Insert Expression').click();
+    await page.getByPlaceholder('${entity.fieldName}').fill(marker);
+    await page.getByRole('button', { name: /确定|确认|Insert/i }).click();
+
+    await expect(page.getByText('插入模板表达式')).toHaveCount(0);
+  });
 });

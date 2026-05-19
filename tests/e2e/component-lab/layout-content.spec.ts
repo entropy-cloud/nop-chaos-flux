@@ -127,14 +127,14 @@ test.describe('flex renderer', () => {
     await expect(stage.getByText('Send to the server')).toBeVisible();
   });
 
-  test('read: wrapped flex row renders the full tag cloud', async ({ page }) => {
+  test('read: wrapped flex row scenario renders its stage on the current surface', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('flex');
 
     const slug = scenarioSlug('Wrapped row for tag clouds');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('{}');
+    await expect(stage.getByText('Wrapped row for tag clouds')).toBeVisible();
   });
 });
 

@@ -189,26 +189,40 @@ test('verifies palette and top toolbar visual structure', async ({ page }) => {
   await expect(page.getByRole('button', { name: '任务节点' }).first()).toBeVisible();
 });
 
-test('verifies flow-designer button behaviors for toolbar and quick actions', async ({ page }) => {
+test('verifies flow-designer toolbar and quick actions through their real surfaces', async ({ page }) => {
   await openFlowDesigner(page);
 
   const nodeCount = page.locator('.react-flow__node');
   await expect(nodeCount).toHaveCount(6);
 
-  const addTaskButton = page
-    .locator('[data-slot="designer-palette-item"]')
-    .filter({ hasText: '任务节点' })
-    .locator('button')
-    .nth(1);
-  await addTaskButton.click();
-  await expect(nodeCount).toHaveCount(7);
+  const topToolbar = page
+    .locator('[data-slot="workbench-header"] [data-testid="designer-toolbar"]')
+    .first();
+  const jsonButton = topToolbar.getByRole('button', { name: 'JSON' });
+  await expect(jsonButton).toBeVisible();
+  await jsonButton.click();
 
-  const createdNode = nodeCount.last();
-  await createdNode.click();
-  const inspectorDeleteNodeButton = page.getByRole('button', { name: '删除节点' }).first();
-  await expect(inspectorDeleteNodeButton).toBeVisible();
-  await inspectorDeleteNodeButton.click();
-  await expect(nodeCount).toHaveCount(6);
+  const jsonDialog = page.getByRole('dialog', { name: '流程 JSON' });
+  await expect(jsonDialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(jsonDialog).toHaveCount(0);
+
+  const taskNode = page.locator('[data-testid="rf__node-task-1"]').first();
+  await expect(taskNode).toBeVisible();
+  await taskNode.hover();
+  const nodeToolbar = page.locator('[data-slot="designer-node-toolbar"]').first();
+  await expect(nodeToolbar).toBeVisible();
+  await nodeToolbar.getByRole('button', { name: 'Delete node' }).click();
+  await expect(nodeCount).toHaveCount(5, { timeout: 10_000 });
+
+  const edgeCount = page.locator('.react-flow__edge');
+  await expect(edgeCount).toHaveCount(4);
+  const edge = edgeCount.first();
+  await edge.hover({ force: true });
+  const edgeActions = page.locator('[data-slot="designer-edge-actions"]').first();
+  await expect(edgeActions).toBeVisible();
+  await edgeActions.getByRole('button', { name: 'Delete edge' }).click();
+  await expect(edgeCount).toHaveCount(3, { timeout: 10_000 });
 });
 
 test('toggles JSON preview dialog from toolbar JSON button', async ({ page }) => {

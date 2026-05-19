@@ -9,6 +9,18 @@ async function waitForIdleFrame(page: import('@playwright/test').Page) {
   );
 }
 
+async function readRecoveredMainText(page: import('@playwright/test').Page) {
+  return page.evaluate(() => {
+    const probe = window.__NOP_WORD_EDITOR_PROBE__;
+    const main = probe?.getState().document?.main ?? [];
+    return main
+      .map((item) =>
+        item && typeof item === 'object' && 'value' in item ? String(item.value ?? '') : '',
+      )
+      .join(' ');
+  });
+}
+
 async function openWordEditor(page: import('@playwright/test').Page) {
   await page.goto('/');
 
@@ -102,16 +114,18 @@ test.describe('Word Editor Page', () => {
 
     const canvasElement = page.locator('canvas').first();
     await expect(canvasElement).toBeVisible({ timeout: 15000 });
+    const marker = `Hello from E2E test ${Date.now()}`;
     await canvasElement.click();
     await waitForIdleFrame(page);
 
-    await page.keyboard.type('Hello from E2E test');
+    await page.keyboard.type(marker);
 
     const wordCountDisplay = page.locator('[class*="tabular-nums"]').first();
     await expect(wordCountDisplay).toBeVisible();
+    await expect.poll(() => readRecoveredMainText(page), { timeout: 10000 }).toContain(marker);
   });
 
-  test('toolbar buttons are clickable', async ({ page }) => {
+  test('formatting toolbar buttons are visible and respond without breaking the editor surface', async ({ page }) => {
     await openWordEditor(page);
 
     const boldButton = page.getByTitle('Bold');
@@ -127,11 +141,11 @@ test.describe('Word Editor Page', () => {
     await underlineButton.click();
 
     await expect(boldButton).toBeVisible();
-    await expect(italicButton).toBeVisible();
-    await expect(underlineButton).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible();
+    await assertTrackedPageErrors(page);
   });
 
-  test('can open hyperlink dialog', async ({ page }) => {
+  test('hyperlink toolbar action opens its dialog surface', async ({ page }) => {
     await openWordEditor(page);
 
     const hyperlinkButton = page.getByTitle('Insert Hyperlink');
@@ -147,7 +161,7 @@ test.describe('Word Editor Page', () => {
     await expect(page.getByText('插入超链接')).toHaveCount(0);
   });
 
-  test('can open expression insert dialog', async ({ page }) => {
+  test('expression toolbar action opens its dialog surface', async ({ page }) => {
     await openWordEditor(page);
 
     const exprButton = page.getByTitle('Insert Expression');
@@ -162,7 +176,7 @@ test.describe('Word Editor Page', () => {
     await expect(page.getByPlaceholder('${entity.fieldName}')).toBeVisible();
   });
 
-  test('can open dataset dialog', async ({ page }) => {
+  test('dataset panel add action opens its creation dialog', async ({ page }) => {
     await openWordEditor(page);
 
     const addDatasetButton = page.getByRole('button', { name: '添加数据集' }).first();
@@ -181,7 +195,7 @@ test.describe('Word Editor Page', () => {
     await expect(typeSelect).toBeVisible();
   });
 
-  test('can save document', async ({ page }) => {
+  test('save action writes a persisted document snapshot', async ({ page }) => {
     await openWordEditor(page);
 
     const saveButton = page.getByRole('button', { name: '保存' });
@@ -210,7 +224,7 @@ test.describe('Word Editor Page', () => {
       .not.toBeNull();
   });
 
-  test('can open search panel', async ({ page }) => {
+  test('search toolbar action opens the search panel', async ({ page }) => {
     await openWordEditor(page);
 
     const searchButton = page.getByTitle('Search & Replace');
@@ -221,7 +235,7 @@ test.describe('Word Editor Page', () => {
     await expect(page.getByPlaceholder('Replace...')).toBeVisible();
   });
 
-  test('can open chart dialog', async ({ page }) => {
+  test('chart toolbar action opens its dialog surface', async ({ page }) => {
     await openWordEditor(page);
 
     const chartButton = page.getByTitle('Insert Chart');
@@ -236,7 +250,7 @@ test.describe('Word Editor Page', () => {
     await expect(page.getByPlaceholder('Category field name (e.g., category)')).toBeVisible();
   });
 
-  test('can open code dialog', async ({ page }) => {
+  test('barcode toolbar action opens its dialog surface', async ({ page }) => {
     await openWordEditor(page);
 
     const codeButton = page.getByTitle('Insert Barcode/QR Code');

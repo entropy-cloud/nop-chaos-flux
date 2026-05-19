@@ -20,12 +20,13 @@ test.describe('crud renderer editing and selection flows', () => {
     await inlineEditor.getByRole('button', { name: /保存|save/i }).click();
 
     await expect(inlineEditor.locator('input[name="quick-edit-name"]')).toHaveValue('Alpha Prime');
+    await expect(stage.locator('input[name="quick-edit-name"]').first()).toHaveValue('Alpha Prime');
 
     const quickEditHtml = await readInnerHtml(inlineEditor);
     expect(quickEditHtml).toContain('quick-edit-name');
   });
 
-  test('supports dialog quick edit shell and updates the row value on save', async ({ page }) => {
+  test('supports dialog quick edit shell and preserves the edited value when reopened', async ({ page }) => {
     const lab = await openCrudLab(page);
     const stage = crudStage(lab, 'CRUD quick-edit baseline');
 
@@ -44,7 +45,7 @@ test.describe('crud renderer editing and selection flows', () => {
     const reopenedDialog = page.locator('[data-slot="table-quick-edit-dialog"]');
     await expect(reopenedDialog).toBeVisible();
     await expect(reopenedDialog.getByLabel('Status')).toHaveValue('review');
-    await reopenedDialog.getByRole('button', { name: /关闭|close/i }).click();
+    await reopenedDialog.getByRole('button', { name: /关闭|close/i }).first().click();
   });
 
   test('updates selection-driven list actions and clears selection on refresh', async ({

@@ -7,7 +7,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await assertTrackedPageErrors(page);
 }
 
-test('creates a new edge through handle drag interaction', async ({ page }) => {
+test('synthetic connect event updates the live edge count', async ({ page }) => {
   await openFlowDesigner(page);
 
   const edgeCount = page.locator('.react-flow__edge');

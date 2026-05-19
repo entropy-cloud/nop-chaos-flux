@@ -57,12 +57,10 @@ test('back button navigates to home page', async ({ page }) => {
   const lab = new ComponentLabHelper(page);
   await lab.openRenderer('text');
 
-  // The debugger launcher button can overlap the back button.
-  // Use JavaScript click to bypass occlusion.
-  await page.evaluate(() => {
-    const btn = document.querySelector('[data-testid="component-lab-back"]') as HTMLElement;
-    if (btn) btn.click();
-  });
+  await expect(lab.backButton).toBeVisible();
+  await expect(lab.backButton).toContainText('Back to Home');
+  await lab.backButton.focus();
+  await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/(#\/?)?$/, { timeout: 10_000 });
   await expect(page.getByRole('heading', { name: 'Playground' })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText('Component Lab').first()).toBeVisible();

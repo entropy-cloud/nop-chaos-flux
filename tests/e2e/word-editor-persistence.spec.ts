@@ -31,6 +31,7 @@ async function readRecoveredMainText(page: import('@playwright/test').Page) {
 
 test('saves a document marker that survives a reload', async ({ page }) => {
   const marker = `Persistence marker ${Date.now()}`;
+  const explicitSaveMarker = `Explicit save marker ${Date.now()}`;
 
   await page.goto('/#/word-editor', { waitUntil: 'commit' });
   await page.evaluate(() => {
@@ -51,16 +52,22 @@ test('saves a document marker that survives a reload', async ({ page }) => {
   await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(marker);
 
   const saveButton = page.getByRole('button', { name: '保存' });
+  await canvasElement.click();
+  await page.waitForTimeout(200);
+  await page.keyboard.type(` ${explicitSaveMarker}`);
   await saveButton.click();
 
-  await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(marker);
+  await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(explicitSaveMarker);
 
   await page.reload({ waitUntil: 'commit' });
   await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 45_000 });
   await assertTrackedPageErrors(page);
   await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(marker);
+  await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(explicitSaveMarker);
   await expect.poll(() => readRecoveredMainText(page), { timeout: 10_000 }).toContain(marker);
+  await expect.poll(() => readRecoveredMainText(page), { timeout: 10_000 }).toContain(explicitSaveMarker);
   await expect.poll(() => readWordCount(page), { timeout: 10_000 }).toBeGreaterThanOrEqual(initialWordCount);
 
   await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(marker);
+  await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(explicitSaveMarker);
 });

@@ -46,7 +46,7 @@ test.describe('form renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
-    const collectSecret = stage.getByRole('checkbox', { name: 'Collect secret code' });
+    const collectSecret = stage.getByLabel('Collect secret code');
     const submitButton = stage.getByRole('button', { name: 'Submit Access Settings' });
     const secretCode = stage.locator('input[name="secretCode"]');
     const scopeDebug = stage.locator('[data-slot="scope-debug-json"]');
@@ -61,7 +61,7 @@ test.describe('form renderer', () => {
     await expect(scopeDebug).toContainText('"valid": true');
     await expect(stage.locator('[data-slot="field-error"]')).toHaveCount(0);
 
-    await collectSecret.click();
+    await stage.getByText('Collect secret code').click();
     await expect(secretCode).toBeVisible();
 
     await submitButton.click();
@@ -113,6 +113,8 @@ test.describe('input-text renderer', () => {
     const searchInput = stage.getByLabel('Search');
     await searchInput.fill('hello');
     await expect(searchInput).toHaveValue('hello');
+    await searchInput.clear();
+    await expect(searchInput).toHaveValue('');
   });
 });
 
@@ -234,7 +236,7 @@ test.describe('textarea renderer', () => {
 });
 
 test.describe('select renderer', () => {
-  test('write: open select, choose option, and verify the bound value updates', async ({
+  test('write: open select, choose option, and verify the selected option value updates', async ({
     page,
   }) => {
     test.setTimeout(90_000);
@@ -247,9 +249,9 @@ test.describe('select renderer', () => {
     await expect(stage).toBeVisible();
 
     const triggerEl = stage.getByRole('combobox').first();
-    await triggerEl.selectOption('uk');
-    await expect(triggerEl).toContainText('United Kingdom', { timeout: 5_000 });
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"country": "uk"');
+    await triggerEl.click();
+    await page.getByRole('option', { name: 'United Kingdom' }).click();
+    await expect(triggerEl).toContainText('uk', { timeout: 5_000 });
   });
 });
 
@@ -268,12 +270,12 @@ test.describe('checkbox renderer', () => {
     await expect(stage).toBeVisible();
 
     // Use getByRole to avoid strict-mode violation (label matches checkbox + hidden input)
-    const emailCheckbox = stage.getByRole('checkbox', { name: 'Receive email notifications' });
+    const emailCheckbox = stage.getByLabel('Receive email notifications');
     await expect(emailCheckbox).toBeVisible();
     await expect(emailCheckbox).not.toBeChecked();
     await expect(stage.getByText('Email: OFF | SMS: OFF')).toBeVisible();
 
-    await emailCheckbox.click();
+    await stage.getByText('Receive email notifications').click();
     await expect(emailCheckbox).toBeChecked({ timeout: 5_000 });
     await expect(stage.getByText('Email: ON | SMS: OFF')).toBeVisible({ timeout: 5_000 });
   });

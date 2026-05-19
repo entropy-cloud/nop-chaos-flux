@@ -77,14 +77,23 @@ test('SQL format button formats the editor content', async ({ page }) => {
   const editorEl = field.locator('.cm-editor').first();
   await expect(editorEl).toBeVisible();
 
+  await editorEl.click();
+  await page.keyboard.press(process.platform === 'win32' ? 'Control+A' : 'Meta+A');
+  await page.keyboard.type('select id,name from users where id=1');
+
+  const beforeContent = await field.locator('.cm-content').first().innerText();
   const beforeLines = await editorEl.locator('.cm-line').count();
 
   await formatBtn.click();
 
+  const afterContent = await field.locator('.cm-content').first().innerText();
   const afterLines = await editorEl.locator('.cm-line').count();
 
+  expect(afterContent).not.toBe(beforeContent);
   expect(afterLines).toBeGreaterThanOrEqual(beforeLines);
   expect(afterLines).toBeGreaterThan(0);
+  expect(afterContent.toUpperCase()).toContain('SELECT');
+  expect(afterContent.toUpperCase()).toContain('FROM');
 });
 
 test('snippet panel dropdown shows configured snippets', async ({ page }) => {
