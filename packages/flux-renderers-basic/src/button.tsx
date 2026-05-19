@@ -22,7 +22,7 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
       onClick={(event) => void props.events.onClick?.(event)}
       disabled={props.props.disabled === true}
     >
-      {String(label ?? 'Button')}
+      {label ? String(label) : null}
     </Button>
   );
 }

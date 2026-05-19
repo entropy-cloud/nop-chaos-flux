@@ -189,6 +189,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           <TabsContent
             key={value}
             value={value}
+            keepMounted={true}
             data-slot="tabs-content"
             className={cn(schemaProps.contentClassName)}
           >

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as flowDesigner from './index.js';
 import * as flowDesignerUnstable from './unstable.js';
+import type { DesignerPageSchemaInput } from './schemas.js';
 
 describe('flow-designer-renderers public surface', () => {
   it('keeps xyflow internals and renderer-only helpers off the root entry', () => {
@@ -65,5 +66,20 @@ describe('flow-designer-renderers public surface', () => {
       disabled: '${busy}',
       statusPath: 'designerStatus',
     });
+  });
+
+  it('preserves the caller input type at the helper boundary', () => {
+    const schema = flowDesigner.defineDesignerPageSchema({
+      type: 'designer-page',
+      title: 'Designer',
+      config: { nodeTypes: [], edgeTypes: [], palette: { groups: [] } },
+      customHostField: 'host-only',
+    });
+
+    const typedSchema: typeof schema & { customHostField: string } = schema;
+    const inputSchema: DesignerPageSchemaInput = schema;
+
+    expect(typedSchema.customHostField).toBe('host-only');
+    expect(inputSchema.type).toBe('designer-page');
   });
 });

@@ -533,20 +533,22 @@ describe('WordEditorPage actions and events', () => {
       } as any);
 
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    renderWordEditor();
+    try {
+      renderWordEditor();
 
-    fireEvent.click(screen.getByRole('button', { name: '保存' }));
-    expect(invoke).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole('button', { name: '保存' }));
+      expect(invoke).toHaveBeenCalledTimes(1);
 
-    cleanup();
-    resolveSave?.({ ok: true });
-    await Promise.resolve();
-    await vi.runAllTimersAsync();
+      cleanup();
+      resolveSave?.({ ok: true });
+      await Promise.resolve();
+      await vi.runAllTimersAsync();
 
-    expect(consoleError).not.toHaveBeenCalled();
-
-    consoleError.mockRestore();
-    providerSpy.mockRestore();
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+      providerSpy.mockRestore();
+    }
   });
 
   it('notifies when save resolves ok:false', async () => {

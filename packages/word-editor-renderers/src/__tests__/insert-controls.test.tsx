@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import * as FluxReact from '@nop-chaos/flux-react';
 import { InsertControls } from '../toolbar/insert-controls.js';
@@ -9,6 +9,10 @@ describe('InsertControls', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     cleanup();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('notifies when image read fails', () => {

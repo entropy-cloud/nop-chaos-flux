@@ -24,8 +24,8 @@ export type DesignerPageSchema = BaseSchema & DesignerPageSchemaInput;
 
 export function defineDesignerPageSchema<T extends DesignerPageSchemaInput>(
   schema: T,
-): DesignerPageSchema {
-  return schema as unknown as DesignerPageSchema;
+): T {
+  return schema;
 }
 
 export interface DesignerFieldSchema extends BaseSchema {

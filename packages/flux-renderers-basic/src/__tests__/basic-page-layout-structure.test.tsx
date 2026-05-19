@@ -411,6 +411,48 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     cleanup();
   });
 
+  it('keeps inactive tab panels mounted as the supported baseline', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout-tabs-mounted-panels"
+        schema={{
+          type: 'tabs',
+          value: 'first',
+          items: [
+            { key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] },
+            { key: 'second', title: 'Second', body: [{ type: 'text', text: 'Second body' }] },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('First body')).toBeTruthy();
+      expect(screen.getByText('Second body')).toBeTruthy();
+      expect(screen.getByRole('tab', { name: 'First' }).getAttribute('aria-selected')).toBe('true');
+      expect(screen.getByRole('tab', { name: 'Second' }).getAttribute('aria-selected')).toBe('false');
+    });
+
+    const panels = Array.from(document.querySelectorAll('[data-slot="tabs-content"]'));
+    expect(panels).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Second' }));
+
+    await waitFor(() => {
+      const nextPanels = Array.from(document.querySelectorAll('[data-slot="tabs-content"]'));
+      expect(nextPanels).toHaveLength(2);
+      expect(screen.getByText('First body')).toBeTruthy();
+      expect(screen.getByText('Second body')).toBeTruthy();
+      expect(screen.getByRole('tab', { name: 'First' }).getAttribute('aria-selected')).toBe('false');
+      expect(screen.getByRole('tab', { name: 'Second' }).getAttribute('aria-selected')).toBe('true');
+    });
+
+    cleanup();
+  });
+
   it('stacks default tabs above the active panel and keeps vertical tabs side by side', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { rerender } = render(
