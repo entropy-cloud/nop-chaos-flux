@@ -71,6 +71,22 @@ describe('createChildScope dispose', () => {
 
     unsubscribe?.();
   });
+
+  it('keeps runtime-created child scope ids unique even when scopeKey repeats', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const parentScope = createScopeRef({ id: 'parent', path: '$parent', initialData: {} });
+
+    const first = runtime.createChildScope(parentScope, { value: 1 }, { scopeKey: 'child' });
+    const second = runtime.createChildScope(parentScope, { value: 2 }, { scopeKey: 'child' });
+
+    expect(first.id).not.toBe(second.id);
+    expect(first.id).toContain('child');
+    expect(second.id).toContain('child');
+  });
 });
 
 describe('runtime dispose clears internally-owned moduleCache', () => {

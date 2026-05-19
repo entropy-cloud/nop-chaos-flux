@@ -343,7 +343,8 @@ export function createRendererRuntime(input: {
     createChildScope(parent, patch, options) {
       const data = toRecord(patch);
       const store = createScopeStore(data);
-      const scopeId = options?.scopeKey ?? `${parent.id}:${options?.pathSuffix ?? 'child'}`;
+      const scopeBaseId = options?.scopeKey ?? `${parent.id}:${options?.pathSuffix ?? 'child'}`;
+      const scopeId = `${scopeBaseId}:${Math.random().toString(36).slice(2, 10)}`;
       const scope = createScopeRef({
         id: scopeId,
         path: options?.pathSuffix ? `${parent.path}.${options.pathSuffix}` : `${parent.path}.child`,
