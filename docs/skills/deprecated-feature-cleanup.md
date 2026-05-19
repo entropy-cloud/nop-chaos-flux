@@ -17,7 +17,7 @@
 
 从文档侧出发，扫描以下来源：
 
-- `docs/plans/` 中 `Follow-up` 或 `Non-Goals` 里明确提到"下个版本移除"或"待清理"的项
+- `docs/plans/` 中尚未归档的计划里 `Follow-up` 或 `Non-Goals` 明确提到"下个版本移除"或"待清理"的项（计划格式与状态字段定义见 `docs/plans/00-plan-authoring-and-execution-guide.md`）
 - `docs/architecture/` 中标注 `@deprecated`、`legacy`、`compat`、`将被移除` 的接口或字段
 - `docs/bugs/` 中修复后遗留的兼容路径，且 bug 已关闭
 - 源码中标注 `@deprecated` JSDoc 注释的导出，但前提是 docs 中也有对应记录

@@ -211,7 +211,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 - tab 切换状态也不应与 dialog/drawer 的 surface open-state 混用
 - 如果未来需要对外发布 tabs 只读状态摘要，优先通过 `statusPath`
 - `valueStatePath` 继续负责可写激活态持久化；`statusPath` 若存在，则负责只读摘要发布
-- 当前 live baseline 下，inactive tab panels 保持 mounted；tabs 只切换可见性，不应因为 panel unmount 而重置其中 form/detail 等 owner runtime 的本地草稿值
+- 当前 supported baseline 下，inactive tab panels 保持 mounted；`tabs` 只切换 active/inactive state，不因 panel unmount 重建 hidden subtree，因此其中 form/detail 等 owner runtime 的本地草稿值需要保留
 
 ## 9. 与其他容器的边界
 

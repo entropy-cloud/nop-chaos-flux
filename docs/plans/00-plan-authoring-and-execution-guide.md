@@ -49,6 +49,7 @@
 18. **Checklist 打勾是 closure 的前置条件，不是附带动作。** 执行完一个 item 后必须立即将对应 `- [ ]` 改为 `- [x]`。标记 `Plan Status: completed` 时，文件内不得残留任何未勾选的 in-scope checklist item。如果存在未勾选项，要么完成它，要么显式移入 `Deferred But Adjudicated` 并写清原因。
 19. **标记 `completed` 前，必须做一次文本一致性核对。** 至少逐项确认以下五处彼此一致：`Plan Status`、每个 slice 的 `Status`、每个 slice 的 `Exit Criteria`、`Closure Gates`、以及对应 `docs/logs/` 收口记录。任何一处仍显示未完成，都不能把 plan 视为真正关闭。
 20. **已标记 `completed` 的历史计划默认视为历史记录，不因后续规范演进、模板变化、或后续代码演化而主动回写。** 只有在用户明确要求、需要修复事实性错误/损坏链接、或当前活跃计划明确且经用户确认以“修订历史计划文本”为交付物时，才允许修改这类计划。对历史计划的新审计发现，默认记录在新的 analysis / active plan / daily log 中，而不是为了追求模板一致性去重写旧计划。
+21. **避免计划过度拆分。** 不要因为“每条 finding 都能单开 plan”就默认拆到最小粒度。若多条 finding 明显落在同一组件、同一模块、或同一 owner-doc/result surface，且通常会由同一组代码改动、同一组 focused proof、同一组 exit criteria 一起收口，优先合并成一个诚实的 owner plan。只有当合并后会产生多套彼此独立的 closure criteria、owner-doc obligations、或明显不同的 live result surface 时，才继续拆分。反过来，如果一个队列里出现大量 one-finding micro-plan，必须主动复审是否已经 over-split，而不是把“编号更多”误当成“边界更清晰”。
 
 ## Anti-Slacking Rule
 

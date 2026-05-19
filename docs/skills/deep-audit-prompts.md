@@ -1507,7 +1507,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 3. 检查 docs/references/terminology.md：
    a. 术语定义是否与代码中的实际命名一致
    b. 是否有新增的概念缺少术语定义
-4. 检查 docs/plans/ 下的活跃计划：
+ 4. 检查 docs/plans/ 下尚未归档的计划（格式和状态字段定义见 docs/plans/00-plan-authoring-and-execution-guide.md）：
    a. 状态标记是否与实际代码状态匹配
    b. 是否有标记为 "in progress" 但已完成的计划
    c. 是否有标记为 "completed" 但检查清单未全部通过的计划

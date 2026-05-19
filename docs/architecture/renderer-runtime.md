@@ -582,10 +582,11 @@ function useRenderScope(): ScopeRef;
 function useRenderInstancePath(): readonly InstanceFrame[] | undefined;
 function useCurrentActionScope(): ActionScope | undefined;
 function useCurrentComponentRegistry(): ComponentHandleRegistry | undefined;
+function useCurrentImportFrame(): ImportFrame | undefined;
 function useScopeSelector<T, S = Record<string, unknown>>(
   selector: (scopeData: S) => T,
   equalityFn?: (a: T, b: T) => boolean,
-  options?: { enabled?: boolean; fallback?: T },
+  options?: { enabled?: boolean; fallback?: T; paths?: readonly string[] },
 ): T;
 function useOwnScopeSelector<T, S = Record<string, unknown>>(
   selector: (scopeData: S) => T,
@@ -641,7 +642,9 @@ function useDataSourceStatus(
 
 Current scope-hook semantics are:
 
+- `useCurrentImportFrame()` is part of the current public `@nop-chaos/flux-react` root hook surface. It exposes the nearest active import frame for import-aware renderers and host bridges; lower-level import-frame context objects remain internal/unstable implementation detail.
 - `useScopeSelector()` subscribes to the lexical-scope-visible snapshot, so child renderers react when parent scope data changes.
+- `useScopeSelector(..., { paths })` is the active path-aware scope subscription option for render-time derived reads; callers that know the dependency paths should provide them instead of subscribing to every lexical scope write.
 - `useOwnScopeSelector()` subscribes only to the current scope's own snapshot, for paths that intentionally ignore parent-scope churn.
 - `readOwn()` remains a current-layer-only API; selector inheritance should come from hook choice, not hidden fields on own snapshots.
 
