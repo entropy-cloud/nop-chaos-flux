@@ -1,6 +1,7 @@
 import React from 'react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input } from '@nop-chaos/ui';
+import { XIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@nop-chaos/ui';
 import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import { Badge } from '@nop-chaos/ui';
@@ -195,7 +196,7 @@ function MultiSelectInput({
               disabled={disabled}
               onClick={() => toggle(v)}
             >
-              {opt?.label ?? v} ×
+              {opt?.label ?? v} <XIcon className="size-3" />
             </Button>
           );
         })

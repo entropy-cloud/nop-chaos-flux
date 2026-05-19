@@ -13,6 +13,7 @@ import {
   cn,
 } from '@nop-chaos/ui';
 import { ChevronRightIcon, ChevronsUpDownIcon, SearchIcon, XIcon } from 'lucide-react';
+import { Spinner } from '@nop-chaos/ui';
 import {
   createFieldValidation,
   formFieldRules,
@@ -54,6 +55,7 @@ function TreeOptionNode(props: {
           'flex w-full items-center rounded-md py-1.5 pr-2 text-sm',
           props.disabled ? 'opacity-50' : 'cursor-pointer',
           checked ? 'bg-muted' : 'hover:bg-muted',
+          'focus-visible:ring-2 focus-visible:ring-ring',
         )}
         style={{ paddingInlineStart: `${props.option.depth * 16 + 8}px` }}
         role="treeitem"
@@ -231,8 +233,9 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           {sourceError}
         </span>
       ) : optionsSourceState?.loading === true ? (
-        <span data-slot="input-tree-source-loading" role="status" aria-live="polite">
-          {t('flux.common.loading')}
+        <span data-slot="input-tree-source-loading" role="status" aria-live="polite" className="flex items-center gap-1.5">
+          <Spinner className="size-4" aria-hidden="true" />
+          <span>{t('flux.common.loading')}</span>
         </span>
       ) : null}
     </div>
@@ -337,8 +340,9 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
           {sourceError}
         </span>
       ) : optionsSourceState?.loading === true ? (
-        <span data-slot="tree-select-source-loading" role="status" aria-live="polite">
-          {t('flux.common.loading')}
+        <span data-slot="tree-select-source-loading" role="status" aria-live="polite" className="flex items-center gap-1.5">
+          <Spinner className="size-4" aria-hidden="true" />
+          <span>{t('flux.common.loading')}</span>
         </span>
       ) : null}
     </div>

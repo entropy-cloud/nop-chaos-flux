@@ -296,7 +296,7 @@ export function ConditionGroup({
                 className={cn(
                   'ml-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-colors',
                   value.not
-                    ? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-600 dark:bg-orange-950 dark:text-orange-300'
+                    ? 'border-warning bg-warning/10 text-warning dark:border-warning dark:bg-warning/10 dark:text-warning'
                     : 'border-border text-muted-foreground hover:text-foreground',
                 )}
                 onClick={handleNotToggle}

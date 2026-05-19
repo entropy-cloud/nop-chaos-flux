@@ -100,7 +100,7 @@ describe('array-field renderer (scalar)', () => {
 
     const addButton = screen.getByText('Add item');
     expect(addButton).toBeTruthy();
-    const removeButtons = screen.getAllByText('Remove');
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove' });
     expect(removeButtons.length).toBe(3);
 
     const field = addButton.closest('.nop-field');
@@ -160,13 +160,13 @@ describe('array-field renderer (scalar)', () => {
     fireEvent.click(screen.getByText('Add item'));
 
     await waitFor(() => {
-      expect(screen.getAllByText('Remove').length).toBe(2);
+      expect(screen.getAllByRole('button', { name: 'Remove' }).length).toBe(2);
     });
 
-    fireEvent.click(screen.getAllByText('Remove')[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[0]);
 
     await waitFor(() => {
-      expect(screen.getAllByText('Remove').length).toBe(1);
+      expect(screen.getAllByRole('button', { name: 'Remove' }).length).toBe(1);
     });
 
     fireEvent.click(screen.getByText('Submit'));
@@ -281,9 +281,9 @@ describe('array-field renderer (scalar)', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getAllByText('Remove').length).toBe(1));
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Remove' }).length).toBe(1));
     fireEvent.click(screen.getByText('Tags').closest('.nop-field')!);
-    expect(screen.getAllByText('Remove').length).toBe(1);
+    expect(screen.getAllByRole('button', { name: 'Remove' }).length).toBe(1);
   });
 
   it('removes an item when the wrapped remove action is activated from the keyboard', async () => {
@@ -313,11 +313,11 @@ describe('array-field renderer (scalar)', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getAllByText('Remove').length).toBe(2));
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Remove' }).length).toBe(2));
     const removeAction = screen.getAllByRole('button', { name: 'Remove' })[0];
     fireEvent.keyDown(removeAction, { key: 'Enter' });
 
-    await waitFor(() => expect(screen.getAllByText('Remove').length).toBe(1));
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Remove' }).length).toBe(1));
   });
 });
 
@@ -498,7 +498,7 @@ describe('array-field renderer (object itemKind)', () => {
 
     await waitFor(() => expect(screen.getAllByLabelText('Name').length).toBe(2));
 
-    const removeButtons = screen.getAllByText('Remove');
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove' });
     fireEvent.click(removeButtons[0]);
 
     await waitFor(() => {

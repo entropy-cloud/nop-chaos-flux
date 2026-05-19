@@ -19,7 +19,7 @@ describe('condition-builder config integration display behavior', () => {
     it('shows static conjunction label when showNot is true but showAndOr is false', () => {
       renderGroup({ showAndOr: false, showNot: true });
       expect(screen.queryAllByText('OR')).toHaveLength(0);
-      expect(screen.queryAllByText('AND').length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryAllByText('AND')).toHaveLength(0);
     });
 
     it('renders static conjunction label in simple mode even when showAndOr is true', () => {

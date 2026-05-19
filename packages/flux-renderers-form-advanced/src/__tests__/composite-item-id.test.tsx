@@ -45,7 +45,7 @@ describe('composite editor hidden ids', () => {
       />,
     );
 
-    fireEvent.click(screen.getAllByText('Remove')[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Remove Reviewer \d+$/ })[0]);
     fireEvent.click(screen.getByText('Add item'));
 
     await waitFor(() => {
@@ -91,7 +91,7 @@ describe('composite editor hidden ids', () => {
       />,
     );
 
-    fireEvent.click(screen.getAllByText('Remove')[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Remove entry \d+$/ })[0]);
     fireEvent.click(screen.getByText('Add metadata entry'));
 
     await waitFor(() => {

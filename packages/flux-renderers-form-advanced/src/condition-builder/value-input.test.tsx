@@ -166,7 +166,7 @@ describe('ValueInput', () => {
 
     rerender(<ValueInput field={field} op="equal" value={['open']} onChange={onChange} />);
 
-    fireEvent.click(screen.getByText('Open ×'));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove value Open' }));
     expect(onChange).toHaveBeenLastCalledWith(undefined);
   });
 

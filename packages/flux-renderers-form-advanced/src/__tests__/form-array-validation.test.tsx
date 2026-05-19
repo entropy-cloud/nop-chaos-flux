@@ -105,7 +105,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     fireEvent.click(screen.getByText('Submit limited reviewers'));
     expect(await screen.findByText('Reviewers must contain at most 1 item(s)')).toBeTruthy();
 
-    fireEvent.click(screen.getAllByText('Remove')[1]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Remove Reviewer \d+$/ })[1]);
 
     await waitFor(() => {
       expect(screen.queryByText('Reviewers must contain at most 1 item(s)')).toBeNull();
@@ -163,7 +163,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
       />,
     );
 
-    fireEvent.click(screen.getAllByText('Remove')[1]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Remove Reviewer \d+$/ })[1]);
 
     await waitFor(() => {
       expect(
@@ -427,7 +427,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
 
     expect(await screen.findByText('Reviewer 2 is required')).toBeTruthy();
 
-    fireEvent.click(screen.getAllByText('Remove')[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Remove Reviewer \d+$/ })[0]);
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Reviewer 1')).toBeTruthy();
@@ -543,7 +543,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
       />,
     );
 
-    fireEvent.click(screen.getAllByText('Remove')[1]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Remove entry \d+$/ })[1]);
 
     await waitFor(() => {
       expect(

@@ -76,7 +76,7 @@ describe('detail-field renderer basic behavior', () => {
     await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
 
     expect(screen.queryByText('Confirm')).toBeNull();
-    expect(screen.getByText('Close')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Close' }).length).toBeGreaterThanOrEqual(1);
   });
 
   it('opens a dialog with the edit content when trigger is clicked', async () => {

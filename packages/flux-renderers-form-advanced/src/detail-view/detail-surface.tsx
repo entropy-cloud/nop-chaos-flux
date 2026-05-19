@@ -124,7 +124,7 @@ export function DetailSurface(props: DetailSurfaceProps) {
         if (!next) props.onClose();
       }}
     >
-      <DialogContent showCloseButton={false}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{props.title}</DialogTitle>
         </DialogHeader>

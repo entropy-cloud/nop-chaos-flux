@@ -72,7 +72,7 @@ describe('detail-view renderer basic behavior', () => {
     await waitFor(() => expect(screen.getByLabelText('Theme')).toBeTruthy());
 
     expect(screen.queryByText('Confirm')).toBeNull();
-    expect(screen.getByText('Close')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Close' }).length).toBeGreaterThanOrEqual(1);
   });
 
   it('opens dialog with static data pre-populated', async () => {

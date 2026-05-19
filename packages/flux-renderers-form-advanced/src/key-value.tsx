@@ -16,6 +16,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
+import { Trash2Icon } from 'lucide-react';
 import {
   formFieldRules,
   getChildFieldUiState,
@@ -186,13 +187,14 @@ function KeyValueRow(props: {
       <Button
         ref={removeButtonRef}
         type="button"
-        variant="destructive"
+        variant="ghost"
         size="sm"
         disabled={disabled}
+        className="hover:text-destructive"
         aria-label={`${t('flux.form.remove')} entry ${index + 1}`}
         onClick={() => onRemove(index)}
       >
-        {t('flux.form.remove')}
+        <Trash2Icon className="size-4" />
       </Button>
     </div>
   );

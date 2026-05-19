@@ -233,13 +233,13 @@ describe('composite form - array-field add/remove', () => {
 
     await waitFor(() => expect(screen.getByText('Tags')).toBeTruthy());
 
-    const removeButtons = screen.getAllByText('Remove');
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove' });
     expect(removeButtons.length).toBe(3);
 
     fireEvent.click(removeButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getAllByText('Remove').length).toBe(2);
+      expect(screen.getAllByRole('button', { name: 'Remove' }).length).toBe(2);
     });
   });
 
