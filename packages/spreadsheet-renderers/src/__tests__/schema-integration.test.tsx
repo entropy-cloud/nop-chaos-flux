@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
@@ -347,7 +347,14 @@ describe('spreadsheet-page schema integration', () => {
       const resolved = actionScope.resolve('spreadsheet:setCellValue');
       expect(resolved?.method).toBe('setCellValue');
 
-      const result = await resolved!.provider.invoke(resolved!.method, {}, {} as any);
+      const result = await resolved!.provider.invoke(
+        resolved!.method,
+        {
+          cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+          value: 'next',
+        },
+        {} as any,
+      );
       expect(result.ok).toBe(false);
       expect(result.error).toBeInstanceOf(Error);
       expect((result.error as Error).message).toBe('Sheet is protected');
@@ -362,5 +369,18 @@ describe('spreadsheet-page schema integration', () => {
 
     expect(provider.listMethods?.()).toEqual(SPREADSHEET_HOST_METHODS);
     expect(Object.keys(SPREADSHEET_MANIFEST_V1.capabilities.methods)).toEqual(SPREADSHEET_HOST_METHODS);
+  });
+
+  it('rejects payloads that do not match the published spreadsheet host args contract', async () => {
+    const dispatch = vi.fn(async () => ({ ok: true, changed: false }));
+    const provider = createSpreadsheetActionProvider(dispatch);
+
+    const result = await provider.invoke('setCellValue', { value: 'missing-cell' }, {} as any);
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe(
+      'spreadsheet:setCellValue payload does not match the published host args contract.',
+    );
+    expect(dispatch).not.toHaveBeenCalled();
   });
 });

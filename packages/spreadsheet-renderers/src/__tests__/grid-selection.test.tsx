@@ -5,59 +5,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
 import {
   createSpreadsheetBridge,
-  SpreadsheetGrid,
   spreadsheetRendererDefinitions,
   useSpreadsheetInteractions,
 } from '../index.js';
-
-function SpreadsheetGridHarness(props: {
-  sheetId: string;
-  bridge: ReturnType<typeof createSpreadsheetBridge>;
-}) {
-  const interactions = useSpreadsheetInteractions({
-    bridge: props.bridge,
-    sheetId: props.sheetId,
-    rows: 5,
-    cols: 5,
-  });
-
-  return (
-    <SpreadsheetGrid
-      snapshot={interactions.snapshot}
-      bridge={props.bridge}
-      rows={5}
-      cols={5}
-      columnWidths={interactions.columnWidths}
-      rowHeights={interactions.rowHeights}
-      selectedCell={interactions.selectedCell}
-      selection={interactions.snapshot.selection}
-      editingCell={interactions.editingCell}
-      editValue={interactions.editValue}
-      editSaveState={interactions.editSaveState}
-      fillHandleState={interactions.fillHandleState}
-      isInRange={interactions.isInRange}
-      isFillPreview={interactions.isFillPreview}
-      getSelectedRange={interactions.getSelectedRange}
-      getMergeInfo={interactions.getMergeInfo}
-      onCellClick={interactions.handleCellClick}
-      onCellDoubleClick={interactions.handleCellDoubleClick}
-      onCellMouseDown={interactions.handleCellMouseDown}
-      onCellMouseEnter={interactions.handleCellMouseEnter}
-      onSelectRow={interactions.handleSelectRow}
-      onSelectColumn={interactions.handleSelectColumn}
-      onSelectAll={interactions.handleSelectAll}
-      onColumnResizeStart={interactions.handleColumnResizeStart}
-      onRowResizeStart={interactions.handleRowResizeStart}
-      onFillHandleMouseDown={interactions.handleFillHandleMouseDown}
-      onFillHandleDoubleClick={interactions.handleFillHandleDoubleClick}
-      onEditValueChange={interactions.handleEditValueChange}
-      onEditSave={interactions.handleEditSave}
-      onEditCancel={interactions.handleEditCancel}
-      dropTargetCell={interactions.dropTargetCell}
-      draggingField={null}
-    />
-  );
-}
+import { SpreadsheetGridHarness } from './spreadsheet-grid-harness.js';
 
 afterEach(() => {
   cleanup();
@@ -472,7 +423,7 @@ describe('spreadsheet grid selection', () => {
         sheetId,
         rows: 5,
         cols: 5,
-        onLog: (message) => logs.push(message),
+        onLog: (message: string) => logs.push(message),
       });
 
       return (
@@ -527,7 +478,7 @@ describe('spreadsheet grid selection', () => {
         sheetId,
         rows: 5,
         cols: 5,
-        onLog: (message) => logs.push(message),
+        onLog: (message: string) => logs.push(message),
       });
 
       return (

@@ -1,83 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  cellAddress,
-  type SpreadsheetRange,
-  type SpreadsheetFrozenPane,
-} from '@nop-chaos/spreadsheet-core';
+import { cellAddress } from '@nop-chaos/spreadsheet-core';
 import {
   Button,
   ContextMenu,
   ContextMenuTrigger,
 } from '@nop-chaos/ui';
-import type { SpreadsheetHostSnapshot, SpreadsheetBridge } from './bridge.js';
 import { mapCellStyle } from './cell-style-map.js';
 import {
   DEFAULT_ROW_HEIGHT,
   DEFAULT_COL_WIDTH,
   ROW_HEADER_WIDTH,
-  OVERSCAN,
-  computeRowOffsets,
-  computeColOffsets,
-  findFirstVisible,
   isCellWithinSelection,
   getAnchorCellFromSelection,
   getSelectedAxisInfo,
   rangesEqual,
   expandSortRangeToUsedColumns,
 } from './spreadsheet-grid/constants.js';
+import type { SpreadsheetGridProps } from './spreadsheet-grid/types.js';
+import { buildSpreadsheetGridViewport } from './spreadsheet-grid/viewport.js';
 import { useContextMenuActions } from './spreadsheet-grid/use-context-menu-actions.js';
 import { SpreadsheetCellEditor, SpreadsheetEditStatus } from './spreadsheet-grid/inline-controls.js';
 import { SpreadsheetGridOverlayControls } from './spreadsheet-grid/overlay-controls.js';
-
-export interface SpreadsheetGridProps {
-  snapshot: SpreadsheetHostSnapshot;
-  bridge: SpreadsheetBridge;
-  rows: number;
-  cols: number;
-  columnWidths: Record<number, number>;
-  rowHeights: Record<number, number>;
-  selectedCell: { row: number; col: number } | null;
-  selection: SpreadsheetHostSnapshot['selection'];
-  editingCell: { row: number; col: number } | null;
-  editValue: string;
-  editSaveState?: { status: 'idle' | 'saving' | 'cancelled' | 'failed'; message?: string };
-  fillHandleState: {
-    isFilling: boolean;
-    startRow: number;
-    startCol: number;
-    endRow: number;
-    endCol: number;
-    currentRow: number;
-    currentCol: number;
-  };
-  isInRange: (row: number, col: number) => boolean;
-  isFillPreview: (row: number, col: number) => boolean;
-  getSelectedRange: () => SpreadsheetRange | null;
-  getMergeInfo: (
-    row: number,
-    col: number,
-  ) => { isMerged: boolean; isTopLeft: boolean; rowSpan: number; colSpan: number };
-  onCellClick: (row: number, col: number) => void;
-  onCellDoubleClick: (row: number, col: number) => void;
-  onCellMouseDown: (row: number, col: number, e: React.MouseEvent) => void;
-  onCellMouseEnter: (row: number, col: number) => void;
-  onSelectRow: (row: number, extend?: boolean) => void;
-  onSelectColumn: (col: number, extend?: boolean) => void;
-  onSelectAll: () => void;
-  onColumnResizeStart: (col: number, e: React.MouseEvent) => void;
-  onRowResizeStart: (row: number, e: React.MouseEvent) => void;
-  onFillHandleMouseDown: (row: number, col: number, e: React.MouseEvent) => void;
-  onFillHandleDoubleClick: () => void;
-  onEditValueChange: (value: string) => void;
-  onEditSave: () => void;
-  onEditCancel: () => void;
-  dropTargetCell: { row: number; col: number } | null;
-  draggingField: unknown;
-  getCellMetadata?: (row: number, col: number) => unknown;
-  onFieldDragOver?: (row: number, col: number) => void;
-  onFieldDragLeave?: () => void;
-  readonly?: boolean;
-}
 
 export function SpreadsheetGrid({
   snapshot,
@@ -263,60 +206,37 @@ export function SpreadsheetGrid({
     if (el.clientWidth !== viewportWidth) setViewportWidth(el.clientWidth);
   }, [viewportHeight, viewportWidth]);
 
-  const rowOffsets = useMemo(() => computeRowOffsets(rows, rowHeights), [rows, rowHeights]);
-  const colOffsets = useMemo(() => computeColOffsets(cols, columnWidths), [cols, columnWidths]);
-
-  const totalHeight = rowOffsets[rows] ?? 0;
-  const totalWidth = colOffsets[cols] ?? 0;
-
-  const frozenRows = frozen?.row ?? 0;
-  const frozenCols = frozen?.col ?? 0;
-  const frozenRowHeight = frozenRows > 0 ? rowOffsets[frozenRows] : 0;
-  const frozenColWidth = frozenCols > 0 ? colOffsets[frozenCols] : 0;
-
-  const effectiveScrollTop = scrollTop;
-  const effectiveScrollLeft = scrollLeft;
-
-  const visStartRow = Math.max(
-    frozenRows,
-    findFirstVisible(rowOffsets, effectiveScrollTop + frozenRowHeight) - OVERSCAN,
+  const viewport = useMemo(
+    () =>
+      buildSpreadsheetGridViewport({
+        rows,
+        cols,
+        columnWidths,
+        rowHeights,
+        selection,
+        snapshot,
+        selectedCell,
+        frozen,
+        scrollTop,
+        scrollLeft,
+        viewportHeight,
+        viewportWidth,
+      }),
+    [
+      rows,
+      cols,
+      columnWidths,
+      rowHeights,
+      selection,
+      snapshot,
+      selectedCell,
+      frozen,
+      scrollTop,
+      scrollLeft,
+      viewportHeight,
+      viewportWidth,
+    ],
   );
-  const visEndRow = Math.min(
-    rows - 1,
-    findFirstVisible(rowOffsets, effectiveScrollTop + frozenRowHeight + viewportHeight) + OVERSCAN,
-  );
-  const visStartCol = Math.max(
-    frozenCols,
-    findFirstVisible(colOffsets, effectiveScrollLeft + frozenColWidth) - OVERSCAN,
-  );
-  const visEndCol = Math.min(
-    cols - 1,
-    findFirstVisible(colOffsets, effectiveScrollLeft + frozenColWidth + viewportWidth) + OVERSCAN,
-  );
-
-  const topSpacerHeight =
-    frozenRows < visStartRow ? rowOffsets[visStartRow] - rowOffsets[frozenRows] : 0;
-  const bottomSpacerHeight =
-    visEndRow < rows - 1 ? rowOffsets[rows] - rowOffsets[visEndRow + 1] : 0;
-  const leftSpacerWidth =
-    frozenCols < visStartCol ? colOffsets[visStartCol] - colOffsets[frozenCols] : 0;
-  const rightSpacerWidth = visEndCol < cols - 1 ? colOffsets[cols] - colOffsets[visEndCol + 1] : 0;
-
-  const visibleColIndices: number[] = [];
-  for (let c = 0; c < frozenCols; c++) visibleColIndices.push(c);
-  for (let c = visStartCol; c <= visEndCol; c++) visibleColIndices.push(c);
-
-  const visibleRowIndices: number[] = [];
-  for (let r = 0; r < frozenRows; r++) {
-    if (!snapshot.activeSheet?.rows?.[String(r)]?.filteredOut) visibleRowIndices.push(r);
-  }
-  for (let r = visStartRow; r <= visEndRow; r++) {
-    if (!snapshot.activeSheet?.rows?.[String(r)]?.filteredOut) visibleRowIndices.push(r);
-  }
-  const mountedSelectedCellId =
-    selectedCell && visibleRowIndices.includes(selectedCell.row) && visibleColIndices.includes(selectedCell.col)
-      ? `spreadsheet-cell-${cellAddress(selectedCell.row, selectedCell.col)}`
-      : undefined;
 
   function renderCell(r: number, c: number) {
     const addr = cellAddress(r, c);
@@ -400,11 +320,9 @@ export function SpreadsheetGrid({
             {isFillHandleCell && (
               <div
                 className="ss-fill-handle"
-                role="button"
-                tabIndex={-1}
+                aria-hidden="true"
                 onMouseDown={(e) => onFillHandleMouseDown(r, c, e)}
                 onDoubleClick={() => onFillHandleDoubleClick()}
-                aria-label="Fill handle"
               />
             )}
           </>
@@ -459,7 +377,7 @@ export function SpreadsheetGrid({
         tabIndex={0}
         role="grid"
         aria-label="Spreadsheet grid"
-        aria-activedescendant={mountedSelectedCellId}
+        aria-activedescendant={viewport.mountedSelectedCellId}
         onScroll={handleScroll}
         onKeyDown={(event) => {
           if (editingCell) {
@@ -520,8 +438,8 @@ export function SpreadsheetGrid({
       >
         <div
           style={{
-            width: totalWidth + ROW_HEADER_WIDTH,
-            height: totalHeight,
+            width: viewport.totalWidth + ROW_HEADER_WIDTH,
+            height: viewport.totalHeight,
             position: 'relative',
           }}
         >
@@ -555,8 +473,8 @@ export function SpreadsheetGrid({
                     }}
                   />
                 </th>
-                {leftSpacerWidth > 0 && <th style={{ width: leftSpacerWidth, padding: 0 }} />}
-                {visibleColIndices.map((c) => (
+                {viewport.leftSpacerWidth > 0 && <th style={{ width: viewport.leftSpacerWidth, padding: 0 }} />}
+                {viewport.visibleColIndices.map((c) => (
                   <th
                     key={c}
                     style={{ width: columnWidths[c] ?? DEFAULT_COL_WIDTH }}
@@ -608,23 +526,23 @@ export function SpreadsheetGrid({
                     />
                   </th>
                 ))}
-                {rightSpacerWidth > 0 && <th style={{ width: rightSpacerWidth, padding: 0 }} />}
+                {viewport.rightSpacerWidth > 0 && <th style={{ width: viewport.rightSpacerWidth, padding: 0 }} />}
               </tr>
             </thead>
             <tbody>
-              {topSpacerHeight > 0 && (
-                <tr style={{ height: topSpacerHeight }}>
+              {viewport.topSpacerHeight > 0 && (
+                <tr style={{ height: viewport.topSpacerHeight }}>
                   <td
                     colSpan={
-                      visibleColIndices.length +
+                      viewport.visibleColIndices.length +
                       1 +
-                      (leftSpacerWidth > 0 ? 1 : 0) +
-                      (rightSpacerWidth > 0 ? 1 : 0)
+                      (viewport.leftSpacerWidth > 0 ? 1 : 0) +
+                      (viewport.rightSpacerWidth > 0 ? 1 : 0)
                     }
                   />
                 </tr>
               )}
-              {visibleRowIndices.map((r) => (
+              {viewport.visibleRowIndices.map((r) => (
                 <tr
                   key={r}
                   style={{ height: rowHeights[r] ?? DEFAULT_ROW_HEIGHT }}
@@ -675,19 +593,19 @@ export function SpreadsheetGrid({
                       onMouseDown={(e) => onRowResizeStart(r, e)}
                     />
                   </td>
-                  {leftSpacerWidth > 0 && <td style={{ width: leftSpacerWidth, padding: 0 }} />}
-                  {visibleColIndices.map((c) => renderCell(r, c))}
-                  {rightSpacerWidth > 0 && <td style={{ width: rightSpacerWidth, padding: 0 }} />}
+                  {viewport.leftSpacerWidth > 0 && <td style={{ width: viewport.leftSpacerWidth, padding: 0 }} />}
+                  {viewport.visibleColIndices.map((c) => renderCell(r, c))}
+                  {viewport.rightSpacerWidth > 0 && <td style={{ width: viewport.rightSpacerWidth, padding: 0 }} />}
                 </tr>
               ))}
-              {bottomSpacerHeight > 0 && (
-                <tr style={{ height: bottomSpacerHeight }}>
+              {viewport.bottomSpacerHeight > 0 && (
+                <tr style={{ height: viewport.bottomSpacerHeight }}>
                   <td
                     colSpan={
-                      visibleColIndices.length +
+                      viewport.visibleColIndices.length +
                       1 +
-                      (leftSpacerWidth > 0 ? 1 : 0) +
-                      (rightSpacerWidth > 0 ? 1 : 0)
+                      (viewport.leftSpacerWidth > 0 ? 1 : 0) +
+                      (viewport.rightSpacerWidth > 0 ? 1 : 0)
                     }
                   />
                 </tr>
