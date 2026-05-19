@@ -168,7 +168,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   });
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
-  const loadingContent = resolveRendererSlotContent(props, 'loadingSlot');
+  const loadingContent = props.regions.loading?.render() ?? props.props.loadingContent;
 
   const templateNodeId = props.node.templateNode.templateNodeId;
   const ownerKey = createTableOwnerKey(props, runtime.runtimeId);

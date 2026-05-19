@@ -45,10 +45,22 @@ describe('useTablePagination', () => {
     expect(api.currentPage).toBe(1);
     expect(api.pageSize).toBe(20);
     expect(renderScopeUpdate).not.toHaveBeenCalled();
-    expect(onPageChange).toHaveBeenLastCalledWith(null, {
+    expect(onPageChange).toHaveBeenLastCalledWith(undefined, {
+      event: undefined,
       scope: {
-        value: { page: 1, pageSize: 20 },
+        value: {
+          type: 'table:page-change',
+          page: 1,
+          pageSize: 20,
+          pagination: { currentPage: 1, pageSize: 20 },
+        },
         options: { scopeKey: 'pagination', pathSuffix: 'pagination' },
+      },
+      evaluationBindings: {
+        type: 'table:page-change',
+        page: 1,
+        pageSize: 20,
+        pagination: { currentPage: 1, pageSize: 20 },
       },
     });
   });
@@ -135,11 +147,47 @@ describe('useTablePagination', () => {
     });
 
     expect(api.currentPage).toBe(1);
-    expect(onPageChange).toHaveBeenLastCalledWith(null, {
+    expect(onPageChange).toHaveBeenLastCalledWith(undefined, {
+      event: undefined,
       scope: {
-        value: { page: 1, pageSize: 5 },
+        value: {
+          type: 'table:page-change',
+          page: 1,
+          pageSize: 5,
+          pagination: { currentPage: 1, pageSize: 5 },
+        },
         options: { scopeKey: 'pagination', pathSuffix: 'pagination' },
       },
+      evaluationBindings: {
+        type: 'table:page-change',
+        page: 1,
+        pageSize: 5,
+        pagination: { currentPage: 1, pageSize: 5 },
+      },
     });
+  });
+
+  it('uses explicit scope-owned pagination state without treating empty objects as missing', () => {
+    let api: any;
+    const helpers = createHelpers();
+
+    mockScopeState.data = { tableState: { pagination: { currentPage: 2, pageSize: 0 } } };
+
+    render(
+      <PaginationProbe
+        schemaProps={{
+          paginationOwnership: 'scope',
+          paginationStatePath: 'tableState.pagination',
+          pagination: { currentPage: 9, pageSize: 10 },
+        }}
+        helpers={helpers}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    expect(api.currentPage).toBe(2);
+    expect(api.pageSize).toBe(10);
   });
 });

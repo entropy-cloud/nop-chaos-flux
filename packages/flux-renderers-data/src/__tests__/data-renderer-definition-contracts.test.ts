@@ -63,13 +63,13 @@ describe('data renderer definition contracts', () => {
     }
   });
 
-  it('table renderer has value-or-region fields for empty and loadingSlot', () => {
+  it('table renderer has value-or-region fields for empty and loadingContent', () => {
     const table = dataRendererDefinitions.find((d) => d.type === 'table');
     expect(
       table?.fields?.some((f) => f.key === 'empty' && f.kind === 'value-or-region'),
     ).toBe(true);
     expect(
-      table?.fields?.some((f) => f.key === 'loadingSlot' && f.kind === 'value-or-region'),
+      table?.fields?.some((f) => f.key === 'loadingContent' && f.kind === 'value-or-region'),
     ).toBe(true);
   });
 });

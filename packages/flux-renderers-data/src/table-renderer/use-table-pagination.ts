@@ -4,6 +4,32 @@ import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { toPositiveNumber } from './table-data.js';
 
+function createPaginationEventContext(args: {
+  helpers: RendererComponentProps<TableSchema>['helpers'];
+  page: number;
+  pageSize: number;
+  uiEvent?: unknown;
+}) {
+  const payload = {
+    type: 'table:page-change',
+    page: args.page,
+    pageSize: args.pageSize,
+    pagination: {
+      currentPage: args.page,
+      pageSize: args.pageSize,
+    },
+  };
+
+  return {
+    event: args.uiEvent,
+    scope: args.helpers.createScope(payload, {
+      scopeKey: 'pagination',
+      pathSuffix: 'pagination',
+    }),
+    evaluationBindings: payload,
+  };
+}
+
 export function useTablePagination(
   schemaProps: TableSchema,
   onPageChange: RendererComponentProps<TableSchema>['events']['onPageChange'],
@@ -50,7 +76,7 @@ export function useTablePagination(
         : localPageSize;
 
   const handlePageChange = useCallback(
-    (page: number) => {
+    (page: number, uiEvent?: unknown) => {
       startTransition(() => {
         if (paginationOwnership === 'local') {
           setLocalCurrentPage(page);
@@ -58,18 +84,16 @@ export function useTablePagination(
           renderScope.update(paginationStatePath, { currentPage: page, pageSize });
         }
       });
-      onPageChange?.(null, {
-        scope: helpers.createScope(
-          { page, pageSize },
-          { scopeKey: 'pagination', pathSuffix: 'pagination' },
-        ),
-      });
+      onPageChange?.(
+        uiEvent,
+        createPaginationEventContext({ helpers, page, pageSize, uiEvent }),
+      );
     },
     [paginationOwnership, paginationStatePath, pageSize, onPageChange, helpers, renderScope],
   );
 
   const handlePageSizeChange = useCallback(
-    (newPageSize: number) => {
+    (newPageSize: number, uiEvent?: unknown) => {
       startTransition(() => {
         if (paginationOwnership === 'local') {
           setLocalPageSize(newPageSize);
@@ -78,18 +102,16 @@ export function useTablePagination(
           renderScope.update(paginationStatePath, { currentPage: 1, pageSize: newPageSize });
         }
       });
-      onPageChange?.(null, {
-        scope: helpers.createScope(
-          { page: 1, pageSize: newPageSize },
-          { scopeKey: 'pagination', pathSuffix: 'pagination' },
-        ),
-      });
+      onPageChange?.(
+        uiEvent,
+        createPaginationEventContext({ helpers, page: 1, pageSize: newPageSize, uiEvent }),
+      );
     },
     [paginationOwnership, paginationStatePath, onPageChange, helpers, renderScope],
   );
 
   const clampPage = useCallback(
-    (nextPage: number, totalRows: number) => {
+    (nextPage: number, totalRows: number, uiEvent?: unknown) => {
       if (!paginationEnabled) {
         return currentPage;
       }
@@ -108,12 +130,10 @@ export function useTablePagination(
           renderScope.update(paginationStatePath, { currentPage: clampedPage, pageSize });
         }
       });
-      onPageChange?.(null, {
-        scope: helpers.createScope(
-          { page: clampedPage, pageSize },
-          { scopeKey: 'pagination', pathSuffix: 'pagination' },
-        ),
-      });
+      onPageChange?.(
+        uiEvent,
+        createPaginationEventContext({ helpers, page: clampedPage, pageSize, uiEvent }),
+      );
 
       return clampedPage;
     },

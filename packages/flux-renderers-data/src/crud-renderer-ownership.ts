@@ -16,6 +16,24 @@ interface CrudComponentRegistryLike {
   resolve(args: { componentId: string }): CrudQueryFormHandle | undefined;
 }
 
+function createCrudQueryEventPayload(args: {
+  type: 'crud:query-submit' | 'crud:query-reset';
+  query: Record<string, unknown>;
+  page: number;
+  pageSize: number;
+}) {
+  return {
+    type: args.type,
+    query: args.query,
+    pagination: {
+      currentPage: args.page,
+      pageSize: args.pageSize,
+    },
+    page: args.page,
+    pageSize: args.pageSize,
+  };
+}
+
 export interface CrudOwnerPaths {
   ownerStatePath: string;
   queryStatePath: string;
@@ -143,15 +161,29 @@ export function useCrudQueryBridge(args: {
       }
 
       if (shouldFetchOnQueryChange && sequence === submitSequenceRef.current) {
-        onQuerySubmit?.(undefined, {
+        const payload = createCrudQueryEventPayload({
+          type: 'crud:query-submit',
+          query: nextValues,
+          page: 1,
+          pageSize: paginationState.pageSize,
+        });
+        onQuerySubmit?.(payload, {
           scope,
-          evaluationBindings: { query: nextValues },
+          event: payload,
+          evaluationBindings: payload,
         });
       }
 
       return true;
     },
-    [onQuerySubmit, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange],
+    [
+      onQuerySubmit,
+      paginationState.pageSize,
+      queryState.refreshCount,
+      queryStatePath,
+      scope,
+      shouldFetchOnQueryChange,
+    ],
   );
 
   const resetQueryValues = useCallback(() => {
@@ -175,9 +207,16 @@ export function useCrudQueryBridge(args: {
     });
 
     if (shouldFetchOnQueryChange) {
-      onQueryReset?.(undefined, {
+      const payload = createCrudQueryEventPayload({
+        type: 'crud:query-reset',
+        query: defaultQuery,
+        page: 1,
+        pageSize: paginationState.pageSize,
+      });
+      onQueryReset?.(payload, {
         scope,
-        evaluationBindings: { query: defaultQuery },
+        event: payload,
+        evaluationBindings: payload,
       });
     }
   }, [

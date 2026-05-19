@@ -393,8 +393,76 @@ describe('CRUD query and pagination', () => {
         refreshCount: 3,
       });
       expect(onQuerySubmit).toHaveBeenCalledTimes(1);
-      expect((onQuerySubmit.mock.calls[0] as any)?.[1]?.evaluationBindings).toEqual({
+      expect((onQuerySubmit.mock.calls[0] as any)?.[0]).toEqual({
+        type: 'crud:query-submit',
         query: { keyword: 'second' },
+        pagination: { currentPage: 1, pageSize: 10 },
+        page: 1,
+        pageSize: 10,
+      });
+      expect((onQuerySubmit.mock.calls[0] as any)?.[1]?.evaluationBindings).toEqual({
+        type: 'crud:query-submit',
+        query: { keyword: 'second' },
+        pagination: { currentPage: 1, pageSize: 10 },
+        page: 1,
+        pageSize: 10,
+      });
+    });
+  });
+
+  it('emits honest reset payloads even when the default query is empty', async () => {
+    const update = vi.fn();
+    const onQueryReset = vi.fn();
+
+    const componentRegistry = {
+      resolve: () => ({
+        capabilities: {
+          hasMethod(method: string) {
+            return method === 'reset';
+          },
+          invoke() {
+            return { ok: true };
+          },
+        },
+      }),
+    };
+
+    function Harness() {
+      const { handleQueryReset } = useCrudQueryBridge({
+        componentRegistry,
+        queryFormId: 'query-form',
+        scope: { update } as any,
+        queryStatePath: '$._query',
+        paginationStatePath: '$._pagination',
+        queryState: { values: { keyword: 'draft' }, refreshCount: 4 },
+        paginationState: { currentPage: 3, pageSize: 20 },
+        defaultQuery: {},
+        shouldFetchOnQueryChange: true,
+        onQuerySubmit: undefined,
+        onQueryReset: onQueryReset as any,
+      });
+
+      return <button type="button" onClick={handleQueryReset}>reset query</button>;
+    }
+
+    render(<Harness />);
+    fireEvent.click(screen.getByRole('button', { name: 'reset query' }));
+
+    await waitFor(() => {
+      expect(onQueryReset).toHaveBeenCalledTimes(1);
+      expect((onQueryReset.mock.calls[0] as any)?.[0]).toEqual({
+        type: 'crud:query-reset',
+        query: {},
+        pagination: { currentPage: 1, pageSize: 20 },
+        page: 1,
+        pageSize: 20,
+      });
+      expect((onQueryReset.mock.calls[0] as any)?.[1]?.evaluationBindings).toEqual({
+        type: 'crud:query-reset',
+        query: {},
+        pagination: { currentPage: 1, pageSize: 20 },
+        page: 1,
+        pageSize: 20,
       });
     });
   });

@@ -62,9 +62,7 @@ export function useTableVisibleColumns(
   );
   const visibleColumns = enabled
     ? toggledStatePath
-      ? scopeVisibleColumns?.length
-        ? scopeVisibleColumns
-        : defaultVisibleColumns
+      ? scopeVisibleColumns ?? defaultVisibleColumns
       : localVisibleColumns
     : defaultVisibleColumns;
 

@@ -74,7 +74,7 @@ export interface TableSchema extends BaseSchema {
   footer?: SchemaInput | string;
   empty?: BaseSchema | BaseSchema[] | string;
   loading?: boolean;
-  loadingSlot?: BaseSchema | BaseSchema[] | string;
+  loadingContent?: BaseSchema | BaseSchema[] | string;
   stripe?: boolean;
   bordered?: boolean;
   virtualThreshold?: number;

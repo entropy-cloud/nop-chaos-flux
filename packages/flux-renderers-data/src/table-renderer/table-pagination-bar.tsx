@@ -35,8 +35,8 @@ interface TablePaginationBarProps {
   totalPages: number;
   totalRows: number;
   pageSizeOptions?: number[];
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (pageSize: number) => void;
+  onPageChange: (page: number, uiEvent?: unknown) => void;
+  onPageSizeChange: (pageSize: number, uiEvent?: unknown) => void;
 }
 
 export function TablePaginationBar({
@@ -62,7 +62,7 @@ export function TablePaginationBar({
         </span>
         <NativeSelect
           value={String(pageSize)}
-          onChange={(event) => onPageSizeChange(Number(event.target.value))}
+          onChange={(event) => onPageSizeChange(Number(event.target.value), event)}
           size="sm"
           className="min-w-16"
           aria-labelledby={pageSizeLabelId}
@@ -79,7 +79,7 @@ export function TablePaginationBar({
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
-              onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
+              onClick={(event) => currentPage > 1 && onPageChange(currentPage - 1, event)}
               aria-disabled={currentPage === 1}
               className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
             />
@@ -89,7 +89,7 @@ export function TablePaginationBar({
             <>
               <PaginationItem>
                 <PaginationLink
-                  onClick={() => onPageChange(1)}
+                  onClick={(event) => onPageChange(1, event)}
                   isActive={currentPage === 1}
                   className="cursor-pointer"
                 >
@@ -107,7 +107,7 @@ export function TablePaginationBar({
           {Array.from({ length: winEnd - winStart + 1 }, (_, i) => winStart + i).map((page) => (
             <PaginationItem key={page}>
               <PaginationLink
-                onClick={() => onPageChange(page)}
+                onClick={(event) => onPageChange(page, event)}
                 isActive={page === currentPage}
                 className="cursor-pointer"
               >
@@ -125,7 +125,7 @@ export function TablePaginationBar({
               )}
               <PaginationItem>
                 <PaginationLink
-                  onClick={() => onPageChange(totalPages)}
+                  onClick={(event) => onPageChange(totalPages, event)}
                   isActive={currentPage === totalPages}
                   className="cursor-pointer"
                 >
@@ -137,7 +137,7 @@ export function TablePaginationBar({
 
           <PaginationItem>
             <PaginationNext
-              onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
+              onClick={(event) => currentPage < totalPages && onPageChange(currentPage + 1, event)}
               aria-disabled={currentPage === totalPages}
               className={
                 currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'
