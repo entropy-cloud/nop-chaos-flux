@@ -343,6 +343,49 @@ describe('dataRendererDefinitions table columns', () => {
     });
   });
 
+  it('renders column settings controls from ordered keys without repeated linear lookups', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/table-column-settings-keyed"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              columnSettings: { enabled: true, overlay: false },
+              columns: [
+                { label: 'Name', name: 'name' },
+                { label: 'Email', name: 'email' },
+                { label: 'Role', name: 'role' },
+              ],
+              source: [{ id: 1, name: 'Alice', email: 'alice@example.com', role: 'Admin' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: t('flux.table.columns') }));
+
+    const labels = Array.from(
+      document.querySelectorAll('[data-slot="table-column-settings-item"] label'),
+    ).map((node) => node.textContent?.trim());
+    expect(labels).toEqual(['Name', 'Email', 'Role']);
+
+    fireEvent.click(screen.getByRole('button', { name: `${t('flux.table.moveDown')} Name` }));
+
+    await waitFor(() => {
+      const reorderedLabels = Array.from(
+        document.querySelectorAll('[data-slot="table-column-settings-item"] label'),
+      ).map((node) => node.textContent?.trim());
+      expect(reorderedLabels).toEqual(['Email', 'Name', 'Role']);
+    });
+  });
+
   it('moves secondary columns into an expanded row when responsive expand mode is active', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer();

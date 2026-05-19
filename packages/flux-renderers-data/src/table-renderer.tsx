@@ -265,6 +265,37 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const columnSettingsOverlay = schemaProps.columnSettings?.overlay !== false;
   const columnSettingsAlignmentClass =
     schemaProps.columnSettings?.align === 'left' ? 'items-start' : 'items-end';
+  const columnSettingsColumnsByKey = useMemo(
+    () => new Map(columns.map((column, index) => [column.name ?? `column-${index}`, column] as const)),
+    [columns],
+  );
+  const visibleColumnKeys = useMemo(() => new Set(visibleColumns), [visibleColumns]);
+  const orderedColumnKeyToIndex = useMemo(
+    () => new Map(orderedColumns.map((key, index) => [key, index] as const)),
+    [orderedColumns],
+  );
+  const columnSettingsItems = useMemo(
+    () =>
+      orderedColumns.flatMap((key) => {
+        const orderedIndex = orderedColumnKeyToIndex.get(key);
+        const column = columnSettingsColumnsByKey.get(key);
+
+        if (!column || orderedIndex == null) {
+          return [];
+        }
+
+        return [
+          {
+            key,
+            column,
+            orderedIndex,
+            label: typeof column.label === 'string' ? column.label : (column.name ?? key),
+            visible: visibleColumnKeys.has(key),
+          },
+        ];
+      }),
+    [columnSettingsColumnsByKey, orderedColumnKeyToIndex, orderedColumns, visibleColumnKeys],
+  );
 
   const virtualThreshold = schemaProps.virtualThreshold;
   const scrollHeight = schemaProps.scrollHeight;
@@ -297,22 +328,11 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 }
               />
               <DropdownMenuContent>
-                {orderedColumns.map((key) => {
-                  const columnIndex = columns.findIndex(
-                    (column, index) => (column.name ?? `column-${index}`) === key,
-                  );
-                  if (columnIndex < 0) {
-                    return null;
-                  }
-
-                  const column = columns[columnIndex];
-                  const label =
-                    typeof column.label === 'string' ? column.label : (column.name ?? key);
-                  const orderedIndex = orderedColumns.indexOf(key);
+                {columnSettingsItems.map(({ key, label, orderedIndex, visible }) => {
                   return (
                     <div key={key} data-slot="table-column-settings-item">
                       <DropdownMenuCheckboxItem
-                        checked={visibleColumns.includes(key)}
+                        checked={visible}
                         onCheckedChange={(checked) => toggleColumn(key, checked)}
                       >
                         {label}
@@ -356,18 +376,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                   className="mt-2 w-full max-w-sm rounded-md border bg-popover p-2 shadow-sm"
                   data-slot="table-column-settings-inline"
                 >
-                  {orderedColumns.map((key) => {
-                    const columnIndex = columns.findIndex(
-                      (column, index) => (column.name ?? `column-${index}`) === key,
-                    );
-                    if (columnIndex < 0) {
-                      return null;
-                    }
-
-                    const column = columns[columnIndex];
-                    const label =
-                      typeof column.label === 'string' ? column.label : (column.name ?? key);
-                    const orderedIndex = orderedColumns.indexOf(key);
+                  {columnSettingsItems.map(({ key, label, orderedIndex, visible }) => {
                     const checkboxId = `table-column-settings-${props.id}-${key}`;
 
                     return (
@@ -379,7 +388,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                         <div className="flex items-center gap-2">
                           <Checkbox
                             id={checkboxId}
-                            checked={visibleColumns.includes(key)}
+                            checked={visible}
                             onCheckedChange={(checked) => toggleColumn(key, Boolean(checked))}
                           />
                           <Label htmlFor={checkboxId}>{label}</Label>

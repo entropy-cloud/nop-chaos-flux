@@ -79,6 +79,8 @@ vi.mock('@nop-chaos/flux-react', () => ({
 
 vi.mock('@nop-chaos/ui', () => ({
   cn: (...values: Array<string | undefined>) => values.filter(Boolean).join(' '),
+  Spinner: (props: Record<string, unknown>) =>
+    React.createElement('span', { 'data-testid': 'spinner', ...props }),
 }));
 
 vi.mock('@nop-chaos/ui/chart', () => ({
@@ -157,7 +159,7 @@ describe('ChartRenderer', () => {
     const canvas = document.querySelector('[data-slot="chart-canvas"]') as HTMLElement;
     expect(canvas).toBeTruthy();
     expect(screen.getByText(/Loading|加载中/)).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Chart' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Chart' })).toBeTruthy();
 
     fireEvent.click(canvas);
     fireEvent.keyDown(canvas, { key: 'Enter' });

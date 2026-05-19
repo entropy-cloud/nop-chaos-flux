@@ -211,6 +211,7 @@ function VirtualBody({
   expandRowByClick,
   onToggleExpand,
   onSelectRow,
+  emptyContent,
   scrollRef,
 }: TableBodyRowsProps) {
   const parentRef = scrollRef;
@@ -268,7 +269,7 @@ function VirtualBody({
                 justifyContent: 'center',
               }}
             >
-              {''}
+              {emptyContent}
             </div>
           </TableCell>
         </TableRow>

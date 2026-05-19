@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { ArrowUpDownIcon, ArrowUpIcon, ArrowDownIcon, ChevronDownIcon } from 'lucide-react';
+import { ArrowUpDownIcon, ArrowUpIcon, ArrowDownIcon, ListFilterIcon } from 'lucide-react';
 import type { TableColumnSchema, TableSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import type { FilterState, SortState } from './types.js';
@@ -78,6 +78,7 @@ export function TableHeaderRow({
           {schemaProps.rowSelection.type === 'checkbox' && (
             <Checkbox
               checked={allSelected && selectedRowCount === sourceLength && sourceLength > 0}
+              indeterminate={!allSelected && selectedRowCount > 0}
               onCheckedChange={(checked) => onSelectAll(Boolean(checked))}
               aria-label={t('flux.table.selectAll')}
             />
@@ -141,7 +142,7 @@ export function TableHeaderRow({
               <div className="flex items-center gap-1">
                 {isSortable ? (
                   <span
-                    className="cursor-pointer hover:text-primary"
+                    className="cursor-pointer hover:text-primary focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
                     role="button"
                     tabIndex={0}
                     onClick={() => { if (column.name) onSort(column.name); }}
@@ -186,7 +187,7 @@ export function TableHeaderRow({
                           }
                         >
                           <span className="sr-only">{t('flux.table.filter')}</span>
-                          <ChevronDownIcon className="size-3" />
+                          <ListFilterIcon className="size-3" />
                         </Button>
                       }
                     />

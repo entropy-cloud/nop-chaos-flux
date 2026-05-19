@@ -430,7 +430,10 @@ describe('CRUD renderer quick-edit baseline', () => {
       name: 'Dialog Name',
     })) as HTMLInputElement;
     fireEvent.change(dialogInput, { target: { value: 'Alicia' } });
-    fireEvent.click(screen.getByRole('button', { name: t('flux.common.close') }));
+    const dialog = screen.getByRole('dialog');
+    const closeButton = dialog.querySelector('[data-slot="dialog-footer"] [data-slot="button"]');
+    expect(closeButton).toBeTruthy();
+    fireEvent.click(closeButton as HTMLButtonElement);
 
     await waitFor(() => {
       expect(screen.queryByRole('textbox', { name: 'Dialog Name' })).toBeNull();

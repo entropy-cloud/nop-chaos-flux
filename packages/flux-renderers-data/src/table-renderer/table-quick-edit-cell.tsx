@@ -139,12 +139,12 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
       >
         <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
           <Button type="button" variant="outline" size="sm" onClick={openDialog}>
-            {typeof column.label === 'string' ? column.label : t('flux.common.save')}
+            {typeof column.label === 'string' ? column.label : t('flux.common.edit')}
           </Button>
-          <DialogContent data-slot="table-quick-edit-dialog" showCloseButton={false}>
+          <DialogContent data-slot="table-quick-edit-dialog">
             <DialogHeader>
               <DialogTitle>
-                {typeof column.label === 'string' ? column.label : (field ?? t('flux.common.save'))}
+                {typeof column.label === 'string' ? column.label : (field ?? t('flux.common.edit'))}
               </DialogTitle>
             </DialogHeader>
             <DialogBody data-slot="table-quick-edit-dialog-body" onChangeCapture={markBodyDirty}>

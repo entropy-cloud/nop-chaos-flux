@@ -244,7 +244,10 @@ describe('TableQuickEditCell', () => {
 
     const body = screen.getByLabelText('Dialog body');
     fireEvent.change(body, { target: { value: 'changed' } });
-    fireEvent.click(screen.getByRole('button', { name: t('flux.common.close') }));
+    const dialog = screen.getByRole('dialog');
+    const closeButton = dialog.querySelector('[data-slot="dialog-footer"] [data-slot="button"]');
+    expect(closeButton).toBeTruthy();
+    fireEvent.click(closeButton as HTMLButtonElement);
     expect(rowScope.get('record')).toMatchObject({ name: 'Alice' });
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Name' }));

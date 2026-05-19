@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { TableBodyRows } from '../table-renderer/table-body-rows.js';
 import { TableLoadingOverlay } from '../table-renderer/table-loading-overlay.js';
@@ -185,7 +185,7 @@ describe('table internal components', () => {
     expect(onToggleExpand).toHaveBeenCalledWith('1');
   });
 
-  it('supports keyboard activation for interactive rows', () => {
+  it('keeps clickable rows as honest table rows without fake keyboard button semantics', () => {
     const onRowClick = vi.fn();
     const rowScopeCache = new Map<string, any>([['1', makeRowScope({ name: 'Alice' }, 0)]]);
     const processedData = [{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } }];
@@ -221,15 +221,16 @@ describe('table internal components', () => {
     );
 
     const row = document.querySelector('[data-slot="table-row"]') as HTMLElement;
-    expect(row.tabIndex).toBe(0);
+    expect(row.tabIndex).toBe(-1);
+    expect(row.getAttribute('role')).toBeNull();
+    expect(row.getAttribute('aria-expanded')).toBeNull();
 
-    fireEvent.keyDown(row, { key: 'Enter' });
-    fireEvent.keyDown(row, { key: ' ' });
+    fireEvent.click(row);
 
-    expect(onRowClick).toHaveBeenCalledTimes(2);
+    expect(onRowClick).toHaveBeenCalledTimes(1);
   });
 
-  it('publishes aria-expanded on rows when row-click expansion is enabled', () => {
+  it('publishes expand state on the actual expand button instead of the row', () => {
     const rowScopeCache = new Map<string, any>([['1', makeRowScope({ name: 'Alice' }, 0)]]);
     const processedData = [{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } }];
 
@@ -254,7 +255,7 @@ describe('table internal components', () => {
             } as any
           }
           emptyContent={null}
-          showExpandColumn={false}
+          showExpandColumn={true}
           expandRowByClick={true}
           onToggleExpand={() => {}}
           onSelectRow={() => {}}
@@ -263,9 +264,54 @@ describe('table internal components', () => {
       </table>,
     );
 
-    expect(document.querySelector('[data-slot="table-row"]')?.getAttribute('aria-expanded')).toBe(
-      'true',
+    expect(document.querySelector('[data-slot="table-row"]')?.getAttribute('aria-expanded')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Collapse' }).getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('leaves row-click expansion mouse-only while the explicit expand button stays keyboard-accessible', () => {
+    const onToggleExpand = vi.fn();
+    const rowScopeCache = new Map<string, any>([['1', makeRowScope({ name: 'Alice' }, 0)]]);
+    const processedData = [{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } }];
+
+    render(
+      <table>
+        <TableBodyRows
+          props={makeTableProps({ events: {} })}
+          columns={[{ label: 'Name', name: 'name' } as any]}
+          responsiveHiddenColumns={[]}
+          processedData={processedData as any}
+          rowScopeCache={rowScopeCache}
+          rowRepeatedTemplateId="row"
+          expandedRowKeys={new Set()}
+          selectedRowKeys={new Set()}
+          columnCount={2}
+          isStriped={false}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
+          emptyContent={null}
+          showExpandColumn={true}
+          expandRowByClick={true}
+          onToggleExpand={onToggleExpand}
+          onSelectRow={() => {}}
+          virtualEnabled={false}
+        />
+      </table>,
     );
+
+    const row = document.querySelector('[data-slot="table-row"]') as HTMLElement;
+    const expandButton = within(row).getByRole('button', { name: 'Expand' });
+
+    fireEvent.keyDown(row, { key: 'Enter' });
+    fireEvent.keyDown(row, { key: ' ' });
+    expect(onToggleExpand).not.toHaveBeenCalled();
+
+    fireEvent.click(expandButton);
+    expect(onToggleExpand).toHaveBeenCalledTimes(1);
   });
 
   it('renders data rows with checkbox selection cells and correct field values', () => {
