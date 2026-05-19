@@ -174,6 +174,31 @@ describe('schema compiler renderer contract integration', () => {
     );
   });
 
+  it('prefers explicit validation ownerResolution over scopePolicy form fallback', () => {
+    const renderer: RendererDefinition = {
+      type: 'owner-precedence',
+      component: () => null,
+      scopePolicy: 'form',
+      validation: {
+        ownerResolution: 'inherit-owner',
+        childContractMode: 'summary-gate',
+      },
+    };
+
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([renderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = compiler.compile({ type: 'owner-precedence' });
+    const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+
+    expect(root.validationOwnerPlan).toEqual({
+      boundary: 'inherit-owner',
+      childContractMode: 'summary-gate',
+    });
+  });
+
   it('throws in strict mode when custom field compilation fails', () => {
     const renderer: RendererDefinition = {
       type: 'custom-compile',

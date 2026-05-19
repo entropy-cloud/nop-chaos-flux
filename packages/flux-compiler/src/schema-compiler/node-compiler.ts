@@ -471,20 +471,19 @@ export function createCompileSingleNode(
     };
 
     const providerWrap = buildWrapProvidersClosure(providerPlan);
+    const explicitOwnerResolution = renderer.validation?.ownerResolution;
     const validationOwnerPlan =
-      renderer.scopePolicy === 'form'
+      explicitOwnerResolution || renderer.scopePolicy === 'form'
         ? {
-            boundary: 'create-owner' as const,
+            boundary: (explicitOwnerResolution ?? 'create-owner') as
+              | 'inherit-owner'
+              | 'create-owner'
+              | 'no-owner',
             childContractMode:
               renderer.validation?.childContractMode ??
               (schema.type === 'form' ? 'ignore' : 'summary-gate'),
           }
-        : renderer.validation?.ownerResolution
-          ? {
-              boundary: renderer.validation.ownerResolution,
-              childContractMode: renderer.validation.childContractMode,
-            }
-          : undefined;
+        : undefined;
 
     const namedActionPlans: Record<string, CompiledActionProgram> | undefined = rawXuiActions
       ? Object.fromEntries(

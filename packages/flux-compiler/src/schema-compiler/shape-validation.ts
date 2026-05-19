@@ -26,23 +26,21 @@ import {
   isNamespacedSchemaKey,
 } from './shape-validation-utils.js';
 export { applyWrapComponentPlugins, isNamespacedSchemaKey } from './shape-validation-utils.js';
-import {
-  createHostActionValidationContext,
-  type HostActionValidationContext,
-} from './host-action-validation.js';
+import type { HostActionValidationContext } from './host-action-validation.js';
 import {
   isDynamicallyAuthoredSchemaValue,
   summarizeActualSchemaValue,
   validateFluxValueShape,
 } from './flux-value-shape-validation.js';
 import { TABS_ITEM_BOOLEAN_FIELDS } from './tables.js';
+import { validateRegionParams } from './regions.js';
+import { analyzeDeepSchemaField } from './shape-validation-deep-fields.js';
 import {
-  DEEP_FIELD_NORMALIZERS,
-  TABLE_COLUMN_REGION_FIELDS,
-  TABS_ITEM_REGION_FIELDS,
-  VARIANT_ITEM_REGION_FIELDS,
-} from './tables.js';
-import { validateRegionParams, visitNestedSchemaRegions } from './regions.js';
+  createDefaultValidationTraversalState,
+  createRegionTraversalState,
+  resolveNodeHostContext,
+  type ValidationTraversalState,
+} from './shape-validation-traversal.js';
 
 const BOOLEAN_META_KEYS = new Set(['when', 'visible', 'hidden', 'disabled']);
 
@@ -50,10 +48,6 @@ function findNamespaceValidator(diagnostics: SchemaCompilerDiagnosticsContext, n
   return diagnostics.validation.namespaceValidators.find(
     (validator) => validator.namespace === namespace,
   );
-}
-
-interface ValidationTraversalState {
-  hostContext?: HostActionValidationContext;
 }
 
 function validateKnownPropValue(
@@ -141,265 +135,6 @@ function validateNestedBooleanFields(input: {
       });
     }
   });
-}
-
-function resolveNodeHostContext(
-  schema: BaseSchema,
-  renderer: RendererDefinition,
-  path: string,
-  diagnostics: SchemaCompilerDiagnosticsContext,
-  inheritedHostContext: HostActionValidationContext | undefined,
-): {
-  hostContext?: HostActionValidationContext;
-  startsHostBoundary: boolean;
-} {
-  const hostContract = renderer.hostContract;
-
-  if (!hostContract) {
-    return {
-      hostContext: inheritedHostContext,
-      startsHostBoundary: false,
-    };
-  }
-
-  const versionSelector =
-    typeof schema['xui:version'] === 'string' && schema['xui:version'].length > 0
-      ? schema['xui:version']
-      : hostContract.defaultVersion;
-  const manifest = hostContract.resolveManifest(versionSelector);
-
-  if (!manifest) {
-    diagnostics.emit({
-      code: 'unsupported-host-contract-version',
-      path: schemaPathToJsonPointer(path),
-      message: `Renderer type "${renderer.type}" does not support host contract version selector "${versionSelector}" for family "${hostContract.family}".`,
-      source: 'host-contract',
-    });
-
-    return {
-      hostContext: undefined,
-      startsHostBoundary: true,
-    };
-  }
-
-  if (manifest.family !== hostContract.family) {
-    diagnostics.emit({
-      code: 'unknown-host-contract-family',
-      path: schemaPathToJsonPointer(path),
-      message: `Renderer type "${renderer.type}" resolved host contract family "${manifest.family}" but declared "${hostContract.family}".`,
-      source: 'host-contract',
-    });
-  }
-
-  if (
-    inheritedHostContext &&
-    inheritedHostContext.manifest.family === manifest.family &&
-    inheritedHostContext.manifest.version !== manifest.version
-  ) {
-    diagnostics.emit({
-      code: 'host-contract-version-mismatch',
-      path: schemaPathToJsonPointer(path),
-      message: `Renderer type "${renderer.type}" resolved host contract version "${manifest.version}" but the enclosing validation context uses version "${inheritedHostContext.manifest.version}" for family "${manifest.family}".`,
-      severity: 'warning',
-      source: 'host-contract',
-    });
-  }
-
-  return {
-    hostContext: createHostActionValidationContext({
-      family: manifest.family,
-      version: manifest.version,
-      manifest,
-      capabilityPublication: hostContract.capabilityPublication,
-    }),
-    startsHostBoundary: true,
-  };
-}
-
-function createChildTraversalState(
-  state: ValidationTraversalState,
-  regionKey: string,
-  startsHostBoundary: boolean,
-): ValidationTraversalState {
-  if (!state.hostContext || !startsHostBoundary) {
-    return state;
-  }
-
-  return {
-    hostContext: {
-      ...state.hostContext,
-      currentRegion: regionKey,
-    },
-  };
-}
-
-function createRegionTraversalState(
-  state: ValidationTraversalState,
-  regionKey: string,
-  params: readonly string[] | undefined,
-  startsHostBoundary: boolean,
-): ValidationTraversalState {
-  const nextState = createChildTraversalState(state, regionKey, startsHostBoundary);
-
-  if (!params?.length) {
-    return nextState;
-  }
-
-  return {
-    ...nextState,
-    hostContext: nextState.hostContext,
-  };
-}
-
-function analyzeDeepSchemaField(input: {
-  renderer: RendererDefinition;
-  key: string;
-  value: unknown;
-  path: string;
-  registry: RendererRegistry;
-  plugins: readonly RendererPlugin[] | undefined;
-  diagnostics: SchemaCompilerDiagnosticsContext;
-  traversalState: ValidationTraversalState;
-  startsHostBoundary: boolean;
-}): boolean {
-  if (!(input.key in (DEEP_FIELD_NORMALIZERS[input.renderer.type] ?? {}))) {
-    return false;
-  }
-
-  if (input.renderer.type === 'table' || input.renderer.type === 'crud') {
-    if (input.key === 'columns' && Array.isArray(input.value)) {
-      input.value.forEach((column, index) => {
-        if (!column || typeof column !== 'object' || Array.isArray(column)) {
-          return;
-        }
-
-        visitNestedSchemaRegions({
-          candidate: column as Record<string, unknown>,
-          itemRegionPath: `${input.path}.columns[${index}]`,
-          rules: TABLE_COLUMN_REGION_FIELDS,
-          visitRegion(region) {
-            analyzeSchemaInput(
-              region.value,
-              region.path,
-              input.registry,
-              input.plugins,
-              input.diagnostics,
-              createRegionTraversalState(
-                input.traversalState,
-                region.key,
-                region.params,
-                input.startsHostBoundary,
-              ),
-            );
-          },
-        });
-      });
-
-      return true;
-    }
-
-    if (input.renderer.type === 'table' && input.key === 'expandable') {
-      const expandable = input.value;
-      if (!expandable || typeof expandable !== 'object' || Array.isArray(expandable)) {
-        return true;
-      }
-
-      visitNestedSchemaRegions({
-        candidate: expandable as Record<string, unknown>,
-        itemRegionPath: `${input.path}.expandable`,
-        rules: [
-          {
-            key: 'expandedRow',
-            regionKeySuffix: 'expandedRow',
-            compiledKey: 'expandedRowRegionKey',
-            params: ['record', 'index'] as readonly string[],
-            isolate: true,
-          },
-        ],
-        visitRegion(region) {
-          analyzeSchemaInput(
-            region.value,
-            region.path,
-            input.registry,
-            input.plugins,
-            input.diagnostics,
-            createRegionTraversalState(
-              input.traversalState,
-              region.key,
-              region.params,
-              input.startsHostBoundary,
-            ),
-          );
-        },
-      });
-
-      return true;
-    }
-  }
-
-  if (input.renderer.type === 'tabs' && input.key === 'items' && Array.isArray(input.value)) {
-    input.value.forEach((item, index) => {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        return;
-      }
-
-      visitNestedSchemaRegions({
-        candidate: item as Record<string, unknown>,
-        itemRegionPath: `${input.path}.items[${index}]`,
-        rules: TABS_ITEM_REGION_FIELDS,
-        visitRegion(region) {
-          analyzeSchemaInput(
-            region.value,
-            region.path,
-            input.registry,
-            input.plugins,
-            input.diagnostics,
-            createRegionTraversalState(
-              input.traversalState,
-              region.key,
-              region.params,
-              input.startsHostBoundary,
-            ),
-          );
-        },
-      });
-    });
-
-    return true;
-  }
-
-  if (input.renderer.type === 'variant-field' && input.key === 'variants' && Array.isArray(input.value)) {
-    input.value.forEach((item, index) => {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        return;
-      }
-
-      visitNestedSchemaRegions({
-        candidate: item as Record<string, unknown>,
-        itemRegionPath: `${input.path}.variants[${index}]`,
-        rules: VARIANT_ITEM_REGION_FIELDS,
-        visitRegion(region) {
-          analyzeSchemaInput(
-            region.value,
-            region.path,
-            input.registry,
-            input.plugins,
-            input.diagnostics,
-            createRegionTraversalState(
-              input.traversalState,
-              region.key,
-              region.params,
-              input.startsHostBoundary,
-            ),
-          );
-        },
-      });
-    });
-
-    return true;
-  }
-
-  return true;
 }
 
 export function inspectSchemaNodeFields(
@@ -621,11 +356,7 @@ export function analyzeSchemaInput(
   registry: RendererRegistry,
   plugins: readonly RendererPlugin[] | undefined,
   diagnostics: SchemaCompilerDiagnosticsContext,
-  traversalState: ValidationTraversalState = {
-    hostContext: diagnostics.validation.hostContractContext
-      ? createHostActionValidationContext(diagnostics.validation.hostContractContext)
-      : undefined,
-  },
+  traversalState: ValidationTraversalState = createDefaultValidationTraversalState(diagnostics),
 ) {
   if (diagnostics.hasReachedLimit()) {
     return;
@@ -706,6 +437,7 @@ export function analyzeSchemaInput(
         diagnostics,
         traversalState: nodeTraversal,
         startsHostBoundary: nodeTraversal.startsHostBoundary,
+        analyzeSchemaInput,
       })
     ) {
       continue;
