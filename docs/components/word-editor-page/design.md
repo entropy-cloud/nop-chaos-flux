@@ -64,6 +64,9 @@ interface WordEditorConfig {
 - `statusPath` 用于向宿主外部发布窄只读摘要 DTO
 - `onSave` 在显式保存时接收完整 `SavedDocumentData` envelope，供宿主按同一已保存快照做持久化或校验
 - `statusPath.busy` 表示显式保存是否进行中，而不只是静态 shell 摘要
+- 模板标签插入保留 core 发布的真实 `kind`；`c:out` 属于受支持的 `tag-selfclose` 插入面，而不是被降级成 open-tag 的伪契约
+- 图表/条码插入只接受能通过 `validateDocChart` / `validateDocCode` 的完整 payload
+- watermark 不属于当前受支持的 authoring surface，因为页面没有与 persisted truth surface 对齐的 watermark round-trip 契约
 
 ## 5. 字段分类
 
@@ -102,7 +105,7 @@ interface WordEditorConfig {
 - schema 片段通过宿主 scope 读取快照，并通过命名空间动作写操作。
 - `word-editor-page` 属于 `Domain Host Owner`：内部读面是 host projection，宿主外部若需要观测状态，应通过窄 `statusPath` 摘要。
 - 页边距对话框以 `editor-store.paperSettings` 为 owner truth：打开时从当前 paper settings hydrate，确认时同时回写 store 与 canvas bridge 的 `executeSetPaperMargin(...)` 路径。
-- hyperlink、page margins、watermark 这三类 dialog 输入当前都要求稳定程序化标签：不得仅依赖 placeholder 或相邻视觉文本。当前 live baseline 至少固定了 hyperlink display/url、四个 margin 输入和 watermark text 输入的 accessible name。
+- hyperlink 与 page margins dialog 输入当前都要求稳定程序化标签：不得仅依赖 placeholder 或相邻视觉文本。当前 live baseline 至少固定了 hyperlink display/url 与四个 margin 输入的 accessible name。
 
 ### 7.1 Host Projection Contract
 
@@ -140,8 +143,10 @@ host scope 向下投影四个只读字段：
 
 - 数据集通过 `dataset-store` 管理，支持 `static`、`api`、`graphql` 三种源类型。
 - 模板表达式使用 NOP XLang 语法：`${expr}` 文本表达式、`<c:for>`/`<c:if>` 结构标签。
+- `c:out` 作为 `tag-selfclose` 模板标签属于当前受支持插入面，dialog、toolbar、snippet 三条路径都必须发出同一 canonical expression kind。
 - 字段拖拽插入自动生成对应的表达式占位符。
 - 图表/条码占位符当前通过 `nop:chart` / `nop:code` 自闭合标签写入文档并与 `charts` / `codes` 元数据数组一起持久化。
+- 不存在受支持的 watermark authoring surface；页面不会宣称能持久化或恢复 watermark-only authoring state。
 
 ## 10. 样式与 DOM marker 约定
 

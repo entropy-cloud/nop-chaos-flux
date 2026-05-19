@@ -1,7 +1,7 @@
 # Word Editor Architecture
 
 > Owner Doc Status: Active
-> Last Updated: 2026-05-11
+> Last Updated: 2026-05-19
 
 ## Overview
 
@@ -171,7 +171,11 @@ Save and autosave truth rules:
 - document/dataset persistence helpers are browser-optional: in SSR or non-browser environments they must return explicit safe fallbacks (`false`, `null`, `[]`) instead of touching `localStorage`
 - mount-time recovery is persisted-first: when recovered saved state exists, host projection `document` should hydrate from that recovered persisted snapshot instead of continuing to expose schema `initialDocument`
 - `datasets` are also persisted-first on remount: schema `datasets` seed the initial store only when no recovered dataset state exists, and must not overwrite later persisted user edits on every mount
+- template-tag insertion must preserve the canonical tag kind published by `@nop-chaos/word-editor-core`; self-closing tags such as `c:out` stay self-closing instead of being downgraded into `tag-open`
+- supported insertion surfaces may only advertise executable template tags; `c:out` remains supported because the dialog/toolbar/snippet paths now emit its `tag-selfclose` expression directly
 - `word-editor:insertChart` / `word-editor:insertCode` provider enforcement now matches the published manifest contract and rejects payloads the core validators would later discard
+- chart/code dialogs use the same `validateDocChart` / `validateDocCode` gate as the provider path, so invalid metadata is rejected before insertion and before persisted recovery drift can occur
+- watermark commands are not part of the supported persisted truth surface and therefore are not a supported authoring surface in the current page UI
 
 ### With nop-entropy Backend
 

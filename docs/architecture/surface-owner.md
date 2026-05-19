@@ -23,6 +23,7 @@ Current live implementation note:
 - 当前 live 基线已经收口到一个共享 surface-family runtime：declarative `type: 'dialog' | 'drawer'` 与 built-in `openDialog` / `openDrawer` 都注册到同一个 `SurfaceRuntime` / root host / `SurfaceEntry` stack。
 - React host 只负责渲染 root surface stack；surface open/close/status publication 与 active/top-surface 语义统一归 `SurfaceRuntime`。
 - declarative uncontrolled open state (`defaultOpen`) 现在也由 `SurfaceRuntime` / `SurfaceStore` 持有；local close 或 runtime close 会写回同一 owner truth，而不会再被 renderer-local `defaultOpen` 状态重新打开。
+- surface container targeting 现在也要求 geometry 诚实对齐：当 `dialog` / `drawer` 传入 `containerElement` 时，portal、overlay、viewport、popup 必须一起切到容器内 absolute geometry；不允许继续把主要表面保持成 viewport-fixed while only the portal mount target changes.
 
 ## Core Claim
 

@@ -1,6 +1,6 @@
 # 412 Open-Ended Adversarial Review 2026-05-19 Surface Containment Truthfulness Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-open-ended-adversarial-review-01/round-01.md`
 > Related: `docs/plans/406-open-ended-adversarial-review-2026-05-19-25-round-remediation-routing-plan.md`, `docs/architecture/surface-owner.md`, `docs/architecture/renderer-runtime.md`
@@ -47,39 +47,39 @@
 
 ### Phase 1 - Align Drawer Targeting API With Real Geometry Semantics
 
-Status: planned
+Status: completed
 Targets: drawer implementation, focused tests, owner docs
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Decide the honest supported baseline: true contained geometry, or narrowed API/contract that no longer claims containment.
-- [ ] Implement that decision so mounting target and geometry semantics no longer disagree.
-- [ ] Add focused proof for container-targeted drawer geometry/stacking behavior.
-- [ ] Update `docs/architecture/surface-owner.md` and `docs/architecture/renderer-runtime.md` if the supported public contract changed.
+- [x] Decide the honest supported baseline: true contained geometry, not a narrowed fake-containment API.
+- [x] Implement that decision so mounting target and geometry semantics no longer disagree.
+- [x] Add focused proof for container-targeted drawer geometry/stacking behavior.
+- [x] Update `docs/architecture/surface-owner.md` and `docs/architecture/renderer-runtime.md` if the supported public contract changed.
 
 Exit Criteria:
 
-- [ ] `R01-06` is fixed.
-- [ ] Focused proof covers the final supported containment baseline.
-- [ ] `docs/architecture/surface-owner.md` and any affected owner docs are updated if the public contract changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `R01-06` is fixed.
+- [x] Focused proof covers the final supported containment baseline.
+- [x] `docs/architecture/surface-owner.md` and any affected owner docs are updated if the public contract changed; otherwise `No owner-doc update required` is explicit.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained finding is fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained finding is fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: Pending.
+Status Note: The in-scope containment finding is fixed, owner docs match the live baseline, independent closure-audit evidence is recorded, and repo-wide `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are confirmed green.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: `ses_1bf53e4ebffeD4B124gU06sly4` independent closure audit
+- Evidence: `Verdict: acceptable`, `Findings: none`; recommendation was to keep `Plan Status: partially completed` until repo-wide gates were confirmed, and that condition is now satisfied.

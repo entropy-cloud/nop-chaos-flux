@@ -1,6 +1,6 @@
 # 407 Open-Ended Adversarial Review 2026-05-19 Runtime Validation And Packaging Fidelity Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-open-ended-adversarial-review-01/{round-01.md}`
 > Related: `docs/plans/406-open-ended-adversarial-review-2026-05-19-25-round-remediation-routing-plan.md`, `docs/architecture/form-validation.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/frontend-baseline.md`
@@ -53,22 +53,22 @@
 
 ### Phase 1 - Restore Validation Owner And Scope Identity Fidelity
 
-Status: in progress
+Status: completed
 Targets: `packages/flux-react/src/`, `packages/flux-runtime/src/`, focused tests, owner docs if required
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix schema replacement so page-root validation owners cannot keep using stale compiled models after refresh.
+- [x] Fix schema replacement so page-root validation owners cannot keep using stale compiled models after refresh.
 - [x] Restore stable separation between `scopeKey` and canonical `scope.id` so repeated child scopes cannot collide or dispose each other.
-- [ ] Add focused proof for schema replacement, owner refresh, and repeated child-scope disposal behavior.
+- [x] Add focused proof for schema replacement, owner refresh, and repeated child-scope disposal behavior.
 - [x] `docs/architecture/form-validation.md`: No owner-doc update required; the supported owner lifecycle wording did not change in this slice.
 
 Exit Criteria:
 
-- [ ] `R01-01` and `R01-02` are fixed.
-- [ ] Focused proof covers validation-owner refresh and repeated child-scope identity/disposal semantics.
+- [x] `R01-01` and `R01-02` are fixed.
+- [x] Focused proof covers validation-owner refresh and repeated child-scope identity/disposal semantics.
 - [x] `docs/architecture/form-validation.md` and/or `docs/architecture/flux-runtime-module-boundaries.md` are updated if the supported owner baseline changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ### Phase 2 - Unify Compile/Validate Plugin Semantics And Packed-Tarball Proof
 
@@ -87,24 +87,24 @@ Exit Criteria:
 - [x] `R01-03` and `R01-05` are fixed.
 - [x] Focused proof covers plugin execution parity and real tarball payload verification.
 - [x] `docs/architecture/frontend-baseline.md` is updated if the supported release-proof baseline changed; otherwise `No owner-doc update required` is explicit.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed, or each phase explicitly records `No owner-doc update required`.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed, or each phase explicitly records `No owner-doc update required`.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Phase 1 and Phase 2 are complete; all in-scope runtime/compiler findings are fixed; the repo log is refreshed; independent closure audit is clean; and repo-wide `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are confirmed green.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: `ses_1bf2da6e3ffe1YAgiwrpi5QIO3` independent closure audit
+- Evidence: `Verdict: acceptable`, `Findings: none`; recording repo-wide gates is justified and the plan can honestly move to `completed` once closure text is synced.

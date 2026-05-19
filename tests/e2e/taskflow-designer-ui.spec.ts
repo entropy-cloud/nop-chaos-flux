@@ -1,28 +1,90 @@
 import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
+async function signIn(page: import('@playwright/test').Page) {
+  const signInButton = page.getByRole('button', { name: 'Sign in' });
+  if (!(await signInButton.isVisible({ timeout: 2000 }).catch(() => false))) return;
+
+  await signInButton.click();
+  if (!(await signInButton.isVisible({ timeout: 1500 }).catch(() => false))) return;
+
+  await page.getByRole('textbox', { name: 'Username' }).fill('admin');
+  await page.getByRole('textbox', { name: 'Password' }).fill('123456');
+  await signInButton.click();
+  if (!(await signInButton.isVisible({ timeout: 1500 }).catch(() => false))) return;
+
+  await page.getByRole('textbox', { name: 'Username' }).fill('nop');
+  await page.getByRole('textbox', { name: 'Password' }).fill('123');
+  await signInButton.click();
+  await page.waitForTimeout(1000);
+}
+
 async function openFlowDesigner(page: import('@playwright/test').Page) {
   await page.goto('/');
+  await signIn(page);
+  await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0, { timeout: 10000 });
 
-  const signInButton = page.getByRole('button', { name: 'Sign in' });
-  if (await signInButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await signInButton.click();
-    if (await signInButton.isVisible({ timeout: 1500 }).catch(() => false)) {
-      await page.getByRole('textbox', { name: 'Username' }).fill('admin');
-      await page.getByRole('textbox', { name: 'Password' }).fill('123456');
-      await signInButton.click();
-    }
-    if (await signInButton.isVisible({ timeout: 1500 }).catch(() => false)) {
-      await page.getByRole('textbox', { name: 'Username' }).fill('nop');
-      await page.getByRole('textbox', { name: 'Password' }).fill('123');
-      await signInButton.click();
-    }
-  }
+  const flowDesignerCard = page.locator('button', { hasText: 'Visual Workflow' });
+  await expect(flowDesignerCard).toBeVisible({ timeout: 5000 });
+  await flowDesignerCard.click();
 
-  await expect(signInButton).toHaveCount(0, { timeout: 10000 });
-  await page.locator('button', { hasText: 'Visual Workflow' }).click();
   await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 30000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
+
+test('playground entry page renders all nav cards', async ({ page }) => {
+  await page.goto('/');
+  await signIn(page);
+  await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0, { timeout: 10000 });
+
+  const expectedEyebrows = [
+    'All Renderers',
+    'Core Renderers',
+    'Visual Workflow',
+    'Style Prototype',
+    'Spreadsheet + Metadata',
+    'DevTools',
+    'Form Control',
+    'CodeMirror 6',
+    'Document Template',
+    'Large Data Stress',
+  ];
+  for (const eyebrow of expectedEyebrows) {
+    await expect(page.locator('button', { hasText: eyebrow })).toBeVisible({ timeout: 3000 });
+  }
+
+  const expectedTitles = [
+    'Component Lab',
+    'Flux Basic',
+    'Flow Designer',
+    'DingTalk Flow Demo',
+    'Report Designer',
+    'Debugger Lab',
+    'Condition Builder',
+    'Code Editor',
+    'Word Editor',
+    'Performance Table',
+  ];
+  for (const title of expectedTitles) {
+    await expect(page.locator('h2', { hasText: title })).toBeVisible({ timeout: 3000 });
+  }
+
+  await assertTrackedPageErrors(page);
+});
+
+test('entry page "Flow Designer" card navigates to flow designer', async ({ page }) => {
+  await page.goto('/');
+  await signIn(page);
+  await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0, { timeout: 10000 });
+
+  const flowDesignerCard = page.locator('button', { hasText: 'Visual Workflow' });
+  await expect(flowDesignerCard).toBeVisible({ timeout: 5000 });
+  await flowDesignerCard.click();
+
+  await expect(page).toHaveURL(/#\/flow-designer/);
+  await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 30000 });
+
+  await assertTrackedPageErrors(page);
+});
 
 test('TaskFlow (Graph) tab renders 7 nodes and toolbar', async ({ page }) => {
   await openFlowDesigner(page);

@@ -1,6 +1,6 @@
 # 411 Open-Ended Adversarial Review 2026-05-19 Word-Editor Truth Surface And Host Contract Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-open-ended-adversarial-review-01/{round-02.md,round-03.md,round-20.md,round-21.md,round-22.md,round-23.md,round-24.md}`
 > Related: `docs/plans/406-open-ended-adversarial-review-2026-05-19-25-round-remediation-routing-plan.md`, `docs/architecture/word-editor/design.md`, `docs/components/word-editor-page/design.md`, `docs/architecture/capability-projection-manifest.md`
@@ -70,24 +70,24 @@ Exit Criteria:
 
 ### Phase 2 - Restore Template Insertion And Persisted Truth Surface Integrity
 
-Status: planned
+Status: completed
 Targets: template tag insertion, chart/code/watermark persistence, focused tests, owner docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Preserve tag kind during insertion so self-closing tags stay self-closing.
-- [ ] Remove the `c:out` option/execution mismatch so the dialog only advertises executable insertions.
-- [ ] Prevent dialogs/providers from accepting chart/code payloads that the core recovery model rejects.
-- [ ] Adjudicate watermark truth surface honestly: either persist it as a supported surface or remove/narrow the authoring contract and document that decision.
-- [ ] Add focused proof for insertion, recovery, and persisted truth-surface behavior.
-- [ ] Update word-editor owner docs for the final persisted truth-surface baseline.
+- [x] Preserve tag kind during insertion so self-closing tags stay self-closing.
+- [x] Remove the `c:out` option/execution mismatch so the dialog only advertises executable insertions.
+- [x] Prevent dialogs/providers from accepting chart/code payloads that the core recovery model rejects.
+- [x] Adjudicate watermark truth surface honestly by narrowing the supported authoring contract and documenting that decision.
+- [x] Add focused proof for insertion, recovery, and persisted truth-surface behavior.
+- [x] Update word-editor owner docs for the final persisted truth-surface baseline.
 
 Exit Criteria:
 
-- [ ] `R20-01`, `R21-01`, `R22-01`, and `R23-01` are fixed.
-- [ ] Focused proof covers self-closing tag insertion, `c:out` availability, chart/code recovery integrity, and the final watermark contract.
-- [ ] `docs/architecture/word-editor/design.md` and `docs/components/word-editor-page/design.md` are updated.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `R20-01`, `R21-01`, `R22-01`, and `R23-01` are fixed.
+- [x] Focused proof covers self-closing tag insertion, `c:out` availability, chart/code recovery integrity, and the final watermark contract.
+- [x] `docs/architecture/word-editor/design.md` and `docs/components/word-editor-page/design.md` are updated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ### Phase 3 - Align Word-Editor Manifest With Provider Enforcement
 
@@ -108,20 +108,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: In progress. Phase 1 and Phase 3 are complete; Phase 2 (`R20-01`, `R21-01`, `R22-01`, `R23-01`) remains open.
+Status Note: All three execution phases are complete and the full in-scope word-editor findings are fixed. A follow-up oversized-file refactor briefly regressed `src/__tests__/word-editor-page-actions.test.tsx`, but the live baseline is restored: the shared test-support mocks now load before `WordEditorPage`, dataset dialog edits stay in memory until explicit save succeeds, focused word-editor tests are green again, package `typecheck` / `build` / `lint` pass, and repo-wide `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are now confirmed green.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: `ses_1bf7c4234ffeJK8UKOM5EDRAfp` independent closure audit
+- Evidence: `Verdict: acceptable`, `Findings: none`; the earlier recommendation to keep `Plan Status: partially completed` until repo-wide gates were confirmed is now satisfied by the live green workspace verification. Fresh independent closure audit `ses_1bf2e29daffe7YiLCLDd8NY1ww` re-checked the live repo after workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` all passed and confirmed no remaining in-scope closure blockers.

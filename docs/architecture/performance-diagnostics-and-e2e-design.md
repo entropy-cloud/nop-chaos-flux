@@ -17,9 +17,9 @@
 
 ## Short Answer
 
-当前 `performance-table` 页面主要依靠 React `Profiler` 做同环境对比测量。它记录的是一个 `SchemaRenderer` 子树在 React commit 中的 `actualDuration`、commit 次数、批量 host mutation 的排队时间和静默等待时间。它不是跨机器 benchmark，也不是 `nop-debugger` 的控件级更新诊断。
+当前 `performance-table` 页面仍保留 React `Profiler` 的同环境对比测量，但现在也支持显式 diagnostics mode。它记录 `SchemaRenderer` 子树在 React commit 中的 `actualDuration`、commit 次数、批量 host mutation 的排队时间和静默等待时间，同时在 diagnostics mode 下暴露 table/array 的结构化 locality session summary。它不是跨机器 benchmark。
 
-当前 `performance-table` 路由还没有接入 playground 的 `debuggerController`：页面没有接收 controller，没有使用 `decorateEnv()`，也没有向 `SchemaRenderer` 传入 debugger plugin、runtime/component-registry/action-scope callbacks。因此 `window.__NOP_DEBUGGER_API__` 虽然作为全局 automation API 存在，但现状下不是这个 performance 页面内部 renderer tree 的诊断入口。
+当前 `performance-table` 路由已经接入 playground 的 `debuggerController`，但仍保持普通模式 lightweight：只有在 `/?diagnostics=1#/performance-table` 下才会把 decorated `env`、debugger plugin、runtime/component-registry/action-scope callbacks、以及 page-local probes 接到 `SchemaRenderer`。因此 `window.__NOP_DEBUGGER_API__` 和 `window.__NOP_PERF_DIAGNOSTICS__` 现在都可以作为该页面 diagnostics mode 的自动化诊断入口，而普通 `#/performance-table` 仍不支付这些默认成本。
 
 playground 顶层 `createNopDebugger({ capturePerformance: false })` 也明确关闭了高频 render 捕获。即使后续把 performance 页面接入 debugger，默认状态也不能直接通过 `window.__NOP_DEBUGGER_API__` 得到控件级 render 事件。
 
@@ -103,15 +103,17 @@ The page is designed for same-environment comparison. A valid manual workflow to
 
 ### Existing E2E Coverage
 
-`tests/e2e/performance-table.spec.ts` currently verifies:
+`tests/e2e/performance-table.spec.ts` 当前已覆盖：
 
 - the page enters cleanly with zero tracked `console.error` / `pageerror`
 - scenario mode switching shows the expected stress blocks
 - `Run 20 Host Mutations` eventually produces a measurement panel
 - supported cell types render correct row-bound values across pagination
 - the covered tag-list interaction does not surface a global validation error
+- supported table single-row locality diagnostics gate
+- supported array item visible locality diagnostics gate
 
-`tests/e2e/exploratory/performance-table-deep-state.spec.ts` additionally checks scope-owned selection, pagination, sorting, row action behavior, and debugger failure cleanliness. That debugger check currently reads the global API; because `performance-table` is not wired to the controller, it is useful for catching global debugger failures but not a proof that this page's renderer tree was observed by `nop-debugger`.
+`tests/e2e/exploratory/performance-table-deep-state.spec.ts` 仍额外检查 scope-owned selection、pagination、sorting、row action behavior、以及 debugger failure cleanliness。supported locality gates 已经迁入 `tests/e2e/performance-table.spec.ts`，所以 exploratory spec 现在是补充性的 deep-state surface，而不是 locality 真相来源。
 
 These tests are correctness and stability tests with diagnostic value. They are not yet local-refresh performance gates.
 
@@ -121,7 +123,7 @@ These tests are correctness and stability tests with diagnostic value. They are 
 
 Automation should use `window.__NOP_DEBUGGER_API__` or `getNopDebuggerAutomationApi()` instead of scraping the panel DOM.
 
-This section describes the debugger package's current capability surface. It applies to pages that are actually wired to the controller through decorated `env`, plugins, and root lifecycle callbacks. The current `performance-table` page is not yet wired that way.
+This section describes the debugger package's current capability surface. It applies to pages that are actually wired to the controller through decorated `env`, plugins, and root lifecycle callbacks. `performance-table` diagnostics mode now follows that integration path.
 
 Useful existing methods include:
 
@@ -180,7 +182,7 @@ const debuggerController = createNopDebugger({
 });
 ```
 
-For pages that are wired to this controller, the default playground debugger can still expose actions, APIs, inspect data, errors, and failures, but it intentionally does not append high-frequency render events. The current `performance-table` page is not wired to the controller, so this statement does not apply to its internal renderer tree yet.
+For pages that are wired to this controller, the default playground debugger can still expose actions, APIs, inspect data, errors, and failures, but it intentionally does not append high-frequency render events. `performance-table` diagnostics mode now uses this controller wiring while still keeping `capturePerformance: false`; render/remount locality authority comes from page-local probes, not high-frequency debugger render capture.
 
 This is correct for ordinary playground use. Performance capture must remain host-controlled because enabling it for every node on every page would itself become a performance cost.
 
@@ -381,7 +383,7 @@ Rules:
 
 The performance page should add a diagnostic mode rather than overloading the current human-facing metrics.
 
-Before debugger-backed diagnostics can apply to this page, `PerformanceTablePage` must accept the playground `debuggerController` and wire `SchemaRenderer` consistently with other debugger-enabled pages. The root callbacks are `SchemaRenderer` props; their job is to call the canonical controller methods documented in `debugger-runtime.md`:
+The live page now accepts the playground `debuggerController` and wires `SchemaRenderer` consistently with other debugger-enabled pages. The root callbacks are `SchemaRenderer` props; their job is to call the canonical controller methods documented in `debugger-runtime.md`:
 
 - pass a decorated `env` returned by `debuggerController.decorateEnv(env)`
 - pass `plugins={[debuggerController.plugin]}`
@@ -391,13 +393,13 @@ Before debugger-backed diagnostics can apply to this page, `PerformanceTablePage
 - forward `onActionError` to `debuggerController.onActionError()`
 - decide whether a diagnostic run temporarily enables render capture or uses a separate page-local probe path while keeping ordinary page load cheap
 
-Target page additions:
+Live page additions:
 
-- `Enable Diagnostics` control that opts into debugger performance capture and page-local probes
-- `Mutate One Table Row` control with a deterministic row key such as `user-501`
-- `Mutate One Array Item` control in an array-field focused scenario
-- `Run Locality Diagnostic` control that brackets a session and renders a summary table
+- diagnostics URL gate via `/?diagnostics=1#/performance-table`
+- `Run Single Row Locality Diagnostic` control with deterministic visible target row `user-25`
+- `Run Array Item Locality Diagnostic` control in a diagnostics-only object-array scenario
 - page-local `window.__NOP_PERF_DIAGNOSTICS__` only when diagnostics are enabled
+- debugger-backed coverage evidence plus page-local probe/session summary
 
 Target diagnostic renderer:
 
@@ -475,7 +477,7 @@ E2E timeouts are allowed as liveness guards. They are not performance budgets.
 
 ### Target Playwright Pattern
 
-The following pattern is target design, not current supported code. The current router does not parse `#/performance-table?diagnostics=1`, and the page does not yet expose `window.__NOP_PERF_DIAGNOSTICS__` or the locality diagnostic button. Either the router must gain hash-query support, or the diagnostics flag must use a currently parseable URL shape such as query before the hash.
+The following pattern is now the supported baseline. The router still does not parse `#/performance-table?diagnostics=1`, so diagnostics mode uses query-before-hash: `/?diagnostics=1#/performance-table`.
 
 ```ts
 await page.goto('/?diagnostics=1#/performance-table', { waitUntil: 'commit' });
@@ -506,8 +508,8 @@ const report = await page.evaluate(() => ({
 
 expect(report.debuggerFailures).toHaveLength(0);
 expect(report.debuggerErrors).toHaveLength(0);
-expect(report.perf.changedRowKeys).toEqual(['user-501']);
-expect(report.perf.siblingProbeRenderDelta).toBe(0);
+expect(report.perf.changedRowKeys).toEqual(['user-25']);
+expect(report.perf.siblingProbeDelta.render).toBe(0);
 expect(report.perf.unchangedRowUnmountDelta).toBe(0);
 ```
 
@@ -542,7 +544,7 @@ Deliverables:
 
 Deliverables:
 
-- gated `Enable Diagnostics` mode on `performance-table`
+- gated diagnostics mode on `performance-table` via `/?diagnostics=1#/performance-table`
 - debugger-controller wiring for the performance page, or an explicitly documented page-local-only diagnostic path
 - page-local `window.__NOP_PERF_DIAGNOSTICS__`
 - deterministic single-row mutation action

@@ -678,8 +678,15 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
    c. RendererDefinition 的注册协议在各 renderers 包中是否统一；若 live code 已进入主仓主路径、主包导出或被当前 owner 文档当作现行能力讨论，就按现行违约处理，不因 future/过渡表述降级
    d. FormStoreApi / PageStoreApi 的公开方法是否在文档中有完整描述
 4. 检查是否有类型通过 import type 从 A 包导出，又在 B 包 re-export 且添加了不同的约束。
-5. 检查 packages/*/src/ 下是否有未被 index.ts 导出的候选未接线文件；若文件已进入 live 主路径、被当前实现依赖、或形成主实现旁路，即使最初源于预留/切片/迁移，也应按现行设计残留或错误边界处理，不能仅以“开发中”免责。
-6. 检查 exports map：package.json 的 exports 字段与实际 index.ts 导出是否对齐。
+5. 检查 packages/*/src/ 下是否有未被 index.ts 导出的候选未接线文件；若文件已进入 live 主路径、被当前实现依赖、或形成主实现旁路，即使最初源于预留/切片/迁移，也应按现行设计残留或错误边界处理，不能仅以"开发中"免责。
+6. **端到端契约执行一致性检查**（新增）：
+    a. 检查 manifest/host 发布的 API 类型化 payload 是否在 runtime provider/adapter 端被实际 enforce：
+       - manifest 声明了方法签名和参数 shape → provider/adapter 是否有对应的结构化验证？还是使用泛型转发路径（如 `{...args}` spread、`as XxxCommand` 强制转换）绕过？
+       - 编译时 validation 接受的输入 → 运行时 dispatch 是否同样限制了输入形状？
+       - 接口签名约束了参数类型 → provider/adapter 是否有任意对象转发路径让这些约束失效？
+    b. 特别关注 manifest → provider/adapter 链：manifest 声明的 args contract 与 provider 实际收到的有效载荷是否一致。如果 provider 仅靠 `as XxxCommand` 或 `{...args}` 做形状适配，标记为契约真实性问题。
+    c. 检查 renderer 层 helper API 是否坍缩了 core 层的类型分辨（如 renderer 的插入 API 只传 name，但 core 模型依赖 kind + name 的联合约束，导致无法忠实表达某些类型）。
+7. 检查 exports map：package.json 的 exports 字段与实际 index.ts 导出是否对齐。
 
 输出格式：
 
@@ -1390,8 +1397,13 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
    a. tests/ 目录下的 e2e 测试覆盖了哪些场景
    b. 是否有关键的渲染器/表单/验证场景缺少 e2e 覆盖
 7. 检查测试可读性：
-   a. 测试描述是否清晰描述了"在什么条件下应该得到什么结果"
-   b. 是否有测试名是空的或过于泛化（如 "works correctly"）
+    a. 测试描述是否清晰描述了"在什么条件下应该得到什么结果"
+    b. 是否有测试名是空的或过于泛化（如 "works correctly"）
+8. **验证可信度检查**（新增子维度）：
+    a. 检查 E2E 测试名称是否与实际测试行为匹配：标题声称测试了什么行为 → 测试体实际断言了什么？是否有测试名称包含"通过拖拽创建连线"但实际只调用了 test hook 事件？是否有测试名称包含"验证保存后数据持久化"但实际断言在保存操作执行前就已满足？
+    b. 检查 CI/build 验证步骤是否检查了正确的 artifact：发布前检查是否检查了打包后的产物而非源码文件？tarball 内容验证是否读到了 dist/ 下的真实文件而非 src/ 中的源文件？
+    c. 检查测试是否使用了用户可见的结果通道（UI 文本、toast、列表更新）而非仅断言内部 debug state（scope-debug-json、console.log、未公开的 hook 返回值）。
+    d. 对于声称"覆盖了端到端流程"的测试，检查是否有真实用户操作路径 vs 捷径（test hook、直接 store dispatch、绕过 UI 层的函数调用）。
 
 输出格式：
 
@@ -1402,7 +1414,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 ### [维度14] 简短标题
 - **文件**: packages/xxx/src/yyy.test.ts:行号
 - **严重程度**: P0/P1/P2/P3
-- **类别**: 覆盖缺口/跨域/setup膨胀/隔离性/一致性/可读性
+- **类别**: 覆盖缺口/跨域/setup膨胀/隔离性/一致性/可读性/验证可信度
 - **现状**: 一句话描述
 - **建议**: 改进方向
 

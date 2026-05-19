@@ -3,11 +3,155 @@ import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 // This measurement page mutates one shared host/runtime and is intentionally serialized.
 test.describe.configure({ mode: 'serial' });
 
+type DiagnosticsSession = {
+  id: string;
+  scenario: string;
+  status: string;
+  startedAt: number;
+  endedAt?: number;
+  changedRowKeys?: string[];
+  changedItemKeys?: string[];
+  targetProbeDelta?: { render: number; mount: number; unmount: number };
+  siblingProbeDelta?: { render: number; mount: number; unmount: number };
+  targetItemProbeDelta?: { render: number; mount: number; unmount: number };
+  siblingItemProbeDelta?: { render: number; mount: number; unmount: number };
+  unchangedRowUnmountDelta?: number;
+  unchangedItemUnmountDelta?: number;
+  validationPathCheck?: {
+    expectedPath?: string;
+    observedWritePath?: string;
+    observedValidationPath?: string;
+    usedItemKeyPath?: boolean;
+  };
+  debuggerSummary?: {
+    covered: boolean;
+    failureCount: number;
+    errorCount: number;
+    coverageEvidence?: {
+      schemaUrl?: string;
+      inspectedProbeKey?: string;
+      rendererType?: string;
+      matchedByElement?: boolean;
+    };
+  };
+  visibleSnapshot?: {
+    targetValueBefore?: string;
+    targetValueAfter?: string;
+    siblingPrevValueBefore?: string;
+    siblingPrevValueAfter?: string;
+    siblingNextValueBefore?: string;
+    siblingNextValueAfter?: string;
+  };
+};
+
+type DebuggerAutomationEvidence = {
+  available: boolean;
+  inspectedProbeKey?: string;
+  rendererType?: string;
+  path?: string;
+  instancePath?: unknown;
+  errorCount: number;
+  failureCount: number;
+};
+
 async function openPerformanceTable(page: import('@playwright/test').Page) {
   await page.goto('/#/performance-table', { waitUntil: 'commit' });
   await expect(page.getByRole('heading', { name: 'Table Performance Playground', level: 1 })).toBeVisible({ timeout: 45_000 });
   await expect(page.getByRole('button', { name: 'Run 20 Host Mutations' })).toBeVisible();
   await assertTrackedPageErrors(page);
+}
+
+async function openPerformanceTableDiagnostics(page: import('@playwright/test').Page) {
+  await page.goto('/?diagnostics=1#/performance-table', { waitUntil: 'commit' });
+  await expect(page.getByRole('heading', { name: 'Table Performance Playground', level: 1 })).toBeVisible({ timeout: 45_000 });
+  await expect(page.getByRole('button', { name: 'Run Single Row Locality Diagnostic' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Run Array Item Locality Diagnostic' })).toBeVisible();
+  await expect(page.getByText('Diagnostics mode is enabled.')).toBeVisible();
+  await assertTrackedPageErrors(page);
+}
+
+async function readLatestDiagnosticsSession(
+  page: import('@playwright/test').Page,
+): Promise<DiagnosticsSession | null> {
+  return page.evaluate(() => {
+    const diagnostics = window.__NOP_PERF_DIAGNOSTICS__;
+    return (diagnostics?.getLatestSession() ?? null) as DiagnosticsSession | null;
+  });
+}
+
+async function waitForFreshDiagnosticsSession(input: {
+  page: import('@playwright/test').Page;
+  scenario: DiagnosticsSession['scenario'];
+  previousId?: string;
+  startedAfter: number;
+}) {
+  await expect
+    .poll(async () => readLatestDiagnosticsSession(input.page), {
+      timeout: 45_000,
+      message: `Expected fresh diagnostics session for ${input.scenario}`,
+    })
+    .toMatchObject({
+      scenario: input.scenario,
+      status: 'completed',
+    });
+
+  await expect
+    .poll(async () => {
+      const latest = await readLatestDiagnosticsSession(input.page);
+      if (!latest) {
+        return null;
+      }
+
+      const isFresh =
+        latest.id !== input.previousId &&
+        latest.scenario === input.scenario &&
+        latest.status === 'completed' &&
+        latest.startedAt >= input.startedAfter &&
+        typeof latest.endedAt === 'number' &&
+        latest.endedAt >= latest.startedAt;
+
+      return isFresh ? latest : null;
+    }, { timeout: 45_000 })
+    .not.toBeNull();
+
+  return (await readLatestDiagnosticsSession(input.page)) as DiagnosticsSession;
+}
+
+async function readDebuggerAutomationEvidence(input: {
+  page: import('@playwright/test').Page;
+  probeTestId: string;
+  sessionId: string;
+  startedAfter: number;
+}): Promise<DebuggerAutomationEvidence> {
+  const { page, probeTestId, sessionId, startedAfter } = input;
+  return page.evaluate(({ probeTestId, sessionId, startedAfter }) => {
+    const api = (window as typeof window & {
+      __NOP_DEBUGGER_API__?: {
+        inspectByElement(element: HTMLElement): {
+          rendererType?: string;
+          path?: string;
+          instancePath?: unknown;
+        } | undefined;
+        queryEvents(query?: { kind?: string; interactionId?: string; sinceTimestamp?: number }): unknown[];
+        getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): unknown[];
+      };
+    }).__NOP_DEBUGGER_API__;
+
+    const probeElement = document.querySelector(`[data-testid="${probeTestId}"]`) as HTMLElement | null;
+    const inspected = api && probeElement ? api.inspectByElement(probeElement) : undefined;
+    const errors = api?.queryEvents({ kind: 'error', interactionId: sessionId, sinceTimestamp: startedAfter }) ?? [];
+    const failures = api?.getRecentFailures({ sinceTimestamp: startedAfter, limit: 10 }) ?? [];
+
+    return {
+      available: Boolean(api),
+      inspectedProbeKey: probeElement?.getAttribute('data-probe-key') ?? undefined,
+      rendererType: inspected?.rendererType,
+      path: inspected?.path,
+      instancePath: inspected?.instancePath,
+      errorCount: errors.length,
+      failureCount: failures.length,
+    } satisfies DebuggerAutomationEvidence;
+  }, { probeTestId, sessionId, startedAfter });
 }
 
 async function waitForTableRows(page: import('@playwright/test').Page) {
@@ -124,7 +268,7 @@ test.describe('Performance Table Page', () => {
     expect(firstRow!.profile).toBe('1. user_1 <user_1@perf.dev>');
     expect(firstRow!.badge).toBe('editor');
     expect(firstRow!.status).toBe('PAUSED / offline');
-    expect(firstRow!.select).toContain('EMEA');
+    expect(firstRow!.select?.toUpperCase()).toContain('EMEA');
     expect(firstRow!.checkboxChecked).toBe('true');
     expect(firstRow!.switchChecked).toBe('false');
     expect(firstRow!.notes).toContain('Row 1 note');
@@ -200,5 +344,111 @@ test.describe('Performance Table Page', () => {
     await firstTagButton.click();
 
     await expect(page.getByText('requires at least one tag')).toHaveCount(0);
+  });
+
+  test('records a supported table single-row locality diagnostic session', async ({ page }) => {
+    test.setTimeout(120_000);
+
+    await openPerformanceTableDiagnostics(page);
+
+    const browserBefore = Date.now();
+    const previousSession = await readLatestDiagnosticsSession(page);
+
+    await page.getByRole('button', { name: 'Run Single Row Locality Diagnostic' }).click();
+
+    const session = await waitForFreshDiagnosticsSession({
+      page,
+      scenario: 'table-single-row-locality',
+      previousId: previousSession?.id,
+      startedAfter: browserBefore,
+    });
+    const automationEvidence = await readDebuggerAutomationEvidence({
+      page,
+      probeTestId: 'table-target-row-probe',
+      sessionId: session.id,
+      startedAfter: browserBefore,
+    });
+
+    expect(session.id).toBeTruthy();
+    expect(session.changedRowKeys).toEqual(['user-25']);
+    expect(session.targetProbeDelta?.render).toBeGreaterThan(0);
+    expect(session.siblingProbeDelta?.render).toBe(0);
+    expect(session.siblingProbeDelta?.mount).toBe(0);
+    expect(session.siblingProbeDelta?.unmount).toBe(0);
+    expect(session.unchangedRowUnmountDelta).toBe(0);
+    expect(session.visibleSnapshot?.targetValueBefore).not.toBe(session.visibleSnapshot?.targetValueAfter);
+    expect(session.visibleSnapshot?.siblingPrevValueBefore).toBe(session.visibleSnapshot?.siblingPrevValueAfter);
+    expect(session.visibleSnapshot?.siblingNextValueBefore).toBe(session.visibleSnapshot?.siblingNextValueAfter);
+    expect(session.debuggerSummary?.covered).toBe(true);
+    expect(session.debuggerSummary?.failureCount).toBe(0);
+    expect(session.debuggerSummary?.errorCount).toBe(0);
+    expect(session.debuggerSummary?.coverageEvidence?.schemaUrl).toBe(
+      'playground://pages/performance-table/table-only?diagnostics=1',
+    );
+    expect(session.debuggerSummary?.coverageEvidence?.inspectedProbeKey).toBe('table-target-row');
+    expect(session.debuggerSummary?.coverageEvidence?.rendererType).toBe('perf-render-probe');
+    expect(session.debuggerSummary?.coverageEvidence?.matchedByElement).toBe(true);
+    expect(automationEvidence.available).toBe(true);
+    expect(automationEvidence.inspectedProbeKey).toBe('table-target-row');
+    expect(automationEvidence.rendererType).toBe('perf-render-probe');
+    expect(String(automationEvidence.path)).toContain('$.body[');
+    expect(automationEvidence.instancePath).toBeTruthy();
+    expect(automationEvidence.errorCount).toBe(0);
+    expect(automationEvidence.failureCount).toBe(0);
+  });
+
+  test('records a supported array item locality diagnostic session', async ({ page }) => {
+    test.setTimeout(120_000);
+
+    await openPerformanceTableDiagnostics(page);
+
+    const browserBefore = Date.now();
+    const previousSession = await readLatestDiagnosticsSession(page);
+
+    await page.getByRole('button', { name: 'Run Array Item Locality Diagnostic' }).click();
+
+    const session = await waitForFreshDiagnosticsSession({
+      page,
+      scenario: 'array-item-locality',
+      previousId: previousSession?.id,
+      startedAfter: browserBefore,
+    });
+    const automationEvidence = await readDebuggerAutomationEvidence({
+      page,
+      probeTestId: 'array-target-item-probe',
+      sessionId: session.id,
+      startedAfter: browserBefore,
+    });
+
+    expect(session.id).toBeTruthy();
+    expect(session.changedItemKeys).toEqual(['line-8']);
+    expect(session.targetItemProbeDelta?.render).toBeGreaterThan(0);
+    expect(session.siblingItemProbeDelta?.render).toBe(0);
+    expect(session.siblingItemProbeDelta?.mount).toBe(0);
+    expect(session.siblingItemProbeDelta?.unmount).toBe(0);
+    expect(session.unchangedItemUnmountDelta).toBe(0);
+    expect(session.validationPathCheck?.expectedPath).toBe('lineItems.7.qty');
+    expect(session.validationPathCheck?.observedWritePath).toBe('lineItems.7.qty');
+    expect(session.validationPathCheck?.observedValidationPath).toBe('lineItems.7.qty');
+    expect(session.validationPathCheck?.usedItemKeyPath).toBe(false);
+    expect(session.visibleSnapshot?.targetValueBefore).not.toBe(session.visibleSnapshot?.targetValueAfter);
+    expect(session.visibleSnapshot?.siblingPrevValueBefore).toBe(session.visibleSnapshot?.siblingPrevValueAfter);
+    expect(session.visibleSnapshot?.siblingNextValueBefore).toBe(session.visibleSnapshot?.siblingNextValueAfter);
+    expect(session.debuggerSummary?.covered).toBe(true);
+    expect(session.debuggerSummary?.failureCount).toBe(0);
+    expect(session.debuggerSummary?.errorCount).toBe(0);
+    expect(session.debuggerSummary?.coverageEvidence?.schemaUrl).toBe(
+      'playground://pages/performance-table/table-only?diagnostics=1',
+    );
+    expect(session.debuggerSummary?.coverageEvidence?.inspectedProbeKey).toBe('array-target-item');
+    expect(session.debuggerSummary?.coverageEvidence?.rendererType).toBe('perf-render-probe');
+    expect(session.debuggerSummary?.coverageEvidence?.matchedByElement).toBe(true);
+    expect(automationEvidence.available).toBe(true);
+    expect(automationEvidence.inspectedProbeKey).toBe('array-target-item');
+    expect(automationEvidence.rendererType).toBe('perf-render-probe');
+    expect(String(automationEvidence.path)).toContain('$.body[');
+    expect(automationEvidence.instancePath).toBeTruthy();
+    expect(automationEvidence.errorCount).toBe(0);
+    expect(automationEvidence.failureCount).toBe(0);
   });
 });
