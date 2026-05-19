@@ -92,12 +92,12 @@ export function renderDataRow(
   isStriped: boolean,
 ) {
   const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
-  const isRowInteractive = Boolean(parentProps.events.onRowClick) || expandRowByClick;
+  const hasRowClickHandler = Boolean(parentProps.events.onRowClick);
+  const isRowClickable = hasRowClickHandler || expandRowByClick;
 
-  const handleRowActivate = (event: React.SyntheticEvent) => {
-    if (parentProps.events.onRowClick) {
+  const handleRowClick = (event: React.MouseEvent<HTMLTableRowElement>) => {
+    if (hasRowClickHandler) {
       void parentProps.events.onRowClick?.(event, { scope: rowScope });
-      return;
     }
 
     if (expandRowByClick) {
@@ -108,22 +108,11 @@ export function renderDataRow(
   return (
     <TableRow
       data-slot="table-row"
-      data-interactive={isRowInteractive || undefined}
+      data-interactive={isRowClickable || undefined}
       data-expanded={isExpanded || undefined}
       data-striped={isStriped && isEven ? true : undefined}
-      aria-expanded={expandRowByClick ? isExpanded : undefined}
-      tabIndex={isRowInteractive ? 0 : undefined}
-      onClick={isRowInteractive ? handleRowActivate : undefined}
-      onKeyDown={
-        isRowInteractive
-          ? (event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                handleRowActivate(event);
-              }
-            }
-          : undefined
-      }
+      onClick={isRowClickable ? handleRowClick : undefined}
+      className={isRowClickable ? 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none' : undefined}
     >
       {showExpandColumn ? (
         <TableCell
@@ -141,6 +130,7 @@ export function renderDataRow(
             }}
             className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded"
             aria-label={isExpanded ? t('flux.table.collapse') : t('flux.table.expand')}
+            aria-expanded={isExpanded}
           >
             {isExpanded ? (
               <ChevronDownIcon className="size-4" />
@@ -162,6 +152,8 @@ export function renderDataRow(
             <Checkbox
               shape="circle"
               checked={isSelected}
+              role="radio"
+              aria-checked={isSelected}
               onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))}
               aria-label={t('flux.table.selectRow')}
             />

@@ -20,6 +20,7 @@ import {
 import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
+import { Trash2Icon } from 'lucide-react';
 import type { ArrayFieldSchema } from './composite-schemas.js';
 import { formFieldRules, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { createItemFormProxy, createItemScope } from './array-field-runtime.js';
@@ -166,8 +167,8 @@ function ArrayItem(props: {
         </FormContext.Provider>
       </div>
       {removable && (
-        <WrappedFieldAction variant="destructive" size="sm" className="mt-1" onClick={() => onRemove(index)}>
-          {t('flux.form.remove')}
+        <WrappedFieldAction variant="ghost" size="sm" className="mt-1 hover:text-destructive" onClick={() => onRemove(index)} aria-label={t('flux.form.remove')}>
+          <Trash2Icon className="size-4" />
         </WrappedFieldAction>
       )}
     </div>

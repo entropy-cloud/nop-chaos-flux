@@ -17,7 +17,7 @@ import {
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { cn } from '@nop-chaos/ui';
+import { cn, Spinner } from '@nop-chaos/ui';
 import {
   ChartContainer,
   ChartTooltip,
@@ -283,7 +283,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           data-slot="chart-canvas"
           ref={chartRef}
           style={{ width: '100%', height: '100%' }}
-          role="button"
+          role="img"
           tabIndex={0}
           aria-label={chartAccessibleName}
           onClick={(event) => void props.events.onClick?.(event, {})}
@@ -294,6 +294,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
             }
           }}
           onMouseEnter={(event) => void props.events.onHover?.(event, {})}
+          className="focus-visible:ring-2 focus-visible:ring-ring rounded-sm outline-none"
         >
           <div className="sr-only" data-slot="chart-data-equivalent">
             <p>{chartAccessibleName}</p>
@@ -305,14 +306,18 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           </div>
           {loading ? (
             <div
+              role="status"
+              aria-live="polite"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                gap: '0.5rem',
                 height: '100%',
               }}
             >
-              {t('flux.common.loading')}
+              <Spinner className="size-4" aria-hidden="true" />
+              <span>{t('flux.common.loading')}</span>
             </div>
           ) : (
             <ChartContainer config={chartConfig} style={{ height: '100%' }}>

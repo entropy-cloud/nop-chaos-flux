@@ -219,7 +219,7 @@ function TreeNodeRenderer(props: {
           )}
 
           <div
-            className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted"
+            className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             role="treeitem"
             aria-expanded={hasChildren ? open : undefined}
             aria-level={depth + 1}

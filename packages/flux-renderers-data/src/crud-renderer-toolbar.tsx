@@ -1,5 +1,5 @@
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Label, NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
+import { Label, NativeSelect, NativeSelectOption, PaginationPrevious, PaginationNext } from '@nop-chaos/ui';
 import type { CrudStatusSummary } from './crud-schema.js';
 import { isRecord } from '@nop-chaos/flux-core';
 import { DEFAULT_PAGE_SIZE_OPTIONS, type CrudPaginationState } from './crud-renderer-state.js';
@@ -112,27 +112,33 @@ export function CrudToolbarBlocks(props: {
             data-slot={`${slot}-toolbar-pagination`}
             className="flex items-center gap-2"
           >
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pagination.currentPage <= 1}
+            <PaginationPrevious
+              text={t('flux.pagination.previous')}
+              aria-label={t('flux.pagination.previous')}
               onClick={() => onPageChange(Math.max(1, pagination.currentPage - 1))}
-            >
-              {t('flux.pagination.previous')}
-            </Button>
+              className={pagination.currentPage <= 1 ? 'pointer-events-none opacity-50' : undefined}
+            />
             <span className="text-sm text-muted-foreground">
               {t('flux.pagination.page', {
                 current: pagination.currentPage,
                 total: summary.total != null ? Math.ceil(summary.total / pagination.pageSize) : '?',
               })}
             </span>
-            <Button
-              variant="outline"
-              size="sm"
+            <PaginationNext
+              text={t('flux.pagination.next')}
+              aria-label={t('flux.pagination.next')}
               onClick={() => onPageChange(pagination.currentPage + 1)}
-            >
-              {t('flux.pagination.next')}
-            </Button>
+              className={
+                summary.total != null && pagination.currentPage >= Math.ceil(summary.total / pagination.pageSize)
+                  ? 'pointer-events-none opacity-50'
+                  : undefined
+              }
+              aria-disabled={
+                summary.total != null && pagination.currentPage >= Math.ceil(summary.total / pagination.pageSize)
+                  ? true
+                  : undefined
+              }
+            />
           </div>
         );
       default:

@@ -54,7 +54,7 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
         <legend
           data-slot="fieldset-title"
           className={cn(
-            collapsible && 'flex items-center gap-1',
+            collapsible && 'flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-ring rounded-sm outline-none',
             slotProps.titleClassName,
           )}
           onClick={toggle}
