@@ -11,6 +11,10 @@ import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
 import type { FieldSourceSnapshot, ReportSelectionTarget } from '@nop-chaos/report-designer-core';
 import { getFieldCount } from './helpers.js';
+import {
+  createReportFieldDragPayload,
+  writeReportFieldDragPayload,
+} from './report-field-panel.js';
 import type { ReportFieldPanelSchema } from './types.js';
 
 export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFieldPanelSchema>) {
@@ -48,16 +52,20 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
   const emptyLabel = String(props.props.emptyLabel ?? t('flux.reportDesigner.noFieldSources'));
 
   function createFieldPayload(source: FieldSourceSnapshot, field: FieldSourceSnapshot['groups'][number]['fields'][number]) {
-    return {
-      sourceId: source.id,
-      fieldId: field.id,
-      label: field.label,
-      data: { ...field },
-    };
+    return createReportFieldDragPayload(source, field);
   }
 
   function canInsertToSelection(target: ReportSelectionTarget | undefined) {
-    return target != null && target.kind !== 'workbook';
+    return target?.kind === 'cell' || target?.kind === 'range';
+  }
+
+  function handleDragStart(
+    event: React.DragEvent<HTMLLIElement>,
+    source: FieldSourceSnapshot,
+    field: FieldSourceSnapshot['groups'][number]['fields'][number],
+  ) {
+    const payload = createFieldPayload(source, field);
+    writeReportFieldDragPayload(event, payload);
   }
 
   async function handleKeyboardInsert(
@@ -151,13 +159,16 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
                   {showHeader ? <strong>{group.label}</strong> : null}
                   <ul data-slot="report-field-panel-items">
                     {group.fields.map((field) => (
-                      <li
-                        key={field.id}
-                        draggable={dragEnabled}
-                        data-field-id={field.id}
-                        data-field-source-id={source.id}
-                        data-slot="report-field-panel-item"
-                      >
+                       <li
+                         key={field.id}
+                         draggable={dragEnabled}
+                          data-field-id={field.id}
+                          data-field-source-id={source.id}
+                          data-slot="report-field-panel-item"
+                          onDragStart={
+                            dragEnabled ? (event) => handleDragStart(event, source, field) : undefined
+                          }
+                       >
                         <span data-slot="report-field-panel-item-label">{field.label}</span>
                         {keyboardInsertEnabled ? (
                           <Button

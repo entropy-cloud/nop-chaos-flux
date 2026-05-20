@@ -9,6 +9,7 @@ import * as FluxCore from '@nop-chaos/flux-core';
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
 import { registerReportDesignerRenderers } from './index.js';
 import { ReportFieldPanelRenderer } from './field-panel-renderer.js';
+import { REPORT_FIELD_DRAG_MIME } from './report-field-panel.js';
 import './report-field-panel.css';
 
 let mockScopeData: Record<string, unknown> = {};
@@ -196,6 +197,44 @@ describe('ReportFieldPanelRenderer', () => {
     expect(screen.queryByRole('button', { name: /当前选择|current selection/i })).toBeNull();
   });
 
+  it('disables keyboard insertion for sheet targets because host contract only supports cell and range', () => {
+    renderFieldPanel(
+      { fieldSources: sampleFieldSources },
+      { selectionTarget: { kind: 'sheet', sheetId: 'sheet-1' } },
+    );
+
+    const buttons = screen.getAllByRole('button', { name: /当前选择|current selection/i });
+    for (const button of buttons) {
+      expect((button as HTMLButtonElement).disabled).toBe(true);
+    }
+  });
+
+  it('writes the canonical drag payload for draggable field rows', () => {
+    renderFieldPanel({ fieldSources: sampleFieldSources });
+
+    const setData = vi.fn();
+    const dataTransfer = {
+      effectAllowed: 'all',
+      setData,
+    } as unknown as DataTransfer;
+
+    fireEvent.dragStart(screen.getByText('User Name').closest('li') as Element, { dataTransfer });
+
+    expect(setData).toHaveBeenCalledWith(
+      REPORT_FIELD_DRAG_MIME,
+      JSON.stringify({
+        type: 'field',
+        sourceId: 'source-1',
+        fieldId: 'field-1',
+        label: 'User Name',
+        data: {
+          id: 'field-1',
+          label: 'User Name',
+        },
+      }),
+    );
+  });
+
   it('dispatches field insertion to the current selection target', async () => {
     const invoke = vi.fn().mockResolvedValue({ ok: true });
     const createScope = vi.fn(() => ({ id: 'field-scope' }));
@@ -249,6 +288,7 @@ describe('ReportFieldPanelRenderer', () => {
       expect(createScope).toHaveBeenCalledWith(
         {
           field: {
+            type: 'field',
             sourceId: 'source-1',
             fieldId: 'field-1',
             label: 'User Name',
@@ -268,6 +308,7 @@ describe('ReportFieldPanelRenderer', () => {
         'dropFieldToTarget',
         {
           field: {
+            type: 'field',
             sourceId: 'source-1',
             fieldId: 'field-1',
             label: 'User Name',

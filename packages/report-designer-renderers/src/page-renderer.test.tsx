@@ -413,6 +413,70 @@ describe('ReportDesignerPageRenderer', { timeout: 15000 }, () => {
     });
   });
 
+  it('uses the live field panel contract for the default left workbench panel', async () => {
+    const spreadsheet = createEmptyDocument('page-renderer-field-panel-default');
+    const sheetId = spreadsheet.workbook.sheets[0].id;
+
+    renderReportDesignerPage({
+      document: createReportTemplateDocument(spreadsheet, 'Field Panel Report') as any,
+      config: createRuntimeConfig({
+        fieldSources: [
+          {
+            id: 'sales',
+            label: 'Sales',
+            groups: [
+              {
+                id: 'metrics',
+                label: 'Metrics',
+                expanded: true,
+                fields: [{ id: 'revenue', label: 'Revenue', fieldType: 'number' }],
+              },
+            ],
+          },
+        ],
+      }),
+      toolbar: [
+        {
+          type: 'action-button',
+          label: 'Select A1',
+          onClick: {
+            action: 'spreadsheet:setSelection',
+            args: {
+              selection: {
+                kind: 'cell',
+                sheetId,
+                anchor: {
+                  sheetId,
+                  address: 'A1',
+                  row: 0,
+                  col: 0,
+                },
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    await waitFor(() => {
+      const insertButton = screen.getByRole('button', {
+        name: 'Insert field Revenue into the current selection',
+      }) as HTMLButtonElement;
+      expect(screen.getByTestId('left-panel-expanded')).toBeTruthy();
+      expect(document.querySelector('[data-slot="report-field-panel-shell"]')).toBeTruthy();
+      expect(insertButton.disabled).toBe(true);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select A1' }));
+
+    await waitFor(() => {
+      const insertButton = screen.getByRole('button', {
+        name: 'Insert field Revenue into the current selection',
+      }) as HTMLButtonElement;
+      expect(insertButton.disabled).toBe(false);
+    });
+  });
+
   it('publishes report designer host status through statusPath', async () => {
     const spreadsheet = createEmptyDocument('page-renderer-status');
     const document = createReportTemplateDocument(spreadsheet, 'Status Report');

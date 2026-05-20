@@ -35,8 +35,8 @@ import {
 } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, resolveLucideIcon } from '@nop-chaos/ui';
-import { renderFallbackFieldPanel } from './fallbacks.js';
 import { createReportDesignerActionProvider } from './host-action-provider.js';
+import { createReportFieldDragPayload, ReportFieldPanel } from './report-field-panel.js';
 import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
 import { getFieldCount } from './helpers.js';
 import { useReportDesignerHostScope } from './host-data.js';
@@ -589,7 +589,36 @@ export function ReportDesignerPageRenderer(
         onCollapse: () => setLeftCollapsed(true),
         content: hasRendererSlotContent(asReactNode(fieldPanelContent))
           ? asReactNode(fieldPanelContent)
-          : renderFallbackFieldPanel(snapshot.fieldSources),
+          : (
+              <ReportFieldPanel
+                fieldSources={snapshot.fieldSources}
+                onFieldDragStart={() => undefined}
+                onFieldInsert={async (sourceId, fieldId) => {
+                  const nextSource = snapshot.fieldSources.find((source) => source.id === sourceId);
+                  const nextField = nextSource?.groups
+                    .flatMap((group) => group.fields)
+                    .find((field) => field.id === fieldId);
+                  if (!nextSource || !nextField) {
+                    return;
+                  }
+
+                  const target = snapshot.selectionTarget;
+                  if (target?.kind !== 'cell' && target?.kind !== 'range') {
+                    return;
+                  }
+
+                  await core.dispatch({
+                    type: 'report-designer:dropFieldToTarget',
+                    source: 'field-panel',
+                    field: createReportFieldDragPayload(nextSource, nextField),
+                    target,
+                  });
+                }}
+                canInsertField={() =>
+                  snapshot.selectionTarget?.kind === 'cell' || snapshot.selectionTarget?.kind === 'range'
+                }
+              />
+            ),
       })
     : undefined;
 

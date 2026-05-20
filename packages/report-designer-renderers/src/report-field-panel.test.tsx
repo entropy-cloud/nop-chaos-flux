@@ -3,7 +3,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { ReportFieldPanel } from './report-field-panel.js';
+import { REPORT_FIELD_DRAG_MIME, ReportFieldPanel } from './report-field-panel.js';
 
 const fieldSources = [
   {
@@ -67,5 +67,49 @@ describe('ReportFieldPanel public component', () => {
         'disabled',
       ),
     ).toBe(true);
+  });
+
+  it('writes the canonical field drag payload without exposing button semantics', () => {
+    cleanup();
+    resetFluxI18n();
+    initFluxI18n();
+
+    const onFieldDragStart = vi.fn();
+    const setData = vi.fn();
+    const dataTransfer = {
+      effectAllowed: 'all',
+      setData,
+    } as unknown as DataTransfer;
+
+    render(
+      <ReportFieldPanel
+        fieldSources={fieldSources}
+        onFieldDragStart={onFieldDragStart}
+        onFieldInsert={vi.fn()}
+        canInsertField={() => true}
+      />,
+    );
+
+    const dragHandle = document.querySelector('[data-slot="report-field-panel-drag-handle"]');
+    expect(dragHandle?.getAttribute('role')).toBeNull();
+
+    fireEvent.dragStart(dragHandle as Element, { dataTransfer });
+
+    expect(onFieldDragStart).toHaveBeenCalledWith('orders', 'orderId', 'Order ID');
+    expect(setData).toHaveBeenCalledWith(
+      REPORT_FIELD_DRAG_MIME,
+      JSON.stringify({
+        type: 'number',
+        sourceId: 'orders',
+        fieldId: 'orderId',
+        label: 'Order ID',
+        data: {
+          id: 'orderId',
+          label: 'Order ID',
+          path: 'orders.orderId',
+          fieldType: 'number',
+        },
+      }),
+    );
   });
 });

@@ -15,6 +15,7 @@ import type {
   ReportDesignerRuntimeSnapshot,
 } from '@nop-chaos/report-designer-core';
 import { createReportDesignerBridge } from './bridge.js';
+import { readReportFieldDragPayload } from './report-field-panel.js';
 
 function getFailureMessage(error: unknown) {
   return error instanceof Error && error.message ? error.message : t('flux.common.saveFailed');
@@ -153,10 +154,10 @@ export function ReportSpreadsheetCanvas({
     [core, sheetId],
   );
 
-  const handleFieldDropOnCell = useCallback(() => {
+  const handleFieldDropOnCell = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    const dragPayload = readReportFieldDragPayload(event) ?? core.getSnapshot().fieldDrag.payload;
     handleFieldDrop(async (targetCell) => {
-      const dragState = core.getSnapshot().fieldDrag;
-      if (!dragState.active || !dragState.payload) {
+      if (!dragPayload) {
         return;
       }
       const addr = cellAddress(targetCell.row, targetCell.col);
@@ -164,7 +165,7 @@ export function ReportSpreadsheetCanvas({
       const spreadsheetResult = await spreadsheetBridge.dispatch({
         type: 'spreadsheet:setCellValue',
         cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
-        value: `\${${dragState.payload.fieldId}}`,
+        value: `\${${dragPayload.fieldId}}`,
       });
 
       if (spreadsheetResult.cancelled) {
@@ -178,7 +179,7 @@ export function ReportSpreadsheetCanvas({
 
       const designerResult = await designerBridge.dispatchDesigner({
         type: 'report-designer:dropFieldToTarget',
-        field: dragState.payload,
+        field: dragPayload,
         target: {
           kind: 'cell',
           cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
