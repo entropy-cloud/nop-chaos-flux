@@ -1,6 +1,0 @@
-{
-  "vitestPkgDeps": [],
-  "vitestConfigs": [],
-  "testPragmas": [],
-  "sourceImports": ["scripts\\scan-jsdom-usage.mjs:100"]
-}
