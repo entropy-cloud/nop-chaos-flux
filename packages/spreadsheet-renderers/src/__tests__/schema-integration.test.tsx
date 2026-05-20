@@ -364,6 +364,35 @@ describe('spreadsheet-page schema integration', () => {
     }
   });
 
+  it('preserves cancelled spreadsheet commands in top-level action results', async () => {
+    const provider = createSpreadsheetActionProvider(async () => ({
+      ok: false,
+      changed: false,
+      cancelled: true,
+    }));
+
+    const actionScope = createActionScope({ id: 'spreadsheet-cancelled-scope' });
+    const unregister = actionScope.registerNamespace('spreadsheet', provider);
+
+    try {
+      const resolved = actionScope.resolve('spreadsheet:setCellValue');
+      const result = await resolved!.provider.invoke(
+        resolved!.method,
+        {
+          cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+          value: 'next',
+        },
+        {} as any,
+      );
+
+      expect(result.ok).toBe(false);
+      expect(result.cancelled).toBe(true);
+      expect(result.error).toBeUndefined();
+    } finally {
+      unregister();
+    }
+  });
+
   it('exposes the documented spreadsheet host methods through listMethods', () => {
     const provider = createSpreadsheetActionProvider(async () => ({ ok: true, changed: false }));
 

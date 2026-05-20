@@ -100,6 +100,7 @@ export function toSpreadsheetActionResult(response: SpreadsheetCommandResult): A
     ok: response.ok,
     data: response.data,
     error: toActionError(response.error),
+    cancelled: response.cancelled,
   };
 }
 

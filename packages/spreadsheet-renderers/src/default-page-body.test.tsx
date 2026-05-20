@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 const mockInteractions = vi.fn();
 const mockToolbar = vi.fn();
@@ -27,6 +27,7 @@ vi.mock('./sheet-tab-bar.js', () => ({
 import { DefaultSpreadsheetPageBody } from './default-page-body.js';
 
 afterEach(() => {
+  cleanup();
   mockInteractions.mockReset();
   mockToolbar.mockReset();
 });
@@ -145,5 +146,51 @@ describe('DefaultSpreadsheetPageBody', () => {
 
     expect(interactions.handleUndo).toHaveBeenCalledTimes(1);
     expect(interactions.handleRedo).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes outside clicks through handleEditSave when an editor is active', () => {
+    const interactions = createInteractions();
+    interactions.editingCellRef = { current: { row: 0, col: 0 } } as any;
+    mockInteractions.mockReturnValue(interactions);
+
+    const view = render(
+      <DefaultSpreadsheetPageBody
+        bridge={{ dispatch: vi.fn() } as any}
+        snapshot={{
+          workbook: { sheets: [{ id: 'sheet-1', name: 'Sheet1' }] },
+          activeSheet: { id: 'sheet-1' },
+        } as any}
+        showToolbar={true}
+      />,
+    );
+
+    fireEvent.mouseDown(view.container.querySelector('[data-slot="spreadsheet-default-host"]')!);
+
+    expect(interactions.handleEditSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not route input clicks through handleEditSave while editing remains inside the cell editor', () => {
+    const interactions = createInteractions();
+    interactions.editingCellRef = { current: { row: 0, col: 0 } } as any;
+    mockInteractions.mockReturnValue(interactions);
+
+    const view = render(
+      <DefaultSpreadsheetPageBody
+        bridge={{ dispatch: vi.fn() } as any}
+        snapshot={{
+          workbook: { sheets: [{ id: 'sheet-1', name: 'Sheet1' }] },
+          activeSheet: { id: 'sheet-1' },
+        } as any}
+        showToolbar={true}
+      />,
+    );
+    
+    const input = document.createElement('input');
+    input.className = 'ss-cell-edit-input';
+    view.container.querySelector('[data-slot="spreadsheet-default-host"]')!.appendChild(input);
+
+    fireEvent.mouseDown(input);
+
+    expect(interactions.handleEditSave).not.toHaveBeenCalled();
   });
 });

@@ -119,7 +119,9 @@ export function DefaultSpreadsheetPageBody(props: {
       role="region"
       tabIndex={-1}
       onMouseDown={(event) => {
-        if (editingCellRef.current && (event.target as HTMLElement).tagName !== 'INPUT') {
+        const target = event.target as HTMLElement | null;
+        const isEditingInput = target?.closest('input.ss-cell-edit-input');
+        if (editingCellRef.current && !isEditingInput) {
           void handleEditSave();
         }
       }}
