@@ -63,17 +63,10 @@ export function NetworkTab(props: {
                 : ''}
           </span>
            {networkExpandedKey === request.key ? (
+            /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- expanded detail is non-interactive content; click only stops row-toggle bubbling */
             <div
               className="ndbg-entry-expanded"
-              role="button"
-              tabIndex={0}
               onClick={(event) => event.stopPropagation()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }
-              }}
             >
               {request.startEvent?.network ? (
                 <div>

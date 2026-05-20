@@ -137,3 +137,251 @@
 - **历史模式对应**: 对应维度 04 的“复杂控件/设计器状态同时在 store 和 React state 中维护”。不同于 flow canvas hover/dragging 这类文档允许由适配层持有的纯 UI 临时态。
 - **参考文档**: `docs/components/spreadsheet-page/design.md:47-64`, `docs/architecture/report-designer/design.md:231-239`
 - **复核状态**: 未复核
+
+## 深挖第 2 轮追加
+
+### [维度04-04] Flow Designer Tree Mode 将同一流程结构拆在 React `treeDocument` state 与 DesignerCore `GraphDocument`/history 中双写同步
+
+- **文件**: `packages/flow-designer-renderers/src/designer-tree-mode.tsx:21-43`, `packages/flow-designer-renderers/src/designer-command-adapter.ts:54-68`, `packages/flow-designer-core/src/core.ts:318-328`
+- **行号范围**: `designer-tree-mode.tsx:21-43`, `designer-command-adapter.ts:54-68`, `core.ts:318-328`
+- **证据片段**:
+
+  ```ts
+  const inputTreeDocument = readDesignerResolvedProp<TreeDocument>(props, 'treeDocument');
+  const [treeDocument, setTreeDocument] = useState<TreeDocument | undefined>(inputTreeDocument);
+  const [hasLocalTreeEdits, setHasLocalTreeEdits] = useState(false);
+
+  const [core] = useState(() =>
+    createDesignerCore(
+      initialTreeDocument
+        ? computeTreeModeDocument(initialTreeDocument, config)
+  ```
+
+  ```ts
+  function applyTreeDocument(nextTree: TreeDocument): void {
+    if (!treeOwner) {
+      return;
+    }
+    treeOwner.setTreeDocument(nextTree);
+    core.replaceDocument(projectTreeDocumentToGraph(nextTree, core.getConfig()), nextTree);
+  }
+  ```
+
+  ```ts
+  historyState = result.state;
+  replaceDocument(cloneDocument(result.entry.doc), result.entry.revision);
+  if (treeOwner && result.entry.treeDocument) {
+    treeOwner.setTreeDocument(result.entry.treeDocument);
+  }
+  ```
+
+- **严重程度**: P1
+- **现状**: Tree Mode 的当前结构化流程同时存在于 React 层 `treeDocument` / `hasLocalTreeEdits` state，以及 `DesignerCore` 内的 projected `GraphDocument`、history entry `treeDocument`、`replaceDocument(...)` 同步链中。普通 tree 命令先写 React tree owner，再用投影结果替换 core document；undo/redo 又从 core history 反向写回 React tree state。
+- **风险**: TreeDocument 与 GraphDocument projection 都参与当前编辑事实，并且通过多条命令/prop/effect/undo 同步路径保持一致。一旦 host prop 更新、tree 命令、auto-layout、undo/redo、export JSON 同时发生，React `treeDocument`、core `snapshot.doc`、history entry、toolbar/export/inspector 可能读到不同版本的流程结构。
+- **建议**: 收敛 Tree Mode 的 canonical owner。推荐让 `DesignerCore` 拥有 TreeDocument 及其 projected GraphDocument cache，React 只订阅 snapshot；或反过来让 TreeDocument owner 成为唯一写入端，core 只接收只读 projection，不保存可回写的 tree history。不要保留 React state 和 core history 双向同步当前结构文档。
+- **双状态详情**: 第一份状态是 `TreeModeLayoutWrapper` 的 `treeDocument` / `hasLocalTreeEdits` React state；第二份状态是 `DesignerCore` 的 projected `doc`、history entry 中的 `treeDocument` 以及 `treeOwner.setTreeDocument(...)` 回写接口。二者表达同一个 tree-mode 流程结构，只是一个是源 TreeDocument，一个是投影 GraphDocument + paired history snapshot。
+- **同步失败症状**: 用户在 tree mode 中新增/删除节点后，画布 `core.snapshot.doc` 已显示新节点，但外部 `treeDocument` prop 或 React `treeDocument` state 仍停留在旧树；随后触发 undo/redo 或 host rerender，core 会从 history/treeOwner 反写另一份树，导致画布节点、export JSON、status/inspector 读取面不一致，甚至把 host replacement 或本地未保存编辑互相覆盖。
+- **为什么值得现在做**: Flow Designer 文档明确 `@xyflow/react` 不应成为第二事实源，Tree Mode 也应保持稳定 runtime instance 与清晰投影链。当前实现不是只读 projection，而是 TreeDocument 与 GraphDocument/history 双写互相驱动，和已发现的 report/spreadsheet 双状态属于同类 owner 漂移。
+- **误报排除**: 这不是合法的 canvas dragging 临时态，也不是纯 memoized projection。`setTreeDocument(nextTree)`、`core.replaceDocument(...)`、undo/redo 中的 `treeOwner.setTreeDocument(...)` 都会改变当前编辑文档状态；`hasLocalTreeEdits` 还明确参与 host prop 与本地编辑的冲突仲裁。
+- **历史模式对应**: 与 reopened adjudications 中“review-confirmed dual-state tradeoffs”相似，但本条不是已裁定的 ordinary local draft cache；它位于 live designer tree-mode 主路径，影响 document/history/export 事实源，应作为新的 designer state 双状态 residual 处理。
+- **参考文档**: `docs/architecture/flow-designer/design.md:104-115`, `docs/architecture/flow-designer/design.md:489-523`
+- **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+### [维度04-05] Flow Designer Xyflow bridge 用 `useNodesState/useEdgesState` 维护图结构本地副本，拖拽/删除先写 React Flow state 再回写 DesignerCore
+
+- **文件**: `packages/flow-designer-renderers/src/designer-xyflow-canvas/use-xyflow-sync.ts:83-105`, `packages/flow-designer-renderers/src/designer-xyflow-canvas/use-xyflow-interactions.ts:75-110`
+- **行号范围**: `use-xyflow-sync.ts:83-105`, `use-xyflow-interactions.ts:75-110`
+- **证据片段**:
+
+  ```ts
+  export function useXyflowSync({
+    snapshotNodes,
+    snapshotEdges,
+    hoveredEdgeId,
+  }: UseXyflowSyncParams): UseXyflowSyncResult {
+    const lastCommittedPositionsRef = useRef<Map<string, string>>(new Map());
+
+    const [localNodes, setLocalNodes, onNodesChangeInternal] = useNodesState(snapshotNodes);
+    const [localEdges, setLocalEdges, onEdgesChangeInternal] = useEdgesState(snapshotEdges);
+  ```
+
+  ```ts
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      onNodesChangeInternal(changes);
+
+      for (const change of changes) {
+        if (change.type === 'remove') {
+          onDeleteNode(change.id, undefined);
+          lastCommittedPositionsRef.current.delete(change.id);
+          continue;
+  ```
+
+- **严重程度**: P1
+- **现状**: Flow Designer 的 Xyflow 适配层从 `DesignerCore` snapshot 派生 `snapshotNodes/snapshotEdges` 后，又通过 `useNodesState/useEdgesState` 持有 `localNodes/localEdges`。`onNodesChangeInternal` / `onEdgesChangeInternal` 先把 React Flow 本地 graph state 改掉，再把 remove / position / edge remove 翻译为 `DesignerCore` 命令。
+- **风险**: 这违反 owner 文档中“`@xyflow/react` 只作为 canvas 交互与可视化适配层，不作为 graph 数据的第二 source of truth”的边界。删除、拖拽、重连或 core 拒绝/归一化命令时，React Flow 本地 nodes/edges 已经先变化，随后才等待 core snapshot 回推；在同步窗口或命令失败路径中，画布显示、selection、history、export/status host scope 可能短暂或持续读到不同图结构。
+- **建议**: 将 Xyflow bridge 收敛为完全受控 projection：`nodes/edges` 直接来自 `DesignerCore` snapshot；`onNodesChange/onEdgesChange` 只解析交互 intent 并 dispatch core command，不调用会修改结构化 graph state 的本地 setter。若需要拖拽中的流畅预览，应把本地状态限制为 pointer/drag overlay 或“拖拽中位置预览”，并在命名和类型上与 canonical `GraphDocument` nodes/edges 分离。
+- **双状态详情**: 第一份状态是 `DesignerCore` 的 `snapshot.doc.nodes` / `snapshot.doc.edges`；第二份状态是 Xyflow hook 内的 `localNodes` / `localEdges`。二者都表达当前画布节点、边和节点位置，且本地副本会先于 core 命令写入。
+- **同步失败症状**: 用户拖拽节点后 React Flow 立即显示新位置，但 `DesignerCore` history/export/host scope 仍是旧位置；若 core 命令被 tree mode、规则校验或未来插件拒绝，本地画布已经应用了变化。删除节点/边时也可能先从画布消失，再由 core snapshot 回滚，造成 selection、toolbar 状态和保存导出短暂不一致。
+- **为什么值得现在做**: owner 文档已明确 Xyflow 只能持有 pointer capture、dragging 中间态、连线预览、尺寸测量等纯 UI 临时态，不能持有结构化 document state。当前代码把 nodes/edges 结构副本放进 React Flow state，是 live 主路径，不是未接线实验代码。
+- **误报排除**: 这不是合法的 readonly projection 或纯拖拽手势态。`useNodesState/useEdgesState` 返回的 `onNodesChangeInternal` / `onEdgesChangeInternal` 会根据 React Flow change 修改 `localNodes/localEdges`，随后 `<ReactFlow nodes={localNodes} edges={renderedEdges}>` 直接渲染这份副本；它承载的是结构化 nodes/edges，而不仅是 hover 或 pointer 状态。
+- **历史模式对应**: 与已有 [维度04-04] Tree Mode 双写同属 designer graph owner 漂移，但本条覆盖的是 ordinary graph canvas 的 Xyflow adapter 本地 graph 副本，不重复报告 TreeDocument/GraphDocument/history 双写。
+- **参考文档**: `docs/architecture/flow-designer/design.md:104-115`, `docs/architecture/flow-designer/design.md:186-204`
+- **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度04-06] Word Editor 将 chart/code 元数据同时写入 canvas 文档标签与 React state extras
+
+- **文件**: `packages/word-editor-renderers/src/hooks/use-word-editor-state.ts:84-91`, `packages/word-editor-renderers/src/hooks/use-word-editor-actions.ts:116-134`, `packages/word-editor-core/src/document-io.ts:255-262`
+- **行号范围**: `use-word-editor-state.ts:84-91`, `use-word-editor-actions.ts:116-134`, `document-io.ts:255-262`
+- **证据片段**:
+
+  ```ts
+  const [charts, setCharts] = useState<DocChart[]>(() =>
+    normalizeDocCharts(props.props.initialCharts),
+  );
+  const [codes, setCodes] = useState<DocCode[]>(() => normalizeDocCodes(props.props.initialCodes));
+  const [savedDocument, setSavedDocument] = useState<SavedDocumentData | null>(() => {
+    return (
+      recoveredState.document ??
+      (initialDocument
+        ? createSavedDocumentData({ data: initialDocument, paperSettings: null })
+        : null)
+    );
+  });
+  ```
+
+  ```ts
+  const handleChartSave = useCallback(
+    (_chart: DocChart) => {
+      if (!validateDocChart(_chart).valid) {
+        return;
+      }
+      bridge.insertChart(_chart);
+      setCharts((current) => [...current, _chart]);
+    },
+    [bridge, setCharts],
+  );
+  ```
+
+  ```ts
+  return createSavedDocumentData({
+    data: {
+      header: value.data.header ?? [],
+      main: value.data.main,
+      footer: value.data.footer ?? [],
+      charts: extras?.charts ?? [],
+      codes: extras?.codes ?? [],
+    },
+  ```
+
+- **严重程度**: P1
+- **现状**: `insertChart` / `insertCode` 先把 chart/code 作为 `nop:chart` / `nop:code` 标签插入 canvas-editor 文档，再把同一元数据追加到 React `charts` / `codes` state；保存时 `captureDocumentSnapshot(...)` 又从 canvas 当前文档读取正文，并从 React state extras 注入 `charts` / `codes`。
+- **风险**: canvas 文档和 React extras 都能表达同一个 chart/code 占位符事实。用户通过 undo、删除正文标签、恢复文档、导入旧文档或外部 action 改变 canvas 内容时，React `charts` / `codes` 可能不随之移除或重建，最终保存出“正文已无 chart/code 标签但 persisted `data.charts` 仍包含旧元数据”或“正文标签存在但 extras 缺失”的不一致模板。
+- **建议**: 收敛为单一 persisted owner。可选方向是让 canvas/editor document 成为 chart/code 占位符的唯一事实源，保存前从当前文档标签解析并校验 metadata；或把 chart/code registry 放入 `word-editor-core` owner store，并让 canvas 只渲染/插入该 registry 的受控 projection。不要在主保存路径继续用 React local extras 与 canvas document 组合成同一个 `WordDocument`。
+- **双状态详情**: 第一份状态是 canvas-editor 文档中的 `nop:chart` / `nop:code` 标签及其 attrs；第二份状态是 `WordEditorPage` React state 中的 `charts` / `codes` 数组。二者共同决定保存出的 `SavedDocumentData.data.charts` / `data.codes`。
+- **同步失败症状**: 插入 chart 后执行 undo 或手动删除占位符，画布不再显示该 chart，但 `charts` state 仍被保存；或者恢复/加载包含 chart tags 的文档但未同步初始化 `charts` state，保存后 extras 丢失，后端模板编译或 host projection 读到的 chart/code registry 与正文不一致。
+- **为什么值得现在做**: Word Editor 文档已把 `SavedDocumentData` 定义为 persisted envelope，并明确 explicit save 使用完整 envelope 作为单一 persisted truth surface；当前实现却把同一 persisted document 的正文与 chart/code registry 分拆在 canvas 内部和 React state extras 中，属于 live 保存主路径。
+- **误报排除**: 这不是合法的 renderer-local dialog draft。`charts` / `codes` 会进入 `SavedDocumentData.data`，影响持久化、host projection 和后端模板渲染；它们不是只影响 UI 预览的 transient state。也不是校准文档允许的只读 projection，因为 `setCharts` / `setCodes` 是写入端，`captureDocumentSnapshot` 把该写入端作为保存事实源。
+- **历史模式对应**: 对应维度 04 的“复杂设计器状态同时在 domain store / host document 与 React state 中维护”。不同于已有 report/spreadsheet 双状态，本条覆盖 Word Editor 的 canvas document 与 renderer-local extras 组合保存路径。
+- **参考文档**: `docs/architecture/word-editor/design.md:65-102`, `docs/architecture/word-editor/design.md:159-168`
+- **复核状态**: 未复核
+
+### [维度04-07] Spreadsheet toolbar cell/comment editor 用 React draftState 镜像 core 单元格值并先本地显示再异步写 core
+
+- **文件**: `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-spreadsheet-shell.ts:40-54`, `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-cell-value-sync.ts:18-28`, `packages/spreadsheet-renderers/src/spreadsheet-toolbar/cell-editor.tsx:16-24`
+- **行号范围**: `use-spreadsheet-shell.ts:40-54`, `use-cell-value-sync.ts:18-28`, `cell-editor.tsx:16-24`
+- **证据片段**:
+
+  ```ts
+  const [draftState, setDraftState] = useState(() => ({
+    selectedKey: selectedCellSnapshot.selectedKey,
+    cellValue: selectedCellSnapshot.cellValue,
+    commentText: selectedCellSnapshot.commentText,
+  }));
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  const cellValue =
+    draftState.selectedKey === selectedCellSnapshot.selectedKey
+      ? draftState.cellValue
+      : selectedCellSnapshot.cellValue;
+  ```
+
+  ```ts
+  input.setCellValue(value);
+  input.bridge.dispatch({
+    type: 'spreadsheet:setCellValue',
+    cell: {
+      sheetId: input.sheetId,
+      address: cellAddress(input.selectedCell.row, input.selectedCell.col),
+      row: input.selectedCell.row,
+      col: input.selectedCell.col,
+    },
+    value,
+  });
+  ```
+
+  ```tsx
+  <Input
+    id={cellValueInputId}
+    data-slot="spreadsheet-cell-value-input"
+    size="sm"
+    value={props.cellValue}
+    onChange={(e) => props.onCellValueChange(e.target.value)}
+  ```
+
+- **严重程度**: P1
+- **现状**: toolbar cell editor 的 `cellValue` / `commentText` 先从 spreadsheet core snapshot 派生，但随后进入 renderer-local `draftState`。`onCellValueChange` 先 `setCellValue(value)` 更新本地显示，再 fire-and-forget `bridge.dispatch('spreadsheet:setCellValue', ...)` 写入 spreadsheet core，且没有等待 `SpreadsheetCommandResult` 或失败回滚。
+- **风险**: 单元格值属于 `spreadsheet core` 的 worksheet document；当前 toolbar 输入框可短时间或持续显示未被 core 接受的值。若 core 因 readonly、取消、校验、异步命令失败或未来 command policy 拒绝写入，host scope、history、dirty、save/export 仍读 core 旧值，而 toolbar 本地 draft 显示新值，形成可持久化数据与 UI 读面冲突。
+- **建议**: toolbar cell/comment editor 不应拥有 canonical cell value draft。普通 cell value 输入应直接由 core snapshot 驱动，change intent 通过 core command 返回结果后由 snapshot 回推；如果需要 optimistic UI，必须进入 spreadsheet core 的 editing/command owner，并有明确的 pending/cancelled/failed 状态与回滚策略。`bridge.dispatch` 结果不能在写入同一事实源时被忽略。
+- **双状态详情**: 第一份状态是 spreadsheet core 的 `snapshot.document.activeSheet.cells[address].value/comment`；第二份状态是 `useSpreadsheetShell` 的 `draftState.cellValue/commentText`。二者都表达当前 selected cell 的编辑值，且本地状态先于 core command 更新。
+- **同步失败症状**: 用户在 toolbar 输入单元格值后输入框显示新值，但 core command 被取消或失败时，表格单元格、statusPath、host schema、undo/history 和保存导出仍保持旧值；切换选择后又可能按 `selectedKey` 回落，造成输入框与 grid 闪烁/回滚且缺少错误提示。
+- **为什么值得现在做**: `spreadsheet-page` owner 文档明确 worksheet document、selection、editing、history、viewport 归 spreadsheet core，并要求 outside-click edit-save 走统一 save result contract。当前 toolbar cell editor 是另一条单元格编辑入口，仍保留 renderer-local value mirror 与忽略 command result 的双状态路径。
+- **误报排除**: 这不是纯 DOM 输入 composition state。`draftState.cellValue` 是将要写入 workbook 的单元格值，`commentText` 是将要写入 cell comment 的内容，都会影响保存/export；也不是已有 [维度04-03] 的 inline grid editing，本条覆盖 toolbar cell/comment editor 和 `useCellValueSync` 的独立写入路径。
+- **历史模式对应**: 对应维度 04 的“复杂字段不得维护独立本地状态，只从 store 读取”和 spreadsheet owner contract 中“worksheet document 归 core”。它是已有 inline editing 双状态旁边的 residual，不重复报告 `use-editing.ts` 的 `editingCell/editValue`。
+- **参考文档**: `docs/components/spreadsheet-page/design.md:47-64`
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度04-08] Report Designer 将当前选择目标拆在 SpreadsheetCore selection 与 ReportDesignerCore selectionTarget 中异步镜像
+
+- **文件**: `packages/report-designer-renderers/src/report-spreadsheet-canvas.tsx:89-146`, `packages/report-designer-renderers/src/host-data.ts:181-187`
+- **行号范围**: `report-spreadsheet-canvas.tsx:89-146`, `host-data.ts:181-187`
+- **证据片段**:
+
+  ```ts
+  const prevSelectedCell = useRef<{ row: number; col: number } | null>(null);
+  const hasMirroredSpreadsheetSelection = useRef(false);
+
+  useEffect(() => {
+    const selection = ssSnapshot.selection;
+    const selectedCellTarget =
+      selection.kind === 'cell' && selection.anchor
+        ? { row: selection.anchor.row, col: selection.anchor.col }
+  ```
+
+  ```ts
+      spreadsheet,
+      selectionTarget: snapshot.selectionTarget,
+      reportDocument,
+      workbook,
+      activeSheet,
+      activeCell: spreadsheet?.activeCell,
+      activeRange: spreadsheet?.activeRange,
+  ```
+
+- **严重程度**: P2
+- **现状**: `SpreadsheetCore` 的 `ssSnapshot.selection` 是表格画布当前选择；`ReportDesignerCore` 另有 `snapshot.selectionTarget`，由 `report-spreadsheet-canvas.tsx` 的 React effect 通过 `void core.setSelectionTarget(...)` 异步镜像。host scope 同时发布 `spreadsheet.selection/activeCell/activeRange` 与 canonical `selectionTarget`，两者可在同一 render turn 中表达不同目标。
+- **风险**: inspector、metadata、toolbar action 以 `selectionTarget` 为 canonical current-target，但画布和 `spreadsheet.activeCell/activeRange` 已经切到新选择时，schema 片段可能读到“新 activeCell + 旧 selectionTarget/activeMeta/inspector”的组合。快速切换单元格、行列头或范围后立即触发 inspector 写入/字段拖放/toolbar action，可能把 metadata 写到旧目标，或让 inspector schema 与画布高亮不一致。
+- **建议**: 收敛 current selection 的单一 owner。推荐让 report designer core 直接消费 spreadsheet selection command 并同步产出 `selectionTarget`、`activeMeta`、inspector projection；host scope 只发布这一份 canonical target 及其派生 convenience 字段。若 `spreadsheet.selection` 必须保留，应明确标记为 canvas-local projection，不应与 `selectionTarget` 并列作为当前选择读面。
+- **双状态详情**: 第一份状态是 `SpreadsheetCore` 的 `ssSnapshot.selection`；第二份状态是 `ReportDesignerCore` 的 `snapshot.selectionTarget` / `activeMeta` / inspector resolved schema。二者共同描述当前选中的 workbook/sheet/cell/range。
+- **同步失败症状**: 用户点击新单元格后，画布 selection 与 `spreadsheet.activeCell` 已更新，但 `selectionTarget`、`meta`、`inspector` 仍停留在上一单元格；紧接着提交 inspector 表单或执行 toolbar action 时，操作落到旧 target 或显示错误属性面板。
+- **为什么值得现在做**: 组件文档已声明 `selectionTarget` 是唯一 canonical current-target surface，而当前实现仍把 current target 通过 effect 从 spreadsheet selection 镜像到 report core，属于已有 report/spreadsheet 双状态之外的选择/metadata owner residual。
+- **误报排除**: 这不是合法的纯 UI hover/focus state。`selectionTarget` 驱动 inspector schema、active metadata 和 host action 目标；`spreadsheet.selection` 驱动画布选择与 activeCell/activeRange。二者都进入 schema-visible host projection，并会影响 metadata 写入目标。
+- **历史模式对应**: 与已有 [维度04-01]/[维度04-02] 同属 report/spreadsheet owner 漂移，但本条不重复 workbook/document 双状态；它覆盖的是 current selection target 与 inspector/metadata 的事实源冲突。
+- **参考文档**: `docs/architecture/report-designer/design.md:291-292`, `docs/components/report-designer-page/design.md:80-107`
+- **复核状态**: 未复核

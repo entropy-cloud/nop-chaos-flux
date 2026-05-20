@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SpreadsheetFrozenPane } from '@nop-chaos/spreadsheet-core';
 import { ContextMenu, ContextMenuTrigger } from '@nop-chaos/ui';
 import {
@@ -10,7 +10,7 @@ import {
   expandSortRangeToUsedColumns,
 } from './spreadsheet-grid/constants.js';
 import type { SpreadsheetGridProps } from './spreadsheet-grid/types.js';
-import { buildSpreadsheetGridViewport } from './spreadsheet-grid/viewport.js';
+import { buildSpreadsheetGridOffsets, buildSpreadsheetGridViewport } from './spreadsheet-grid/viewport.js';
 import { useContextMenuActions } from './spreadsheet-grid/use-context-menu-actions.js';
 import { SpreadsheetEditStatus } from './spreadsheet-grid/inline-controls.js';
 import { SpreadsheetGridOverlayControls } from './spreadsheet-grid/overlay-controls.js';
@@ -182,6 +182,17 @@ export function SpreadsheetGrid({
     if (el.clientWidth !== viewportWidth) setViewportWidth(el.clientWidth);
   };
 
+  const offsets = useMemo(
+    () =>
+      buildSpreadsheetGridOffsets({
+        rows,
+        cols,
+        columnWidths,
+        rowHeights,
+      }),
+    [rows, cols, columnWidths, rowHeights],
+  );
+
   const viewport = buildSpreadsheetGridViewport({
         rows,
         cols,
@@ -195,7 +206,7 @@ export function SpreadsheetGrid({
         scrollLeft,
         viewportHeight,
         viewportWidth,
-      });
+      }, offsets);
 
   const isDraggingRef = useRef(false);
   const lastDragCellRef = useRef<{ row: number; col: number } | null>(null);

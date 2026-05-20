@@ -625,6 +625,7 @@ describe('array-field renderer (object itemKind)', () => {
     });
   });
 
+
   it('matches the playground registry path and still renders object item children', async () => {
     cleanup();
     const registry = createDefaultRegistry();

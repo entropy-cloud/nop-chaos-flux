@@ -202,6 +202,28 @@ export function validateActionShape(
     );
   }
 
+  if (value.action === 'ajax') {
+    if (value.args === undefined) {
+      emitSchemaDiagnostic(
+        diagnostics,
+        {
+          code: 'invalid-action-shape',
+          path: appendJsonPointer(path, 'args'),
+          message: 'ajax actions require args payload.',
+        },
+        enabled,
+      );
+    } else {
+      validateApiSchemaShape(
+        value.args,
+        appendJsonPointer(path, 'args'),
+        diagnostics,
+        enabled,
+        'invalid-action-shape',
+      );
+    }
+  }
+
   if (value.when !== undefined && typeof value.when !== 'boolean' && typeof value.when !== 'string') {
     emitSchemaDiagnostic(
       diagnostics,
@@ -347,4 +369,86 @@ export function validateSourceShape(
     enabled,
     'invalid-source-shape',
   );
+}
+
+export function validateReactionShape(
+  value: unknown,
+  path: string,
+  diagnostics: SchemaCompilerDiagnosticsContext,
+  enabled: boolean,
+  hostContext?: HostActionValidationContext,
+) {
+  if (!isPlainObject(value)) {
+    return;
+  }
+
+  if (value.watch === undefined) {
+    emitSchemaDiagnostic(
+      diagnostics,
+      {
+        code: 'invalid-property-shape',
+        path: appendJsonPointer(path, 'watch'),
+        message: 'reaction.watch is required.',
+      },
+      enabled,
+    );
+  } else if (
+    typeof value.watch !== 'string' &&
+    !(Array.isArray(value.watch) && value.watch.every((entry) => typeof entry === 'string'))
+  ) {
+    emitSchemaDiagnostic(
+      diagnostics,
+      {
+        code: 'invalid-property-shape',
+        path: appendJsonPointer(path, 'watch'),
+        message: 'reaction.watch must be a string or array of strings.',
+      },
+      enabled,
+    );
+  }
+
+  if (value.immediate !== undefined && typeof value.immediate !== 'boolean') {
+    emitSchemaDiagnostic(
+      diagnostics,
+      {
+        code: 'invalid-property-shape',
+        path: appendJsonPointer(path, 'immediate'),
+        message: 'reaction.immediate must be a boolean when provided.',
+      },
+      enabled,
+    );
+  }
+
+  if (value.debounce !== undefined && typeof value.debounce !== 'number') {
+    emitSchemaDiagnostic(
+      diagnostics,
+      {
+        code: 'invalid-property-shape',
+        path: appendJsonPointer(path, 'debounce'),
+        message: 'reaction.debounce must be a number when provided.',
+      },
+      enabled,
+    );
+  }
+
+  if (value.once !== undefined && typeof value.once !== 'boolean') {
+    emitSchemaDiagnostic(
+      diagnostics,
+      {
+        code: 'invalid-property-shape',
+        path: appendJsonPointer(path, 'once'),
+        message: 'reaction.once must be a boolean when provided.',
+      },
+      enabled,
+    );
+  }
+
+  validateDependsOnRoots(
+    value.dependsOn,
+    appendJsonPointer(path, 'dependsOn'),
+    diagnostics,
+    enabled,
+  );
+
+  validateActionShape(value.actions, appendJsonPointer(path, 'actions'), diagnostics, enabled, hostContext);
 }

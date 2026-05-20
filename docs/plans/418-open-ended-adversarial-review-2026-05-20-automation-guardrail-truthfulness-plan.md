@@ -1,6 +1,6 @@
 # 418 Open-Ended Adversarial Review 2026-05-20 Automation Guardrail Truthfulness Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-20
 > Source: `docs/analysis/2026-05-20-open-ended-adversarial-review-01/round-02.md`
 > Related: `docs/plans/416-open-ended-adversarial-review-2026-05-20-remediation-routing-plan.md`
@@ -46,30 +46,43 @@
 
 ### Phase 1 - Restore Automation Guardrail Truthfulness
 
-Status: planned
+Status: completed
 Targets: automation scripts, check-chain wiring, focused proof, relevant docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Make each in-scope automation guard either honestly named/scoped or actually cover the contract it claims to protect.
-- [ ] Decide which guards belong in the main verification chain and wire them accordingly.
-- [ ] Add focused proof for the in-scope false-negative / stale-chain cases.
-- [ ] Update `docs/references/audit-tooling.md` and/or `docs/references/maintenance-checklist.md` if the supported guardrail baseline changes, or explicitly adjudicate `No owner-doc update required`.
+- [x] Make each in-scope automation guard either honestly named/scoped or actually cover the contract it claims to protect.
+- [x] Decide which guards belong in the main verification chain and wire them accordingly.
+- [x] Add focused proof for the in-scope false-negative / stale-chain cases.
+- [x] Update `docs/references/audit-tooling.md` and `docs/references/maintenance-checklist.md` for the current guardrail baseline.
 
 Exit Criteria:
 
-- [ ] `R02-01`, `R02-02`, and `R02-03` are fixed.
-- [ ] Focused proof covers the final guardrail behavior and check-chain placement.
-- [ ] `docs/references/audit-tooling.md` and/or `docs/references/maintenance-checklist.md` are updated if needed, or `No owner-doc update required` is explicitly recorded.
-- [ ] `docs/logs/2026/05-20.md` is updated.
+- [x] `R02-01`, `R02-02`, and `R02-03` are fixed.
+- [x] Focused proof covers the final guardrail behavior and check-chain placement.
+- [x] `docs/references/audit-tooling.md` and `docs/references/maintenance-checklist.md` are updated to match the live guardrail baseline.
+- [x] `docs/logs/2026/05-20.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Closure
+
+Status Note: The automation guardrail surface is now truthful again: `check-workspace-manifest-deps` covers bare side-effect imports, `check-schema-prop-coverage` is wired into root `check` and `lint`, and `check-finite-prop-contracts` is documented as a curated finite-prop sample guard instead of a complete proof. Focused proof, repo-wide verification, and independent closure audit are all complete.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: independent general subagent
+- Evidence: `ses_1bb02c7feffeSJyOIc1GfmNQsL` (`Verdict: acceptable`, `Findings: none`), recorded in `docs/logs/2026/05-20.md`
+
+Follow-up:
+
+- no remaining plan-owned work

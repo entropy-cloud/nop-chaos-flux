@@ -129,3 +129,7 @@
 - **历史模式对应**: 对应 `performance-design-requirements.md` P9“debug-only and perf-only paths must be owner-controlled”和 P6/P1 对 hot path stringify 的约束。
 - **参考文档**: `docs/architecture/performance-design-requirements.md:44-47,83-87,132-136`; `docs/architecture/renderer-runtime.md:44-56`; `docs/references/audit-tooling.md` 中 `broad-scope-selector` suspect 说明。
 - **复核状态**: 未复核
+
+## 深挖第 2 轮追加
+
+未发现新的高价值问题。深挖结束。

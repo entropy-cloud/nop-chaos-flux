@@ -1,6 +1,6 @@
 # 416 Open-Ended Adversarial Review 2026-05-20 Remediation Routing Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-20
 > Source: `docs/analysis/2026-05-20-open-ended-adversarial-review-01/{round-01.md,round-02.md,round-03.md,round-04.md,round-05.md,round-06.md,round-07.md}`
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/references/reopened-design-decisions-and-audit-adjudications.md`, `docs/plans/399-deep-audit-2026-05-19-compiler-diagnostic-fidelity-plan.md`, `docs/plans/402-deep-audit-2026-05-19-cross-package-i18n-alignment-plan.md`, `docs/plans/405-ux-audit-2026-05-19-remediation-plan.md`, `docs/plans/408-open-ended-adversarial-review-2026-05-19-supported-e2e-truthfulness-plan.md`
@@ -115,79 +115,79 @@
 
 ### Phase 1 - Freeze The 11-Finding Baseline
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/2026-05-20-open-ended-adversarial-review-01/`, this plan
 
 - Item Types: `Decision | Proof`
 
-- [ ] Re-audit all seven round files against the live repo and confirm the retained set is exactly the 11 findings listed in this plan.
-- [ ] Confirm none of the 11 findings is already honestly owned by an existing active or completed plan without a required scope change.
-- [ ] Freeze one canonical finding matrix, bucket mapping, and priority assignment in this plan.
-- [ ] Record explicit adjacency notes for nearby plans so later execution does not silently widen them.
+- [x] Re-audit all seven round files against the live repo and confirm the retained set is exactly the 11 findings listed in this plan.
+- [x] Confirm none of the 11 findings is already honestly owned by an existing active or completed plan without a required scope change.
+- [x] Freeze one canonical finding matrix, bucket mapping, and priority assignment in this plan.
+- [x] Record explicit adjacency notes for nearby plans so later execution does not silently widen them.
 
 Exit Criteria:
 
-- [ ] Every retained finding from `round-01.md` through `round-07.md` appears exactly once in this plan's finding matrix.
-- [ ] No retained finding is ownerless, multiply-owned, or silently merged into an unrelated historical owner plan.
-- [ ] This plan text clearly states why it is a routing plan rather than a broad implementation umbrella.
-- [ ] No owner-doc update required.
-- [ ] `docs/logs/2026/05-20.md` is updated.
+- [x] Every retained finding from `round-01.md` through `round-07.md` appears exactly once in this plan's finding matrix.
+- [x] No retained finding is ownerless, multiply-owned, or silently merged into an unrelated historical owner plan.
+- [x] This plan text clearly states why it is a routing plan rather than a broad implementation umbrella.
+- [x] No owner-doc update required.
+- [x] `docs/logs/2026/05-20.md` is updated.
 
 ### Phase 2 - Create Narrow Successor Execution Owners
 
-Status: planned
+Status: completed
 Targets: `docs/plans/417-*.md`, `docs/plans/418-*.md`, `docs/plans/419-*.md`, `docs/plans/420-*.md`, `docs/plans/421-*.md`, `docs/plans/422-*.md`, this plan
 
 - Item Types: `Decision | Proof`
 
-- [ ] Create Plan `417` for repo-wide i18n key guardrail truthfulness only.
-- [ ] Create Plan `418` for repository automation / verification guardrail truthfulness only, owning `R02-01`, `R02-02`, and `R02-03` together.
-- [ ] Create Plan `419` for compiler / schema validation fidelity only, owning `R03-01`, `R03-02`, `R03-03`, and `R05-01` together.
-- [ ] Create Plan `420` for the report-designer metadata-binding E2E truthfulness residual only.
-- [ ] Create Plan `421` for spreadsheet viewport hot-path scale behavior only.
-- [ ] Create Plan `422` for debugger accessibility semantics only.
-- [ ] Make each successor plan enumerate exact finding IDs, explicit Non-Goals, and required owner-doc obligations or explicit `No owner-doc update required` adjudication.
+- [x] Create Plan `417` for repo-wide i18n key guardrail truthfulness only.
+- [x] Create Plan `418` for repository automation / verification guardrail truthfulness only, owning `R02-01`, `R02-02`, and `R02-03` together.
+- [x] Create Plan `419` for compiler / schema validation fidelity only, owning `R03-01`, `R03-02`, `R03-03`, and `R05-01` together.
+- [x] Create Plan `420` for the report-designer metadata-binding E2E truthfulness residual only.
+- [x] Create Plan `421` for spreadsheet viewport hot-path scale behavior only.
+- [x] Create Plan `422` for debugger accessibility semantics only.
+- [x] Make each successor plan enumerate exact finding IDs, explicit Non-Goals, and required owner-doc obligations or explicit `No owner-doc update required` adjudication.
 
 Exit Criteria:
 
-- [ ] Buckets A-F each have exactly one execution owner path under `docs/plans/`.
-- [ ] No successor plan mixes unrelated result surfaces.
-- [ ] Every successor plan names exact finding IDs and explicit Non-Goals.
-- [ ] Every successor plan names affected owner docs or explicitly records `No owner-doc update required`.
-- [ ] `docs/logs/2026/05-20.md` is updated.
+- [x] Buckets A-F each have exactly one execution owner path under `docs/plans/`.
+- [x] No successor plan mixes unrelated result surfaces.
+- [x] Every successor plan names exact finding IDs and explicit Non-Goals.
+- [x] Every successor plan names affected owner docs or explicitly records `No owner-doc update required`.
+- [x] `docs/logs/2026/05-20.md` is updated.
 
 ### Phase 3 - Independent Routing Review Until Convergence
 
-Status: planned
+Status: completed
 Targets: this plan, successor plans `417`-`422`, `docs/logs/2026/05-20.md`
 
 - Item Types: `Proof | Decision`
 
-- [ ] Run at least one fresh independent subagent closure-audit-style review against this routing plan and all referenced successor plans.
-- [ ] Fix any duplicated ownership, over-broad scope, dishonest downgrade, or missing owner path the reviewer finds.
-- [ ] Repeat independent review after revisions until a fresh reviewer returns no remaining routing findings.
-- [ ] Record the final closure-audit evidence and convergence result in `docs/logs/2026/05-20.md`.
+- [x] Run at least one fresh independent subagent closure-audit-style review against this routing plan and all referenced successor plans.
+- [x] Fix any duplicated ownership, over-broad scope, dishonest downgrade, or missing owner path the reviewer finds.
+- [x] Repeat independent review after revisions until a fresh reviewer returns no remaining routing findings.
+- [x] Record the final closure-audit evidence and convergence result in `docs/logs/2026/05-20.md`.
 
 Exit Criteria:
 
-- [ ] Independent closure audit confirms the 11-finding matrix is one-to-one and owner-complete.
-- [ ] Independent closure audit confirms no in-scope `P0/P1` finding was silently downgraded to vague follow-up or residual wording.
-- [ ] Independent closure audit confirms successor plans are narrow, guide-compliant, and aligned with the frozen matrix.
-- [ ] At least one final fresh reviewer returns `no findings` / equivalent acceptance verdict after revisions.
-- [ ] This plan's statuses, matrix, and daily-log evidence are textually consistent.
+- [x] Independent closure audit confirms the 11-finding matrix is one-to-one and owner-complete.
+- [x] Independent closure audit confirms no in-scope `P0/P1` finding was silently downgraded to vague follow-up or residual wording.
+- [x] Independent closure audit confirms successor plans are narrow, guide-compliant, and aligned with the frozen matrix.
+- [x] At least one final fresh reviewer returns `no findings` / equivalent acceptance verdict after revisions.
+- [x] This plan's statuses, matrix, and daily-log evidence are textually consistent.
 
 ## Closure Gates
 
 > 这是 docs-only routing plan。关闭条件是 11 条 finding 全部获得唯一 successor owner path，并完成独立 routing convergence 审查；不是代码已经全部修复。
 
-- [ ] All 11 findings have exactly one current bucket, disposition, and successor path.
-- [ ] All `P0` findings are routed to explicit execution owner plans.
-- [ ] All `P1` findings are routed without ambiguity.
-- [ ] No confirmed in-scope live defect, contract drift, or truthfulness gap is silently downgraded to deferred or vague follow-up.
-- [ ] Every referenced successor plan exists and is at least `planned` with guide-compliant scope.
-- [ ] This docs-only routing plan requires no owner-doc update for itself; any owner-doc obligations are explicitly routed to successor plans.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] All phase `Exit Criteria` are fully checked before `Plan Status` moves to `completed`.
+- [x] All 11 findings have exactly one current bucket, disposition, and successor path.
+- [x] All `P0` findings are routed to explicit execution owner plans.
+- [x] All `P1` findings are routed without ambiguity.
+- [x] No confirmed in-scope live defect, contract drift, or truthfulness gap is silently downgraded to deferred or vague follow-up.
+- [x] Every referenced successor plan exists and is at least `planned` with guide-compliant scope.
+- [x] This docs-only routing plan requires no owner-doc update for itself; any owner-doc obligations are explicitly routed to successor plans.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] All phase `Exit Criteria` are fully checked before `Plan Status` moves to `completed`.
 
 ## Deferred But Adjudicated
 
@@ -196,3 +196,16 @@ None currently. `R06-01` is routed through explicit successor ownership in Plan 
 ## Non-Blocking Follow-ups
 
 - If later re-audit finds additional same-surface residuals adjacent to buckets A-F, prefer extending the corresponding successor plan before creating another routing umbrella, but only if the live result surface and closure criteria still match.
+
+## Closure
+
+Status Note: The 11-finding matrix, successor routing, and owner-path adjudication are fully synchronized, and the independent closure audit confirmed that the routing baseline is one-to-one, guide-compliant, and free of closure blockers. This plan is now honestly closed as a docs-only routing plan.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: independent general subagent
+- Evidence: `ses_1bb02c7feffeSJyOIc1GfmNQsL` (`Verdict: acceptable`, `Findings: none`), recorded in `docs/logs/2026/05-20.md`
+
+Follow-up:
+
+- no remaining plan-owned work

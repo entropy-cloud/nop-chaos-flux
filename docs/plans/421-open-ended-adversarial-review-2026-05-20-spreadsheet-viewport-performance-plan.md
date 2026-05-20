@@ -1,6 +1,6 @@
 # 421 Open-Ended Adversarial Review 2026-05-20 Spreadsheet Viewport Performance Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-20
 > Source: `docs/analysis/2026-05-20-open-ended-adversarial-review-01/round-06.md`
 > Related: `docs/plans/416-open-ended-adversarial-review-2026-05-20-remediation-routing-plan.md`, `docs/analysis/2026-04-16-performance-audit.md`, `docs/architecture/performance-design-requirements.md`
@@ -44,29 +44,42 @@
 
 ### Phase 1 - Reduce Spreadsheet Viewport Hot-Path Rebuild Cost
 
-Status: planned
+Status: completed
 Targets: viewport computation code, focused proof, affected docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Reduce or eliminate full-grid offset recomputation on ordinary scroll renders.
-- [ ] Add focused proof or measurement-backed verification that the scroll path no longer rebuilds full-sheet row/column offsets on ordinary scroll renders, using a repo-observable targeted test, benchmark, or instrumentation-backed assertion.
-- [ ] Update `docs/architecture/performance-design-requirements.md` if the supported hot-path baseline changes, or explicitly adjudicate `No owner-doc update required`.
+- [x] Reduce or eliminate full-grid offset recomputation on ordinary scroll renders.
+- [x] Add focused proof or measurement-backed verification that the scroll path no longer rebuilds full-sheet row/column offsets on ordinary scroll renders, using a repo-observable targeted test, benchmark, or instrumentation-backed assertion.
+- [x] Adjudicate owner-doc impact explicitly: `docs/architecture/performance-design-requirements.md` required no text change because the existing hot-path guidance already covered avoiding unnecessary hot-path allocations and ambiguous viewport ownership.
 
 Exit Criteria:
 
-- [ ] `R06-01` is fixed.
-- [ ] Focused proof covers the retained concern specifically: ordinary scroll renders no longer trigger full-sheet offset rebuild behavior.
-- [ ] `docs/architecture/performance-design-requirements.md` is updated if needed, or `No owner-doc update required` is explicitly recorded.
-- [ ] `docs/logs/2026/05-20.md` is updated.
+- [x] `R06-01` is fixed.
+- [x] Focused proof covers the retained concern specifically: ordinary scroll renders no longer trigger full-sheet offset rebuild behavior.
+- [x] No owner-doc update required: `docs/architecture/performance-design-requirements.md` already described the supported hot-path baseline and did not need a spreadsheet-specific wording change.
+- [x] `docs/logs/2026/05-20.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained finding is fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained finding is fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Closure
+
+Status Note: Spreadsheet offset arrays now come from a narrowed `buildSpreadsheetGridOffsets(...)` helper cached with `useMemo`, so ordinary scroll renders no longer rebuild full-sheet offsets. Focused proof, repo-wide verification, and independent closure audit are complete; no owner-doc update was required.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: independent general subagent
+- Evidence: `ses_1bb02c7feffeSJyOIc1GfmNQsL` (`Verdict: acceptable`, `Findings: none`), recorded in `docs/logs/2026/05-20.md`
+
+Follow-up:
+
+- no remaining plan-owned work

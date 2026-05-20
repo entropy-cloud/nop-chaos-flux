@@ -1,14 +1,14 @@
 # 从 Spec-Driven Development 到 Attractor-Guided Engineering
 
-副标题：一般业务开发如何借鉴 `nop-chaos-flux` 的 AI 工程实践。
+`nop-chaos-flux` 是一个用 React 19、Zustand 5和 Vite 8 构建的下一代低代码运行时框架（它受百度AMIS框架启发，基于创新的设计原理从零开始独立实现）。它的实现即包含JSON Schema编译器和 runtime，也有报表设计器和 Flow Designer 等设计器工具。
 
-`nop-chaos-flux` 是一个用 React 19、Zustand 、TypeScript 和 Vite 构建的低代码运行时框架（受 AMIS 启发，独立实现）。它的 monorepo 既包含编译器和 runtime，也有表单渲染器和 Flow Designer 等设计器工具。
+这个项目由单个程序员在2个月的时间内完成初步版本，完全使用 AI自动化开发。与一般AI辅助开发不同的是，在不断增加功能实现的过程中，项目并没有出现质量劣化，反而模块边界越来越清楚，文档分类越来越稳定，测试和审计越来越能抓住真实问题，代码质量在不断改进。
 
-这个项目长期使用 AI 辅助开发。值得注意的不是"AI 写了多少代码"，而是另一个结果：模块边界越来越清楚，文档分类越来越稳定，测试和审计越来越能抓住真实问题，代码质量没有在演化中下滑，反而在不断改进。
+我最近做了一次内部分享，把这套实践命名为Attractor-Guided Engineering（吸引子引导工程，以下简称 AGE）。但是后来在具体代码评审中我发现很多人并没有真正理解这套做法。一些人的操作方式仍然接近于随意的vibe coding，而另一些人采用的是类似OpenSpec的spec driven的开发方式，整体偏向于任务驱动的逐特性开发。随着开发工作量叠加，代码中的不一致性在稳步累积，偏离系统架构设计的情况成为常态。
 
-我最近做了一次内部分享，发现很多人并没有真正理解这套做法和 spec-driven development 的差别。问题不在于大家没有写 spec——很多人已经在用 OpenSpec 这样的工具——而在于一开始问的问题就偏了。我前面几版解释也犯了同一个错误：一直在问 OpenSpec 的这些 artifact 能不能对应 Flux 的 owner 文档、plans、logs、bugs、tests、audit。这个问法本身就不对。
+本文将会详细剖析AGE与spec driven开发的区别，并介绍一般业务开发如何借鉴 `nop-chaos-flux` 的 大型AI工程实践。
 
-这套实践我称为 Attractor-Guided Engineering（吸引子引导工程，以下简称 AGE）。AGE 的中心不是 spec，也不是 change package，而是 attractor。
+AGE 的中心不是 spec，也不是 change package，而是 attractor。
 
 ## 核心层级
 
@@ -16,34 +16,54 @@ AGE 的核心是一个严格层级：
 
 **状态空间 → 吸引子 → 轨迹 → 控制**
 
-AI 大规模开发是一个动力系统问题。AI 会快速展开大量可能状态，关键不是先加 guardrail，而是先定义系统长期应该被拉回到什么结构。
+AI 大规模开发可以被看作是一个动力系统问题。AI 会快速展开大量可能状态，关键不是先加 guardrail，而是先定义系统长期应该被拉回到什么结构。
 
-吸引子不是被完整写出的终点，不是项目路线图，也不是"允许活动区域"。它是少量高阶约束隐式定义出的稳定结构：局部实现可以变化，整体仍会被这些关系拉回同一类形态。
+吸引子不是被完整写出的终点，不是项目路线图，也不是“允许活动区域”。它是少量高阶约束隐式定义出的稳定结构：局部实现可以变化，整体仍会被这些关系拉回同一类形态。
 
-在这个仓库里，首先定义 attractor 的不是 plan、lint、test、audit，也不是某个 spec 文件，而是 `docs/architecture/` 下带 precedence 的 owner-doc 体系。
+在 `nop-chaos-flux` 中，首先定义 attractor 的不是 plan、lint、test、audit，也不是某个 spec 文件，而是 `docs/architecture/` 下带 precedence 的 architecture docs。下文把这种有明确 owner 和 precedence 的 architecture docs 称为 owner docs。
 
-`docs/architecture/README.md` 定义文档层级和阅读顺序；`flux-design-principles.md` 定义方向；`frontend-programming-model.md` 定义顶层规范不变量和七个封闭原语；更窄的架构文档在各自主题内定义局部 contract。
+`docs/architecture/README.md` 明确规定：`docs/architecture/` 是当前 final-state architecture baseline；`flux-design-principles.md` 是 governing-principles anchor；`frontend-programming-model.md` 拥有顶层 primitive 和 core-boundary precedence；其他 normative docs 在各自主题内拥有 local precedence。
 
 这些文档不是把所有正确实现枚举出来，而是像方程一样定义一个稳定结构：哪些原语存在，哪些依赖方向合法，哪些 owner 边界不能破，哪些旧模式不再属于正确状态空间。它们先定义可持续存在的状态簇，后面的实现、测试、计划和审计才有共同参照。
 
-Plan、verification、audit、logs、bugs 都在后面。它们不是 attractor 本身，而是让系统轨迹持续贴近 attractor 的 harness。
+Plan、verification、audit、logs、bugs、testing 都在后面。它们不是 attractor 本身，而是让系统轨迹持续贴近 attractor 的 harness。
 
-这正是我前面理解不够准的地方：如果把讨论停在"OpenSpec 是规格演化，Flux 是多事实源对齐"，仍然没有把第一性问题说出来。Flux/AGE 不是以 spec 演化为中心，而是以 attractor 定义和轨迹收敛为中心。
+Flux/AGE 不是以 spec 演化为中心，而是以 attractor 定义和轨迹收敛为中心。
+
+## 真实研发历史里的闭环
+
+如果只说“架构文档定义吸引子”，听起来仍然像普通文档治理。`docs/logs/` 记录的实际研发历史能看出差别。
+
+`docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md` 是一个典型入口。它不直接修代码，而是把 `2026-05-19` deep audit 的 `64` 个 retained findings 收敛成一份 owner-routing baseline。每条 finding 都有唯一 owner bucket、优先级、successor plan 和 owner-doc obligation，避免 ownerless、multiply-owned 或静默降级成 vague follow-up。
+
+这不是 checklist。它的作用是先冻结一轮偏离应该怎样收口。
+
+后续的执行计划再把局部轨迹闭合到具体结果面。`docs/plans/382-deep-audit-2026-05-19-table-and-crud-owner-state-and-event-contract-plan.md` 收口 table/CRUD owner state 和 event payload：`Current Baseline` 先声明显式空数组 owner state 与 event payload 的 live 状态；执行项修复 empty-array fallback；focused tests 证明结果；`docs/components/table/design.md` 和 `docs/components/crud/design.md` 同步 owner contract；最后 repo-wide `pnpm typecheck`、`pnpm build`、`pnpm lint`、`pnpm test` 通过，并由独立 closure audit `ses_1bd9ed593ffeVpkho4lb4wPR6p` 记录 `Verdict: acceptable`。
+
+`docs/plans/388-deep-audit-2026-05-19-form-tree-widget-accessibility-plan.md` 展示了另一种 closure：input-tree 和 tree-select 的可见节点 roving focus、`ArrowUp` / `ArrowDown` / `Home` / `End` 导航、loading `aria-busy` / `aria-describedby` 都有 focused proof，但计划明确裁定 `No owner-doc update required`。这说明 plan 不只是做事清单，也负责裁定本次变化是否改变 owner-doc baseline。
+
+`docs/plans/400-deep-audit-2026-05-19-test-harness-reliability-plan.md` 和 `docs/bugs/62-e2e-shared-websocket-error-suppression-fix.md` 则展示了 memory harness 的作用。问题不是某个业务功能失败，而是 E2E shared fixture 过宽地过滤 `WebSocket connection`，导致真实 transport/runtime failures 在 fixture-managed pages 中不可见。修复不只改代码，还新增 `tests/e2e/fixtures-hard-gate.spec.ts` 证明现在会失败，并用 bug note 记录 future refactor rule：如果未来测试确实预期 WebSocket failure，必须用 per-test allowance，不能恢复 fixture-wide suppression。
+
+`docs/logs/2026/05-19.md` 和 `docs/logs/2026/05-20.md` 不是流水账。它们记录每个 closure slice 的 focused proof、owner-doc 裁定、repo-wide gates、independent audit 和 full-green baseline。比如 `2026-05-20` 的 full-green 记录明确写下 `pnpm test` 49/49、Playwright 323 passed / 41 skipped / 0 failed、`pnpm typecheck` 49/49、`pnpm build` 26/26、`pnpm lint` 26/26。
+
+这些材料合起来形成一条真实链路：owner docs 定义长期结构，audit 发现偏离，plan 路由并冻结 owner，focused proof 证明局部结果，owner-doc 裁定是否更新，logs/bugs/testing 保存跨 session 记忆，closure audit 从 live repo 重新判定完成状态。
+
+这就是 AGE 里的 harness。它的目标不是让每次任务显得更完整，而是让系统轨迹持续回到 attractor 附近。
 
 ## OpenSpec 的结构强在哪里
 
-OpenSpec 把一类工作结构化了：
+OpenSpec 是有代表性的spec driven开发框架，它把一类工作结构化了：
 
 - `openspec/specs/` 保存当前能力的行为规格。
 - `openspec/changes/` 保存拟议变更，包含 `proposal.md`（为什么改、改什么、影响什么）、`design.md`（必要时记录技术设计）、`tasks.md`（给 agent 和人的实施 checklist）。
 - `changes/<name>/specs/` 用 `ADDED / MODIFIED / REMOVED / RENAMED` 记录规格 delta。
 - archive 通过固定规则把 delta 应用回 main specs。
 
-这套机制降低规格更新成本。OpenSpec 不是每次让 AI 自由理解整份需求再随意改文档，而是通过固定 section、requirement header matching、delta application，把结构化变更合并回主规格。这很适合行为规格明确、希望可解析、可归档、可回写的场景。
+这套机制可以降低规格更新成本。OpenSpec 不是每次让 AI 自由理解整份需求再随意改文档，而是通过固定 section、requirement header matching、delta application，把结构化变更合并回主规格。这很适合行为规格明确、希望可解析、可归档、可回写的场景。
 
 ## OpenSpec 的限制在哪里
 
-它不是"太弱"。它支持探索和自定义 workflow，但默认的 spec-driven 主线仍是把很多协作材料组织进结构化的 spec/change package。
+OpenSpec的问题不是能力"太弱"。它支持探索和自定义 workflow，但默认的 spec-driven 主线仍是把很多协作材料组织进结构化的 spec/change package。
 
 它的 spec 格式很显式：Requirement、Scenario、SHALL/MUST、delta sections。这对工具解析友好，但作为通用项目知识组织方式就不够灵活。
 
@@ -89,7 +109,7 @@ OpenSpec 的 `tasks.md` 不对应 Flux 的 `plans`。
 - 哪些缺陷不能降级成 follow-up？
 - 谁独立复核完成状态？
 
-Flux plan 的价值不在于"任务更多"，而在于它是一份局部轨迹的关闭合同。
+Flux plan 的价值不在于“任务更多”，而在于它是一份局部轨迹的关闭合同。
 
 所以 tasks 对 AI 有必要，但 tasks 不是事实源。`- [x]` 只能说明执行者声称某项完成了。真正的证明要回到当前代码、tests、owner docs 和独立审查。
 

@@ -8,7 +8,7 @@ const execFileAsync = promisify(execFile);
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = path.join(__dirname, '..');
 const workspaceImportPattern =
-  /from\s+['"](@nop-chaos\/[^'"]+)['"]|import\s*\(['"](@nop-chaos\/[^'"]+)['"]\)/g;
+  /from\s+['"](@nop-chaos\/[^'"]+)['"]|import\s*\(['"](@nop-chaos\/[^'"]+)['"]\)|import\s+['"](@nop-chaos\/[^'"]+)['"]/g;
 
 function normalizeWorkspaceSpecifier(specifier) {
   const parts = specifier.split('/');
@@ -72,7 +72,7 @@ function collectWorkspaceImports(content) {
   let match;
 
   while ((match = workspaceImportPattern.exec(content))) {
-    const specifier = match[1] ?? match[2];
+      const specifier = match[1] ?? match[2] ?? match[3];
     if (specifier) {
       imports.add(normalizeWorkspaceSpecifier(specifier));
     }

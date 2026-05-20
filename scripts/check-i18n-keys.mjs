@@ -32,6 +32,17 @@ const EXCLUDE_PATTERNS = [
   '/locales/',
 ];
 
+const DYNAMIC_KEY_MAPS = [
+  {
+    fileSuffix: 'packages/flux-renderers-form-advanced/src/condition-builder/operators.ts',
+    exportName: 'OPERATOR_LABEL_KEYS',
+  },
+];
+
+function normalizeUsedTranslationKey(key) {
+  return key.startsWith('flux.') ? key : `flux.${key}`;
+}
+
 /**
  * Extract all keys from a locale object recursively
  * @param {object} obj - The locale object
@@ -318,6 +329,33 @@ async function scanForUsedKeys(dir, relativePath = '') {
   return usedKeys;
 }
 
+async function collectDynamicKeyMapEntries() {
+  const usedKeys = new Map();
+
+  for (const map of DYNAMIC_KEY_MAPS) {
+    const filePath = join(rootDir, map.fileSuffix);
+    const content = await readFile(filePath, 'utf-8');
+    const match = content.match(
+      new RegExp(`export\\s+const\\s+${map.exportName}\\s*:[^=]*=\\s*\\{([\\s\\S]*?)\\n\\};`, 'm'),
+    );
+
+    if (!match) {
+      continue;
+    }
+
+    for (const entry of match[1].matchAll(/:\s*['"]([^'"]+)['"]/g)) {
+      const key = normalizeUsedTranslationKey(entry[1]);
+      const location = `${map.fileSuffix}:${content.slice(0, entry.index ?? 0).split('\n').length}`;
+      if (!usedKeys.has(key)) {
+        usedKeys.set(key, []);
+      }
+      usedKeys.get(key).push(location);
+    }
+  }
+
+  return usedKeys;
+}
+
 /**
  * Scan a single file for i18n key usage
  */
@@ -339,17 +377,13 @@ async function scanFile(filePath, relativePath, usedKeys) {
       let match;
 
       while ((match = pattern.exec(line)) !== null) {
-        const key = match[1];
+        const key = normalizeUsedTranslationKey(match[1]);
+        const location = `${relativePath}:${lineNum + 1}`;
 
-        // Only track flux.* keys
-        if (key.startsWith('flux.')) {
-          const location = `${relativePath}:${lineNum + 1}`;
-
-          if (!usedKeys.has(key)) {
-            usedKeys.set(key, []);
-          }
-          usedKeys.get(key).push(location);
+        if (!usedKeys.has(key)) {
+          usedKeys.set(key, []);
         }
+        usedKeys.get(key).push(location);
       }
     }
   }
@@ -406,6 +440,14 @@ async function main() {
       // Directory doesn't exist
     }
   }
+
+  const dynamicMapKeys = await collectDynamicKeyMapEntries();
+  dynamicMapKeys.forEach((locations, key) => {
+    if (!usedKeys.has(key)) {
+      usedKeys.set(key, []);
+    }
+    usedKeys.get(key).push(...locations);
+  });
 
   console.log(`Found ${usedKeys.size} unique keys used in source code`);
 

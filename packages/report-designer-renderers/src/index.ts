@@ -29,7 +29,13 @@ export {
 } from './report-designer-manifest.js';
 
 export type { ReportFieldPanelProps } from './report-field-panel.js';
-export { ReportFieldPanel } from './report-field-panel.js';
+export {
+  ReportFieldPanel,
+  REPORT_FIELD_DRAG_MIME,
+  createReportFieldDragPayload,
+  writeReportFieldDragPayload,
+  readReportFieldDragPayload,
+} from './report-field-panel.js';
 
 export type {
   ToolbarItem,

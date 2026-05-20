@@ -25,6 +25,7 @@ const textRenderer: RendererDefinition = {
   type: 'text',
   component: () => null,
   propSchema: { text: { type: 'string' } },
+  propContracts: { text: { shape: { kind: 'string' }, required: true, displayName: 'Text' } },
   fields: [{ key: 'text', kind: 'prop' }],
 };
 
@@ -120,7 +121,11 @@ describe('contract exploration: prop coverage completeness', () => {
       { type: 'text' },
       { validation: { unknownBarePropertyPolicy: 'error' } },
     );
-    expect(diagnostics).toEqual([]);
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'invalid-property-shape', path: '/text' }),
+      ]),
+    );
   });
 
   it('H2: detects extra unknown props on closed model with error policy', () => {

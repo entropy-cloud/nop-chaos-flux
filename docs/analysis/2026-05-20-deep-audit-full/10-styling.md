@@ -82,3 +82,58 @@
 - **历史模式对应**: 对应 `bare-data-slot-selector` suspect；同时按用户要求对裸 `[data-slot]` 候选证明泄漏，本条证据是 package public side-effect CSS + root marker 存在但未使用，而不是仅凭 selector 形态。
 - **参考文档**: `docs/references/audit-tooling.md:57`; `docs/architecture/theme-compatibility.md:55-69,253-258`; `docs/architecture/renderer-markers-and-selectors.md:52-76`; `docs/architecture/styling-system.md:398-406`
 - **复核状态**: 未复核
+
+## 深挖第 2 轮追加
+
+### [维度10-04] Flow Designer 的 config-level `classAliases` 会覆盖宿主/page 级别名继承
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flow-designer-renderers\src\designer-xyflow-canvas\designer-xyflow-node.tsx:201-206`
+- **行号范围**: `packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-xyflow-node.tsx:201-206,232-244`; 相关实现见 `packages/flux-core/src/class-aliases.ts:34-42`、`packages/flux-react/src/node-renderer-resolved.tsx:134-150`
+- **证据片段**:
+  ```tsx
+  <ClassAliasesContext.Provider value={config.classAliases}>
+    <RenderNodes
+      input={nodeType.body}
+      options={{ bindings: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
+    />
+  </ClassAliasesContext.Provider>
+  ```
+- **严重程度**: P2
+- **违规类别**: classAlias
+- **现状**: 普通 Flux 渲染链会通过 `mergeClassAliases(parentClassAliases, nodeClassAliases)` 保留父级别名并允许子级覆盖；但 Flow Designer 节点 body / quickActions 手工包了一层 `ClassAliasesContext.Provider value={config.classAliases}`，直接替换当前 context，没有合并外层 page/schema 已建立的 `classAliases`。
+- **风险**: 宿主在 page 或外层 schema 定义的通用别名进入 designer node body 后会失效；同时 `DesignerConfig.classAliases` 变成孤立命名空间，破坏文档承诺的 “page level aliases available to all children / child overrides parent” 继承模型。该路径渲染 node body 和 quickActions，属于 Flow Designer 的主要可配置 schema 插槽。
+- **建议**: 在 `designer-xyflow-node.tsx` 读取当前 `ClassAliasesContext`，使用 `mergeClassAliases(parentAliases, config.classAliases)` 后再提供给 node body / quickActions；或复用 flux-react 已有 provider 构建路径，确保 config-level aliases 只是子级覆盖而不是替换外层作用域。
+- **为什么值得现在做**: Flow Designer 当前仍在形成可配置 designer schema 的主路径契约，修复点集中且不改变既有 class 名输出；现在收敛可避免后续宿主把别名失效误判为 Tailwind 扫描、主题或 schema 写法问题。
+- **误报排除**: 这不是要求 Flow Designer 不能拥有自己的设计器别名；`DesignerConfig.classAliases` 是合理的领域级别名入口。问题仅在于当前实现覆盖而非合并，和 `flux-core` 已有 `mergeClassAliases` 继承语义不一致。
+- **历史模式对应**: 对应 `docs/references/deep-audit-calibration-patterns.md` pattern 10（跨包一致性想法需证明真实契约影响）。本条保留的原因是 `classAliases` 继承是样式系统文档明确契约，且 live `RenderNodes` 插槽会实际消费该 context，不只是实现风格差异。
+- **参考文档**: `docs/architecture/styling-system.md:340-366`; `docs/architecture/styling-system.md:368-374`; `packages/flux-core/src/class-aliases.ts:34-42`; `packages/flux-react/src/node-renderer-resolved.tsx:134-150`
+- **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+### [维度10-05] Flow Designer 仍保留 `themeStyles` 原始 CSS 注入，绕过 classAliases 与 CSS 变量主题契约
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flow-designer-renderers\src\designer-page-body.tsx:334-340`
+- **行号范围**: `packages/flow-designer-renderers/src/designer-page-body.tsx:334-340`; 相关公开类型见 `packages/flow-designer-core/src/types.ts:80-84,272-275`
+- **证据片段**:
+  ```tsx
+  return (
+    <DesignerContext.Provider value={ctxValue}>
+      <div ref={rootRef} className="contents">
+        {config.themeStyles && <style>{config.themeStyles}</style>}
+        <WorkbenchShell
+          className={cn('nop-designer fd-theme-root text-foreground', props.meta.className)}
+          data-testid={props.meta.testid || undefined}
+  ```
+- **严重程度**: P2
+- **违规类别**: 主题 / classAlias / Tailwind
+- **现状**: `DesignerConfig.themeStyles?: string` 仍是 `flow-designer-core` 的公开配置字段，并在 Flow Designer 主渲染路径中直接渲染为 `<style>`；这让配置可以注入任意原始 CSS，而不是通过 `className`、`classAliases`、`config.nodeTypes[].appearance` 或 `.fd-theme-root` / `--fd-*` 变量参与样式系统。
+- **风险**: 原始 CSS 字符串没有自动 scope 到 `.nop-designer` / `.fd-theme-root`，也不受 Tailwind content scan、classAliases 继承、token fallback 或 selector protocol 约束；宿主 schema 一旦使用该入口，可能覆盖全页 `[data-slot]`、`.nop-*` 或第三方节点样式，形成难以复核的隐式主题层，并把 Flow Designer 的视觉契约从“CSS 变量 + stable classes”退回到运行时 CSS 注入。
+- **建议**: 在 v1 基线下移除公开 `themeStyles` 主路径，或至少将其降级为明确受限的 scoped stylesheet 能力：自动包裹/校验 `.nop-designer` 或 `.fd-theme-root` 前缀、禁止裸全局选择器，并优先把节点/边语义视觉迁入 `classAliases`、`appearance` 字段和 `--fd-*` token；同步删除 `DesignerConfig` / `NormalizedDesignerConfig` 中的裸字符串入口。
+- **误报排除**: 这不是把 schema 显式样式能力误判为违规；`className`、`classAliases` 和 `appearance` 仍是合理的显式样式入口。问题在于 `themeStyles` 是未限定作用域的原始 CSS 注入，绕过了当前 styling-system 文档列出的三种 authoring modes 和 theme-compatibility 的 CSS-variable contract。`docs/components/designer-canvas/design.md` 虽仍提到 `themeStyles`，但更高优先级的 `docs/architecture/styling-system.md` / `theme-compatibility.md` 不把原始 style 注入列为当前主题机制，且归档计划也说明该 escape hatch 不应作为最终样式方向。
+- **参考文档**: `docs/architecture/styling-system.md:186-194`; `docs/architecture/styling-system.md:340-374`; `docs/architecture/theme-compatibility.md:20-31`; `docs/architecture/theme-compatibility.md:222-242`; `docs/archive/plans/16-flow-designer-style-json-driven-migration-plan.md:7-19`
+- **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+未发现新的高价值问题。深挖结束。

@@ -123,6 +123,7 @@ test('dragging a field onto a cell writes the cell value and binds report metada
   await field.dragTo(targetCell);
 
   await expect(targetCell).toContainText('${orderId}');
+  await expect(targetCell).toHaveAttribute('data-cell-bound', 'true');
 });
 
 test('sheet tab bar exposes the active sheet and add-sheet action', async ({ page }) => {

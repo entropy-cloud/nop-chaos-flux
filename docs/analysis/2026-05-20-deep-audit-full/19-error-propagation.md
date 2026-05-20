@@ -114,3 +114,69 @@
 - **历史模式对应**: 对应维度 19 的“错误替换”和“跨层错误丢失”，也是 `new Error without cause` 在聚合 action 中的实例。
 - **参考文档**: `docs/architecture/action-scope-and-imports.md`（parallel aggregate semantics、chained action result context）；`docs/references/audit-tooling.md`。
 - **复核状态**: 未复核
+
+## 深挖第 2 轮追加
+
+### [维度19-05] form submit 的显式 signal abort 分支丢弃 AbortSignal.reason
+
+- **文件**: `packages/flux-runtime/src/form-runtime-submit-flow.ts:178-180,343-351`
+- **行号范围**: `form-runtime-submit-flow.ts:178-180,343-351`
+- **证据片段**:
+
+  ```ts
+  if (options?.signal?.aborted) {
+    return { ok: false, cancelled: true, error: new Error('Submit aborted') };
+  }
+  ...
+  if (options?.signal?.aborted) {
+    return { ok: false, cancelled: true, error: new Error('Submit aborted') };
+  }
+
+  const result = await awaitWithAbort(executeSubmit(), options?.signal);
+
+  if (options?.signal?.aborted) {
+    return { ok: false, cancelled: true, error: new Error('Submit aborted') };
+  }
+  ```
+
+- **严重程度**: P2
+- **类别**: 错误替换 / 取消原因丢失
+- **现状**: `executeFormSubmit` 在多个显式 `options.signal.aborted` 检查点直接返回 `new Error('Submit aborted')`，没有读取 `options.signal.reason`，也没有把 reason 作为 `cause` 保留；同文件的 `awaitWithAbort` 也通过 `createSubmitAbortError()` 生成固定 AbortError 文案。
+- **风险**: 上游 action timeout、用户取消、surface 关闭或 owner dispose 都可能通过 abort reason 携带真实原因；当前 submit 边界把这些原因统一替换为固定文案，后续 `ActionResult.error`、`onError`/`onSettled` 绑定和 monitor 只能看到“Submit aborted”，无法区分取消来源，也会削弱跨层诊断。
+- **建议**: 统一构造 submit abort result/error 时优先使用 `options.signal.reason`；若需要标准 AbortError 包装，应使用 `new Error('Submit aborted', { cause: options.signal.reason })` 并保留 `name = 'AbortError'`，或直接复用已有 `isAbortError`/`createCancelledResult` 语义。
+- **误报排除**: 这不是普通取消文案问题；`docs/architecture/action-scope-and-imports.md` 明确取消语义由 action/runtime 栈统一归一，且不应由高层 owner 重新解释。这里已经在主 submit action result 中替换了上游 reason，影响 schema 分支与监控可见的错误对象。
+- **参考文档**: `docs/architecture/action-scope-and-imports.md`（Cancellation Ownership、Chained Action Result Context）；`docs/architecture/flux-runtime-module-boundaries.md`（form submit flow ownership）。
+- **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+### [维度19-06] withRetry abort 分支丢弃 AbortSignal.reason
+
+- **文件**: `packages/flux-action-core/src/operation-control.ts:156-187`
+- **行号范围**: `operation-control.ts:156-187`
+- **证据片段**:
+
+  ```ts
+  function abortError() {
+    return withRetryMetadata(new DOMException('The operation was aborted', 'AbortError'), {
+      attempts,
+      failureCount,
+      lastFailureReason,
+    });
+  }
+
+  function throwIfAborted() {
+    if (options.signal?.aborted) {
+      throw abortError();
+    }
+  }
+  ```
+
+- **严重程度**: P2
+- **类别**: 错误替换 / 取消原因丢失
+- **现状**: `withRetry` 在 pre-aborted signal 与 retry delay abort 两条路径中都调用 `abortError()`，但 `abortError()` 固定创建 `DOMException('The operation was aborted', 'AbortError')`，没有读取 `options.signal.reason`，也没有把原始 reason 作为 `cause` 或 `lastFailureReason` 保留。
+- **风险**: action 控制流文档要求 cancellation 由 action/operation-control 层统一归一；当前 retry 控制层会把用户取消、surface dispose、上游 timeout 等原因统一替换为固定 AbortError。随后 `runSingleActionWithRetry` 只能把这个固定错误放进 `{ cancelled: true }` result，`onError`/`onSettled`、monitor 和失败诊断无法区分取消来源。
+- **建议**: `abortError()` 应优先使用 `options.signal.reason`：若 reason 是 Error/DOMException 则保留原对象并附加 retry metadata；若需要标准 AbortError 包装，则使用 `{ cause: options.signal.reason }` 保留原始原因，并将 `lastFailureReason` 设为该 reason。
+- **误报排除**: 这不是普通取消文案问题；同文件 `withTimeout` 已在 parent abort 分支用 `createAbortError(parentSignal.reason)` 保留上游 reason，而 `withRetry` 是 action retry 主控制层，当前确实在跨层传播时替换了取消根因。
+- **参考文档**: `docs/architecture/action-scope-and-imports.md`（Cancellation Ownership、timeout/cancel result 语义）；`docs/architecture/flux-runtime-module-boundaries.md`（`operation-control.ts` 为 action/request execution control 共享层）。
+- **复核状态**: 未复核

@@ -35,6 +35,7 @@ import {
   ReportFieldPanel,
   buildReportDesignerScopeData,
   registerReportDesignerRenderers,
+  readReportFieldDragPayload,
 } from '@nop-chaos/report-designer-renderers';
 import { t } from '@nop-chaos/flux-i18n';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -372,11 +373,20 @@ export function ReportDesignerDemo() {
     [designerBridge, sheetId, snapshot.activeSheet?.cells, spreadsheetBridge],
   );
 
-  const handleFieldDrop = useCallback(async () => {
+  const handleFieldDrop = useCallback(async (event?: React.DragEvent<HTMLDivElement>) => {
+    const dragPayload = event ? readReportFieldDragPayload(event) : undefined;
+    const field =
+      dragPayload
+        ? {
+            sourceId: dragPayload.sourceId,
+            fieldId: dragPayload.fieldId,
+            label: dragPayload.label,
+          }
+        : draggingField;
     const targetCell = dropTargetCell || selectedCell;
-    if (!draggingField || !targetCell) return;
+    if (!field || !targetCell) return;
     try {
-      await insertFieldAtCell(draggingField, targetCell);
+      await insertFieldAtCell(field, targetCell);
     } finally {
       setDraggingField(null);
     }
@@ -506,7 +516,10 @@ export function ReportDesignerDemo() {
             ref={gridRef}
             className="flex flex-col h-full min-h-0"
             onDragOver={(e) => e.preventDefault()}
-            onDrop={handleFieldDrop}
+            onDrop={(event) => {
+              event.preventDefault();
+              void handleFieldDrop(event);
+            }}
             onMouseDown={(e) => {
               if (editingCellRef.current && (e.target as HTMLElement).tagName !== 'INPUT') {
                 handleEditSave();

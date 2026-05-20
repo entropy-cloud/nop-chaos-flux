@@ -100,6 +100,71 @@ function findArrayContent(text, fieldName) {
   return text.slice(start + 1, end);
 }
 
+function extractTopLevelObjectKeys(text) {
+  const keys = new Set();
+  let depth = 0;
+  let inString = false;
+  let stringChar = '';
+  let buffer = '';
+  let readingKey = true;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const prev = i > 0 ? text[i - 1] : '';
+
+    if ((ch === '"' || ch === "'" || ch === '`') && prev !== '\\') {
+      if (!inString) {
+        inString = true;
+        stringChar = ch;
+      } else if (ch === stringChar) {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (inString) {
+      continue;
+    }
+
+    if (ch === '{' || ch === '[') {
+      depth++;
+      readingKey = false;
+      continue;
+    }
+
+    if (ch === '}' || ch === ']') {
+      depth--;
+      continue;
+    }
+
+    if (depth !== 0) {
+      continue;
+    }
+
+    if (ch === ':') {
+      const key = buffer.trim().replace(/^['"]|['"]$/g, '');
+      if (key) {
+        keys.add(key);
+      }
+      buffer = '';
+      readingKey = false;
+      continue;
+    }
+
+    if (ch === ',') {
+      buffer = '';
+      readingKey = true;
+      continue;
+    }
+
+    if (readingKey) {
+      buffer += ch;
+    }
+  }
+
+  return keys;
+}
+
 // ─── Phase 1: Extract declared keys ──────────────────────────────────────────
 
 function extractKeysFromRendererObject(objText) {
@@ -137,7 +202,7 @@ function extractKeysFromRendererObject(objText) {
     const ei = findMatchingBrace(objText, si);
     if (ei !== -1) {
       const inner = objText.slice(si + 1, ei);
-      for (const m of inner.matchAll(/^\s*(\w+)\s*:\s*\{/gm)) keys.add(m[1]);
+      for (const key of extractTopLevelObjectKeys(inner)) keys.add(key);
     }
   }
 
@@ -148,7 +213,7 @@ function extractKeysFromRendererObject(objText) {
     const ei = findMatchingBrace(objText, si);
     if (ei !== -1) {
       const inner = objText.slice(si + 1, ei);
-      for (const m of inner.matchAll(/^\s*(\w+)\s*:\s*[\{\[]/gm)) keys.add(m[1]);
+      for (const key of extractTopLevelObjectKeys(inner)) keys.add(key);
     }
   }
 

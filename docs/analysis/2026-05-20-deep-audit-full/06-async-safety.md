@@ -95,3 +95,7 @@
 - **历史模式对应**: 对应 `docs/bugs/07-submit-concurrent-guard-fix.md` 中“异步 mutating 方法不能只依赖 UI flag/表象”的教训；也对应维度 06 “fire-and-forget/no catch 需语义判断后报告用户可见失败”。
 - **参考文档**: `docs/bugs/07-submit-concurrent-guard-fix.md`; `docs/architecture/performance-design-requirements.md` P6；`docs/skills/deep-audit-prompts.md` 维度 06。
 - **复核状态**: 未复核
+
+## 深挖第 2 轮追加
+
+未发现新的高价值问题。深挖结束。

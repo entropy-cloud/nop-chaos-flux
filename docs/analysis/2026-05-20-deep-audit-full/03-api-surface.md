@@ -157,3 +157,367 @@
 - [维度03-02] `packages/flow-designer-renderers/src/designer-manifest.ts:277-283` / `designer-page-helpers.tsx:122-135` — `navigate-back` manifest 方法与基础 provider 方法集合不一致。
 - [维度03-03] `packages/flux-react/src/unstable.ts:1-28` — `flux-react/unstable` 已成为一线 renderer 主路径公共 API，分裂标准 hooks/RendererComponentProps 契约。
 - [维度03-04] `packages/flux-renderers-form/src/index.tsx:4-14` — form 包 root entry 公开内部 field-utils 与 renderer factory，跨包锁定未文档化字段控制器契约。
+
+## 深挖第 2 轮追加
+
+### [维度03-05] Word Editor manifest 声明完整 insertChart/insertCode args shape，但 provider 只做类型强转 + 业务 validator，未按 FluxValueShape 结构化 enforce
+
+- **文件**: `packages/word-editor-renderers/src/word-editor-manifest.ts:133-149`, `packages/word-editor-renderers/src/word-editor-action-provider.ts:98-116`, `packages/word-editor-core/src/chart-model.ts:35-56`
+- **行号范围**: `word-editor-manifest.ts:133-149`, `word-editor-action-provider.ts:98-116`, `chart-model.ts:35-56`
+- **证据片段**:
+
+  ```ts
+  insertChart: {
+    args: chartShape,
+    description: 'Insert a chart placeholder tag and persist its metadata.',
+  },
+  insertCode: {
+    args: codeShape,
+    description: 'Insert a barcode or QR-code placeholder tag and persist its metadata.',
+  },
+  ```
+
+  ```ts
+  case 'insertChart': {
+    const chart = payload as DocChart | undefined;
+    const validation = validateDocChart(chart ?? {});
+    if (!chart?.id || !validation.valid) {
+      return fail('insertChart requires a complete chart payload.');
+    }
+    input.bridge.insertChart(chart);
+  ```
+
+  ```ts
+  if (!chart.chartName || chart.chartName.trim() === '') {
+    errors.push('Chart name is required');
+  }
+
+  if (!chart.chartType || !VALID_CHART_TYPES.includes(chart.chartType)) {
+    errors.push('Chart type must be one of: bar, line, pie, scatter, area');
+  }
+  ```
+
+- **严重程度**: P1
+- **现状**: `WORD_EDITOR_MANIFEST_V1` 通过 `chartShape` / `codeShape` 发布了完整结构化 args contract，但 `createWordEditorActionProvider()` 没有复用 manifest shape 做结构校验，而是把 `payload as DocChart` / `payload as DocCode` 后交给 core validator。core validator 主要校验业务完整性，并假设字段已有正确类型。
+- **风险**: manifest 与运行时执行契约仍可能漂移：例如 `showChartName` 在 manifest 中要求 boolean，但 `validateDocChart()` 不校验该字段类型，错误 payload 可进入 `bridge.insertChart()`；反过来，`chartName` / `codeName` 等字段若传入非 string truthy 值，validator 的 `.trim()` 路径可能抛出异常而不是返回结构化 `ActionResult` error。schema authoring / tooling 看到的是 FluxValueShape contract，provider 主路径实际执行的是另一个未完全等价的业务 validator contract。
+- **建议**: 像 `spreadsheet-renderers` / `report-designer-renderers` 一样，在 word-editor provider 中基于 `WORD_EDITOR_MANIFEST_V1.capabilities.methods` 做统一 `validateMethodPayload()`；通过 shape 校验后再调用 core 业务 validator。校验失败应返回稳定 `{ ok: false, error }`，不要让类型错误冒泡。
+- **为什么值得现在做**: word-editor manifest、hostContract、capability publication 和 provider 都已从 root entry 公开导出，且 owner docs 已声明 provider enforcement 与 manifest 契约一致；当前 residual 会继续误导 host action 调用方。
+- **误报排除**: 这不是重复报告旧的 R24 “provider 只校验 id + name”问题；live code 已改为调用 core validators。本发现是新的 residual：业务 validator 不等同于 manifest `FluxValueShape` 结构校验，仍存在 shape 字段未校验和类型错误抛异常路径。
+- **历史模式对应**: 对应维度 03 “manifest → provider/adapter payload enforce”专项；也符合 reopened adjudications 的“旧问题旁边的新 residual”口径。
+- **参考文档**: `docs/architecture/capability-projection-manifest.md:776-790`, `docs/components/word-editor-page/design.md:132-138`, `docs/architecture/word-editor/design.md:174-177`
+- **复核状态**: 未复核
+
+### [维度03-06] Word Editor provider 返回 chartId/codeId，但 manifest 未声明 insertChart/insertCode result shape
+
+- **文件**: `packages/word-editor-renderers/src/word-editor-manifest.ts:143-149`, `packages/word-editor-renderers/src/word-editor-action-provider.ts:104-116`
+- **行号范围**: `word-editor-manifest.ts:143-149`, `word-editor-action-provider.ts:104-116`
+- **证据片段**:
+  ```ts
+  insertChart: {
+    args: chartShape,
+    description: 'Insert a chart placeholder tag and persist its metadata.',
+  },
+  insertCode: {
+    args: codeShape,
+    description: 'Insert a barcode or QR-code placeholder tag and persist its metadata.',
+  },
+  ```
+  ```ts
+  input.bridge.insertChart(chart);
+  input.setCharts([...input.getCharts(), chart]);
+  return ok({ chartId: chart.id });
+  ```
+  ```ts
+  input.bridge.insertCode(code);
+  input.setCodes([...input.getCodes(), code]);
+  return ok({ codeId: code.id });
+  ```
+- **严重程度**: P2
+- **现状**: `word-editor:insertChart` / `word-editor:insertCode` 的 provider 成功路径分别返回 `{ chartId }` / `{ codeId }`，但 manifest 只声明 args 和 description，没有声明 result shape。
+- **风险**: host action 的 chained action / tooling / docs 无法从 manifest 获得真实返回数据契约；schema 作者可能无法可靠消费 `result.chartId` / `result.codeId`，而实际 provider 又已经把这些字段作为可观察返回值发布出来。
+- **建议**: 在 manifest 中为 `insertChart` / `insertCode` 补充 result shape，例如 `{ kind: 'object', fields: { chartId: { kind: 'string' } } }` 与 `{ codeId: { kind: 'string' } }`；或如果这些返回值不应成为公共 contract，则从 provider 返回数据中移除。
+- **为什么值得现在做**: 这直接影响 host action 返回值契约和 chained action authoring 可发现性；修复只需让 manifest 与现有 provider 返回对齐，ROI 明确。
+- **误报排除**: `capability-projection-manifest.md` 明确说明 runtime result conformance checking 不是默认热路径要求；本发现不是要求运行时校验 result，而是指出 manifest 没有如实声明 provider 已公开返回的 `ActionResult.data` shape。
+- **历史模式对应**: 对应维度 03 的“契约一致性盲区”和 manifest/provider parity 检查；不是 flow designer result/path 的重复问题。
+- **参考文档**: `docs/architecture/capability-projection-manifest.md:595-607`, `docs/references/renderer-interfaces.md:177-183`
+- **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+### [维度03-07] Spreadsheet manifest 将大量需要结构化参数的 host actions 声明为无 args，provider 因此接受任意对象并直接转发到 core command
+
+- **文件**: `packages/spreadsheet-renderers/src/spreadsheet-manifest.ts:281-289`, `packages/spreadsheet-renderers/src/host-action-provider.ts:73-95`, `packages/spreadsheet-core/src/commands-base.ts:173-184`
+- **行号范围**: `spreadsheet-manifest.ts:281-289`, `host-action-provider.ts:73-95`, `commands-base.ts:173-184`
+- **证据片段**:
+  ```ts
+  insertRow: {
+    description: 'Insert one or more rows.',
+  },
+  insertColumn: {
+    description: 'Insert one or more columns.',
+  },
+  deleteRow: {
+    description: 'Delete one or more rows.',
+  },
+  ```
+  ```ts
+  if (!contract?.args) {
+    if (payload === undefined) {
+      return { ok: true, args: {} };
+    }
+    if (isCommandRecord(payload)) {
+      return { ok: true, args: payload };
+    }
+  ```
+  ```ts
+  export interface InsertRowCommand extends SpreadsheetCommandBase {
+    type: 'spreadsheet:insertRow';
+    sheetId: string;
+    row: number;
+    count?: number;
+  }
+  ```
+- **严重程度**: P1
+- **现状**: `SPREADSHEET_HOST_METHOD_CONTRACTS` 中 `insertRow`、`insertColumn`、`deleteRow`、`renameSheet`、`copyCells`、`setCellFontFamily`、`find`、`replaceAll` 等大量方法只有 description，没有声明 core command 实际必需的 args；provider 在 `!contract?.args` 分支会接受任意 object payload 并通过 `{ type: \`spreadsheet:${method}\`, ...validation.args }` 转发。
+- **风险**: 编译器/工具侧会把这些 host actions 视作无结构化参数契约，无法发现缺少 `sheetId`、`row`、`target`、`options` 等错误；运行时又把任意对象强行转成 core command，导致 manifest “可调用面”与 core command contract 脱节，错误 schema 只能在更深的 core handler 中以 undefined 参数、异常或错误 mutation 暴露。
+- **建议**: 为所有已发布 `SPREADSHEET_HOST_METHOD_CONTRACTS` 补齐与 `SpreadsheetCommand` union 对齐的 `args` shape；确实依赖当前 selection 的无参数 toolbar 命令应在 core command 类型中也体现为无参数，或拆成单独 host method，避免同名 method 同时表示“schema-callable command”与“toolbar contextual command”。
+- **误报排除**: 这不是重复报告 flow/word provider 未做 shape 校验；spreadsheet provider 已有 `validateMethodPayload()`，但 manifest 对大量已公开方法未声明 args，使 validator 在这些方法上主动退化为“任意 object 通过”。也不是单纯要求 result runtime conformance，而是输入 args contract 与 core command 类型直接不一致。
+- **参考文档**: `docs/architecture/capability-projection-manifest.md:589-606`, `docs/architecture/capability-projection-manifest.md:776-790`, `docs/components/spreadsheet-page/design.md:53-58`
+- **复核状态**: 未复核
+
+### [维度03-08] Report Designer host actions 返回 preview/export/save 数据，但 manifest 未声明 result shape，链式 action 无法可靠发现返回契约
+
+- **文件**: `packages/report-designer-renderers/src/report-designer-manifest.ts:244-285`, `packages/report-designer-core/src/core-dispatch.ts:194-214`, `packages/report-designer-core/src/core-dispatch.ts:260-328`
+- **行号范围**: `report-designer-manifest.ts:244-285`, `core-dispatch.ts:194-214`, `core-dispatch.ts:260-328`
+- **证据片段**:
+  ```ts
+  preview: {
+    args: {
+      kind: 'object',
+      fields: {
+        mode: { kind: 'string' },
+        args: { kind: 'object', fields: {} },
+      },
+  ```
+  ```ts
+  exportTemplate: {
+    args: {
+      kind: 'object',
+      fields: {
+        format: { kind: 'string' },
+      },
+      optional: ['format'],
+    },
+  ```
+  ```ts
+  return { ok: result.ok, changed: false, data: result.data, error: result.error };
+  ```
+  ```ts
+  return { ok: true, changed: false, data: exported };
+  ```
+  ```ts
+  return { ok: true, changed: false, data: exported };
+  ```
+- **严重程度**: P2
+- **现状**: `report-designer:preview`、`exportTemplate`、`save` 的 core dispatch 成功路径都会通过 `ActionResult.data` 暴露数据，但 `REPORT_DESIGNER_MANIFEST_V1.capabilities.methods` 只声明 args/description，没有为这些方法声明 result shape。
+- **风险**: host-aware tooling、action authoring UI 和 chained action 无法从 manifest 得知 `result.data` 的可用结构；schema 作者可能依赖实际返回值，但公开 manifest 不承认该 contract，后续 provider/core 调整会破坏隐式消费者。
+- **建议**: 为 `preview`、`exportTemplate`、`save` 补充 result shape；若 exported/preview payload 当前确实是 domain adapter opaque value，也应显式声明为 `{ kind: 'unknown' }` 并在 description 中说明其 adapter-owned 边界，而不是完全省略 result。
+- **误报排除**: `capability-projection-manifest.md` 明确 runtime result conformance 不是热路径要求；本发现不要求运行时校验 result，只要求 manifest 如实描述已经公开返回的 `ActionResult.data`。这也不是重复 [维度03-06] 的 Word Editor `chartId/codeId`，而是 report-designer host family 的独立 result contract 缺口。
+- **参考文档**: `docs/architecture/capability-projection-manifest.md:595-606`, `docs/references/renderer-interfaces.md:177-183`
+- **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度03-09] Flow Designer manifest 声明 `nodeId`/`edgeId` result，但 provider 实际返回完整 node/edge 对象
+
+- **文件**: `packages/flow-designer-renderers/src/designer-manifest.ts:62-73`, `packages/flow-designer-renderers/src/designer-command-adapter-graph.ts:67-80`, `packages/flow-designer-renderers/src/designer-context.ts:119-124`
+- **行号范围**: `designer-manifest.ts:62-73`, `designer-command-adapter-graph.ts:67-80`, `designer-context.ts:119-124`
+- **证据片段**:
+  ```ts
+  addNode: {
+    args: {
+      kind: 'object',
+      fields: {
+        nodeType: { kind: 'string' },
+        position: positionShape,
+        data: nodeDataShape,
+      },
+      optional: ['position', 'data'],
+    },
+    result: { kind: 'object', fields: { nodeId: { kind: 'string' } } },
+  ```
+  ```ts
+  case 'addNode': {
+    const { result: node, error } = captureLifecycleHookFailure(core, () =>
+      core.addNode(command.nodeType, command.position ?? { x: 200, y: 120 }, command.data),
+    );
+    if (!node) {
+      if (error) {
+        return createFailure(core, error);
+      }
+  ```
+  ```ts
+  export function toActionResult(
+    result: import('./designer-command-adapter.js').DesignerCommandResult,
+  ) {
+    return {
+      ok: result.ok,
+      data: result.exported ?? result.data,
+      error: result.error,
+    };
+  }
+  ```
+- **严重程度**: P1
+- **现状**: `FLOW_DESIGNER_MANIFEST_V1` 对 `addNode` / `addEdge` / `duplicateNode` 发布的 result shape 是 `{ nodeId: string }` 或 `{ edgeId: string }`，但 adapter 成功路径把完整 `GraphNode` / `GraphEdge` 放进 `DesignerCommandResult.data`，provider 又原样作为 `ActionResult.data` 返回。
+- **风险**: tooling、action authoring UI 和 chained action 会按 manifest 引导用户读取 `result.nodeId` / `result.edgeId`，但运行时实际返回的是 `{ id, type, position, data, ... }` 这类 domain object；这会让基于 result 的后续 action 在运行时读不到 manifest 承诺字段。
+- **建议**: 二选一收敛：要么 provider 在 public action result 中适配为 manifest 声明的 `{ nodeId }` / `{ edgeId }`，要么把 manifest result shape 改为真实的 node/edge object shape（至少包含 `id`）并同步 docs/examples。
+- **误报排除**: 这不是要求运行时做 result conformance checking；问题是 manifest 已经声明了具体 result 字段，而 provider 主路径返回了不同结构，属于公开契约与执行结果不一致。此前 [维度03-01] 覆盖 Flow Designer 输入 args enforce，[维度03-02] 覆盖方法集合，本条是新的 result shape residual。
+- **参考文档**: `docs/architecture/capability-projection-manifest.md:595-606`, `docs/references/renderer-interfaces.md:177-183`
+- **复核状态**: 未复核
+
+### [维度03-10] Flow Designer 文档称 `copySelection`/`pasteClipboard` 对外暴露，但 manifest 与 provider 均未发布这些方法
+
+- **文件**: `docs/architecture/flow-designer/api.md:50-52`, `packages/flow-designer-renderers/src/designer-action-provider.ts:35-43`, `packages/flow-designer-renderers/src/designer-command-adapter.ts:173-178`
+- **行号范围**: `api.md:50-52`, `designer-action-provider.ts:35-43`, `designer-command-adapter.ts:173-178`
+- **证据片段**:
+  ```md
+  - 当前 `designer:save` 直接调用 `core.save()`；`designer:export` 直接返回 `core.exportDocument()` 的 JSON 字符串，当前 playground 通过本地 JSON dialog 展示导出结果而不是经 `env.functions.publishFlowExport` 回传。
+  - 当前 clipboard 也是 core 自身能力，先支持单节点 copy/paste，并通过 `designer:copySelection` / `designer:pasteClipboard` 对外暴露。
+  - 当前删除确认不通过专用 designer action 实现，而是由 `designer-page` 外围 schema 使用共享 `dialog` action 包装 `designer:deleteSelection`。
+  ```
+  ```ts
+  'export',
+  'undo',
+  'redo',
+  'toggleGrid',
+  'togglePalette',
+  'toggleInspector',
+  'setViewport',
+  'save',
+  'restore',
+  ```
+  ```ts
+  case 'copySelection':
+    core.copySelection();
+    return createSuccess(core);
+  case 'pasteClipboard':
+    core.pasteClipboard();
+    return createSuccess(core);
+  ```
+- **严重程度**: P2
+- **现状**: active API 文档把 `designer:copySelection` / `designer:pasteClipboard` 描述为对外暴露的 schema action；command adapter 内部也支持这两个 command，但 `createDesignerActionProvider().listMethods()` / `invoke()` 和 manifest method map 都没有发布对应 host action。
+- **风险**: schema 作者按当前 owner doc 编写 `designer:copySelection` 或 `designer:pasteClipboard` 会在运行时得到 unknown method；compiler/tooling 也无法从 manifest 发现这些方法，形成“文档稳定 API / 内部 command / host capability”三者不一致。
+- **建议**: 若 clipboard action 是当前支持面，应同时补齐 manifest method、provider `listMethods()` 和 `invoke()` 分支；若它仍是内部 command，则从 active API 文档移除“对外暴露”表述，并明确 clipboard 只由内建快捷键或 renderer shell 调用。
+- **误报排除**: 这不是要求把所有 core command 都发布为 host action；问题只针对 active owner doc 已明确声称对外暴露、且 adapter 已存在实现的两个方法。此前 [维度03-02] 覆盖 `navigate-back` manifest/provider 不一致，本条是 clipboard API 的独立 contract drift。
+- **参考文档**: `docs/architecture/capability-projection-manifest.md:589-606`, `docs/architecture/flow-designer/api.md:34-45`
+- **复核状态**: 未复核
+
+### [维度03-11] Spreadsheet host actions 返回 clipboard/find/replace 数据，但 manifest 未声明 result shape
+
+- **文件**: `packages/spreadsheet-renderers/src/spreadsheet-manifest.ts:269-280`, `packages/spreadsheet-renderers/src/spreadsheet-manifest.ts:398-408`, `packages/spreadsheet-core/src/command-handlers/clipboard-handlers.ts:15-24`, `packages/spreadsheet-core/src/command-handlers/search-handlers.ts:15-24`
+- **行号范围**: `spreadsheet-manifest.ts:269-280`, `spreadsheet-manifest.ts:398-408`, `clipboard-handlers.ts:15-24`, `search-handlers.ts:15-24`
+- **证据片段**:
+  ```ts
+  copyCells: {
+    description: 'Copy the current selection.',
+  },
+  cutCells: {
+    description: 'Cut the current selection.',
+  },
+  pasteCells: {
+    description: 'Paste clipboard content at the current target.',
+  },
+  clearCells: {
+  ```
+  ```ts
+  find: {
+    description: 'Find text in the workbook.',
+  },
+  findNext: {
+    description: 'Advance to the next find result.',
+  },
+  replace: {
+    description: 'Replace the current find result.',
+  },
+  replaceAll: {
+    description: 'Replace all matching results.',
+  },
+  ```
+  ```ts
+  export const handleCopyCells: CommandHandler<CopyCellsCommand> = (store, command) => {
+    const state = store.getState();
+    const clipboard = copyRangeToClipboard(
+      state.document,
+      command.range.sheetId,
+      command.range,
+      'copy',
+    );
+    store.setState({ clipboard });
+    return { ok: true, changed: false, data: clipboard };
+  };
+  ```
+  ```ts
+  export const handleFind: CommandHandler<FindCommand> = (store, command) => {
+    const state = store.getState();
+    const result = findInDocument(
+      state.document,
+      command.options.searchScope === 'sheet' ? state.activeSheetId : undefined,
+      command.options.query,
+      command.options,
+  ```
+- **严重程度**: P2
+- **现状**: Spreadsheet manifest 对 `copyCells` / `cutCells` / `find` / `findNext` / `replaceAll` 等方法只提供 description，没有声明 result；但 core handler 会通过 `SpreadsheetCommandResult.data` 返回 clipboard、find result 或 `{ count }`，provider 再通过 `toSpreadsheetActionResult()` 作为 public `ActionResult.data` 暴露。
+- **风险**: chained action、debugger 和 host-aware authoring tooling 无法发现这些可用返回值；schema 作者可能依赖实际 `result.data`，但 manifest 不承认该 contract，后续 core/provider 调整会破坏隐式消费者。
+- **建议**: 为这些已公开返回数据的方法补充 result shape；如果 clipboard/find payload 需要保持 domain-owned opaque，也应显式声明 `{ kind: 'unknown' }` 或最小 `{ count: number }` 等稳定 shape，而不是完全省略 result。
+- **误报排除**: 这不是重复 [维度03-07] 的 Spreadsheet 输入 args 缺口；本条只关注 provider 已经公开返回的 `ActionResult.data` 未进入 manifest result contract。也不是要求运行时校验 result，只要求 manifest 如实描述已经发布的返回面。
+- **参考文档**: `docs/architecture/capability-projection-manifest.md:595-606`, `docs/components/spreadsheet-page/design.md:53-58`
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度03-12] Tabs 已发布 `component:setValue/getValue` 运行时能力与组件文档，但 RendererDefinition 未声明 `componentCapabilityContracts`
+
+- **文件**: `packages/flux-renderers-basic/src/tabs.tsx:119-136`, `packages/flux-renderers-basic/src/basic-renderer-definitions.ts:356-365`, `docs/components/tabs/design.md:336-343`
+- **行号范围**: `tabs.tsx:119-136`, `basic-renderer-definitions.ts:356-365`, `tabs/design.md:336-343`
+- **证据片段**:
+
+  ```ts
+  capabilities: {
+    invoke(method, payload) {
+      switch (method) {
+        case 'setValue':
+          ownedAxis.setValue(String(payload?.value ?? firstValue));
+          return { ok: true, data: payload?.value };
+        case 'getValue':
+          return { ok: true, data: ownedAxis.value };
+  ```
+
+  ```ts
+        defaultValue: 'default',
+      },
+    },
+    fields: [
+      { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
+      { key: 'onChange', kind: 'event' },
+      { key: 'items', kind: 'prop' },
+      { key: 'value', kind: 'prop' },
+  ```
+
+  ```md
+  ### 13.2 组件句柄能力
+
+  当前 live capability：
+
+  - `component:setValue`
+  - `component:getValue`
+
+  这与 `docs/architecture/action-scope-and-imports.md`、`docs/architecture/component-resolution.md` 的组件定向调用模型一致。
+  ```
+
+- **严重程度**: P2
+- **现状**: `TabsRenderer` 实际注册了 `setValue` / `getValue` component handle，组件设计文档也把 `component:setValue` / `component:getValue` 定义为当前 live capability；但 `tabs` 的 `RendererDefinition` 只声明 `propContracts` 和 `fields`，没有同步发布 `componentCapabilityContracts`。
+- **风险**: `ResolvedAuthoringContract.componentCapabilityContracts`、组件定向 action authoring tooling 与 diagnostics 无法发现 Tabs 已公开的实例能力；schema 作者只能依赖组件文档或运行时试错，后续若实现改名/删减能力也不会触发静态契约漂移信号。
+- **建议**: 在 `tabs` renderer definition 中补齐 `componentCapabilityContracts`，至少声明 `setValue` 的 args shape `{ value: unknown|string }` 与 `getValue` 的 result shape；若不希望这些能力成为稳定公共面，则应从 docs 和 runtime handle 中同时收回。
+- **误报排除**: 这不是要求所有内部 handle 都必须公开为 authoring metadata；Tabs 文档明确写着“当前 live capability”，且 runtime 已通过 `ComponentHandleRegistry` 暴露给 `component:<method>` 主路径，已越过纯内部实现边界。此前已有发现覆盖 host manifest/provider 和 form root export，本条是普通 renderer `componentCapabilityContracts` 与 live handle 的独立契约缺口。
+- **参考文档**: `docs/references/renderer-interfaces.md:163-168`, `docs/architecture/renderer-runtime.md:275-331`, `docs/architecture/action-scope-and-imports.md:612-650`
+- **复核状态**: 未复核

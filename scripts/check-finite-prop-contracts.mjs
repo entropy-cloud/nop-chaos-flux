@@ -8,10 +8,12 @@ const rootDir = join(__dirname, '..');
 const checks = [
   {
     file: 'packages/flux-renderers-basic/src/schemas.ts',
-    schemaPattern: /export interface ButtonSchema[\s\S]*?variant\?:\s*'default'\s*\|\s*'destructive'\s*\|\s*'outline'\s*\|\s*'secondary'\s*\|\s*'ghost'\s*\|\s*'link'/,
+    schemaPattern:
+      /export interface ButtonSchema[\s\S]*?variant\?:\s*'default'\s*\|\s*'destructive'\s*\|\s*'outline'\s*\|\s*'secondary'\s*\|\s*'ghost'\s*\|\s*'link'[\s\S]*?size\?:\s*'default'\s*\|\s*'xs'\s*\|\s*'sm'\s*\|\s*'lg'\s*\|\s*'icon'\s*\|\s*'icon-xs'\s*\|\s*'icon-sm'\s*\|\s*'icon-lg'/,
     contractFile: 'packages/flux-renderers-basic/src/basic-renderer-definitions.ts',
-    contractPattern: /type:\s*'button'[\s\S]*?propContracts:\s*\{[\s\S]*?variant:\s*\{[\s\S]*?editorType:\s*'select'[\s\S]*?kind:\s*'union'/,
-    label: 'button.variant',
+    contractPattern:
+      /type:\s*'button'[\s\S]*?propContracts:\s*\{[\s\S]*?variant:\s*\{[\s\S]*?editorType:\s*'select'[\s\S]*?size:\s*\{[\s\S]*?editorType:\s*'select'/,
+    label: 'button.variant + button.size',
   },
   {
     file: 'packages/flux-renderers-basic/src/schemas.ts',
@@ -29,9 +31,11 @@ const checks = [
   },
   {
     file: 'packages/flux-renderers-data/src/schemas.ts',
-    schemaPattern: /export interface TableSchema[\s\S]*?paginationOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'[\s\S]*?filterOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'/,
+    schemaPattern:
+      /export interface TableSchema[\s\S]*?paginationOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'[\s\S]*?selectionOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'[\s\S]*?sortOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'[\s\S]*?filterOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'/,
     contractFile: 'packages/flux-renderers-data/src/data-renderer-definitions.ts',
-    contractPattern: /type:\s*'table'[\s\S]*?propContracts:\s*\{[\s\S]*?paginationOwnership:\s*\{[\s\S]*?editorType:\s*'select'[\s\S]*?filterOwnership:\s*\{[\s\S]*?editorType:\s*'select'/,
+    contractPattern:
+      /type:\s*'table'[\s\S]*?propContracts:\s*\{[\s\S]*?paginationOwnership:\s*\{[\s\S]*?editorType:\s*'select'[\s\S]*?selectionOwnership:\s*\{[\s\S]*?editorType:\s*'select'[\s\S]*?sortOwnership:\s*\{[\s\S]*?editorType:\s*'select'[\s\S]*?filterOwnership:\s*\{[\s\S]*?editorType:\s*'select'/,
     label: 'table ownership finite fields',
   },
   {

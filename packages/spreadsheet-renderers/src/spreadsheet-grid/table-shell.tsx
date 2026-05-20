@@ -164,7 +164,7 @@ function SpreadsheetGridCell({
       data-cell-active={isSelected || undefined}
       data-cell-selected={isSelected || undefined}
       data-range-highlight={inRange || undefined}
-      data-cell-bound={hasBinding || undefined}
+      data-cell-bound={hasBinding ? true : undefined}
       data-cell-comment={hasComment || undefined}
       data-cell-frozen={isFrozenCell || undefined}
       data-cell-merged={mergeInfo.isMerged || undefined}

@@ -222,3 +222,71 @@
 2. 再修 [维度14-02]：把 Word Editor action tests 的 spy 清理改为 `try/finally` 或 `afterEach vi.restoreAllMocks()`，提升整文件稳定性。
 3. 再修 [维度14-04]：为 Flow Designer 增加真实用户拖拽建边 E2E，保留 synthetic hook 测试但不要让它代表完整端到端覆盖。
 4. 最后修 [维度14-03]：收敛跨包私有 context 导入和手工 props 伪造测试，改用公开 renderer/runtime test helper，减少测试对内部实现布局的耦合。
+
+## 深挖第 2 轮追加
+
+### [维度14-05] flow-designer-renderers 的 package test 脚本遗漏 3 个已提交测试文件
+
+- **文件**: `packages/flow-designer-renderers/package.json:24-28`, `packages/flow-designer-renderers/src/designer-page.graph-regression.test.tsx:13-17`, `packages/flow-designer-renderers/src/designer-page.tree-history.test.tsx:16-18`, `packages/flow-designer-renderers/src/dingflow/ding-flow-add-node-menu.test.tsx:8-10`
+- **行号范围**: `package.json:24-28`; `designer-page.graph-regression.test.tsx:13-17`; `designer-page.tree-history.test.tsx:16-18`; `ding-flow-add-node-menu.test.tsx:8-10`
+- **证据片段**:
+  ```json
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/designer-theme.css dist/designer-theme.css",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "set NODE_OPTIONS=--max-old-space-size=8192 && vitest run --passWithNoTests src/designer-controls.test.tsx src/designer-page-shell.test.tsx src/designer-page.tree.test.tsx src/index.xyflow.test.tsx src/edge-label-expression.test.tsx src/auto-layout-guards.test.tsx && vitest run --passWithNoTests src/designer-provider-and-manifest.test.tsx src/canvas-bridge.test.tsx src/edge-label-xyflow.test.tsx src/designer-command-adapter.test.ts src/designer-command-adapter.tree.test.ts src/designer-page.resolved-props.test.ts src/designer-page-helpers.test.ts src/public-surface.test.ts && vitest run --passWithNoTests src/dingflow/ding-flow-add-branch-overlay.test.tsx src/dingflow/dingflow-overlays.test.ts src/dingflow/dingflow-command-dispatch.test.ts src/designer-xyflow-canvas/use-xyflow-sync.test.tsx src/designer-xyflow-canvas/xyflow-utils.test.ts",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  }
+  ```
+  ```tsx
+  describe('DesignerPageRenderer graph mode regression', () => {
+    it('graph mode still works correctly', () => {
+  ```
+- **严重程度**: P1
+- **类别**: 覆盖缺口 / CI 验证可信度
+- **现状**: `packages/flow-designer-renderers` 没有使用默认 `vitest run` 发现全部测试，而是在 `package.json` 中手工枚举测试文件；当前枚举未包含已存在的 `src/designer-page.graph-regression.test.tsx`、`src/designer-page.tree-history.test.tsx`、`src/dingflow/ding-flow-add-node-menu.test.tsx`。
+- **风险**: `pnpm test` / turbo package test 会跳过这 3 个回归测试，导致 graph mode regression、tree history continuity、DingFlow add-node menu 键盘导航等关键路径即使损坏也不会被默认测试门禁发现；后续开发者可能误以为这些回归已有 CI 保护。
+- **建议**: 将该 package 的 `test` 脚本改回可自动发现的 `vitest run --passWithNoTests`，或至少把 3 个遗漏文件加入当前分段命令；同时增加一个轻量脚本/约束检查，防止手工枚举测试列表再次与实际 `*.test.ts(x)` 文件漂移。
+- **误报排除**: 这不是“测试文件数量少”或“手工枚举不优雅”的泛化问题；live `package.json` 的 test 命令确实没有包含上述 3 个已提交测试文件，而这些文件包含实际 `describe/it` 用例，不是 helper、fixture 或跳过的草稿文件。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1380-1384,1403-1408`, `AGENTS.md:27-31,175-178`, `package.json:21`
+- **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+### [维度14-06] Vitest 覆盖率阈值配置未接入默认 `pnpm test` 门禁，阈值实际不会被执行
+
+- **文件**: `package.json:21-22`, `packages/flux-runtime/package.json:27-31`, `packages/flux-runtime/vitest.config.ts:5-15`
+- **行号范围**: `package.json:21-22`; `packages/flux-runtime/package.json:27-31`; `packages/flux-runtime/vitest.config.ts:5-15`
+- **证据片段**:
+  ```json
+  "test": "turbo run test --concurrency=2",
+  "test:e2e": "playwright test",
+  ```
+  ```json
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  ```
+  ```ts
+  coverage: {
+    provider: 'v8',
+    reporter: ['text', 'json-summary'],
+    include: ['src/**/*.{ts,tsx}'],
+    exclude: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/**/__tests__/**'],
+    thresholds: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+  ```
+- **严重程度**: P2
+- **类别**: 覆盖质量 / CI 验证可信度
+- **现状**: 多个 package 的 `vitest.config.ts` 配置了 `coverage.thresholds`，但 root `pnpm test` 只运行 `turbo run test`，各 package 的 `test` 脚本也只是 `vitest run` / `vitest run --passWithNoTests`，没有 `--coverage` 或独立 `test:coverage` 门禁；Vitest 覆盖率阈值只有在启用 coverage 时才会执行。
+- **风险**: 维护者容易误以为 80% 覆盖率阈值已经被默认测试门禁保护，但实际 `pnpm test` 可以在覆盖率大幅下降时继续通过；这会削弱 runtime、compiler、renderer 等核心包的覆盖率回归防线，并让覆盖率配置变成“看起来存在但不生效”的假护栏。
+- **建议**: 明确二选一收敛：要么新增并接入 `pnpm test:coverage` / package `test:coverage`，在关键包执行 `vitest run --coverage` 并让阈值失败进入 CI；要么从普通 config 中移除或注释这些阈值，改成文档化的手动审计命令，避免默认测试门禁产生误导。
+- **误报排除**: 这不是要求所有包都必须追求固定覆盖率数字，也不是报告当前覆盖率不足；问题点是 live config 已声明阈值，而默认验证路径没有启用 coverage，导致阈值本身不可达。前两轮已覆盖“测试文件遗漏”和“弱断言/隔离性”，本条是独立的覆盖率门禁真实性问题。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1380-1384,1403-1408`, `AGENTS.md:27-31,203-210`, `docs/references/audit-tooling.md:13-19`
+- **复核状态**: 未复核

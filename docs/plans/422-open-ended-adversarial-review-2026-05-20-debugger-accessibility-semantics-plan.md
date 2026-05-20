@@ -1,6 +1,6 @@
 # 422 Open-Ended Adversarial Review 2026-05-20 Debugger Accessibility Semantics Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-20
 > Source: `docs/analysis/2026-05-20-open-ended-adversarial-review-01/round-07.md`
 > Related: `docs/plans/416-open-ended-adversarial-review-2026-05-20-remediation-routing-plan.md`, `docs/plans/405-ux-audit-2026-05-19-remediation-plan.md`, `docs/architecture/debugger-runtime.md`
@@ -44,29 +44,42 @@
 
 ### Phase 1 - Restore Honest Debugger Detail-Panel Semantics
 
-Status: planned
+Status: completed
 Targets: debugger panel code, focused proof, affected docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Remove false button semantics or replace them with an honest semantic/interaction model.
-- [ ] Add focused proof for the final keyboard and accessibility behavior.
-- [ ] Update `docs/architecture/debugger-runtime.md` if the supported debugger semantics baseline changes, or explicitly adjudicate `No owner-doc update required`.
+- [x] Remove false button semantics or replace them with an honest semantic/interaction model.
+- [x] Add focused proof for the final keyboard and accessibility behavior.
+- [x] Adjudicate owner-doc impact explicitly: `docs/architecture/debugger-runtime.md` required no text change because it does not publish a contradictory contract for the expanded detail wrappers.
 
 Exit Criteria:
 
-- [ ] `R07-01` is fixed.
-- [ ] Focused proof covers the final keyboard/semantic behavior.
-- [ ] `docs/architecture/debugger-runtime.md` is updated if needed, or `No owner-doc update required` is explicitly recorded.
-- [ ] `docs/logs/2026/05-20.md` is updated.
+- [x] `R07-01` is fixed.
+- [x] Focused proof covers the final keyboard/semantic behavior.
+- [x] No owner-doc update required: `docs/architecture/debugger-runtime.md` already matched the supported baseline at the documented level and did not need wrapper-specific wording.
+- [x] `docs/logs/2026/05-20.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained finding is fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained finding is fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Closure
+
+Status Note: The debugger expanded-detail wrappers no longer publish fake nested button semantics; expanded content remains non-interactive content that only stops row-toggle bubbling where necessary. Focused proof, repo-wide verification, and independent closure audit are complete; no owner-doc update was required.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: independent general subagent
+- Evidence: `ses_1bb02c7feffeSJyOIc1GfmNQsL` (`Verdict: acceptable`, `Findings: none`), recorded in `docs/logs/2026/05-20.md`
+
+Follow-up:
+
+- no remaining plan-owned work

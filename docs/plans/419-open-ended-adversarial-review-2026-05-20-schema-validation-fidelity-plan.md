@@ -1,6 +1,6 @@
 # 419 Open-Ended Adversarial Review 2026-05-20 Schema Validation Fidelity Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-20
 > Source: `docs/analysis/2026-05-20-open-ended-adversarial-review-01/{round-03.md,round-05.md}`
 > Related: `docs/plans/416-open-ended-adversarial-review-2026-05-20-remediation-routing-plan.md`, `docs/plans/399-deep-audit-2026-05-19-compiler-diagnostic-fidelity-plan.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/api-data-source.md`
@@ -50,29 +50,42 @@
 
 ### Phase 1 - Restore Schema Validation Parity
 
-Status: planned
+Status: completed
 Targets: schema validation code, focused proof, affected owner docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Add honest validation paths for the in-scope lifecycle, required-prop, reaction, and built-in ajax payload contracts.
-- [ ] Add focused proof that invalid authored shapes fail at validation time rather than degrading into runtime-only failures.
-- [ ] Update `docs/architecture/flux-core.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/complex-control-host-protocol.md`, and `docs/architecture/api-data-source.md` as needed to match the final supported validation baseline, or explicitly adjudicate `No owner-doc update required` for any unchanged owner doc.
+- [x] Add honest validation paths for the in-scope lifecycle, required-prop, reaction, and built-in ajax payload contracts.
+- [x] Add focused proof that invalid authored shapes fail at validation time rather than degrading into runtime-only failures.
+- [x] Adjudicate owner-doc impact explicitly: `docs/architecture/flux-core.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/complex-control-host-protocol.md`, `docs/architecture/api-data-source.md`, and `docs/architecture/action-algebra-formal-spec.md` already described the final supported contract, so no owner-doc text change was required for this slice.
 
 Exit Criteria:
 
-- [ ] `R03-01`, `R03-02`, `R03-03`, and `R05-01` are fixed.
-- [ ] Focused proof covers the final validation behavior for all retained in-scope contracts.
-- [ ] The named owner docs are updated as needed, or `No owner-doc update required` is explicitly recorded for each unchanged owner doc.
-- [ ] `docs/logs/2026/05-20.md` is updated.
+- [x] `R03-01`, `R03-02`, `R03-03`, and `R05-01` are fixed.
+- [x] Focused proof covers the final validation behavior for all retained in-scope contracts.
+- [x] No owner-doc update required: `docs/architecture/flux-core.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/complex-control-host-protocol.md`, `docs/architecture/api-data-source.md`, and `docs/architecture/action-algebra-formal-spec.md` already matched the supported baseline after the code fix.
+- [x] `docs/logs/2026/05-20.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Closure
+
+Status Note: Schema validation now rejects missing required renderer props, malformed lifecycle actions, malformed `reaction` watch/control fields, and invalid built-in `ajax` payloads at validation time instead of relying on runtime degradation. Focused proof, repo-wide verification, and independent closure audit are complete, and the named owner docs already matched the final supported contract.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: independent general subagent
+- Evidence: `ses_1bb02c7feffeSJyOIc1GfmNQsL` (`Verdict: acceptable`, `Findings: none`), recorded in `docs/logs/2026/05-20.md`
+
+Follow-up:
+
+- no remaining plan-owned work

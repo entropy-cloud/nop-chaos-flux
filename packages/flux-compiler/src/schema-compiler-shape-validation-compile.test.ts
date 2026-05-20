@@ -209,6 +209,51 @@ describe('compile and validate integration', () => {
     ).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'invalid-action-shape' })]));
   });
 
+  it('validates reaction watch and control fields', () => {
+    const renderer: RendererDefinition = { type: 'reaction', component: () => null };
+    const compiler = makeCompiler([renderer]);
+
+    expect(
+      compiler.validate?.({
+        type: 'reaction',
+        watch: 123,
+        immediate: 'yes',
+        debounce: 'slow',
+        once: 'nope',
+        actions: { action: 'setValue', args: { value: 1 } },
+      } as any),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'invalid-property-shape', path: '/watch' }),
+        expect.objectContaining({ code: 'invalid-property-shape', path: '/immediate' }),
+        expect.objectContaining({ code: 'invalid-property-shape', path: '/debounce' }),
+        expect.objectContaining({ code: 'invalid-property-shape', path: '/once' }),
+      ]),
+    );
+  });
+
+  it('validates missing ajax args payloads', () => {
+    const renderer: RendererDefinition = { type: 'button', component: () => null, fields: [{ key: 'onClick', kind: 'event' }] };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ type: 'button', onClick: { action: 'ajax' } } as any)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'invalid-action-shape', path: '/onClick/args' }),
+      ]),
+    );
+  });
+
+  it('validates lifecycle action shapes', () => {
+    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ type: 'text', onMount: 'bad-action' } as any)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'invalid-action-shape', path: '/onMount' }),
+      ]),
+    );
+  });
+
   it('reports unknown xui namespace properties', () => {
     const renderer: RendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);

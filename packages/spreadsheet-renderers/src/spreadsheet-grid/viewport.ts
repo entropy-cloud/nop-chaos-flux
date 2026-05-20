@@ -23,11 +23,32 @@ export interface SpreadsheetGridViewportState {
   mountedSelectedCellId?: string;
 }
 
+export interface SpreadsheetGridOffsetsCache {
+  rowOffsets: number[];
+  colOffsets: number[];
+}
+
+export interface SpreadsheetGridOffsetsInput {
+  rows: number;
+  cols: number;
+  rowHeights: SpreadsheetGridViewportModel['rowHeights'];
+  columnWidths: SpreadsheetGridViewportModel['columnWidths'];
+}
+
+export function buildSpreadsheetGridOffsets(
+  input: SpreadsheetGridOffsetsInput,
+): SpreadsheetGridOffsetsCache {
+  return {
+    rowOffsets: computeRowOffsets(input.rows, input.rowHeights),
+    colOffsets: computeColOffsets(input.cols, input.columnWidths),
+  };
+}
+
 export function buildSpreadsheetGridViewport(
   model: SpreadsheetGridViewportModel,
+  offsets: SpreadsheetGridOffsetsCache = buildSpreadsheetGridOffsets(model),
 ): SpreadsheetGridViewportState {
-  const rowOffsets = computeRowOffsets(model.rows, model.rowHeights);
-  const colOffsets = computeColOffsets(model.cols, model.columnWidths);
+  const { rowOffsets, colOffsets } = offsets;
   const totalHeight = rowOffsets[model.rows] ?? 0;
   const totalWidth = colOffsets[model.cols] ?? 0;
 

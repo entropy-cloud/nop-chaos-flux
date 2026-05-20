@@ -9,6 +9,7 @@ import {
   useSpreadsheetInteractions,
 } from '../index.js';
 import { SpreadsheetGridHarness } from './spreadsheet-grid-harness.js';
+import * as viewportModule from '../spreadsheet-grid/viewport.js';
 
 afterEach(() => {
   cleanup();
@@ -510,5 +511,37 @@ describe('spreadsheet grid selection', () => {
       expect(logs).toContain('Cell save failed: save failed');
       expect(core.getSnapshot().selection.anchor?.address).toBe('B2');
     });
+  });
+
+  it('does not rebuild viewport offsets on ordinary scroll renders', async () => {
+    const documentModel = createEmptyDocument('viewport-offset-cache');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const offsetsSpy = vi.spyOn(viewportModule, 'buildSpreadsheetGridOffsets');
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const grid = container.querySelector('[role="grid"]') as HTMLElement | null;
+    expect(grid).toBeTruthy();
+
+    if (grid) {
+      Object.defineProperty(grid, 'clientHeight', { value: 240, configurable: true });
+      Object.defineProperty(grid, 'clientWidth', { value: 320, configurable: true });
+      fireEvent.scroll(grid);
+    }
+
+    await waitFor(() => {
+      expect(offsetsSpy.mock.calls.length).toBeGreaterThan(0);
+    });
+
+    const callsAfterMeasure = offsetsSpy.mock.calls.length;
+
+    if (grid) {
+      Object.defineProperty(grid, 'scrollTop', { value: 120, configurable: true, writable: true });
+      Object.defineProperty(grid, 'scrollLeft', { value: 40, configurable: true, writable: true });
+      fireEvent.scroll(grid);
+    }
+
+    expect(offsetsSpy.mock.calls.length).toBe(callsAfterMeasure);
   });
 });

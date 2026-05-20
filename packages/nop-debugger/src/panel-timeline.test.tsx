@@ -255,4 +255,32 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
     expect(toggle.className).toContain('ndbg-errors-only-toggle');
     expect(toggle.hasAttribute('data-active')).toBe(true);
   });
+
+  it('keeps expanded detail content non-focusable and non-button-like', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'timeline';
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'notify',
+        group: 'notify',
+        level: 'info',
+        source: 'toast',
+        summary: 'Saved successfully',
+        detail: 'ok',
+      },
+    ];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    fireEvent.click(screen.getByText('Saved successfully'));
+
+    const expanded = document.querySelector('.ndbg-entry-expanded') as HTMLElement | null;
+    expect(expanded).toBeTruthy();
+    expect(expanded?.getAttribute('role')).toBeNull();
+    expect(expanded?.getAttribute('tabindex')).toBeNull();
+  });
 });

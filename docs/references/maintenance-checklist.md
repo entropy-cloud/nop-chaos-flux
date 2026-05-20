@@ -169,12 +169,14 @@ Review:
 Examples:
 
 - root script changes in `package.json`
+- audit script coverage/placement changes such as new hard gates or check-chain wiring moves
 - workspace package layout changes
 - baseline tooling upgrades that alter expectations
 
 Review:
 
 - `docs/architecture/frontend-baseline.md`
+- `docs/references/audit-tooling.md`
 - `docs/index.md`
 
 ## 9. Example or playground behavior changes

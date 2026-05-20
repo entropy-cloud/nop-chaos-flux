@@ -1,6 +1,6 @@
 # 420 Open-Ended Adversarial Review 2026-05-20 Report Designer E2E Truthfulness Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-20
 > Source: `docs/analysis/2026-05-20-open-ended-adversarial-review-01/round-04.md`
 > Related: `docs/plans/416-open-ended-adversarial-review-2026-05-20-remediation-routing-plan.md`, `docs/plans/408-open-ended-adversarial-review-2026-05-19-supported-e2e-truthfulness-plan.md`, `docs/testing/e2e-standards.md`
@@ -44,29 +44,42 @@
 
 ### Phase 1 - Restore Report Designer Metadata-Binding Proof
 
-Status: planned
+Status: completed
 Targets: report-designer E2E, helpers if needed, relevant docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Update the spec so it asserts semantic binding, not only visible cell text.
-- [ ] Keep the title and supported proof surface aligned after the assertion change.
-- [ ] Update `docs/testing/e2e-standards.md` if the supported proof rule changes, or explicitly adjudicate `No owner-doc update required`.
+- [x] Update the spec so it asserts semantic binding, not only visible cell text.
+- [x] Keep the title and supported proof surface aligned after the assertion change.
+- [x] Adjudicate owner-doc impact explicitly: `docs/testing/e2e-standards.md` required no change because the retained fix strengthens a spec-local assertion rather than changing the repository-wide E2E proof rule.
 
 Exit Criteria:
 
-- [ ] `R04-01` is fixed.
-- [ ] Focused proof covers the final metadata-binding outcome.
-- [ ] `docs/testing/e2e-standards.md` is updated if needed, or `No owner-doc update required` is explicitly recorded.
-- [ ] `docs/logs/2026/05-20.md` is updated.
+- [x] `R04-01` is fixed.
+- [x] Focused proof covers the final metadata-binding outcome.
+- [x] No owner-doc update required: `docs/testing/e2e-standards.md` already matched the supported page-entry rule and did not need a spec-local contract note.
+- [x] `docs/logs/2026/05-20.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained finding is fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained finding is fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Closure
+
+Status Note: The report-designer drag/drop proof now asserts metadata binding truthfully instead of only visible cell text, and the demo path now prefers the standard drag payload before the legacy fallback. Focused unit and Playwright proof, repo-wide verification, and independent closure audit are complete; no owner-doc update was required.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: independent general subagent
+- Evidence: `ses_1bb02c7feffeSJyOIc1GfmNQsL` (`Verdict: acceptable`, `Findings: none`), recorded in `docs/logs/2026/05-20.md`
+
+Follow-up:
+
+- no remaining plan-owned work

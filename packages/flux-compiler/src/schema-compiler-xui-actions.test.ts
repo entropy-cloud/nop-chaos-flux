@@ -100,7 +100,7 @@ describe('xui:actions compilation', () => {
       type: 'button',
       label: 'Click',
       'xui:actions': {
-        save: { action: 'ajax' },
+        save: { action: 'ajax', args: { url: '/save' } },
       },
     });
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
@@ -171,7 +171,7 @@ describe('xui:actions compilation', () => {
       type: 'button',
       'xui:actions': {
         bad: null,
-        good: { action: 'ajax' },
+        good: { action: 'ajax', args: { url: '/good' } },
       },
     });
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;

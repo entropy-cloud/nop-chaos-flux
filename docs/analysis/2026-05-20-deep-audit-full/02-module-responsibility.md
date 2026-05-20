@@ -92,3 +92,60 @@
 - 本轮只执行了 `pnpm check:oversized-code-files`，未执行完整 `pnpm check` / `pnpm lint`。
 - 顶层目录 entries 统计使用只读 Python 命令辅助生成，作为目录结构建议依据；未作为硬门禁。
 - 本轮为初审，所有发现复核状态均为“未复核”；不包含最终复核结论。
+
+## 深挖第 2 轮追加
+
+### [维度02-03] `detail-view.tsx` 在 renderer 文件内吸收 staged owner、draft runtime、值适配、提交回滚与父验证协调
+
+- **文件**: `packages/flux-renderers-form-advanced/src/detail-view/detail-view.tsx`
+- **行号范围**: `36-544`
+- **证据片段**:
+  ```ts
+  328:     const initialValues = buildDetailDraftInitialValues(adaptedValue, getInitialValues());
+  329:
+  330:     const newDraftForm = runtime.createFormRuntime({
+  331:       id: `detail-view-draft:${scopePath ?? 'static'}:${Date.now()}`,
+  332:       initialValues,
+  333:       parentScope,
+  334:       validation: props.templateNode.validationPlan,
+  335:     });
+  ```
+- **严重程度**: P2
+- **现状**: `detail-view.tsx` 已进入 500+ warning，单个 renderer component 同时承担 UI shell、父 form/scope 投影读取、draft `FormRuntime` 创建、`transformIn/validate/transformOut` staged lifecycle、commit patch/update lowering、父验证 settle、失败回滚和 surface 渲染。
+- **风险**: 后续补齐 detail-field/detail-view 共享 value adapter、patch overlay、sheet 模式或非 form validation owner 时，变更会继续落到 renderer 文件内，导致 UI shell 修改与 staged owner 语义互相影响；同一 reviewer 很难只审 visual surface 或只审 commit/rollback/validation 流程。
+- **建议**: 保留 `DetailViewRenderer` 为薄 renderer；优先提取 `useDetailViewRuntime()` 或 `detail-view-staged-owner.ts` 承担 open/confirm/cancel、draft form 创建、commit rollback、parent validation settle；把 `buildCommittedWrites` / `buildDraftValuesFromCommitResult` 移到纯 helper 并补 focused tests。
+- **为什么值得现在做**: 该文件已达 570 行 warning，且 value adaptation 文档明确把 `ValueAdapter` / staged owner helper 视为共享基础设施，不应由具体控件各自内联完整 lifecycle。现在拆分可避免 `detail-field` / `detail-view` / future value-oriented controls 继续复制或修改同一套 owner 流程。
+- **误报排除**: 这不是“renderer 较复杂但 owner 清晰”的机械大文件问题；文件内存在具体 runtime owner 创建、提交写入、验证协调和回滚算法，不只是 JSX 组装。也不是 reopened 文档中的“已接受 draft cache 双状态”重报，本条关注模块职责边界，而非判定 staged draft 本身错误。
+- **历史模式对应**: 对应本仓库“大型 renderer 第一轮提取 controller/hooks 后停止”的模式；建议类似历史 `table-renderer.tsx` 拆出 controls/row scope/header body，而不是为行数机械拆 JSX。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:601-607`, `docs/skills/deep-audit-prompts.md:616-621`, `docs/architecture/value-adaptation-and-detail-field.md:106-140`, `docs/architecture/value-adaptation-and-detail-field.md:167-175`
+- **复核状态**: 未复核
+
+### [维度02-04] `schema-compiler/node-compiler.ts` 成为 schema-compiler 拆分后的新中心汇聚点，单函数混合节点组装与多类 feature lowering
+
+- **文件**: `packages/flux-compiler/src/schema-compiler/node-compiler.ts`
+- **行号范围**: `69-579`
+- **证据片段**:
+  ```ts
+  533:       validationPlan:
+  534:         renderer.scopePolicy === 'form' || schema.type === 'page'
+  535:           ? collectValidationModel(
+  536:               Object.values(regions)
+  ...
+  553:       sourcePropKeys: Array.from(sourcePropKeys).sort(),
+  554:       sourceStatePropKeys,
+  555:       ...(namedActionPlans && Object.keys(namedActionPlans).length > 0 ? { namedActionPlans } : {}),
+  556:     };
+  ```
+- **严重程度**: P2
+- **现状**: `node-compiler.ts` 已达 581 行 warning，`createCompileSingleNode()` 内联了 compile failure renderer、field/meta/region 分类循环、lazy eval structural fields、custom field compile error handling、event/lifecycle action compilation、xui import plan、provider wrap plan、validation owner/validation model plan、named action plan、static analysis、data-source/reaction carrier lowering。
+- **风险**: `schema-compiler.ts` 已被拆成多个 focused submodules，但 `node-compiler.ts` 正在吸收每个新 node-level feature 的特殊 lowering；后续添加 compile-time transforms、capability contracts、source/reaction 选项或 validation owner 规则时，会继续扩大这个单函数，使 schema shape、runtime provider plan、action/import/source/reaction lowering 的 owner review 边界变模糊。
+- **建议**: 不需要把编译 orchestration 拆散成碎片，但应先提取稳定 feature builders：`compile-node-fields.ts` 负责 field loop 输出 props/regions/events/source keys，`compile-node-imports.ts` 负责 importsPlan/prepared imports，`compile-node-validation.ts` 负责 validationOwnerPlan/validationPlan，`compile-node-carriers.ts` 负责 data-source/reaction/named actions。`node-compiler.ts` 保留单节点组装顺序。
+- **为什么值得现在做**: 这是历史 `schema-compiler.ts` 拆分后的二次膨胀信号；当前还未超过 700 hard gate，但已是新增 compile feature 的自然落点。趁各 feature lowering 边界仍可按现有 helper 切开，拆分成本低于继续追加 capability/validation/source 规则后再治理。
+- **误报排除**: 不是仅因 581 行而报告；文件中已有多个明确 owner 方向的 focused modules（`fields.ts`、`regions.ts`、`tables.ts`、`validation-collection.ts`、`static-analysis.ts`），但 node-level feature lowering 又集中回一个函数。也不是合理薄 orchestrator：该函数不仅调用子模块，还内联构造多类 plan、错误节点、prepared import staticMeta、named action plans 与 source/reaction carriers。
+- **历史模式对应**: 对应本仓库“拆分后中心文件二次膨胀 / implementation leakage back into coordinator”的模式；与历史从 `flux-core/src/index.ts`、`schema-compiler.ts` 拆出 focused helpers 的收敛方向一致。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:601-607`, `docs/skills/deep-audit-prompts.md:616-621`, `docs/architecture/flux-runtime-module-boundaries.md:65-107`, `docs/architecture/flux-runtime-module-boundaries.md:416-424`
+- **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+未发现新的高价值问题。深挖结束。

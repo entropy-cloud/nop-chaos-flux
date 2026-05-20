@@ -173,17 +173,10 @@ export function TimelineTab(props: {
         </strong>
         <span className="ndbg-entry-meta">{event.source}</span>
         {expandedId === event.id ? (
+          /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- expanded detail is non-interactive content; click only stops row-toggle bubbling */
           <div
             className="ndbg-entry-expanded"
-            role="button"
-            tabIndex={0}
             onClick={(clickEvent) => clickEvent.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            }}
           >
             {event.detail ? <code className="ndbg-entry-detail">{event.detail}</code> : null}
             {event.network ? (

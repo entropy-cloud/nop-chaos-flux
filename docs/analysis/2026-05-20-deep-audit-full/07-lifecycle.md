@@ -152,3 +152,237 @@
 - **历史模式对应**: lifecycle cleanup guardrail：全局/外部订阅必须在组件卸载或依赖变化时完整清理。
 - **参考文档**: `docs/skills/react19-best-practices-review.md`（未清理的全局事件、订阅、观察器）、`docs/references/audit-tooling.md`（heuristic suspect 仅作线索，需 live code 复核）。
 - **复核状态**: 未复核
+
+## 深挖第 2 轮追加
+
+### [维度07-06] SchemaRenderer 在 render/useMemo 中创建 root ActionScope 与 ComponentHandleRegistry
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-react\src\schema-renderer.tsx`
+- **行号范围**: `224-235`
+- **证据片段**:
+
+  ```tsx
+  const rootActionScope = useMemo(
+    () => props.actionScope ?? runtime.createActionScope({ id: 'root-action-scope' }),
+    [props.actionScope, runtime],
+  );
+  const ownsRootActionScope = props.actionScope == null;
+  const rootComponentRegistry = useMemo(
+    () =>
+      props.componentRegistry ??
+      runtime.createComponentHandleRegistry({ id: 'root-component-registry' }),
+    [props.componentRegistry, runtime],
+  );
+  ```
+
+- **严重程度**: P1
+- **effect 职责**: root action scope / root component registry 的创建、发布、替换与释放。
+- **应归属层级**: commit-safe React lifecycle effect 或 renderer runtime root owner；不应在 render/useMemo 阶段调用 runtime owner API。
+- **现状**: `useMemo` 在 render 阶段调用 `runtime.createActionScope()` 和 `runtime.createComponentHandleRegistry()`，随后才由 effects 发布/cleanup。`createActionScope()` 会把 scope 加入 runtime-owned 集合，属于 runtime mutation；component registry 也是 root capability boundary 创建。
+- **风险**: 未提交 render、异常 render、StrictMode replay 或 Suspense-like 中断时，root capability boundary 可能先于 commit 被创建并进入 runtime ownership，cleanup 依赖后续 effect 不可靠。该问题位于 `SchemaRenderer` root 主路径，影响所有 schema tree。
+- **建议**: 将 root action scope / component registry 创建移动到 `useLayoutEffect` 或 runtime root owner 的 commit-safe API；commit 前可渲染准备态或使用外部传入 scope/registry，已提交后再发布到 `CompiledSchemaTree`。释放应统一通过 runtime release/dispose owner。
+- **为什么值得现在做**: 已有 07-01/07-02 暴露了 node 级 render-phase runtime mutation；root boundary 若继续保留同类模式，会成为后续修复的反例和复制模板。
+- **误报排除**: 这不是已报告的 07-02 `useNodeScopes`，也不是 07-01 `NodeRenderer` import bindings child scope；本条是 `SchemaRenderer` root boundary 自身的 render-phase runtime mutation。也不是普通 memo 缓存，因为调用的是 runtime owner API。
+- **历史模式对应**: 对应 Bug 15 “render 阶段不得触发 store/runtime 写入”的 guardrail；也对应本轮 07-01/07-02 的 “create in render, cleanup in effect” residual 模式。
+- **参考文档**: `docs/architecture/renderer-runtime.md`（render phase must stay side-effect free、Execution Boundary Ownership Matrix）、`docs/bugs/15-render-nodes-setstate-during-render-fix.md`。
+- **复核状态**: 未复核
+
+### [维度07-07] SchemaRenderer 在 render/useMemo 中创建 runtime、page runtime 与 surface runtime，root owner 生命周期仍由 render 阶段启动
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-react\src\schema-renderer.tsx`
+- **行号范围**: `133-162`
+- **证据片段**:
+
+  ```tsx
+  const runtime = useMemo(() => {
+    const resolvedRegistry = props.registry ?? registry;
+    const expressionCompiler = createExpressionCompiler(
+      props.formulaCompiler ?? createFormulaCompiler(),
+    );
+
+    return createRendererRuntime({
+      registry: resolvedRegistry,
+      env: envRef.current,
+  ```
+
+  ```tsx
+  const page = useMemo(() => runtime.createPageRuntime(initialPageDataRef.current), [runtime]);
+  const ownedSurfaceRuntime = useMemo(() => runtime.createSurfaceRuntime(), [runtime]);
+  ```
+
+- **严重程度**: P1
+- **effect 职责**: root `RendererRuntime`、`PageRuntime`、root `SurfaceRuntime` 的创建、挂载、替换与 dispose。
+- **应归属层级**: React commit 阶段的 root owner lifecycle，或外部 host 显式传入的 already-owned runtime；不应在 render/useMemo 阶段启动拥有 dispose 语义的 runtime owner。
+- **现状**: `SchemaRenderer` 在 render/useMemo 中创建完整 runtime family，并在后续 `useEffect` cleanup 中用 microtask 延迟 dispose。当前实现为 StrictMode cleanup 做了补偿，但创建本身仍发生在 render phase。
+- **风险**: 并发/中断 render 或 render 抛错时，已经创建的 runtime/page/surface owner 可能没有对应 committed cleanup；runtime 内部 owned pages、surface runtimes、validation owners、module cache、action dispatcher 等生命周期会早于 React commit 存活。
+- **建议**: 提供 commit-safe root runtime holder：在 layout effect 中创建/替换 runtime family，并通过 `useSyncExternalStore`/state 发布 committed runtime；commit 前返回准备态。若必须支持外部传入 runtime，则把 owner 创建责任移出 `SchemaRenderer`，避免 render 阶段创建 disposable runtime。
+- **为什么值得现在做**: `SchemaRenderer` 是全树入口；如果 root runtime family 仍允许 render-phase allocation，后续仅修 NodeRenderer/FormRenderer 无法真正关闭生命周期盲区。
+- **误报排除**: renderer-runtime 文档确实提到 React-owned runtime cleanup 要 StrictMode-safe，但这只覆盖 effect cleanup replay，不豁免 render-phase owner creation。本条不是重复 07-06 的 action scope/registry，而是更上层的 root runtime/page/surface family 创建路径。
+- **历史模式对应**: 对应 Bug 15 render-phase mutation 原则，以及 DataSource 生命周期从 React effect 迁回 runtime owner 的 owner 收敛模式。
+- **参考文档**: `docs/architecture/renderer-runtime.md`（render phase side-effect free、React-owned runtime cleanup StrictMode-safe、runtime dispose）、`docs/bugs/15-render-nodes-setstate-during-render-fix.md`。
+- **复核状态**: 未复核
+
+### [维度07-08] FormRenderer 在 render/useMemo 中创建 FormRuntime，runtime-owned form set 只能等 runtime.dispose 清空
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form\src\renderers\form.tsx`
+- **行号范围**: `158-180`
+- **证据片段**:
+
+  ```tsx
+  const ownedForm = useMemo(
+    () =>
+      runtime.createFormRuntime({
+        id: formId,
+        name: formName,
+        initialValues: initialValuesRef.current,
+        parentScope,
+        statusPath,
+        valuesPath,
+  ```
+
+- **严重程度**: P1
+- **effect 职责**: renderer-owned `FormRuntime` 的创建、发布、替换与 dispose。
+- **应归属层级**: concrete form owner 的 commit-safe lifecycle effect，或 runtime 提供可释放并从 owned set 注销的 form owner API。
+- **现状**: Form renderer 在 render/useMemo 中调用 `runtime.createFormRuntime()`。该 runtime API 会将 form 加入 `ownedFormRuntimes`（`runtime-owned-factories.ts:320`），组件 effect cleanup 调用 `disposedForm.dispose()`，但没有对应 `ownedFormRuntimes.delete(formRuntime)` release 路径，集合只在 root `runtime.dispose()` 时整体 clear。
+- **风险**: 未提交 render 或异常 render 会泄漏已创建 form runtime；即使正常 unmount，已 dispose 的 form runtime 仍留在 runtime-owned set，直到 root runtime dispose。长生命周期页面中反复挂载/替换表单会累积 stale form runtime 引用，root dispose 时还会再次遍历并调用已 disposed form。
+- **建议**: 将 `createFormRuntime()` 移入 `useLayoutEffect` 并以 committed holder 发布；同时补 runtime-level `releaseFormRuntime(form)` 或让 form dispose 回调从 owned set 注销，避免组件局部 dispose 与 runtime-owned set 分离。
+- **为什么值得现在做**: `form` 是核心 owner renderer，form runtime 又承载验证、提交、状态发布等关键生命周期；这里若不收敛，会持续复制 “render 创建 owner + effect 补偿 cleanup” 的历史模式。
+- **误报排除**: 这不是单纯 “useMemo 冗余” 或 React Compiler 风格问题；`createFormRuntime()` 明确登记 runtime ownership。也不是 07-01/07-02 的 NodeRenderer 路径，而是 concrete form owner 主路径。
+- **历史模式对应**: 对应 Bug 15 render-phase runtime mutation；也对应 07-01/07-02/07-03 中 child scope/action scope/surface scope 的 create-in-render lifecycle 漂移模式。
+- **参考文档**: `docs/architecture/renderer-runtime.md`（Form data scope + FormRuntime creator-owned boundary、helpers createScope lifecycle baseline、render phase must stay side-effect free）、`docs/bugs/15-render-nodes-setstate-during-render-fix.md`。
+- **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+### [维度07-09] detail draft FormRuntime 由交互路径反复创建，closeDraft 只 dispose 不释放 runtime-owned form 引用
+
+- **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\detail-view\detail-view.tsx:330-342`, `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\detail-view\detail-field.tsx:192-204`, `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\detail-view\detail-draft-controller.ts:111-138`, `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\runtime-owned-factories.ts:309-321`
+- **行号范围**: `detail-view.tsx:330-342`; `detail-field.tsx:192-204`; `detail-draft-controller.ts:111-138`; `runtime-owned-factories.ts:309-321`
+- **证据片段**:
+
+  ```tsx
+  const newDraftForm = runtime.createFormRuntime({
+    id: `detail-view-draft:${scopePath ?? 'static'}:${Date.now()}`,
+    initialValues,
+    parentScope,
+    validation: props.templateNode.validationPlan,
+  });
+
+  if (!openSequencer.isCurrent(openToken)) {
+    newDraftForm.dispose();
+    return;
+  }
+
+  openDraft(newDraftForm);
+  ```
+
+  ```ts
+  const openDraft = React.useCallback(
+    (nextDraftForm: FormRuntime) => {
+      if (!mountedRef.current) {
+        nextDraftForm.dispose();
+        return;
+      }
+
+      confirmSequencer.invalidate();
+      setConfirming(false);
+      draftFormRef.current?.dispose();
+      assignDraftForm(nextDraftForm);
+  ```
+
+  ```ts
+  const formRuntime = createManagedFormRuntime({
+    ...inputValue,
+    reportDependentRevalidationFailure,
+    executeValidationRule: (compiledRule, rule, field, scope, signal) =>
+      executeRuntimeValidationRule(compiledRule, rule, field, scope, signal, {
+        dispatch: (action, ctx) => input.dispatchAction(action, ctx),
+      }),
+  });
+
+  ownedFormRuntimes.add(formRuntime);
+  ```
+
+- **严重程度**: P2
+- **effect 职责**: detail-view/detail-field 草稿表单的创建、打开、关闭、替换与释放。
+- **应归属层级**: draft form owner runtime 或 runtime-level releasable form owner API；React controller 可以触发打开/关闭，但不应只做局部 `dispose()` 而留下 root runtime ownership 引用。
+- **现状**: `detail-view` 与 `detail-field` 在每次打开编辑面板时通过 `runtime.createFormRuntime()` 创建 draft form；`openDraft`/`closeDraft`/unmount cleanup 只调用 `FormRuntime.dispose()`。但 `createFormRuntime()` 会把 form 加入 `ownedFormRuntimes`，当前没有对应的 per-form release/delete 路径，直到 root `runtime.dispose()` 才整体清空。
+- **风险**: 用户在长生命周期页面中反复打开/取消/确认 detail draft，会不断把已关闭 draft form 留在 root runtime 的 owned set 中；这些 stale form runtime 持有 scope、validation owner、field registration、child contract 等对象引用，造成内存累积，并在 root dispose 时被再次遍历 dispose，扩大 teardown 成本和生命周期归属混乱。
+- **建议**: 为 `RendererRuntime` 增加 `releaseFormRuntime(form)` 或让 `FormRuntime.dispose()` 通过 owner 回调从 `ownedFormRuntimes` 注销；detail draft controller 的 `openDraft`/`closeDraft`/unmount cleanup 应走同一 release API。若 draft form 语义需要独立 owner，可封装为 detail-draft runtime controller，统一管理创建、替换与释放。
+- **误报排除**: 这不是已报告的 07-08 `FormRenderer` render/useMemo 创建 form runtime；本条是用户交互路径下的 detail draft form，创建发生在 `handleOpen()`，但仍通过同一个 runtime-owned factory 注册到 root owned set，且局部 close/cancel/replace 只 dispose 不 release，因此是独立的生命周期 residual。
+- **参考文档**: `docs/architecture/renderer-runtime.md`（FormRuntime creator-owned boundary、runtime owners must expose explicit teardown）、`docs/architecture/value-adaptation-and-detail-field.md`、`docs/bugs/15-render-nodes-setstate-during-render-fix.md`。
+- **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度07-10] import-owned ActionScope 在 NodeRenderer render/useMemo 中创建且没有对应 release
+
+- **文件**: `packages/flux-react/src/node-renderer.tsx`; `packages/flux-runtime/src/runtime-factory.ts`
+- **行号范围**: `node-renderer.tsx:71-77`; `runtime-factory.ts:157-165`
+- **证据片段**:
+
+  ```tsx
+  const importOwnedActionScope = useMemo(() => {
+    if (!nodeImports?.length) {
+      return undefined;
+    }
+
+    return createImportOwnedActionScope(runtime, props.actionScope, props.node.id);
+  }, [runtime, props.actionScope, props.node.id, nodeImports]);
+  ```
+
+  ```ts
+  const actionScope = createActionScope({
+    id: scopeInput.id ?? `action-scope-${actionScopeCounter}`,
+    parent: scopeInput.parent,
+  });
+
+  ownedActionScopes.add(actionScope);
+  ```
+
+- **严重程度**: P1
+- **effect 职责**: import-owned action scope 的创建、namespace 安装、卸载与 runtime owned set 释放。
+- **应归属层级**: React commit 阶段 lifecycle effect 或 import runtime owner；不应在 render/useMemo 中创建 runtime-owned action scope。
+- **现状**: `NodeRenderer` 对带 `nodeImports` 的节点在 render 阶段通过 `useMemo` 调用 `runtime.createActionScope()`；该 API 会把 scope 加入 runtime 的 `ownedActionScopes`。当前文件只在 `installPrepared()` cleanup 中 pop import frame，没有对 `importOwnedActionScope` 调用 `runtime.releaseActionScope()`。
+- **风险**: 未提交 render、异常 render 或 StrictMode replay 会创建无法由 effect cleanup 覆盖的 action scope；即使正常卸载，import-owned scope 也会留在 runtime owned set 直到 root runtime dispose，长生命周期页面中反复挂载 import-owned 节点会累积 namespace/capability owner 引用。
+- **建议**: 将 import-owned action scope 的创建移动到 `useLayoutEffect` 并通过 committed holder 发布；cleanup 中显式 `runtime.releaseActionScope(importOwnedActionScope)`。也可把 import frame 与其 action scope 封装为同一个 runtime-owned registration，由 `importStack.pop()` 统一释放。
+- **误报排除**: 这不是已报告的 07-02 `useNodeScopes` node-owned scope，也不是 reopened 文档中已修复的 prepared-import installation render-phase mutation；本条是 `NodeRenderer` 内另一条 import-owned action scope 创建路径，并且存在缺失 release 的独立 lifecycle residual。
+- **参考文档**: `docs/architecture/renderer-runtime.md`（render phase must stay side-effect free、NodeRenderer import 边界）、`docs/references/reopened-design-decisions-and-audit-adjudications.md`、`docs/bugs/15-render-nodes-setstate-during-render-fix.md`。
+- **复核状态**: 未复核
+
+### [维度07-11] useHostScope 在 useState initializer 中创建 host projection child scope，host 作用域仍从 render 阶段进入 runtime ownership
+
+- **文件**: `packages/flux-react/src/workbench/hooks.ts`; `packages/flux-runtime/src/runtime-host-projection-scope.ts`
+- **行号范围**: `hooks.ts:49-65`; `runtime-host-projection-scope.ts:58-64`
+- **证据片段**:
+  ```tsx
+  const [store] = useState<HostScopeStore>(() =>
+    createHostScopeStore(
+      runtime.createHostProjectionScope({
+        parentScope,
+        projection: scopeData,
+        path,
+        scopeLabel,
+      }),
+    ),
+  );
+  ```
+  ```ts
+  const hostScope = input.createChildScope(input.parentScope, input.projection, {
+    scopeKey: `${input.path}:${input.scopeLabel}-host`,
+    pathSuffix: input.scopeLabel,
+  });
+  ```
+- **严重程度**: P1
+- **effect 职责**: complex host renderer 的 projected host scope 创建、替换、projection 更新与 dispose。
+- **应归属层级**: commit-safe React lifecycle effect 或 runtime host-scope owner；不应在 `useState` 初始化期间创建 runtime child scope。
+- **现状**: `useHostScope()` 的 lazy initializer 在 render 阶段调用 `runtime.createHostProjectionScope()`，后者立即通过 `createChildScope()` 创建 runtime-owned child scope。后续 `useLayoutEffect` 只处理 parent/path 改变后的替换和 unmount dispose，无法覆盖未提交 render。
+- **风险**: `designer-page`、`spreadsheet-page`、`report-designer-page`、`word-editor-page` 等 host renderer 的初次 render 如果被中断或抛错，已创建的 host projection scope 会进入 runtime owned scope disposer 集合但没有 committed cleanup；host projection 持有 document/runtime/selection 等大对象，泄漏成本高于普通局部 UI state。
+- **建议**: 改为 commit-safe holder：初始 render 返回父 scope或 `null`/fallback，在 `useLayoutEffect` 中创建 host projection scope并通过 `useSyncExternalStore`/state 发布；unmount 和 parent/path 变化统一 dispose 已提交 scope。若需要同步首帧 projection，可由 runtime 提供不会注册 owned disposer 的 prepare/commit 两阶段 API。
+- **误报排除**: 这不是普通 `useState` 初始化缓存，也不是 07-01/07-03 已报告的 import/surface child scope；本条调用的是 `runtime.createHostProjectionScope()`，内部直接创建 runtime-owned child scope，且影响所有使用 `useHostScope` 的 domain-host renderer。
+- **参考文档**: `docs/architecture/renderer-runtime.md`（source lifecycle semantics remain runtime-owned、render phase must stay side-effect free、domain-host-renderer owner 分类）、`docs/architecture/data-domain-owner.md`、`docs/bugs/15-render-nodes-setstate-during-render-fix.md`。
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+未发现新的高价值问题。深挖结束。

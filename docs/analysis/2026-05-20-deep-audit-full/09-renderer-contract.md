@@ -177,3 +177,147 @@
 - **历史模式对应**: 对应“Blanket FieldFrame Or Shared Shell Adoption Pressure”中的保留条件：存在直接 FieldFrame bypass 和外壳 ownership 复制；也对应 renderer-runtime 中 `cid` 属于 mounted inspectable node root 的历史规则。
 - **参考文档**: `docs/architecture/renderer-runtime.md`（cid placement、props versus meta、NodeFrameWrapper/FieldFrame 语义）；`docs/architecture/field-metadata-slot-modeling.md`（FieldFrame chrome inputs owner surface）；`docs/references/deep-audit-calibration-patterns.md`（Pattern 9）；`docs/references/audit-tooling.md`（`check:audit-fieldframe-bypasses` suspect）
 - **复核状态**: 未复核
+
+## 深挖第 2 轮追加
+
+### [维度09-06] `variant-field` 从 `templateNode.eventPlans` 反抽 raw `ActionSchema` 并自行 dispatch，绕过标准 `props.events.detectVariantAction` 事件通道
+
+- **文件**: `packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx:89-101`, `packages/flux-renderers-form-advanced/src/variant-field/variant-field-controller.ts:48-53,118-130`, `packages/flux-renderers-form-advanced/src/variant-field/variant-field-helpers.ts:33-43`
+- **行号范围**: `variant-field.tsx:89-101`, `variant-field-controller.ts:48-53,118-130`, `variant-field-helpers.ts:33-43`
+- **证据片段**:
+  ```ts
+  fields: [
+    ...formFieldRules,
+    { key: 'variants', kind: 'prop' },
+    { key: 'selector', kind: 'prop' },
+    { key: 'selectorMode', kind: 'prop' },
+    { key: 'defaultVariant', kind: 'prop' },
+    { key: 'detectVariantAction', kind: 'event' },
+    { key: 'transformInAction', kind: 'ignored' },
+  ],
+  ```
+  ```ts
+  const detectVariantPlan = (
+    props.templateNode as { eventPlans?: Record<string, unknown> } | undefined
+  )?.eventPlans?.detectVariantAction;
+  const detectVariantAction = React.useMemo(
+    () => getAuthoredActionSchema(detectVariantPlan),
+    [detectVariantPlan],
+  );
+  ```
+  ```ts
+  const result = await props.helpers.dispatch(
+    injectDetectVariantArgs(detectVariantAction, {
+      value: currentValue,
+      variants: variants.map((variant) => variant.key),
+    }),
+  ```
+- **严重程度**: P1
+- **契约条款**: `event` 字段应由 `NodeRenderer` 编译并装配为 `props.events` 上的 `RendererEventHandler`；concrete renderer 应从 `props.events` 消费事件处理器，而不是读取 `templateNode.eventPlans`、反抽 compiled action program 的 raw source 后自行 dispatch。
+- **现状**: `detectVariantAction` 在 renderer definition 中声明为 `event`，但 `variant-field` 没有调用 `props.events.detectVariantAction`。它直接读取 `props.templateNode.eventPlans.detectVariantAction`，再通过 `getAuthoredActionSchema()` 从 `CompiledActionProgram.nodes[].source` 提取原始 `ActionSchema`，注入默认 args 后调用 `props.helpers.dispatch()`。
+- **风险**: 该路径绕过 `NodeRenderer` 对事件字段的统一适配、默认 scope/nodeInstance/event 语义，以及未来 tracing、diagnostics、cancellation 或 event contract 变更。若 compiled action program 后续不再保留 `source`，或 event handler 增强语义只在 `props.events` 中实现，`variant-field` 会静默偏离标准事件通道。
+- **建议**: 优先将 `detectVariantAction` 作为真正事件从 `props.events.detectVariantAction` 调用，并通过 event payload / eventContext 传递 `{ value, variants }`。如果该字段确实需要 renderer 主动持有并改写 action schema，应重新建模为明确的 owner action prop / semantic action channel，而不是声明为 `event` 后读取 `eventPlans`。
+- **为什么值得现在做**: `variant-field` 是高级表单字段主路径，`detectVariantAction` 已有测试和实际 schema 行为覆盖；当前实现会把后续 event channel 收敛、action diagnostics 或 compiled action program 内部结构调整的成本集中到 live renderer 主路径上。
+- **误报排除**: 这不是重复 quickSaveAction event 问题。这里的问题不在表格 quick-edit，也不是单纯“event 被当 prop 读”，而是 `variant-field` 直接读取 compiled `eventPlans` 并从中反抽 raw action source，绕过 `props.events` 的标准 handler。
+- **历史模式对应**: 对应 field metadata / slot modeling 中“字段语义由 renderer metadata 定义，renderer 只消费规范化输出”的收敛模式；也对应 renderer-runtime 中 “NodeRenderer builds events” 与 concrete renderer boundary 不应依赖 compiled template 内部结构的模式。
+- **参考文档**: `docs/architecture/renderer-runtime.md`（NodeRenderer Responsibilities、Renderer Component Contract、Props Versus Hooks）；`docs/architecture/field-metadata-slot-modeling.md`（Renderer metadata defines field semantics、event field、renderer consumes normalized outputs）；`docs/references/renderer-interfaces.md`（RendererDefinition field map、RendererEventHandler、Render-Time React Contracts）
+- **复核状态**: 未复核
+
+### [维度09-07] `ReportInspectorShellRenderer` 手工伪造 `ReportInspectorRenderer` props 并直接调用子 renderer，绕过 `report-inspector` definition/NodeRenderer 装配
+
+- **文件**: `packages/report-designer-renderers/src/inspector-shell-renderer.tsx:32-41,70-72`, `packages/report-designer-renderers/src/renderers.tsx:153-160`
+- **行号范围**: `inspector-shell-renderer.tsx:32-41,70-72`, `renderers.tsx:153-160`
+- **证据片段**:
+  ```tsx
+  const inspectorProps: RendererComponentProps<ReportInspectorSchema | ReportInspectorShellSchema> =
+    {
+      ...props,
+      meta: {
+        visible: true,
+        hidden: false,
+        disabled: false,
+        changed: false,
+      },
+      props: { ...props.props, body: inspector?.resolvedSchema },
+    };
+  ```
+  ```tsx
+  ) : (
+    <ReportInspectorRenderer {...inspectorProps} />
+  )}
+  ```
+  ```ts
+  {
+    type: 'report-inspector',
+    component: LazyReportInspectorRenderer,
+    fields: [
+      { key: 'body', kind: 'prop' },
+      { key: 'emptyLabel', kind: 'prop' },
+      { key: 'noSelectionLabel', kind: 'prop' },
+    ],
+  },
+  ```
+- **严重程度**: P2
+- **契约条款**: `NodeRenderer` 负责根据目标 renderer definition 解析 `meta` / `props` / `events` / `regions` / `helpers` 并调用 concrete renderer；一个 renderer 不应手工构造另一个 renderer 的 `RendererComponentProps` 后直接调用其 component。
+- **现状**: `report-inspector-shell` 读取 owner scope 后，把自身 `props` 展开并改写 `meta` 与 `props.body`，直接 `<ReportInspectorRenderer {...inspectorProps} />`。这条路径没有经过 `report-inspector` 自己的 renderer definition field map、node identity、path、cid/testid、events/regions 装配。
+- **风险**: 当前 `report-inspector` 字段面较窄，所以问题局部可控；但一旦它新增字段 metadata、wrap、region、event、debug/diagnostics 或 node identity 依赖，shell 内嵌路径会与正常 schema 使用路径分叉。手工覆盖 `meta` 也会让内层 inspector 是否是独立 inspectable node 变得不明确。
+- **建议**: 若 shell 需要组合 inspector，应通过 `props.helpers.render({ type: 'report-inspector', body: inspector?.resolvedSchema, ... }, { pathSuffix: 'inspector' })` 走标准渲染路径；或者抽出纯 `ReportInspectorView` / controller，让 `ReportInspectorRenderer` 与 shell 共享 view 层，而不是伪造完整 renderer boundary。
+- **为什么值得现在做**: 这是除 CRUD/Table 外另一个 live renderer-to-renderer direct call；如果现在不收敛，report designer 后续扩展 inspector 字段、事件或调试桥时会复制同类旁路维护成本，并扩大 renderer contract 漂移面。
+- **误报排除**: 这不是重复 `CrudRenderer` 伪造 `TableRenderer` props 的发现；它位于 `report-designer-renderers`，目标 renderer 与字段面不同。也不是禁止组合 renderer UI，问题点是组合方式伪造了完整 `RendererComponentProps` boundary，而不是使用 `helpers.render` 或共享纯 view。
+- **历史模式对应**: 对应 renderer-runtime 中 “NodeRenderer assembles final renderer contract” 的历史收敛模式；也对应 v1 基线下不接受主路径 renderer boundary 伪造 / raw props 拼装补洞的模式。
+- **参考文档**: `docs/architecture/renderer-runtime.md`（End-To-End Render Pipeline、NodeRenderer Responsibilities、Renderer Component Contract）；`docs/architecture/field-metadata-slot-modeling.md`（renderer consumes normalized outputs）；`docs/references/renderer-interfaces.md`（RendererDefinition field map、Render-Time React Contracts）
+- **复核状态**: 未复核
+
+## 深挖第 3 轮追加
+
+### [维度09-08] 多个 `wrap: true` 字段渲染器把 node-level `data-testid` / `data-cid` 盲目镜像到内层 control root
+
+- **文件**: `packages/flux-react/src/node-frame-wrapper.tsx:58-84`, `packages/flux-renderers-form-advanced/src/tree-controls.tsx:255-260`, `packages/flux-renderers-form-advanced/src/array-editor.tsx:334-340`, `packages/flux-renderers-form-advanced/src/composite-field/array-field.tsx:544-550`
+- **行号范围**: `node-frame-wrapper.tsx:58-84`, `tree-controls.tsx:255-260`, `array-editor.tsx:334-340`, `array-field.tsx:544-550`
+- **证据片段**:
+  ```tsx
+  const usesInteractiveControlRoot =
+    props.templateNode.type === 'array-editor' ||
+    props.templateNode.type === 'array-field' ||
+    props.templateNode.type === 'input-tree' ||
+    props.templateNode.type === 'tree-select' ||
+    props.templateNode.type === 'tag-list' ||
+    props.templateNode.type === 'condition-builder' ||
+    props.templateNode.type === 'key-value' ||
+    props.templateNode.type === 'detail-field';
+  ```
+  ```tsx
+  <FieldFrame
+    ...
+    testid={props.resolvedMeta.testid}
+    cid={props.resolvedMeta.cid}
+  >
+  ```
+  ```tsx
+  <div
+    className={cn('nop-input-tree', props.meta.className)}
+    data-slot="input-tree-control"
+    data-testid={props.meta.testid}
+    data-cid={props.meta.cid}
+  >
+  ```
+  ```tsx
+  <div
+    className={cn('nop-array-field', props.meta.className)}
+    data-slot="field-control"
+    data-testid={props.meta.testid}
+    data-cid={props.meta.cid}
+  >
+  ```
+- **严重程度**: P2
+- **契约条款**: `renderer-runtime.md` 明确规定 `testid` / `cid` 是 node-level anchor；对 `wrap: true` 字段渲染器，mounted inspectable node root 通常是 `FieldFrame`，因此 `props.meta.testid` 和 `props.meta.cid` 属于 `FieldFrame`，内层 control 不应盲目镜像。
+- **现状**: `NodeFrameWrapper` 已经对 `array-editor`、`array-field`、`input-tree`、`tree-select`、`tag-list`、`condition-builder`、`key-value` 等 `wrap: true` 字段把 `testid` / `cid` 传给 `FieldFrame`。但这些字段渲染器自身仍把同一 `props.meta.testid` / `props.meta.cid` 写到内层 control root，形成同一 node id/test anchor 在 FieldFrame 与内层 DOM 上重复出现。
+- **风险**: DOM/debugger/registry lookup 依赖最近的 `data-cid` 时，重复 cid 会让“mounted inspectable node root”边界变得不稳定；测试选择器也可能同时命中外层 FieldFrame 与内层 control，掩盖 wrapper contract 变化。后续若 FieldFrame 根节点、`frameClassName`、分组布局或调试桥规则调整，这些内层镜像点需要逐个同步。
+- **建议**: 对 `wrap: true` 字段删除内层对 node-level `props.meta.testid` / `props.meta.cid` 的盲目透传，只保留 `props.meta.className` 到 canonical control root。若某个复杂字段确实需要 control-level 专用测试锚点，应新增明确命名的 control-level prop 或 data attribute，而不是复用 node-level `testid` / `cid`。
+- **误报排除**: 这不是要求所有复杂字段机械采用 FieldFrame；这些 renderer definition 已经声明 `wrap: true`，且 `NodeFrameWrapper` 已经是外层 FieldFrame owner。本条只针对同一 node-level anchor 被内外两层同时写入，符合 calibration pattern 9 中“直接违反当前 shell contract / 外壳 ownership 漂移”的保留条件。
+- **参考文档**: `docs/architecture/renderer-runtime.md`（cid placement、props versus meta、`testid` and `cid` follow a different rule from `className`）；`AGENTS.md`（Renderer Component Contract）；`docs/references/deep-audit-calibration-patterns.md`（Pattern 9）
+- **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+未发现新的高价值问题。深挖结束。

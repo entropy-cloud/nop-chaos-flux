@@ -1,6 +1,6 @@
 # 417 Open-Ended Adversarial Review 2026-05-20 I18n Guardrail Truthfulness Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-20
 > Source: `docs/analysis/2026-05-20-open-ended-adversarial-review-01/round-01.md`
 > Related: `docs/plans/416-open-ended-adversarial-review-2026-05-20-remediation-routing-plan.md`, `docs/plans/402-deep-audit-2026-05-19-cross-package-i18n-alignment-plan.md`
@@ -46,29 +46,42 @@
 
 ### Phase 1 - Align I18n Key Guardrail With Live Key Usage
 
-Status: planned
+Status: completed
 Targets: i18n guardrail script, focused proof, relevant docs
 
 - Item Types: `Fix | Proof`
 
-- [ ] Extend the guardrail so namespace-relative and supported dynamic key patterns are handled honestly.
-- [ ] Add focused proof covering the key forms that motivated `R01-01`.
-- [ ] Adjudicate owner-doc impact explicitly: update `docs/references/audit-tooling.md` if the supported hard-gate coverage contract changes, and update `docs/references/maintenance-checklist.md` or `docs/index.md` only if the repo's recommended maintenance/routing baseline changes; otherwise explicitly record `No owner-doc update required`.
+- [x] Extend the guardrail so namespace-relative and supported dynamic key patterns are handled honestly.
+- [x] Add focused proof covering the key forms that motivated `R01-01`.
+- [x] Adjudicate owner-doc impact explicitly: `docs/references/audit-tooling.md` was updated for the changed hard-gate coverage contract, while `docs/references/maintenance-checklist.md` and `docs/index.md` required no text change for this slice.
 
 Exit Criteria:
 
-- [ ] `R01-01` is fixed.
-- [ ] Focused proof covers the final supported key-usage patterns.
-- [ ] `docs/references/audit-tooling.md` is updated if needed, and `docs/references/maintenance-checklist.md` / `docs/index.md` are updated if needed; otherwise `No owner-doc update required` is explicitly recorded for each unchanged owner doc.
-- [ ] `docs/logs/2026/05-20.md` is updated.
+- [x] `R01-01` is fixed.
+- [x] Focused proof covers the final supported key-usage patterns.
+- [x] `docs/references/audit-tooling.md` is updated, and `docs/references/maintenance-checklist.md` / `docs/index.md` are explicitly adjudicated as `No owner-doc update required` for this slice.
+- [x] `docs/logs/2026/05-20.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained finding is fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained finding is fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Closure
+
+Status Note: The `check:i18n-keys` guard now normalizes namespace-relative keys to `flux.*`, collects declared dynamic key maps such as `OPERATOR_LABEL_KEYS`, and the updated hard-gate coverage is documented in `docs/references/audit-tooling.md`. Focused proof, repo-wide verification, and independent closure audit are all complete.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: independent general subagent
+- Evidence: `ses_1bb02c7feffeSJyOIc1GfmNQsL` (`Verdict: acceptable`, `Findings: none`), recorded in `docs/logs/2026/05-20.md`
+
+Follow-up:
+
+- no remaining plan-owned work

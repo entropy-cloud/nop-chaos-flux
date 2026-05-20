@@ -17,6 +17,7 @@ import {
   validateActionShape,
   validateApiSchemaShape,
   validateDependsOnRoots,
+  validateReactionShape,
   validateSourceShape,
 } from './shape-validation-rules.js';
 import {
@@ -61,6 +62,36 @@ function validateKnownPropValue(
 
   if (!valid) {
     skippedPropKeys.add(key);
+  }
+}
+
+function validateRequiredPropContracts(
+  schema: BaseSchema,
+  renderer: RendererDefinition,
+  pointer: string,
+  diagnostics: SchemaCompilerDiagnosticsContext,
+  enabled: boolean,
+) {
+  const propContracts = renderer.propContracts;
+  if (!propContracts) {
+    return;
+  }
+
+  for (const [key, contract] of Object.entries(propContracts)) {
+    if (!contract.required || schema[key] !== undefined) {
+      continue;
+    }
+
+    emitSchemaDiagnostic(
+      diagnostics,
+      {
+        code: 'invalid-property-shape',
+        path: appendJsonPointer(pointer, key),
+        message: `Missing required property "${key}" for renderer type "${renderer.type}".`,
+        source: 'renderer',
+      },
+      enabled,
+    );
   }
 }
 
@@ -137,6 +168,8 @@ export function inspectSchemaNodeFields(
   const acceptedKeys = getAcceptedSchemaKeys(renderer);
   const skippedPropKeys = new Set<string>();
   const extensions: Record<string, unknown> = {};
+
+  validateRequiredPropContracts(schema, renderer, pointer, diagnostics, enabled);
 
   for (const key of Object.keys(schema)) {
     const value = schema[key];
@@ -304,13 +337,14 @@ export function inspectSchemaNodeFields(
   }
 
   if (schema.type === 'reaction') {
-    validateActionShape(
-      schema.actions,
-      appendJsonPointer(pointer, 'actions'),
-      diagnostics,
-      enabled,
-      hostContext,
-    );
+    validateReactionShape(schema, pointer, diagnostics, enabled, hostContext);
+  }
+
+  for (const lifecycleKey of ['onMount', 'onUnmount'] as const) {
+    const lifecycleValue = schema[lifecycleKey];
+    if (lifecycleValue !== undefined) {
+      validateActionShape(lifecycleValue, appendJsonPointer(pointer, lifecycleKey), diagnostics, enabled, hostContext);
+    }
   }
 
   if (enabled && renderer.schemaValidator) {
