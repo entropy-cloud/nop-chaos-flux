@@ -120,6 +120,7 @@ Do not move generic validation helpers back into compiler modules when they can 
   - owner-local validation orchestration shared by `FormRuntime`
   - full-traversal / subtree validation coordination
   - dependent revalidation, external-error publication, owner summary computation
+  - `applyChangesAndRevalidate(...)` sequencing, including the transitional lifecycle rule that owner-local writes can commit before validation resumes against the next active model generation
 - `packages/flux-runtime/src/form-runtime-owner-field-states.ts`
   - shared field-state merge helpers used by owner-local external-error rebuild paths
 - `packages/flux-runtime/src/form-runtime.ts`

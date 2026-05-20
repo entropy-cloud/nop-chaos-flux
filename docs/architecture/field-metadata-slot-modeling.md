@@ -214,6 +214,10 @@ Recommended examples:
 - `item`
 - `empty`
 
+Current owner example: `packages/flux-renderers-data/src/data-renderer-definitions.ts` models `chart.title` as `value-or-region`, so schema authors can provide either a plain string or a schema fragment without introducing a parallel `titleRegion` prop.
+
+Current shared field-chrome example: `packages/flux-renderers-form/src/field-utils/field-reading.tsx` exports `formFieldChromeRules`, making the supported `FieldFrame` chrome inputs explicit in one owner surface (`hint`, `description`, `remark`, `labelRemark`, `labelAlign`, `labelWidth`) instead of relying on ad hoc renderer knowledge.
+
 These names should not be mechanically expanded into schema-level names such as:
 
 - `titleRegion`
@@ -384,6 +388,7 @@ Current concrete pattern:
 - `table.columns[].label` -> `columns.N.label` region
 - `table.columns[].buttons` -> `columns.N.buttons` region
 - `table.columns[].cell` -> `columns.N.cell` region
+- `table.columns[].body` -> `columns.N.quickEditBody` region
 
 Recommended compiled result shape:
 

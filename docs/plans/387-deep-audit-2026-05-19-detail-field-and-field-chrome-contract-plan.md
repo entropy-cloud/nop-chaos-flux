@@ -1,6 +1,6 @@
 # 387 Deep Audit 2026-05-19 Detail-Field And Field-Chrome Contract Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -10,9 +10,9 @@
 
 ## Current Baseline
 
-- detail-field control root 丢弃 schema `className`。
-- detail renderer 直读 `FormRuntime` store。
-- shared field metadata 未显式覆盖 `FieldFrame` chrome inputs。
+- `packages/flux-renderers-form-advanced/src/detail-view/detail-field.tsx` 已保留 schema `className` 到 canonical control root。
+- detail surfaces 已回到 `useCurrentFormState` / `useScopeSelector`，不再直读 `FormRuntime` store。
+- `packages/flux-renderers-form/src/field-utils/field-reading.tsx` 已导出 shared `formFieldChromeRules`，显式覆盖 `FieldFrame` chrome inputs。
 
 ## Goals
 
@@ -42,37 +42,37 @@
 
 ### Phase 1 - Restore Detail And Field-Chrome Contract
 
-Status: planned
+Status: completed
 Targets: detail-field code, tests, owner docs
 
 - Item Types: `Fix | Proof`
-- [ ] Restore schema `className` handling and stop direct store reads.
-- [ ] Make the field-chrome metadata contract explicit.
-- [ ] Update the owner docs named in Plan `371`.
+- [x] Restore schema `className` handling and stop direct store reads.
+- [x] Make the field-chrome metadata contract explicit.
+- [x] Update the owner docs named in Plan `371`.
 
 Exit Criteria:
 
-- [ ] `09-01`, `09-03`, and `12-01` are fixed.
-- [ ] Focused proof covers the final detail-field and field-chrome contract.
-- [ ] `docs/architecture/renderer-runtime.md` and `docs/architecture/field-metadata-slot-modeling.md` are updated.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `09-01`, `09-03`, and `12-01` are fixed.
+- [x] Focused proof covers the final detail-field and field-chrome contract.
+- [x] `docs/architecture/renderer-runtime.md` and `docs/architecture/field-metadata-slot-modeling.md` are updated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Plan `387` is closed. The retained detail-field `className` / direct-store / field-chrome metadata gaps are already fixed in the live repo, focused proof now explicitly covers the control-root className contract, owner docs are synced, repo-wide verification passed, and the independent closure audit found bookkeeping-only drift.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: general subagent
+- Evidence: independent audit `ses_1bd6a8bd8ffe95ya3f4UG3Ouvh` confirmed the retained code findings were already fixed and only focused proof/doc/log bookkeeping remained; after adding explicit className proof and syncing owner docs/log/closure gates, no in-scope blocker remained.

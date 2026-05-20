@@ -1,6 +1,6 @@
 # 377 Deep Audit 2026-05-19 SchemaRenderer Suite Decomposition Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -57,16 +57,16 @@ Exit Criteria:
 
 - [x] The in-scope retained findings are fixed.
 - [x] `No owner-doc update required`.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
 - [x] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: The in-scope test-surface split and focused proof landed, but repo-wide closure gates remain blocked by unrelated workspace failures, so the plan stays `partially completed`.
+Status Note: Completed. The in-scope SchemaRenderer suite split remains landed, the independent closure audit found no remaining in-scope semantic gap, and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.
 
 Closure Audit Evidence:
 
@@ -76,4 +76,5 @@ Closure Audit Evidence:
   - `packages/flux-react/src/__tests__/schema-renderer-registry-debug.test.tsx` now owns the registry/debug/surface-runtime seam coverage.
   - Focused verification passed: `pnpm exec vitest run src/__tests__/schema-renderer.test.tsx src/__tests__/schema-renderer-registry-debug.test.tsx` in `packages/flux-react` (`2` files / `19` tests).
   - `pnpm --filter @nop-chaos/flux-react typecheck`, `build`, and `lint` passed.
-  - `pnpm check:oversized-code-files` no longer reports any `packages/flux-react/src/__tests__/schema-renderer*.test.tsx` hard-gate offender; the remaining hard-gate files are unrelated (`apps/playground/src/pages/performance-table-page.tsx`, `packages/word-editor-renderers/src/__tests__/word-editor-page-actions.test.tsx`).
+  - `pnpm check:oversized-code-files` no longer reports any `packages/flux-react/src/__tests__/schema-renderer*.test.tsx` hard-gate offender; remaining hard-gate files are unrelated.
+  - Workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.

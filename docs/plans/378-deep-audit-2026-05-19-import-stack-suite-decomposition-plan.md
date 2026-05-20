@@ -1,6 +1,6 @@
 # 378 Deep Audit 2026-05-19 Import-Stack Suite Decomposition Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -59,14 +59,14 @@ Exit Criteria:
 - [x] `No owner-doc update required`.
 - [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
 - [x] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: The in-scope import-stack suite decomposition is landed: `installPrepared` coverage moved into its own focused suite, shared import-stack test support remains the single helper surface, the old oversized hard-gate offender is gone, and focused/package-local verification is green. Full plan closure remains blocked by unrelated workspace failures outside this surface, so the plan stays `partially completed`.
+Status Note: Completed. The in-scope import-stack suite decomposition remains landed, the independent closure audit found no remaining in-scope semantic gap, and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.
 
 Closure Audit Evidence:
 
@@ -82,6 +82,7 @@ Closure Audit Evidence:
 
 Verification Evidence:
 
-- Workspace `pnpm typecheck` / `pnpm build` currently fail outside this plan in `packages/flux-renderers-data/src/chart-renderer.tsx`.
-- Workspace `pnpm lint` currently fails outside this plan in `packages/flux-renderers-data/src/chart-renderer.tsx`.
-- Workspace `pnpm test` currently fails outside this plan because `packages/flow-designer-renderers` test transforms currently hit a parse error in `packages/flux-react/src/node-renderer.tsx`.
+- Workspace `pnpm typecheck` is green (`49` successful tasks).
+- Workspace `pnpm build` is green (`26` successful tasks).
+- Workspace `pnpm lint` is green (`26` successful tasks).
+- Workspace `pnpm test` is green (`49` successful tasks).

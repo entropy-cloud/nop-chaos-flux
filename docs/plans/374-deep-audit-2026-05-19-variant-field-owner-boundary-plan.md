@@ -1,6 +1,6 @@
 # 374 Deep Audit 2026-05-19 Variant-Field Owner Boundary Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -60,20 +60,25 @@ Exit Criteria:
 - [x] The in-scope retained finding is fixed.
 - [x] Required owner-doc updates are landed.
 - [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
 - [x] `pnpm test`
 
 ## Closure
 
-Status Note: In-scope `variant-field` owner decomposition landed and cleared the local oversized hard gate, but full plan closure remains blocked by out-of-scope workspace verification failures and the missing independent closure audit, so the plan stays `partially completed`.
+Status Note: Completed. The in-scope `variant-field` owner decomposition remains landed, the root file stays below the oversized hard gate, the supported parent-owned `inherit-owner` projected baseline remains unchanged, the independent closure audit found no remaining semantic gap, and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: independent general subagent `ses_1bdb8d5ddffeLgpp2i3g4fnhaK`
+- Evidence:
+  - `packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx` remains a thin root shell (`116` lines) delegating owner concerns to `variant-field-controller.ts`, `variant-field-owner.ts`, and `variant-field-view.tsx`.
+  - Focused proof remains green: `pnpm exec vitest run src/variant-field/variant-field-owner-contract.test.tsx src/variant-field/variant-field-detection.test.tsx src/variant-field/variant-field-transform.test.tsx src/variant-field/variant-field-selector.test.tsx src/variant-field/variant-field-field-frame.test.tsx src/variant-field/variant-field-unmount.test.tsx src/variant-field/variant-field.test.tsx` (`7` files / `71` tests).
+  - Owner-doc adjudication remains honest: the supported boundary is still documented in `docs/architecture/variant-field.md` and remains consistent with `docs/architecture/form-validation.md`; no additional `docs/architecture/renderer-runtime.md` update is required for this retained finding.
+  - `pnpm exec node scripts/check-oversized-code-files.mjs` no longer reports `variant-field.tsx`; only unrelated files remain over the hard gate.
+  - Workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.
 
 Verification Evidence:
 
@@ -83,4 +88,4 @@ Verification Evidence:
 - `pnpm build` in `packages/flux-renderers-form-advanced` passed.
 - `pnpm lint` in `packages/flux-renderers-form-advanced` passed.
 - `pnpm check:oversized-code-files` still fails at workspace level on out-of-scope files `packages/flux-react/src/__tests__/schema-renderer.test.tsx` (`741`) and `packages/flux-action-core/src/__tests__/contract-control-flow-edge-cases.test.ts` (`720`), but no longer reports `packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx`.
-- `pnpm typecheck` in `packages/flux-renderers-form-advanced` is still blocked by pre-existing out-of-scope `packages/flux-renderers-data` errors in `src/table-renderer.tsx` and `src/table-renderer/use-table-pagination.ts`.
+- Workspace verification is now green: `pnpm typecheck` (`49` successful tasks), `pnpm build` (`26` successful tasks), `pnpm lint` (`26` successful tasks), and `pnpm test` (`49` successful tasks).

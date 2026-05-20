@@ -863,6 +863,7 @@ Rules:
 4. cross-owner coordination must be modeled as explicit parent/child orchestration rather than one `applyChangesAndRevalidate(...)` call spanning multiple owners
 5. for `reason: 'change'`, the changed path itself remains part of the supported revalidation baseline; owners must not revalidate only dependents while skipping the directly changed path
 6. if the owner is `disposed`, the call must return an explicit lifecycle-blocked result rather than an ordinary clean-success result
+7. if the owner is `bootstrapping` or `refreshing`, owner-local `writes` may still commit immediately, but validation publication must wait until the owner returns to `active` and re-read the current compiled model generation before publishing results
 
 ## Large Inline Tables And Aggregate Rules
 

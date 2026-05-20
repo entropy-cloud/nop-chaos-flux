@@ -1,6 +1,6 @@
 # 382 Deep Audit 2026-05-19 Table And CRUD Owner-State And Event Contract Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -10,9 +10,9 @@
 
 ## Current Baseline
 
-- 空数组 owner state 会被 fallback defaults 覆盖。
-- table pagination events 缺 UI event / semantic payload。
-- CRUD query submit/reset payload 为空。
+- `04-01` 已修复：table 与 CRUD summary 现在保留显式空数组 owner state，不再把 `[]` 误当成“缺失 state”并回退到 defaults。
+- `09-02` / `09-04` 已在当前 live baseline 中成立：table pagination 会透传 UI event 并发布 `table:page-change` 语义 payload；CRUD query submit/reset 会发布带 `type/query/page/pageSize/pagination` 的语义 payload。
+- 剩余工作是把 owner-doc / plan / log 同步到这个已落地 baseline，并完成 closure audit 与 repo-wide gates。
 
 ## Goals
 
@@ -44,37 +44,37 @@
 
 ### Phase 1 - Fix Owner State And Event Payload Contracts
 
-Status: planned
+Status: completed
 Targets: table/CRUD code, tests, owner doc
 
 - Item Types: `Fix | Proof`
-- [ ] Fix empty-array owner-state fallback behavior.
-- [ ] Restore supported semantic event payloads for table and CRUD events.
-- [ ] Update the table/CRUD component docs plus `renderer-runtime.md` to the final supported contract.
+- [x] Fix empty-array owner-state fallback behavior.
+- [x] Restore supported semantic event payloads for table and CRUD events.
+- [x] Update the table/CRUD component docs plus `renderer-runtime.md` to the final supported contract.
 
 Exit Criteria:
 
-- [ ] `04-01`, `09-02`, and `09-04` are fixed.
-- [ ] Focused proof covers owner-state and event-payload results.
-- [ ] `docs/components/table/design.md`, `docs/components/crud/design.md`, and `docs/architecture/renderer-runtime.md` are updated, or `No change required` is explicitly adjudicated.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `04-01`, `09-02`, and `09-04` are fixed.
+- [x] Focused proof covers owner-state and event-payload results.
+- [x] `docs/components/table/design.md`, `docs/components/crud/design.md`, and `docs/architecture/renderer-runtime.md` are updated, or `No change required` is explicitly adjudicated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Completed after landing the empty-array owner-state fix, confirming the existing semantic event-payload baseline, updating owner docs, and re-running focused plus repo-wide verification.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: independent subagent closure audit `ses_1bd9ed593ffeVpkho4lb4wPR6p`
+- Evidence: `Verdict: acceptable`, `Findings: none`, `Plan 382 can be marked completed now: yes`

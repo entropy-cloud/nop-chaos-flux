@@ -15,22 +15,23 @@
 - `type: 'chart'`
 - `category: 'data'`
 - `sourcePackage: '@nop-chaos/flux-renderers-data'`
-- 当前 fields: `onClick`、`onHover` 为 `event`，`empty` 为 `value-or-region`
+- 当前 fields: `title`、`empty` 为 `value-or-region`，`onClick`、`onHover` 为 `event`
 
 ## 4. schema 设计
 
 - 当前导出字段为 `chartType`、`title`、`series`、`source`、`xAxis`、`yAxis`、`height`、`loading`、`empty`。
+- `title` 遵循 value-or-region authoring contract：既可以是普通字符串，也可以是 schema fragment；renderer 会把 slot 内容渲染为 `chart-title` chrome，并通过 `aria-labelledby` 继续作为图表的可访问名称来源。
 - `series` 和 `source` 的职责需要文档明确：前者更接近最终绘图配置，后者更接近原始数据集。
 
 ## 5. 字段分类
 
-- `chartType`、`title`、`series`、`source`、`xAxis`、`yAxis`、`height`、`loading`: `value`
-- `empty`: `value-or-region`
+- `chartType`、`series`、`source`、`xAxis`、`yAxis`、`height`、`loading`: `value`
+- `title`、`empty`: `value-or-region`
 - `onClick`、`onHover`: `event`
 
 ## 6. regions 与 slot 约定
 
-- 当前仅 `empty` 作为正式 slot。
+- `title` 和 `empty` 是正式 supported slots。
 - 数据点 tooltip、legend 自定义等复杂渲染不建议首版直接开放 arbitrary schema slot。
 
 ## 7. 运行期状态归属

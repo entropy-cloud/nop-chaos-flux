@@ -1,6 +1,6 @@
 # 375 Deep Audit 2026-05-19 Spreadsheet-Grid Surface Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -64,16 +64,16 @@ Exit Criteria:
 - [x] Required owner-doc updates are landed.
 - [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
 - [x] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
 - [x] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: In-scope code/doc work is complete after splitting the table/cell shell out of `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx`, keeping the root file below the oversized hard gate, and making the fill handle explicit as a presentational pointer-only affordance instead of an advertised button. Final plan closure remains blocked by unrelated workspace `typecheck`/`build`/`test` failures outside this surface.
+Status Note: Completed. The in-scope spreadsheet-grid split and fill-handle semantics fix remain landed, the independent closure pass found no remaining in-scope semantic gap, and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: GPT-5.4 independent closure pass
-- Evidence: re-audited the live repo after the split and contract/doc updates; confirmed `spreadsheet-grid.tsx` dropped to `402` lines, the extracted `packages/spreadsheet-renderers/src/spreadsheet-grid/table-shell.tsx` owns the table/cell rendering surface, focused proof in `packages/spreadsheet-renderers/src/__tests__/context-menu-fill-and-range.test.tsx` asserts the fill handle remains `aria-hidden` with no faux button role, and focused spreadsheet verification plus package-local `typecheck`/`build`/`lint` passed. Workspace closure gates remain blocked by unrelated failures in `@nop-chaos/flux-renderers-data` build/typecheck and `@nop-chaos/flux-runtime` tests; `pnpm check:oversized-code-files` still fails only on unrelated files after `spreadsheet-grid.tsx` cleared the hard gate.
+- Evidence: re-audited the live repo after the split and contract/doc updates; confirmed `spreadsheet-grid.tsx` dropped to `402` lines, the extracted `packages/spreadsheet-renderers/src/spreadsheet-grid/table-shell.tsx` owns the table/cell rendering surface, focused proof in `packages/spreadsheet-renderers/src/__tests__/context-menu-fill-and-range.test.tsx` asserts the fill handle remains `aria-hidden` with no faux button role, focused spreadsheet verification plus package-local `typecheck`/`build`/`lint` passed, and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are now green.

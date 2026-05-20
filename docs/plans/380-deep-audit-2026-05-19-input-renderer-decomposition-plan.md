@@ -1,6 +1,6 @@
 # 380 Deep Audit 2026-05-19 Input Renderer Decomposition And Stepper Accessibility Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -63,16 +63,16 @@ Exit Criteria:
 
 - [x] The in-scope retained findings are fixed.
 - [x] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
 - [x] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: The in-scope renderer decomposition and stepper accessibility fix landed, but repo-wide closure gates remain blocked by unrelated workspace failures, so the plan stays `partially completed`.
+Status Note: Completed. The in-scope input renderer split and stepper accessibility fix remain landed, the independent closure audit found no remaining in-scope semantic gap, and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.
 
 Closure Audit Evidence:
 
@@ -83,3 +83,4 @@ Closure Audit Evidence:
   - Focused proof passed in `packages/flux-renderers-form/src/__tests__/input-number.test.tsx` and `packages/flux-renderers-form/src/__tests__/input-classname-contract.test.tsx` (`2` files / `22` tests).
   - `pnpm --filter @nop-chaos/flux-renderers-form typecheck`, `build`, and `lint` passed.
   - Owner-doc adjudication: `docs/architecture/renderer-runtime.md` and `docs/architecture/styling-system.md` already describe the supported widget/root-className baseline; `No change required` is honest for this internal file split.
+  - Workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.

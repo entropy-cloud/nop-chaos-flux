@@ -190,6 +190,7 @@ interface ReportDesignerPageSchema {
 - `spreadsheet-page` 只关心 workbook 编辑，并已支持 `toolbar` / `body` / `dialogs` 三个 region 与 `statusPath` 摘要发布
 - `spreadsheet-page` 在未提供自定义 `body` 时仍应提供可工作的默认 spreadsheet host（共享 toolbar/grid/tab shell），不能退化成仅有诊断文本的空壳
 - `spreadsheet-page.readOnly` 是共享 host 级交互约束：除了 core mutation dispatch 以外，toolbar、sheet-tab、inline edit、field-drop、keyboard mutation entry 也必须一起锁住
+- `spreadsheet-page` 默认 host 还负责把 spreadsheet edit/save result fidelity 保持到页面层：outside-click inline save 与 namespaced `spreadsheet:*` host action provider 都必须保留 resolved failed / cancelled semantics，不得把 cancelled 重新分类成 generic failure，也不得吞掉 bridge rejection
 - `report-designer-page` 在 workbook 之上叠加字段拖拽、metadata、preview、inspector 适配，并已支持 `toolbar` / `fieldPanel` / `inspector` / `dialogs` / `body` 五个 region 与 `statusPath`
 - 按 `docs/architecture/designer-workbench-shell.md` 的共享规则，左侧字段面板与右侧 inspector 都是 config-driven optional panels：存在已解析 panel definition 时才显示，对应缺失时整侧隐藏
 - 当前 live renderer 使用 `document.spreadsheet` 作为 spreadsheet 文档入口；本 family doc 不再把额外 top-level `spreadsheet?: SpreadsheetConfig` 写成当前页面 schema 字段

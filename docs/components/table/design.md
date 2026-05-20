@@ -45,6 +45,7 @@
 
 - 当前明确支持 `paginationOwnership`、`selectionOwnership`、`sortOwnership`、`filterOwnership`，可取 `local`、`controlled`、`scope`。
 - `columnSettings.toggledColumnsStatePath` / `orderedColumnsStatePath` 现在也构成 table visible-columns / ordered-columns 的 scope owner 接入点；CRUD 等上层组合 renderer 应复用这些 path，而不是重新维护平行列状态。
+- 对这些 scope-owned 列状态，显式空数组也是有效 owner 值：`[]` 表示当前没有可见列或没有保留的列顺序，不应再被 fallback defaults 覆盖。
 - 展开仍是 table-local interaction state，尚未收口到独立外部可写 owner path。
 - 当前 header search/filter 已有可观察的基础行为：列头菜单可驱动 keyword/filter state 并影响本地数据处理；但 richer filter source/search UX、统一 ownership 收口和更完整回归证据仍属于后续 table-heavy parity。
 - 当前 header search/filter 已有可观察且更稳定的行为：列头菜单可驱动 keyword/filter state、通过 active trigger 表达当前列已有筛选，并提供按列 clear action 一次性清理 keyword + option filters。更丰富的 filter source/search UX 与 ownership 收口仍属于后续 table-heavy parity。
@@ -59,6 +60,7 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 当前事件已覆盖行点击、排序、过滤、分页、选择和刷新。
+- `onPageChange` 的 live payload 现已回到统一 supported 语义：若分页 UI 触发来自真实交互事件，则 handler 会收到原始 UI event，同时 `evaluationBindings` / semantic payload 始终包含 `type: 'table:page-change'` 与 `{ page, pageSize, pagination }` 摘要。
 - 当前组件句柄基线是 `component:refresh`、`component:getSelection`、`component:setSelection`。
 - `component:refresh` 触发的是 table instance capability；如果表格显示 loading，优先读取其上游 query/source owner 状态，而不是假设 table 自己就是请求 owner。
 

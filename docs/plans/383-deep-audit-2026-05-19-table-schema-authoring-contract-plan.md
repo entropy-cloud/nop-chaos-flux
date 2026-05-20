@@ -1,6 +1,6 @@
 # 383 Deep Audit 2026-05-19 Table Schema Authoring Contract Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -10,8 +10,8 @@
 
 ## Current Baseline
 
-- table public schema 暴露 internal `loadingSlot` suffix。
-- nested column slots 在 TS schema 中缺少 author-facing fields。
+- `packages/flux-renderers-data/src/schemas.ts` 现在显式保留 public `loadingContent` authoring field，不再把旧 `loadingSlot` 当作 public schema surface。
+- `packages/flux-renderers-data/src/schemas.ts` 现在补齐 author-facing nested column input fields：`label?: SchemaInput | string`, `cell?: SchemaInput`, `body?: SchemaInput`，与 live compiler deep-region extraction contract 对齐。
 
 ## Goals
 
@@ -40,37 +40,37 @@
 
 ### Phase 1 - Fix Table Authoring Schema Surface
 
-Status: planned
+Status: completed
 Targets: table schema files, tests, owner doc
 
 - Item Types: `Fix | Proof`
-- [ ] Remove internal-suffix authoring leakage from the public table schema.
-- [ ] Add the author-facing nested slot fields the table surface requires.
-- [ ] Update `docs/architecture/field-metadata-slot-modeling.md` to the final authoring contract.
+- [x] Remove internal-suffix authoring leakage from the public table schema.
+- [x] Add the author-facing nested slot fields the table surface requires.
+- [x] Update `docs/architecture/field-metadata-slot-modeling.md` to the final authoring contract.
 
 Exit Criteria:
 
-- [ ] `12-03` and `12-04` are fixed.
-- [ ] Focused proof covers the final public schema shape.
-- [ ] `docs/architecture/field-metadata-slot-modeling.md` is updated.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `12-03` and `12-04` are fixed.
+- [x] Focused proof covers the final public schema shape.
+- [x] `docs/architecture/field-metadata-slot-modeling.md` is updated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Completed after restoring the public table authoring contract around `loadingContent` and nested column slot inputs. The final focused proof now covers both the public authoring input shape and the documented deep-region extraction path where authored `table.columns[].body` compiles into `columns.N.quickEditBody` / `quickEditBodyRegionKey`.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: general subagent `ses_1bd3b1351ffe15B8pnpic10szn`
+- Evidence: re-audit returned `Verdict: acceptable` with no remaining in-scope findings; it explicitly confirmed the public `loadingContent` surface, author-facing `label` / `cell` / `body` inputs, and the direct proof that authored `table.columns[].body` compiles into `columns.N.quickEditBody` / `quickEditBodyRegionKey`, with green `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` on the same live tree.

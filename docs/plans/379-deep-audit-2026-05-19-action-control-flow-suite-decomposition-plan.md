@@ -1,6 +1,6 @@
 # 379 Deep Audit 2026-05-19 Action Control-Flow Suite Decomposition Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -57,16 +57,16 @@ Exit Criteria:
 
 - [x] The in-scope retained findings are fixed.
 - [x] `No owner-doc update required`.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
 - [x] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: The in-scope split and helper extraction landed, but repo-wide closure gates remain blocked by unrelated workspace failures, so the plan stays `partially completed`.
+Status Note: Completed. The in-scope action control-flow suite split remains landed, the independent closure audit found no remaining in-scope semantic gap, and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.
 
 Closure Audit Evidence:
 
@@ -77,3 +77,4 @@ Closure Audit Evidence:
   - Focused verification passed: `pnpm exec vitest run src/__tests__/contract-control-flow-branches.test.ts src/__tests__/contract-control-flow-parallel.test.ts src/__tests__/contract-control-flow-timeout-cancel.test.ts` in `packages/flux-action-core` (`3` files / `19` tests).
   - `pnpm --filter @nop-chaos/flux-action-core typecheck`, `build`, and `lint` passed.
   - `pnpm check:oversized-code-files` no longer reports the old action control-flow hard-gate suite; remaining hard-gate files are unrelated.
+  - Workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.

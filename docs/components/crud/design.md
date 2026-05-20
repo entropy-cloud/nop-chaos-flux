@@ -174,6 +174,7 @@ clientMode: {
 - query submit/reset 继续通过 query-form component handle + owner state path 收口
 - table pagination/sort/filter/selection/visible-columns 继续通过内部 `table` 的 scope-owned state path 收口
 - CRUD 只把这些 owner 结果聚合成 `$crud` / `statusPath` 只读摘要，而不在 renderer 主体里重新发明第二套交互 state owner
+- 当 `columnSettings.toggledColumnsStatePath` / `orderedColumnsStatePath` 指向的 owner 值是显式空数组时，CRUD summary 必须保留这份空结果；它表示当前没有可见列，而不是“未提供 owner state”。
 
 `crud.statusPath` 和 `$crud` 暴露的是只读摘要：
 
@@ -195,6 +196,8 @@ interface CrudStatusSummary {
 ```
 
 `visibleColumnNames` 的 live baseline 已接线到与内部 `table` 相同的 `columnSettings.toggledColumnsStatePath` / `orderedColumnsStatePath`，因此 CRUD footer/toolbar/statusPath 读取到的是同一份列可见性 owner 结果，而不是 renderer-local 推测值。
+
+`onQuerySubmit` / `onQueryReset` 的 live payload 也已回到支持中的 semantic contract：它们都会发布带 `type`, `query`, `page`, `pageSize`, `pagination` 的语义事件对象，因此 action handlers 可同时读取 `ActionContext.event` 与同形的 `evaluationBindings`。
 
 ## 8. AMIS 迁移映射
 

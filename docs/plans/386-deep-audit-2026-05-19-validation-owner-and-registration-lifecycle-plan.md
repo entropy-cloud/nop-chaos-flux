@@ -1,6 +1,6 @@
 # 386 Deep Audit 2026-05-19 Validation Owner And Registration Lifecycle Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-19
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
@@ -10,10 +10,9 @@
 
 ## Current Baseline
 
-- `scopePolicy: form` 会遮蔽显式 validation owner resolution。
-- `array-editor` 与 `key-value` 直接 mutate `childPaths`，绕过 registration API。
-- `applyChangesAndRevalidate` lifecycle 语义不清。
-- stale async validation run 被记录为 succeeded。
+- `08-01`, `08-02`, `08-03`, `08-05` 的 live fixes 已存在于当前代码与 focused tests 中。
+- `08-04` 现在已补 focused proof 并同步 owner docs：`applyChangesAndRevalidate(...)` 在 `bootstrapping` / `refreshing` 下允许 owner-local writes 先落库，但验证发布必须等待 owner 回到 `active` 后再基于当前 model generation 执行。
+- 剩余工作是回填 plan/log closure bookkeeping、repo-wide gates、以及独立 closure audit evidence。
 
 ## Goals
 
@@ -43,37 +42,37 @@
 
 ### Phase 1 - Restore Validation Owner Lifecycle Contract
 
-Status: planned
+Status: completed
 Targets: validation owner code, tests, owner docs
 
 - Item Types: `Fix | Proof`
-- [ ] Fix validation owner resolution and registration update paths.
-- [ ] Fix stale async validation result semantics.
-- [ ] Update the owner docs named in Plan `371` to the final supported contract.
+- [x] Fix validation owner resolution and registration update paths.
+- [x] Fix stale async validation result semantics.
+- [x] Update the owner docs named in Plan `371` to the final supported contract.
 
 Exit Criteria:
 
-- [ ] `08-01` through `08-05` are fixed.
-- [ ] Focused proof covers owner resolution, registration updates, and async validation semantics.
-- [ ] `docs/architecture/form-validation.md` and `docs/architecture/flux-runtime-module-boundaries.md` are updated.
-- [ ] `docs/logs/2026/05-19.md` is updated.
+- [x] `08-01` through `08-05` are fixed.
+- [x] Focused proof covers owner resolution, registration updates, and async validation semantics.
+- [x] `docs/architecture/form-validation.md` and `docs/architecture/flux-runtime-module-boundaries.md` are updated.
+- [x] `docs/logs/2026/05-19.md` is updated.
 
 ## Closure Gates
 
-- [ ] The in-scope retained findings are fixed.
-- [ ] Required owner-doc updates are landed.
-- [ ] No in-scope retained finding is silently downgraded to deferred or follow-up.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The in-scope retained findings are fixed.
+- [x] Required owner-doc updates are landed.
+- [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Completed after re-checking the already-landed `08-01` / `08-02` / `08-03` / `08-05` fixes, adding explicit focused proof for the `08-04` transitional lifecycle contract, updating owner docs, and confirming package plus repo-wide verification.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: not yet run
+- Reviewer / Agent: independent subagent closure audit `ses_1bd9a8ecaffe4EkEyNbzkS8XuJ`
+- Evidence: `Verdict: acceptable`, `Findings: none`, `Plan 386 can be marked completed now: yes`
