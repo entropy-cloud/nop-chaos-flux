@@ -153,6 +153,76 @@ describe('owner validation lifecycle contracts', () => {
     });
   });
 
+  it('commits writes but defers validation publication while applyChangesAndRevalidate waits for bootstrapping owners to become active', async () => {
+    const model = makeFormModel({ name: makeNode('name', { required: true }) });
+    const validateRule = vi.fn().mockImplementation(realValidateRule);
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      parentScope: createStubScope({ name: '' }),
+      initialValues: { name: '' },
+      validation: model,
+      initialLifecycleState: 'bootstrapping',
+      validateRule,
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const applyPromise = runtime.applyChangesAndRevalidate({
+      writes: { name: '' },
+      changedPaths: ['name'],
+      reason: 'change',
+    });
+    await Promise.resolve();
+
+    expect(runtime.store.getState().values).toMatchObject({ name: '' });
+    expect(runtime.getFieldState('name').errors).toEqual([]);
+    expect(validateRule).not.toHaveBeenCalled();
+
+    runtime.refreshCompiledModel(model);
+
+    await expect(applyPromise).resolves.toMatchObject({
+      ok: false,
+      fieldErrors: {
+        name: [expect.objectContaining({ path: 'name', rule: 'required' })],
+      },
+    });
+    expect(validateRule).toHaveBeenCalled();
+  });
+
+  it('revalidates against the activated model after applyChangesAndRevalidate spans a lifecycle transition', async () => {
+    const refreshedModel = makeFormModel({ name: makeNode('name', { required: true }) });
+    const validateRule = vi.fn().mockImplementation(realValidateRule);
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      parentScope: createStubScope({ name: 'Alice' }),
+      initialValues: { name: 'Alice' },
+      validation: undefined,
+      initialLifecycleState: 'bootstrapping',
+      validateRule,
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const applyPromise = runtime.applyChangesAndRevalidate({
+      writes: { name: '' },
+      changedPaths: ['name'],
+      reason: 'change',
+    });
+    await Promise.resolve();
+
+    expect(runtime.store.getState().values).toMatchObject({ name: '' });
+    expect(runtime.getScopeState()).toMatchObject({ lifecycleState: 'bootstrapping', ready: false });
+    expect(validateRule).not.toHaveBeenCalled();
+
+    runtime.refreshCompiledModel(refreshedModel);
+
+    await expect(applyPromise).resolves.toMatchObject({
+      ok: false,
+      fieldErrors: {
+        name: [expect.objectContaining({ path: 'name', rule: 'required' })],
+      },
+    });
+    expect(validateRule).toHaveBeenCalled();
+  });
+
   it('publishes sync validation errors before async validation settles', async () => {
     let resolveAsyncRule:
       | ((value: ReturnType<typeof realValidateRule> | undefined) => void)
