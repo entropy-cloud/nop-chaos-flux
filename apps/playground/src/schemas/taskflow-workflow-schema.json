@@ -179,6 +179,46 @@
     "version": "1.0",
     "kind": "nop-taskflow-workflow",
     "documentMode": "graph",
+    "classAliases": {
+      "node-card": "nop-glass-card flex flex-col px-3 py-3 rounded-xl shadow-lg min-w-[192px] transition-all duration-150",
+      "node-card--tf-start": "",
+      "node-card--tf-end": "",
+      "node-card--tf-script": "",
+      "node-card--tf-invoke": "",
+      "node-card--tf-if": "",
+      "node-card--tf-choose": "",
+      "node-card--tf-delay": "",
+      "node-card--tf-sequential": "",
+      "node-card--tf-graph": "",
+      "node-card--tf-parallel": "",
+      "node-info": "flex-1 min-w-0 flex flex-col gap-1",
+      "node-header": "flex items-start gap-3",
+      "node-icon": "w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0",
+      "node-icon--tf-start": "nop-gradient-start",
+      "node-icon--tf-end": "nop-gradient-end",
+      "node-icon--tf-script": "nop-gradient-task",
+      "node-icon--tf-invoke": "nop-gradient-parallel",
+      "node-icon--tf-if": "nop-gradient-condition",
+      "node-icon--tf-choose": "nop-gradient-condition",
+      "node-icon--tf-delay": "nop-gradient-loop",
+      "node-icon--tf-sequential": "nop-gradient-task",
+      "node-icon--tf-graph": "nop-gradient-loop",
+      "node-icon--tf-parallel": "nop-gradient-parallel",
+      "node-title": "block text-sm leading-none font-semibold text-foreground whitespace-nowrap overflow-hidden text-ellipsis",
+      "node-subtitle": "block text-sm leading-none text-muted-foreground line-clamp-2",
+      "node-footer": "flex items-center justify-between gap-2 mt-3 text-sm text-muted-foreground",
+      "node-badge": "text-sm px-2 py-1 rounded-full font-medium",
+      "node-badge--tf-start": "text-emerald-700 bg-emerald-100",
+      "node-badge--tf-end": "text-rose-800 bg-rose-100",
+      "node-badge--tf-script": "text-sky-700 bg-sky-100",
+      "node-badge--tf-invoke": "text-violet-800 bg-violet-100",
+      "node-badge--tf-if": "text-amber-800 bg-amber-100",
+      "node-badge--tf-choose": "text-amber-800 bg-amber-100",
+      "node-badge--tf-delay": "text-pink-900 bg-fuchsia-100",
+      "node-badge--tf-sequential": "text-sky-700 bg-sky-100",
+      "node-badge--tf-graph": "text-pink-900 bg-fuchsia-100",
+      "node-badge--tf-parallel": "text-violet-800 bg-violet-100"
+    },
     "nodeTypes": [
       {
         "id": "tf-start",
@@ -187,13 +227,56 @@
         "description": "Workflow start node",
         "constraints": { "maxInstances": 1, "allowIncoming": false },
         "defaults": { "step": { "common": { "name": "start" } } },
-        "appearance": { "minWidth": 100, "minHeight": 40, "borderRadius": 20 },
+        "appearance": { "minWidth": 192, "minHeight": 112 },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
-            { "type": "icon", "icon": "play-circle", "className": "text-green-500 w-4 h-4" },
-            { "type": "text", "text": "${step.common.displayName || step.common.name}" }
+          "direction": "column",
+          "className": "node-card node-card--tf-start",
+          "items": [
+            {
+              "type": "flex",
+              "className": "node-header",
+              "items": [
+                {
+                  "type": "container",
+                  "className": "node-icon node-icon--tf-start",
+                  "body": [{ "type": "icon", "icon": "play-circle" }]
+                },
+                {
+                  "type": "container",
+                  "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${step.common.displayName || step.common.name}",
+                      "className": "node-title"
+                    },
+                    {
+                      "type": "text",
+                      "text": "Process entry point",
+                      "className": "node-subtitle"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "className": "node-footer",
+              "items": [
+                {
+                  "type": "text",
+                  "body": "Start",
+                  "className": "node-badge node-badge--tf-start"
+                },
+                {
+                  "type": "text",
+                  "text": "${step.props.lang || 'js'}",
+                  "className": "node-subtitle"
+                }
+              ]
+            }
           ]
         },
         "ports": [
@@ -244,13 +327,56 @@
         "description": "Workflow end node",
         "constraints": { "maxInstances": 1, "allowOutgoing": false },
         "defaults": {},
-        "appearance": { "minWidth": 100, "minHeight": 40, "borderRadius": 20 },
+        "appearance": { "minWidth": 192, "minHeight": 112 },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
-            { "type": "icon", "icon": "stop-circle", "className": "text-red-500 w-4 h-4" },
-            { "type": "text", "text": "${step.common.displayName || step.common.name || 'End'}" }
+          "direction": "column",
+          "className": "node-card node-card--tf-end",
+          "items": [
+            {
+              "type": "flex",
+              "className": "node-header",
+              "items": [
+                {
+                  "type": "container",
+                  "className": "node-icon node-icon--tf-end",
+                  "body": [{ "type": "icon", "icon": "stop-circle" }]
+                },
+                {
+                  "type": "container",
+                  "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${step.common.displayName || step.common.name || 'End'}",
+                      "className": "node-title"
+                    },
+                    {
+                      "type": "text",
+                      "text": "Process exit point",
+                      "className": "node-subtitle"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "className": "node-footer",
+              "items": [
+                {
+                  "type": "text",
+                  "body": "End",
+                  "className": "node-badge node-badge--tf-end"
+                },
+                {
+                  "type": "text",
+                  "text": "No output",
+                  "className": "node-subtitle"
+                }
+              ]
+            }
           ]
         },
         "ports": [
@@ -274,16 +400,59 @@
         "label": "Script",
         "icon": "code",
         "description": "Run a script step",
-        "appearance": { "minWidth": 130, "minHeight": 50 },
+        "appearance": { "minWidth": 192, "minHeight": 112 },
         "defaults": {
           "step": { "common": { "name": "script" }, "props": { "type": "script", "lang": "js" } }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
-            { "type": "icon", "icon": "code", "className": "text-blue-500 w-4 h-4" },
-            { "type": "text", "text": "${step.common.displayName || step.common.name}" }
+          "direction": "column",
+          "className": "node-card node-card--tf-script",
+          "items": [
+            {
+              "type": "flex",
+              "className": "node-header",
+              "items": [
+                {
+                  "type": "container",
+                  "className": "node-icon node-icon--tf-script",
+                  "body": [{ "type": "icon", "icon": "code" }]
+                },
+                {
+                  "type": "container",
+                  "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${step.common.displayName || step.common.name}",
+                      "className": "node-title"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${step.props.lang || 'js'} · ${(step.props.source || '').substring(0, 20)}",
+                      "className": "node-subtitle"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "className": "node-footer",
+              "items": [
+                {
+                  "type": "text",
+                  "body": "Script",
+                  "className": "node-badge node-badge--tf-script"
+                },
+                {
+                  "type": "text",
+                  "text": "${step.props.lang || 'js'}",
+                  "className": "node-subtitle"
+                }
+              ]
+            }
           ]
         },
         "ports": [
@@ -355,7 +524,7 @@
         "label": "Invoke",
         "icon": "zap",
         "description": "Invoke a bean method",
-        "appearance": { "minWidth": 130, "minHeight": 50 },
+        "appearance": { "minWidth": 192, "minHeight": 112 },
         "defaults": {
           "step": {
             "common": { "name": "invoke" },
@@ -364,10 +533,53 @@
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
-            { "type": "icon", "icon": "zap", "className": "text-yellow-500 w-4 h-4" },
-            { "type": "text", "text": "${step.common.displayName || step.common.name}" }
+          "direction": "column",
+          "className": "node-card node-card--tf-invoke",
+          "items": [
+            {
+              "type": "flex",
+              "className": "node-header",
+              "items": [
+                {
+                  "type": "container",
+                  "className": "node-icon node-icon--tf-invoke",
+                  "body": [{ "type": "icon", "icon": "zap" }]
+                },
+                {
+                  "type": "container",
+                  "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${step.common.displayName || step.common.name}",
+                      "className": "node-title"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${step.props.bean ? step.props.bean + '.' + step.props.method : 'No bean configured'}",
+                      "className": "node-subtitle"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "className": "node-footer",
+              "items": [
+                {
+                  "type": "text",
+                  "body": "Invoke",
+                  "className": "node-badge node-badge--tf-invoke"
+                },
+                {
+                  "type": "text",
+                  "text": "${step.props.method || '—'}",
+                  "className": "node-subtitle"
+                }
+              ]
+            }
           ]
         },
         "ports": [
@@ -424,14 +636,57 @@
         "label": "If Condition",
         "icon": "git-branch",
         "description": "Conditional branch",
-        "appearance": { "minWidth": 140, "minHeight": 50 },
+        "appearance": { "minWidth": 192, "minHeight": 112 },
         "defaults": { "step": { "common": { "name": "condition" }, "props": { "type": "if" } } },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
-            { "type": "icon", "icon": "git-branch", "className": "text-purple-500 w-4 h-4" },
-            { "type": "text", "text": "${step.common.displayName || step.common.name}" }
+          "direction": "column",
+          "className": "node-card node-card--tf-if",
+          "items": [
+            {
+              "type": "flex",
+              "className": "node-header",
+              "items": [
+                {
+                  "type": "container",
+                  "className": "node-icon node-icon--tf-if",
+                  "body": [{ "type": "icon", "icon": "git-branch" }]
+                },
+                {
+                  "type": "container",
+                  "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${step.common.displayName || step.common.name}",
+                      "className": "node-title"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${step.props.condition || 'No condition'}",
+                      "className": "node-subtitle"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "className": "node-footer",
+              "items": [
+                {
+                  "type": "text",
+                  "body": "If/Else",
+                  "className": "node-badge node-badge--tf-if"
+                },
+                {
+                  "type": "text",
+                  "text": "2 branches",
+                  "className": "node-subtitle"
+                }
+              ]
+            }
           ]
         },
         "ports": [
@@ -487,14 +742,57 @@
         "label": "Choose",
         "icon": "list",
         "description": "Multi-branch choose",
-        "appearance": { "minWidth": 140, "minHeight": 50 },
+        "appearance": { "minWidth": 192, "minHeight": 112 },
         "defaults": { "step": { "common": { "name": "choose" }, "props": { "type": "choose" } } },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
-            { "type": "icon", "icon": "list", "className": "text-orange-500 w-4 h-4" },
-            { "type": "text", "text": "${step.common.displayName || step.common.name}" }
+          "direction": "column",
+          "className": "node-card node-card--tf-choose",
+          "items": [
+            {
+              "type": "flex",
+              "className": "node-header",
+              "items": [
+                {
+                  "type": "container",
+                  "className": "node-icon node-icon--tf-choose",
+                  "body": [{ "type": "icon", "icon": "list" }]
+                },
+                {
+                  "type": "container",
+                  "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${step.common.displayName || step.common.name}",
+                      "className": "node-title"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${step.props.decider || 'Multi-way branch'}",
+                      "className": "node-subtitle"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "className": "node-footer",
+              "items": [
+                {
+                  "type": "text",
+                  "body": "Choose",
+                  "className": "node-badge node-badge--tf-choose"
+                },
+                {
+                  "type": "text",
+                  "text": "N branches",
+                  "className": "node-subtitle"
+                }
+              ]
+            }
           ]
         },
         "ports": [
@@ -549,16 +847,59 @@
         "label": "Sequential",
         "icon": "list-ordered",
         "description": "Sequential step container",
-        "appearance": { "minWidth": 140, "minHeight": 50 },
+        "appearance": { "minWidth": 192, "minHeight": 112 },
         "defaults": {
           "step": { "common": { "name": "sequential" }, "props": { "type": "sequential" } }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
-            { "type": "icon", "icon": "list-ordered", "className": "text-teal-500 w-4 h-4" },
-            { "type": "text", "text": "${step.common.displayName || step.common.name}" }
+          "direction": "column",
+          "className": "node-card node-card--tf-sequential",
+          "items": [
+            {
+              "type": "flex",
+              "className": "node-header",
+              "items": [
+                {
+                  "type": "container",
+                  "className": "node-icon node-icon--tf-sequential",
+                  "body": [{ "type": "icon", "icon": "list-ordered" }]
+                },
+                {
+                  "type": "container",
+                  "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${step.common.displayName || step.common.name}",
+                      "className": "node-title"
+                    },
+                    {
+                      "type": "text",
+                      "text": "Sequential step container",
+                      "className": "node-subtitle"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "className": "node-footer",
+              "items": [
+                {
+                  "type": "text",
+                  "body": "Sequential",
+                  "className": "node-badge node-badge--tf-sequential"
+                },
+                {
+                  "type": "text",
+                  "text": "Container",
+                  "className": "node-subtitle"
+                }
+              ]
+            }
           ]
         },
         "ports": [
@@ -611,8 +952,8 @@
         "icon": "git-merge",
         "description": "Nested graph sub-flow (double-click to enter)",
         "appearance": {
-          "minWidth": 140,
-          "minHeight": 50,
+          "minWidth": 192,
+          "minHeight": 112,
           "borderColor": "#6366f1",
           "borderStyle": "dashed"
         },
@@ -626,14 +967,52 @@
           "body": [
             {
               "type": "flex",
-              "className": "items-center gap-2 px-3 py-2 cursor-pointer",
-              "body": [
-                { "type": "icon", "icon": "git-merge", "className": "text-indigo-500 w-4 h-4" },
-                { "type": "text", "text": "${step.common.displayName || step.common.name}" },
+              "direction": "column",
+              "className": "node-card node-card--tf-graph cursor-pointer",
+              "items": [
                 {
-                  "type": "icon",
-                  "icon": "corner-down-right",
-                  "className": "text-indigo-300 w-3 h-3 ml-auto"
+                  "type": "flex",
+                  "className": "node-header",
+                  "items": [
+                    {
+                      "type": "container",
+                      "className": "node-icon node-icon--tf-graph",
+                      "body": [{ "type": "icon", "icon": "git-merge" }]
+                    },
+                    {
+                      "type": "container",
+                      "className": "node-info",
+                      "bodyClassName": "flex flex-col gap-0",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "${step.common.displayName || step.common.name}",
+                          "className": "node-title"
+                        },
+                        {
+                          "type": "text",
+                          "text": "Sub-flow · double-click to enter",
+                          "className": "node-subtitle"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "className": "node-footer",
+                  "items": [
+                    {
+                      "type": "text",
+                      "body": "SubFlow",
+                      "className": "node-badge node-badge--tf-graph"
+                    },
+                    {
+                      "type": "icon",
+                      "icon": "corner-down-right",
+                      "className": "text-indigo-300 w-3 h-3"
+                    }
+                  ]
                 }
               ]
             }
@@ -691,16 +1070,59 @@
         "label": "Parallel",
         "icon": "columns",
         "description": "Parallel execution",
-        "appearance": { "minWidth": 140, "minHeight": 50 },
+        "appearance": { "minWidth": 192, "minHeight": 112 },
         "defaults": {
           "step": { "common": { "name": "parallel" }, "props": { "type": "parallel" } }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
-            { "type": "icon", "icon": "columns", "className": "text-cyan-500 w-4 h-4" },
-            { "type": "text", "text": "${step.common.displayName || step.common.name}" }
+          "direction": "column",
+          "className": "node-card node-card--tf-parallel",
+          "items": [
+            {
+              "type": "flex",
+              "className": "node-header",
+              "items": [
+                {
+                  "type": "container",
+                  "className": "node-icon node-icon--tf-parallel",
+                  "body": [{ "type": "icon", "icon": "columns" }]
+                },
+                {
+                  "type": "container",
+                  "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${step.common.displayName || step.common.name}",
+                      "className": "node-title"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${step.props.joinType || 'joinAll'}",
+                      "className": "node-subtitle"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "className": "node-footer",
+              "items": [
+                {
+                  "type": "text",
+                  "body": "Parallel",
+                  "className": "node-badge node-badge--tf-parallel"
+                },
+                {
+                  "type": "text",
+                  "text": "${step.props.joinType || 'joinAll'}",
+                  "className": "node-subtitle"
+                }
+              ]
+            }
           ]
         },
         "ports": [
@@ -765,7 +1187,7 @@
         "label": "Delay",
         "icon": "clock",
         "description": "Delay step",
-        "appearance": { "minWidth": 130, "minHeight": 50 },
+        "appearance": { "minWidth": 192, "minHeight": 112 },
         "defaults": {
           "step": {
             "common": { "name": "delay" },
@@ -774,10 +1196,53 @@
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
-            { "type": "icon", "icon": "clock", "className": "text-gray-500 w-4 h-4" },
-            { "type": "text", "text": "${step.common.displayName || step.common.name}" }
+          "direction": "column",
+          "className": "node-card node-card--tf-delay",
+          "items": [
+            {
+              "type": "flex",
+              "className": "node-header",
+              "items": [
+                {
+                  "type": "container",
+                  "className": "node-icon node-icon--tf-delay",
+                  "body": [{ "type": "icon", "icon": "clock" }]
+                },
+                {
+                  "type": "container",
+                  "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${step.common.displayName || step.common.name}",
+                      "className": "node-title"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${step.props.delayMillisExpr || '1000'} ms",
+                      "className": "node-subtitle"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "className": "node-footer",
+              "items": [
+                {
+                  "type": "text",
+                  "body": "Delay",
+                  "className": "node-badge node-badge--tf-delay"
+                },
+                {
+                  "type": "text",
+                  "text": "${step.props.delayMillisExpr || '1000'}ms",
+                  "className": "node-subtitle"
+                }
+              ]
+            }
           ]
         },
         "ports": [
@@ -832,6 +1297,11 @@
       {
         "id": "tf-next",
         "label": "Next",
+        "body": {
+          "type": "text",
+          "text": "${data.label}",
+          "className": "text-xs font-medium text-indigo-600 bg-white/80 px-1.5 py-0.5 rounded"
+        },
         "appearance": { "stroke": "#6366f1", "strokeWidth": 2, "markerEnd": "arrow" },
         "defaults": { "taskflowEdgeKind": "taskflow-next" },
         "inspector": {
@@ -847,6 +1317,11 @@
       {
         "id": "tf-error",
         "label": "Error",
+        "body": {
+          "type": "text",
+          "text": "${data.label}",
+          "className": "text-xs font-medium text-red-600 bg-white/80 px-1.5 py-0.5 rounded"
+        },
         "appearance": {
           "stroke": "#ef4444",
           "strokeWidth": 2,
@@ -867,6 +1342,11 @@
       {
         "id": "tf-wait",
         "label": "Wait",
+        "body": {
+          "type": "text",
+          "text": "${data.label}",
+          "className": "text-xs font-medium text-green-600 bg-white/80 px-1.5 py-0.5 rounded"
+        },
         "appearance": {
           "stroke": "#22c55e",
           "strokeWidth": 2,
@@ -887,6 +1367,11 @@
       {
         "id": "tf-wait-error",
         "label": "Wait Error",
+        "body": {
+          "type": "text",
+          "text": "${data.label}",
+          "className": "text-xs font-medium text-orange-600 bg-white/80 px-1.5 py-0.5 rounded"
+        },
         "appearance": {
           "stroke": "#f97316",
           "strokeWidth": 2,

@@ -10,6 +10,7 @@ import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
 import { CodeEditorPage } from './pages/code-editor-page';
 import { FlowDesignerPage } from './pages/flow-designer-page';
+import { TaskFlowDesignerPage } from './pages/taskflow-designer-page';
 import { DingTalkFlowDemo } from './pages/ding-talk-flow-demo';
 import { PerformanceTablePage } from './pages/performance-table-page';
 import { useRoute } from './use-route';
@@ -98,6 +99,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <FluxBasicPage debuggerController={debuggerController} onBack={goHome} />;
         case 'flow-designer':
           return <FlowDesignerPage debuggerController={debuggerController} onBack={goHome} />;
+        case 'taskflow-designer':
+          return <TaskFlowDesignerPage debuggerController={debuggerController} onBack={goHome} />;
         case 'dingtalk-flow-demo':
           return <DingTalkFlowDemo onBack={goHome} />;
         case 'report-designer':

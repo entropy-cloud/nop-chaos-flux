@@ -18,6 +18,16 @@ const PALETTE_APPEARANCE_BY_ID: Record<string, string> = {
   http: 'fd-palette-appearance-http',
   database: 'fd-palette-appearance-data',
   table: 'fd-palette-appearance-data',
+  'tf-start': 'fd-palette-appearance-start',
+  'tf-end': 'fd-palette-appearance-end',
+  'tf-script': 'fd-palette-appearance-task',
+  'tf-invoke': 'fd-palette-appearance-parallel',
+  'tf-if': 'fd-palette-appearance-condition',
+  'tf-choose': 'fd-palette-appearance-condition',
+  'tf-sequential': 'fd-palette-appearance-task',
+  'tf-delay': 'fd-palette-appearance-data',
+  'tf-graph': 'fd-palette-appearance-parallel',
+  'tf-parallel': 'fd-palette-appearance-parallel',
 };
 
 function resolvePaletteAppearance(nodeType: NodeTypeConfig) {
@@ -131,7 +141,7 @@ export function DesignerPaletteContent(props: {
                       <Button
                         type="button"
                         variant="ghost"
-                        className="flex flex-1 min-w-0 items-center gap-3 text-left border-none p-0 hover:bg-transparent"
+                        className="flex flex-1 min-w-0 items-center justify-start gap-3 text-left border-none p-0 hover:bg-transparent"
                         onClick={() => handleAddNode(nt)}
                         draggable
                         onDragStart={(event) => {

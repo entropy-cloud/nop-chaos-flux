@@ -70,6 +70,10 @@ vi.mock('./pages/flow-designer-page', () => ({
   FlowDesignerPage: () => <div data-testid="flow-designer-page">flow-designer</div>,
 }));
 
+vi.mock('./pages/taskflow-designer-page', () => ({
+  TaskFlowDesignerPage: () => <div data-testid="taskflow-designer-page">taskflow-designer</div>,
+}));
+
 vi.mock('./pages/ding-talk-flow-demo', () => ({
   DingTalkFlowDemo: () => <div data-testid="dingtalk-flow-page">dingtalk</div>,
 }));

@@ -18,16 +18,16 @@ async function signIn(page: import('@playwright/test').Page) {
   await page.waitForTimeout(1000);
 }
 
-async function openFlowDesigner(page: import('@playwright/test').Page) {
+async function openTaskFlowDesigner(page: import('@playwright/test').Page) {
   await page.goto('/');
   await signIn(page);
   await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0, { timeout: 10000 });
 
-  const flowDesignerCard = page.locator('button', { hasText: 'Visual Workflow' });
-  await expect(flowDesignerCard).toBeVisible({ timeout: 5000 });
-  await flowDesignerCard.click();
+  const taskflowCard = page.locator('button', { hasText: 'TaskFlow' });
+  await expect(taskflowCard).toBeVisible({ timeout: 5000 });
+  await taskflowCard.click();
 
-  await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 30000 });
+  await expect(page.locator('.react-flow__node')).toHaveCount(7, { timeout: 30000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
 
@@ -40,6 +40,7 @@ test('playground entry page renders all nav cards', async ({ page }) => {
     'All Renderers',
     'Core Renderers',
     'Visual Workflow',
+    'TaskFlow',
     'Style Prototype',
     'Spreadsheet + Metadata',
     'DevTools',
@@ -56,6 +57,7 @@ test('playground entry page renders all nav cards', async ({ page }) => {
     'Component Lab',
     'Flux Basic',
     'Flow Designer',
+    'TaskFlow Designer',
     'DingTalk Flow Demo',
     'Report Designer',
     'Debugger Lab',
@@ -65,29 +67,30 @@ test('playground entry page renders all nav cards', async ({ page }) => {
     'Performance Table',
   ];
   for (const title of expectedTitles) {
-    await expect(page.locator('h2', { hasText: title })).toBeVisible({ timeout: 3000 });
+    const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    await expect(page.locator('h2').filter({ hasText: new RegExp(`^${escaped}$`) })).toBeVisible({ timeout: 3000 });
   }
 
   await assertTrackedPageErrors(page);
 });
 
-test('entry page "Flow Designer" card navigates to flow designer', async ({ page }) => {
+test('entry page "TaskFlow" card navigates to taskflow designer', async ({ page }) => {
   await page.goto('/');
   await signIn(page);
   await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0, { timeout: 10000 });
 
-  const flowDesignerCard = page.locator('button', { hasText: 'Visual Workflow' });
-  await expect(flowDesignerCard).toBeVisible({ timeout: 5000 });
-  await flowDesignerCard.click();
+  const taskflowCard = page.locator('button', { hasText: 'TaskFlow' });
+  await expect(taskflowCard).toBeVisible({ timeout: 5000 });
+  await taskflowCard.click();
 
-  await expect(page).toHaveURL(/#\/flow-designer/);
-  await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 30000 });
+  await expect(page).toHaveURL(/#\/taskflow-designer/);
+  await expect(page.locator('.react-flow__node')).toHaveCount(7, { timeout: 30000 });
 
   await assertTrackedPageErrors(page);
 });
 
 test('TaskFlow (Graph) tab renders 7 nodes and toolbar', async ({ page }) => {
-  await openFlowDesigner(page);
+  await openTaskFlowDesigner(page);
 
   const taskflowGraphTab = page.getByRole('tab', { name: 'TaskFlow (Graph)' });
   await expect(taskflowGraphTab).toBeVisible();
@@ -113,7 +116,7 @@ test('TaskFlow (Graph) tab renders 7 nodes and toolbar', async ({ page }) => {
 });
 
 test('TaskFlow (Tree) tab renders tree document', async ({ page }) => {
-  await openFlowDesigner(page);
+  await openTaskFlowDesigner(page);
   await page.waitForTimeout(1000);
 
   const taskflowTreeTab = page.getByRole('tab', { name: 'TaskFlow (Tree)' });
@@ -131,11 +134,11 @@ test('TaskFlow (Tree) tab renders tree document', async ({ page }) => {
   await assertTrackedPageErrors(page);
 });
 
-test('switching between TaskFlow and existing tabs produces no errors', async ({ page }) => {
-  await openFlowDesigner(page);
+test('switching between TaskFlow modes produces no errors', async ({ page }) => {
+  await openTaskFlowDesigner(page);
   await page.waitForTimeout(1000);
 
-  const tabCycles = ['TaskFlow (Graph)', '工作流', 'TaskFlow (Tree)', '钉钉审批流'];
+  const tabCycles = ['TaskFlow (Graph)', 'TaskFlow (Tree)'];
   for (const tabLabel of tabCycles) {
     const tab = page.getByRole('tab', { name: tabLabel });
     await expect(tab).toBeVisible({ timeout: 5000 });
@@ -148,7 +151,7 @@ test('switching between TaskFlow and existing tabs produces no errors', async ({
 });
 
 test('TaskFlow (Graph) toolbar buttons are functional (export + save)', async ({ page }) => {
-  await openFlowDesigner(page);
+  await openTaskFlowDesigner(page);
   await page.waitForTimeout(1000);
 
   const taskflowGraphTab = page.getByRole('tab', { name: 'TaskFlow (Graph)' });
@@ -173,7 +176,7 @@ test('TaskFlow (Graph) toolbar buttons are functional (export + save)', async ({
 });
 
 test('TaskFlow (Graph) palette shows node types', async ({ page }) => {
-  await openFlowDesigner(page);
+  await openTaskFlowDesigner(page);
   await page.waitForTimeout(1000);
 
   const taskflowGraphTab = page.getByRole('tab', { name: 'TaskFlow (Graph)' });
@@ -203,7 +206,7 @@ test('TaskFlow (Graph) palette shows node types', async ({ page }) => {
 });
 
 test('TaskFlow (Graph) renders edges', async ({ page }) => {
-  await openFlowDesigner(page);
+  await openTaskFlowDesigner(page);
   await page.waitForTimeout(1000);
 
   const taskflowGraphTab = page.getByRole('tab', { name: 'TaskFlow (Graph)' });

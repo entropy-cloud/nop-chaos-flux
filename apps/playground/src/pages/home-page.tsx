@@ -2,6 +2,7 @@ type NavigationTarget =
   | 'component-lab'
   | 'flux-basic'
   | 'flow-designer'
+  | 'taskflow-designer'
   | 'dingtalk-flow-demo'
   | 'report-designer'
   | 'debugger-lab'
@@ -39,6 +40,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Visual Workflow',
     description:
       'DingTalk approval flow, action flow, and general workflow editors with toolbar, palette, inspector, and canvas.',
+  },
+  {
+    id: 'taskflow-designer',
+    title: 'TaskFlow Designer',
+    eyebrow: 'TaskFlow',
+    description:
+      'TaskFlow visual designer with graph and tree modes, nop-task DSL export/import/inspector.',
   },
   {
     id: 'dingtalk-flow-demo',

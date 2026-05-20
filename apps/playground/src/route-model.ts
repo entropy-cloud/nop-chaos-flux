@@ -357,6 +357,12 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'designer-page, toolbar, inspector, canvas, node palette, edge connections.',
   },
   {
+    id: 'taskflow-designer',
+    title: 'TaskFlow Designer',
+    eyebrow: 'TaskFlow',
+    description: 'TaskFlow visual designer with graph and tree modes, nop-task DSL round-trip.',
+  },
+  {
     id: 'dingtalk-flow-demo',
     title: 'DingTalk Flow Demo',
     eyebrow: 'Style Prototype',
