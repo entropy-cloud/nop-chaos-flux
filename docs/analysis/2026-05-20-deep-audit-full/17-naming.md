@@ -112,3 +112,143 @@
 - **历史模式对应**: 命中 `docs/references/deep-audit-calibration-patterns.md` 的 V1 Override；兼容 alias 出现在 live playground 主路径时不能仅以“仍支持兼容”降级为无问题。
 - **参考文档**: `docs/architecture/flux-core.md:147-154`, `docs/architecture/action-scope-and-imports.md:480-482`, `docs/architecture/surface-owner.md:258`, `docs/references/deep-audit-calibration-patterns.md:21-28`
 - **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度17-05] `refreshSource` 的正式目标字段是 `targetId`，但 runtime adapter DTO 与测试继续使用 `sourceId`
+
+- **文件**: `packages/flux-runtime/src/action-adapter.ts:300-315`, `packages/flux-runtime/src/__tests__/action-adapter.unit.test.ts:234-248`, `packages/flux-action-core/src/action-dispatcher/built-in-actions.ts:194-205`, `docs/references/action-payload-matrix.md:62`, `docs/references/flux-json-conventions.md:154-160`
+- **行号范围**: `packages/flux-runtime/src/action-adapter.ts:300-315`
+- **证据片段**:
+
+  ```ts
+        case 'refreshSource': {
+          const sourceId =
+            typeof invocation.args?.sourceId === 'string' ? invocation.args.sourceId : undefined;
+          if (!sourceId) {
+            return { ok: false, error: new Error('refreshSource requires sourceId') };
+          }
+
+          const refreshed = await runtime.refreshDataSource({
+            id: sourceId,
+            scope: ctx.scope,
+          });
+  ```
+
+- **严重程度**: P2
+- **冲突名称**: `targetId` vs `sourceId`
+- **冲突位置**: `docs/references/action-payload-matrix.md:62`、`docs/references/flux-json-conventions.md:154-160`、`docs/architecture/action-scope-and-imports.md:644,789` 都把 `refreshSource` 的 author-visible targeting 字段定义为 `targetId`；但 `packages/flux-action-core/src/action-dispatcher/built-in-actions.ts:194-205` 在跨包调用 runtime adapter 时把 `targetId` 改名成 `args.sourceId`，`packages/flux-runtime/src/action-adapter.ts:300-315` 和 `action-adapter.unit.test.ts:239-245` 又把 `sourceId` 固化成 runtime adapter DTO 与错误消息。
+- **统一建议**: 保持 `refreshSource` 从 authoring、compiled targeting、runtime adapter invocation 到错误消息都使用 `targetId`；如 runtime 内部需要变量名 `sourceId`，应只在调用 `runtime.refreshDataSource({ id })` 前做局部变量转换，不把 `sourceId` 暴露为 `BuiltInActionInvocation.args` 字段或测试夹具输入。
+- **现状**: authoring 层写 `{ action: 'refreshSource', targetId: 'mainData' }` 可以工作，因为 action-core 会把 `action.targeting.targetId` 转成 adapter `args.sourceId`；但跨包 adapter 契约与直接单测已经形成第二套字段名。
+- **风险**: 后续维护者在调试 adapter、扩展 `BuiltInActionInvocation`、编写 runtime 级测试或监控错误消息时会认为 `refreshSource` 的目标字段叫 `sourceId`，削弱文档中 `targetId` 作为 runtime-entry targeting 字段的唯一性；一旦新增 action shape validation 或 adapter public test helpers，`sourceId` 可能反向泄露到 authoring 示例。
+- **为什么值得现在做**: 这不是局部变量命名风格，而是 `flux-action-core` 到 `flux-runtime` 的 built-in action invocation 边界字段名；修复面集中，且能与既有 `targetId` targeting contract、`refreshSource` 文档和 schema 类型保持一致。
+- **误报排除**: 本条不声称当前 schema authoring 必须写 `sourceId`，也不重复 `setValues` 把 `targetId` 当写入路径 fallback 的问题；这里关注的是 `refreshSource` 自己在 runtime adapter DTO 中把正式 targeting 字段重命名为 `sourceId` 并用测试/错误消息固化。
+- **历史模式对应**: 对应 `docs/references/deep-audit-calibration-patterns.md` 的 public-boundary vocabulary drift：即使转换发生在内部包边界，只要该边界有共享类型、测试和错误消息，就不应长期保留与 canonical authoring 字段不同的术语。
+- **参考文档**: `docs/references/action-payload-matrix.md:62,136-147`, `docs/references/flux-json-conventions.md:154-160`, `docs/architecture/action-scope-and-imports.md:644,789`
+- **复核状态**: 未复核
+
+### [维度17-06] Report Designer active docs 仍把 `selection` / `target` 描述为 `selectionTarget` alias，但 live contract 已删除这些名称
+
+- **文件**: `docs/architecture/report-designer/design.md:291-292,417-441`, `docs/architecture/report-designer/config-schema.md:317-318`, `docs/components/report-designer-page/design.md:104-108`, `packages/report-designer-renderers/src/host-data.ts:155-182`, `packages/report-designer-renderers/src/report-designer-manifest.ts:155-158`
+- **行号范围**: `docs/architecture/report-designer/design.md:291-292`
+- **证据片段**:
+  ```md
+  - inspector schema 使用固定宿主 scope 读取 canonical `selectionTarget`，并保留 `selection` / `target` 作为兼容 alias，同时读取 `activeSheet`、`meta`
+  - `activeCell`、`activeRange` 如需提供，应视为从 `selection` 派生的便利字段，而不是高于 `selection` / `target` 的主契约
+  ```
+- **严重程度**: P2
+- **冲突名称**: `selectionTarget` vs `selection` / `target`
+- **冲突位置**: `docs/components/report-designer-page/design.md:107` 与 `docs/architecture/flux-runtime-module-boundaries.md:434` 明确说 `target` / `selection` 不再属于支持的 host projection contract，`packages/report-designer-renderers/src/host-data.ts:155-182` 和 `report-designer-manifest.ts:155-158` 也只发布/声明 `selectionTarget`；但 `docs/architecture/report-designer/design.md:291-292` 与 `docs/architecture/report-designer/config-schema.md:317-318` 仍把 `selection` / `target` 写成兼容 alias。
+- **统一建议**: 将 report-designer active architecture/config docs 统一改为只推荐 `selectionTarget`；删除“保留 `selection` / `target` alias”的描述，并把 `activeCell` / `activeRange` 的派生来源表述从 `selection` 改成 `selectionTarget` 或 spreadsheet convenience projection。
+- **现状**: live host scope 的 top-level projection 返回 `selectionTarget`，未返回 top-level `selection` / `target`；manifest 也只声明 canonical `selectionTarget`。但两个 active owner docs 仍会引导 inspector schema 作者读取旧 alias。
+- **风险**: 新的 inspector/body schema 可能按 active docs 读取 `${target.kind}` 或 `${selection.kind}`，在 live runtime 中得到 `undefined`；后续维护者也会在“aliases removed”和“aliases retained”两套 active 文档之间来回判断，导致 schema contract、manifest 和 docs 继续分裂。
+- **为什么值得现在做**: 这是 schema-visible host projection vocabulary，影响 Report Designer inspector authoring；修复只需同步 active docs，不涉及兼容实现成本，却能消除已经完成删除后的残留术语。
+- **误报排除**: 不涉及 nested `spreadsheet.selection` 这种 canvas-local projection，也不要求删除 `field-panel` action payload 中名为 `target` 的业务参数；问题限定在 Report Designer host scope 的 top-level current-target 字段 alias。
+- **历史模式对应**: 命中既往 `selectionTarget` alias 收敛模式：兼容 alias 已从 live projection/manifest 移除后，active docs 继续传播旧名称，会让已完成的命名收敛在 authoring 侧反向失效。
+- **参考文档**: `docs/components/report-designer-page/design.md:104-108`, `docs/architecture/flux-runtime-module-boundaries.md:432-434`, `docs/architecture/report-designer/design.md:417-441`
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度17-07] `data-source` 当前规范以 `name` 作为资源身份/发布路径，但 compiler/runtime 公开边界与测试仍以 `id` 作为主刷新身份
+
+- **文件**: `packages/flux-core/src/types/schema.ts:167-177`, `packages/flux-compiler/src/source-compiler.ts:63-80`, `packages/flux-runtime/src/async-data/source-registry.ts:84-90,133-134,337-343`, `packages/flux-runtime/src/__tests__/runtime-sources-refresh.test.ts:19-41`, `docs/references/terminology.md:367-375`
+- **行号范围**: `packages/flux-runtime/src/async-data/source-registry.ts:337-343`
+- **证据片段**:
+  ```ts
+  async function refreshDataSource(args: { id: string; scope?: ScopeRef }): Promise<boolean> {
+    if (args.scope) {
+      const bucket = scopeEntries.get(args.scope.id);
+      const entry =
+        bucket?.get(args.id) ??
+        Array.from(bucket?.values() ?? []).find((candidate) => candidate.name === args.id);
+  ```
+- **严重程度**: P2
+- **冲突名称**: `DataSourceSchema.name` vs runtime/compiler `id`
+- **冲突位置**: `docs/references/terminology.md:373-375` 将 `DataSourceSchema` 描述为以 `name` 作为规范 author-visible identity 和默认发布路径；`packages/flux-core/src/types/schema.ts:167-177` 的当前 schema 类型也只在 `BaseDataSourceSchema` 上声明 `name`、`mergeToScope`、`statusPath` 等 data-source 字段。但 `packages/flux-compiler/src/source-compiler.ts:63-80` 的 `compileDataSource(id, schema, ...)` 仍把外部传入 `id` 写入 `CompiledDataSource.id`，而 `name` 只转成 `targetPath`；`packages/flux-runtime/src/async-data/source-registry.ts:84-90,337-343` 的公开 registry API 仍是 `registerDataSource({ id })` / `refreshDataSource({ id })`，并优先用 `bucket.get(args.id)` 命中旧 id，再 fallback 到 `entry.name`；`packages/flux-runtime/src/__tests__/runtime-sources-refresh.test.ts:19-41` 固化了 `{ id: 'scoped-total', name: 'total' }` 时通过 `refreshDataSource({ id: 'scoped-total' })` 刷新，而不是用规范 `name: 'total'`。
+- **统一建议**: 将 data-source 的跨包身份命名收敛到 `name`：`CompiledDataSource`、`registerDataSource`、`refreshDataSource` 和测试夹具的公开/共享参数应使用 `name` 或 `sourceName` 表达规范资源身份；如果内部仍需要 node identity，应明确命名为 `nodeId` / `ownerNodeId`，仅用于 owner/debug，不作为 refresh lookup 的主字段。`refreshSource.targetId` 可以继续作为 action targeting 字段，但其值应明确指向 canonical data-source `name`。
+- **现状**: 当前 live code 实际支持两套 identity：运行时 bucket 主键是 `args.id`，`nameIndex` / candidate.name 是 fallback；测试和 runtime API 名称继续把 `id` 放在主路径。作者文档则已经把 data-source 的正常身份/发布路径收敛到 `name`。
+- **风险**: 维护者会继续把 data-source 的“可刷新目标”理解为 node/schema `id`，而 schema 作者从文档和 playground 看到的是 `name`。后续做 source registry diagnostics、`refreshSource` 校验、schema 文件验证或跨包 runtime adapter 时，容易出现“targetId 应填 id 还是 name”的二义性；特别是 `id !== name` 时，测试会保护旧 id 路径，削弱 `name` 作为唯一资源身份的收敛。
+- **为什么值得现在做**: 这是 schema-visible source identity 与 runtime cross-package API 的术语分裂，不是局部变量风格。已有规范名 `name` 和 fallback 实现都在场，修复主要是重命名/拆分 owner node id 与 source name，可避免 `refreshSource`、source registry 和 DataSourceSchema 后续继续扩大双身份。
+- **误报排除**: 本条不重复 `refreshSource targetId/sourceId`：`targetId` 作为 action targeting 字段可保留；问题限定在 `targetId` 所指向的 data-source resource identity 在 registry/compiler/runtime 中被命名为 `id`，并与 `DataSourceSchema.name` 形成双词汇。也不涉及 `dataPath/path`，这里的冲突是资源身份字段 `name` 与 runtime `id`。
+- **历史模式对应**: 对应 `docs/references/deep-audit-calibration-patterns.md` 的 public-boundary vocabulary drift；这里的 `id` 不只是内部变量，而是 compiler/runtime/test 共享边界参数名。
+- **参考文档**: `docs/references/terminology.md:367-375`, `docs/architecture/api-data-source.md:653-657`, `docs/skills/deep-audit-prompts.md:1573-1576`
+- **复核状态**: 未复核
+
+## 深挖第 6 轮追加
+
+### [维度17-08] active Component Lab 仍用 Badge `label` / `variant`，但 live schema contract 已收敛到 `text` / `level`
+
+- **文件**: `apps/playground/src/component-lab/renderers/page-lab-page.tsx:10-22`, `apps/playground/src/component-lab/renderers/tabs-lab-page.tsx:19-25`, `packages/flux-renderers-basic/src/schemas.ts:157-160`, `packages/flux-renderers-basic/src/badge.tsx:6-15`
+- **行号范围**: `apps/playground/src/component-lab/renderers/page-lab-page.tsx:10-22`
+- **证据片段**:
+  ```ts
+        body: [
+          { type: 'text', text: 'Acme Corp' },
+          { type: 'badge', label: 'v2.4.1', variant: 'secondary' },
+        ],
+      },
+    ],
+    body: [
+      { type: 'text', text: 'Welcome to the team dashboard. Select a section to get started.' },
+      {
+        type: 'flex',
+        body: [
+          { type: 'badge', label: 'Active Members: 12' },
+          { type: 'badge', label: 'Open Tasks: 5', variant: 'destructive' },
+  ```
+- **严重程度**: P2
+- **冲突名称**: `text` / `level` vs `label` / `variant`
+- **冲突位置**: `docs/references/flux-json-conventions.md:197-204` 规定 Badge 使用 `level` 表达语义级别；`packages/flux-renderers-basic/src/schemas.ts:157-160` 的 `BadgeSchema` 只声明 `text` 与 `level`；`packages/flux-renderers-basic/src/badge.tsx:7-15` 实际只读取 `props.props.text` 与 `props.props.level`。但 active Component Lab 的 page/tabs/container/flex/loop/recurse/detail-view 等示例仍大量使用 `label` / `variant`，且 `packages/flux-renderers-basic/src/__tests__/basic-coverage-gaps.test.tsx:62-85` 已用测试证明这些字段会被忽略。
+- **统一建议**: 将所有 Flux schema 层 badge authoring 示例统一改为 `{ type: 'badge', text, level }`；只在 UI 组件内部或 `@nop-chaos/ui` shadcn adapter 层保留 `variant`，不要把 UI-level visual variant 反向暴露为 Flux BadgeSchema 字段。
+- **现状**: canonical `badge-lab-page.tsx` 已使用 `text` / `level`，但其他 active lab 页面仍传播旧的 `label` / `variant` 写法，导致同一 renderer 在同一个 Component Lab 中有两套互斥词汇。
+- **风险**: schema 作者从 live playground 复制 `label` / `variant` 后会得到空 badge 或错误视觉级别；维护者也会误以为 BadgeRenderer 应兼容 `label` / `variant`，从而重新扩大公开 schema surface。
+- **为什么值得现在做**: 这是 active authoring 示例与 live renderer contract 的直接命名漂移，且已有测试明确证明旧字段无效；替换成本低，可避免 stale examples 继续制造运行时“看似渲染但内容为空”的误导。
+- **误报排除**: 不是要求修改 `@nop-chaos/ui` 的 `Badge` 组件 `variant` prop；问题限定在 Flux JSON `type: 'badge'` schema。`BadgeRenderer` 当前明确只消费 `text` / `level`，所以这不是内部 UI 命名差异。
+- **历史模式对应**: 命中 v1 baseline 下 authoring 示例继续传播旧词汇的 public vocabulary drift。
+- **参考文档**: `docs/references/flux-json-conventions.md:197-204`, `docs/architecture/variant-vocabulary.md:180-201`, `packages/flux-renderers-basic/src/__tests__/basic-coverage-gaps.test.tsx:62-85`
+- **复核状态**: 未复核
+
+### [维度17-09] `showToast` 正式 payload 使用 `args.level`，但 active action-flow 示例继续写 `args.variant`
+
+- **文件**: `apps/playground/src/schemas/action-flow-tree-schema.json:54-60`, `docs/examples/action-flow-tree.md:140-146`, `packages/flux-core/src/types/actions.ts:30-33`, `packages/flux-runtime/src/action-adapter.ts:254-265`
+- **行号范围**: `apps/playground/src/schemas/action-flow-tree-schema.json:54-60`
+- **证据片段**:
+  ```json
+  "data": {
+    "label": "显示错误",
+    "action": "showToast",
+    "args": { "message": "保存失败", "variant": "destructive" }
+  }
+  ```
+- **严重程度**: P2
+- **冲突名称**: `args.level` vs `args.variant`
+- **冲突位置**: `packages/flux-core/src/types/actions.ts:30-33` 定义 `ShowToastActionArgs` 为 `level` / `message`；`packages/flux-runtime/src/action-adapter.ts:254-265` 运行时也只读取 `invocation.args?.level`，且合法值为 `info | success | warning | error`。但 active playground schema 与 `docs/examples/action-flow-tree.md:140-146` 的 showToast 示例仍使用 `args.variant: "destructive"`。
+- **统一建议**: 将 showToast 示例统一改为 `args: { message, level: 'error' }` 或省略 level 使用默认 `info`；保留 `variant: 'destructive'` 仅限直接 shadcn `Button` / UI visual variant，不用于 action payload。
+- **现状**: 当前 runtime 会忽略 `variant`，因此这些示例看起来像在声明 destructive toast，实际通知级别仍退回默认 `info`。
+- **风险**: schema 作者会把 `variant` 当作 showToast 的正式 payload 字段，导致错误/失败提示以默认 info 级别展示；后续维护者也可能为了适配示例而给 `showToast` 再加一套 `variant` alias，扩大 action payload 双词汇。
+- **为什么值得现在做**: 这是 active example/playground 中的 action payload 命名漂移，直接影响低代码 authoring 复制路径；修复只需改示例字段名和值，不涉及 runtime 行为变更。
+- **误报排除**: `docs/architecture/variant-vocabulary.md:188-189` 明确说明 notification API 使用 `info | success | warning | error`，不应把 visual `danger/destructive` 强行套入通知 API；本条不要求把 notification `error` 改成 visual `danger`。
+- **历史模式对应**: 对应 action payload public vocabulary drift；不是 UI visual variant 的内部命名问题。
+- **参考文档**: `docs/references/flux-json-conventions.md:100-119`, `docs/references/action-payload-matrix.md:54,88-91`, `docs/architecture/variant-vocabulary.md:188-201`
+- **复核状态**: 未复核

@@ -521,3 +521,233 @@
 - **误报排除**: 这不是要求所有内部 handle 都必须公开为 authoring metadata；Tabs 文档明确写着“当前 live capability”，且 runtime 已通过 `ComponentHandleRegistry` 暴露给 `component:<method>` 主路径，已越过纯内部实现边界。此前已有发现覆盖 host manifest/provider 和 form root export，本条是普通 renderer `componentCapabilityContracts` 与 live handle 的独立契约缺口。
 - **参考文档**: `docs/references/renderer-interfaces.md:163-168`, `docs/architecture/renderer-runtime.md:275-331`, `docs/architecture/action-scope-and-imports.md:612-650`
 - **复核状态**: 未复核
+
+## 深挖第 6 轮追加
+
+### [维度03-13] Table 已发布 `component:refresh/getSelection/setSelection` 运行时能力与组件文档，但 RendererDefinition 未声明 `componentCapabilityContracts`
+
+- **文件**: `packages/flux-renderers-data/src/table-renderer/use-table-handle.ts:25-70`, `packages/flux-renderers-data/src/data-renderer-definitions.ts:16-143`, `docs/components/table/design.md:60-65`
+- **行号范围**: `use-table-handle.ts:25-70`, `data-renderer-definitions.ts:16-143`, `table/design.md:60-65`
+- **证据片段**:
+  ```ts
+  capabilities: {
+    invoke(method, payload, ctx) {
+      switch (method) {
+        case 'refresh': {
+  ```
+  ```ts
+  case 'getSelection': {
+    return { ok: true, data: Array.from(selectedRowKeys) };
+  }
+  case 'setSelection': {
+    const nextKeys = toSelectionPayload(payload);
+    setSelectionExternal(nextKeys);
+    return { ok: true, data: Array.from(nextKeys) };
+  }
+  ```
+  ```ts
+  {
+    type: 'table',
+    displayName: 'Table',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    component: TableRenderer,
+    schemaValidator: validateTableSchema,
+    propContracts: {
+  ```
+  ```md
+  - 当前组件句柄基线是 `component:refresh`、`component:getSelection`、`component:setSelection`。
+  ```
+- **严重程度**: P2
+- **现状**: `TableRenderer` 通过 `useTableHandle()` 实际注册了 `refresh`、`getSelection`、`setSelection` component handle，且 table 组件设计文档明确把这三个 `component:*` 方法列为当前句柄基线；但 `table` 的 `RendererDefinition` 只声明了 props/events/fields，没有同步声明 `componentCapabilityContracts`。
+- **风险**: `ResolvedAuthoringContract.componentCapabilityContracts`、组件定向 action authoring tooling 与 diagnostics 无法发现 table 已公开的实例能力；schema 作者按文档可以调用这些能力，但静态契约面不会提供 args/result shape，也不会在后续实现漂移时给出 authoring 层信号。尤其 `setSelection` 接受 payload 并返回 selection keys，`getSelection` 返回 string array，这些真实返回/输入契约目前只能从 runtime switch 推断。
+- **建议**: 在 `table` renderer definition 中补齐 `componentCapabilityContracts`：`refresh` 可声明 result `{ page: number, pageSize: number }` 或选择不承诺 data；`getSelection` 声明 string array result；`setSelection` 声明可接受 selection payload 并返回 string array。若这些能力不应成为稳定公共面，则应从 docs 和 runtime handle 中同时收回。
+- **为什么值得现在做**: `table` 是 docs 中与 CRUD 并列的 component capability 代表 renderer，且 `docs/architecture/renderer-runtime.md` 已把 table-like capabilities 明确归入 renderer/component metadata；当前只有 CRUD 补齐了 metadata，table 这个更基础的主路径 renderer 反而缺失，容易让 authoring contract 形成错误基线。
+- **误报排除**: 这不是要求所有内部 handle 都必须公开为 authoring metadata；table 文档明确写着“当前组件句柄基线”，runtime 也通过 `ComponentHandleRegistry` 暴露给 `component:<method>` 主路径。此前 [维度03-12] 覆盖的是 Tabs `setValue/getValue`，本条是 data renderer table 的独立 live handle/definition contract drift。
+- **参考文档**: `docs/references/renderer-interfaces.md:163-168`, `docs/architecture/renderer-runtime.md:1043-1051`, `docs/architecture/action-scope-and-imports.md:612-650`
+- **复核状态**: 未复核
+
+## 深挖第 7 轮追加
+
+### [维度03-14] Chart 当前句柄基线在架构文档、运行时实现与 RendererDefinition metadata 三处不一致
+
+- **文件**: `docs/architecture/renderer-runtime.md:1053-1062`, `packages/flux-renderers-data/src/chart-renderer.tsx:144-167`, `packages/flux-renderers-data/src/data-renderer-definitions.ts:151-170`
+- **行号范围**: `renderer-runtime.md:1053-1062`, `chart-renderer.tsx:144-167`, `data-renderer-definitions.ts:151-170`
+- **证据片段**:
+
+  ```md
+  ### Chart renderer
+
+  Chart now participates in the component-handle registry as a DOM-owning renderer.
+
+  Current handle baseline:
+
+  - chart registers a `ComponentHandle` with an optional `ref`
+  - the registered `ref` points at the mounted chart container element when materialized
+  - the handle exposes narrow chart instance capabilities such as `resize`, `setOption`, and `getDataURL`
+  ```
+
+  ```ts
+  capabilities: {
+    invoke(method, _payload) {
+      switch (method) {
+        case 'resize':
+          handleResize();
+          return { ok: true };
+        default:
+          return { ok: false, error: new Error(`Unsupported chart handle method: ${method}`) };
+      }
+    },
+  ```
+
+  ```ts
+  {
+    type: 'chart',
+    displayName: 'Chart',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    component: LazyChartRenderer,
+    fields: [
+  ```
+
+- **严重程度**: P2
+- **现状**: 架构文档把 Chart 当前 handle baseline 写成包含 `resize`、`setOption`、`getDataURL`，但运行时 `ChartRenderer` 只发布 `resize`；同时 `chart` 的 `RendererDefinition` 没有 `componentCapabilityContracts` 描述已发布的 `resize`，也没有描述文档承诺的另外两个能力。
+- **风险**: action authoring tooling / inspector 会从 metadata 看不到 chart 实例能力；开发者按架构文档调用 `component:setOption` 或 `component:getDataURL` 会在运行时得到 unsupported method。Chart 作为 DOM-owning renderer 的公共句柄契约因此无法作为稳定 v1 API 使用。
+- **建议**: 明确 Chart v1 支持的 handle 集合：若只支持 `resize`，同步收窄 `renderer-runtime.md` 并在 `data-renderer-definitions.ts` 补 `componentCapabilityContracts: [{ handle: 'resize', ... }]`；若 `setOption/getDataURL` 是当前 contract，则补齐 runtime handle 实现和 metadata。
+- **误报排除**: 这不是要求所有内部 ref 都公开为 authoring metadata；架构文档已明确写入“Current handle baseline”，运行时也确实通过 `ComponentHandleRegistry` 注册了 chart handle，已越过纯内部实现边界。
+- **参考文档**: `docs/references/renderer-interfaces.md:163-168`, `docs/architecture/action-scope-and-imports.md:612-650`
+- **复核状态**: 未复核
+
+### [维度03-15] Code Editor 文档发布完整 schema/events，但 RendererDefinition 未提供 propContracts/eventContracts，authoring contract 为空壳
+
+- **文件**: `packages/flux-code-editor/src/code-editor-renderer.tsx:31-52`, `packages/flux-code-editor/src/code-editor-renderer.tsx:203-222`, `docs/components/code-editor/design.md:21-50`
+- **行号范围**: `code-editor-renderer.tsx:31-52`, `code-editor-renderer.tsx:203-222`, `code-editor/design.md:21-50`
+- **证据片段**:
+  ```ts
+  export const codeEditorFieldRules: SchemaFieldRule[] = [
+    { key: 'label', kind: 'value-or-region', regionKey: 'label' },
+    { key: 'value', kind: 'prop' },
+    { key: 'language', kind: 'prop' },
+    { key: 'mode', kind: 'prop' },
+    { key: 'placeholder', kind: 'prop' },
+    ...{ key: 'onChange', kind: 'event' },
+    { key: 'onFocus', kind: 'event' },
+    { key: 'onBlur', kind: 'event' },
+  ];
+  ```
+  ```ts
+  export const codeEditorRendererDefinition: RendererDefinition = {
+    type: 'code-editor',
+    component: CodeEditorRenderer,
+    fields: codeEditorFieldRules,
+    validation: {
+      kind: 'field',
+      valueKind: 'scalar',
+  ```
+  ```md
+  - `type: 'code-editor'`
+  - `sourcePackage: '@nop-chaos/flux-code-editor'`
+  - `wrap: true`
+  - validation contributor: `kind: 'field'`、`valueKind: 'scalar'`
+    ...
+    interface CodeEditorSchema extends BaseSchema {
+    type: 'code-editor';
+    language: EditorLanguage;
+    mode?: EditorMode;
+  ```
+- **严重程度**: P2
+- **现状**: `code-editor` live schema 和组件文档列出了 `language/mode/value/placeholder/height/...` 以及 `onChange/onFocus/onBlur`，renderer field rules 也把这些字段纳入编译；但 `codeEditorRendererDefinition` 没有 `propContracts` / `eventContracts`，也没有文档声明的 `sourcePackage` metadata。
+- **风险**: `ResolvedAuthoringContract.editableProps` / `events` 依赖 `RendererDefinition.propContracts` / `eventContracts`，因此 authoring tooling、autocomplete、diagnostics 和 inspector 无法从正式 renderer definition 发现 code-editor 的公开字段与事件，只能依赖旁路 docs 或 TS 类型，形成 live schema 与 authoring API 表面的漂移。
+- **建议**: 为 `code-editor` 补齐最小 `propContracts` 和 `eventContracts`，至少覆盖文档中的公开 schema 字段、有限枚举字段和三个事件；同步补 `displayName/category/sourcePackage` 等 discovery metadata，避免组件文档与 renderer definition 分裂。
+- **误报排除**: 这不是机械要求每个 renderer 都一次性拥有完整 authoring metadata；`code-editor` 已作为独立包公开导出 renderer definition，组件文档也把其 schema 作为当前落地能力描述，缺失 metadata 会直接影响统一 authoring contract。
+- **参考文档**: `docs/references/renderer-interfaces.md:150-161`, `docs/references/renderer-interfaces.md:192-198`
+- **复核状态**: 未复核
+
+### [维度03-16] Report Designer manifest 对 metadata/field-drop host action 使用空对象 shape，provider 校验通过后仍以强转命令进入 core 判别联合
+
+- **文件**: `packages/report-designer-renderers/src/report-designer-manifest.ts:201-228`, `packages/report-designer-renderers/src/host-action-provider.ts:144-148`, `packages/report-designer-core/src/commands.ts:22-38`
+- **行号范围**: `report-designer-manifest.ts:201-228`, `host-action-provider.ts:144-148`, `commands.ts:22-38`
+- **证据片段**:
+  ```ts
+  dropFieldToTarget: {
+    args: {
+      kind: 'object',
+      fields: {
+        field: { kind: 'object', fields: {} },
+        target: { kind: 'object', fields: {} },
+      },
+    },
+  ```
+  ```ts
+  updateMeta: {
+    args: {
+      kind: 'object',
+      fields: {
+        target: { kind: 'object', fields: {} },
+        patch: metadataBagShape,
+      },
+    },
+  ```
+  ```ts
+  const result = await dispatch({
+    type: `report-designer:${method}`,
+    ...validation.args,
+  } as ReportDesignerCommand);
+  ```
+  ```ts
+  export interface DropFieldToTargetCommand extends ReportDesignerCommandBase {
+    type: 'report-designer:dropFieldToTarget';
+    field: FieldDragPayload;
+    target: Extract<ReportSelectionTarget, { kind: 'cell' | 'range' }>;
+  }
+  ```
+- **严重程度**: P1
+- **现状**: Report Designer provider 已有 `validateMethodPayload()`，但 manifest 对 `dropFieldToTarget.field/target`、`updateMeta.target`、`replaceMeta.target` 只声明 `{ kind: 'object', fields: {} }`，等价于任意对象通过；provider 随后用 `as ReportDesignerCommand` 将 payload 转入 core，而 core command 类型要求 `FieldDragPayload` 和 `ReportSelectionTarget` 判别联合的具体字段。
+- **风险**: manifest 表面上提供了结构化 args contract，实际却无法阻止 `{ target: {} }`、`{ field: {} }` 等无效 payload 进入 core dispatch；后续 metadata 路径会按 `target.kind/cell/range` 等字段执行，错误 schema 可能退化为运行时异常或无效 mutation，而不是 host action 层稳定的 contract error。
+- **建议**: 将 report-designer manifest 的 host args shape 与 `FieldDragPayload`、`ReportSelectionTarget` 判别联合对齐：为 `field` 声明 `type/sourceId/fieldId/data`，为 `target` 声明 `cell/range/...` union，且对 `dropFieldToTarget` 限定为 cell/range；provider 校验失败应返回结构化 `ActionResult` error。
+- **误报排除**: 这不是重复报告“没有 provider 校验”；Report Designer 已有 validator，但 manifest shape 过宽使 validator 对关键 payload 失去约束力。问题也不同于已记录的 result shape 缺失，本条关注输入 args contract 与 core command 判别联合不一致。
+- **参考文档**: `docs/architecture/capability-projection-manifest.md:776-790`, `docs/references/renderer-interfaces.md:177-183`
+- **复核状态**: 未复核
+
+## 深挖第 8 轮追加
+
+### [维度03-17] Data Source 文档声明 `component:refresh` 当前应支持，但 renderer 未注册组件句柄且 definition 无 capability metadata
+
+- **文件**: `docs/components/data-source/design.md:42-45`, `packages/flux-renderers-data/src/data-renderer-definitions.ts:145-150`, `packages/flux-renderers-data/src/data-source-renderer.tsx:21-32`
+- **行号范围**: `design.md:42-45`, `data-renderer-definitions.ts:145-150`, `data-source-renderer.tsx:21-32`
+- **证据片段**:
+
+  ```md
+  ## 8. 事件、动作与组件句柄能力
+
+  - 当前应优先支持 `component:refresh` 这类重新执行能力。
+  - `component:cancel` 可以作为后续增强，但不应在当前文档中伪装成已落地句柄。
+  ```
+
+  ```ts
+  {
+    type: 'data-source',
+    displayName: 'Data Source',
+    category: 'logic',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    component: DataSourceRenderer,
+  },
+  ```
+
+  ```ts
+  const registration = runtime.registerDataSource({
+    id: props.id,
+    scope,
+    compiledSource,
+  });
+  ...
+  return null;
+  ```
+
+- **严重程度**: P2
+- **现状**: `data-source` 组件文档把 `component:refresh` 写成当前应优先支持的句柄能力，并明确区分 `component:cancel` 只是后续增强；但 `DataSourceRenderer` 只注册 runtime data source，不向 `ComponentHandleRegistry` 注册 handle，`RendererDefinition` 也没有 `componentCapabilityContracts`。
+- **风险**: schema 作者或 authoring tooling 按组件文档使用 `component:refresh` targeting `data-source` 实例时，运行时无法解析该组件能力；同时正式 renderer definition 也不会暴露该能力，形成“文档承诺 / metadata 空缺 / runtime 不支持”的三方契约漂移。当前真正可用的是 built-in `refreshSource` + `targetId`，与文档声明的 component-targeted 入口不是同一 API。
+- **建议**: 二选一收敛：若 `data-source` 当前确实应支持实例 refresh，则在 `DataSourceRenderer` 注册 `ComponentHandle`，调用 `runtime.refreshDataSource({ id/name, scope })`，并在 definition 中补 `componentCapabilityContracts: [{ handle: 'refresh', ... }]`；若当前正式入口只允许 `refreshSource`，则将组件文档改为“当前使用 built-in `refreshSource`，`component:refresh` 为 future”。
+- **误报排除**: 这不是要求所有 data-source runtime API 都变成 component handle；问题仅限 active component doc 明确把 `component:refresh` 放在当前能力段，而 live renderer 没有任何 component handle 注册路径。也不重复 [维度03-12]/[维度03-13]/[维度03-14]，那些是“runtime handle 已发布但 metadata 缺失”，本条是“文档承诺了 runtime handle 但实现和 metadata 均未发布”。
+- **参考文档**: `docs/references/renderer-interfaces.md:163-168`, `docs/architecture/action-scope-and-imports.md:612-650`, `docs/references/action-payload-matrix.md:62`
+- **复核状态**: 未复核

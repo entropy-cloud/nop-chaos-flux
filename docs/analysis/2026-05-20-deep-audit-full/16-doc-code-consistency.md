@@ -223,3 +223,206 @@
 - **误报排除**: 这不是要求把 React Profiler 耗时变成 hard threshold；文档 line 30 已正确说明 E2E 可做 count-based locality diagnostics/regression gates、不能做绝对耗时 benchmark。问题仅在 line 118 继续否认已进入 supported spec 的 local-refresh locality gate。
 - **参考文档**: `docs/plans/414-playground-performance-diagnostics-e2e-plan.md:195-210`, `docs/references/maintenance-checklist.md:13-20`
 - **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度16-07] flow-designer runtime-snapshot 文档把已重新公开的 `doc.nodes/edges` 仍写成 removed
+
+- **文档路径**: `docs/architecture/flow-designer/runtime-snapshot.md:35-52`
+- **代码路径**: `packages/flow-designer-renderers/src/designer-host-projection.ts:76-93`, `packages/flow-designer-renderers/src/designer-host-projection.ts:189-226`, `apps/playground/src/taskflow-designer-lib/index.ts:26-73`
+- **行号范围**: doc `35-52`, code `76-93`, `189-226`, `26-73`
+- **证据片段**:
+  ```md
+  37: - retained canonical schema-visible fields:
+  39: - `doc` as a narrowed summary DTO (`id`, `kind`, `name`, `version`, `viewport`, `nodeCount`, `edgeCount`)
+  47: - removed from the supported region host scope boundary:
+  50: - full graph document payload under `doc`
+  ```
+  ```ts
+  76: export const DESIGNER_HOST_PROJECTION_FIELDS: HostProjectionContract['fields'] = {
+  77:   doc: {
+  80:       fields: {
+  86:         nodeCount: { kind: 'number' },
+  87:         edgeCount: { kind: 'number' },
+  88:         nodes: nodesArrayShape,
+  89:         edges: edgesArrayShape,
+  92:     description: 'Current graph document summary with nodes/edges for domain export',
+  ```
+  ```ts
+  201:   const nodes = snapshot.doc.nodes.map((n) => ({
+  207:   const edges = snapshot.doc.edges.map((e) => ({
+  215:   return {
+  216:     doc: {
+  222:       nodeCount: snapshot.doc.nodes.length,
+  223:       edgeCount: snapshot.doc.edges.length,
+  224:       nodes,
+  225:       edges,
+  ```
+  ```ts
+  26: interface DesignerProjection {
+  27:   doc: {
+  32:     nodes: Array<{ id: string; type: string; position: { x: number; y: number } }>;
+  33:     edges: Array<{ id: string; source: string; target: string; sourcePort?: string; taskflowEdgeKind?: string }>;
+  50: function buildGraphDocFromProjection(doc: DesignerProjection['doc']): GraphDocument {
+  ```
+- **严重程度**: P2
+- **漂移类型**: active architecture doc / host-scope projection contract drift
+- **当前状态**: `runtime-snapshot.md` 的 Current Projection Matrix 仍说 schema-visible `doc` 只是窄摘要，并把 “full graph document payload under `doc`” 列为 removed；但 live `DESIGNER_HOST_PROJECTION_FIELDS` 已把 `doc.nodes` / `doc.edges` 纳入 contract，`buildDesignerHostProjection()` 也实际投影 nodes/edges，TaskFlow playground 的 namespace export/save 路径依赖这些字段重建 `GraphDocument`。
+- **风险**: 后续 Flow Designer、TaskFlow、domain export 维护者会按文档误删或避免使用 `doc.nodes/edges`，直接破坏当前 graph export/save/sync 路径；也会让 host projection manifest 与 owner doc 对同一 schema-visible contract 给出相反结论。
+- **建议**: 将 `runtime-snapshot.md` 的 projection matrix 改为当前 baseline：`doc` 是 bounded graph summary including `nodes` / `edges` for domain export，而不是完整 `GraphDocument`；明确仍未公开的是 node `data` 全量、edge `data` 全量、core/adapter/config internals 等 imperative 或 heavyweight payload。
+- **误报排除**: 这不是要求把完整 `GraphDocument` 暴露给所有全局 schema；代码只在 region host scope 中公开受限 node/edge summaries，并没有公开 core instance 或完整 node/edge data。问题是 active doc 把这些已纳入 manifest 的 summary arrays 仍归入 removed/full payload。
+- **参考文档**: `docs/architecture/flow-designer/runtime-snapshot.md:260-284`, `docs/references/maintenance-checklist.md:13-20`
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度16-08] `docs/index.md` 将 compiler 边界工作路由到 archived completed plan，而不是 active architecture baseline
+
+- **文档路径**: `docs/index.md:61-62`; `docs/archive/plans/122-compiler-package-extraction-and-boundary-plan.md:14-24`
+- **代码路径**: `packages/flux-compiler/src/index.ts:1-13`; `packages/flux-runtime/src/runtime-factory.ts:25,101-108`
+- **行号范围**: doc `index.md:61-62`, archived plan `14-24`, code `flux-compiler/index.ts:1-13`, `runtime-factory.ts:25,101-108`
+- **证据片段**:
+  ```md
+  61: | Draft, execute, or audit a plan under `docs/plans/` | `docs/plans/00-plan-authoring-and-execution-guide.md` | `docs/logs/00-log-writing-guide.md` |
+  62: | Work on compiler package boundaries, schema compile/validate ownership, or action precompile placement | `docs/archive/plans/122-compiler-package-extraction-and-boundary-plan.md` | `docs/architecture/schema-file-validator.md`, `docs/architecture/flux-runtime-module-boundaries.md` |
+  ```
+  ```md
+  14: ## Current Baseline
+  16: - `packages/flux-runtime/src/runtime-factory.ts` 当前默认直接创建 `expressionCompiler` and `schemaCompiler`...
+  17: - `packages/flux-runtime/src/schema-compiler.ts` 当前同时拥有 `compile(...)` 与 `validate(...)`...
+  18: - `packages/flux-runtime/src/schema-compiler/` 目录已经是一个独立子系统...
+  24: - ... live repo 目前仍是 “schema + runtime compile” 主入口。
+  ```
+  ```ts
+  1: export { createSchemaCompiler, validateSchema } from './schema-compiler.js';
+  2: export { compileAction, compileActions, type ActionCompilerOptions } from './action-compiler.js';
+  13: export { createCompileSymbolTable, createBaseCompileSymbolTable } from './compile-symbol-table.js';
+  ```
+  ```ts
+  25: import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
+  101:   const schemaCompiler =
+  102:     input.schemaCompiler ??
+  103:     createSchemaCompiler({
+  104:       registry: input.registry,
+  ```
+- **严重程度**: P2
+- **漂移类型**: active routing drift / archived historical plan routed as primary current baseline
+- **当前状态**: `docs/index.md` 是 authoritative docs navigation baseline，但 compiler work 的第一入口仍指向 `docs/archive/plans/122...`。
+- **文档状态**: 该 archived plan 已标 `Plan Status: completed`，且其 `Current Baseline` 描述的是迁移前 `flux-runtime/src/schema-compiler.ts` 持有 compiler 的旧状态。
+- **代码状态**: live code 已有独立 `@nop-chaos/flux-compiler` package，`createSchemaCompiler` / `validateSchema` / action compiler / symbol table 均从 `flux-compiler` 导出；runtime 只装配并调用该 compiler。
+- **风险**: 后续 contributor 按 docs/index 路由会先读历史迁移计划，把 completed archive 的旧 baseline 当作当前 owner contract，进而误判 compiler ownership、重复迁移或把新 schema validation/action precompile 工作放回 runtime。
+- **建议**: 将 `docs/index.md:62` 的 first read 改为 active owner docs，例如 `docs/architecture/schema-file-validator.md` 或 `docs/architecture/flux-runtime-module-boundaries.md`；archived Plan 122 可作为 “historical extraction context” 放到 Then read 或 references，而不是 primary route。
+- **误报排除**: 这不是否定 archived plan 的历史价值；问题是 authoritative routing 把历史 completed plan 放在当前任务第一入口，且该 plan 的 Current Baseline 明显不是 live baseline。
+- **参考文档**: `docs/index.md:13-23`; `docs/plans/00-plan-authoring-and-execution-guide.md:50-51`; `docs/references/maintenance-checklist.md:167-180`
+- **复核状态**: 未复核
+
+### [维度16-09] `api-data-source.md` 仍称 action-backed data-source refresh 未进入 ActionRuntimeAdapter，但 live code 已通过 runtime.dispatch 执行
+
+- **文档路径**: `docs/architecture/api-data-source.md:281-290,308-315`
+- **代码路径**: `packages/flux-runtime/src/async-data/source-registry.ts:138-145`; `packages/flux-runtime/src/async-data/api-data-source-controller-runtime.ts:47-63,278`; `packages/flux-action-core/src/action-dispatcher/built-in-actions.ts:81-95`
+- **行号范围**: doc `281-290,308-315`, code `source-registry.ts:138-145`, `api-data-source-controller-runtime.ts:47-63,278`, `built-in-actions.ts:81-95`
+- **证据片段**:
+  ```md
+  281: Current convergence baseline:
+  283: - `ActionRuntimeAdapter` is now the unified runtime invocation boundary...
+  285: - action-backed `type: 'source'` bodies already reuse that same boundary...
+  286: - Architecture target: action-backed remote `data-source` producer requests should also enter the same ajax action / `ActionRuntimeAdapter` invocation boundary...
+  288: Current implementation note:
+  290: - live `api-data-source-controller-runtime.ts` still calls the shared request substrate (`executeApiSchema(...)` / `executeApiRequest(...)`) directly for producer refreshes.
+  ```
+  ```md
+  308: 1. Already converged
+  310: - built-in / component / namespaced actions
+  311: - `reaction.actions`
+  312: - action-backed remote `source` execution bodies
+  313: - target-state action-backed remote `data-source` producer requests
+  315: These should all reach runtime through `runtime.dispatch(...)` ... action-backed remote `data-source` refresh still needs the remaining adapter-entry cleanup...
+  ```
+  ```ts
+  138:     const controller = isActionSource
+  139:       ? createDataSourceController({
+  140:           runtime: input.runtime,
+  143:           action: compiled.action!,
+  144:           dispatch: input.runtime.dispatch,
+  145:           scope: args.scope,
+  ```
+  ```ts
+  47: async function executeDataSourceAction(
+  52:   const result = await input.dispatch(input.action, {
+  53:     runtime: input.runtime,
+  54:     scope,
+  55:     signal,
+  56:   });
+  58:   if (!result.ok || result.cancelled || result.timedOut) {
+  59:     throw toDispatchError(result);
+  62:   return result;
+  278:       const response = await executeDataSourceAction(input, requestScope, activeController.signal);
+  ```
+  ```ts
+  81:     case 'ajax': {
+  82:       const api = evaluateActionArgs(action, ctx, internals.evaluator);
+  89:       invocation = {
+  90:         action: 'ajax',
+  91:         args: api,
+  92:         targeting: action.targeting,
+  93:         actionNode: action,
+  94:         signal,
+  ```
+- **严重程度**: P2
+- **漂移类型**: active architecture doc 行为状态失真 / remaining-gap 已收敛但仍写成未完成
+- **当前状态**: 同一文档先把 “target-state action-backed remote data-source producer requests” 列入 Already converged，但仍保留 “still calls request substrate directly / still needs adapter-entry cleanup”。
+- **文档状态**: `api-data-source.md` 继续把 data-source producer refresh 描述为没有进入 unified action adapter 的 remaining implementation gap。
+- **代码状态**: runtime source registry 对 action-backed data-source 传入 `input.runtime.dispatch`；refresh 执行 `executeDataSourceAction()`，后者调用 `input.dispatch(input.action, ...)`；built-in `ajax` action 再经 action dispatcher 构造 adapter invocation。
+- **风险**: data-source / action convergence 后续维护者会按文档寻找已不存在的 “direct executeApiSchema producer refresh” gap，可能重复改造或绕开现有 dispatch path；也会让 source refresh、cache identity、dependency collection 的真实边界被误读。
+- **建议**: 更新 `api-data-source.md`：明确 action-backed data-source producer refresh 已进入 `runtime.dispatch(...)` / ajax action adapter path；保留 `prepareApiRequestForExecution` 仅用于 cache-key/dependency preflight 的说明；如果仍有 gap，应改写为更窄的 cache identity/dependency pre-evaluation 与 adapter execution split，而不是 “still calls request substrate directly”。
+- **误报排除**: `api-data-source-controller-runtime.ts` 仍在 `204-214` 调用 `prepareApiRequestForExecution(...)`，但该路径用于 prepared request/cache key 与 dependency extraction；实际 producer response 在 `278` 通过 `executeDataSourceAction(...)` dispatch 获得，不是直接 fetch/request substrate 执行。
+- **参考文档**: `docs/references/maintenance-checklist.md:95-118,281-295`; `docs/architecture/action-scope-and-imports.md`
+- **复核状态**: 未复核
+
+## 深挖第 6 轮追加
+
+### [维度16-10] `api-data-source.md` 声称 `mergeToScope` 非对象发布会诊断失败，但运行时静默跳过 merge
+
+- **文档路径**: `docs/architecture/api-data-source.md:643-651`
+- **代码路径**: `packages/flux-runtime/src/async-data/data-source-runtime-utils.ts:122-138`; `packages/flux-runtime/src/async-data/api-data-source-controller-state.ts:84-101`; `packages/flux-runtime/src/async-data/formula-data-source-controller.ts:161-168`
+- **行号范围**: doc `643-651`, code `122-138`, `84-101`, `161-168`
+- **证据片段**:
+  ```md
+  643: `mergeToScope: true` rules:
+  645: 1. `name` remains the authoritative identity and default publication path
+  646: 2. if `resultMapping` is present, runtime applies `resultMapping` first and uses the mapped object as the published value
+  647: 3. if the published value is a plain object, runtime additionally shallow-merges its top-level fields into the current lexical scope
+  650: 6. collisions with reserved projection names, active `Resource` targets, or ordinary scope data in the same owning lexical scope are invalid
+  651: 7. if the published value is not object-like, `mergeToScope: true` is invalid and publication fails diagnostically
+  ```
+  ```ts
+  122:   const { scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data } = input;
+  123:   if (targetPath) {
+  124:     const currentValue = scope.get(targetPath);
+  125:     scope.update(
+  126:       targetPath,
+  127:       applyMergeStrategy({
+  136:   if (mergeToScope && isRecord(data)) {
+  137:     scope.merge(data);
+  138:   }
+  ```
+  ```ts
+  84:     writeDataToScope({
+  85:       scope: input.scope,
+  86:       targetPath: input.targetPath,
+  87:       mergeToScope: input.mergeToScope,
+  88:       mergeStrategy: input.mergeStrategy,
+  89:       mergeKey: input.mergeKey,
+  90:       data: effectiveData,
+  91:     });
+  ```
+- **严重程度**: P2
+- **漂移类型**: active architecture doc / runtime behavior contract drift
+- **当前状态**: 文档把 `mergeToScope: true` 的非对象发布定义为 invalid，并要求 diagnostically fail；live runtime 只在 `mergeToScope && isRecord(data)` 时执行 `scope.merge(data)`，否则静默不 merge，且仍会按 `targetPath` 正常发布数据。
+- **文档状态**: 当前架构文档承诺了错误语义与诊断语义。
+- **代码状态**: action-backed 与 formula-backed data-source 都调用同一个 `writeDataToScope()`，该 helper 对非对象 `mergeToScope` 没有 throw、没有 `reportRuntimeHostIssue(...)`、没有 `env.notify(...)`，也没有 collision/reserved-name 诊断。
+- **风险**: schema 作者和后续维护者会以为错误配置会被显式拦截，但实际会得到“命名路径已更新、current scope 未 merge、无任何错误”的半成功状态，调试时难以判断是结果形状错误还是依赖/刷新未触发。
+- **建议**: 二选一收敛：若文档语义正确，在 `writeDataToScope()` 或调用层对 `mergeToScope && !isRecord(data)` 以及同 scope collision 发出结构化 host diagnostic，并按约定失败；若代码语义才是当前支持面，则把文档改为“非对象值只跳过 shallow merge，不视为发布失败”，并移除 invalid/fails diagnostically 表述。
+- **误报排除**: 这不是只缺少测试的推测；当前唯一 merge 分支由 `isRecord(data)` 守卫，非对象路径没有其他错误分支。`formula-data-source-controller` 的 publish failure catch 只能捕获 thrown error，但 `writeDataToScope()` 在非对象 merge 时不会抛错。
+- **参考文档**: `docs/references/maintenance-checklist.md:13-20`, `docs/references/maintenance-checklist.md:281-295`
+- **复核状态**: 未复核

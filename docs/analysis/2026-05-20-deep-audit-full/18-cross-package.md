@@ -142,6 +142,10 @@
 - **参考文档**: `docs/skills/deep-audit-prompts.md:1649-1652`；`docs/references/audit-tooling.md:39`；`docs/architecture/flux-design-principles.md:24-27`。
 - **复核状态**: 未复核
 
+## 深挖第 5 轮追加
+
+未发现新的高价值问题。深挖结束。
+
 ### [维度18-04] Flow Designer 画布快捷动作 aria-label 硬编码英文，和同包 locale namespace 及菜单文本模式不一致
 
 - **涉及包**: `@nop-chaos/flow-designer-renderers` vs `@nop-chaos/flux-i18n`
@@ -292,4 +296,113 @@
 - **风险**: Spreadsheet canvas 是 report/spreadsheet family 的共享核心编辑面，非英文 locale 下视觉按钮/菜单可能已翻译，但屏幕阅读器、自动化按可访问名称定位、以及 hover title 仍输出英文；后续 report designer 复用 spreadsheet canvas 时会继承同一 mixed-locale accessibility contract。
 - **误报排除**: 未报告单元格内容、sheet 用户自定义名称本身、测试 fixture 或技术缩写；本条只覆盖 renderer 内置交互控件的固定可访问名称。它也不是重复 [维度18-03] 的 placeholder 问题，涉及的文件、交互 surface 和用户影响路径均不同。
 - **参考文档**: `docs/skills/deep-audit-prompts.md:1649-1652`；`docs/references/audit-tooling.md:39`；`docs/components/spreadsheet-page/design.md:53-64`；`docs/architecture/flux-design-principles.md:24-27`。
+- **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度18-07] Code Editor 工具栏/变量面板部分操作名仍硬编码英文，和同包 SQL 工具栏及 `flux.codeEditor` locale 模式不一致
+
+- **涉及包**: `@nop-chaos/flux-code-editor` vs `@nop-chaos/flux-i18n`
+- **文件**: `packages/flux-code-editor/src/code-editor-renderer.tsx:168-190`, `packages/flux-code-editor/src/code-editor-renderer/sql-editor-toolbar.tsx:77-83`, `packages/flux-code-editor/src/code-editor-renderer/snippet-panel.tsx:24-28`, `packages/flux-code-editor/src/variable-panel.tsx:87-99`, `packages/flux-i18n/src/locales/en-US.ts:418-436`
+- **行号范围**: 主要证据集中在 `code-editor-renderer.tsx:168-190`、`sql-editor-toolbar.tsx:77-83`、`snippet-panel.tsx:24-28`、`variable-panel.tsx:87-99`。
+- **证据片段**:
+  ```tsx
+  // packages/flux-code-editor/src/code-editor-renderer.tsx:168-190
+  <ToolbarButton
+    data-slot="code-editor-header-close"
+    onClick={() => setIsFullscreen(false)}
+    aria-label="Exit fullscreen"
+  >
+  ...
+  <ToolbarButton
+    data-slot="code-editor-toolbar-fullscreen"
+    onClick={toggleFullscreen}
+    aria-label="Enter fullscreen"
+    title="Fullscreen"
+  >
+  ```
+  ```tsx
+  // packages/flux-code-editor/src/code-editor-renderer/sql-editor-toolbar.tsx:77-83
+  <ToolbarButton
+    data-slot="code-editor-toolbar-fullscreen"
+    onClick={onEnterFullscreen}
+    aria-label="Enter fullscreen"
+    title="Fullscreen"
+  >
+  ```
+  ```tsx
+  // packages/flux-code-editor/src/variable-panel.tsx:87-99
+  <ToolbarButton
+    data-slot="code-editor-var-item-copy"
+    onClick={() => onCopy(variable)}
+    title="Copy to clipboard"
+    aria-label="Copy to clipboard"
+  >
+  ...
+  title="Insert at cursor"
+  aria-label="Insert at cursor"
+  ```
+- **严重程度**: P2
+- **不一致类别**: i18n 文本硬编码 / accessibility chrome 契约不一致
+- **包 A 模式**: `flux-code-editor` 已经在 SQL toolbar、变量面板标题、执行结果面板中使用 `t('flux.codeEditor.*')`，但 fullscreen、snippet toggle、变量 copy/insert 这些同一编辑器 chrome 操作仍直接写英文 `aria-label` / `title`。
+- **包 B 模式**: `flux-i18n` 已有 `flux.codeEditor` namespace，覆盖 `formatSQL`、`showVariables`、`executeSQL`、`variables`、`expandVariablePanel`、`collapseVariablePanel`、`resultRows` 等相邻操作文案；同包 `SQLEditorToolbar` 的 format/run/vars 按钮也已通过 `t()` 输出。
+- **统一建议**: 在 `flux.codeEditor` 下补齐 `enterFullscreen`、`exitFullscreen`、`fullscreen`、`insertSnippet`、`copyToClipboard`、`insertAtCursor` 等 key，并将 `code-editor-renderer.tsx`、`sql-editor-toolbar.tsx`、`snippet-panel.tsx`、`variable-panel.tsx` 的固定 `title` / `aria-label` 全部改为 `t('flux.codeEditor.*')`。
+- **现状**: 非英文 locale 下 Code Editor 的主要 SQL 按钮会翻译，但 fullscreen、snippet、变量项快捷操作仍以英文暴露给屏幕阅读器、hover title 和按可访问名称定位的自动化测试；`pnpm check:i18n-keys` 无法发现这些未调用 `t()` 的硬编码字符串。
+- **风险**: Code Editor 是表达式/SQL 编辑的共享基础组件，可能被表单、设计器、调试器等多个包复用；硬编码 accessibility names 会把 mixed-locale chrome 扩散到所有宿主，并让同一个 toolbar 内出现部分按钮可翻译、部分按钮固定英文的契约漂移。
+- **误报排除**: 未将用户传入的 snippet `name` / `description`、SQL 关键字、变量值或 schema placeholder 视为问题；本条只覆盖组件内置按钮的固定操作名称，且这些操作与同文件/同包已 i18n 的 toolbar action 属于同一 chrome surface。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1649-1652`；`docs/references/audit-tooling.md:39`；`docs/architecture/flux-design-principles.md:24-27`。
+- **复核状态**: 未复核
+
+### [维度18-08] Nop Debugger 面板控制与搜索输入硬编码英文，和已建立的 `flux.debugger` locale namespace 不一致
+
+- **涉及包**: `@nop-chaos/nop-debugger` vs `@nop-chaos/flux-i18n`
+- **文件**: `packages/nop-debugger/src/panel.tsx:293-417`, `packages/nop-debugger/src/panel/node-tab.tsx:80-88,261-268,391-395`, `packages/nop-debugger/src/panel/timeline-tab.tsx:203-209`, `packages/flux-i18n/src/locales/en-US.ts:210-264`
+- **行号范围**: 主要证据集中在 `panel.tsx:293-417`、`node-tab.tsx:80-88,261-268,391-395`、`timeline-tab.tsx:203-209`。
+- **证据片段**:
+  ```tsx
+  // packages/nop-debugger/src/panel.tsx:293-417
+  <Button
+    ...
+    title="Open Debugger"
+  >
+  ...
+  data-tooltip={chrome.paused ? 'Resume' : 'Pause'}
+  aria-label={chrome.paused ? 'Resume' : 'Pause'}
+  ...
+  data-tooltip="Clear"
+  aria-label="Clear"
+  ...
+  data-tooltip={inspectMode ? 'Cancel pick' : 'Pick element'}
+  aria-label={inspectMode ? 'Cancel pick' : 'Pick element'}
+  ...
+  <div className="ndbg-tabs" role="tablist" aria-label="Debugger tabs">
+  ```
+  ```tsx
+  // packages/nop-debugger/src/panel/node-tab.tsx:80-88,261-268,391-395
+  <span className="ndbg-metric-label">{t('flux.debugger.componentInspector')}</span>
+  <Button
+    ...
+    aria-label="Clear selected element"
+  >
+  ...
+  placeholder="Enter nodeId to inspect..."
+  ...
+  placeholder="Evaluate formula expression on component data..."
+  ```
+  ```tsx
+  // packages/nop-debugger/src/panel/timeline-tab.tsx:203-209
+  <Input
+    type="search"
+    className="ndbg-search"
+    placeholder="Search events, /regex/, or path:body.0"
+  ```
+- **严重程度**: P2
+- **不一致类别**: i18n 文本硬编码 / devtool UI chrome 契约不一致
+- **包 A 模式**: `nop-debugger` 面板主体大量标题、区块 label、empty state 已使用 `t('flux.debugger.*')`，但面板启动按钮、header icon action、tablist aria-label、节点输入 placeholder、表达式求值 placeholder、timeline 搜索 placeholder 仍直接写英文。
+- **包 B 模式**: `flux-i18n` 已维护完整 `flux.debugger` namespace，包含 `title`、`console`、`scan`、`inspectHint`、`componentInspector`、`selectedElement`、`enterNodeId`、`expressionEvaluator`、`events`、`errorsOnly`、`noEventsMatch` 等调试器主界面文案；同一文件周边已通过 `t()` 输出这些文本。
+- **统一建议**: 将 debugger chrome 收敛到 locale key：补齐 `openDebugger`、`resume`、`pause`、`clearSelectedElement`、`cancelPick`、`pickElement`、`minimize`、`tabsLabel`、`nodeIdPlaceholder`、`evalPlaceholder`、`eventSearchPlaceholder` 等 key，并替换硬编码 `title`、`data-tooltip`、`aria-label`、`placeholder`。
+- **现状**: 默认语言为 `zh-CN`，因此当前 Debugger 会出现标题/区块中文、按钮 tooltip/aria-label/search placeholder 英文的混合界面；这些字符串没有进入 `t()` 调用，无法被 `check:i18n-keys` 覆盖。
+- **风险**: Debugger 是跨包运行时诊断入口，常用于定位 renderer/runtime 问题；混合语言会影响可访问名称、自动化定位以及非英文团队的调试体验。更重要的是同一包已建立 locale namespace，继续保留硬编码会让新增 debugger chrome 复制错误模式。
+- **误报排除**: 未报告事件 kind、nodeId、路径表达式示例中的技术 token、用户数据或运行时 detail；本条只覆盖 debugger 自带固定 UI chrome 文案。技术示例如 `/regex/`、`path:body.0` 可作为翻译字符串的一部分保留，不要求翻译技术语法本身。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1649-1652`；`docs/references/audit-tooling.md:39`；`docs/architecture/flux-design-principles.md:24-27`。
 - **复核状态**: 未复核

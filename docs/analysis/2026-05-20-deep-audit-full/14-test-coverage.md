@@ -290,3 +290,220 @@
 - **误报排除**: 这不是要求所有包都必须追求固定覆盖率数字，也不是报告当前覆盖率不足；问题点是 live config 已声明阈值，而默认验证路径没有启用 coverage，导致阈值本身不可达。前两轮已覆盖“测试文件遗漏”和“弱断言/隔离性”，本条是独立的覆盖率门禁真实性问题。
 - **参考文档**: `docs/skills/deep-audit-prompts.md:1380-1384,1403-1408`, `AGENTS.md:27-31,203-210`, `docs/references/audit-tooling.md:13-19`
 - **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度14-07] Report Designer 多个失败路径测试仍只断言 warning 命中，无法发现 `reportRuntimeHostIssue` 默认 error 通知与显式 warning 的重复 toast
+
+- **文件**: `packages/report-designer-renderers/src/page-renderer.tsx:350-363`, `packages/report-designer-renderers/src/page-renderer.test.tsx:301-305`, `packages/report-designer-renderers/src/report-spreadsheet-canvas.tsx:213-227`, `packages/report-designer-renderers/src/report-spreadsheet-canvas.test.tsx:157-174`
+- **行号范围**: `page-renderer.tsx:350-363`; `page-renderer.test.tsx:301-305`; `report-spreadsheet-canvas.tsx:213-227`; `report-spreadsheet-canvas.test.tsx:157-174`
+- **证据片段**:
+  ```tsx
+  reportRuntimeHostIssue({
+    env,
+    error,
+    phase: 'render',
+    path: props.path,
+    details: {
+      schemaPath: props.path,
+      operation: 'resolveReportDesignerPageInputs',
+      invalidProps: issues,
+    },
+  });
+  env.notify?.('warning', error.message);
+  ```
+  ```tsx
+  await waitFor(() => {
+    expect(fieldSourceProvider.load).toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith('warning', 'field sources exploded');
+    expect(onError).toHaveBeenCalled();
+  });
+  ```
+  ```tsx
+  reportRuntimeHostIssue({
+    env,
+    error,
+    phase: 'action',
+    path: 'report-designer.spreadsheet-canvas',
+    details: {
+      operation: 'report-field-drop',
+      sheetId,
+    },
+  });
+  env.notify?.('warning', getFailureMessage(error));
+  ```
+  ```tsx
+  await waitFor(() => {
+    expect(spreadsheetBridge.dispatch).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        type: 'spreadsheet:setCellValue',
+        value: '${amount}',
+      }),
+    );
+    expect(spreadsheetBridge.dispatch).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        type: 'spreadsheet:clearCells',
+        clearValues: true,
+      }),
+    );
+    expect(testMocks.notify).toHaveBeenCalledWith('warning', 'designer rejected drop');
+    expect(testMocks.reportRuntimeHostIssue).toHaveBeenCalled();
+  });
+  ```
+- **严重程度**: P1
+- **类别**: 验证可信度 / 失败路径质量
+- **现状**: 第 1 轮已覆盖 `field-panel-renderer` 的同类弱断言；继续复核发现 `page-renderer` 初始化/非法输入失败路径、`report-spreadsheet-canvas` 字段 drop 回滚失败路径也存在同一结构：实现先调用未设置 `notify: false` 的 `reportRuntimeHostIssue({ env, error })`，该 helper 默认会 `env.notify('error', message)`，随后又显式调用 `env.notify('warning', ...)`。对应测试只断言 warning 被调用，或 mock 掉 `reportRuntimeHostIssue` 后断言它“被调用”，没有验证真实通知调用次数、顺序和 level。
+- **风险**: Report Designer 关键失败路径在真实运行时可能同时出现 error toast 与 warning toast，但当前测试仍会通过；字段源加载失败、非法 page props、字段 drop 回滚失败都属于用户可见故障面，重复/错级通知会降低错误恢复体验并污染监控信号。
+- **建议**: 对这些失败路径统一明确通知 contract：如果只期望 warning，应在 `reportRuntimeHostIssue` 调用中传 `notify: false`，或移除后续显式 warning；测试侧改为使用真实 `reportRuntimeHostIssue` 行为并断言 `notify` 的 `toHaveBeenCalledTimes(1)`、调用顺序和 level。对于需要同时监控和 warning toast 的路径，测试应显式断言 monitor 被调用但 notify 不重复。
+- **为什么值得现在做**: 这不是新增功能覆盖缺口，而是已有失败路径测试给出了“已覆盖”的假信心；第 1 轮只列出 field panel 一个点，live code 显示同一模式已扩散到页面初始化和 spreadsheet canvas drop 路径，值得一次性收敛。
+- **误报排除**: `reportRuntimeHostIssue` 的实现明确在 `input.notify !== false` 时调用 `input.env.notify(level, message)`，默认 level 为 `error`；上述调用没有传 `notify: false`，因此不是理论上的重复风险。测试断言 `toHaveBeenCalledWith('warning', ...)` 也确实无法排除额外 error 调用。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1403-1408`, `docs/references/audit-tooling.md:54`, `AGENTS.md:215-223`
+- **复核状态**: 未复核
+
+### [维度14-08] mutation testing 入口有文档化但 `break: 0` 且 CI 不运行，质量门禁实际不可失败
+
+- **文件**: `package.json:14`, `stryker.runtime.conf.mjs:5-22`, `.github/workflows/ci.yml:65-99`, `docs/architecture/frontend-baseline.md:142-149`
+- **行号范围**: `package.json:14`; `stryker.runtime.conf.mjs:5-22`; `.github/workflows/ci.yml:65-99`; `frontend-baseline.md:142-149`
+- **证据片段**:
+
+  ```json
+  "audit:mutants": "stryker run stryker.runtime.conf.mjs --plugins @stryker-mutator/vitest-runner",
+  ```
+
+  ```js
+  mutate: [
+    'packages/flux-runtime/src/validation/*.ts',
+    '!packages/flux-runtime/src/validation/index.ts',
+    '!packages/flux-runtime/src/validation/*.test.ts',
+  ],
+  testFiles: ['packages/flux-runtime/src/validation/*.test.ts'],
+  ...
+  thresholds: {
+    high: 80,
+    low: 60,
+    break: 0,
+  },
+  ```
+
+  ```yml
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      ...
+      - run: pnpm test
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    steps:
+      ...
+      - run: pnpm test:e2e
+  ```
+
+  ```md
+  - `pnpm audit:mutants` - Stryker mutation-test entry point for the current `flux-runtime/src/validation` pilot using an isolated Vitest config
+  ```
+
+- **严重程度**: P2
+- **类别**: 测试质量门禁 / mutation coverage 可信度
+- **现状**: 仓库根脚本和架构文档都把 `pnpm audit:mutants` 作为当前 `flux-runtime/src/validation` mutation-test pilot 入口，但 Stryker 配置的 `thresholds.break` 为 `0`，即使 mutation score 极低也不会让命令因阈值失败；CI workflow 只运行 `pnpm test` 和 `pnpm test:e2e`，没有运行 `pnpm audit:mutants`。
+- **风险**: validation 这类高风险规则代码即使新增测试只覆盖执行路径、不杀死关键 mutants，也不会被任何默认门禁捕获；维护者看到 `high: 80 / low: 60` 和文档化 mutation pilot，容易误以为 mutation quality 已有保护，但实际不会阻断回归。
+- **建议**: 如果该 pilot 要作为质量门禁，应把 `thresholds.break` 提升到明确的最低可接受值，并在 CI 增加独立 job 或定期 gate 运行 `pnpm audit:mutants`；如果暂时只是手动诊断工具，应在文档和脚本命名中明确“非门禁”，避免与默认测试质量保证混淆。
+- **为什么值得现在做**: 第 3 轮已发现 coverage thresholds 没有接入默认 test；本条是独立的 mutation testing 真实性问题：即使手动运行 mutation 入口，当前阈值也不会失败。它直接影响 validation pilot 的测试质量信号，而不仅是覆盖率数字。
+- **误报排除**: 这不是要求所有包都必须启用 mutation testing；问题点在于 live repo 已提供并文档化 mutation pilot，但配置 `break: 0` 使其不具备失败门禁语义，CI 也没有补充运行该入口。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1380-1384,1403-1408`, `docs/architecture/frontend-baseline.md:142-149`, `AGENTS.md:175-178`
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度14-09] 文档列为质量门禁的 `check:flux-bundle-pack` 未接入 root `check/lint` 或 CI，facade tarball artifact 回归不会被默认验证捕获
+
+- **文件**: `docs/architecture/frontend-baseline.md:104-111,131-140`, `package.json:8,21,36,47,53`, `.github/workflows/ci.yml:31-63`
+- **行号范围**: `frontend-baseline.md:104-111,131-140`; `package.json:8,21,36,47,53`; `.github/workflows/ci.yml:31-63`
+- **证据片段**:
+
+  ```md
+  - the repo-owned tarball output convention is `dist-packages/`
+  - `pnpm check:flux-bundle-pack` validates the real packed tarball shape, not only local `dist/`
+    ...
+    The repository should keep these checks passing:
+  - `pnpm build`
+  - `pnpm typecheck`
+  - `pnpm test`
+  - `pnpm lint`
+  - `pnpm check:flux-bundle-pack`
+  ```
+
+  ```json
+  "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:schema-prop-coverage && pnpm check:audit-suspects",
+  "test": "turbo run test --concurrency=2",
+  "check:flux-bundle-pack": "node scripts/check-flux-bundle-pack.mjs",
+  "lint": "node scripts/clean-src-artifacts.mjs && node scripts/verify-no-src-artifacts.mjs && node scripts/check-react19-legacy-apis.mjs && node scripts/check-active-doc-code-anchors.mjs && node scripts/check-package-css-exports.mjs && node scripts/check-renderer-definition-fields-only.mjs && node scripts/check-finite-prop-contracts.mjs && node scripts/check-i18n-keys.mjs && node scripts/check-schema-prop-coverage.mjs && turbo run lint",
+  ```
+
+  ```yml
+  build:
+    name: Build
+    ...
+    - run: pnpm build
+
+  lint:
+    name: Lint
+    ...
+    - run: pnpm lint
+  ```
+
+- **严重程度**: P2
+- **类别**: CI artifact validation mismatch / 测试质量门禁可信度
+- **现状**: `frontend-baseline.md` 把 `pnpm check:flux-bundle-pack` 明确列为应保持通过的仓库质量门禁，并说明它验证真实 packed tarball shape；但 root `pnpm check`、`pnpm lint`、`pnpm test` 均未运行该脚本，GitHub CI 的 build/lint/test/e2e jobs 也没有运行它。该命令只作为独立脚本存在。
+- **风险**: facade package `@nop-chaos/flux` 的 tarball 内容、packed manifest、CSS entry、peer dependency shape 或 dist artifact 发生回归时，默认 PR CI 仍可能全绿；维护者看到 owner doc 中的“quality gate”容易误以为真实发布 artifact 已被 CI 保护。
+- **建议**: 将 `pnpm check:flux-bundle-pack` 接入 CI（建议 build job 后追加独立 step，或纳入 root `pnpm check`），并确保失败阻断 PR；如果暂不作为默认门禁，应从 `frontend-baseline.md` 的“repository should keep these checks passing”中降级为手动 release check，并明确非 CI gate。
+- **误报排除**: 这不是重复报告覆盖率阈值或 mutation gate 不生效；本条针对的是已文档化的发布 tarball artifact 验证与默认 CI 实际执行不一致。`scripts/check-flux-bundle-pack.mjs` 确实会读取 packed tarball 中的 `package/dist/index.js`、`index.d.ts`、`style.css` 和 packed `package.json`，但 `.github/workflows/ci.yml` 没有调用该入口。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1403-1406`, `docs/architecture/frontend-baseline.md:104-111,131-140`, `docs/references/audit-tooling.md:38`
+- **复核状态**: 未复核
+
+## 深挖第 6 轮追加
+
+### [维度14-10] GitHub CI 未运行文档化的 `pnpm check` 健康门禁，workspace manifest / oversized 等硬检查不会阻断 PR
+
+- **文件**: `package.json:8,21,47`, `.github/workflows/ci.yml:48-80`, `docs/references/audit-tooling.md:23-41`
+- **行号范围**: `package.json:8,21,47`; `.github/workflows/ci.yml:48-80`; `docs/references/audit-tooling.md:23-41`
+- **证据片段**:
+
+  ```json
+  "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:schema-prop-coverage && pnpm check:audit-suspects",
+  "test": "turbo run test --concurrency=2",
+  ...
+  "lint": "node scripts/clean-src-artifacts.mjs && node scripts/verify-no-src-artifacts.mjs && node scripts/check-react19-legacy-apis.mjs && node scripts/check-active-doc-code-anchors.mjs && node scripts/check-package-css-exports.mjs && node scripts/check-renderer-definition-fields-only.mjs && node scripts/check-finite-prop-contracts.mjs && node scripts/check-i18n-keys.mjs && node scripts/check-schema-prop-coverage.mjs && turbo run lint",
+  ```
+
+  ```yml
+  lint:
+    name: Lint
+    ...
+    - run: pnpm lint
+
+  test:
+    name: Test
+    ...
+    - run: pnpm test
+  ```
+
+  ```md
+  | `pnpm check` | Health gate plus audit suspects | Runs structural guard scripts, schema property coverage, and `check:audit-suspects`. Fails only on hard gate failures; suspect output is informational. |
+  ...
+  | `pnpm check:workspace-manifest-deps` | ... | Workspace source imports not declared in local package manifests |
+  | `pnpm check:schema-prop-coverage` | ... | JSON-visible schema properties lacking authored-test coverage |
+  ```
+
+- **严重程度**: P1
+- **类别**: CI 验证可信度 / hard gate 接入缺口
+- **现状**: `docs/references/audit-tooling.md` 将 `pnpm check` 定义为 health gate，且 root `check` 包含 `check:workspace-manifest-deps`、`check:oversized-code-files`、`check:audit-suspects` 等默认健康检查；但 GitHub CI 只有 `pnpm lint`、`pnpm test`、`pnpm build`、`pnpm typecheck`、`pnpm test:e2e`、`pnpm format:check`，没有任何 job 运行 `pnpm check`。`pnpm lint` 虽覆盖部分脚本，但没有覆盖 `check:workspace-manifest-deps` 和 `check:oversized-code-files`。
+- **风险**: PR 可以在缺失 workspace package manifest 依赖、代码文件重新超过 oversized hard gate、或 audit suspect 基线出现重大漂移时仍通过 CI；维护者看到 `pnpm check` 被文档定义为 health gate，容易误以为这些验证已由默认 CI 执行，导致本地偶发执行与 PR 门禁之间产生可信度落差。
+- **建议**: 在 `.github/workflows/ci.yml` 增加独立 `check` job 或在 lint job 中显式运行 `pnpm check`；如果担心 suspect 输出不应阻断，保持当前脚本语义即可，因为 `check:audit-suspects` 按文档为 informational exit 0，而 hard gate 失败仍会阻断。若不准备接入 CI，则应把 `docs/references/audit-tooling.md` 中 `pnpm check` 的 gate 语义降级为本地手动检查，并明确 CI 不覆盖的脚本清单。
+- **误报排除**: 这不是重复报告 `check:flux-bundle-pack` 未接入 CI；本条聚焦 root `pnpm check` 本身作为已文档化 health gate 未被 CI 调用，且 `lint` 并非等价替代：它没有运行 `check:workspace-manifest-deps` / `check:oversized-code-files` / `check:audit-suspects`。也不是要求 suspect 输出变成失败门禁，当前 `pnpm check` 已区分 hard gate 与 informational suspect。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1380-1384,1403-1408`, `docs/references/audit-tooling.md:23-41`, `AGENTS.md:27-31`
+- **复核状态**: 未复核

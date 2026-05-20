@@ -131,3 +131,174 @@
 - **误报排除**: 这不是“低代码动态 args 本来弱类型”的正常边界；当前代码已经公开声明了 `componentCapabilityContracts.args`，且目标是表单 owner 的写接口，不是只读调试或 schema passthrough。也不是第 1/2 轮已覆盖的 host manifest provider 问题：这里走的是 `component:<method>` / `ComponentHandleRegistry` 普通 component capability 路径，现有 Flow/Word host action provider 修复建议不会覆盖该 runtime 分支。
 - **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/references/renderer-interfaces.md`, `docs/architecture/capability-contract-model.md`, `docs/architecture/action-scope-and-imports.md`, `docs/references/action-payload-matrix.md`, `docs/references/deep-audit-calibration-patterns.md`
 - **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度13-04] Host capability 编译期校验在 `args` 缺失时跳过 manifest 必填字段，发布的参数契约无法阻止无 payload 调用
+
+- **文件**: `packages/flux-compiler/src/schema-compiler/host-action-validation.ts:101-128`, `packages/flux-compiler/src/schema-compiler/shape-validation-rules.ts:179-203`, `packages/word-editor-renderers/src/word-editor-manifest.ts:133-149`
+- **行号范围**: `host-action-validation.ts:101-128`, `shape-validation-rules.ts:179-203`, `word-editor-manifest.ts:133-149`
+- **证据片段**:
+  ```ts
+  const method = manifest.capabilities.methods[parsed.method];
+  if (!method) {
+    diagnostics.emit({
+      code: 'unknown-host-capability-method',
+      path: appendJsonPointer(path, 'action'),
+  ```
+  ```ts
+  if (method.args && args !== undefined) {
+    const argsPath = appendJsonPointer(path, 'args');
+    const validationResult = validateFluxValueShape(
+      args,
+      method.args,
+  ```
+  ```ts
+  insertField: {
+    args: {
+      kind: 'object',
+      fields: {
+        datasetName: { kind: 'string' },
+        fieldName: { kind: 'string' },
+      },
+    },
+  ```
+- **严重程度**: P1
+- **分类**: 危险
+- **现状**: `validateHostAction` 只在 `method.args && args !== undefined` 时校验 manifest 参数 shape；当 host capability 声明了必填 object args，但 schema 写成 `{ action: 'word-editor:insertField' }`、`{ action: 'spreadsheet:setCellValue' }` 或 `{ action: 'report-designer:updateMeta' }` 且完全省略 `args` 时，编译期不会把缺失 payload 当成 `invalid-host-capability-args`。通用 `validateActionShape` 也只检查“提供了 args 但不是 object”，没有补上“host method 声明 args 时必须提供 args”的规则。
+- **真实风险**: host manifest 对 schema 作者呈现为强契约，但最常见的“漏写 args”不会在编译/诊断阶段暴露，只能落到运行时 provider。对已补 runtime validation 的 Spreadsheet/Report 会变成延迟失败；对第 1/2 轮已发现的 Flow/Word 未校验或半校验 provider，则会继续进入默认值、断言或领域 validator 路径，产生空 nodeType、未结构化失败或异常外泄。该问题使 manifest 的静态类型边界对必填 payload 失效。
+- **建议**: 在 `validateHostAction` 中只要 `method.args` 存在就调用 `validateFluxValueShape(args, method.args, ...)`，让 `undefined` 命中 object shape 的错误；或显式先报 `Host capability args are required`。同时为“method.args 存在但 schema.args 缺失”补测试，覆盖 direct `validateHostAction(...)` 和 schema `onClick`/reaction 嵌套路径。
+- **误报排除**: 这不是低代码动态表达式导致的合理放宽；`args` 整体缺失不是 `${...}` 动态值，也不是 optional 字段缺失。`FluxValueShape` 已能对 `undefined` vs object 产生错误，当前只是调用条件把校验短路了。该问题也不同于第 1/2 轮 provider 未 runtime 校验：即使 provider 已校验，编译期仍未兑现 manifest 必填契约。
+- **参考文档**: `docs/architecture/capability-projection-manifest.md`, `docs/architecture/complex-control-host-protocol.md`, `docs/architecture/action-scope-and-imports.md`, `docs/references/deep-audit-calibration-patterns.md`
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度13-05] Spreadsheet host manifest 对多项写命令缺失 args 契约，provider 校验会把空 payload 当合法命令下发
+
+- **文件**: `packages/spreadsheet-renderers/src/spreadsheet-manifest.ts:311-318`, `packages/spreadsheet-renderers/src/host-action-provider.ts:69-95`, `packages/spreadsheet-core/src/command-handlers/selection-handlers.ts:37-50`, `packages/spreadsheet-core/src/commands-base.ts:201-217`
+- **行号范围**: `spreadsheet-manifest.ts:311-318`, `host-action-provider.ts:69-95`, `selection-handlers.ts:37-50`, `commands-base.ts:201-217`
+- **证据片段**:
+
+  ```ts
+  selectAll: {
+    description: 'Select the entire sheet.',
+  },
+  selectRow: {
+    description: 'Select one or more rows.',
+  },
+  selectColumn: {
+    description: 'Select one or more columns.',
+  },
+  ```
+
+  ```ts
+  const contract = (SPREADSHEET_HOST_METHOD_CONTRACTS as HostCapabilityContract['methods'])[method];
+  if (!contract?.args) {
+    if (payload === undefined) {
+      return { ok: true, args: {} };
+    }
+    if (isCommandRecord(payload)) {
+      return { ok: true, args: payload };
+    }
+  ```
+
+  ```ts
+  export interface SelectRowCommand extends SpreadsheetCommandBase {
+    type: 'spreadsheet:selectRow';
+    sheetId: string;
+    row: number;
+    extend?: boolean;
+  }
+
+  export interface SelectColumnCommand extends SpreadsheetCommandBase {
+    type: 'spreadsheet:selectColumn';
+    sheetId: string;
+  ```
+
+  ```ts
+  export const handleSelectRow: CommandHandler<SelectRowCommand> = (store, command) => {
+    const state = store.getState();
+    const current = state.selection;
+    if (
+      command.extend &&
+      current.kind === 'row' &&
+  ```
+
+- **严重程度**: P1
+- **分类**: 危险
+- **现状**: Spreadsheet manifest 已发布 `selectAll` / `selectRow` / `selectColumn` 等 host capability，但这些方法没有声明 `args`；provider 的 `validateMethodPayload` 对“无 args 契约”的方法会接受 `undefined` 并下发 `{ type: "spreadsheet:<method>" } as SpreadsheetCommand`。core 类型却要求 `selectRow.sheetId`、`selectRow.row`、`selectColumn.sheetId`、`selectColumn.col` 等必填字段。
+- **真实风险**: schema/host 调用 `{ action: "spreadsheet:selectRow" }` 会通过 runtime payload validation，并进入 core handler。`handleSelectRow` 可写入 `{ kind: "row", sheetId: undefined, rows: [undefined] }` 这类非法 selection；同类缺失还存在于多项 manifest 仅写 description 的 spreadsheet 命令，导致公开 host API 文档看不出必填 payload，运行时也无法阻止空命令进入 core。
+- **建议**: 为所有公开 spreadsheet host 写命令补齐 `FluxValueShape args`，至少覆盖 core `SpreadsheetCommand` 中的必填字段；对确实尚未对外支持或无法表达参数的命令，不应出现在 `SPREADSHEET_HOST_METHOD_CONTRACTS` / `SPREADSHEET_HOST_METHODS` 主公开面。补测试覆盖无 payload 调用 `spreadsheet:selectRow/selectColumn/selectAll` 应返回结构化失败而不是写入非法 selection。
+- **误报排除**: 这不是第 13-01/13-02 的 provider 未按 manifest narrowing，也不是第 13-04 的“声明了 args 但编译期漏报缺失 args”。这里 Spreadsheet provider 已按 manifest 执行校验，真正缺口是 manifest 对 core 必填命令字段没有发布 args 契约，导致校验器按“无参命令”放行。
+- **参考文档**: `docs/architecture/capability-projection-manifest.md`, `docs/architecture/complex-control-host-protocol.md`, `docs/references/deep-audit-calibration-patterns.md`
+- **复核状态**: 未复核
+
+## 深挖第 6 轮追加
+
+### [维度13-06] Report Designer host capability 的 `target` 参数只校验“任意对象”，可把非法 selection target 写入语义元数据
+
+- **文件**: `packages/report-designer-renderers/src/report-designer-manifest.ts:211-229`, `packages/report-designer-renderers/src/host-action-provider.ts:105-148`, `packages/report-designer-core/src/types.ts:21-27`, `packages/report-designer-core/src/runtime/metadata.ts:219-254`
+- **行号范围**: `report-designer-manifest.ts:211-229`, `host-action-provider.ts:105-148`, `types.ts:21-27`, `metadata.ts:219-254`
+- **证据片段**:
+
+  ```ts
+  updateMeta: {
+    args: {
+      kind: 'object',
+      fields: {
+        target: { kind: 'object', fields: {} },
+        patch: metadataBagShape,
+      },
+    },
+  ```
+
+  ```ts
+  const args = payload === undefined ? {} : payload;
+  if (!matchesShape(args, contract.args)) {
+    return {
+      ok: false,
+      error: new Error(
+        `report-designer:${method} payload does not match the published host args contract.`,
+      ),
+    };
+  }
+
+  return { ok: true, args: args as CommandRecord };
+  ```
+
+  ```ts
+  export type ReportSelectionTarget =
+    | { kind: 'workbook' }
+    | { kind: 'sheet'; sheetId: string }
+    | { kind: 'row'; sheetId: string; row: number }
+    | { kind: 'column'; sheetId: string; col: number }
+    | { kind: 'cell'; cell: SpreadsheetCellRef }
+    | { kind: 'range'; range: SpreadsheetRange };
+  ```
+
+  ```ts
+  case 'row': {
+    const key = String(target.row);
+    const currentMeta = document.semantic?.rowMeta?.[target.sheetId]?.[key];
+    const changed = !shallowEqualMetadata(currentMeta, normalized);
+    return {
+      changed,
+      document: changed
+        ? {
+            ...document,
+            semantic: buildNextSemanticWithAxisMeta(
+              document.semantic,
+              'rowMeta',
+              target.sheetId,
+              key,
+  ```
+
+- **严重程度**: P1
+- **分类**: 危险
+- **现状**: Report Designer provider 已按 manifest 做 runtime payload validation，但 manifest 对 `updateMeta` / `replaceMeta` / `dropFieldToTarget` 的 `target` 只声明为 `{ kind: 'object', fields: {} }`，等价于“任意 plain object”。这与 core 中精确的 `ReportSelectionTarget` 判别联合不一致。
+- **真实风险**: host/schema 调用 `report-designer:updateMeta` 并传入 `{ target: { kind: "row" }, patch: { label: "x" } }` 会通过 provider 校验并被 cast 成 `ReportDesignerCommand`。core 随后按 `target.kind === "row"` 进入元数据写路径，把 `target.sheetId` 和 `target.row` 当作真实字段使用，可能生成 `rowMeta[undefined]["undefined"]` 这类非法语义元数据；`column` / `cell` / `range` 同类非法 target 还可能触发异常或写入错误键。
+- **建议**: 为 Report Designer manifest 增加精确 `ReportSelectionTarget` shape：按 `kind` 拆分 union，分别要求 `sheet.sheetId`、`row.sheetId + row`、`column.sheetId + col`、`cell.cell`、`range.range` 的必要字段；`dropFieldToTarget` 应进一步限制为 `cell | range`。provider 侧继续复用 `matchesShape`，core 可补 defensive guard，非法 target 返回结构化失败。
+- **误报排除**: 这不是“低代码动态对象”或“manifest 未 runtime narrowing”的重复问题；当前 provider 已执行 manifest validation，缺陷在于 manifest 本身把 core 必需判别联合坍缩成任意对象，使已存在的 runtime validation 产生 API 盲区并放行会污染核心文档状态的 payload。
+- **参考文档**: `docs/architecture/capability-projection-manifest.md`, `docs/architecture/complex-control-host-protocol.md`, `docs/architecture/report-designer/contracts.md`, `docs/references/deep-audit-calibration-patterns.md`
+- **复核状态**: 未复核

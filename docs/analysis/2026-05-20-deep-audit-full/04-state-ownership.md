@@ -385,3 +385,185 @@
 - **历史模式对应**: 与已有 [维度04-01]/[维度04-02] 同属 report/spreadsheet owner 漂移，但本条不重复 workbook/document 双状态；它覆盖的是 current selection target 与 inspector/metadata 的事实源冲突。
 - **参考文档**: `docs/architecture/report-designer/design.md:291-292`, `docs/components/report-designer-page/design.md:80-107`
 - **复核状态**: 未复核
+
+## 深挖第 6 轮追加
+
+### [维度04-09] Word Editor 纸张设置同时存在于 editorStore 与 canvas-editor 内部文档，保存读取另一事实源
+
+- **文件**: `packages/word-editor-renderers/src/toolbar/page-controls.tsx:76-100`, `packages/word-editor-renderers/src/editor-canvas.tsx:55-70`, `packages/word-editor-core/src/document-io.ts:235-264`
+- **行号范围**: `page-controls.tsx:76-100`, `editor-canvas.tsx:55-70`, `document-io.ts:235-264`
+- **证据片段**:
+  ```ts
+  const handlePaperSize = (key: string) => {
+    const preset = PAPER_SIZE_PRESETS[key];
+    if (preset) {
+      store.setPaperSettings({ ...paperSettings, width: preset.width, height: preset.height });
+      requestAnimationFrame(() => {
+        bridge?.command?.executePaperSize(preset.width, preset.height);
+      });
+    }
+  };
+  ```
+  ```ts
+  const handleApplyMargins = () => {
+    store.setPaperSettings({ ...paperSettings, margins });
+    bridge?.command?.executeSetPaperMargin(margins);
+    setShowMarginDialog(false);
+  };
+  ```
+  ```ts
+  const paperSettings = bridge.getPaperSettings();
+  const saved = createSavedDocumentData({
+    data: {
+      header: editorValue.header ?? [],
+      main: editorValue.main,
+      footer: editorValue.footer ?? [],
+      charts: chartsRef.current ?? [],
+      codes: codesRef.current ?? [],
+    },
+    paperSettings: paperSettings ?? { ...DEFAULT_PAPER_SETTINGS },
+  });
+  ```
+  ```ts
+  value = bridge.getValue();
+  paperSettings = bridge.getPaperSettings();
+  ...
+  return createSavedDocumentData({
+    data: {
+      header: value.data.header ?? [],
+      main: value.data.main,
+      footer: value.data.footer ?? [],
+      charts: extras?.charts ?? [],
+      codes: extras?.codes ?? [],
+    },
+    paperSettings,
+  });
+  ```
+- **严重程度**: P1
+- **现状**: Word Editor 的纸张尺寸、方向、页边距先写入 `editorStore.paperSettings` 供 toolbar/UI 读取，再通过 `bridge.command.executePaperSize/executePaperDirection/executeSetPaperMargin` 写入 canvas-editor 内部状态；但 autosave 和显式 save 的 persisted `SavedDocumentData.paperSettings` 又从 `bridge.getPaperSettings()` 读取 canvas-editor 状态。
+- **风险**: `editorStore.paperSettings` 和 canvas-editor 内部 paper settings 都描述同一份持久化纸张设置。由于部分写入使用 `requestAnimationFrame` 延迟，且 bridge command 没有结果/失败回滚，toolbar/host runtime 可显示新设置，而保存/autosave 仍持久化旧设置；反向也可能在 bridge 被外部恢复或初始化后，store 只保存初始化时的一次镜像，后续 canvas 内部变化未同步到 store。
+- **建议**: 收敛纸张设置的 canonical owner。若 `editorStore` 是 owner，保存应从 `editorStore.paperSettings` 读取，并让 canvas-editor 只作为受控 projection；若 canvas-editor 是 owner，toolbar 不应先写 store，而应执行 bridge command 后通过统一 change event/快照回推 store。不要在保存主路径中让 UI store 与 bridge 内部状态分别作为同一 `paperSettings` 的写入端/读取端。
+- **双状态详情**: 第一份状态是 `EditorStoreState.paperSettings`；第二份状态是 `@hufe921/canvas-editor` 实例内部由 `executePaperSize`、`executePaperDirection`、`executeSetPaperMargin` 修改并由 `bridge.getPaperSettings()` 读取的 paper settings。二者共同决定用户看到的纸张设置与最终保存出的 `SavedDocumentData.paperSettings`。
+- **同步失败症状**: 用户选择 A3 或修改页边距后，toolbar 立即显示新设置，但在 `requestAnimationFrame` 执行前或 bridge command 失败/被忽略时点击保存，`captureDocumentSnapshot` 仍从 canvas-editor 读取旧纸张设置，导致保存文件与 UI 显示不一致；或者 autosave 将旧 paperSettings 写入 `savedDocument`，host projection 继续暴露旧 envelope。
+- **为什么值得现在做**: Word Editor 文档明确 `paperSettings` 属于 `SavedDocumentData` persisted envelope，显式 save 以完整 envelope 作为持久化 truth surface。当前实现让 persisted 字段在 renderer store 与 canvas-editor 内部状态之间分裂，并且保存读取的不是 toolbar 刚写入的 store。
+- **误报排除**: 这不是纯视觉 toolbar draft。`paperSettings` 会进入 `SavedDocumentData.paperSettings`，影响保存、恢复、打印/页面布局和 host save payload；`store.setPaperSettings(...)` 与 `bridge.command.executePaper...(...)` 都是对同一持久化设置的实际写入。
+- **历史模式对应**: 对应维度 04 的“复杂编辑器状态同时在 domain store 与第三方 editor 内部状态中维护”。不同于已有 [维度04-06] 的 chart/code registry，本条覆盖 Word Editor 的纸张设置保存路径。
+- **参考文档**: `docs/architecture/word-editor/design.md:95-101`, `docs/architecture/word-editor/design.md:159-167`
+- **复核状态**: 未复核
+
+## 深挖第 7 轮追加
+
+### [维度04-10] Spreadsheet viewport 同时存在于 core runtime 契约与 grid React 本地滚动状态，且保存/export 永远读不到实际视口
+
+- **文件**: `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx:110-209`, `packages/spreadsheet-core/src/types.ts:18-26`, `packages/spreadsheet-core/src/core.ts:37-43`
+- **行号范围**: `spreadsheet-grid.tsx:110-209`, `types.ts:18-26,245-252`, `core.ts:37-43`
+- **证据片段**:
+
+  ```ts
+  const [scrollTop, setScrollTop] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(600);
+  const [viewportWidth, setViewportWidth] = useState(800);
+  ...
+  setScrollTop(el.scrollTop);
+  setScrollLeft(el.scrollLeft);
+  ```
+
+  ```ts
+  export interface SpreadsheetDocument {
+    id: string;
+    kind: string;
+    name: string;
+    version: string;
+    meta?: Record<string, unknown>;
+    viewport?: SpreadsheetViewportSnapshot;
+    workbook: WorkbookDocument;
+  }
+  ```
+
+  ```ts
+  const store = createStore<SpreadsheetInternalState>(() => ({
+    document: initialDocument,
+    activeSheetId: firstSheetId,
+    selection: { kind: 'none' },
+    editing: undefined,
+    viewport: createDefaultViewport(),
+  ```
+
+- **严重程度**: P2
+- **现状**: spreadsheet core 的 document/runtime 明确定义了 `viewport`，且 owner 文档声明 worksheet document、selection、editing、history 和 viewport 归 spreadsheet core；但实际滚动视口由 `SpreadsheetGrid` 的 `scrollTop/scrollLeft/viewportHeight/viewportWidth` React state 驱动，core `runtime.viewport` 始终初始化为默认值，且没有命令把真实滚动状态写回 core。
+- **风险**: host projection、status/manifest、保存/export 或未来恢复视口时读取的是 core 的默认 viewport，而画布实际显示的是 grid 本地 viewport。用户滚动到某区域后，schema-visible runtime、保存出的 `SpreadsheetDocument.viewport`、以及重新加载后的视口位置都可能与用户最后看到的位置不一致。
+- **建议**: 将 viewport owner 收敛到 spreadsheet core：提供 `spreadsheet:setViewport` 或专门的 viewport update API，grid 只派发滚动 intent / measurement update 并从 core snapshot 派生可发布 viewport。若 `viewportHeight/viewportWidth` 被判定为纯 DOM measurement，可拆成 renderer-local measurement；但 `scrollX/scrollY/zoom` 这类可持久化/host-visible viewport 应由 core 唯一持有。
+- **双状态详情**: 第一份状态是 `SpreadsheetRuntimeSnapshot.viewport` / `SpreadsheetDocument.viewport`；第二份状态是 `SpreadsheetGrid` 内部 `scrollTop` / `scrollLeft` / `viewportHeight` / `viewportWidth`。二者共同描述当前表格可视区域，但只有本地 React state 实际驱动画布。
+- **同步失败症状**: 用户滚动表格后，画布显示第 N 行/列，但 core snapshot 仍暴露 `{ scrollX: 0, scrollY: 0, zoom: 1 }`；保存/export 或 host schema 读取 viewport 时得到默认值，重新打开无法恢复用户视口，外部 toolbar/status 基于 runtime viewport 的行为也会落在错误区域。
+- **误报排除**: 这不是纯 pointer/hover 临时态。`viewport` 已进入 `SpreadsheetDocument` 与 `SpreadsheetRuntimeSnapshot` 类型契约，并被 spreadsheet owner 文档归入 core runtime state；当前本地 state 承载的是同一 viewport 事实，而不是仅用于 DOM 测量的私有实现细节。
+- **参考文档**: `docs/components/spreadsheet-page/design.md:47-52`, `docs/architecture/report-designer/design.md:231-239`
+- **复核状态**: 未复核
+
+## 深挖第 8 轮追加
+
+### [维度04-11] CRUD 与 Table 对同一个 filter owner path 使用两套不兼容形状，导致 `$crud.filters` 与实际过滤结果分裂
+
+- **文件**: `packages/flux-renderers-data/src/crud-renderer.tsx:60-83,122-134,236-250`, `packages/flux-renderers-data/src/crud-renderer-state.ts:253-263`, `packages/flux-renderers-data/src/table-renderer/use-table-filter.ts:19-31,95-105`, `packages/flux-renderers-data/src/table-renderer/table-data.ts:96-107`
+- **行号范围**: `crud-renderer.tsx:60-83,122-134,236-250`; `crud-renderer-state.ts:253-263`; `use-table-filter.ts:19-31,95-105`; `table-data.ts:96-107`
+- **证据片段**:
+
+  ```ts
+  const { queryState, paginationState, sortState, filterState, selectedRowKeys } =
+    useCrudRuntimeState({
+      scope,
+      queryStatePath: ownerPaths.queryStatePath,
+      paginationStatePath: ownerPaths.paginationStatePath,
+      sortStatePath: ownerPaths.sortStatePath,
+      filterStatePath: ownerPaths.filterStatePath,
+  ```
+
+  ```ts
+  const filterState = useScopeSelector(
+    (scopeData) => toRecord(getIn(scopeData, filterStatePath)),
+    shallowEqualRecords,
+    { paths: [filterStatePath] },
+  );
+  ```
+
+  ```ts
+  const toFilterState = useCallback((value: unknown): FilterState => {
+    const record = value as
+      | Record<string, { filters?: string[]; keyword?: string } | undefined>
+      | undefined;
+    const next: FilterState = {};
+    Object.entries(record ?? {}).forEach(([key, entry]) => {
+      next[key] = {
+        values: new Set(Array.isArray(entry?.filters) ? entry.filters : []),
+        keyword: typeof entry?.keyword === 'string' ? entry.keyword : undefined,
+      };
+  ```
+
+  ```ts
+  if (filterOwnership === 'scope' && filterStatePath) {
+    renderScope.update(
+      filterStatePath,
+      Object.fromEntries(
+        Object.entries(newFilters).map(([key, entry]) => [
+          key,
+          { filters: Array.from(entry.values), keyword: entry.keyword },
+        ]),
+      ),
+  ```
+
+  ```ts
+  Object.entries(filterState).forEach(([columnName, values]) => {
+    if (values.values.size > 0) {
+      data = data.filter((row) => values.values.has(String(row.record[columnName])));
+    }
+  ```
+
+- **严重程度**: P1
+- **现状**: CRUD 将 `filterStatePath` 作为 `$crud.filters` / `statusPath` 的公开摘要来源直接 `toRecord(...)` 发布；底层 Table 又把同一个 `filterStatePath` 解释为 `{ [column]: { filters?: string[]; keyword?: string } }`，再转换成内部 `Set` 参与 `processTableData(...)`。同一个 owner path 同时承担 public summary shape 与 table internal filter DTO，两边没有共享规范化层。
+- **风险**: 当宿主或初始数据写入 `{ filters: { status: 'active' } }` 这类 CRUD summary 形状时，`$crud.filters.status` 会显示 active，但 Table 的 `toFilterState` 会把 string 当成无 filters/keyword，实际表格不被过滤。反过来，用户通过列头筛选后 Table 写入 `{ status: { filters: ['active'] } }`，实际行过滤生效，但 `$crud.filters.status` 变成对象，schema 表达式、toolbar、statusPath 消费方读到的形状与文档/测试中的摘要语义不一致。
+- **建议**: 为 CRUD/Table filter owner path 收敛唯一 canonical DTO。推荐把 `filterStatePath` 明确定义为 Table filter DTO，并让 CRUD `$crud.filters` 通过共享 serializer 派生稳定公开摘要；或反向让 Table 接受 CRUD summary DTO，但必须统一读写与文档。不要让同一个 scope path 同时被 raw public summary 与 internal Set-backed filter bridge 以不同结构解释。
+- **双状态详情**: 第一份“状态”是 CRUD 公开读面中的 `filterState` / `$crud.filters` / `statusPath.filters`，直接来自 `toRecord(getIn(scopeData, filterStatePath))`；第二份“状态”是 Table 的 `FilterState`，由同一个 path 解析成 `{ values: Set<string>, keyword }` 并驱动 `processTableData`。二者指向同一个 owner path，却表达不同 shape 和语义。
+- **同步失败症状**: 页脚或 toolbar 显示 `filter=active`，但表格仍显示未过滤行；或用户点击列头筛选后表格只剩 active 行，而 `${$crud.filters.status}` 显示对象/异常文本，依赖 `$crud.filters.status` 的刷新参数、导出参数或自定义按钮拿到错误 payload。
+- **误报排除**: 这不是合法的 renderer-local UI state，也不是已报告的 table visible/order local defaults。`filterStatePath` 是 CRUD 明确传给 Table 的 scope-owned interaction state，同时 `$crud` / `statusPath` 是 schema-visible projection；该 path 直接影响实际行过滤与外部 schema 读面，属于同一事实源的形状冲突。
+- **参考文档**: `docs/components/table/design.md:46-48`, `docs/components/crud/design.md:163-177`, `docs/components/crud/design.md:179-198`
+- **复核状态**: 未复核

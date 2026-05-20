@@ -180,3 +180,198 @@
 - **误报排除**: 这不是已有 [维度15-02] 的 TreeSelect options × selected 嵌套查找，也不是已有 [维度15-03] 的 JSON.stringify 变更检测；该问题位于 table 搜索输入的主交互路径。也不是“已经虚拟化所以无风险”，因为 `virtualEnabled` 只影响 `TableBodyRows` 的 DOM 渲染，`processTableData()` 在虚拟化判断后仍按完整 `source` 执行过滤。
 - **参考文档**: `docs/architecture/performance-design-requirements.md:39-47,122-124,132-140`; `docs/skills/deep-audit-prompts.md:1451-1474`
 - **复核状态**: 未复核
+
+## 深挖第 4 轮追加
+
+### [维度15-05] Spreadsheet 选区高亮在每个可见单元格重复计算选区范围，行/列多选会触发 per-cell 排序
+
+- **文件**: `packages/spreadsheet-renderers/src/spreadsheet-grid/table-shell.tsx:131-142,413-431`, `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-selection.ts:182-195,216-224`
+- **行号范围**: `table-shell.tsx:131-142,413-431`; `use-selection.ts:182-195,216-224`
+- **证据片段**:
+  ```ts
+  const inRange = isInRange(row, col);
+  ```
+  ```tsx
+  {viewport.visibleColIndices.map((col) => (
+    <SpreadsheetGridCell
+      key={`${row}-${col}`}
+      row={row}
+      col={col}
+      ...
+      isInRange={isInRange}
+  ```
+  ```ts
+  const getSelectedRange = useCallback((): SpreadsheetRange | null => {
+    ...
+    if (snapshot.selection.kind === 'row' && snapshot.selection.rows?.length) {
+      const rows = [...snapshot.selection.rows].sort((a, b) => a - b);
+      return createRange(sheetId, rows[0]!, 0, rows[rows.length - 1]!, totalCols - 1);
+    }
+    if (snapshot.selection.kind === 'column' && snapshot.selection.columns?.length) {
+      const columns = [...snapshot.selection.columns].sort((a, b) => a - b);
+      return createRange(sheetId, 0, columns[0]!, totalRows - 1, columns[columns.length - 1]!);
+    }
+  ```
+  ```ts
+  const isInRange = useCallback(
+    (row: number, col: number): boolean => {
+      const range = getSelectedRange();
+      if (!range) return false;
+      return (
+        row >= range.startRow && row <= range.endRow && col >= range.startCol && col <= range.endCol
+      );
+    },
+    [getSelectedRange],
+  );
+  ```
+- **严重程度**: P2
+- **类别**: 性能
+- **安全/性能规则编号**: P2（虚拟化渲染路径中避免 per-cell 重复派生和可增长集合排序）
+- **现状**: `SpreadsheetGrid` 已在父层计算一次 `selectedRange` 并传给每个 cell，但 `SpreadsheetGridCell` 仍对每个可见单元格调用 `isInRange(row, col)`；`isInRange()` 内部又调用 `getSelectedRange()`。当选区是行/列多选时，`getSelectedRange()` 会复制并排序 `selection.rows` / `selection.columns`，导致一次表格渲染按“可见单元格数 × 已选行/列数 log n”重复计算。
+- **风险**: Spreadsheet 虚拟化只限制 DOM 节点数量，但冻结区、overscan、大 viewport、列宽较窄时可见单元格仍可达到数百到上千；行/列多选、拖拽扩展选区、键盘选择等高频路径会把同一个选区范围在每个 cell 上重复排序和构造对象，造成渲染卡顿。已传入的 `selectedRange` 未被复用，说明这是可避免的热路径浪费。
+- **建议**: 在 `useSelection` 或 `SpreadsheetGrid` 层将 selected range 作为 memoized 派生值一次性计算，并让 cell 直接基于传入的 `selectedRange` 做 O(1) 边界判断；行/列多选的 min/max 应在选择状态更新时维护，或至少在单次 render 中缓存，避免 per-cell sort。
+- **误报排除**: 这不是普通的小数组 `includes`；证据显示该函数在每个可见 cell 渲染中调用，且行/列选择会复制排序可增长集合。也不同于已有 [维度15-01] 图编辑索引缺失、[维度15-02] TreeSelect 嵌套查找、[维度15-04] Table 过滤热路径，这是 Spreadsheet 网格渲染主路径中的独立重复派生问题。
+- **参考文档**: `docs/architecture/performance-design-requirements.md:39-47,55-58,132-140`
+- **复核状态**: 未复核
+
+### [维度15-06] Report Designer 每次 Spreadsheet 文档同步都深拷贝整棵文档并进入 undo 栈
+
+- **文件**: `packages/report-designer-renderers/src/page-renderer.tsx:467-479`, `packages/report-designer-core/src/core.ts:312-318,441-450`
+- **行号范围**: `page-renderer.tsx:467-479`; `core.ts:312-318,441-450`
+- **证据片段**:
+
+  ```ts
+  useEffect(() => {
+    const nextSpreadsheetDocument = spreadsheetSnapshot.document;
+
+    if (syncingSpreadsheetFromReportRef.current) {
+      return;
+    }
+    if (nextSpreadsheetDocument === lastSyncedSpreadsheetRef.current) {
+      return;
+    }
+
+    lastSyncedSpreadsheetRef.current = nextSpreadsheetDocument;
+    core.syncSpreadsheetDocument(spreadsheetSnapshot.document);
+  }, [core, spreadsheetSnapshot.document]);
+  ```
+
+  ```ts
+  syncSpreadsheetDocument(nextDocument) {
+    const currentDocument = store.getState().document;
+    const changed = applyDocumentChange({
+      ...currentDocument,
+      spreadsheet: structuredClone(nextDocument),
+    });
+
+    if (changed) {
+      store.setState((current) => ({ ...current, spreadsheetSyncSource: nextDocument }));
+      void refreshDerivedState();
+    }
+  },
+  ```
+
+  ```ts
+  function pushUndoEntry(
+    current: ReportDesignerInternalState,
+  ): Partial<ReportDesignerInternalState> {
+    const maxDepth = config.maxUndoDepth ?? 50;
+    const undoStack = [...current.undoStack, current.document];
+    if (undoStack.length > maxDepth) undoStack.shift();
+    return { undoStack, redoStack: [] };
+  }
+  ```
+
+- **严重程度**: P2
+- **类别**: 性能
+- **安全/性能规则编号**: P1 / P2（交互热路径避免整文档深拷贝；长生命周期 undo 栈避免大对象放大）
+- **现状**: Report Designer renderer 订阅 `spreadsheetSnapshot.document`，每次 Spreadsheet core 文档 identity 变化都会调用 `core.syncSpreadsheetDocument()`；该方法对完整 spreadsheet 子树执行 `structuredClone(nextDocument)`，随后 `applyDocumentChange()` 将当前完整 report document 推入 undo 栈，默认最多 50 层。
+- **风险**: 单元格编辑、粘贴、拖拽填充、样式批量修改等 Spreadsheet 高频操作都会同步到 Report Designer。随着 workbook/cells/styles/metadata 增长，每次操作都要深拷贝整棵 spreadsheet 文档，并保留历史 report document 引用，容易造成 CPU 峰值和内存放大；批量粘贴或连续编辑时，`structuredClone` 与 undo 栈会成为主交互路径瓶颈。
+- **建议**: 将 report/spreadsheet 同步改为补丁或 command-level history：Spreadsheet core 产出可逆变更记录，Report Designer 只记录增量 patch 或共享不可变结构；至少对同步路径做 batch/debounce，并避免把每个单元格级变化都作为完整 report document undo entry。对于保存/导出再做深拷贝，交互同步路径不应整文档 clone。
+- **误报排除**: 这不是保存/导出时的边界 clone；触发点在 `useEffect` 监听 spreadsheet document identity 的运行态同步路径。也不是已有 [维度15-03] source props JSON.stringify 变更检测或 [维度15-04] Table 过滤问题；这里的成本来自 Report Designer 与 Spreadsheet 跨包同步时的整文档 `structuredClone` 和 undo 历史放大。
+- **参考文档**: `docs/architecture/performance-design-requirements.md:39-47,51-58,132-140`, `docs/architecture/report-designer/design.md`
+- **复核状态**: 未复核
+
+## 深挖第 5 轮追加
+
+### [维度15-07] Spreadsheet 行过滤会按最大行号全量回填，稀疏大表过滤可被单个远端单元格放大
+
+- **文件**: `packages/spreadsheet-core/src/core/filter-operations.ts:15-37`, `packages/spreadsheet-renderers/src/spreadsheet-grid/use-context-menu-actions.ts:236-248`
+- **行号范围**: `filter-operations.ts:15-37`; `use-context-menu-actions.ts:236-248`
+- **证据片段**:
+
+  ```ts
+  const candidateRows = Object.values(cells)
+    .filter((cell) => newFilterColumns.some((f) => f.col === cell.col))
+    .map((cell) => cell.row);
+  const maxRow = candidateRows.length > 0 ? Math.max(...candidateRows) : -1;
+
+  const rows = { ...sheet.rows };
+  for (let row = hasHeader ? 1 : 0; row <= maxRow; row++) {
+    const key = String(row);
+    const matchesAll = newFilterColumns.every((f) => {
+      const cell = cells[cellAddress(row, f.col)];
+  ```
+
+  ```ts
+  const selectedCellValue =
+    cells?.[cellAddress(selectionAnchorCell.row, selectionAnchorCell.col)]?.value;
+  await bridge.dispatch({
+    type: 'spreadsheet:filterRowsByCellValue',
+    sheetId: activeSheetId,
+    col: selectionAnchorCell.col,
+    value: selectedCellValue,
+  });
+  ```
+
+- **严重程度**: P2
+- **类别**: 性能
+- **规则编号**: P1 / P2
+- **当前状态**: Spreadsheet 右键“按选中值过滤”进入 core 后，先遍历所有 `cells` 并对每个 cell 执行 active filters 的 `some`，再用 `Math.max(...candidateRows)` 得到最大行号，随后从 0 到 `maxRow` 为每一行计算 `every` 并写入 `rows[key]`。
+- **风险**: 对稀疏大表，一个很远的有值单元格会让过滤路径回填大量空行元数据；多列过滤时成本变为 `cells × filters + maxRow × filters`。`Math.max(...candidateRows)` 还会在候选 cell 很多时创建大参数列表，存在栈/参数数量放大风险。虚拟化只限制渲染，不限制该 core 过滤计算与状态写入。
+- **建议**: 过滤应基于实际 used-row/index 结构，而不是 `0..maxRow` 回填；维护 sheet 级 `usedRowsByColumn` / row index，过滤时只计算候选 row 集合，并用增量 patch 标记过滤状态。`maxRow` 应用单次循环求值，避免 spread 大数组。
+- **误报排除**: 这不是已有 Spreadsheet 选区 per-cell 排序问题，也不是 Table 搜索过滤问题；这里位于 spreadsheet core 的行过滤命令路径，风险来自稀疏表 `maxRow` 扫描和 `cells × filters` 派生。
+- **参考文档**: `docs/architecture/performance-design-requirements.md:39-47,55-58,132-140`
+- **复核状态**: 未复核
+
+### [维度15-08] Word Editor 自动保存每次编辑后同步序列化整篇文档并写 localStorage
+
+- **文件**: `packages/word-editor-renderers/src/editor-canvas.tsx:52-70,108-110`
+- **行号范围**: `editor-canvas.tsx:52-70,108-110`
+- **证据片段**:
+  ```ts
+  const debouncedSave = () => {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      const value = bridge.getValue();
+      if (value) {
+        const editorValue = value.data;
+        const paperSettings = bridge.getPaperSettings();
+        const saved = createSavedDocumentData({
+  ```
+  ```ts
+          localStorage.setItem('nop-word-editor-document', JSON.stringify(saved));
+          onAutosaveRef.current?.(saved);
+        }
+      }, 500);
+    };
+  ```
+  ```ts
+  onContentChange: () => {
+    debouncedSave();
+    editorStore.setDirty(true);
+  },
+  ```
+- **严重程度**: P2
+- **类别**: 性能
+- **规则编号**: P1 / P6
+- **当前状态**: Word Editor 的 `onContentChange` 每次内容变化都会安排 500ms 自动保存；保存回调在主线程读取完整 editor value，构造完整 `SavedDocumentData`，执行 `JSON.stringify(saved)`，再同步 `localStorage.setItem(...)`。
+- **风险**: 大文档、图表、代码块或连续输入场景下，自动保存会周期性阻塞主线程；localStorage quota 或不可用异常也没有走 `word-editor-core` 中已有的结构化 persist 错误路径，可能形成难诊断的 autosave 退化。
+- **建议**: 将自动保存改为 owner-controlled persistence pipeline：使用 idle/deferred 写入、大小阈值、增量 dirty segments 或后台持久化 adapter；复用 `word-editor-core` 的 persist 错误封装，并将 autosave 失败反馈到 store/monitor。
+- **误报排除**: 这不是一次性导出/手动保存的合理序列化；触发点直接挂在 `onContentChange` 编辑主路径上，且 `localStorage.setItem` 是同步阻塞 API。
+- **参考文档**: `docs/architecture/performance-design-requirements.md:44-47,73-76,132-140`
+- **复核状态**: 未复核
+
+## 深挖第 6 轮追加
+
+未发现新的高价值问题。深挖结束。
