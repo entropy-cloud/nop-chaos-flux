@@ -56,6 +56,12 @@ export interface TableColumnSchema extends BaseSchema {
   quickEdit?: boolean | TableColumnQuickEditConfig;
 }
 
+export interface TableColumnSchemaInput extends Omit<TableColumnSchema, 'label'> {
+  label?: SchemaInput | string;
+  cell?: SchemaInput;
+  body?: SchemaInput;
+}
+
 export interface TableSchema extends BaseSchema {
   type: 'table';
   source?: SchemaValue;
@@ -105,6 +111,14 @@ export interface TableSchema extends BaseSchema {
   onPageChange?: BaseSchema;
   onSelectionChange?: BaseSchema;
   onRefresh?: BaseSchema;
+}
+
+export type TableSchemaProps = Omit<TableSchema, 'columns'> & {
+  columns?: TableColumnSchema[];
+};
+
+export interface TableSchemaInput extends Omit<TableSchema, 'columns'> {
+  columns?: TableColumnSchemaInput[];
 }
 
 export interface TreeSchema extends BaseSchema {

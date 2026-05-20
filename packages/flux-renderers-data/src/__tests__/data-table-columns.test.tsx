@@ -256,6 +256,43 @@ describe('dataRendererDefinitions table columns', () => {
     });
   });
 
+  it('honors an explicit empty scope-owned visible/ordered column state', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/table-column-settings-empty-scope"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              columnSettings: {
+                enabled: true,
+                toggledColumnsStatePath: 'tableState.toggledColumns',
+                orderedColumnsStatePath: 'tableState.orderedColumns',
+              },
+              columns: [
+                { label: 'Name', name: 'name' },
+                { label: 'Email', name: 'email' },
+              ],
+              source: [{ id: 1, name: 'Alice', email: 'alice@example.com' }],
+            },
+          ],
+        }}
+        data={{ tableState: { toggledColumns: [], orderedColumns: [] } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(document.querySelectorAll('[data-slot="table-head"]')).toHaveLength(0);
+      expect(screen.queryByText('Alice')).toBeNull();
+      expect(screen.queryByText('alice@example.com')).toBeNull();
+    });
+  });
+
   it('reorders columns through column settings move controls', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer();

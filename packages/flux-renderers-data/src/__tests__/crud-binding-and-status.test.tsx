@@ -128,4 +128,52 @@ describe('CRUD binding and status', () => {
     });
   });
 
+  it('preserves explicit empty scope-owned visibleColumnNames instead of falling back to defaults', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-visible-columns-empty-summary"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'visible-columns-empty-crud',
+              columnSettings: {
+                enabled: true,
+                toggledColumnsStatePath: 'crudState.toggledColumns',
+                orderedColumnsStatePath: 'crudState.orderedColumns',
+              },
+              source: [{ id: '1', name: 'Alice', email: 'alice@example.com' }],
+              columns: [
+                { name: 'name', label: 'Name' },
+                { name: 'email', label: 'Email' },
+              ],
+              footerToolbar: [{ type: 'text', text: 'Visible: ${$crud.visibleColumnNames}' }],
+            },
+          ],
+        }}
+        data={{
+          crudState: {
+            toggledColumns: [],
+            orderedColumns: [],
+          },
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="crud-footer-toolbar"]')?.textContent?.trim()).toBe(
+        'Visible:',
+      );
+      expect(document.querySelectorAll('[data-slot="table-head"]')).toHaveLength(0);
+      expect(screen.queryByText('Alice')).toBeNull();
+      expect(screen.queryByText('alice@example.com')).toBeNull();
+    });
+  });
+
 });

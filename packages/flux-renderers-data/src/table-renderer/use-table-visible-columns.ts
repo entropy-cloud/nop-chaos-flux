@@ -52,9 +52,7 @@ export function useTableVisibleColumns(
     () =>
       normalizeOrderedColumns(
         orderedStatePath
-          ? scopeOrderedColumns?.length
-            ? scopeOrderedColumns
-            : defaultOrderedColumns
+          ? (scopeOrderedColumns ?? defaultOrderedColumns)
           : localOrderedColumns,
         defaultOrderedColumns,
       ),

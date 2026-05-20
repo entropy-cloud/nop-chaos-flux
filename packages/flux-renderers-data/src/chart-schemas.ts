@@ -13,7 +13,7 @@ export interface ChartSchema extends BaseSchema {
   type: 'chart';
   componentId?: string;
   chartType?: ChartType;
-  title?: string;
+  title?: BaseSchema | BaseSchema[] | string;
   series?: SchemaValue;
   source?: SchemaValue;
   xAxis?: { dataKey?: string; label?: string };

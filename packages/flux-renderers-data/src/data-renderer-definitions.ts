@@ -158,7 +158,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'source', kind: 'prop' },
       { key: 'series', kind: 'prop' },
       { key: 'chartType', kind: 'prop' },
-      { key: 'title', kind: 'prop' },
+      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'xAxis', kind: 'prop' },
       { key: 'yAxis', kind: 'prop' },
       { key: 'height', kind: 'prop' },

@@ -105,8 +105,8 @@ export function useCrudVisibleColumnNames(args: {
       return undefined;
     }
 
-    const visibleColumns = state.toggledColumns?.length ? state.toggledColumns : defaultColumnNames;
-    const orderedColumns = state.orderedColumns?.length ? state.orderedColumns : defaultColumnNames;
+    const visibleColumns = state.toggledColumns ?? defaultColumnNames;
+    const orderedColumns = state.orderedColumns ?? defaultColumnNames;
     const visibleSet = new Set(visibleColumns);
     return orderedColumns.filter((name) => visibleSet.has(name));
   }, [

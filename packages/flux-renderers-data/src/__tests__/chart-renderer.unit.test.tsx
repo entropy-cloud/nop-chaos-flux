@@ -73,8 +73,9 @@ function createMockComponent(name: string) {
 
 vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentComponentRegistry: () => mockState.currentRegistry,
+  hasRendererSlotContent: (content: unknown) => content !== null && content !== undefined && content !== false,
   resolveRendererSlotContent: (props: any, key: string, options: { fallback: string }) =>
-    props.props[key] ?? options.fallback,
+    props.regions?.[key]?.render?.() ?? props.props[key] ?? options?.fallback,
 }));
 
 vi.mock('@nop-chaos/ui', () => ({
@@ -182,6 +183,31 @@ describe('ChartRenderer', () => {
     );
 
     expect(screen.getByLabelText('Revenue chart')).toBeTruthy();
+  });
+
+  it('renders a region-backed title and exposes it through aria-labelledby', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            source: [{ label: 'Jan', value: 3 }],
+          },
+          regions: {
+            title: {
+              render: () => <span>Revenue slot</span>,
+            },
+          },
+        })}
+      />,
+    );
+
+    const title = document.querySelector('[data-slot="chart-title"]');
+    const canvas = document.querySelector('[data-slot="chart-canvas"]');
+
+    expect(title?.textContent).toContain('Revenue slot');
+    expect(title?.id).toBeTruthy();
+    expect(canvas?.getAttribute('aria-labelledby')).toBe(title?.id);
+    expect(canvas?.getAttribute('aria-label')).toBeNull();
   });
 
   it('renders a textual data equivalent for assistive technologies', () => {

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useId, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import {
   BarChart,
@@ -15,7 +15,11 @@ import {
   CartesianGrid,
 } from 'recharts';
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
-import { resolveRendererSlotContent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
+import {
+  hasRendererSlotContent,
+  resolveRendererSlotContent,
+  useCurrentComponentRegistry,
+} from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn, Spinner } from '@nop-chaos/ui';
 import {
@@ -39,9 +43,11 @@ const COLORS = [
 export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
   const chartRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   const chartType = (props.props.chartType as ChartType) ?? 'bar';
-  const title = props.props.title as string | undefined;
+  const titleContent = resolveRendererSlotContent(props, 'title');
+  const titleText = typeof props.props.title === 'string' ? props.props.title : undefined;
   const source = Array.isArray(props.props.source)
     ? (props.props.source as Array<Record<string, unknown>>)
     : [];
@@ -69,7 +75,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       }
     });
     if (Object.keys(config).length === 0) {
-      config.value = { label: title ?? 'Value', color: COLORS[0] };
+      config.value = { label: titleText ?? 'Value', color: COLORS[0] };
     }
     return config;
   })();
@@ -108,7 +114,8 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   })();
 
   const chartHeight = typeof height === 'number' ? `${height}px` : height || '400px';
-  const chartAccessibleName = title?.trim() || t('flux.common.chart');
+  const hasTitleContent = hasRendererSlotContent(titleContent);
+  const chartAccessibleName = titleText?.trim() || t('flux.common.chart');
   const resolvedChartType = (
     series.length > 0 ? (series[0].type ?? chartType) : chartType
   ) as ChartType;
@@ -266,6 +273,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
     >
+      {hasTitleContent ? <div data-slot="chart-title" id={titleId}>{titleContent}</div> : null}
       {isEmpty ? (
         <div data-slot="chart-empty">{emptyContent}</div>
       ) : (
@@ -275,7 +283,8 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           style={{ width: '100%', height: '100%' }}
           role="img"
           tabIndex={0}
-          aria-label={chartAccessibleName}
+          aria-label={hasTitleContent ? undefined : chartAccessibleName}
+          aria-labelledby={hasTitleContent ? titleId : undefined}
           onClick={(event) => void props.events.onClick?.(event, {})}
           onKeyDown={(event) => {
             if (props.events.onClick && (event.key === 'Enter' || event.key === ' ')) {
