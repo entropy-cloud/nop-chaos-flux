@@ -190,6 +190,7 @@ Copy an existing package as template. Steps: create `packages/<name>/` → add `
 - Imperative mood: "Add feature" not "Added feature"
 - Reference doc paths when relevant
 - Keep messages concise and descriptive
+- When a commit records a full-green state where unit tests and e2e both passed completely, the commit title/subject itself MUST explicitly mention `full-green verification` rather than leaving that status only in the commit body.
 
 ---
 
