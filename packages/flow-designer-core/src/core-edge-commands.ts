@@ -84,7 +84,7 @@ export function addEdgeCommand(
       targetPort = result.targetPort;
       data = result.data;
     } catch (err) {
-      ctx.emit({ type: 'lifecycleHookError', hook: 'beforeConnect', error: String(err) });
+      ctx.emit({ type: 'lifecycleHookError', hook: 'beforeConnect', error: err });
       return null;
     }
   }
@@ -213,7 +213,7 @@ export function deleteEdgeCommand(ctx: EdgeCommandContext, edgeId: string): void
       }
       edgeId = result.id;
     } catch (err) {
-      ctx.emit({ type: 'lifecycleHookError', hook: 'beforeDelete', error: String(err) });
+      ctx.emit({ type: 'lifecycleHookError', hook: 'beforeDelete', error: err });
       return;
     }
   }

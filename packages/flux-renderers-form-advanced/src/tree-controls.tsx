@@ -30,6 +30,10 @@ import {
   useTreeSelectController,
 } from './tree-control-controllers.js';
 
+function createTreeItemId(treeId: string, option: TreeOptionMeta) {
+  return `${treeId}-${option.valueKey.replace(/[^a-zA-Z0-9_-]/g, '_')}-${option.depth}`;
+}
+
 function TreeOptionNode(props: {
   option: TreeOptionMeta;
   value: unknown;
@@ -37,16 +41,31 @@ function TreeOptionNode(props: {
   showPathLabel: boolean;
   disabled: boolean;
   onChange: (value: unknown) => void;
+  activeItemKey?: string;
+  treeId: string;
+  expandedKeys: ReadonlySet<string>;
+  onToggleExpanded: (option: TreeOptionMeta, expanded: boolean) => void;
+  onMoveFocus: (direction: 'prev' | 'next' | 'first' | 'last') => void;
+  onFocusItem: (option: TreeOptionMeta) => void;
 }) {
+  const expanded =
+    props.option.children.length > 0 && props.expandedKeys.has(props.option.valueKey);
+  const focused = props.activeItemKey === props.option.valueKey;
+  const itemId = createTreeItemId(props.treeId, props.option);
   const {
-    expanded,
     checked,
     hasChildren,
     handleSelect,
     handleKeyDown,
     handleChevronClick,
     handleChevronKeyDown,
-  } = useTreeOptionNodeController(props);
+    handleFocus,
+  } = useTreeOptionNodeController({
+    ...props,
+    expanded,
+    focused,
+    itemId,
+  });
 
   return (
     <div data-slot="tree-option-node" data-depth={props.option.depth}>
@@ -59,13 +78,15 @@ function TreeOptionNode(props: {
         )}
         style={{ paddingInlineStart: `${props.option.depth * 16 + 8}px` }}
         role="treeitem"
+        id={itemId}
         aria-level={props.option.depth + 1}
         aria-expanded={hasChildren ? expanded : undefined}
         aria-selected={checked}
         aria-disabled={props.disabled || undefined}
-        tabIndex={props.disabled ? -1 : 0}
+        tabIndex={props.disabled ? -1 : focused ? 0 : -1}
         onClick={props.disabled ? undefined : handleSelect}
         onKeyDown={props.disabled ? undefined : handleKeyDown}
+        onFocus={props.disabled ? undefined : handleFocus}
       >
         <Button
           type="button"
@@ -116,6 +137,12 @@ function TreeOptionNode(props: {
                   showPathLabel={props.showPathLabel}
                   disabled={props.disabled}
                   onChange={props.onChange}
+                  activeItemKey={props.activeItemKey}
+                  treeId={props.treeId}
+                  expandedKeys={props.expandedKeys}
+                  onToggleExpanded={props.onToggleExpanded}
+                  onMoveFocus={props.onMoveFocus}
+                  onFocusItem={props.onFocusItem}
                 />
               ))}
             </div>
@@ -136,13 +163,29 @@ function TreeOptionList(props: {
   ariaLabel: string;
   searchLabel: string;
   describedBy?: string;
+  loadingDescriptionId?: string;
+  loading?: boolean;
   errorMessage?: string;
   invalid?: boolean;
 }) {
-  const { query, setQuery, filteredOptions } = useTreeOptionListController({
+  const treeId = React.useId();
+  const {
+    query,
+    setQuery,
+    filteredOptions,
+    activeItemKey,
+    expandedKeys,
+    toggleExpanded,
+    moveFocus,
+    focusItem,
+  } = useTreeOptionListController({
     options: props.options,
     searchable: props.searchable,
+    disabled: props.disabled,
   });
+  const describedBy = [props.describedBy, props.loading ? props.loadingDescriptionId : undefined]
+    .filter(Boolean)
+    .join(' ') || undefined;
 
   return (
     <div data-slot="tree-option-list">
@@ -163,9 +206,10 @@ function TreeOptionList(props: {
         role="tree"
         aria-label={props.ariaLabel}
         aria-multiselectable={props.multiple || undefined}
-        aria-describedby={props.describedBy}
+        aria-describedby={describedBy}
         aria-errormessage={props.errorMessage}
         aria-invalid={props.invalid || undefined}
+        aria-busy={props.loading || undefined}
       >
         {filteredOptions.map((option) => (
           <TreeOptionNode
@@ -176,6 +220,12 @@ function TreeOptionList(props: {
             showPathLabel={props.showPathLabel}
             disabled={props.disabled}
             onChange={props.onChange}
+            activeItemKey={activeItemKey}
+            treeId={treeId}
+            expandedKeys={expandedKeys}
+            onToggleExpanded={toggleExpanded}
+            onMoveFocus={moveFocus}
+            onFocusItem={focusItem}
           />
         ))}
       </div>
@@ -200,6 +250,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const fieldLabel = String((props.props.label ?? name) || 'tree');
   const searchLabel = `${t('flux.common.search')} ${fieldLabel}`;
   const sourceErrorId = name ? `${name}-source-error` : undefined;
+  const loadingId = name ? `${name}-source-loading` : undefined;
 
   return (
     <div
@@ -224,6 +275,8 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           ariaLabel={fieldLabel}
           searchLabel={searchLabel}
           describedBy={sourceError ? sourceErrorId : undefined}
+          loadingDescriptionId={loadingId}
+          loading={optionsSourceState?.loading === true}
           errorMessage={sourceError ? sourceErrorId : undefined}
           invalid={Boolean(sourceError)}
         />
@@ -233,7 +286,13 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           {sourceError}
         </span>
       ) : optionsSourceState?.loading === true ? (
-        <span data-slot="input-tree-source-loading" role="status" aria-live="polite" className="flex items-center gap-1.5">
+        <span
+          id={loadingId}
+          data-slot="input-tree-source-loading"
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-1.5"
+        >
           <Spinner className="size-4" aria-hidden="true" />
           <span>{t('flux.common.loading')}</span>
         </span>
@@ -264,6 +323,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const fieldLabel = String(props.props.label ?? name);
   const searchLabel = `${t('flux.common.search')} ${fieldLabel || 'tree'}`;
   const sourceErrorId = name ? `${name}-source-error` : undefined;
+  const loadingId = name ? `${name}-source-loading` : undefined;
 
   return (
     <div
@@ -330,6 +390,8 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             ariaLabel={fieldLabel}
             searchLabel={searchLabel}
             describedBy={sourceError ? sourceErrorId : undefined}
+            loadingDescriptionId={loadingId}
+            loading={optionsSourceState?.loading === true}
             errorMessage={sourceError ? sourceErrorId : undefined}
             invalid={Boolean(sourceError)}
           />
@@ -340,7 +402,13 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
           {sourceError}
         </span>
       ) : optionsSourceState?.loading === true ? (
-        <span data-slot="tree-select-source-loading" role="status" aria-live="polite" className="flex items-center gap-1.5">
+        <span
+          id={loadingId}
+          data-slot="tree-select-source-loading"
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-1.5"
+        >
           <Spinner className="size-4" aria-hidden="true" />
           <span>{t('flux.common.loading')}</span>
         </span>

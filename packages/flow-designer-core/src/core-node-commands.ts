@@ -49,7 +49,7 @@ export function addNodeCommand(
       position = result.position;
       data = result.data;
     } catch (err) {
-      ctx.emit({ type: 'lifecycleHookError', hook: 'beforeCreateNode', error: String(err) });
+      ctx.emit({ type: 'lifecycleHookError', hook: 'beforeCreateNode', error: err });
       return null;
     }
   }
@@ -143,7 +143,7 @@ export function deleteNodeCommand(ctx: NodeCommandContext, nodeId: string): void
       }
       nodeId = result.id;
     } catch (err) {
-      ctx.emit({ type: 'lifecycleHookError', hook: 'beforeDelete', error: String(err) });
+      ctx.emit({ type: 'lifecycleHookError', hook: 'beforeDelete', error: err });
       return;
     }
   }

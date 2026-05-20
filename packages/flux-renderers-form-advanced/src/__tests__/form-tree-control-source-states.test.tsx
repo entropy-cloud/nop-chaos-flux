@@ -46,7 +46,64 @@ describe('tree controls source state and picker branches', () => {
     expect((screen.getByPlaceholderText('Search Categories') as HTMLInputElement).disabled).toBe(
       true,
     );
+    const tree = screen.getByRole('tree', { name: 'Categories' });
     expect(screen.getByRole('treeitem', { name: 'Runtime' }).tabIndex).toBe(-1);
+    expect(tree.getAttribute('aria-busy')).toBe('true');
+    expect(tree.getAttribute('aria-describedby')).toBe('categoryIds-source-loading');
+  });
+
+  it('uses roving focus and arrow/home/end keyboard navigation in input-tree', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allFormDefs);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-control-source-states.test.tsx#roving"
+        schema={
+          {
+            type: 'form',
+            body: [
+              {
+                type: 'input-tree',
+                name: 'categoryIds',
+                label: 'Categories',
+                treeMode: 'checkbox',
+                options: [
+                  {
+                    label: 'Engineering',
+                    value: 'eng',
+                    children: [{ label: 'Platform', value: 'platform' }],
+                  },
+                  { label: 'Design', value: 'design' },
+                ],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const engineering = await screen.findByRole('treeitem', { name: 'Engineering' });
+    const platform = screen.getByRole('treeitem', { name: 'Platform' });
+    const design = screen.getByRole('treeitem', { name: 'Design' });
+
+    expect(engineering.tabIndex).toBe(0);
+    expect(platform.tabIndex).toBe(-1);
+    expect(design.tabIndex).toBe(-1);
+
+    engineering.focus();
+    fireEvent.keyDown(engineering, { key: 'ArrowDown' });
+    await waitFor(() => expect(platform.tabIndex).toBe(0));
+
+    platform.focus();
+    fireEvent.keyDown(platform, { key: 'End' });
+    await waitFor(() => expect(design.tabIndex).toBe(0));
+
+    design.focus();
+    fireEvent.keyDown(design, { key: 'Home' });
+    await waitFor(() => expect(engineering.tabIndex).toBe(0));
   });
 
   it('renders object and fallback source errors for input-tree and tree-select', async () => {

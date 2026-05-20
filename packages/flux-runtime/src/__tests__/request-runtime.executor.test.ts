@@ -294,6 +294,63 @@ describe('createApiRequestExecutor', () => {
     await expect(second).resolves.toMatchObject({ ok: true, data: { requestId: 1 } });
   });
 
+  it('does not reuse an aborted in-flight promise for ignore-new dedup strategy', async () => {
+    const parentController = new AbortController();
+    let resolveSecond: ((value: any) => void) | undefined;
+    const fetcher = vi.fn((api: ApiSchema, ctx: { signal?: AbortSignal }) => {
+      if (fetcher.mock.calls.length === 1) {
+        return new Promise((_resolve, reject) => {
+          ctx.signal?.addEventListener(
+            'abort',
+            () => {
+              reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+            },
+            { once: true },
+          );
+        });
+      }
+
+      return new Promise((resolve) => {
+        resolveSecond = resolve;
+      }).then(() => ({ ok: true, status: 200, data: { requestId: api.data } }));
+    });
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+
+    const first = execute(
+      'ajax',
+      { url: '/api/items', data: { requestId: 1 } },
+      scope,
+      undefined,
+      {
+        signal: parentController.signal,
+        control: { dedup: 'ignore-new' },
+      },
+    );
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    parentController.abort(new DOMException('Parent cancelled', 'AbortError'));
+
+    const second = execute(
+      'ajax',
+      { url: '/api/items', data: { requestId: 1 } },
+      scope,
+      undefined,
+      { control: { dedup: 'ignore-new' } },
+    );
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+
+    resolveSecond?.({ ok: true, status: 200, data: { requestId: 1 } });
+
+    await expect(second).resolves.toMatchObject({ ok: true, data: { requestId: { requestId: 1 } } });
+    await expect(first).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
   it('treats different params as distinct requests for ignore-new dedup strategy', async () => {
     let resolvePageOne: ((value: any) => void) | undefined;
     const fetcher = vi.fn(
@@ -469,6 +526,29 @@ describe('createApiRequestExecutor', () => {
     releaseRequest?.();
 
     await expect(promise).rejects.toThrow('aborted');
+  });
+
+  it('detaches parent abort listener after a normal request settles', async () => {
+    const addEventListener = vi.spyOn(AbortSignal.prototype, 'addEventListener');
+    const removeEventListener = vi.spyOn(AbortSignal.prototype, 'removeEventListener');
+    const env = {
+      fetcher: vi.fn(async () => ({ ok: true, status: 200, data: { ok: true } })),
+    } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+    const parentController = new AbortController();
+
+    try {
+      await expect(
+        execute('ajax', { url: '/api/test' }, scope, undefined, { signal: parentController.signal }),
+      ).resolves.toMatchObject({ ok: true, data: { ok: true } });
+
+      expect(addEventListener).toHaveBeenCalledWith('abort', expect.any(Function), { once: true });
+      expect(removeEventListener).toHaveBeenCalledWith('abort', expect.any(Function));
+    } finally {
+      addEventListener.mockRestore();
+      removeEventListener.mockRestore();
+    }
   });
 
   it('cancel-previous aborts the in-flight request', async () => {

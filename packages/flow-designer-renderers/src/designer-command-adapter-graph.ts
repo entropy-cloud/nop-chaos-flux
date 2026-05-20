@@ -11,6 +11,27 @@ import {
   viewportsEqual,
 } from './designer-command-adapter-helpers.js';
 
+function captureLifecycleHookFailure<T>(
+  core: DesignerCore,
+  run: () => T,
+): { result: T; error: unknown } {
+  let capturedError: unknown;
+  const unsubscribe = core.subscribe((event) => {
+    if (event.type === 'lifecycleHookError') {
+      capturedError = event.error;
+    }
+  });
+
+  try {
+    return {
+      result: run(),
+      error: capturedError,
+    };
+  } finally {
+    unsubscribe();
+  }
+}
+
 export function executeGraphOnlyCommand(
   core: DesignerCore,
   command: DesignerCommand,
@@ -28,26 +49,29 @@ export function executeGraphOnlyCommand(
         return createFailure(core, validation.error, validation.reason);
       }
 
-      const edge = core.addEdge(
-        command.source,
-        command.target,
-        command.data,
-        command.sourcePort,
-        command.targetPort,
+      const { result: edge, error } = captureLifecycleHookFailure(core, () =>
+        core.addEdge(
+          command.source,
+          command.target,
+          command.data,
+          command.sourcePort,
+          command.targetPort,
+        ),
       );
       if (!edge) {
-        return createFailure(core, 'Unable to add edge.');
+        return createFailure(core, error ?? 'Unable to add edge.');
       }
 
       return createSuccess(core, { data: edge });
     }
     case 'addNode': {
-      const node = core.addNode(
-        command.nodeType,
-        command.position ?? { x: 200, y: 120 },
-        command.data,
+      const { result: node, error } = captureLifecycleHookFailure(core, () =>
+        core.addNode(command.nodeType, command.position ?? { x: 200, y: 120 }, command.data),
       );
       if (!node) {
+        if (error) {
+          return createFailure(core, error);
+        }
         const failure = inferAddNodeFailure(core, command.nodeType);
         return createFailure(core, failure.error, failure.reason);
       }
@@ -55,11 +79,21 @@ export function executeGraphOnlyCommand(
       return createSuccess(core, { data: node });
     }
     case 'deleteEdge':
-      core.deleteEdge(command.edgeId);
+      {
+        const { error } = captureLifecycleHookFailure(core, () => core.deleteEdge(command.edgeId));
+        if (error) {
+          return createFailure(core, error);
+        }
+      }
       relayoutAfterTreeMutation(core);
       return createSuccess(core);
     case 'deleteNode':
-      core.deleteNode(command.nodeId);
+      {
+        const { error } = captureLifecycleHookFailure(core, () => core.deleteNode(command.nodeId));
+        if (error) {
+          return createFailure(core, error);
+        }
+      }
       relayoutAfterTreeMutation(core);
       return createSuccess(core);
     case 'duplicateNode': {

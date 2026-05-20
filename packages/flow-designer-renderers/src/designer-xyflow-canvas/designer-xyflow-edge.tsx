@@ -69,6 +69,10 @@ export function DesignerXyflowEdge(props: EdgeProps) {
   const lineStyle =
     typeof edgeData?.lineStyle === 'string' ? edgeData.lineStyle : appearance?.strokeStyle;
   const showQuickActions = props.selected || edgeData?.__fdHovered === true;
+  const edgeLabelValue =
+    typeof edgeData?.label === 'string' && edgeData.label.trim().length > 0
+      ? edgeData.label
+      : undefined;
 
   const edgeStyle: React.CSSProperties = {
     stroke: edgeData?.__fdBranchFocused
@@ -84,6 +88,8 @@ export function DesignerXyflowEdge(props: EdgeProps) {
   } else if (lineStyle === 'dotted') {
     edgeStyle.strokeDasharray = '2,4';
   }
+  const edgeLabel = edgeLabelValue ?? `${props.source} to ${props.target}`;
+  const edgeAriaLabel = `${props.selected ? 'Selected ' : ''}Edge ${edgeLabel}`;
 
   return (
     <>
@@ -103,6 +109,8 @@ export function DesignerXyflowEdge(props: EdgeProps) {
           <div
             role="button"
             tabIndex={0}
+            aria-label={edgeAriaLabel}
+            aria-pressed={props.selected}
             className={cn(
               'fd-edge-label px-3 py-1.5 rounded-full border border-border text-sm font-medium text-muted-foreground shadow-sm',
               props.selected && 'border-primary text-foreground',

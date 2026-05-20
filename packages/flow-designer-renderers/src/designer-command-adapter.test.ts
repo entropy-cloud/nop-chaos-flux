@@ -86,6 +86,28 @@ describe('createDesignerCommandAdapter', () => {
     });
   });
 
+  it('preserves original hook error objects on command failures', () => {
+    const hookError = new Error('beforeCreateNode exploded');
+    const core = createDesignerCore(createDocumentWithEdgeChain(), {
+      ...createTestDesignerConfig(),
+      hooks: {
+        beforeCreateNode: () => {
+          throw hookError;
+        },
+      },
+    });
+    const adapter = createDesignerCommandAdapter(core);
+
+    const result = adapter.execute({
+      type: 'addNode',
+      nodeType: 'task',
+      position: { x: 40, y: 60 },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe(hookError);
+  });
+
   it('preserves port ids when adding and reconnecting edges', () => {
     const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
     const adapter = createDesignerCommandAdapter(core);

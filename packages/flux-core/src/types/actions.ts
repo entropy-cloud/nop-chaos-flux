@@ -205,6 +205,7 @@ export interface ActionNamespaceProvider {
     ctx: ActionContext,
   ): Promise<ActionResult> | ActionResult;
   dispose?(): void;
+  release?(): void;
   listMethods?(): readonly string[];
 }
 

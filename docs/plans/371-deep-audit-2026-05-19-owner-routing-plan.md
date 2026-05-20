@@ -1,7 +1,7 @@
 # 371 Deep Audit 2026-05-19 Owner Routing Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-19
+> Plan Status: completed
+> Last Reviewed: 2026-05-20
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, reviewed dimension files under `docs/analysis/2026-05-19-deep-audit-full/`, `docs/plans/00-plan-authoring-and-execution-guide.md`
 > Related: `docs/plans/343-deep-audit-2026-05-17-review-completion-and-owner-routing-plan.md`, `docs/plans/350-open-ended-adversarial-review-2026-05-18-priority-remediation-plan.md`
 
@@ -20,7 +20,7 @@
 
 - `docs/analysis/2026-05-19-deep-audit-full/summary.md` 当前 retained aggregate 为 `64`，并与显式 P0/P1/P2/P3 tables 一致。
 - 当前 hard-gate failures 是 `01-01` 与 `02-01` 至 `02-07`。
-- 经过多轮独立复审后，原先过度细碎的 successor queue 已收敛：`380+381` 合并，`389+390` 合并，`375+393` 合并；其余表面保持分离以维持 honest single-surface ownership。
+- 经过多轮独立复审后，原先过度细碎的 successor queue 已收敛：`380+381` 合并，`389+390` 合并；其余表面保持分离以维持 honest single-surface ownership。
 - 由于 retained findings 横跨多个不共享 exit criteria 的结果面，单一 code-execution umbrella plan 不诚实；但同样不应把同一组件/子系统拆成过多彼此依赖的小计划。
 
 ## Goals
@@ -169,86 +169,86 @@
 
 ### Phase 1 - Freeze The Retained-Finding Routing Baseline
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, reviewed dimension files, this plan
 
 - Item Types: `Decision | Proof`
-- [ ] Re-audit every retained ID in the matrix against the reviewed dimension files and ensure each row appears exactly once.
-- [ ] Reconfirm that the `64 retained` aggregate count matches the explicit retained-ID tables and the source summary.
-- [ ] Confirm that no retained finding is already honestly owned by an active plan and no historical completed plan is being reopened mechanically.
-- [ ] Freeze the bucket boundaries, priority assignments, owner-doc obligations, and planned successor paths in this plan so later phases contain no unresolved routing language.
+- [x] Re-audit every retained ID in the matrix against the reviewed dimension files and ensure each row appears exactly once.
+- [x] Reconfirm that the `64 retained` aggregate count matches the explicit retained-ID tables and the source summary.
+- [x] Confirm that no retained finding is already honestly owned by an active plan and no historical completed plan is being reopened mechanically.
+- [x] Freeze the bucket boundaries, priority assignments, owner-doc obligations, and planned successor paths in this plan so later phases contain no unresolved routing language.
 
 Exit Criteria:
 
-- [ ] Every explicit retained finding ID from the source analysis appears exactly once in this plan's matrix.
-- [ ] The retained-count baseline is textually consistent across the source summary and this plan.
-- [ ] No finding is still ownerless, multiply-owned, or routed with unresolved `or` / `pending` language.
-- [ ] Every bucket has one explicit owner-doc obligation, even when the answer is `No owner-doc update required`.
-- [ ] `docs/logs/2026/05-19.md` records the frozen routing baseline.
+- [x] Every explicit retained finding ID from the source analysis appears exactly once in this plan's matrix.
+- [x] The retained-count baseline is textually consistent across the source summary and this plan.
+- [x] No finding is still ownerless, multiply-owned, or routed with unresolved `or` / `pending` language.
+- [x] Every bucket has one explicit owner-doc obligation, even when the answer is `No owner-doc update required`.
+- [x] `docs/logs/2026/05-19.md` records the frozen routing baseline.
 
 ### Phase 2 - Create Hard-Gate And P0/P1 Successor Owners
 
-Status: planned
-Targets: `docs/plans/`, successor plans `372`-`386`, this plan, `docs/logs/2026/05-19.md`
+Status: completed
+Targets: `docs/plans/`, hard-gate and P0/P1 successor plans created from the surviving queue (`372`-`380`, `382`-`386`), this plan, `docs/logs/2026/05-19.md`
 
 - Item Types: `Decision | Proof`
-- [ ] Create Plans `372`-`379` for Buckets `A`-`H` and keep each hard-gate file/suite surface narrow.
-- [ ] Create Plans `382` and `386` for Buckets `J` and `N`, covering all retained P1 findings.
-- [ ] Create Plans `380`, `383`, `384`, and `385` exactly as frozen in the bucket table so adjacent P0/P1 successor boundaries remain honest.
-- [ ] Make each successor explicitly inherit the owner-doc obligation frozen in this plan.
+- [x] Create Plans `372`-`379` for Buckets `A`-`H` and keep each hard-gate file/suite surface narrow.
+- [x] Create Plans `382` and `386` for Buckets `J` and `N`, covering all retained P1 findings.
+- [x] Create Plans `380`, `383`, `384`, and `385` exactly as frozen in the bucket table so adjacent P0/P1 successor boundaries remain honest.
+- [x] Make each successor explicitly inherit the owner-doc obligation frozen in this plan.
 
 Exit Criteria:
 
-- [ ] Hard-gate findings and current P1 findings are routed to explicit guide-compliant successor plans.
-- [ ] No successor plan mixes unrelated result surfaces just to reduce file count.
-- [ ] Each successor plan enumerates exact finding IDs, explicit Non-Goals, and explicit owner-doc obligations.
-- [ ] `docs/logs/2026/05-19.md` records the hard-gate / P0 / P1 owner split.
+- [x] Hard-gate findings and current P1 findings are routed to explicit guide-compliant successor plans.
+- [x] No successor plan mixes unrelated result surfaces just to reduce file count.
+- [x] Each successor plan enumerates exact finding IDs, explicit Non-Goals, and explicit owner-doc obligations.
+- [x] `docs/logs/2026/05-19.md` records the hard-gate / P0 / P1 owner split.
 
 ### Phase 3 - Create The Remaining Successor Queue
 
-Status: planned
-Targets: `docs/plans/`, successor plans `387`-`404`, this plan, `docs/logs/2026/05-19.md`
+Status: completed
+Targets: `docs/plans/`, remaining successor plans from the surviving queue (`387`-`404`, excluding merged-away `390` and absent `381`), this plan, `docs/logs/2026/05-19.md`
 
 - Item Types: `Decision | Proof`
-- [ ] Create the remaining successor plans so every retained P2/P3 finding from the matrix has a real owner file under `docs/plans/`.
-- [ ] Keep report, spreadsheet, flow-designer, owner-doc, compiler, test, slot, performance, and accessibility surfaces separated exactly as frozen in the bucket table.
-- [ ] Do not widen any successor beyond the bucket table just to reduce the queue length.
+- [x] Create the remaining successor plans so every retained P2/P3 finding from the matrix has a real owner file under `docs/plans/`.
+- [x] Keep report, spreadsheet, flow-designer, owner-doc, compiler, test, slot, performance, and accessibility surfaces separated exactly as frozen in the bucket table.
+- [x] Do not widen any successor beyond the bucket table just to reduce the queue length.
 
 Exit Criteria:
 
-- [ ] Every remaining retained finding from the matrix is routed to an explicit successor execution owner.
-- [ ] Every referenced successor plan exists and is at least `planned`.
-- [ ] No retained finding is silently downgraded to deferred or non-blocking follow-up.
-- [ ] `docs/logs/2026/05-19.md` records the remaining successor queue.
+- [x] Every remaining retained finding from the matrix is routed to an explicit successor execution owner.
+- [x] Every referenced successor plan exists and is at least `planned`.
+- [x] No retained finding is silently downgraded to deferred or non-blocking follow-up.
+- [x] `docs/logs/2026/05-19.md` records the remaining successor queue.
 
 ### Phase 4 - Independent Routing Audit And Queue Freeze
 
-Status: planned
-Targets: this plan, successor plans `372`-`404`, `docs/logs/2026/05-19.md`
+Status: completed
+Targets: this plan, the surviving successor queue (`372`-`404` excluding merged-away `381` and `390`), `docs/logs/2026/05-19.md`
 
 - Item Types: `Proof | Decision`
-- [ ] Run a fresh independent routing audit that re-reads the source analysis, this plan, and all successor plans created in Phases 2-3.
-- [ ] Fix any duplicated ownership, missing owner, dishonest downgrade, or over-broad successor scope discovered by the audit.
-- [ ] Record the audit outcome and final queue freeze in `docs/logs/2026/05-19.md`.
+- [x] Run a fresh independent routing audit that re-reads the source analysis, this plan, and all successor plans created in Phases 2-3.
+- [x] Fix any duplicated ownership, missing owner, dishonest downgrade, or over-broad successor scope discovered by the audit.
+- [x] Record the audit outcome and final queue freeze in `docs/logs/2026/05-19.md`.
 
 Exit Criteria:
 
-- [ ] Independent audit confirms the routed retained set is one-to-one and owner-complete.
-- [ ] Independent audit confirms no retained P0/P1/P2/P3 finding was silently downgraded to vague residual text.
-- [ ] Independent audit confirms successor plans are narrow, guide-compliant, and aligned with this matrix.
-- [ ] This plan's statuses, matrix, closure gates, and log evidence are textually consistent.
-- [ ] `docs/logs/2026/05-19.md` records the closure-audit result.
+- [x] Independent audit confirms the routed retained set is one-to-one and owner-complete.
+- [x] Independent audit confirms no retained P0/P1/P2/P3 finding was silently downgraded to vague residual text.
+- [x] Independent audit confirms successor plans are narrow, guide-compliant, and aligned with this matrix.
+- [x] This plan's statuses, matrix, closure gates, and log evidence are textually consistent.
+- [x] `docs/logs/2026/05-19.md` records the closure-audit result.
 
 ## Closure Gates
 
 > This is a docs-only owner-routing plan. It closes only after the matrix, successor ownership, and independent routing audit are complete. It does not claim code execution closure.
 
-- [ ] All retained findings in the final explicit ID baseline have exactly one current owner bucket and one explicit successor path.
-- [ ] All hard-gate findings are routed to explicit successor execution plans.
-- [ ] All retained P1 findings are routed to explicit successor execution plans.
-- [ ] No retained finding is silently downgraded to deferred or non-blocking follow-up.
-- [ ] Every referenced successor plan exists and is at least `planned` with guide-compliant scope, exact finding IDs, explicit Non-Goals, and explicit owner-doc obligations.
-- [ ] Independent subagent routing audit is completed and recorded.
+- [x] All retained findings in the final explicit ID baseline have exactly one current owner bucket and one explicit successor path.
+- [x] All hard-gate findings are routed to explicit successor execution plans.
+- [x] All retained P1 findings are routed to explicit successor execution plans.
+- [x] No retained finding is silently downgraded to deferred or non-blocking follow-up.
+- [x] Every referenced successor plan exists and is at least `planned` with guide-compliant scope, exact finding IDs, explicit Non-Goals, and explicit owner-doc obligations.
+- [x] Independent subagent routing audit is completed and recorded.
 
 ## Deferred But Adjudicated
 
@@ -260,13 +260,13 @@ None currently.
 
 ## Closure
 
-Status Note: Pending. This plan is drafted to freeze the `2026-05-19` routing baseline, but closure requires successor plans `372`-`404` and an independent routing audit.
+Status Note: Completed. The `2026-05-19` retained set remains one-to-one routed, all referenced surviving successor plans exist, and the final independent routing audit found no ownership gaps after queue-shape text was synchronized to the merged-away `381` / `390` reality.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent routing audit
-- Evidence: not yet run
+- Reviewer / Agent: gpt-5.4 independent routing closure audit (`ses_1c1a8efacffeFpK21DOAlZoJPa`), plus final live-tree synchronization audit (`ses_1bcc603b1ffevG0J1BP1bRB0ML`)
+- Evidence: final audit evidence is recorded across `docs/logs/2026/05-19.md` and `docs/logs/2026/05-20.md`; the surviving queue is `372`-`404` excluding merged-away `381` and `390`, and every matrix successor path resolves to a live plan file.
 
 Follow-up:
 
-- Planned successor queue: `docs/plans/372-deep-audit-2026-05-19-workspace-manifest-hygiene-plan.md` through `docs/plans/404-deep-audit-2026-05-19-tabs-hidden-region-mounting-plan.md`.
+- Surviving successor queue: `372`, `373`, `374`, `375`, `376`, `377`, `378`, `379`, `380`, `382`, `383`, `384`, `385`, `386`, `387`, `388`, `389`, `391`, `392`, `393`, `394`, `395`, `396`, `397`, `398`, `399`, `400`, `401`, `402`, `403`, `404`.

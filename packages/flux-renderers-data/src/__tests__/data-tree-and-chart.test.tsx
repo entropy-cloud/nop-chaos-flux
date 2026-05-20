@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createDataSchemaRenderer,
   env,
@@ -9,6 +9,10 @@ import {
 } from '../test-support.js';
 
 describe('dataRendererDefinitions tree and chart behavior', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders visual tree nodes through the node region with inherited bindings', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer([iconRenderer]);
@@ -596,5 +600,70 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
 
     fireEvent.keyDown(childB, { key: 'ArrowLeft' });
     expect(document.activeElement).toBe(parentNode);
+  });
+
+  it('bounds the initial expanded subtree render for large child lists', async () => {
+    cleanup();
+    vi.useFakeTimers();
+    const SchemaRenderer = createDataSchemaRenderer();
+    const children = Array.from({ length: 120 }, (_, index) => ({
+      id: `child-${index + 1}`,
+      label: `Child ${index + 1}`,
+      children: [],
+    }));
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-large-expanded-bounded"
+        schema={{
+          type: 'page',
+          body: [{ type: 'tree', data: '${nodes}', initiallyExpanded: true }],
+        }}
+        data={{
+          nodes: [{ id: 'root', label: 'Root', children }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(screen.getByText('Root')).toBeTruthy();
+    expect(screen.getByText('Child 1')).toBeTruthy();
+
+    expect(screen.getByText('Child 50')).toBeTruthy();
+    expect(screen.queryByText('Child 120')).toBeNull();
+    expect(document.querySelector('[data-slot="tree-children-more"]')).toBeTruthy();
+  });
+
+  it('eventually renders the full expanded subtree after the deferred fill completes', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    const children = Array.from({ length: 120 }, (_, index) => ({
+      id: `child-${index + 1}`,
+      label: `Child ${index + 1}`,
+      children: [],
+    }));
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-large-expanded-complete"
+        schema={{
+          type: 'page',
+          body: [{ type: 'tree', data: '${nodes}', initiallyExpanded: true }],
+        }}
+        data={{
+          nodes: [{ id: 'root', label: 'Root', children }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(screen.getByText('Child 50')).toBeTruthy();
+
+    await waitFor(() => {
+      expect(screen.getByText('Child 120')).toBeTruthy();
+      expect(document.querySelector('[data-slot="tree-children-more"]')).toBeNull();
+    }, { timeout: 3000 });
   });
 });

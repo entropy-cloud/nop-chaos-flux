@@ -83,7 +83,7 @@ export interface DesignerCommandResult {
   ok: boolean;
   snapshot: DesignerSnapshot;
   data?: unknown;
-  error?: string;
+  error?: unknown;
   exported?: string;
   reason?: DesignerCommandReason;
 }

@@ -370,4 +370,55 @@ describe('tree controls - DOM structure, markers, and expand/collapse', () => {
       expect(screen.getByRole('tree', { name: 'Department' })).toBeTruthy();
     });
   });
+
+  it('applies shared tree keyboard semantics inside tree-select popovers', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/tree-structure.test.tsx#tree-select-keyboard"
+        schema={
+          {
+            type: 'form',
+            body: [
+              {
+                type: 'tree-select',
+                name: 'department',
+                label: 'Department',
+                options: [
+                  {
+                    label: 'Operations',
+                    value: 'ops',
+                    children: [{ label: 'Support', value: 'support' }],
+                  },
+                  { label: 'Design', value: 'design' },
+                ],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Department/ }));
+
+    const operations = await screen.findByRole('treeitem', { name: 'Operations' });
+    const support = screen.getByRole('treeitem', { name: 'Support' });
+    const design = screen.getByRole('treeitem', { name: 'Design' });
+
+    expect(operations.tabIndex).toBe(0);
+    expect(support.tabIndex).toBe(-1);
+    expect(design.tabIndex).toBe(-1);
+
+    operations.focus();
+    fireEvent.keyDown(operations, { key: 'ArrowDown' });
+    await waitFor(() => expect(support.tabIndex).toBe(0));
+
+    support.focus();
+    fireEvent.keyDown(support, { key: 'End' });
+    await waitFor(() => expect(design.tabIndex).toBe(0));
+  });
 });

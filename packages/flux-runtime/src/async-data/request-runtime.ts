@@ -394,6 +394,20 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
   const activeControllers = new Map<string, AbortController>();
   const activePromises = new Map<string, Promise<ApiResponse<any>>>();
 
+  function clearStaleActiveRequest(requestKey: string) {
+    const controller = activeControllers.get(requestKey);
+    const promise = activePromises.get(requestKey);
+    const stale = !!promise && (!controller || controller.signal.aborted);
+
+    if (!stale) {
+      return false;
+    }
+
+    activeControllers.delete(requestKey);
+    activePromises.delete(requestKey);
+    return true;
+  }
+
   const executeApiRequest: ApiRequestExecutor = async function executeApiRequest<T>(
     actionType: string,
     api: ApiSchema | ExecutableApiRequest,
@@ -404,6 +418,7 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
     const executableApi = finalizeApiRequest(api as ApiSchema).request;
     const requestKey = createRequestKey(actionType, executableApi, scope, form);
     const dedupStrategy = resolveRequestDedup(options?.control);
+    clearStaleActiveRequest(requestKey);
     const previousController = activeControllers.get(requestKey);
     const previousPromise = activePromises.get(requestKey);
     const env = getEnv();

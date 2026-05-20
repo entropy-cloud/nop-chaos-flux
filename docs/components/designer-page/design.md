@@ -67,6 +67,7 @@
 
 - 根节点保留 `nop-designer` marker。
 - 视觉壳是设计器工作台，不应和普通页面共享隐式布局假设。
+- 当前 live baseline 下，DingFlow add-node 浮层若声明 `role="menu"`，则必须提供 roving focus 与 `Arrow` / `Home` / `End` 键盘模型；canvas 上可聚焦 node / edge 交互根若声明 `role="button"`，则必须提供稳定 `aria-label`，并通过 `aria-pressed` 暴露 selected state。
 
 ## 11. 实现拆分建议
 

@@ -11,6 +11,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-ch
 import { ChevronRightIcon } from 'lucide-react';
 import type { TreeSchema } from './schemas.js';
 
+const TREE_EXPANDED_CHILD_BATCH_SIZE = 50;
+
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }
@@ -153,9 +155,19 @@ function TreeNodeRenderer(props: {
   const instancePath = [...(parentInstancePath ?? []), { repeatedTemplateId, instanceKey: nodeKey }];
   const childNodes = toTreeNodes(getIn(node, childrenKey));
   const hasChildren = childNodes.length > 0;
-  const [open, setOpen] = useState(
-    () => hasChildren && shouldExpandInitially(initiallyExpanded, depth),
-  );
+  const initiallyOpen = hasChildren && shouldExpandInitially(initiallyExpanded, depth);
+  const [open, setOpen] = useState(() => initiallyOpen);
+  const [renderedChildCount, setRenderedChildCount] = useState(() => {
+    if (!initiallyOpen) {
+      return 0;
+    }
+
+    if (childNodes.length <= TREE_EXPANDED_CHILD_BATCH_SIZE) {
+      return childNodes.length;
+    }
+
+    return TREE_EXPANDED_CHILD_BATCH_SIZE;
+  });
   const label = getIn(node, labelField);
   const nodeContent = owner.regions.node
     ? owner.regions.node.render({
@@ -165,6 +177,34 @@ function TreeNodeRenderer(props: {
     : null;
   const interactiveNode = hasChildren && expandOnClickNode;
   const isTabbable = (activeNodeId ?? treeNodeId) === treeNodeId;
+
+  React.useEffect(() => {
+    if (!open) {
+      setRenderedChildCount(0);
+      return;
+    }
+
+    if (childNodes.length <= TREE_EXPANDED_CHILD_BATCH_SIZE) {
+      setRenderedChildCount(childNodes.length);
+      return;
+    }
+
+    setRenderedChildCount((previous) => {
+      if (previous >= childNodes.length) {
+        return previous;
+      }
+
+      return Math.max(previous, TREE_EXPANDED_CHILD_BATCH_SIZE);
+    });
+
+    const timer = window.setTimeout(() => {
+      setRenderedChildCount(childNodes.length);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [childNodes.length, open]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen && activeNodeId?.startsWith(`${treeNodeId}/`)) {
@@ -299,7 +339,7 @@ function TreeNodeRenderer(props: {
         {hasChildren ? (
           <CollapsibleContent>
             <div data-slot="tree-children" role="group">
-              {childNodes.map((childNode, childIndex) => (
+              {childNodes.slice(0, renderedChildCount).map((childNode, childIndex) => (
                 <TreeNodeRenderer
                   key={`${nodeKey}:${toNodeKey(childNode, keyField, childIndex)}`}
                   owner={owner}
@@ -320,12 +360,15 @@ function TreeNodeRenderer(props: {
                    focusNode={focusNode}
                    moveFocus={moveFocus}
                    focusFirstChild={focusFirstChild}
-                   focusParent={focusParent}
-                 />
-               ))}
-             </div>
-           </CollapsibleContent>
-        ) : null}
+                    focusParent={focusParent}
+                  />
+                ))}
+              {open && renderedChildCount < childNodes.length ? (
+                <div data-slot="tree-children-more" hidden aria-hidden="true" />
+              ) : null}
+              </div>
+            </CollapsibleContent>
+         ) : null}
       </Collapsible>
     </div>
   );

@@ -30,7 +30,7 @@ export function createSuccess(
 
 export function createFailure(
   core: DesignerCore,
-  error: string,
+  error: unknown,
   reason?: DesignerCommandReason,
   extra?: Omit<DesignerCommandResult, 'ok' | 'snapshot' | 'error' | 'reason'>,
 ): DesignerCommandResult {

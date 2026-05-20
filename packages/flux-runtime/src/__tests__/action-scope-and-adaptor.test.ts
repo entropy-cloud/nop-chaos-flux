@@ -20,11 +20,17 @@ describe('action scope helpers', () => {
 
   it('registers, replaces, resolves, and unregisters namespace providers', () => {
     const parentProvider = { kind: 'parent', listMethods: () => ['run'], dispose: vi.fn() } as any;
-    const childProvider = { kind: 'child', listMethods: () => ['open'], dispose: vi.fn() } as any;
+    const childProvider = {
+      kind: 'child',
+      listMethods: () => ['open'],
+      dispose: vi.fn(),
+      release: vi.fn(),
+    } as any;
     const replacementProvider = {
       kind: 'replacement',
       listMethods: () => ['close'],
       dispose: vi.fn(),
+      release: vi.fn(),
     } as any;
     const parent = createActionScope({ id: 'parent-scope' });
     parent.registerNamespace('dialog', parentProvider);
@@ -47,6 +53,7 @@ describe('action scope helpers', () => {
 
     scope.registerNamespace('dialog', replacementProvider);
     expect(childProvider.dispose).toHaveBeenCalledTimes(1);
+    expect(childProvider.release).toHaveBeenCalledTimes(1);
     expect(scope.resolve('dialog:close')?.provider).toBe(replacementProvider);
     expect(scope.listNamespaces()).toEqual(['dialog']);
 
@@ -55,6 +62,7 @@ describe('action scope helpers', () => {
 
     scope.unregisterNamespace('dialog');
     expect(replacementProvider.dispose).toHaveBeenCalledTimes(1);
+    expect(replacementProvider.release).toHaveBeenCalledTimes(1);
     expect(scope.resolve('dialog:open')?.provider).toBe(parentProvider);
 
     scope.unregisterNamespace('missing');

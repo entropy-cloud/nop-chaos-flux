@@ -130,4 +130,47 @@ describe('DesignerXyflowEdge label rendering', () => {
       expect(textEl.textContent).toBe('触发条件');
     }, { timeout: 3000 });
   });
+
+  it('publishes stable accessible edge name and selected state', async () => {
+    const ctx = createDesignerContextValue(TEST_CONFIG, TEST_DOC);
+
+    const edgeHostRenderer: RendererDefinition = {
+      type: 'edge-host',
+      component: () => (
+        <DesignerContext.Provider value={ctx}>
+          <DesignerXyflowEdge
+            id="edge-1"
+            source="node-1"
+            target="node-2"
+            sourceX={0}
+            sourceY={0}
+            targetX={300}
+            targetY={0}
+            sourcePosition="right"
+            targetPosition="left"
+            data={{ condition: '触发条件', lineStyle: 'solid', typeId: 'default', label: '审批连线' }}
+            selected={true}
+            type="designerEdge"
+          />
+        </DesignerContext.Provider>
+      ),
+      fields: [],
+      staticCapable: true,
+    };
+
+    const LocalRenderer = createSchemaRenderer([textWithBody, edgeHostRenderer]);
+    render(
+      <LocalRenderer
+        schemaUrl="test://edge-render-selected"
+        schema={{ type: 'edge-host' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      const edge = screen.getByRole('button', { name: 'Selected Edge 审批连线' });
+      expect(edge.getAttribute('aria-pressed')).toBe('true');
+    });
+  });
 });

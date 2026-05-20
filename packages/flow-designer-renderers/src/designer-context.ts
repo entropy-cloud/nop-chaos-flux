@@ -94,22 +94,33 @@ export function useDesignerSnapshot(core: DesignerCore): DesignerSnapshot {
 export function notifyCommandFailure(
   input: {
     notify: import('@nop-chaos/flux-core').RendererEnv['notify'] | undefined;
-    error: string | undefined;
+    error: unknown;
     reason?: string;
   },
 ) {
-  if (!input.error || input.reason === 'unchanged') {
+  if (input.reason === 'unchanged') {
     return;
   }
 
-  input.notify?.('warning', input.error);
+  const message =
+    input.error instanceof Error
+      ? input.error.message
+      : typeof input.error === 'string'
+        ? input.error
+        : undefined;
+
+  if (!message) {
+    return;
+  }
+
+  input.notify?.('warning', message);
 }
 
 export function toActionResult(result: import('./designer-command-adapter.js').DesignerCommandResult) {
   return {
     ok: result.ok,
     data: result.exported ?? result.data,
-    error: result.error ? new Error(result.error) : undefined,
+    error: result.error,
   };
 }
 

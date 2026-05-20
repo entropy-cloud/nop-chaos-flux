@@ -65,11 +65,18 @@ export function DesignerPageInner({
           return;
         }
 
+        const message =
+          event.error instanceof Error
+            ? event.error.message
+            : typeof event.error === 'string'
+              ? event.error
+              : String(event.error);
+
         reportRuntimeHostIssue({
           env,
           level: 'warning',
-          message: event.error,
-          error: new Error(event.error),
+          message,
+          error: event.error,
           phase: 'render',
           details: {
             reason: 'designer-lifecycle-hook-failed',

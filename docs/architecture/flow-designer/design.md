@@ -99,6 +99,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `designer-page.shortcuts`，用于在宿主层把键盘事件映射到已有 `designer:*` / shared action 链
 - 单一 `@xyflow/react` canvas bridge，经由 `DesignerCanvasContent` host 映射到 command adapter dispatch
 - Xyflow bridge、palette/canvas internals、和 `designer-context` hooks 属于 renderer implementation surface；若 package 内部或高级集成确实需要，走 `@nop-chaos/flow-designer-renderers/unstable`，不再由 root entry 冻结
+- Flow-designer interactive affordances that declare widget semantics must also ship the matching accessibility contract: DingFlow add-node overlays using `role="menu"` must implement roving item focus plus `Arrow` / `Home` / `End` navigation, and focusable node/edge canvas roots using `role="button"` must expose stable `aria-label` and selected state through `aria-pressed` instead of relying on arbitrary schema body text or visual-only styling.
 
 ### 3.3 `@xyflow/react` 适配边界
 

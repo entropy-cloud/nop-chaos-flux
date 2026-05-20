@@ -8,7 +8,7 @@ import { useNodeTypeConfig, useDesignerContext } from '../designer-context.js';
 import { renderPorts } from './render-ports.js';
 import type { DesignerFlowNodeData } from './types.js';
 import { DesignerIcon } from '../designer-icon.js';
-import { Badge, Button, Card, CardContent, CardHeader, cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { DingFlowPlusButton } from '../dingflow/index.js';
 import type { TreeNodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import { resolveNodeTypeAccent, resolveNodeTypeMeta } from '../designer-node-appearance.js';
@@ -126,13 +126,8 @@ export function DesignerXyflowNode(props: NodeProps) {
     if (!nodeType?.appearance) return undefined;
     const { appearance } = nodeType;
     const s: React.CSSProperties = {};
-    if (isTreeMode) {
-      if (appearance.minWidth !== undefined) s.width = appearance.minWidth;
-      if (appearance.minHeight !== undefined) s.height = appearance.minHeight;
-    } else {
-      if (appearance.minWidth !== undefined) s.minWidth = appearance.minWidth;
-      if (appearance.minHeight !== undefined) s.minHeight = appearance.minHeight;
-    }
+    if (appearance.minWidth !== undefined) s.minWidth = appearance.minWidth;
+    if (appearance.minHeight !== undefined) s.minHeight = appearance.minHeight;
     if (appearance.borderRadius !== undefined) s.borderRadius = appearance.borderRadius;
     if (appearance.borderWidth !== undefined) s.borderWidth = appearance.borderWidth;
     if (props.selected && appearance.borderColorSelected) {
@@ -144,13 +139,24 @@ export function DesignerXyflowNode(props: NodeProps) {
       s.boxShadow = '0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent)';
     }
     return Object.keys(s).length > 0 ? s : undefined;
-  }, [nodeType, props.selected, data.__fdBranchFocused, isTreeMode]);
+  }, [nodeType, props.selected, data.__fdBranchFocused]);
+  const nodeLabel =
+    typeof data.label === 'string' && data.label.trim().length > 0
+      ? data.label
+      : typeof typeMeta.label === 'string' && typeMeta.label.trim().length > 0
+        ? typeMeta.label
+        : typeof data.typeLabel === 'string' && data.typeLabel.trim().length > 0
+          ? data.typeLabel
+          : props.id;
+  const nodeAriaLabel = `${props.selected ? 'Selected ' : ''}Node ${nodeLabel}`;
 
   if (!nodeType?.body || !isSchemaInput(nodeType.body)) {
     return (
       <div
         role="button"
         tabIndex={0}
+        aria-label={nodeAriaLabel}
+        aria-pressed={props.selected}
         className={cn('nop-designer-node', nodeType?.appearance?.className)}
         style={appearanceStyle}
         data-selected={props.selected ? '' : undefined}
@@ -165,31 +171,13 @@ export function DesignerXyflowNode(props: NodeProps) {
     );
   }
 
-  const treeSummary = (() => {
-    const raw = props.data as Record<string, unknown>;
-    const summaryParts: string[] = [];
-    const branchType = raw.branchType;
-    const action = raw.action;
-    const mode = raw.mode;
-    const when = raw.when;
-    const timeout = raw.timeout;
-    const examineMode = raw.examineMode;
-
-    if (typeof action === 'string' && action.length > 0) summaryParts.push(action);
-    if (typeof branchType === 'string' && branchType.length > 0) summaryParts.push(branchType);
-    if (typeof mode === 'string' && mode.length > 0) summaryParts.push(mode);
-    if (typeof examineMode === 'string' && examineMode.length > 0) summaryParts.push(`mode:${examineMode}`);
-    if (typeof timeout === 'number' || typeof timeout === 'string') summaryParts.push(`timeout:${timeout}`);
-    if (typeof when === 'string' && when.trim().length > 0) summaryParts.push('conditional');
-
-    return summaryParts.slice(0, 3);
-  })();
-
   return (
     <>
       <div
         role="button"
         tabIndex={0}
+        aria-label={nodeAriaLabel}
+        aria-pressed={props.selected}
         className={cn('nop-designer-node', 'relative', nodeType.appearance?.className)}
         style={appearanceStyle}
         data-selected={props.selected ? '' : undefined}
@@ -199,57 +187,16 @@ export function DesignerXyflowNode(props: NodeProps) {
         onKeyDown={handleNodeKeyDown}
       >
         {renderPorts(nodeType.ports, isTreeMode)}
-        {isTreeMode ? (
-          treeNodeType?.tree?.isTerminal ? (
-            <div className="flex flex-col items-center justify-center w-full h-full">
-              <div
-                className="w-3 h-3 rounded-full bg-muted-foreground/40"
-                style={{ borderColor: accent }}
-              />
-              <div className="text-[11px] text-muted-foreground/60 mt-1 truncate max-w-full text-center">
-                {data.label}
-              </div>
+        {isTreeMode && treeNodeType?.tree?.isTerminal ? (
+          <div className="flex flex-col items-center justify-center w-full h-full">
+            <div
+              className="w-3 h-3 rounded-full bg-muted-foreground/40"
+              style={{ borderColor: accent }}
+            />
+            <div className="text-[11px] text-muted-foreground/60 mt-1 truncate max-w-full text-center">
+              {data.label}
             </div>
-          ) : (
-            <Card
-              className="fd-tree-node-shell border shadow-sm overflow-hidden w-full h-full"
-              style={{
-                borderColor: accent,
-                boxShadow: data.__fdBranchFocused
-                  ? `0 0 0 3px color-mix(in srgb, ${accent} 20%, transparent)`
-                  : undefined,
-              }}
-              data-tree-node-type={data.typeId}
-            >
-              <CardHeader className="px-3 py-1.5 gap-1" style={{ background: `color-mix(in srgb, ${accent} 12%, white)` }}>
-                <div className="flex items-center gap-2 min-w-0">
-                  {typeMeta.icon ? <DesignerIcon icon={typeMeta.icon} className="shrink-0" /> : null}
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground truncate">
-                      {typeMeta.label}
-                    </div>
-                    <div className="text-sm font-semibold truncate">{data.label}</div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="px-3 py-1 flex flex-col gap-0.5">
-                {treeSummary.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {treeSummary.map((item) => (
-                      <Badge key={item} variant="secondary" className="text-[10px] font-medium">
-                        {item}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : null}
-                {Array.isArray((props.data as Record<string, unknown>).branches) ? (
-                  <div className="text-[11px] text-muted-foreground">
-                    {`${((props.data as Record<string, unknown>).branches as unknown[]).length} branch${((props.data as Record<string, unknown>).branches as unknown[]).length === 1 ? '' : 'es'}`}
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
-          )
+          </div>
         ) : (
           <ClassAliasesContext.Provider value={config.classAliases}>
             <RenderNodes

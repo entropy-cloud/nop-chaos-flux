@@ -362,6 +362,26 @@ describe('DesignerXyflowCanvasBridge', () => {
     expect(mockState.latestReactFlowProps.onConnect).toBeUndefined();
     expect(mockState.latestReactFlowProps.onReconnect).toBeUndefined();
   });
+
+  it('publishes stable accessible node name and selected state', () => {
+    document.body.innerHTML = '';
+    render(
+      <DesignerXyflowNode
+        id="node-1"
+        selected={true}
+        data={{ typeId: 'task', label: 'Task 1', typeLabel: 'Task' }}
+        xPos={20}
+        yPos={40}
+        dragging={false}
+        zIndex={1}
+        isConnectable={true}
+        type="task"
+      />,
+    );
+
+    const nodes = screen.getAllByRole('button', { name: 'Selected Node Task 1' });
+    expect(nodes.at(-1)?.getAttribute('aria-pressed')).toBe('true');
+  });
 });
 
 describe('renderDesignerCanvasBridge', () => {

@@ -60,6 +60,7 @@ describe('createDesignerActionProvider', () => {
         features: {},
         canvas: {},
       }),
+      subscribe: () => () => {},
       addNode: (
         type: string,
         position: { x: number; y: number },
@@ -171,6 +172,7 @@ describe('createDesignerActionProvider', () => {
         features: {},
         canvas: {},
       }),
+      subscribe: () => () => {},
       addEdge: () => null,
     } as any;
 
@@ -180,8 +182,7 @@ describe('createDesignerActionProvider', () => {
     } as any);
 
     expect(result.ok).toBe(false);
-    expect(result.error).toBeInstanceOf(Error);
-    expect((result.error as Error).message).toBe('Edges must connect existing nodes.');
+    expect(result.error).toBe('Edges must connect existing nodes.');
     expect(notify).toHaveBeenCalledWith('warning', 'Edges must connect existing nodes.');
   });
 

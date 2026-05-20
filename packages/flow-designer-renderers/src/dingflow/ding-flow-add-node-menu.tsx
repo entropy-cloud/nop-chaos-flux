@@ -24,10 +24,23 @@ export function DingFlowAddNodeMenu({
   onClose,
 }: DingFlowAddNodeMenuProps) {
   const firstButtonRef = React.useRef<HTMLButtonElement | null>(null);
+  const itemRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+  const [activeIndex, setActiveIndex] = React.useState(0);
 
   React.useEffect(() => {
     firstButtonRef.current?.focus();
   }, []);
+
+  React.useEffect(() => {
+    const nextIndex = Math.min(activeIndex, Math.max(items.length - 1, 0));
+    setActiveIndex(nextIndex);
+  }, [activeIndex, items.length]);
+
+  function focusItem(nextIndex: number) {
+    const normalizedIndex = ((nextIndex % items.length) + items.length) % items.length;
+    setActiveIndex(normalizedIndex);
+    itemRefs.current[normalizedIndex]?.focus();
+  }
 
   return (
     <>
@@ -38,6 +51,30 @@ export function DingFlowAddNodeMenu({
         role="menu"
         aria-label="Add node"
         onKeyDown={(event) => {
+          if (items.length > 0 && event.key === 'ArrowRight') {
+            event.preventDefault();
+            focusItem(activeIndex + 1);
+            return;
+          }
+
+          if (items.length > 0 && event.key === 'ArrowLeft') {
+            event.preventDefault();
+            focusItem(activeIndex - 1);
+            return;
+          }
+
+          if (items.length > 0 && event.key === 'Home') {
+            event.preventDefault();
+            focusItem(0);
+            return;
+          }
+
+          if (items.length > 0 && event.key === 'End') {
+            event.preventDefault();
+            focusItem(items.length - 1);
+            return;
+          }
+
           if (event.key === 'Escape') {
             event.preventDefault();
             onClose();
@@ -47,12 +84,19 @@ export function DingFlowAddNodeMenu({
         {items.map((item, index) => (
           <Button
             key={item.type}
-            ref={index === 0 ? firstButtonRef : undefined}
+            ref={(node) => {
+              itemRefs.current[index] = node;
+              if (index === 0) {
+                firstButtonRef.current = node;
+              }
+            }}
             type="button"
             variant="ghost"
             className="h-auto flex-col gap-1 px-0 py-0"
             role="menuitem"
             aria-label={item.label}
+            tabIndex={index === activeIndex ? 0 : -1}
+            onFocus={() => setActiveIndex(index)}
             onClick={(e) => {
               e.stopPropagation();
               onSelect(item.type);

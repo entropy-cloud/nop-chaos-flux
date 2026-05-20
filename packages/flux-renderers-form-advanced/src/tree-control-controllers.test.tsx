@@ -10,7 +10,10 @@ import {
 import { buildTreeOptionMetaList, getTreeOptionConfig, type TreeOptionMeta } from './tree-options.js';
 
 function FilterHarness(props: { options: TreeOptionMeta[]; searchable: boolean }) {
-  const { query, setQuery, filteredOptions } = useTreeOptionListController(props);
+  const { query, setQuery, filteredOptions } = useTreeOptionListController({
+    ...props,
+    disabled: false,
+  });
 
   return (
     <div>
@@ -63,12 +66,19 @@ function NodeControllerHarness(props: {
       children: [{ label: 'Platform', value: 'platform' }],
     },
   ])[0];
+  const [expanded, setExpanded] = React.useState(true);
   const controller = useTreeOptionNodeController({
     option,
     value: '',
     multiple: false,
     disabled: props.disabled ?? false,
     onChange: props.onChange,
+    expanded,
+    focused: true,
+    itemId: 'tree-item-1',
+    onToggleExpanded: (_option, nextExpanded) => setExpanded(nextExpanded),
+    onMoveFocus: vi.fn(),
+    onFocusItem: vi.fn(),
   });
 
   return (
@@ -164,5 +174,49 @@ describe('tree control controllers', () => {
     fireEvent.keyDown(screen.getByTestId('chevron'), { key: ' ' });
     expect(screen.getByTestId('expanded').textContent).toBe('true');
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('routes tree keyboard navigation through the shared move-focus callback', () => {
+    cleanup();
+    const option = buildTreeOptionMetaList([
+      {
+        label: 'Engineering',
+        value: 'eng',
+        children: [{ label: 'Platform', value: 'platform' }],
+      },
+    ])[0];
+    const onMoveFocus = vi.fn();
+
+    function Harness() {
+      const controller = useTreeOptionNodeController({
+        option,
+        value: '',
+        multiple: false,
+        disabled: false,
+        onChange: vi.fn(),
+        expanded: true,
+        focused: true,
+        itemId: 'tree-item-1',
+        onToggleExpanded: vi.fn(),
+        onMoveFocus,
+        onFocusItem: vi.fn(),
+      });
+
+      return <div onKeyDown={controller.handleKeyDown} data-testid="row" tabIndex={0} />;
+    }
+
+    render(<Harness />);
+
+    fireEvent.keyDown(screen.getByTestId('row'), { key: 'ArrowDown' });
+    fireEvent.keyDown(screen.getByTestId('row'), { key: 'ArrowUp' });
+    fireEvent.keyDown(screen.getByTestId('row'), { key: 'Home' });
+    fireEvent.keyDown(screen.getByTestId('row'), { key: 'End' });
+
+    expect(onMoveFocus.mock.calls).toEqual([
+      ['next'],
+      ['prev'],
+      ['first'],
+      ['last'],
+    ]);
   });
 });

@@ -20,6 +20,11 @@ function parseActionName(actionName: string): { namespace: string; method: strin
 export function createActionScope(input: { id: string; parent?: ActionScope }): ActionScope {
   const namespaces = new Map<string, ActionNamespaceProvider>();
 
+  function cleanupProvider(provider: ActionNamespaceProvider) {
+    provider.dispose?.();
+    provider.release?.();
+  }
+
   function resolveInScope(actionName: string): ResolvedActionHandler | undefined {
     const parsed = parseActionName(actionName);
 
@@ -49,7 +54,7 @@ export function createActionScope(input: { id: string; parent?: ActionScope }): 
       const existing = namespaces.get(namespace);
 
       if (existing && existing !== provider) {
-        existing.dispose?.();
+        cleanupProvider(existing);
       }
 
       namespaces.set(namespace, provider);
@@ -57,7 +62,7 @@ export function createActionScope(input: { id: string; parent?: ActionScope }): 
       return () => {
         if (namespaces.get(namespace) === provider) {
           namespaces.delete(namespace);
-          provider.dispose?.();
+          cleanupProvider(provider);
         }
       };
     },
@@ -69,7 +74,7 @@ export function createActionScope(input: { id: string; parent?: ActionScope }): 
       }
 
       namespaces.delete(namespace);
-      provider.dispose?.();
+      cleanupProvider(provider);
     },
     listNamespaces() {
       return Array.from(namespaces.keys());

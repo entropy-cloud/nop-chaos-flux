@@ -327,7 +327,7 @@ export type DesignerEvent =
   | { type: 'transactionStarted'; transactionId: string; label?: string }
   | { type: 'transactionCommitted'; transactionId: string }
   | { type: 'transactionRolledBack'; transactionId: string }
-  | { type: 'lifecycleHookError'; hook: string; error: string }
+  | { type: 'lifecycleHookError'; hook: string; error: unknown }
   | { type: 'nodes:moved' }
   | { type: 'nodes:updated' };
 

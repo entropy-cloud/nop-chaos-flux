@@ -1,7 +1,7 @@
 # 376 Deep Audit 2026-05-19 Spreadsheet Context-Menu Test Decomposition Plan
 
-> Plan Status: partially completed
-> Last Reviewed: 2026-05-19
+> Plan Status: completed
+> Last Reviewed: 2026-05-20
 > Source: `docs/analysis/2026-05-19-deep-audit-full/summary.md`, `docs/plans/371-deep-audit-2026-05-19-owner-routing-plan.md`
 
 ## Purpose
@@ -13,7 +13,7 @@
 - Live repo no longer contains `packages/spreadsheet-renderers/src/__tests__/context-menu-operations.test.tsx`.
 - The spreadsheet context-menu coverage is already decomposed across `context-menu-structure.test.tsx`, `context-menu-state-and-resize.test.tsx`, and `context-menu-fill-and-range.test.tsx`.
 - `packages/spreadsheet-renderers/src/__tests__/spreadsheet-grid-harness.tsx` exists as shared spreadsheet test support and is reused by the context-menu suites plus `grid-selection.test.tsx`.
-- Remaining closure work is proof-only: confirm the spreadsheet retained findings stay fixed and record that the repo-wide oversized hard gate still fails only on unrelated files.
+- Remaining closure work was proof-only: confirm the spreadsheet retained findings stay fixed and rerun the repo-wide oversized and workspace gates on the current tree.
 
 ## Goals
 
@@ -61,18 +61,18 @@ Exit Criteria:
 - [x] `No owner-doc update required`.
 - [x] No in-scope retained finding is silently downgraded to deferred or follow-up.
 - [x] Focused spreadsheet verification confirms the split suites and shared harness preserve the covered behavior surface.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm check:oversized-code-files`
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm check:oversized-code-files`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: In-scope spreadsheet test decomposition is landed and focused proof is green, but the plan is not yet closable because `pnpm check:oversized-code-files` still fails on unrelated hard-gate offenders and no independent closure audit was recorded.
+Status Note: Completed. The in-scope spreadsheet decomposition remains landed, the shared harness reuse remains intact, `pnpm check:oversized-code-files` now passes with warning-only unrelated files, and the current workspace verification baseline is green.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: focused proof run on 2026-05-19 showed `16` passing spreadsheet-renderer test files / `104` tests via `pnpm --filter @nop-chaos/spreadsheet-renderers test -- --runInBand src/__tests__/context-menu-structure.test.tsx src/__tests__/context-menu-state-and-resize.test.tsx src/__tests__/context-menu-fill-and-range.test.tsx src/__tests__/grid-selection.test.tsx src/__tests__/schema-integration.test.tsx`; `pnpm check:oversized-code-files` still fails on unrelated files `packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx`, `packages/flux-react/src/__tests__/schema-renderer.test.tsx`, and `packages/flux-action-core/src/__tests__/contract-control-flow-edge-cases.test.ts`.
+- Reviewer / Agent: gpt-5.4 independent closure audit (`ses_1bce29d43ffeuzWeLBl4keTTrn`)
+- Evidence: confirmed `context-menu-operations.test.tsx` remains absent, `SpreadsheetGridHarness` reuse remains live across the split context-menu suites plus `grid-selection.test.tsx`, focused spreadsheet verification passed (`4` files / `36` tests), `pnpm check:oversized-code-files` now returns `80 warnings, 0 errors`, and repo-wide `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` all pass on the current tree.

@@ -102,4 +102,34 @@ describe('createAsyncGovernanceStore', () => {
     store.clearOwner('owner-x');
     expect(store.getOwnerState('owner-x')).toBeUndefined();
   });
+
+  it('preserves error stack and nested cause in debug summaries', () => {
+    const store = createAsyncGovernanceStore();
+    const handle = store.beginRun({
+      ownerKind: 'validation',
+      ownerId: 'owner-debug',
+      scopeId: 'scope-debug',
+      cause: 'submit',
+    });
+    const nestedCause = { code: 'E_TIMEOUT', retryable: true };
+    const error = new Error('outer failure', { cause: nestedCause });
+    error.stack = 'Error: outer failure\n    at async-governance.test.ts:1:1';
+
+    const settled = store.settleRun(handle, { outcome: 'failed', error });
+
+    expect(settled.error).toEqual({
+      name: 'Error',
+      message: 'outer failure',
+      stack: 'Error: outer failure\n    at async-governance.test.ts:1:1',
+      cause: nestedCause,
+    });
+    expect(store.getSnapshot()).toEqual({
+      owners: [
+        expect.objectContaining({
+          ownerId: 'owner-debug',
+          recentRuns: [expect.objectContaining({ error: settled.error })],
+        }),
+      ],
+    });
+  });
 });
