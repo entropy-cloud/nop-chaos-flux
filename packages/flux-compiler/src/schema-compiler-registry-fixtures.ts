@@ -13,7 +13,7 @@ export const tableRenderer: RendererDefinition = {
     { key: 'onSelectionChange', kind: 'event' },
     { key: 'onRefresh', kind: 'event' },
     { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-    { key: 'loadingSlot', kind: 'value-or-region', regionKey: 'loadingSlot' },
+    { key: 'loadingContent', kind: 'value-or-region', regionKey: 'loading' },
   ],
 };
 

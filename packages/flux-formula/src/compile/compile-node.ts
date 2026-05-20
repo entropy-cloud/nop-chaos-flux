@@ -32,6 +32,14 @@ function applyTransform<T>(value: T, options?: ExpressionCompileOptions): T {
   return options?.transform ? (options.transform(value) as T) : value;
 }
 
+function describeCompilationError(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
 function compileNode<T>(
   input: T,
   formulaCompiler: FormulaCompiler,
@@ -76,9 +84,10 @@ function compileNode<T>(
       } catch (error) {
         options?.reportDiagnostic?.({
           code: 'unhandled-compilation-error',
-          message: `Expression compilation failed: ${String(error)}`,
+          message: `Expression compilation failed: ${describeCompilationError(error)}`,
           path: options?.sourcePath ?? '',
           source: 'core',
+          cause: error,
         });
         return {
           kind: 'static-node',
@@ -104,9 +113,10 @@ function compileNode<T>(
     } catch (error) {
       options?.reportDiagnostic?.({
         code: 'unhandled-compilation-error',
-        message: `Template compilation failed: ${String(error)}`,
+        message: `Template compilation failed: ${describeCompilationError(error)}`,
         path: options?.sourcePath ?? '',
         source: 'core',
+        cause: error,
       });
       return {
         kind: 'static-node',

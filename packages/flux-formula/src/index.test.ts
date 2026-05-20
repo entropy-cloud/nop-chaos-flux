@@ -397,12 +397,15 @@ describe('createExpressionCompiler', () => {
     });
 
     expect(compiled.kind).toBe('static-node');
+    const diagnostic = reportDiagnostic.mock.calls[0]?.[0];
     expect(reportDiagnostic).toHaveBeenCalledWith(
       expect.objectContaining({
         code: 'unhandled-compilation-error',
         message: expect.stringContaining('Expression compilation failed'),
       }),
     );
+    expect(diagnostic?.cause).toBeInstanceOf(Error);
+    expect((diagnostic?.cause as Error | undefined)?.message).toContain('Expected eof');
   });
 
   it('calls reportDiagnostic when template compilation fails', () => {
@@ -414,12 +417,15 @@ describe('createExpressionCompiler', () => {
     });
 
     expect(compiled.kind).toBe('static-node');
+    const diagnostic = reportDiagnostic.mock.calls[0]?.[0];
     expect(reportDiagnostic).toHaveBeenCalledWith(
       expect.objectContaining({
         code: 'unhandled-compilation-error',
         message: expect.stringContaining('Template compilation failed'),
       }),
     );
+    expect(diagnostic?.cause).toBeInstanceOf(Error);
+    expect((diagnostic?.cause as Error | undefined)?.message).toContain('Expected eof');
   });
 
   it('throws when template segment evaluation fails instead of returning false-success text', () => {

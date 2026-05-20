@@ -26,6 +26,7 @@ export interface SchemaCompilerDiagnosticsContext {
     severity?: SchemaDiagnosticSeverity;
     source?: SchemaDiagnostic['source'];
     sourceLocation?: SchemaDiagnosticSourceLocation;
+    cause?: unknown;
   }): void;
   hasReachedLimit(): boolean;
 }
@@ -293,6 +294,7 @@ export function createSchemaCompilerDiagnosticsContext(
     severity?: SchemaDiagnosticSeverity;
     source?: SchemaDiagnostic['source'];
     sourceLocation?: SchemaDiagnosticSourceLocation;
+    cause?: unknown;
   }) {
     if (!enabled || hasReachedLimit()) {
       return;
@@ -307,6 +309,7 @@ export function createSchemaCompilerDiagnosticsContext(
       severity: issue.severity ?? 'error',
       source: issue.source ?? 'core',
       ...(sourceLocation ? { sourceLocation } : {}),
+      ...(issue.cause !== undefined ? { cause: issue.cause } : {}),
     };
 
     const key = `${diagnostic.source}:${diagnostic.code}:${diagnostic.path}:${diagnostic.message}`;

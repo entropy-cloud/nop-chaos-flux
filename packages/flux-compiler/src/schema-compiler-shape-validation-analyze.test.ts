@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { makeCompiler } from './schema-compiler-shape-validation-test-utils.js';
+import { createSchemaCompilerDiagnosticsContext } from './schema-compiler/diagnostics.js';
+import { validateFluxValueShape } from './schema-compiler/flux-value-shape-validation.js';
 
 describe('analyzeSchemaInput validation', () => {
   it('reports invalid root (non-object, non-array)', () => {
@@ -382,6 +384,31 @@ describe('analyzeSchemaInput validation', () => {
     );
   });
 
+  it('preserves compile failure cause on owner-facing validation diagnostics', () => {
+    const renderer: RendererDefinition = {
+      type: 'text',
+      component: () => null,
+      propSchema: { text: { type: 'string' } },
+    };
+    const compiler = makeCompiler([renderer]);
+
+    const diagnostics = compiler.validate?.({ type: 'text', text: '${foo + }' });
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'unhandled-compilation-error',
+          path: '$.text',
+          message: expect.stringContaining('Expression compilation failed:'),
+          cause: expect.any(Error),
+        }),
+      ]),
+    );
+    expect(
+      diagnostics?.find((issue) => issue.code === 'unhandled-compilation-error')?.cause,
+    ).toBeInstanceOf(Error);
+  });
+
   it('traverses deep extracted table regions during validation', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
@@ -503,6 +530,40 @@ describe('analyzeSchemaInput validation', () => {
         expect.objectContaining({
           code: 'invalid-property-value',
           path: '/variant',
+          message: expect.stringContaining('Option 1:'),
+        }),
+      ]),
+    );
+  });
+
+  it('preserves union branch failure details in raw value-shape diagnostics', () => {
+    const diagnostics = createSchemaCompilerDiagnosticsContext(undefined, 'validate');
+
+    const valid = validateFluxValueShape(
+      'primary',
+      {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'default' },
+          { kind: 'literal', value: 'outline' },
+        ],
+      },
+      '/variant',
+      diagnostics,
+      {
+        code: 'invalid-property-value',
+        source: 'core',
+        messagePrefix: 'Invalid value for property "variant" on renderer type "button".',
+      },
+    );
+
+    expect(valid).toBe(false);
+    expect(diagnostics.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-property-value',
+          path: '/variant',
+          message: expect.stringContaining('Option 1:'),
         }),
       ]),
     );

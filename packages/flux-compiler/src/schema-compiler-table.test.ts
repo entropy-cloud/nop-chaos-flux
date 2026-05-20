@@ -67,6 +67,40 @@ describe('createSchemaCompiler', () => {
     expect(node.propsProgram.value.columns[0].cellRegionKey).toBe('columns.0.cell');
   });
 
+  it('extracts table column body fragments into quick edit compiled regions', () => {
+    const tableRenderer: RendererDefinition = {
+      type: 'table',
+      component: () => null,
+    };
+    const textRenderer: RendererDefinition = {
+      type: 'text',
+      component: () => null,
+    };
+    const registry = createRendererRegistry([tableRenderer, textRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = compiler.compile({
+      type: 'table',
+      columns: [
+        {
+          label: 'Member',
+          name: 'name',
+          body: { type: 'text', text: 'Quick edit ${$slot.record.name}' },
+        },
+      ],
+    });
+    const node = compiled.root as any;
+
+    expect(node.regions['columns.0.quickEditBody']?.node).toBeTruthy();
+    expect(node.propsProgram.value.columns[0].body).toBeUndefined();
+    expect(node.propsProgram.value.columns[0].quickEditBodyRegionKey).toBe(
+      'columns.0.quickEditBody',
+    );
+  });
+
   it('treats table empty as a plain prop or compiled region based on field metadata', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',

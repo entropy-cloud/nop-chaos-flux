@@ -140,6 +140,7 @@ export interface ExpressionCompileOptions {
     path: string;
     severity?: import('../schema-diagnostics/index.js').SchemaDiagnosticSeverity;
     source?: import('../schema-diagnostics/index.js').SchemaDiagnosticSource;
+    cause?: unknown;
   }) => void;
 }
 

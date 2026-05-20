@@ -74,12 +74,12 @@ describe('schema property coverage - recurse', () => {
 describe('schema property coverage - table', () => {
   const compiler = createCompiler(tableRenderer);
 
-  it('compiles table with loadingSlot', () => {
+  it('compiles table with loadingContent', () => {
     const root = compileNode(compiler, {
       type: 'table',
-      loadingSlot: 'Loading...',
+      loadingContent: 'Loading...',
     });
-    expect(root.propsProgram.value.loadingSlot).toBe('Loading...');
+    expect(root.propsProgram.value.loadingContent).toBe('Loading...');
   });
 
   it('compiles table with onFilterChange event', () => {

@@ -48,6 +48,7 @@ export interface SchemaDiagnostic {
   severity: SchemaDiagnosticSeverity;
   source: SchemaDiagnosticSource;
   sourceLocation?: SchemaDiagnosticSourceLocation;
+  cause?: unknown;
 }
 
 export interface SchemaDiagnosticCollector {

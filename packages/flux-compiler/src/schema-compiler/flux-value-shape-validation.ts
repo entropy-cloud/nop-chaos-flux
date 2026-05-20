@@ -2,6 +2,8 @@ import type { FluxValueShape } from '@nop-chaos/flux-core';
 import { appendJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics.js';
 
 function createSilentDiagnosticsContext(): SchemaCompilerDiagnosticsContext {
+  const diagnostics: SchemaCompilerDiagnosticsContext['diagnostics'] = [];
+
   return {
     enabled: false,
     continueOnError: true,
@@ -13,8 +15,17 @@ function createSilentDiagnosticsContext(): SchemaCompilerDiagnosticsContext {
       hostContractContext: undefined,
       strictMode: false,
     },
-    diagnostics: [],
-    emit() {},
+    diagnostics,
+    emit(issue) {
+      diagnostics.push({
+        code: issue.code,
+        path: issue.path,
+        message: issue.message,
+        severity: issue.severity ?? 'error',
+        source: issue.source ?? 'core',
+        ...(issue.sourceLocation ? { sourceLocation: issue.sourceLocation } : {}),
+      });
+    },
     hasReachedLimit() {
       return false;
     },
@@ -23,6 +34,10 @@ function createSilentDiagnosticsContext(): SchemaCompilerDiagnosticsContext {
 
 function describeLiteral(value: string | number | boolean | null) {
   return JSON.stringify(value);
+}
+
+function formatUnionBranchFailureMessages(messages: string[]) {
+  return messages.map((message, index) => `Option ${index + 1}: ${message}`).join(' ');
 }
 
 export function isDynamicallyAuthoredSchemaValue(value: unknown): boolean {
@@ -219,17 +234,23 @@ export function validateFluxValueShape(
     }
 
     case 'union': {
+      const branchMessages: string[] = [];
       for (const variant of shape.anyOf) {
         const silentDiagnostics = createSilentDiagnosticsContext();
         if (validateFluxValueShape(value, variant, path, silentDiagnostics, issue)) {
           return true;
+        }
+
+        const firstDiagnostic = silentDiagnostics.diagnostics[0];
+        if (firstDiagnostic?.message) {
+          branchMessages.push(firstDiagnostic.message);
         }
       }
 
       diagnostics.emit({
         code: issue.code,
         path,
-        message: `${issue.messagePrefix ?? 'Value does not match any allowed option.'} Expected ${summarizeExpectedFluxValueShape(shape)} but received ${summarizeActualSchemaValue(value)}.`,
+        message: `${issue.messagePrefix ?? 'Value does not match any allowed option.'} Expected ${summarizeExpectedFluxValueShape(shape)} but received ${summarizeActualSchemaValue(value)}.${branchMessages.length > 0 ? ` ${formatUnionBranchFailureMessages(branchMessages)}` : ''}`,
         source: issue.source,
       });
       return false;
