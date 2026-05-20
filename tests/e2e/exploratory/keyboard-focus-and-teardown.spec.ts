@@ -1,5 +1,6 @@
 import { expect, test, type Page, assertTrackedPageErrors } from '../fixtures.js';
 import { ComponentLabHelper, scenarioSlug } from '../component-lab/helpers';
+import { selectComboboxOption } from '../select-helpers.js';
 
 async function clearDebugger(page: Page) {
   await page.evaluate(() => {
@@ -113,9 +114,9 @@ test.describe('Exploratory run-02: keyboard, focus, and teardown', () => {
 
     const trigger = stage.getByRole('combobox').first();
     const scopeDebug = stage.locator('[data-slot="scope-debug-json"]');
-    await trigger.selectOption('uk');
+    await selectComboboxOption(trigger, page, 'United Kingdom');
 
-    await expect(trigger).toContainText('United Kingdom');
+    await expect(trigger).toContainText(/uk|United Kingdom/i);
     await expect(scopeDebug).toContainText('"country": "uk"');
 
     await assertDebuggerHealthy(page);

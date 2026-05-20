@@ -14,6 +14,10 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.getByRole('tab', { name: '工作流' })).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 30_000 });
   },
+  'taskflow-designer': async (page) => {
+    await expect(page.getByRole('tab', { name: 'TaskFlow (Graph)' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('.react-flow')).toBeVisible({ timeout: 30_000 });
+  },
   'dingtalk-flow-demo': async (page) => {
     await expect(page.getByRole('button', { name: 'Back' })).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('.react-flow')).toBeVisible();

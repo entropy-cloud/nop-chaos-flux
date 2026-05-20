@@ -4,6 +4,10 @@ import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(60_000);
 
+async function readSavedDatasets(page: import('@playwright/test').Page) {
+  return page.evaluate(() => localStorage.getItem('nop-word-editor-datasets'));
+}
+
 async function openWordEditor(page: import('@playwright/test').Page) {
   await page.goto('/#/word-editor', { waitUntil: 'commit' });
   await page.evaluate(() => {
@@ -44,9 +48,12 @@ test.describe('Dataset Sidebar Panel', () => {
     await openDatasetDialog(page);
 
     await page.getByPlaceholder('Enter dataset name').fill('TestDataset');
-    await page.getByRole('button', { name: '保存' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: '保存' }).click();
 
     await expect(page.getByText('TestDataset')).toBeVisible();
+
+    await page.getByRole('button', { name: '保存' }).click();
+    await expect.poll(() => readSavedDatasets(page), { timeout: 15_000 }).toContain('TestDataset');
 
     await page.reload({ waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 15000 });

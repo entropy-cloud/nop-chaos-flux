@@ -1,14 +1,5 @@
 import { test, expect, assertTrackedPageErrors } from './fixtures.js';
-
-async function selectRoleOption(
-  page: import('@playwright/test').Page,
-  labelText: string,
-  optionText: string,
-): Promise<void> {
-  const trigger = page.getByRole('combobox', { name: labelText });
-  await trigger.selectOption({ label: optionText });
-  await expect(trigger).toContainText(optionText, { timeout: 5_000 });
-}
+import { selectComboboxOptionByLabel } from './select-helpers.js';
 
 test('diagnose admin code meta explanation on live flux-basic page', async ({ page }) => {
   test.setTimeout(90_000);
@@ -23,7 +14,7 @@ test('diagnose admin code meta explanation on live flux-basic page', async ({ pa
   await page.getByLabel('Username').fill('alice');
   await page.getByLabel('Username').blur();
   await page.getByLabel('Search Users').fill('alice');
-  await selectRoleOption(page, 'Role', 'Admin');
+  await selectComboboxOptionByLabel(page, 'Role', 'Admin');
 
   await expect
     .poll(

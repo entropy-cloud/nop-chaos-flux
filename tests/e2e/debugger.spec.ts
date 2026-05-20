@@ -1,4 +1,5 @@
 import { test, expect, assertTrackedPageErrors } from './fixtures.js';
+import { selectComboboxOptionByLabel } from './select-helpers.js';
 
 async function waitForDebuggerPanel(page: import('@playwright/test').Page) {
   await expect(page.locator('.nop-debugger')).toBeVisible();
@@ -33,16 +34,6 @@ async function openFluxBasicPage(page: import('@playwright/test').Page): Promise
   await assertTrackedPageErrors(page);
 }
 
-async function selectRoleOption(
-  page: import('@playwright/test').Page,
-  labelText: string,
-  optionText: string,
-): Promise<void> {
-  const trigger = page.getByRole('combobox', { name: labelText });
-  await trigger.selectOption({ label: optionText });
-  await expect(trigger).toContainText(optionText, { timeout: 5_000 });
-}
-
 async function seedFluxBasicExplanationFixture(page: import('@playwright/test').Page): Promise<{
   usernameCid: number;
   userFormCid: number;
@@ -53,7 +44,7 @@ async function seedFluxBasicExplanationFixture(page: import('@playwright/test').
   await page.getByLabel('Username').fill('alice');
   await page.getByLabel('Username').blur();
   await page.getByLabel('Search Users').fill('alice');
-  await selectRoleOption(page, 'Role', 'Admin');
+  await selectComboboxOptionByLabel(page, 'Role', 'Admin');
   await page.evaluate(() => {
     const api = (window as unknown as { __NOP_DEBUGGER_API__?: { clear(): void } }).__NOP_DEBUGGER_API__;
     api?.clear();
