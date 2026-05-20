@@ -43,6 +43,37 @@ describe('detail-field renderer basic behavior', () => {
     expect(field?.querySelector('[data-slot="detail-field-draft-body"]')).toBeNull();
   });
 
+  it('applies authored className to the detail-field control root', async () => {
+    cleanup();
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-basic.test.tsx#className"
+        schema={{
+          type: 'form',
+          data: { address: { street: '123 Main St' } },
+          body: [
+            {
+              type: 'detail-field',
+              name: 'address',
+              label: 'Address',
+              className: 'detail-field-owned-class',
+              triggerLabel: 'Edit Address',
+              content: [{ type: 'input-text', name: 'street', label: 'Street' }],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
+
+    expect(document.querySelector('.nop-detail-field.detail-field-owned-class')).toBeTruthy();
+  });
+
   it('allows opening in readOnly mode without confirm action', async () => {
     cleanup();
     const SchemaRenderer = createFormSchemaRenderer();
