@@ -13,7 +13,6 @@ import { t } from '@nop-chaos/flux-i18n';
 import { Button, Separator, cn } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema.js';
 import { normalizeCrudSchema } from './crud-schema.js';
-import { TableRenderer } from './table-renderer.js';
 import {
   applyQueryToRows,
   DEFAULT_PAGE_SIZE,
@@ -40,11 +39,11 @@ function asReactNode(value: unknown): React.ReactNode {
 }
 
 export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
+  const authoredSchema = props.templateNode.schema as CrudSchema;
   const defaultEmptyLabel = t('flux.common.noData');
   const onRefresh = props.events.onRefresh;
   const nodeScope = props.node.scope;
   const schemaProps = useSchemaProps(props);
-  const authoredSchema = props.templateNode.schema as CrudSchema | undefined;
   const normalizedSchema = normalizeCrudSchema(schemaProps as CrudSchema);
   const scope = useRenderScope();
   const componentRegistry = useCurrentComponentRegistry();
@@ -106,9 +105,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     normalizedSchema.clientMode?.loadDataOnce === true
       ? normalizedSchema.clientMode.fetchOnFilter === true
       : true;
-  const quickSaveAction = normalizedSchema.quickSaveAction ?? authoredSchema?.quickSaveAction;
-  const quickSaveItemAction =
-    normalizedSchema.quickSaveItemAction ?? authoredSchema?.quickSaveItemAction;
   const defaultColumnNames = (normalizedSchema.columns ?? [])
     .filter((column) => column.hidden !== true)
     .map((column, index) => column.name ?? `column-${index}`);
@@ -224,8 +220,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const toolbarContent = resolveCrudSlotContent('toolbar');
   const listActionsContent = resolveCrudSlotContent('listActions');
   const footerToolbarContent = resolveCrudSlotContent('footerToolbar');
-  const emptyContent = resolveCrudSlotContent('empty', { fallback: defaultEmptyLabel });
-  const tableEmpty = typeof emptyContent === 'string' ? emptyContent : defaultEmptyLabel;
+  const tableEmptyContent = authoredSchema.empty ?? defaultEmptyLabel;
 
   const headerBlocks = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header');
   const footerBlocks = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer');
@@ -238,7 +233,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       type: 'table',
       id: `${props.id}-table`,
       source: filteredRows as BaseSchema['data'],
-      columns: normalizedSchema.columns ?? [],
+      columns: authoredSchema.columns ?? normalizedSchema.columns ?? [],
       rowKey: normalizedSchema.rowKey,
       selectionOwnership: 'scope',
       selectionStatePath,
@@ -255,65 +250,34 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         pageSizeOptions: DEFAULT_PAGE_SIZE_OPTIONS,
         showSizeChanger: true,
       },
-      empty: tableEmpty,
-      quickSaveAction,
-      quickSaveItemAction,
+      empty: tableEmptyContent,
+      quickSaveAction: authoredSchema.quickSaveAction ?? normalizedSchema.quickSaveAction,
+      quickSaveItemAction:
+        authoredSchema.quickSaveItemAction ?? normalizedSchema.quickSaveItemAction,
     };
 
     if (normalizedSchema.selection) {
       base.rowSelection = { type: normalizedSchema.selection.type ?? 'checkbox', selectedRowKeys };
     }
 
-    if (normalizedSchema.onRefresh) {
-      base.onRefresh = normalizedSchema.onRefresh;
+    if (authoredSchema.onRefresh ?? normalizedSchema.onRefresh) {
+      base.onRefresh = authoredSchema.onRefresh ?? normalizedSchema.onRefresh;
     }
 
-    if (normalizedSchema.onRowClick) {
-      base.onRowClick = normalizedSchema.onRowClick;
+    if (authoredSchema.onRowClick ?? normalizedSchema.onRowClick) {
+      base.onRowClick = authoredSchema.onRowClick ?? normalizedSchema.onRowClick;
     }
 
-    if (normalizedSchema.columnSettings) {
-      base.columnSettings = normalizedSchema.columnSettings;
+    if (authoredSchema.columnSettings ?? normalizedSchema.columnSettings) {
+      base.columnSettings = authoredSchema.columnSettings ?? normalizedSchema.columnSettings;
     }
 
-    if (normalizedSchema.responsive) {
-      base.responsive = normalizedSchema.responsive;
+    if (authoredSchema.responsive ?? normalizedSchema.responsive) {
+      base.responsive = authoredSchema.responsive ?? normalizedSchema.responsive;
     }
 
     return base as TableSchema;
   })();
-  const tableEvents = props.events as unknown as RendererComponentProps<TableSchema>['events'];
-  const tableResolvedProps: RendererComponentProps<TableSchema>['props'] = {
-    ...tableSchema,
-    disabled: props.props.disabled,
-    className: props.props.className,
-    frameClassName: props.props.frameClassName,
-    testid: props.props.testid,
-    cid: props.props.cid,
-  };
-  const tableRendererProps: RendererComponentProps<TableSchema> =
-    ({
-      id: `${props.id}-table`,
-      path: `${props.path}.table`,
-      schema: tableSchema,
-      templateNode:
-        props.templateNode as unknown as RendererComponentProps<TableSchema>['templateNode'],
-      node: {
-        ...props.node,
-        scope: crudScope,
-      } as unknown as RendererComponentProps<TableSchema>['node'],
-      props: tableResolvedProps,
-      meta: {
-        ...props.meta,
-        cid: undefined,
-        className: undefined,
-        testid: undefined,
-      },
-      regions: props.regions as RendererComponentProps<TableSchema>['regions'],
-      events: tableEvents,
-      helpers: props.helpers,
-    }) satisfies RendererComponentProps<TableSchema>;
-
   const queryFormSchema: BaseSchema | null = (() => {
     const queryForm = normalizedSchema.queryForm;
     if (!queryForm?.body) {
@@ -402,7 +366,12 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       ) : null}
 
       <div className="nop-crud-table" data-slot="crud-table">
-        <TableRenderer {...tableRendererProps} />
+        {asReactNode(
+          props.helpers.render(tableSchema, {
+            pathSuffix: 'table',
+            scope: crudScope,
+          }),
+        )}
       </div>
 
       {hasFooterToolbar || footerBlocks.length > 0 ? (

@@ -78,6 +78,10 @@ describe('spreadsheet context menu fill and range commands', () => {
 
     fireEvent.click(firstCell!);
 
+    await waitFor(() => {
+      expect(core.getSnapshot().selection.anchor?.address).toBe('A1');
+    });
+
     const fillHandle = container.querySelector('.ss-fill-handle') as HTMLElement | null;
     expect(fillHandle).toBeTruthy();
     fireEvent.doubleClick(fillHandle!);
@@ -107,6 +111,10 @@ describe('spreadsheet context menu fill and range commands', () => {
     expect(firstCell).toBeTruthy();
 
     fireEvent.click(firstCell!);
+
+    await waitFor(() => {
+      expect(core.getSnapshot().selection.anchor?.address).toBe('A1');
+    });
 
     const fillHandle = container.querySelector('.ss-fill-handle') as HTMLElement | null;
     expect(fillHandle).toBeTruthy();

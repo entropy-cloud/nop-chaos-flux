@@ -18,6 +18,6 @@ export default {
   thresholds: {
     high: 80,
     low: 60,
-    break: 0,
+    break: 60,
   },
 };

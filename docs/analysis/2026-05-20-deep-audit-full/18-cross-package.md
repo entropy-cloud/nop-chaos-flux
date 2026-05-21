@@ -406,3 +406,31 @@
 - **误报排除**: 未报告事件 kind、nodeId、路径表达式示例中的技术 token、用户数据或运行时 detail；本条只覆盖 debugger 自带固定 UI chrome 文案。技术示例如 `/regex/`、`path:body.0` 可作为翻译字符串的一部分保留，不要求翻译技术语法本身。
 - **参考文档**: `docs/skills/deep-audit-prompts.md:1649-1652`；`docs/references/audit-tooling.md:39`；`docs/architecture/flux-design-principles.md:24-27`。
 - **复核状态**: 未复核
+
+## 维度复核结论
+
+- [维度18-01]: 保留 (P2)。`packages/word-editor-renderers/src/toolbar/shared.tsx` 与 `font-controls.tsx` 仍把 toolbar 标题/aria-label 直接写成英文，未跟随同包已有的 `flux.wordEditor` locale 路径。
+- [维度18-02]: 保留 (P2)。`packages/flow-designer-renderers/src/designer-palette.tsx:68-69` 仍在同一个 palette header 中混用硬编码中文“节点库”和 `t('flux.flowDesigner.*')` 文案。
+- [维度18-03]: 保留 (P2)。`packages/spreadsheet-renderers/src/spreadsheet-toolbar/find-replace-panel.tsx:120`、`cell-editor.tsx:131` 等 placeholder 仍硬编码英文，和同文件其余 `t()` 文案不一致。
+- [维度18-04]: 保留 (P2)。`packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-xyflow-node.tsx:157-174` 与 `designer-xyflow-edge.tsx:168-174` 的 quick action aria-label 仍是硬编码英文。
+- [维度18-05]: 保留 (P2)。`packages/flow-designer-renderers/src/schemas.ts:4-20` 仍公开 `designer-page.title`，但 renderer definition 与 `DesignerPageBody` 主路径未接线该 field/slot，和 spreadsheet/report/word editor host page 的标题模式不一致。
+- [维度18-06]: 保留 (P2)。`packages/spreadsheet-renderers/src/spreadsheet-grid.tsx:257-259`、`table-shell.tsx:262-269`、`sheet-tab-bar.tsx:145-162` 的核心 canvas/sheet-tab accessibility names 仍硬编码英文，未进入 `flux.spreadsheet` / `flux.sheet` locale。
+- [维度18-07]: 保留 (P2)。`packages/flux-code-editor/src/code-editor-renderer.tsx:168-190`、`variable-panel.tsx:87-99` 等 fullscreen/snippet/copy/insert 操作仍是硬编码英文，而同包 SQL toolbar 其余动作已接入 `flux.codeEditor` locale。
+- [维度18-08]: 保留 (P2)。`packages/nop-debugger/src/panel.tsx:293-417`、`node-tab.tsx:261-268,391-395`、`timeline-tab.tsx:203-209` 仍把 debugger chrome 的 tooltip/aria-label/placeholder 写成英文，和已有 `flux.debugger` namespace 混杂输出。
+
+## 子项复核结论
+
+- [维度18-01] 至 [维度18-08]: 均成立。复核后仍收敛为两类问题：i18n namespace 已存在但固定 chrome 文案未接入，以及 host renderer public field/slot 模式未与同类包对齐。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                           | 一句话摘要                                                         |
+| ----- | -------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 18-01 | P2       | `packages/word-editor-renderers/src/toolbar/shared.tsx`                                        | Word Editor toolbar 固定文案仍硬编码英文                           |
+| 18-02 | P2       | `packages/flow-designer-renderers/src/designer-palette.tsx:68-69`                              | Flow Designer palette header 仍混用硬编码中文与 locale 文案        |
+| 18-03 | P2       | `packages/spreadsheet-renderers/src/spreadsheet-toolbar/find-replace-panel.tsx:120`            | Spreadsheet toolbar placeholder 仍硬编码英文                       |
+| 18-04 | P2       | `packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-xyflow-node.tsx:157-174` | Flow Designer canvas quick action aria-label 仍硬编码英文          |
+| 18-05 | P2       | `packages/flow-designer-renderers/src/schemas.ts:4-20`                                         | `designer-page.title` public surface 仍与同类 host page 模式不一致 |
+| 18-06 | P2       | `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx:257-259`                              | spreadsheet canvas/sheet-tab accessibility names 仍未 i18n         |
+| 18-07 | P2       | `packages/flux-code-editor/src/code-editor-renderer.tsx:168-190`                               | Code Editor toolbar/variable chrome 仍部分硬编码英文               |
+| 18-08 | P2       | `packages/nop-debugger/src/panel.tsx:293-417`                                                  | Debugger chrome/placeholder 仍部分硬编码英文                       |

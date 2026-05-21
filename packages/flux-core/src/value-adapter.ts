@@ -98,7 +98,7 @@ function toValidationIssues(error: unknown): AdapterValidationIssue[] {
   return [
     {
       level: 'error',
-      message: String(error ?? 'Validation failed'),
+      message: error instanceof Error ? error.message : String(error ?? 'Validation failed'),
     },
   ];
 }
@@ -107,20 +107,34 @@ function getActionResultValue(result: ActionResult, fallback: unknown) {
   return result.data !== undefined ? result.data : fallback;
 }
 
-function toActionFailureMessage(
+function createActionFailureError(
   phase: 'transformIn' | 'transformOut',
   resultOrError: ActionResult | unknown,
-): string {
+): Error {
   if (
     typeof resultOrError === 'object' &&
     resultOrError !== null &&
     'ok' in resultOrError &&
     (resultOrError as ActionResult).ok === false
   ) {
-    return `[flux] ${phase} failed: ${String((resultOrError as ActionResult).error ?? 'Unknown adapter error')}`;
+    const result = resultOrError as ActionResult;
+    const messageSource = result.error ?? result;
+    const error = new Error(
+      `[flux] ${phase} failed: ${messageSource instanceof Error ? messageSource.message : String(messageSource ?? 'Unknown adapter error')}`,
+    );
+    (error as Error & { cause?: unknown }).cause = result;
+    return error;
   }
 
-  return `[flux] ${phase} failed: ${String(resultOrError ?? 'Unknown adapter error')}`;
+  const error = new Error(
+    `[flux] ${phase} failed: ${resultOrError instanceof Error ? resultOrError.message : String(resultOrError ?? 'Unknown adapter error')}`,
+  );
+
+  if (resultOrError !== undefined) {
+    (error as Error & { cause?: unknown }).cause = resultOrError;
+  }
+
+  return error;
 }
 
 function resolveDispatch(ctx: AdapterActionContext, dispatch?: AdapterDispatch) {
@@ -260,7 +274,7 @@ export function actionAdapter(
       );
 
       if (!result?.ok) {
-        throw new Error(toActionFailureMessage('transformIn', result));
+        throw createActionFailureError('transformIn', result);
       }
 
       return getActionResultValue(result, value);
@@ -284,7 +298,7 @@ export function actionAdapter(
       );
 
       if (!result?.ok) {
-        throw new Error(toActionFailureMessage('transformOut', result));
+        throw createActionFailureError('transformOut', result);
       }
 
       return getActionResultValue(result, value);

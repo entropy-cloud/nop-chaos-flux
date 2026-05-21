@@ -328,17 +328,24 @@ export function useTreeSelectController(input: {
   placeholder: unknown;
 }) {
   const { options, treeConfig, value, multiple, placeholder } = input;
+  const selectedValueSet = React.useMemo(() => {
+    if (!multiple || !Array.isArray(value)) {
+      return undefined;
+    }
+
+    return new Set(value);
+  }, [multiple, value]);
 
   const triggerText = React.useMemo(() => {
     const flattenedOptions = flattenTreeOptions(options, treeConfig);
     const selectedLabels = multiple
       ? flattenedOptions
-          .filter((entry) => isTreeSelectionChecked(value, entry.value, true))
+          .filter((entry) => selectedValueSet?.has(entry.value))
           .map((entry) => entry.label)
       : flattenedOptions.find((entry) => Object.is(entry.value, value))?.label;
 
     return Array.isArray(selectedLabels) ? selectedLabels.join(', ') : selectedLabels;
-  }, [multiple, options, treeConfig, value]);
+  }, [multiple, options, selectedValueSet, treeConfig, value]);
 
   const triggerLabel =
     typeof placeholder === 'string' && placeholder ? placeholder : 'Select tree option';

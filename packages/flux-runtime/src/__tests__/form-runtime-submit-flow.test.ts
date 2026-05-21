@@ -112,11 +112,13 @@ describe('executeFormSubmit', () => {
     });
 
     const controller = new AbortController();
-    controller.abort();
+    controller.abort('user-cancelled');
     const aborted = createSubmitInput();
-    await expect(
-      executeFormSubmit(aborted.input, { signal: controller.signal }),
-    ).resolves.toMatchObject({ ok: false, cancelled: true });
+    await expect(executeFormSubmit(aborted.input, { signal: controller.signal })).resolves.toMatchObject({
+      ok: false,
+      cancelled: true,
+      error: expect.objectContaining({ name: 'AbortError', cause: 'user-cancelled' }),
+    });
   });
 
   it('returns validation failure or validate-error lifecycle results', async () => {
@@ -578,6 +580,35 @@ describe('executeFormSubmit', () => {
       error: submitFailure,
       failureHandled: true,
       settledError: undefined,
+    });
+  });
+
+  it('preserves AbortSignal.reason on validation and submit abort checks', async () => {
+    const earlyController = new AbortController();
+    earlyController.abort('surface-closed');
+
+    const earlySetup = createSubmitInput();
+    await expect(executeFormSubmit(earlySetup.input, { signal: earlyController.signal })).resolves.toMatchObject({
+      ok: false,
+      cancelled: true,
+      error: expect.objectContaining({ name: 'AbortError', cause: 'surface-closed' }),
+    });
+
+    const lateController = new AbortController();
+    const submitAction = vi.fn().mockImplementation(async () => {
+      lateController.abort('timeout-from-parent');
+      return { ok: true, data: { saved: true } };
+    });
+    const lateSetup = createSubmitInput({
+      input: {
+        getLifecycleHandlers: () => ({ submitAction }),
+      },
+    });
+
+    await expect(executeFormSubmit(lateSetup.input, { signal: lateController.signal })).resolves.toMatchObject({
+      ok: false,
+      cancelled: true,
+      error: expect.objectContaining({ name: 'AbortError', cause: 'timeout-from-parent' }),
     });
   });
 });

@@ -20,9 +20,11 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentForm: () => state.parentForm,
   useCurrentValidationScope: () => state.parentValidationOwner,
   useRenderScope: () => state.parentScope,
+  useRenderFragment: () => (input: unknown) => input,
   useRendererRuntime: () => state.runtime,
   useScopeSelector: () => ({ kind: 'text', value: 'alpha' }),
   useCurrentFormState: () => undefined,
+  resolveRendererSlotContent: () => undefined,
   toFieldRemarkProps: () => undefined,
 }));
 

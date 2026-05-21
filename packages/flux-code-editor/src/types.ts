@@ -187,10 +187,8 @@ export type SQLSchemaSourceRef = SchemaObject & {
 
 export function resolveSourceRefPath(sourceRef: {
   path?: string;
-  /** @deprecated Use path instead. */
-  dataPath?: string;
 }): string | undefined {
-  return sourceRef.path ?? sourceRef.dataPath;
+  return sourceRef.path;
 }
 
 export interface CodeEditorResolvedProps {

@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "turbo run dev --filter=@nop-chaos/flux-playground",
     "postinstall": "node scripts/patch-lucide-react.mjs",
-    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:schema-prop-coverage && pnpm check:audit-suspects",
+    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:flux-bundle-pack && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:schema-prop-coverage && pnpm check:audit-suspects",
     "analyze": "turbo run analyze --filter=@nop-chaos/flux-playground",
     "audit:deps": "depcruise --config .dependency-cruiser.cjs apps packages scripts",
     "audit:knip": "knip --config knip.json",
@@ -19,6 +19,7 @@
     "tsc": "tsgo",
     "tsc6": "tsc6",
     "test": "turbo run test --concurrency=2",
+    "test:coverage": "turbo run test --concurrency=2 -- --coverage",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "check:react19": "node scripts/check-react19-legacy-apis.mjs",
@@ -41,6 +42,7 @@
     "check:audit-missing-renderer-markers": "node scripts/audit/find-missing-renderer-markers.mjs",
     "check:audit-performance-suspects": "node scripts/audit/find-performance-suspects.mjs",
     "check:audit-styling-suspects": "node scripts/audit/find-styling-suspects.mjs",
+    "check:audit-non-retained-renderer-references": "node scripts/audit/find-non-retained-renderer-references.mjs",
     "check:audit-react19-optimization-candidates": "node scripts/audit/find-react19-optimization-candidates.mjs",
     "check:duplicates": "node scripts/check-duplicates.mjs",
     "check:duplicates:detail": "jscpd packages/ --config .jscpd.json",
@@ -95,7 +97,8 @@
     "turbo": "^2.9.6",
     "typescript-eslint": "^8.58.0",
     "vite": "^8.0.3",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.2",
+    "cross-env": "^10.1.0"
   },
   "lint-staged": {
     "*.{ts,tsx}": "eslint --fix",

@@ -266,6 +266,11 @@ surface owner 的典型 instance capability 是：
   - 关闭当前 action 所在 surface
   - 未指定时关闭 top-most active surface
 
+Current live affordance baseline:
+
+- drawer-like surfaces 不应只依赖 footer close/cancel 作为唯一退出路径。
+- 当 surface 采用 drawer shell 时，header 需要保留稳定可见的 close affordance，并与 `onOpenChange(false)` / footer close 共享同一关闭语义，而不是变成第二套私有 lifecycle。
+
 这些动作只解决 surface control，不替代内部更具体 owner 的入口，例如：
 
 - form 的 `component:submit`

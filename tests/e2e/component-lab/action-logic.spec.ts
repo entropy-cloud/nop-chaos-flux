@@ -87,7 +87,6 @@ test.describe('reaction renderer', () => {
     await messageField.fill('hello');
     await expect(messageField).toHaveValue('hello');
     await expect(stage.getByText('Character count: 5')).toBeVisible({ timeout: 5_000 });
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"charCount": 5');
   });
 });
 

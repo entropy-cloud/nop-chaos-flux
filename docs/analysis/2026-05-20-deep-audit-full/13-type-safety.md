@@ -302,3 +302,32 @@
 - **误报排除**: 这不是“低代码动态对象”或“manifest 未 runtime narrowing”的重复问题；当前 provider 已执行 manifest validation，缺陷在于 manifest 本身把 core 必需判别联合坍缩成任意对象，使已存在的 runtime validation 产生 API 盲区并放行会污染核心文档状态的 payload。
 - **参考文档**: `docs/architecture/capability-projection-manifest.md`, `docs/architecture/complex-control-host-protocol.md`, `docs/architecture/report-designer/contracts.md`, `docs/references/deep-audit-calibration-patterns.md`
 - **复核状态**: 未复核
+
+## 深挖第 7 轮追加
+
+未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度13-01]: 降级为 P2。`packages/flow-designer-renderers/src/designer-action-provider.ts:55-66,291-299,353-366` 的确未按 manifest shape 统一收窄 payload，但多数命令最终会落到 adapter/core 失败或产生明显空值，当前更像公开 host contract enforcement 缺口，而非已证实的高概率核心数据损坏路径。
+- [维度13-02]: 保留 (P1)。`packages/word-editor-renderers/src/word-editor-action-provider.ts:98-116` 仍把 payload 直接断言为 `DocChart/DocCode`，而 manifest 已发布 `chartShape/codeShape`；live provider 仍未在 runtime 按 manifest 做 shape narrowing。
+- [维度13-03]: 保留 (P1)。`packages/flux-renderers-form/src/renderers/form-definition.ts:188-209` 已发布 `component:setValue/setValues` args contract，但 `packages/flux-runtime/src/action-adapter.ts:363-370` 仍直接转发 payload，`form-component-handle.ts:45-53` 也继续用 `String(...)` / `as Record<string, unknown>` 写入 form。
+- [维度13-04]: 保留 (P1)。`packages/flux-compiler/src/schema-compiler/host-action-validation.ts:112-128` 仍仅在 `args !== undefined` 时校验 host args，`shape-validation-rules.ts:193-203` 也没有补“manifest 声明 args 时不得省略 args”的规则。
+- [维度13-05]: 保留 (P1)。`packages/spreadsheet-renderers/src/spreadsheet-manifest.ts:311-318` 仍把 `selectAll/selectRow/selectColumn` 等发布为无 `args`，而 `host-action-provider.ts:69-95` 会在这种情况下接受 `undefined` 并放行为空命令，和 core 必填字段要求不符。
+- [维度13-06]: 保留 (P1)。`packages/report-designer-renderers/src/report-designer-manifest.ts:201-239` 仍把多个 `target` 声明为任意 object，`host-action-provider.ts:105-148` 的 runtime 校验因此无法阻止非法 target 进入 `ReportDesignerCommand`，而 core `ReportSelectionTarget` 仍是精确判别联合（`packages/report-designer-core/src/types.ts:21-27`）。
+
+## 子项复核结论
+
+- [维度13-01]: 降级保留 (P2)。Flow host payload narrowing 问题保留，但按 contract enforcement 缺口处理。
+- [维度13-02] 至 [维度13-06]: 均成立 (P1)。复核后仍是本轮最强的一组动态边界类型收窄问题。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                     | 一句话摘要                                                                         |
+| ----- | -------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| 13-01 | P2       | `packages/flow-designer-renderers/src/designer-action-provider.ts:55-66,291-299,353-366` | Flow host payload 未按 manifest 统一收窄，降级为 contract enforcement 缺口         |
+| 13-02 | P1       | `packages/word-editor-renderers/src/word-editor-action-provider.ts:98-116`               | Word Editor provider 仍未按 manifest shape 收窄 chart/code payload                 |
+| 13-03 | P1       | `packages/flux-runtime/src/action-adapter.ts:363-370`                                    | `component:setValue/setValues` 已发布 args contract，但 runtime 仍直接转发 payload |
+| 13-04 | P1       | `packages/flux-compiler/src/schema-compiler/host-action-validation.ts:112-128`           | manifest 声明 args 时，host action validation 仍允许完全省略 `args`                |
+| 13-05 | P1       | `packages/spreadsheet-renderers/src/spreadsheet-manifest.ts:311-318`                     | Spreadsheet 多个 host command 仍被发布为无参，但 core 要求必填字段                 |
+| 13-06 | P1       | `packages/report-designer-renderers/src/report-designer-manifest.ts:201-239`             | Report Designer `target` payload 仍只校验任意 object                               |

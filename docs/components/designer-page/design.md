@@ -16,23 +16,25 @@
 
 - `type: 'designer-page'`
 - `sourcePackage: '@nop-chaos/flow-designer-renderers'`
-- 当前 regions: `toolbar`、`inspector`、`dialogs`
+- 当前 regions: `title`、`toolbar`、`inspector`、`dialogs`
 - 当前 action policy: `actionScopePolicy: 'new'`
 
 ## 4. schema 设计
 
 - 关键字段是 `title`、`className`、`visible`、`hidden`、`disabled`、`document`、`treeDocument`、`statusPath`、`config`、`toolbar`、`inspector`、`dialogs`。
-- `document` / `treeDocument` 与 `config` 是宿主输入；当前 live baseline 要求至少提供一种文档输入与 `config`，不通过隐式全局单例获取。
+- `title` 当前是已接线的 `value-or-region` host page title surface，而不是仅文档声明未消费字段。
+- `document` / `treeDocument` 与 `config` 是宿主输入；当前 live baseline 不只要求“至少提供一种文档输入”，还要求 graph mode 提供 `document`、tree mode 提供 `treeDocument`，并且 formal schema validation 会对缺失前置条件报错，而不是只在运行时退回 fallback shell。
 - `statusPath` 是当前支持的宿主外部摘要发布入口，而不是 future-only 设计草案。
 - `$designer` 是刻意保留的 additive host-summary export，用于给 page 内 schema 片段读取只读 designer 摘要；它不替代 host manifest projection，也不提升为通用 page 全局数据别名。
 
 ## 5. 字段分类
 
-- `title`、`className`、`visible`、`hidden`、`disabled`、`document`、`treeDocument`、`statusPath`、`config`: `value`
-- `toolbar`、`inspector`、`dialogs`: `region`
+- `className`、`visible`、`hidden`、`disabled`、`document`、`treeDocument`、`statusPath`、`config`: `value`
+- `title`、`toolbar`、`inspector`、`dialogs`: `region`
 
 ## 6. regions 与 slot 约定
 
+- `title` 用于 designer workbench 顶部标题区，可用纯值或 schema region。
 - `toolbar` 用于 designer 顶部动作区。
 - `inspector` 用于右侧 schema 渲染区域。
 - `dialogs` 用于 designer 内部补充弹层挂载点。
@@ -50,6 +52,7 @@
 
 - 当 `config.documentMode === 'tree'` 时，`designer-page` 承载的是 structured process tree，而不是自由 graph。
 - 画布上的 nodes/edges 在 tree mode 下是投影结果和交互桥接面，不是 authoring source of truth。
+- tree mode 当前不再维护 renderer-local React tree 副本；host 传入的 `treeDocument` 仍是唯一结构 owner，`DesignerCore` 只持有投影后的 graph/history 视图。
 - tree mode 下的结构编辑应通过结构化命令完成，例如插入链节点、插入 branch group、在 merge continuation 之前插入节点、删除节点、调整 branch 顺序。
 - tree mode 不应默认暴露自由连线、自由重连、手工拖拽排版这类 graph-first 操作。
 
@@ -67,6 +70,7 @@
 
 - 根节点保留 `nop-designer` marker。
 - 视觉壳是设计器工作台，不应和普通页面共享隐式布局假设。
+- Flow Designer 主题收敛到 `className` / `classAliases` / node-edge `appearance` / `fd-theme-root` CSS variables；当前 live baseline 不再把 `config.themeStyles` 视为受支持的主路径样式入口。
 - 当前 live baseline 下，DingFlow add-node 浮层若声明 `role="menu"`，则必须提供 roving focus 与 `Arrow` / `Home` / `End` 键盘模型；canvas 上可聚焦 node / edge 交互根若声明 `role="button"`，则必须提供稳定 `aria-label`，并通过 `aria-pressed` 暴露 selected state。
 
 ## 11. 实现拆分建议

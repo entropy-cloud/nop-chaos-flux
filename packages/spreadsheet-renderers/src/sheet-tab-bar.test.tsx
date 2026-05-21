@@ -1,12 +1,24 @@
 // @vitest-environment happy-dom
 
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { SheetTabBar } from './sheet-tab-bar.js';
 
+async function setupI18n() {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+}
+
+afterEach(() => {
+  resetFluxI18n();
+});
+
 describe('SheetTabBar', () => {
-  it('keeps the remove action outside the sheet tab button', () => {
+  it('keeps the remove action outside the sheet tab button', async () => {
+    await setupI18n();
     const onSwitchSheet = vi.fn();
     const onRemoveSheet = vi.fn();
 
@@ -24,7 +36,7 @@ describe('SheetTabBar', () => {
       />,
     );
 
-    const tabButton = screen.getByRole('button', { name: 'Summary' });
+    const tabButton = screen.getAllByRole('button', { name: 'Summary' })[0];
     const removeButton = screen.getByRole('button', { name: 'Remove sheet Summary' });
 
     expect(tabButton.querySelector('button')).toBeNull();
@@ -33,11 +45,12 @@ describe('SheetTabBar', () => {
     fireEvent.click(removeButton);
 
     expect(onSwitchSheet).not.toHaveBeenCalled();
-    expect(screen.getByRole('dialog', { name: '删除工作表' })).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Delete Sheet' })).toBeTruthy();
     expect(onRemoveSheet).not.toHaveBeenCalled();
   });
 
-  it('disables sheet mutations when readOnly is true', () => {
+  it('disables sheet mutations when readOnly is true', async () => {
+    await setupI18n();
     render(
       <SheetTabBar
         sheets={[
@@ -54,7 +67,7 @@ describe('SheetTabBar', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Summary' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getAllByRole('button', { name: 'Summary' })[0]?.hasAttribute('disabled')).toBe(true);
     expect(screen.getByRole('button', { name: 'Add sheet' }).hasAttribute('disabled')).toBe(true);
     expect(screen.getByRole('button', { name: 'Remove sheet Summary' }).hasAttribute('disabled')).toBe(
       true,

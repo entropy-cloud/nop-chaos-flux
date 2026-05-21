@@ -187,7 +187,7 @@ describe('table internal components', () => {
     expect(onToggleExpand).toHaveBeenCalledWith('1');
   });
 
-  it('keeps clickable rows as honest table rows without fake keyboard button semantics', () => {
+  it('keeps clickable rows as honest table rows while exposing native keyboard activation', () => {
     const onRowClick = vi.fn();
     const rowScopeCache = new Map<string, any>([['1', makeRowScope({ name: 'Alice' }, 0)]]);
     const processedData = [{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } }];
@@ -223,13 +223,16 @@ describe('table internal components', () => {
     );
 
     const row = document.querySelector('[data-slot="table-row"]') as HTMLElement;
-    expect(row.tabIndex).toBe(-1);
+    expect(row.tabIndex).toBe(0);
     expect(row.getAttribute('role')).toBeNull();
     expect(row.getAttribute('aria-expanded')).toBeNull();
+    expect(row.className).toContain('focus-visible:ring-2');
+    expect(row.className).toContain('focus-visible:ring-ring');
 
     fireEvent.click(row);
+    fireEvent.keyDown(row, { key: 'Enter' });
 
-    expect(onRowClick).toHaveBeenCalledTimes(1);
+    expect(onRowClick).toHaveBeenCalledTimes(2);
   });
 
   it('publishes expand state on the actual expand button instead of the row', () => {
@@ -270,7 +273,7 @@ describe('table internal components', () => {
     expect(screen.getByRole('button', { name: 'Collapse' }).getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('leaves row-click expansion mouse-only while the explicit expand button stays keyboard-accessible', () => {
+  it('lets keyboard activation trigger the same row-click expansion path as pointer activation', () => {
     const onToggleExpand = vi.fn();
     const rowScopeCache = new Map<string, any>([['1', makeRowScope({ name: 'Alice' }, 0)]]);
     const processedData = [{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } }];
@@ -309,11 +312,10 @@ describe('table internal components', () => {
     const expandButton = within(row).getByRole('button', { name: 'Expand' });
 
     fireEvent.keyDown(row, { key: 'Enter' });
-    fireEvent.keyDown(row, { key: ' ' });
-    expect(onToggleExpand).not.toHaveBeenCalled();
+    expect(onToggleExpand).toHaveBeenCalledTimes(1);
 
     fireEvent.click(expandButton);
-    expect(onToggleExpand).toHaveBeenCalledTimes(1);
+    expect(onToggleExpand).toHaveBeenCalledTimes(2);
   });
 
   it('renders data rows with checkbox selection cells and correct field values', () => {

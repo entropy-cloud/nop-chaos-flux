@@ -14,7 +14,7 @@ const withShowToggle = {
           required: true,
         },
       ],
-      actions: [{ type: 'button', label: 'Continue', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Continue', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -47,7 +47,7 @@ const confirmPassword = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Set Password', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Set Password', onClick: { action: 'submitForm' } }],
     },
   ],
 };

@@ -87,16 +87,16 @@ function renderVariableList(
         <ToolbarButton
           data-slot="code-editor-var-item-copy"
           onClick={() => onCopy(variable)}
-          title="Copy to clipboard"
-          aria-label="Copy to clipboard"
+          title={t('flux.codeEditor.copyToClipboard')}
+          aria-label={t('flux.codeEditor.copyToClipboard')}
         >
           <CopyIcon />
         </ToolbarButton>
         <ToolbarButton
           data-slot="code-editor-var-item-insert"
           onClick={() => onInsert(variable)}
-          title="Insert at cursor"
-          aria-label="Insert at cursor"
+          title={t('flux.codeEditor.insertAtCursor')}
+          aria-label={t('flux.codeEditor.insertAtCursor')}
         >
           <CornerDownRightIcon />
         </ToolbarButton>

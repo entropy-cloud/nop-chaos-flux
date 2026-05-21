@@ -2,6 +2,8 @@ import { afterEach, describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   captureDocumentSnapshot,
   createSavedDocumentData,
+  extractDocChartsFromDocument,
+  extractDocCodesFromDocument,
   persistSavedDocument,
   SaveDocumentError,
   setRecoveryLoadErrorHandler,
@@ -57,7 +59,15 @@ describe('saveDocument', () => {
     const mockData = {
       data: {
         header: [{ value: 'header' }],
-        main: [{ value: 'main' }],
+        main: [
+          { value: 'main' },
+          {
+            url: 'xpl:<nop:chart id="chart_1" name="Revenue" type="bar" dataset="ds" category="month" valueField="value" showTitle="true" />',
+          },
+          {
+            url: 'xpl:<nop:code id="code_1" name="QR" type="qrcode" dataset="ds" valueField="id" />',
+          },
+        ],
         footer: [{ value: 'footer' }],
       },
     };
@@ -71,27 +81,12 @@ describe('saveDocument', () => {
       })),
     } as any;
 
-    const result = saveDocument(mockBridge, {
-      charts: [
-        {
-          id: 'chart_1',
-          chartName: 'Revenue',
-          chartType: 'bar',
-          showChartName: true,
-          datasetId: 'ds',
-          categoryField: 'month',
-          valueField: ['value'],
-        },
-      ],
-      codes: [
-        { id: 'code_1', codeName: 'QR', codeType: 'qrcode', datasetId: 'ds', valueField: 'id' },
-      ],
-    });
+    const result = saveDocument(mockBridge);
 
     expect(result).not.toBeNull();
     expect(localStorageState.current.setItem).toHaveBeenCalledWith(STORAGE_KEY, expect.any(String));
     const saved = JSON.parse(localStorageState.current.setItem.mock.calls[0][1]) as any;
-    expect(saved.data.main).toEqual([{ value: 'main' }]);
+    expect(saved.data.main).toEqual(mockData.data.main);
     expect(saved.data.header).toEqual([{ value: 'header' }]);
     expect(saved.data.footer).toEqual([{ value: 'footer' }]);
     expect(saved.data.charts).toHaveLength(1);
@@ -154,19 +149,53 @@ describe('saveDocument', () => {
 
   it('captures a saved snapshot without persisting it yet', () => {
     const mockBridge = {
-      getValue: vi.fn(() => ({ data: { header: [], main: [{ value: 'draft' }], footer: [] } })),
+      getValue: vi.fn(() => ({
+        data: {
+          header: [],
+          main: [
+            { value: 'draft' },
+            {
+              url: 'xpl:<nop:chart id="chart_1" name="Revenue" type="bar" dataset="ds" category="month" valueField="value" showTitle="true" />',
+            },
+            {
+              url: 'xpl:<nop:code id="code_1" name="QR" type="qrcode" dataset="ds" valueField="id" />',
+            },
+          ],
+          footer: [],
+        },
+      })),
       getPaperSettings: vi.fn(() => null),
     } as any;
 
-    const saved = captureDocumentSnapshot(mockBridge, {
-      charts: [{ id: 'chart_1', chartName: 'Revenue', chartType: 'bar', showChartName: true, datasetId: 'ds', categoryField: 'month', valueField: ['value'] }],
-      codes: [{ id: 'code_1', codeName: 'QR', codeType: 'qrcode', datasetId: 'ds', valueField: 'id' }],
-    });
+    const saved = captureDocumentSnapshot(mockBridge);
 
-    expect(saved.data.main).toEqual([{ value: 'draft' }]);
+    expect(saved.data.main).toEqual(mockBridge.getValue().data.main);
     expect(saved.data.charts).toHaveLength(1);
     expect(saved.data.codes).toHaveLength(1);
     expect(localStorageState.current.setItem).not.toHaveBeenCalled();
+  });
+
+  it('prefers explicit paper settings over bridge-derived paper settings', () => {
+    const mockBridge = {
+      getValue: vi.fn(() => ({ data: { header: [], main: [{ value: 'draft' }], footer: [] } })),
+      getPaperSettings: vi.fn(() => ({
+        width: 595,
+        height: 842,
+        direction: 'vertical',
+        margins: [100, 120, 100, 120],
+      })),
+    } as any;
+
+    const saved = captureDocumentSnapshot(mockBridge, {
+      paperSettings: { width: 1000, height: 700, direction: 'horizontal', margins: [1, 2, 3, 4] },
+    });
+
+    expect(saved.paperSettings).toEqual({
+      width: 1000,
+      height: 700,
+      direction: 'horizontal',
+      margins: [1, 2, 3, 4],
+    });
   });
 
   it('persists a previously captured saved snapshot', () => {
@@ -202,6 +231,44 @@ describe('saveDocument', () => {
     expect(saved.data.charts).toEqual([]);
     expect(saved.data.codes).toEqual([]);
     expect(saved.paperSettings.width).toBe(595);
+  });
+
+  it('rebuilds chart/code metadata from live document tags', () => {
+    const document = {
+      header: [],
+      main: [
+        { value: 'draft' },
+        {
+          url: 'xpl:<nop:chart id="chart_1" name="Revenue" type="bar" dataset="ds" category="month" valueField="value1,value2" seriesField="series" showTitle="true" />',
+        },
+        {
+          url: 'xpl:<nop:code id="code_1" name="QR" type="qrcode" dataset="ds" valueField="id" />',
+        },
+      ],
+      footer: [],
+    } as any;
+
+    expect(extractDocChartsFromDocument(document)).toEqual([
+      {
+        id: 'chart_1',
+        chartName: 'Revenue',
+        chartType: 'bar',
+        showChartName: true,
+        datasetId: 'ds',
+        categoryField: 'month',
+        valueField: ['value1', 'value2'],
+        seriesField: ['series'],
+      },
+    ]);
+    expect(extractDocCodesFromDocument(document)).toEqual([
+      {
+        id: 'code_1',
+        codeName: 'QR',
+        codeType: 'qrcode',
+        datasetId: 'ds',
+        valueField: 'id',
+      },
+    ]);
   });
 });
 

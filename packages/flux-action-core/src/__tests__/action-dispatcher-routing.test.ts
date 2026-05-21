@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import type {
+  ActionScope,
   BuiltInActionInvocation,
   ComponentActionInvocation,
 } from '@nop-chaos/flux-core';
 import {
   createActionCtx,
   createMockAdapter,
+  createMockEnv,
   createTestDispatcher,
   makeCompiledProgram,
   staticCompiled,
@@ -258,6 +260,81 @@ describe('action-dispatcher routing', () => {
     expect(result.ok).toBe(false);
     expect(result.error).toBeInstanceOf(Error);
     expect((result.error as Error).message).toContain('Unsupported action');
+  });
+
+  it('preserves namespace metadata when a namespaced provider throws', async () => {
+    const providerError = new Error('provider exploded');
+    const actionScope = {
+      resolve: vi.fn(() => ({
+        namespace: 'demo',
+        method: 'save',
+        sourceScopeId: 'import:demo',
+        provider: { kind: 'import' },
+      })),
+    } as unknown as ActionScope;
+    const env = createMockEnv();
+    const adapter = createMockAdapter({
+      invokeNamespacedAction: vi.fn(async () => {
+        throw providerError;
+      }),
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter, env });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'demo:save',
+          payload: {},
+          targeting: {},
+          control: {},
+          source: { action: 'demo:save' },
+        },
+      ]),
+      createActionCtx({ runtime, actionScope }),
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: providerError,
+      namespace: 'demo',
+      sourceScopeId: 'import:demo',
+      providerKind: 'import',
+    });
+    expect((env.monitor?.onActionEnd as ReturnType<typeof vi.fn>).mock.calls[0]?.[0]?.result).toMatchObject({
+      namespace: 'demo',
+      sourceScopeId: 'import:demo',
+      providerKind: 'import',
+    });
+  });
+
+  it('preserves component target metadata when a component action throws', async () => {
+    const componentError = new Error('component exploded');
+    const adapter = createMockAdapter({
+      invokeComponentAction: vi.fn(async () => {
+        throw componentError;
+      }),
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'component:doStuff',
+          payload: {},
+          targeting: { componentId: 'comp-1', componentName: 'Editor' },
+          control: {},
+          source: { action: 'component:doStuff', componentId: 'comp-1', componentName: 'Editor' },
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: componentError,
+      componentId: 'comp-1',
+      componentName: 'Editor',
+    });
   });
 
   it('dispose() can be called without error and clears pending debounces', () => {

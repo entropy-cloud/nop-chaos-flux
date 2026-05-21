@@ -113,8 +113,6 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   return (
     <div
       className={cn('nop-condition-builder', props.meta.className)}
-      data-testid={props.meta.testid}
-      data-cid={props.meta.cid}
     >
       <ConditionGroup
         value={effectiveValue}
@@ -192,6 +190,7 @@ function PickerModeContent({
 
 export const conditionBuilderRendererDefinition: RendererDefinition = {
   type: 'condition-builder',
+  sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: ConditionBuilderRenderer,
   fields: formFieldRules,
   validation: {

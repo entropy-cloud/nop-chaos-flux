@@ -147,5 +147,39 @@ describe('WordEditorPage host scope', () => {
     );
     expect(definition?.propContracts?.statusPath?.shape.kind).toBe('string');
     expect(definition?.eventContracts?.onBack?.displayName).toBe('Back');
+    expect(definition?.propContracts?.config?.shape).toEqual({
+      kind: 'object',
+      fields: {
+        leftPanel: {
+          kind: 'object',
+          fields: { generator: { kind: 'literal', value: 'default' } },
+          optional: ['generator'],
+        },
+        rightPanel: {
+          kind: 'object',
+          fields: { generator: { kind: 'literal', value: 'default' } },
+          optional: ['generator'],
+        },
+      },
+      optional: ['leftPanel', 'rightPanel'],
+    });
+    expect(definition?.eventContracts?.onBack?.payload).toEqual({
+      kind: 'object',
+      fields: {
+        type: { kind: 'string' },
+        nativeEvent: { kind: 'unknown' },
+        currentTarget: { kind: 'unknown' },
+        target: { kind: 'unknown' },
+      },
+      optional: ['nativeEvent', 'currentTarget', 'target'],
+    });
+    expect(definition?.eventContracts?.onSave?.payload).toEqual({
+      kind: 'object',
+      fields: {
+        data: { kind: 'object', fields: {} },
+        paperSettings: { kind: 'object', fields: {} },
+        savedAt: { kind: 'string' },
+      },
+    });
   });
 });

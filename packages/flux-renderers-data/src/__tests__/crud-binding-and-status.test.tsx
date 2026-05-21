@@ -176,4 +176,40 @@ describe('CRUD binding and status', () => {
     });
   });
 
+  it('normalizes scope-backed filter summaries to the same dto shape used by table filtering', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-filter-shape"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              source: [{ id: '1', name: 'Alice', status: 'active' }],
+              filterOwnership: 'scope',
+              filterStatePath: 'crudState.filters',
+              footerToolbar: [
+                {
+                  type: 'text',
+                  text: 'Filter=${$crud.filters.status.filters}',
+                },
+              ],
+              columns: [{ name: 'name', label: 'Name' }],
+            },
+          ],
+        }}
+        data={{ crudState: { filters: { status: 'active' } } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Filter=active')).toBeTruthy();
+    });
+  });
+
 });

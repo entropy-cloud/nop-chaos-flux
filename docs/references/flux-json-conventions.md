@@ -137,7 +137,7 @@
 - `path` 是推荐字段名，不使用 `dataPath`
 - `setValues.args.path` 存在时，`args.values` 的 key 相对这个基准路径
 - 在 `form` context 中同样遵守这条规则；runtime 会把相对 key 展开到 `args.path` 下，而不是退回根路径写入
-- `setValues` 兼容读取 `targetId` 作为基准路径 fallback，但显式 `args.path` 优先
+- `setValues` 基准路径只使用 `args.path`
 - `setValue` / `setValues` 不使用 `componentPath` / 顶层 `value` / 顶层 `values`
 
 `submitForm` retry 约定：
@@ -151,7 +151,7 @@
 - payload 统一走 `args`，所有 action 在 authoring 侧有一个一致入口
 - `path` 明确表示写入目标，`value` / `values` 明确表示写入内容，语义边界清晰
 - `setValues` 允许可选 `path`，既支持绝对 patch，也支持同一 subtree 的相对 patch，减少重复路径前缀
-- `refreshSource` 保持 `targetId`，因为它是 runtime-owned source entry，不是数据写入动作
+- `refreshSource` 保持 `targetId`，并且该目标值指向 canonical data-source `name`
 
 定向调用推荐矩阵：
 

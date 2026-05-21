@@ -161,6 +161,29 @@ describe('TableQuickEditCell', () => {
     });
   });
 
+  it('shows visible saving feedback for inline quick-edit while save is in flight', async () => {
+    let resolveSave: (() => void) | undefined;
+    const helpers = createHelpers();
+    helpers.dispatch.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSave = () => resolve({ ok: true });
+        }),
+    );
+    renderCell({ helpers });
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Alicia' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Saving...').length).toBeGreaterThan(0);
+      expect(document.querySelector('[data-slot="table-quick-edit-saving"]')).toBeTruthy();
+    });
+
+    resolveSave?.();
+    await waitFor(() => expect(screen.queryByText('Saving...')).toBeNull());
+  });
+
   it('renders custom inline body and tracks dirty state through change capture', async () => {
     const customBody = { type: 'input-text', label: 'Custom body' };
     const customHelpers = createHelpers();
@@ -258,5 +281,37 @@ describe('TableQuickEditCell', () => {
     await waitFor(() => {
       expect(helpers.dispatch).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('shows visible saving feedback for dialog quick-edit while save is in flight', async () => {
+    let resolveSave: (() => void) | undefined;
+    const helpers = createHelpers();
+    helpers.dispatch.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSave = () => resolve({ ok: true });
+        }),
+    );
+
+    renderCell({
+      helpers,
+      column: {
+        name: 'name',
+        label: 'Edit Name',
+        quickEdit: { mode: 'dialog', body: { type: 'input-text', label: 'Dialog body' } },
+      },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Name' }));
+    fireEvent.change(screen.getByLabelText('Dialog body'), { target: { value: 'changed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Saving...').length).toBeGreaterThan(0);
+      expect(document.querySelector('[data-slot="table-quick-edit-saving"]')).toBeTruthy();
+    });
+
+    resolveSave?.();
+    await waitFor(() => expect(screen.queryByText('Saving...')).toBeNull());
   });
 });

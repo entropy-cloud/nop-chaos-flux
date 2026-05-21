@@ -26,7 +26,7 @@ const reportSummary = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -59,7 +59,7 @@ const userDetailView = {
               body: [
                 { type: 'icon', icon: 'user', size: 16 },
                 { type: 'text', text: '${user.name}' },
-                { type: 'badge', label: '${user.role}', variant: 'secondary' },
+                { type: 'badge', text: '${user.role}', level: 'info' },
               ],
             },
             { type: 'text', text: 'Email: ${user.email}' },
@@ -82,7 +82,7 @@ const userDetailView = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };

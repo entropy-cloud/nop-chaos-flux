@@ -3,6 +3,7 @@ import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 import { isSchema } from '@nop-chaos/flux-core';
 import { RenderNodes } from '@nop-chaos/flux-react/unstable';
+import { t } from '@nop-chaos/flux-i18n';
 import { useEdgeTypeConfig, useDesignerContext } from '../designer-context.js';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import type { DesignerFlowEdgeData } from './types.js';
@@ -160,7 +161,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
               variant="ghost"
               size="icon-sm"
               className="w-7 h-7 rounded-lg inline-flex items-center justify-center border-0 hover:bg-black/8 dark:hover:bg-white/10"
-              aria-label="Select edge"
+              aria-label={t('flux.flowDesigner.selectEdge')}
               onClick={handleLabelClick}
             >
               <DesignerIcon icon="pencil" />
@@ -170,7 +171,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
               variant="ghost"
               size="icon-sm"
               className="w-7 h-7 rounded-lg inline-flex items-center justify-center border-0 hover:bg-destructive/15 hover:text-destructive"
-              aria-label="Delete edge"
+              aria-label={t('flux.flowDesigner.deleteEdge')}
               onClick={handleDeleteEdge}
             >
               <DesignerIcon icon="trash-2" />

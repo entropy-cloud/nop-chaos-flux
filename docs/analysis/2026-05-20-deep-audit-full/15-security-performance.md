@@ -334,6 +334,17 @@
 - **参考文档**: `docs/architecture/performance-design-requirements.md:39-47,55-58,132-140`
 - **复核状态**: 未复核
 
+## 维度复核结论
+
+- [维度15-01]: 保留 (P2)。`packages/flow-designer-renderers/src/designer-command-adapter-helpers.ts:46-104` 与 `packages/flow-designer-core/src/core-edge-commands.ts:44-99` 仍在交互路径重复线性扫描 node/edge 集合，未见文档要求的索引化收口。
+- [维度15-02]: 保留 (P2)。`packages/flux-renderers-form-advanced/src/tree-control-controllers.ts:332-341` 仍对 flattened options 逐项调用 `isTreeSelectionChecked()`，而后者在多选模式下继续对 selected values 做 `some()`，O(options × selected) 路径仍在。
+- [维度15-03]: 保留 (P2)。`packages/flux-react/src/node-source-prop-controller.ts:51-67,219-258` 仍用 `JSON.stringify` 为 source entries/base value 生成运行态判定键，`use-node-source-props.ts:86-92` 也继续在 props 变化时直接运行该 controller。
+- [维度15-04]: 保留 (P2)。`packages/flux-renderers-data/src/table-renderer/use-table-filter.ts:122-157` 仍在每次搜索输入变更时同步推进 filter state，而 `table-renderer.tsx:231-237,303-307` / `table-data.ts:96-108` 仍对完整 `source` 做全量过滤；虚拟化只覆盖渲染不覆盖过滤成本。
+- [维度15-05]: 保留 (P2)。`packages/spreadsheet-renderers/src/spreadsheet-grid/table-shell.tsx:131-142,413-444` 仍对每个可见 cell 调用 `isInRange(row, col)`，而 `use-selection.ts:182-224` 的 `getSelectedRange()` 在行/列选择下继续复制并排序 selected rows/columns。
+- [维度15-06]: 保留 (P2)。`packages/report-designer-renderers/src/page-renderer.tsx:467-479` 仍在 spreadsheet snapshot 变化时同步 `core.syncSpreadsheetDocument()`；后者在 `packages/report-designer-core/src/core.ts` 仍对 spreadsheet 子树 `structuredClone` 并推动整 document undo entry。
+- [维度15-07]: 保留 (P2)。`packages/spreadsheet-core/src/core/filter-operations.ts:15-37` 仍通过 `Math.max(...candidateRows)` + `for row <= maxRow` 全量回填 rows，`use-context-menu-actions.ts:236-248` 仍直连这一过滤命令。
+- [维度15-08]: 保留 (P2)。`packages/word-editor-renderers/src/editor-canvas.tsx:52-70,108-110` 仍在 autosave debounce 中每次取整篇文档、`JSON.stringify(saved)` 并同步写 `localStorage`。
+
 ### [维度15-08] Word Editor 自动保存每次编辑后同步序列化整篇文档并写 localStorage
 
 - **文件**: `packages/word-editor-renderers/src/editor-canvas.tsx:52-70,108-110`
@@ -375,3 +386,20 @@
 ## 深挖第 6 轮追加
 
 未发现新的高价值问题。深挖结束。
+
+## 子项复核结论
+
+- [维度15-01] 至 [维度15-08]: 均成立。复核后仍集中在高频交互热路径的线性扫描、整量 stringify/clone、稀疏表全量回填与同步 autosave；未见需要从最终汇总中移除的条目。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                  | 一句话摘要                                                                |
+| ----- | -------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 15-01 | P2       | `packages/flow-designer-renderers/src/designer-command-adapter-helpers.ts:46-104`     | Flow Designer node/edge 交互路径仍重复线性扫描集合                        |
+| 15-02 | P2       | `packages/flux-renderers-form-advanced/src/tree-control-controllers.ts:332-341`       | tree selection checked 仍是 O(options × selected)                         |
+| 15-03 | P2       | `packages/flux-react/src/node-source-prop-controller.ts:51-67,219-258`                | node source prop controller 仍用 `JSON.stringify` 做运行态判定键          |
+| 15-04 | P2       | `packages/flux-renderers-data/src/table-renderer/use-table-filter.ts:122-157`         | table 搜索过滤仍对完整 source 做同步全量过滤                              |
+| 15-05 | P2       | `packages/spreadsheet-renderers/src/spreadsheet-grid/table-shell.tsx:131-142,413-444` | spreadsheet 可见 cell 命中判定仍频繁做范围复制/排序与逐 cell `isInRange`  |
+| 15-06 | P2       | `packages/report-designer-renderers/src/page-renderer.tsx:467-479`                    | report designer 仍在 snapshot 变化时同步 clone/undo 整个 spreadsheet 子树 |
+| 15-07 | P2       | `packages/spreadsheet-core/src/core/filter-operations.ts:15-37`                       | spreadsheet 行过滤仍通过 `maxRow` 回填整段 rows                           |
+| 15-08 | P2       | `packages/word-editor-renderers/src/editor-canvas.tsx:52-70,108-110`                  | Word Editor autosave 仍同步序列化整篇文档并写 `localStorage`              |

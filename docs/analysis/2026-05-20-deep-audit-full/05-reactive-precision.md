@@ -133,3 +133,24 @@
 ## 深挖第 2 轮追加
 
 未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度05-01]: 保留 (P2)。`DesignerPageBody` 仍直接订阅完整 `DesignerSnapshot`，并把任意局部状态变更扩散到 `WorkbenchShell`、slot render 与 host scope 投影；live code 已有 `useDesignerSnapshotSelector`，证据足以认定为真实的过宽订阅热路径。
+- [维度05-02]: 保留 (P2)。`DesignerCanvasContent` 对完整 snapshot 订阅仍成立，而画布桥实际主依赖是 `doc/selection/viewport/grid` 等子集；`canUndo/isDirty/paletteCollapsed/inspectorCollapsed` 一类无关变更会重建重型 canvas props。
+- [维度05-03]: 降级为 P3。默认 toolbar 项确有可收窄空间，但 `itemsOverride` 允许按任意 scope 表达式求值，当前整 own-scope 订阅有一部分属于动态契约成本；证据不足以继续按 P2 作为明确缺陷推动。
+- [维度05-04]: 驳回。`scope-debug` 是显式 opt-in 的调试 renderer，整 scope 订阅与 stringify 正是其功能本身；仅凭其被注册到基础 renderer 集合、且未再加额外 debug gate，不足以在本维度下认定为当前主路径缺陷。
+
+## 子项复核结论
+
+- [维度05-01]: 成立 (P2)。Designer host shell 完整 snapshot 订阅保留。
+- [维度05-02]: 成立 (P2)。canvas 内容完整 snapshot 订阅保留。
+- [维度05-03]: 降级保留 (P3)。toolbar 默认项订阅过宽，但存在动态 contract 成本。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                      | 一句话摘要                                                    |
+| ----- | -------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| 05-01 | P2       | `packages/flow-designer-renderers/src/designer-page-body.tsx`                             | DesignerPageBody 仍对完整 snapshot 过宽订阅                   |
+| 05-02 | P2       | `packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-canvas-content.tsx` | DesignerCanvasContent 仍对完整 snapshot 过宽订阅              |
+| 05-03 | P3       | `packages/flow-designer-renderers/src/designer-toolbar.tsx`                               | toolbar own-scope 订阅可收窄，但因动态 itemsOverride 降级保留 |

@@ -272,8 +272,8 @@ Mounted-subtree rule:
         "type": "detail-field",
         "name": "",
         "viewer": {
-          "type": "tpl",
-          "tpl": "${value?.action || '未设置'}"
+          "type": "text",
+          "text": "${value?.action || '未设置'}"
         },
         "content": {
           "type": "designer-page"

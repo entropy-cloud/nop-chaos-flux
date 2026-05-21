@@ -366,6 +366,39 @@ describe('createNodeSourcePropController', () => {
     expect(observer.run).toHaveBeenCalledTimes(1);
   });
 
+  it('skips redundant observer runs when structurally equal source configs are recreated', () => {
+    const { observer } = createObserverMock();
+    const controller = createNodeSourcePropController(
+      {
+        sourcePropKeys: [],
+        sourceStatePropKeys: {},
+      } as any,
+      { createSourceObserver: () => observer } as any,
+    );
+
+    const scope = createScope();
+    controller.run(
+      {
+        expressionConfig: {
+          variables: { type: 'source', action: 'loadItems', path: '/same' },
+        },
+        plain: { nested: ['a', 'b'] },
+      },
+      scope,
+    );
+    controller.run(
+      {
+        expressionConfig: {
+          variables: { type: 'source', action: 'loadItems', path: '/same' },
+        },
+        plain: { nested: ['a', 'b'] },
+      },
+      scope,
+    );
+
+    expect(observer.run).toHaveBeenCalledTimes(1);
+  });
+
   it('disposes the runtime-owned observer', async () => {
     const { observer } = createObserverMock();
     const controller = createNodeSourcePropController(

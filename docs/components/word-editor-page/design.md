@@ -63,9 +63,11 @@ interface WordEditorConfig {
 - `onSave` 是可选持久化回调
 - `statusPath` 用于向宿主外部发布窄只读摘要 DTO
 - `onSave` 在显式保存时接收完整 `SavedDocumentData` envelope，供宿主按同一已保存快照做持久化或校验
+- builder-facing formal metadata 也必须与这条 live baseline 一致：`onBack` 发布 event-like payload，`onSave` 发布完整 `SavedDocumentData` envelope，`config` 不再退回 opaque object
 - `statusPath.busy` 表示显式保存是否进行中，而不只是静态 shell 摘要
 - 模板标签插入保留 core 发布的真实 `kind`；`c:out` 属于受支持的 `tag-selfclose` 插入面，而不是被降级成 open-tag 的伪契约
 - 图表/条码插入只接受能通过 `validateDocChart` / `validateDocCode` 的完整 payload
+- `word-editor:insertChart` / `word-editor:insertCode` 的公开 contract 同时包含 manifest-enforced args shape 和成功结果 `chartId` / `codeId`
 - watermark 不属于当前受支持的 authoring surface，因为页面没有与 persisted truth surface 对齐的 watermark round-trip 契约
 
 ## 5. 字段分类
@@ -126,16 +128,18 @@ host scope 向下投影四个只读字段：
 - `datasets` 的 schema 输入只作为首次 seed；一旦存在 recovered persisted datasets，remount 后 host projection 继续发布 persisted datasets，而不是被 schema `datasets` 重置。
 - `statusPath.busy` 必须在显式保存进行中发布 `true`，保存完成或失败后再回落到 `false`。
 - datasets recovery baseline 只应在显式保存成功后提交；失败或 abort 的 save 不得提前写入 partial-commit datasets。
+- persisted `document.data.charts` / `document.data.codes` 从当前 canvas 文档里的 `nop:chart` / `nop:code` 标签重建；`initialCharts` / `initialCodes` 与运行期 chart/code 计数不再作为保存时的第二事实源。
+- 保存使用 `editor-store.paperSettings` 作为纸张设置 owner truth；页面设置 UI 与 save snapshot 不再分别信任不同事实源。
 
 ## 8. 事件、动作与组件句柄能力
 
-| 动作       | 命名空间                                | 说明                                                                                            |
-| ---------- | --------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| 保存文档   | `word-editor:save`                      | 序列化并持久化当前文档；成功路径向 `onSave` 交付完整 `SavedDocumentData` envelope               |
-| 插入字段   | `word-editor:insertField`               | 在光标位置插入数据字段                                                                          |
-| 插入图表   | `word-editor:insertChart`               | 仅在 payload 满足 manifest/core validator 契约时插入 `nop:chart` 自闭合模板占位符并持久化元数据 |
-| 插入代码块 | `word-editor:insertCode`                | 仅在 payload 满足 manifest/core validator 契约时插入 `nop:code` 自闭合模板占位符并持久化元数据  |
-| 撤销/重做  | `word-editor:undo` / `word-editor:redo` | 历史操作                                                                                        |
+| 动作       | 命名空间                                | 说明                                                                                                          |
+| ---------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 保存文档   | `word-editor:save`                      | 序列化并持久化当前文档；成功路径向 `onSave` 交付完整 `SavedDocumentData` envelope                             |
+| 插入字段   | `word-editor:insertField`               | 在光标位置插入数据字段                                                                                        |
+| 插入图表   | `word-editor:insertChart`               | 仅在 payload 满足 manifest/core validator 契约时插入 `nop:chart` 自闭合模板占位符；成功结果返回 `{ chartId }` |
+| 插入代码块 | `word-editor:insertCode`                | 仅在 payload 满足 manifest/core validator 契约时插入 `nop:code` 自闭合模板占位符；成功结果返回 `{ codeId }`   |
+| 撤销/重做  | `word-editor:undo` / `word-editor:redo` | 历史操作                                                                                                      |
 
 - 页面自身不应暴露大而全的 imperative ref。
 
@@ -145,7 +149,7 @@ host scope 向下投影四个只读字段：
 - 模板表达式使用 NOP XLang 语法：`${expr}` 文本表达式、`<c:for>`/`<c:if>` 结构标签。
 - `c:out` 作为 `tag-selfclose` 模板标签属于当前受支持插入面，dialog、toolbar、snippet 三条路径都必须发出同一 canonical expression kind。
 - 字段拖拽插入自动生成对应的表达式占位符。
-- 图表/条码占位符当前通过 `nop:chart` / `nop:code` 自闭合标签写入文档并与 `charts` / `codes` 元数据数组一起持久化。
+- 图表/条码占位符通过 `nop:chart` / `nop:code` 自闭合标签写入文档；保存/自动保存时从这些 live tags 重建 persisted `charts` / `codes` registry。
 - 不存在受支持的 watermark authoring surface；页面不会宣称能持久化或恢复 watermark-only authoring state。
 
 ## 10. 样式与 DOM marker 约定

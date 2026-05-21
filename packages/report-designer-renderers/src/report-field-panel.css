@@ -1,41 +1,41 @@
-[data-slot='report-field-panel-shell'] {
+.nop-report-field-panel[data-slot='report-field-panel-shell'] {
   display: flex;
   flex-direction: column;
   gap: 16px;
   min-width: 0;
 }
 
-[data-slot='report-field-panel-stack'] {
+.nop-report-field-panel [data-slot='report-field-panel-stack'] {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-[data-slot='report-field-panel-source'] {
+.nop-report-field-panel [data-slot='report-field-panel-source'] {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-[data-slot='report-field-panel-source-label'] {
+.nop-report-field-panel [data-slot='report-field-panel-source-label'] {
   font-size: 13px;
   font-weight: 600;
   color: var(--nop-text-strong, rgb(15 23 42));
 }
 
-[data-slot='report-field-panel-group'] {
+.nop-report-field-panel [data-slot='report-field-panel-group'] {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-[data-slot='report-field-panel-items'] {
+.nop-report-field-panel [data-slot='report-field-panel-items'] {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-[data-slot='report-field-panel-item'] {
+.nop-report-field-panel [data-slot='report-field-panel-item'] {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -45,12 +45,12 @@
   background: var(--nop-surface, rgb(255 255 255));
 }
 
-[data-slot='report-field-panel-item']:hover {
+.nop-report-field-panel [data-slot='report-field-panel-item']:hover {
   border-color: var(--nop-border-hover, rgb(148 163 184));
   background: var(--nop-surface-hover, rgb(248 250 252));
 }
 
-[data-slot='report-field-panel-drag-handle'] {
+.nop-report-field-panel [data-slot='report-field-panel-drag-handle'] {
   display: flex;
   align-items: center;
   flex: 1 1 auto;
@@ -64,7 +64,7 @@
   text-align: left;
 }
 
-[data-slot='report-field-panel-item-type'] {
+.nop-report-field-panel [data-slot='report-field-panel-item-type'] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -77,7 +77,7 @@
   font-weight: 600;
 }
 
-[data-slot='report-field-panel-item-label'] {
+.nop-report-field-panel [data-slot='report-field-panel-item-label'] {
   flex: 1 1 auto;
   font-size: 13px;
   color: var(--nop-text-strong, rgb(15 23 42));

@@ -177,6 +177,7 @@ Review:
 
 - `docs/architecture/frontend-baseline.md`
 - `docs/references/audit-tooling.md`
+- `docs/testing/e2e-standards.md` when Playwright gate behavior or supported E2E enforcement changes
 - `docs/index.md`
 
 ## 9. Example or playground behavior changes

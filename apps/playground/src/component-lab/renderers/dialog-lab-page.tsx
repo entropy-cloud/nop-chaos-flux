@@ -15,7 +15,7 @@ const basicDialog = {
             { type: 'text', text: 'This is the dialog body content.' },
             { type: 'text', text: 'Dialogs support body and actions regions.' },
           ],
-          actions: [{ type: 'button', label: 'Close', onClick: { action: 'closeDialog' } }],
+          actions: [{ type: 'button', label: 'Close', onClick: { action: 'closeSurface' } }],
         },
       },
     },
@@ -37,7 +37,7 @@ const formDialog = {
               type: 'form',
               onSubmitSuccess: [
                 { action: 'setValue', args: { path: 'submitted', value: true } },
-                { action: 'closeDialog' },
+                { action: 'closeSurface' },
               ],
               body: [
                 { type: 'input-text', name: 'name', label: 'Full Name', required: true },
@@ -51,13 +51,13 @@ const formDialog = {
                 {
                   type: 'button',
                   label: 'Confirm',
-                  onClick: { action: 'submit' },
+                  onClick: { action: 'submitForm' },
                 },
                 {
                   type: 'button',
                   label: 'Cancel',
                   variant: 'outline',
-                  onClick: { action: 'closeDialog' },
+                  onClick: { action: 'closeSurface' },
                 },
               ],
             },

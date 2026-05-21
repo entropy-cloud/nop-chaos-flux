@@ -62,10 +62,14 @@ function JsonNode(props: {
           size="sm"
           className="ndbg-json-toggle"
           aria-expanded={!collapsed}
-          aria-label={`${collapsed ? 'Expand' : 'Collapse'} JSON array`}
+          aria-label={
+            collapsed ? t('flux.debugger.expandJsonArray') : t('flux.debugger.collapseJsonArray')
+          }
           onClick={() => setCollapsed((value) => !value)}
         >
-          {collapsed ? `▶ Array(${data.length})` : `▼ Array(${data.length})`}
+          {collapsed
+            ? t('flux.debugger.jsonArrayCollapsed', { count: data.length })
+            : t('flux.debugger.jsonArrayExpanded', { count: data.length })}
         </Button>
         {!collapsed && (
           <div style={{ paddingLeft: 12 }}>
@@ -109,10 +113,14 @@ function JsonNode(props: {
           size="sm"
           className="ndbg-json-toggle"
           aria-expanded={!collapsed}
-          aria-label={`${collapsed ? 'Expand' : 'Collapse'} JSON object`}
+          aria-label={
+            collapsed ? t('flux.debugger.expandJsonObject') : t('flux.debugger.collapseJsonObject')
+          }
           onClick={() => setCollapsed((value) => !value)}
         >
-          {collapsed ? `▶ Object{${entries.length}}` : `▼ Object{${entries.length}}`}
+          {collapsed
+            ? t('flux.debugger.jsonObjectCollapsed', { count: entries.length })
+            : t('flux.debugger.jsonObjectExpanded', { count: entries.length })}
         </Button>
         {!collapsed && (
           <div style={{ paddingLeft: 12 }}>

@@ -39,6 +39,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
   });
 
   const numericValue = value as number | undefined;
+  const errorId = name ? `${name}-error` : undefined;
 
   function handleBlur() {
     if (numericValue !== undefined) {
@@ -96,6 +97,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
           aria-label={String((props.props.label ?? name) || '') || undefined}
           aria-required={props.props.required ? true : undefined}
           aria-invalid={presentation.showError ? true : undefined}
+          aria-errormessage={presentation.showError ? errorId : undefined}
           placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
           min={min}
           max={max}

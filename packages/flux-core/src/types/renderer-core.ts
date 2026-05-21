@@ -389,6 +389,7 @@ export interface RendererRuntime {
   }): Promise<ActionResult>;
   createSourceObserver(): SourceObserver;
   createPageRuntime(data?: Record<string, any>): PageRuntime;
+  disposeOwnedPage(page: PageRuntime): void;
   createValidationScopeRuntime(input: {
     id?: string;
     parentScope: ScopeRef;
@@ -414,7 +415,7 @@ export interface RendererRuntime {
     scope: ScopeRef;
     compiledSource: CompiledDataSource;
   }): DataSourceRegistration;
-  refreshDataSource(input: { id: string; scope?: ScopeRef }): Promise<boolean>;
+  refreshDataSource(input: { name: string; scope?: ScopeRef }): Promise<boolean>;
   registerReaction(input: {
     id: string;
     scope: ScopeRef;

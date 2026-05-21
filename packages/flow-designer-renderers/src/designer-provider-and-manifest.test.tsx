@@ -6,6 +6,9 @@ import { createDesignerActionProvider, flowDesignerRendererDefinitions } from '.
 import { DesignerIcon } from './designer-icon.js';
 import { render } from '@testing-library/react';
 import { installFlowDesignerTestHooks } from './index-test-support.js';
+import { validateSchema } from '@nop-chaos/flux-compiler';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 installFlowDesignerTestHooks();
 
@@ -118,12 +121,44 @@ describe('createDesignerActionProvider', () => {
       {} as any,
     );
 
-    expect(addResult).toMatchObject({ ok: true, data: expect.objectContaining({ type: 'task' }) });
+    expect(addResult).toMatchObject({ ok: true, data: { nodeId: 'n1' } });
     expect(exportResult).toMatchObject({ ok: true, data: '{"ok":true}' });
     expect(branchResult).toMatchObject({ ok: true });
-    expect(addEdgeResult).toMatchObject({
-      ok: true,
-      data: expect.objectContaining({ sourcePort: 'out-1', targetPort: 'in-1' }),
+    expect(addEdgeResult).toMatchObject({ ok: true, data: { edgeId: 'e1' } });
+  });
+
+  it('rejects payloads that do not match the published manifest args contract', async () => {
+    const provider = createDesignerActionProvider(createDesignerCore(
+      {
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 },
+      },
+      {
+        version: '1.0.0',
+        kind: 'flow',
+        nodeTypes: [{ id: 'task', label: 'Task', defaults: {} }],
+      },
+    ));
+
+    const addNodeResult = await provider.invoke('addNode', { position: { x: 1, y: 2 } }, {} as any);
+    const toggleResult = await provider.invoke('toggleNodeSelection', { edgeId: 'e1' }, {} as any);
+
+    expect(addNodeResult).toMatchObject({
+      ok: false,
+      error: expect.objectContaining({
+        message: 'designer:addNode payload does not match the published host args contract.',
+      }),
+    });
+    expect(toggleResult).toMatchObject({
+      ok: false,
+      error: expect.objectContaining({
+        message: 'designer:toggleNodeSelection payload does not match the published host args contract.',
+      }),
     });
   });
 
@@ -183,6 +218,16 @@ describe('createDesignerActionProvider', () => {
 
     expect(result.ok).toBe(false);
     expect(result.error).toBe('Edges must connect existing nodes.');
+    expect(result.cause).toEqual(
+      expect.objectContaining({
+        reason: 'missing-node',
+        result: expect.objectContaining({
+          ok: false,
+          reason: 'missing-node',
+          error: 'Edges must connect existing nodes.',
+        }),
+      }),
+    );
     expect(notify).toHaveBeenCalledWith('warning', 'Edges must connect existing nodes.');
   });
 
@@ -294,6 +339,52 @@ describe('flowDesignerRendererDefinitions', () => {
       transitiveInheritance: true,
     });
   });
+
+  it('publishes document prerequisites through schema validation', () => {
+    const registry = createRendererRegistry(flowDesignerRendererDefinitions);
+    const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+
+    const graphDiagnostics = validateSchema({
+      schema: { type: 'designer-page', config: { nodeTypes: [], edgeTypes: [] } } as any,
+      registry,
+      expressionCompiler,
+    });
+    const treeDiagnostics = validateSchema({
+      schema: {
+        type: 'designer-page',
+        config: { documentMode: 'tree', nodeTypes: [], edgeTypes: [] },
+      } as any,
+      registry,
+      expressionCompiler,
+    });
+    const validTreeDiagnostics = validateSchema({
+      schema: {
+        type: 'designer-page',
+        treeDocument: { id: 'tree-1', kind: 'tree', name: 'Tree', version: '1.0.0', nodes: [] },
+        config: { documentMode: 'tree', nodeTypes: [], edgeTypes: [] },
+      } as any,
+      registry,
+      expressionCompiler,
+    });
+
+    expect(graphDiagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'missing-required-field',
+          path: '/document',
+        }),
+      ]),
+    );
+    expect(treeDiagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'missing-required-field',
+          path: '/treeDocument',
+        }),
+      ]),
+    );
+    expect(validTreeDiagnostics).toEqual([]);
+  });
 });
 
 describe('flow-designer manifest', () => {
@@ -321,7 +412,9 @@ describe('flow-designer manifest', () => {
     expect((fields.doc.schema as any).fields.nodes).toBeTruthy();
     expect((fields.doc.schema as any).fields.edges).toBeTruthy();
     expect(fields.activeBranch).toBeTruthy();
-    expect(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods['navigate-back']).toBeTruthy();
+    expect(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods.copySelection).toBeTruthy();
+    expect(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods.pasteClipboard).toBeTruthy();
+    expect(FLOW_DESIGNER_MANIFEST_V1.capabilities.methods['navigate-back']).toBeUndefined();
   });
 
   it('buildDesignerScopeData stays aligned with the published manifest projection', async () => {

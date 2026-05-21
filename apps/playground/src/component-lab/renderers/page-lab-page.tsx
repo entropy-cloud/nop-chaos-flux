@@ -8,7 +8,7 @@ const withTitleAndFooter = {
       type: 'flex',
       body: [
         { type: 'text', text: 'Acme Corp' },
-        { type: 'badge', label: 'v2.4.1', variant: 'secondary' },
+        { type: 'badge', text: 'v2.4.1', level: 'info' },
       ],
     },
   ],
@@ -17,8 +17,8 @@ const withTitleAndFooter = {
     {
       type: 'flex',
       body: [
-        { type: 'badge', label: 'Active Members: 12' },
-        { type: 'badge', label: 'Open Tasks: 5', variant: 'destructive' },
+        { type: 'badge', text: 'Active Members: 12', level: 'success' },
+        { type: 'badge', text: 'Open Tasks: 5', level: 'danger' },
       ],
     },
   ],

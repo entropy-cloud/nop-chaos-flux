@@ -5,6 +5,8 @@ import { compileAction as _compileAction, compileDataSource } from '@nop-chaos/f
 import { createRendererRuntime } from '../index.js';
 import { textRenderer, env } from './test-fixtures.js';
 import { extractScopeData as _extractScopeData, prepareApiData as _prepareApiData } from '../async-data/request-runtime.js';
+import { createDataSourceController } from '../async-data/api-data-source-controller.js';
+import { createApiCacheStore } from '../async-data/api-cache.js';
 
 const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
@@ -204,6 +206,48 @@ describe('async data contracts', () => {
       expect(page.scope.get('payload')).toEqual({ status: 'done' });
 
       registration.dispose();
+    });
+  });
+
+  describe('Phase 2 retained error fidelity regressions', () => {
+    it('preserves failed action results as error causes for action-backed data sources', async () => {
+      const actionResult = {
+        ok: false,
+        attempts: 2,
+        failureCount: 2,
+        providerKind: 'host' as const,
+        data: { code: 'E_SOURCE' },
+      };
+      const runtime = createRendererRuntime({
+        registry: createRendererRegistry([textRenderer]),
+        env,
+        expressionCompiler,
+      });
+      const page = runtime.createPageRuntime({});
+      const controller = createDataSourceController({
+        runtime,
+        apiCache: createApiCacheStore(),
+        asyncGovernance: (runtime as any).asyncGovernance,
+        action: _compileAction({ action: 'custom:load' }, expressionCompiler),
+        scope: page.scope,
+        targetPath: 'payload',
+        dispatch: vi.fn().mockResolvedValue(actionResult),
+      } as any);
+
+      await controller.refresh();
+
+      expect(controller.getState()).toMatchObject({
+        status: 'error',
+        fetchStatus: 'idle',
+        error: expect.objectContaining({
+          message: 'Data source action failed',
+          cause: actionResult,
+        }),
+        failureReason: expect.objectContaining({
+          message: 'Data source action failed',
+          cause: actionResult,
+        }),
+      });
     });
   });
 

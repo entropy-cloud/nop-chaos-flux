@@ -19,7 +19,7 @@ const basicCheckboxGroup = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -47,7 +47,7 @@ const withMinMaxValidation = {
         },
         { type: 'text', text: 'Selected: ${(skills ?? []).join(", ") || "(none)"}' },
       ],
-      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
     },
   ],
 };

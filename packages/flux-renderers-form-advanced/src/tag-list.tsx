@@ -40,7 +40,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
     }
 
     if (currentForm && shouldValidateOn(name, currentForm, 'change')) {
-      void currentForm.validateField(name);
+      void currentForm.validateField(name, 'change');
       return;
     }
 
@@ -86,8 +86,6 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
     <div
       className={cn('nop-tag-list', 'flex flex-wrap gap-2.5', props.meta.className)}
       data-slot="field-control"
-      data-testid={props.meta.testid}
-      data-cid={props.meta.cid}
     >
       {tags.map((tag) => {
         const active = value.includes(tag);
@@ -141,6 +139,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
 
 export const tagListRendererDefinition: RendererDefinition = {
   type: 'tag-list',
+  sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: TagListRenderer,
   wrap: true,
   fields: formFieldRules,

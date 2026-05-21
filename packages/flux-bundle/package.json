@@ -49,7 +49,7 @@
   "scripts": {
     "build": "vite build && node ../../scripts/prepare-flux-bundle-dist.mjs",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint",
     "pack:release": "node ../../scripts/pack-flux-bundle.mjs",
     "check:pack": "node ../../scripts/check-flux-bundle-pack.mjs"

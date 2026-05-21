@@ -16,7 +16,7 @@ const basicInputs = {
         },
         { type: 'input-text', name: 'city', label: 'City', placeholder: 'Optional city' },
       ],
-      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -42,7 +42,7 @@ const constrainedInputs = {
           maxLength: 100,
         },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };

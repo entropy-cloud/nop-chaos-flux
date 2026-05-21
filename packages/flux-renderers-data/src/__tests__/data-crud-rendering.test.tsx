@@ -117,6 +117,32 @@ describe('CRUD renderer', () => {
     expect(screen.getByText(t('flux.common.noData'))).toBeTruthy();
   });
 
+  it('preserves rich empty content through the CRUD to table path', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-rich-empty"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              source: [],
+              columns: [{ name: 'name', label: 'Name' }],
+              empty: { type: 'text', text: 'No rows for ${team}' },
+            },
+          ],
+        }}
+        data={{ team: 'Platform' }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(screen.getByText('No rows for Platform')).toBeTruthy();
+  });
+
   it('renders queryForm through an internal form schema', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);

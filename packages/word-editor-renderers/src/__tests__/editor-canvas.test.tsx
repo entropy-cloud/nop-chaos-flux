@@ -9,6 +9,22 @@ const mockedCore = vi.hoisted(() => ({
     ...value,
     savedAt: '2026-05-02T00:00:00.000Z',
   })),
+  captureDocumentSnapshotMock: vi.fn(() => ({
+    data: {
+      header: [],
+      main: [{ value: 'draft' }],
+      footer: [],
+      charts: [],
+      codes: [],
+    },
+    paperSettings: {
+      width: 595,
+      height: 842,
+      direction: 'vertical',
+      margins: [100, 120, 100, 120],
+    },
+    savedAt: '2026-05-02T00:00:00.000Z',
+  })),
 }));
 
 vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
@@ -16,6 +32,7 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
   return {
     ...actual,
     createSavedDocumentData: mockedCore.createSavedDocumentDataMock,
+    captureDocumentSnapshot: mockedCore.captureDocumentSnapshotMock,
   };
 });
 
@@ -33,6 +50,7 @@ describe('EditorCanvas', () => {
       configurable: true,
     });
     mockedCore.createSavedDocumentDataMock.mockClear();
+    mockedCore.captureDocumentSnapshotMock.mockClear();
   });
 
   afterEach(() => {
@@ -48,7 +66,7 @@ describe('EditorCanvas', () => {
     Reflect.deleteProperty(globalThis, 'localStorage');
   });
 
-  it('autosaves using live charts and codes instead of initial document extras', async () => {
+  it('autosaves from the live canvas snapshot and store-owned paper settings', async () => {
     let onContentChange: (() => void) | undefined;
     const bridge = {
       mount: vi.fn((_container, _editorData, callbacks) => {
@@ -68,6 +86,9 @@ describe('EditorCanvas', () => {
       setSelection: vi.fn(),
       setTotalPages: vi.fn(),
       setScale: vi.fn(),
+      getState: vi.fn(() => ({
+        paperSettings: { width: 1000, height: 700, direction: 'horizontal', margins: [1, 2, 3, 4] },
+      })),
     };
     const autosaveSpy = vi.fn();
 
@@ -92,12 +113,12 @@ describe('EditorCanvas', () => {
     await vi.advanceTimersByTimeAsync(500);
     await Promise.resolve();
 
-    expect(mockedCore.createSavedDocumentDataMock).toHaveBeenCalled();
-    const savedArg = mockedCore.createSavedDocumentDataMock.mock.calls.at(-1)?.[0];
-    expect(savedArg.data.charts).toEqual([{ id: 'live-chart', chartName: 'Live' }]);
-    expect(savedArg.data.codes).toEqual([{ id: 'live-code', codeName: 'Live' }]);
-    expect(savedArg.data.charts).not.toEqual([{ id: 'initial-chart', chartName: 'Initial' }]);
-    expect(savedArg.data.codes).not.toEqual([{ id: 'initial-code', codeName: 'Initial' }]);
+    expect(mockedCore.captureDocumentSnapshotMock).toHaveBeenCalledWith(
+      bridge,
+      expect.objectContaining({
+        paperSettings: { width: 1000, height: 700, direction: 'horizontal', margins: [1, 2, 3, 4] },
+      }),
+    );
     expect(autosaveSpy).toHaveBeenCalledTimes(1);
     expect(editorStore.setDirty).toHaveBeenCalledWith(true);
     expect(editorStore.setDirty.mock.calls.at(-1)).toEqual([true]);
@@ -120,6 +141,9 @@ describe('EditorCanvas', () => {
       setSelection: vi.fn(),
       setTotalPages: vi.fn(),
       setScale: vi.fn(),
+      getState: vi.fn(() => ({
+        paperSettings: { width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] },
+      })),
     };
 
     const { rerender } = render(
@@ -164,6 +188,9 @@ describe('EditorCanvas', () => {
       setSelection: vi.fn(),
       setTotalPages: vi.fn(),
       setScale: vi.fn(),
+      getState: vi.fn(() => ({
+        paperSettings: { width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] },
+      })),
     };
 
     render(
@@ -202,7 +229,7 @@ describe('EditorCanvas', () => {
     );
   });
 
-  it('does not expose watermark-only commands through the persisted autosave snapshot', async () => {
+  it('does not write autosave snapshots directly to localStorage on each content change', async () => {
     let onContentChange: (() => void) | undefined;
     const bridge = {
       mount: vi.fn((_container, _editorData, callbacks) => {
@@ -225,16 +252,18 @@ describe('EditorCanvas', () => {
       setSelection: vi.fn(),
       setTotalPages: vi.fn(),
       setScale: vi.fn(),
+      getState: vi.fn(() => ({
+        paperSettings: { width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] },
+      })),
     };
 
     render(<EditorCanvas editorStore={editorStore as any} bridge={bridge as any} />);
 
-    bridge.command.executeAddWatermark({ data: 'draft' });
     onContentChange?.();
     await vi.advanceTimersByTimeAsync(500);
     await Promise.resolve();
 
-    const savedArg = mockedCore.createSavedDocumentDataMock.mock.calls.at(-1)?.[0];
-    expect(savedArg.data.watermark).toBeUndefined();
+    expect(globalThis.localStorage.setItem).not.toHaveBeenCalled();
+    expect(mockedCore.captureDocumentSnapshotMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -19,6 +19,17 @@ describe('basic renderer static contracts', () => {
     expect(tabs?.propContracts?.orientation?.shape.kind).toBe('union');
   });
 
+  it('publishes tabs component capability contracts for setValue and getValue', () => {
+    const tabs = basicRendererDefinitions.find((definition) => definition.type === 'tabs');
+
+    expect(tabs?.componentCapabilityContracts?.map((item) => item.handle)).toEqual([
+      'setValue',
+      'getValue',
+    ]);
+    expect(tabs?.componentCapabilityContracts?.[0]?.args?.kind).toBe('object');
+    expect(tabs?.componentCapabilityContracts?.[1]?.result?.kind).toBe('string');
+  });
+
   it('registers text tag as a resolved prop field', () => {
     const text = basicRendererDefinitions.find((definition) => definition.type === 'text');
 

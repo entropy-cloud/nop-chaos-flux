@@ -301,6 +301,8 @@ describe('registerReaction dispose race with scheduled microtask', () => {
   it('marks reaction runs as failed when dispatch returns non-cancelled ok:false', async () => {
     const runtime = createRuntime();
     const page = runtime.createPageRuntime({ count: 0 });
+    const monitorError = vi.fn();
+    runtime.env.monitor = { onError: monitorError } as any;
 
     const registration = runtime.registerReaction({
       id: 'failed-reaction-result',
@@ -314,7 +316,12 @@ describe('registerReaction dispose race with scheduled microtask', () => {
         },
         expressionCompiler,
       ),
-      dispatch: vi.fn().mockResolvedValue({ ok: false, error: new Error('reaction failed') }),
+      dispatch: vi.fn().mockResolvedValue({
+        ok: false,
+        attempts: 2,
+        failureCount: 2,
+        providerKind: 'host',
+      }),
     });
 
     try {
@@ -326,6 +333,27 @@ describe('registerReaction dispose race with scheduled microtask', () => {
           .reactions.find((entry) => entry.id === 'failed-reaction-result');
         expect(reaction?.async?.recentRuns.some((run) => run.outcome === 'failed')).toBe(true);
       });
+      expect(monitorError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({
+            message: 'Reaction failed-reaction-result returned ok:false',
+            cause: expect.objectContaining({
+              ok: false,
+              attempts: 2,
+              failureCount: 2,
+              providerKind: 'host',
+            }),
+          }),
+          details: expect.objectContaining({
+            actionResult: expect.objectContaining({
+              ok: false,
+              attempts: 2,
+              failureCount: 2,
+              providerKind: 'host',
+            }),
+          }),
+        }),
+      );
     } finally {
       registration.dispose();
     }

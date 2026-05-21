@@ -214,6 +214,7 @@ export function ReportSpreadsheetCanvas({
       reportRuntimeHostIssue({
         env,
         error,
+        notify: false,
         phase: 'action',
         path: 'report-designer.spreadsheet-canvas',
         details: {

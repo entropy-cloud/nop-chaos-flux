@@ -21,7 +21,7 @@ const singleSelect = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -46,7 +46,7 @@ const inlineOptions = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };

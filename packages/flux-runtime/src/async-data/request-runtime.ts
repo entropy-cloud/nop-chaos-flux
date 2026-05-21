@@ -46,6 +46,21 @@ function normalizeTimeout(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
+function createAbortReasonError(message: string, cause: unknown): Error {
+  return Object.assign(new Error(message, { cause }), { name: 'AbortError' });
+}
+
+function createSupersededRequestAbortReason(requestKey: string): Error {
+  return createAbortReasonError('Request was superseded by a newer request', {
+    reason: 'request-superseded',
+    requestKey,
+  });
+}
+
+function createDisposedRequestAbortReason(): Error {
+  return createAbortReasonError('Request executor was disposed', { reason: 'request-executor-disposed' });
+}
+
 function createApiResponseError(
   response: ApiResponse<unknown>,
   retryMetadata: { attempts: number; failureCount: number; lastFailureReason?: unknown },
@@ -429,7 +444,7 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
       }
 
       if (dedupStrategy === 'cancel-previous' && previousController) {
-        previousController.abort();
+        previousController.abort(createSupersededRequestAbortReason(requestKey));
       }
     }
 
@@ -437,9 +452,9 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
     let detachParentAbortListener: (() => void) | undefined;
     if (options?.signal) {
       if (options.signal.aborted) {
-        controller.abort();
+        controller.abort(options.signal.reason);
       } else {
-        const abortFromParent = () => controller.abort();
+        const abortFromParent = () => controller.abort(options.signal?.reason);
         options.signal.addEventListener('abort', abortFromParent, { once: true });
         detachParentAbortListener = () => {
           options.signal?.removeEventListener('abort', abortFromParent);
@@ -474,7 +489,7 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
 
   executeApiRequest.dispose = () => {
     for (const controller of activeControllers.values()) {
-      controller.abort();
+      controller.abort(createDisposedRequestAbortReason());
     }
 
     activeControllers.clear();

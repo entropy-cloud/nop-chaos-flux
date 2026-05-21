@@ -85,6 +85,7 @@ interface CodeEditorSchema extends BaseSchema {
 ## 8. 事件、动作与组件句柄能力
 
 - `onChange`、`onFocus`、`onBlur` 通过 Flux 事件系统接线。
+- `RendererDefinition` 当前也发布同名 `eventContracts`，并为 `language`、`mode`、`expressionConfig`、`sqlConfig`、fullscreen/theme/layout props 提供 `propContracts`，所以 authoring discovery 面与 live renderer contract 保持一致。
 - `onChange` 在 form context 中应走 `currentForm.setValue(name, newValue)`，无 form 时走 `scope.update(name, newValue)`。
 - 组件可以长期提供局部 imperative capability，但不应演化成 namespaced host action owner。
 
@@ -100,6 +101,7 @@ interface CodeEditorSchema extends BaseSchema {
 - 根节点保留稳定 marker，例如 `nop-code-editor`。
 - 编辑器容器遵循 field-level renderer 的样式契约，不引入工作台级 layout 假设。
 - 全屏能力仍属于组件 feature，不意味着它是平台宿主。
+- fullscreen close button 与 variable-panel copy/insert actions 属于组件内 chrome；当前 live baseline要求这些 action labels 接入现有 `flux.codeEditor` locale 命名空间，而不是继续硬编码英文。
 
 ## 11. 实现拆分建议
 

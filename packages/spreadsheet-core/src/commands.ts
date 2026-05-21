@@ -2,6 +2,7 @@ export type {
   SpreadsheetCommandBase,
   SetActiveSheetCommand,
   SetSelectionCommand,
+  SetViewportCommand,
   SetCellValueCommand,
   SetCellFormulaCommand,
   SetCellStyleCommand,
@@ -75,6 +76,7 @@ export type {
 import type {
   SetActiveSheetCommand,
   SetSelectionCommand,
+  SetViewportCommand,
   SetCellValueCommand,
   SetCellFormulaCommand,
   SetCellStyleCommand,
@@ -146,6 +148,7 @@ import type {
 export type SpreadsheetCommand =
   | SetActiveSheetCommand
   | SetSelectionCommand
+  | SetViewportCommand
   | SetCellValueCommand
   | SetCellFormulaCommand
   | SetCellStyleCommand

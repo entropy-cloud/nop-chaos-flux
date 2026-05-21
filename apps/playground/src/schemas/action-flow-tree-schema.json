@@ -56,7 +56,7 @@
                           "data": {
                             "label": "显示错误",
                             "action": "showToast",
-                            "args": { "message": "保存失败", "variant": "destructive" }
+                            "args": { "message": "保存失败", "level": "error" }
                           }
                         }
                       }

@@ -203,6 +203,53 @@ describe('tree controls source state and picker branches', () => {
     });
   });
 
+  it('renders zero-results state and clears searchable tree query through the clear affordance', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allFormDefs);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-control-source-states.test.tsx#zero-results"
+        schema={
+          {
+            type: 'form',
+            body: [
+              {
+                type: 'tree-select',
+                name: 'departmentId',
+                label: 'Department',
+                searchable: true,
+                options: [
+                  { label: 'Engineering', value: 'eng' },
+                  { label: 'Design', value: 'design' },
+                ],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Department/ }));
+    const search = await screen.findByPlaceholderText('Search Department');
+    fireEvent.change(search, { target: { value: 'zzz' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('No results found')).toBeTruthy();
+      expect(document.querySelector('[data-slot="tree-option-empty"]')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+
+    await waitFor(() => {
+      expect((screen.getByPlaceholderText('Search Department') as HTMLInputElement).value).toBe('');
+      expect(screen.getByRole('treeitem', { name: 'Engineering' })).toBeTruthy();
+      expect(screen.queryByText('No results found')).toBeNull();
+    });
+  });
+
   it('supports clearable tree-select in checkbox mode and renders joined selected labels', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, formStateProbeRenderer]);

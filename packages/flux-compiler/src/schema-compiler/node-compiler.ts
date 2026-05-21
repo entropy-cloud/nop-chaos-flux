@@ -66,6 +66,10 @@ export type CompileSchemaToTemplateNodesFn = (
   depth: number,
 ) => TemplateNode | TemplateNode[];
 
+function isImportSpecCandidate(value: unknown): value is XuiImportSpec {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
 export function createCompileSingleNode(
   expressionCompiler: ExpressionCompiler,
   compileSchemaToTemplateNodes: CompileSchemaToTemplateNodesFn,
@@ -141,7 +145,7 @@ export function createCompileSingleNode(
     const deepNormalizers = DEEP_FIELD_NORMALIZERS[renderer.type] ?? {};
 
     const nodeImports = Array.isArray(fieldInspection.extensions?.['xui:imports'])
-      ? (fieldInspection.extensions?.['xui:imports'] as XuiImportSpec[])
+      ? (fieldInspection.extensions?.['xui:imports'] as unknown[]).filter(isImportSpecCandidate)
       : undefined;
 
     let symbolTable = pushInjectedLocalSymbols(

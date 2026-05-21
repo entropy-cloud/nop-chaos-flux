@@ -10,13 +10,12 @@ export function useCellValueSync(input: {
   readOnly: boolean;
 }) {
   return useCallback(
-    (value: string) => {
+    async (value: string) => {
       if (!input.selectedCell || input.readOnly) {
         return;
       }
 
-      input.setCellValue(value);
-      input.bridge.dispatch({
+      await input.bridge.dispatch({
         type: 'spreadsheet:setCellValue',
         cell: {
           sheetId: input.sheetId,

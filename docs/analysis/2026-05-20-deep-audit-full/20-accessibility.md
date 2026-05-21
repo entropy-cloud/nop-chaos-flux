@@ -194,3 +194,25 @@
 ## 深挖第 2 轮追加
 
 未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度20-01]: 保留 (P2)。`packages/flux-renderers-form/src/renderers/input-number-renderer.tsx:77-99` 仍把真实焦点控件包在 wrapper 内，而 `packages/flux-react/src/field-frame.tsx:187-194` 的 `aria-describedby` / `aria-errormessage` 只会克隆到外层元素，错误说明仍不能稳定关联到实际输入框。
+- [维度20-02]: 保留 (P2)。`packages/flux-renderers-form-advanced/src/tree-control-controllers.ts:271-302` 的 roving tabindex 仍只改 active key，不移动 DOM focus，也未用 `aria-activedescendant` 完成 tree 焦点模型。
+- [维度20-03]: 保留 (P2)。`packages/flux-renderers-data/src/table-renderer/table-body-row-rendering.tsx:140-160` 仍只给交互行加鼠标 `onClick`，没有等价的 Tab 聚焦与 Enter/Space 激活路径。
+- [维度20-04]: 保留 (P1)。`packages/spreadsheet-renderers/src/spreadsheet-grid.tsx:128-131` 仍让 `role="grid"` 使用 `aria-activedescendant` 指向普通 `<td>`，`table-shell.tsx:134-140` 也仍缺少 `gridcell` / row / row/col index 语义。
+- [维度20-05]: 保留 (P2)。`packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-xyflow-node.tsx:159-169,173-181` 仍只在 hover 路径打开默认 toolbar，键盘选中节点后仍无法稳定显露 Edit/Duplicate/Delete 快捷按钮。
+
+## 子项复核结论
+
+- [维度20-01] 至 [维度20-05]: 均成立。复核后仍收敛为三类问题：错误说明未关联真实焦点控件、自定义复合控件缺完整焦点/键盘模型、复杂 designer/grid 控件声明了 ARIA 外形但未完成 owned-element 语义。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                                   | 一句话摘要                                        |
+| ----- | -------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| 20-01 | P2       | `packages/flux-renderers-form/src/renderers/input-number-renderer.tsx:77-99`                           | input-number 错误说明仍未稳定关联到真实焦点控件   |
+| 20-02 | P2       | `packages/flux-renderers-form-advanced/src/tree-control-controllers.ts:271-302`                        | input-tree roving tabindex 仍不移动真实 DOM focus |
+| 20-03 | P2       | `packages/flux-renderers-data/src/table-renderer/table-body-row-rendering.tsx:140-160`                 | table 行级点击动作仍无键盘等价路径                |
+| 20-04 | P1       | `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx:128-131`                                      | spreadsheet grid 仍缺完整 ARIA gridcell/row 语义  |
+| 20-05 | P2       | `packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-xyflow-node.tsx:159-169,173-181` | Flow Designer 节点 toolbar 仍只靠 hover 打开      |

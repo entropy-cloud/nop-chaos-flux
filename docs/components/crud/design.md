@@ -27,6 +27,7 @@
 - 列展示、排序、筛选、选择、展开、分页仍以 `table` 为底层载体。
 - 对话框和抽屉仍由按钮自己通过 action 打开。
 - `crud` 负责的是这些子能力的组合协作和迁移友好 authoring 面。
+- 当前 live baseline 中，`crud.empty` 保持与底层 `table.empty` 相同的 `value-or-region` 契约，不再把 richer empty content 压平成纯文本。
 
 ### 4.2 Operation 列继续由用户声明
 
@@ -168,6 +169,8 @@ clientMode: {
 - table visible-columns / ordered-columns -> 底层 `table` column-settings owner state
 - dialog/drawer 开合 -> 对应 surface owner
 - quick edit 提交 -> 显式 action 或后续表格编辑 owner
+- CRUD 透传给 table 的 `empty` 必须保留 authored React/region 内容；只有调用方自己传入字符串时，live path 才会表现为纯文本空态。
+- CRUD 内部 table 已回到标准 renderer 装配路径；CRUD 自己不再手工伪造 table renderer props，也不再从 raw schema 回填 quick-save contract。
 
 当前 live baseline 中，`crud-renderer.tsx` 不再自己维护另一套 query/column-settings bridge 逻辑：
 
@@ -190,12 +193,14 @@ interface CrudStatusSummary {
   query?: Record<string, unknown>;
   pagination?: { currentPage?: number; pageSize?: number };
   sort?: { column?: string; direction?: 'asc' | 'desc' };
-  filters?: Record<string, unknown>;
+  filters?: Record<string, { filters?: string[]; keyword?: string }>;
   visibleColumnNames?: string[];
 }
 ```
 
 `visibleColumnNames` 的 live baseline 已接线到与内部 `table` 相同的 `columnSettings.toggledColumnsStatePath` / `orderedColumnsStatePath`，因此 CRUD footer/toolbar/statusPath 读取到的是同一份列可见性 owner 结果，而不是 renderer-local 推测值。
+
+`sort` / `filters` 也与内部 `table` 使用同一份 owner DTO：CRUD 不再为相同 `sortStatePath` / `filterStatePath` 发布另一套兼容 shape。
 
 `onQuerySubmit` / `onQueryReset` 的 live payload 也已回到支持中的 semantic contract：它们都会发布带 `type`, `query`, `page`, `pageSize`, `pagination` 的语义事件对象，因此 action handlers 可同时读取 `ActionContext.event` 与同形的 `evaluationBindings`。
 
@@ -244,7 +249,7 @@ interface CrudStatusSummary {
 | 响应式更多列展开        | 已支持    | 已支持基础版：`responsive.mode: 'expand'` 会在低于 `breakpoint` 时把次要列移入 expandable detail row                                                | 已覆盖基础版      |
 | 服务端分页              | 已支持    | 未实现完整请求 owner baseline；当前支持消费上游 source-result object（如 `{ items, total }`）并通过 `onRefresh -> refreshSource` 回到上游请求 owner | 已定义            |
 | 前端一次性加载分页/过滤 | 已支持    | 已支持基础版：`loadDataOnce` / `fetchOnFilter`                                                                                                      | 已覆盖基础版      |
-| quick edit              | 已支持    | 已支持基础版：inline / custom body / local dialog quick-edit + quick save bridge                                                                    | 已覆盖基础版      |
+| quick edit              | 已支持    | 已支持基础版：inline / custom body / local dialog quick-edit + quick save bridge，并在保存中显示可见 saving feedback                                | 已覆盖基础版      |
 | 动态列                  | 已支持    | 部分可通过 source 注入                                                                                                                              | 已覆盖设计入口    |
 | 地址栏同步查询参数      | 已支持    | 未实现，且当前阶段显式 deferred                                                                                                                     | 已定义            |
 

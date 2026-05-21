@@ -22,31 +22,43 @@ export function OverviewTab(props: {
       <article className="ndbg-metric-card">
         <span className="ndbg-metric-label">{t('flux.debugger.events')}</span>
         <strong>{overview.totalEvents}</strong>
-        <span>{paused ? 'stream paused' : 'stream live'}</span>
+        <span>{paused ? t('flux.debugger.streamPaused') : t('flux.debugger.streamLive')}</span>
       </article>
       <article className="ndbg-metric-card">
         <span className="ndbg-metric-label">{t('flux.debugger.latestCompile')}</span>
         <strong>
-          {overview.latestCompile ? formatClock(overview.latestCompile.timestamp) : 'n/a'}
+          {overview.latestCompile
+            ? formatClock(overview.latestCompile.timestamp)
+            : t('flux.debugger.notAvailable')}
         </strong>
-        <span>{overview.latestCompile?.summary ?? 'No compile event yet'}</span>
+        <span>{overview.latestCompile?.summary ?? t('flux.debugger.noCompileEventYet')}</span>
       </article>
       <article className="ndbg-metric-card">
         <span className="ndbg-metric-label">{t('flux.debugger.latestAction')}</span>
         <strong>
-          {overview.latestAction ? formatClock(overview.latestAction.timestamp) : 'n/a'}
+          {overview.latestAction
+            ? formatClock(overview.latestAction.timestamp)
+            : t('flux.debugger.notAvailable')}
         </strong>
-        <span>{overview.latestAction?.summary ?? 'No action event yet'}</span>
+        <span>{overview.latestAction?.summary ?? t('flux.debugger.noActionEventYet')}</span>
       </article>
       <article className="ndbg-metric-card">
         <span className="ndbg-metric-label">{t('flux.debugger.latestApi')}</span>
-        <strong>{overview.latestApi ? formatClock(overview.latestApi.timestamp) : 'n/a'}</strong>
-        <span>{overview.latestApi?.summary ?? 'No API event yet'}</span>
+        <strong>
+          {overview.latestApi
+            ? formatClock(overview.latestApi.timestamp)
+            : t('flux.debugger.notAvailable')}
+        </strong>
+        <span>{overview.latestApi?.summary ?? t('flux.debugger.noApiEventYet')}</span>
       </article>
       <article className="ndbg-metric-card" data-error="">
         <span className="ndbg-metric-label">{t('flux.debugger.errors')}</span>
         <strong>{overview.errorCount}</strong>
-        <span>{overview.errorCount > 0 ? 'Needs attention' : 'No errors recorded'}</span>
+        <span>
+          {overview.errorCount > 0
+            ? t('flux.debugger.needsAttention')
+            : t('flux.debugger.noErrorsRecorded')}
+        </span>
       </article>
       <article className="ndbg-metric-card">
         <span className="ndbg-metric-label">{t('flux.debugger.latestTrace')}</span>
@@ -66,7 +78,7 @@ export function OverviewTab(props: {
           {overview.slowestRenderMs != null
             ? t('flux.debugger.slowestRenderCommit', {
                 ms: overview.slowestRenderMs,
-                suffix: overview.slowestRenderMs > 16 ? ' (slow)' : '',
+                suffix: overview.slowestRenderMs > 16 ? t('flux.debugger.slowSuffix') : '',
               })
             : t('flux.debugger.noRenderCommitEvents')}
         </span>
@@ -79,11 +91,13 @@ export function OverviewTab(props: {
       </article>
       <article className="ndbg-metric-card" data-error={strictMode ? undefined : ''}>
         <span className="ndbg-metric-label">{t('flux.debugger.strictValidation')}</span>
-        <strong>{strictMode ? 'ON' : 'OFF'}</strong>
+        <strong>
+          {strictMode ? t('flux.debugger.strictModeOn') : t('flux.debugger.strictModeOff')}
+        </strong>
         <span>
           {strictMode
-            ? 'Unknown properties generate diagnostics'
-            : 'Unknown properties silently become props'}
+            ? t('flux.debugger.strictModeOnDescription')
+            : t('flux.debugger.strictModeOffDescription')}
         </span>
       </article>
     </div>

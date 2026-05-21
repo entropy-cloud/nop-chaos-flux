@@ -754,7 +754,7 @@
           "action": "designer:save",
           "icon": "save",
           "label": "保存",
-          "variant": "default",
+          "intent": "primary",
           "disabled": "${!isDirty}"
         }
       ]

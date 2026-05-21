@@ -36,6 +36,54 @@ import { runComponentAction, runNamespacedAction, runNamedAction } from './actio
 
 const caughtFailureResults = new WeakSet<ActionResult>();
 
+function createFailureError(message: string, cause?: unknown): Error {
+  const error = new Error(message);
+
+  if (cause !== undefined) {
+    (error as Error & { cause?: unknown }).cause = cause;
+  }
+
+  return error;
+}
+
+function createParallelFailureError(result: ActionResult): Error {
+  if (result.error instanceof Error) {
+    return result.error;
+  }
+
+  const message =
+    typeof result.error === 'string' && result.error.length > 0
+      ? result.error
+      : result.cancelled
+        ? 'Parallel action was cancelled'
+        : result.timedOut
+          ? 'Parallel action timed out'
+          : 'Parallel action failed';
+
+  return createFailureError(message, result);
+}
+
+function hasOwnDefined<T extends object, K extends keyof T>(value: T, key: K): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key) && value[key] !== undefined;
+}
+
+function getFailureMetadata(
+  actionPayload: ActionMonitorPayload,
+  error: unknown,
+): Partial<Pick<ActionResult, 'componentId' | 'componentName' | 'componentType' | 'namespace' | 'sourceScopeId' | 'providerKind'>> {
+  const errorMetadata =
+    error && typeof error === 'object' ? (error as Partial<ActionResult>) : undefined;
+
+  return {
+    componentId: errorMetadata?.componentId ?? actionPayload.componentId,
+    componentName: errorMetadata?.componentName ?? actionPayload.componentName,
+    componentType: errorMetadata?.componentType ?? actionPayload.componentType,
+    namespace: errorMetadata?.namespace ?? actionPayload.namespace,
+    sourceScopeId: errorMetadata?.sourceScopeId ?? actionPayload.sourceScopeId,
+    providerKind: errorMetadata?.providerKind ?? actionPayload.providerKind,
+  };
+}
+
 function mergeAbortSignals(rootSignal: AbortSignal, actionSignal?: AbortSignal): AbortSignal {
   if (!actionSignal || actionSignal === rootSignal) {
     return rootSignal;
@@ -183,8 +231,7 @@ async function runParallelActions(
     (result) => { const cls = classifyActionResult(result); return cls === 'failure' || cls === 'cancelled'; },
   );
   const representativeError =
-    representativeFailure?.error ??
-    (representativeFailure ? new Error('Parallel action failed') : undefined);
+    representativeFailure ? createParallelFailureError(representativeFailure) : undefined;
 
   return finishAction(ctx, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
     ok: results.every((result) => { const cls = classifyActionResult(result); return cls !== 'failure' && cls !== 'cancelled'; }),
@@ -302,9 +349,12 @@ async function runSingleAction(
 
     reportActionError(ctx, error, activeCtx);
 
+    const metadata = getFailureMetadata(actionPayload, error);
+
     const result = {
       ok: false,
       error,
+      ...metadata,
     };
     caughtFailureResults.add(result);
     reportActionEnd(ctx, actionPayload, Date.now() - startedAt, result);
@@ -518,7 +568,7 @@ async function dispatch(
         if (classifyActionResult(previous) === 'failure') {
           previous = {
             ...result,
-            onErrorError: previous.error,
+            onErrorError: hasOwnDefined(previous, 'error') ? previous.error : previous,
           };
         }
       } catch (error) {
@@ -581,7 +631,7 @@ async function dispatch(
     }
 
     if (resultClass === 'failure' && !normalizedAction.control?.continueOnError) {
-      return (previous as { onErrorError?: unknown }).onErrorError !== undefined ? previous : result;
+      return hasOwnDefined(previous, 'onErrorError') ? previous : result;
     }
   }
 

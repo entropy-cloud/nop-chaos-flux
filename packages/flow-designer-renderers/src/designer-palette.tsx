@@ -35,6 +35,7 @@ function resolvePaletteAppearance(nodeType: NodeTypeConfig) {
 }
 
 export function DesignerPaletteContent(props: {
+  classAliases?: Record<string, string>;
   rootProps?: {
     className?: string;
     'data-testid'?: string;
@@ -81,11 +82,11 @@ export function DesignerPaletteContent(props: {
     <div
       className={cn('nop-palette h-full text-foreground', props.rootProps?.className)}
       data-testid={props.rootProps?.['data-testid']}
-      data-cid={props.rootProps?.['data-cid']}
+        data-cid={props.rootProps?.['data-cid']}
     >
       <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-foreground">节点库</div>
+          <div className="text-sm font-semibold text-foreground">{t('flux.flowDesigner.paletteTitle')}</div>
           <div className="text-sm text-muted-foreground">{t('flux.flowDesigner.addNodeHint')}</div>
         </div>
         <div className="flex shrink-0 items-center gap-2 self-start">

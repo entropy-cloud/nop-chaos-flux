@@ -25,7 +25,7 @@ export function createSharedVitestConfig(options: SharedVitestConfigOptions) {
       pool: 'forks',
       maxWorkers: isHappyDOM ? 2 : 4,
       include: ['**/*.{test,spec}.ts', '**/*.{test,spec}.tsx'],
-      exclude: ['**/node_modules/**', '**/.git/**', '**/dist/**'],
+      exclude: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/.stryker-tmp/**'],
       ...(options.coverage ? { coverage: options.coverage } : {}),
     },
   });

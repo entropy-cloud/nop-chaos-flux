@@ -283,3 +283,18 @@ flux-core
 - 本轮人工搜索未发现跨包 `src/` 或 `internal` 私有路径导入
 - 本轮未发现生产依赖循环
 - 本轮未发现缺失 `tsconfig.build.json` 或 `build` 脚本的包
+
+## 维度复核结论
+
+- 独立复核后，维度 01 的零发现结论仍成立；基于 live `packages/*/package.json` 复建的 25 包生产依赖图，未发现 `flux-core` 反向依赖、`flux-react -> renderers`、`*-core -> *-renderers`、`spreadsheet-core -> report-designer-core`，也未发现生产依赖环。
+- 已复核跨包导入面，仍仅见已声明 `exports` 的公开子路径使用（如 `@nop-chaos/flux-react/unstable`、`@nop-chaos/ui/chart`、`@nop-chaos/flux-renderers-form/definitions`、`@nop-chaos/spreadsheet-renderers/canvas-styles.css`）；未见 `@nop-chaos/*/src/*`、`/internal/*` 这类私有路径耦合，因此零发现判断可保留。
+- 已复核包发布/构建基线：25 个包均存在 `tsconfig.build.json` 与 `build` 脚本；JS/TS 入口 `exports` 保持 `types + default`，CSS 子路径导出为已声明的静态资源例外，未构成需上报的边界问题。
+- 残余风险/缺口：本次复核主要覆盖 manifest 生产依赖与静态 import 面；`devDependencies` 级测试/构建耦合未按生产边界上报，后续若 owner 文档收紧跨域 renderer 复用或 `unstable` 子路径政策，需再做一次针对公开子路径的专项复核。
+
+## 子项复核结论
+
+- 维度 01：零发现结论成立，无需进入子项追加复核。
+
+## 最终保留项
+
+- 无。

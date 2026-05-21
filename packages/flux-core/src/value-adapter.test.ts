@@ -154,6 +154,23 @@ describe('value-adapter', () => {
     });
   });
 
+  it('keeps the original ActionResult as the transform failure cause', async () => {
+    const failedResult = {
+      ok: false,
+      data: { attempts: 2, providerKind: 'import' },
+      error: 'boom',
+    };
+    const dispatch = vi.fn(async () => failedResult as any);
+    const adapter = actionAdapter({ action: 'demo:in' }, { action: 'demo:out' }, undefined, dispatch);
+
+    await expect(
+      adapter.in('raw', { name: 'profile', readOnly: false, scope, form: null }),
+    ).rejects.toMatchObject({
+      message: '[flux] transformIn failed: boom',
+      cause: failedResult,
+    });
+  });
+
   it('parses validation result shapes from action data', async () => {
     const dispatch = vi.fn(async () => ({
       ok: true,

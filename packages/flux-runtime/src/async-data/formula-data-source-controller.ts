@@ -89,6 +89,15 @@ export function createFormulaDataSourceController(input: {
     return Object.is(left, right);
   }
 
+  function settleFailure(run: ReturnType<NonNullable<typeof input.asyncGovernance>['beginRun']> | undefined, error: unknown) {
+    if (run && input.asyncGovernance) {
+      input.asyncGovernance.settleRun(run, {
+        outcome: 'failed',
+        error,
+      });
+    }
+  }
+
   function publish(): void {
     if (stopped) {
       return;
@@ -104,48 +113,78 @@ export function createFormulaDataSourceController(input: {
           })
         : undefined;
 
-    updateState((current) => ({
-      ...toNextDataSourceState(current, {
-        fetchStatus: 'fetching',
-        status: typeof current.data === 'undefined' ? 'pending' : current.status,
-        stale: typeof current.data !== 'undefined',
-        error: undefined,
-      }),
-    }));
+    try {
+      updateState((current) => ({
+        ...toNextDataSourceState(current, {
+          fetchStatus: 'fetching',
+          status: typeof current.data === 'undefined' ? 'pending' : current.status,
+          stale: typeof current.data !== 'undefined',
+          error: undefined,
+        }),
+      }));
 
-    const rawValue = dynamicCompiled
-      ? input.runtime.expressionCompiler.evaluateWithState(
-          dynamicCompiled,
-          input.scope,
-          input.runtime.env,
-          runtimeState!,
-        ).value
-      : staticCompiled?.value;
-    const nextValue = applyResultMapping({
-      runtime: input.runtime,
-      scope: input.scope,
-      compiledResultMapping: input.compiledResultMapping,
-      payload: rawValue,
-    });
+      const rawValue = dynamicCompiled
+        ? input.runtime.expressionCompiler.evaluateWithState(
+            dynamicCompiled,
+            input.scope,
+            input.runtime.env,
+            runtimeState!,
+          ).value
+        : staticCompiled?.value;
+      const nextValue = applyResultMapping({
+        runtime: input.runtime,
+        scope: input.scope,
+        compiledResultMapping: input.compiledResultMapping,
+        payload: rawValue,
+      });
 
-    input.onDependenciesChange?.(collectRuntimeDependencies(runtimeState));
+      input.onDependenciesChange?.(collectRuntimeDependencies(runtimeState));
 
-    if (run && input.asyncGovernance && !input.asyncGovernance.isCurrentRun(run)) {
-      input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
-      updateState((current) => current);
-      return;
-    }
+      if (run && input.asyncGovernance && !input.asyncGovernance.isCurrentRun(run)) {
+        input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
+        updateState((current) => current);
+        return;
+      }
 
-    const currentData = state.data;
-    const unchangedValue = valuesEqual(currentData, nextValue);
+      const currentData = state.data;
+      const unchangedValue = valuesEqual(currentData, nextValue);
 
-    if (unchangedValue) {
+      if (unchangedValue) {
+        updateState((current) => ({
+          ...current,
+          status: 'success',
+          fetchStatus: 'idle',
+          stale: false,
+          error: undefined,
+          failureCount: 0,
+          failureReason: undefined,
+        }));
+
+        if (run && input.asyncGovernance) {
+          input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
+          updateState((current) => current);
+        }
+
+        return;
+      }
+
+      writeDataToScope({
+        scope: input.scope,
+        targetPath: input.targetPath,
+        mergeToScope: input.mergeToScope,
+        mergeStrategy: input.mergeStrategy,
+        mergeKey: input.mergeKey,
+        data: nextValue,
+      });
+
       updateState((current) => ({
         ...current,
         status: 'success',
         fetchStatus: 'idle',
         stale: false,
+        data: nextValue,
         error: undefined,
+        dataUpdatedAt: Date.now(),
         failureCount: 0,
         failureReason: undefined,
       }));
@@ -154,34 +193,19 @@ export function createFormulaDataSourceController(input: {
         input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
         updateState((current) => current);
       }
-
-      return;
-    }
-
-    writeDataToScope({
-      scope: input.scope,
-      targetPath: input.targetPath,
-      mergeToScope: input.mergeToScope,
-      mergeStrategy: input.mergeStrategy,
-      mergeKey: input.mergeKey,
-      data: nextValue,
-    });
-
-    updateState((current) => ({
-      ...current,
-      status: 'success',
-      fetchStatus: 'idle',
-      stale: false,
-      data: nextValue,
-      error: undefined,
-      dataUpdatedAt: Date.now(),
-      failureCount: 0,
-      failureReason: undefined,
-    }));
-
-    if (run && input.asyncGovernance) {
-      input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
-      updateState((current) => current);
+    } catch (error) {
+      input.onDependenciesChange?.(undefined);
+      reportPublishFailure(error);
+      settleFailure(run, error);
+      updateState((current) => ({
+        ...current,
+        status: 'error',
+        fetchStatus: 'idle',
+        error,
+        failureCount: current.failureCount + 1,
+        failureReason: error instanceof Error ? error : new Error(String(error), { cause: error }),
+      }));
+      throw error;
     }
   }
 

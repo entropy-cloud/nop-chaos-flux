@@ -386,3 +386,37 @@
 ## 深挖第 5 轮追加
 
 未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度07-01]: 保留 (P1)。`packages/flux-react/src/node-renderer.tsx:182-218` 仍在 `useMemo` 中调用 `runtime.createChildScope()` 创建 import bindings scope，释放依赖后续 `useLayoutEffect`，render-phase runtime mutation 仍成立。
+- [维度07-02]: 保留 (P1)。`packages/flux-react/src/use-node-scopes.ts:42-103` 仍在 `useMemo` 中创建 node-owned `ActionScope` / `ComponentHandleRegistry`，cleanup 仅在 effect 中异步 release/dispose。
+- [维度07-03]: 保留 (P1)。`packages/flux-renderers-basic/src/use-surface-renderer.ts:114-128` 仍无条件在 render/useMemo 中创建 `declarativeScope`，且与 `effectiveOpen` 脱钩；surface closed/unopened 路径下的 scope owner 漂移未收敛。
+- [维度07-04]: 保留 (P1)。`packages/report-designer-renderers/src/page-renderer.tsx` 仍用 React effects 编排 report core 与 spreadsheet core 的双向 document sync；该一致性协议依然定义在 renderer 层而非 domain bridge/core。
+- [维度07-05]: 保留 (P2)。`packages/ui/src/components/ui/carousel.tsx:92-101` 仍注册 `reInit` 和 `select`，cleanup 只 `off('select', onSelect)`，事件集合不对称。
+- [维度07-06]: 保留 (P1)。`packages/flux-react/src/schema-renderer.tsx:224-276` 仍在 render/useMemo 中创建 root `ActionScope` 与 `ComponentHandleRegistry`，仅在 effect cleanup 中 release/dispose。
+- [维度07-07]: 保留 (P1)。`packages/flux-react/src/schema-renderer.tsx:133-162` 仍在 render/useMemo 中创建 `RendererRuntime`、`PageRuntime` 与 root `SurfaceRuntime`，属于 root owner render-phase allocation。
+- [维度07-08]: 保留 (P1)。`packages/flux-renderers-form/src/renderers/form.tsx:158-196` 仍在 render/useMemo 中创建 `FormRuntime`；同时 `packages/flux-runtime/src/runtime-owned-factories.ts:292-321` 只 `ownedFormRuntimes.add(formRuntime)`，没有 per-form release 路径。
+- [维度07-09]: 保留 (P2)。detail draft 路径仍通过 `runtime.createFormRuntime()` 创建草稿 form，而 close/replace/unmount 仅 `dispose()`；runtime-owned form set 仍缺逐个 release，残留 owner 引用问题成立。
+- [维度07-10]: 保留 (P1)。`packages/flux-react/src/node-renderer.tsx:71-77` 仍在 render/useMemo 中创建 import-owned `ActionScope`，而 `packages/flux-runtime/src/runtime-factory.ts:157-173` 表明该 scope 会进入 `ownedActionScopes`；当前 `NodeRenderer` 未见对应 `runtime.releaseActionScope(importOwnedActionScope)`。
+- [维度07-11]: 保留 (P1)。`packages/flux-react/src/workbench/hooks.ts:56-65` 仍在 `useState` initializer 中调用 `runtime.createHostProjectionScope()`，而其内部 `runtime-host-projection-scope.ts:61-64` 立即通过 `createChildScope()` 创建 runtime-owned child scope，render-phase owner creation 仍存在。
+
+## 子项复核结论
+
+- [维度07-01] 至 [维度07-11]: 均成立。复核后仍集中指向同一类问题：runtime-owned scope/runtime/form/surface/host owner 仍在 render phase 创建，或缺 committed release 路径；未见足以从最终汇总中移除的单项。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                | 一句话摘要                                                          |
+| ----- | -------- | ------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 07-01 | P1       | `packages/flux-react/src/node-renderer.tsx:182-218`                 | import bindings scope 仍在 render/useMemo 中创建                    |
+| 07-02 | P1       | `packages/flux-react/src/use-node-scopes.ts:42-103`                 | node-owned ActionScope / ComponentHandleRegistry 仍在 render 中创建 |
+| 07-03 | P1       | `packages/flux-renderers-basic/src/use-surface-renderer.ts:114-128` | surface declarativeScope 仍在 render 中创建且与 open 状态脱钩       |
+| 07-04 | P1       | `packages/report-designer-renderers/src/page-renderer.tsx`          | report↔spreadsheet 一致性协议仍定义在 renderer lifecycle 层         |
+| 07-05 | P2       | `packages/ui/src/components/ui/carousel.tsx:92-101`                 | carousel 事件注册/卸载集合不对称                                    |
+| 07-06 | P1       | `packages/flux-react/src/schema-renderer.tsx:224-276`               | root ActionScope 与 handle registry 仍在 render 中创建              |
+| 07-07 | P1       | `packages/flux-react/src/schema-renderer.tsx:133-162`               | RendererRuntime/PageRuntime/SurfaceRuntime 仍在 render 中创建       |
+| 07-08 | P1       | `packages/flux-renderers-form/src/renderers/form.tsx:158-196`       | FormRuntime 仍在 render 中创建且缺 per-form release                 |
+| 07-09 | P2       | `packages/flux-renderers-form-advanced/src/detail-view`             | detail draft form dispose 仍未从 runtime-owned set 逐个 release     |
+| 07-10 | P1       | `packages/flux-react/src/node-renderer.tsx:71-77`                   | import-owned ActionScope 创建后仍缺显式 release                     |
+| 07-11 | P1       | `packages/flux-react/src/workbench/hooks.ts:56-65`                  | host projection scope 仍在 `useState` initializer 中创建            |

@@ -567,3 +567,127 @@
 - **误报排除**: 这不是合法的 renderer-local UI state，也不是已报告的 table visible/order local defaults。`filterStatePath` 是 CRUD 明确传给 Table 的 scope-owned interaction state，同时 `$crud` / `statusPath` 是 schema-visible projection；该 path 直接影响实际行过滤与外部 schema 读面，属于同一事实源的形状冲突。
 - **参考文档**: `docs/components/table/design.md:46-48`, `docs/components/crud/design.md:163-177`, `docs/components/crud/design.md:179-198`
 - **复核状态**: 未复核
+
+## 深挖第 9 轮追加
+
+### [维度04-12] CRUD/Table 对同一个 `sortStatePath` 支持的 sort DTO 不一致，导致 `$crud.sort` 与实际行排序分裂
+
+- **文件**: `packages/flux-renderers-data/src/crud-renderer-state.ts:63-80,253-257`, `packages/flux-renderers-data/src/table-renderer/use-table-sort.ts:43-58,88-95`, `packages/flux-renderers-data/src/table-renderer/table-data.ts:84-93`, `packages/flux-renderers-data/src/crud-renderer.tsx:236-250`
+- **行号范围**: `crud-renderer-state.ts:63-80,253-257`; `use-table-sort.ts:43-58,88-95`; `table-data.ts:84-93`; `crud-renderer.tsx:236-250`
+- **证据片段**:
+
+  ```ts
+  export function normalizeSort(value: unknown): CrudSortState {
+    const record = toRecord(value);
+    const column =
+      typeof record.column === 'string'
+        ? record.column
+        : typeof record.field === 'string'
+          ? record.field
+          : undefined;
+    const direction =
+      record.direction === 'asc' || record.direction === 'desc'
+        ? record.direction
+        : record.order === 'asc' || record.order === 'desc'
+          ? record.order
+          : undefined;
+  ```
+
+  ```ts
+  const sortState = useScopeSelector(
+    (scopeData) => normalizeSort(getIn(scopeData, sortStatePath)),
+    (a, b) => a.column === b.column && a.direction === b.direction,
+    { paths: [sortStatePath] },
+  );
+  ```
+
+  ```ts
+  const scopeSortState = useScopeSelector(
+    (scopeData) => {
+      if (sortOwnership !== 'scope' || !sortStatePath) {
+        return undefined;
+      }
+
+      const value = getIn(scopeData, sortStatePath) as Record<string, unknown> | undefined;
+      return {
+        column: typeof value?.column === 'string' ? value.column : '',
+        direction:
+          value?.direction === 'asc' || value?.direction === 'desc' ? value.direction : null,
+      } satisfies SortState;
+    },
+  ```
+
+  ```ts
+  if (sortState.column && sortState.direction) {
+    data.sort((a, b) => {
+      const aVal = a.record[sortState.column];
+      const bVal = b.record[sortState.column];
+  ```
+
+  ```ts
+  sortOwnership: 'scope',
+  sortStatePath,
+  filterOwnership: 'scope',
+  filterStatePath,
+  ```
+
+- **严重程度**: P1
+- **现状**: CRUD 的 `useCrudRuntimeState` 对同一个 `sortStatePath` 接受并规范化 `{ field, order }` 与 `{ column, direction }` 两种形状，用于 `$crud.sort` / `statusPath` 摘要；但内部 Table 读取同一个 `sortStatePath` 时只接受 `{ column, direction }`，随后 `processTableData(...)` 也只按 Table 解析出的 `sortState.column/direction` 排序。
+- **风险**: 宿主或初始 scope 写入 `{ field: 'name', order: 'asc' }` 时，`$crud.sort` 会显示 `{ column: 'name', direction: 'asc' }`，但 Table 实际排序状态为空，行顺序不变。schema-visible projection、toolbar/refresh/export 参数和用户看到的表格结果会分裂；用户可能基于 `$crud.sort` 触发导出或刷新，得到“参数已排序、当前表格未排序”的不一致结果。
+- **建议**: 将 sort owner DTO 收敛到唯一 canonical shape。推荐抽出共享 `normalizeSort` 给 CRUD 与 Table 共用，并在 scope-owned path 上写回同一 canonical `{ column, direction }`；或明确只支持 `{ column, direction }`，删除 CRUD 对 `{ field, order }` 的公开支持及测试语义。不要让 `$crud.sort` 与 Table 排序执行路径对同一路径使用不同解析规则。
+- **双状态详情**: 第一份“状态”是 CRUD 公开读面的 `sortState` / `$crud.sort` / `statusPath.sort`，会把 `{ field, order }` 解释为 canonical `{ column, direction }`；第二份“状态”是 Table 的 `SortState`，从同一个 `sortStatePath` 只读取 `column/direction` 并驱动 `processTableData`。两者指向同一个 owner path，但允许的 DTO shape 不一致。
+- **同步失败症状**: 页面 footer 或 toolbar 显示 `sort=name:asc`，但表格仍按原始 source 顺序显示；随后点击列头排序时 Table 写入 `{ column: 'name', direction: 'asc' }`，才与 `$crud.sort` 对齐，表现为同一排序状态在初始/外部写入与用户交互写入之间结果不同。
+- **误报排除**: 这不是重复报告 `[维度04-11]` 的 filter owner shape conflict；本条仅覆盖 `sortStatePath`。也不是合法的 public alias，因为 CRUD 文档声明 pagination/sort/filter/selection 继续通过内部 Table 的 scope-owned state path 收口，而当前 `$crud.sort` 与实际 Table 排序执行读取同一路径却使用不同 shape。
+- **参考文档**: `docs/components/crud/design.md:172-176,179-195`, `docs/components/table/design.md:44-55`
+- **复核状态**: 未复核
+
+## 深挖第 10 轮追加
+
+未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度04-01]: 保留 (P1)。`packages/report-designer-renderers/src/page-renderer.tsx` 确实同时创建 `ReportDesignerCore` 与 `SpreadsheetCore`，并通过双向 `useEffect`/ref 防环同步同一 spreadsheet subtree；而 owner 文档明确要求 `document.spreadsheet` 作为 canonical baseline。
+- [维度04-02]: 保留 (P1)。`buildReportDesignerScopeData()` 在有 `spreadsheetSnapshot` 时直接用其覆盖 `reportDocument/workbook`，但 `report-designer-core.exportDocument()` 仍从 report core 导出，live code 已形成 host 读面与 save/export 读面分裂。
+- [维度04-03]: 降级为 P2。`use-editing.ts` 的确把编辑草稿放在 React state/ref，而 `SpreadsheetRuntimeSnapshot` 预留了 `editing`；但 live core 目前没有完整的 editing command/订阅消费链，现阶段更像 owner contract 未收口，而非已经广泛外溢的双事实源。
+- [维度04-04]: 保留 (P1)。Tree mode 同时维护 React `treeDocument/hasLocalTreeEdits` 与 `DesignerCore` 的 projected `doc`/history `treeDocument`，且 prop sync、命令执行、undo/redo 都在双向回写。
+- [维度04-05]: 降级为 P2。`useNodesState/useEdgesState` 确实让 Xyflow 持有结构副本并先本地应用 change，但 live 代码也持续用 snapshot 回推合并、主要服务交互流畅性；属明确边界违约，严重度低于独立持久化/历史 owner。
+- [维度04-06]: 保留 (P1)。`insertChart/insertCode` 同时写 canvas tag 与 React `charts/codes`，而 autosave/save 又从 bridge 文档正文 + React extras 组装 `SavedDocumentData`；删除/undo/recover 路径下两者没有统一回收或重建机制。
+- [维度04-07]: 保留 (P1)。toolbar `draftState` 先本地显示单元格值/注释，再 fire-and-forget `bridge.dispatch('spreadsheet:setCellValue')`，未等待结果或回滚；这与 spreadsheet core 作为 worksheet owner 的契约直接冲突。
+- [维度04-08]: 保留 (P2)。`report-spreadsheet-canvas.tsx` 确实通过 effect 将 `ssSnapshot.selection` 异步镜像到 `selectionTarget`，而 host scope 同时暴露 `spreadsheet.activeCell/activeRange` 与 `selectionTarget`，存在短窗口冲突。
+- [维度04-09]: 保留 (P1)。纸张设置先写 `editorStore.paperSettings`，再经 `bridge.command.executePaper*` 写 canvas-editor，保存却从 `bridge.getPaperSettings()` 读取；live code 已存在写入端与保存读取端不一致。
+- [维度04-10]: 保留 (P2)。类型与文档都把 `viewport` 归 spreadsheet core，但实际滚动/尺寸只在 `SpreadsheetGrid` 本地 state 中维护，core `viewport` 未接线，属于明确 owner 漂移。
+- [维度04-11]: 保留 (P1)。CRUD 对 `filterStatePath` 直接 `toRecord(...)` 生成 `$crud.filters/statusPath.filters`，Table 同一路径却要求 `{ filters, keyword }` DTO 并驱动实际过滤，live shape 已不一致。
+- [维度04-12]: 保留 (P1)。CRUD `normalizeSort()` 接受 `{ field, order }` 和 `{ column, direction }`，但 Table scope sort 只识别后者；同一 `sortStatePath` 的公开摘要与实际排序执行路径仍未统一。
+
+## 子项复核结论
+
+- [维度04-01]: 成立 (P1)。Report Designer / Spreadsheet 双 core canonical document owner 冲突保留。
+- [维度04-02]: 成立 (P1)。host 读面与 save/export 读面分裂保留。
+- [维度04-03]: 降级保留 (P2)。editing owner contract 未收口，但尚未证明为高概率双事实源故障。
+- [维度04-04]: 成立 (P1)。tree mode React 文档与 core projected doc/history 双 owner 保留。
+- [维度04-05]: 降级保留 (P2)。Xyflow 本地结构副本问题存在，但严重度低于独立持久化 owner。
+- [维度04-06]: 成立 (P1)。Word Editor chart/code 双写 extras 问题保留。
+- [维度04-07]: 成立 (P1)。toolbar draftState 与 worksheet owner 冲突保留。
+- [维度04-08]: 成立 (P2)。selectionTarget 异步镜像短窗口冲突保留。
+- [维度04-09]: 成立 (P1)。paperSettings 写入端与保存读取端不一致保留。
+- [维度04-10]: 成立 (P2)。viewport owner 漂移保留。
+- [维度04-11]: 成立 (P1)。CRUD/Table filter DTO shape 不一致保留。
+- [维度04-12]: 成立 (P1)。CRUD/Table sort DTO shape 不一致保留。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                            | 一句话摘要                                                                           |
+| ----- | -------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 04-01 | P1       | `packages/report-designer-renderers/src/page-renderer.tsx`                      | Report Designer 同时维护 report core 与 spreadsheet core 的 canonical document owner |
+| 04-02 | P1       | `packages/report-designer-renderers/src/host-data.ts`                           | host 读面与 save/export 读面读取不同事实源                                           |
+| 04-03 | P2       | `packages/spreadsheet-renderers/src/use-editing.ts`                             | spreadsheet editing state 降级保留为 owner contract 未收口                           |
+| 04-04 | P1       | `packages/flow-designer-renderers/src/designer-tree-mode.tsx`                   | tree mode 同时维护 React treeDocument 与 DesignerCore history/projected doc          |
+| 04-05 | P2       | `packages/flow-designer-renderers/src/designer-xyflow-canvas`                   | Xyflow 本地结构副本降级保留为交互副本 owner 漂移                                     |
+| 04-06 | P1       | `packages/word-editor-renderers/src/editor-canvas.tsx`                          | Word Editor chart/code 同时写 canvas tags 与 React extras                            |
+| 04-07 | P1       | `packages/spreadsheet-renderers/src/spreadsheet-toolbar/use-toolbar-actions.ts` | toolbar draftState 与 worksheet owner 冲突                                           |
+| 04-08 | P2       | `packages/report-designer-renderers/src/report-spreadsheet-canvas.tsx`          | spreadsheet selection 异步镜像到 selectionTarget 存在短窗口分裂                      |
+| 04-09 | P1       | `packages/word-editor-renderers/src/toolbar/page-controls.tsx`                  | paperSettings 写入 editorStore/canvas，保存却从 bridge 读取另一事实源                |
+| 04-10 | P2       | `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx`                       | viewport 文档/类型归 core，实际仍在 grid 本地 state                                  |
+| 04-11 | P1       | `packages/flux-renderers-data/src/crud-renderer-ownership.ts`                   | CRUD/Table 同一 filterStatePath 使用不同 DTO shape                                   |
+| 04-12 | P1       | `packages/flux-renderers-data/src/crud-renderer-ownership.ts`                   | CRUD/Table 同一 sortStatePath 使用不同 DTO shape                                     |

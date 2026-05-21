@@ -32,6 +32,8 @@ export {
   saveDatasets,
   loadDatasets,
   loadRecoveredState,
+  extractDocChartsFromDocument,
+  extractDocCodesFromDocument,
   normalizeWordDocument,
   normalizeDocCharts,
   normalizeDocCodes,

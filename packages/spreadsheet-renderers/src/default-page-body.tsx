@@ -9,10 +9,31 @@ import { useSpreadsheetInteractions } from './use-spreadsheet-interactions.js';
 const DEFAULT_ROWS = 100;
 const DEFAULT_COLS = 26;
 
-function resolveGridDimensions(config: SpreadsheetConfig | undefined) {
+function resolveGridDimensions(
+  snapshot: SpreadsheetHostSnapshot,
+  config: SpreadsheetConfig | undefined,
+) {
+  const activeSheet = snapshot.activeSheet;
+  const rowIndexes = Object.values(activeSheet?.rows ?? {}).map((row) => row.index);
+  const columnIndexes = Object.values(activeSheet?.columns ?? {}).map((column) => column.index);
+  const cellEntries = Object.values(activeSheet?.cells ?? {});
+  const mergeEntries = activeSheet?.merges ?? [];
+  const lastRowIndex = Math.max(
+    -1,
+    ...rowIndexes,
+    ...cellEntries.map((cell) => cell.row),
+    ...mergeEntries.map((merge) => merge.endRow),
+  );
+  const lastColumnIndex = Math.max(
+    -1,
+    ...columnIndexes,
+    ...cellEntries.map((cell) => cell.col),
+    ...mergeEntries.map((merge) => merge.endCol),
+  );
+
   return {
-    rows: Math.max(DEFAULT_ROWS, 1),
-    cols: Math.max(DEFAULT_COLS, 1),
+    rows: Math.max(DEFAULT_ROWS, lastRowIndex + 1, 1),
+    cols: Math.max(DEFAULT_COLS, lastColumnIndex + 1, 1),
     defaultRowHeight: config?.defaultRowHeight,
     defaultColumnWidth: config?.defaultColumnWidth,
   };
@@ -25,7 +46,7 @@ export function DefaultSpreadsheetPageBody(props: {
   showToolbar: boolean;
 }) {
   const sheetId = props.snapshot.activeSheet?.id ?? props.snapshot.workbook.sheets[0]?.id ?? '';
-  const dimensions = resolveGridDimensions(props.config);
+  const dimensions = resolveGridDimensions(props.snapshot, props.config);
   const interactions = useSpreadsheetInteractions({
     bridge: props.bridge,
     sheetId,
@@ -100,6 +121,7 @@ export function DefaultSpreadsheetPageBody(props: {
     handleFillHandleMouseDown,
     handleFillHandleDoubleClick,
     handleEditValueChange,
+    editSaveState,
     handleEditSave,
     handleEditCancel,
     handleFieldDragOver,
@@ -187,6 +209,7 @@ export function DefaultSpreadsheetPageBody(props: {
         selection={snapshot.selection}
         editingCell={editingCell}
         editValue={editValue}
+        editSaveState={editSaveState}
         fillHandleState={fillHandleState}
         isInRange={isInRange}
         isFillPreview={isFillPreview}

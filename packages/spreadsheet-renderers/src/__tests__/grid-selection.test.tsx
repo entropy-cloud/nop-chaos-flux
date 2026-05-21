@@ -2,6 +2,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
 import {
   createSpreadsheetBridge,
@@ -13,9 +14,60 @@ import * as viewportModule from '../spreadsheet-grid/viewport.js';
 
 afterEach(() => {
   cleanup();
+  resetFluxI18n();
 });
 
 describe('spreadsheet grid selection', () => {
+  it('publishes translated header labels and gridcell semantics', async () => {
+    resetFluxI18n();
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+    await changeLanguage('en-US');
+
+    const documentModel = createEmptyDocument('grid-aria-semantics');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    expect(screen.getByLabelText('Select entire sheet')).toBeTruthy();
+    expect(screen.getByLabelText('Select column B')).toBeTruthy();
+    expect(screen.getByLabelText('Select row 1')).toBeTruthy();
+
+    const firstRow = container.querySelector('tbody tr[role="row"]') as HTMLElement | null;
+    const firstCell = container.querySelector('td[role="gridcell"]') as HTMLElement | null;
+
+    expect(firstRow?.getAttribute('aria-rowindex')).toBe('1');
+    expect(firstCell?.getAttribute('aria-rowindex')).toBe('1');
+    expect(firstCell?.getAttribute('aria-colindex')).toBe('1');
+  });
+
+  it('updates the spreadsheet viewport contract on scroll', async () => {
+    const documentModel = createEmptyDocument('grid-viewport-sync');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const dispatchSpy = vi.spyOn(bridge, 'dispatch');
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const grid = container.querySelector('[role="grid"]') as HTMLElement | null;
+    expect(grid).toBeTruthy();
+
+    Object.defineProperty(grid!, 'scrollTop', { value: 40, writable: true });
+    Object.defineProperty(grid!, 'scrollLeft', { value: 24, writable: true });
+    Object.defineProperty(grid!, 'clientHeight', { value: 600, writable: true });
+    Object.defineProperty(grid!, 'clientWidth', { value: 800, writable: true });
+    fireEvent.scroll(grid!);
+
+    await waitFor(() => {
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'spreadsheet:setViewport',
+          viewport: expect.objectContaining({ scrollX: 24, scrollY: 40, zoom: 1 }),
+        }),
+      );
+    });
+  });
+
   it('shows range highlight while dragging before mouseup', async () => {
     const documentModel = createEmptyDocument('drag-selection-preview');
     const core = createSpreadsheetCore({ document: documentModel });
@@ -79,6 +131,10 @@ describe('spreadsheet grid selection', () => {
   });
 
   it('supports keyboard selection on the corner and column headers', async () => {
+    resetFluxI18n();
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+    await changeLanguage('en-US');
+
     const documentModel = createEmptyDocument('header-keyboard-selection');
     const core = createSpreadsheetCore({ document: documentModel });
     const sheetId = core.getSnapshot().activeSheetId;

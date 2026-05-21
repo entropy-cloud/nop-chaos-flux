@@ -25,6 +25,16 @@ import {
   type OwnedReactionRegistration,
 } from './reaction-runtime-helpers.js';
 
+function toReactionFailureError(result: import('@nop-chaos/flux-core').ActionResult, reactionId: string): Error {
+  if (result.error instanceof Error) {
+    return result.error;
+  }
+
+  const message =
+    result.error == null ? `Reaction ${reactionId} returned ok:false` : String(result.error);
+  return new Error(message, { cause: result });
+}
+
 export interface ReactionRegistration {
   id: string;
   dispose(): void;
@@ -255,14 +265,7 @@ export function registerReaction(input: {
       }
 
       if (!dispatchResult.ok) {
-        const error =
-          dispatchResult.error instanceof Error
-            ? dispatchResult.error
-            : new Error(
-                dispatchResult.error == null
-                  ? `Reaction ${input.id} returned ok:false`
-                  : String(dispatchResult.error),
-              );
+        const error = toReactionFailureError(dispatchResult, input.id);
 
         input.runtime.env.monitor?.onError?.({
           phase: 'action',
@@ -272,6 +275,7 @@ export function registerReaction(input: {
             reactionId: input.id,
             scopeId: input.scope.id,
             changedPaths: changePaths,
+            actionResult: dispatchResult,
           },
         });
         if (run && input.asyncGovernance) {

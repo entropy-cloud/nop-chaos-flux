@@ -564,10 +564,19 @@ describe('createFormComponentHandle', () => {
       data: { name: 'Alice' },
     });
 
+    await expect(
+      handle.capabilities?.invoke('setValue', { value: 'admin' }, actionCtx),
+    ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
+    await expect(
+      handle.capabilities?.invoke('setValues', { values: 'bad-payload' }, actionCtx),
+    ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
+
     expect(form.submit).toHaveBeenCalledWith({ interactionId: '123' });
     expect(form.reset).toHaveBeenCalledWith({ name: 'Bob' });
     expect(form.setValue).toHaveBeenCalledWith('role', 'admin');
     expect(form.setValues).toHaveBeenCalledWith({ active: true });
+    expect(form.setValue).toHaveBeenCalledTimes(1);
+    expect(form.setValues).toHaveBeenCalledTimes(1);
 
     const unsupported = await handle.capabilities?.invoke('unknown', undefined, actionCtx);
     expect(unsupported?.ok).toBe(false);

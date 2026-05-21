@@ -4,7 +4,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { NopDebuggerPanel } from './panel.js';
-import { createSnapshot, createController } from './panel.test.js';
+import { createSnapshot, createController } from './panel.test-support.js';
 import type { NopDebuggerSnapshot } from './types.js';
 
 beforeEach(async () => {

@@ -12,11 +12,14 @@ import {
   DialogTitle,
   Drawer,
   DrawerBody,
+  DrawerClose,
   DrawerContent,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
+  Spinner,
 } from '@nop-chaos/ui';
+import { XIcon } from 'lucide-react';
 
 export interface DetailSurfaceProps {
   open: boolean;
@@ -78,6 +81,7 @@ export function DetailDraftFooter(props: DetailDraftFooterProps) {
         disabled={props.confirming}
         aria-label={props.confirming ? t('flux.form.confirming') : t('flux.common.confirm')}
       >
+        {props.confirming ? <Spinner className="size-4" aria-hidden="true" /> : null}
         {props.confirming ? t('flux.form.confirming') : t('flux.common.confirm')}
       </Button>
     </>
@@ -103,10 +107,17 @@ export function DetailSurface(props: DetailSurfaceProps) {
         onOpenChange={(next) => {
           if (!next) props.onClose();
         }}
-      >
-        <DrawerContent>
-          <DrawerHeader>
+        >
+          <DrawerContent>
+          <DrawerHeader className="flex-row items-start justify-between gap-3">
             <DrawerTitle>{props.title}</DrawerTitle>
+            <DrawerClose
+              render={
+                <Button type="button" variant="ghost" size="icon-sm" aria-label={t('flux.common.close')} />
+              }
+            >
+              <XIcon className="size-4" />
+            </DrawerClose>
           </DrawerHeader>
           <DrawerBody>
             <div data-slot={props.bodySlot}>{props.children}</div>

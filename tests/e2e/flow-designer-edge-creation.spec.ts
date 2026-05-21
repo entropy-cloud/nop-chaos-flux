@@ -30,3 +30,36 @@ test('synthetic connect event updates the live edge count', async ({ page }) => 
   await expect(page.getByText('6 个节点')).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText('7 条连线')).toBeVisible({ timeout: 10_000 });
 });
+
+test('dragging from a real source handle to a real target handle creates a visible edge', async ({ page }) => {
+  await openFlowDesigner(page);
+
+  const edgeCount = page.locator('.react-flow__edge');
+  await expect(edgeCount).toHaveCount(6);
+
+  const sourceHandle = page.getByTestId('designer-handle-source-out-primary').first();
+  const targetHandle = page.getByTestId('designer-handle-target-in-primary').last();
+  await expect(sourceHandle).toBeVisible();
+  await expect(targetHandle).toBeVisible();
+
+  const sourceBox = await sourceHandle.boundingBox();
+  const targetBox = await targetHandle.boundingBox();
+  expect(sourceBox).toBeTruthy();
+  expect(targetBox).toBeTruthy();
+
+  await page.mouse.move(
+    sourceBox!.x + sourceBox!.width / 2,
+    sourceBox!.y + sourceBox!.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    targetBox!.x + targetBox!.width / 2,
+    targetBox!.y + targetBox!.height / 2,
+    { steps: 12 },
+  );
+  await page.mouse.up();
+
+  await expect(edgeCount).toHaveCount(7, { timeout: 10_000 });
+  await expect(page.getByText('7 条连线')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.react-flow__edge').last()).toBeVisible();
+});

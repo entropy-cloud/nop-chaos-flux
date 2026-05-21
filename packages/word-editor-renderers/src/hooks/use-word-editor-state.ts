@@ -194,6 +194,7 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
         setCharts,
         getCodes: () => codes,
         setCodes,
+        getPaperSettings: () => editorStore.getState().paperSettings,
         saveEvent: props.events.onSave,
         onDocumentSaved: handleDocumentSaved,
       }),

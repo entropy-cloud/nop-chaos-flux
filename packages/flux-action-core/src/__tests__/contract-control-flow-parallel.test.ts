@@ -60,6 +60,35 @@ describe('contract: parallel edge cases', () => {
     expect(completed.filter((a) => a === 'setValue')).toHaveLength(2);
   });
 
+  it('parallel failure error keeps the failed child result as cause when the child had no error object', async () => {
+    const failedChild = { ok: false, data: { providerKind: 'host', attempts: 2 } };
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: async (inv) => {
+        if (inv.action === 'showToast') return failedChild as any;
+        return { ok: true, data: inv.action };
+      },
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        parallelNode([
+          actionNode('setValue', { path: 'a', value: 1 }),
+          actionNode('showToast', { message: 'fail' }),
+        ]),
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect((result.error as Error & { cause?: unknown }).cause).toMatchObject({
+      ok: false,
+      data: failedChild.data,
+      error: failedChild,
+    });
+  });
+
   it('parallel with single child succeeds', async () => {
     const adapter = createMockAdapter({
       invokeBuiltInAction: async (inv) => ({ ok: true, data: inv.action }),

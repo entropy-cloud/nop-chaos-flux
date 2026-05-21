@@ -78,7 +78,21 @@ function mockCode(overrides: Partial<DocCode> = {}): DocCode {
 }
 
 function createMinimalEditorStore(): EditorStoreApi {
-  return { setDirty: vi.fn() } as unknown as EditorStoreApi;
+  return {
+    setDirty: vi.fn(),
+    getState: () => ({
+      paperSettings: {
+        width: 595,
+        height: 842,
+        direction: 'vertical',
+        margins: [100, 120, 100, 120],
+      },
+    }),
+  } as unknown as EditorStoreApi;
+}
+
+function defaultPaperSettings() {
+  return { width: 595, height: 842, direction: 'vertical' as const, margins: [100, 120, 100, 120] as [number, number, number, number] };
 }
 
 describe('createWordEditorActionProvider', () => {
@@ -96,6 +110,7 @@ describe('createWordEditorActionProvider', () => {
       setCharts: () => undefined,
       getCodes: () => [mockCode()],
       setCodes: () => undefined,
+      getPaperSettings: defaultPaperSettings,
       saveEvent: async () => ({ ok: false, error: new Error('save failed') }),
     });
 
@@ -117,6 +132,7 @@ describe('createWordEditorActionProvider', () => {
       setCharts: () => undefined,
       getCodes: () => [mockCode()],
       setCodes: () => undefined,
+      getPaperSettings: defaultPaperSettings,
       saveEvent,
       onDocumentSaved,
     });
@@ -142,6 +158,7 @@ describe('createWordEditorActionProvider', () => {
       setCharts: () => undefined,
       getCodes: () => [mockCode()],
       setCodes: () => undefined,
+      getPaperSettings: defaultPaperSettings,
     });
 
     const { captureDocumentSnapshot } = await import('@nop-chaos/word-editor-core');
@@ -169,6 +186,7 @@ describe('createWordEditorActionProvider', () => {
       setCharts: () => undefined,
       getCodes: () => [mockCode()],
       setCodes: () => undefined,
+      getPaperSettings: defaultPaperSettings,
       saveEvent: async () => ({ ok: false, error: new Error('save failed') }),
       onDocumentSaved,
     });
@@ -205,6 +223,7 @@ describe('createWordEditorActionProvider', () => {
       setCharts: () => undefined,
       getCodes: () => [mockCode()],
       setCodes: () => undefined,
+      getPaperSettings: defaultPaperSettings,
       saveEvent,
     });
 
@@ -225,18 +244,21 @@ describe('createWordEditorActionProvider', () => {
       setCharts: () => undefined,
       getCodes: () => [mockCode()],
       setCodes: () => undefined,
+      getPaperSettings: defaultPaperSettings,
       saveEvent: async (): Promise<ActionResult> => ({ ok: true }),
       onDocumentSaved,
     });
     const controller = new AbortController();
-    controller.abort();
+    const abortReason = new Error('user-cancelled');
+    controller.abort(abortReason);
 
     const result = await provider.invoke('save', undefined, {
       signal: controller.signal,
     } as ActionContext);
 
     expect(result.ok).toBe(false);
-    expect((result.error as Error).message).toBe('Word document save was aborted.');
+    expect(result.cancelled).toBe(true);
+    expect(result.error).toBe(abortReason);
     expect(editorStore.setDirty).not.toHaveBeenCalledWith(false);
     expect(onDocumentSaved).not.toHaveBeenCalled();
   });
@@ -251,6 +273,7 @@ describe('createWordEditorActionProvider', () => {
       setCharts: () => undefined,
       getCodes: () => [],
       setCodes: () => undefined,
+      getPaperSettings: defaultPaperSettings,
     });
 
     const result = await provider.invoke('insertChart', {
@@ -277,6 +300,7 @@ describe('createWordEditorActionProvider', () => {
       setCharts: () => undefined,
       getCodes: () => [],
       setCodes: () => undefined,
+      getPaperSettings: defaultPaperSettings,
     });
 
     const result = await provider.invoke('insertCode', {
@@ -289,5 +313,39 @@ describe('createWordEditorActionProvider', () => {
 
     expect(result.ok).toBe(false);
     expect((result.error as Error).message).toBe('insertCode requires a complete code payload.');
+  });
+
+  it('rejects insertChart payloads that violate the published manifest shape', async () => {
+    const bridge = { insertChart: vi.fn() } as unknown as CanvasEditorBridge;
+    const provider = createWordEditorActionProvider({
+      bridge,
+      editorStore: createMinimalEditorStore(),
+      datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
+      getCharts: () => [],
+      setCharts: () => undefined,
+      getCodes: () => [],
+      setCodes: () => undefined,
+      getPaperSettings: defaultPaperSettings,
+    });
+
+    const result = await provider.invoke(
+      'insertChart',
+      {
+        id: 'chart-1',
+        chartName: 'Chart',
+        chartType: 'bar',
+        showChartName: 'yes',
+        datasetId: 'ds',
+        categoryField: 'month',
+        valueField: ['value'],
+      } as unknown as Record<string, unknown>,
+      {} as ActionContext,
+    );
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe(
+      'word-editor:insertChart payload does not match the published host args contract.',
+    );
+    expect(bridge.insertChart).not.toHaveBeenCalled();
   });
 });

@@ -112,6 +112,47 @@ describe('tree controls - UI markers, slots, and collapse/expand', () => {
     expect(screen.getByRole('textbox', { name: 'Search Department' })).toBeTruthy();
   });
 
+  it('moves actual tree focus and aria-activedescendant during keyboard navigation', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-ui-markers.test.tsx#focus"
+        schema={
+          {
+            type: 'form',
+            body: [
+              {
+                type: 'input-tree',
+                name: 'category',
+                label: 'Category',
+                options: [
+                  { label: 'Platform', value: 'platform' },
+                  { label: 'Design', value: 'design' },
+                ],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const tree = document.querySelector('[data-slot="tree-option-items"]') as HTMLElement;
+    const firstItem = screen.getByRole('treeitem', { name: /Platform/ });
+    const secondItem = screen.getByRole('treeitem', { name: /Design/ });
+
+    firstItem.focus();
+    fireEvent.keyDown(firstItem, { key: 'ArrowDown' });
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(secondItem);
+      expect(tree.getAttribute('aria-activedescendant')).toBe(secondItem.id);
+    });
+  });
+
   it('collapses and expands input-tree child nodes via the chevron toggle', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs]);

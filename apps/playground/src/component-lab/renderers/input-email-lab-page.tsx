@@ -15,7 +15,7 @@ const basicEmail = {
           required: true,
         },
       ],
-      actions: [{ type: 'button', label: 'Verify', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Verify', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -37,7 +37,7 @@ const prePopulatedInvalid = {
         },
       ],
       actions: [
-        { type: 'button', label: 'Submit to see validation error', onClick: { action: 'submit' } },
+        { type: 'button', label: 'Submit to see validation error', onClick: { action: 'submitForm' } },
       ],
     },
   ],

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, SchemaInput } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
@@ -11,9 +11,7 @@ import type {
 } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
-import type { ReportInspectorSchema } from './schemas.js';
 import type { ReportInspectorShellSchema } from './types.js';
-import { ReportInspectorRenderer } from './report-designer-inspector.js';
 
 export function ReportInspectorShellRenderer(
   props: RendererComponentProps<ReportInspectorShellSchema>,
@@ -29,15 +27,11 @@ export function ReportInspectorShellRenderer(
   const target = scopeData.selectionTarget as ReportSelectionTarget | undefined;
   const inspector = scopeData.inspector as ReportDesignerRuntimeSnapshot['inspector'] | undefined;
   const inspectorErrorLabel = inspector?.error != null ? String(inspector.error) : undefined;
-  const inspectorProps: RendererComponentProps<ReportInspectorSchema | ReportInspectorShellSchema> = {
-    ...props,
-    meta: {
-      visible: true,
-      hidden: false,
-      disabled: false,
-      changed: false,
-    },
-    props: { ...props.props, body: inspector?.resolvedSchema },
+  const inspectorSchema: SchemaInput = {
+    type: 'report-inspector',
+    body: inspector?.resolvedSchema,
+    emptyLabel: props.props.emptyLabel,
+    noSelectionLabel: props.props.noSelectionLabel,
   };
 
   return (
@@ -68,7 +62,7 @@ export function ReportInspectorShellRenderer(
           <p data-slot="report-designer-empty">{inspectorErrorLabel}</p>
         </div>
       ) : (
-        <ReportInspectorRenderer {...inspectorProps} />
+        (props.helpers.render(inspectorSchema, { pathSuffix: 'inspector' }) as React.ReactNode)
       )}
     </section>
   );

@@ -104,10 +104,10 @@ Note: The DSL layer provides the analysis; the framework layer decides how to us
 
 - `packages/flux-core/src/types/renderer-core.ts` - `RendererDefinition.staticCapable`
 - `packages/flux-core/src/types/node-identity.ts` - `StaticAnalysisResult`, `TemplateNode.staticAnalysis`
-- `packages/flux-compiler/src/schema-compiler.ts` - `computeStaticAnalysis()`
+- `packages/flux-compiler/src/schema-compiler/static-analysis.ts` - `computeStaticAnalysis()`
 - `packages/flux-compiler/src/schema-compiler-static-analysis.test.ts` - Unit tests
 
 ## See Also
 
-- `docs/plans/131-static-analysis-optimization-plan.md` - Implementation plan
+- `docs/archive/plans/131-static-analysis-optimization-plan.md` - Implementation history
 - `docs/experiments/v11-final-design.md` - Original design discussion

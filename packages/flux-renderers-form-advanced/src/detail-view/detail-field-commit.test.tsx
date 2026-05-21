@@ -501,7 +501,7 @@ describe('detail-field renderer commit behavior', () => {
     await waitFor(() =>
       expect(notify).toHaveBeenCalledWith(
         'warning',
-        '[flux] transformIn failed: Error: detail field open failed',
+        '[flux] transformIn failed: detail field open failed',
       ),
     );
     expect(screen.queryByLabelText('Street')).toBeNull();
@@ -557,9 +557,9 @@ describe('detail-field renderer commit behavior', () => {
     await waitFor(() => {
       expect(notify).toHaveBeenCalledWith(
         'warning',
-        '[flux] transformOut failed: Error: detail field confirm failed',
+        '[flux] transformOut failed: detail field confirm failed',
       );
-      expect(screen.getByText('[flux] transformOut failed: Error: detail field confirm failed')).toBeTruthy();
+      expect(screen.getByText('[flux] transformOut failed: detail field confirm failed')).toBeTruthy();
       expect(screen.getByLabelText('Street')).toBeTruthy();
     });
   });

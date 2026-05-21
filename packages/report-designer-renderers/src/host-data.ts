@@ -32,12 +32,36 @@ function getActiveSheet(
   }
 }
 
-function getSpreadsheetSelectionTarget(snapshot: SpreadsheetRuntimeSnapshot) {
-  return snapshot.selection;
-}
-
 function getSpreadsheetActiveSheet(snapshot: SpreadsheetRuntimeSnapshot) {
   return snapshot.document.workbook.sheets.find((sheet) => sheet.id === snapshot.activeSheetId);
+}
+
+function getSpreadsheetSelectionTarget(snapshot: SpreadsheetRuntimeSnapshot) {
+  switch (snapshot.selection.kind) {
+    case 'cell':
+      return snapshot.selection.anchor;
+    case 'range':
+      return snapshot.selection.range;
+    case 'row':
+      return {
+        kind: 'row',
+        sheetId: snapshot.selection.sheetId,
+        rows: snapshot.selection.rows,
+      };
+    case 'column':
+      return {
+        kind: 'column',
+        sheetId: snapshot.selection.sheetId,
+        columns: snapshot.selection.columns,
+      };
+    case 'sheet':
+      return {
+        kind: 'sheet',
+        sheetId: snapshot.selection.sheetId,
+      };
+    default:
+      return undefined;
+  }
 }
 
 function buildSpreadsheetScopeData(snapshot: SpreadsheetRuntimeSnapshot) {
@@ -57,6 +81,7 @@ function buildSpreadsheetScopeData(snapshot: SpreadsheetRuntimeSnapshot) {
       readonly: snapshot.readonly,
       dirty: snapshot.dirty,
       zoom: snapshot.viewport.zoom,
+      viewport: snapshot.viewport,
     },
   };
 }
@@ -134,7 +159,7 @@ export function createHostData(
 }
 
 export function buildReportDesignerScopeData(
-  core: ReportDesignerCore,
+  _core: ReportDesignerCore,
   snapshot: ReportDesignerRuntimeSnapshot,
   spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
 ): Record<string, unknown> {
@@ -142,15 +167,9 @@ export function buildReportDesignerScopeData(
   const spreadsheet = spreadsheetSnapshot
     ? buildSpreadsheetScopeData(spreadsheetSnapshot)
     : undefined;
-  const workbook = spreadsheet?.workbook ?? snapshot.document.spreadsheet.workbook;
-  const activeSheet =
-    spreadsheet?.activeSheet ?? getActiveSheet(snapshot, snapshot.selectionTarget);
-  const runtimeCanUndo = snapshot.canUndo || (spreadsheetSnapshot?.history.canUndo ?? false);
-  const runtimeCanRedo = snapshot.canRedo || (spreadsheetSnapshot?.history.canRedo ?? false);
-  const runtimeDirty = snapshot.dirty || (spreadsheetSnapshot?.dirty ?? false);
-  const reportDocument = spreadsheetSnapshot
-    ? { ...snapshot.document, spreadsheet: spreadsheetSnapshot.document }
-    : snapshot.document;
+  const reportDocument = snapshot.document;
+  const workbook = reportDocument.spreadsheet.workbook;
+  const activeSheet = getActiveSheet(snapshot, snapshot.selectionTarget);
 
   return {
     designer: {
@@ -172,19 +191,21 @@ export function buildReportDesignerScopeData(
       fieldCount,
     },
     runtime: {
-      canUndo: runtimeCanUndo,
-      canRedo: runtimeCanRedo,
+      canUndo: snapshot.canUndo,
+      canRedo: snapshot.canRedo,
       previewRunning: snapshot.preview.running,
       previewMode: snapshot.preview.mode,
-      dirty: runtimeDirty,
+      dirty: snapshot.dirty,
     },
     spreadsheet,
     selectionTarget: snapshot.selectionTarget,
     reportDocument,
     workbook,
     activeSheet,
-    activeCell: spreadsheet?.activeCell,
-    activeRange: spreadsheet?.activeRange,
+    activeCell:
+      snapshot.selectionTarget?.kind === 'cell' ? snapshot.selectionTarget.cell : undefined,
+    activeRange:
+      snapshot.selectionTarget?.kind === 'range' ? snapshot.selectionTarget.range : undefined,
     documentName: snapshot.document.name,
     fieldSources: snapshot.fieldSources,
     fieldCount,

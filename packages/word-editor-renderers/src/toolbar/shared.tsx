@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, Separator } from '@nop-chaos/ui';
 import { cn } from '@nop-chaos/ui';
 
@@ -19,6 +20,8 @@ export function ToolbarButton({
   title,
   label,
 }: ToolbarButtonProps) {
+  const localizedTitle = t(title);
+  const localizedLabel = label ? t(label) : undefined;
   if (label) {
     return (
       <Button
@@ -27,12 +30,12 @@ export function ToolbarButton({
         size="xs"
         onClick={onClick}
         disabled={disabled}
-        title={title}
+        title={localizedTitle}
         aria-pressed={active}
         className={cn('flex-shrink-0', active && 'bg-accent text-accent-foreground')}
       >
         {Icon && <Icon className="w-4 h-4" />}
-        <span>{label}</span>
+        <span>{localizedLabel}</span>
       </Button>
     );
   }
@@ -43,8 +46,8 @@ export function ToolbarButton({
       size="icon-xs"
       onClick={onClick}
       disabled={disabled}
-      title={title}
-      aria-label={title}
+      title={localizedTitle}
+      aria-label={localizedTitle}
       aria-pressed={active}
       className={cn('flex-shrink-0', active && 'bg-accent text-accent-foreground')}
     >

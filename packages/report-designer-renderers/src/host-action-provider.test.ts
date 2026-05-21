@@ -31,6 +31,28 @@ describe('report designer host action provider', () => {
     }
   });
 
+  it('preserves non-Error report-designer failures as error causes', async () => {
+    const structuredError = {
+      code: 'preview-unavailable',
+      message: 'Preview adapter unavailable',
+      providerId: 'preview-host',
+    };
+    const provider = createReportDesignerActionProvider(async () => ({
+      ok: false,
+      changed: false,
+      error: structuredError,
+      data: { code: 'preview-unavailable' },
+    }));
+
+    const result = await provider.invoke('preview', { mode: 'inline' }, {} as any);
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect((result.error as Error).message).toBe('Preview adapter unavailable');
+    expect((result.error as Error).cause).toBe(structuredError);
+    expect(result.data).toEqual({ code: 'preview-unavailable' });
+  });
+
   it('exposes the documented report-designer host methods through listMethods', () => {
     const provider = createReportDesignerActionProvider(async () => ({ ok: true, changed: false }));
 
@@ -63,6 +85,39 @@ describe('report designer host action provider', () => {
     expect(result.ok).toBe(false);
     expect((result.error as Error).message).toBe(
       'report-designer:openInspector payload does not match the published host args contract.',
+    );
+  });
+
+  it('rejects incomplete report selection targets for metadata writes', async () => {
+    const provider = createReportDesignerActionProvider(async () => ({ ok: true, changed: false }));
+
+    const result = await provider.invoke(
+      'updateMeta',
+      { target: { kind: 'row' }, patch: { label: 'x' } },
+      {} as any,
+    );
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe(
+      'report-designer:updateMeta payload does not match the published host args contract.',
+    );
+  });
+
+  it('rejects field drops that target non-cell report selections', async () => {
+    const provider = createReportDesignerActionProvider(async () => ({ ok: true, changed: false }));
+
+    const result = await provider.invoke(
+      'dropFieldToTarget',
+      {
+        field: { type: 'field', sourceId: 'sales', fieldId: 'amount', data: {} },
+        target: { kind: 'workbook' },
+      },
+      {} as any,
+    );
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe(
+      'report-designer:dropFieldToTarget payload does not match the published host args contract.',
     );
   });
 });

@@ -73,6 +73,60 @@ const actionIntentShape = {
   ],
 };
 
+const reportDesignerConfigShape = {
+  kind: 'object' as const,
+  fields: {
+    kind: { kind: 'string' as const },
+    fieldSources: { kind: 'array' as const, item: { kind: 'object' as const, fields: {} } },
+    maxUndoDepth: { kind: 'number' as const },
+    features: {
+      kind: 'object' as const,
+      fields: {
+        fieldPanel: { kind: 'boolean' as const },
+        inspector: { kind: 'boolean' as const },
+        preview: { kind: 'boolean' as const },
+        expressionEditor: { kind: 'boolean' as const },
+        dragFieldToCell: { kind: 'boolean' as const },
+        dragFieldToRange: { kind: 'boolean' as const },
+        customPropertyPanels: { kind: 'boolean' as const },
+      },
+      optional: [
+        'fieldPanel',
+        'inspector',
+        'preview',
+        'expressionEditor',
+        'dragFieldToCell',
+        'dragFieldToRange',
+        'customPropertyPanels',
+      ],
+    },
+    inspector: {
+      kind: 'object' as const,
+      fields: {
+        mode: {
+          kind: 'union' as const,
+          anyOf: [
+            { kind: 'literal' as const, value: 'panel' },
+            { kind: 'literal' as const, value: 'drawer' },
+          ],
+        },
+        body: { kind: 'object' as const, fields: {} },
+        byTarget: { kind: 'object' as const, fields: {} },
+        byProfile: { kind: 'object' as const, fields: {} },
+      },
+      optional: ['mode', 'body', 'byTarget', 'byProfile'],
+    },
+    preview: {
+      kind: 'object' as const,
+      fields: {
+        provider: { kind: 'string' as const },
+      },
+      optional: ['provider'],
+    },
+  },
+  optional: ['kind', 'fieldSources', 'maxUndoDepth', 'features', 'inspector', 'preview'],
+};
+
 function compileToolbarItemsOverride(
   value: unknown,
   context: FieldCompileContext,
@@ -193,7 +247,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
         required: true,
       },
       config: {
-        shape: { kind: 'object', fields: {} },
+        shape: reportDesignerConfigShape,
         displayName: 'Config',
         description: 'Report designer runtime config.',
         editorType: 'object',

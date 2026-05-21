@@ -121,6 +121,7 @@ export function toActionResult(result: import('./designer-command-adapter.js').D
     ok: result.ok,
     data: result.exported ?? result.data,
     error: result.error,
+    cause: result.reason ? { reason: result.reason, result } : undefined,
   };
 }
 

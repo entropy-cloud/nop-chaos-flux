@@ -83,6 +83,8 @@ describe('fieldset collapsible interaction', () => {
     expect(legend.getAttribute('tabindex')).toBe('0');
     expect(legend.getAttribute('aria-expanded')).toBe('false');
     expect(legend.getAttribute('aria-controls')).toBe('42-body');
+    expect(legend.className).toContain('focus-visible:ring-2');
+    expect(legend.className).toContain('focus-visible:ring-ring');
 
     const icon = document.querySelector('[data-slot="fieldset-collapse-icon"]') as SVGElement;
     expect(icon).toBeTruthy();

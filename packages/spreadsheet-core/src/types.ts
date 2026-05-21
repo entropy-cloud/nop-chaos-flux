@@ -257,8 +257,6 @@ export interface SpreadsheetRuntimeSnapshot {
 export interface SpreadsheetConfig {
   defaultRowHeight?: number;
   defaultColumnWidth?: number;
-  minRowHeight?: number;
-  minColumnWidth?: number;
   maxUndoDepth?: number;
 }
 

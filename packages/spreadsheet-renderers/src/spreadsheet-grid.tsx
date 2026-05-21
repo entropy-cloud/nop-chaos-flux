@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SpreadsheetFrozenPane } from '@nop-chaos/spreadsheet-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { ContextMenu, ContextMenuTrigger } from '@nop-chaos/ui';
 import {
   DEFAULT_COL_WIDTH,
@@ -107,8 +108,8 @@ export function SpreadsheetGrid({
     | { axis: 'column'; index: number; size: string }
     | null
   >(null);
-  const [scrollTop, setScrollTop] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const [scrollTop, setScrollTop] = useState(snapshot.runtime.viewport?.scrollY ?? 0);
+  const [scrollLeft, setScrollLeft] = useState(snapshot.runtime.viewport?.scrollX ?? 0);
   const [viewportHeight, setViewportHeight] = useState(600);
   const [viewportWidth, setViewportWidth] = useState(800);
   const keyboardCellRef = useRef<{ row: number; col: number }>(selectedCell ?? { row: 0, col: 0 });
@@ -180,7 +181,28 @@ export function SpreadsheetGrid({
     setScrollLeft(el.scrollLeft);
     if (el.clientHeight !== viewportHeight) setViewportHeight(el.clientHeight);
     if (el.clientWidth !== viewportWidth) setViewportWidth(el.clientWidth);
+    void bridge.dispatch({
+      type: 'spreadsheet:setViewport',
+      viewport: {
+        scrollX: el.scrollLeft,
+        scrollY: el.scrollTop,
+        zoom: snapshot.runtime.zoom,
+      },
+    });
   };
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) {
+      return;
+    }
+    if (el.scrollTop !== scrollTop) {
+      el.scrollTop = scrollTop;
+    }
+    if (el.scrollLeft !== scrollLeft) {
+      el.scrollLeft = scrollLeft;
+    }
+  }, [scrollLeft, scrollTop]);
 
   const offsets = useMemo(
     () =>
@@ -253,7 +275,7 @@ export function SpreadsheetGrid({
         style={{ overflow: 'auto', position: 'relative' }}
         tabIndex={0}
         role="grid"
-        aria-label="Spreadsheet grid"
+        aria-label={t('flux.spreadsheet.gridAriaLabel')}
         aria-activedescendant={viewport.mountedSelectedCellId}
         onScroll={handleScroll}
         onKeyDown={(event) => {

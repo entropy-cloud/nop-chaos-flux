@@ -351,6 +351,7 @@ export function ReportDesignerPageRenderer(
     reportRuntimeHostIssue({
       env,
       error,
+      notify: false,
       phase: 'render',
       path: props.path,
       details: {
@@ -383,6 +384,7 @@ export function ReportDesignerPageRenderer(
       reportRuntimeHostIssue({
         env,
         error,
+        notify: false,
         phase: 'render',
         path: props.path,
         details: {

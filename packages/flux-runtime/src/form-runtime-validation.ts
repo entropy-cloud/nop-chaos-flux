@@ -22,6 +22,10 @@ import { scheduleDebounce } from '@nop-chaos/flux-core';
 import { normalizeRuntimeValidationErrors } from './validation/index.js';
 import { isPathHiddenByOwner } from './form-runtime-field-ops.js';
 import { overlayFieldErrorsWithExternal } from './form-runtime-owner-external-errors.js';
+import {
+  registerAbortSignalController,
+  unregisterAbortSignalController,
+} from './runtime-action-helpers.js';
 
 function shouldValidateHiddenRuntimeRegistration(
   sharedState: FormRuntimeValidationState,
@@ -292,13 +296,15 @@ async function validateCompiledField(
 
     if (options?.signal) {
       if (options.signal.aborted) {
-        validationAbortController.abort();
+        validationAbortController.abort(options.signal.reason);
       } else {
-        const abortValidation = () => validationAbortController?.abort();
+        const abortValidation = () => validationAbortController?.abort(options.signal?.reason);
         options.signal.addEventListener('abort', abortValidation, { once: true });
         detachAbortListener = () => options.signal?.removeEventListener('abort', abortValidation);
       }
     }
+
+    registerAbortSignalController(validationAbortController.signal, validationAbortController);
 
     if (validatingDelay > 0) {
       validatingTimer = setTimeout(() => {
@@ -344,6 +350,10 @@ async function validateCompiledField(
           sharedState.scope,
           validationAbortController?.signal,
         );
+
+        if (validationAbortController?.signal.aborted) {
+          throw VALIDATION_CANCELLED;
+        }
 
         if (asyncError) {
           errors.push(asyncError);
@@ -450,6 +460,10 @@ async function validateCompiledField(
     }
 
     detachAbortListener?.();
+
+    if (validationAbortController) {
+      unregisterAbortSignalController(validationAbortController.signal);
+    }
 
     if (
       validationAbortController &&

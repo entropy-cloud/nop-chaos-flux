@@ -4,10 +4,12 @@ import type { WordDocument } from './template-model.js';
 import type { Dataset } from './dataset-model.js';
 import type { DocChart } from './chart-model.js';
 import type { DocCode } from './code-model.js';
+import type { WordEditorElement } from './canvas-editor-types.js';
 import { createDataColumn, createDataset, validateDataset } from './dataset-model.js';
 import { createDocChart, validateDocChart } from './chart-model.js';
 import { createDocCode, validateDocCode } from './code-model.js';
 import { DEFAULT_PAPER_SETTINGS } from './paper-settings.js';
+import { isTemplateUrl, parseExprFromUrl } from './template-expr.js';
 
 function isNonEmptyStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string' && item.trim());
@@ -209,6 +211,106 @@ function normalizePaperSettings(value: unknown): PaperSettings {
   };
 }
 
+function collectTemplateAttrs(
+  elements: WordEditorElement[] | undefined,
+  tagName: 'nop:chart' | 'nop:code',
+): Record<string, string>[] {
+  if (!Array.isArray(elements)) {
+    return [];
+  }
+
+  const collected: Record<string, string>[] = [];
+  for (const element of elements) {
+    if (!element || typeof element !== 'object' || Array.isArray(element)) {
+      continue;
+    }
+
+    const record = element as Record<string, unknown>;
+    const url = typeof record.url === 'string' ? record.url : null;
+    if (url && isTemplateUrl(url)) {
+      const expr = parseExprFromUrl(url);
+      if (expr?.kind === 'tag-selfclose' && expr.tagName === tagName && expr.attrs) {
+        collected.push(expr.attrs);
+      }
+    }
+
+    const valueList = Array.isArray(record.valueList) ? record.valueList : [];
+    for (const item of valueList) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        continue;
+      }
+      const childUrl = typeof (item as Record<string, unknown>).url === 'string'
+        ? ((item as Record<string, unknown>).url as string)
+        : null;
+      if (!childUrl || !isTemplateUrl(childUrl)) {
+        continue;
+      }
+      const expr = parseExprFromUrl(childUrl);
+      if (expr?.kind === 'tag-selfclose' && expr.tagName === tagName && expr.attrs) {
+        collected.push(expr.attrs);
+      }
+    }
+
+    const nested = Array.isArray(record.children)
+      ? collectTemplateAttrs(record.children as WordEditorElement[], tagName)
+      : [];
+    if (nested.length > 0) {
+      collected.push(...nested);
+    }
+  }
+
+  return collected;
+}
+
+export function extractDocChartsFromDocument(document: {
+  header?: WordEditorElement[];
+  main?: WordEditorElement[];
+  footer?: WordEditorElement[];
+}): DocChart[] {
+  return [document.header, document.main, document.footer]
+    .flatMap((section) => collectTemplateAttrs(section, 'nop:chart'))
+    .map((attrs) => ({
+      id: attrs.id,
+      chartName: attrs.name,
+      chartType: normalizeChartType(attrs.type),
+      showChartName: attrs.showTitle === 'true',
+      datasetId: attrs.dataset,
+      categoryField: attrs.category,
+      valueField:
+        typeof attrs.valueField === 'string'
+          ? attrs.valueField.split(',').map((item) => item.trim()).filter(Boolean)
+          : undefined,
+      seriesField:
+        typeof attrs.seriesField === 'string' && attrs.seriesField.trim().length > 0
+          ? attrs.seriesField.split(',').map((item) => item.trim()).filter(Boolean)
+          : undefined,
+    }))
+    .flatMap((candidate) => {
+      const validation = validateDocChart(candidate);
+      return validation.valid ? [createDocChart(candidate)] : [];
+    });
+}
+
+export function extractDocCodesFromDocument(document: {
+  header?: WordEditorElement[];
+  main?: WordEditorElement[];
+  footer?: WordEditorElement[];
+}): DocCode[] {
+  return [document.header, document.main, document.footer]
+    .flatMap((section) => collectTemplateAttrs(section, 'nop:code'))
+    .map((attrs) => ({
+      id: attrs.id,
+      codeName: attrs.name,
+      codeType: normalizeCodeType(attrs.type),
+      datasetId: attrs.dataset,
+      valueField: attrs.valueField,
+    }))
+    .flatMap((candidate) => {
+      const validation = validateDocCode(candidate);
+      return validation.valid ? [createDocCode(candidate)] : [];
+    });
+}
+
 export function createSavedDocumentData(input: {
   data: WordDocument;
   paperSettings: PaperSettings | null | undefined;
@@ -234,7 +336,7 @@ export function createSavedDocumentData(input: {
 
 export function captureDocumentSnapshot(
   bridge: CanvasEditorBridge,
-  extras?: { charts?: DocChart[]; codes?: DocCode[] },
+  options?: { paperSettings?: PaperSettings | null },
 ): SavedDocumentData {
   let value: ReturnType<CanvasEditorBridge['getValue']>;
   let paperSettings: ReturnType<CanvasEditorBridge['getPaperSettings']>;
@@ -257,10 +359,10 @@ export function captureDocumentSnapshot(
       header: value.data.header ?? [],
       main: value.data.main,
       footer: value.data.footer ?? [],
-      charts: extras?.charts ?? [],
-      codes: extras?.codes ?? [],
+      charts: extractDocChartsFromDocument(value.data),
+      codes: extractDocCodesFromDocument(value.data),
     },
-    paperSettings,
+    paperSettings: options?.paperSettings ?? paperSettings,
   });
 }
 
@@ -283,9 +385,9 @@ export function persistSavedDocument(saved: SavedDocumentData): SavedDocumentDat
 
 export function saveDocument(
   bridge: CanvasEditorBridge,
-  extras?: { charts?: DocChart[]; codes?: DocCode[] },
+  options?: { paperSettings?: PaperSettings | null },
 ): SavedDocumentData {
-  return persistSavedDocument(captureDocumentSnapshot(bridge, extras));
+  return persistSavedDocument(captureDocumentSnapshot(bridge, options));
 }
 
 export function loadDocument(): SavedDocumentData | null {

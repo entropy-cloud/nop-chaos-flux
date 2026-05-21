@@ -94,6 +94,11 @@ Current enablement baseline:
 - `enabled: false` means the debugger controller remains a bounded no-op surface for automation/query APIs, but it must not enable component-registry debug capture or append debugger events.
 - performance-oriented render capture may be controlled separately from general debugger enablement through an explicit host gate such as `capturePerformance`; hosts that only want launcher/panel availability do not need to pay render-event collection cost.
 
+Current panel baseline:
+
+- built-in panel chrome, launcher labels, tooltips, placeholders, and JSON-viewer disclosure labels resolve through the `flux.debugger` locale namespace rather than hardcoded English
+- debugger disclosure and selection triggers use shared `@nop-chaos/ui` button semantics with native button behavior plus `aria-expanded`/content relationships instead of hand-authored `role="button"` widgets
+
 ## Unified Event Model
 
 The debugger event stream includes at least:

@@ -1,4 +1,5 @@
 import type {
+  ApplyExternalErrorsInput,
   CompiledFormValidationModel,
   CompiledValidationNode,
   FieldRegistrationHandle,
@@ -197,6 +198,17 @@ export function createProjectedFormRuntime(
     };
   }
 
+  function mapExternalErrors(input: ApplyExternalErrorsInput): ApplyExternalErrorsInput {
+    return {
+      ...input,
+      errors: input.errors.map((error) => ({
+        ...error,
+        path: options.prefixPath(error.path),
+        ownerPath: error.ownerPath ? options.prefixPath(error.ownerPath) : error.ownerPath,
+      })),
+    };
+  }
+
   const proxy: FormRuntime = {
     ...parentForm,
     get store() {
@@ -246,6 +258,9 @@ export function createProjectedFormRuntime(
         ),
         changedPaths: input.changedPaths?.map((path) => options.prefixPath(path)),
       });
+    },
+    applyExternalErrors(input) {
+      return parentForm.applyExternalErrors(mapExternalErrors(input));
     },
     getField(path) {
       return parentForm.getField(options.prefixPath(path));
@@ -305,6 +320,12 @@ export function createProjectedFormRuntime(
     },
     registerField(registration): FieldRegistrationHandle {
       return parentForm.registerField(mapRegistration(registration));
+    },
+    updateFieldRegistration(registrationId, patch) {
+      parentForm.updateFieldRegistration(registrationId, {
+        ...patch,
+        childPaths: patch.childPaths?.map((path) => mapChildPath(path)),
+      });
     },
     notifyFieldHidden(path, hidden) {
       parentForm.notifyFieldHidden(options.prefixPath(path), hidden);

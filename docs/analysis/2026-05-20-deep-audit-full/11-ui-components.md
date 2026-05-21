@@ -122,3 +122,23 @@
 - **历史模式对应**: calibration pattern 3；保留原因是同文件已存在共享 Button 用法，且 role widget 的语义偏差可被明确定位。
 - **参考文档**: `AGENTS.md` MANDATORY UI Component Usage；`packages/ui/src/index.ts`；`docs/references/deep-audit-calibration-patterns.md` pattern 3。
 - **复核状态**: 未复核
+
+## 维度复核结论
+
+- [维度11-01]: 保留 (P2)。`packages/flux-renderers-data/src/table-renderer/table-header-row.tsx:141-158` 仍用 `span role="button"` 承担排序触发，而同文件过滤菜单已使用 `@nop-chaos/ui` 的 `Button`。
+- [维度11-02]: 保留 (P2)。`packages/nop-debugger/src/panel/network-tab.tsx:34-49` 仍以 `article role="button"` 实现整行 disclosure trigger；虽然 expanded detail 已去掉伪 button role，但主触发器仍是手写 role widget。
+- [维度11-03]: 保留 (P2)。`packages/nop-debugger/src/panel/node-tab.tsx:234-248,340-378` 仍在树项和事件列表上使用 `div/article role="button"`，expanded detail 已是普通内容容器，但主交互语义仍未收敛到共享组件。
+- [维度11-04]: 保留 (P2)。`packages/nop-debugger/src/panel/timeline-tab.tsx:147-159,278-291` 仍用 `article role="button"` 和 `strong role="button"` 承担展开触发；详情内容容器虽非按钮，但 disclosure trigger 仍是手写模式。
+
+## 子项复核结论
+
+- [维度11-01] 至 [维度11-04]: 均成立。复核后仍集中指向可直接替换为 `@nop-chaos/ui` Button/Collapsible 的 disclosure/sort trigger，自定义 role widget 仍在主路径存续。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                           | 一句话摘要                                                   |
+| ----- | -------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| 11-01 | P2       | `packages/flux-renderers-data/src/table-renderer/table-header-row.tsx:141-158` | table 排序触发仍用 `span role="button"`，未用共享 Button     |
+| 11-02 | P2       | `packages/nop-debugger/src/panel/network-tab.tsx:34-49`                        | debugger network row disclosure 仍用 `article role="button"` |
+| 11-03 | P2       | `packages/nop-debugger/src/panel/node-tab.tsx:234-248,340-378`                 | debugger node/event 列表 disclosure 仍用手写 role widget     |
+| 11-04 | P2       | `packages/nop-debugger/src/panel/timeline-tab.tsx:147-159,278-291`             | debugger timeline disclosure trigger 仍未收敛到共享组件      |

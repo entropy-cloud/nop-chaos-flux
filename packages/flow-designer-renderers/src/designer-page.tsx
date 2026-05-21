@@ -49,5 +49,10 @@ export function DesignerCanvasRenderer(props: RendererComponentProps) {
 }
 
 export function DesignerPaletteRenderer(props: RendererComponentProps) {
-  return <DesignerPaletteContent rootProps={getRootMetaProps(props.meta)} />;
+  return (
+    <DesignerPaletteContent
+      classAliases={props.node?.templateNode.classAliasesPlan?.aliases}
+      rootProps={getRootMetaProps(props.meta)}
+    />
+  );
 }

@@ -15,7 +15,7 @@ const withHeaderBodyFooter = {
         { type: 'text', text: 'Role: Administrator' },
         { type: 'text', text: 'Email: alice@example.com' },
       ],
-      footer: [{ type: 'badge', label: 'Active', variant: 'default' }],
+      footer: [{ type: 'badge', text: 'Active', level: 'success' }],
     },
   ],
 };
@@ -31,7 +31,7 @@ const withClassNameCard = {
           className: 'border rounded-lg p-3 bg-[var(--nop-hero-bg)]',
           body: [
             { type: 'text', text: 'Card A' },
-            { type: 'badge', label: 'New', variant: 'secondary' },
+            { type: 'badge', text: 'New', level: 'info' },
           ],
         },
         {
@@ -39,7 +39,7 @@ const withClassNameCard = {
           className: 'border rounded-lg p-3 bg-[var(--nop-hero-bg)]',
           body: [
             { type: 'text', text: 'Card B' },
-            { type: 'badge', label: 'Featured', variant: 'default' },
+            { type: 'badge', text: 'Featured', level: 'success' },
           ],
         },
       ],

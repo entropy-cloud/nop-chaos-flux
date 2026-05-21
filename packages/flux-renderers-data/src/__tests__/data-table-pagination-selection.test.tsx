@@ -309,7 +309,7 @@ describe('dataRendererDefinitions table pagination and selection', () => {
               type: 'table',
               id: 'refreshable-table',
               source: '${tableData ? [tableData] : []}',
-              onRefresh: { action: 'refreshSource', targetId: 'table-source' },
+              onRefresh: { action: 'refreshSource', targetId: 'tableData' },
               columns: [{ label: 'Value', name: 'value' }],
             },
             {

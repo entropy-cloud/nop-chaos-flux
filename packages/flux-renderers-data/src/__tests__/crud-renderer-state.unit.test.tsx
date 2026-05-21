@@ -342,7 +342,7 @@ describe('useCrudRuntimeState', () => {
     expect(runtimeState.queryState).toEqual({ values: { role: 'scope' }, refreshCount: 7 });
     expect(runtimeState.paginationState).toEqual({ currentPage: 2, pageSize: 15 });
     expect(runtimeState.sortState).toEqual({ column: 'scopeField', direction: 'desc' });
-    expect(runtimeState.filterState).toEqual({ status: 'scope' });
+    expect(runtimeState.filterState).toEqual({ status: { filters: ['scope'] } });
     expect(runtimeState.selectedRowKeys).toEqual(['scope-key']);
     expect(update).not.toHaveBeenCalled();
   });
@@ -427,7 +427,7 @@ describe('useCrudRuntimeState', () => {
     expect(runtimeState.queryState).toEqual({ values: { role: 'scope' }, refreshCount: 2 });
     expect(runtimeState.paginationState).toEqual({ currentPage: 3, pageSize: 20 });
     expect(runtimeState.sortState).toEqual({ column: 'scopeField', direction: 'desc' });
-    expect(runtimeState.filterState).toEqual({ status: 'scope' });
+    expect(runtimeState.filterState).toEqual({ status: { filters: ['scope'] } });
     expect(runtimeState.selectedRowKeys).toEqual(['scope-key']);
     expect(update).not.toHaveBeenCalled();
   });

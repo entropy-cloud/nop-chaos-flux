@@ -53,7 +53,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node -e \"const fs=require('fs');fs.rmSync('dist/styles',{recursive:true,force:true});fs.cpSync('src/styles','dist/styles',{recursive:true});\"",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --ignore-pattern \"**/*.d.ts\" --cache --cache-location node_modules/.cache/eslint"
   }
 }

@@ -4,7 +4,7 @@ import type {
   DynamicRendererSchema,
   RendererComponentProps,
 } from '@nop-chaos/flux-core';
-import { cn } from '@nop-chaos/ui';
+import { cn, Spinner } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { asReactNode } from './utils.js';
 
@@ -133,6 +133,23 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
             pathSuffix: `dynamic.${loadActionKey ?? 'schema'}`,
           }),
         )}
+      </div>
+    );
+  }
+
+  if (visibleState.loading) {
+    return (
+      <div
+        className={cn('nop-dynamic-renderer flex flex-col gap-3', props.meta.className)}
+        data-loading=""
+        data-testid={props.meta.testid || undefined}
+        data-cid={props.meta.cid || undefined}
+      >
+        <div data-slot="dynamic-renderer-loading" role="status" aria-live="polite" className="flex items-center gap-2">
+          <Spinner className="size-4" aria-hidden="true" />
+          <span>{t('flux.common.loading')}</span>
+        </div>
+        {asReactNode(props.regions.body?.render())}
       </div>
     );
   }

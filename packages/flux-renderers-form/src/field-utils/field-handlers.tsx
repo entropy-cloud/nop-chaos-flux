@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   getIn,
   reportRuntimeHostIssue,
@@ -13,9 +13,9 @@ import {
   useCurrentFormState,
   useCurrentValidationScope,
   useRenderScope,
+  useRendererRuntime,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import { RuntimeContext } from '@nop-chaos/flux-react/unstable';
 import { shouldValidateOn, shouldValidateOnOwner } from './field-validation.js';
 import { useFieldPresentation } from './field-presentation.js';
 
@@ -164,7 +164,7 @@ export function useFieldHandlers(args: {
 }) {
   const { name, currentForm, scope, toFormValue = identityValue, adapter, adapterContext } = args;
   const currentValidationScope = useCurrentValidationScope();
-  const runtime = useContext(RuntimeContext);
+  const runtime = useRendererRuntime();
   const generationRef = useRef(0);
 
   const handleAsyncFieldError = (error: unknown, operation: string) => {

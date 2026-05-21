@@ -1,13 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetHostSnapshot } from '../bridge.js';
-
-function resolveDraftValue(
-  next: React.SetStateAction<string>,
-  current: string,
-): string {
-  return typeof next === 'function' ? next(current) : next;
-}
 
 export function useSpreadsheetShell(
   snapshot: SpreadsheetHostSnapshot,
@@ -20,59 +13,25 @@ export function useSpreadsheetShell(
     },
     [onLog],
   );
-  const selectedCellSnapshot = useMemo(() => {
-    if (!selectedCell) {
-      return {
-        selectedKey: '',
-        cellValue: '',
-        commentText: '',
-      };
-    }
-
-    const cell = snapshot.activeSheet?.cells?.[cellAddress(selectedCell.row, selectedCell.col)];
-    const comment = cell?.comment;
-    return {
-      selectedKey: `${selectedCell.row}:${selectedCell.col}:${String(cell?.value ?? '')}:${typeof comment === 'string' ? comment : (comment?.text ?? '')}`,
-      cellValue: String(cell?.value ?? ''),
-      commentText: typeof comment === 'string' ? comment : (comment?.text ?? ''),
-    };
-  }, [snapshot.activeSheet, selectedCell]);
-  const [draftState, setDraftState] = useState(() => ({
-    selectedKey: selectedCellSnapshot.selectedKey,
-    cellValue: selectedCellSnapshot.cellValue,
-    commentText: selectedCellSnapshot.commentText,
-  }));
   const gridRef = useRef<HTMLDivElement>(null);
 
-  const cellValue =
-    draftState.selectedKey === selectedCellSnapshot.selectedKey
-      ? draftState.cellValue
-      : selectedCellSnapshot.cellValue;
-  const commentText =
-    draftState.selectedKey === selectedCellSnapshot.selectedKey
-      ? draftState.commentText
-      : selectedCellSnapshot.commentText;
+  const cell = selectedCell
+    ? snapshot.activeSheet?.cells?.[cellAddress(selectedCell.row, selectedCell.col)]
+    : undefined;
+  const comment = cell?.comment;
+  const cellValue = String(cell?.value ?? '');
+  const commentText = typeof comment === 'string' ? comment : (comment?.text ?? '');
 
   const setCellValue = useCallback(
-    (value: React.SetStateAction<string>) => {
-      setDraftState({
-        selectedKey: selectedCellSnapshot.selectedKey,
-        cellValue: resolveDraftValue(value, cellValue),
-        commentText,
-      });
+    (_value: React.SetStateAction<string>) => {
     },
-    [cellValue, commentText, selectedCellSnapshot.selectedKey],
+    [],
   );
 
   const setCommentText = useCallback(
-    (value: React.SetStateAction<string>) => {
-      setDraftState({
-        selectedKey: selectedCellSnapshot.selectedKey,
-        cellValue,
-        commentText: resolveDraftValue(value, commentText),
-      });
+    (_value: React.SetStateAction<string>) => {
     },
-    [cellValue, commentText, selectedCellSnapshot.selectedKey],
+    [],
   );
 
   return {

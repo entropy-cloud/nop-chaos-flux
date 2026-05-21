@@ -42,7 +42,7 @@ const richRecurse = {
           body: [
             { type: 'icon', icon: 'folder-open', size: 14 },
             { type: 'text', text: '${$slot.node.label}' },
-            { type: 'badge', text: 'L${$slot.node.depth ?? 0}', variant: 'secondary' },
+            { type: 'badge', text: 'L${$slot.node.depth ?? 0}', level: 'info' },
           ],
         },
         {

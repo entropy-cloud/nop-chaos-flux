@@ -398,6 +398,8 @@ Shared field chrome lives in `packages/flux-renderers-form/src/renderers/shared/
 
 `schema-compiler-registry.test.ts` no longer imports `@nop-chaos/flux-renderers-data`.
 
+`@nop-chaos/flux-renderers-form` root now keeps an explicit named shared field-extension surface for first-party renderer packages instead of a blanket wildcard export of the entire field-utils barrel. Shared field chrome, validation-trigger helpers, and controller hooks that are intentionally cross-package stay documented and named; additional internal helpers should not re-expand through root `export *` patterns.
+
 Use that area for small repeated presentation primitives such as:
 
 - field labels
@@ -471,6 +473,8 @@ Workbench host families that publish namespaced providers through `ActionScope` 
 - provider adapters own host-command normalization at the package boundary instead of forwarding `Record<string, unknown> + as any` glue into domain cores
 - host command failures surface through top-level `ActionResult.error`
 - any payload returned by the domain core remains available in `ActionResult.data`
+- when a host/core failure is not already an `Error`, provider adapters should preserve the original payload through `Error.cause` instead of flattening it into `String(error)`
+- renderer-owned bridge helpers that must adapt host-specific structured failure context such as Flow Designer command `reason` or create-dialog submit failure results should keep that context reachable through the final `ActionResult.cause` / monitor details rather than dropping it at the bridge boundary
 
 `spreadsheet-renderers` and `report-designer-renderers` now follow this baseline through package-local host action providers, matching the established flow/word host family pattern.
 

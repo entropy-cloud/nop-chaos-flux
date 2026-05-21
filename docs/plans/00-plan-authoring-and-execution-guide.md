@@ -30,7 +30,7 @@
 ## Minimum Rules
 
 1. 写计划前先核对 live repo，再写 `Current Baseline`。
-2. 一个计划只负责一个明确结果面；过宽就拆成新 plan。
+2. 一个计划只负责一个明确结果面；过宽才拆成新 plan。不要把“涉及多个文件 / 多条 finding / 多个 phase”误当成必须拆 plan 的信号。
 3. 必须有 `Goals` 和 `Non-Goals`，因为历史上真正稳定的计划几乎都靠这两段防止 scope drift。
 4. 必须有 plan 级状态、execution-slice 级状态、Closure Gates。
 5. 不要求给 `Purpose`、`Scope`、`Risks` 这类说明段落单独标记完成状态。
@@ -50,6 +50,9 @@
 19. **标记 `completed` 前，必须做一次文本一致性核对。** 至少逐项确认以下五处彼此一致：`Plan Status`、每个 slice 的 `Status`、每个 slice 的 `Exit Criteria`、`Closure Gates`、以及对应 `docs/logs/` 收口记录。任何一处仍显示未完成，都不能把 plan 视为真正关闭。
 20. **已标记 `completed` 的历史计划默认视为历史记录，不因后续规范演进、模板变化、或后续代码演化而主动回写。** 只有在用户明确要求、需要修复事实性错误/损坏链接、或当前活跃计划明确且经用户确认以“修订历史计划文本”为交付物时，才允许修改这类计划。对历史计划的新审计发现，默认记录在新的 analysis / active plan / daily log 中，而不是为了追求模板一致性去重写旧计划。
 21. **避免计划过度拆分。** 不要因为“每条 finding 都能单开 plan”就默认拆到最小粒度。若多条 finding 明显落在同一组件、同一模块、或同一 owner-doc/result surface，且通常会由同一组代码改动、同一组 focused proof、同一组 exit criteria 一起收口，优先合并成一个诚实的 owner plan。只有当合并后会产生多套彼此独立的 closure criteria、owner-doc obligations、或明显不同的 live result surface 时，才继续拆分。反过来，如果一个队列里出现大量 one-finding micro-plan，必须主动复审是否已经 over-split，而不是把“编号更多”误当成“边界更清晰”。
+22. **不要把文件长度或 finding 数量当作默认拆分阈值。** `docs/plans/` 中的单一 owner plan 在 30 KB 左右甚至更大都可以接受，只要它仍然服务同一个结果面，并且读者仍能清楚看懂 baseline、phase 状态、proof 和 closure。真正触发拆分的应是 closure 语义分叉，而不是“文档快到 30 KB”或“已经有很多 bullet”。
+23. **优先在单个 owner plan 内增加 phase / workstream，而不是新增 plan 文件。** 当问题仍属于同一个结果面，但 proof、owner-doc、或代码落点开始变多时，默认先在同一个 plan 里把 phase 写实、把 owner-doc obligations 写清楚、把 exit criteria 写窄。只有当这些 phase 之间已经形成彼此独立的 closure 单元，才升级为多个 plans。
+24. **审计驱动队列默认先合并再拆分。** 对来自 deep-audit、UX audit、adversarial review 的 findings，不要因为来源是逐条编号输出，就直接映射成逐条独立 plan。先判断这些 findings 是否共享同一 owner / 同一组件家族 / 同一验证路径；如果共享，就应先合并成一个 remediation owner plan，再在 plan 内部分 phase 收口。
 
 ## Anti-Slacking Rule
 
@@ -306,6 +309,7 @@ Follow-up:
 7. 如果计划要处理重构热点或大文件治理，先基于 live repo audit 写清当前超大文件清单、目标阈值，以及 closure 时将使用的复核命令；不要只引用旧日志或旧计划里的行数结论。
 8. 为每个 execution item 标记类型：`Fix`、`Decision`、`Proof`、`Follow-up`。如果一个项已经被确认为 live defect 或 contract drift，就不能写成 `Follow-up`。
 9. 如果某个 Phase 改了代码或行为，该 Phase 的 exit criteria 必须列出需要更新的 `docs/architecture/`、`docs/components/` 或 `docs/logs/` 条目；如果不需要 owner-doc 更新，也要显式写出 `No owner-doc update required`。文档更新不是全局收尾工作，而是 Phase 内的工作。`docs/architecture/` 下的文档只写最终设计状态（见 Minimum Rules 第 14 条）。
+10. 当你犹豫“要不要新开一个 successor plan”时，先尝试在当前 owner plan 内新增一个 phase / workstream，并问自己：这样是否已经足够诚实地表达不同 proof 或 owner-doc obligations？如果足够，就不要新增 plan 文件。
 
 ### When Executing
 
@@ -380,3 +384,4 @@ Follow-up:
 
 - 如果读者看完 plan 仍然不知道“这个 feature 什么时候算真正可用”，说明计划可能被切得过碎。
 - 如果计划中的多个 slice 只有全部完成后 feature 才第一次成立，那么默认应把它们放在同一个 owner plan 下，直到 live repo 证据证明需要拆分。
+- 如果你主要是因为“finding 太多”“文件快到 30 KB”“不想让 phase 看起来复杂”而想拆 plan，这通常不是足够的拆分理由；优先把单个 owner plan 写清楚，而不是继续增殖 plan 文件。

@@ -497,8 +497,8 @@ interface DetailViewSchema extends BaseSchema {
 {
   "type": "detail-view",
   "scopePath": "row",
-  "viewer": { "type": "tpl", "tpl": "${value.name}" },
-  "content": { "type": "tpl", "tpl": "${JSON.stringify(value, null, 2)}" }
+  "viewer": { "type": "text", "text": "${value.name}" },
+  "content": { "type": "text", "text": "${JSON.stringify(value, null, 2)}" }
 }
 ```
 
@@ -580,6 +580,9 @@ Current live implementation note:
 - `detail-field` / `detail-view` open and confirm flows use request-token sequencing: a newer open or close/reopen cycle supersedes older async `transformInAction` / `validateValueAction` / `transformOutAction` completions, stale completions are dropped, and any superseded draft form created by an older open is disposed instead of reopening or recommitting stale state
 - opening a newer detail draft also invalidates any older in-flight confirm session before the new draft becomes active, so a stale confirm cannot later close or commit over the newer reopened session
 - closing a detail session also clears owner-local `confirming` state so a completed or superseded confirm cannot leave the next detail session stuck in a perpetual confirming footer
+- `detail-field` / `detail-view` 的 open pending 当前采用 trigger-pending 基线：异步 `transformInAction` 执行期间，trigger 保持原文案和可再次触发的语义，但会显示 spinner 并发布 `aria-busy`，以避免“无响应”错觉。
+- confirm pending 当前采用 surface-footer pending 基线：confirm button 在异步校验/提交期间显示 spinner + confirming text，并阻止重复 confirm。
+- 当 detail surface 采用 drawer 模式时，header 还需要提供稳定可见的 close affordance；该入口与 footer close/cancel 共享同一 close 语义。
 
 ### Scope Recommendation
 
@@ -622,8 +625,8 @@ Current live implementation note:
   "name": "submitAction",
   "xui:imports": [{ "from": "@tenant/acme-action-graph", "as": "actionGraph" }],
   "viewer": {
-    "type": "tpl",
-    "tpl": "${value?.action || '未设置'}"
+    "type": "text",
+    "text": "${value?.action || '未设置'}"
   },
   "content": {
     "type": "designer-page",
@@ -660,15 +663,15 @@ scope/detail 模式也可以使用同样的值适配动作，只是 owner 不再
   "readOnly": true,
   "scopePath": "record",
   "viewer": {
-    "type": "tpl",
-    "tpl": "${value.name}"
+    "type": "text",
+    "text": "${value.name}"
   },
   "content": {
     "type": "container",
     "body": [
-      { "type": "tpl", "tpl": "Name: ${value.name}" },
-      { "type": "tpl", "tpl": "Status: ${value.status}" },
-      { "type": "tpl", "tpl": "Owner: ${value.owner}" }
+      { "type": "text", "text": "Name: ${value.name}" },
+      { "type": "text", "text": "Status: ${value.status}" },
+      { "type": "text", "text": "Owner: ${value.owner}" }
     ]
   },
   "surface": {
@@ -685,8 +688,8 @@ scope/detail 模式也可以使用同样的值适配动作，只是 owner 不再
   "type": "detail-view",
   "scopePath": "record",
   "viewer": {
-    "type": "tpl",
-    "tpl": "${value.name}"
+    "type": "text",
+    "text": "${value.name}"
   },
   "content": {
     "type": "form",
@@ -727,12 +730,12 @@ scope/detail 模式也可以使用同样的值适配动作，只是 owner 不再
   "name": "description",
   "readOnly": true,
   "viewer": {
-    "type": "tpl",
-    "tpl": "${String(value || '').slice(0, 100)}"
+    "type": "text",
+    "text": "${String(value || '').slice(0, 100)}"
   },
   "content": {
-    "type": "tpl",
-    "tpl": "${value}"
+    "type": "text",
+    "text": "${value}"
   },
   "surface": {
     "mode": "drawer",

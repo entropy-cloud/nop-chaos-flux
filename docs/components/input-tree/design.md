@@ -85,6 +85,14 @@ interface InputTreeSchema extends InputSchema {
 - 远程加载、搜索请求与缓存仍应遵循统一 source/API 语义
 - 节点 children 默认读取 `childrenKey`
 
+### Searchable Baseline
+
+- 当 `searchable=true` 时，`input-tree` 的本地 query 属于 renderer-local UI state，不进入表单值。
+- query 非空时，搜索框旁必须提供稳定可发现的 clear affordance；pointer 与键盘都可回到空查询状态。
+- query 命中为空时，树面板必须渲染明确的 zero-results empty state，而不是留白。
+- zero-results empty state 只表达当前 query 未命中，不改变原始 `options`、字段值或展开 owner。清空 query 后列表恢复到当前 live options。
+- roving focus 的 live baseline 现已要求同步真实 DOM focus 与 `aria-activedescendant`：方向键/Home/End 移动后，屏幕阅读器焦点必须跟随当前 active treeitem，而不是只改本地 active key 状态。
+
 ## 10. 结论
 
 - `input-tree` 应作为独立 form field family 保留

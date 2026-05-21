@@ -11,10 +11,10 @@
 
 ## Current Baseline
 
-- lifecycle actions 会 compile/run，但不经过等价 shape validation。
-- `RendererPropContract.required` 公开为 authoring contract，却没有缺失字段校验。
-- `reaction` 仅校验 `actions`，不校验 `watch` 与 control fields。
-- built-in `ajax` action contract 声明 `args: ApiSchema`，但 validation 仍按 generic action object 处理。
+- live compiler validation 已覆盖 lifecycle actions 的 shape validation。
+- `RendererPropContract.required` 缺失字段现在会在 schema validation 时报错。
+- `reaction` 当前已校验 `watch`、control fields、以及 `actions`。
+- built-in `ajax` action 的 `args: ApiSchema` 当前已按专门 shape validation 处理。
 
 ## Goals
 

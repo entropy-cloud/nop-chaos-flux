@@ -27,7 +27,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "set NODE_OPTIONS=--max-old-space-size=8192 && vitest run --passWithNoTests",
+    "test": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
   },
   "devDependencies": {

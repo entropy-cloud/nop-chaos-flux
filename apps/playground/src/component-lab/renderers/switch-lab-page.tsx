@@ -14,7 +14,7 @@ const basicSwitch = {
         },
         { type: 'text', text: 'Feature is: ${enabled ? "ON" : "OFF"}' },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -45,7 +45,7 @@ const multiSwitch = {
           description: 'Help improve the product by sharing usage data.',
         },
       ],
-      actions: [{ type: 'button', label: 'Save Preferences', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save Preferences', onClick: { action: 'submitForm' } }],
     },
   ],
 };

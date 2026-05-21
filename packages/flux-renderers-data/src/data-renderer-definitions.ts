@@ -105,6 +105,35 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         defaultValue: 'local',
       },
     },
+    componentCapabilityContracts: [
+      {
+        handle: 'refresh',
+        displayName: 'Refresh',
+        description: 'Refresh the current table view and return its pagination snapshot.',
+        result: {
+          kind: 'object',
+          fields: {
+            page: { kind: 'number' },
+            pageSize: { kind: 'number' },
+          },
+        },
+      },
+      {
+        handle: 'getSelection',
+        displayName: 'Get Selection',
+        description: 'Return the currently selected row keys.',
+        result: { kind: 'array', item: { kind: 'string' } },
+      },
+      {
+        handle: 'setSelection',
+        displayName: 'Set Selection',
+        description: 'Replace the current table selection and return the applied row keys.',
+        args: {
+          kind: 'unknown',
+        },
+        result: { kind: 'array', item: { kind: 'string' } },
+      },
+    ],
     fields: [
       { key: 'source', kind: 'prop' },
       { key: 'rowKey', kind: 'prop' },
@@ -129,8 +158,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'pagination', kind: 'prop' },
       { key: 'rowSelection', kind: 'prop' },
       { key: 'expandable', kind: 'prop' },
-      { key: 'quickSaveAction', kind: 'event' },
-      { key: 'quickSaveItemAction', kind: 'event' },
+      { key: 'quickSaveAction', kind: 'prop' },
+      { key: 'quickSaveItemAction', kind: 'prop' },
       { key: 'onRowClick', kind: 'event' },
       { key: 'onSortChange', kind: 'event' },
       { key: 'onFilterChange', kind: 'event' },
@@ -154,6 +183,13 @@ export const dataRendererDefinitions: RendererDefinition[] = [
     category: 'data',
     sourcePackage: '@nop-chaos/flux-renderers-data',
     component: LazyChartRenderer,
+    componentCapabilityContracts: [
+      {
+        handle: 'resize',
+        displayName: 'Resize',
+        description: 'Request the current chart instance to recompute its layout.',
+      },
+    ],
     fields: [
       { key: 'source', kind: 'prop' },
       { key: 'series', kind: 'prop' },

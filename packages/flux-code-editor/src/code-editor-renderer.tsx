@@ -1,7 +1,9 @@
 import './code-editor-styles.css';
 import { useEffect, useMemo, useState } from 'react';
 import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { resolveRendererSlotContent, useRenderScope } from '@nop-chaos/flux-react';
+import { formFieldChromeRules } from '@nop-chaos/flux-renderers-form';
 import { cn } from '@nop-chaos/ui';
 import { Maximize2Icon, XIcon } from 'lucide-react';
 import { ToolbarButton } from './code-editor-renderer/toolbar-button.js';
@@ -30,6 +32,7 @@ import { useCodeMirror } from './use-code-mirror.js';
 
 export const codeEditorFieldRules: SchemaFieldRule[] = [
   { key: 'label', kind: 'value-or-region', regionKey: 'label' },
+  ...formFieldChromeRules,
   { key: 'value', kind: 'prop' },
   { key: 'language', kind: 'prop' },
   { key: 'mode', kind: 'prop' },
@@ -171,7 +174,8 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
           <ToolbarButton
             data-slot="code-editor-header-close"
             onClick={() => setIsFullscreen(false)}
-            aria-label="Exit fullscreen"
+            aria-label={t('flux.codeEditor.exitFullscreen')}
+            title={t('flux.codeEditor.exitFullscreen')}
           >
             <XIcon />
           </ToolbarButton>
@@ -185,8 +189,8 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
           <ToolbarButton
             data-slot="code-editor-toolbar-fullscreen"
             onClick={toggleFullscreen}
-            aria-label="Enter fullscreen"
-            title="Fullscreen"
+            aria-label={t('flux.codeEditor.enterFullscreen')}
+            title={t('flux.codeEditor.fullscreen')}
           >
             <Maximize2Icon />
           </ToolbarButton>
@@ -203,6 +207,109 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
 export const codeEditorRendererDefinition: RendererDefinition = {
   type: 'code-editor',
   component: CodeEditorRenderer,
+  sourcePackage: '@nop-chaos/flux-code-editor',
+  propContracts: {
+    language: {
+      shape: { kind: 'string' },
+      displayName: 'Language',
+      description: 'Code editor language mode.',
+      editorType: 'select',
+      required: true,
+    },
+    mode: {
+      shape: { kind: 'string' },
+      displayName: 'Mode',
+      description: 'Optional editor mode override such as template mode.',
+      editorType: 'text',
+    },
+    value: {
+      shape: { kind: 'string' },
+      displayName: 'Value',
+      description: 'Initial or controlled editor text value.',
+      editorType: 'textarea',
+    },
+    placeholder: {
+      shape: { kind: 'string' },
+      displayName: 'Placeholder',
+      description: 'Placeholder shown when the editor is empty.',
+      editorType: 'text',
+    },
+    expressionConfig: {
+      shape: { kind: 'object', fields: {} },
+      displayName: 'Expression Config',
+      description: 'Expression-mode variables, functions, and lint settings.',
+      editorType: 'object',
+    },
+    sqlConfig: {
+      shape: { kind: 'object', fields: {} },
+      displayName: 'SQL Config',
+      description: 'SQL-mode tables, dialect, snippets, variables, and preview settings.',
+      editorType: 'object',
+    },
+    lineNumbers: {
+      shape: { kind: 'boolean' },
+      displayName: 'Line Numbers',
+      description: 'Whether to show line numbers.',
+      editorType: 'boolean',
+    },
+    folding: {
+      shape: { kind: 'boolean' },
+      displayName: 'Folding',
+      description: 'Whether code folding affordances are enabled.',
+      editorType: 'boolean',
+    },
+    autoHeight: {
+      shape: { kind: 'boolean' },
+      displayName: 'Auto Height',
+      description: 'Whether the editor grows with its content.',
+      editorType: 'boolean',
+    },
+    allowFullscreen: {
+      shape: { kind: 'boolean' },
+      displayName: 'Allow Fullscreen',
+      description: 'Whether the editor exposes fullscreen controls.',
+      editorType: 'boolean',
+    },
+    editorTheme: {
+      shape: { kind: 'string' },
+      displayName: 'Editor Theme',
+      description: 'Editor color theme.',
+      editorType: 'select',
+    },
+    options: {
+      shape: { kind: 'object', fields: {} },
+      displayName: 'Options',
+      description: 'Additional editor options bag.',
+      editorType: 'object',
+    },
+    height: {
+      shape: { kind: 'unknown' },
+      displayName: 'Height',
+      description: 'Editor height.',
+      editorType: 'text',
+    },
+    width: {
+      shape: { kind: 'unknown' },
+      displayName: 'Width',
+      description: 'Editor width.',
+      editorType: 'text',
+    },
+  },
+  eventContracts: {
+    onChange: {
+      displayName: 'Change',
+      description: 'Runs when the editor value changes.',
+      payload: { kind: 'string' },
+    },
+    onFocus: {
+      displayName: 'Focus',
+      description: 'Runs when the editor receives focus.',
+    },
+    onBlur: {
+      displayName: 'Blur',
+      description: 'Runs when the editor loses focus.',
+    },
+  },
   fields: codeEditorFieldRules,
   validation: {
     kind: 'field',

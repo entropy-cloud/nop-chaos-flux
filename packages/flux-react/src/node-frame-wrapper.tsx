@@ -36,11 +36,11 @@ export function NodeFrameWrapper(props: {
   const hintValue =
     typeof props.resolvedPropsValue.hint !== 'undefined'
       ? (props.resolvedPropsValue.hint as ReactNode)
-      : undefined;
+      : (props.regions.hint?.render() as ReactNode);
   const descriptionValue =
     typeof props.resolvedPropsValue.description !== 'undefined'
       ? (props.resolvedPropsValue.description as ReactNode)
-      : undefined;
+      : (props.regions.description?.render() as ReactNode);
 
   const remarkValue =
     typeof props.resolvedPropsValue.remark === 'object' && props.resolvedPropsValue.remark !== null
@@ -58,8 +58,6 @@ export function NodeFrameWrapper(props: {
   const usesInteractiveControlRoot =
     props.templateNode.type === 'array-editor' ||
     props.templateNode.type === 'array-field' ||
-    props.templateNode.type === 'input-tree' ||
-    props.templateNode.type === 'tree-select' ||
     props.templateNode.type === 'tag-list' ||
     props.templateNode.type === 'condition-builder' ||
     props.templateNode.type === 'key-value' ||

@@ -1,7 +1,7 @@
 # 405 UX 设计合规性修复计划（第二轮审计）
 
 > Plan Status: completed
-> Last Reviewed: 2026-05-19
+> Last Reviewed: 2026-05-21
 > Source: `docs/analysis/2026-05-19-ux-audit/summary.md`
 > Related: `docs/plans/370-ui-design-pattern-remediation-plan.md`（第一轮审计修复，已 completed）
 
@@ -142,18 +142,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [x] 全部 9 项 in-scope 修复已完成
+- [x] 9 项 in-scope 审计发现已完成收口：7 项已修复，2 项已在 `Deferred But Adjudicated` 中明确裁定
 - [x] 删除按钮在 4 个组件中视觉一致
-- [x] 所有 `tabIndex={0}` 交互元素具备 `focus-visible` ring
+- [x] 本计划修复的 3 处键盘入口具备 `focus-visible` ring：tree-renderer treeitem、collapsible fieldset legend、table 交互行
 - [x] Chart loading 具备 `role="status"` + `aria-live="polite"`
 - [x] 修复视角10-1 中的 PaginationNext 最后一页未禁用功能缺陷
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
 - [x] No owner-doc update required（所有 Phase 均为局部样式/语义属性调整）
-- [ ] 独立子 agent closure-audit 已完成并记录证据
+- [x] 独立子 agent closure-audit 已完成并记录
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
-- [x] `pnpm lint` (affected packages clean; pre-existing flux-i18n lint error unrelated)
-- [x] `pnpm test` (pre-existing flow-designer-renderers worker crash unrelated)
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -182,14 +182,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: All 5 phases completed. 7 in-scope fixes applied across 7 files. typecheck (49/49), build (26/26), affected-package lint clean. Pre-existing flux-i18n lint error and flow-designer-renderers test worker crash are unrelated.
+Status Note: All 5 phases are complete, the 7 direct in-scope fixes are landed, the remaining 2 findings stay explicitly adjudicated in `Deferred But Adjudicated`, and the closure-only blockers were resolved by the final independent audit plus repo-wide verification.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: opencode (primary execution agent)
-- Evidence: docs/logs/2026/05-19.md (plan 405 entry); pnpm typecheck 49/49 pass, pnpm build 26/26 pass, affected-package lint clean
+- Reviewer / Agent: fresh independent closure audit on 2026-05-21 (`ses_1b5ff4f16ffeEz45cEZLzjqEHa` initial fail for closure-truthfulness and missing focused proof, then final pass after proof + closure sync)
+- Evidence: live repo re-audit confirmed all 7 direct code fixes landed; added focused proof in `packages/flux-renderers-data/src/__tests__/{chart-renderer.unit.test.tsx,data-package-units.test.tsx,table-internal-components.test.tsx,data-tree-and-chart.test.tsx}`, `packages/flux-renderers-form/src/__tests__/fieldset-interaction.test.tsx`, and `packages/flux-renderers-form-advanced/src/condition-builder/condition-item.test.tsx` now covers chart loading `aria-live`, CRUD `PaginationNext` disabled affordance, table/tree/fieldset focus-visible classes, and condition-item baseline remove-button visibility, while Phase 1 delete-button normalization was re-audited directly in live code plus existing remove-action tests; final workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` all passed.
 
 Follow-up:
 
-- InputNumber suffix/stepper 布局优化（deferred）
-- tree-renderer CollapsibleTrigger focus-visible（INFO 级，watch-only）
+- 无剩余 plan-owned work；后续仅保留已裁定 residual 的常规跟踪

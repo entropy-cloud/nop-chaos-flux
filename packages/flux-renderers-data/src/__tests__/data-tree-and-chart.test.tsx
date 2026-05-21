@@ -523,6 +523,8 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
     const parentNode = await screen.findByRole('treeitem', { name: 'Parent' });
     const trigger = document.querySelector('[data-slot="tree-node"] [aria-label]');
     expect(parentNode.getAttribute('tabindex')).toBe('0');
+    expect(parentNode.className).toContain('focus-visible:ring-2');
+    expect(parentNode.className).toContain('focus-visible:ring-ring');
     expect(trigger?.getAttribute('tabindex')).toBe('-1');
 
     parentNode.focus();

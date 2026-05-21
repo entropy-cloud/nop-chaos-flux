@@ -38,10 +38,9 @@ describe('type guards', () => {
     expect(isSQLSchemaSourceRef([{ name: 'users', columns: [] }])).toBe(false);
   });
 
-  it('resolveSourceRefPath prefers path and supports legacy dataPath', () => {
+  it('resolveSourceRefPath reads the canonical path field', () => {
     expect(resolveSourceRefPath({ path: 'items' })).toBe('items');
-    expect(resolveSourceRefPath({ dataPath: 'legacy.items' })).toBe('legacy.items');
-    expect(resolveSourceRefPath({ path: 'items', dataPath: 'legacy.items' })).toBe('items');
+    expect(resolveSourceRefPath({})).toBeUndefined();
   });
 });
 

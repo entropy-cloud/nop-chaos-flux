@@ -546,6 +546,7 @@ Current implementation note:
 - ordinary owner validation now reapplies the current external-error overlay on the validated path instead of dropping external errors when rule execution rewrites stored field errors
 - array mutations remap owner-local external errors together with field state, hidden-field participation, and validation-run bookkeeping
 - `applyChangesAndRevalidate(...)` now clears matching owner-local external errors for written paths using the same clear semantics as direct value writes
+- projected form proxies must remap both `applyExternalErrors(...)` paths and `updateFieldRegistration(...).childPaths` through the same owner-root prefixing rule as `validateField(...)` and value writes so nested detail/object/variant owners keep external errors and dynamic child participation inside the projected owner subtree
 
 ## Compile-Time Collection
 
@@ -782,6 +783,7 @@ Current live participation baseline:
 - hiding a parent path excludes descendant compiled fields from active validation participation, and owner cleanup clears stale descendant errors when that subtree transitions to hidden
 - hiding a parent path also invalidates descendant in-flight async validation work so stale async completions cannot republish into the hidden subtree
 - `clearValueWhenHidden` now cascades across descendant compiled fields inside the hidden subtree rather than only clearing the exact path passed to `notifyFieldHidden(...)`
+- renderer-triggered validation entry points on advanced composite controls must preserve the actual owner reason (`change`, `blur`, etc.) and must not silently fall back to manual/no-reason validation after already consulting `shouldValidateOn(...)`
 
 Refresh baseline note:
 
@@ -1141,7 +1143,7 @@ Target architecture cases:
 
 1. stronger active instance graph optimizations
 2. owner-local caching refinement
-3. richer child-scope gating contracts (`summary-gate`, `recurse-submit` fully functional)
+3. broader non-form child-scope participation beyond the current submit-path contracts
 4. more advanced dynamic overlay management
 
 ## Final Decision

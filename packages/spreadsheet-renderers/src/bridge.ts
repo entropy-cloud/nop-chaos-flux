@@ -22,6 +22,7 @@ export interface SpreadsheetHostSnapshot {
     readonly: boolean;
     dirty: boolean;
     zoom: number;
+    viewport: SpreadsheetRuntimeSnapshot['viewport'];
   };
 }
 
@@ -57,6 +58,7 @@ export function deriveHostSnapshot(runtime: SpreadsheetRuntimeSnapshot): Spreads
       readonly: runtime.readonly,
       dirty: runtime.dirty,
       zoom: runtime.viewport.zoom,
+      viewport: runtime.viewport,
     },
   };
 }

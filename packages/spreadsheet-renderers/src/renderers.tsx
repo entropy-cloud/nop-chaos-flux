@@ -35,9 +35,17 @@ export const spreadsheetRendererDefinitions: RendererDefinition[] = [
         required: true,
       },
       config: {
-        shape: { kind: 'object', fields: {} },
+        shape: {
+          kind: 'object',
+          fields: {
+            defaultRowHeight: { kind: 'number' },
+            defaultColumnWidth: { kind: 'number' },
+            maxUndoDepth: { kind: 'number' },
+          },
+          optional: ['defaultRowHeight', 'defaultColumnWidth', 'maxUndoDepth'],
+        },
         displayName: 'Config',
-        description: 'Spreadsheet host configuration.',
+        description: 'Spreadsheet host configuration. The current supported knobs are default row height, default column width, and undo depth.',
         editorType: 'object',
       },
       readOnly: {

@@ -28,6 +28,66 @@ const rangeShape: FluxValueShape = {
   },
 };
 
+const selectionResultShape: FluxValueShape = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'string' },
+    sheetId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] },
+    anchor: { kind: 'union', anyOf: [{ kind: 'null' }, cellRefShape] },
+    range: { kind: 'union', anyOf: [{ kind: 'null' }, rangeShape] },
+    rows: { kind: 'array', item: { kind: 'number' } },
+    columns: { kind: 'array', item: { kind: 'number' } },
+  },
+  optional: ['sheetId', 'anchor', 'range', 'rows', 'columns'],
+};
+
+const viewportShape: FluxValueShape = {
+  kind: 'object',
+  fields: {
+    scrollX: { kind: 'number' },
+    scrollY: { kind: 'number' },
+    zoom: { kind: 'number' },
+  },
+};
+
+const clipboardResultShape: FluxValueShape = {
+  kind: 'object',
+  fields: {
+    type: { kind: 'string' },
+    sourceSheetId: { kind: 'string' },
+    range: rangeShape,
+    cells: { kind: 'array', item: { kind: 'array', item: { kind: 'object', fields: {} } } },
+    timestamp: { kind: 'number' },
+  },
+};
+
+const findOptionsShape: FluxValueShape = {
+  kind: 'object',
+  fields: {
+    query: { kind: 'string' },
+    searchScope: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] },
+    matchCase: { kind: 'boolean' },
+    wholeCell: { kind: 'boolean' },
+    includeFormulas: { kind: 'boolean' },
+  },
+  optional: ['searchScope', 'matchCase', 'wholeCell', 'includeFormulas'],
+};
+
+const findResultShape: FluxValueShape = {
+  kind: 'union',
+  anyOf: [
+    { kind: 'null' },
+    {
+      kind: 'object',
+      fields: {
+        cell: cellRefShape,
+        value: { kind: 'unknown' },
+      },
+      optional: ['value'],
+    },
+  ],
+};
+
 const runtimeShape: FluxValueShape = {
   kind: 'object',
   fields: {
@@ -130,6 +190,15 @@ export const SPREADSHEET_HOST_METHOD_CONTRACTS: HostCapabilityContract['methods'
         },
       },
       description: 'Set spreadsheet selection.',
+    },
+    setViewport: {
+      args: {
+        kind: 'object',
+        fields: {
+          viewport: viewportShape,
+        },
+      },
+      description: 'Update spreadsheet viewport state.',
     },
     setCellValue: {
       args: {
@@ -267,30 +336,105 @@ export const SPREADSHEET_HOST_METHOD_CONTRACTS: HostCapabilityContract['methods'
       description: 'Redo last spreadsheet operation.',
     },
     copyCells: {
+      args: {
+        kind: 'object',
+        fields: {
+          range: rangeShape,
+        },
+      },
+      result: clipboardResultShape,
       description: 'Copy the current selection.',
     },
     cutCells: {
+      args: {
+        kind: 'object',
+        fields: {
+          range: rangeShape,
+        },
+      },
+      result: clipboardResultShape,
       description: 'Cut the current selection.',
     },
     pasteCells: {
+      args: {
+        kind: 'object',
+        fields: {
+          target: cellRefShape,
+          options: { kind: 'object', fields: {} },
+        },
+        optional: ['options'],
+      },
       description: 'Paste clipboard content at the current target.',
     },
     clearCells: {
+      args: {
+        kind: 'object',
+        fields: {
+          target: { kind: 'union', anyOf: [cellRefShape, rangeShape] },
+          clearValues: { kind: 'boolean' },
+          clearFormats: { kind: 'boolean' },
+          clearComments: { kind: 'boolean' },
+        },
+        optional: ['clearValues', 'clearFormats', 'clearComments'],
+      },
       description: 'Clear the current selection.',
     },
     insertRow: {
+      args: {
+        kind: 'object',
+        fields: {
+          sheetId: { kind: 'string' },
+          row: { kind: 'number' },
+          count: { kind: 'number' },
+        },
+        optional: ['count'],
+      },
       description: 'Insert one or more rows.',
     },
     insertColumn: {
+      args: {
+        kind: 'object',
+        fields: {
+          sheetId: { kind: 'string' },
+          col: { kind: 'number' },
+          count: { kind: 'number' },
+        },
+        optional: ['count'],
+      },
       description: 'Insert one or more columns.',
     },
     deleteRow: {
+      args: {
+        kind: 'object',
+        fields: {
+          sheetId: { kind: 'string' },
+          row: { kind: 'number' },
+          count: { kind: 'number' },
+        },
+        optional: ['count'],
+      },
       description: 'Delete one or more rows.',
     },
     deleteColumn: {
+      args: {
+        kind: 'object',
+        fields: {
+          sheetId: { kind: 'string' },
+          col: { kind: 'number' },
+          count: { kind: 'number' },
+        },
+        optional: ['count'],
+      },
       description: 'Delete one or more columns.',
     },
     renameSheet: {
+      args: {
+        kind: 'object',
+        fields: {
+          sheetId: { kind: 'string' },
+          name: { kind: 'string' },
+        },
+      },
       description: 'Rename a worksheet.',
     },
     moveSheet: {
@@ -309,12 +453,39 @@ export const SPREADSHEET_HOST_METHOD_CONTRACTS: HostCapabilityContract['methods'
       description: 'Protect or unprotect a worksheet.',
     },
     selectAll: {
+      args: {
+        kind: 'object',
+        fields: {
+          sheetId: { kind: 'string' },
+        },
+      },
+      result: selectionResultShape,
       description: 'Select the entire sheet.',
     },
     selectRow: {
+      args: {
+        kind: 'object',
+        fields: {
+          sheetId: { kind: 'string' },
+          row: { kind: 'number' },
+          extend: { kind: 'boolean' },
+        },
+        optional: ['extend'],
+      },
+      result: selectionResultShape,
       description: 'Select one or more rows.',
     },
     selectColumn: {
+      args: {
+        kind: 'object',
+        fields: {
+          sheetId: { kind: 'string' },
+          col: { kind: 'number' },
+          extend: { kind: 'boolean' },
+        },
+        optional: ['extend'],
+      },
+      result: selectionResultShape,
       description: 'Select one or more columns.',
     },
     setCellFontFamily: {
@@ -390,21 +561,74 @@ export const SPREADSHEET_HOST_METHOD_CONTRACTS: HostCapabilityContract['methods'
       description: 'Sort the current range.',
     },
     filterRowsByCellValue: {
+      args: {
+        kind: 'object',
+        fields: {
+          sheetId: { kind: 'string' },
+          col: { kind: 'number' },
+          value: { kind: 'unknown' },
+          hasHeader: { kind: 'boolean' },
+        },
+        optional: ['hasHeader'],
+      },
       description: 'Filter rows by the selected cell value.',
     },
     clearRowFilters: {
+      args: {
+        kind: 'object',
+        fields: {
+          sheetId: { kind: 'string' },
+        },
+      },
       description: 'Clear row filters.',
     },
     find: {
+      args: {
+        kind: 'object',
+        fields: {
+          options: findOptionsShape,
+        },
+      },
+      result: findResultShape,
       description: 'Find text in the workbook.',
     },
     findNext: {
+      args: {
+        kind: 'object',
+        fields: {
+          options: findOptionsShape,
+          from: cellRefShape,
+        },
+        optional: ['from'],
+      },
+      result: findResultShape,
       description: 'Advance to the next find result.',
     },
     replace: {
+      args: {
+        kind: 'object',
+        fields: {
+          cell: cellRefShape,
+          replacement: { kind: 'string' },
+          options: findOptionsShape,
+        },
+      },
       description: 'Replace the current find result.',
     },
     replaceAll: {
+      args: {
+        kind: 'object',
+        fields: {
+          replacement: { kind: 'string' },
+          options: findOptionsShape,
+        },
+      },
+      result: {
+        kind: 'object',
+        fields: {
+          count: { kind: 'number' },
+        },
+      },
       description: 'Replace all matching results.',
     },
 };

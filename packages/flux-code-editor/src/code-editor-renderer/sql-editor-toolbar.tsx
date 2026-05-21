@@ -78,8 +78,8 @@ export function SQLEditorToolbar({
         <ToolbarButton
           data-slot="code-editor-toolbar-fullscreen"
           onClick={onEnterFullscreen}
-          aria-label="Enter fullscreen"
-          title="Fullscreen"
+          aria-label={t('flux.codeEditor.enterFullscreen')}
+          title={t('flux.codeEditor.fullscreen')}
         >
           <Maximize2Icon />
         </ToolbarButton>

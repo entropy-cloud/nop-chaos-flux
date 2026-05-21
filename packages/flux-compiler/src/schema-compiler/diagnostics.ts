@@ -233,6 +233,7 @@ type ResolvedValidationOptions = Omit<
 > & {
   hostContractContext?: HostContractContext;
   strictMode?: boolean;
+  preparedImports?: ReadonlyMap<string, import('@nop-chaos/flux-core').PreparedImportSpec>;
 };
 
 function resolveValidationOptions(
@@ -249,6 +250,9 @@ function resolveValidationOptions(
     namespaceValidators: [] as readonly SchemaNamespaceValidator[],
     hostContractContext: undefined as HostContractContext | undefined,
     strictMode: undefined as boolean | undefined,
+    preparedImports: undefined as
+      | ReadonlyMap<string, import('@nop-chaos/flux-core').PreparedImportSpec>
+      | undefined,
   };
 
   const validation = options?.validation;
@@ -263,6 +267,7 @@ function resolveValidationOptions(
     namespaceValidators: mergeNamespaceValidators(validation?.namespaceValidators),
     hostContractContext: validation?.hostContractContext ?? defaults.hostContractContext,
     strictMode: validation?.strictMode ?? defaults.strictMode,
+    preparedImports: options?.preparedImports ?? defaults.preparedImports,
   };
 }
 

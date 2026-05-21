@@ -44,7 +44,7 @@ const productLoop = {
               direction: 'row',
               gap: 2,
               body: [
-                { type: 'badge', text: '${$slot.product.category}', variant: 'secondary' },
+                { type: 'badge', text: '${$slot.product.category}', level: 'info' },
                 { type: 'text', text: '$${$slot.product.price}' },
               ],
             },

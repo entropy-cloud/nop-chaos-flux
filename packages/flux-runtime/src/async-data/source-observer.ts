@@ -25,6 +25,14 @@ function buildLoadingState(): SourceTransientState {
 }
 
 function buildResultState(result: ActionResult): SourceTransientState {
+  if (result.cancelled || result.timedOut) {
+    return {
+      loading: false,
+      error: result,
+      status: 'idle',
+    };
+  }
+
   return {
     loading: false,
     error: result.ok ? undefined : result.error,
@@ -80,12 +88,16 @@ export function createSourceObserver(runtime: RendererRuntime): SourceObserver {
 
     void Promise.allSettled(
       input.entries.map(async (entry) => {
-        const result = await runtime.executeSource({
-          source: entry.source,
-          scope: input.scope,
-          ctx: { signal: controller.signal },
-        });
-        return [entry, result] as const;
+        try {
+          const result = await runtime.executeSource({
+            source: entry.source,
+            scope: input.scope,
+            ctx: { signal: controller.signal },
+          });
+          return { entry, result } as const;
+        } catch (error) {
+          return Promise.reject({ entry, error });
+        }
       }),
     )
       .then((settled) => {
@@ -98,7 +110,7 @@ export function createSourceObserver(runtime: RendererRuntime): SourceObserver {
 
         for (const result of settled) {
           if (result.status === 'fulfilled') {
-            const [entry, actionResult] = result.value;
+            const { entry, result: actionResult } = result.value;
             valuePatch[entry.key] = actionResult.ok ? actionResult.data : undefined;
             if (entry.stateKey) {
               transientPatch[entry.stateKey] = buildResultState(actionResult);
@@ -106,14 +118,17 @@ export function createSourceObserver(runtime: RendererRuntime): SourceObserver {
             continue;
           }
 
-          const error = result.reason;
-          for (const entry of input.entries) {
-            if (!(entry.key in valuePatch)) {
-              valuePatch[entry.key] = undefined;
-            }
-            if (entry.stateKey && !(entry.stateKey in transientPatch)) {
-              transientPatch[entry.stateKey] = { loading: false, error, status: 'error' };
-            }
+          const rejected = result.reason as { entry?: AnonymousSourceEntry; error?: unknown };
+          const entry = rejected.entry;
+          const error = rejected.error ?? result.reason;
+
+          if (!entry) {
+            continue;
+          }
+
+          valuePatch[entry.key] = undefined;
+          if (entry.stateKey) {
+            transientPatch[entry.stateKey] = { loading: false, error, status: 'error' };
           }
         }
 

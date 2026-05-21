@@ -15,7 +15,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'condition-builder'`
-- `sourcePackage: '@nop-chaos/flux-renderers-form'`
+- `sourcePackage: '@nop-chaos/flux-renderers-form-advanced'`
 - 当前 fields: `label` 为 `value-or-region`
 - 当前 validation contributor: `kind: 'field'`、`valueKind: 'scalar'`
 

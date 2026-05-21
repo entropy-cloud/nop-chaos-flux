@@ -46,6 +46,7 @@ export function defineReportDesignerPageSchema<T extends ReportDesignerPageSchem
 export interface ReportInspectorShellSchema extends BaseSchema {
   type: 'report-inspector-shell';
   title?: string | SchemaInput;
+  emptyLabel?: string;
   noSelectionLabel?: string;
   errorLabel?: string;
 }

@@ -236,22 +236,22 @@ describe('createActionRuntimeAdapter direct branches', () => {
     ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
     await expect(
       adapter.invokeBuiltInAction(
-        createBuiltInInvocation('refreshSource', { sourceId: 'source-1' }),
+        createBuiltInInvocation('refreshSource', { targetId: 'source-1' }),
         createCtx(),
       ),
     ).resolves.toEqual({ ok: true, data: true, error: undefined });
     await expect(
       adapter.invokeBuiltInAction(
-        createBuiltInInvocation('refreshSource', { sourceId: 'missing-source' }),
+        createBuiltInInvocation('refreshSource', { targetId: 'missing-source' }),
         createCtx(),
       ),
     ).resolves.toMatchObject({ ok: false, data: false, error: expect.any(Error) });
     expect(refreshDataSource).toHaveBeenNthCalledWith(1, {
-      id: 'source-1',
+      name: 'source-1',
       scope: expect.anything(),
     });
     expect(refreshDataSource).toHaveBeenNthCalledWith(2, {
-      id: 'missing-source',
+      name: 'missing-source',
       scope: expect.anything(),
     });
 
@@ -553,7 +553,7 @@ describe('built-in scope-write and submit semantics', () => {
     expect(form.setValue).not.toHaveBeenCalled();
   });
 
-  it('setValues honors targetId inside the current form runtime with one batch update', async () => {
+  it('setValues no longer uses targetId as a base-path fallback', async () => {
     const adapter = createAdapter();
     const form = { id: 'form-1', setValue: vi.fn(), setValues: vi.fn() };
 
@@ -568,15 +568,9 @@ describe('built-in scope-write and submit semantics', () => {
 
     expect(result).toMatchObject({
       ok: true,
-      data: {
-        'profile.firstName': 'Alice',
-        'profile.lastName': 'Smith',
-      },
+      data: { firstName: 'Alice', lastName: 'Smith' },
     });
-    expect(form.setValues).toHaveBeenCalledWith({
-      'profile.firstName': 'Alice',
-      'profile.lastName': 'Smith',
-    });
+    expect(form.setValues).toHaveBeenCalledWith({ firstName: 'Alice', lastName: 'Smith' });
     expect(form.setValue).not.toHaveBeenCalled();
   });
 

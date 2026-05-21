@@ -161,9 +161,10 @@ Save and autosave truth rules:
 - local dirty state is cleared only after the renderer-local save succeeds and the host `saveEvent` also returns success
 - a failed host save keeps the editor dirty so close protection, status publication, and host integrations still see unsaved work
 - explicit save passes the full `SavedDocumentData` envelope to the host `saveEvent(saved, ctx)` callback instead of a blank event payload
+- renderer `eventContracts` / `propContracts` 现在与这条 live baseline 对齐：`onBack` 发布 event-like payload，`onSave` 发布完整 `SavedDocumentData` envelope，`config` 公开 `leftPanel` / `rightPanel` 最小结构而不再是 opaque object
 - `statusPath.busy` tracks the renderer-local explicit save lifecycle, so external hosts can distinguish idle from in-flight save state
-- autosave must build `SavedDocumentData` from the current runtime `charts` / `codes`, not from `initialDocument`
-- when an explicit save succeeds, the persisted host projection updates its saved `charts` / `codes` extras from the same runtime values used for the save
+- autosave and explicit save rebuild persisted `charts` / `codes` from live `nop:chart` / `nop:code` tags in the current canvas document; renderer-local chart/code arrays are runtime/UI state, not the persisted owner truth
+- explicit save uses `editor-store.paperSettings` as the saved paper-settings owner truth instead of treating bridge re-read state as a second authoritative source
 - explicit save now treats `SavedDocumentData` as the single persisted truth surface for the renderer-owned save path: the success callback receives the full saved envelope, and host projection `document` refreshes from `saved.data` in that same envelope
 - dataset persistence is part of the successful save commit only; datasets must not be written ahead of host save success / abort adjudication
 - async save completion must not recreate local UI state after unmount; save-success banners and timers are renderer-local affordances only while the page is still mounted
@@ -174,8 +175,10 @@ Save and autosave truth rules:
 - template-tag insertion must preserve the canonical tag kind published by `@nop-chaos/word-editor-core`; self-closing tags such as `c:out` stay self-closing instead of being downgraded into `tag-open`
 - supported insertion surfaces may only advertise executable template tags; `c:out` remains supported because the dialog/toolbar/snippet paths now emit its `tag-selfclose` expression directly
 - `word-editor:insertChart` / `word-editor:insertCode` provider enforcement now matches the published manifest contract and rejects payloads the core validators would later discard
+- `word-editor:insertChart` / `word-editor:insertCode` manifest metadata also publishes the success result shape (`chartId` / `codeId`) returned by the provider
 - chart/code dialogs use the same `validateDocChart` / `validateDocCode` gate as the provider path, so invalid metadata is rejected before insertion and before persisted recovery drift can occur
 - watermark commands are not part of the supported persisted truth surface and therefore are not a supported authoring surface in the current page UI
+- built-in toolbar and page-control chrome use the `flux.wordEditor.*` locale namespace instead of hardcoded English strings
 
 ### With nop-entropy Backend
 

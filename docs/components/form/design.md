@@ -235,8 +235,8 @@ fieldset 不感知 mode/labelAlign/labelWidth。这些通过 React context 从 f
 
 ```json
 {
-  "type": "group",
-  "body": [
+  "type": "flex",
+  "items": [
     { "type": "input-text", "name": "firstName", "label": "名" },
     { "type": "input-text", "name": "lastName", "label": "姓" }
   ]

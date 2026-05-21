@@ -14,7 +14,7 @@ const httpHeaders = {
         ],
       },
       body: [{ type: 'key-value', name: 'headers', label: 'HTTP Headers' }],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -40,7 +40,7 @@ const envVars = {
           valuePlaceholder: 'value',
         },
       ],
-      actions: [{ type: 'button', label: 'Apply', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Apply', onClick: { action: 'submitForm' } }],
     },
   ],
 };

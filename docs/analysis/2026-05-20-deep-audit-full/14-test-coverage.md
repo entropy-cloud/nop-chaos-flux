@@ -48,6 +48,46 @@
 - **参考文档**: `docs/skills/deep-audit-prompts.md:1403-1408`, `docs/references/audit-tooling.md:54`, `AGENTS.md:215-223`
 - **复核状态**: 未复核
 
+## 深挖第 10 轮追加
+
+### [维度14-14] 支持中的 Component Lab E2E 仍把 `scope-debug-json` 调试渲染器当成主要断言通道，端到端可信度失真
+
+- **文件**: `tests/e2e/component-lab/complex-form.spec.ts:183-199`, `tests/e2e/component-lab/simple-form.spec.ts:49-79`, `tests/e2e/component-lab/action-logic.spec.ts:83-90`, `packages/flux-renderers-basic/src/scope-debug.tsx:49-68`
+- **行号范围**: `complex-form.spec.ts:183-199`; `simple-form.spec.ts:49-79`; `action-logic.spec.ts:83-90`; `scope-debug.tsx:49-68`
+- **证据片段**:
+  ```tsx
+  test('read: simple condition builder publishes its preloaded rule shape into scope state', async ({
+    page,
+  }) => {
+    ...
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"field": "status"');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"operator": "eq"');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"value": "active"');
+  });
+  ```
+  ```tsx
+  const scopeDebug = stage.locator('[data-slot="scope-debug-json"]');
+  ...
+  await expect(scopeDebug).toContainText('"errorCount": 1');
+  await expect(scopeDebug).toContainText('"valid": false');
+  ...
+  await expect(scopeDebug).toContainText('"secretCode": "alpha-42"');
+  ```
+  ```tsx
+  const scopeText = useScopeSelector((scopeData) => stringifyDebugValue(scopeData));
+  ...
+  <div data-slot="scope-debug-body">
+    <pre data-slot="scope-debug-json">{scopeText}</pre>
+  </div>
+  ```
+- **严重程度**: P1
+- **类别**: 验证可信度 / E2E 断言通道
+- **现状**: 多个受支持的 Playwright E2E 直接断言 `[data-slot="scope-debug-json"]`。其中 `condition-builder` 用例几乎完全依赖这个调试 `<pre>` 的 JSON 文本来证明规则已渲染；`simple-form` 也把 `errorCount/valid/secretCode` 的正确性主要交给 debug dump 验证。该节点来自 `ScopeDebugRenderer`，本质是把 `useScopeSelector` 读到的内部 scope 状态序列化后输出。
+- **风险**: 这类 E2E 可以在“内部 scope 数据正确、但真实用户可见表单/条件构建 UI 渲染错误、文案错误、交互错误”时继续通过；反过来，若仅 debug 序列化格式变化而用户行为未坏，测试又会误报。结果是 suite 对真实端到端行为给出虚高信心。
+- **建议**: 将这些用例的主断言改为用户可见结果通道：例如 condition-builder 断言实际规则行/字段标签/operator/value 控件已渲染；hidden-required 场景断言错误提示出现/消失、提交结果文本或表单控件状态变化。`scope-debug-json` 最多保留为辅助诊断，不应作为 supported E2E 的主要成功判据。
+- **为什么值得现在做**: 这是维度 14 明确新增的“验证可信度检查”命中项，而且影响的是已纳入默认 E2E 套件的 component-lab 场景，不是孤立调试脚本。
+- **误报排除**: 这不是泛泛反对 `page.evaluate` 或任何内部探针。问题点更具体：这些 spec 直接把名为 `scope-debug-json` 的调试渲染器当作核心 oracle；而实现文件也明确表明它只是 scope 数据的 JSON dump，不是面向用户的稳定结果通道。
+
 ### [维度14-02] 多个测试内 `spyOn/mockReturnValue` 只在成功路径末尾恢复，失败时会污染同文件后续用例
 
 - **文件**: `packages/word-editor-renderers/src/__tests__/word-editor-page-actions.test.tsx:22-30,101-126`
@@ -362,6 +402,23 @@
 - **参考文档**: `docs/skills/deep-audit-prompts.md:1403-1408`, `docs/references/audit-tooling.md:54`, `AGENTS.md:215-223`
 - **复核状态**: 未复核
 
+## 维度复核结论
+
+- [维度14-01]: 保留 (P1)。`packages/report-designer-renderers/src/field-panel-renderer.tsx:114-127` 仍先 `reportRuntimeHostIssue(...)` 再 `env.notify('warning', ...)`，而 `field-panel-renderer.test.tsx:379-389` 仍只断言 warning 命中，无法排除重复通知。
+- [维度14-02]: 保留 (P2)。`packages/word-editor-renderers/src/__tests__/word-editor-page-actions.test.tsx` 的多处 `spyOn(...).mockReturnValue(...)` / hook spies 仍在测试成功路径末尾 `mockRestore()`，而 `afterEach` 仍未统一 `vi.restoreAllMocks()`。
+- [维度14-03]: 保留 (P2)。同一测试文件仍从 `../../../flux-react/src/contexts.js` 导入私有 context，并手工伪造 `WordEditorPage` 的完整 renderer props，验证路径仍绕过公开 runtime/render 入口。
+- [维度14-04]: 保留 (P2)。`tests/e2e/flow-designer-edge-creation.spec.ts:10-32` 仍只覆盖 `nop-designer:test-connect` synthetic hook，没有真实拖拽建边 E2E。
+- [维度14-05]: 保留 (P1)。`packages/flow-designer-renderers/package.json:24-28` 的手工枚举 test 脚本仍未包含已存在的 `designer-page.graph-regression.test.tsx`、`designer-page.tree-history.test.tsx`、`ding-flow-add-node-menu.test.tsx`。
+- [维度14-06]: 保留 (P2)。root `package.json:21-22` 仍只跑普通 `pnpm test`，`packages/flux-runtime/package.json:27-31` 仍是 `vitest run --passWithNoTests`，而 `vitest.config.ts:5-15` 的 coverage thresholds 仍未被默认门禁触发。
+- [维度14-07]: 保留 (P1)。`packages/report-designer-renderers/src/page-renderer.tsx:350-363` 与 `report-spreadsheet-canvas.tsx:213-227` 仍存在 `reportRuntimeHostIssue + explicit warning notify` 双通道；对应测试 `page-renderer.test.tsx:301-305`、`report-spreadsheet-canvas.test.tsx:157-174` 仍只做弱 warning 断言。
+- [维度14-08]: 保留 (P2)。mutation testing 入口仍是文档化但非默认门禁的独立脚本，且当前配置/CI 路径未把它变成可失败的常规质量护栏。
+- [维度14-09]: 保留 (P1)。`check:flux-bundle-pack` 仍未接入 root `check` / `lint` / CI 默认路径，包产物完整性校验护栏依旧是手动命令。
+- [维度14-10]: 保留 (P1)。GitHub CI 仍未运行 `pnpm check`，默认流水线继续遗漏整组 workspace/static audit guards。
+- [维度14-11]: 保留 (P1)。`set NODE_OPTIONS=... && ...` 仍是 Windows 风格写法；在 Linux CI shell 下不会按预期设置 `NODE_OPTIONS`。
+- [维度14-12]: 保留 (P2)。workspace/package 默认测试路径仍广泛依赖 `--passWithNoTests`，继续削弱“测试被实际发现并执行”的信号强度。
+- [维度14-13]: 保留 (P2)。Playwright 仍未在默认配置中启用 `forbidOnly`，误提交 `.only` 的护栏仍不够硬。
+- [维度14-14]: 保留 (P1)。supported component-lab E2E 仍把 `[data-slot="scope-debug-json"]` 当主断言通道，端到端可信度问题未收敛。
+
 ### [维度14-08] mutation testing 入口有文档化但 `break: 0` 且 CI 不运行，质量门禁实际不可失败
 
 - **文件**: `package.json:14`, `stryker.runtime.conf.mjs:5-22`, `.github/workflows/ci.yml:65-99`, `docs/architecture/frontend-baseline.md:142-149`
@@ -507,3 +564,135 @@
 - **误报排除**: 这不是重复报告 `check:flux-bundle-pack` 未接入 CI；本条聚焦 root `pnpm check` 本身作为已文档化 health gate 未被 CI 调用，且 `lint` 并非等价替代：它没有运行 `check:workspace-manifest-deps` / `check:oversized-code-files` / `check:audit-suspects`。也不是要求 suspect 输出变成失败门禁，当前 `pnpm check` 已区分 hard gate 与 informational suspect。
 - **参考文档**: `docs/skills/deep-audit-prompts.md:1380-1384,1403-1408`, `docs/references/audit-tooling.md:23-41`, `AGENTS.md:27-31`
 - **复核状态**: 未复核
+
+## 深挖第 7 轮追加
+
+### [维度14-11] Linux CI 实际不会应用两个 package `test` 脚本里声明的 `NODE_OPTIONS` 内存上限，重型套件的稳定性保护形同虚设
+
+- **文件**: `packages/flow-designer-renderers/package.json:24-28`, `packages/flux-renderers-data/package.json:27-31`, `.github/workflows/ci.yml:65-80`
+- **行号范围**: `flow-designer-renderers/package.json:24-28`; `flux-renderers-data/package.json:27-31`; `.github/workflows/ci.yml:65-80`
+- **证据片段**:
+  ```json
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/designer-theme.css dist/designer-theme.css",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "set NODE_OPTIONS=--max-old-space-size=8192 && vitest run --passWithNoTests ...",
+  }
+  ```
+  ```json
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "set NODE_OPTIONS=--max-old-space-size=8192 && vitest run --passWithNoTests",
+  }
+  ```
+  ```yml
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      ...
+      - run: pnpm test
+  ```
+  复核命令输出：
+  ```bash
+  set NODE_OPTIONS=--max-old-space-size=8192 && python -c "import os; print(os.environ.get('NODE_OPTIONS'))"
+  # => None
+  ```
+- **严重程度**: P2
+- **类别**: CI 验证可信度 / 测试稳定性
+- **现状**: 两个 package 的 `test` 脚本使用的是 Windows `cmd` 风格的 `set NODE_OPTIONS=... && ...`。但 GitHub CI `test` job 跑在 `ubuntu-latest`，默认 shell 为 bash；在 bash 下该写法不会把 `NODE_OPTIONS` 注入后续 `vitest run` 进程，实测环境变量保持未设置。
+- **风险**: 维护者会误以为大套件已在 8 GB Node 堆限制下执行，实际 CI 完全没有应用这层保护。随着 flow-designer / data-renderers 用例继续增长，内存回归、OOM 或随机崩溃会直接表现为难复现的 CI 不稳定，而脚本表面上又给出了“已加内存保护”的假信心。
+- **建议**: 将这两个脚本改为跨平台写法，例如 `NODE_OPTIONS=--max-old-space-size=8192 vitest run ...`（配合 `cross-env`）或使用 Node 包装脚本统一设置环境变量；并在 Linux CI 路径上保留一次 focused proof，避免后续再回退到 `set ... &&`。
+- **误报排除**: 这不是泛泛地批评“脚本写法不优雅”。证据链是完整的：live package script 使用 Windows `set ... &&`，CI 明确在 Ubuntu 上执行 `pnpm test`，且在当前 bash 环境中同样写法实测得到 `NODE_OPTIONS=None`，说明内存设置确实未生效。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1403-1406`, `docs/references/audit-tooling.md:27-28`, `AGENTS.md:27-31`
+- **复核状态**: 未复核
+
+## 深挖第 8 轮追加
+
+### [维度14-12] workspace 默认 `--passWithNoTests` 让整包“零发现测试”也能在 CI 中通过，`pnpm test` 缺少最小存在性门禁
+
+- **文件**: `package.json:21`, `packages/flux-runtime/package.json:30`, `packages/flux-core/package.json:18`, `apps/playground/package.json:12`
+- **行号范围**: `package.json:21`; `packages/flux-runtime/package.json:30`; `packages/flux-core/package.json:18`; `apps/playground/package.json:12`
+- **证据片段**:
+  ```json
+  "test": "turbo run test --concurrency=2"
+  ```
+  ```json
+  "test": "vitest run --passWithNoTests"
+  ```
+  ```json
+  "test": "vitest run --passWithNoTests"
+  ```
+- **严重程度**: P2
+- **类别**: CI 验证可信度 / 测试门禁真实性
+- **现状**: root `pnpm test` 通过 turbo 执行各 workspace 的 `test` 脚本，而当前 packages/apps 的默认模式普遍是 `vitest run --passWithNoTests`。这意味着某个包一旦因测试文件被误删、重命名、移动出发现范围、或配置漂移导致“0 tests found”，该包仍会绿过。
+- **风险**: 与 [维度14-05] 的“某个包当前已漏跑部分测试”不同，这是一条更底层的门禁缺口：即使没有手工枚举测试文件，整包测试发现失败也不会阻断 PR。后续任何包的整组测试静默消失时，CI 仍可能显示 `pnpm test` 全绿，削弱默认回归保护的可信度。
+- **建议**: 对默认应有测试的 workspace 去掉 `--passWithNoTests`；若确有少数允许零测试的例外包，单独白名单化或使用单独脚本，而不是把宽松语义作为全仓默认。至少应让 root test gate 能在“某包 0 tests discovered”时失败。
+- **误报排除**: 这不是泛泛批评“测试少”或重复 [维度14-05] 的漏跑变体；问题点是 live CI gate 的脚本语义本身允许“整包零测试发现”成功退出，属于独立的测试门禁真实性缺陷。
+- **参考文档**: `docs/skills/deep-audit-prompts.md:1380-1384,1403-1408`, `AGENTS.md:27-31`
+- **复核状态**: 未复核
+
+## 深挖第 9 轮追加
+
+### [维度14-13] Playwright E2E 门禁未启用 `forbidOnly`，误提交 `test.only`/`describe.only` 时 CI 仍可能绿过
+
+- **文件**: `playwright.config.ts:46-57`, `package.json:21-23`, `.github/workflows/ci.yml:82-99`
+- **行号范围**: `playwright.config.ts:46-57`; `package.json:21-23`; `.github/workflows/ci.yml:82-99`
+- **证据片段**:
+  ```ts
+  export default defineConfig({
+    testDir: './tests/e2e',
+    timeout: 45_000,
+    fullyParallel: true,
+    workers: 2,
+    retries: 0,
+    reporter: 'list',
+    use: {
+      baseURL: baseUrl,
+  ```
+  ```json
+  "test": "turbo run test --concurrency=2",
+  "test:e2e": "playwright test",
+  "test:e2e:headed": "playwright test --headed",
+  ```
+  ```yml
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    steps:
+      ...
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+  ```
+- **严重程度**: P1
+- **类别**: CI 验证可信度 / E2E 门禁真实性
+- **现状**: Playwright 配置中没有 `forbidOnly`，root `test:e2e` 也没有追加等价 CLI 保护；CI 直接运行 `pnpm test:e2e`。这意味着一旦有人误提交 `test.only(...)` 或 `describe.only(...)`，E2E job 可能只执行被聚焦的少数用例而不失败。
+- **风险**: PR/主干 CI 会呈现“E2E 全绿”的假象，但实际大部分端到端回归路径被静默跳过；这类问题尤其容易在临时调试后遗留，直接削弱默认 E2E 门禁的可信度。
+- **建议**: 在 `playwright.config.ts` 显式加入 `forbidOnly: !!process.env.CI`；如需本地保留 focused run 能力，也应至少保证 CI 路径强制失败。可再补一个轻量静态检查，防止 `.only` 漏入提交。
+- **为什么值得现在做**: 这是典型“门禁看起来存在、但可被一行 focused test 静默绕过”的高杠杆问题；修复成本极低，但能显著提升整套 E2E 结果的可信度。
+- **误报排除**: 这不是要求仓库当前必须存在 `.only` 才能报告；问题点是默认 CI gate 缺少防逃逸保护。与 [维度14-05]/[14-10]/[14-12] 不同，本条关注的是“已运行的 E2E 套件可被 focused test 静默缩小”而非“某些测试未被接入”或“零测试允许通过”。
+- **复核状态**: 未复核
+
+## 子项复核结论
+
+- [维度14-01] 至 [维度14-14]: 均成立。复核后主要收敛为四类：弱断言/私有测试入口、漏跑测试、默认门禁未接入或不可失败、CI/跨平台脚本可信度缺口；未见需要再驳回的条目。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                             | 一句话摘要                                                     |
+| ----- | -------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| 14-01 | P1       | `packages/report-designer-renderers/src/field-panel-renderer.tsx:114-127`        | field panel 失败路径测试仍无法排除重复通知                     |
+| 14-02 | P2       | `packages/word-editor-renderers/src/__tests__/word-editor-page-actions.test.tsx` | Word Editor tests 仍依赖成功路径末尾 `mockRestore()`           |
+| 14-03 | P2       | `packages/word-editor-renderers/src/__tests__/word-editor-page-actions.test.tsx` | Word Editor tests 仍绕过公开 runtime/render 入口               |
+| 14-04 | P2       | `tests/e2e/flow-designer-edge-creation.spec.ts:10-32`                            | Flow Designer 仍缺真实拖拽建边 E2E                             |
+| 14-05 | P1       | `packages/flow-designer-renderers/package.json:24-28`                            | 手工枚举 test 脚本仍遗漏 3 个已提交测试文件                    |
+| 14-06 | P2       | `package.json:21-22`                                                             | coverage thresholds 仍未接入默认 `pnpm test` 门禁              |
+| 14-07 | P1       | `packages/report-designer-renderers/src/page-renderer.tsx:350-363`               | Report Designer 多个失败路径测试仍只做弱 warning 断言          |
+| 14-08 | P2       | `stryker.runtime.conf.mjs:5-22`                                                  | mutation testing 入口仍文档化但非默认可失败门禁                |
+| 14-09 | P1       | `package.json` / `scripts/check-flux-bundle-pack.mjs`                            | `check:flux-bundle-pack` 仍未接入默认 check/lint/CI            |
+| 14-10 | P1       | `.github/workflows/ci.yml`                                                       | GitHub CI 仍未运行 `pnpm check`                                |
+| 14-11 | P1       | `packages/flow-designer-renderers/package.json`                                  | Windows 风格 `set NODE_OPTIONS=... &&` 仍会在 Linux CI 下失效  |
+| 14-12 | P2       | `package.json` / 多个 package `test` 脚本                                        | 默认测试路径仍广泛依赖 `--passWithNoTests`                     |
+| 14-13 | P2       | `playwright.config.ts:46-57`                                                     | Playwright 默认门禁仍未启用 `forbidOnly`                       |
+| 14-14 | P1       | `tests/e2e/component-lab*.spec.ts`                                               | supported component-lab E2E 仍把 scope-debug-json 当主断言通道 |

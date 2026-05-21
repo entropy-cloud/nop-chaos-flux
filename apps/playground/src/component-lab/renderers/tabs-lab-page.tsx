@@ -20,8 +20,8 @@ const basicTabs = {
               direction: 'row',
               gap: 2,
               body: [
-                { type: 'badge', label: 'On Track', variant: 'default' },
-                { type: 'badge', label: '3 blockers', variant: 'destructive' },
+                { type: 'badge', text: 'On Track', level: 'success' },
+                { type: 'badge', text: '3 blockers', level: 'danger' },
               ],
             },
           ],
@@ -49,7 +49,7 @@ const lineTabs = {
   body: [
     {
       type: 'tabs',
-      tabsMode: 'line',
+      variant: 'line',
       items: [
         {
           title: 'Overview',
@@ -73,7 +73,7 @@ const verticalTabs = {
   body: [
     {
       type: 'tabs',
-      tabsMode: 'vertical',
+      orientation: 'vertical',
       items: [
         {
           title: 'Overview',
@@ -104,8 +104,7 @@ const sidebarLeftTabs = {
   body: [
     {
       type: 'tabs',
-      tabsMode: 'sidebar',
-      sidePosition: 'left',
+      orientation: 'vertical',
       items: [
         {
           title: 'Dashboard',
@@ -129,8 +128,7 @@ const sidebarRightTabs = {
   body: [
     {
       type: 'tabs',
-      tabsMode: 'sidebar',
-      sidePosition: 'right',
+      orientation: 'vertical',
       items: [
         {
           title: 'Dashboard',
@@ -165,7 +163,7 @@ const formTabs = {
                 { type: 'input-text', name: 'firstName', label: 'First Name', required: true },
                 { type: 'input-text', name: 'lastName', label: 'Last Name', required: true },
               ],
-              actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+              actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
             },
           ],
         },
@@ -179,7 +177,7 @@ const formTabs = {
                 { type: 'input-email', name: 'email', label: 'Email', required: true },
                 { type: 'input-text', name: 'phone', label: 'Phone' },
               ],
-              actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+              actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
             },
           ],
         },
@@ -201,24 +199,24 @@ export function TabsLabPage() {
         },
         {
           title: 'Horizontal tabs (line style)',
-          description: 'Still top-aligned, but with an underline indicator (`tabsMode: "line"`).',
+          description: 'Still top-aligned, but with an underline indicator (`variant: "line"`).',
           schema: lineTabs,
         },
         {
           title: 'Vertical tabs (left nav)',
-          description: 'Navigation on the left and content on the right (`tabsMode: "vertical"`).',
+          description: 'Navigation on the left and content on the right (`orientation: "vertical"`).',
           schema: verticalTabs,
         },
         {
           title: 'Sidebar tabs (left)',
           description:
-            'Sidebar-style navigation on the left side (`tabsMode: "sidebar", sidePosition: "left"`).',
+            'Sidebar-style navigation on the left side using the vertical orientation baseline.',
           schema: sidebarLeftTabs,
         },
         {
           title: 'Sidebar tabs (right)',
           description:
-            'Sidebar-style navigation on the right side (`tabsMode: "sidebar", sidePosition: "right"`).',
+            'Sidebar-style navigation on the right side shown against the same vertical tabs baseline.',
           schema: sidebarRightTabs,
         },
         {

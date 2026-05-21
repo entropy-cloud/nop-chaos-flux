@@ -3,6 +3,7 @@ import React from 'react';
 import { describe, expect, it, afterEach, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { t } from '@nop-chaos/flux-i18n';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv, SchemaInput } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
@@ -205,6 +206,10 @@ describe('code-editor integration', () => {
               language: 'expression',
               mode: 'template',
               autoHeight: true,
+              placeholder: '{{ user.name }}',
+              folding: true,
+              options: { tabSize: 2 },
+              width: 480,
               expressionConfig: {
                 variables: [{ label: 'Name', value: 'data.name', type: 'string' }],
               },
@@ -273,8 +278,8 @@ describe('code-editor integration', () => {
     });
 
     expect(screen.getByText('JSON Editor')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Enter fullscreen' }));
-    expect(screen.getByRole('button', { name: 'Exit fullscreen' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: t('flux.codeEditor.enterFullscreen') }));
+    expect(screen.getByRole('button', { name: t('flux.codeEditor.exitFullscreen') })).toBeTruthy();
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
@@ -352,6 +357,45 @@ describe('code-editor integration', () => {
     fireEvent.click(field!);
 
     expect(screen.queryByText('Current user')).toBeNull();
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('publishes code-editor prop and event contracts for authoring discovery', () => {
+    expect(codeEditorRendererDefinition.sourcePackage).toBe('@nop-chaos/flux-code-editor');
+    expect(codeEditorRendererDefinition.propContracts?.language?.required).toBe(true);
+    expect(codeEditorRendererDefinition.eventContracts?.onChange?.payload).toEqual({ kind: 'string' });
+  });
+
+  it('localizes variable-panel action labels', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    renderCodeEditorSchema({
+      type: 'page',
+      body: [
+        {
+          type: 'form',
+          name: 'testForm',
+          body: [
+            {
+              type: 'code-editor',
+              name: 'sqlEditor',
+              label: 'SQL Editor',
+              language: 'sql',
+              sqlConfig: {
+                variablePanel: {
+                  enabled: true,
+                  variables: [{ label: 'Tenant', value: 'tenantId' }],
+                },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(screen.getByLabelText(t('flux.codeEditor.copyToClipboard'))).toBeTruthy();
+    expect(screen.getByLabelText(t('flux.codeEditor.insertAtCursor'))).toBeTruthy();
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });

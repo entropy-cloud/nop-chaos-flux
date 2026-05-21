@@ -20,16 +20,89 @@ const selectionTargetShape: FluxValueShape = {
     {
       kind: 'object',
       fields: {
-        kind: { kind: 'string' },
+        kind: { kind: 'literal', value: 'workbook' },
+      },
+    },
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'literal', value: 'sheet' },
+        sheetId: { kind: 'string' },
+      },
+    },
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'literal', value: 'row' },
         sheetId: { kind: 'string' },
         row: { kind: 'number' },
-        col: { kind: 'number' },
-        cell: { kind: 'object', fields: {} },
-        range: { kind: 'object', fields: {} },
       },
-      optional: ['sheetId', 'row', 'col', 'cell', 'range'],
+    },
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'literal', value: 'column' },
+        sheetId: { kind: 'string' },
+        col: { kind: 'number' },
+      },
+    },
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'literal', value: 'cell' },
+        cell: {
+          kind: 'object',
+          fields: {
+            sheetId: { kind: 'string' },
+            address: { kind: 'string' },
+            row: { kind: 'number' },
+            col: { kind: 'number' },
+          },
+        },
+      },
+    },
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'literal', value: 'range' },
+        range: {
+          kind: 'object',
+          fields: {
+            sheetId: { kind: 'string' },
+            startRow: { kind: 'number' },
+            startCol: { kind: 'number' },
+            endRow: { kind: 'number' },
+            endCol: { kind: 'number' },
+          },
+        },
+      },
     },
   ],
+};
+
+const fieldDragPayloadShape: FluxValueShape = {
+  kind: 'object',
+  fields: {
+    type: { kind: 'string' },
+    sourceId: { kind: 'string' },
+    fieldId: { kind: 'string' },
+    data: { kind: 'object', fields: {} },
+  },
+};
+
+const cellOrRangeTargetShape: FluxValueShape = {
+  kind: 'union',
+  anyOf: selectionTargetShape.anyOf.filter(
+    (variant) =>
+      variant.kind === 'object' &&
+      (variant.fields.kind.kind !== 'literal' ||
+        variant.fields.kind.value === 'cell' ||
+        variant.fields.kind.value === 'range'),
+  ),
+};
+
+const opaqueResultShape: FluxValueShape = {
+  kind: 'unknown',
 };
 
 const fieldSourcesShape: FluxValueShape = {
@@ -202,8 +275,8 @@ const reportDesignerCapabilities: HostCapabilityContract = {
       args: {
         kind: 'object',
         fields: {
-          field: { kind: 'object', fields: {} },
-          target: { kind: 'object', fields: {} },
+          field: fieldDragPayloadShape,
+          target: cellOrRangeTargetShape,
         },
       },
       description: 'Drop a field onto a report target.',
@@ -212,7 +285,7 @@ const reportDesignerCapabilities: HostCapabilityContract = {
       args: {
         kind: 'object',
         fields: {
-          target: { kind: 'object', fields: {} },
+          target: selectionTargetShape,
           patch: metadataBagShape,
         },
       },
@@ -222,7 +295,7 @@ const reportDesignerCapabilities: HostCapabilityContract = {
       args: {
         kind: 'object',
         fields: {
-          target: { kind: 'object', fields: {} },
+          target: selectionTargetShape,
           nextMeta: metadataBagShape,
         },
       },
@@ -232,7 +305,7 @@ const reportDesignerCapabilities: HostCapabilityContract = {
       args: {
         kind: 'object',
         fields: {
-          target: { kind: 'object', fields: {} },
+          target: selectionTargetShape,
         },
         optional: ['target'],
       },
@@ -250,6 +323,7 @@ const reportDesignerCapabilities: HostCapabilityContract = {
         },
         optional: ['mode', 'args'],
       },
+      result: opaqueResultShape,
       description: 'Run report preview.',
     },
     stopPreview: {
@@ -262,6 +336,7 @@ const reportDesignerCapabilities: HostCapabilityContract = {
       description: 'Redo last report-designer change.',
     },
     save: {
+      result: opaqueResultShape,
       description: 'Persist the report template.',
     },
     importTemplate: {
@@ -281,6 +356,7 @@ const reportDesignerCapabilities: HostCapabilityContract = {
         },
         optional: ['format'],
       },
+      result: opaqueResultShape,
       description: 'Export the report template.',
     },
   },

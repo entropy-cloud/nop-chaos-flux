@@ -2,6 +2,7 @@ import type { CommandHandler } from './types.js';
 import type {
   SetActiveSheetCommand,
   SetSelectionCommand,
+  SetViewportCommand,
   SelectAllCommand,
   SelectRowCommand,
   SelectColumnCommand,
@@ -22,6 +23,20 @@ export const handleSetActiveSheet: CommandHandler<SetActiveSheetCommand> = (stor
 export const handleSetSelection: CommandHandler<SetSelectionCommand> = (store, command) => {
   store.setState({ selection: command.selection, editing: undefined });
   return { ok: true, changed: true };
+};
+
+export const handleSetViewport: CommandHandler<SetViewportCommand> = (store, command) => {
+  const state = store.getState();
+  if (
+    state.viewport.scrollX === command.viewport.scrollX &&
+    state.viewport.scrollY === command.viewport.scrollY &&
+    state.viewport.zoom === command.viewport.zoom
+  ) {
+    return { ok: true, changed: false, data: state.viewport };
+  }
+
+  store.setState({ viewport: command.viewport });
+  return { ok: true, changed: true, data: command.viewport };
 };
 
 export const handleSelectAll: CommandHandler<SelectAllCommand> = (store, command) => {
@@ -73,6 +88,7 @@ export const handleSelectColumn: CommandHandler<SelectColumnCommand> = (store, c
 export function registerSelectionHandlers(registry: Map<string, CommandHandler>) {
   registry.set('spreadsheet:setActiveSheet', handleSetActiveSheet as CommandHandler);
   registry.set('spreadsheet:setSelection', handleSetSelection as CommandHandler);
+  registry.set('spreadsheet:setViewport', handleSetViewport as CommandHandler);
   registry.set('spreadsheet:selectAll', handleSelectAll as CommandHandler);
   registry.set('spreadsheet:selectRow', handleSelectRow as CommandHandler);
   registry.set('spreadsheet:selectColumn', handleSelectColumn as CommandHandler);

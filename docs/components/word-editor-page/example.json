@@ -17,8 +17,8 @@
     {
       "id": "users",
       "name": "users",
-      "label": "Users",
-      "sourceType": "static",
+      "description": "Users",
+      "type": "static",
       "columns": [
         {
           "name": "name",

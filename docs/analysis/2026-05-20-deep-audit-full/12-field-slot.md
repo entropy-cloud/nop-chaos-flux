@@ -180,3 +180,24 @@
 ## 深挖第 4 轮追加
 
 未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度12-01]: 保留 (P2)。`packages/flux-code-editor/src/code-editor-renderer.tsx:31-52,203-222` 仍是 `wrap: true`，但 field rules 只声明 `label` 而未声明 `hint/description` 等共享 chrome 输入；该 definition contract 缺口仍在。
+- [维度12-02]: 保留 (P2)。`packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx:89-102` 使用 `formFieldRules`，但 `variant-field-view.tsx:208-216` 仍只从 `schemaProps.hint/description` 读取字符串，没有消费 `regions.hint/regions.description`。
+- [维度12-03]: 驳回。该条与已保留的 API/renderer-contract 发现重复，本质是 `quickSaveAction` event metadata 与消费端仍按 prop/action-schema 读取的同一问题；继续在字段/slot 维度单列不会增加独立修复信息。
+- [维度12-04]: 保留 (P1)。`packages/flux-react/src/node-frame-wrapper.tsx:36-43,69-75` 仍只读取 `resolvedPropsValue.hint/description`，而 `packages/flux-renderers-form/src/field-utils/field-reading.tsx:21-34` 明确把二者声明为 `value-or-region`；共享 wrapper 主路径的 region fallback 缺口成立。
+
+## 子项复核结论
+
+- [维度12-01]: 成立 (P2)。Code Editor wrap=true 但 field chrome inputs 未完整声明，保留。
+- [维度12-02]: 成立 (P2)。variant-field 仍未消费 `hint/description` region，保留。
+- [维度12-04]: 成立 (P1)。共享 wrapper 对 `value-or-region` 的 region fallback 缺口保留为高优先级。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                     | 一句话摘要                                                      |
+| ----- | -------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| 12-01 | P2       | `packages/flux-code-editor/src/code-editor-renderer.tsx:31-52,203-222`                   | Code Editor `wrap: true` 但 field chrome inputs 声明不完整      |
+| 12-02 | P2       | `packages/flux-renderers-form-advanced/src/variant-field/variant-field-view.tsx:208-216` | variant-field 仍只消费字符串 hint/description，不消费 regions   |
+| 12-04 | P1       | `packages/flux-react/src/node-frame-wrapper.tsx:36-43,69-75`                             | 共享 FieldFrame wrapper 仍缺 `hint/description` region fallback |

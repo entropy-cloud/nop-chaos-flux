@@ -884,7 +884,7 @@ Recommended ownership split:
 Shape ownership split:
 
 - the manifest envelope types and reused structural shape contract should live in the same dependency-safe shared layer
-- compiler traversal, diagnostics emission, and resolution flow stay in `flux-runtime`
+- compiler traversal, diagnostics emission, and resolution flow stay in `flux-compiler`
 
 Do not bury manifest definitions only inside React page renderers.
 
@@ -1060,7 +1060,12 @@ The manifest just lets tools know what `designer` means.
 - projection: `selectionTarget`, `fieldSources`, `preview`, `runtime`, `activeSheet`
 - capabilities: `preview`, `save`, `setSelectionTarget`, `insertField`
 
-The manifest lets the compiler validate that `${fieldSources[0].name}` is a valid projection path and that `report-designer:preview` takes the documented args shape.
+The manifest lets the compiler validate that `report-designer:preview` takes the documented args shape.
+
+Projection-path validation remains narrower:
+
+- generic projection-path diagnostics are only sound after projection publication attribution is compiler-visible
+- until that attribution exists, projection fields remain documented contract and future-tooling input, not a universally enabled compile-time path validator
 
 ## Loader And CI Use
 
@@ -1077,7 +1082,8 @@ schema file
   -> resolve one concrete manifest bundle through the owner-local resolver
   -> confirm the fragment executes inside a compiler-visible capability publication boundary
   -> for standalone fragment validation, use explicit `hostContractContext` if needed
-  -> validate expressions and actions against manifest contracts
+  -> validate actions against manifest contracts
+  -> validate projection paths only where projection publication attribution is compiler-visible
   -> compile final execution schema
 ```
 

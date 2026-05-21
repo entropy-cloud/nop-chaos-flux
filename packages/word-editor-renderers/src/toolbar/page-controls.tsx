@@ -103,19 +103,19 @@ export function PageControls({ bridge, store }: PageControlsProps) {
 
   return (
     <ToolbarGroup>
-      <ToolbarButton icon={FileText} onClick={handlePageModeToggle} title="Toggle Page Mode" />
+      <ToolbarButton icon={FileText} onClick={handlePageModeToggle} title="flux.wordEditor.togglePageMode" />
       <ToolbarSeparator />
-      <ToolbarButton icon={ZoomOut} onClick={handleZoomOut} title="Zoom Out" />
+      <ToolbarButton icon={ZoomOut} onClick={handleZoomOut} title="flux.wordEditor.zoomOut" />
       <span className="w-10 text-center text-xs text-muted-foreground">
         {Math.round(scale * 100)}%
       </span>
-      <ToolbarButton icon={ZoomIn} onClick={handleZoomIn} title="Zoom In" />
-      <ToolbarButton icon={Maximize} onClick={handleZoomReset} title="Reset Zoom" />
+      <ToolbarButton icon={ZoomIn} onClick={handleZoomIn} title="flux.wordEditor.zoomIn" />
+      <ToolbarButton icon={Maximize} onClick={handleZoomReset} title="flux.wordEditor.resetZoom" />
       <ToolbarSeparator />
       <NativeSelect
         value={paperSizeKey}
         onChange={(e) => handlePaperSize(e.target.value)}
-        title="Paper Size"
+        title={t('flux.wordEditor.paperSize')}
         size="xs"
         className="max-w-[80px]"
       >
@@ -129,7 +129,9 @@ export function PageControls({ bridge, store }: PageControlsProps) {
         icon={Rows3}
         onClick={handleOrientation}
         title={
-          paperSettings.direction === 'vertical' ? 'Switch to Landscape' : 'Switch to Portrait'
+          paperSettings.direction === 'vertical'
+            ? 'flux.wordEditor.switchToLandscape'
+            : 'flux.wordEditor.switchToPortrait'
         }
       />
       <ToolbarButton
@@ -138,10 +140,10 @@ export function PageControls({ bridge, store }: PageControlsProps) {
           setMargins(cloneMargins(paperSettings));
           setShowMarginDialog(true);
         }}
-        title="Set Margins"
+        title="flux.wordEditor.setMargins"
       />
       <ToolbarSeparator />
-      <ToolbarButton icon={Printer} onClick={() => bridge?.command?.executePrint()} title="Print" />
+      <ToolbarButton icon={Printer} onClick={() => bridge?.command?.executePrint()} title="flux.wordEditor.print" />
 
       <Dialog
         open={showMarginDialog}

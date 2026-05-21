@@ -24,7 +24,7 @@ const simpleFilter = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Apply Filter', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Apply Filter', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -85,7 +85,7 @@ const complexFilter = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Run Query', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Run Query', onClick: { action: 'submitForm' } }],
     },
   ],
 };

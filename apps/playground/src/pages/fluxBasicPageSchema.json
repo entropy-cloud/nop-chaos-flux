@@ -196,7 +196,7 @@
                         "type": "button",
                         "label": "Close Dialog",
                         "onClick": {
-                          "action": "closeDialog"
+                          "action": "closeSurface"
                         }
                       }
                     ]
@@ -215,7 +215,8 @@
                   "url": "/api/users"
                 },
                 "then": {
-                  "action": "refreshTable"
+                  "action": "component:refresh",
+                  "componentId": "user-form"
                 }
               }
             }

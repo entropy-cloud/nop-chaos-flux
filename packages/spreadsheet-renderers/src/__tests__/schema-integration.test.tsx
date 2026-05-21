@@ -16,6 +16,7 @@ import {
   defineSpreadsheetPageSchema,
   registerSpreadsheetRenderers,
   SPREADSHEET_MANIFEST_V1,
+  spreadsheetRendererDefinitions,
 } from '../index.js';
 import { SPREADSHEET_HOST_METHODS } from '../spreadsheet-manifest.js';
 
@@ -97,6 +98,22 @@ afterEach(() => {
 });
 
 describe('spreadsheet-page schema integration', () => {
+  it('publishes only the supported spreadsheet config knobs on the renderer contract', () => {
+    const definition = spreadsheetRendererDefinitions.find(
+      (candidate) => candidate.type === 'spreadsheet-page',
+    );
+
+    expect(definition?.propContracts?.config?.shape).toEqual({
+      kind: 'object',
+      fields: {
+        defaultRowHeight: { kind: 'number' },
+        defaultColumnWidth: { kind: 'number' },
+        maxUndoDepth: { kind: 'number' },
+      },
+      optional: ['defaultRowHeight', 'defaultColumnWidth', 'maxUndoDepth'],
+    });
+  });
+
   it('updates cell value via spreadsheet namespaced action', async () => {
     const document = createEmptyDocument('integration-spreadsheet');
     const sheetId = document.workbook.sheets[0].id;
@@ -358,6 +375,43 @@ describe('spreadsheet-page schema integration', () => {
       expect(result.ok).toBe(false);
       expect(result.error).toBeInstanceOf(Error);
       expect((result.error as Error).message).toBe('Sheet is protected');
+      expect(result.data).toEqual({ code: 'protected' });
+    } finally {
+      unregister();
+    }
+  });
+
+  it('preserves non-Error spreadsheet command failures as error causes', async () => {
+    const structuredError = {
+      code: 'protected',
+      message: 'Sheet is protected',
+      sheetId: 'sheet-1',
+    };
+    const provider = createSpreadsheetActionProvider(async () => ({
+      ok: false,
+      changed: false,
+      error: structuredError,
+      data: { code: 'protected' },
+    }));
+
+    const actionScope = createActionScope({ id: 'spreadsheet-structured-error-scope' });
+    const unregister = actionScope.registerNamespace('spreadsheet', provider);
+
+    try {
+      const resolved = actionScope.resolve('spreadsheet:setCellValue');
+      const result = await resolved!.provider.invoke(
+        resolved!.method,
+        {
+          cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+          value: 'next',
+        },
+        {} as any,
+      );
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeInstanceOf(Error);
+      expect((result.error as Error).message).toBe('Sheet is protected');
+      expect((result.error as Error).cause).toBe(structuredError);
       expect(result.data).toEqual({ code: 'protected' });
     } finally {
       unregister();

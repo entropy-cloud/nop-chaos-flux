@@ -300,8 +300,18 @@ describe('ReportDesignerPageRenderer', { timeout: 15000 }, () => {
 
     await waitFor(() => {
       expect(fieldSourceProvider.load).toHaveBeenCalled();
+      expect(notify).toHaveBeenCalledTimes(1);
       expect(notify).toHaveBeenCalledWith('warning', 'field sources exploded');
-      expect(onError).toHaveBeenCalled();
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phase: 'render',
+          path: '$',
+          details: expect.objectContaining({
+            schemaPath: '$',
+            operation: 'initializeReportDesigner',
+          }),
+        }),
+      );
     });
   });
 
@@ -381,11 +391,22 @@ describe('ReportDesignerPageRenderer', { timeout: 15000 }, () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('report-target-kind').textContent).toBe('sheet');
+      expect(notify).toHaveBeenCalledTimes(1);
       expect(notify).toHaveBeenCalledWith(
         'warning',
         'report-designer-page received invalid required prop(s): document, config',
       );
-      expect(onError).toHaveBeenCalled();
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phase: 'render',
+          path: '$',
+          details: expect.objectContaining({
+            schemaPath: '$',
+            operation: 'resolveReportDesignerPageInputs',
+            invalidProps: ['document', 'config'],
+          }),
+        }),
+      );
     });
   });
 

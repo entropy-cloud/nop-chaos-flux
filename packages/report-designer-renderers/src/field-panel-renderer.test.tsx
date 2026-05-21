@@ -377,10 +377,12 @@ describe('ReportFieldPanelRenderer', () => {
     );
 
     await waitFor(() => {
+      expect(notify).toHaveBeenCalledTimes(1);
       expect(notify).toHaveBeenCalledWith('warning', 'Insert failed');
       expect(reportRuntimeHostIssueSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.any(Error),
+          notify: false,
           phase: 'action',
           path: 'page.body.0',
           details: { operation: 'report-field-panel-insert' },
@@ -440,10 +442,12 @@ describe('ReportFieldPanelRenderer', () => {
     );
 
     await waitFor(() => {
+      expect(notify).toHaveBeenCalledTimes(1);
       expect(notify).toHaveBeenCalledWith('warning', 'Resolved insert failed');
       expect(reportRuntimeHostIssueSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.any(Error),
+          notify: false,
           phase: 'action',
           path: 'page.body.0',
           details: { operation: 'report-field-panel-insert' },

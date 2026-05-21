@@ -22,11 +22,17 @@ export function normalizeToolbarBlocks(
   const blocks: ToolbarBlockDefinition[] = [];
   for (const item of value) {
     if (typeof item === 'string') {
+      if (item === 'bulkActions') {
+        continue;
+      }
       blocks.push({ type: item });
       continue;
     }
 
     if (isRecord(item) && typeof item.type === 'string') {
+      if (item.type === 'bulkActions') {
+        continue;
+      }
       blocks.push({ type: item.type, align: item.align === 'right' ? 'right' : 'left' });
     }
   }
@@ -65,7 +71,6 @@ export function CrudToolbarBlocks(props: {
 
   function renderBlock(block: ToolbarBlockDefinition, index: number) {
     switch (block.type) {
-      case 'bulkActions':
       case 'listActions':
         return hasListActions ? (
           <div key={`${slot}-list-actions-${index}`} data-slot={`${slot}-toolbar-list-actions`}>

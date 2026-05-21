@@ -22,7 +22,24 @@ function toActionError(error: unknown): Error | undefined {
     return new Error(error);
   }
 
-  return error == null ? undefined : new Error(String(error));
+  if (error == null) {
+    return undefined;
+  }
+
+  if (typeof error === 'object') {
+    const message =
+      typeof (error as { message?: unknown }).message === 'string' &&
+      (error as { message: string }).message.length > 0
+        ? (error as { message: string }).message
+        : typeof (error as { code?: unknown }).code === 'string' &&
+            (error as { code: string }).code.length > 0
+          ? (error as { code: string }).code
+          : 'Spreadsheet command failed';
+
+    return new Error(message, { cause: error });
+  }
+
+  return new Error(String(error), { cause: error });
 }
 
 function matchesShape(value: unknown, shape: FluxValueShape): boolean {
@@ -121,11 +138,20 @@ export function createSpreadsheetActionProvider(
         };
       }
 
-      const result = await dispatch({
-        type: `spreadsheet:${method}`,
-        ...validation.args,
-      } as SpreadsheetCommand);
-      return toSpreadsheetActionResult(result);
+      try {
+        const result = await dispatch({
+          type: `spreadsheet:${method}`,
+          ...validation.args,
+        } as SpreadsheetCommand);
+        return toSpreadsheetActionResult(result);
+      } catch (error) {
+        const normalizedError = toActionError(error);
+        return {
+          ok: false,
+          error: normalizedError,
+          cause: error,
+        } satisfies ActionResult;
+      }
     },
   };
 }

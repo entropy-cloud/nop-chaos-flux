@@ -14,7 +14,7 @@ const acceptTerms = {
           required: true,
         },
       ],
-      actions: [{ type: 'button', label: 'Continue', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Continue', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -32,7 +32,7 @@ const checkboxWithReaction = {
           text: 'Email: ${emailNotify ? "ON" : "OFF"} | SMS: ${smsNotify ? "ON" : "OFF"}',
         },
       ],
-      actions: [{ type: 'button', label: 'Save Preferences', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save Preferences', onClick: { action: 'submitForm' } }],
     },
   ],
 };

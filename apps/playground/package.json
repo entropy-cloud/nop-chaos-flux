@@ -9,7 +9,7 @@
     "analyze": "tsc -p tsconfig.json && vite build --mode analyze",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
   },
   "dependencies": {

@@ -219,4 +219,23 @@ describe('tree control controllers', () => {
       ['last'],
     ]);
   });
+
+  it('keeps the same joined label output in checkbox mode', () => {
+    cleanup();
+    const options = buildTreeOptionMetaList([
+      { label: 'Platform', value: 'platform' },
+      { label: 'Design', value: 'design' },
+    ]);
+
+    render(
+      <TriggerHarness
+        options={options}
+        value={['platform', 'design']}
+        multiple
+        placeholder="Choose department"
+      />,
+    );
+
+    expect(screen.getByTestId('trigger-text').textContent).toBe('Platform, Design');
+  });
 });

@@ -751,3 +751,114 @@
 - **误报排除**: 这不是要求所有 data-source runtime API 都变成 component handle；问题仅限 active component doc 明确把 `component:refresh` 放在当前能力段，而 live renderer 没有任何 component handle 注册路径。也不重复 [维度03-12]/[维度03-13]/[维度03-14]，那些是“runtime handle 已发布但 metadata 缺失”，本条是“文档承诺了 runtime handle 但实现和 metadata 均未发布”。
 - **参考文档**: `docs/references/renderer-interfaces.md:163-168`, `docs/architecture/action-scope-and-imports.md:612-650`, `docs/references/action-payload-matrix.md:62`
 - **复核状态**: 未复核
+
+## 深挖第 9 轮追加
+
+### [维度03-18] form-advanced 已公开并注册迁出组件，但组件文档与 RendererDefinition 仍发布旧 package 契约
+
+- **文件**: `packages/flux-renderers-form-advanced/src/index.tsx:17-39`, `packages/flux-renderers-form-advanced/src/condition-builder/condition-builder.tsx:193-217`, `docs/components/condition-builder/design.md:15-20`, `docs/components/package-splitting-strategy.md:521-530`
+- **行号范围**: `index.tsx:17-39`, `condition-builder.tsx:193-217`, `condition-builder/design.md:15-20`, `package-splitting-strategy.md:521-530`
+- **证据片段**:
+  ```ts
+  export {
+    ConditionBuilderRenderer,
+    conditionBuilderRendererDefinition,
+  } from './condition-builder/condition-builder.js';
+  export { KeyValueRenderer, keyValueRendererDefinition } from './key-value.js';
+  export { TagListRenderer, tagListRendererDefinition } from './tag-list.js';
+  ...
+  export const formAdvancedRendererDefinitions: RendererDefinition[] = [
+  ```
+  ```ts
+  export const conditionBuilderRendererDefinition: RendererDefinition = {
+    type: 'condition-builder',
+    component: ConditionBuilderRenderer,
+    fields: formFieldRules,
+    validation: {
+  ```
+  ```md
+  - `type: 'condition-builder'`
+  - `sourcePackage: '@nop-chaos/flux-renderers-form'`
+  - 当前 fields: `label` 为 `value-or-region`
+  ```
+  ```md
+  ### 3.5 `flux-renderers-form-advanced`（新包，从 form 拆出）
+
+  ...
+  | `condition-builder` | runtime | 从 form 迁出 |
+  | `array-editor` | runtime | 从 form 迁出 |
+  | `tag-list` | runtime | 从 form 迁出 |
+  | `key-value` | runtime | 从 form 迁出 |
+  ```
+- **严重程度**: P2
+- **现状**: `condition-builder`、`array-editor`、`tag-list`、`key-value` 等已由 `@nop-chaos/flux-renderers-form-advanced` root entry 公开并进入 `formAdvancedRendererDefinitions` 注册主路径；但组件 owner 文档仍把 `sourcePackage` 写成 `@nop-chaos/flux-renderers-form`，且对应 `RendererDefinition` 没有 `sourcePackage` metadata 来给 authoring contract / inspector 提供 live 包归属。
+- **风险**: schema authoring、组件发现、包拆分维护和文档导航会把高级字段归到旧包；后续按文档从 `flux-renderers-form` 查找或导入组件会失败，也会掩盖这些组件对 `flux-renderers-form-advanced` 的真实发布边界。
+- **建议**: 将迁出组件的组件文档 `sourcePackage` 同步为 `@nop-chaos/flux-renderers-form-advanced`，并在对应 `RendererDefinition` 中补齐 `sourcePackage`（以及必要的 discovery metadata），使 root entry、definition metadata 与 owner docs 三者一致。
+- **误报排除**: 这不是单纯文档措辞问题；迁出组件已在 live root entry 和 renderer registry 主路径公开，`docs/components/package-splitting-strategy.md` 也明确记录“从 form 迁出”。问题不重复已报告的 Code Editor metadata 缺口；本条关注 form-advanced 已迁出组件的公开包归属 contract drift。
+- **参考文档**: `docs/references/renderer-interfaces.md:148-199`, `docs/components/package-splitting-strategy.md:521-530`
+- **复核状态**: 未复核
+
+## 深挖第 10 轮追加
+
+未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度03-01]: 降级为 P2。`packages/flow-designer-renderers/src/designer-action-provider.ts:55-66` 确有强转和默认值绕过 manifest args，但当前 owner 文档更明确要求的是编译期 host action 校验（`docs/architecture/capability-projection-manifest.md:776-790`）；运行时 provider 必须做同等结构化校验的 P1 证据不足。
+- [维度03-02]: 保留 (P2)。`FLOW_DESIGNER_MANIFEST_V1` 发布了 `navigate-back`，但基础 provider 方法表不含该方法，只有 wrapper 条件性补入（`packages/flow-designer-renderers/src/designer-manifest.ts:277-279`, `packages/flow-designer-renderers/src/designer-page-helpers.tsx:122-135`），属于公开契约集合不一致。
+- [维度03-03]: 驳回。`./unstable` 是 `package.json` exports 与 owner 文档明确承认的 renderer-facing convenience surface（`packages/flux-react/package.json:11-20`, `docs/architecture/flux-runtime-module-boundaries.md:438-463`）；具体 callsite 是否不该绕过 hooks 应在 renderer-contract/模块边界维度单独审，不构成当前 API 表面积违约。
+- [维度03-04]: 保留 (P2)。`packages/flux-renderers-form/src/index.tsx:4-14` 通过 root entry 全量公开 `field-utils`/factory，且 `flux-renderers-form-advanced` 已主路径消费这些 helper，形成未文档化的跨包公共契约锁定风险。
+- [维度03-05]: 保留 (P1)。`word-editor` manifest 声明了结构化 `chartShape/codeShape`，但 provider 仅做 `as DocChart/DocCode` + 业务 validator（`packages/word-editor-renderers/src/word-editor-action-provider.ts:98-116`）；`validateDocChart()` 也未覆盖全部 shape/type（`packages/word-editor-core/src/chart-model.ts:35-58`），契约漂移成立。
+- [维度03-06]: 保留 (P2)。provider 成功返回 `{ chartId }` / `{ codeId }`，但 manifest 未声明 result（`packages/word-editor-renderers/src/word-editor-manifest.ts:143-149`, `packages/word-editor-renderers/src/word-editor-action-provider.ts:104-116`）；而 owner 文档已明确 result shape 属于 contract 元数据（`docs/architecture/capability-projection-manifest.md:595-606`）。
+- [维度03-07]: 保留 (P1)。Spreadsheet manifest 对大量 host actions 只写 description、不写 args（`packages/spreadsheet-renderers/src/spreadsheet-manifest.ts:269-408`），provider 在 `!contract?.args` 分支接受任意 object（`packages/spreadsheet-renderers/src/host-action-provider.ts:73-95`），而 core command 明确要求 `sheetId/row/...` 等结构（`packages/spreadsheet-core/src/commands-base.ts:173-239`）。
+- [维度03-08]: 保留 (P2)。`preview/exportTemplate/save` 实际通过 `ActionResult.data` 返回数据（`packages/report-designer-core/src/core-dispatch.ts:194-214`, `260-328`），但 manifest 未声明 result（`packages/report-designer-renderers/src/report-designer-manifest.ts:244-285`），与 result-contract baseline 不符。
+- [维度03-09]: 保留 (P1)。Flow manifest 将 `addNode/addEdge/duplicateNode` 的 result 声明为 `{ nodeId/edgeId }`（`packages/flow-designer-renderers/src/designer-manifest.ts:62-100,166-174`），但 adapter/provider 实际返回完整 node/edge 对象（`packages/flow-designer-renderers/src/designer-command-adapter-graph.ts:65-80`, `packages/flow-designer-renderers/src/designer-context.ts:119-124`）。
+- [维度03-10]: 保留 (P2)。active API 文档声称 `designer:copySelection` / `designer:pasteClipboard` 已对外暴露（`docs/architecture/flow-designer/api.md:50-52`），但 manifest 与 provider 均未发布这两个方法，只有内部 adapter command 存在（`packages/flow-designer-renderers/src/designer-action-provider.ts:15-53`, `packages/flow-designer-renderers/src/designer-command-adapter.ts:173-178`）。
+- [维度03-11]: 保留 (P2)。Spreadsheet clipboard/find/replace 相关 handler 会返回 `data`（如 clipboard/find result/count，见 `packages/spreadsheet-core/src/command-handlers/clipboard-handlers.ts:15-24`, `search-handlers.ts:15-24`），但 manifest 对这些方法未声明 result（`packages/spreadsheet-renderers/src/spreadsheet-manifest.ts:269-280,398-408`）。
+- [维度03-12]: 保留 (P2)。Tabs 运行时已注册 `setValue/getValue` handle（`packages/flux-renderers-basic/src/tabs.tsx:115-145`），组件文档也写为当前 live capability（`docs/components/tabs/design.md:336-343`），但 `RendererDefinition` 缺 `componentCapabilityContracts`（`packages/flux-renderers-basic/src/basic-renderer-definitions.ts:333-379`）。
+- [维度03-13]: 保留 (P2)。Table 已公开 `refresh/getSelection/setSelection` handle（`packages/flux-renderers-data/src/table-renderer/use-table-handle.ts:21-84`）且文档声明为当前句柄基线（`docs/components/table/design.md:60-65`），但 definition 未声明 `componentCapabilityContracts`（`packages/flux-renderers-data/src/data-renderer-definitions.ts:16-143`）。
+- [维度03-14]: 保留 (P2)。架构文档把 Chart 当前 handle baseline 写成 `resize/setOption/getDataURL`（`docs/architecture/renderer-runtime.md:1053-1063`），运行时只实现 `resize`（`packages/flux-renderers-data/src/chart-renderer.tsx:144-167`），definition 也无 capability metadata（`packages/flux-renderers-data/src/data-renderer-definitions.ts:151-170`）。
+- [维度03-15]: 保留 (P2)。`code-editor` 文档与 live field rules 已发布 props/events 面（`docs/components/code-editor/design.md:21-71`, `packages/flux-code-editor/src/code-editor-renderer.tsx:31-52`），但 `RendererDefinition` 仅有 `fields/validation/wrap`，缺 `propContracts/eventContracts`（`packages/flux-code-editor/src/code-editor-renderer.tsx:203-222`），会使 authoring contract 发现面失真。
+- [维度03-16]: 保留 (P1)。Report Designer 虽有 `validateMethodPayload()`，但 manifest 对 `dropFieldToTarget.field/target`、`updateMeta.target` 等只声明空对象（`packages/report-designer-renderers/src/report-designer-manifest.ts:201-228`），provider 校验后仍以 `as ReportDesignerCommand` 进入要求判别联合的 core command（`packages/report-designer-renderers/src/host-action-provider.ts:144-148`, `packages/report-designer-core/src/commands.ts:22-38`）。
+- [维度03-17]: 驳回。`docs/components/data-source/design.md:42-45` 的表述是“当前应优先支持”，更像方向性设计要求，不足以单独证明 `component:refresh` 已是 live public capability；在缺少 manifest/definition/runtime 任一已发布证据时，不宜按当前 API 违约入账。
+- [维度03-18]: 保留 (P2)。`form-advanced` 已从 root entry 公开并注册迁出组件（`packages/flux-renderers-form-advanced/src/index.tsx:17-49`），包拆分文档也明确“从 form 迁出”（`docs/components/package-splitting-strategy.md:521-530`），但组件 owner 文档仍写旧 `sourcePackage`，且 definition 缺少对应 metadata（如 `condition-builder`，`packages/flux-renderers-form-advanced/src/condition-builder/condition-builder.tsx:193-217`, `docs/components/condition-builder/design.md:15-20`）。
+
+## 子项复核结论
+
+- [维度03-01]: 降级保留 (P2)。应按 host action runtime/provider 契约收口，不再按 P1 推动。
+- [维度03-02]: 成立 (P2)。Flow manifest 与基础 provider 方法集合不一致，保留。
+- [维度03-04]: 成立 (P2)。`flux-renderers-form` root entry 未文档化公共 helper surface 保留。
+- [维度03-05]: 成立 (P1)。Word Editor manifest/provider args contract 漂移保留为高优先级。
+- [维度03-06]: 成立 (P2)。Word Editor provider result 未进 manifest metadata，保留。
+- [维度03-07]: 成立 (P1)。Spreadsheet host API args contract 漂移保留为高优先级。
+- [维度03-08]: 成立 (P2)。Report Designer result metadata 缺口保留。
+- [维度03-09]: 成立 (P1)。Flow manifest result 与实际 provider 输出不一致，保留为高优先级。
+- [维度03-10]: 成立 (P2)。active API 文档暴露未发布方法，保留。
+- [维度03-11]: 成立 (P2)。Spreadsheet clipboard/find/replace result metadata 缺口保留。
+- [维度03-12]: 成立 (P2)。Tabs live handle 缺 capability metadata，保留。
+- [维度03-13]: 成立 (P2)。Table live handle 缺 capability metadata，保留。
+- [维度03-14]: 成立 (P2)。Chart docs/runtime/definition handle baseline 不一致，保留。
+- [维度03-15]: 成立 (P2)。Code Editor definition 缺 prop/event contract metadata，保留。
+- [维度03-16]: 成立 (P1)。Report Designer manifest 空对象 target 仍会放行非法 payload，保留为高优先级。
+- [维度03-18]: 成立 (P2)。form-advanced 迁出组件 sourcePackage / definition metadata 漂移保留。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                         | 一句话摘要                                                                     |
+| ----- | -------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| 03-01 | P2       | `packages/flow-designer-renderers/src/designer-action-provider.ts:55-66`     | Flow host action provider args runtime收窄不足，降级保留                       |
+| 03-02 | P2       | `packages/flow-designer-renderers/src/designer-manifest.ts:277-279`          | Flow manifest 发布了 `navigate-back`，基础 provider 方法表未对齐               |
+| 03-04 | P2       | `packages/flux-renderers-form/src/index.tsx:4-14`                            | `flux-renderers-form` root entry 全量公开 field-utils/factory 未文档化 surface |
+| 03-05 | P1       | `packages/word-editor-renderers/src/word-editor-action-provider.ts:98-116`   | Word Editor manifest/provider chart/code args contract 漂移                    |
+| 03-06 | P2       | `packages/word-editor-renderers/src/word-editor-manifest.ts:143-149`         | Word Editor provider 成功 result 未写入 manifest metadata                      |
+| 03-07 | P1       | `packages/spreadsheet-renderers/src/spreadsheet-manifest.ts:269-408`         | Spreadsheet host actions 大量缺 args contract，provider 仍可放行任意 object    |
+| 03-08 | P2       | `packages/report-designer-renderers/src/report-designer-manifest.ts:244-285` | Report Designer preview/export/save result metadata 缺失                       |
+| 03-09 | P1       | `packages/flow-designer-renderers/src/designer-manifest.ts:62-100`           | Flow manifest result 声明与 provider 实际返回 node/edge 对象不一致             |
+| 03-10 | P2       | `docs/architecture/flow-designer/api.md:50-52`                               | active API 文档暴露 `copySelection/pasteClipboard`，manifest/provider 未发布   |
+| 03-11 | P2       | `packages/spreadsheet-renderers/src/spreadsheet-manifest.ts:269-280,398-408` | Spreadsheet clipboard/find/replace handler 有 result，但 manifest 未声明       |
+| 03-12 | P2       | `packages/flux-renderers-basic/src/basic-renderer-definitions.ts:333-379`    | Tabs live capability 已存在但 definition 缺 `componentCapabilityContracts`     |
+| 03-13 | P2       | `packages/flux-renderers-data/src/data-renderer-definitions.ts:16-143`       | Table live capability 已存在但 definition 缺 `componentCapabilityContracts`    |
+| 03-14 | P2       | `docs/architecture/renderer-runtime.md:1053-1063`                            | Chart handle baseline 在 docs/runtime/definition 三处不一致                    |
+| 03-15 | P2       | `packages/flux-code-editor/src/code-editor-renderer.tsx:203-222`             | Code Editor definition 缺 prop/event contract metadata                         |
+| 03-16 | P1       | `packages/report-designer-renderers/src/report-designer-manifest.ts:201-228` | Report Designer target payload contract 仍会放行非法联合对象                   |
+| 03-18 | P2       | `packages/flux-renderers-form-advanced/src/index.tsx:17-49`                  | form-advanced 迁出组件 sourcePackage / definition metadata 未同步              |

@@ -40,31 +40,76 @@ interface ControllerRunState {
   scopeId: string | undefined;
   scopePath: string | undefined;
   scopeStore: ScopeRef['store'] | undefined;
-  entriesKey: string | undefined;
-  baseValueKey: string | undefined;
+  entries: readonly ResolvedSourceEntry[];
+  baseValue: ResolvedNodeProps['value'];
 }
 
 function createSyntheticSourceKey(path: string) {
   return `__source:${path}`;
 }
 
-function safeValueKey(value: unknown): string | undefined {
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return undefined;
+function arePlainObjectsEqual(
+  left: unknown,
+  right: unknown,
+  visited = new WeakMap<object, object>(),
+): boolean {
+  if (Object.is(left, right)) {
+    return true;
   }
+
+  if (!left || !right || typeof left !== 'object' || typeof right !== 'object') {
+    return false;
+  }
+
+  if (visited.get(left as object) === (right as object)) {
+    return true;
+  }
+
+  visited.set(left as object, right as object);
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+      return false;
+    }
+
+    return left.every((item, index) => arePlainObjectsEqual(item, right[index], visited));
+  }
+
+  const leftRecord = left as Record<string, unknown>;
+  const rightRecord = right as Record<string, unknown>;
+  const leftKeys = Object.keys(leftRecord);
+  const rightKeys = Object.keys(rightRecord);
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  return leftKeys.every(
+    (key) => key in rightRecord && arePlainObjectsEqual(leftRecord[key], rightRecord[key], visited),
+  );
 }
 
-function createEntriesKey(entries: readonly ResolvedSourceEntry[]): string | undefined {
-  return safeValueKey(
-    entries.map((entry) => ({
-      key: entry.key,
-      stateKey: entry.stateKey,
-      targetPath: entry.targetPath,
-      source: entry.source,
-    })),
-  );
+function areResolvedSourceEntriesEqual(
+  left: readonly ResolvedSourceEntry[],
+  right: readonly ResolvedSourceEntry[],
+) {
+  if (left === right) {
+    return true;
+  }
+
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((entry, index) => {
+    const other = right[index];
+    return Boolean(
+      other &&
+        entry.key === other.key &&
+        entry.stateKey === other.stateKey &&
+        entry.targetPath === other.targetPath &&
+        arePlainObjectsEqual(entry.source, other.source),
+    );
+  });
 }
 
 function collectNestedSourceEntries(
@@ -223,8 +268,8 @@ export function createNodeSourcePropController(
       scopeId: scope.id,
       scopePath: scope.path,
       scopeStore: scope.store,
-      entriesKey: createEntriesKey(sourceEntries),
-      baseValueKey: safeValueKey(baseValue),
+      entries: sourceEntries,
+      baseValue,
     };
 
     if (
@@ -232,8 +277,8 @@ export function createNodeSourcePropController(
       currentRunState.scopeId === nextRunState.scopeId &&
       currentRunState.scopePath === nextRunState.scopePath &&
       currentRunState.scopeStore === nextRunState.scopeStore &&
-      currentRunState.baseValueKey === nextRunState.baseValueKey &&
-      currentRunState.entriesKey === nextRunState.entriesKey
+      arePlainObjectsEqual(currentRunState.baseValue, nextRunState.baseValue) &&
+      areResolvedSourceEntriesEqual(currentRunState.entries, nextRunState.entries)
     ) {
       return;
     }

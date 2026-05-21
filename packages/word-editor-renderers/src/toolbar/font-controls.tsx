@@ -9,6 +9,7 @@ import {
   Redo2,
   Paintbrush,
 } from 'lucide-react';
+import { t } from '@nop-chaos/flux-i18n';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import type { EditorSelectionState } from '@nop-chaos/word-editor-core';
 import { Input, NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
@@ -39,25 +40,25 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
         icon={Undo2}
         onClick={() => runCommand(() => command?.executeUndo())}
         disabled={!selection.undo}
-        title="Undo"
+        title="flux.wordEditor.undo"
       />
       <ToolbarButton
         icon={Redo2}
         onClick={() => runCommand(() => command?.executeRedo())}
         disabled={!selection.redo}
-        title="Redo"
+        title="flux.wordEditor.redo"
       />
       <ToolbarSeparator />
       <ToolbarButton
         icon={Paintbrush}
         onClick={() => runCommand(() => command?.executePainter({ isDblclick: false }))}
-        title="Format Painter"
+        title="flux.wordEditor.formatPainter"
       />
       <ToolbarSeparator />
       <NativeSelect
         value={selection.font || 'Microsoft YaHei'}
         onChange={(e) => runCommand(() => command?.executeFont(e.target.value))}
-        title="Font"
+        title={t('flux.wordEditor.font')}
         size="xs"
         className="flex-shrink-0 max-w-[130px]"
       >
@@ -70,7 +71,7 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
       <NativeSelect
         value={selection.size}
         onChange={(e) => runCommand(() => command?.executeSize(Number(e.target.value)))}
-        title="Font Size"
+        title={t('flux.wordEditor.fontSize')}
         size="xs"
         className="flex-shrink-0 w-14"
       >
@@ -84,37 +85,37 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
         icon={Bold}
         onClick={() => runCommand(() => command?.executeBold())}
         active={selection.bold}
-        title="Bold"
+        title="flux.wordEditor.bold"
       />
       <ToolbarButton
         icon={Italic}
         onClick={() => runCommand(() => command?.executeItalic())}
         active={selection.italic}
-        title="Italic"
+        title="flux.wordEditor.italic"
       />
       <ToolbarButton
         icon={Underline}
         onClick={() => runCommand(() => command?.executeUnderline())}
         active={selection.underline}
-        title="Underline"
+        title="flux.wordEditor.underline"
       />
       <ToolbarButton
         icon={Strikethrough}
         onClick={() => runCommand(() => command?.executeStrikeout())}
         active={selection.strikeout}
-        title="Strikethrough"
+        title="flux.wordEditor.strikethrough"
       />
       <ToolbarButton
         icon={Superscript}
         onClick={() => runCommand(() => command?.executeSuperscript())}
         active={selection.superscript}
-        title="Superscript"
+        title="flux.wordEditor.superscript"
       />
       <ToolbarButton
         icon={Subscript}
         onClick={() => runCommand(() => command?.executeSubscript())}
         active={selection.subscript}
-        title="Subscript"
+        title="flux.wordEditor.subscript"
       />
       <ToolbarSeparator />
       <Input
@@ -122,16 +123,16 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
         value={selection.color || '#000000'}
         onChange={(e) => runCommand(() => command?.executeColor(e.target.value))}
         className={cn('w-7 h-7 cursor-pointer flex-shrink-0 border rounded')}
-        title="Text Color"
-        aria-label="Text Color"
+        title={t('flux.wordEditor.textColor')}
+        aria-label={t('flux.wordEditor.textColor')}
       />
       <Input
         type="color"
         value={selection.highlight || '#ffff00'}
         onChange={(e) => runCommand(() => command?.executeHighlight(e.target.value))}
         className={cn('w-7 h-7 cursor-pointer flex-shrink-0 border rounded')}
-        title="Highlight Color"
-        aria-label="Highlight Color"
+        title={t('flux.wordEditor.highlightColor')}
+        aria-label={t('flux.wordEditor.highlightColor')}
       />
     </ToolbarGroup>
   );

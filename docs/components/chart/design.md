@@ -42,7 +42,8 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 当前最小事件是 `onClick`、`onHover`。
-- 后续可补 `component:refresh`、`component:exportImage` 一类句柄，但应保持狭义。
+- 当前组件句柄基线是 `component:resize`。
+- 后续可补更窄的导出或实例控制句柄，但应在 runtime、definition metadata 和 owner docs 中同时收口。
 
 ## 9. 数据源、表达式、导入能力接入点
 

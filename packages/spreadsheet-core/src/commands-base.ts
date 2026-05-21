@@ -3,6 +3,7 @@ import type {
   SpreadsheetRange,
   SpreadsheetSelection,
   SpreadsheetSortDirection,
+  SpreadsheetViewportSnapshot,
 } from './types.js';
 
 export interface SpreadsheetCommandBase {
@@ -19,6 +20,11 @@ export interface SetActiveSheetCommand extends SpreadsheetCommandBase {
 export interface SetSelectionCommand extends SpreadsheetCommandBase {
   type: 'spreadsheet:setSelection';
   selection: SpreadsheetSelection;
+}
+
+export interface SetViewportCommand extends SpreadsheetCommandBase {
+  type: 'spreadsheet:setViewport';
+  viewport: SpreadsheetViewportSnapshot;
 }
 
 export interface SetCellValueCommand extends SpreadsheetCommandBase {

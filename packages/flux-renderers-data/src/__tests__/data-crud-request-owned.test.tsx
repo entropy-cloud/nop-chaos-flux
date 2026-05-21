@@ -41,7 +41,7 @@ describe('CRUD renderer request-owned baseline', () => {
               source: '${pagedUsers}',
               onRefresh: {
                 action: 'refreshSource',
-                targetId: 'crud-users-source',
+                targetId: 'pagedUsers',
               },
               footerToolbar: [{ type: 'text', text: 'Rows: ${$crud.itemCount}/${$crud.total}' }],
               columns: [{ name: 'name', label: 'Name' }],
@@ -116,7 +116,7 @@ describe('CRUD renderer request-owned baseline', () => {
               },
               onQuerySubmit: {
                 action: 'refreshSource',
-                targetId: 'crud-users-source',
+                targetId: 'pagedUsers',
               },
               columns: [{ name: 'name', label: 'Name' }],
             },
@@ -184,7 +184,7 @@ describe('CRUD renderer request-owned baseline', () => {
               },
               onQuerySubmit: {
                 action: 'refreshSource',
-                targetId: 'crud-users-source',
+                targetId: 'pagedUsers',
               },
               footerToolbar: [
                 {

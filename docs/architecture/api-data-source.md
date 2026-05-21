@@ -287,7 +287,7 @@ Current convergence baseline:
 
 Current implementation note:
 
-- live `api-data-source-controller-runtime.ts` still calls the shared request substrate (`executeApiSchema(...)` / `executeApiRequest(...)`) directly for producer refreshes. This preserves request convergence, but is a remaining implementation gap relative to the stricter adapter-entry target from `docs/plans/139-unified-action-dispatch-for-submit-validation-and-data-access.md`.
+- live action-backed producer refresh already executes through `runtime.dispatch(...)` and therefore reuses `ActionRuntimeAdapter`; the source controller still owns scheduling, publication, async governance, and stale-result handling around that invocation.
 
 Important distinction:
 
@@ -648,12 +648,12 @@ The legacy AMIS-style behavior of publishing without an explicit binding target 
 4. `resultMapping + mergeToScope: true` is the preferred shape for linked-data field projection into the current owner scope
 5. the merged fields keep provenance from the source publication, but once merged into the current owner they are ordinary writable current-scope values unless some other schema rule makes them readonly
 6. collisions with reserved projection names, active `Resource` targets, or ordinary scope data in the same owning lexical scope are invalid
-7. if the published value is not object-like, `mergeToScope: true` is invalid and publication fails diagnostically
+7. if the published value is not object-like, runtime skips the shallow merge and still keeps the named publication path; new schema should treat `mergeToScope: true` as object-oriented authoring rather than relying on non-object merge behavior
 
 Current runtime compatibility note:
 
-- current runtime now publishes `data-source` values through `name` first and accepts `name` in `refreshSource` / source-registry lookup
-- legacy `id` targeting and legacy `dataPath` publication overrides remain supported as compatibility paths during convergence
+- current runtime publishes `data-source` values through `name` first and refresh lookup targets that canonical `name`
+- legacy `dataPath` publication overrides remain supported as compatibility paths during convergence
 - anonymous formula-backed resources may still fall back to runtime `id`; new schema should not rely on that compatibility path
 - current runtime now applies `resultMapping` before normal publication for both action-backed and formula-backed `data-source` values
 

@@ -81,6 +81,15 @@ function getFilterLabels(): Record<NopDebuggerFilterKind, string> {
   };
 }
 
+function getTabLabels(): Record<NopDebuggerTab, string> {
+  return {
+    overview: t('flux.debugger.tabOverview'),
+    timeline: t('flux.debugger.tabTimeline'),
+    network: t('flux.debugger.tabNetwork'),
+    node: t('flux.debugger.tabNode'),
+  };
+}
+
 function includesText(target: string | undefined, query: string) {
   return (target ?? '').toLowerCase().includes(query.toLowerCase());
 }
@@ -146,6 +155,7 @@ function matchesSearchQuery(event: import('./types.js').NopDebugEvent, rawQuery:
 
 export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const filterLabels = getFilterLabels();
+  const tabLabels = getTabLabels();
   const chrome = useDebuggerSnapshot(
     props.controller,
     (snapshot) => ({
@@ -299,7 +309,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         className="nop-debugger-launcher nop-theme-root"
         style={{ left: `${launcherPosition.x}px`, top: `${launcherPosition.y}px` }}
         onPointerDown={launcherBind.onPointerDown}
-        title="Open Debugger"
+        title={t('flux.debugger.openDebugger')}
         onClick={(event: MouseEvent<HTMLButtonElement>) => {
           if (consumeSuppressedClick()) {
             event.preventDefault();
@@ -315,7 +325,9 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           <Bug size={14} />
         </span>
         <span className="ndbg-launcher-label">
-           {errorCount > 0 ? `${errorCount} err` : `${events.length}`}
+          {errorCount > 0
+            ? t('flux.debugger.launcherErrorCount', { count: errorCount })
+            : t('flux.debugger.launcherEventCount', { count: events.length })}
         </span>
         {errorCount > 0 ? <span className="ndbg-launcher-badge">{badgeDisplay}</span> : null}
       </Button>
@@ -366,8 +378,8 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             size="icon-sm"
             className="ndbg-icon-button"
             onClick={() => (chrome.paused ? props.controller.resume() : props.controller.pause())}
-            data-tooltip={chrome.paused ? 'Resume' : 'Pause'}
-            aria-label={chrome.paused ? 'Resume' : 'Pause'}
+            data-tooltip={chrome.paused ? t('flux.debugger.resume') : t('flux.debugger.pause')}
+            aria-label={chrome.paused ? t('flux.debugger.resume') : t('flux.debugger.pause')}
           >
             {chrome.paused ? <Play size={14} /> : <Pause size={14} />}
           </Button>
@@ -377,8 +389,8 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             size="icon-sm"
             className="ndbg-icon-button"
             onClick={() => props.controller.clear()}
-            data-tooltip="Clear"
-            aria-label="Clear"
+            data-tooltip={t('flux.debugger.clear')}
+            aria-label={t('flux.debugger.clear')}
           >
             <Trash2 size={14} />
           </Button>
@@ -393,9 +405,9 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
               }
               setInspectMode(!inspectMode);
             }}
-            data-tooltip={inspectMode ? 'Cancel pick' : 'Pick element'}
+            data-tooltip={inspectMode ? t('flux.debugger.cancelPick') : t('flux.debugger.pickElement')}
             data-active={inspectMode ? '' : undefined}
-            aria-label={inspectMode ? 'Cancel pick' : 'Pick element'}
+            aria-label={inspectMode ? t('flux.debugger.cancelPick') : t('flux.debugger.pickElement')}
           >
             <Crosshair size={14} />
           </Button>
@@ -406,15 +418,15 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             className="ndbg-icon-button"
             data-testid="ndbg-minimize"
             onClick={() => props.controller.minimize()}
-            data-tooltip="Minimize"
-            aria-label="Minimize"
+            data-tooltip={t('flux.debugger.minimize')}
+            aria-label={t('flux.debugger.minimize')}
           >
             <Minimize2 size={14} />
           </Button>
         </div>
       </div>
 
-      <div className="ndbg-tabs" role="tablist" aria-label="Debugger tabs">
+      <div className="ndbg-tabs" role="tablist" aria-label={t('flux.debugger.tabsLabel')}>
         {(['overview', 'timeline', 'network', 'node'] as NopDebuggerTab[]).map((tab) => (
           <Button
             key={tab}
@@ -425,7 +437,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             data-active={chrome.activeTab === tab ? '' : undefined}
             onClick={() => props.controller.setActiveTab(tab)}
           >
-            {tab}
+            {tabLabels[tab]}
           </Button>
         ))}
       </div>

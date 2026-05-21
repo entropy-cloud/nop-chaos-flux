@@ -8,7 +8,7 @@ import { textRenderer, env } from './test-fixtures.js';
 const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 describe('createRendererRuntime', () => {
-  it('refreshes registered data sources by id within an explicit scope', async () => {
+  it('refreshes registered data sources by name within an explicit scope', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
@@ -37,7 +37,7 @@ describe('createRendererRuntime', () => {
     page.scope.update('qty', 5);
 
     await expect(
-      runtime.refreshDataSource({ id: 'scoped-total', scope: page.scope }),
+      runtime.refreshDataSource({ name: 'total', scope: page.scope }),
     ).resolves.toBe(true);
     expect(page.scope.get('total')).toBe(10);
 
@@ -641,9 +641,7 @@ describe('createRendererRuntime', () => {
 
     secondScope.update('value', 11);
 
-    await expect(
-      runtime.refreshDataSource({ id: 'shared-source', scope: secondScope }),
-    ).resolves.toBe(true);
+    await expect(runtime.refreshDataSource({ name: 'derived', scope: secondScope })).resolves.toBe(true);
 
     expect(firstScope.get('derived')).toBe(1);
     expect(secondScope.get('derived')).toBe(11);
@@ -652,7 +650,7 @@ describe('createRendererRuntime', () => {
     second.dispose();
   });
 
-  it('returns false when refreshing an unknown data source id', async () => {
+  it('returns false when refreshing an unknown data source name', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
@@ -660,8 +658,6 @@ describe('createRendererRuntime', () => {
     });
     const page = runtime.createPageRuntime({});
 
-    await expect(
-      runtime.refreshDataSource({ id: 'missing-source', scope: page.scope }),
-    ).resolves.toBe(false);
+    await expect(runtime.refreshDataSource({ name: 'missing-source', scope: page.scope })).resolves.toBe(false);
   });
 });

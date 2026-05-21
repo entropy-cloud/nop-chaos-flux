@@ -4,6 +4,7 @@ import { Button, Input } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { DEFAULT_FILTERS } from '../diagnostics.js';
 import type { NopDebugEvent, NopDebuggerFilterKind } from '../types.js';
+import { DisclosureTrigger } from './disclosure-trigger.js';
 import type { ErrorGroup } from './event-groups.js';
 import { JsonViewer } from './json-viewer.js';
 
@@ -143,41 +144,34 @@ export function TimelineTab(props: {
   const renderEventEntry = (event: NopDebugEvent) => {
     const isSlowRender =
       event.kind === 'render:end' && event.durationMs != null && event.durationMs > 16;
+    const expanded = expandedId === event.id;
+    const detailId = `ndbg-timeline-detail-${event.id}`;
+
     return (
-      <article
-        key={event.id}
-        className="ndbg-entry"
-        role="button"
-        tabIndex={0}
-        onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setExpandedId(expandedId === event.id ? null : event.id);
-          }
-        }}
-      >
-        <div className="ndbg-entry-topline">
-          <span
-            className="ndbg-badge"
-            data-group={event.group}
-            data-slow={isSlowRender ? '' : undefined}
-          >
-            {event.group}
-          </span>
-          <time>{formatClock(event.timestamp)}</time>
-        </div>
-        <strong className="ndbg-entry-summary">
-          {renderHighlightedText(event.summary, searchText)}
-          {isSlowRender ? ' ⚠️ ' : ''}
-        </strong>
-        <span className="ndbg-entry-meta">{event.source}</span>
-        {expandedId === event.id ? (
-          /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- expanded detail is non-interactive content; click only stops row-toggle bubbling */
-          <div
-            className="ndbg-entry-expanded"
-            onClick={(clickEvent) => clickEvent.stopPropagation()}
-          >
+      <article key={event.id} className="ndbg-entry">
+        <DisclosureTrigger
+          expanded={expanded}
+          controlsId={detailId}
+          onToggle={() => setExpandedId(expanded ? null : event.id)}
+        >
+          <div className="ndbg-entry-topline">
+            <span
+              className="ndbg-badge"
+              data-group={event.group}
+              data-slow={isSlowRender ? '' : undefined}
+            >
+              {event.group}
+            </span>
+            <time>{formatClock(event.timestamp)}</time>
+          </div>
+          <strong className="ndbg-entry-summary">
+            {renderHighlightedText(event.summary, searchText)}
+            {isSlowRender ? ' ⚠️ ' : ''}
+          </strong>
+          <span className="ndbg-entry-meta">{event.source}</span>
+        </DisclosureTrigger>
+        {expanded ? (
+          <div id={detailId} className="ndbg-entry-expanded">
             {event.detail ? <code className="ndbg-entry-detail">{event.detail}</code> : null}
             {event.network ? (
               <div>
@@ -205,7 +199,7 @@ export function TimelineTab(props: {
       <Input
         type="search"
         className="ndbg-search"
-        placeholder="Search events, /regex/, or path:body.0"
+        placeholder={t('flux.debugger.searchPlaceholder')}
         size="sm"
         value={searchText}
         onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value)}
@@ -275,24 +269,23 @@ export function TimelineTab(props: {
                 </span>
                 <time>{formatClock(group.latestTimestamp)}</time>
               </div>
-               <strong
-                className="ndbg-entry-summary"
-                role="button"
-                tabIndex={0}
-                onClick={() =>
+              <DisclosureTrigger
+                expanded={errorGroupExpanded === group.source}
+                controlsId={`ndbg-error-group-${group.events[0]?.id ?? group.source}`}
+                onToggle={() =>
                   setErrorGroupExpanded(errorGroupExpanded === group.source ? null : group.source)
                 }
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setErrorGroupExpanded(errorGroupExpanded === group.source ? null : group.source);
-                  }
-                }}
+                className="gap-0"
               >
-                {group.source} ({group.count})
-              </strong>
+                <strong className="ndbg-entry-summary">
+                  {group.source} ({group.count})
+                </strong>
+              </DisclosureTrigger>
               {errorGroupExpanded === group.source ? (
-                <div className="ndbg-entry-expanded">
+                <div
+                  id={`ndbg-error-group-${group.events[0]?.id ?? group.source}`}
+                  className="ndbg-entry-expanded"
+                >
                   {group.events.map((event) => (
                     <div key={event.id}>
                       <span className="ndbg-entry-meta">{formatClock(event.timestamp)}</span>

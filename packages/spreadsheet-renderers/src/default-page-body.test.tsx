@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 const mockInteractions = vi.fn();
 const mockToolbar = vi.fn();
+const mockGrid = vi.fn();
 
 vi.mock('./use-spreadsheet-interactions.js', () => ({
   useSpreadsheetInteractions: (...args: unknown[]) => mockInteractions(...args),
@@ -17,7 +18,10 @@ vi.mock('./spreadsheet-toolbar.js', () => ({
 }));
 
 vi.mock('./spreadsheet-grid.js', () => ({
-  SpreadsheetGrid: () => <div data-testid="spreadsheet-grid-probe" />,
+  SpreadsheetGrid: (props: unknown) => {
+    mockGrid(props);
+    return <div data-testid="spreadsheet-grid-probe" />;
+  },
 }));
 
 vi.mock('./sheet-tab-bar.js', () => ({
@@ -30,6 +34,7 @@ afterEach(() => {
   cleanup();
   mockInteractions.mockReset();
   mockToolbar.mockReset();
+  mockGrid.mockReset();
 });
 
 function createInteractions() {
@@ -167,6 +172,59 @@ describe('DefaultSpreadsheetPageBody', () => {
     fireEvent.mouseDown(view.container.querySelector('[data-slot="spreadsheet-default-host"]')!);
 
     expect(interactions.handleEditSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes edit save state through to the default spreadsheet grid', () => {
+    const interactions = createInteractions();
+    (interactions as typeof interactions & { editSaveState?: unknown }).editSaveState = {
+      status: 'failed',
+      message: 'save failed',
+    } as any;
+    mockInteractions.mockReturnValue(interactions);
+
+    render(
+      <DefaultSpreadsheetPageBody
+        bridge={{ dispatch: vi.fn() } as any}
+        snapshot={{
+          workbook: { sheets: [{ id: 'sheet-1', name: 'Sheet1' }] },
+          activeSheet: { id: 'sheet-1' },
+        } as any}
+        showToolbar={true}
+      />,
+    );
+
+    expect(mockGrid).toHaveBeenCalled();
+    expect((mockGrid.mock.calls[0]?.[0] as any)?.editSaveState).toEqual({
+      status: 'failed',
+      message: 'save failed',
+    });
+  });
+
+  it('expands default grid dimensions to cover used cells beyond the legacy 100x26 shell', () => {
+    const interactions = createInteractions();
+    mockInteractions.mockReturnValue(interactions);
+
+    render(
+      <DefaultSpreadsheetPageBody
+        bridge={{ dispatch: vi.fn() } as any}
+        snapshot={{
+          workbook: { sheets: [{ id: 'sheet-1', name: 'Sheet1' }] },
+          activeSheet: {
+            id: 'sheet-1',
+            cells: {
+              A1: { address: 'A1', row: 0, col: 0, value: 'top-left' },
+              AD121: { address: 'AD121', row: 120, col: 29, value: 'far' },
+            },
+          },
+        } as any}
+        showToolbar={true}
+      />,
+    );
+
+    expect((mockInteractions.mock.calls[0]?.[0] as any)?.rows).toBe(121);
+    expect((mockInteractions.mock.calls[0]?.[0] as any)?.cols).toBe(30);
+    expect((mockGrid.mock.calls[0]?.[0] as any)?.rows).toBe(121);
+    expect((mockGrid.mock.calls[0]?.[0] as any)?.cols).toBe(30);
   });
 
   it('does not route input clicks through handleEditSave while editing remains inside the cell editor', () => {

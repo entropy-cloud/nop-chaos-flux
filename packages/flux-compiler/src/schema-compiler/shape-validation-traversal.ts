@@ -7,6 +7,9 @@ import {
 
 export interface ValidationTraversalState {
   hostContext?: HostActionValidationContext;
+  symbolTable?: import('@nop-chaos/flux-core').CompileSymbolTable;
+  visibleImports?: ReadonlyMap<string, import('@nop-chaos/flux-core').PreparedImportSpec | undefined>;
+  startsHostBoundary: boolean;
 }
 
 export function createDefaultValidationTraversalState(
@@ -16,6 +19,9 @@ export function createDefaultValidationTraversalState(
     hostContext: diagnostics.validation.hostContractContext
       ? createHostActionValidationContext(diagnostics.validation.hostContractContext)
       : undefined,
+    symbolTable: undefined,
+    visibleImports: undefined,
+    startsHostBoundary: false,
   };
 }
 
@@ -102,6 +108,7 @@ export function createChildTraversalState(
   }
 
   return {
+    ...state,
     hostContext: {
       ...state.hostContext,
       currentRegion: regionKey,

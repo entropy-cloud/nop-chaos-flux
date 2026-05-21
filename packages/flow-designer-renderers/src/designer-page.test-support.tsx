@@ -19,6 +19,10 @@ export function getCreateDesignerCoreMock() {
   return flowDesignerMocks.createDesignerCoreMock;
 }
 
+export function getLatestCreatedDesignerCore() {
+  return flowDesignerMocks.createDesignerCoreMock.mock.results.at(-1)?.value;
+}
+
 vi.mock('@nop-chaos/flow-designer-core', async () => {
   const actual = await vi.importActual<typeof import('@nop-chaos/flow-designer-core')>(
     '@nop-chaos/flow-designer-core',

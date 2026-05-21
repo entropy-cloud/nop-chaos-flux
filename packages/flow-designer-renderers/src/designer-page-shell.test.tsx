@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+/* eslint-disable max-lines */
 
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -13,6 +14,7 @@ import {
   formulaCompiler,
   installFlowDesignerTestHooks,
 } from './index-test-support.js';
+import { createDesignerPageSchemaRenderer } from './designer-page.test-support.js';
 
 installFlowDesignerTestHooks();
 
@@ -154,6 +156,124 @@ describe('designer-page status publication', () => {
         }),
       );
     });
+  });
+
+  it('reports create dialog submitAction failures through monitor and notify without closing the dialog', async () => {
+    const notify = vi.fn();
+    const onError = vi.fn();
+    const failedActionResult = {
+      ok: false,
+      cancelled: true,
+      timedOut: true,
+      cause: { reason: 'timeout' },
+    };
+    let registeredActionScope:
+      | import('@nop-chaos/flux-core').ActionScope
+      | null
+      | undefined = undefined;
+    const actionButtonRenderer = {
+      type: 'action-button',
+      component: (props: { props: { label?: string }; events: { onClick?: () => void } }) => (
+        <button type="button" onClick={() => void props.events.onClick?.()}>
+          {String(props.props.label ?? 'Action')}
+        </button>
+      ),
+      fields: [{ key: 'onClick', kind: 'event' }],
+    } as RendererDefinition;
+    const createDialogBodyRenderer = {
+      type: 'create-dialog-body-probe',
+      component: () => <span>Create dialog body</span>,
+    } as RendererDefinition;
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+      actionButtonRenderer,
+      createDialogBodyRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flow/index-create-dialog-failure"
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: {
+            ...createTestConfig(),
+            nodeTypes: [
+              {
+                id: 'task',
+                label: 'Task',
+                body: { type: 'text', text: 'Task' },
+                defaults: { label: 'Task' },
+                createDialog: {
+                  title: 'Create task',
+                  body: { type: 'create-dialog-body-probe' },
+                  submitAction: { action: 'test:failCreate' },
+                },
+              },
+            ],
+          },
+        }}
+        env={{
+          ...(createRendererEnv(notify) as RendererEnv),
+          monitor: { onError },
+        }}
+        formulaCompiler={formulaCompiler}
+        onActionScopeChange={(scope) => {
+          if (registeredActionScope === scope) {
+            return;
+          }
+          registeredActionScope?.unregisterNamespace('test');
+          registeredActionScope = scope;
+          scope?.registerNamespace('test', {
+            kind: 'host',
+            listMethods: () => ['failCreate'],
+            invoke: async () => failedActionResult,
+          });
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Task' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Create task')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('error', 'Create dialog submit action was cancelled.');
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phase: 'render',
+          error: expect.any(Error),
+          details: expect.objectContaining({
+            reason: 'designer-create-dialog-submit-failed',
+            documentId: 'doc-1',
+            documentMode: undefined,
+            nodeType: 'task',
+            cancelled: true,
+            timedOut: true,
+            actionResult: expect.objectContaining({
+              ...failedActionResult,
+              providerKind: 'host',
+              sourceScopeId: 'root-action-scope',
+            }),
+          }),
+        }),
+      );
+    });
+
+    expect(screen.getByText('Create task')).toBeTruthy();
   });
 
   it('mounts toolbar, inspector, and dialogs regions with designer host scope and keeps edge selection on fallback inspector path', async () => {
@@ -309,10 +429,7 @@ describe('DesignerPageRenderer basic rendering', () => {
       'options',
     ]);
 
-    const SchemaRenderer = createSchemaRenderer([
-      ...basicTestRendererDefinitions,
-      ...flowDesignerRendererDefinitions,
-    ]);
+    const SchemaRenderer = createDesignerPageSchemaRenderer();
 
     const view = render(
       <SchemaRenderer
@@ -434,6 +551,39 @@ describe('DesignerPageRenderer basic rendering', () => {
     expect((view.container.querySelector('input[type="text"]') as HTMLInputElement)?.disabled).toBe(true);
     expect((view.container.querySelector('textarea') as HTMLTextAreaElement)?.disabled).toBe(true);
     expect((view.container.querySelector('input[type="number"]') as HTMLInputElement)?.disabled).toBe(true);
+  });
+
+  it('renders title as a supported value-or-region contract above the toolbar', () => {
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flow/index-title-slot"
+        schema={{
+          type: 'designer-page',
+          title: { type: 'text', text: 'Flow Title' },
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: createTestConfig(),
+        }}
+        env={createRendererEnv() as RendererEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(screen.getByText('Flow Title')).toBeTruthy();
+    const designerPageDef = flowDesignerRendererDefinitions.find((definition) => definition.type === 'designer-page');
+    expect(designerPageDef?.fields?.some((field) => field.key === 'title' && field.regionKey === 'title')).toBe(true);
   });
 
   it('renders the designer page with xyflow canvas', () => {
@@ -631,4 +781,5 @@ describe('DesignerPageRenderer basic rendering', () => {
       expect(document.querySelector('.nop-designer-node-toolbar')).toBeNull();
     });
   });
+
 });

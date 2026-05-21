@@ -1,6 +1,6 @@
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { ComponentRegistryContext } from '@nop-chaos/flux-react/unstable';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
@@ -12,6 +12,8 @@ beforeEach(() => {
   resetFluxI18n();
   initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 });
+
+afterEach(cleanup);
 
 describe('data package units', () => {
   it('registers data renderer definitions through package entry', () => {
@@ -41,6 +43,17 @@ describe('data package units', () => {
     ).toEqual([{ type: 'statistics' }, { type: 'pagination', align: 'right' }]);
 
     expect(normalizeToolbarBlocks(undefined, 'footer')).toEqual([]);
+  });
+
+  it('drops legacy bulkActions toolbar blocks from normalized layouts', () => {
+    expect(
+      normalizeToolbarBlocks(
+        {
+          header: ['listActions', 'bulkActions', { type: 'bulkActions' }],
+        } as any,
+        'header',
+      ),
+    ).toEqual([{ type: 'listActions' }]);
   });
 
   it('renders toolbar blocks and forwards interactions', () => {
@@ -75,6 +88,29 @@ describe('data package units', () => {
     expect(onPageSizeChange).toHaveBeenCalledWith(50);
     expect(onPageChange).toHaveBeenCalledWith(1);
     expect(onPageChange).toHaveBeenCalledWith(3);
+  });
+
+  it('disables next pagination affordance on the last page', () => {
+    const onPageChange = vi.fn();
+
+    render(
+      <CrudToolbarBlocks
+        slot="footer"
+        blocks={[{ type: 'pagination', align: 'right' }]}
+        summary={{ total: 25, itemCount: 25 } as any}
+        listActionsContent={null}
+        hasListActions={false}
+        pagination={{ currentPage: 3, pageSize: 10 }}
+        onPageChange={onPageChange}
+        onPageSizeChange={() => {}}
+      />,
+    );
+
+    const next = screen.getByRole('button', { name: 'Next' });
+    expect(next.getAttribute('aria-disabled')).toBe('true');
+    expect(next.className).toContain('pointer-events-none');
+    expect(next.className).toContain('opacity-50');
+
   });
 
   it('returns null for empty toolbar block sets', () => {

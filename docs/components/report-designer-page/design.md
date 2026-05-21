@@ -27,6 +27,7 @@
 - `toolbar`、`fieldPanel`、`inspector`、`dialogs`、`body` 是主要 regions，可接收通用 region schema 输入，不限于 report-designer family 专用 renderer。
 - 目标设计中，如需让宿主外部读取 report designer host 摘要，应使用 `statusPath`，而不是把完整 host projection 提升到 page 全局 scope。
 - 左右工作台是否出现由 resolved `config` 决定；`fieldPanel` 与 `inspector` regions 是 override surfaces，不是 side-panel existence 的 canonical source。
+- `config` 的 formal authoring baseline 不再是 opaque object：当前公开 vocabulary 至少包括 `kind?`、`fieldSources?`、`maxUndoDepth?`、`features?`、`inspector?`、`preview?`，其中 side-panel existence 由 `features.fieldPanel` / `features.inspector`、`fieldSources`、`inspector.body|byTarget|byProfile` 共同决定。
 
 ## 5. 字段分类
 
@@ -108,6 +109,13 @@ host scope 向下投影一套 canonical contract，不再把 compatibility alias
 - `workbook` / `spreadsheet.workbook` 必须与 `reportDocument.spreadsheet` 指向同一条 canonical workbook baseline；save/export/host projection 不支持各自读取不同 spreadsheet snapshot。
 - `runtime.dirty` 是对外发布给 `statusPath` 和 host scope 的聚合 dirty；初次挂载时内部 spreadsheet clone 不能被误发布成外部 dirty 变更。
 - report owner 的 undo/redo 可用态读取 `designer.canUndo` / `designer.canRedo`；聚合跨-owner历史只通过 `runtime.canUndo` / `runtime.canRedo` 对外发布。
+- `spreadsheet.selection` 在 host projection 中发布结构化 selection target：cell/range 直接发布 anchor/range，row/column/sheet 也保留 `kind + sheetId + rows/columns` 形状，避免 schema 片段再猜测 canvas 内部选择状态。
+
+### 7.2 Host Action Result Contract
+
+- `report-designer:save`、`report-designer:preview`、`report-designer:exportTemplate` 的 live host action contract 统一返回结构化结果对象，而不是只靠 side effects。
+- `preview` result 至少区分 `ok`、`cancelled`、`error`，并可携带 adapter result metadata，供宿主 schema 或 toolbar action 做稳定分支。
+- `save` / `exportTemplate` result 也保留成功与失败的结构化 metadata，避免调用方依赖隐式 notify 文案推断结果。
 
 ## 8. 事件、动作与组件句柄能力
 

@@ -507,10 +507,13 @@ describe('createRendererRuntime', () => {
         expect.objectContaining({
           actionType: 'component:setValue',
           dispatchMode: 'component',
-          componentId: 'compiled-cid-form',
-          componentName: 'compiledCidForm',
           componentType: 'form',
           method: 'setValue',
+          result: expect.objectContaining({
+            ok: true,
+            componentType: 'form',
+            data: 'Carol',
+          }),
         }),
       );
     } finally {

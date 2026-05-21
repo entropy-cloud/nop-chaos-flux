@@ -56,6 +56,16 @@ const edgeIdArrayShape: FluxValueShape = {
   item: { kind: 'string' },
 };
 
+const nodeResultShape: FluxValueShape = {
+  kind: 'object',
+  fields: { nodeId: { kind: 'string' } },
+};
+
+const edgeResultShape: FluxValueShape = {
+  kind: 'object',
+  fields: { edgeId: { kind: 'string' } },
+};
+
 const designerCapabilities: HostCapabilityContract = {
   namespace: 'designer',
   methods: {
@@ -69,7 +79,7 @@ const designerCapabilities: HostCapabilityContract = {
         },
         optional: ['position', 'data'],
       },
-      result: { kind: 'object', fields: { nodeId: { kind: 'string' } } },
+      result: nodeResultShape,
       description: 'Add a new node to the graph',
     },
     addBranch: {
@@ -97,7 +107,7 @@ const designerCapabilities: HostCapabilityContract = {
         },
         optional: ['sourcePort', 'targetPort', 'data'],
       },
-      result: { kind: 'object', fields: { edgeId: { kind: 'string' } } },
+      result: edgeResultShape,
       description: 'Add a new edge between nodes',
     },
     clearSelection: {
@@ -170,7 +180,7 @@ const designerCapabilities: HostCapabilityContract = {
           nodeId: { kind: 'string' },
         },
       },
-      result: { kind: 'object', fields: { nodeId: { kind: 'string' } } },
+      result: nodeResultShape,
       description: 'Duplicate a node',
     },
     moveNode: {
@@ -274,8 +284,11 @@ const designerCapabilities: HostCapabilityContract = {
     restore: {
       description: 'Restore last saved document state',
     },
-    'navigate-back': {
-      description: 'Invoke the upstream navigation-back handler when the designer host exposes one.',
+    copySelection: {
+      description: 'Copy the current selection into the designer clipboard.',
+    },
+    pasteClipboard: {
+      description: 'Paste the current designer clipboard contents.',
     },
     beginTransaction: {
       args: {
@@ -387,6 +400,8 @@ export const FLOW_DESIGNER_MANIFEST_V1: HostCapabilityProjectionManifest = {
     docsPath: 'docs/architecture/flow-designer/design.md',
   },
 };
+
+export const FLOW_DESIGNER_HOST_METHOD_CONTRACTS = designerCapabilities.methods;
 
 const manifestVersions: ReadonlyMap<string, HostCapabilityProjectionManifest> = new Map([
   ['1.0', FLOW_DESIGNER_MANIFEST_V1],

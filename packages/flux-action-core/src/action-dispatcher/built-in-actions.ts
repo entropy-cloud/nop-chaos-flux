@@ -192,8 +192,8 @@ export async function runBuiltInAction(
       break;
     }
     case 'refreshSource': {
-      const sourceId = action.targeting.targetId;
-      if (!sourceId) {
+      const targetId = action.targeting.targetId;
+      if (!targetId) {
         return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
           ok: false,
           error: new Error('refreshSource requires targetId'),
@@ -201,7 +201,7 @@ export async function runBuiltInAction(
       }
       invocation = {
         action: 'refreshSource',
-        args: { sourceId: String(sourceId) },
+        args: { targetId: String(targetId) },
         targeting: action.targeting,
         actionNode: action,
         signal,

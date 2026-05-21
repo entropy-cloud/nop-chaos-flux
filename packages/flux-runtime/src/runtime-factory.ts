@@ -428,6 +428,7 @@ export function createRendererRuntime(input: {
       return createSourceObserver(runtime);
     },
     createPageRuntime: runtimeOwnedFactories.createPageRuntime,
+    disposeOwnedPage: runtimeOwnedFactories.disposeOwnedPage,
     createValidationScopeRuntime: runtimeOwnedFactories.createValidationScopeRuntime,
     createSurfaceRuntime: runtimeOwnedFactories.createSurfaceRuntime,
     createDataSourceController(inputValue) {
@@ -454,7 +455,7 @@ export function createRendererRuntime(input: {
         compiledSource: inputValue.compiledSource,
       });
     },
-    refreshDataSource(inputValue: { id: string; scope?: ScopeRef }) {
+    refreshDataSource(inputValue: { name: string; scope?: ScopeRef }) {
       if (!sourceRegistryRef.current) {
         throw new Error('Runtime source registry is not initialized yet');
       }

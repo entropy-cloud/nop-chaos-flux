@@ -43,7 +43,7 @@ const radioMode = {
         },
         { type: 'text', text: 'Selected: ${department ?? "(none)"}' },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -63,7 +63,7 @@ const checkboxMode = {
         },
         { type: 'text', text: 'Selected IDs: ${(teams ?? []).join(", ") || "(none)"}' },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };

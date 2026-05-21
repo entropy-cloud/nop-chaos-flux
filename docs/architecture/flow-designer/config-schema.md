@@ -44,7 +44,7 @@ interface DesignerPageSchema {
 }
 ```
 
-当 `config.documentMode` 为 `'tree'` 时，应使用 `treeDocument` 字段而非 `document` 字段。运行时会先把它投影成 `GraphDocument`，然后用同一个 `DesignerCore` 通过 `replaceDocument(...)` 保持 tree 编辑前后的 `selection`、`history`、`snapshot` 连续性。
+当 `config.documentMode` 为 `'tree'` 时，应使用 `treeDocument` 字段而非 `document` 字段。当前 formal schema validation 也会把这条前置条件编码为 builder-facing contract：tree mode 缺少 `treeDocument` 会报错；非 tree mode 缺少 `document` 也会报错。运行时会先把 `treeDocument` 投影成 `GraphDocument`，然后用同一个 `DesignerCore` 通过 `replaceDocument(...)` 保持 tree 编辑前后的 `selection`、`history`、`snapshot` 连续性。
 
 ## 2. GraphDocument
 
@@ -228,13 +228,13 @@ interface NodeTypeConfig {
         "className": "fd-node__content",
         "body": [
           {
-            "type": "tpl",
-            "tpl": "${label}",
+            "type": "text",
+            "text": "${label}",
             "className": "fd-node__title"
           },
           {
-            "type": "tpl",
-            "tpl": "${status}",
+            "type": "text",
+            "text": "${status}",
             "className": "fd-node__status"
           }
         ]
@@ -277,8 +277,8 @@ interface NodeBodyBindings {
 
 ```json
 {
-  "type": "tpl",
-  "tpl": "${node.label} - ${data.status}"
+  "type": "text",
+  "text": "${node.label} - ${data.status}"
 }
 ```
 
@@ -297,8 +297,8 @@ interface NodeBodyBindings {
         "icon": "play-circle"
       },
       {
-        "type": "tpl",
-        "tpl": "${data.label}"
+        "type": "text",
+        "text": "${data.label}"
       }
     ]
   },
@@ -321,18 +321,18 @@ interface NodeBodyBindings {
         "className": "fd-node__header",
         "items": [
           { "type": "icon", "icon": "git-branch" },
-          { "type": "tpl", "tpl": "${data.label}" }
+          { "type": "text", "text": "${data.label}" }
         ]
       },
       {
         "type": "container",
         "className": "fd-node__conditions",
         "body": {
-          "type": "each",
+          "type": "loop",
           "name": "data.conditions",
-          "items": {
-            "type": "tpl",
-            "tpl": "${expr} → ${target}",
+          "body": {
+            "type": "text",
+            "text": "${item.expr} → ${item.target}",
             "className": "fd-node__condition-item"
           }
         }
@@ -552,8 +552,8 @@ interface EdgeScope {
   "id": "labeled",
   "label": "带标签边",
   "body": {
-    "type": "tpl",
-    "tpl": "${data.label}",
+    "type": "text",
+    "text": "${data.label}",
     "className": "fd-edge-label"
   },
   "appearance": {
@@ -765,7 +765,7 @@ interface DesignerConfig {
       {
         "type": "button",
         "label": "保存",
-        "variant": "default",
+        "intent": "primary",
         "disabled": "${!runtime.dirty}",
         "onClick": { "action": "designer:save" }
       }
@@ -1269,8 +1269,8 @@ interface TreeNodeTypeConfig extends NodeTypeConfig {
         "icon": "user-check"
       },
       {
-        "type": "tpl",
-        "tpl": "${data.label}"
+        "type": "text",
+        "text": "${data.label}"
       }
     ]
   },
@@ -1295,8 +1295,8 @@ interface TreeNodeTypeConfig extends NodeTypeConfig {
         "icon": "git-branch"
       },
       {
-        "type": "tpl",
-        "tpl": "${data.label}"
+        "type": "text",
+        "text": "${data.label}"
       }
     ]
   },
@@ -1323,8 +1323,8 @@ interface TreeNodeTypeConfig extends NodeTypeConfig {
         "icon": "stop-circle"
       },
       {
-        "type": "tpl",
-        "tpl": "${data.label}"
+        "type": "text",
+        "text": "${data.label}"
       }
     ]
   },

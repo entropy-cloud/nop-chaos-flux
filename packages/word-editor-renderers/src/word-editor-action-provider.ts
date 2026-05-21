@@ -1,10 +1,17 @@
-import type { ActionContext, ActionNamespaceProvider, ActionResult } from '@nop-chaos/flux-core';
+import type {
+  ActionContext,
+  ActionNamespaceProvider,
+  ActionResult,
+  FluxValueShape,
+  HostCapabilityContract,
+} from '@nop-chaos/flux-core';
 import type {
   CanvasEditorBridge,
   DatasetStoreApi,
   DocChart,
   DocCode,
   EditorStoreApi,
+  PaperSettings,
   SavedDocumentData,
 } from '@nop-chaos/word-editor-core';
 import {
@@ -14,6 +21,83 @@ import {
   validateDocChart,
   validateDocCode,
 } from '@nop-chaos/word-editor-core';
+import { WORD_EDITOR_HOST_METHOD_CONTRACTS } from './word-editor-manifest.js';
+
+type CommandRecord = Record<string, unknown>;
+
+function isCommandRecord(payload: unknown): payload is CommandRecord {
+  return Boolean(payload) && typeof payload === 'object' && !Array.isArray(payload);
+}
+
+function matchesShape(value: unknown, shape: FluxValueShape): boolean {
+  switch (shape.kind) {
+    case 'unknown':
+      return true;
+    case 'string':
+      return typeof value === 'string';
+    case 'number':
+      return typeof value === 'number' && Number.isFinite(value);
+    case 'boolean':
+      return typeof value === 'boolean';
+    case 'null':
+      return value === null;
+    case 'literal':
+      return value === shape.value;
+    case 'array':
+      return Array.isArray(value) && value.every((item) => matchesShape(item, shape.item));
+    case 'union':
+      return shape.anyOf.some((variant) => matchesShape(value, variant));
+    case 'object': {
+      if (!isCommandRecord(value)) {
+        return false;
+      }
+      const optional = new Set(shape.optional ?? []);
+      for (const [key, fieldShape] of Object.entries(shape.fields)) {
+        if (!(key in value)) {
+          if (!optional.has(key)) {
+            return false;
+          }
+          continue;
+        }
+        if (!matchesShape(value[key], fieldShape)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    default:
+      return false;
+  }
+}
+
+function validateMethodPayload(
+  method: string,
+  payload: unknown,
+): { ok: true; args: CommandRecord } | { ok: false; error: Error } {
+  const contract = (WORD_EDITOR_HOST_METHOD_CONTRACTS as HostCapabilityContract['methods'])[method];
+  if (!contract?.args) {
+    if (payload === undefined) {
+      return { ok: true, args: {} };
+    }
+    if (isCommandRecord(payload)) {
+      return { ok: true, args: payload };
+    }
+    return {
+      ok: false,
+      error: new Error(`word-editor:${method} does not accept a non-object payload.`),
+    };
+  }
+
+  const args = payload === undefined ? {} : payload;
+  if (!matchesShape(args, contract.args)) {
+    return {
+      ok: false,
+      error: new Error(`word-editor:${method} payload does not match the published host args contract.`),
+    };
+  }
+
+  return { ok: true, args: args as CommandRecord };
+}
 
 function ok(data?: unknown): ActionResult {
   return data === undefined ? { ok: true } : { ok: true, data };
@@ -27,6 +111,22 @@ function failWithError(error: Error): ActionResult {
   return { ok: false, error };
 }
 
+function toAbortError(reason: unknown, message: string): Error {
+  if (reason instanceof Error) {
+    return reason;
+  }
+
+  if (reason === undefined) {
+    const error = new Error(message);
+    error.name = 'AbortError';
+    return error;
+  }
+
+  const error = new Error(message, { cause: reason });
+  error.name = 'AbortError';
+  return error;
+}
+
 export function createWordEditorActionProvider(input: {
   bridge: CanvasEditorBridge;
   editorStore: EditorStoreApi;
@@ -35,6 +135,7 @@ export function createWordEditorActionProvider(input: {
   setCharts(next: DocChart[]): void;
   getCodes(): DocCode[];
   setCodes(next: DocCode[]): void;
+  getPaperSettings(): PaperSettings;
   saveEvent?:
     | ((event?: SavedDocumentData, ctx?: Partial<ActionContext>) => Promise<ActionResult>)
     | undefined;
@@ -48,13 +149,10 @@ export function createWordEditorActionProvider(input: {
     async invoke(method, payload, ctx) {
       switch (method) {
         case 'save': {
-          const charts = input.getCharts();
-          const codes = input.getCodes();
           let saved: SavedDocumentData;
           try {
             saved = captureDocumentSnapshot(input.bridge, {
-              charts,
-              codes,
+              paperSettings: input.getPaperSettings(),
             });
           } catch (error) {
             const normalizedError = error instanceof Error ? error : new Error(String(error));
@@ -71,7 +169,11 @@ export function createWordEditorActionProvider(input: {
             }
           }
           if (ctx.signal?.aborted) {
-            return { ok: false, error: new Error('Word document save was aborted.') };
+            return {
+              ok: false,
+              cancelled: true,
+              error: toAbortError(ctx.signal.reason, 'Word document save was aborted.'),
+            };
           }
           try {
             persistSavedDocument(saved);
@@ -96,9 +198,13 @@ export function createWordEditorActionProvider(input: {
           return ok();
         }
         case 'insertChart': {
-          const chart = payload as DocChart | undefined;
-          const validation = validateDocChart(chart ?? {});
-          if (!chart?.id || !validation.valid) {
+          const payloadValidation = validateMethodPayload(method, payload);
+          if (!payloadValidation.ok) {
+            return { ok: false, error: payloadValidation.error };
+          }
+          const chart = payloadValidation.args as unknown as DocChart;
+          const domainValidation = validateDocChart(chart ?? {});
+          if (!chart?.id || !domainValidation.valid) {
             return fail('insertChart requires a complete chart payload.');
           }
           input.bridge.insertChart(chart);
@@ -106,9 +212,13 @@ export function createWordEditorActionProvider(input: {
           return ok({ chartId: chart.id });
         }
         case 'insertCode': {
-          const code = payload as DocCode | undefined;
-          const validation = validateDocCode(code ?? {});
-          if (!code?.id || !validation.valid) {
+          const payloadValidation = validateMethodPayload(method, payload);
+          if (!payloadValidation.ok) {
+            return { ok: false, error: payloadValidation.error };
+          }
+          const code = payloadValidation.args as unknown as DocCode;
+          const domainValidation = validateDocCode(code ?? {});
+          if (!code?.id || !domainValidation.valid) {
             return fail('insertCode requires a complete code payload.');
           }
           input.bridge.insertCode(code);

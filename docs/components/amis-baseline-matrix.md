@@ -239,22 +239,21 @@ Notes:
 
 ### 3. Replaced By Composition Or Owner Architecture
 
-| AMIS type            | Why not retained standalone                                                                           | Replacement                                  |
-| -------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `each`               | structural repetition already has a no-UI owner                                                       | `loop`                                       |
-| `wrapper`            | generic wrapper semantics do not justify a standalone canonical type                                  | `container` / `fragment`                     |
-| `panel`              | panel semantics are better expressed by card/container/collapse composition                           | composition                                  |
-| `hbox`               | duplicated layout naming                                                                              | `flex`                                       |
-| `vbox`               | duplicated layout naming                                                                              | `flex`                                       |
-| `fieldset`           | 表单分组容器由 Flux 独立保留为 `fieldset` family，而不是继续作为 AMIS 历史容器语义散落在其他 owner 中 | `fieldset`（见上方 Flux-only form family）   |
-| `group`              | generic grouping is better expressed structurally or by layout/container families                     | `container` / `flex` / `fragment`            |
-| `input-group`        | group chrome belongs to field composition, not a top-level owner                                      | composition                                  |
-| `pagination-wrapper` | wrapper-plus-pagination should not become its own canonical type                                      | `pagination` + collection renderer           |
-| `switch-container`   | conditional rendering belongs to declarative branching and dynamic rendering                          | `dynamic-renderer` / conditional composition |
-| `subform`            | Flux already has object/detail/composite field architecture                                           | object/detail/composite field families       |
-| `search-box`         | search UI should be authored as `form` + `input-text` + `button` or `crud.queryForm`                  | composition                                  |
-| `words`              | specialized display does not justify a canonical owner                                                | `text` / `tag-list` / composition            |
-| `multiline-text`     | specialized display does not justify a canonical owner                                                | `text` / `textarea` / composition            |
+| AMIS type            | Why not retained standalone                                                          | Replacement                                  |
+| -------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------- |
+| `each`               | structural repetition already has a no-UI owner                                      | `loop`                                       |
+| `wrapper`            | generic wrapper semantics do not justify a standalone canonical type                 | `container` / `fragment`                     |
+| `panel`              | panel semantics are better expressed by card/container/collapse composition          | composition                                  |
+| `hbox`               | duplicated layout naming                                                             | `flex`                                       |
+| `vbox`               | duplicated layout naming                                                             | `flex`                                       |
+| `group`              | generic grouping is better expressed structurally or by layout/container families    | `container` / `flex` / `fragment`            |
+| `input-group`        | group chrome belongs to field composition, not a top-level owner                     | composition                                  |
+| `pagination-wrapper` | wrapper-plus-pagination should not become its own canonical type                     | `pagination` + collection renderer           |
+| `switch-container`   | conditional rendering belongs to declarative branching and dynamic rendering         | `dynamic-renderer` / conditional composition |
+| `subform`            | Flux already has object/detail/composite field architecture                          | object/detail/composite field families       |
+| `search-box`         | search UI should be authored as `form` + `input-text` + `button` or `crud.queryForm` | composition                                  |
+| `words`              | specialized display does not justify a canonical owner                               | `text` / `tag-list` / composition            |
+| `multiline-text`     | specialized display does not justify a canonical owner                               | `text` / `textarea` / composition            |
 
 ### 4. Replaced By `code-editor` Or Editor Infrastructure
 

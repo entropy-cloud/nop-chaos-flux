@@ -19,7 +19,9 @@ function withRetryMetadata(
   metadata: { attempts: number; failureCount: number; lastFailureReason?: unknown },
 ): unknown {
   if (error instanceof Error) {
-    const wrapped = new Error(error.message, { cause: error });
+    const wrapped = new Error(error.message, {
+      cause: (error as Error & { cause?: unknown }).cause ?? error,
+    });
     wrapped.name = error.name;
     wrapped.stack = error.stack;
 
@@ -43,21 +45,19 @@ export function createAbortScope(): { signal: AbortSignal; cancel(): void } {
 }
 
 function createAbortError(reason?: unknown): Error {
-  if (reason instanceof Error) {
+  if (reason instanceof Error && reason.name === 'AbortError') {
     return reason;
-  }
-
-  if (typeof DOMException !== 'undefined') {
-    return new DOMException(
-      typeof reason === 'string' && reason.length > 0 ? reason : 'The operation was aborted',
-      'AbortError',
-    );
   }
 
   const error = new Error(
     typeof reason === 'string' && reason.length > 0 ? reason : 'The operation was aborted',
   );
   error.name = 'AbortError';
+
+  if (reason !== undefined) {
+    (error as Error & { cause?: unknown }).cause = reason;
+  }
+
   return error;
 }
 
@@ -154,10 +154,10 @@ export async function withRetry<T>(
   }
 
   function abortError() {
-    return withRetryMetadata(new DOMException('The operation was aborted', 'AbortError'), {
+    return withRetryMetadata(createAbortError(options.signal?.reason), {
       attempts,
       failureCount,
-      lastFailureReason,
+      lastFailureReason: options.signal?.reason ?? lastFailureReason,
     });
   }
 

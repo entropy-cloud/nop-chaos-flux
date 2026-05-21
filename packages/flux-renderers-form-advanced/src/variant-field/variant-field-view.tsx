@@ -1,6 +1,7 @@
 import React from 'react';
 import type {
   FormRuntime,
+  FrameWrapMode,
   RendererComponentProps,
   RenderRegionHandle,
   ResolvedNodeMeta,
@@ -23,20 +24,6 @@ import {
 } from '@nop-chaos/ui';
 import type { VariantFieldSchema } from '../composite-field/composite-schemas.js';
 import type { VariantResolvedOption } from './variant-field-helpers.js';
-
-function resolveVariantFrameWrap(
-  frameWrap: boolean | 'label' | 'group' | 'none' | undefined,
-): 'label' | 'group' | 'none' {
-  if (frameWrap === false || frameWrap === 'none') {
-    return 'none';
-  }
-
-  if (frameWrap === 'group') {
-    return 'group';
-  }
-
-  return 'label';
-}
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -66,10 +53,10 @@ interface VariantFieldViewProps {
   activeContentRegion: RenderRegionHandle | undefined;
   activeKey: string | undefined;
   activeViewerRegion: RenderRegionHandle | undefined;
+  descriptionContent: React.ReactNode;
   effectiveDisabled: boolean;
-  labelContent: React.ReactNode;
+  hintContent: React.ReactNode;
   meta: ResolvedNodeMeta;
-  name: string;
   onVariantSwitch: (key: string) => void;
   readOnly: boolean;
   schemaProps: RendererComponentProps<VariantFieldSchema>['props'];
@@ -84,10 +71,10 @@ export function VariantFieldView({
   activeContentRegion,
   activeKey,
   activeViewerRegion,
+  descriptionContent,
   effectiveDisabled,
-  labelContent,
+  hintContent,
   meta,
-  name,
   onVariantSwitch,
   readOnly,
   schemaProps,
@@ -97,6 +84,13 @@ export function VariantFieldView({
   variantValidationOwner,
   variants,
 }: VariantFieldViewProps) {
+  const frameWrap = schemaProps.frameWrap;
+  const frameWrapMode: FrameWrapMode =
+    frameWrap === false || frameWrap === 'none'
+      ? 'none'
+      : frameWrap === 'group'
+        ? 'group'
+        : 'label';
   const renderActiveRegion = (region: RenderRegionHandle | undefined) => (
     <VariantFieldProviders form={variantForm} scope={variantScope} validationOwner={variantValidationOwner}>
       {asReactNode(region?.render())}
@@ -166,63 +160,62 @@ export function VariantFieldView({
       </div>
     );
   };
-
-  const labelAlignValue = schemaProps.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined;
-  const remarkValue =
-    typeof schemaProps.remark === 'object' && schemaProps.remark !== null
-      ? toFieldRemarkProps(schemaProps.remark as Parameters<typeof toFieldRemarkProps>[0])
-      : undefined;
-  const labelRemarkValue =
-    typeof schemaProps.labelRemark === 'object' && schemaProps.labelRemark !== null
-      ? toFieldRemarkProps(schemaProps.labelRemark as Parameters<typeof toFieldRemarkProps>[0])
-      : undefined;
-  const frameWrapMode = resolveVariantFrameWrap(schemaProps.frameWrap);
-
-  const body = (
-    <div
-      data-slot="variant-field-body"
-      data-active-variant={activeKey}
-      className={cn('nop-variant-field', meta.className)}
-    >
-      {renderSelector()}
-      {renderReadOnlyContent()}
-    </div>
-  );
-
-  if (frameWrapMode === 'none') {
-    return (
-      <div
-        data-slot="variant-field-body"
-        data-active-variant={activeKey}
-        className={cn('nop-variant-field', meta.className)}
-        data-testid={meta.testid}
-        data-cid={meta.cid}
-      >
-        {renderSelector()}
-        {renderReadOnlyContent()}
-      </div>
-    );
-  }
-
   return (
-    <FieldFrame
-      name={name || undefined}
-      label={labelContent}
-      required={schemaProps.required === true || undefined}
-      hint={schemaProps.hint as string | undefined}
-      description={schemaProps.description as string | undefined}
-      remark={remarkValue}
-      labelRemark={labelRemarkValue}
-      labelAlign={labelAlignValue === 'inherit' ? undefined : labelAlignValue}
-      labelWidth={schemaProps.labelWidth as string | number | undefined}
-      rootTag="div"
-      layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
-      className={meta.frameClassName}
-      testid={meta.testid}
-      cid={meta.cid}
-      rootProps={{ 'data-active-variant': activeKey, 'data-frame-wrap': frameWrapMode }}
-    >
-      {body}
-    </FieldFrame>
+    (() => {
+      const body = (
+        <div
+          data-slot="variant-field-body"
+          data-active-variant={frameWrapMode === 'none' ? activeKey : undefined}
+          className={cn('nop-variant-field', meta.className)}
+          data-testid={frameWrapMode === 'none' ? meta.testid : undefined}
+          data-cid={frameWrapMode === 'none' ? meta.cid : undefined}
+          data-frame-wrap={schemaProps.frameWrap}
+        >
+          {renderSelector()}
+          {renderReadOnlyContent()}
+        </div>
+      );
+
+      if (frameWrapMode === 'none') {
+        return body;
+      }
+
+      const labelAlign =
+        schemaProps.labelAlign === 'inherit' ? undefined : schemaProps.labelAlign;
+      const remark =
+        typeof schemaProps.remark === 'object' && schemaProps.remark !== null
+          ? toFieldRemarkProps(schemaProps.remark)
+          : undefined;
+      const labelRemark =
+        typeof schemaProps.labelRemark === 'object' && schemaProps.labelRemark !== null
+          ? toFieldRemarkProps(schemaProps.labelRemark)
+          : undefined;
+
+      return (
+        <FieldFrame
+          name={typeof schemaProps.name === 'string' ? schemaProps.name : undefined}
+          label={schemaProps.label as React.ReactNode}
+          required={schemaProps.required === true}
+          hint={hintContent}
+          description={descriptionContent}
+          remark={remark}
+          labelRemark={labelRemark}
+          labelAlign={labelAlign}
+          labelWidth={schemaProps.labelWidth}
+          rootTag="div"
+          layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
+          className={meta.frameClassName}
+          testid={meta.testid}
+          cid={meta.cid}
+          rootProps={{
+            'data-active-variant': activeKey,
+            'data-frame-wrap':
+              typeof schemaProps.frameWrap === 'string' ? schemaProps.frameWrap : undefined,
+          }}
+        >
+          {body}
+        </FieldFrame>
+      );
+    })()
   );
 }

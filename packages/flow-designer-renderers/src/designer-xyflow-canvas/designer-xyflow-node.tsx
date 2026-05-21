@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { NodeProps } from '@xyflow/react';
 import { NodeToolbar, Position } from '@xyflow/react';
 import type { SchemaInput } from '@nop-chaos/flux-core';
-import { isSchema } from '@nop-chaos/flux-core';
+import { isSchema, mergeClassAliases } from '@nop-chaos/flux-core';
 import { RenderNodes, ClassAliasesContext } from '@nop-chaos/flux-react/unstable';
+import { t } from '@nop-chaos/flux-i18n';
 import { useNodeTypeConfig, useDesignerContext } from '../designer-context.js';
 import { renderPorts } from './render-ports.js';
 import type { DesignerFlowNodeData } from './types.js';
@@ -88,6 +89,10 @@ export function DesignerXyflowNode(props: NodeProps) {
     }),
     [dispatch, props.id, isDeletable],
   );
+  const effectiveClassAliases = useMemo(
+    () => mergeClassAliases(props.data?.__fdInheritedClassAliases as Record<string, string> | undefined, config.classAliases),
+    [config.classAliases, props.data],
+  );
 
   const handleNodeKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -113,6 +118,8 @@ export function DesignerXyflowNode(props: NodeProps) {
       hideToolbarTimeoutRef.current = null;
     }, 180);
   }
+
+  const isToolbarVisible = props.selected || showToolbar;
 
   useEffect(() => {
     return () => {
@@ -198,7 +205,7 @@ export function DesignerXyflowNode(props: NodeProps) {
             </div>
           </div>
         ) : (
-          <ClassAliasesContext.Provider value={config.classAliases}>
+          <ClassAliasesContext.Provider value={effectiveClassAliases}>
             <RenderNodes
               input={nodeType.body}
               options={{ bindings: nodeRenderData, scopeKey: `node:${props.id}`, pathSuffix: 'node' }}
@@ -212,8 +219,8 @@ export function DesignerXyflowNode(props: NodeProps) {
         )}
       </div>
 
-      {(hasQuickActions || showToolbar) && (
-        <NodeToolbar isVisible={showToolbar} position={Position.Top}>
+      {(hasQuickActions || isToolbarVisible) && (
+        <NodeToolbar isVisible={isToolbarVisible} position={Position.Top}>
           <div
             role="toolbar"
             tabIndex={0}
@@ -229,7 +236,7 @@ export function DesignerXyflowNode(props: NodeProps) {
             }}
           >
             {hasQuickActions ? (
-              <ClassAliasesContext.Provider value={config.classAliases}>
+              <ClassAliasesContext.Provider value={effectiveClassAliases}>
                 <RenderNodes
                   input={nodeType.quickActions!}
                   options={{
@@ -248,7 +255,7 @@ export function DesignerXyflowNode(props: NodeProps) {
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Edit node"
+                  aria-label={t('flux.flowDesigner.editNode')}
                   className="border-0 hover:bg-accent"
                   onClick={actionScope.onEdit}
                 >
@@ -258,21 +265,21 @@ export function DesignerXyflowNode(props: NodeProps) {
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Duplicate node"
+                  aria-label={t('flux.flowDesigner.duplicateNode')}
                   className="border-0 hover:bg-accent"
                   onClick={actionScope.onDuplicate}
                 >
                   <DesignerIcon icon="copy" />
                 </Button>
                 {isDeletable && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Delete node"
-                  className="border-0 hover:bg-destructive/15 hover:text-destructive"
-                  onClick={actionScope.onDelete}
-                >
+                 <Button
+                   type="button"
+                   variant="ghost"
+                   size="icon-sm"
+                   aria-label={t('flux.flowDesigner.deleteNode')}
+                   className="border-0 hover:bg-destructive/15 hover:text-destructive"
+                   onClick={actionScope.onDelete}
+                 >
                   <DesignerIcon icon="trash-2" />
                 </Button>
                 )}

@@ -33,7 +33,7 @@ const membersArray = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Save Team', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save Team', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -60,7 +60,7 @@ const contactsWithSubmit = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
     },
     {
       type: 'text',

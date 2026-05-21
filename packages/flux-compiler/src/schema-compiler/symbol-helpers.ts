@@ -5,6 +5,10 @@ import type {
   XuiImportSpec,
 } from '@nop-chaos/flux-core';
 
+function isImportSpecCandidate(value: unknown): value is XuiImportSpec {
+  return value !== null && typeof value === 'object';
+}
+
 export function pushImportSymbols(
   symbolTable: CompileSymbolTable,
   imports: unknown,
@@ -16,7 +20,12 @@ export function pushImportSymbols(
 
   const symbols: Record<string, import('@nop-chaos/flux-core').SymbolInfo> = {};
 
-  for (const spec of imports as XuiImportSpec[]) {
+  for (const entry of imports) {
+    if (!isImportSpecCandidate(entry)) {
+      continue;
+    }
+
+    const spec = entry;
     if (spec.as) {
       symbols[`$${spec.as}`] = {
         name: `$${spec.as}`,
@@ -102,6 +111,10 @@ export function pushPreparedImportSymbols(
   const symbols: Record<string, import('@nop-chaos/flux-core').SymbolInfo> = {};
 
   for (const spec of imports) {
+    if (!isImportSpecCandidate(spec)) {
+      continue;
+    }
+
     if (!spec.as) {
       continue;
     }

@@ -132,6 +132,7 @@ describe('useHostScope', () => {
     });
     const listener = vi.fn<(change: any) => void>();
     testState.capturedScope?.store?.subscribe(listener);
+    listener.mockClear();
 
     view.rerender(
       <RuntimeContext.Provider value={view.runtime}>
@@ -157,5 +158,41 @@ describe('useHostScope', () => {
         paths: ['host.selection.id', 'host.selection.kind'],
       }),
     );
+  });
+
+  it('preserves the same host snapshot when projection data is structurally unchanged', () => {
+    const view = renderProbe({
+      host: {
+        selection: {
+          selectedNodeIds: ['n1'],
+          selectedEdgeIds: [],
+        },
+      },
+    });
+    const listener = vi.fn<(change: any) => void>();
+    const initialOwn = testState.capturedScope?.readOwn();
+    testState.capturedScope?.store?.subscribe(listener);
+
+    view.rerender(
+      <RuntimeContext.Provider value={view.runtime}>
+        <ScopeContext.Provider value={view.page.scope}>
+          <HostScopeProbe
+            scopeData={{
+              host: {
+                selection: {
+                  selectedNodeIds: ['n1'],
+                  selectedEdgeIds: [],
+                },
+              },
+            }}
+            onCapture={(scope) => {
+              testState.capturedScope = scope;
+            }}
+          />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    expect(testState.capturedScope?.readOwn()).toEqual(initialOwn);
   });
 });

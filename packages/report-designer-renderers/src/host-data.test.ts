@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
+import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
 import {
   createReportDesignerCore,
   createReportTemplateDocument,
@@ -58,5 +58,30 @@ describe('buildReportDesignerScopeData', () => {
     expect(designer).toHaveProperty('canUndo', false);
     expect(designer).toHaveProperty('canRedo', false);
     expect(Array.isArray(designer.fieldSources)).toBe(true);
+  });
+
+  it('does not replace canonical reportDocument/workbook with spreadsheet snapshot aliases', () => {
+    const spreadsheet = createEmptyDocument();
+    const document = createReportTemplateDocument(spreadsheet, 'Canonical Report');
+    const core = createReportDesignerCore({
+      document,
+      config: { kind: 'report-template' },
+    });
+    const spreadsheetCore = createSpreadsheetCore({ document: spreadsheet });
+    void spreadsheetCore.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId: spreadsheet.workbook.sheets[0]!.id, address: 'A1', row: 0, col: 0 },
+      value: 'draft-only',
+    });
+
+    const scopeData = buildReportDesignerScopeData(
+      core,
+      core.getSnapshot(),
+      spreadsheetCore.getSnapshot(),
+    );
+
+    expect((scopeData.reportDocument as any).spreadsheet.workbook.sheets[0]?.cells?.A1).toBeUndefined();
+    expect((scopeData.workbook as any).sheets[0]?.cells?.A1).toBeUndefined();
+    expect((scopeData.spreadsheet as any).workbook.sheets[0]?.cells?.A1?.value).toBe('draft-only');
   });
 });

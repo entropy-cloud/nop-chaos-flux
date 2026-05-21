@@ -14,7 +14,11 @@ interface DesignerPageInnerProps {
   config: DesignerConfig;
   core?: ReturnType<typeof createDesignerCore>;
   treeDocument?: TreeDocument;
-  setTreeDocument?: React.Dispatch<React.SetStateAction<TreeDocument | undefined>>;
+  treeOwner?: {
+    getTreeDocument(): TreeDocument;
+    setTreeDocument(next: TreeDocument): void;
+    config: DesignerConfig;
+  };
 }
 
 export function DesignerPageInner({
@@ -22,8 +26,8 @@ export function DesignerPageInner({
   document,
   config,
   core: providedCore,
-  treeDocument,
-  setTreeDocument,
+  treeDocument: _treeDocument,
+  treeOwner,
 }: DesignerPageInnerProps) {
   const env = useRendererEnv();
   const core = useMemo(() => {
@@ -39,15 +43,9 @@ export function DesignerPageInner({
     () =>
       createDesignerCommandAdapter(
         core,
-        config.documentMode === 'tree' && treeDocument && setTreeDocument
-          ? {
-              getTreeDocument: () => treeDocument,
-              setTreeDocument: (next) => setTreeDocument(next),
-              config,
-            }
-          : undefined,
+        config.documentMode === 'tree' ? treeOwner : undefined,
       ),
-    [core, config, treeDocument, setTreeDocument],
+    [core, config.documentMode, treeOwner],
   );
   const dispatch = useCallback(
     (command: import('./designer-command-adapter.js').DesignerCommand) => {

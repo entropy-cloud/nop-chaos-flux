@@ -528,6 +528,108 @@ describe('createApiRequestExecutor', () => {
     await expect(promise).rejects.toThrow('aborted');
   });
 
+  it('forwards parent abort reasons into the internal request signal', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    const fetcher = vi.fn(async (_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
+      capturedSignal = ctx.signal;
+      return new Promise((_resolve, reject) => {
+        ctx.signal?.addEventListener(
+          'abort',
+          () => reject(ctx.signal?.reason ?? Object.assign(new Error('aborted'), { name: 'AbortError' })),
+          { once: true },
+        );
+      });
+    });
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+    const parentController = new AbortController();
+
+    const promise = execute('ajax', { url: '/api/test' }, scope, undefined, {
+      signal: parentController.signal,
+    });
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(capturedSignal).toBeDefined();
+    });
+
+    const reason = new DOMException('Parent cancelled', 'AbortError');
+    parentController.abort(reason);
+
+    await expect(promise).rejects.toBe(reason);
+    expect(capturedSignal?.reason).toBe(reason);
+  });
+
+  it('marks cancel-previous aborts with a superseded reason', async () => {
+    let firstSignal: AbortSignal | undefined;
+    let resolveSecond: ((value: unknown) => void) | undefined;
+    const fetcher = vi.fn(async (_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
+      if (fetcher.mock.calls.length === 1) {
+        firstSignal = ctx.signal;
+        return new Promise((_resolve, reject) => {
+          ctx.signal?.addEventListener('abort', () => reject(ctx.signal?.reason), { once: true });
+        });
+      }
+
+      return new Promise((resolve) => {
+        resolveSecond = resolve;
+      }).then(() => ({ ok: true, status: 200, data: null }));
+    });
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+
+    const first = execute('ajax', { url: '/api/test' }, scope);
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+
+    const second = execute('ajax', { url: '/api/test' }, scope);
+    resolveSecond?.(undefined);
+
+    await expect(second).resolves.toMatchObject({ ok: true });
+    await expect(first).rejects.toMatchObject({
+      name: 'AbortError',
+      cause: expect.objectContaining({ reason: 'request-superseded' }),
+    });
+    expect(firstSignal?.reason).toMatchObject({
+      name: 'AbortError',
+      cause: expect.objectContaining({ reason: 'request-superseded' }),
+    });
+  });
+
+  it('marks dispose aborts with a structured disposed reason', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    let releaseRequest: (() => void) | undefined;
+    const fetcher = vi.fn(async (_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
+      capturedSignal = ctx.signal;
+      await new Promise<void>((resolve) => {
+        releaseRequest = resolve;
+      });
+      throw ctx.signal?.reason;
+    });
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+
+    const promise = execute('ajax', { url: '/api/test' }, scope);
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    execute.dispose();
+    releaseRequest?.();
+
+    await expect(promise).rejects.toMatchObject({
+      name: 'AbortError',
+      cause: expect.objectContaining({ reason: 'request-executor-disposed' }),
+    });
+    expect(capturedSignal?.reason).toMatchObject({
+      name: 'AbortError',
+      cause: expect.objectContaining({ reason: 'request-executor-disposed' }),
+    });
+  });
+
   it('detaches parent abort listener after a normal request settles', async () => {
     const addEventListener = vi.spyOn(AbortSignal.prototype, 'addEventListener');
     const removeEventListener = vi.spyOn(AbortSignal.prototype, 'removeEventListener');

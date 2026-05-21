@@ -616,7 +616,7 @@ Interpretation:
   "type": "form",
   "body": [
     {
-      "type": "radios",
+      "type": "radio-group",
       "name": "company",
       "options": {
         "type": "source",
@@ -663,9 +663,8 @@ Interpretation:
       ]
     },
     {
-      "type": "formula",
-      "name": "wizard.currentStep",
-      "formula": "${wizard.currentStep || 1}"
+      "type": "text",
+      "text": "Current step: ${wizard.currentStep || 1}"
     }
   ]
 }

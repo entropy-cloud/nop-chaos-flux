@@ -34,7 +34,8 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    expect(screen.getByText('Loading...')).toBeTruthy();
+    expect(document.querySelector('[data-slot="dynamic-renderer-loading"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="dynamic-renderer-loading"]')).toBeTruthy();
     cleanup();
   });
 
@@ -169,7 +170,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByText('Loading...')).toBeTruthy());
+    await waitFor(() => expect(document.querySelector('[data-slot="dynamic-renderer-loading"]')).toBeTruthy());
     await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
     expect(screen.queryByText('First schema')).toBeNull();
 

@@ -161,6 +161,7 @@ describe('ChartRenderer', () => {
     expect(canvas).toBeTruthy();
     expect(screen.getByText(/Loading|加载中/)).toBeTruthy();
     expect(screen.getByRole('img', { name: 'Chart' })).toBeTruthy();
+    expect(screen.getByRole('status').getAttribute('aria-live')).toBe('polite');
 
     fireEvent.click(canvas);
     fireEvent.keyDown(canvas, { key: 'Enter' });

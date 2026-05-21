@@ -72,6 +72,19 @@ function buildGraphDocFromProjection(doc: DesignerProjection['doc']): GraphDocum
   };
 }
 
+function flushDesignerProjectionIntoModel(
+  ctx: ActionContext,
+  model: TaskFlowAuthoringModel | null,
+  containerId: string | null,
+): TaskFlowAuthoringModel | null {
+  const designerDoc = getDesignerDoc(ctx);
+  if (!designerDoc || !model || !containerId) {
+    return model;
+  }
+
+  return syncFromGraphDocument(model, containerId, buildGraphDocFromProjection(designerDoc));
+}
+
 export function createNamespace(_context: ImportedNamespaceContext): ActionNamespaceProvider {
   let authoringModel: TaskFlowAuthoringModel | null = null;
   let activeContainerId: string | null = null;
@@ -156,14 +169,9 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
           }
           case 'lower-to-dsl':
           case 'export-json': {
-            const designerDoc = getDesignerDoc(ctx);
             let model = (payload?.model ?? authoringModel) as TaskFlowAuthoringModel | null;
-
-            if (designerDoc && model && activeContainerId) {
-              const graphDoc = buildGraphDocFromProjection(designerDoc);
-              model = syncFromGraphDocument(model, activeContainerId, graphDoc);
-              authoringModel = model;
-            }
+            model = flushDesignerProjectionIntoModel(ctx, model, activeContainerId);
+            authoringModel = model;
 
             if (!model) {
               return { ok: false, error: new Error('No authoring model available. Call set-authoring-model first.') };
@@ -191,14 +199,9 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
             return { ok: true, data: errors };
           }
           case 'save': {
-            const designerDoc = getDesignerDoc(ctx);
             let model = (payload?.model ?? authoringModel) as TaskFlowAuthoringModel | null;
-
-            if (designerDoc && model && activeContainerId) {
-              const graphDoc = buildGraphDocFromProjection(designerDoc);
-              model = syncFromGraphDocument(model, activeContainerId, graphDoc);
-              authoringModel = model;
-            }
+            model = flushDesignerProjectionIntoModel(ctx, model, activeContainerId);
+            authoringModel = model;
 
             if (!model) {
               return { ok: false, error: new Error('No authoring model available.') };
@@ -223,25 +226,28 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
               return { ok: false, error: new Error('No authoring model') };
             }
 
-            const designerDoc = getDesignerDoc(ctx);
-            if (designerDoc && authoringModel && activeContainerId) {
-              const graphDoc = buildGraphDocFromProjection(designerDoc);
-              authoringModel = syncFromGraphDocument(authoringModel, activeContainerId, graphDoc);
+            authoringModel = flushDesignerProjectionIntoModel(ctx, authoringModel, activeContainerId);
+            if (!authoringModel) {
+              return { ok: false, error: new Error('No authoring model') };
             }
+            const currentAuthoringModel: TaskFlowAuthoringModel = authoringModel;
 
-            const container = findContainerById(authoringModel.root, containerId);
+            const container = findContainerById(currentAuthoringModel.root, containerId);
             if (!container) {
               return { ok: false, error: new Error(`Container not found: ${containerId}`) };
             }
 
             if (activeContainerId) {
-              containerStack.push(activeContainerId, findContainerById(authoringModel.root, activeContainerId)!);
+              containerStack.push(
+                activeContainerId,
+                findContainerById(currentAuthoringModel.root, activeContainerId)!,
+              );
             }
             activeContainerId = containerId;
             containerStack.push(containerId, container);
 
             const projectedDoc = container.profile === 'workflow'
-              ? projectToGraphDocument({ authoringModel, containerId })
+              ? projectToGraphDocument({ authoringModel: currentAuthoringModel, containerId })
               : null;
 
             return {
@@ -260,11 +266,7 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
               return { ok: false, error: new Error('Already at root container') };
             }
 
-            const designerDoc = getDesignerDoc(ctx);
-            if (designerDoc && authoringModel && activeContainerId) {
-              const graphDoc = buildGraphDocFromProjection(designerDoc);
-              authoringModel = syncFromGraphDocument(authoringModel, activeContainerId, graphDoc);
-            }
+            authoringModel = flushDesignerProjectionIntoModel(ctx, authoringModel, activeContainerId);
 
             containerStack.pop();
             const parentEntry = containerStack.peek();

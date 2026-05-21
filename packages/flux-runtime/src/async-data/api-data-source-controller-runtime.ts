@@ -34,10 +34,12 @@ function toDispatchError(result: ActionResult): unknown {
   }
 
   if (result.cancelled || result.timedOut) {
-    return Object.assign(new Error('Data source action was cancelled'), { name: 'AbortError' });
+    return Object.assign(new Error('Data source action was cancelled', { cause: result }), {
+      name: 'AbortError',
+    });
   }
 
-  return new Error('Data source action failed');
+  return new Error('Data source action failed', { cause: result });
 }
 
 function isCompiledApiArgs(value: unknown): value is CompiledRuntimeValue<Record<string, unknown>> {

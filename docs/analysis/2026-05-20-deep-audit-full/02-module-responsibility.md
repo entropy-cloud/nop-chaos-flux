@@ -149,3 +149,24 @@
 ## 深挖第 3 轮追加
 
 未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度02-01]: 保留 (P2)。live `apps/playground/src/taskflow-designer-lib/index.ts` 仍在入口文件内同时承载 namespace provider、projection flush、`import-json` 的 DSL parse/step conversion 与 default module 导出；虽已有 `projection.ts`/`sync.ts`/`lowering.ts`/`validation.ts`，但 `index.ts` 仍明显不是薄入口。
+- [维度02-02]: 保留 (P2)。live `packages/report-designer-renderers/src/page-renderer.tsx` 仍把 core 创建/初始化、双 namespace 注册、report↔spreadsheet 同步守卫、host scope 注入与 WorkbenchShell 渲染集中在单一 renderer 文件内，和 `docs/references/renderer-implementation-guidelines.md` 所述 thin orchestration renderer 基线不符。
+- [维度02-03]: 降级为 P3。`packages/flux-renderers-form-advanced/src/detail-view/detail-view.tsx` 仍偏重，但 live code 已把 sequencer/draft controller/child validation 外提到 `detail-draft-controller.ts`，且 `docs/architecture/form-validation.md` 明确允许 `detail-view` 在 renderer 打开时创建 child `FormRuntime`；当前更像继续提取本地 controller 的可维护性问题，不足以维持 P2。
+- [维度02-04]: 驳回。`packages/flux-compiler/src/schema-compiler/node-compiler.ts` 虽然较大，但其 live 角色仍是“compile single node”的集中编排层；`fields.ts`、`regions.ts`、`validation-collection.ts`、`static-analysis.ts` 等已承担分拆后的专职模块，现状更接近可接受的 compiler orchestration，而非明确的职责越界。
+
+## 子项复核结论
+
+- [维度02-01]: 成立 (P2)。应作为 playground/taskflow 入口文件继续薄化的收口项保留。
+- [维度02-02]: 成立 (P2)。应作为 report designer orchestration renderer 继续拆分的收口项保留。
+- [维度02-03]: 降级保留 (P3)。可作为后续 detail-view 本地 controller 继续提取的维护性问题进入汇总。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                    | 一句话摘要                                                                      |
+| ----- | -------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 02-01 | P2       | `apps/playground/src/taskflow-designer-lib/index.ts`                    | taskflow designer 入口仍非薄入口，混合 namespace/projection/DSL lowering/export |
+| 02-02 | P2       | `packages/report-designer-renderers/src/page-renderer.tsx`              | report designer page renderer 仍聚合 core 初始化、双向同步与 host shell 装配    |
+| 02-03 | P3       | `packages/flux-renderers-form-advanced/src/detail-view/detail-view.tsx` | detail-view 仍偏重，但已部分外提，降级为维护性收口项                            |

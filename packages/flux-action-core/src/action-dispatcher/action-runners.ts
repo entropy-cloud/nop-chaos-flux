@@ -16,6 +16,30 @@ import {
 } from './action-parsing.js';
 import { XUI_ACTIONS_NAMESPACE } from '@nop-chaos/flux-core';
 
+function attachResultMetadata(
+  result: ActionResult,
+  metadata: Partial<Pick<ActionResult, 'namespace' | 'sourceScopeId' | 'providerKind' | 'componentId' | 'componentName' | 'componentType'>>,
+): ActionResult {
+  return {
+    ...result,
+    ...metadata,
+  };
+}
+
+function attachThrownMetadata(
+  error: unknown,
+  metadata: Partial<Pick<ActionResult, 'namespace' | 'sourceScopeId' | 'providerKind' | 'componentId' | 'componentName' | 'componentType'>>,
+): unknown {
+  if (error && typeof error === 'object') {
+    return Object.assign(error as Record<string, unknown>, metadata);
+  }
+
+  return {
+    error,
+    ...metadata,
+  };
+}
+
 export function finishAction(
   ctx: ActionDispatcherContext,
   actionPayload: ActionMonitorPayload,
@@ -87,7 +111,23 @@ export async function runComponentAction(
     target,
     payload,
   };
-  const result = normalizeActionResult(await internals.adapter.invokeComponentAction(invocation, ctx));
+  let result: ActionResult;
+
+  try {
+    result = attachResultMetadata(
+      normalizeActionResult(await internals.adapter.invokeComponentAction(invocation, ctx)),
+      {
+        componentId: target.componentId,
+        componentName: target.componentName,
+      },
+    );
+  } catch (error) {
+    throw attachThrownMetadata(error, {
+      componentId: target.componentId,
+      componentName: target.componentName,
+    });
+  }
+
   return finishAction(
     internals,
     { ...actionPayload, dispatchMode: 'component', method },
@@ -125,9 +165,25 @@ export async function runNamespacedAction(
     method: parsed.method,
     payload,
   };
-  const result = normalizeActionResult(
-    await internals.adapter.invokeNamespacedAction(invocation, ctx),
-  );
+  let result: ActionResult;
+
+  try {
+    result = attachResultMetadata(
+      normalizeActionResult(await internals.adapter.invokeNamespacedAction(invocation, ctx)),
+      {
+        namespace: parsed.namespace,
+        sourceScopeId,
+        providerKind,
+      },
+    );
+  } catch (error) {
+    throw attachThrownMetadata(error, {
+      namespace: parsed.namespace,
+      sourceScopeId,
+      providerKind,
+    });
+  }
+
   return finishAction(
     internals,
     {
@@ -137,11 +193,7 @@ export async function runNamespacedAction(
       method: parsed.method,
     },
     startedAt,
-    {
-      ...result,
-      sourceScopeId,
-      providerKind,
-    },
+    result,
   );
 }
 
@@ -171,9 +223,25 @@ export async function runNamedAction(
     method: action.action,
     payload,
   };
-  const result = normalizeActionResult(
-    await internals.adapter.invokeNamespacedAction(invocation, ctx),
-  );
+  let result: ActionResult;
+
+  try {
+    result = attachResultMetadata(
+      normalizeActionResult(await internals.adapter.invokeNamespacedAction(invocation, ctx)),
+      {
+        namespace: XUI_ACTIONS_NAMESPACE,
+        sourceScopeId,
+        providerKind,
+      },
+    );
+  } catch (error) {
+    throw attachThrownMetadata(error, {
+      namespace: XUI_ACTIONS_NAMESPACE,
+      sourceScopeId,
+      providerKind,
+    });
+  }
+
   return finishAction(
     internals,
     {
@@ -183,10 +251,6 @@ export async function runNamedAction(
       method: action.action,
     },
     startedAt,
-    {
-      ...result,
-      sourceScopeId,
-      providerKind,
-    },
+    result,
   );
 }

@@ -137,6 +137,13 @@ describe('ReportSpreadsheetCanvas', () => {
       error: new Error('designer rejected drop'),
     } as any);
 
+    const actualReportRuntimeHostIssue = await vi.importActual<typeof import('@nop-chaos/flux-core')>(
+      '@nop-chaos/flux-core'
+    );
+    testMocks.reportRuntimeHostIssue.mockImplementation((input) => {
+      actualReportRuntimeHostIssue.reportRuntimeHostIssue(input as never);
+    });
+
     const view = render(
       <ReportSpreadsheetCanvas
         core={core}
@@ -169,8 +176,19 @@ describe('ReportSpreadsheetCanvas', () => {
           clearValues: true,
         }),
       );
+      expect(testMocks.notify).toHaveBeenCalledTimes(1);
       expect(testMocks.notify).toHaveBeenCalledWith('warning', 'designer rejected drop');
-      expect(testMocks.reportRuntimeHostIssue).toHaveBeenCalled();
+      expect(testMocks.reportRuntimeHostIssue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          notify: false,
+          phase: 'action',
+          path: 'report-designer.spreadsheet-canvas',
+          details: {
+            operation: 'report-field-drop',
+            sheetId,
+          },
+        }),
+      );
     });
   });
 });

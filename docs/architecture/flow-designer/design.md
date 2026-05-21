@@ -96,6 +96,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `extendFlowDesignerRegistry()` 是当前 root stable surface 中与 register 语义一致的 helper
 - `designer-page` 在自身 action-scope 边界内注册 `designer` namespace provider，并让 toolbar/inspector 片段沿该边界执行
 - 当前 `designer-page` 不只是在 React 树上把 toolbar/inspector 放在同一 action-scope 边界里，还会在 region render 调用时显式透传 host `scope` 与 `actionScope`，降低后续 render-path 调整时丢失 designer namespace 绑定的风险
+- `designer-page` 的 builder-facing formal contract 现在还显式编码文档前置条件：graph mode 必须提供 `document`，tree mode 必须提供 `treeDocument`，不能继续把这类 host-root invalid schema 留到运行时 fallback 才暴露
 - `designer-page.shortcuts`，用于在宿主层把键盘事件映射到已有 `designer:*` / shared action 链
 - 单一 `@xyflow/react` canvas bridge，经由 `DesignerCanvasContent` host 映射到 command adapter dispatch
 - Xyflow bridge、palette/canvas internals、和 `designer-context` hooks 属于 renderer implementation surface；若 package 内部或高级集成确实需要，走 `@nop-chaos/flow-designer-renderers/unstable`，不再由 root entry 冻结
@@ -368,8 +369,8 @@ Flow Designer 需要统一的事务边界，即使历史底层实现最终同时
 
 ```json
 {
-  "type": "tpl",
-  "tpl": "当前节点：${activeNode.data.label}"
+  "type": "text",
+  "text": "当前节点：${activeNode.data.label}"
 }
 ```
 

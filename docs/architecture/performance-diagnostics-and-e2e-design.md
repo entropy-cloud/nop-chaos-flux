@@ -115,7 +115,7 @@ The page is designed for same-environment comparison. A valid manual workflow to
 
 `tests/e2e/exploratory/performance-table-deep-state.spec.ts` 仍额外检查 scope-owned selection、pagination、sorting、row action behavior、以及 debugger failure cleanliness。supported locality gates 已经迁入 `tests/e2e/performance-table.spec.ts`，所以 exploratory spec 现在是补充性的 deep-state surface，而不是 locality 真相来源。
 
-These tests are correctness and stability tests with diagnostic value. They are not yet local-refresh performance gates.
+These tests are correctness and stability tests with diagnostic value, and the supported locality scenarios now also act as local-refresh regression gates for changed-row keys, probe deltas, and unchanged-row unmount stability.
 
 ## Current `nop-debugger` Capability Boundary
 

@@ -594,6 +594,12 @@ For expressions evaluated inside `then` and `onError`, the reserved branch-resul
 
 These names are reserved for chained-action evaluation. They are not ordinary `ScopeRef` data and must not be modeled as ambient host or page scope fields.
 
+For namespaced host providers and renderer-owned host bridges, the triggering `result` should preserve structured failure context instead of only publishing a flattened message:
+
+- if the host/core failure payload is not already an `Error`, adapt it to `ActionResult.error` with the original payload preserved on `Error.cause`
+- if a renderer-owned bridge adds host-specific context such as Flow Designer command `reason` or a create-dialog submitAction failed result, keep that structured context reachable from `ActionResult.cause` and any emitted monitor details
+- structured `{ ok: false, cancelled: true }` and `{ ok: false, cancelled: true, timedOut: true }` results remain the canonical cancellation vocabulary even when a renderer decides to notify or report the failure locally
+
 In practice this means payload should be authored under `args`:
 
 ```json
@@ -641,7 +647,7 @@ Preferred targeting matrix:
 
 - component instance -> `component:<method>` plus `componentId` or `componentName`
 - surface family -> built-in `closeSurface`, which closes the current surface by default and only needs `surfaceId` for an explicit non-default target
-- runtime-owned source entry -> built-in `refreshSource` plus `targetId`
+- runtime-owned source entry -> built-in `refreshSource` plus `targetId`, where the target value is the source `name`
 
 Compatibility carriers:
 

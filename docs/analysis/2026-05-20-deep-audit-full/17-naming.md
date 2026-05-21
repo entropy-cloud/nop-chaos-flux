@@ -252,3 +252,196 @@
 - **历史模式对应**: 对应 action payload public vocabulary drift；不是 UI visual variant 的内部命名问题。
 - **参考文档**: `docs/references/flux-json-conventions.md:100-119`, `docs/references/action-payload-matrix.md:54,88-91`, `docs/architecture/variant-vocabulary.md:188-201`
 - **复核状态**: 未复核
+
+## 深挖第 7 轮追加
+
+### [维度17-10] `word-editor-page` active example 仍用旧 dataset 词汇 `sourceType` / `label`，但 live `Dataset` 契约只接受 `type` / `description`
+
+- **文件**: `docs/components/word-editor-page/example.json:16-22`, `packages/word-editor-renderers/src/types.ts:27-28`, `packages/word-editor-core/src/dataset-model.ts:10-15`, `packages/word-editor-core/src/document-io.ts:345-348,366-375`
+- **行号范围**: `docs/components/word-editor-page/example.json:16-22`
+- **证据片段**:
+  ```json
+  "datasets": [
+    {
+      "id": "users",
+      "name": "users",
+      "label": "Users",
+      "sourceType": "static",
+  ```
+- **严重程度**: P2
+- **冲突名称**: `type` / `description` vs `sourceType` / `label`
+- **冲突位置**: `packages/word-editor-renderers/src/types.ts:27-28` 把 `word-editor-page.datasets` 公开声明为 `Dataset[]`；`packages/word-editor-core/src/dataset-model.ts:10-15` 的 live `Dataset` 字段是 `id/name/description/type/columns`；`packages/word-editor-core/src/document-io.ts:345-348,366-375` 的 normalize/validate 路径只读取 `record.description` 与 `record.type`。但 active example `docs/components/word-editor-page/example.json:16-22` 仍写 `label` 与 `sourceType`。
+- **统一建议**: 将 `word-editor-page` 的公开 example 全部收敛到 live `Dataset` 词汇：使用 `type` 表示数据集来源类型，使用 `description` 表示展示性说明；如果旧字段需要迁移说明，只保留在专门迁移文档，不继续出现在 active example。
+- **现状**: 当前 example 复制到 live schema 后，`label` 会被静默忽略，`sourceType` 不会被识别为 `Dataset.type`，而 `normalizeDataset()` 又要求 `type` 存在并合法，导致示例数据集无法按 example 预期进入 runtime。
+- **风险**: schema 作者会直接从组件文档 example 复制旧字段，得到“示例能看懂、运行时却无数据集”的错误体验；维护者也会误以为 Word Editor dataset contract 兼容 `sourceType` / `label`，进一步扩大公开词汇面。
+- **为什么值得现在做**: 这是 active docs/example 与 live cross-package public type (`@nop-chaos/word-editor-core` → `word-editor-renderers`) 的直接术语漂移，且会影响真实 authoring 复制路径，不是内部变量命名差异。
+- **误报排除**: 不是历史讨论稿或测试夹具；`docs/components/word-editor-page/example.json` 是面向作者的 active example，而 `WordEditorPageSchemaInput.datasets` 确实直接走 live `Dataset[]` 契约与 normalize 路径。
+- **参考文档**: `docs/components/word-editor-page/design.md:27-40,144`, `docs/architecture/word-editor/design.md:97-100`
+- **复核状态**: 未复核
+
+### [维度17-11] `refreshTable` 仍以“表格刷新”词汇暴露在公开面，但 live 行为与当前 authoring 基线已转向 page/source/component owner 入口
+
+- **文件**: `apps/playground/src/pages/fluxBasicPageSchema.json:208-219`, `packages/flux-core/src/types/actions.ts:89-91`, `packages/flux-core/src/constants.ts:12-27`, `packages/flux-runtime/src/action-adapter.ts:292-297`, `docs/architecture/action-scope-and-imports.md:472-487`, `docs/references/flux-json-conventions.md:156-160`
+- **行号范围**: `apps/playground/src/pages/fluxBasicPageSchema.json:208-219`
+- **证据片段**:
+  ```json
+  {
+    "type": "button",
+    "label": "Submit Form",
+    "onClick": {
+      "action": "component:submit",
+      "componentId": "user-form",
+      "args": { "method": "post", "url": "/api/users" },
+      "then": { "action": "refreshTable" }
+  ```
+- **严重程度**: P2
+- **冲突名称**: `refreshTable` vs `component:refresh` / `refreshSource` / page refresh
+- **冲突位置**: `docs/references/flux-json-conventions.md:156-160` 的定向调用矩阵已把实例能力收敛到 `component:<method>`、source/runtime 入口收敛到 `refreshSource + targetId`；`docs/architecture/action-scope-and-imports.md:486-487` 又明确 `refreshTable` 属于“older built-in selectors”，新 schema 应优先使用更窄的 semantic-owner 或 instance-targeted 入口。但 `packages/flux-core/src/types/actions.ts:89-91`、`packages/flux-core/src/constants.ts:12-27` 仍把 `refreshTable` 暴露为正式 built-in action，`apps/playground/src/pages/fluxBasicPageSchema.json:218` 继续面向作者教学该写法，而 `packages/flux-runtime/src/action-adapter.ts:292-297` 的实际行为只是 `ctx.page?.refresh()`。
+- **统一建议**: 将 active examples 从 `refreshTable` 收敛到明确 owner 的入口：刷新具体组件用 `component:refresh`，刷新 runtime-owned source 用 `refreshSource`；若必须保留兼容处理，应在类型/文档中把 `refreshTable` 明确降为 legacy page-refresh alias，而不是继续作为面向新 schema 的正式动作名传播。
+- **现状**: 当前公开词汇 `refreshTable` 名称看起来指向“表格实例刷新”，但 runtime 实际只触发 page-level `refresh()`；与此同时，owner docs 已开始把更准确的 refresh 入口表述为 component/source 级能力。
+- **风险**: schema 作者会误把 `refreshTable` 当作表格或 CRUD 实例的正式刷新动作并继续复制到新 schema；维护者也会在 `refreshTable`（旧名）、`component:refresh`（实例能力）、`refreshSource`（source owner）三套词汇之间长期摇摆，增加 action contract 收敛成本。
+- **为什么值得现在做**: 这是 built-in public action 名称与 live owner semantics 之间的公开术语漂移，且已经出现在 active playground 示例中，会直接影响 authoring 入口，而不只是内部实现注释。
+- **误报排除**: 本条不是泛泛地要求删除所有旧 built-ins；问题限定在 `refreshTable` 这个名字仍被活示例和 public types 当作正常 authoring 词汇，而 runtime 行为与 owner docs 已表明它并不是精确的当前命名基线。
+- **参考文档**: `docs/references/action-payload-matrix.md:61,234-241`, `docs/references/renderer-interfaces.md:280-288`, `docs/architecture/action-scope-and-imports.md:40-48,472-487`
+- **复核状态**: 未复核
+
+## 深挖第 8 轮追加
+
+### [维度17-12] Tabs active examples 继续教授 `tabsMode` / `sidePosition`，但组件文档已把 `variant` / `orientation` 视为更贴近正式命名的基线
+
+- **文件**: `apps/playground/src/component-lab/renderers/tabs-lab-page.tsx:50-53,74-77,106-108,131-133,203-221`, `docs/components/tabs/design.md:123-129,451-454`, `docs/components/index.md:267-270`, `packages/flux-renderers-basic/src/schemas.ts:84-87`, `packages/flux-renderers-basic/src/tabs.tsx:90-95,160`
+- **行号范围**: `apps/playground/src/component-lab/renderers/tabs-lab-page.tsx:50-53,74-77,106-108,131-133`
+- **证据片段**:
+  ```ts
+      {
+        type: 'tabs',
+        tabsMode: 'line',
+  ```
+  ```ts
+      {
+        type: 'tabs',
+        tabsMode: 'sidebar',
+        sidePosition: 'left',
+  ```
+- **严重程度**: P2
+- **冲突名称**: `variant` / `orientation` vs `tabsMode` / `sidePosition`
+- **冲突位置**: `docs/components/index.md:269-270` 明确要求 renderer 优先沿用 UI primitive 名称如 `orientation` / `variant`；`docs/components/tabs/design.md:128` 又写明前者“更贴近 Flux/UI primitive 命名”，后者只是 live contract 的兼容表达；但 `apps/playground/src/component-lab/renderers/tabs-lab-page.tsx:52,76,107-108,132-133` 的 active lab 仍主要用 `tabsMode` / `sidePosition` 教学，`packages/flux-renderers-basic/src/schemas.ts:84-87` 也继续把两套字段并列暴露为公开 schema。
+- **统一建议**: 将 Tabs 的 author-facing 示例优先改成 `variant: 'line'`、`orientation: 'vertical'` 等 primitive-aligned 词汇；若 `sidebar` 确有独立语义，建议收敛为更窄且单义的新正式字段，而不是长期保留 `tabsMode` / `sidePosition` 这一整套并行命名。
+- **现状**: live renderer 实际已把 `tabsMode` 映射为 `orientation` / `variant` 内核（`tabs.tsx:90-95,160`），但 public schema、组件文档和 playground 示例仍同时教授两套作者词汇。
+- **风险**: schema 作者会继续从 component-lab 复制 `tabsMode` / `sidePosition`，使 Tabs 命名长期停留在“双词汇”状态；后续若想统一到 UI primitive 语言，测试/示例/公开类型都会反向固化旧名。
+- **为什么值得现在做**: 这不是内部变量风格，而是面向 schema author 的公开字段命名分叉；当前 Component Lab 同一组件已同时出现 `orientation` 和 `tabsMode`，收敛收益直接且成本低。
+- **误报排除**: 本条不否认 `tabsMode` 当前仍可工作，也不重复 `[维度17-08]` 的 Badge `variant` 问题；这里的问题是 Tabs 自己的公开 authoring surface 在 active docs/example 中同时维持 primitive-aligned 与 legacy-mode 两套命名。
+- **参考文档**: `docs/components/index.md:267-270`, `docs/components/tabs/design.md:123-129,451-454`
+- **复核状态**: 未复核
+
+## 深挖第 9 轮追加
+
+### [维度17-13] CRUD 正式作者字段已收敛到 `listActions`，但 live schema 仍把 `bulkActions` 暴露为 `toolbarLayout` 公共块名
+
+- **文件**: `packages/flux-renderers-data/src/crud-schema.ts:63-79`, `packages/flux-renderers-data/src/crud-renderer-toolbar.tsx:67-74`, `docs/components/crud/design.md:118-133`, `docs/components/crud/example.json:52-55`
+- **行号范围**: `packages/flux-renderers-data/src/crud-schema.ts:63-79`
+- **证据片段**:
+
+  ```ts
+  export interface CrudToolbarItemConfig extends SchemaObject {
+    type?: 'bulkActions' | 'pagination' | 'statistics' | 'switch-per-page' | 'columns-toggler';
+    align?: 'left' | 'right';
+  }
+
+  export interface CrudToolbarLayoutConfig extends SchemaObject {
+    header?: SchemaInput;
+    footer?: SchemaInput;
+    showPagination?: boolean;
+    showStatistics?: boolean;
+    showSwitchPerPage?: boolean;
+    showBulkActions?: boolean;
+  }
+  ```
+
+- **严重程度**: P2
+- **冲突名称**: `listActions` vs `bulkActions`
+- **冲突位置**: `docs/components/crud/design.md:118-133` 明确把依赖 selection 的批量动作收敛进 canonical `listActions`，并写明 `bulkActions` 不再属于支持中的 authoring surface；`docs/components/crud/example.json:52-55` 的 live 示例也只使用 `toolbarLayout.header: ["listActions", "pagination"]`。但 `packages/flux-renderers-data/src/crud-schema.ts:64,78` 仍把 `bulkActions` / `showBulkActions` 暴露为公开 schema 名称，`packages/flux-renderers-data/src/crud-renderer-toolbar.tsx:68-69` 还把 `bulkActions` 与 `listActions` 当同义块处理。
+- **统一建议**: 将 CRUD 的 toolbar public vocabulary 收敛为 `listActions`：`CrudToolbarItemConfig.type` 只保留 `listActions`，布尔开关改为 `showListActions`；若需要兼容旧输入，只在编译期迁移或专门兼容层中处理，不继续把 `bulkActions` 保留在 live `CrudSchema` 公开类型与 renderer 主路径。
+- **现状**: CRUD 顶层 authoring 字段已经拒绝 `bulkActions`，但同一组件的 `toolbarLayout` 子契约仍公开 `bulkActions` / `showBulkActions`，形成“主字段已收敛、布局块名仍沿用旧词汇”的双命名面。
+- **风险**: schema 作者和后续维护者会误以为 CRUD 仍正式支持 `bulkActions` 这一套命名，只是位置从顶层挪到了 `toolbarLayout`；后续做 schema 校验、文档生成、低代码编辑器提示或迁移脚本时，也会被这套残留块名继续牵制。
+- **为什么值得现在做**: 这属于 live public/schema-visible 命名漂移，不是内部变量风格；修复面集中在 CRUD toolbar schema 与 block 解析，能直接消除同一组件内 `listActions`/`bulkActions` 并存的作者词汇。
+- **误报排除**: 本条不重复“AMIS 迁移输入可以出现 `bulkActions`”这一历史映射，也不质疑 migration example 中的旧字段展示；问题限定在 live `CrudSchema` 与 toolbar renderer 当前仍把 `bulkActions` 当公开可写块名，而 owner docs 已把 canonical authoring surface 收敛到 `listActions`。
+- **历史模式对应**: 属于 public/schema-visible vocabulary drift；与前面 action alias 类问题同类，但这是 CRUD 自身公开布局块名的独立残留，不是已有条目的近邻变体。
+- **参考文档**: `docs/components/crud/design.md:118-133,204-212`, `packages/flux-renderers-data/src/data-schema-validation.ts:213-218`
+- **复核状态**: 未复核
+
+## 深挖第 10 轮追加
+
+### [维度17-14] Flow Designer toolbar 正式语义字段已收敛到 `intent`，但 active docs/playground 仍教授无效的 `variant`
+
+- **文件**: `apps/playground/src/schemas/workflow-designer-schema.json:752-758`, `docs/components/designer-page/example.json:109-116`, `docs/architecture/flow-designer/config-schema.md:753-770`, `packages/flow-designer-core/src/types.ts:231-239`, `packages/flow-designer-renderers/src/designer-toolbar.tsx:217-222`
+- **行号范围**: `apps/playground/src/schemas/workflow-designer-schema.json:752-758`
+- **证据片段**:
+  ```json
+  {
+    "type": "button",
+    "action": "designer:save",
+    "icon": "save",
+    "label": "保存",
+    "variant": "default",
+    "disabled": "${!isDirty}"
+  }
+  ```
+  ```ts
+  const variant =
+    item.intent === 'danger'
+      ? 'destructive'
+      : active || item.intent === 'primary'
+        ? 'default'
+        : 'outline';
+  ```
+- **严重程度**: P2
+- **冲突名称**: `intent` vs `variant`
+- **冲突位置**: `packages/flow-designer-core/src/types.ts:231-239` 的 live toolbar button contract 只声明 `intent?: ActionIntent`；`packages/flow-designer-renderers/src/renderer-definitions.ts:141-150` 也只校验 `intent`；`packages/flow-designer-renderers/src/designer-toolbar.tsx:217-222` 渲染时只读取 `item.intent` 决定按钮样式。但 `apps/playground/src/schemas/workflow-designer-schema.json:752-758`、`docs/components/designer-page/example.json:109-116`、`docs/architecture/flow-designer/config-schema.md:753-770` 仍把保存按钮写成 `variant: "default"`。
+- **统一建议**: 将 Flow Designer toolbar 的 author-facing schema 统一收敛为 `intent`；保存按钮应写成 `intent: "primary"` 或省略以表达 neutral，而不是继续使用 `variant`。如果 `variant` 仅用于普通 `button` renderer，应明确限定它不属于 `designer-page.toolbar.items[]` 合同。
+- **现状**: active 文档与 playground 继续展示 `variant`，但 live toolbar owner 根本不消费该字段；这些示例里的 `variant: "default"` 实际不会进入 toolbar 语义映射。
+- **风险**: schema 作者会从活示例复制 `variant`，得到“看起来声明了主按钮样式、实际运行时被忽略”的 toolbar 配置；后续维护者也会误以为 Flow Designer toolbar 与普通 `ButtonSchema` 共用一套样式词汇，重新扩大已收敛的 `intent`/`variant` 双词汇。
+- **为什么值得现在做**: 这是当前仍在 docs/playground 主路径上教学的 schema-visible 命名漂移，不是内部变量差异；而且它已从纯命名问题升级为示例配置被 runtime 忽略的真实行为偏差。
+- **误报排除**: 不是泛化到所有 `button.variant` 使用。普通 Flux `button` renderer 继续使用 `variant` 是正式契约；问题仅限 `designer-page.toolbar.items[]` 这条 repo-owned toolbar contract，它的正式字段已经是 `intent`。
+- **复核状态**: 未复核
+
+## 维度复核结论
+
+- [维度17-01]: 保留 (P2)。`packages/flux-code-editor/src/types.ts:188-194` 仍接受 `dataPath` fallback，`types.test.ts:41-44` 仍用测试固化该 legacy 词汇，而公开约定已经收敛到 `path`。
+- [维度17-02]: 保留 (P2)。`apps/playground/src/component-lab/renderers/form-lab-page.tsx:30` 仍在作者示例中教学 `action: 'submit'`，而 `docs/references/flux-json-conventions.md:123-130` 已把 `submitForm` 写为 canonical baseline。
+- [维度17-03]: 保留 (P2)。`packages/flux-runtime/src/action-adapter.ts:98-106` 仍在 `setValues` 中把 `invocation.targeting.targetId` 当写入基准路径 fallback，继续与 `args.path` 的正式词汇并存。
+- [维度17-04]: 保留 (P2)。`apps/playground/src/component-lab/renderers/dialog-lab-page.tsx:18` 与 `drawer-lab-page.tsx:17-20` 仍在新示例里使用 `closeDialog` / `closeDrawer`，没有收敛到 `closeSurface`。
+- [维度17-05]: 保留 (P2)。`packages/flux-action-core/src/action-dispatcher/built-in-actions.ts` 到 `packages/flux-runtime/src/action-adapter.ts:125-134,300-315` 的 adapter DTO 仍以 `sourceId` 命名 refreshSource 目标，与 author-facing `targetId` 继续分裂。
+- [维度17-06]: 驳回。事实本身成立，但与 [维度16-14] 指向同一 Report Designer host projection alias 漂移；最终汇总按文档-代码契约问题保留，不再在命名维度重复计数。
+- [维度17-07]: 保留 (P2)。`packages/flux-runtime/src/async-data/source-registry.ts:337-343` 的 refresh lookup 与 compiler/runtime 共享边界仍以 `id` 为主、`name` 为 fallback，继续与 `DataSourceSchema.name` 的资源身份词汇并存。
+- [维度17-08]: 保留 (P2)。`apps/playground/src/component-lab/renderers/page-lab-page.tsx:10-25` 等 active labs 仍大量使用 Badge 的 `label` / `variant`，而 live `BadgeSchema` 与 renderer 已只消费 `text` / `level`。
+- [维度17-09]: 保留 (P2)。`apps/playground/src/schemas/action-flow-tree-schema.json:57-59` 仍用 `showToast.args.variant = 'destructive'`，但 `packages/flux-core/src/types/actions.ts:30-33` 与 runtime adapter 只识别 `level`。
+- [维度17-10]: 保留 (P2)。`docs/components/word-editor-page/example.json:16-22` 仍用 `sourceType` / `label`，而 live `Dataset` contract 已收敛到 `type` / `description`。
+- [维度17-11]: 保留 (P2)。`apps/playground/src/pages/fluxBasicPageSchema.json:291-295` 仍教学 `refreshTable`，runtime 也仍把它保留在 built-in action 名称集合中，但当前 owner docs 已把新写法收敛到 component/source/page 更窄入口。
+- [维度17-12]: 保留 (P2)。`apps/playground/src/component-lab/renderers/tabs-lab-page.tsx:50-53,74-77,106-108,131-133` 仍主要教学 `tabsMode` / `sidePosition`，没有向 `variant` / `orientation` 的 primitive-aligned 词汇收敛。
+- [维度17-13]: 保留 (P2)。`packages/flux-renderers-data/src/crud-schema.ts:63-79` 与 `crud-renderer-toolbar.tsx:67-74` 仍把 `bulkActions` / `showBulkActions` 暴露在 live toolbar public vocabulary 中，而 owner docs 已收敛到 `listActions`。
+- [维度17-14]: 保留 (P2)。`apps/playground/src/schemas/workflow-designer-schema.json:752-758`、`docs/components/designer-page/example.json:109-116` 与 `docs/architecture/flow-designer/config-schema.md:753-770` 仍用 `variant` 教学 Flow Designer toolbar item，但 live contract 只消费 `intent`。
+
+## 子项复核结论
+
+- [维度17-01] 至 [维度17-05]: 成立 (P2)。运行时/示例主路径仍在传播 legacy action/path/source 词汇。
+- [维度17-06]: 驳回。与 [维度16-14] 属同一 Report Designer host projection alias 根因，不再重复计数。
+- [维度17-07] 至 [维度17-14]: 成立 (P2)。资源身份、badge/showToast、dataset、refresh、tabs、CRUD、designer toolbar 等作者词汇仍未收敛。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                        | 一句话摘要                                                        |
+| ----- | -------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| 17-01 | P2       | `packages/flux-code-editor/src/types.ts:188-194`                                            | code-editor source ref 仍接受 `dataPath` fallback                 |
+| 17-02 | P2       | `apps/playground/src/component-lab/renderers/form-lab-page.tsx:30`                          | live 示例仍教学 `submit` alias                                    |
+| 17-03 | P2       | `packages/flux-runtime/src/action-adapter.ts:98-106`                                        | `setValues` 仍把 `targetId` 当写入基准路径 fallback               |
+| 17-04 | P2       | `apps/playground/src/component-lab/renderers/dialog-lab-page.tsx:18`                        | dialog/drawer 示例仍教学 `closeDialog/closeDrawer` alias          |
+| 17-05 | P2       | `packages/flux-runtime/src/action-adapter.ts:300-315`                                       | refreshSource runtime adapter DTO 仍用 `sourceId` 命名目标        |
+| 17-07 | P2       | `packages/flux-runtime/src/async-data/source-registry.ts:337-343`                           | data-source 资源身份在 runtime/compiler 边界仍以 `id` 为主        |
+| 17-08 | P2       | `apps/playground/src/component-lab/renderers/page-lab-page.tsx:10-25`                       | active labs 仍传播 Badge 的 `label/variant` 旧词汇                |
+| 17-09 | P2       | `apps/playground/src/schemas/action-flow-tree-schema.json:57-59`                            | showToast 示例仍用 `args.variant` 而非 `args.level`               |
+| 17-10 | P2       | `docs/components/word-editor-page/example.json:16-22`                                       | Word Editor dataset active example 仍用 `sourceType/label`        |
+| 17-11 | P2       | `apps/playground/src/pages/fluxBasicPageSchema.json:291-295`                                | live 示例仍教学 `refreshTable` 旧词汇                             |
+| 17-12 | P2       | `apps/playground/src/component-lab/renderers/tabs-lab-page.tsx:50-53,74-77,106-108,131-133` | Tabs active examples 仍主要教学 `tabsMode/sidePosition`           |
+| 17-13 | P2       | `packages/flux-renderers-data/src/crud-schema.ts:63-79`                                     | CRUD toolbar public vocabulary 仍暴露 `bulkActions`               |
+| 17-14 | P2       | `apps/playground/src/schemas/workflow-designer-schema.json:752-758`                         | Flow Designer toolbar active docs/playground 仍教学无效 `variant` |

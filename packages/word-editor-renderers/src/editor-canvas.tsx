@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react';
 import type { WordEditorData } from '@nop-chaos/word-editor-core';
 import type { EditorStoreApi } from '@nop-chaos/word-editor-core';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
-import { createSavedDocumentData, DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core';
+import { captureDocumentSnapshot, createSavedDocumentData, DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core';
 import type { PaperSettings, SavedDocumentData, WordDocument } from '@nop-chaos/word-editor-core';
 import type { DocChart, DocCode } from '@nop-chaos/word-editor-core';
 
@@ -52,22 +52,13 @@ export function EditorCanvas({
     const debouncedSave = () => {
       if (saveTimer) clearTimeout(saveTimer);
       saveTimer = setTimeout(() => {
-        const value = bridge.getValue();
-        if (value) {
-          const editorValue = value.data;
-          const paperSettings = bridge.getPaperSettings();
-          const saved = createSavedDocumentData({
-              data: {
-                header: editorValue.header ?? [],
-                main: editorValue.main,
-                footer: editorValue.footer ?? [],
-                charts: chartsRef.current ?? [],
-                codes: codesRef.current ?? [],
-              },
-            paperSettings: paperSettings ?? { ...DEFAULT_PAPER_SETTINGS },
+        try {
+          const saved = captureDocumentSnapshot(bridge, {
+            paperSettings: editorStore.getState().paperSettings,
           });
-          localStorage.setItem('nop-word-editor-document', JSON.stringify(saved));
           onAutosaveRef.current?.(saved);
+        } catch {
+          // Ignore autosave snapshot failures and keep editing interactive.
         }
       }, 500);
     };

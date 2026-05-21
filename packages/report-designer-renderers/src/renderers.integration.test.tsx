@@ -18,6 +18,7 @@ import {
 } from '@nop-chaos/report-designer-core';
 import {
   defineReportDesignerPageSchema,
+  reportDesignerRendererDefinitions,
   registerReportDesignerRenderers,
 } from './index.js';
 
@@ -148,6 +149,66 @@ function renderReportDesignerPage(input: {
 }
 
 describe('report-designer namespaced actions integration', { timeout: 15000 }, () => {
+  it('publishes the live config vocabulary on the report-designer-page contract', () => {
+    const definition = reportDesignerRendererDefinitions.find(
+      (candidate) => candidate.type === 'report-designer-page',
+    );
+
+    expect(definition?.propContracts?.config?.shape).toEqual({
+      kind: 'object',
+      fields: {
+        kind: { kind: 'string' },
+        fieldSources: { kind: 'array', item: { kind: 'object', fields: {} } },
+        maxUndoDepth: { kind: 'number' },
+        features: {
+          kind: 'object',
+          fields: {
+            fieldPanel: { kind: 'boolean' },
+            inspector: { kind: 'boolean' },
+            preview: { kind: 'boolean' },
+            expressionEditor: { kind: 'boolean' },
+            dragFieldToCell: { kind: 'boolean' },
+            dragFieldToRange: { kind: 'boolean' },
+            customPropertyPanels: { kind: 'boolean' },
+          },
+          optional: [
+            'fieldPanel',
+            'inspector',
+            'preview',
+            'expressionEditor',
+            'dragFieldToCell',
+            'dragFieldToRange',
+            'customPropertyPanels',
+          ],
+        },
+        inspector: {
+          kind: 'object',
+          fields: {
+            mode: {
+              kind: 'union',
+              anyOf: [
+                { kind: 'literal', value: 'panel' },
+                { kind: 'literal', value: 'drawer' },
+              ],
+            },
+            body: { kind: 'object', fields: {} },
+            byTarget: { kind: 'object', fields: {} },
+            byProfile: { kind: 'object', fields: {} },
+          },
+          optional: ['mode', 'body', 'byTarget', 'byProfile'],
+        },
+        preview: {
+          kind: 'object',
+          fields: {
+            provider: { kind: 'string' },
+          },
+          optional: ['provider'],
+        },
+      },
+      optional: ['kind', 'fieldSources', 'maxUndoDepth', 'features', 'inspector', 'preview'],
+    });
+  });
+
   it('updates sheet metadata from toolbar action via report-designer namespace', async () => {
     renderReportDesignerPage({
       toolbar: [

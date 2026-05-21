@@ -412,4 +412,20 @@ describe('ConditionItem', () => {
     );
     expect(container.querySelector('[data-slot="condition-item"]')).toBeTruthy();
   });
+
+  it('keeps the remove button visible before hover and fully visible on focus', () => {
+    render(
+      <ConditionItem
+        value={makeItem()}
+        fields={testFields}
+        onChange={() => {}}
+        onRemove={() => {}}
+      />,
+    );
+
+    const removeButton = screen.getByRole('button', { name: 'Remove condition' });
+    expect(removeButton.className).toContain('opacity-40');
+    expect(removeButton.className).toContain('group-hover:opacity-100');
+    expect(removeButton.className).toContain('focus:opacity-100');
+  });
 });

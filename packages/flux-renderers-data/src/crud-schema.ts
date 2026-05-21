@@ -61,7 +61,7 @@ export interface CrudColumnSchema extends SchemaObject {
 }
 
 export interface CrudToolbarItemConfig extends SchemaObject {
-  type?: 'bulkActions' | 'pagination' | 'statistics' | 'switch-per-page' | 'columns-toggler';
+  type?: 'listActions' | 'pagination' | 'statistics' | 'switch-per-page' | 'columns-toggler';
   align?: 'left' | 'right';
   draggable?: boolean;
   overlay?: boolean;
@@ -75,7 +75,7 @@ export interface CrudToolbarLayoutConfig extends SchemaObject {
   showPagination?: boolean;
   showStatistics?: boolean;
   showSwitchPerPage?: boolean;
-  showBulkActions?: boolean;
+  showListActions?: boolean;
 }
 
 export interface CrudColumnSettingsConfig extends SchemaObject {

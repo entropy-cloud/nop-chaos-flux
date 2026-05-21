@@ -1,7 +1,8 @@
 import type { ChangeEvent, KeyboardEvent } from 'react';
-import { Button, Input } from '@nop-chaos/ui';
+import { Button, Input, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { NopComponentInspectResult, NopComponentTreeItem, NopNodeDiagnostics } from '../types.js';
+import { DisclosureTrigger } from './disclosure-trigger.js';
 import { JsonViewer } from './json-viewer.js';
 
 function formatClock(timestamp: number) {
@@ -52,6 +53,11 @@ export function NodeTab(props: {
     evalResult,
     handleEvalExpression,
   } = props;
+  const formTabLabels = {
+    values: t('flux.debugger.formTabValues'),
+    errors: t('flux.debugger.formTabErrors'),
+    meta: t('flux.debugger.formTabMeta'),
+  } as const;
 
   return (
     <>
@@ -84,7 +90,7 @@ export function NodeTab(props: {
                   size="icon-xs"
                   className="ndbg-icon-button ndbg-close-button"
                   onClick={() => setSelectedElement(null)}
-                  aria-label="Clear selected element"
+                  aria-label={t('flux.debugger.clearSelectedElement')}
                 >
                   ✕
                 </Button>
@@ -120,7 +126,14 @@ export function NodeTab(props: {
                     {inspectData.className.length > 60 ? '…' : ''}
                   </span>
                 ) : null}
-                <span>{inspectData.mounted ? '● mounted' : '○ unmounted'}</span>
+                <span>
+                  {t('flux.debugger.mountedState', {
+                    indicator: inspectData.mounted ? '●' : '○',
+                    state: inspectData.mounted
+                      ? t('flux.debugger.mounted')
+                      : t('flux.debugger.unmounted'),
+                  })}
+                </span>
               </div>
             </article>
 
@@ -138,7 +151,7 @@ export function NodeTab(props: {
                       data-active={formTab === tab ? '' : undefined}
                       onClick={() => setFormTab(tab)}
                     >
-                      {tab}
+                      {formTabLabels[tab]}
                     </Button>
                   ))}
                 </div>
@@ -209,7 +222,7 @@ export function NodeTab(props: {
                 size="icon-xs"
                 className="ndbg-icon-button ndbg-close-button"
                 onClick={() => setSelectedElement(null)}
-                aria-label="Clear selected element"
+                aria-label={t('flux.debugger.clearSelectedElement')}
               >
                 ✕
               </Button>
@@ -231,28 +244,26 @@ export function NodeTab(props: {
                 .filter(Boolean)
                 .join(' ');
 
-               return (
-                <div
-                  key={item.cid}
-                  className={itemClassName}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => inspectTreeItem(item)}
-                  style={{ paddingLeft: `${item.depth * 16 + 8}px` }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      inspectTreeItem(item);
-                    }
-                  }}
-                >
-                  <span className="ndbg-tree-item-id">
-                    #{item.cid}
-                  </span>{' '}
-                  <span className="ndbg-tree-item-label">{item.label || 'element'}</span>
-                </div>
-              );
-            })}
+                return (
+                 <Button
+                   key={item.cid}
+                   variant="ghost"
+                   className={cn(
+                     itemClassName,
+                     'h-auto w-full justify-start whitespace-normal px-2 py-1 active:translate-y-0',
+                   )}
+                   onClick={() => inspectTreeItem(item)}
+                   style={{ paddingLeft: `${item.depth * 16 + 8}px` }}
+                 >
+                   <span className="ndbg-tree-item-id">
+                     #{item.cid}
+                   </span>{' '}
+                   <span className="ndbg-tree-item-label">
+                     {item.label || t('flux.debugger.element')}
+                   </span>
+                 </Button>
+               );
+             })}
           </div>
         ) : (
           <p className="ndbg-empty">{t('flux.debugger.clickScanHint')}</p>
@@ -261,7 +272,7 @@ export function NodeTab(props: {
       <Input
         type="text"
         className="ndbg-node-input"
-        placeholder="Enter nodeId to inspect..."
+        placeholder={t('flux.debugger.nodeIdPlaceholder')}
         size="sm"
         value={nodeIdInput}
         onChange={(e: ChangeEvent<HTMLInputElement>) => onNodeIdInputChange(e.target.value)}
@@ -278,10 +289,13 @@ export function NodeTab(props: {
             <strong className="ndbg-entry-summary">
               {nodeDiagnostics.rendererTypes.length > 0
                 ? nodeDiagnostics.rendererTypes.join(', ')
-                : 'Unknown type'}
+                : t('flux.debugger.unknownType')}
             </strong>
             <span className="ndbg-entry-meta">
-              {nodeDiagnostics.path ?? 'no path'} | {nodeDiagnostics.totalEvents} events
+              {t('flux.debugger.nodeEventsSummary', {
+                path: nodeDiagnostics.path ?? t('flux.debugger.noPath'),
+                count: nodeDiagnostics.totalEvents,
+              })}
             </span>
           </article>
           {nodeDiagnostics.totalEvents === 0 ? (
@@ -337,46 +351,41 @@ export function NodeTab(props: {
                   );
                 })()}
               </div>
-               {nodeDiagnostics.recentEvents.map((event) => (
-                <article
-                  key={event.id}
-                  className="ndbg-entry"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setExpandedId(expandedId === event.id ? null : event.id);
-                    }
-                  }}
-                >
-                  <div className="ndbg-entry-topline">
-                    <span className="ndbg-badge" data-group={event.group}>
-                      {event.kind}
-                    </span>
-                    <time>{formatClock(event.timestamp)}</time>
-                  </div>
-                  <strong className="ndbg-entry-summary">{event.summary}</strong>
-                  {event.durationMs != null ? (
-                    <span className="ndbg-entry-meta">{event.durationMs}ms</span>
-                  ) : null}
-                   {expandedId === event.id ? (
-                    /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- expanded detail is non-interactive content; click only stops row-toggle bubbling */
-                    <div
-                      className="ndbg-entry-expanded"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {event.detail ? (
-                        <code className="ndbg-entry-detail">{event.detail}</code>
+                {nodeDiagnostics.recentEvents.map((event) => {
+                  const expanded = expandedId === event.id;
+                  const detailId = `ndbg-node-event-detail-${event.id}`;
+
+                  return (
+                    <article key={event.id} className="ndbg-entry">
+                      <DisclosureTrigger
+                        expanded={expanded}
+                        controlsId={detailId}
+                        onToggle={() => setExpandedId(expanded ? null : event.id)}
+                      >
+                        <div className="ndbg-entry-topline">
+                          <span className="ndbg-badge" data-group={event.group}>
+                            {event.kind}
+                          </span>
+                          <time>{formatClock(event.timestamp)}</time>
+                        </div>
+                        <strong className="ndbg-entry-summary">{event.summary}</strong>
+                        {event.durationMs != null ? (
+                          <span className="ndbg-entry-meta">{event.durationMs}ms</span>
+                        ) : null}
+                      </DisclosureTrigger>
+                      {expanded ? (
+                        <div id={detailId} className="ndbg-entry-expanded">
+                          {event.detail ? (
+                            <code className="ndbg-entry-detail">{event.detail}</code>
+                          ) : null}
+                          {event.exportedData != null ? (
+                            <JsonViewer data={event.exportedData} defaultExpanded={2} />
+                          ) : null}
+                        </div>
                       ) : null}
-                      {event.exportedData != null ? (
-                        <JsonViewer data={event.exportedData} defaultExpanded={2} />
-                      ) : null}
-                    </div>
-                  ) : null}
-                </article>
-              ))}
+                    </article>
+                  );
+                })}
             </>
           )}
         </div>
@@ -391,7 +400,7 @@ export function NodeTab(props: {
           <Input
             type="text"
             className="ndbg-eval-input"
-            placeholder="Evaluate formula expression on component data..."
+            placeholder={t('flux.debugger.expressionPlaceholder')}
             size="sm"
             value={evalInput}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setEvalInput(e.target.value)}

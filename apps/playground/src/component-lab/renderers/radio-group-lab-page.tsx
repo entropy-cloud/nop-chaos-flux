@@ -20,7 +20,7 @@ const basicRadioGroup = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Select Plan', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Select Plan', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -46,7 +46,7 @@ const inlineRadioGroup = {
         },
         { type: 'text', text: 'Selected priority: ${priority ?? "(none)"}' },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };

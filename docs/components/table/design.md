@@ -44,14 +44,18 @@
 ## 7. 运行期状态归属
 
 - 当前明确支持 `paginationOwnership`、`selectionOwnership`、`sortOwnership`、`filterOwnership`，可取 `local`、`controlled`、`scope`。
+- `sortStatePath` / `filterStatePath` 的 live DTO 已与 CRUD 摘要读取保持一致：sort 使用 `{ column, direction }`，filter 使用 `{ [column]: { filters?: string[]; keyword?: string } }`。
 - `columnSettings.toggledColumnsStatePath` / `orderedColumnsStatePath` 现在也构成 table visible-columns / ordered-columns 的 scope owner 接入点；CRUD 等上层组合 renderer 应复用这些 path，而不是重新维护平行列状态。
 - 对这些 scope-owned 列状态，显式空数组也是有效 owner 值：`[]` 表示当前没有可见列或没有保留的列顺序，不应再被 fallback defaults 覆盖。
 - 展开仍是 table-local interaction state，尚未收口到独立外部可写 owner path。
 - 当前 header search/filter 已有可观察的基础行为：列头菜单可驱动 keyword/filter state 并影响本地数据处理；但 richer filter source/search UX、统一 ownership 收口和更完整回归证据仍属于后续 table-heavy parity。
 - 当前 header search/filter 已有可观察且更稳定的行为：列头菜单可驱动 keyword/filter state、通过 active trigger 表达当前列已有筛选，并提供按列 clear action 一次性清理 keyword + option filters。更丰富的 filter source/search UX 与 ownership 收口仍属于后续 table-heavy parity。
+- row-level `onRowClick` / `expandRowByClick` 现已具备与鼠标一致的 Enter/Space 键盘激活路径；交互行保持原生 table row 语义，不改写成 fake button role。
 - table 的 `loading` 默认应视为上游 source/query owner 状态的 UI 投影，而不是 table 自己发明请求协议。
 - 真正属于 table 自己的状态是 selection、pagination，以及未来的 sort/filter/inline-edit 等 interaction state。
 - 当前 live baseline 下，sort/filter 与 visible-columns 已进入同一 interaction-owner 体系，只是 expand/inline-edit 仍未完全收口。
+- quick-edit 当前 live baseline 已覆盖 inline 与 dialog 两条保存路径的 visible saving feedback：保存中既会禁用重复提交，也会显示 spinner + saving text，而不是只通过 disabled 态暗示 pending。
+- `empty` 继续保持 `value-or-region` contract；上层 `crud` 传入 richer empty content 时，table live path 必须原样渲染该内容。
 - 目标设计里，table subtree 若需要高频读取这些状态，可提供只读 `$table` 绑定；table 外部观察者仍应通过显式 `statusPath` 读取只读 summary DTO。
 - table shell scope 默认继承 parent lexical scope；若声明 `data`，则在此基础上补充 table own patch。
 - materialized row scopes 默认应保持 `isolate: true`。
@@ -62,6 +66,7 @@
 - 当前事件已覆盖行点击、排序、过滤、分页、选择和刷新。
 - `onPageChange` 的 live payload 现已回到统一 supported 语义：若分页 UI 触发来自真实交互事件，则 handler 会收到原始 UI event，同时 `evaluationBindings` / semantic payload 始终包含 `type: 'table:page-change'` 与 `{ page, pageSize, pagination }` 摘要。
 - 当前组件句柄基线是 `component:refresh`、`component:getSelection`、`component:setSelection`。
+- quick-edit save contracts 是 action props，不是 event fields：`quickSaveAction` / `quickSaveItemAction` 由 quick-edit cell 直接 dispatch 到 row scope。
 - `component:refresh` 触发的是 table instance capability；如果表格显示 loading，优先读取其上游 query/source owner 状态，而不是假设 table 自己就是请求 owner。
 
 ## 9. 数据源、表达式、导入能力接入点

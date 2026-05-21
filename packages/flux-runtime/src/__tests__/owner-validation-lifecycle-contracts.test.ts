@@ -8,6 +8,7 @@ import { buildCompiledFormValidationModel } from '@nop-chaos/flux-core';
 import { createManagedFormRuntime } from '../form-runtime.js';
 import { createScopeRef, createScopeStore } from '../scope.js';
 import { validateRule as realValidateRule } from '../validation-runtime.js';
+import { executeRuntimeValidationRule } from '../runtime-action-helpers.js';
 
 function createStubScope(initialValues: Record<string, unknown> = {}): ScopeRef {
   const store = createScopeStore(initialValues);
@@ -419,6 +420,38 @@ describe('owner validation lifecycle contracts', () => {
           recentRuns: expect.arrayContaining([
             expect.objectContaining({ cause: 'submit' }),
             expect.objectContaining({ cause: 'blur', outcome: expect.stringMatching(/cancelled|stale-dropped/) }),
+          ]),
+        }),
+      ],
+    });
+  });
+
+  it('records superseded async validation runs as cancelled instead of succeeded', async () => {
+    const dispatch = vi
+      .fn()
+      .mockResolvedValue({ ok: false, cancelled: true, error: new Error('cancelled validation') });
+
+    const runtime = createManagedFormRuntime({
+      id: 'test-form-cancelled',
+      parentScope: createStubScope({ name: 'Alice' }),
+      initialValues: { name: 'Alice' },
+      validation: makeFormModel({ name: makeNode('name', { async: true }) }),
+      validateRule: realValidateRule,
+      executeValidationRule: (compiledRule, rule, field, scope, signal) =>
+        executeRuntimeValidationRule(compiledRule, rule, field, scope, signal, {
+          dispatch,
+        }),
+    });
+
+    const validatePromise = runtime.validateField('name', 'change');
+
+    await expect(validatePromise).resolves.toMatchObject({ ok: true, errors: [] });
+    expect(runtime.getAsyncOwnerDebugSnapshot?.()).toMatchObject({
+      owners: [
+        expect.objectContaining({
+          ownerId: `validation:${runtime.scope.id}:name`,
+          recentRuns: expect.arrayContaining([
+            expect.objectContaining({ outcome: 'cancelled', cancelled: true }),
           ]),
         }),
       ],

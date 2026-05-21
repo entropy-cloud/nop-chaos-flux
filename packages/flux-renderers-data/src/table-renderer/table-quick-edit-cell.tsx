@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
+  Spinner,
 } from '@nop-chaos/ui';
 import type { TableColumnQuickEditConfig, TableColumnSchema, TableSchema } from '../schemas.js';
 import { useTableQuickEditController } from './table-quick-edit-controller.js';
@@ -149,14 +150,26 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
             </DialogHeader>
             <DialogBody data-slot="table-quick-edit-dialog-body" onChangeCapture={markBodyDirty}>
               {editorNode}
+              {saving ? (
+                <div
+                  data-slot="table-quick-edit-saving"
+                  role="status"
+                  aria-live="polite"
+                  className="flex items-center gap-2 text-sm text-muted-foreground"
+                >
+                  <Spinner className="size-4" aria-hidden="true" />
+                  <span>{t('flux.common.saving')}</span>
+                </div>
+              ) : null}
             </DialogBody>
             <DialogFooter showCloseButton={false}>
-              <Button type="button" variant="outline" onClick={closeDialog}>
+              <Button type="button" variant="outline" onClick={closeDialog} disabled={saving}>
                 {t('flux.common.close')}
               </Button>
               {saveAction ? (
                 <Button type="button" disabled={!dirty || saving} onClick={() => void runSave()}>
-                  {t('flux.common.save')}
+                  {saving ? <Spinner className="size-4" aria-hidden="true" /> : null}
+                  {saving ? t('flux.common.saving') : t('flux.common.save')}
                 </Button>
               ) : null}
             </DialogFooter>
@@ -188,6 +201,17 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
       }}
     >
       {editorNode}
+      {saving ? (
+        <div
+          data-slot="table-quick-edit-saving"
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-2 text-sm text-muted-foreground"
+        >
+          <Spinner className="size-4" aria-hidden="true" />
+          <span>{t('flux.common.saving')}</span>
+        </div>
+      ) : null}
       {!config?.saveImmediately && saveAction ? (
         <Button
           type="button"
@@ -196,7 +220,8 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
           disabled={!dirty || saving}
           onClick={() => void runSave()}
         >
-          {t('flux.common.save')}
+          {saving ? <Spinner className="size-4" aria-hidden="true" /> : null}
+          {saving ? t('flux.common.saving') : t('flux.common.save')}
         </Button>
       ) : null}
     </div>

@@ -163,6 +163,34 @@ describe('contract: onError branch result handling', () => {
     expect((result as { onErrorError?: unknown }).onErrorError).toBe(secondaryError);
     expect((runtime.env.notify as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
   });
+
+  it('preserves onError failure results even when the branch failure has no error field', async () => {
+    const originalError = new Error('primary-fail');
+    const branchFailure = { ok: false, data: { reason: 'structured-branch-failure' } };
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: async (inv) => {
+        if (inv.action === 'setValue') {
+          return { ok: false, error: originalError };
+        }
+
+        return branchFailure as any;
+      },
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        actionNode('setValue', { path: 'x', value: 1 }, {
+          onError: [actionNode('showToast', { message: 'recover' })],
+        }),
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe(originalError);
+    expect((result as { onErrorError?: unknown }).onErrorError).toEqual(branchFailure);
+  });
 });
 
 describe('contract: skipped action (when=false) branch behavior', () => {

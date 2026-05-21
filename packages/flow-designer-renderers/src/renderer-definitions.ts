@@ -153,6 +153,49 @@ function validateDesignerConfigToolbar(context: import('@nop-chaos/flux-core').R
   });
 }
 
+function validateDesignerPageDocumentPrerequisite(
+  context: import('@nop-chaos/flux-core').RendererSchemaValidationContext,
+) {
+  if (context.schema.type !== 'designer-page') {
+    return;
+  }
+
+  const schema = context.schema as {
+    config?: { documentMode?: unknown };
+    document?: unknown;
+    treeDocument?: unknown;
+  };
+  const documentMode = schema.config?.documentMode;
+
+  if (documentMode === 'tree') {
+    if (schema.treeDocument !== undefined) {
+      return;
+    }
+
+    context.emit({
+      code: 'missing-required-field',
+      path: '/treeDocument',
+      message: 'designer-page in tree mode requires treeDocument.',
+    });
+    return;
+  }
+
+  if (schema.document !== undefined) {
+    return;
+  }
+
+  context.emit({
+    code: 'missing-required-field',
+    path: '/document',
+    message: 'designer-page in graph mode requires document.',
+  });
+}
+
+function validateDesignerPageSchema(context: import('@nop-chaos/flux-core').RendererSchemaValidationContext) {
+  validateDesignerConfigToolbar(context);
+  validateDesignerPageDocumentPrerequisite(context);
+}
+
 export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'designer-page',
@@ -162,6 +205,12 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
     rendererClass: 'domain-host-renderer',
     rendererTraits: ['workbench-shell', 'builder-facing'],
     propContracts: {
+      title: {
+        shape: { kind: 'unknown' },
+        displayName: 'Title',
+        description: 'Optional designer page title content rendered above the workbench toolbar.',
+        editorType: 'slot',
+      },
       statusPath: {
         shape: { kind: 'string' },
         displayName: 'Status Path',
@@ -171,13 +220,13 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
       document: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Document',
-        description: 'Initial designer graph document.',
+        description: 'Initial designer graph document. Required unless config.documentMode is tree.',
         editorType: 'object',
       },
       treeDocument: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Tree Document',
-        description: 'Initial designer tree document for tree mode.',
+        description: 'Initial designer tree document for tree mode. Required when config.documentMode is tree.',
         editorType: 'object',
       },
       config: {
@@ -188,7 +237,7 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
         required: true,
       },
     },
-    schemaValidator: validateDesignerConfigToolbar,
+    schemaValidator: validateDesignerPageSchema,
     scopeExportContracts: {
       $designer: {
         kind: 'object',
@@ -211,6 +260,7 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
       },
     },
     fields: [
+      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'statusPath', kind: 'prop' },
       { key: 'document', kind: 'prop' },
       { key: 'treeDocument', kind: 'prop' },

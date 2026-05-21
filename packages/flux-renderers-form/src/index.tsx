@@ -9,6 +9,25 @@ export {
   validateInputFieldSchema,
 } from './renderers/input.js';
 export { fieldsetRendererDefinition } from './renderers/fieldset.js';
-export * from './renderers/shared/index.js';
-export * from './field-utils.js';
+export { FieldError, FieldHint, FieldHelpText, FieldLabel } from './renderers/shared/index.js';
+export {
+  defaultValidationBehavior,
+  getFieldValidationBehavior,
+  getValidationBehaviorForOwner,
+  shouldValidateOn,
+  shouldValidateOnOwner,
+  formLabelFieldRule,
+  formBooleanFieldRules,
+  formFieldChromeRules,
+  formFieldRules,
+  resolveFieldLabelContent,
+  resolveFieldLabelText,
+  getChildFieldUiState,
+  useCompositeChildFieldState,
+  useFieldPresentation,
+  useHiddenFieldPolicy,
+  createFieldHandlers,
+  useFieldHandlers,
+  useFormFieldController,
+} from './field-utils.js';
 export * from './schemas.js';

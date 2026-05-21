@@ -19,7 +19,7 @@ export function SpreadsheetCellEditor(props: SpreadsheetToolbarProps) {
         size="sm"
         value={props.cellValue}
         onChange={(e) => props.onCellValueChange(e.target.value)}
-        placeholder="Enter cell value"
+        placeholder={t('flux.spreadsheet.cellValuePlaceholder')}
         readOnly={props.readOnly}
         disabled={props.readOnly}
       />
@@ -32,7 +32,7 @@ export function SpreadsheetCellEditor(props: SpreadsheetToolbarProps) {
             size="sm"
             value={props.commentText}
             onChange={(e) => props.onCommentTextChange(e.target.value)}
-            placeholder="Add comment..."
+            placeholder={t('flux.spreadsheet.commentPlaceholder')}
             readOnly={props.readOnly}
             disabled={props.readOnly}
           />

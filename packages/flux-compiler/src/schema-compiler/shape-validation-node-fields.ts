@@ -6,13 +6,13 @@ import {
   type SchemaCompilerDiagnosticsContext,
 } from './diagnostics.js';
 import { classifyField } from './fields.js';
-import type { HostActionValidationContext } from './host-action-validation.js';
 import {
   isDynamicallyAuthoredSchemaValue,
   summarizeActualSchemaValue,
   validateFluxValueShape,
 } from './flux-value-shape-validation.js';
 import {
+  type ActionValidationContext,
   emitSchemaDiagnostic,
   validateActionShape,
   validateApiSchemaShape,
@@ -159,7 +159,7 @@ export function inspectSchemaNodeFields(
   path: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
   enabled: boolean,
-  hostContext?: HostActionValidationContext,
+  actionContext?: ActionValidationContext,
 ): {
   extensions?: Readonly<Record<string, unknown>>;
   skippedPropKeys: ReadonlySet<string>;
@@ -259,7 +259,7 @@ export function inspectSchemaNodeFields(
     }
 
     if (rule.kind === 'event') {
-      validateActionShape(value, keyPath, diagnostics, enabled, hostContext);
+      validateActionShape(value, keyPath, diagnostics, enabled, actionContext);
       continue;
     }
 
@@ -337,13 +337,13 @@ export function inspectSchemaNodeFields(
   }
 
   if (schema.type === 'reaction') {
-    validateReactionShape(schema, pointer, diagnostics, enabled, hostContext);
+    validateReactionShape(schema, pointer, diagnostics, enabled, actionContext);
   }
 
   for (const lifecycleKey of ['onMount', 'onUnmount'] as const) {
     const lifecycleValue = schema[lifecycleKey];
     if (lifecycleValue !== undefined) {
-      validateActionShape(lifecycleValue, appendJsonPointer(pointer, lifecycleKey), diagnostics, enabled, hostContext);
+      validateActionShape(lifecycleValue, appendJsonPointer(pointer, lifecycleKey), diagnostics, enabled, actionContext);
     }
   }
 

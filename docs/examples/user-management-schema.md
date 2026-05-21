@@ -7,6 +7,7 @@ This example is intentionally small but complete.
 - each important capability appears once
 - form business flow is owned by the `form` node
 - submit buttons stay thin and trigger `component:submit`
+- current compile-time validation still emits one `unvalidated-component-target` warning for that `component:submit` example because the repo does not yet publish target-binding metadata for `componentId`
 - inside a form subtree, pending UI reads the readonly `$form` binding
 - `closeSurface` uses the default current-surface behavior
 - page data updates rely on current `ajax` plus explicit follow-up write actions instead of outdated top-level write-field assumptions

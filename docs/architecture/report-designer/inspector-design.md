@@ -123,8 +123,8 @@ Inspector schema 运行时应始终注入稳定 host scope，而不是让局部 
 
 ```json
 {
-  "type": "tpl",
-  "tpl": "当前目标: ${target.kind}"
+  "type": "text",
+  "text": "当前目标: ${target.kind}"
 }
 ```
 

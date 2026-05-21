@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from '../toolbar/shared.js';
 
 vi.mock('@nop-chaos/ui', () => {
@@ -35,10 +36,27 @@ vi.mock('@nop-chaos/ui', () => {
 });
 
 describe('ToolbarButton', () => {
+  beforeEach(() => {
+    resetFluxI18n();
+    initFluxI18n();
+  });
+
+  afterEach(() => {
+    resetFluxI18n();
+  });
+
   it('renders with title', () => {
     render(<ToolbarButton onClick={vi.fn()} title="Bold" />);
     expect(screen.getByTitle('Bold')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
+  });
+
+  it('translates built-in word-editor locale keys before rendering', () => {
+    resetFluxI18n();
+    initFluxI18n({ lng: 'zh-CN', fallbackLng: 'zh-CN' });
+    render(<ToolbarButton onClick={vi.fn()} title="flux.wordEditor.print" />);
+    expect(screen.getByTitle('打印')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '打印' })).toBeInTheDocument();
   });
 
   it('calls onClick when clicked', async () => {

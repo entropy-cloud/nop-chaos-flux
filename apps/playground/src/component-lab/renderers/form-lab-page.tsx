@@ -27,7 +27,7 @@ const basicForm = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -55,7 +55,7 @@ const formWithSubmitFeedback = {
         },
         { type: 'text', text: '${submitted ? "Success! Submitted username: " + username : ""}' },
       ],
-      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -82,7 +82,7 @@ const formWithHiddenRequiredField = {
           visible: '${collectSecret === true}',
         },
       ],
-      actions: [{ type: 'button', label: 'Submit Access Settings', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Submit Access Settings', onClick: { action: 'submitForm' } }],
     },
   ],
 };

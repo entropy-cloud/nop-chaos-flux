@@ -461,8 +461,6 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     <div
       className={cn('nop-object-field', props.meta.className)}
       data-slot="field-control"
-      data-testid={props.meta.testid}
-      data-cid={props.meta.cid}
     >
       <FormContext.Provider value={childForm ?? undefined}>
         <ScopeContext.Provider value={childScope}>
@@ -477,6 +475,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
 export const objectFieldRendererDefinition: RendererDefinition = {
   type: 'object-field',
+  sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: ObjectFieldRenderer,
   wrap: true,
   fields: [

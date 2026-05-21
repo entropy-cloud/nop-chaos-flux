@@ -5,6 +5,10 @@ import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
   Checkbox,
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
   Input,
   Label,
   Popover,
@@ -21,7 +25,12 @@ import {
   validateInputFieldSchema,
 } from '@nop-chaos/flux-renderers-form';
 import type { InputTreeSchema, TreeSelectSchema } from '@nop-chaos/flux-renderers-form';
-import { buildTreeOptionMetaList, getTreeOptionConfig, type TreeOptionMeta } from './tree-options.js';
+import {
+  buildTreeOptionMetaList,
+  flattenTreeOptions,
+  getTreeOptionConfig,
+  type TreeOptionMeta,
+} from './tree-options.js';
 import {
   getSourceErrorMessage,
   isMultipleMode,
@@ -169,6 +178,7 @@ function TreeOptionList(props: {
   invalid?: boolean;
 }) {
   const treeId = React.useId();
+  const treeRef = React.useRef<HTMLDivElement>(null);
   const {
     query,
     setQuery,
@@ -186,22 +196,53 @@ function TreeOptionList(props: {
   const describedBy = [props.describedBy, props.loading ? props.loadingDescriptionId : undefined]
     .filter(Boolean)
     .join(' ') || undefined;
+  const hasQuery = query.trim().length > 0;
+  const activeDescendantId = React.useMemo(() => {
+    const activeOption = activeItemKey
+      ? flattenTreeOptions(filteredOptions).find((option) => option.valueKey === activeItemKey)
+      : undefined;
+    return activeOption ? createTreeItemId(treeId, activeOption) : undefined;
+  }, [activeItemKey, filteredOptions, treeId]);
+
+  React.useEffect(() => {
+    if (!activeDescendantId || props.disabled) {
+      return;
+    }
+
+    const activeElement = treeRef.current?.querySelector<HTMLElement>(`#${CSS.escape(activeDescendantId)}`);
+    activeElement?.focus();
+  }, [activeDescendantId, props.disabled]);
 
   return (
     <div data-slot="tree-option-list">
       {props.searchable ? (
-        <Label data-slot="tree-option-search">
-          <SearchIcon className="size-4" />
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            aria-label={props.searchLabel}
-            placeholder={props.searchLabel}
-            disabled={props.disabled}
-          />
-        </Label>
+        <div className="flex items-center gap-2" data-slot="tree-option-search-row">
+          <Label data-slot="tree-option-search" className="flex-1">
+            <SearchIcon className="size-4" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              aria-label={props.searchLabel}
+              placeholder={props.searchLabel}
+              disabled={props.disabled}
+            />
+          </Label>
+          {hasQuery ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label={t('flux.common.clear')}
+              disabled={props.disabled}
+              onClick={() => setQuery('')}
+            >
+              <XIcon className="size-4" />
+            </Button>
+          ) : null}
+        </div>
       ) : null}
       <div
+        ref={treeRef}
         data-slot="tree-option-items"
         role="tree"
         aria-label={props.ariaLabel}
@@ -210,24 +251,36 @@ function TreeOptionList(props: {
         aria-errormessage={props.errorMessage}
         aria-invalid={props.invalid || undefined}
         aria-busy={props.loading || undefined}
+        aria-activedescendant={activeDescendantId}
       >
-        {filteredOptions.map((option) => (
-          <TreeOptionNode
-            key={`${option.valueKey}:${option.depth}`}
-            option={option}
-            value={props.value}
-            multiple={props.multiple}
-            showPathLabel={props.showPathLabel}
-            disabled={props.disabled}
-            onChange={props.onChange}
-            activeItemKey={activeItemKey}
-            treeId={treeId}
-            expandedKeys={expandedKeys}
-            onToggleExpanded={toggleExpanded}
-            onMoveFocus={moveFocus}
-            onFocusItem={focusItem}
-          />
-        ))}
+        {filteredOptions.length > 0 ? (
+          filteredOptions.map((option) => (
+            <TreeOptionNode
+              key={`${option.valueKey}:${option.depth}`}
+              option={option}
+              value={props.value}
+              multiple={props.multiple}
+              showPathLabel={props.showPathLabel}
+              disabled={props.disabled}
+              onChange={props.onChange}
+              activeItemKey={activeItemKey}
+              treeId={treeId}
+              expandedKeys={expandedKeys}
+              onToggleExpanded={toggleExpanded}
+              onMoveFocus={moveFocus}
+              onFocusItem={focusItem}
+            />
+          ))
+        ) : (
+          <Empty data-slot="tree-option-empty" className="min-h-28 border-0 p-4 shadow-none">
+            <EmptyHeader>
+              <EmptyTitle>{t('flux.common.noResults')}</EmptyTitle>
+              {hasQuery ? (
+                <EmptyDescription>{props.searchLabel}</EmptyDescription>
+              ) : null}
+            </EmptyHeader>
+          </Empty>
+        )}
       </div>
     </div>
   );
@@ -256,8 +309,6 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
     <div
       className={cn('nop-input-tree', props.meta.className)}
       data-slot="input-tree-control"
-      data-testid={props.meta.testid}
-      data-cid={props.meta.cid}
     >
       <div data-slot="input-tree-options">
         <TreeOptionList
@@ -329,8 +380,6 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
     <div
       className={cn('nop-tree-select', props.meta.className)}
       data-slot="tree-select-control"
-      data-testid={props.meta.testid}
-      data-cid={props.meta.cid}
     >
       <Popover>
         <div className="flex items-center gap-2" data-slot="tree-select-trigger-row">
@@ -420,6 +469,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
 export const treeControlRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-tree',
+    sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
@@ -431,6 +481,7 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'tree-select',
+    sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },

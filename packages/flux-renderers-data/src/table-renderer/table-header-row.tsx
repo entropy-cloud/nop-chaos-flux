@@ -141,20 +141,17 @@ export function TableHeaderRow({
             {isSortable || isFilterable || isSearchable ? (
               <div className="flex items-center gap-1">
                 {isSortable ? (
-                  <span
-                    className="cursor-pointer hover:text-primary focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => { if (column.name) onSort(column.name); }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        if (column.name) onSort(column.name);
-                      }
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto rounded-sm px-1 py-0 font-normal hover:text-primary"
+                    onClick={() => {
+                      if (column.name) onSort(column.name);
                     }}
                   >
                     {labelContent}
-                  </span>
+                  </Button>
                 ) : (
                   <span>{labelContent}</span>
                 )}

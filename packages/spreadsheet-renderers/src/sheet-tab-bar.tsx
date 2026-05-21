@@ -140,12 +140,12 @@ export function SheetTabBar({
                     type="button"
                     variant="ghost"
                     size="icon-xs"
-                    className="ss-sheet-tab-close"
-                    onClick={(e) => handleCloseClick(e, sheet.id, sheet.name)}
-                    aria-label={`Remove sheet ${sheet.name}`}
-                    title={`Remove sheet ${sheet.name}`}
-                    disabled={readOnly}
-                  >
+                     className="ss-sheet-tab-close"
+                     onClick={(e) => handleCloseClick(e, sheet.id, sheet.name)}
+                     aria-label={t('flux.sheet.removeSheetAriaLabel', { name: sheet.name })}
+                     title={t('flux.sheet.removeSheetAriaLabel', { name: sheet.name })}
+                     disabled={readOnly}
+                   >
                     ×
                   </Button>
                 ) : null}
@@ -158,7 +158,7 @@ export function SheetTabBar({
           size="icon-xs"
           className="ss-sheet-add"
           onClick={onAddSheet}
-          aria-label="Add sheet"
+          aria-label={t('flux.sheet.addSheetAriaLabel')}
           disabled={readOnly}
         >
           +

@@ -122,11 +122,7 @@ export function createMergedDesignerProvider(args: {
   return {
     kind: designerProvider.kind ?? 'host',
     listMethods() {
-      const methods = designerProvider.listMethods?.() ?? [];
-      if (methods.includes('navigate-back')) {
-        return methods;
-      }
-      return [...methods, 'navigate-back'];
+      return designerProvider.listMethods?.() ?? [];
     },
     invoke(method, payload, ctx) {
       if (method === 'navigate-back') {
@@ -138,6 +134,12 @@ export function createMergedDesignerProvider(args: {
       designerProvider.dispose?.();
     },
   };
+}
+
+export function resolveDesignerNavigateBackHandler(
+  actionScope: ActionScope | undefined,
+): { provider: ActionNamespaceProvider; method: string } | undefined {
+  return actionScope?.parent?.resolve('designer:navigate-back');
 }
 
 export function createDesignerContextValue(args: {
@@ -205,7 +207,7 @@ export async function confirmCreateDialog(args: {
     });
 
     if (!result.ok) {
-      return { ok: false as const, error: result.error };
+      return { ok: false as const, result };
     }
 
     if (result.data && typeof result.data === 'object' && !Array.isArray(result.data)) {

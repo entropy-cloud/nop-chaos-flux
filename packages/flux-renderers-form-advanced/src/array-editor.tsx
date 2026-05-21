@@ -108,7 +108,7 @@ function ArrayEditorRow(props: {
               currentForm.setValue(itemPath, event.target.value);
 
               if (shouldValidateOn(name, currentForm, 'change')) {
-                void currentForm.validateField(itemPath);
+                void currentForm.validateField(itemPath, 'change');
               }
             }
           }}
@@ -117,7 +117,7 @@ function ArrayEditorRow(props: {
               currentForm.touchField(itemPath);
 
               if (shouldValidateOn(name, currentForm, 'blur')) {
-                void currentForm.validateField(itemPath);
+                void currentForm.validateField(itemPath, 'blur');
               }
             }
           }}
@@ -264,7 +264,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       currentForm.setValue(name, nextItems);
 
       if (shouldValidateOn(name, currentForm, 'change')) {
-        void currentForm.validateField(name);
+        void currentForm.validateField(name, 'change');
       }
     },
     [currentForm, name, scope],
@@ -279,7 +279,9 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
       if (currentForm && name) {
         currentForm.removeValue(name, index);
-        void currentForm.validateSubtree(name);
+        if (shouldValidateOn(name, currentForm, 'change')) {
+          void currentForm.validateSubtree(name, 'change');
+        }
         return;
       }
 
@@ -335,8 +337,6 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
     <div
       className={cn('nop-array-editor', 'grid gap-3', props.meta.className)}
       data-slot="field-control"
-      data-testid={props.meta.testid}
-      data-cid={props.meta.cid}
     >
       {items.map((item, index) => {
         return (
@@ -383,7 +383,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             currentForm.appendValue(name, nextItem);
 
             if (shouldValidateOn(name, currentForm, 'change')) {
-              void currentForm.validateField(name);
+              void currentForm.validateField(name, 'change');
             }
 
             return;
@@ -400,6 +400,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
 export const arrayEditorRendererDefinition: RendererDefinition = {
   type: 'array-editor',
+  sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: ArrayEditorRenderer,
   wrap: true,
   fields: formFieldRules,

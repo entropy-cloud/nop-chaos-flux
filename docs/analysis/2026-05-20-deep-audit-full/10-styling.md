@@ -137,3 +137,29 @@
 ## 深挖第 4 轮追加
 
 未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度10-01]: 保留 (P2)。`packages/spreadsheet-renderers/src/canvas-styles.css:24-247` 仍以裸 `[data-slot='spreadsheet-*']` 顶层选择器公开 spreadsheet grid/header/editor/status 样式，没有 package/root scope 约束。
+- [维度10-02]: 保留 (P2)。同一 `canvas-styles.css:248+` 仍把 toolbar/status/find-replace 等外壳 chrome 放进 canvas-only stylesheet，并继续使用多处硬编码颜色，未与 canvas hot-path 样式边界分离。
+- [维度10-03]: 保留 (P3)。`packages/report-designer-renderers/src/report-field-panel.css:1-84` 仍全部使用裸 `[data-slot='report-field-panel-*']` 选择器，虽然 slot 前缀碰撞风险较低，但 live CSS 作用域仍未利用现有 root marker 收窄。
+- [维度10-04]: 保留 (P2)。`packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-xyflow-node.tsx:201-206,232-244` 仍直接 `ClassAliasesContext.Provider value={config.classAliases}`，未与外层 page/schema aliases 合并，和 `mergeClassAliases` 继承契约不一致。
+- [维度10-05]: 保留 (P2)。`packages/flow-designer-renderers/src/designer-page-body.tsx:334-338` 仍在主路径直接渲染 `config.themeStyles` 到 `<style>`，公开 raw CSS 注入入口依旧绕过 classAliases / CSS 变量主题契约。
+
+## 子项复核结论
+
+- [维度10-01]: 成立 (P2)。Spreadsheet canvas styles 仍缺 root/package scope。
+- [维度10-02]: 成立 (P2)。canvas-only stylesheet 仍混入外壳 chrome 与硬编码颜色。
+- [维度10-03]: 降级保留 (P3)。Report field panel CSS scope 问题存在，但碰撞风险较低。
+- [维度10-04]: 成立 (P2)。Flow Designer classAliases 继承契约仍未合并。
+- [维度10-05]: 成立 (P2)。themeStyles raw CSS 注入仍绕过主题契约。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                                   | 一句话摘要                                                              |
+| ----- | -------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| 10-01 | P2       | `packages/spreadsheet-renderers/src/canvas-styles.css:24-247`                                          | spreadsheet canvas 样式仍以裸 slot 选择器公开                           |
+| 10-02 | P2       | `packages/spreadsheet-renderers/src/canvas-styles.css:248+`                                            | canvas-only stylesheet 仍混入 toolbar/status/find-replace 等外壳 chrome |
+| 10-03 | P3       | `packages/report-designer-renderers/src/report-field-panel.css:1-84`                                   | report field panel CSS 仍未利用 root marker 收窄作用域                  |
+| 10-04 | P2       | `packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-xyflow-node.tsx:201-206,232-244` | Flow Designer classAliases 仍未与外层 aliases 合并                      |
+| 10-05 | P2       | `packages/flow-designer-renderers/src/designer-page-body.tsx:334-338`                                  | Flow Designer 仍直接渲染 `themeStyles` raw CSS                          |

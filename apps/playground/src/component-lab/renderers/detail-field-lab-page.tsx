@@ -32,7 +32,7 @@ const profileDetailField = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -75,7 +75,7 @@ const addressDetailField = {
           ],
         },
       ],
-      actions: [{ type: 'button', label: 'Save Order', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save Order', onClick: { action: 'submitForm' } }],
     },
   ],
 };

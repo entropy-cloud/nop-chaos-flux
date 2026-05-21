@@ -9,7 +9,7 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { getIn, setIn } from '@nop-chaos/flux-core';
-import { Button, cn } from '@nop-chaos/ui';
+import { Button, cn, Spinner } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DetailViewSchema } from '../composite-field/composite-schemas.js';
 import {
@@ -94,10 +94,13 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const {
     open,
     draftForm,
+    opening,
     confirming,
     draftError,
     openDraft,
     closeDraft,
+    beginOpen,
+    finishOpen,
     beginConfirm,
     finishConfirm,
     setDraftErrorSafe,
@@ -315,31 +318,38 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     if (effectiveDisabled) return;
 
     const openToken = openSequencer.nextToken();
+    beginOpen();
 
-    const adaptedValue = await runTransformIn(
-      schemaProps.transformInAction,
-      {
-        rawValue: currentValue,
-        readOnly,
-      },
-      runAdaptationAction,
-    );
+    try {
+      const adaptedValue = await runTransformIn(
+        schemaProps.transformInAction,
+        {
+          rawValue: currentValue,
+          readOnly,
+        },
+        runAdaptationAction,
+      );
 
-    const initialValues = buildDetailDraftInitialValues(adaptedValue, getInitialValues());
+      const initialValues = buildDetailDraftInitialValues(adaptedValue, getInitialValues());
 
-    const newDraftForm = runtime.createFormRuntime({
-      id: `detail-view-draft:${scopePath ?? 'static'}:${Date.now()}`,
-      initialValues,
-      parentScope,
-      validation: props.templateNode.validationPlan,
-    });
+      const newDraftForm = runtime.createFormRuntime({
+        id: `detail-view-draft:${scopePath ?? 'static'}:${Date.now()}`,
+        initialValues,
+        parentScope,
+        validation: props.templateNode.validationPlan,
+      });
 
-    if (!openSequencer.isCurrent(openToken)) {
-      newDraftForm.dispose();
-      return;
+      if (!openSequencer.isCurrent(openToken)) {
+        newDraftForm.dispose();
+        return;
+      }
+
+      openDraft(newDraftForm);
+    } finally {
+      if (openSequencer.isCurrent(openToken)) {
+        finishOpen();
+      }
     }
-
-    openDraft(newDraftForm);
   }
 
   async function settleParentValidation(): Promise<boolean> {
@@ -507,12 +517,14 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
           variant="outline"
           size="sm"
           aria-label={triggerLabel}
+          aria-busy={opening || undefined}
           onClick={() => {
             handleOpen().catch((error) => {
               reportOpenFailure(error);
             });
           }}
         >
+          {opening ? <Spinner className="size-4" aria-hidden="true" /> : null}
           {triggerLabel}
         </Button>
       )}
@@ -545,6 +557,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
 
 export const detailViewRendererDefinition: RendererDefinition<DetailViewSchema> = {
   type: 'detail-view',
+  sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: DetailViewRenderer,
   fields: [
     { key: 'name', kind: 'prop' },

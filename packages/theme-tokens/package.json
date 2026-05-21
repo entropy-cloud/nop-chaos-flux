@@ -18,7 +18,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "lint": "eslint \"src/**/*.ts\" --cache --cache-location node_modules/.cache/eslint"
   }
 }

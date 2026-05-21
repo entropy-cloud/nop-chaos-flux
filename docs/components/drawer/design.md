@@ -76,6 +76,7 @@ Current live implementation note:
 - 视觉和可访问性交互复用 `@nop-chaos/ui` Drawer。
 - 标准 shell 结构应为 `DrawerContent -> DrawerHeader? -> DrawerBody -> DrawerFooter?`。
 - `DrawerContent` 负责弹层壳行为；默认 body spacing 应归 `DrawerBody`，并与 dialog 保持相同的 body-slot 责任边界。
+- 当前 live drawer header baseline 要求稳定可见的 close affordance：即使 footer 也提供 close/cancel，header 仍应保留显式关闭按钮，避免 drawer 只剩底部退出路径。
 
 ## 11. 与其他容器的边界
 

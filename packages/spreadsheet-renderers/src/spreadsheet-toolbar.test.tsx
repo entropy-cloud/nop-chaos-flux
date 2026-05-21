@@ -95,6 +95,8 @@ describe('SpreadsheetToolbar', () => {
     expect(container.querySelectorAll('[data-slot="spreadsheet-find-row"]')).toHaveLength(2);
     expect(container.querySelector('[data-slot="spreadsheet-find-input"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="spreadsheet-replace-input"]')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Search text...')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Replace with...')).toBeTruthy();
   });
 
   it('renders cell and comment editors when a cell and comment input are active', async () => {
@@ -108,6 +110,8 @@ describe('SpreadsheetToolbar', () => {
     expect(screen.getAllByDisplayValue('hello').length).toBeGreaterThan(0);
     expect(screen.getByDisplayValue('note')).toBeTruthy();
     expect(screen.getByText('Delete')).toBeTruthy();
+    expect(screen.getAllByPlaceholderText('Enter cell value').length).toBeGreaterThan(0);
+    expect(screen.getAllByPlaceholderText('Add comment...').length).toBeGreaterThan(0);
     expect(container.querySelector('[data-slot="spreadsheet-cell-editor"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="spreadsheet-cell-value-input"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="spreadsheet-comment-editor"]')).toBeTruthy();

@@ -24,6 +24,13 @@ describe('data renderer definition contracts', () => {
     expect(eventKeys).toContain('onRefresh');
   });
 
+  it('table quick-save contracts are published as props, not events', () => {
+    const table = dataRendererDefinitions.find((d) => d.type === 'table');
+
+    expect(table?.fields?.find((field) => field.key === 'quickSaveAction')?.kind).toBe('prop');
+    expect(table?.fields?.find((field) => field.key === 'quickSaveItemAction')?.kind).toBe('prop');
+  });
+
   it('tree renderer has parameterized node region', () => {
     const tree = dataRendererDefinitions.find((d) => d.type === 'tree');
     const nodeField = tree?.fields?.find((f) => f.key === 'node');
@@ -35,6 +42,39 @@ describe('data renderer definition contracts', () => {
     const chart = dataRendererDefinitions.find((d) => d.type === 'chart');
     expect(chart?.fields?.some((f) => f.key === 'onClick' && f.kind === 'event')).toBe(true);
     expect(chart?.fields?.some((f) => f.key === 'onHover' && f.kind === 'event')).toBe(true);
+  });
+
+  it('table publishes component capabilities for refresh and selection control', () => {
+    const table = dataRendererDefinitions.find((d) => d.type === 'table');
+
+    expect(table?.componentCapabilityContracts?.map((item) => item.handle)).toEqual([
+      'refresh',
+      'getSelection',
+      'setSelection',
+    ]);
+    expect(table?.componentCapabilityContracts?.[0]?.result).toEqual({
+      kind: 'object',
+      fields: {
+        page: { kind: 'number' },
+        pageSize: { kind: 'number' },
+      },
+    });
+    expect(table?.componentCapabilityContracts?.[2]?.result).toEqual({
+      kind: 'array',
+      item: { kind: 'string' },
+    });
+  });
+
+  it('chart publishes only the implemented resize component capability', () => {
+    const chart = dataRendererDefinitions.find((d) => d.type === 'chart');
+
+    expect(chart?.componentCapabilityContracts).toEqual([
+      {
+        handle: 'resize',
+        displayName: 'Resize',
+        description: 'Request the current chart instance to recompute its layout.',
+      },
+    ]);
   });
 
   it('crud is a flux-owner-renderer with composite traits', () => {

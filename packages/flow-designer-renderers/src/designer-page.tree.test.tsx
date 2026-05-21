@@ -8,6 +8,7 @@ import {
   createDesignerPageSchemaRenderer,
   createRendererEnv,
   createTreeTestConfig,
+  getLatestCreatedDesignerCore,
   getLayoutTreeWithElkMock,
 } from './designer-page.test-support.js';
 
@@ -166,5 +167,56 @@ describe('DesignerPageRenderer tree mode', () => {
     );
 
     expect(view.getByText('Tree mode requires treeDocument prop')).toBeTruthy();
+  });
+
+  it('keeps tree mode host-owned instead of mutating a local tree copy', async () => {
+    const SchemaRenderer = createDesignerPageSchemaRenderer();
+    const treeDocument = {
+      id: 'tree-owner',
+      kind: 'test-tree',
+      name: 'Tree Owner',
+      version: '1.0',
+      root: {
+        id: 'start',
+        type: 'start',
+        data: { label: 'Start' },
+        child: {
+          id: 'task-1',
+          type: 'task',
+          data: { label: 'Do Work' },
+          child: {
+            id: 'end',
+            type: 'end',
+            data: { label: 'End' },
+          },
+        },
+      },
+    };
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-owner"
+        schema={{
+          type: 'designer-page',
+          treeDocument,
+          config: createTreeTestConfig(),
+        }}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const core = getLatestCreatedDesignerCore();
+    expect(core).toBeTruthy();
+
+    core.selectNode('task-1');
+    core.updateNode('task-1', { label: 'Changed in graph only' });
+
+    await waitFor(() => {
+      expect(treeDocument.root.child?.data.label).toBe('Do Work');
+      expect(core.getSnapshot().doc.nodes.find((node: { id: string }) => node.id === 'task-1')?.data.label).toBe(
+        'Changed in graph only',
+      );
+    });
   });
 });

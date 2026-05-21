@@ -128,7 +128,7 @@ describe('detail-view renderer concurrency behavior', () => {
     await waitFor(() =>
       expect(notify).toHaveBeenCalledWith(
         'warning',
-        '[flux] transformIn failed: Error: detail open failed',
+        '[flux] transformIn failed: detail open failed',
       ),
     );
     expect(screen.queryByLabelText('Name')).toBeNull();

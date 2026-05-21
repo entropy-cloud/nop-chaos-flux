@@ -8,6 +8,7 @@ import {
   normalizeRange,
   rangeSize,
   createEmptyDocument,
+  createSpreadsheetCore,
 } from './index.js';
 
 describe('cellAddress', () => {
@@ -175,5 +176,35 @@ describe('createEmptyDocument', () => {
   it('should use provided id', () => {
     const doc = createEmptyDocument('my-id');
     expect(doc.id).toBe('my-id');
+  });
+});
+
+describe('spreadsheet viewport owner', () => {
+  it('updates runtime viewport through spreadsheet:setViewport', async () => {
+    const core = createSpreadsheetCore({ document: createEmptyDocument('viewport-doc') });
+
+    const result = await core.dispatch({
+      type: 'spreadsheet:setViewport',
+      viewport: { scrollX: 12, scrollY: 34, zoom: 1.25 },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(core.getSnapshot().viewport).toEqual({ scrollX: 12, scrollY: 34, zoom: 1.25 });
+  });
+});
+
+describe('SpreadsheetConfig public contract', () => {
+  it('keeps only the currently supported host config knobs', () => {
+    const config = {
+      defaultRowHeight: 28,
+      defaultColumnWidth: 96,
+      maxUndoDepth: 150,
+    } satisfies import('./index.js').SpreadsheetConfig;
+
+    expect(config).toEqual({
+      defaultRowHeight: 28,
+      defaultColumnWidth: 96,
+      maxUndoDepth: 150,
+    });
   });
 });

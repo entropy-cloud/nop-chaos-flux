@@ -142,7 +142,7 @@ Action flow：
                           "action": "showToast",
                           "args": {
                             "message": "${error.message ?? '保存失败'}",
-                            "variant": "destructive"
+                            "level": "error"
                           }
                         }
                       }
@@ -316,7 +316,7 @@ Action flow：
               "data": {
                 "label": "通知失败",
                 "action": "showToast",
-                "args": { "message": "日志记录失败", "variant": "destructive" }
+                "args": { "message": "日志记录失败", "level": "error" }
               }
             }
           }
@@ -363,7 +363,7 @@ Tree → `ActionSchema` JSON 的编译规则：
     "action": "showToast",
     "args": {
       "message": "${error.message ?? '保存失败'}",
-      "variant": "destructive"
+      "level": "error"
     }
   }
 }

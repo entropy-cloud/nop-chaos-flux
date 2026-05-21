@@ -283,7 +283,7 @@ describe('createRuntimeSourceRegistry', () => {
 
     expect(firstRefresh).toHaveBeenCalledTimes(1);
 
-    const refreshed = await secondRegistry.refreshDataSource({ id: 'source-2', scope: secondScope });
+    const refreshed = await secondRegistry.refreshDataSource({ name: 'result', scope: secondScope });
     await Promise.resolve();
 
     expect(refreshed).toBe(true);

@@ -158,7 +158,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'refreshSource',
-        targetId: 'total-source',
+        targetId: 'total',
       },
       {
         runtime,

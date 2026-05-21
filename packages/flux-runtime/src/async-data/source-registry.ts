@@ -87,7 +87,7 @@ export interface RuntimeSourceRegistry {
     scope: ScopeRef;
     compiledSource: CompiledDataSource;
   }): DataSourceRegistration;
-  refreshDataSource(input: { id: string; scope?: ScopeRef }): Promise<boolean>;
+  refreshDataSource(input: { name: string; scope?: ScopeRef }): Promise<boolean>;
   disposeScope(scopeId: string): void;
   disposeScopeTree(scopeId: string): void;
   getDebugSnapshot(): import('@nop-chaos/flux-core').SourceRegistryDebugSnapshot;
@@ -334,12 +334,10 @@ export function createRuntimeSourceRegistry(input: {
     }
   }
 
-  async function refreshDataSource(args: { id: string; scope?: ScopeRef }): Promise<boolean> {
+  async function refreshDataSource(args: { name: string; scope?: ScopeRef }): Promise<boolean> {
     if (args.scope) {
       const bucket = scopeEntries.get(args.scope.id);
-      const entry =
-        bucket?.get(args.id) ??
-        Array.from(bucket?.values() ?? []).find((candidate) => candidate.name === args.id);
+      const entry = Array.from(bucket?.values() ?? []).find((candidate) => candidate.name === args.name);
 
       if (!entry) {
         return false;
@@ -350,7 +348,7 @@ export function createRuntimeSourceRegistry(input: {
     }
 
     for (const bucket of scopeEntries.values()) {
-      const entry = bucket.get(args.id);
+      const entry = Array.from(bucket.values()).find((candidate) => candidate.name === args.name);
 
       if (entry) {
         await entry.controller.refresh();
@@ -358,7 +356,7 @@ export function createRuntimeSourceRegistry(input: {
       }
     }
 
-    const namedEntry = nameIndex.get(args.id);
+    const namedEntry = nameIndex.get(args.name);
     if (namedEntry) {
       await namedEntry.controller.refresh();
       return true;

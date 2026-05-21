@@ -109,7 +109,7 @@ export function validateHostAction(
     return false;
   }
 
-  if (method.args && args !== undefined) {
+  if (method.args) {
     const argsPath = appendJsonPointer(path, 'args');
     const validationResult = validateFluxValueShape(
       args,

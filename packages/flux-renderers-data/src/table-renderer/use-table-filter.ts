@@ -194,5 +194,8 @@ export function useTableFilter(
     [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, onFilterStateChange, renderScope],
   );
 
-  return { filterState, handleFilter, handleSearch, clearFilters };
+  return useMemo(
+    () => ({ filterState, handleFilter, handleSearch, clearFilters }),
+    [clearFilters, filterState, handleFilter, handleSearch],
+  );
 }

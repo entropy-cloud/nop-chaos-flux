@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { renderDesignerCanvasBridge } from './canvas-bridge.js';
-import { useDesignerContext, useDesignerFullSnapshot } from './designer-context.js';
+import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
 import { DingFlowAddNodeMenu, type DingFlowMenuItem } from './dingflow/index.js';
 import { createDingFlowMenuCommand } from './dingflow/dingflow-command-dispatch.js';
 import { DesignerIcon } from './designer-icon.js';
@@ -63,7 +63,35 @@ export function DesignerCanvasContent(props: {
   };
 } = {}) {
   const { core, dispatch, config } = useDesignerContext();
-  const snapshot = useDesignerFullSnapshot();
+  const snapshot = useDesignerSnapshotSelector(
+    (state) => ({
+      doc: state.doc,
+      selection: state.selection,
+      activeNode: state.activeNode,
+      activeEdge: state.activeEdge,
+      activeBranch: state.activeBranch,
+      canUndo: state.canUndo,
+      canRedo: state.canRedo,
+      isDirty: state.isDirty,
+      gridEnabled: state.gridEnabled,
+      paletteCollapsed: state.paletteCollapsed,
+      inspectorCollapsed: state.inspectorCollapsed,
+      viewport: state.viewport,
+    }),
+    (left, right) =>
+      left.doc === right.doc &&
+      left.selection === right.selection &&
+      left.activeNode === right.activeNode &&
+      left.activeEdge === right.activeEdge &&
+      left.activeBranch === right.activeBranch &&
+      left.canUndo === right.canUndo &&
+      left.canRedo === right.canRedo &&
+      left.isDirty === right.isDirty &&
+      left.gridEnabled === right.gridEnabled &&
+      left.paletteCollapsed === right.paletteCollapsed &&
+      left.inspectorCollapsed === right.inspectorCollapsed &&
+      left.viewport === right.viewport,
+  );
   const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);
   const [reconnectingEdgeId, setReconnectingEdgeId] = useState<string | null>(null);
   const [popover, setPopover] = useState<PopoverState | null>(null);

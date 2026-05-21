@@ -20,8 +20,8 @@ describe('createSourceObserver', () => {
     observer.run({
       scope: page.scope,
       entries: [
-        { key: 'a', source: { formula: '${1 + 1}' } as never },
-        { key: 'b', source: { formula: '${2 + 2}' } as never },
+        { key: 'a', source: { type: 'data-source', formula: '${1 + 1}' } as never },
+        { key: 'b', source: { type: 'data-source', formula: '${2 + 2}' } as never },
       ],
     });
 
@@ -59,14 +59,24 @@ describe('createSourceObserver', () => {
 
     observer.run({
       scope: page.scope,
-      entries: [{ key: 'data', source: { action: 'ajax', args: { url: '/api/first' } } as never }],
+      entries: [
+        {
+          key: 'data',
+          source: { type: 'data-source', action: 'ajax', args: { url: '/api/first' } } as never,
+        },
+      ],
     });
 
     await vi.waitFor(() => expect(callCount).toBe(1));
 
     observer.run({
       scope: page.scope,
-      entries: [{ key: 'data', source: { action: 'ajax', args: { url: '/api/second' } } as never }],
+      entries: [
+        {
+          key: 'data',
+          source: { type: 'data-source', action: 'ajax', args: { url: '/api/second' } } as never,
+        },
+      ],
     });
 
     await vi.waitFor(() => expect(callCount).toBe(2));
@@ -103,7 +113,13 @@ describe('createSourceObserver', () => {
     observer.subscribe(listener);
     observer.run({
       scope: page.scope,
-      entries: [{ key: 'value', stateKey: 'sourceState', source: { formula: '${1 + 1}' } as never }],
+      entries: [
+        {
+          key: 'value',
+          stateKey: 'sourceState',
+          source: { type: 'data-source', formula: '${1 + 1}' } as never,
+        },
+      ],
     });
 
     await vi.waitFor(() => {
@@ -112,6 +128,77 @@ describe('createSourceObserver', () => {
         status: 'error',
       });
       expect((observer.getSnapshot().value.sourceState as { error?: unknown }).error).toBeInstanceOf(Error);
+    });
+
+    observer.dispose();
+  });
+
+  it('classifies cancelled source results as idle instead of error', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler,
+    });
+    const observer = createSourceObserver({
+      ...runtime,
+      executeSource: vi.fn().mockResolvedValue({
+        ok: false,
+        cancelled: true,
+        error: Object.assign(new Error('cancelled'), { name: 'AbortError' }),
+      }),
+    } as typeof runtime);
+    const page = runtime.createPageRuntime({});
+
+    observer.run({
+      scope: page.scope,
+      entries: [
+        {
+          key: 'value',
+          stateKey: 'sourceState',
+          source: { type: 'data-source', formula: '${1}' } as never,
+        },
+      ],
+    });
+
+    await vi.waitFor(() => {
+      expect(observer.getSnapshot().value.sourceState).toMatchObject({
+        loading: false,
+        status: 'idle',
+      });
+    });
+
+    observer.dispose();
+  });
+
+  it('keeps rejected source errors attached to the matching entry only', async () => {
+    const errorA = new Error('source-a failed');
+    const errorB = new Error('source-b failed');
+    const executeSource = vi
+      .fn()
+      .mockRejectedValueOnce(errorA)
+      .mockRejectedValueOnce(errorB);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler,
+    });
+    const observer = createSourceObserver({
+      ...runtime,
+      executeSource,
+    } as typeof runtime);
+    const page = runtime.createPageRuntime({});
+
+    observer.run({
+      scope: page.scope,
+      entries: [
+        { key: 'a', stateKey: 'aState', source: { type: 'data-source', formula: '${1}' } as never },
+        { key: 'b', stateKey: 'bState', source: { type: 'data-source', formula: '${2}' } as never },
+      ],
+    });
+
+    await vi.waitFor(() => {
+      expect(observer.getSnapshot().value.aState).toMatchObject({ status: 'error', error: errorA });
+      expect(observer.getSnapshot().value.bState).toMatchObject({ status: 'error', error: errorB });
     });
 
     observer.dispose();

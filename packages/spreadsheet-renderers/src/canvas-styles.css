@@ -21,7 +21,8 @@
   -webkit-user-select: none;
 }
 
-[data-slot='spreadsheet-grid'] {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'],
+[data-slot='report-designer-spreadsheet-canvas'] [data-slot='spreadsheet-grid'] {
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -37,21 +38,29 @@
   -webkit-user-select: none;
 }
 
-[data-slot='spreadsheet-grid'][data-fill-dragging] {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'][data-fill-dragging],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid'][data-fill-dragging] {
   cursor: crosshair;
 }
 
-[data-slot='spreadsheet-grid'][data-sheet-filtered] {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'][data-sheet-filtered],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid'][data-sheet-filtered] {
   box-shadow:
     0 12px 36px rgba(15, 23, 42, 0.08),
     inset 0 0 0 1px rgba(59, 130, 246, 0.28);
 }
 
-[data-slot='spreadsheet-grid'][data-fill-dragging] .ss-cell {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'][data-fill-dragging] .ss-cell,
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid'][data-fill-dragging]
+  .ss-cell {
   cursor: crosshair;
 }
 
-[data-slot='spreadsheet-grid'] .ss-fill-handle {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] .ss-fill-handle,
+[data-slot='report-designer-spreadsheet-canvas'] [data-slot='spreadsheet-grid'] .ss-fill-handle {
   position: absolute;
   right: -4px;
   bottom: -4px;
@@ -62,7 +71,8 @@
   z-index: 5;
 }
 
-[data-slot='spreadsheet-grid'] table {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] table,
+[data-slot='report-designer-spreadsheet-canvas'] [data-slot='spreadsheet-grid'] table {
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
@@ -71,11 +81,16 @@
   background: white;
 }
 
-[data-slot='spreadsheet-grid'] thead,
-[data-slot='spreadsheet-grid'] tbody,
-[data-slot='spreadsheet-grid'] tr,
-[data-slot='spreadsheet-grid'] th,
-[data-slot='spreadsheet-grid'] td {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] thead,
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] tbody,
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] tr,
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] th,
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] td,
+[data-slot='report-designer-spreadsheet-canvas'] [data-slot='spreadsheet-grid'] thead,
+[data-slot='report-designer-spreadsheet-canvas'] [data-slot='spreadsheet-grid'] tbody,
+[data-slot='report-designer-spreadsheet-canvas'] [data-slot='spreadsheet-grid'] tr,
+[data-slot='report-designer-spreadsheet-canvas'] [data-slot='spreadsheet-grid'] th,
+[data-slot='report-designer-spreadsheet-canvas'] [data-slot='spreadsheet-grid'] td {
   margin: 0;
   padding: 0;
   border-spacing: 0;
@@ -245,7 +260,7 @@
   color: rgb(180, 83, 9);
 }
 
-[data-slot='spreadsheet-toolbar'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar'] {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -256,13 +271,13 @@
   flex-wrap: wrap;
 }
 
-[data-slot='spreadsheet-toolbar-group'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar-group'] {
   display: flex;
   align-items: center;
   gap: 1px;
 }
 
-[data-slot='spreadsheet-toolbar-separator'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar-separator'] {
   display: inline-block;
   width: 0;
   height: 18px;
@@ -271,7 +286,7 @@
   flex-shrink: 0;
 }
 
-[data-slot='spreadsheet-toolbar-status'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar-status'] {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -279,7 +294,7 @@
   padding-left: 8px;
 }
 
-[data-slot='spreadsheet-toolbar-cell-address'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar-cell-address'] {
   font-size: 12px;
   font-weight: 500;
   color: rgb(71, 85, 105);
@@ -287,7 +302,7 @@
   text-align: right;
 }
 
-[data-slot='spreadsheet-toolbar-frozen-badge'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar-frozen-badge'] {
   font-size: 10px;
   padding: 1px 6px;
   border-radius: 3px;
@@ -295,7 +310,7 @@
   color: rgb(29, 78, 216);
 }
 
-[data-slot='spreadsheet-toolbar'] [data-toolbar-active] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-toolbar'] [data-toolbar-active] {
   background-color: #e0e7ff;
 }
 
@@ -352,9 +367,9 @@
   color: rgb(0, 0, 0);
 }
 
-[data-slot='spreadsheet-find-replace-panel'],
-[data-slot='spreadsheet-cell-editor'],
-[data-slot='spreadsheet-comment-editor'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-find-replace-panel'],
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-cell-editor'],
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-comment-editor'] {
   position: absolute;
   top: 0;
   left: 0;
@@ -371,23 +386,23 @@
   z-index: 100;
 }
 
-[data-slot='spreadsheet-find-replace-panel'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-find-replace-panel'] {
   top: 8px;
   left: 8px;
 }
 
-[data-slot='spreadsheet-comment-editor'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-comment-editor'] {
   min-width: 200px;
 }
 
-[data-slot='spreadsheet-find-row'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-find-row'] {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-[data-slot='spreadsheet-find-input'],
-[data-slot='spreadsheet-replace-input'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-find-input'],
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-replace-input'] {
   flex: 1;
   padding: 6px 10px;
   border: 1px solid var(--nop-border);
@@ -396,12 +411,12 @@
   outline: none;
 }
 
-[data-slot='spreadsheet-find-input']:focus,
-[data-slot='spreadsheet-replace-input']:focus {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-find-input']:focus,
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-replace-input']:focus {
   border-color: var(--nop-accent);
 }
 
-[data-slot='spreadsheet-find-results'] {
+[data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-find-results'] {
   font-size: 12px;
   color: var(--nop-body-copy);
 }

@@ -218,6 +218,8 @@ Current owner example: `packages/flux-renderers-data/src/data-renderer-definitio
 
 Current shared field-chrome example: `packages/flux-renderers-form/src/field-utils/field-reading.tsx` exports `formFieldChromeRules`, making the supported `FieldFrame` chrome inputs explicit in one owner surface (`hint`, `description`, `remark`, `labelRemark`, `labelAlign`, `labelWidth`) instead of relying on ad hoc renderer knowledge.
 
+Current wrapper baseline: any renderer that opts into `wrap: true` or otherwise renders through `FieldFrame` must either reuse `formFieldChromeRules` or declare an equivalent explicit field contract, and the rendering path must consume `hint` / `description` through the normalized `value-or-region` channels rather than assuming plain strings only.
+
 These names should not be mechanically expanded into schema-level names such as:
 
 - `titleRegion`
@@ -307,8 +309,8 @@ Example using a renderable schema fragment:
 {
   "type": "card",
   "title": {
-    "type": "tpl",
-    "tpl": "Hello ${user.name}"
+    "type": "text",
+    "text": "Hello ${user.name}"
   }
 }
 ```

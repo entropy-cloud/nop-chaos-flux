@@ -228,6 +228,45 @@ describe('detail-field renderer basic behavior', () => {
     await waitFor(() => expect(screen.queryByText('Edit Address')).toBeNull());
   });
 
+  it('renders drawer mode with a visible header close button', async () => {
+    cleanup();
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-basic.test.tsx#drawer-close"
+        schema={{
+          type: 'form',
+          data: { address: { street: '123 Main St' } },
+          body: [
+            {
+              type: 'detail-field',
+              name: 'address',
+              triggerLabel: 'Edit Address',
+              surface: { mode: 'drawer', title: 'Address Drawer' },
+              content: [{ type: 'input-text', name: 'street', label: 'Street' }],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(await screen.findByText('Edit Address'));
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeTruthy());
+    expect(document.querySelector('[data-slot="drawer-close"]')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+
+    fireEvent.click(screen.getByText('Edit Address'));
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeTruthy());
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close' }).at(-1) as HTMLButtonElement);
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
   it('reads nested path values from scope fallback when no parent form exists', async () => {
     cleanup();
     const SchemaRenderer = createFormSchemaRenderer();

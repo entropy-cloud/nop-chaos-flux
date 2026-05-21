@@ -99,3 +99,21 @@
 ## 深挖第 2 轮追加
 
 未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度06-01]: 保留 (P1)。`packages/spreadsheet-renderers/src/spreadsheet-interactions/use-cell-value-sync.ts:18-28` 仍先 `setCellValue(value)` 再直接 `bridge.dispatch(...)`，没有 await/catch，也没有处理 `SpreadsheetCommandResult`；live code 仍会把 toolbar 输入的本地显示与实际保存结果分裂。
+- [维度06-02]: 驳回。`packages/report-designer-core/src/core.ts:262-277` 的 `setSelectionTarget()` 本身不会把失败向外 reject；它在内部将 `inspector.loading` 置为 `true` 后调用 `refreshDerivedState()`，而后者会捕获错误并回写 `inspector.error/loading=false`。因此 `report-spreadsheet-canvas.tsx:92-146` 的 `void core.setSelectionTarget(...)` 虽然是 fire-and-forget，但当前证据不足以成立“长期 loading 且无诊断”的主路径故障。
+- [维度06-03]: 保留 (P2)。`packages/spreadsheet-renderers/src/default-page-body.tsx:121-127,179-214` 仍在失焦和 grid save 路径上 `void handleEditSave()`，而 `useEditing.ts:46-85` 的 reject 没有本地 catch；同时 `DefaultSpreadsheetPageBody` 没把 `editSaveState` 传给 `SpreadsheetGrid`，导致 `inline-controls.tsx:40-60` 已存在的错误展示能力在默认页主路径中未接线。
+
+## 子项复核结论
+
+- [维度06-01]: 成立 (P1)。toolbar 输入本地显示与实际保存结果分裂问题保留。
+- [维度06-03]: 成立 (P2)。默认页 save 失败反馈未接线问题保留。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                       | 一句话摘要                                                       |
+| ----- | -------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| 06-01 | P1       | `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-cell-value-sync.ts:18-28` | toolbar cell value sync fire-and-forget，未等待/处理真实保存结果 |
+| 06-03 | P2       | `packages/spreadsheet-renderers/src/default-page-body.tsx:121-127,179-214`                 | 默认 spreadsheet 页 save 失败反馈能力未接线到主路径              |

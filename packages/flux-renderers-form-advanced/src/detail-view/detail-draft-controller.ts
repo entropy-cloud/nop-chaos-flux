@@ -84,6 +84,7 @@ export function useDetailAdaptationAction(input: {
 export function useDetailDraftControllerState() {
   const [open, setOpen] = React.useState(false);
   const [draftForm, setDraftForm] = React.useState<FormRuntime | undefined>(undefined);
+  const [opening, setOpening] = React.useState(false);
   const [confirming, setConfirming] = React.useState(false);
   const [draftError, setDraftError] = React.useState<string | undefined>(undefined);
   const mountedRef = React.useRef(true);
@@ -98,6 +99,7 @@ export function useDetailDraftControllerState() {
       mountedRef.current = false;
       openSequencer.invalidate();
       confirmSequencer.invalidate();
+      setOpening(false);
       draftFormRef.current?.dispose();
       draftFormRef.current = undefined;
     };
@@ -115,6 +117,7 @@ export function useDetailDraftControllerState() {
         return;
       }
 
+      setOpening(false);
       confirmSequencer.invalidate();
       setConfirming(false);
       draftFormRef.current?.dispose();
@@ -132,6 +135,7 @@ export function useDetailDraftControllerState() {
 
     openSequencer.invalidate();
     confirmSequencer.invalidate();
+    setOpening(false);
     setConfirming(false);
     setOpen(false);
     draftFormRef.current?.dispose();
@@ -162,9 +166,23 @@ export function useDetailDraftControllerState() {
     }
   }, []);
 
+  const beginOpen = React.useCallback(() => {
+    if (mountedRef.current) {
+      setOpening(true);
+      setDraftError(undefined);
+    }
+  }, []);
+
+  const finishOpen = React.useCallback(() => {
+    if (mountedRef.current) {
+      setOpening(false);
+    }
+  }, []);
+
   return {
     open,
     draftForm,
+    opening,
     confirming,
     draftError,
     mountedRef,
@@ -172,6 +190,8 @@ export function useDetailDraftControllerState() {
     confirmSequencer,
     openDraft,
     closeDraft,
+    beginOpen,
+    finishOpen,
     beginConfirm,
     finishConfirm,
     setDraftErrorSafe,

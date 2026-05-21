@@ -224,6 +224,111 @@ describe('detail-view renderer basic behavior', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Edit Settings' })).toBeTruthy());
   });
 
+  it('shows trigger pending feedback while opening async detail-view content', async () => {
+    cleanup();
+    let resolveOpen: (() => void) | undefined;
+    const SchemaRenderer = createPageSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-basic.test.tsx#open-pending"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'detail-view',
+              data: { theme: 'dark' },
+              triggerLabel: 'Edit Config',
+              transformInAction: { action: 'probe:open' },
+              surface: { mode: 'dialog', title: 'Edit Config' },
+              content: [{ type: 'input-text', name: 'theme', label: 'Theme' }],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+        onActionScopeChange={(actionScope) => {
+          actionScope?.registerNamespace('probe', {
+            kind: 'host',
+            invoke(method: string) {
+              if (method === 'open') {
+                return new Promise((resolve) => {
+                  resolveOpen = () => resolve({ ok: true, data: { theme: 'dark' } });
+                });
+              }
+
+              return { ok: false, error: new Error(`Unsupported method: ${method}`) };
+            },
+          });
+        }}
+      />,
+    );
+
+    const trigger = await screen.findByRole('button', { name: 'Edit Config' });
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Edit Config' }).getAttribute('aria-busy')).toBe('true');
+    });
+
+    resolveOpen?.();
+
+    await waitFor(() => expect(screen.getByLabelText('Theme')).toBeTruthy());
+  });
+
+  it('shows confirming pending feedback while confirm is in flight', async () => {
+    cleanup();
+    let resolveConfirm: (() => void) | undefined;
+    const SchemaRenderer = createPageSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-basic.test.tsx#confirm-pending"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'detail-view',
+              data: { theme: 'dark' },
+              triggerLabel: 'Edit Config',
+              transformOutAction: { action: 'probe:confirm' },
+              surface: { mode: 'dialog', title: 'Edit Config' },
+              content: [{ type: 'input-text', name: 'theme', label: 'Theme' }],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+        onActionScopeChange={(actionScope) => {
+          actionScope?.registerNamespace('probe', {
+            kind: 'host',
+            invoke(method: string) {
+              if (method === 'confirm') {
+                return new Promise((resolve) => {
+                  resolveConfirm = () => resolve({ ok: true, data: { theme: 'light' } });
+                });
+              }
+
+              return { ok: true, data: { theme: 'dark' } };
+            },
+          });
+        }}
+      />,
+    );
+
+    fireEvent.click(await screen.findByText('Edit Config'));
+    await waitFor(() => expect(screen.getByLabelText('Theme')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Confirming...' })).toBeTruthy();
+    });
+
+    resolveConfirm?.();
+
+    await waitFor(() => expect(screen.queryByLabelText('Theme')).toBeNull());
+  });
+
   it('applies confirmed updates for data-only detail-view on page scope', async () => {
     cleanup();
     const SchemaRenderer = createPageSchemaRenderer();

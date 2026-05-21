@@ -426,3 +426,213 @@
 - **误报排除**: 这不是只缺少测试的推测；当前唯一 merge 分支由 `isRecord(data)` 守卫，非对象路径没有其他错误分支。`formula-data-source-controller` 的 publish failure catch 只能捕获 thrown error，但 `writeDataToScope()` 在非对象 merge 时不会抛错。
 - **参考文档**: `docs/references/maintenance-checklist.md:13-20`, `docs/references/maintenance-checklist.md:281-295`
 - **复核状态**: 未复核
+
+## 深挖第 7 轮追加
+
+### [维度16-11] Plan 405 标记 completed 但 closure audit gate 未完成且证据仍是执行者自查
+
+- **文档路径**: `docs/plans/405-ux-audit-2026-05-19-remediation-plan.md:3-5,143-156,187-190`; `docs/logs/2026/05-19.md:372-381`
+- **代码路径**: 无直接代码路径（计划 closure 状态漂移）
+- **行号范围**: plan `3-5`, `143-156`, `187-190`; log `372-381`
+- **证据片段**:
+  ```md
+  3: > Plan Status: completed
+  4: > Last Reviewed: 2026-05-19
+  5: > Source: `docs/analysis/2026-05-19-ux-audit/summary.md`
+  ```
+  ```md
+  143: ## Closure Gates
+  145: - [x] 全部 9 项 in-scope 修复已完成
+  151: - [x] No owner-doc update required（所有 Phase 均为局部样式/语义属性调整）
+  152: - [ ] 独立子 agent closure-audit 已完成并记录证据
+  153: - [x] `pnpm typecheck`
+  154: - [x] `pnpm build`
+  155: - [x] `pnpm lint` (affected packages clean; pre-existing flux-i18n lint error unrelated)
+  156: - [x] `pnpm test` (pre-existing flow-designer-renderers worker crash unrelated)
+  ```
+  ```md
+  187: Closure Audit Evidence:
+  189: - Reviewer / Agent: opencode (primary execution agent)
+  190: - Evidence: docs/logs/2026/05-19.md (plan 405 entry); pnpm typecheck 49/49 pass, pnpm build 26/26 pass, affected-package lint clean
+  ```
+  ```md
+  372: ### 2026-05-19 (plan 405 — UX audit second-round remediation)
+  374: - Executed `docs/plans/405-ux-audit-2026-05-19-remediation-plan.md`: all 5 phases completed...
+  380: - Verification: `pnpm typecheck`..., `pnpm build`..., affected-package lint...
+  381: - Deferred items per plan...
+  ```
+- **严重程度**: P2
+- **漂移类型**: 计划状态失真 / closure gate 与 completed 状态矛盾
+- **当前状态**: `docs/plans/00-plan-authoring-and-execution-guide.md` 要求 `completed` 前所有 Closure Gates 已勾选，且 closure audit 必须由独立审阅者或独立子 agent 完成；Plan 405 仍有未勾选 closure-audit gate。
+- **文档状态**: Plan 405 顶部已标 `Plan Status: completed`，但 Closure Gates 中独立 closure audit 未完成；Closure Evidence 写的是 `opencode (primary execution agent)`，不是独立审阅者；验证项还把带有 pre-existing failure 的 lint/test 标成 `[x]`。
+- **代码状态**: 本发现不判断 Plan 405 的 UX 修复代码是否已落地；问题是计划闭环文本自身与当前计划治理规则冲突。
+- **风险**: 后续 contributor 会把 Plan 405 当作已独立复核完成的 reliable closure baseline，忽略仍未记录的独立 closure audit，以及验证门禁文本中“失败但勾选”的歧义。
+- **建议**: 对 Plan 405 做一次独立 closure audit 并记录审阅者/证据，重新确认当前 workspace gates；若不能补齐，应把 `Plan Status` 降回 `partially completed`，并取消不成立的 gate 勾选或明确移出 scope。
+- **误报排除**: 这不是套用新模板回写历史计划；Plan 405 自身已采用 Closure Gates，且同一文件内同时存在 `completed` 与未勾选 in-scope gate，属于当前文本内部矛盾。
+- **参考文档**: `docs/plans/00-plan-authoring-and-execution-guide.md:49-50,321-330,334-349`
+- **复核状态**: 未复核
+
+## 深挖第 8 轮追加
+
+### [维度16-12] `performance-design-requirements.md` 的 P7 仍链接已迁移到 archive 的旧计划路径
+
+- **文档路径**: `docs/architecture/performance-design-requirements.md:100-102`
+- **代码路径（如有）**: 无；对应历史计划实际位于 `docs/archive/plans/90-form-store-per-path-subscription-plan.md`、`docs/archive/plans/91-form-field-state-normalization-refactor-plan.md`
+- **行号范围**: doc `100-102`
+- **证据片段**:
+  ```md
+  100: - See `docs/plans/90-form-store-per-path-subscription-plan.md` for the per-path subscription
+  101: implementation plan and `docs/plans/91-form-field-state-normalization-refactor-plan.md`
+  102: for the unified `fieldStates` map refactor.
+  ```
+  ```text
+  glob:
+  - docs/plans/90-form-store-per-path-subscription-plan.md -> not found
+  - docs/archive/plans/90-form-store-per-path-subscription-plan.md -> exists
+  - docs/plans/91-form-field-state-normalization-refactor-plan.md -> not found
+  - docs/archive/plans/91-form-field-state-normalization-refactor-plan.md -> exists
+  ```
+- **严重程度**: P2
+- **漂移类型**: 路径失效 / active architecture doc 链接漂移
+- **文档描述**: 当前性能 owner doc 在 P7 规则下把 per-path subscription 与 field-state normalization 的实现依据链接到 `docs/plans/90`、`docs/plans/91`。
+- **代码现状**: 这两个路径在 live repo 中已不存在；对应计划已迁移到 `docs/archive/plans/`。因此 active architecture doc 当前给出的是失效入口。
+- **建议**: 将链接改为 `docs/archive/plans/90-...` / `docs/archive/plans/91-...`，或更好地改写为“historical implementation context”并补一个当前 owner doc/reference，避免让 active architecture doc 继续依赖失效的 active-plan 路径。
+- **为什么值得现在做**: `performance-design-requirements.md` 是 active owner doc，P7 又是高频性能边界；死链接会让后续维护者无法追溯 rule provenance，也会误导人以为这两份计划仍是活跃执行面。
+- **误报排除**: 这不是单纯建议清理历史引用；问题是当前文档直接引用了不存在的 live 路径，且仓库中确有对应 archive 文件可对照，属于明确的 active-doc 失配。
+- **参考文档**: `docs/index.md:10-11,198-210`, `docs/references/maintenance-checklist.md:13-20`
+- **复核状态**: 未复核
+
+## 深挖第 9 轮追加
+
+### [维度16-13] `static-analysis.md` 仍把 static-analysis owner 指向旧入口文件与已归档前计划路径
+
+- **文档路径**: `docs/architecture/static-analysis.md:103-113`
+- **代码路径**: `packages/flux-compiler/src/schema-compiler/static-analysis.ts:51-111`; `packages/flux-compiler/src/schema-compiler/node-compiler.ts:41-44,558`; `docs/archive/plans/131-static-analysis-optimization-plan.md:1-4`
+- **行号范围**: doc `103-113`, code `static-analysis.ts:51-111`, `node-compiler.ts:41-44,558`, archived plan `1-4`
+- **证据片段**:
+  ```md
+  103: ## Related Files
+  107: - `packages/flux-compiler/src/schema-compiler.ts` - `computeStaticAnalysis()`
+  108: - `packages/flux-compiler/src/schema-compiler-static-analysis.test.ts` - Unit tests
+  110: ## See Also
+  112: - `docs/plans/131-static-analysis-optimization-plan.md` - Implementation plan
+  ```
+  ```ts
+  41: import {
+  42:   buildWrapProvidersClosure,
+  43:   computeStaticAnalysis,
+  44: } from './static-analysis.js';
+  ...
+  558:     node.staticAnalysis = computeStaticAnalysis(node, schema);
+  ```
+  ```ts
+  51: export function computeStaticAnalysis(
+  52:   node: TemplateNode,
+  53:   schema: BaseSchema,
+  ```
+  ```md
+  1: # 131 Static Analysis Optimization Plan
+  3: > Plan Status: completed
+  ```
+- **严重程度**: P2
+- **漂移类型**: owner漂移 / 路径失效
+- **文档描述**: active architecture doc 仍把 `computeStaticAnalysis()` 的 owner 文件写成 `packages/flux-compiler/src/schema-compiler.ts`，并把实现计划链接到 `docs/plans/131-static-analysis-optimization-plan.md`。
+- **代码现状**: live implementation 已拆到 `packages/flux-compiler/src/schema-compiler/static-analysis.ts`，由 `node-compiler.ts` 导入并挂接；Plan 131 也已归档到 `docs/archive/plans/131-static-analysis-optimization-plan.md`。
+- **建议**: 将 `Related Files` 改为 `schema-compiler/static-analysis.ts` + `schema-compiler/node-compiler.ts`，并把 `See Also` 改成 archive 路径或标注为 historical implementation context。
+- **为什么值得现在做**: `static-analysis.md` 是当前 owner doc；它同时给错实现落点和计划入口，会把后续 static-capable / compile optimization 维护工作引向错误文件与失效路线。
+- **误报排除**: 这不是泛泛而谈“schema-compiler 目录 owner 仍算 compiler”；文档明确点名 `computeStaticAnalysis()` 位于根 `schema-compiler.ts`，而 live symbol 定义与调用点都已迁移到专用子模块；同时 `docs/plans/131-...` 在 live repo 中已不存在。
+- **参考文档**: `docs/index.md:10-11,102-105`, `docs/references/maintenance-checklist.md:60-75`
+- **复核状态**: 未复核
+
+## 深挖第 10 轮追加
+
+### [维度16-14] Report Designer owner docs仍宣称保留 `selection` / `target` 兼容 alias，但 live host projection 已不再发布这些字段
+
+- **文档路径**: `docs/architecture/report-designer/design.md:291-292,417-441`; `docs/architecture/report-designer/config-schema.md:317-319`
+- **代码路径**: `packages/report-designer-renderers/src/host-data.ts:155-195`; `packages/report-designer-renderers/src/report-designer-manifest.ts:102-195`
+- **行号范围**: doc `design.md:291-292,417-441`, `config-schema.md:317-319`; code `host-data.ts:155-195`, `report-designer-manifest.ts:102-195`
+- **证据片段**:
+  ```md
+  291: - inspector schema 使用固定宿主 scope 读取 canonical `selectionTarget`，并保留 `selection` / `target` 作为兼容 alias
+  ...
+  436: - removed from the supported schema-visible boundary:
+  441: - compatibility aliases `selection` and `target` for `selectionTarget`
+  ```
+  ```md
+  317: - `body` 适合简单场景：由 schema 自己根据 `target` / `selection` 决定展示内容
+  318: - 当前 host scope 的 canonical 选择字段是 `selectionTarget`；`selection` / `target` 仅保留为兼容 alias
+  ```
+  ```ts
+  155:   return {
+  156:     designer: {
+  161:       selectionTarget: snapshot.selectionTarget,
+  ...
+  181:     spreadsheet,
+  182:     selectionTarget: snapshot.selectionTarget,
+  183:     reportDocument,
+  184:     workbook,
+  185:     activeSheet,
+  186:     activeCell: spreadsheet?.activeCell,
+  187:     activeRange: spreadsheet?.activeRange,
+  ```
+  ```ts
+  102: const reportDesignerProjection: HostProjectionContract = {
+  103:   fields: {
+  ...
+  155:     selectionTarget: {
+  156:       schema: selectionTargetShape,
+  157:       description: 'Canonical current selection target.',
+  158:     },
+  ...
+  191:     reportDocument: {
+  ```
+- **严重程度**: P2
+- **漂移类型**: active architecture doc / host projection contract drift
+- **文档描述**: Report Designer 文档仍把 `selection` / `target` 写成可继续使用的兼容 alias，且 `config-schema.md` 直接建议简单场景按 `target` / `selection` 写 schema。
+- **代码现状**: live host scope 构造与 manifest 只发布 `selectionTarget`；顶层存在 `workbook`、`activeSheet`、`activeCell`、`activeRange` 等字段，但没有顶层 `selection` 或 `target` alias。
+- **风险**: 后续 schema 作者按 owner docs 写 `${target.kind}` 或 `${selection.kind}` 会在 supported path 上读到 `undefined`，导致 inspector / toolbar / tpl 条件分支错误，同时文档之间也自相矛盾（同一 `design.md` 前文说保留 alias，后文又把 alias 列为 removed）。
+- **建议**: 将 `design.md`、`config-schema.md`、相邻 report-designer owner docs 统一改为当前 baseline：canonical field 只有 `selectionTarget`；若确需兼容 alias，应先在 `host-data.ts` 与 manifest 中真实恢复并记录其兼容范围，否则删除所有“alias retained”表述。
+- **为什么值得现在做**: 这是 report-designer schema authoring 的直接入口文档，错误字段名会立刻生成无效 schema，不是纯历史说明问题。
+- **误报排除**: 这不是把嵌套 `spreadsheet.selection` 误当成顶层 alias；文档写的是 report-designer host scope 的 `selection` / `target` 兼容字段，而 live top-level projection 和 manifest 都未发布它们。
+- **参考文档**: `docs/references/maintenance-checklist.md:13-20`
+- **复核状态**: 未复核
+
+## 维度复核结论
+
+- [维度16-01]: 保留 (P2)。`AGENTS.md:73` 仍把 Report Designer/Spreadsheet Editor 的第二跳路由到 `docs/architecture/report-designer/contracts.md`，而 `docs/architecture/report-designer/README.md:50-53` 与 `contracts.md:3-7` 仍明确它是 future contract draft，不是 live owner baseline。
+- [维度16-02]: 保留 (P2)。`docs/plans/419-open-ended-adversarial-review-2026-05-20-schema-validation-fidelity-plan.md:14-17` 仍把 required prop/lifecycle/reaction/ajax shape gaps 写成 current baseline，但 live compiler 已在 `packages/flux-compiler/src/schema-compiler/shape-validation-node-fields.ts:80-90,339-347` 与 `shape-validation-rules.ts:205-224` 落地对应校验。
+- [维度16-03]: 保留 (P2)。`docs/architecture/form-validation.md:1133-1144` 仍把 `summary-gate` / `recurse-submit` fully functional 放在 future，`packages/flux-runtime/src/form-runtime-submit-flow.ts:258-265` 则已在 submit 主路径执行 child contract gating。
+- [维度16-04]: 保留 (P2)。`docs/architecture/styling-system.md:50-55` 仍把“Compile schema -> props”画在 `flux-runtime`，但 live compiler owner 已在 `packages/flux-compiler/src/index.ts:1-2`，`packages/flux-runtime/src/runtime-factory.ts:25,101-108` 只是装配/注入。
+- [维度16-05]: 保留 (P2)。`docs/architecture/flow-designer/tree-mode.md:456-480` 仍把 TreeDocument/treeDocument/domain adapter registry 混写成未分层的 phase 列表，而 `packages/flow-designer-core/src/types.ts:336-388`、`packages/flow-designer-renderers/src/designer-tree-mode.tsx:17-59` 已把基础 contract 与 renderer 接线落到主路径。
+- [维度16-06]: 保留 (P2)。`docs/architecture/performance-diagnostics-and-e2e-design.md:113-118` 仍否认 supported locality tests 是 local-refresh regression gates，但 `tests/e2e/performance-table.spec.ts:349-378` 已对 changed row keys、probe delta、unmount delta 做 count-based gate。
+- [维度16-07]: 保留 (P2)。`docs/architecture/flow-designer/runtime-snapshot.md:37-50` 仍把 `doc` 写成不含 nodes/edges 的窄摘要并称 full graph payload removed，而 `packages/flow-designer-renderers/src/designer-host-projection.ts:76-93,201-225` 已把 `doc.nodes` / `doc.edges` 作为 bounded summary contract 公开。
+- [维度16-08]: 保留 (P2)。`docs/index.md:62` 仍把 compiler ownership/boundary 工作的 first read 指向 `docs/archive/plans/122-compiler-package-extraction-and-boundary-plan.md`，而该 archived completed plan 的 `Current Baseline` 已明显落后于 live `@nop-chaos/flux-compiler` package。
+- [维度16-09]: 保留 (P2)。`docs/architecture/api-data-source.md:283-290,315` 仍说 action-backed remote data-source refresh 直接走 request substrate、尚未进入 adapter-entry cleanup，但 `packages/flux-runtime/src/async-data/source-registry.ts:138-145` 与 `api-data-source-controller-runtime.ts:278` 已通过 `runtime.dispatch(...)` 执行 producer action。
+- [维度16-10]: 保留 (P2)。`docs/architecture/api-data-source.md:643-651` 仍把 `mergeToScope: true` 的非对象发布定义为 diagnostically fail，但 `packages/flux-runtime/src/async-data/data-source-runtime-utils.ts:122-138` 仍只是静默跳过 `scope.merge(data)`。
+- [维度16-11]: 保留 (P2)。`docs/plans/405-ux-audit-2026-05-19-remediation-plan.md:143-156` 的 closure-audit gate 仍未勾选，`189-190` 的 Closure Audit Evidence 仍写 primary execution agent，自身与 `Plan Status: completed` 冲突。
+- [维度16-12]: 保留 (P2)。`docs/architecture/performance-design-requirements.md:100-102` 仍链接 `docs/plans/90-...` / `91-...`，live repo 中这两个路径已迁到 `docs/archive/plans/`。
+- [维度16-13]: 保留 (P2)。`docs/architecture/static-analysis.md:103-112` 仍把 `computeStaticAnalysis()` owner 写成 `packages/flux-compiler/src/schema-compiler.ts` 并链接 `docs/plans/131-...`，但 live code 已迁到 `packages/flux-compiler/src/schema-compiler/static-analysis.ts:51-54`，计划也已归档。
+- [维度16-14]: 保留 (P2)。`docs/architecture/report-designer/design.md:291-292` 与 `config-schema.md:317-319` 仍教学 `selection` / `target` alias，但 `packages/report-designer-renderers/src/host-data.ts:155-187` 与 `report-designer-manifest.ts:155-158` 只发布 `selectionTarget`。
+
+## 子项复核结论
+
+- [维度16-01] 至 [维度16-14]: 均成立。复核后主要收敛为四类：active routing 指向 future/archived 文档、plan baseline 过时、owner 文档仍描述旧行为、active docs 链接已失效路径；未见需要从最终汇总中移除的单项。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                               | 一句话摘要                                                                 |
+| ----- | -------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| 16-01 | P2       | `AGENTS.md:73`                                                                                     | AGENTS 仍把 Report Designer 常规工作第二跳路由到 future contract draft     |
+| 16-02 | P2       | `docs/plans/419-open-ended-adversarial-review-2026-05-20-schema-validation-fidelity-plan.md:14-17` | Plan 419 current baseline 仍落后于 live schema validation 代码             |
+| 16-03 | P2       | `docs/architecture/form-validation.md:1133-1144`                                                   | form-validation phases 仍把已落地 child submit contracts 写成 future       |
+| 16-04 | P2       | `docs/architecture/styling-system.md:50-55`                                                        | styling-system 架构图仍把 schema compilation 归到 `flux-runtime`           |
+| 16-05 | P2       | `docs/architecture/flow-designer/tree-mode.md:456-480`                                             | tree-mode phases 仍混写已落地基础 contract 与剩余 domain gaps              |
+| 16-06 | P2       | `docs/architecture/performance-diagnostics-and-e2e-design.md:113-118`                              | performance-diagnostics 文档仍否认已落地 locality regression gates         |
+| 16-07 | P2       | `docs/architecture/flow-designer/runtime-snapshot.md:37-50`                                        | runtime-snapshot 仍把已公开的 `doc.nodes/edges` 写成 removed               |
+| 16-08 | P2       | `docs/index.md:62`                                                                                 | docs/index 仍把 compiler ownership first read 指向 archived completed plan |
+| 16-09 | P2       | `docs/architecture/api-data-source.md:283-290,315`                                                 | api-data-source 文档仍称 action-backed refresh 直接走 request substrate    |
+| 16-10 | P2       | `docs/architecture/api-data-source.md:643-651`                                                     | `mergeToScope` 非对象发布的文档错误语义仍与 runtime 不符                   |
+| 16-11 | P2       | `docs/plans/405-ux-audit-2026-05-19-remediation-plan.md:143-156`                                   | Plan 405 已标 completed，但 closure-audit gate 仍未完成                    |
+| 16-12 | P2       | `docs/architecture/performance-design-requirements.md:100-102`                                     | active architecture doc 仍链接已迁 archive 的旧计划路径                    |
+| 16-13 | P2       | `docs/architecture/static-analysis.md:103-112`                                                     | static-analysis owner 文件与计划入口仍指向旧路径                           |
+| 16-14 | P2       | `docs/architecture/report-designer/design.md:291-292`                                              | Report Designer owner docs 仍宣称保留 `selection/target` alias             |

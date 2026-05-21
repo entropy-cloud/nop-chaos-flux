@@ -502,4 +502,47 @@ describe('reactive meta and draggable dialogs', () => {
       'Runtime description',
     );
   });
+
+  it('falls back to hint and description regions for wrapped field chrome', async () => {
+    const { container } = render(
+      <FormContext.Provider
+        value={{
+          store: {
+            subscribe: () => () => undefined,
+            getState: () => EMPTY_FORM_STORE_STATE,
+          },
+          validation: undefined,
+        } as any}
+      >
+        <NodeFrameWrapper
+          templateNode={{
+            type: 'wrap-probe',
+            schema: { type: 'wrap-probe', frameWrap: true },
+          } as any}
+          definitionWrap={true}
+          resolvedMeta={{} as any}
+          resolvedPropsValue={{ name: 'query', label: 'Resolved Query' }}
+          regions={{
+            hint: { key: 'hint', templateNode: null as any, render: () => <span>Region hint</span> },
+            description: {
+              key: 'description',
+              templateNode: null as any,
+              render: () => <span>Region description</span>,
+            },
+          }}
+        >
+          <input aria-label="Query" />
+        </NodeFrameWrapper>
+      </FormContext.Provider>,
+    );
+
+    expect(container.querySelector('[data-slot="field-description"]')?.textContent).toContain(
+      'Region description',
+    );
+
+    fireEvent.focus(screen.getByLabelText('Query'));
+
+    expect(container.querySelector('[data-slot="field-hint"]')?.textContent).toContain('Region hint');
+    expect(container.querySelector('[data-slot="field-description"]')).toBeNull();
+  });
 });

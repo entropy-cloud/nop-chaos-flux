@@ -217,6 +217,52 @@ describe('variant-field FieldFrame attribute forwarding', () => {
     expect(descEl?.textContent).toBe('Helper description');
   });
 
+  it('renders hint and description regions through the direct FieldFrame path', async () => {
+    cleanup();
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-field-frame.test.tsx#region-chrome"
+        schema={{
+          type: 'form',
+          data: { payload: null },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              label: 'Payload',
+              hint: { type: 'text', text: 'Rich hint' },
+              description: { type: 'text', text: 'Rich description' },
+              defaultVariant: 'text',
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  content: [{ type: 'input-text', name: 'value', label: 'Value' }],
+                  initialValue: { value: '' },
+                },
+              ],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Payload')).toBeTruthy());
+
+    expect(document.querySelector('[data-slot="field-description"]')?.textContent).toContain(
+      'Rich description',
+    );
+
+    fireEvent.focus(document.querySelector('input') as HTMLInputElement);
+
+    expect(document.querySelector('[data-slot="field-hint"]')?.textContent).toContain('Rich hint');
+    expect(document.querySelector('[data-slot="field-description"]')).toBeNull();
+  });
+
   it('supports frameWrap none without emitting field chrome', async () => {
     cleanup();
     const SchemaRenderer = createFormSchemaRenderer();

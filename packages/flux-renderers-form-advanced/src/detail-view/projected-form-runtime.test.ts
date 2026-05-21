@@ -229,6 +229,69 @@ describe('projected form runtime helpers', () => {
     });
   });
 
+  it('remaps external-error and childPath updates into the owner subtree', () => {
+    const parentForm = {
+      applyExternalErrors: vi.fn(() => ({ valid: false, hasErrors: true, validating: false, ready: true, lifecycleState: 'active', modelGeneration: 1 })),
+      updateFieldRegistration: vi.fn(),
+      store: { id: 'parent-store' },
+      validation: { id: 'validation' },
+      lifecycleState: 'active',
+      modelGeneration: 1,
+      scopeId: 'scope-id',
+      rootPath: 'profile',
+      canSubmit: true,
+      allTouched: false,
+      isPathOwned: vi.fn(() => true),
+      getFieldState: vi.fn(),
+      validateAt: vi.fn(),
+      validateField: vi.fn(),
+      validateAll: vi.fn(),
+      getField: vi.fn(),
+      getDependents: vi.fn(),
+      findByPrefix: vi.fn(),
+      getChildren: vi.fn(),
+      getError: vi.fn(),
+      isValidating: vi.fn(),
+      isTouched: vi.fn(),
+      isDirty: vi.fn(),
+      isVisited: vi.fn(),
+      touchField: vi.fn(),
+      visitField: vi.fn(),
+      clearErrors: vi.fn(),
+      setValue: vi.fn(),
+      setValues: vi.fn(),
+      registerField: vi.fn(() => ({ unregister: vi.fn() })),
+      notifyFieldHidden: vi.fn(),
+      validateSubtree: vi.fn(),
+      refreshCompiledModel: vi.fn(),
+      dispose: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
+    } as any;
+
+    const projectedForm = createProjectedFormRuntime(parentForm, {
+      store: { id: 'projected-store' } as any,
+      prefixPath: (path) => (path ? `profile.${path}` : 'profile'),
+      mapChildPath: (path) => `profile.${path}`,
+    });
+
+    projectedForm.applyExternalErrors({
+      sourceId: 'value-adaptation:profile',
+      errors: [{ path: 'name', ownerPath: 'name', message: 'bad', rule: 'async' }],
+      replace: true,
+    });
+    projectedForm.updateFieldRegistration('reg-1', { childPaths: ['name', 'age'] });
+
+    expect(parentForm.applyExternalErrors).toHaveBeenCalledWith({
+      sourceId: 'value-adaptation:profile',
+      errors: [{ path: 'profile.name', ownerPath: 'profile.name', message: 'bad', rule: 'async' }],
+      replace: true,
+    });
+    expect(parentForm.updateFieldRegistration).toHaveBeenCalledWith('reg-1', {
+      childPaths: ['profile.name', 'profile.age'],
+    });
+  });
+
   it('projects validation metadata into the owner-local subtree', () => {
     const parentValidation = {
       behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },

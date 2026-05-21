@@ -305,3 +305,33 @@
 ## 深挖第 4 轮追加
 
 未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度08-01]: 保留 (P1)。`packages/flux-renderers-form-advanced/src/key-value.tsx:285-300` 的 `syncField()` 仍在每次同步时无条件 `validateField(name)`，没有按 `validateOn`/reason 收口。
+- [维度08-02]: 保留 (P2)。`key-value.tsx:112-127,166-181` 仍先用 `shouldValidateOn(..., 'change'/'blur')` 判定，再以无 reason 的 `validateField(keyPath/valuePath)` 执行。
+- [维度08-03]: 保留 (P2)。`packages/flux-renderers-form-advanced/src/array-editor.tsx:106-121` 的子项 change/blur 验证仍未传 `reason`。
+- [维度08-04]: 保留 (P2)。`packages/flux-renderers-form-advanced/src/tag-list.tsx:37-49` 中 non-form owner 分支传了 `'change'`，form 分支仍是无 reason `validateField(name)`，owner 语义分叉依旧存在。
+- [维度08-05]: 保留 (P2)。`array-editor.tsx:251-268,382-387` 的父数组 aggregate validation 仍在 `shouldValidateOn(..., 'change')` 后调用无 reason `validateField(name)`。
+- [维度08-06]: 保留 (P2)。`array-editor.tsx:273-284` 删除分支仍无条件 `validateSubtree(name)`，既无 trigger gate，也无结构变更 reason。
+- [维度08-07]: 保留 (P2)。`packages/flux-renderers-form-advanced/src/composite-field/array-field.tsx:423-446` 仍是 add 只 append、remove 立即 `validateSubtree(name)`，结构操作验证生命周期不对称。
+- [维度08-08]: 保留 (P1)。`packages/flux-renderers-form-advanced/src/detail-view/projected-form-runtime.ts:200-320` 仍未覆盖 `applyExternalErrors(...)` 的路径重映射，而 `value-adaptation-helper.ts:92-118` 会从 projected form 直接写相对路径错误。
+- [维度08-09]: 保留 (P1)。同一 projected form proxy 仍未覆盖 `updateFieldRegistration(...)`；而 `key-value.tsx:279-282` 会在动态 `childPaths` 变更时调用该 API，导致 projected path mapping 缺口继续存在。
+
+## 子项复核结论
+
+- [维度08-01] 至 [维度08-09]: 均成立。复核后仍可归为两组主问题：动态字段/数组类控件的 validation reason 与 trigger gate 未收口；projected form runtime 的 path remapping contract 仍不完整。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                      | 一句话摘要                                                       |
+| ----- | -------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| 08-01 | P1       | `packages/flux-renderers-form-advanced/src/key-value.tsx:285-300`                         | key-value syncField 仍无条件触发 `validateField(name)`           |
+| 08-02 | P2       | `packages/flux-renderers-form-advanced/src/key-value.tsx:112-127,166-181`                 | key-value change/blur 验证仍不传 reason                          |
+| 08-03 | P2       | `packages/flux-renderers-form-advanced/src/array-editor.tsx:106-121`                      | array-editor 子项 change/blur 验证仍不传 reason                  |
+| 08-04 | P2       | `packages/flux-renderers-form-advanced/src/tag-list.tsx:37-49`                            | tag-list form/non-form owner validation reason 语义分叉          |
+| 08-05 | P2       | `packages/flux-renderers-form-advanced/src/array-editor.tsx:251-268,382-387`              | array aggregate validation 仍在 trigger gate 后无 reason 调用    |
+| 08-06 | P2       | `packages/flux-renderers-form-advanced/src/array-editor.tsx:273-284`                      | 删除分支仍无条件 `validateSubtree(name)`                         |
+| 08-07 | P2       | `packages/flux-renderers-form-advanced/src/composite-field/array-field.tsx:423-446`       | array-field add/remove 结构操作验证生命周期不对称                |
+| 08-08 | P1       | `packages/flux-renderers-form-advanced/src/detail-view/projected-form-runtime.ts:200-320` | projected form runtime 仍未 remap `applyExternalErrors(...)`     |
+| 08-09 | P1       | `packages/flux-renderers-form-advanced/src/detail-view/projected-form-runtime.ts:200-320` | projected form runtime 仍未 remap `updateFieldRegistration(...)` |

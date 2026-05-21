@@ -582,6 +582,14 @@ Therefore the compiler diagnostics phase must not apply a blanket unknown-proper
 
 Built-in actions may stay strict by their narrower contract, but the compatibility path documented in `docs/architecture/action-scope-and-imports.md` must remain valid.
 
+Current validation baseline for selector semantics:
+
+- validation classifies selectors before lowering into built-in, component-targeted, lexical plain named, host namespaced, import namespaced, or unresolved plain-action classes
+- built-in compatibility aliases such as `submit` emit explicit diagnostics instead of being treated as canonical built-ins
+- bare action names must resolve through lexical `xui:actions`; they do not fall through to host/import namespace lookup
+- import namespace method validation uses `ImportedLibraryStaticMeta.namespaceMethods` when present, and emits explicit skipped-validation diagnostics when that metadata is absent
+- `component:<method>` emits explicit weakened-validation diagnostics because compile-time target typing is still unavailable without a separate binding carrier
+
 ## Reporter Layering
 
 The compiler core should emit diagnostics to collectors/reporters, not directly to the console.

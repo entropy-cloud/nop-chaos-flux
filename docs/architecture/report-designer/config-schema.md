@@ -132,62 +132,17 @@ interface MergeRange {
 
 ```ts
 interface SpreadsheetConfig {
-  version?: string;
-  features?: SpreadsheetFeatures;
-  canvas?: SpreadsheetCanvasConfig;
-  editors?: SpreadsheetEditorConfig[];
-  shortcuts?: SpreadsheetShortcutConfig[];
+  defaultRowHeight?: number;
+  defaultColumnWidth?: number;
+  maxUndoDepth?: number;
 }
 ```
 
-### 3.1 `SpreadsheetFeatures`
+说明:
 
-```ts
-interface SpreadsheetFeatures {
-  multiSheet?: boolean;
-  editCell?: boolean;
-  resizeRow?: boolean;
-  resizeColumn?: boolean;
-  merge?: boolean;
-  hiddenRowColumn?: boolean;
-  styleEditing?: boolean;
-  clipboard?: boolean;
-  undo?: boolean;
-  redo?: boolean;
-  formulas?: boolean;
-  frozenPane?: boolean;
-}
-```
-
-### 3.2 `SpreadsheetCanvasConfig`
-
-```ts
-interface SpreadsheetCanvasConfig {
-  minZoom?: number;
-  maxZoom?: number;
-  defaultZoom?: number;
-  showGridLines?: boolean;
-  showRowHeaders?: boolean;
-  showColumnHeaders?: boolean;
-  showSheetTabs?: boolean;
-  overscanRows?: number;
-  overscanCols?: number;
-}
-```
-
-### 3.3 `SpreadsheetEditorConfig`
-
-```ts
-interface SpreadsheetEditorConfig {
-  id: string;
-  match: {
-    valueType?: string[];
-    cellType?: string[];
-  };
-  kind: 'input' | 'textarea' | 'custom';
-  customRenderer?: string;
-}
-```
+- `defaultRowHeight` / `defaultColumnWidth` 是默认 host grid 的基础尺寸输入
+- `maxUndoDepth` 透传到 spreadsheet core history 深度上限
+- 其他更宽的 spreadsheet feature/canvas/editor 配置 vocabulary 当前不属于 live `spreadsheet-page` renderer contract
 
 ## 4. ReportTemplateDocument
 
@@ -314,8 +269,8 @@ interface ReportInspectorConfig {
 
 说明:
 
-- `body` 适合简单场景：由 schema 自己根据 `target` / `selection` 决定展示内容
-- 当前 host scope 的 canonical 选择字段是 `selectionTarget`；`selection` / `target` 仅保留为兼容 alias
+- `body` 适合简单场景：由 schema 自己根据 `selectionTarget` 决定展示内容
+- 当前 host scope 的 canonical 选择字段是 `selectionTarget`
 - `byTarget` 适合不同 selection kind 完全不同的编辑面板
 - `byProfile` 适合不同 profile 生成不同的 inspector schema
 - inspector 的实际编辑体直接就是普通 Flux schema/form；这里不再定义 provider/panel/value-adapter 这类平行 inspector 模型

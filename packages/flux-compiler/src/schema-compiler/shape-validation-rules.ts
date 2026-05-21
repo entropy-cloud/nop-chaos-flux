@@ -1,6 +1,14 @@
 import { appendJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics.js';
 import { isPlainObject, normalizeRootPath } from '@nop-chaos/flux-core';
 import { validateHostAction, type HostActionValidationContext } from './host-action-validation.js';
+import { classifyActionSelector, validateActionSelector } from './action-selector-validation.js';
+
+export interface ActionValidationContext {
+  hostContext?: HostActionValidationContext;
+  symbolTable?: import('@nop-chaos/flux-core').CompileSymbolTable;
+  visibleImports?: ReadonlyMap<string, import('@nop-chaos/flux-core').PreparedImportSpec | undefined>;
+  strictMode?: boolean;
+}
 
 function isDynamicStructuralPath(value: string): boolean {
   return value.includes('${') || value.includes('$@{');
@@ -154,11 +162,11 @@ export function validateActionShape(
   path: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
   enabled: boolean,
-  hostContext?: HostActionValidationContext,
+  actionContext?: ActionValidationContext,
 ) {
   if (Array.isArray(value)) {
     value.forEach((entry, index) => {
-      validateActionShape(entry, appendJsonPointer(path, index), diagnostics, enabled, hostContext);
+      validateActionShape(entry, appendJsonPointer(path, index), diagnostics, enabled, actionContext);
     });
     return;
   }
@@ -186,8 +194,25 @@ export function validateActionShape(
       },
       enabled,
     );
-  } else if (enabled && hostContext) {
-    validateHostAction(value.action, value.args, path, diagnostics, hostContext);
+  } else {
+    const resolution = classifyActionSelector({
+      action: value.action,
+      symbolTable: actionContext?.symbolTable,
+      visibleImports: actionContext?.visibleImports,
+      hostContext: actionContext?.hostContext,
+    });
+
+    validateActionSelector({
+      resolution,
+      path,
+      diagnostics,
+      enabled,
+      strictMode: actionContext?.strictMode,
+    });
+
+    if (enabled && actionContext?.hostContext && resolution.class === 'host-namespaced') {
+      validateHostAction(value.action, value.args, path, diagnostics, actionContext.hostContext);
+    }
   }
 
   if (value.args !== undefined && !isPlainObject(value.args)) {
@@ -247,43 +272,43 @@ export function validateActionShape(
       enabled,
     );
   } else if (Array.isArray(value.parallel)) {
-    validateActionShape(
-      value.parallel,
-      appendJsonPointer(path, 'parallel'),
-      diagnostics,
-      enabled,
-      hostContext,
-    );
+      validateActionShape(
+        value.parallel,
+        appendJsonPointer(path, 'parallel'),
+        diagnostics,
+        enabled,
+        actionContext,
+      );
   }
 
   if (value.then !== undefined) {
-    validateActionShape(
-      value.then,
-      appendJsonPointer(path, 'then'),
-      diagnostics,
-      enabled,
-      hostContext,
-    );
+      validateActionShape(
+        value.then,
+        appendJsonPointer(path, 'then'),
+        diagnostics,
+        enabled,
+        actionContext,
+      );
   }
 
   if (value.onError !== undefined) {
-    validateActionShape(
-      value.onError,
-      appendJsonPointer(path, 'onError'),
-      diagnostics,
-      enabled,
-      hostContext,
-    );
+      validateActionShape(
+        value.onError,
+        appendJsonPointer(path, 'onError'),
+        diagnostics,
+        enabled,
+        actionContext,
+      );
   }
 
   if (value.onSettled !== undefined) {
-    validateActionShape(
-      value.onSettled,
-      appendJsonPointer(path, 'onSettled'),
-      diagnostics,
-      enabled,
-      hostContext,
-    );
+      validateActionShape(
+        value.onSettled,
+        appendJsonPointer(path, 'onSettled'),
+        diagnostics,
+        enabled,
+        actionContext,
+      );
   }
 }
 
@@ -376,7 +401,7 @@ export function validateReactionShape(
   path: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
   enabled: boolean,
-  hostContext?: HostActionValidationContext,
+  actionContext?: ActionValidationContext,
 ) {
   if (!isPlainObject(value)) {
     return;
@@ -450,5 +475,5 @@ export function validateReactionShape(
     enabled,
   );
 
-  validateActionShape(value.actions, appendJsonPointer(path, 'actions'), diagnostics, enabled, hostContext);
+  validateActionShape(value.actions, appendJsonPointer(path, 'actions'), diagnostics, enabled, actionContext);
 }

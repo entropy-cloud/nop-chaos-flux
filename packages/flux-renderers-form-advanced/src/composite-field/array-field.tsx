@@ -21,7 +21,7 @@ import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-re
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas.js';
-import { formFieldRules, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
+import { formFieldRules, shouldValidateOn, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { createItemFormProxy, createItemScope } from './array-field-runtime.js';
 import { WrappedFieldAction } from '../wrapped-field-action.js';
 import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime.js';
@@ -430,6 +430,9 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       }
 
       parentForm.appendValue(name, newItem);
+      if (shouldValidateOn(name, parentForm, 'change')) {
+        void parentForm.validateSubtree(name, 'change');
+      }
     }
   }
 
@@ -442,7 +445,9 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       }
 
       parentForm.removeValue(name, index);
-      void parentForm.validateSubtree(name);
+      if (shouldValidateOn(name, parentForm, 'change')) {
+        void parentForm.validateSubtree(name, 'change');
+      }
     }
   }, [itemKind, name, parentForm]);
 
@@ -545,8 +550,6 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
     <div
       className={cn('nop-array-field', props.meta.className)}
       data-slot="field-control"
-      data-testid={props.meta.testid}
-      data-cid={props.meta.cid}
     >
       <div data-slot="array-field-body">
         {itemEntries.map(({ item, index, itemIdentity, itemInstancePath }) => {
@@ -581,6 +584,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
 
 export const arrayFieldRendererDefinition: RendererDefinition = {
   type: 'array-field',
+  sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: ArrayFieldRenderer,
   wrap: true,
   fields: [

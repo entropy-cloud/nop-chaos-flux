@@ -81,7 +81,7 @@ describe('PageControls', () => {
 
     render(<PageControls bridge={bridge} store={store as any} />);
 
-    fireEvent.click(screen.getByTitle('Set Margins'));
+    fireEvent.click(screen.getByTitle('设置页边距'));
 
     const dialog = await screen.findByRole('dialog');
     const inputs = within(dialog).getAllByRole('spinbutton') as HTMLInputElement[];
@@ -129,7 +129,7 @@ describe('PageControls', () => {
 
     render(<PageControls bridge={bridge} store={store as any} />);
 
-    fireEvent.click(screen.getAllByTitle('Toggle Page Mode')[0]!);
+    fireEvent.click(screen.getAllByTitle('切换分页模式')[0]!);
 
     expect(store.setPageMode).toHaveBeenCalledWith('continuity');
     expect(executePageMode).toHaveBeenCalledWith('continuity');
@@ -156,12 +156,38 @@ describe('PageControls', () => {
 
     render(<PageControls bridge={bridge} store={store as any} />);
 
-    fireEvent.click(screen.getAllByTitle('Set Margins')[0]!);
+    fireEvent.click(screen.getAllByTitle('设置页边距')[0]!);
     const marginDialog = await screen.findByRole('dialog');
     expect(within(marginDialog).getByRole('spinbutton', { name: 'Top margin' })).toBeTruthy();
     expect(within(marginDialog).getByRole('spinbutton', { name: 'Right margin' })).toBeTruthy();
     expect(within(marginDialog).getByRole('spinbutton', { name: 'Bottom margin' })).toBeTruthy();
     expect(within(marginDialog).getByRole('spinbutton', { name: 'Left margin' })).toBeTruthy();
     expect(screen.queryByTitle('Watermark')).toBeNull();
+  });
+
+  it('localizes built-in toolbar chrome through flux.wordEditor keys', () => {
+    cleanup();
+    resetFluxI18n();
+    initFluxI18n({ lng: 'zh-CN', fallbackLng: 'zh-CN' });
+
+    const store = createStore();
+    const bridge = {
+      command: {
+        executePageScaleAdd: vi.fn(),
+        executePageScaleMinus: vi.fn(),
+        executePageScaleRecovery: vi.fn(),
+        executePageMode: vi.fn(),
+        executePaperSize: vi.fn(),
+        executePaperDirection: vi.fn(),
+        executeSetPaperMargin: vi.fn(),
+        executePrint: vi.fn(),
+      },
+    } as any;
+
+    render(<PageControls bridge={bridge} store={store as any} />);
+
+    expect(screen.getByTitle('设置页边距')).toBeTruthy();
+    expect(screen.getByTitle('打印')).toBeTruthy();
+    expect(screen.getByTitle('切换分页模式')).toBeTruthy();
   });
 });

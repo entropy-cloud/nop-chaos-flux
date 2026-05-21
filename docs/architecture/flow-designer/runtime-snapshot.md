@@ -36,7 +36,7 @@
 
 - retained canonical schema-visible fields:
   - `$designer` as the compact host summary export (`kind`, `dirty`, `canUndo`, `canRedo`, `selectionKind`, `selectionCount`)
-  - `doc` as a narrowed summary DTO (`id`, `kind`, `name`, `version`, `viewport`, `nodeCount`, `edgeCount`)
+  - `doc` as a bounded summary DTO (`id`, `kind`, `name`, `version`, `viewport`, `nodeCount`, `edgeCount`, `nodes`, `edges`)
   - `selection`
   - `activeNode`
   - `activeEdge`
@@ -47,7 +47,7 @@
 - removed from the supported region host scope boundary:
   - `DesignerCore` instance
   - command adapter instance
-  - full graph document payload under `doc`
+  - full rich graph payload beyond the bounded `doc.nodes` / `doc.edges` summary export
   - config internals such as palette / nodeTypes / edgeTypes
   - module-global bridge state
 
@@ -232,6 +232,8 @@ interface DesignerContextValue {
 - `DesignerCanvasContent`
 - `DefaultInspector`
 - `DesignerFieldRenderer`
+
+其中当前订阅粒度基线是：`DesignerPageBody` 仍持有用于 `statusPath` / host-scope 投影的完整 snapshot 订阅，但 canvas host 已收窄为 `doc`、`selection`、`activeNode`、`activeEdge`、`activeBranch`、`gridEnabled`、`viewport` 子集，不再因为 `canUndo`、`isDirty`、panel collapse 这类 shell-only 变化重建整套重型 canvas bridge props。
 
 ### 已通过 child scope 注入给 region schema 片段
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import {
+  mergeClassAliases,
   reportRuntimeHostIssue,
   type ActionNamespaceProvider,
   type RendererComponentProps,
@@ -39,6 +40,7 @@ import {
   confirmCreateDialog,
   createDesignerContextValue,
   createMergedDesignerProvider,
+  resolveDesignerNavigateBackHandler,
   renderDesignerSchema,
   type DesignerCreateDialogState,
 } from './designer-page-helpers.js';
@@ -97,8 +99,30 @@ export function DesignerPageBody({
   config,
 }: DesignerPageBodyProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const snapshot = useDesignerSnapshot(core);
   const env = useRendererEnv();
+  const statusSnapshot = useDesignerSnapshot(core);
+  const uiSnapshot = useMemo(
+    () => ({
+      paletteCollapsed: statusSnapshot.paletteCollapsed,
+      inspectorCollapsed: statusSnapshot.inspectorCollapsed,
+      canUndo: statusSnapshot.canUndo,
+      canRedo: statusSnapshot.canRedo,
+      isDirty: statusSnapshot.isDirty,
+      activeNode: statusSnapshot.activeNode,
+      activeEdge: statusSnapshot.activeEdge,
+      selection: statusSnapshot.selection,
+    }),
+    [
+      statusSnapshot.activeEdge,
+      statusSnapshot.activeNode,
+      statusSnapshot.canRedo,
+      statusSnapshot.canUndo,
+      statusSnapshot.inspectorCollapsed,
+      statusSnapshot.isDirty,
+      statusSnapshot.paletteCollapsed,
+      statusSnapshot.selection,
+    ],
+  );
   const statusPath =
     typeof readDesignerResolvedProp<string>(props, 'statusPath') === 'string'
       ? readDesignerResolvedProp<string>(props, 'statusPath')
@@ -111,8 +135,8 @@ export function DesignerPageBody({
     if (!isTreeMode) {
       return;
     }
-    emitTreeLayoutDebugSnapshot(env, snapshot);
-  }, [env, isTreeMode, snapshot]);
+    emitTreeLayoutDebugSnapshot(env, statusSnapshot);
+  }, [env, isTreeMode, statusSnapshot]);
   const onPlusButtonClick = useCallback(
     (
       sourceId: string,
@@ -135,14 +159,14 @@ export function DesignerPageBody({
     [core, commandAdapter],
   );
   const upstreamBackHandler = useMemo(
-    () => actionScope?.resolve('designer:navigate-back'),
+    () => resolveDesignerNavigateBackHandler(actionScope),
     [actionScope],
   );
   const mergedDesignerProvider = useMemo<ActionNamespaceProvider | undefined>(
     () => createMergedDesignerProvider({ designerProvider, upstreamBackHandler }),
     [designerProvider, upstreamBackHandler],
   );
-  const designerScope = useDesignerHostScope({ snapshot, config, core, path: props.path });
+  const designerScope = useDesignerHostScope({ snapshot: statusSnapshot, config, core, path: props.path });
   const [jsonOpen, setJsonOpen] = React.useState(false);
   const [pendingCreateDialog, setPendingCreateDialog] =
     React.useState<DesignerCreateDialogState | null>(null);
@@ -175,6 +199,20 @@ export function DesignerPageBody({
     setPendingCreateDialog(null);
   }, [creatingNode]);
 
+  const reportHostIssue = useCallback(
+    (input: { message: string; error?: unknown; details?: Record<string, unknown> }) => {
+      reportRuntimeHostIssue({
+        env,
+        level: 'error',
+        message: input.message,
+        error: input.error,
+        phase: 'render',
+        details: input.details,
+      });
+    },
+    [env],
+  );
+
   const handleConfirmCreateDialog = useCallback(async () => {
     if (!pendingCreateDialog || creatingNodeRef.current) {
       return;
@@ -193,26 +231,51 @@ export function DesignerPageBody({
 
       if (result.ok && result.result.ok) {
         setPendingCreateDialog(null);
+      } else if (!result.ok) {
+        const actionResult = result.result;
+        const error =
+          actionResult.error ??
+          new Error(
+            actionResult.cancelled
+              ? 'Create dialog submit action was cancelled.'
+              : 'Create dialog submit action failed.',
+            { cause: actionResult },
+          );
+        const message =
+          error instanceof Error
+            ? error.message
+            : actionResult.cancelled
+              ? 'Create dialog submit action was cancelled.'
+              : 'Create dialog submit action failed.';
+
+        reportHostIssue({
+          message,
+          error,
+          details: {
+            reason: 'designer-create-dialog-submit-failed',
+            documentId: statusSnapshot.doc.id,
+            documentMode: config.documentMode,
+            nodeType: pendingCreateDialog.nodeType.id,
+            cancelled: actionResult.cancelled,
+            timedOut: actionResult.timedOut,
+            actionResult,
+          },
+        });
       }
     } finally {
       creatingNodeRef.current = false;
       setCreatingNode(false);
     }
-  }, [actionScope, designerScope, dispatch, pendingCreateDialog, props.helpers]);
-
-  const reportHostIssue = useCallback(
-    (input: { message: string; error?: unknown; details?: Record<string, unknown> }) => {
-      reportRuntimeHostIssue({
-        env,
-        level: 'error',
-        message: input.message,
-        error: input.error,
-        phase: 'render',
-        details: input.details,
-      });
-    },
-    [env],
-  );
+  }, [
+    actionScope,
+    config.documentMode,
+    designerScope,
+    dispatch,
+    pendingCreateDialog,
+    props.helpers,
+    reportHostIssue,
+    statusSnapshot.doc.id,
+  ]);
 
   useEffect(() => {
     if (!layoutError) {
@@ -224,11 +287,11 @@ export function DesignerPageBody({
       error: new Error(layoutError),
       details: {
         reason: 'designer-auto-layout-failed',
-        documentId: snapshot.doc.id,
+        documentId: statusSnapshot.doc.id,
         documentMode: config.documentMode,
       },
     });
-  }, [config.documentMode, layoutError, reportHostIssue, snapshot.doc.id]);
+  }, [config.documentMode, layoutError, reportHostIssue, statusSnapshot.doc.id]);
 
   const ctxValue = useMemo<DesignerContextValue>(
     () =>
@@ -288,20 +351,51 @@ export function DesignerPageBody({
   );
   const showPalettePanel = hasPalettePanel(config);
   const showInspectorPanel = hasInspectorPanel(config);
+  const nodeClassAliases = props.node.templateNode.classAliasesPlan?.aliases;
+  const mergedClassAliases = useMemo(
+    () => mergeClassAliases(nodeClassAliases, config.classAliases),
+    [nodeClassAliases, config.classAliases],
+  );
+
+  const titleSlot = props.regions.title?.render({
+    scope: designerScope,
+    actionScope,
+  });
+  const resolvedTitle = hasRendererSlotContent(asReactNode(titleSlot))
+    ? asReactNode(titleSlot)
+    : undefined;
+  const headerContent = hasRendererSlotContent(asReactNode(toolbarSlot)) ? (
+    asReactNode(toolbarSlot)
+  ) : (
+    <DesignerToolbarContent
+      exportActive={jsonOpen}
+      onExportToggle={() => setJsonOpen((value) => !value)}
+      onAutoLayout={handleAutoLayout}
+      autoLayoutBusy={layoutBusy}
+    />
+  );
+  const header = resolvedTitle ? (
+    <div className="stack-3 p-4">
+      <div data-slot="designer-page-title">{resolvedTitle}</div>
+      {headerContent}
+    </div>
+  ) : (
+    headerContent
+  );
 
   useStatusPathPublication<DesignerHostStatusSummary>(
     props.node.scope.parent ?? props.node.scope,
     statusPath,
     {
       kind: 'designer',
-      dirty: snapshot.isDirty,
+      dirty: statusSnapshot.isDirty,
       busy: layoutBusy,
       error: layoutError,
-      canUndo: snapshot.canUndo,
-      canRedo: snapshot.canRedo,
-      selectionKind: snapshot.activeNode ? 'node' : snapshot.activeEdge ? 'edge' : 'none',
+      canUndo: statusSnapshot.canUndo,
+      canRedo: statusSnapshot.canRedo,
+      selectionKind: statusSnapshot.activeNode ? 'node' : statusSnapshot.activeEdge ? 'edge' : 'none',
       selectionCount:
-        snapshot.selection.selectedNodeIds.length + snapshot.selection.selectedEdgeIds.length,
+        statusSnapshot.selection.selectedNodeIds.length + statusSnapshot.selection.selectedEdgeIds.length,
     },
   );
 
@@ -334,25 +428,13 @@ export function DesignerPageBody({
   return (
     <DesignerContext.Provider value={ctxValue}>
       <div ref={rootRef} className="contents">
-        {config.themeStyles && <style>{config.themeStyles}</style>}
         <WorkbenchShell
           className={cn('nop-designer fd-theme-root text-foreground', props.meta.className)}
           data-testid={props.meta.testid || undefined}
           data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
-          header={
-            hasRendererSlotContent(asReactNode(toolbarSlot)) ? (
-              asReactNode(toolbarSlot)
-            ) : (
-              <DesignerToolbarContent
-                exportActive={jsonOpen}
-                onExportToggle={() => setJsonOpen((value) => !value)}
-                onAutoLayout={handleAutoLayout}
-                autoLayoutBusy={layoutBusy}
-              />
-            )
-          }
-          leftPanel={showPalettePanel ? <DesignerPaletteContent /> : undefined}
-          leftCollapsed={snapshot.paletteCollapsed}
+          header={header}
+          leftPanel={showPalettePanel ? <DesignerPaletteContent classAliases={mergedClassAliases} /> : undefined}
+          leftCollapsed={uiSnapshot.paletteCollapsed}
           onLeftToggle={() => dispatch({ type: 'togglePalette' })}
           leftLabel={t('flux.flowDesigner.expandPalette')}
           canvas={<DesignerCanvasContent />}
@@ -363,7 +445,7 @@ export function DesignerPageBody({
                 : <DefaultInspector renderSchema={renderInspectorSchema} />
               : undefined
           }
-          rightCollapsed={snapshot.inspectorCollapsed}
+          rightCollapsed={uiSnapshot.inspectorCollapsed}
           onRightToggle={() => dispatch({ type: 'toggleInspector' })}
           rightLabel={t('flux.flowDesigner.expandInspector')}
           dialogs={

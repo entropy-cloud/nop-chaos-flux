@@ -41,6 +41,8 @@
 - `loadAction` 结果必须先通过 action-shape validation；返回值必须是可编译的最终 schema，最小要求是 `{ type: string }` 形状。
 - `loadAction` 执行失败或返回非法 schema 时，组件进入 renderer-owned error state，并在 `nop-dynamic-renderer` 壳内发布错误文本；不得伪装成普通 render-boundary 崩溃。
 - 当新的 `loadAction` 输入替换旧值时，旧 schema 不再继续显示为当前成功状态；可见状态应与最新 `loadAction` 对齐。
+- 当前 live loading baseline 为 renderer-owned visible pending UI：`nop-dynamic-renderer` 壳内会显示 spinner + loading text，并可继续渲染 authored `body` region 作为宿主补充内容。
+- 因此 `dynamic-renderer` 当前可见状态收口为三态：loading（renderer-owned spinner + optional body）、schema-ready（动态 schema render result）、error（renderer-owned diagnostic text）。
 
 ## 8. 事件、动作与组件句柄能力
 

@@ -142,10 +142,12 @@ const wordEditorCapabilities: HostCapabilityContract = {
     },
     insertChart: {
       args: chartShape,
+      result: { kind: 'object', fields: { chartId: { kind: 'string' } } },
       description: 'Insert a chart placeholder tag and persist its metadata.',
     },
     insertCode: {
       args: codeShape,
+      result: { kind: 'object', fields: { codeId: { kind: 'string' } } },
       description: 'Insert a barcode or QR-code placeholder tag and persist its metadata.',
     },
     undo: {
@@ -156,6 +158,8 @@ const wordEditorCapabilities: HostCapabilityContract = {
     },
   },
 };
+
+export const WORD_EDITOR_HOST_METHOD_CONTRACTS = wordEditorCapabilities.methods;
 
 export const WORD_EDITOR_MANIFEST_V1: HostCapabilityProjectionManifest = {
   family: 'word-editor',

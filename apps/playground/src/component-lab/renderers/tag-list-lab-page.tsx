@@ -16,7 +16,7 @@ const techTags = {
         },
         { type: 'text', text: 'Current tags: ${(tags ?? []).join(", ") || "(none)"}' },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -37,7 +37,7 @@ const emptyStart = {
         },
         { type: 'text', text: '${(labels ?? []).length} label(s) added' },
       ],
-      actions: [{ type: 'button', label: 'Apply Labels', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Apply Labels', onClick: { action: 'submitForm' } }],
     },
   ],
 };

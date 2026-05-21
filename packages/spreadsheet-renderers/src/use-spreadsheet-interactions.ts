@@ -165,7 +165,7 @@ export function useSpreadsheetInteractions(
     handleEditCancel,
     handleEditValueChange,
     handleCellValueSave,
-  } = useEditing(snapshot, bridge, sheetId, null, cellValue);
+  } = useEditing(snapshot, bridge, sheetId, selectedCell, cellValue);
 
   const {
     selectedCell: selectionCell,

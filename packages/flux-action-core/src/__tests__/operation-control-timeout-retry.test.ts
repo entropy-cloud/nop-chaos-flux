@@ -153,6 +153,32 @@ describe('withRetry timeout integration', () => {
     vi.useRealTimers();
   });
 
+  it('preserves AbortSignal.reason when retry is aborted', async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    const reason = new Error('superseded by newer request');
+
+    const promise = withRetry(
+      async () => {
+        throw new Error('fail');
+      },
+      { times: 5, delay: 100, signal: controller.signal },
+      () => true,
+    );
+    const assertionPromise = expect(promise).rejects.toMatchObject({
+      name: 'AbortError',
+      cause: reason,
+      lastFailureReason: reason,
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    controller.abort(reason);
+    await vi.advanceTimersByTimeAsync(200);
+
+    await assertionPromise;
+    vi.useRealTimers();
+  });
+
   it('wraps non-Error throws with retry metadata', async () => {
     try {
       await withRetry(

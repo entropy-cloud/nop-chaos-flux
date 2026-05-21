@@ -206,6 +206,37 @@ describe('createImportStack', () => {
       ).rejects.toThrow('Imported namespace a failed to load: loader boom');
     });
 
+    it('rethrows the original pending import failure instead of retrying in the same wait chain', async () => {
+      const { moduleCache, scope } = createStackSetup();
+      const loaderError = new Error('first load failed');
+      const load = vi.fn(async () => {
+        throw loaderError;
+      });
+      const stack = createImportStack({
+        moduleCache,
+        getLoader: () => ({ load }),
+        getRuntime: createMockRuntime,
+        getEnv: createMockEnv,
+      });
+
+      const first = stack.push({
+        ownerNodeId: 'node-1',
+        imports: [{ from: 'lib', as: 'a' }],
+        scope,
+        schemaUrl: '/schema.json',
+      });
+      const second = stack.push({
+        ownerNodeId: 'node-2',
+        imports: [{ from: 'lib', as: 'a' }],
+        scope,
+        schemaUrl: '/schema.json',
+      });
+
+      await expect(first).rejects.toThrow('Imported namespace a failed to load: first load failed');
+      await expect(second).rejects.toThrow('Imported namespace a failed to load: first load failed');
+      expect(load).toHaveBeenCalledTimes(1);
+    });
+
     it('handles expression helpers from module', async () => {
       const { moduleCache, scope } = createStackSetup();
       const helpers = { compute: vi.fn(() => 42) };

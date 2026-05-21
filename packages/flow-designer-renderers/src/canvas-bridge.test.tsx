@@ -382,6 +382,27 @@ describe('DesignerXyflowCanvasBridge', () => {
     const nodes = screen.getAllByRole('button', { name: 'Selected Node Task 1' });
     expect(nodes.at(-1)?.getAttribute('aria-pressed')).toBe('true');
   });
+
+  it('keeps the default quick toolbar visible for a selected node without hover', () => {
+    document.body.innerHTML = '';
+    render(
+      <DesignerXyflowNode
+        id="node-1"
+        selected={true}
+        data={{ typeId: 'task', label: 'Task 1', typeLabel: 'Task' }}
+        xPos={20}
+        yPos={40}
+        dragging={false}
+        zIndex={1}
+        isConnectable={true}
+        type="task"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: '编辑节点' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '复制节点' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '删除节点' })).toBeTruthy();
+  });
 });
 
 describe('renderDesignerCanvasBridge', () => {

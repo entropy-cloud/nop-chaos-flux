@@ -95,6 +95,7 @@ The following are architecture-level constraints distilled from historical regre
 
 - Reactive render paths must subscribe. Components that need reactive scope data in render must use selector/subscription APIs such as `useScopeSelector`, not imperative reads such as `scope.get(...)`.
 - Render phase must stay side-effect free. Renderer paths must not call store writers or state setters during render. If synchronization is needed, buffer and flush in an effect. Current live baseline: `NodeRenderer` installs prepared import frames and named-action namespaces from layout effects, and import-owned nodes may return `null` for the pre-commit pass instead of mutating runtime state during render.
+- Runtime-owned React boundaries must allocate owner resources only after commit. The current live baseline applies the same commit-safe rule to fragment child scopes, node-owned action scopes/component registries, host projection scopes, declarative surface scopes, and renderer-owned form runtimes; pre-commit passes may temporarily render a preparing/null state instead of creating runtime-owned resources during render.
 - Root page scope should be seeded when `SchemaRenderer` creates the page runtime. Effects should only reconcile subsequent prop changes so mount-time child effects do not lose writes to a later root-data sync.
 - Scope identity and lifecycle must stay stable. Fragment/dialog render paths should avoid unnecessary scope recreation and must preserve parent-child reactivity when parent scope data changes.
 - React host effects should not republish owner summaries that already belong to runtime owners. For example, `DialogHost` may render the mounted surface tree, but `statusPath` publication belongs to `SurfaceRuntime` so React rendering does not create a second source of truth or write to the wrong scope.
@@ -1058,7 +1059,7 @@ Current handle baseline:
 
 - chart registers a `ComponentHandle` with an optional `ref`
 - the registered `ref` points at the mounted chart container element when materialized
-- the handle exposes narrow chart instance capabilities such as `resize`, `setOption`, and `getDataURL`
+- the handle currently exposes the narrow chart instance capability `resize`
 
 This is the preferred bridge for imported libraries or host tooling that need one concrete chart instance or DOM anchor without turning renderer internals into ambient global state.
 

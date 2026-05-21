@@ -1,8 +1,18 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { FormFieldStateSnapshot, ScopeRef, ValidationError } from '@nop-chaos/flux-core';
-import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
+import type {
+  FormFieldStateSnapshot,
+  RendererRuntime,
+  ScopeRef,
+  ValidationError,
+} from '@nop-chaos/flux-core';
+import {
+  FormContext,
+  RuntimeContext,
+  ScopeContext,
+  ValidationContext,
+} from '@nop-chaos/flux-react/unstable';
 import {
   createFieldHandlers,
   defaultValidationBehavior,
@@ -252,27 +262,12 @@ describe('useHiddenFieldPolicy', () => {
       return <span>probe</span>;
     }
 
-    const { rerender, unmount } = render(
-      <FormContext.Provider value={form}>
-        <ValidationContext.Provider value={undefined}>
-          <ScopeContext.Provider value={makeScope()}>
-            <Probe hidden={true} />
-          </ScopeContext.Provider>
-        </ValidationContext.Provider>
-      </FormContext.Provider>,
-    );
+    const scope = makeScope();
+    const { rerender, unmount } = render(wrapInContexts(scope, <Probe hidden={true} />, { form }));
 
     expect(notifyFieldHidden).toHaveBeenCalledWith('name', true);
 
-    rerender(
-      <FormContext.Provider value={form}>
-        <ValidationContext.Provider value={undefined}>
-          <ScopeContext.Provider value={makeScope()}>
-            <Probe hidden={false} />
-          </ScopeContext.Provider>
-        </ValidationContext.Provider>
-      </FormContext.Provider>,
-    );
+    rerender(wrapInContexts(scope, <Probe hidden={false} />, { form }));
 
     expect(notifyFieldHidden).toHaveBeenCalledWith('name', false);
 
@@ -306,13 +301,33 @@ function makeAdapterScope(data: Record<string, unknown>): ScopeRef {
   };
 }
 
-function wrapInContexts(scope: ScopeRef, children: React.ReactNode) {
+function makeMockRuntime(): RendererRuntime {
+  return {
+    env: {
+      notify: vi.fn(),
+      monitor: {
+        onError: vi.fn(),
+      },
+    },
+  } as unknown as RendererRuntime;
+}
+
+function wrapInContexts(
+  scope: ScopeRef,
+  children: React.ReactNode,
+  options?: {
+    form?: unknown;
+    validationScope?: unknown;
+  },
+) {
   return (
-    <FormContext.Provider value={undefined}>
-      <ValidationContext.Provider value={undefined}>
-        <ScopeContext.Provider value={scope}>{children}</ScopeContext.Provider>
-      </ValidationContext.Provider>
-    </FormContext.Provider>
+    <RuntimeContext.Provider value={makeMockRuntime()}>
+      <FormContext.Provider value={(options?.form ?? undefined) as any}>
+        <ValidationContext.Provider value={(options?.validationScope ?? undefined) as any}>
+          <ScopeContext.Provider value={scope}>{children}</ScopeContext.Provider>
+        </ValidationContext.Provider>
+      </FormContext.Provider>
+    </RuntimeContext.Provider>
   );
 }
 
@@ -500,15 +515,7 @@ describe('useFieldPresentation subscription precision', () => {
       return <span data-testid="probe">ok</span>;
     }
 
-    render(
-      <FormContext.Provider value={form}>
-        <ValidationContext.Provider value={undefined}>
-          <ScopeContext.Provider value={scope}>
-            <PresentationProbe />
-          </ScopeContext.Provider>
-        </ValidationContext.Provider>
-      </FormContext.Provider>,
-    );
+    render(wrapInContexts(scope, <PresentationProbe />, { form }));
 
     expect(subscribeToPaths).toHaveBeenCalledWith(['email'], expect.any(Function));
     expect(subscribeToPath).toHaveBeenCalledWith('email', expect.any(Function));

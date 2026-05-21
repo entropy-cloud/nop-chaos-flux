@@ -371,7 +371,7 @@ A non-rendering source declaration that publishes one derived value into scope.
 It supports:
 
 - formula-backed or API-backed producers under one resource model
-- `name` as the normative author-visible identity and default publication path
+- `name` as the normative author-visible identity, refresh target, and default publication path
 - `mergeToScope: true` as the only narrowed special publish extension beyond the named path
 - `stopWhen` expression for conditional polling termination
 - `includeScope` on its `ApiSchema` for automatic scope variable injection

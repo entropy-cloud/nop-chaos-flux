@@ -321,3 +321,31 @@
 ## 深挖第 4 轮追加
 
 未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度09-01]: 保留 (P1)。`packages/flux-renderers-data/src/data-renderer-definitions.ts:132-133` 仍把 `quickSaveAction` / `quickSaveItemAction` 声明为 `event`，但 `table-quick-edit-cell.tsx:59-80` 与 `table-quick-edit-controller.ts:321-350` 仍把它们当 `ActionSchema` prop 直接 `helpers.dispatch(...)`。
+- [维度09-02]: 保留 (P1)。`packages/flux-renderers-data/src/crud-renderer.tsx:236-315` 仍手工伪造 `RendererComponentProps<TableSchema>` 并直接 `<TableRenderer {...tableRendererProps} />`，没有走 `helpers.render` / NodeRenderer 装配路径。
+- [维度09-03]: 保留 (P2)。`crud-renderer.tsx:46-48,109-111` 仍从 `props.templateNode.schema` 回填 `quickSaveAction` / `quickSaveItemAction`，raw schema fallback 仍在 live 主路径承担 contract 补洞。
+- [维度09-04]: 保留 (P2)。`packages/flux-renderers-form/src/field-utils/field-handlers.tsx:11-18,165-188` 仍通过 `RuntimeContext` from `@nop-chaos/flux-react/unstable` 读取 runtime，而不是公开 `useRendererRuntime()` hook。
+- [维度09-05]: 保留 (P2)。`packages/flux-renderers-form-advanced/src/variant-field/variant-field-view.tsx:10-39,207-226` 仍直接拥有 `FieldFrame` 并复制 frame-wrap / chrome 装配逻辑，与 `variant-field` definition 未声明 `wrap: true` 的中央路径并行。
+- [维度09-06]: 保留 (P1)。`packages/flux-renderers-form-advanced/src/variant-field/variant-field-controller.ts:48-54,118-131` 仍从 `templateNode.eventPlans.detectVariantAction` 反抽 raw `ActionSchema`，经 `variant-field-helpers.ts:33-44` 读取 compiled program `source` 后自行 `helpers.dispatch(...)`，未走 `props.events.detectVariantAction`。
+- [维度09-07]: 保留 (P2)。`packages/report-designer-renderers/src/inspector-shell-renderer.tsx:32-41,70-72` 仍手工构造 `inspectorProps` 并直接渲染 `<ReportInspectorRenderer />`，绕过 `report-inspector` definition/NodeRenderer 正常装配。
+- [维度09-08]: 保留 (P2)。`packages/flux-react/src/node-frame-wrapper.tsx:58-84` 已把多个 `wrap: true` 字段的 node-level `testid/cid` 交给 `FieldFrame`，而 `array-editor.tsx:334-340`、`array-field.tsx:544-550`、相关复杂字段 renderer 仍把同一 `props.meta.testid/cid` 镜像到内层 control root，重复 anchor 仍存在。
+
+## 子项复核结论
+
+- [维度09-01] 至 [维度09-08]: 均成立。复核后仍集中指向 renderer boundary 被 props/raw schema/unstable/runtime internals 手工旁路，适合作为一组 renderer contract 收口项保留。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                                | 一句话摘要                                                                 |
+| ----- | -------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| 09-01 | P1       | `packages/flux-renderers-data/src/data-renderer-definitions.ts:132-133`                             | table quick save actions 仍声明为 event，但消费端按 ActionSchema prop 使用 |
+| 09-02 | P1       | `packages/flux-renderers-data/src/crud-renderer.tsx:236-315`                                        | CRUD 仍手工伪造 Table renderer props 并直接调用组件                        |
+| 09-03 | P2       | `packages/flux-renderers-data/src/crud-renderer.tsx:46-48,109-111`                                  | CRUD 仍用 raw schema fallback 回填 quickSave contract 缺口                 |
+| 09-04 | P2       | `packages/flux-renderers-form/src/field-utils/field-handlers.tsx:11-18,165-188`                     | field handlers 仍从 unstable RuntimeContext 读 runtime                     |
+| 09-05 | P2       | `packages/flux-renderers-form-advanced/src/variant-field/variant-field-view.tsx:10-39,207-226`      | variant-field view 仍自带 FieldFrame 并复制 wrap/chrome 装配               |
+| 09-06 | P1       | `packages/flux-renderers-form-advanced/src/variant-field/variant-field-controller.ts:48-54,118-131` | variant-field 仍绕过 `props.events` 反抽 raw action 自行 dispatch          |
+| 09-07 | P2       | `packages/report-designer-renderers/src/inspector-shell-renderer.tsx:32-41,70-72`                   | report inspector shell 仍直接构造 inner renderer props                     |
+| 09-08 | P2       | `packages/flux-react/src/node-frame-wrapper.tsx:58-84`                                              | wrap=true 字段的 node-level `cid/testid` 仍被内外层重复镜像                |

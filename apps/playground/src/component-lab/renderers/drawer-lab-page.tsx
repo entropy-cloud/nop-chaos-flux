@@ -16,7 +16,7 @@ const rightDrawer = {
               type: 'form',
               onSubmitSuccess: [
                 { action: 'setValue', args: { path: 'submitted', value: true } },
-                { action: 'closeDrawer' },
+                { action: 'closeSurface' },
               ],
               body: [
                 {
@@ -35,13 +35,13 @@ const rightDrawer = {
                 {
                   type: 'button',
                   label: 'Save',
-                  onClick: { action: 'submit' },
+                  onClick: { action: 'submitForm' },
                 },
                 {
                   type: 'button',
                   label: 'Cancel',
                   variant: 'outline',
-                  onClick: { action: 'closeDrawer' },
+                  onClick: { action: 'closeSurface' },
                 },
               ],
             },
@@ -74,7 +74,7 @@ const leftDrawer = {
               type: 'button',
               label: 'Close',
               variant: 'outline',
-              onClick: { action: 'closeDrawer' },
+              onClick: { action: 'closeSurface' },
             },
           ],
         },

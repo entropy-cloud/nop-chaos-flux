@@ -314,7 +314,27 @@ export const DEBUGGER_STYLES = `
 
 .ndbg-highlight { border-radius: 4px; background: var(--nop-debugger-highlight-bg); color: var(--nop-debugger-highlight-text); padding: 0 2px; }
 
-.ndbg-entry { cursor: pointer; }
+.ndbg-entry-trigger {
+  width: 100%;
+  height: auto;
+  display: grid;
+  justify-content: stretch;
+  justify-items: stretch;
+  gap: 8px;
+  padding: 0;
+  border-radius: inherit;
+  white-space: normal;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ndbg-entry-trigger:hover {
+  background: transparent;
+  color: inherit;
+}
+
 .ndbg-json-key { color: var(--nop-debugger-json-key); }
 .ndbg-json-string { color: var(--nop-debugger-json-string); }
 .ndbg-json-number { color: var(--nop-debugger-json-number); }

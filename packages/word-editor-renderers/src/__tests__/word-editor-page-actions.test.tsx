@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import * as FluxReact from '@nop-chaos/flux-react';
 import type { ActionResult } from '@nop-chaos/flux-core';
 import {
@@ -15,12 +14,11 @@ import {
   resetWordEditorActionMocks,
 } from './word-editor-page-actions.test-support.js';
 import * as wordEditorActionProvider from '../word-editor-action-provider.js';
-import { WordEditorPage } from '../word-editor-page.js';
-import { RuntimeContext, ScopeContext } from '../../../flux-react/src/contexts.js';
 
 describe('WordEditorPage actions and events', () => {
   afterEach(() => {
     cleanup();
+    vi.restoreAllMocks();
     if (originalWindowConfirm.hasOwn) {
       window.confirm = originalWindowConfirm.value;
     } else {
@@ -102,9 +100,7 @@ describe('WordEditorPage actions and events', () => {
     resetWordEditorActionMocks();
 
     const invoke = vi.fn(async () => ({ ok: true }));
-    const providerSpy = vi
-      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
-      .mockReturnValue({
+    vi.spyOn(wordEditorActionProvider, 'createWordEditorActionProvider').mockReturnValue({
         kind: 'host',
         listMethods() {
           return ['save'];
@@ -122,7 +118,6 @@ describe('WordEditorPage actions and events', () => {
       expect(invokeCtx?.signal).toBeInstanceOf(AbortSignal);
     });
 
-    providerSpy.mockRestore();
   });
 
   it('ignores concurrent save triggers while a save is already running', async () => {
@@ -139,9 +134,7 @@ describe('WordEditorPage actions and events', () => {
       await saveProviderResult;
       return { ok: true };
     });
-    const providerSpy = vi
-      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
-      .mockReturnValue({
+    vi.spyOn(wordEditorActionProvider, 'createWordEditorActionProvider').mockReturnValue({
         kind: 'host',
         listMethods() {
           return ['save'];
@@ -159,7 +152,6 @@ describe('WordEditorPage actions and events', () => {
     await waitFor(() => {
       expect(screen.getByText('已保存')).toBeTruthy();
     });
-    providerSpy.mockRestore();
   });
 
   it('invokes onBack directly without local confirm handling', async () => {
@@ -182,85 +174,25 @@ describe('WordEditorPage actions and events', () => {
       expect(notify).toHaveBeenCalledWith('info', 'back event fired');
     });
     expect(confirmSpy).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
   });
 
-  it('forwards the click event through onBack', async () => {
+  it('forwards the click event through the public onBack renderer event entry', async () => {
     resetWordEditorActionMocks();
-    const useHostScopeSpy = vi.spyOn(FluxReact, 'useHostScope').mockReturnValue({} as any);
-    const useCurrentActionScopeSpy = vi
-      .spyOn(FluxReact, 'useCurrentActionScope')
-      .mockReturnValue(undefined as any);
-    const useNamespaceRegistrationSpy = vi
-      .spyOn(FluxReact, 'useNamespaceRegistration')
-      .mockImplementation(() => undefined);
-    const useRendererEnvSpy = vi
-      .spyOn(FluxReact, 'useRendererEnv')
-      .mockReturnValue({ notify: vi.fn() } as any);
-    const useStatusPathPublicationSpy = vi
-      .spyOn(FluxReact, 'useStatusPathPublication')
-      .mockImplementation(() => undefined);
-    const hasRendererSlotContentSpy = vi
-      .spyOn(FluxReact, 'hasRendererSlotContent')
-      .mockReturnValue(false);
-    const resolveRendererSlotContentSpy = vi
-      .spyOn(FluxReact, 'resolveRendererSlotContent')
-      .mockReturnValue(undefined);
-    const onBack = vi.fn(async () => ({ ok: true }));
+    const notify = vi.fn();
 
-    render(
-      <RuntimeContext.Provider value={{ env: { notify: vi.fn() } } as any}>
-        <ScopeContext.Provider
-          value={{
-            id: 'word-editor-scope',
-            path: '$.body[0]',
-            value: {},
-            get: () => undefined,
-            has: () => false,
-            readOwn: () => ({}),
-            readVisible: () => ({}),
-            materializeVisible: () => ({}),
-            update: () => undefined,
-            merge: () => undefined,
-          } as any}
-        >
-          <WordEditorPage
-            id="word-editor"
-            path="$.body[0]"
-            schema={{ type: 'word-editor-page' } as any}
-            templateNode={{ validationOwnerPlan: undefined } as any}
-            node={{ scope: { parent: null } } as any}
-            props={{} as any}
-            meta={{} as any}
-            regions={{} as any}
-            events={{ onBack }}
-            helpers={{
-              render: vi.fn(),
-              evaluate: vi.fn(),
-              createScope: vi.fn(),
-              dispatch: vi.fn(),
-              executeSource: vi.fn(),
-            } as any}
-          />
-        </ScopeContext.Provider>
-      </RuntimeContext.Provider>,
-    );
+    renderWordEditor({
+      schema: {
+        type: 'word-editor-page',
+        onBack: { action: 'showToast', args: { message: 'public back event fired' } },
+      },
+      env: createEnv(notify),
+    });
 
     fireEvent.click(screen.getByRole('button', { name: '返回' }));
 
-    expect(onBack).toHaveBeenCalledTimes(1);
-    const firstCall = onBack.mock.calls[0] as unknown[] | undefined;
-    const forwardedEvent = firstCall?.[0];
-    expect(forwardedEvent).toBeTruthy();
-    expect((forwardedEvent as MouseEvent).type).toBe('click');
-
-    useHostScopeSpy.mockRestore();
-    useCurrentActionScopeSpy.mockRestore();
-    useNamespaceRegistrationSpy.mockRestore();
-    useRendererEnvSpy.mockRestore();
-    useStatusPathPublicationSpy.mockRestore();
-    hasRendererSlotContentSpy.mockRestore();
-    resolveRendererSlotContentSpy.mockRestore();
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('info', 'public back event fired');
+    });
   });
 
   it('does not publish save message updates after unmount', async () => {
@@ -313,8 +245,7 @@ describe('WordEditorPage actions and events', () => {
 
     const notify = vi.fn();
     const invoke = vi.fn(async () => ({ ok: false, error: new Error('Save rejected') }));
-    const providerSpy = vi
-      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
+    vi.spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
       .mockReturnValue({
         kind: 'host',
         listMethods() {
@@ -329,8 +260,6 @@ describe('WordEditorPage actions and events', () => {
     await waitFor(() => {
       expect(notify).toHaveBeenCalledWith('warning', 'Save rejected');
     });
-
-    providerSpy.mockRestore();
   });
 
   it('notifies when save throws', async () => {
@@ -340,8 +269,7 @@ describe('WordEditorPage actions and events', () => {
     const invoke = vi.fn(async () => {
       throw new Error('Save crashed');
     });
-    const providerSpy = vi
-      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
+    vi.spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
       .mockReturnValue({
         kind: 'host',
         listMethods() {
@@ -356,8 +284,6 @@ describe('WordEditorPage actions and events', () => {
     await waitFor(() => {
       expect(notify).toHaveBeenCalledWith('warning', 'Save crashed');
     });
-
-    providerSpy.mockRestore();
   });
 
   it('does not notify when save aborts with AbortError', async () => {
@@ -367,8 +293,7 @@ describe('WordEditorPage actions and events', () => {
     const invoke = vi.fn(async () => {
       throw new DOMException('aborted', 'AbortError');
     });
-    const providerSpy = vi
-      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
+    vi.spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
       .mockReturnValue({
         kind: 'host',
         listMethods() {
@@ -384,8 +309,6 @@ describe('WordEditorPage actions and events', () => {
       expect(invoke).toHaveBeenCalledTimes(1);
     });
     expect(notify).not.toHaveBeenCalled();
-
-    providerSpy.mockRestore();
   });
 
   it('publishes busy status while a save is in flight', async () => {
@@ -393,76 +316,35 @@ describe('WordEditorPage actions and events', () => {
 
     let resolveSave: ((value: ActionResult) => void) | undefined;
     const statusCalls: Array<{ busy: boolean; dirty: boolean }> = [];
-    const useHostScopeSpy = vi.spyOn(FluxReact, 'useHostScope').mockReturnValue({} as any);
-    const useCurrentActionScopeSpy = vi
-      .spyOn(FluxReact, 'useCurrentActionScope')
-      .mockReturnValue(undefined as any);
-    const useNamespaceRegistrationSpy = vi
-      .spyOn(FluxReact, 'useNamespaceRegistration')
-      .mockImplementation(() => undefined);
-    const useRendererEnvSpy = vi
-      .spyOn(FluxReact, 'useRendererEnv')
-      .mockReturnValue({ notify: vi.fn() } as any);
-    const useStatusPathPublicationSpy = vi
-      .spyOn(FluxReact, 'useStatusPathPublication')
+    vi.spyOn(FluxReact, 'useStatusPathPublication')
       .mockImplementation((_scope, _statusPath, summary: any) => {
         statusCalls.push({ busy: Boolean(summary?.busy), dirty: Boolean(summary?.dirty) });
       });
-    const hasRendererSlotContentSpy = vi
-      .spyOn(FluxReact, 'hasRendererSlotContent')
-      .mockReturnValue(false);
-    const resolveRendererSlotContentSpy = vi
-      .spyOn(FluxReact, 'resolveRendererSlotContent')
-      .mockReturnValue(undefined);
-    const onSave = vi.fn(
+    const invoke = vi.fn(
       () =>
         new Promise<ActionResult>((resolve) => {
           resolveSave = resolve;
         }),
     );
+    vi.spyOn(wordEditorActionProvider, 'createWordEditorActionProvider').mockReturnValue({
+      kind: 'host',
+      listMethods() {
+        return ['save'];
+      },
+      invoke,
+    } as any);
 
-    render(
-      <RuntimeContext.Provider value={{ env: { notify: vi.fn() } } as any}>
-        <ScopeContext.Provider
-          value={{
-            id: 'word-editor-scope',
-            path: '$.body[0]',
-            value: {},
-            get: () => undefined,
-            has: () => false,
-            readOwn: () => ({}),
-            readVisible: () => ({}),
-            materializeVisible: () => ({}),
-            update: () => undefined,
-            merge: () => undefined,
-          } as any}
-        >
-          <WordEditorPage
-            id="word-editor"
-            path="$.body[0]"
-            schema={{ type: 'word-editor-page' } as any}
-            templateNode={{ validationOwnerPlan: undefined } as any}
-            node={{ scope: { parent: {} } } as any}
-            props={{ statusPath: 'wordEditorStatus' } as any}
-            meta={{} as any}
-            regions={{} as any}
-            events={{ onSave }}
-            helpers={{
-              render: vi.fn(),
-              evaluate: vi.fn(),
-              createScope: vi.fn(),
-              dispatch: vi.fn(),
-              executeSource: vi.fn(),
-            } as any}
-          />
-        </ScopeContext.Provider>
-      </RuntimeContext.Provider>,
-    );
+    renderWordEditor({
+      schema: {
+        type: 'word-editor-page',
+        statusPath: 'wordEditorStatus',
+      },
+    });
 
     fireEvent.click(screen.getByRole('button', { name: '保存' }));
 
     await waitFor(() => {
-      expect(onSave).toHaveBeenCalledTimes(1);
+      expect(invoke).toHaveBeenCalledTimes(1);
     });
     await waitFor(() => {
       expect(statusCalls.some((call) => call.busy)).toBe(true);
@@ -473,14 +355,6 @@ describe('WordEditorPage actions and events', () => {
     await waitFor(() => {
       expect(statusCalls.at(-1)).toEqual({ busy: false, dirty: false });
     });
-
-    useHostScopeSpy.mockRestore();
-    useCurrentActionScopeSpy.mockRestore();
-    useNamespaceRegistrationSpy.mockRestore();
-    useRendererEnvSpy.mockRestore();
-    useStatusPathPublicationSpy.mockRestore();
-    hasRendererSlotContentSpy.mockRestore();
-    resolveRendererSlotContentSpy.mockRestore();
   });
 
 });

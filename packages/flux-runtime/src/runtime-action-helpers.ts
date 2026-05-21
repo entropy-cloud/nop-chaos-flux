@@ -23,6 +23,16 @@ import { createValidationError } from './validation/index.js';
 import type { ApiRequestExecutor } from './async-data/request-runtime.js';
 import type { RuntimeEvalHelpers } from './runtime-eval-helpers.js';
 
+const abortSignalControllers = new WeakMap<AbortSignal, AbortController>();
+
+export function registerAbortSignalController(signal: AbortSignal, controller: AbortController) {
+  abortSignalControllers.set(signal, controller);
+}
+
+export function unregisterAbortSignalController(signal: AbortSignal) {
+  abortSignalControllers.delete(signal);
+}
+
 export async function executeRuntimeValidationRule(
   compiledRule: CompiledValidationRule,
   rule: Extract<ValidationRule, { kind: 'async' }>,
@@ -40,6 +50,10 @@ export async function executeRuntimeValidationRule(
     });
 
     if (result.cancelled) {
+      const controller = signal ? abortSignalControllers.get(signal) : undefined;
+      if (controller && !controller.signal.aborted) {
+        controller.abort(result.error);
+      }
       return undefined;
     }
 

@@ -95,10 +95,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: true, data: values };
           }
 
-          const basePath =
-            typeof invocation.args?.path === 'string'
-              ? invocation.args.path
-              : invocation.targeting.targetId;
+          const basePath = typeof invocation.args?.path === 'string' ? invocation.args.path : undefined;
 
           const resolvedValues = basePath
             ? Object.fromEntries(
@@ -298,21 +295,21 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         }
 
         case 'refreshSource': {
-          const sourceId =
-            typeof invocation.args?.sourceId === 'string' ? invocation.args.sourceId : undefined;
-          if (!sourceId) {
-            return { ok: false, error: new Error('refreshSource requires sourceId') };
+          const targetId =
+            typeof invocation.args?.targetId === 'string' ? invocation.args.targetId : invocation.targeting.targetId;
+          if (!targetId) {
+            return { ok: false, error: new Error('refreshSource requires targetId') };
           }
 
           const refreshed = await runtime.refreshDataSource({
-            id: sourceId,
+            name: targetId,
             scope: ctx.scope,
           });
 
           return {
             ok: refreshed,
             data: refreshed,
-            error: refreshed ? undefined : new Error(`Source not found: ${sourceId}`),
+            error: refreshed ? undefined : new Error(`Source not found: ${targetId}`),
           };
         }
 

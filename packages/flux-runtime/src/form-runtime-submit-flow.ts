@@ -69,8 +69,26 @@ function extractTouchedPaths(fieldStates: Record<string, FieldState>): Record<st
   return touched;
 }
 
-function createSubmitAbortError() {
-  return Object.assign(new Error('Submit aborted'), { name: 'AbortError' });
+function createSubmitAbortError(reason?: unknown) {
+  if (reason instanceof Error && reason.name === 'AbortError') {
+    return reason;
+  }
+
+  const error = Object.assign(new Error('Submit aborted'), { name: 'AbortError' });
+
+  if (reason !== undefined) {
+    (error as Error & { cause?: unknown }).cause = reason;
+  }
+
+  return error;
+}
+
+function createSubmitAbortedResult(signal?: AbortSignal): ActionResult {
+  return {
+    ok: false,
+    cancelled: true,
+    error: createSubmitAbortError(signal?.reason),
+  };
 }
 
 function attachLifecycleError(result: ActionResult, error: unknown): ActionResult {
@@ -120,13 +138,13 @@ async function awaitWithAbort<T>(promise: Promise<T>, signal?: AbortSignal): Pro
   }
 
   if (signal.aborted) {
-    throw createSubmitAbortError();
+    throw createSubmitAbortError(signal.reason);
   }
 
   return await new Promise<T>((resolve, reject) => {
     const abort = () => {
       signal.removeEventListener('abort', abort);
-      reject(createSubmitAbortError());
+      reject(createSubmitAbortError(signal.reason));
     };
 
     signal.addEventListener('abort', abort, { once: true });
@@ -176,7 +194,7 @@ export async function executeFormSubmit(
   }
 
   if (options?.signal?.aborted) {
-    return { ok: false, cancelled: true, error: new Error('Submit aborted') };
+    return createSubmitAbortedResult(options.signal);
   }
 
   const { store, runtimeFieldRegistrations } = sharedState;
@@ -241,7 +259,7 @@ export async function executeFormSubmit(
       } as const;
 
       if (options?.signal?.aborted) {
-        return { ok: false, cancelled: true, error: new Error('Submit aborted') };
+        return createSubmitAbortedResult(options.signal);
       }
 
       return runFailureLifecycleHandler(validationFailure, lifecycleHandlers?.onValidateError, options);
@@ -342,13 +360,13 @@ export async function executeFormSubmit(
       : () => Promise.resolve({ ok: true, data: store.getState().values });
 
     if (options?.signal?.aborted) {
-      return { ok: false, cancelled: true, error: new Error('Submit aborted') };
+      return createSubmitAbortedResult(options.signal);
     }
 
     const result = await awaitWithAbort(executeSubmit(), options?.signal);
 
     if (options?.signal?.aborted) {
-      return { ok: false, cancelled: true, error: new Error('Submit aborted') };
+      return createSubmitAbortedResult(options.signal);
     }
 
     const resultClass = classifySubmitResult(result);

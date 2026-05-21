@@ -48,10 +48,16 @@ For the detailed DOM marker contract around `role`, `data-slot`, root `nop-*` ma
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
+│                     flux-compiler                            │
+│  - Compile schema → props/meta/regions/events               │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
 │                  flux-runtime (stateless)                    │
-│  - Compile schema → props                                    │
+│  - Instantiate compiled schema                               │
 │  - Resolve expressions                                       │
-│  - Map schema props to component props                       │
+│  - Provide runtime values to renderers                       │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           ▼

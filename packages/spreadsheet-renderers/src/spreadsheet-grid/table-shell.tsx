@@ -1,5 +1,6 @@
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
 import type { CSSProperties } from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button } from '@nop-chaos/ui';
 import { mapCellStyle } from '../cell-style-map.js';
 import {
@@ -155,6 +156,9 @@ function SpreadsheetGridCell({
     <td
       key={col}
       id={`spreadsheet-cell-${addr}`}
+      role="gridcell"
+      aria-rowindex={row + 1}
+      aria-colindex={col + 1}
       className={cellStyle.className}
       style={style}
       tabIndex={isSelected ? 0 : -1}
@@ -287,7 +291,7 @@ export function SpreadsheetGridTableShell({
                 size="sm"
                 className="ss-header-button"
                 data-slot="spreadsheet-header-button"
-                aria-label="Select entire sheet"
+                aria-label={t('flux.sheet.selectAllAriaLabel')}
                 onClick={onSelectAll}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
@@ -321,7 +325,7 @@ export function SpreadsheetGridTableShell({
                     size="sm"
                     className="ss-header-button"
                     data-slot="spreadsheet-header-button"
-                    aria-label={`Select column ${columnLabel}`}
+                     aria-label={t('flux.sheet.selectColumnAriaLabel', { name: columnLabel })}
                     onClick={(event) => onSelectColumn(col, event.shiftKey)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
@@ -363,6 +367,8 @@ export function SpreadsheetGridTableShell({
           {viewport.visibleRowIndices.map((row) => (
             <tr
               key={row}
+              role="row"
+              aria-rowindex={row + 1}
               style={{ height: rowHeights[row] ?? DEFAULT_ROW_HEIGHT }}
               className={frozen && row < (frozen.row ?? 0) ? 'frozen-row' : ''}
             >
@@ -381,7 +387,7 @@ export function SpreadsheetGridTableShell({
                   data-slot="spreadsheet-header-button"
                   variant="ghost"
                   size="sm"
-                  aria-label={`Select row ${row + 1}`}
+                   aria-label={t('flux.sheet.selectRowAriaLabel', { index: row + 1 })}
                   onClick={(event) => onSelectRow(row, event.shiftKey)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {

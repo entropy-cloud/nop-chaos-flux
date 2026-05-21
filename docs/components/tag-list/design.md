@@ -13,7 +13,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'tag-list'`
-- `sourcePackage: '@nop-chaos/flux-renderers-form'`
+- `sourcePackage: '@nop-chaos/flux-renderers-form-advanced'`
 - 当前 fields: `label` 为 `value-or-region`
 
 ## 4. schema 设计

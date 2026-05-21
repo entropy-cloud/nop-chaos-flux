@@ -175,7 +175,7 @@ describe('symbol-helpers', () => {
           body: {
             type: 'container',
             body: {
-              type: 'panel',
+              type: 'card',
               'xui:imports': [{ from: 'deep-lib', as: 'deep' }],
             },
           },

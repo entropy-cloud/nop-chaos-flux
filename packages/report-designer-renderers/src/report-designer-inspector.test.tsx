@@ -102,4 +102,26 @@ describe('ReportInspectorRenderer', () => {
 
     expect(screen.getByTestId('inspector-root')).toBeTruthy();
   });
+
+  it('renders inspector-shell through the report-inspector definition path', () => {
+    const registry = createDefaultRegistry([textRenderer]);
+    registerReportDesignerRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://report/inspector-shell"
+        schema={{ type: 'report-inspector-shell' }}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{
+          selectionTarget: { kind: 'cell' },
+          inspector: { resolvedSchema: { type: 'text', text: 'Shell body' } },
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Shell body')).toBeTruthy();
+  });
 });

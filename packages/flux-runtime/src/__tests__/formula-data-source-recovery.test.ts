@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RendererRuntime, ScopeRef, ScopeDependencySet } from '@nop-chaos/flux-core';
 import { createFormulaDataSourceController } from '../async-data/formula-data-source-controller.js';
+import { createAsyncGovernanceStore } from '../async-data/async-governance.js';
 
 function createMockScope(): ScopeRef {
   const data: Record<string, unknown> = {};
@@ -131,5 +132,59 @@ describe('createFormulaDataSourceController', () => {
     expect(scope.get('result')).toBe(42);
     expect(updateSpy).toHaveBeenCalledTimes(1);
     expect(controller.getState().dataUpdatedAt).toBe(firstUpdatedAt);
+  });
+
+  it('settles failed refresh runs and leaves the controller out of fetching after publish errors', async () => {
+    let shouldThrow = false;
+    const scope = createMockScope();
+    const asyncGovernance = createAsyncGovernanceStore();
+    const controller = createFormulaDataSourceController({
+      runtime: {
+        env: {
+          notify: vi.fn(),
+        },
+        expressionCompiler: {
+          compileValue: () => ({
+            isStatic: false,
+            kind: 'dynamic',
+            createState: () => ({
+              root: { kind: 'leaf-state', initialized: false },
+            }),
+          }),
+          evaluateWithState: () => {
+            if (shouldThrow) {
+              throw new Error('refresh failed');
+            }
+            return { value: 42, changed: true, reusedReference: false };
+          },
+          evaluateValue: () => 42,
+          createState: () => ({
+            root: { kind: 'leaf-state', initialized: false },
+          }),
+        },
+      } as unknown as RendererRuntime,
+      scope,
+      ownerId: 'data-source:test-scope:result',
+      asyncGovernance,
+      targetPath: 'result',
+      formula: '${someFormula}',
+    });
+
+    controller.start();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    shouldThrow = true;
+
+    await expect(controller.refresh()).rejects.toThrow('refresh failed');
+    expect(controller.getState()).toMatchObject({
+      status: 'error',
+      fetchStatus: 'idle',
+    });
+    expect(asyncGovernance.getOwnerState('data-source:test-scope:result')?.recentRuns).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ outcome: 'failed', error: expect.objectContaining({ message: 'refresh failed' }) }),
+      ]),
+    );
   });
 });

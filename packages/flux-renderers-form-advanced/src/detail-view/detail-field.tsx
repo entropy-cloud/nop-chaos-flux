@@ -9,7 +9,7 @@ import {
   useScopeSelector,
   useCurrentFormState,
 } from '@nop-chaos/flux-react';
-import { Button, cn } from '@nop-chaos/ui';
+import { Button, cn, Spinner } from '@nop-chaos/ui';
 import type { DetailFieldSchema } from '../composite-field/composite-schemas.js';
 import { formFieldRules, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { t } from '@nop-chaos/flux-i18n';
@@ -86,11 +86,14 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const {
     open,
     draftForm,
+    opening,
     confirming,
     draftError,
     mountedRef,
     openDraft,
     closeDraft,
+    beginOpen,
+    finishOpen,
     beginConfirm,
     finishConfirm,
     setDraftErrorSafe,
@@ -174,34 +177,41 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     if (presentation.effectiveDisabled) return;
 
     const openToken = openSequencer.nextToken();
+    beginOpen();
 
-    const adaptedValue = await runTransformIn(
-      schemaProps.transformInAction,
-      {
-        rawValue: fieldValue,
-        name,
-        readOnly,
-      },
-      runAdaptationAction,
-    );
+    try {
+      const adaptedValue = await runTransformIn(
+        schemaProps.transformInAction,
+        {
+          rawValue: fieldValue,
+          name,
+          readOnly,
+        },
+        runAdaptationAction,
+      );
 
-    if (!mountedRef.current) return;
+      if (!mountedRef.current) return;
 
-    const initialValues = buildDetailDraftInitialValues(adaptedValue);
+      const initialValues = buildDetailDraftInitialValues(adaptedValue);
 
-    const newDraftForm = runtime.createFormRuntime({
-      id: `detail-field-draft:${name}:${Date.now()}`,
-      initialValues,
-      parentScope,
-      validation: props.templateNode.validationPlan,
-    });
+      const newDraftForm = runtime.createFormRuntime({
+        id: `detail-field-draft:${name}:${Date.now()}`,
+        initialValues,
+        parentScope,
+        validation: props.templateNode.validationPlan,
+      });
 
-    if (!mountedRef.current || !openSequencer.isCurrent(openToken)) {
-      newDraftForm.dispose();
-      return;
+      if (!mountedRef.current || !openSequencer.isCurrent(openToken)) {
+        newDraftForm.dispose();
+        return;
+      }
+
+      openDraft(newDraftForm);
+    } finally {
+      if (mountedRef.current && openSequencer.isCurrent(openToken)) {
+        finishOpen();
+      }
     }
-
-    openDraft(newDraftForm);
   }
 
   async function handleConfirm() {
@@ -320,6 +330,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
             variant="outline"
             size="sm"
             aria-label={triggerLabel}
+            aria-busy={opening || undefined}
             onClick={() => {
               handleOpen().catch((error) => {
                 logDetailFieldAsyncError('open', error);
@@ -327,6 +338,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
               });
             }}
           >
+            {opening ? <Spinner className="size-4" aria-hidden="true" /> : null}
             {triggerLabel}
           </Button>
         )}
@@ -363,6 +375,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
 export const detailFieldRendererDefinition: RendererDefinition<DetailFieldSchema> = {
   type: 'detail-field',
+  sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: DetailFieldRenderer,
   wrap: true,
   fields: [

@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { NopDebuggerPanel } from './panel.js';
-import { createSnapshot, createController } from './panel.test.js';
+import { createSnapshot, createController } from './panel.test-support.js';
 
 beforeEach(async () => {
   resetFluxI18n();
@@ -282,5 +282,45 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
     expect(expanded).toBeTruthy();
     expect(expanded?.getAttribute('role')).toBeNull();
     expect(expanded?.getAttribute('tabindex')).toBeNull();
+  });
+
+  it('uses button semantics for timeline error-group disclosure', () => {
+    const snapshot = createSnapshot();
+    snapshot.activeTab = 'timeline';
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'error',
+        group: 'error',
+        level: 'error',
+        source: 'root.onActionError',
+        summary: 'Boom',
+      },
+      {
+        id: 2,
+        sessionId: 'session-test',
+        timestamp: 120,
+        kind: 'error',
+        group: 'error',
+        level: 'error',
+        source: 'root.onActionError',
+        summary: 'Still boom',
+      },
+    ];
+    const controller = createController(snapshot);
+
+    render(<NopDebuggerPanel controller={controller} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Errors Only' }));
+
+    const groupTrigger = screen.getByRole('button', { name: /root\.onActionError \(2\)/i });
+    expect(groupTrigger.getAttribute('aria-expanded')).toBe('false');
+
+    fireEvent.click(groupTrigger);
+
+    expect(groupTrigger.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByText('Still boom')).toBeTruthy();
   });
 });

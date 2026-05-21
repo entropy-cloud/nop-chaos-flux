@@ -521,3 +521,245 @@
 - **误报排除**: 这不是重复 Report Designer 非 Error stringification；这是 Spreadsheet host family 的独立 provider。虽然当前部分内置 handler 返回字符串，但公开 result contract 和 core dispatch catch 都是 `unknown`，跨包 host provider 应保真处理。
 - **参考文档**: `docs/architecture/flux-runtime-module-boundaries.md`（Namespaced Host Provider Result Contract）；`docs/architecture/action-scope-and-imports.md`（ActionResult、error/result branch context）
 - **复核状态**: 未复核
+
+## 深挖第 7 轮追加
+
+### [维度19-15] value-adapter 将 value adaptation action 的失败结果压缩成字符串错误，丢失 `ActionResult` 结构化上下文
+
+- **文件**: `packages/flux-core/src/value-adapter.ts:110-124,251-287,310-314`
+- **行号**: `110-124`, `251-287`, `310-314`
+- **证据片段**:
+  ```ts
+  function toActionFailureMessage(
+    phase: 'transformIn' | 'transformOut',
+    resultOrError: ActionResult | unknown,
+  ): string {
+    if (... && (resultOrError as ActionResult).ok === false) {
+      return `[flux] ${phase} failed: ${String((resultOrError as ActionResult).error ?? 'Unknown adapter error')}`;
+    }
+  }
+  ```
+  ```ts
+  if (!result?.ok) {
+    throw new Error(toActionFailureMessage('transformOut', result));
+  }
+  ```
+- **严重程度**: P1
+- **类别**: 错误替换 / 非抛出型失败上下文丢失
+- **当前状态**: `actionAdapter` 是 `detail-field`、`detail-view`、`object-field`、`variant-field` 共用的 value adaptation substrate，但在 `transformIn` / `transformOut` 失败时只读取 `result.error` 拼接文案，再抛出一个新的 `Error`；原始 `ActionResult` 中的 `cancelled`、`timedOut`、`cause`、`results`、`attempts`、`failureCount`、`providerKind` 等字段全部丢失。`validate` 分支同样只把 `result.error` 映射成 issue message，无法保留完整失败结果。
+- **风险**: 适配 action 一旦走 namespaced/import/provider/parallel/retry/timeout 路径，owner 层最终只能看到一条字符串错误，无法区分“用户取消/超时/补偿失败/聚合子结果失败/重试耗尽”等不同语义；这会让 detail/object/variant 这条跨 renderer 家族的共享错误通道失真，并误导上层 notify、draft error、调试与后续补偿逻辑。
+- **建议**: `actionAdapter` 不应把失败结果降格为字符串。至少应抛出/返回保留原始 `ActionResult` 的错误，例如 `new Error(message, { cause: result })`，或直接把完整 `ActionResult` 作为 owner-level failure object 向上传递；`validate` 路径也应允许 issue/diagnostic 读取 `result.cause`、`results`、`attempts` 等结构字段。
+- **误报排除**: 这不是普通 UI 友好文案问题。`docs/architecture/value-adaptation-and-detail-field.md` 已把 value adaptation 定义为 owner-level shared infrastructure，要求其统一处理 action payload/result/error；当前实现是在共享基础设施边界主动替换失败对象，而不是某个单独 renderer 的展示层简化。
+- **参考文档**: `docs/architecture/value-adaptation-and-detail-field.md`（共享 value adaptation substrate、统一错误处理）；`docs/architecture/action-scope-and-imports.md`（`ActionResult`、cancellation/timeout/result context 语义）
+- **复核状态**: 未复核
+
+### [维度19-16] anonymous source observer 将结构化 cancelled/timedOut source result 记录成普通 error 状态
+
+- **文件**: `packages/flux-runtime/src/async-data/source-observer.ts:27-32,99-105`; `packages/flux-renderers-form/src/renderers/input-choice-renderers.tsx:47-66`; `packages/flux-renderers-form-advanced/src/tree-control-controllers.ts:11-32`
+- **行号**: `source-observer.ts:27-32,99-105`; `input-choice-renderers.tsx:47-66`; `tree-control-controllers.ts:11-32`
+- **证据片段**:
+  ```ts
+  function buildResultState(result: ActionResult): SourceTransientState {
+    return {
+      loading: false,
+      error: result.ok ? undefined : result.error,
+      status: result.ok ? 'ready' : 'error',
+    };
+  }
+  ```
+  ```ts
+  if (sourceState?.status !== 'error') {
+    return undefined;
+  }
+  ```
+- **严重程度**: P1
+- **类别**: 取消/超时误分类
+- **当前状态**: `createSourceObserver` 对 source action 的返回结果只按 `result.ok` 决定 `ready/error`，完全忽略 `cancelled` / `timedOut`。而 options/tree 等 consumer 又把 `status === 'error'` 直接解释为“加载失败”并展示错误消息。
+- **风险**: source-enabled props 经 action timeout、上游 abort、owner dispose、refresh supersession 等返回结构化 `{ ok:false, cancelled:true }` / `{ timedOut:true }` 时，会被匿名 source 管道误记成普通加载失败。这样下游控件会把取消/超时报成“Failed to load options/tree options”，同时丢失 cancellation 语义，破坏 action/runtime 文档要求的统一取消分类。
+- **建议**: source observer 应为 cancelled/timedOut 保留独立状态或至少避免映射成 `status: 'error'`；若维持现有 `SourceTransientState` 形状，至少应让 consumer 可区分 `cancelled/timedOut` 与真正 failure，例如把完整 `ActionResult` 保留到 transient state，再由 UI 层决定是否展示错误。
+- **误报排除**: 这不是“取消时不更新 UI”的可接受简化。问题发生在 runtime-owned source observer 对 `ActionResult` 的主分类层，且当前已有多个 consumer 把该分类直接用于用户可见错误提示。
+- **参考文档**: `docs/architecture/action-scope-and-imports.md`（Cancellation Ownership）；`docs/architecture/flux-runtime-module-boundaries.md`（source/reaction runtime ownership）
+- **复核状态**: 未复核
+
+## 深挖第 8 轮追加
+
+### [维度19-17] anonymous source observer 会把首个 rejected source 的异常错误地扩散到后续 source
+
+- **文件**: `packages/flux-runtime/src/async-data/source-observer.ts:81-116`
+- **证据片段**:
+  ```ts
+  void Promise.allSettled(
+    input.entries.map(async (entry) => {
+      const result = await runtime.executeSource({
+        source: entry.source,
+        scope: input.scope,
+        ctx: { signal: controller.signal },
+      });
+      return [entry, result] as const;
+    }),
+  ).then((settled) => {
+    for (const result of settled) {
+      if (result.status === 'fulfilled') {
+        /* ... */ continue;
+      }
+      const error = result.reason;
+      for (const entry of input.entries) {
+        if (entry.stateKey && !(entry.stateKey in transientPatch)) {
+          transientPatch[entry.stateKey] = { loading: false, error, status: 'error' };
+        }
+      }
+    }
+  });
+  ```
+- **严重程度**: P1
+- **类别**: 错误替换 / 跨层错误归因错位
+- **现状**: `Promise.allSettled` 的 rejected 分支拿不到对应 `entry`，当前代码直接把当前 `result.reason` 批量写给所有尚未写入的 source state。这样一旦前面的 source 先 rejected，后续真正失败的 source 会继承“第一个失败”的错误对象。
+- **风险**: 一个 observer 同时驱动多个匿名 source（如多个 source-enabled prop）时，UI、debugger 与 host diagnostics 会把 A source 的异常错误地显示在 B/C source 上；后续排障看到的是“错误对象存在”，但根因已被跨 source 替换，属于高价值的跨层诊断失真。
+- **建议**: 不要在 rejected 分支按“所有未处理 entry”批量灌错。应改成每个 entry 自己产出 `{ entry, ok/result }` 或 `{ entry, error }` 的包装结果，再逐项写回对应 stateKey。
+- **为什么值得现在做**: 这是 runtime-owned shared substrate，不是单个 renderer 的展示细节；一处错误会污染所有依赖匿名 source observer 的控件诊断。
+- **误报排除**: 这不是“同一次批量加载统一失败提示”的合理策略；代码并非在构造 aggregate error，而是在逐 source state 上写入错误，却使用了错误的 source 归属。
+- **历史模式对应**: 对应维度 19 的“跨层错误丢失/替换”，且比单纯字符串化更严重，因为它把错误归给了错误的 owner。
+- **参考文档**: `docs/architecture/flux-runtime-module-boundaries.md`；`docs/architecture/action-scope-and-imports.md`
+- **复核状态**: 未复核
+
+### [维度19-18] Flow Designer create dialog 会静默吞掉 submitAction 失败，并丢失完整 `ActionResult`
+
+- **文件**: `packages/flow-designer-renderers/src/designer-page-helpers.tsx:200-208`; `packages/flow-designer-renderers/src/designer-page-body.tsx:186-197`
+- **证据片段**:
+  ```ts
+  const result = await args.helpers.dispatch(submitAction, {
+    scope: args.designerScope,
+    actionScope: args.actionScope,
+  });
+  if (!result.ok) {
+    return { ok: false as const, error: result.error };
+  }
+  ```
+  ```ts
+  const result = await confirmCreateDialog({ ... });
+  if (result.ok && result.result.ok) {
+    setPendingCreateDialog(null);
+  }
+  ```
+- **严重程度**: P1
+- **类别**: 错误吞没 / 非抛出型失败上下文丢失
+- **现状**: create dialog 的 `submitAction` 若返回 `{ ok:false }`，helper 只保留 `result.error`，把 `cancelled`、`timedOut`、`cause`、`results`、`attempts` 等结构化上下文全部丢掉；而调用方对 `ok:false` 完全不报告、不通知、不上报，只是保持对话框原样停留。
+- **风险**: 节点创建前置 action 一旦失败，尤其是返回无 `error` 的结构化失败或取消结果时，用户和调试器都看不到任何明确失败信号；这会把 action 层真实失败静默吞进 renderer 交互层，形成“按钮无反应”的跨层诊断黑洞。
+- **建议**: `confirmCreateDialog` 应返回完整失败 `ActionResult`，而不是仅返回 `error`；`designer-page-body` 应显式上报/通知失败，并区分 cancelled、timedOut 与 ordinary failure。
+- **为什么值得现在做**: create dialog 是 Flow Designer 高价值主路径；静默失败会直接损害节点创建、host action 集成和 schema 侧排障效率。
+- **误报排除**: 这不是“失败时保留弹窗等待用户修正”的正常交互；当前问题不是弹窗不关闭，而是失败结果没有被任何层消费或传播，导致真正的错误被吞没。
+- **历史模式对应**: 对应维度 19 的“Result 风格失败跨层被压扁/吞没”，且与已有 action-core 问题不同，发生在 renderer-owned action bridge。
+- **参考文档**: `docs/architecture/action-scope-and-imports.md`；`docs/architecture/flux-runtime-module-boundaries.md`
+- **复核状态**: 未复核
+
+## 深挖第 9 轮追加
+
+### [维度19-19] formula data source 的 publish 异常在 refresh 路径只被上报，不会结算为 failed，导致 source/debugger 卡在 `fetching` / `running`
+
+- **文件**: `packages/flux-runtime/src/async-data/formula-data-source-controller.ts:97-114,216-241`; `packages/flux-runtime/src/async-data/source-registry.ts:253-264`
+- **行号范围**: `formula-data-source-controller.ts:97-114,216-241`; `source-registry.ts:253-264`
+- **证据片段**:
+
+  ```ts
+  const run =
+    asyncOwnerId && input.asyncGovernance
+      ? input.asyncGovernance.beginRun({ ownerKind: 'data-source', ownerId: asyncOwnerId, ... })
+      : undefined;
+
+  updateState((current) => ({
+    ...toNextDataSourceState(current, {
+      fetchStatus: 'fetching',
+      status: typeof current.data === 'undefined' ? 'pending' : current.status,
+    }),
+  }));
+  ```
+
+  ```ts
+  void Promise.resolve()
+    .then(() => {
+      publish();
+    })
+    .catch((error: unknown) => {
+      reportPublishFailure(error);
+      updateState((current) => ({ ...current, status: 'error', fetchStatus: 'idle', error }));
+    });
+
+  async refresh() {
+    publish();
+  }
+  ```
+
+  ```ts
+  const refreshPromise = controller.refresh();
+  void refreshPromise
+    .catch((error) => {
+      reportRefreshFailure(error);
+    })
+    .finally(() => {
+      leaveSourceCascade(cascadeState);
+    });
+  ```
+
+- **严重程度**: P1
+- **类别**: 错误吞没 / async owner 结算遗漏
+- **现状**: `formula-data-source-controller` 的 `publish()` 会先 `beginRun()` 并把 source 状态推进到 `fetching`，但表达式求值、result mapping 或 `writeDataToScope()` 抛错时，没有在 `publish()` 内统一 `settleRun(..., { outcome: 'failed', error })`。初始 `start()` 路径至少会在外层 `.catch(...)` 把 source state 改成 error，但仍拿不到 `run` 去结算 async governance；`refresh()` 路径更糟，直接调用 `publish()`，异常只会被 `source-registry` 的 `.catch(reportRefreshFailure)` 记录，source state 也不会回落到 error/idle。
+- **风险**: formula-backed source 一旦在 refresh/依赖变更后抛错，跨层会出现互相矛盾的诊断：host issue 已记录失败，但 `DataSourceState` 可能长期停留在 `fetching/pending`，`async` debug snapshot 的 `currentRun` 也可能一直是 `running`，看不到 failed/stale-dropped/cancelled 结算。依赖 source 状态的 renderer、statusPath 和 debugger 会把真实失败误读成“还在加载”或“没有结论”。
+- **建议**: 把 `publish()` 改成 owner 内部完整 try/catch/finally：一旦 beginRun 后任一步失败，必须同时更新 `DataSourceState` 为 error/idle 并 `settleRun(run, { outcome: 'failed', error })`；`refresh()` 不应把异常留给 `source-registry` 仅做 host report。若仍需向上抛出，也应先完成 owner-local failed settlement，再决定是否 rethrow。
+- **为什么值得现在做**: 这是 runtime-owned shared source substrate，不是单个 renderer 的展示细节；formula-backed source 是文档明确保留的主模型之一，错误被卡在 “fetching/running” 会直接破坏 source lifecycle 与 debugger 的根因可见性。
+- **误报排除**: 这不是“同步 formula source 不需要 async diagnostics”的合理简化。live code 已明确为 formula source 调用 `beginRun()` 并把 `state.async` 暴露到 source/debug snapshot；既然 owner 已进入 shared async-governance 语义，就不能在失败路径只报 host issue 而不结算 owner。
+- **参考文档**: `docs/architecture/api-data-source.md`（formula-backed 与 action-backed producer 共用 source model、source owner 负责 stale/result lifecycle）；`docs/architecture/flux-runtime-module-boundaries.md`（source/reaction runtime ownership）；`docs/architecture/debugger-runtime.md`（async-governance snapshot 需要解释 async result 为什么没有发布）
+- **复核状态**: 未复核
+
+## 深挖第 10 轮追加
+
+未发现新的高价值问题。深挖结束。
+
+## 维度复核结论
+
+- [维度19-01]: 保留 (P1)。`packages/flux-runtime/src/import-stack.ts:115-135` 在复用 pending load 失败后仍会清除 pending 并隐式重试，首次失败不会按同一次等待链路继续传播。
+- [维度19-02]: 保留 (P1)。`packages/flux-runtime/src/async-data/api-data-source-controller-runtime.ts:45-55` 仍把无 `error` 的 failed `ActionResult` 扁平化成通用 `Error`，丢掉 `cause/results/attempts` 等结构化上下文。
+- [维度19-03]: 保留 (P2)。`packages/word-editor-renderers/src/word-editor-action-provider.ts:80-82` 仍把 abort 伪装成普通 `{ ok:false, error }`，没有返回 `cancelled: true`。
+- [维度19-04]: 保留 (P2)。`packages/flux-action-core/src/action-dispatcher/action-execution.ts:100-106` 仍在 parallel 聚合失败无 `error` 时生成 `new Error('Parallel action failed')`，`onError` 绑定拿不到失败子结果定位。
+- [维度19-05]: 保留 (P2)。`packages/flux-runtime/src/form-runtime-submit-flow.ts:127-139,343-351` 仍在多个 abort 检查点统一返回 `new Error('Submit aborted')`，没有保留 `AbortSignal.reason`。
+- [维度19-06]: 保留 (P2)。`packages/flux-action-core/src/operation-control.ts:160-171` 的 `withRetry` abort 分支仍固定生成 `DOMException('The operation was aborted', 'AbortError')`，未把 `options.signal.reason` 带过边界。
+- [维度19-07]: 保留 (P1)。`packages/flux-runtime/src/runtime-action-helpers.ts:42-44` 仍把 cancelled validation action result 映射为 `undefined`，`packages/flux-runtime/src/form-runtime-validation.ts:420-422` 仍把这类 run 结算为 `succeeded`。
+- [维度19-08]: 保留 (P2)。`packages/flux-runtime/src/async-data/request-runtime.ts:431-443,475-477` 的 parent abort、dedup cancel-previous 与 dispose 仍用无参 `abort()`，请求底层看不到上游 reason。
+- [维度19-09]: 保留 (P1)。`packages/flux-action-core/src/action-dispatcher/action-runners.ts:118-145` 只在 provider 正常返回后补 namespace/component metadata；直接 throw 仍会掉回 `action-execution.ts:296-311` 的通用 catch，失败结果缺少 dispatch-mode/sourceScope/provider 元数据。
+- [维度19-10]: 保留 (P2)。`packages/flow-designer-renderers/src/designer-context.ts:119-124` 的 `toActionResult()` 仍只保留 `ok/data/error`，把 command-level `reason` 丢在 Flow Designer host provider 边界外。
+- [维度19-11]: 保留 (P2)。`packages/report-designer-renderers/src/host-action-provider.ts:34-44,118-124` 仍把非 `Error` 的 preview/command failure `new Error(String(error))` 化，没有保留结构化 cause。
+- [维度19-12]: 保留 (P2)。`packages/flux-action-core/src/action-dispatcher/action-execution.ts:518-524,583-584` 仍只按 `previous.error !== undefined` 判断 `onError` 分支是否失败，无 `error` 的 failed `ActionResult` 继续被吞掉。
+- [维度19-13]: 保留 (P2)。`packages/flux-runtime/src/async-data/reaction-runtime.ts:462-475` 仍把 failed `dispatchResult` 压成单个 `Error` 后上报 monitor/async governance，丢掉完整 `ActionResult`。
+- [维度19-14]: 保留 (P2)。`packages/spreadsheet-renderers/src/host-action-provider.ts:16-26,98-104` 仍把 spreadsheet command 的非 `Error` 失败对象字符串化，和 Report Designer 同类问题独立存在。
+- [维度19-15]: 保留 (P1)。`packages/flux-core/src/value-adapter.ts:110-124,251-287,310-314` 仍把 value adaptation action failure 降格成字符串 message 再抛新 `Error`，共享 substrate 丢失原始 `ActionResult` 结构字段。
+- [维度19-16]: 保留 (P1)。`packages/flux-runtime/src/async-data/source-observer.ts:27-32,99-105` 仍只按 `result.ok` 分类 anonymous source state，`cancelled/timedOut` 会被记录为普通 `error` 并被下游控件当成加载失败。
+- [维度19-17]: 保留 (P1)。`packages/flux-runtime/src/async-data/source-observer.ts:91-109` 的 `Promise.allSettled` rejected 分支仍把首个 rejected error 批量灌给所有尚未写入的 source state，错误归因会跨 source 污染。
+- [维度19-18]: 保留 (P1)。`packages/flow-designer-renderers/src/designer-page-helpers.tsx:200-208` 仍只从 `submitAction` 失败中摘 `result.error`，`designer-page-body.tsx:186-197` 也仍未显式上报/处理 `result.ok === false`，create dialog 失败仍会静默停留。
+- [维度19-19]: 保留 (P1)。`packages/flux-runtime/src/async-data/formula-data-source-controller.ts:97-185,240-242` 仍在 `publish()` 内 begin run 但不对 publish exception 做 failed settlement；`source-registry.ts:253-264` refresh 路径也仍只 report，不会把 source/debugger async owner 结算为 failed。
+
+## 子项复核结论
+
+- [维度19-01] 至 [维度19-19]: 均成立。复核后仍集中在四类根因：Result 风格失败被扁平化为通用 Error、abort reason/cancelled 语义被丢失、provider/namespace metadata 未跨边界保真、async owner 的 failed/cancelled settlement 仍缺口明显。
+
+## 最终保留项
+
+| 编号  | 严重程度 | 文件                                                                                    | 一句话摘要                                                       |
+| ----- | -------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| 19-01 | P1       | `packages/flux-runtime/src/import-stack.ts:115-135`                                     | pending import 失败后仍被吞掉并隐式重试                          |
+| 19-02 | P1       | `packages/flux-runtime/src/async-data/api-data-source-controller-runtime.ts:45-55`      | data-source failed result 仍被扁平化为通用 Error                 |
+| 19-03 | P2       | `packages/word-editor-renderers/src/word-editor-action-provider.ts:80-82`               | Word Editor abort 仍被伪装成普通 failure                         |
+| 19-04 | P2       | `packages/flux-action-core/src/action-dispatcher/action-execution.ts:100-106`           | parallel 聚合失败仍生成无上下文的通用 Error                      |
+| 19-05 | P2       | `packages/flux-runtime/src/form-runtime-submit-flow.ts:127-139,343-351`                 | form submit abort 仍丢 `AbortSignal.reason`                      |
+| 19-06 | P2       | `packages/flux-action-core/src/operation-control.ts:160-171`                            | withRetry abort 分支仍丢上游 reason                              |
+| 19-07 | P1       | `packages/flux-runtime/src/runtime-action-helpers.ts:42-44`                             | async validation 仍把 cancelled action result 记成 succeeded     |
+| 19-08 | P2       | `packages/flux-runtime/src/async-data/request-runtime.ts:431-443,475-477`               | request runtime abort 转发仍丢上游 reason                        |
+| 19-09 | P1       | `packages/flux-action-core/src/action-dispatcher/action-runners.ts:118-145`             | namespaced/component action 直接 throw 仍丢 dispatch metadata    |
+| 19-10 | P2       | `packages/flow-designer-renderers/src/designer-context.ts:119-124`                      | Flow Designer command `reason` 仍未进入 ActionResult             |
+| 19-11 | P2       | `packages/report-designer-renderers/src/host-action-provider.ts:34-44,118-124`          | Report Designer 非 Error failure 仍被字符串化                    |
+| 19-12 | P2       | `packages/flux-action-core/src/action-dispatcher/action-execution.ts:518-524,583-584`   | `onError` 分支无 `error` 的 failed result 仍会被吞掉             |
+| 19-13 | P2       | `packages/flux-runtime/src/async-data/reaction-runtime.ts:462-475`                      | reaction failed result 仍被压成单个 Error                        |
+| 19-14 | P2       | `packages/spreadsheet-renderers/src/host-action-provider.ts:16-26,98-104`               | Spreadsheet 非 Error command failure 仍被字符串化                |
+| 19-15 | P1       | `packages/flux-core/src/value-adapter.ts:110-124,251-287,310-314`                       | value-adapter 仍把 shared ActionResult failure 压成字符串错误    |
+| 19-16 | P1       | `packages/flux-runtime/src/async-data/source-observer.ts:27-32,99-105`                  | anonymous source observer 仍把 cancelled/timedOut 记成普通 error |
+| 19-17 | P1       | `packages/flux-runtime/src/async-data/source-observer.ts:91-109`                        | source observer 仍会把首个 rejected error 扩散到后续 source      |
+| 19-18 | P1       | `packages/flow-designer-renderers/src/designer-page-helpers.tsx:200-208`                | Flow Designer create dialog 仍静默吞掉 submitAction 失败         |
+| 19-19 | P1       | `packages/flux-runtime/src/async-data/formula-data-source-controller.ts:97-185,240-242` | formula source refresh 失败后仍不会 failed settlement            |

@@ -1,8 +1,113 @@
-import type { ActionNamespaceProvider } from '@nop-chaos/flux-core';
+import type {
+  ActionNamespaceProvider,
+  FluxValueShape,
+  HostCapabilityContract,
+} from '@nop-chaos/flux-core';
 import type { DesignerCore } from '@nop-chaos/flow-designer-core';
 import { createDesignerCommandAdapter } from './designer-command-adapter.js';
 import type { DesignerCommandAdapter } from './designer-command-adapter.js';
 import { notifyCommandFailure, toActionResult } from './designer-context.js';
+import { FLOW_DESIGNER_HOST_METHOD_CONTRACTS } from './designer-manifest.js';
+
+type CommandRecord = Record<string, unknown>;
+
+function isCommandRecord(payload: unknown): payload is CommandRecord {
+  return Boolean(payload) && typeof payload === 'object' && !Array.isArray(payload);
+}
+
+function matchesShape(value: unknown, shape: FluxValueShape): boolean {
+  switch (shape.kind) {
+    case 'unknown':
+      return true;
+    case 'string':
+      return typeof value === 'string';
+    case 'number':
+      return typeof value === 'number' && Number.isFinite(value);
+    case 'boolean':
+      return typeof value === 'boolean';
+    case 'null':
+      return value === null;
+    case 'literal':
+      return value === shape.value;
+    case 'array':
+      return Array.isArray(value) && value.every((item) => matchesShape(item, shape.item));
+    case 'union':
+      return shape.anyOf.some((variant) => matchesShape(value, variant));
+    case 'object': {
+      if (!isCommandRecord(value)) {
+        return false;
+      }
+      const optional = new Set(shape.optional ?? []);
+      for (const [key, fieldShape] of Object.entries(shape.fields)) {
+        if (!(key in value)) {
+          if (!optional.has(key)) {
+            return false;
+          }
+          continue;
+        }
+        if (!matchesShape(value[key], fieldShape)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    default:
+      return false;
+  }
+}
+
+function validateMethodPayload(
+  method: string,
+  payload: unknown,
+): { ok: true; args: CommandRecord } | { ok: false; error: Error } {
+  const contract = (FLOW_DESIGNER_HOST_METHOD_CONTRACTS as HostCapabilityContract['methods'])[method];
+  if (!contract?.args) {
+    if (payload === undefined) {
+      return { ok: true, args: {} };
+    }
+    if (isCommandRecord(payload)) {
+      return { ok: true, args: payload };
+    }
+    return {
+      ok: false,
+      error: new Error(`designer:${method} does not accept a non-object payload.`),
+    };
+  }
+
+  const args = payload === undefined ? {} : payload;
+  if (!matchesShape(args, contract.args)) {
+    return {
+      ok: false,
+      error: new Error(`designer:${method} payload does not match the published host args contract.`),
+    };
+  }
+
+  return { ok: true, args: args as CommandRecord };
+}
+
+function mapPublishedResult(method: string, actionResult: ReturnType<typeof toActionResult>) {
+  if (!actionResult.ok) {
+    return actionResult;
+  }
+
+  if (method === 'addNode' || method === 'duplicateNode') {
+    const nodeId =
+      isCommandRecord(actionResult.data) && typeof actionResult.data.id === 'string'
+        ? actionResult.data.id
+        : undefined;
+    return { ...actionResult, data: nodeId ? { nodeId } : undefined };
+  }
+
+  if (method === 'addEdge') {
+    const edgeId =
+      isCommandRecord(actionResult.data) && typeof actionResult.data.id === 'string'
+        ? actionResult.data.id
+        : undefined;
+    return { ...actionResult, data: edgeId ? { edgeId } : undefined };
+  }
+
+  return actionResult;
+}
 
 export function createDesignerActionProvider(
   core: DesignerCore,
@@ -41,6 +146,8 @@ export function createDesignerActionProvider(
         'setViewport',
         'save',
         'restore',
+        'copySelection',
+        'pasteClipboard',
         'beginTransaction',
         'commitTransaction',
         'rollbackTransaction',
@@ -53,31 +160,39 @@ export function createDesignerActionProvider(
       ];
     },
     invoke(method, payload, ctx) {
+      const validation = validateMethodPayload(method, payload);
+      if (!validation.ok) {
+        return { ok: false, error: validation.error };
+      }
+      const args = validation.args;
+
       switch (method) {
         case 'addNode': {
-          const result = adapter.execute({
+          const actionResult = toActionResult(
+            adapter.execute({
             type: 'addNode',
-            nodeType: String(payload?.nodeType ?? ''),
-            position: (payload?.position as { x: number; y: number } | undefined) ?? {
+            nodeType: args.nodeType as string,
+            position: (args.position as { x: number; y: number } | undefined) ?? {
               x: 200,
               y: 120,
             },
-            data: payload?.data as Record<string, unknown> | undefined,
-          });
+            data: args.data as Record<string, unknown> | undefined,
+            }),
+          );
           notifyCommandFailure({
             notify: ctx?.runtime?.env?.notify,
-            error: result.error,
-            reason: result.reason,
+            error: actionResult.error,
+            reason: (actionResult.cause as { reason?: string } | undefined)?.reason,
           });
-          return toActionResult(result);
+          return mapPublishedResult(method, actionResult);
         }
         case 'addBranch': {
           const result = adapter.execute({
             type: 'addBranch',
-            nodeId: String(payload?.nodeId ?? ''),
-            branchData: payload?.branchData as Record<string, unknown> | undefined,
-            childType: typeof payload?.childType === 'string' ? payload.childType : undefined,
-            childData: payload?.childData as Record<string, unknown> | undefined,
+            nodeId: args.nodeId as string,
+            branchData: args.branchData as Record<string, unknown> | undefined,
+            childType: typeof args.childType === 'string' ? args.childType : undefined,
+            childData: args.childData as Record<string, unknown> | undefined,
           });
           notifyCommandFailure({
             notify: ctx?.runtime?.env?.notify,
@@ -87,20 +202,22 @@ export function createDesignerActionProvider(
           return toActionResult(result);
         }
         case 'addEdge': {
-          const result = adapter.execute({
+          const actionResult = toActionResult(
+            adapter.execute({
             type: 'addEdge',
-            source: String(payload?.source ?? ''),
-            target: String(payload?.target ?? ''),
-            sourcePort: typeof payload?.sourcePort === 'string' ? payload.sourcePort : undefined,
-            targetPort: typeof payload?.targetPort === 'string' ? payload.targetPort : undefined,
-            data: payload?.data as Record<string, unknown> | undefined,
-          });
+            source: args.source as string,
+            target: args.target as string,
+            sourcePort: typeof args.sourcePort === 'string' ? args.sourcePort : undefined,
+            targetPort: typeof args.targetPort === 'string' ? args.targetPort : undefined,
+            data: args.data as Record<string, unknown> | undefined,
+            }),
+          );
           notifyCommandFailure({
             notify: ctx?.runtime?.env?.notify,
-            error: result.error,
-            reason: result.reason,
+            error: actionResult.error,
+            reason: (actionResult.cause as { reason?: string } | undefined)?.reason,
           });
-          return toActionResult(result);
+          return mapPublishedResult(method, actionResult);
         }
         case 'clearSelection': {
           const result = adapter.execute({ type: 'clearSelection' });
@@ -109,37 +226,37 @@ export function createDesignerActionProvider(
         case 'selectNode': {
           const result = adapter.execute({
             type: 'selectNode',
-            nodeId: typeof payload?.nodeId === 'string' ? payload.nodeId : null,
+            nodeId: (args.nodeId as string | null | undefined) ?? null,
           });
           return toActionResult(result);
         }
         case 'selectBranch': {
           const result = adapter.execute({
             type: 'selectBranch',
-            nodeId: String(payload?.nodeId ?? ''),
-            branchId: typeof payload?.branchId === 'string' ? payload.branchId : null,
+            nodeId: args.nodeId as string,
+            branchId: (args.branchId as string | null | undefined) ?? null,
           });
           return toActionResult(result);
         }
         case 'selectEdge': {
           const result = adapter.execute({
             type: 'selectEdge',
-            edgeId: typeof payload?.edgeId === 'string' ? payload.edgeId : null,
+            edgeId: (args.edgeId as string | null | undefined) ?? null,
           });
           return toActionResult(result);
         }
         case 'deleteNode': {
           const result = adapter.execute({
             type: 'deleteNode',
-            nodeId: String(payload?.nodeId ?? ''),
+            nodeId: args.nodeId as string,
           });
           return toActionResult(result);
         }
         case 'deleteBranch': {
           const result = adapter.execute({
             type: 'deleteBranch',
-            nodeId: String(payload?.nodeId ?? ''),
-            branchId: String(payload?.branchId ?? ''),
+            nodeId: args.nodeId as string,
+            branchId: args.branchId as string,
           });
           notifyCommandFailure({
             notify: ctx?.runtime?.env?.notify,
@@ -151,7 +268,7 @@ export function createDesignerActionProvider(
         case 'deleteEdge': {
           const result = adapter.execute({
             type: 'deleteEdge',
-            edgeId: String(payload?.edgeId ?? ''),
+            edgeId: args.edgeId as string,
           });
           return toActionResult(result);
         }
@@ -160,22 +277,24 @@ export function createDesignerActionProvider(
           return toActionResult(result);
         }
         case 'duplicateNode': {
-          const result = adapter.execute({
+          const actionResult = toActionResult(
+            adapter.execute({
             type: 'duplicateNode',
-            nodeId: String(payload?.nodeId ?? ''),
-          });
+            nodeId: args.nodeId as string,
+            }),
+          );
           notifyCommandFailure({
             notify: ctx?.runtime?.env?.notify,
-            error: result.error,
-            reason: result.reason,
+            error: actionResult.error,
+            reason: (actionResult.cause as { reason?: string } | undefined)?.reason,
           });
-          return toActionResult(result);
+          return mapPublishedResult(method, actionResult);
         }
         case 'moveNode': {
           const result = adapter.execute({
             type: 'moveNode',
-            nodeId: String(payload?.nodeId ?? ''),
-            position: (payload?.position as { x: number; y: number } | undefined) ?? { x: 0, y: 0 },
+            nodeId: args.nodeId as string,
+            position: (args.position as { x: number; y: number } | undefined) ?? { x: 0, y: 0 },
           });
           notifyCommandFailure({
             notify: ctx?.runtime?.env?.notify,
@@ -187,9 +306,9 @@ export function createDesignerActionProvider(
         case 'moveBranch': {
           const result = adapter.execute({
             type: 'moveBranch',
-            nodeId: String(payload?.nodeId ?? ''),
-            branchId: String(payload?.branchId ?? ''),
-            direction: payload?.direction === 'left' ? 'left' : 'right',
+            nodeId: args.nodeId as string,
+            branchId: args.branchId as string,
+            direction: args.direction === 'left' ? 'left' : 'right',
           });
           notifyCommandFailure({
             notify: ctx?.runtime?.env?.notify,
@@ -201,9 +320,9 @@ export function createDesignerActionProvider(
         case 'updateBranchData': {
           const result = adapter.execute({
             type: 'updateBranchData',
-            nodeId: String(payload?.nodeId ?? ''),
-            branchId: String(payload?.branchId ?? ''),
-            data: (payload?.data as Record<string, unknown>) ?? {},
+            nodeId: args.nodeId as string,
+            branchId: args.branchId as string,
+            data: (args.data as Record<string, unknown>) ?? {},
           });
           notifyCommandFailure({
             notify: ctx?.runtime?.env?.notify,
@@ -215,11 +334,11 @@ export function createDesignerActionProvider(
         case 'reconnectEdge': {
           const result = adapter.execute({
             type: 'reconnectEdge',
-            edgeId: String(payload?.edgeId ?? ''),
-            source: String(payload?.source ?? ''),
-            target: String(payload?.target ?? ''),
-            sourcePort: typeof payload?.sourcePort === 'string' ? payload.sourcePort : undefined,
-            targetPort: typeof payload?.targetPort === 'string' ? payload.targetPort : undefined,
+            edgeId: args.edgeId as string,
+            source: args.source as string,
+            target: args.target as string,
+            sourcePort: typeof args.sourcePort === 'string' ? args.sourcePort : undefined,
+            targetPort: typeof args.targetPort === 'string' ? args.targetPort : undefined,
           });
           notifyCommandFailure({
             notify: ctx?.runtime?.env?.notify,
@@ -231,8 +350,8 @@ export function createDesignerActionProvider(
         case 'updateNodeData': {
           const result = adapter.execute({
             type: 'updateNodeData',
-            nodeId: String(payload?.nodeId ?? ''),
-            data: (payload?.data as Record<string, unknown>) ?? {},
+            nodeId: args.nodeId as string,
+            data: (args.data as Record<string, unknown>) ?? {},
           });
           notifyCommandFailure({
             notify: ctx?.runtime?.env?.notify,
@@ -244,8 +363,8 @@ export function createDesignerActionProvider(
         case 'updateEdgeData': {
           const result = adapter.execute({
             type: 'updateEdgeData',
-            edgeId: String(payload?.edgeId ?? ''),
-            data: (payload?.data as Record<string, unknown>) ?? {},
+            edgeId: args.edgeId as string,
+            data: (args.data as Record<string, unknown>) ?? {},
           });
           notifyCommandFailure({
             notify: ctx?.runtime?.env?.notify,
@@ -288,10 +407,18 @@ export function createDesignerActionProvider(
           const result = adapter.execute({ type: 'toggleInspector' });
           return toActionResult(result);
         }
+        case 'copySelection': {
+          const result = adapter.execute({ type: 'copySelection' });
+          return toActionResult(result);
+        }
+        case 'pasteClipboard': {
+          const result = adapter.execute({ type: 'pasteClipboard' });
+          return toActionResult(result);
+        }
         case 'setViewport': {
           const result = adapter.execute({
             type: 'setViewport',
-            viewport: (payload?.viewport as { x: number; y: number; zoom: number } | undefined) ?? {
+            viewport: (args.viewport as { x: number; y: number; zoom: number } | undefined) ?? {
               x: 0,
               y: 0,
               zoom: 1,
@@ -309,35 +436,25 @@ export function createDesignerActionProvider(
         }
         case 'beginTransaction': {
           const txId = core.beginTransaction(
-            typeof payload?.label === 'string' ? payload.label : undefined,
-            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined,
+            typeof args.label === 'string' ? args.label : undefined,
+            typeof args.transactionId === 'string' ? args.transactionId : undefined,
           );
           return { ok: true, data: txId };
         }
         case 'commitTransaction': {
-          core.commitTransaction(
-            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined,
-          );
+          core.commitTransaction(typeof args.transactionId === 'string' ? args.transactionId : undefined);
           return { ok: true };
         }
         case 'rollbackTransaction': {
-          core.rollbackTransaction(
-            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined,
-          );
+          core.rollbackTransaction(typeof args.transactionId === 'string' ? args.transactionId : undefined);
           return { ok: true };
         }
         case 'toggleNodeSelection': {
-          if (typeof payload?.nodeId !== 'string') {
-            return { ok: false, error: new Error('toggleNodeSelection requires nodeId') };
-          }
-          core.toggleNodeSelection(payload.nodeId);
+          core.toggleNodeSelection(args.nodeId as string);
           return { ok: true };
         }
         case 'toggleEdgeSelection': {
-          if (typeof payload?.edgeId !== 'string') {
-            return { ok: false, error: new Error('toggleEdgeSelection requires edgeId') };
-          }
-          core.toggleEdgeSelection(payload.edgeId);
+          core.toggleEdgeSelection(args.edgeId as string);
           return { ok: true };
         }
         case 'selectAllNodes': {
@@ -345,24 +462,18 @@ export function createDesignerActionProvider(
           return { ok: true };
         }
         case 'setSelection': {
-          const nodeIds = Array.isArray(payload?.nodeIds) ? payload.nodeIds.map(String) : [];
-          const edgeIds = Array.isArray(payload?.edgeIds) ? payload.edgeIds.map(String) : [];
+          const nodeIds = Array.isArray(args.nodeIds) ? args.nodeIds.map(String) : [];
+          const edgeIds = Array.isArray(args.edgeIds) ? args.edgeIds.map(String) : [];
           core.setSelection(nodeIds, edgeIds);
           return { ok: true };
         }
         case 'moveNodes': {
-          if (!payload?.deltas || typeof payload.deltas !== 'object') {
-            return { ok: false, error: new Error('moveNodes requires deltas') };
-          }
-          core.moveNodes(payload.deltas as Record<string, { dx: number; dy: number }>);
+          core.moveNodes(args.deltas as Record<string, { dx: number; dy: number }>);
           return { ok: true };
         }
         case 'updateMultipleNodes': {
-          if (!Array.isArray(payload?.updates)) {
-            return { ok: false, error: new Error('updateMultipleNodes requires updates array') };
-          }
           core.updateMultipleNodes(
-            payload.updates as Array<{ nodeId: string; data: Record<string, unknown> }>,
+            args.updates as Array<{ nodeId: string; data: Record<string, unknown> }>,
           );
           return { ok: true };
         }

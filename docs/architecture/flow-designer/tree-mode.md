@@ -453,30 +453,17 @@ Tree DSL 本身不解释领域语义。以下是不同 domain 如何复用同一
 
 判断标准：如果编辑时用户不需要"在两个已有节点之间画一根任意连线"，用 tree。
 
-## Implementation Phases
+## Current Baseline
 
-### Phase 1: TreeDocument 类型 + TreeProjection
+- `TreeDocument`、`TreeNode`、`TreeNodeBranch`、`TreeConfig`、`TreeDomainAdapter` 已在 `flow-designer-core` 中定义
+- tree projection 和 tree-mode `designer-page` 主路径已接线；渲染器可接受 `treeDocument` 并复用同一个 `DesignerCore`/workbench shell
+- tree-mode 当前已覆盖基础 tree contract、投影渲染、以及本地 tree 编辑态回写
 
-- 定义 `TreeDocument`、`TreeNode`、`TreeNodeBranch` 类型
-- 实现 `tree-projection.ts`：tree → flat nodes + edges
-- 验证：手动构造 TreeDocument JSON，通过投影在 React Flow 中渲染
+## Remaining Gaps
 
-### Phase 2: Tree-mode command surface
-
-- 树形 CRUD 操作：添加/删除/移动节点、添加/删除分支
-- 继续复用单一 `DesignerCore` 的 history、selection、snapshot，以及现有 core clipboard 能力
-- 验证：通过 designer actions 操作 tree 投影并保持同一个 core 实例连续工作
-
-### Phase 3: designer-page 支持 tree 模式
-
-- `DesignerPageSchema` 接受 `treeDocument`
-- `designer-page` 渲染器根据 `documentMode` 选择 Core
-- 完整的树形编辑器页面（palette、inspector、toolbar）
-
-### Phase 4: Domain adapters
-
-- 钉钉：FlowLong JSON ↔ TreeDocument 双向转换
-- Action flow：TreeDocument → ActionSchema lowering
+- 钉钉 `FlowLong JSON ↔ TreeDocument` 双向 domain adapter 仍是后续 domain 落地项
+- action-flow 的 `TreeDocument → ActionSchema` lowering 仍是后续 domain 落地项
+- domain-specific save/export and profile-level authoring surfaces 仍需各自 family doc 单独收口
 
 ## Related Documents
 

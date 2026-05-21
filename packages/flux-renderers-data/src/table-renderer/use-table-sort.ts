@@ -8,6 +8,19 @@ function toSortDirection(value: unknown): SortState['direction'] {
   return value === 'asc' || value === 'desc' ? value : null;
 }
 
+function toSortState(value: unknown): SortState {
+  const record = value as { column?: unknown; field?: unknown; direction?: unknown; order?: unknown } | undefined;
+  return {
+    column:
+      typeof record?.column === 'string'
+        ? record.column
+        : typeof record?.field === 'string'
+          ? record.field
+          : '',
+    direction: toSortDirection(record?.direction ?? record?.order),
+  };
+}
+
 export function useTableSort(
   schemaProps: TableSchema,
   onSortChange: RendererComponentProps<TableSchema>['events']['onSortChange'],
@@ -28,15 +41,13 @@ export function useTableSort(
     typeof schemaProps.sortStatePath === 'string' ? schemaProps.sortStatePath : undefined;
   const [localSortState, setLocalSortState] = useState<SortState>({ column: '', direction: null });
   const controlledSortState = useMemo(
-    () => ({
-      column:
-        typeof controlledSortInput.sortColumn === 'string'
-          ? controlledSortInput.sortColumn
-          : typeof controlledSortInput.sort?.column === 'string'
-            ? controlledSortInput.sort.column
-            : '',
-      direction: toSortDirection(controlledSortInput.sortDirection ?? controlledSortInput.sort?.direction),
-    }),
+    () =>
+      toSortState({
+        column: controlledSortInput.sortColumn,
+        field: controlledSortInput.sort?.column,
+        direction: controlledSortInput.sortDirection,
+        order: controlledSortInput.sort?.direction,
+      }),
     [controlledSortInput],
   );
 
@@ -46,12 +57,7 @@ export function useTableSort(
         return undefined;
       }
 
-      const value = getIn(scopeData, sortStatePath) as Record<string, unknown> | undefined;
-      return {
-        column: typeof value?.column === 'string' ? value.column : '',
-        direction:
-          value?.direction === 'asc' || value?.direction === 'desc' ? value.direction : null,
-      } satisfies SortState;
+      return toSortState(getIn(scopeData, sortStatePath));
     },
     (a, b) => a?.column === b?.column && a?.direction === b?.direction,
     { paths: sortStatePath ? [sortStatePath] : undefined },

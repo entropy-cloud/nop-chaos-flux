@@ -32,7 +32,7 @@ export interface CrudSortState {
   direction?: 'asc' | 'desc';
 }
 
-export type CrudFilterState = Record<string, unknown>;
+export type CrudFilterState = Record<string, { filters?: string[]; keyword?: string }>;
 
 export interface CrudQueryState {
   values: Record<string, unknown>;
@@ -78,6 +78,80 @@ export function normalizeSort(value: unknown): CrudSortState {
     column,
     direction,
   };
+}
+
+function normalizeCrudFilterEntry(value: unknown) {
+  if (typeof value === 'string' && value.length > 0) {
+    return { filters: [value] };
+  }
+
+  if (Array.isArray(value)) {
+    const filters = value.filter((item): item is string => typeof item === 'string');
+    return filters.length > 0 ? { filters } : undefined;
+  }
+
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const filters = Array.isArray(value.filters)
+    ? value.filters.filter((item): item is string => typeof item === 'string')
+    : undefined;
+  const keyword = typeof value.keyword === 'string' && value.keyword.length > 0 ? value.keyword : undefined;
+
+  if ((!filters || filters.length === 0) && keyword === undefined) {
+    return undefined;
+  }
+
+  return { filters, keyword };
+}
+
+export function normalizeCrudFilters(value: unknown): CrudFilterState {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const normalized: CrudFilterState = {};
+
+  for (const [key, entry] of Object.entries(value)) {
+    const nextEntry = normalizeCrudFilterEntry(entry);
+    if (nextEntry !== undefined) {
+      normalized[key] = nextEntry;
+    }
+  }
+
+  return normalized;
+}
+
+function areCrudFilterStatesEqual(left: CrudFilterState, right: CrudFilterState): boolean {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  return leftKeys.every((key) => {
+    const leftEntry = left[key];
+    const rightEntry = right[key];
+
+    if (!leftEntry || !rightEntry) {
+      return leftEntry === rightEntry;
+    }
+
+    if (leftEntry.keyword !== rightEntry.keyword) {
+      return false;
+    }
+
+    const leftFilters = leftEntry.filters ?? [];
+    const rightFilters = rightEntry.filters ?? [];
+
+    if (leftFilters.length !== rightFilters.length) {
+      return false;
+    }
+
+    return leftFilters.every((value, index) => value === rightFilters[index]);
+  });
 }
 
 export function applyQueryToRows(rows: unknown[], query: Record<string, unknown>) {
@@ -257,8 +331,8 @@ export function useCrudRuntimeState(args: {
   );
 
   const filterState = useScopeSelector(
-    (scopeData) => toRecord(getIn(scopeData, filterStatePath)),
-    shallowEqualRecords,
+    (scopeData) => normalizeCrudFilters(getIn(scopeData, filterStatePath)),
+    areCrudFilterStatesEqual,
     { paths: [filterStatePath] },
   );
 

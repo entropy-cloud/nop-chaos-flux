@@ -114,7 +114,7 @@ function KeyValueRow(props: {
               currentForm.setValue(keyPath, event.target.value);
 
               if (shouldValidateOn(name, currentForm, 'change')) {
-                void currentForm.validateField(keyPath);
+                void currentForm.validateField(keyPath, 'change');
               }
             }
           }}
@@ -123,7 +123,7 @@ function KeyValueRow(props: {
               currentForm.touchField(keyPath);
 
               if (shouldValidateOn(name, currentForm, 'blur')) {
-                void currentForm.validateField(keyPath);
+                void currentForm.validateField(keyPath, 'blur');
               }
             }
           }}
@@ -168,7 +168,7 @@ function KeyValueRow(props: {
               currentForm.setValue(valuePath, event.target.value);
 
               if (shouldValidateOn(name, currentForm, 'change')) {
-                void currentForm.validateField(valuePath);
+                void currentForm.validateField(valuePath, 'change');
               }
             }
           }}
@@ -177,7 +177,7 @@ function KeyValueRow(props: {
               currentForm.touchField(valuePath);
 
               if (shouldValidateOn(name, currentForm, 'blur')) {
-                void currentForm.validateField(valuePath);
+                void currentForm.validateField(valuePath, 'blur');
               }
             }
           }}
@@ -296,7 +296,10 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       }
 
       currentForm.setValue(name, nextPairs);
-      void currentForm.validateField(name);
+
+      if (shouldValidateOn(name, currentForm, 'change')) {
+        void currentForm.validateField(name, 'change');
+      }
     },
     [currentForm, name, scope],
   );
@@ -393,8 +396,6 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     <div
       className={cn('nop-key-value', 'grid gap-3', props.meta.className)}
       data-slot="field-control"
-      data-testid={props.meta.testid}
-      data-cid={props.meta.cid}
     >
       {pairs.map((pair, index) => {
         return (
@@ -432,7 +433,9 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
           if (currentForm && name) {
             currentForm.appendValue(name, nextEntry);
-            void currentForm.validateField(name);
+            if (shouldValidateOn(name, currentForm, 'change')) {
+              void currentForm.validateField(name, 'change');
+            }
             return;
           }
 
@@ -447,6 +450,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
 export const keyValueRendererDefinition: RendererDefinition = {
   type: 'key-value',
+  sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: KeyValueRenderer,
   wrap: true,
   fields: formFieldRules,

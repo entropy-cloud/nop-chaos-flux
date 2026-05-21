@@ -361,6 +361,27 @@ export const basicRendererDefinitions: RendererDefinition[] = [
         defaultValue: 'default',
       },
     },
+    componentCapabilityContracts: [
+      {
+        handle: 'setValue',
+        displayName: 'Set Value',
+        description: 'Set the active tab value on the current tabs instance.',
+        args: {
+          kind: 'object',
+          fields: {
+            value: { kind: 'unknown' },
+          },
+          optional: ['value'],
+        },
+        result: { kind: 'unknown' },
+      },
+      {
+        handle: 'getValue',
+        displayName: 'Get Value',
+        description: 'Read the current active tab value.',
+        result: { kind: 'string' },
+      },
+    ],
     fields: [
       { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
       { key: 'onChange', kind: 'event' },

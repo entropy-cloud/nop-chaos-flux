@@ -20,7 +20,7 @@ export function SpreadsheetFindReplacePanel(props: SpreadsheetToolbarProps) {
           size="sm"
           value={props.findQuery}
           onChange={(e) => props.onFindQueryChange(e.target.value)}
-          placeholder="Search text..."
+          placeholder={t('flux.spreadsheet.searchPlaceholder')}
         />
         <Button variant="ghost" size="xs" onClick={props.onFind}>
           {t('flux.spreadsheet.findNext')}
@@ -34,7 +34,7 @@ export function SpreadsheetFindReplacePanel(props: SpreadsheetToolbarProps) {
           size="sm"
           value={props.replaceText}
           onChange={(e) => props.onReplaceTextChange(e.target.value)}
-          placeholder="Replace with..."
+          placeholder={t('flux.spreadsheet.replacePlaceholder')}
         />
         <Button
           variant="ghost"

@@ -43,7 +43,7 @@ const singleSelect = {
         },
         { type: 'text', text: 'Selected: ${team ?? "(none)"}' },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -64,7 +64,7 @@ const checkboxTreeSelect = {
         },
         { type: 'text', text: 'Selected: ${(departments ?? []).join(", ") || "(none)"}' },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };

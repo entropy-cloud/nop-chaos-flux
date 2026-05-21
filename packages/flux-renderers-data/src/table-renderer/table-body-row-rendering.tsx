@@ -150,6 +150,22 @@ function DataRowView({
     }
   };
 
+  const handleRowKeyDown = (event: React.KeyboardEvent<HTMLTableRowElement>) => {
+    if (!isRowClickable || (event.key !== 'Enter' && event.key !== ' ')) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (hasRowClickHandler) {
+      void parentProps.events.onRowClick?.(event, { scope: rowScope });
+    }
+
+    if (expandRowByClick) {
+      onToggleExpand(rowKey);
+    }
+  };
+
   return (
     <TableRow
       data-slot="table-row"
@@ -157,6 +173,8 @@ function DataRowView({
       data-expanded={isExpanded || undefined}
       data-striped={isStriped && isEven ? true : undefined}
       onClick={isRowClickable ? handleRowClick : undefined}
+      onKeyDown={isRowClickable ? handleRowKeyDown : undefined}
+      tabIndex={isRowClickable ? 0 : -1}
       className={isRowClickable ? 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none' : undefined}
     >
       {showExpandColumn ? (

@@ -49,6 +49,7 @@ root 稳定导出：
 - `designer-page` 当前还会把 designer host `scope` 与当前 `actionScope` 显式传给 `toolbar` / `inspector` / `dialogs` region render，因此这些 schema 片段不是仅靠“位于同一 React 子树”才可用，而是明确绑定到同一份 designer snapshot 视图与 namespace 边界。
 - 当前 `designer:save` 直接调用 `core.save()`；`designer:export` 直接返回 `core.exportDocument()` 的 JSON 字符串，当前 playground 通过本地 JSON dialog 展示导出结果而不是经 `env.functions.publishFlowExport` 回传。
 - 当前 clipboard 也是 core 自身能力，先支持单节点 copy/paste，并通过 `designer:copySelection` / `designer:pasteClipboard` 对外暴露。
+- `designer:navigate-back` 不是 Flow Designer 自身 manifest 发布的方法；它只作为 `designer-page` 对上游已存在返回动作的桥接别名存在于运行时 action-scope 解析链中。
 - 当前删除确认不通过专用 designer action 实现，而是由 `designer-page` 外围 schema 使用共享 `dialog` action 包装 `designer:deleteSelection`。
 - 当前键盘快捷键也不通过 core 内建按键表实现，而是由 `designer-page.shortcuts` 在宿主层声明，再复用同一条 action dispatch 链。
 - 当前窄屏响应式行为也留在 `designer-page` shell：renderer 负责根据 media query 把 inspector 切换成 canvas 下方的可展开面板，但 inspector schema 和 nodeTypes/edgeTypes 的字段片段不需要改写成移动端专用协议。
@@ -67,7 +68,7 @@ root 稳定导出：
 interface DesignerPageSchema {
   type: 'designer-page';
   id?: string;
-  title?: string;
+  title?: string | SchemaInput;
   document?: GraphDocumentInput;
   treeDocument?: TreeDocumentInput;
   config: DesignerConfig;
@@ -83,8 +84,10 @@ interface DesignerPageSchema {
 - `config` 包含 `toolbar?: ToolbarConfig` 和 `shortcuts?: ShortcutsConfig`，详见 `config-schema.md`
 - `statusPath` 用于向宿主外部发布 `DesignerHostStatusSummary`
 - `config.toolbar` 只配置 built-in default toolbar 的 item 集合，不是完整 schema 容器
+- `title` 是当前已接线的 page-level value-or-region surface，会渲染在 workbench toolbar 上方
 - `toolbar` / `inspector` / `dialogs` 是 page 级 schema override surfaces
-- 当 `config.documentMode === 'tree'` 时，renderer 接收 `treeDocument`，先投影为 `GraphDocument`，再在稳定的 `DesignerCore` 上用 `replaceDocument(...)` 同步后续 tree 变化
+- 当 `config.documentMode === 'tree'` 时，renderer 接收 `treeDocument`，先投影为 `GraphDocument` 建立 host-owned `DesignerCore`；结构编辑只允许走 tree owner / tree commands，不再把 React local tree copy 当成第二 authoring source
+- formal authoring baseline 现在还显式校验文档前置条件：graph mode 缺少 `document` 会报 schema error，tree mode 缺少 `treeDocument` 会报 schema error，不再让这类页面根节点在 tooling 中表现为“形式上有效、运行时才 fallback”
 
 `designer-page` 是宿主入口，不是普通容器的简单别名。它负责：
 

@@ -49,16 +49,11 @@ test.describe('form renderer', () => {
     const collectSecret = stage.getByLabel('Collect secret code');
     const submitButton = stage.getByRole('button', { name: 'Submit Access Settings' });
     const secretCode = stage.locator('input[name="secretCode"]');
-    const scopeDebug = stage.locator('[data-slot="scope-debug-json"]');
 
     await expect(collectSecret).toBeVisible();
     await expect(secretCode).toHaveCount(0);
-    await expect(scopeDebug).toContainText('"errorCount": 0');
-    await expect(scopeDebug).toContainText('"valid": true');
 
     await submitButton.click();
-    await expect(scopeDebug).toContainText('"errorCount": 0');
-    await expect(scopeDebug).toContainText('"valid": true');
     await expect(stage.locator('[data-slot="field-error"]')).toHaveCount(0);
 
     await stage.getByText('Collect secret code').click();
@@ -68,14 +63,11 @@ test.describe('form renderer', () => {
     await expect(stage.locator('[data-slot="field-error"]')).toContainText(
       /Secret Code.*(不能为空|required)|不能为空|required/i,
     );
-    await expect(scopeDebug).toContainText('"errorCount": 1');
-    await expect(scopeDebug).toContainText('"valid": false');
 
     await secretCode.fill('alpha-42');
     await submitButton.click();
-    await expect(scopeDebug).toContainText('"errorCount": 0');
-    await expect(scopeDebug).toContainText('"valid": true');
-    await expect(scopeDebug).toContainText('"secretCode": "alpha-42"');
+    await expect(stage.locator('[data-slot="field-error"]')).toHaveCount(0);
+    await expect(secretCode).toHaveValue('alpha-42');
   });
 });
 

@@ -24,7 +24,7 @@ const basicNumberInputs = {
           value: 10,
         },
       ],
-      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
     },
   ],
 };
@@ -54,7 +54,7 @@ const decoratedNumberInputs = {
           value: 320,
         },
       ],
-      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
   ],
 };

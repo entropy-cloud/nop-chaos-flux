@@ -115,6 +115,7 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
     reportRuntimeHostIssue({
       env,
       error,
+      notify: false,
       phase: 'action',
       path: props.path,
       details: {

@@ -489,7 +489,7 @@ describe('CRUD query and pagination', () => {
               footerToolbar: [
                 {
                   type: 'text',
-                  text: 'Summary: page=${$crud.pagination.currentPage}/${$crud.pagination.pageSize}; sort=${$crud.sort.column || "none"}:${$crud.sort.direction || "none"}; filter=${$crud.filters.status || "none"}',
+                  text: 'Summary: page=${$crud.pagination.currentPage}/${$crud.pagination.pageSize}; sort=${$crud.sort.column || "none"}:${$crud.sort.direction || "none"}; filter=${$crud.filters.status.filters || "none"}',
                 },
               ],
               columns: [{ name: 'name', label: 'Name' }],

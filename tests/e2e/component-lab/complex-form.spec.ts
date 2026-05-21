@@ -180,7 +180,7 @@ test.describe('array-editor renderer', () => {
 // condition-builder
 // ---------------------------------------------------------------------------
 test.describe('condition-builder renderer', () => {
-  test('read: simple condition builder publishes its preloaded rule shape into scope state', async ({
+  test('read: simple condition builder renders its preloaded rule through visible controls', async ({
     page,
   }) => {
     const lab = new ComponentLabHelper(page);
@@ -189,13 +189,10 @@ test.describe('condition-builder renderer', () => {
     const slug = scenarioSlug('Simple single-rule AND group');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText(
-      '"field": "status"',
-    );
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"operator": "eq"');
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText(
-      '"value": "active"',
-    );
+    await expect(stage.getByRole('group', { name: /satisfy the following/i })).toBeVisible();
+    await expect(stage.getByRole('button', { name: 'AND' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(stage.getByLabel('Field')).toHaveValue('Status');
+    await expect(stage.getByLabel('Value')).toHaveText(/Active/i);
   });
 });
 

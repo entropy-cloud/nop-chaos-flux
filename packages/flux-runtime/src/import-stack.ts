@@ -117,8 +117,9 @@ async function loadModule(input: {
   if (existing) {
     try {
       return await existing;
-    } catch {
+    } catch (error) {
       input.moduleCache.removePending(key);
+      throw error;
     }
   }
 

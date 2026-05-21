@@ -68,12 +68,20 @@ interface TreeSelectSchema extends InputSchema {
 
 二者共享树 option model，但不共享同一交互壳。
 
-## 9. 结论
+## 9. Searchable Baseline
+
+- 当 `searchable=true` 时，popup 内的树搜索必须提供本地 query 输入、zero-results empty state 和 clear affordance 的完整基础微交互。
+- clear affordance 负责清空当前搜索 query，而不是清空字段值；字段值清空继续由 `clearable=true` 的 trigger-row clear button 承担。
+- query 命中为空时，popup panel 必须显示明确的 empty state，而不是让树区域直接留白。
+- 清空 query 后，tree-select 必须恢复当前 live options 列表与 roving-focus 基线。
+- roving focus 的 live baseline 现已要求同步真实 DOM focus 与 `aria-activedescendant`，所以 popup 内 tree 键盘导航不会停留在旧 DOM 焦点上。
+
+## 10. 结论
 
 - `tree-select` 应作为独立 field renderer 保留
 - 它与 `tree`、`select`、`input-tree` 都应保持明确边界
 
-## 10. 实现拆分建议
+## 11. 实现拆分建议
 
 - `tree-select` 的 renderer/view 层应主要负责 trigger、popover、`@nop-chaos/ui` 组合和 field contract 接线，不应把搜索、节点展开、选中标签派生、键盘交互全部堆回同一个 JSX 文件。
 - 纯 tree option 数据处理应优先放在 helper 模块，例如 option meta 构建、flatten、path label 计算、选择切换等；这类逻辑适合脱离 React 单独测试。

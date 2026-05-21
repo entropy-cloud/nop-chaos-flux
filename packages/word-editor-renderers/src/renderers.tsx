@@ -4,6 +4,7 @@ import {
   type RendererRegistry,
 } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
+import type { SavedDocumentData } from '@nop-chaos/word-editor-core';
 import { wordEditorHostContract } from './word-editor-manifest.js';
 import type { WordEditorPageSchema } from './types.js';
 import { WordEditorPage } from './word-editor-page.js';
@@ -19,6 +20,26 @@ const LazyWordEditorPage = useEagerRenderersInTests
       () => import('./word-editor-page.js').then((m) => m.WordEditorPage),
     );
 
+const wordEditorPanelConfigShape = {
+  kind: 'object' as const,
+  fields: {
+    generator: { kind: 'literal' as const, value: 'default' },
+  },
+  optional: ['generator'],
+};
+
+const savedDocumentDataShape = {
+  kind: 'object' as const,
+  fields: {
+    data: { kind: 'object' as const, fields: {} },
+    paperSettings: { kind: 'object' as const, fields: {} },
+    savedAt: { kind: 'string' as const },
+  },
+} satisfies {
+  kind: 'object';
+  fields: Record<keyof SavedDocumentData, unknown>;
+};
+
 export const wordEditorRendererDefinitions: RendererDefinition[] = [
   {
     type: 'word-editor-page',
@@ -29,7 +50,14 @@ export const wordEditorRendererDefinitions: RendererDefinition[] = [
     rendererTraits: ['workbench-shell', 'builder-facing'],
     propContracts: {
       config: {
-        shape: { kind: 'object', fields: {} },
+        shape: {
+          kind: 'object',
+          fields: {
+            leftPanel: wordEditorPanelConfigShape,
+            rightPanel: wordEditorPanelConfigShape,
+          },
+          optional: ['leftPanel', 'rightPanel'],
+        },
         displayName: 'Config',
         description: 'Config-driven side-panel contract for the word editor workbench shell.',
         editorType: 'object',
@@ -69,12 +97,21 @@ export const wordEditorRendererDefinitions: RendererDefinition[] = [
       onBack: {
         displayName: 'Back',
         description: 'Handles navigation back from the workbench shell.',
-        payload: { kind: 'object', fields: {} },
+        payload: {
+          kind: 'object',
+          fields: {
+            type: { kind: 'string' },
+            nativeEvent: { kind: 'unknown' },
+            currentTarget: { kind: 'unknown' },
+            target: { kind: 'unknown' },
+          },
+          optional: ['nativeEvent', 'currentTarget', 'target'],
+        },
       },
       onSave: {
         displayName: 'Save',
         description: 'Handles save completion for the current document.',
-        payload: { kind: 'object', fields: {} },
+        payload: savedDocumentDataShape,
       },
     },
     fields: [

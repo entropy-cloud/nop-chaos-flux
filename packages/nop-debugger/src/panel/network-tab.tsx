@@ -1,6 +1,7 @@
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { MergedRequest } from './event-groups.js';
+import { DisclosureTrigger } from './disclosure-trigger.js';
 import { JsonViewer } from './json-viewer.js';
 
 function formatClock(timestamp: number) {
@@ -31,71 +32,64 @@ export function NetworkTab(props: {
       {mergedRequests.length === 0 ? (
         <p className="ndbg-empty">{t('flux.debugger.noNetworkEvents')}</p>
       ) : null}
-       {mergedRequests.map((request) => (
-        <article
-          key={request.key}
-          className="ndbg-entry"
-          role="button"
-          tabIndex={0}
-          onClick={() =>
-            setNetworkExpandedKey(networkExpandedKey === request.key ? null : request.key)
-          }
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setNetworkExpandedKey(networkExpandedKey === request.key ? null : request.key);
-            }
-          }}
-        >
-          <div className="ndbg-entry-topline">
-            <span className={getStatusClassName(request.status)} data-group="api">
-              {request.status}
-            </span>
-            <time>{formatClock(request.startEvent?.timestamp ?? 0)}</time>
-          </div>
-          <strong className="ndbg-entry-summary">{request.summary}</strong>
-          <span className="ndbg-entry-meta">
-            {request.requestInstanceId ? `${request.requestInstanceId} | ` : ''}
-            {request.durationMs != null
-              ? `${request.durationMs}ms`
-              : request.status === 'pending'
-                ? 'pending...'
-                : ''}
-          </span>
-           {networkExpandedKey === request.key ? (
-            /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- expanded detail is non-interactive content; click only stops row-toggle bubbling */
-            <div
-              className="ndbg-entry-expanded"
-              onClick={(event) => event.stopPropagation()}
-            >
-              {request.startEvent?.network ? (
-                <div>
-                  <span className="ndbg-json-key">{t('flux.debugger.request')}</span>
-                  <JsonViewer data={request.startEvent.network} defaultExpanded={2} />
-                </div>
-              ) : null}
-              {request.endEvent?.network ? (
-                <div>
-                  <span className="ndbg-json-key">{t('flux.debugger.response')}</span>
-                  <JsonViewer data={request.endEvent.network} defaultExpanded={2} />
-                </div>
-              ) : null}
-              {request.endEvent?.exportedData != null ? (
-                <div>
-                  <span className="ndbg-json-key">{t('flux.debugger.responseData')}</span>
-                  <JsonViewer data={request.endEvent.exportedData} defaultExpanded={2} />
-                </div>
-              ) : null}
-              {request.startEvent?.detail ? (
-                <code className="ndbg-entry-detail">{request.startEvent.detail}</code>
-              ) : null}
-              {request.endEvent?.detail ? (
-                <code className="ndbg-entry-detail">{request.endEvent.detail}</code>
-              ) : null}
-            </div>
-          ) : null}
-        </article>
-      ))}
+       {mergedRequests.map((request) => {
+         const expanded = networkExpandedKey === request.key;
+         const detailId = `ndbg-network-detail-${request.startEvent?.id ?? request.endEvent?.id ?? 'pending'}`;
+
+         return (
+           <article key={request.key} className="ndbg-entry">
+             <DisclosureTrigger
+               expanded={expanded}
+               controlsId={detailId}
+               onToggle={() => setNetworkExpandedKey(expanded ? null : request.key)}
+             >
+               <div className="ndbg-entry-topline">
+                 <span className={getStatusClassName(request.status)} data-group="api">
+                   {request.status}
+                 </span>
+                 <time>{formatClock(request.startEvent?.timestamp ?? 0)}</time>
+               </div>
+               <strong className="ndbg-entry-summary">{request.summary}</strong>
+               <span className="ndbg-entry-meta">
+                 {request.requestInstanceId ? `${request.requestInstanceId} | ` : ''}
+                 {request.durationMs != null
+                   ? `${request.durationMs}ms`
+                   : request.status === 'pending'
+                     ? t('flux.debugger.pending')
+                     : ''}
+               </span>
+             </DisclosureTrigger>
+             {expanded ? (
+               <div id={detailId} className="ndbg-entry-expanded">
+                 {request.startEvent?.network ? (
+                   <div>
+                     <span className="ndbg-json-key">{t('flux.debugger.request')}</span>
+                     <JsonViewer data={request.startEvent.network} defaultExpanded={2} />
+                   </div>
+                 ) : null}
+                 {request.endEvent?.network ? (
+                   <div>
+                     <span className="ndbg-json-key">{t('flux.debugger.response')}</span>
+                     <JsonViewer data={request.endEvent.network} defaultExpanded={2} />
+                   </div>
+                 ) : null}
+                 {request.endEvent?.exportedData != null ? (
+                   <div>
+                     <span className="ndbg-json-key">{t('flux.debugger.responseData')}</span>
+                     <JsonViewer data={request.endEvent.exportedData} defaultExpanded={2} />
+                   </div>
+                 ) : null}
+                 {request.startEvent?.detail ? (
+                   <code className="ndbg-entry-detail">{request.startEvent.detail}</code>
+                 ) : null}
+                 {request.endEvent?.detail ? (
+                   <code className="ndbg-entry-detail">{request.endEvent.detail}</code>
+                 ) : null}
+               </div>
+             ) : null}
+           </article>
+         );
+       })}
     </div>
   );
 }

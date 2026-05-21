@@ -31,7 +31,9 @@ Root scripts in `package.json`:
 - `pnpm dev`
 - `pnpm build`
 - `pnpm typecheck`
+- `pnpm check`
 - `pnpm test`
+- `pnpm test:coverage`
 - `pnpm lint`
 - `pnpm analyze`
 - `pnpm check:react19`
@@ -132,11 +134,12 @@ Examples:
 
 The repository should keep these checks passing:
 
+- `pnpm check`
 - `pnpm build`
 - `pnpm typecheck`
 - `pnpm test`
+- `pnpm test:coverage`
 - `pnpm lint`
-- `pnpm check:flux-bundle-pack`
 - `node scripts/verify-no-src-artifacts.mjs`
 
 Additional audit-oriented tooling now tracked at the root:
@@ -145,8 +148,15 @@ Additional audit-oriented tooling now tracked at the root:
 - `pnpm audit:knip` - repo-wide unused file/export/dependency scan baseline
 - `pnpm audit:knip:packages` - package-focused knip scan used to separate package noise from playground-only findings
 - `pnpm audit:knip:playground` - playground-only knip scan for app dependency cleanup
-- `pnpm audit:mutants` - Stryker mutation-test entry point for the current `flux-runtime/src/validation` pilot using an isolated Vitest config
+- `pnpm audit:mutants` - manual Stryker mutation-test pilot for `flux-runtime/src/validation`; it uses a failing mutation threshold when run, but is not part of the default CI chain
 - `pnpm audit:semgrep` - local Semgrep rule entry point when the host Python environment supports Semgrep installation
+
+Current CI verification baseline:
+
+- `pnpm check` runs the structural hard gates plus `check:flux-bundle-pack`
+- `pnpm test` runs workspace tests without `--passWithNoTests`, so zero discovered tests now fail the default gate
+- `pnpm test:coverage` is the dedicated CI coverage job that executes package Vitest thresholds
+- `playwright.config.ts` enables `forbidOnly` in CI so focused E2E runs cannot silently shrink the default gate
 
 Source artifact policy:
 
