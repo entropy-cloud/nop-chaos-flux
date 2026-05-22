@@ -469,6 +469,73 @@ export const rendererMarkerRules = [
   },
 ];
 
+export const runtimeRawSchemaReadRules = [
+  {
+    id: 'runtime-raw-schema-read',
+    severity: 'high',
+    description:
+      'Renderer reads from templateNode.schema at runtime instead of compiled/normalized props (violates compile-once principle)',
+    include: (filePath) => {
+      return (
+        /\.(tsx|ts)$/.test(filePath) &&
+        !isTestFile(filePath) &&
+        !filePath.includes('/test-support') &&
+        (filePath.includes('/flux-renderers-') ||
+          filePath.includes('/flow-designer-renderers/') ||
+          filePath.includes('/word-editor-renderers/') ||
+          filePath.includes('/spreadsheet-renderers/') ||
+          filePath.includes('/report-designer-renderers/') ||
+          filePath.includes('/flux-code-editor/') ||
+          filePath.includes('/nop-debugger/'))
+      );
+    },
+    patterns: [
+      /\btemplateNode\.schema\b/g,
+      /\bprops\.schema\b/g,
+    ],
+    filterMatch: ({ lineText, content, relativePath }) => {
+      if (
+        lineText.includes('//') &&
+        !lineText.split('//')[0].includes('templateNode.schema') &&
+        !lineText.split('//')[0].includes('props.schema')
+      ) {
+        return false;
+      }
+
+      if (lineText.includes('useSchemaProps')) {
+        return false;
+      }
+
+      if (
+        lineText.includes('templateNode.schema') &&
+        (lineText.includes('normalizeCrudSchema') ||
+          lineText.includes('normalizeTableSchema') ||
+          lineText.includes('normalize'))
+      ) {
+        return false;
+      }
+
+      if (
+        relativePath.includes('variant-field/') &&
+        (lineText.includes('templateNode.schema as VariantFieldSchema') ||
+          lineText.includes('authoredSchema?.hint') ||
+          lineText.includes('authoredSchema.hint') ||
+          lineText.includes('authoredSchema?.description') ||
+          lineText.includes('authoredSchema.description') ||
+          lineText.includes('authoredSchema?.detectVariantAction') ||
+          lineText.includes('authoredDetectVariantAction') ||
+          lineText.includes('getAuthoredVariantOption(authoredSchema') ||
+          lineText.includes('authoredNextOption') ||
+          lineText.includes('authoredSchema,'))
+      ) {
+        return false;
+      }
+
+      return true;
+    },
+  },
+];
+
 export const allAuditSuspectRules = [
   ...reactiveRenderReadRules,
   ...asyncFailureRules,
@@ -477,4 +544,5 @@ export const allAuditSuspectRules = [
   ...fieldFrameBypassRules,
   ...testLeakRules,
   ...rendererMarkerRules,
+  ...runtimeRawSchemaReadRules,
 ];

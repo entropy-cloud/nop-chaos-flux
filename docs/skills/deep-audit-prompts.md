@@ -1031,9 +1031,10 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
       - props.regions（子渲染句柄）
       - props.events（事件处理器）
       - props.helpers（运行时辅助）
-   c. 是否直接访问了 store（应使用标准 hooks）
-   d. 是否在组件内部创建了 ad-hoc React context（应使用标准 hooks）
-   e. 是否有 prop-drilling chain（应使用 useCurrentForm / useCurrentPage 等 hooks）
+   c. **【compile-once 硬门禁】运行期禁止从 `props.templateNode.schema`（原始未编译 schema）或 `props.schema` 读取业务数据。** 所有 schema 驱动的值必须从 `props.props`（编译后解析值）或通过 `useSchemaProps(props)` 获取。架构护栏依据：`docs/references/architecture-guardrails-from-bugs.md` "Renderer-level workarounds (reading from `meta.templateNode.schema` instead of resolved props) bypass the compilation pipeline and are fragile under refactoring." 正确/错误对照见 `docs/references/integrating-third-party-components.md` "Reading raw schema values instead of resolved props"。先消费 `pnpm check:audit-runtime-raw-schema-reads` 的 suspect 输出；对每条 suspect，确认是否为运行期业务数据读取（而非类型标注、normalize 入参、注释或测试支持代码），并标记为 P0/P1。
+    d. 是否直接访问了 store（应使用标准 hooks）
+   e. 是否在组件内部创建了 ad-hoc React context（应使用标准 hooks）
+   f. 是否有 prop-drilling chain（应使用 useCurrentForm / useCurrentPage 等 hooks）
 3. 检查渲染器注册：
    a. 每个渲染器是否正确导出 RendererDefinition
    b. 注册函数是否遵循 registerXxxRenderers(registry) 模式
