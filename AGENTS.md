@@ -76,6 +76,7 @@ When creating, revising, executing, or auditing a file under `docs/plans/`, you 
 | Add new actions, event handlers, or `xui:import` usage        | `docs/architecture/action-scope-and-imports.md`                             | `docs/architecture/renderer-runtime.md`                                                                       |
 | Change package boundaries, create a new package, or move code | `docs/architecture/flux-runtime-module-boundaries.md`                       | `docs/architecture/frontend-baseline.md`                                                                      |
 | Change core architecture (compilation, scope, expressions)    | `docs/architecture/flux-core.md`                                            | `docs/references/terminology.md`                                                                              |
+| Run or debug e2e tests (Playwright)                           | `docs/references/e2e-test-diagnostic-guide.md`                              | `playwright.config.ts`                                                                                        |
 | Debug a CSS class not being generated in a monorepo package   | `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`    | `apps/playground/src/styles.css` (check `@source` directive)                                                  |
 
 ### By Code Location
