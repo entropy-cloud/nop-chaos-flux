@@ -146,11 +146,11 @@ test.describe('Nop Debugger', () => {
 
     const headerButtons = page.locator('.ndbg-header-actions button');
     await expect(headerButtons).toHaveCount(4);
-    const tooltips = await page.evaluate(() => {
-      const btns = document.querySelectorAll('.ndbg-header-actions button');
-      return Array.from(btns).map((b) => b.getAttribute('data-tooltip'));
-    });
-    expect(tooltips).toEqual(['Pause', 'Clear', 'Pick element', 'Minimize']);
+
+    await expect(page.getByTestId('ndbg-pause')).toBeVisible();
+    await expect(page.getByTestId('ndbg-clear')).toBeVisible();
+    await expect(page.getByTestId('ndbg-pick-element')).toBeVisible();
+    await expect(page.getByTestId('ndbg-minimize')).toBeVisible();
 
   });
 
@@ -349,7 +349,7 @@ test.describe('Nop Debugger', () => {
     await page.locator('.nop-debugger').waitFor({ state: 'visible', timeout: 10000 });
     await expect(page.locator('.nop-debugger')).toBeVisible();
 
-    const minimizeBtn = page.locator('[data-tooltip="Minimize"]');
+    const minimizeBtn = page.getByTestId('ndbg-minimize');
     await minimizeBtn.click();
     await waitForMinimizedBar(page);
 
@@ -368,7 +368,7 @@ test.describe('Nop Debugger', () => {
     await getLauncher(page).click();
     await waitForDebuggerPanel(page);
 
-    await page.locator('[data-tooltip="Minimize"]').click();
+    await page.getByTestId('ndbg-minimize').click();
     await waitForMinimizedBar(page);
 
     const className = await page.locator('.ndbg-minimized').getAttribute('class');
@@ -397,7 +397,7 @@ test.describe('Nop Debugger', () => {
     await getLauncher(page).click();
     await waitForDebuggerPanel(page);
 
-    await page.locator('[data-tooltip="Minimize"]').click();
+    await page.getByTestId('ndbg-minimize').click();
     await waitForMinimizedBar(page);
 
     await page.locator('.ndbg-minimized').click();
@@ -414,7 +414,7 @@ test.describe('Nop Debugger', () => {
     await getLauncher(page).click();
     await waitForDebuggerPanel(page);
 
-    await page.locator('[data-tooltip="Minimize"]').click();
+    await page.getByTestId('ndbg-minimize').click();
     await waitForMinimizedBar(page);
 
     const bar = page.locator('.ndbg-minimized');
@@ -450,7 +450,7 @@ test.describe('Nop Debugger', () => {
     await getLauncher(page).click();
     await waitForDebuggerPanel(page);
 
-    await page.locator('[data-tooltip="Minimize"]').click();
+    await page.getByTestId('ndbg-minimize').click();
     await waitForMinimizedBar(page);
 
     const bar = page.locator('.ndbg-minimized');
@@ -476,7 +476,7 @@ test.describe('Nop Debugger', () => {
 
     await page.getByRole('button', { name: 'Fire Error' }).click();
 
-    await page.locator('[data-tooltip="Minimize"]').click();
+    await page.getByTestId('ndbg-minimize').click();
     await waitForMinimizedBar(page);
 
     const bar = page.locator('.ndbg-minimized');

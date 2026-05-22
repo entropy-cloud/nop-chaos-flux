@@ -189,7 +189,7 @@ test.describe('condition-builder renderer', () => {
     const slug = scenarioSlug('Simple single-rule AND group');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    await expect(stage.getByRole('group', { name: /satisfy the following/i })).toBeVisible();
+    await expect(stage.locator('[data-slot="condition-group"]')).toBeVisible();
     await expect(stage.getByRole('button', { name: 'AND' })).toHaveAttribute('aria-pressed', 'true');
     await expect(stage.getByLabel('Field')).toHaveValue('Status');
     await expect(stage.getByLabel('Value')).toHaveText(/Active/i);

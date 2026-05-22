@@ -13,6 +13,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import { Button, Separator, cn } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema.js';
 import { normalizeCrudSchema } from './crud-schema.js';
+import { TableRenderer } from './table-renderer.js';
 import {
   applyQueryToRows,
   DEFAULT_PAGE_SIZE,
@@ -278,6 +279,36 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
     return base as TableSchema;
   })();
+  const tableEvents = props.events as unknown as RendererComponentProps<TableSchema>['events'];
+  const tableResolvedProps: RendererComponentProps<TableSchema>['props'] = {
+    ...tableSchema,
+    disabled: props.props.disabled,
+    className: props.props.className,
+    frameClassName: props.props.frameClassName,
+    testid: props.props.testid,
+    cid: props.props.cid,
+  };
+  const tableRendererProps: RendererComponentProps<TableSchema> = {
+    id: `${props.id}-table`,
+    path: `${props.path}.table`,
+    schema: tableSchema,
+    templateNode:
+      props.templateNode as unknown as RendererComponentProps<TableSchema>['templateNode'],
+    node: {
+      ...props.node,
+      scope: crudScope,
+    } as unknown as RendererComponentProps<TableSchema>['node'],
+    props: tableResolvedProps,
+    meta: {
+      ...props.meta,
+      cid: undefined,
+      className: undefined,
+      testid: undefined,
+    },
+    regions: props.regions as RendererComponentProps<TableSchema>['regions'],
+    events: tableEvents,
+    helpers: props.helpers,
+  };
   const queryFormSchema: BaseSchema | null = (() => {
     const queryForm = normalizedSchema.queryForm;
     if (!queryForm?.body) {
@@ -366,12 +397,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       ) : null}
 
       <div className="nop-crud-table" data-slot="crud-table">
-        {asReactNode(
-          props.helpers.render(tableSchema, {
-            pathSuffix: 'table',
-            scope: crudScope,
-          }),
-        )}
+        <TableRenderer {...tableRendererProps} />
       </div>
 
       {hasFooterToolbar || footerBlocks.length > 0 ? (

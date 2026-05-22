@@ -142,6 +142,13 @@ All renderer components MUST follow the `RendererComponentProps` pattern. Read d
 
 **NEVER** create ad-hoc React contexts or prop-drilling chains for data these hooks already provide.
 
+### MANDATORY: React 19 Best Practices
+
+- React 19 + React Compiler are the workspace baseline.
+- Prefer plain render logic first. Do **not** add `useCallback` or `useMemo` by default.
+- Prefer render-time derivation over `useEffect` + `setState` mirrors. Use `useEffect` only for external synchronization.
+- `useEffectEvent`, `startTransition`, and `useDeferredValue` are not mandatory syntax migrations; use them only when they solve a concrete problem.
+
 ### MANDATORY: Styling Rules
 
 1. **Layout renderers** (container, flex, page, panel) emit **marker classes ONLY**. No hardcoded `gap-4`, `flex`, `p-4`, or `grid`; styling comes from schema.
@@ -155,6 +162,7 @@ All renderer components MUST follow the `RendererComponentProps` pattern. Read d
 - UTF-8 without BOM, ESM-first (`"type": "module"`), TypeScript strict mode.
 - Default to no comments. Add one only after repeated debugging shows a constraint is easy to misread.
 - Follow existing code style in each file.
+- When a referenced file is not found at its expected path, check `docs/archive/` before concluding it does not exist.
 - Docs should stay under 40 KB; split at 50 KB.
 - Files over 500 lines should be evaluated for extraction. Split by responsibility into dedicated modules.
 - When refactoring large files: create new files first → verify → replace original. See `docs/architecture/flux-core.md` for detailed steps.

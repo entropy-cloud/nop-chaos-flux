@@ -377,6 +377,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             variant="ghost"
             size="icon-sm"
             className="ndbg-icon-button"
+            data-testid="ndbg-pause"
             onClick={() => (chrome.paused ? props.controller.resume() : props.controller.pause())}
             data-tooltip={chrome.paused ? t('flux.debugger.resume') : t('flux.debugger.pause')}
             aria-label={chrome.paused ? t('flux.debugger.resume') : t('flux.debugger.pause')}
@@ -388,6 +389,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             variant="ghost"
             size="icon-sm"
             className="ndbg-icon-button"
+            data-testid="ndbg-clear"
             onClick={() => props.controller.clear()}
             data-tooltip={t('flux.debugger.clear')}
             aria-label={t('flux.debugger.clear')}
@@ -399,6 +401,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             variant="ghost"
             size="icon-sm"
             className="ndbg-icon-button"
+            data-testid="ndbg-pick-element"
             onClick={() => {
               if (!chrome.panelOpen) {
                 props.controller.show();
