@@ -18,49 +18,54 @@ This file is the top-level docs router.
 
 ## Read This First
 
-| If you need to...                                                    | Read this first                                       | Then read                                                                                                          |
-| -------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Understand mandatory AI context and current project state            | `docs/context/README.md`                              | `docs/context/project-context.md`, `docs/context/source-of-truth-and-precedence.md`, `docs/context/conventions.md` |
-| Understand the lightweight default development workflow              | `docs/process/application-development-workflow.md`    | `AGENTS.md`                                                                                                        |
-| Read raw PM, prototype, article, or card-set inputs                  | `docs/input/README.md`                                | the active file in `docs/input/`                                                                                   |
-| Clarify ambiguous requirements                                       | `docs/discussions/README.md`                          | `docs/requirements/00-requirement-synthesis-guide.md`                                                              |
-| Understand the project goal and product shape                        | `docs/architecture/project-vision.md`                 | `docs/design/app-overview.md`                                                                                      |
-| Understand the current app-layer baseline                            | `docs/design/app-overview.md`                         | `docs/design/feature-inventory.md`, `docs/design/roles-and-permissions.md`                                         |
-| Understand the current technical baseline                            | `docs/architecture/system-baseline.md`                | `docs/architecture/module-boundaries.md`                                                                           |
-| Understand owner-doc precedence and source-of-truth boundaries       | `docs/context/source-of-truth-and-precedence.md`      | the relevant owner doc                                                                                             |
-| Start or review a non-trivial implementation                         | `docs/plans/00-plan-authoring-and-execution-guide.md` | the active plan under `docs/plans/`                                                                                |
-| Review optional audit workflows for higher-risk work                 | `docs/audits/00-audit-execution-guide.md`             | the relevant prompt in `docs/skills/`                                                                              |
-| Understand which docs should use dated filenames versus stable names | `docs/references/document-naming-and-timeliness.md`   | the relevant guide in the target directory                                                                         |
-| Quickly copy a recommended filename pattern for a new dated document | `docs/references/document-naming-and-timeliness.md`   | the `Quick Copy Set` section                                                                                       |
-| Copy a ready-made dated document skeleton                            | `docs/examples/README.md`                             | rename the closest `.example.md` file                                                                              |
-| See one realistic small feature walkthrough                          | `docs/examples/complete-small-app-walkthrough.md`     | then copy the closest skeleton from `docs/examples/`                                                               |
-| Check what docs must be updated after a change                       | `docs/references/maintenance-checklist.md`            | the most relevant file in `docs/design/` or `docs/architecture/`                                                   |
-| Review recent implementation history                                 | `docs/logs/index.md`                                  | the latest dated log file                                                                                          |
-| Look up a past subtle regression                                     | `docs/bugs/00-bug-fix-note-writing-guide.md`          | the relevant file in `docs/bugs/`                                                                                  |
-| Record or review exploratory/manual testing                          | `docs/testing/index.md`                               | the relevant dated test note                                                                                       |
-| Review tradeoffs or open design investigations                       | `docs/analysis/README.md`                             | the relevant analysis note                                                                                         |
-| Review durable reusable engineering lessons                          | `docs/lessons/README.md`                              | the relevant numbered lesson                                                                                       |
-| Read implementation-ready requirements                               | `docs/requirements/README.md`                         | the active requirement file                                                                                        |
-| Review why a landed result still missed expectation                  | `docs/retrospectives/README.md`                       | the relevant retrospective note                                                                                    |
+| If you need to...                                                    | Read this first                                       | Then read                                                                                               |
+| -------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Understand mandatory AI context and current project state            | `docs/context/README.md`                              | `docs/context/project-context.md`, `docs/context/ai-autonomy-policy.md`, `docs/context/codebase-map.md` |
+| Understand the lightweight default development workflow              | `docs/process/application-development-workflow.md`    | `AGENTS.md`                                                                                             |
+| Choose the next AI-ready work item                                   | `docs/backlog/README.md`                              | `docs/context/ai-autonomy-policy.md`, active requirement and owner doc                                  |
+| Read raw PM, prototype, article, or card-set inputs                  | `docs/input/README.md`                                | the active file in `docs/input/`                                                                        |
+| Clarify ambiguous requirements                                       | `docs/discussions/README.md`                          | `docs/requirements/00-requirement-synthesis-guide.md`                                                   |
+| Understand the project goal and product shape                        | `docs/architecture/project-vision.md`                 | `docs/design/app-overview.md`                                                                           |
+| Understand the current app-layer baseline                            | `docs/design/app-overview.md`                         | `docs/design/feature-inventory.md`, `docs/design/roles-and-permissions.md`                              |
+| Understand the current technical baseline                            | `docs/architecture/system-baseline.md`                | `docs/architecture/module-boundaries.md`                                                                |
+| Understand owner-doc precedence and source-of-truth boundaries       | `docs/context/source-of-truth-and-precedence.md`      | the relevant owner doc                                                                                  |
+| Start or review a non-trivial implementation                         | `docs/plans/00-plan-authoring-and-execution-guide.md` | the active plan under `docs/plans/`, `docs/audits/00-audit-execution-guide.md`                          |
+| Review audit workflows or required plan/closure audits               | `docs/audits/00-audit-execution-guide.md`             | the relevant prompt in `docs/skills/`                                                                   |
+| Understand which docs should use dated filenames versus stable names | `docs/references/document-naming-and-timeliness.md`   | the relevant guide in the target directory                                                              |
+| Quickly copy a recommended filename pattern for a new dated document | `docs/references/document-naming-and-timeliness.md`   | the `Quick Copy Set` section                                                                            |
+| Copy a ready-made dated document skeleton                            | `docs/examples/README.md`                             | rename the closest `.example.md` file                                                                   |
+| See one realistic small feature walkthrough                          | `docs/examples/complete-small-app-walkthrough.md`     | then copy the closest skeleton from `docs/examples/`                                                    |
+| Check what docs must be updated after a change                       | `docs/references/maintenance-checklist.md`            | the most relevant file in `docs/design/` or `docs/architecture/`                                        |
+| Review recent implementation history                                 | `docs/logs/index.md`                                  | the latest dated log file                                                                               |
+| Look up a past subtle regression                                     | `docs/bugs/00-bug-fix-note-writing-guide.md`          | the relevant file in `docs/bugs/`                                                                       |
+| Record or review exploratory/manual testing                          | `docs/testing/index.md`                               | the relevant dated test note                                                                            |
+| Check the latest known-good verification state                       | `docs/testing/known-good-baselines.md`                | latest dated testing or log note                                                                        |
+| Review tradeoffs or open design investigations                       | `docs/analysis/README.md`                             | the relevant analysis note                                                                              |
+| Review durable reusable engineering lessons                          | `docs/lessons/README.md`                              | the relevant numbered lesson                                                                            |
+| Read implementation-ready requirements                               | `docs/requirements/README.md`                         | the active requirement file                                                                             |
+| Review why a landed result still missed expectation                  | `docs/retrospectives/README.md`                       | the relevant retrospective note                                                                         |
 
 ## Recommended Default Path
 
 For most small and medium projects, the default path is:
 
 1. `docs/context/`
-2. `docs/input/`
-3. `docs/requirements/`
-4. `docs/design/` and `docs/architecture/`
-5. `docs/plans/` when needed
-6. `docs/logs/`
-7. `docs/bugs/` when needed
+2. `docs/backlog/` when choosing work
+3. `docs/input/`
+4. `docs/requirements/`
+5. `docs/design/` and `docs/architecture/`
+6. `docs/plans/` when planning triggers apply
+7. `docs/audits/` for required plan/closure audits or stored audit evidence
+8. `docs/logs/`
+9. `docs/bugs/` when needed
 
-Use `docs/discussions/`, `docs/audits/`, `docs/testing/`, `docs/skills/`, `docs/analysis/`, and `docs/retrospectives/` only when the task complexity or ambiguity justifies them.
+Use `docs/discussions/`, extra `docs/testing/` notes, `docs/skills/`, `docs/analysis/`, and `docs/retrospectives/` only when the task complexity or ambiguity justifies them.
 
 ## Directory Roles
 
 - `docs/process/` - workflow and operating process documents
 - `docs/context/` - mandatory AI context, owner precedence, and project-wide conventions
+- `docs/backlog/` - prioritized candidate work and AI-ready next actions
 - `docs/input/` - raw external inputs and copied source material
 - `docs/discussions/` - optional requirement clarification and unresolved question records
 - `docs/requirements/` - synthesized implementation-ready requirement docs
@@ -70,13 +75,14 @@ Use `docs/discussions/`, `docs/audits/`, `docs/testing/`, `docs/skills/`, `docs/
 - `docs/references/` - stable lookup guides and maintenance aids
 - `docs/examples/` - small copyable skeletons for dated working documents
 - `docs/plans/` - execution plans with closure criteria
-- `docs/audits/` - optional audit methods and audit records
+- `docs/audits/` - audit methods and audit records, including required plan/closure audit evidence for created plans
 - `docs/skills/` - optional reusable AI prompts and audit/review playbooks
 - `docs/logs/` - dated implementation memory
 - `docs/testing/` - optional exploratory and manual testing notes
 - `docs/bugs/` - complex regression history and root-cause notes
 - `docs/analysis/` - optional investigations, comparisons, and design tradeoffs
 - `docs/retrospectives/` - optional post-delivery gap analysis and process improvements
+- `docs/archive/` - inactive documents moved here by human decision; kept for historical reference
 
 ## Core Principle
 
@@ -84,6 +90,7 @@ Use files for durable truth.
 
 - input captures where requirements came from
 - context captures mandatory project rules and source-of-truth precedence
+- backlog captures prioritized next actions and autonomy labels
 - discussions capture what was unclear
 - requirements capture what should be built
 - design and architecture capture what must stay true

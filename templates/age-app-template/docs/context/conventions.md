@@ -21,9 +21,10 @@ Keep it short. If a rule becomes detailed lookup material, move the detail to `d
 
 ## Review Rule
 
-- High-risk or high-ambiguity requirement, design, and plan drafts should get an independent subagent or reviewer pass.
+- High-risk or high-ambiguity requirement and design drafts should get an independent subagent or reviewer pass.
+- Every created plan requires independent plan audit before implementation and closure audit before completion unless it explicitly qualifies for the micro-plan exception in `docs/plans/00-plan-authoring-and-execution-guide.md`.
 - Independent review should cite files and evidence, not only say “looks good.”
-- If no independent reviewer is available, record that limitation in the plan or log.
+- If no independent reviewer is available, record that limitation in the plan or log. Cold replay is allowed only for non-protected, non-high-risk plans and never for resolving protected-area or source-of-truth conflicts by itself.
 
 ## Bug Rule
 

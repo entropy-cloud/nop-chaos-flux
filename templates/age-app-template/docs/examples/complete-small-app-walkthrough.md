@@ -108,7 +108,21 @@ Example update:
 - Non-admin: cannot access User Management.
 ```
 
-## 4. Plan
+## 4. Backlog Entry
+
+Target file:
+
+- `docs/backlog/README.md`
+
+Example row:
+
+```md
+| P0 | User Management first slice | `docs/requirements/2026-05-21-user-management.md` | `docs/design/app-overview.md` | `docs/plans/2026-05-21-user-management-plan.md` | `ready` | `plan-first` | `none` |
+```
+
+Because this slice changes auth-visible admin behavior and spans page, API, permissions, and tests, it is `plan-first`, not a micro-plan.
+
+## 5. Plan
 
 Target file:
 
@@ -120,6 +134,7 @@ Target file:
 > Plan Status: planned
 > Last Reviewed: 2026-05-21
 > Source: `docs/requirements/2026-05-21-user-management.md`
+> Audit: required
 
 ## Current Baseline
 
@@ -145,15 +160,23 @@ Target file:
 - [ ] enforce admin access
 - [ ] add tests for search, disable, and non-admin access
 
+## Plan Audit
+
+- Status: pending
+- Reviewer / Agent: `<independent reviewer or subagent>`
+- Evidence: `<audit file or task id>`
+
 ## Closure Gates
 
 - [ ] acceptance criteria pass
+- [ ] plan audit passed before implementation
 - [ ] affected owner docs updated
 - [ ] verification commands run
+- [ ] closure audit passed
 - [ ] daily log updated
 ```
 
-## 5. Log Entry
+## 6. Log Entry
 
 Target file:
 
@@ -170,8 +193,8 @@ Target file:
 - Verification: `<real test command>` passed for user list/search/disable and non-admin access.
 ```
 
-## 6. Closure Audit Note
+## 7. Closure Audit Note
 
-For this small slice, closure can stay in the log if the result is clear.
+This slice has a plan and therefore needs closure audit before the plan is marked complete.
 
-Use a separate audit file only if the feature is risky, ambiguous, or disputed.
+Use a separate audit file if the audit is non-trivial, disputed, or useful for future sessions. Otherwise, record the independent reviewer/subagent evidence in the plan and daily log.

@@ -9,12 +9,16 @@ This directory is intentionally small. It exists because important project rules
 ## Read These First
 
 1. `project-context.md`
-2. `source-of-truth-and-precedence.md`
-3. `conventions.md`
+2. `ai-autonomy-policy.md`
+3. `codebase-map.md`
+4. `source-of-truth-and-precedence.md`
+5. `conventions.md`
 
 ## What Belongs Here
 
 - current project context that should orient every AI session
+- autonomy rules for when AI may proceed, plan, ask, research, or stop
+- compact codebase routing that prevents repeated rediscovery
 - source-of-truth and owner-doc precedence rules
 - project-wide conventions that are not merely optional lookup material
 

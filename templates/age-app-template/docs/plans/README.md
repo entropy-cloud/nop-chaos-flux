@@ -8,6 +8,8 @@ Use this directory for non-trivial implementation plans.
 - for small and medium projects, prefer `docs/plans/YYYY-MM-DD-topic-plan.md`
 - if the plan count grows large, a numeric prefix such as `NNN-YYYY-MM-DD-topic-plan.md` is acceptable
 
+Every created plan requires plan audit before implementation and closure audit before completion unless it explicitly qualifies for the micro-plan exception in `00-plan-authoring-and-execution-guide.md`.
+
 Recommended filenames:
 
 - `2026-05-21-user-list-plan.md`

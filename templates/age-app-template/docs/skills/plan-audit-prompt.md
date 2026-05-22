@@ -1,11 +1,15 @@
 # Plan Audit Prompt
 
-Use this prompt when auditing a non-trivial execution plan before implementation.
+Use this prompt when auditing an execution plan before implementation.
+
+All created plans require this audit unless the plan explicitly qualifies for the micro-plan exception.
 
 ```text
 Read `AGENTS.md`, `docs/index.md`, `docs/process/application-development-workflow.md`, the active requirement/design docs, and the active file under `docs/plans/`.
 
 Audit the plan as an execution contract.
+
+Check `docs/context/ai-autonomy-policy.md` reviewer availability. Cold replay is valid only for non-protected, non-high-risk plans and never for protected areas, unresolved product risk, or source-of-truth conflicts.
 
 Focus on:
 - whether the current baseline is honest
@@ -13,7 +17,14 @@ Focus on:
 - whether closure gates are real
 - whether hidden dependencies or unresolved requirement gaps remain
 - whether any in-scope defect or contract gap was silently downgraded
+- whether the micro-plan exception is being misused
+- whether the backlog or context was loosened by AI without human confirmation or human-approved owner-doc evidence
+- whether stale-doc or legacy-mode conflicts were classified before implementation
+- whether proof and verification cover every acceptance criterion
 
 Return findings first, ordered by severity.
 Do not praise the plan unless it changes the risk assessment.
+
+If blocking issues are found, say `needs revision` and list the exact files/sections to change.
+If no blocking issue remains, say `passes plan audit` and list residual risks if any.
 ```

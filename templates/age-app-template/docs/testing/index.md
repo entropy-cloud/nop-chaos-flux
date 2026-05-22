@@ -7,6 +7,7 @@ Use this directory for exploratory, manual, and issue-focused testing notes that
 - record exploratory test passes/failures
 - capture reproduction steps for flaky or environment-sensitive issues
 - preserve manual verification evidence that should not live only in a PR comment
+- record meaningful known-good verification states in `known-good-baselines.md`
 
 Recommended filename:
 

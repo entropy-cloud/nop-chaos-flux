@@ -19,15 +19,18 @@ This workflow makes those failure modes explicit.
 For most small and medium app projects, use this path:
 
 1. `context`
-2. `input`
-3. `requirements`
-4. `design`
-5. `plan` when needed
-6. `implementation`
-7. `verification`
-8. `logs / bugs`
+2. `backlog` when choosing work
+3. `input`
+4. `requirements`
+5. `design`
+6. `plan` when planning triggers apply
+7. `plan audit` for created plans unless the micro-plan exception applies
+8. `implementation`
+9. `verification`
+10. `closure audit` for created plans unless the micro-plan exception applies
+11. `logs / bugs`
 
-Use the heavier layers only when the work is ambiguous, risky, or repeatedly failing.
+Use document audits, retrospectives, skill extraction, and extra testing notes only when the work is ambiguous, risky, or repeatedly failing.
 
 ## Optional Extended Layers
 
@@ -35,20 +38,24 @@ These are available but not mandatory for every task:
 
 1. `discussion`
 2. `document audit`
-3. `plan audit`
-4. `closure audit`
-5. `retrospective`
-6. `skill extraction`
+3. `retrospective`
+4. `skill extraction`
+
+Plan audit and closure audit are not optional for created plans except under the micro-plan exception in `docs/plans/00-plan-authoring-and-execution-guide.md`.
 
 ## Stage 0 - Read Context
 
 Before non-trivial work, read:
 
 - `docs/context/project-context.md`
+- `docs/context/ai-autonomy-policy.md`
+- `docs/context/codebase-map.md`
 - `docs/context/source-of-truth-and-precedence.md`
 - `docs/context/conventions.md`
 
-If these files are empty or stale, update them before relying on the rest of the workflow.
+If these files are empty or stale, update factual context before relying on the rest of the workflow. AI may make rules stricter, but must not loosen autonomy, remove blockers, mark stale docs fresh, or downgrade protected areas without human confirmation or human-approved owner-doc evidence.
+
+For a direct user-requested local low-risk edit, backlog setup is not required if the change clearly fits the no-plan path and verification commands are real.
 
 ## Three-Step Control Loop
 
@@ -69,13 +76,11 @@ After drafting substantial design documents, use an independent subagent or revi
 
 Write `docs/plans/` from the settled design baseline, not from raw source material alone.
 
-After drafting a substantial plan, use an independent subagent or reviewer pass and revise until major objections are resolved.
+After drafting a plan, use an independent subagent or reviewer pass and revise until major objections are resolved unless the plan explicitly qualifies for the micro-plan exception.
 
 ### C. Audit Periodically
 
-Use document audits, plan audits, and closure audits at a frequency proportional to project risk.
-
-For small projects, this may be lightweight and occasional. For unstable or drifting work, increase the audit cadence.
+Use document audits at a frequency proportional to project risk. Plan audits and closure audits are mandatory for created plans except under the micro-plan exception.
 
 ## Stage 1 - Collect Raw Inputs
 
@@ -154,9 +159,11 @@ At minimum, challenge these risks:
 
 Use `docs/audits/` and the prompt templates under `docs/skills/`.
 
-## Stage 6 - Write The Plan When Needed
+## Stage 6 - Write The Plan When Planning Triggers Apply
 
-When work is non-trivial, create a plan under `docs/plans/`.
+Create a plan under `docs/plans/` when work is more than a very small low-risk edit or when any planning trigger in the plan guide applies.
+
+The only no-plan path is a local low-risk change that affects very few files, has clear existing behavior or tests, and does not touch contracts, data/model shape, auth, permissions, integrations, deployment, cross-surface behavior, or stale-doc conflicts. Larger local edits should use the micro-plan or full-plan path in the plan guide.
 
 The plan should capture:
 
@@ -169,9 +176,9 @@ The plan should capture:
 
 The plan should not become a low-level implementation design dump.
 
-## Stage 7 - Audit The Plan When Needed
+## Stage 7 - Audit The Plan
 
-Before implementation, independently challenge the plan only when the slice is large enough or risky enough to justify it.
+Before implementation, independently challenge every created plan unless it explicitly qualifies for the micro-plan exception in the plan guide.
 
 The audit should test:
 
@@ -179,6 +186,8 @@ The audit should test:
 - are closure gates real
 - are hidden dependencies missing
 - does the plan silently rely on unresolved requirement gaps
+
+If the audit finds blocking issues, revise the plan and repeat the audit until no major objection remains.
 
 ## Stage 8 - Implement Small Complete Slices
 
@@ -204,9 +213,9 @@ Rule:
 
 - every non-trivial bug fix should add or update automated test coverage
 
-## Stage 10 - Independent Closure Audit When Needed
+## Stage 10 - Independent Closure Audit
 
-Non-trivial work is not automatically closed just because the implementing agent says so.
+Work tracked by a plan is not automatically closed just because the implementing agent says so.
 
 Closure requires an independent re-check against:
 
@@ -216,6 +225,10 @@ Closure requires an independent re-check against:
 - stated closure gates
 
 If the plan is not really closed, keep it open.
+
+Micro-plans may use a documented cold-replay self-check instead of an independent subagent or reviewer, but the plan must say why the micro-plan exception applies.
+
+Before closing a micro-plan, compare the actual diff against the exception limits. If the final change exceeded those limits or touched an excluded area, reclassify it and run the required audits before closure.
 
 ## Stage 11 - Retrospective When Needed
 
@@ -262,11 +275,13 @@ For most non-trivial tasks, the default loop is:
 1. read or update context
 2. write or update input/requirement files
 3. update design or architecture docs if the supported baseline changed
-4. write or update a plan only when the slice is non-trivial
-5. implement
-6. verify
-7. record logs and bug notes when needed
+4. write or update a plan when planning triggers apply
+5. audit the plan unless the micro-plan exception applies
+6. implement
+7. verify
+8. run closure audit for created plans unless the micro-plan exception applies, and verify any micro-plan still fits the actual diff limits
+9. record logs and bug notes when needed
 
-Add audits, retrospectives, and reusable skills only when the problem pattern justifies the extra process.
+Add document audits, retrospectives, and reusable skills only when the problem pattern justifies the extra process.
 
 Even in the lightweight path, keep the file-in/file-out rule: important instructions, plans, and conclusions should land in files, not only in chat.

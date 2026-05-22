@@ -9,6 +9,7 @@ Use this file after changes land to check whether repo memory stayed in sync.
 1. The relevant owner doc in `docs/architecture/`
 2. The daily log in `docs/logs/`
 3. Any affected requirement, plan, bug note, or testing note
+4. `docs/testing/known-good-baselines.md` when a meaningful full verification baseline was established
 
 ## Change Triggers
 
@@ -45,6 +46,10 @@ Review:
 - the relevant file under `docs/audits/` if an audit was part of the slice
 - `docs/logs/YYYY/MM-DD.md`
 - `docs/testing/` if exploratory/manual proof was needed
+
+Created plans require plan audit before implementation and closure audit before completion unless the active plan explicitly documents the micro-plan exception.
+
+If a micro-plan exception was used, compare the actual diff against the exception limits before closure.
 
 ### Subtle Regression Or Root Cause Discovery
 

@@ -140,6 +140,16 @@ Rule:
 - If verification fails, the plan is not closed even if implementation appears complete.
 - If model/schema files and prose docs disagree on database truth, model/schema files win; update the prose docs or model intentionally.
 
+## Legacy Or Stale-Docs Mode
+
+Use this mode when `docs/context/project-context.md` marks documentation freshness as `stale`, `unknown`, or `partially stale` for the active slice.
+
+- Live code and executable contracts are evidence of current behavior, not automatically desired behavior.
+- Owner docs are intended attractors only after they are revalidated against live code, requirements, and human/product intent.
+- Before changing behavior, classify each conflict as `implementation drift`, `doc drift`, or `intentional legacy behavior` in a requirement, discussion, analysis, or plan file.
+- AI autonomy defaults to `research-only` or `plan-first` until a baseline audit or human confirmation records what should be preserved versus changed. For `partially stale`, this restriction applies only to slices whose requirement, owner doc, codebase-map route, or touched code area has not been verified fresh.
+- Do not "fix" code to match stale docs or rewrite docs to match code without recording the drift classification.
+
 ## Simple Rule Of Thumb
 
 - stable behavior and structure belong in owner docs
