@@ -1,6 +1,5 @@
 import React from 'react';
 import type {
-  ActionSchema,
   ActionScope,
   ComponentHandleRegistry,
   RendererComponentProps,
@@ -77,15 +76,12 @@ export function useSurfaceRenderer(
   );
   const lastOpenRef = React.useRef(effectiveOpen);
   const closeHandledRef = React.useRef(false);
-  const fallbackOnOpen = (props.schema as { onOpen?: ActionSchema }).onOpen;
-  const fallbackOnClose = (props.schema as { onClose?: ActionSchema }).onClose;
   const eventHandlers = React.useMemo(
     () => ({
-    onOpen: events.onOpen ?? (fallbackOnOpen ? () => helpers.dispatch(fallbackOnOpen) : undefined),
-    onClose:
-      events.onClose ?? (fallbackOnClose ? () => helpers.dispatch(fallbackOnClose) : undefined),
+    onOpen: events.onOpen,
+    onClose: events.onClose,
     }),
-    [events.onClose, events.onOpen, fallbackOnClose, fallbackOnOpen, helpers],
+    [events.onClose, events.onOpen],
   );
 
   React.useEffect(() => {

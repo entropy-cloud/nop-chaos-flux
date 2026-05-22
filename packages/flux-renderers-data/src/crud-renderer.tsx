@@ -40,7 +40,6 @@ function asReactNode(value: unknown): React.ReactNode {
 }
 
 export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
-  const authoredSchema = props.templateNode.schema as CrudSchema;
   const defaultEmptyLabel = t('flux.common.noData');
   const onRefresh = props.events.onRefresh;
   const nodeScope = props.node.scope;
@@ -221,7 +220,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const toolbarContent = resolveCrudSlotContent('toolbar');
   const listActionsContent = resolveCrudSlotContent('listActions');
   const footerToolbarContent = resolveCrudSlotContent('footerToolbar');
-  const tableEmptyContent = authoredSchema.empty ?? defaultEmptyLabel;
+  const tableEmptyContent = normalizedSchema.empty ?? defaultEmptyLabel;
 
   const headerBlocks = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header');
   const footerBlocks = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer');
@@ -252,29 +251,28 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         showSizeChanger: true,
       },
       empty: tableEmptyContent,
-      quickSaveAction: authoredSchema.quickSaveAction ?? normalizedSchema.quickSaveAction,
-      quickSaveItemAction:
-        authoredSchema.quickSaveItemAction ?? normalizedSchema.quickSaveItemAction,
+      quickSaveAction: normalizedSchema.quickSaveAction,
+      quickSaveItemAction: normalizedSchema.quickSaveItemAction,
     };
 
     if (normalizedSchema.selection) {
       base.rowSelection = { type: normalizedSchema.selection.type ?? 'checkbox', selectedRowKeys };
     }
 
-    if (authoredSchema.onRefresh ?? normalizedSchema.onRefresh) {
-      base.onRefresh = authoredSchema.onRefresh ?? normalizedSchema.onRefresh;
+    if (normalizedSchema.onRefresh) {
+      base.onRefresh = normalizedSchema.onRefresh;
     }
 
-    if (authoredSchema.onRowClick ?? normalizedSchema.onRowClick) {
-      base.onRowClick = authoredSchema.onRowClick ?? normalizedSchema.onRowClick;
+    if (normalizedSchema.onRowClick) {
+      base.onRowClick = normalizedSchema.onRowClick;
     }
 
-    if (authoredSchema.columnSettings ?? normalizedSchema.columnSettings) {
-      base.columnSettings = authoredSchema.columnSettings ?? normalizedSchema.columnSettings;
+    if (normalizedSchema.columnSettings) {
+      base.columnSettings = normalizedSchema.columnSettings;
     }
 
-    if (authoredSchema.responsive ?? normalizedSchema.responsive) {
-      base.responsive = authoredSchema.responsive ?? normalizedSchema.responsive;
+    if (normalizedSchema.responsive) {
+      base.responsive = normalizedSchema.responsive;
     }
 
     return base as TableSchema;

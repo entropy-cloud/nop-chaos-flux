@@ -376,7 +376,6 @@ function TreeNodeRenderer(props: {
 
 export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const schemaProps = props.props as TreeSchema;
-  const authoredSchema = props.templateNode.schema as TreeSchema | undefined;
   const data = toTreeNodes(schemaProps.data);
   const childrenKey =
     typeof schemaProps.childrenKey === 'string' && schemaProps.childrenKey
@@ -394,10 +393,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const emptyContent = resolveRendererSlotContent(props, 'empty', {
     fallback: t('flux.common.noData'),
   });
-  const treeLabel = String(
-    (schemaProps.label ?? authoredSchema?.label ?? authoredSchema?.title ?? props.id ?? 'Tree') ||
-      'Tree',
-  );
+  const treeLabel = String(schemaProps.label || schemaProps.title || props.id || 'Tree');
   const statusPath =
     typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;
   const repeatedTemplateId = createTreeNodeRepeatedTemplateId(props.id);

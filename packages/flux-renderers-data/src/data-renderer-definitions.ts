@@ -212,6 +212,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
     component: TreeRenderer,
     fields: [
       { key: 'data', kind: 'prop' },
+      { key: 'label', kind: 'prop' },
+      { key: 'title', kind: 'prop' },
       { key: 'childrenKey', kind: 'prop' },
       { key: 'labelField', kind: 'prop' },
       { key: 'keyField', kind: 'prop' },
