@@ -1,0 +1,61 @@
+# Skills And Prompt Index
+
+## Purpose
+
+`docs/skills/` collects reusable internal prompts, review playbooks, and audit templates for recurring work in this repo.
+
+Use these files as **method selectors**:
+
+1. decide the task route from `docs/index.md` and the relevant owner docs first
+2. then choose the smallest reusable prompt that matches the work method
+3. do not use a skill as a substitute for requirement, design, or architecture truth
+
+## Read First
+
+Before using any prompt here, read:
+
+1. `AGENTS.md`
+2. `docs/index.md`
+3. the owner doc for the area you are touching
+
+## By Task
+
+| If you need to...                                                                 | Read this first                                                                                                                               |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Diagnose a bug, flaky test, runtime failure, or cross-layer diagnostic mismatch   | `docs/skills/bug-diagnosis-prompt.md`                                                                                                         |
+| Run a shorter live execution of the bug diagnosis workflow                        | `docs/skills/bug-diagnosis-execution-template.md`                                                                                             |
+| Implement a feature or fix via contract-driven test-first slices                  | `docs/skills/test-first-implementation-prompt.md`                                                                                             |
+| Explore the codebase for contract violations by writing failing tests first       | `docs/skills/exploratory-contract-testing-prompt.md`                                                                                          |
+| Explore the playground and component lab for real E2E failures                    | `docs/skills/exploratory-e2e-testing-prompt.md`                                                                                               |
+| Run a broad open-ended adversarial review driven by live code signals             | `docs/skills/open-ended-adversarial-review-prompt.md`                                                                                         |
+| Run a structured multi-dimensional deep audit                                     | `docs/skills/deep-audit-prompts.md`                                                                                                           |
+| Audit code quality with focus on real implementation quality, not metrics theater | `docs/skills/code-quality-audit-prompt.md`                                                                                                    |
+| Discover high-ROI architecture deepening opportunities                            | `docs/skills/architecture-deepening-review-prompt.md`                                                                                         |
+| Turn a plan or design direction into a user-selectable question document          | `docs/skills/plan-grilling-question-document-prompt.md`                                                                                       |
+| Audit whether unit tests really protect stable contracts                          | `docs/skills/unit-test-logic-and-contract-coverage-audit-prompt.md`                                                                           |
+| Review React 19 usage against project-specific best practices                     | `docs/skills/react19-best-practices-review.md`                                                                                                |
+| Audit UX patterns and interaction quality                                         | `docs/skills/ux-design-pattern-audit-prompt.md`                                                                                               |
+| Review docs for accuracy, strength, and decision quality                          | `docs/skills/doc-evaluation.md`, `docs/skills/plan-grilling-question-document-prompt.md`                                                      |
+| Review or clean up deprecated features                                            | `docs/skills/deprecated-feature-cleanup.md`                                                                                                   |
+| Review branch integration / merge handling guidance                               | `docs/skills/branch-merge.md`                                                                                                                 |
+| Discover refactor targets or request refactor direction                           | `docs/skills/code-refactor-discovery-prompt.md`, `docs/skills/architecture-deepening-review-prompt.md`, `docs/skills/code-refactor-prompt.md` |
+| Run AI tone / filler review on generated text                                     | `docs/skills/ai-tone-and-filler-review.md`                                                                                                    |
+| Explore next-gen low-code attractors and capability opportunities                 | `docs/skills/next-gen-lowcode-attractor-discovery-prompt.md`                                                                                  |
+
+## Recommended Starting Set
+
+For the most common engineering work in this repo, start with:
+
+1. `docs/skills/bug-diagnosis-prompt.md`
+2. `docs/skills/test-first-implementation-prompt.md`
+3. `docs/skills/exploratory-contract-testing-prompt.md`
+4. `docs/skills/exploratory-e2e-testing-prompt.md`
+5. `docs/skills/open-ended-adversarial-review-prompt.md`
+6. `docs/skills/deep-audit-prompts.md`
+
+## Notes
+
+1. Prefer the shorter, narrower prompt when two prompts could both apply.
+2. If the task is a local straightforward fix, you often do not need a reusable prompt at all.
+3. For bug work, prefer `bug-diagnosis-prompt.md` before jumping directly to exploratory testing.
+4. For E2E failures, pair the relevant prompt with `docs/references/e2e-test-diagnostic-guide.md` and `docs/testing/e2e-standards.md`.
