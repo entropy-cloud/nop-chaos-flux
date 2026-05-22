@@ -180,7 +180,7 @@ test.describe('array-editor renderer', () => {
 // condition-builder
 // ---------------------------------------------------------------------------
 test.describe('condition-builder renderer', () => {
-  test.skip('read: simple condition builder renders its preloaded rule through visible controls', async ({
+  test('read: simple condition builder renders its preloaded rule through visible controls', async ({
     page,
   }) => {
     const lab = new ComponentLabHelper(page);

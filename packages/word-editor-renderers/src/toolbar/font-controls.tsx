@@ -41,6 +41,14 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
         onClick={() => runCommand(() => command?.executeUndo())}
         disabled={!selection.undo}
         title="flux.wordEditor.undo"
+        testId="toolbar-undo"
+      />
+      <ToolbarButton
+        icon={Redo2}
+        onClick={() => runCommand(() => command?.executeRedo())}
+        disabled={!selection.redo}
+        title="flux.wordEditor.redo"
+        testId="toolbar-redo"
       />
       <ToolbarButton
         icon={Redo2}
@@ -86,18 +94,21 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
         onClick={() => runCommand(() => command?.executeBold())}
         active={selection.bold}
         title="flux.wordEditor.bold"
+        testId="toolbar-bold"
       />
       <ToolbarButton
         icon={Italic}
         onClick={() => runCommand(() => command?.executeItalic())}
         active={selection.italic}
         title="flux.wordEditor.italic"
+        testId="toolbar-italic"
       />
       <ToolbarButton
         icon={Underline}
         onClick={() => runCommand(() => command?.executeUnderline())}
         active={selection.underline}
         title="flux.wordEditor.underline"
+        testId="toolbar-underline"
       />
       <ToolbarButton
         icon={Strikethrough}

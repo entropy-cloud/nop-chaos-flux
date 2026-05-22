@@ -170,6 +170,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
               type="button"
               variant="ghost"
               size="icon-sm"
+              data-testid="designer-edge-delete"
               className="w-7 h-7 rounded-lg inline-flex items-center justify-center border-0 hover:bg-destructive/15 hover:text-destructive"
               aria-label={t('flux.flowDesigner.deleteEdge')}
               onClick={handleDeleteEdge}

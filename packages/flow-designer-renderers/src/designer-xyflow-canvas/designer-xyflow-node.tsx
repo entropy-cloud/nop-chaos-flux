@@ -273,13 +273,14 @@ export function DesignerXyflowNode(props: NodeProps) {
                 </Button>
                 {isDeletable && (
                  <Button
-                   type="button"
-                   variant="ghost"
-                   size="icon-sm"
-                   aria-label={t('flux.flowDesigner.deleteNode')}
-                   className="border-0 hover:bg-destructive/15 hover:text-destructive"
-                   onClick={actionScope.onDelete}
-                 >
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    data-testid="designer-node-delete"
+                    aria-label={t('flux.flowDesigner.deleteNode')}
+                    className="border-0 hover:bg-destructive/15 hover:text-destructive"
+                    onClick={actionScope.onDelete}
+                  >
                   <DesignerIcon icon="trash-2" />
                 </Button>
                 )}

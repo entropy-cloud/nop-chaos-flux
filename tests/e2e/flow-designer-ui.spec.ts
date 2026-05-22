@@ -30,7 +30,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await assertTrackedPageErrors(page);
 }
 
-test.skip('captures node and hover toolbar html', async ({ page }, testInfo) => {
+test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   await openFlowDesigner(page);
 
   const shotsDir = join(testInfo.outputDir, 'screenshots');
@@ -190,7 +190,6 @@ test('verifies palette and top toolbar visual structure', async ({ page }) => {
 });
 
 test('verifies flow-designer toolbar and quick actions through their real surfaces', async ({ page }) => {
-  test.skip();
   await openFlowDesigner(page);
 
   const nodeCount = page.locator('.react-flow__node');
@@ -213,7 +212,7 @@ test('verifies flow-designer toolbar and quick actions through their real surfac
   await taskNode.hover();
   const nodeToolbar = page.locator('[data-slot="designer-node-toolbar"]').first();
   await expect(nodeToolbar).toBeVisible();
-  await nodeToolbar.getByRole('button', { name: 'Delete node' }).click();
+  await nodeToolbar.getByTestId('designer-node-delete').click();
   await expect(nodeCount).toHaveCount(5, { timeout: 10_000 });
 
   const edgeCount = page.locator('.react-flow__edge');
@@ -222,7 +221,7 @@ test('verifies flow-designer toolbar and quick actions through their real surfac
   await edge.hover({ force: true });
   const edgeActions = page.locator('[data-slot="designer-edge-actions"]').first();
   await expect(edgeActions).toBeVisible();
-  await edgeActions.getByRole('button', { name: 'Delete edge' }).click();
+  await edgeActions.getByTestId('designer-edge-delete').click();
   await expect(edgeCount).toHaveCount(3, { timeout: 10_000 });
 });
 

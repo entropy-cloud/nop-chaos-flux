@@ -14,6 +14,7 @@ import { ChevronDownIcon } from 'lucide-react';
 import type {
   ConditionBuilderSchema,
   ConditionGroupValue,
+  ConditionItemValue,
   ConditionOperatorOverrides,
   ConditionField,
 } from './types.js';
@@ -21,9 +22,36 @@ import { ConditionGroup } from './condition-group.js';
 import { genId } from './id-utils.js';
 import { groupValuesEqual } from './utils.js';
 
+function convertAmisRule(rule: unknown): ConditionGroupValue | ConditionItemValue {
+  if (!rule || typeof rule !== 'object') {
+    return { id: genId('item'), left: { type: 'field', field: '' }, op: 'eq' };
+  }
+  const r = rule as Record<string, unknown>;
+  if ('rules' in r || 'children' in r) {
+    const raw = r as { combinator?: string; conjunction?: string; rules?: unknown[]; children?: unknown[]; not?: boolean };
+    return {
+      id: genId('group'),
+      conjunction: (raw.combinator === 'or' || raw.conjunction === 'or') ? 'or' : 'and',
+      not: raw.not,
+      children: ((raw.rules ?? raw.children ?? []) as unknown[]).map(convertAmisRule),
+    };
+  }
+  return {
+    id: genId('item'),
+    left: { type: 'field', field: (r.field as string) ?? '' },
+    op: (r.operator as string) ?? 'eq',
+    right: r.value,
+  };
+}
+
 function toGroupValue(value: unknown): ConditionGroupValue {
-  if (value && typeof value === 'object' && 'children' in value) {
-    return value as ConditionGroupValue;
+  if (value && typeof value === 'object') {
+    if ('children' in value) {
+      return value as ConditionGroupValue;
+    }
+    if ('rules' in value) {
+      return convertAmisRule(value) as ConditionGroupValue;
+    }
   }
   return {
     id: genId('root'),

@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { ArrowLeft, Save, FileText, Database, Columns, Type, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
@@ -6,6 +7,8 @@ import {
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, Tabs, TabsList, TabsTrigger, TabsContent } from '@nop-chaos/ui';
+import type { SavedDocumentData } from '@nop-chaos/word-editor-core';
+import { persistSavedDocument } from '@nop-chaos/word-editor-core';
 import { EditorCanvas } from './editor-canvas.js';
 import { RibbonToolbar } from './toolbar/ribbon-toolbar.js';
 import { OutlinePanel } from './panels/outline-panel.js';
@@ -64,6 +67,15 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     mountedRef,
     setSaving: setIsSaving,
   });
+
+  const handleAutosave = useCallback((saved: SavedDocumentData) => {
+    setSavedDocument(saved);
+    try {
+      persistSavedDocument(saved);
+    } catch {
+      // Autosave persistence is best-effort; non-critical if localStorage is unavailable.
+    }
+  }, [setSavedDocument]);
 
   const actions = useWordEditorActions({
     bridge,
@@ -209,7 +221,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           recoveredDocument={recoveredState.document}
           charts={charts}
           codes={codes}
-          onAutosave={setSavedDocument}
+          onAutosave={handleAutosave}
         />
       </div>
   );

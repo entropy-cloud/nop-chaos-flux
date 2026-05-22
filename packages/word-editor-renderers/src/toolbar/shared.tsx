@@ -10,6 +10,7 @@ export interface ToolbarButtonProps {
   disabled?: boolean;
   title: string;
   label?: string;
+  testId?: string;
 }
 
 export function ToolbarButton({
@@ -19,6 +20,7 @@ export function ToolbarButton({
   disabled,
   title,
   label,
+  testId,
 }: ToolbarButtonProps) {
   const localizedTitle = t(title);
   const localizedLabel = label ? t(label) : undefined;
@@ -32,6 +34,7 @@ export function ToolbarButton({
         disabled={disabled}
         title={localizedTitle}
         aria-pressed={active}
+        data-testid={testId}
         className={cn('flex-shrink-0', active && 'bg-accent text-accent-foreground')}
       >
         {Icon && <Icon className="w-4 h-4" />}
@@ -49,6 +52,7 @@ export function ToolbarButton({
       title={localizedTitle}
       aria-label={localizedTitle}
       aria-pressed={active}
+      data-testid={testId}
       className={cn('flex-shrink-0', active && 'bg-accent text-accent-foreground')}
     >
       {Icon && <Icon className="w-4 h-4" aria-hidden="true" />}

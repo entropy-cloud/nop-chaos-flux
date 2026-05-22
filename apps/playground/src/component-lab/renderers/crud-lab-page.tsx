@@ -190,7 +190,7 @@ const requestOwnedCrud = {
       source: '${pagedRecords}',
       onRefresh: {
         action: 'refreshSource',
-        targetId: 'crud-users-source',
+        targetId: 'pagedRecords',
       },
       footerToolbar: [
         { type: 'text', text: 'Visible rows: ${$crud.itemCount}; Total: ${$crud.total}' },
@@ -381,7 +381,7 @@ const clientModeFetchOnFilterCrud = {
       },
       onQuerySubmit: {
         action: 'refreshSource',
-        targetId: 'client-mode-source',
+        targetId: 'clientModeRecords',
       },
       footerToolbar: [
         {

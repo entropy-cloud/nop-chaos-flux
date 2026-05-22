@@ -234,7 +234,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       type: 'table',
       id: `${props.id}-table`,
       source: filteredRows as BaseSchema['data'],
-      columns: authoredSchema.columns ?? normalizedSchema.columns ?? [],
+      columns: normalizedSchema.columns ?? [],
       rowKey: normalizedSchema.rowKey,
       selectionOwnership: 'scope',
       selectionStatePath,

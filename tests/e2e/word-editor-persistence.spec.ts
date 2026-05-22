@@ -30,7 +30,6 @@ async function readRecoveredMainText(page: import('@playwright/test').Page) {
 }
 
 test('saves a document marker that survives a reload', async ({ page }) => {
-  test.skip();
   const marker = `Persistence marker ${Date.now()}`;
   const explicitSaveMarker = `Explicit save marker ${Date.now()}`;
 

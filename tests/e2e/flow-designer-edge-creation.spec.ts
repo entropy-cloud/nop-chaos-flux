@@ -32,14 +32,13 @@ test('synthetic connect event updates the live edge count', async ({ page }) => 
 });
 
 test('dragging from a real source handle to a real target handle creates a visible edge', async ({ page }) => {
-  test.skip();
   await openFlowDesigner(page);
 
   const edgeCount = page.locator('.react-flow__edge');
   await expect(edgeCount).toHaveCount(6);
 
-  const sourceHandle = page.getByTestId('designer-handle-source-out-primary').first();
-  const targetHandle = page.getByTestId('designer-handle-target-in-primary').last();
+  const sourceHandle = page.getByTestId('designer-handle-source-out').first();
+  const targetHandle = page.getByTestId('designer-handle-target-in').last();
   await expect(sourceHandle).toBeVisible();
   await expect(targetHandle).toBeVisible();
 

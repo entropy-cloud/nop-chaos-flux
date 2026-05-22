@@ -58,15 +58,14 @@ test.describe('Word Editor Page', () => {
   });
 
   test('displays toolbar with all control groups', async ({ page }) => {
-    test.skip();
     await openWordEditor(page);
 
-    await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Redo' })).toBeVisible();
+    await expect(page.getByTestId('toolbar-undo')).toBeVisible();
+    await expect(page.getByTestId('toolbar-redo')).toBeVisible();
 
-    await expect(page.getByRole('button', { name: 'Bold' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Italic' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Underline' })).toBeVisible();
+    await expect(page.getByTestId('toolbar-bold')).toBeVisible();
+    await expect(page.getByTestId('toolbar-italic')).toBeVisible();
+    await expect(page.getByTestId('toolbar-underline')).toBeVisible();
 
     await expect(page.getByRole('button', { name: 'Align Left' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Center' })).toBeVisible();
@@ -81,9 +80,9 @@ test.describe('Word Editor Page', () => {
     await expect(page.getByRole('button', { name: 'For Loop' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Output' })).toBeVisible();
 
-    await expect(page.getByRole('button', { name: 'Zoom In' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Zoom Out' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Print' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /放大|Zoom In/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /缩小|Zoom Out/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /打印|Print/ })).toBeVisible();
 
     await expect(page.getByRole('button', { name: 'Search & Replace' })).toBeVisible();
   });
@@ -127,18 +126,17 @@ test.describe('Word Editor Page', () => {
   });
 
   test('formatting toolbar buttons are visible and respond without breaking the editor surface', async ({ page }) => {
-    test.skip();
     await openWordEditor(page);
 
-    const boldButton = page.getByTitle('Bold');
+    const boldButton = page.getByTestId('toolbar-bold');
     await expect(boldButton).toBeVisible({ timeout: 15000 });
     await boldButton.click();
 
-    const italicButton = page.getByTitle('Italic');
+    const italicButton = page.getByTestId('toolbar-italic');
     await expect(italicButton).toBeVisible();
     await italicButton.click();
 
-    const underlineButton = page.getByTitle('Underline');
+    const underlineButton = page.getByTestId('toolbar-underline');
     await expect(underlineButton).toBeVisible();
     await underlineButton.click();
 
