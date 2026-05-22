@@ -5,6 +5,7 @@
 > Plan Status: planned
 > Last Reviewed: 2026-05-21
 > Source: `docs/requirements/2026-05-21-user-management.md`
+> Audit: required
 
 ## Current Baseline
 
@@ -19,15 +20,31 @@
 
 - work intentionally excluded from this plan
 
+## Task Route
+
+- Type: `implementation-only change`
+- Owner Docs: `docs/design/app-overview.md`
+- Skill Selection Basis: `plan-audit-prompt.md` and `closure-audit-prompt.md` apply as review methods; delivery phase uses `Skill: none`
+
+## Infrastructure And Config Prereqs
+
+- No infra prereqs beyond existing baseline
+
 ## Execution Plan
 
 ### Phase 1 - Land The Core Slice
 
 Status: planned
 Targets: `apps/...`, `packages/...`, `docs/...`
+Skill: `none`
+
+- Item Types: `Add | Proof`
+- Prereqs: none
 
 - [ ] implement the core behavior
+  - Skill: `none`
 - [ ] add or update proof
+  - Skill: `none`
 
 Exit Criteria:
 
@@ -35,9 +52,40 @@ Exit Criteria:
 - [ ] docs updated or `No owner-doc update required`
 - [ ] `docs/logs/` updated
 
+## Plan Audit
+
+- Status: pending
+- Reviewer / Agent: `<independent reviewer or subagent>`
+- Evidence: `<audit file or task id>`
+
 ## Closure Gates
 
 - [ ] in-scope behavior is complete
 - [ ] relevant docs are aligned
-- [ ] verification has run
-- [ ] no in-scope issue was silently deferred
+- [ ] verification has run (specify which commands; customize for visual/UX domains if needed)
+- [ ] no in-scope item downgraded to deferred/follow-up
+- [ ] plan audit passed before implementation
+- [ ] text consistency verified: status, phases, gates, and log all agree
+- [ ] closure audit was independent
+- [ ] closure evidence exists in files
+
+## Deferred But Adjudicated
+
+### <item name>
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: <reason>
+- Successor Required: `no`
+
+## Closure
+
+Status Note: <why the plan can close>
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: `<independent reviewer or subagent>`
+- Evidence: `<task id / log link / audit file>`
+
+Follow-up:
+
+- <non-blocking follow-up items only>

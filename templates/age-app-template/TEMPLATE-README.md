@@ -44,7 +44,7 @@ The template was then simplified through several review passes:
 4. Add copyable examples for common dated documents.
 5. Move mandatory AI context out of `docs/references/` into `docs/context/`, because agents do not reliably read reference material unless it is part of the entry path.
 6. Add explicit AI autonomy, backlog, codebase map, and known-good baseline hooks so AI can choose safe next actions without rediscovering the repo every session.
-7. Keep advanced layers such as retrospectives, skills, testing notes, and analysis optional so the template remains usable for small and medium projects. Plan and closure audits are mandatory for created plans except the documented micro-plan exception.
+7. Keep advanced layers such as retrospectives, skills, testing notes, and analysis optional so the template remains usable for small and medium projects. Plan and closure audits are mandatory for created plans.
 
 Independent review found the template direction useful but warned about two risks: documentation theater and excessive process. The current version addresses those risks by keeping a lean default path and making optional layers explicit.
 
@@ -77,7 +77,7 @@ This template turns the repo into a durable execution surface with a lean defaul
 6. verification
 7. closure
 
-For created plans, plan audit and closure audit are part of the default control loop unless the work explicitly qualifies for the micro-plan exception. For more ambiguous or risky work, the template also provides optional document audit, retrospective, and skill-extraction layers.
+For created plans, plan audit and closure audit are part of the default control loop. For more ambiguous or risky work, the template also provides optional document audit, retrospective, and skill-extraction layers.
 
 ## What This Template Includes
 
@@ -122,7 +122,7 @@ Trigger-based folders:
 - `docs/logs/` when a real change lands
 - `docs/bugs/` when a non-obvious bug is fixed or needs memory
 
-Created plans require plan audit before implementation and closure audit before completion, except for a micro-plan that only tracks a very small low-risk edit of normally 1-3 non-generated files and under roughly 200 changed lines. Micro-plans still require a cold-replay closure self-check and must be reclassified if the actual diff exceeds the exception.
+Created plans require plan audit before implementation and closure audit before completion.
 
 Everything else is optional and should be used only when the project complexity justifies it.
 
@@ -169,12 +169,13 @@ Do not push important work through chat alone.
 2. If needed, clarify ambiguity in `docs/discussions/`.
 3. Synthesize implementation-ready requirements in `docs/requirements/`.
 4. Update stable app design in `docs/design/` and technical baseline in `docs/architecture/`, and make them reference each other where needed instead of mixing both concerns into one file.
-5. For work that changes contracts, data/model behavior, auth, integrations, cross-module behavior, spans more than one session, or is more than a very small low-risk edit, create a plan under `docs/plans/`.
-6. Audit the plan before implementation unless the micro-plan exception applies.
-7. Implement the smallest complete slice.
-8. Run verification.
-9. Run closure audit for created plans unless the micro-plan exception applies.
-10. Update logs and any affected docs.
+5. Route the task and select candidate reusable skills.
+6. For work that changes contracts, data/model behavior, auth, integrations, cross-module behavior, spans more than one session, or is more than a very small low-risk edit, create a plan under `docs/plans/`.
+7. Audit the plan before implementation.
+8. Implement the smallest complete slice.
+9. Run verification.
+10. Run closure audit for created plans.
+11. Update logs and any affected docs.
 
 Use these only when needed:
 
@@ -204,6 +205,6 @@ Do not generate a whole demo application.
 If raw inputs are ambiguous or incomplete, first write a requirement synthesis or clarification document instead of coding.
 
 If the scope changes contracts, data/model behavior, auth, integrations, cross-module behavior, spans more than one session, or is more than a very small low-risk edit, create or update a plan in `docs/plans/` only after the requirement and design baseline are stable enough.
-Every created plan needs independent plan audit before implementation and closure audit before completion unless it explicitly qualifies for the micro-plan exception. Micro-plans still need documented cold-replay closure self-check and actual-diff validation.
+Every created plan needs independent plan audit before implementation and closure audit before completion.
 After landing changes, update the daily log, affected owner docs, and bug memory when needed.
 ```

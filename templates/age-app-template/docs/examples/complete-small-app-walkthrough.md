@@ -120,7 +120,7 @@ Example row:
 | P0 | User Management first slice | `docs/requirements/2026-05-21-user-management.md` | `docs/design/app-overview.md` | `docs/plans/2026-05-21-user-management-plan.md` | `ready` | `plan-first` | `none` |
 ```
 
-Because this slice changes auth-visible admin behavior and spans page, API, permissions, and tests, it is `plan-first`, not a micro-plan.
+Because this slice changes auth-visible admin behavior and spans page, API, permissions, and tests, it is `plan-first` and requires independent plan and closure audit.
 
 ## 5. Plan
 
@@ -152,13 +152,43 @@ Target file:
 - profile editing
 - bulk actions
 
+## Task Route
+
+- Type: `implementation-only change`
+- Owner Docs: `docs/design/app-overview.md`
+- Skill Selection Basis: `plan-audit-prompt.md` and `closure-audit-prompt.md` apply as review methods; delivery phase uses `Skill: none`
+
+## Infrastructure And Config Prereqs
+
+- No infra prereqs beyond existing baseline
+
 ## Execution Plan
 
+### Phase 1 - Land The Core Slice
+
+Status: planned
+Targets: `apps/...`, `packages/...`, `docs/...`
+Skill: `none`
+
+- Item Types: `Add | Proof`
+- Prereqs: none
+
 - [ ] add user list route/page
+  - Skill: `none`
 - [ ] wire search behavior
+  - Skill: `none`
 - [ ] add disable action
+  - Skill: `none`
 - [ ] enforce admin access
+  - Skill: `none`
 - [ ] add tests for search, disable, and non-admin access
+  - Skill: `none`
+
+Exit Criteria:
+
+- [ ] user list/search/disable behavior lands for admins
+- [ ] affected owner docs updated or `No owner-doc update required`
+- [ ] `docs/logs/` updated
 
 ## Plan Audit
 
@@ -168,12 +198,31 @@ Target file:
 
 ## Closure Gates
 
-- [ ] acceptance criteria pass
+- [ ] in-scope behavior is complete
+- [ ] relevant docs are aligned
+- [ ] verification has run (specify which commands; customize for visual/UX domains if needed)
+- [ ] no in-scope item downgraded to deferred/follow-up
 - [ ] plan audit passed before implementation
-- [ ] affected owner docs updated
-- [ ] verification commands run
-- [ ] closure audit passed
-- [ ] daily log updated
+- [ ] text consistency verified: status, phases, gates, and log all agree
+- [ ] closure audit was independent
+- [ ] closure evidence exists in files
+
+## Deferred But Adjudicated
+
+None.
+
+## Closure
+
+Status Note: complete only after plan and closure audits both pass.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: `<independent reviewer or subagent>`
+- Evidence: `<task id / log link / audit file>`
+
+Follow-up:
+
+- none
 ```
 
 ## 6. Log Entry

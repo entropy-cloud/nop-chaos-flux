@@ -20,6 +20,23 @@ Before writing non-trivial code, agents must first understand:
 Read `docs/context/source-of-truth-and-precedence.md` when facts conflict or you are unsure which artifact owns the answer.
 Read `docs/process/application-development-workflow.md` when planning or workflow decisions are part of the task.
 
+## Task Routing
+
+Before writing code, agents MUST classify the task first:
+
+1. Determine the task type:
+   - requirement clarification
+   - app-layer design change
+   - architecture change
+   - implementation-only change
+   - bug investigation
+   - verification or audit work
+2. Use `docs/index.md` to read the owner docs for that task type before acting.
+3. Check `docs/skills/README.md` for candidate reusable skills before drafting or revising a plan.
+4. For non-trivial work, record the chosen route and planned skill usage in the plan before implementation.
+
+Do not jump from a feature request directly to code unless the route is already obvious from the active requirement and owner docs.
+
 ## Operating Rules
 
 1. Prefer file-in, file-out collaboration.
@@ -32,9 +49,10 @@ Read `docs/process/application-development-workflow.md` when planning or workflo
 8. Record non-obvious regressions in `docs/bugs/`.
 9. If prototype and implementation diverge materially, capture the reason in `docs/retrospectives/` instead of silently moving on.
 10. Promote repeated process lessons into `docs/skills/` or `docs/audits/` only when the pattern is recurring enough to justify reuse.
-11. For high-risk or high-ambiguity requirement, design, or plan drafts, request an independent subagent or reviewer pass and revise until major objections are resolved. Every created plan MUST pass an independent plan audit before implementation begins and an independent closure audit before being marked complete, except for the micro-plan exception defined below.
+11. For high-risk or high-ambiguity requirement, design, or plan drafts, request an independent subagent or reviewer pass and revise until major objections are resolved. Every created plan MUST pass an independent plan audit before implementation begins and an independent closure audit before being marked complete.
 12. Keep code comments minimal. Prefer self-explanatory code; add only rare comments when a local constraint is otherwise easy to misread.
 13. When a referenced file is not found at its expected path, check `docs/archive/` before concluding it does not exist. Archived files retain their original relative name under `docs/archive/`. Do not move files to `docs/archive/` without human approval.
+14. Treat reusable skills as method selectors, not substitutes for requirements, design, or architecture docs. Business knowledge belongs in owner docs first.
 
 ## Read This First
 
@@ -76,16 +94,17 @@ Read additionally when needed:
 2. If needed, clarify ambiguity in `docs/discussions/`.
 3. Synthesize implementation-ready requirements in `docs/requirements/`.
 4. Split stable design output into app-layer design under `docs/design/` and technical design under `docs/architecture/`, with the two referencing each other when needed.
-5. Write or update a plan when the planning triggers apply.
-6. Audit the plan before implementation unless the micro-plan exception applies.
-7. Implement the smallest complete slice.
-8. Run verification.
-9. Run closure audit for created plans unless the micro-plan exception applies.
-10. Record logs and any needed bug notes.
+5. Route the task and select candidate reusable skills.
+6. Write or update a plan when the planning triggers apply, and record skill usage per phase or item when relevant.
+7. Audit the plan before implementation.
+8. Implement the smallest complete slice.
+9. Run verification.
+10. Run closure audit for created plans.
+11. Record logs and any needed bug notes.
 
 ## Optional Workflow Layers
 
-Use these when warranted by task complexity. Plan and closure audits are mandatory for created plans except for the micro-plan exception below.
+Use these when warranted by task complexity. Plan and closure audits are mandatory for created plans.
 
 - `docs/audits/` for document audits and plan/closure audit evidence
 - `docs/testing/` for manual or exploratory proof
@@ -107,13 +126,18 @@ Create a plan when the task has any of these traits:
 
 Skip a formal plan only for local low-risk edits such as copy changes, small styling fixes, test-only cleanups, and single-file behavior fixes with clear existing tests.
 
-Micro-plan exception:
+All created plans MUST pass independent subagent or reviewer audit before implementation begins and again before the plan is marked complete. Protected areas, unresolved product risk, and source-of-truth conflicts require human/subagent review or stay open.
 
-- If a plan exists only to track a very small edit of normally 1-3 non-generated files and under roughly 200 changed lines, and it has no contract, data/model, auth, permission, integration, deployment, cross-surface, stale-doc conflict, or unresolved product risk, independent plan audit may be skipped.
-- The plan must explicitly state `Audit: skipped under micro-plan exception` and why the exception applies.
-- Closure still requires a cold-replay self-check against the plan, affected docs, real diff, and verification commands; do not mark completion from chat memory alone.
+## Skill Usage Rule
 
-All other created plans MUST pass independent subagent or reviewer audit before implementation begins and again before the plan is marked complete. If no second reviewer is available, use a separate cold-replay pass only for non-protected, non-high-risk plans and document that limitation. Protected areas, unresolved product risk, and source-of-truth conflicts require human/subagent review or stay open.
+Before using a reusable skill, confirm all of the following:
+
+- the task type and route are already clear from the requirement and owner docs
+- the skill matches the work method, not just a similar business label
+- required inputs listed in `docs/skills/README.md` are available
+- the expected output is known and can be stored in the correct docs location
+
+For non-trivial plans, each phase or item that depends on a reusable skill should record `Skill: <name>` or `Skill: none`.
 
 ## Prompting Guidance For Agents
 

@@ -4,11 +4,11 @@
 
 This guide defines the default audit checkpoints for app-layer development.
 
-Plan audit and closure audit are mandatory for created plans unless the plan explicitly qualifies for the micro-plan exception in `docs/plans/00-plan-authoring-and-execution-guide.md`.
+Plan audit and closure audit are mandatory for created plans.
 
 Every created plan must record durable audit evidence in at least one place: the plan, the daily log, or a file under `docs/audits/`. Do not leave audit results only in chat.
 
-Cold replay is not a second reviewer. It is allowed only where `docs/context/ai-autonomy-policy.md` and the plan guide allow it, and it cannot approve protected-area scope changes by itself.
+Cold replay is not a second reviewer and cannot approve plan creation, plan closure, or protected-area scope changes by itself.
 
 ## Three Default Audits
 
@@ -29,7 +29,7 @@ Check for:
 
 ## Plan Audit
 
-Run after writing a plan and before implementation, except when the plan documents `Audit: skipped under micro-plan exception` and explains why the exception applies.
+Run after writing a plan and before implementation.
 
 Check for:
 
@@ -38,11 +38,11 @@ Check for:
 - unowned leftovers
 - plan scope that still depends on unresolved requirements
 - missing proof strategy for each acceptance criterion
-- misuse of the micro-plan exception for work that touches contracts, data/model, auth, permissions, integrations, deployment, multiple modules, more than 5 total files, or more than roughly 200 changed lines
+- missing or weak task routing and skill-selection rationale in the plan
 
 ## Closure Audit
 
-Run after implementation and verification for every created plan, except for micro-plans that document a cold-replay self-check.
+Run after implementation and verification for every created plan.
 
 Check for:
 
@@ -52,8 +52,6 @@ Check for:
 - plan closure gates are truly satisfied
 - no in-scope item was downgraded to a vague follow-up
 - verification failures are not being treated as non-blocking without explicit adjudication
-
-For micro-plans, check that the actual diff still satisfies the exception limits. If it does not, require reclassification and audit before closure.
 
 ## Output Rule
 

@@ -2,14 +2,14 @@
 
 Use this prompt when auditing an execution plan before implementation.
 
-All created plans require this audit unless the plan explicitly qualifies for the micro-plan exception.
+All created plans require this audit.
 
 ```text
 Read `AGENTS.md`, `docs/index.md`, `docs/process/application-development-workflow.md`, the active requirement/design docs, and the active file under `docs/plans/`.
 
 Audit the plan as an execution contract.
 
-Check `docs/context/ai-autonomy-policy.md` reviewer availability. Cold replay is valid only for non-protected, non-high-risk plans and never for protected areas, unresolved product risk, or source-of-truth conflicts.
+Check `docs/context/ai-autonomy-policy.md` reviewer availability. Cold replay is not a second reviewer and never approves protected areas, unresolved product risk, or source-of-truth conflicts.
 
 Focus on:
 - whether the current baseline is honest
@@ -17,7 +17,7 @@ Focus on:
 - whether closure gates are real
 - whether hidden dependencies or unresolved requirement gaps remain
 - whether any in-scope defect or contract gap was silently downgraded
-- whether the micro-plan exception is being misused
+- whether task routing and recorded skill usage are honest, necessary, and matched to the owner docs
 - whether the backlog or context was loosened by AI without human confirmation or human-approved owner-doc evidence
 - whether stale-doc or legacy-mode conflicts were classified before implementation
 - whether proof and verification cover every acceptance criterion

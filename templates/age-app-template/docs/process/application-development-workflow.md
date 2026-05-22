@@ -23,12 +23,13 @@ For most small and medium app projects, use this path:
 3. `input`
 4. `requirements`
 5. `design`
-6. `plan` when planning triggers apply
-7. `plan audit` for created plans unless the micro-plan exception applies
-8. `implementation`
-9. `verification`
-10. `closure audit` for created plans unless the micro-plan exception applies
-11. `logs / bugs`
+6. `task routing and skill selection`
+7. `plan` when planning triggers apply
+8. `plan audit` for created plans
+9. `implementation`
+10. `verification`
+11. `closure audit` for created plans
+12. `logs / bugs`
 
 Use document audits, retrospectives, skill extraction, and extra testing notes only when the work is ambiguous, risky, or repeatedly failing.
 
@@ -41,7 +42,7 @@ These are available but not mandatory for every task:
 3. `retrospective`
 4. `skill extraction`
 
-Plan audit and closure audit are not optional for created plans except under the micro-plan exception in `docs/plans/00-plan-authoring-and-execution-guide.md`.
+Plan audit and closure audit are not optional for created plans.
 
 ## Stage 0 - Read Context
 
@@ -76,11 +77,11 @@ After drafting substantial design documents, use an independent subagent or revi
 
 Write `docs/plans/` from the settled design baseline, not from raw source material alone.
 
-After drafting a plan, use an independent subagent or reviewer pass and revise until major objections are resolved unless the plan explicitly qualifies for the micro-plan exception.
+After drafting a plan, use an independent subagent or reviewer pass and revise until major objections are resolved.
 
 ### C. Audit Periodically
 
-Use document audits at a frequency proportional to project risk. Plan audits and closure audits are mandatory for created plans except under the micro-plan exception.
+Use document audits at a frequency proportional to project risk. Plan audits and closure audits are mandatory for created plans.
 
 ## Stage 1 - Collect Raw Inputs
 
@@ -159,26 +160,38 @@ At minimum, challenge these risks:
 
 Use `docs/audits/` and the prompt templates under `docs/skills/`.
 
-## Stage 6 - Write The Plan When Planning Triggers Apply
+## Stage 6 - Route The Task And Select Skills
+
+Before implementation, explicitly decide how the work should be executed:
+
+- classify the task type
+- confirm the owner docs that control the work
+- check `docs/skills/README.md` for reusable method skills
+- record `Skill: <name>` or `Skill: none` in the plan where relevant
+
+If no existing skill clearly fits, proceed with the normal docs-driven workflow instead of forcing a weak skill match.
+
+## Stage 7 - Write The Plan When Planning Triggers Apply
 
 Create a plan under `docs/plans/` when work is more than a very small low-risk edit or when any planning trigger in the plan guide applies.
 
-The only no-plan path is a local low-risk change that affects very few files, has clear existing behavior or tests, and does not touch contracts, data/model shape, auth, permissions, integrations, deployment, cross-surface behavior, or stale-doc conflicts. Larger local edits should use the micro-plan or full-plan path in the plan guide.
+The only no-plan path is a local low-risk change that affects very few files, has clear existing behavior or tests, and does not touch contracts, data/model shape, auth, permissions, integrations, deployment, cross-surface behavior, or stale-doc conflicts. Larger local edits should use the full-plan path in the plan guide.
 
 The plan should capture:
 
 - current baseline
 - goals
 - non-goals
+- task route and skill selection
 - phased execution
 - proof requirements
 - closure gates
 
 The plan should not become a low-level implementation design dump.
 
-## Stage 7 - Audit The Plan
+## Stage 8 - Audit The Plan
 
-Before implementation, independently challenge every created plan unless it explicitly qualifies for the micro-plan exception in the plan guide.
+Before implementation, independently challenge every created plan.
 
 The audit should test:
 
@@ -189,7 +202,7 @@ The audit should test:
 
 If the audit finds blocking issues, revise the plan and repeat the audit until no major objection remains.
 
-## Stage 8 - Implement Small Complete Slices
+## Stage 9 - Implement Small Complete Slices
 
 Implement the smallest complete slice that produces a real supported result.
 
@@ -199,7 +212,7 @@ Rules:
 - do not create large placeholder surfaces just to look complete
 - prefer one real feature slice over five weak page shells
 
-## Stage 9 - Verify
+## Stage 10 - Verify
 
 Run the real verification commands for the repo.
 
@@ -213,7 +226,7 @@ Rule:
 
 - every non-trivial bug fix should add or update automated test coverage
 
-## Stage 10 - Independent Closure Audit
+## Stage 11 - Independent Closure Audit
 
 Work tracked by a plan is not automatically closed just because the implementing agent says so.
 
@@ -226,11 +239,7 @@ Closure requires an independent re-check against:
 
 If the plan is not really closed, keep it open.
 
-Micro-plans may use a documented cold-replay self-check instead of an independent subagent or reviewer, but the plan must say why the micro-plan exception applies.
-
-Before closing a micro-plan, compare the actual diff against the exception limits. If the final change exceeded those limits or touched an excluded area, reclassify it and run the required audits before closure.
-
-## Stage 11 - Retrospective When Needed
+## Stage 12 - Retrospective When Needed
 
 If prototype and implementation still diverged, or if the first requirement set missed key reality, write a retrospective under `docs/retrospectives/`.
 
@@ -241,7 +250,7 @@ Good retrospective questions:
 - what assumption looked reasonable but failed in implementation
 - what should move earlier in the workflow next time
 
-## Stage 12 - Skill Extraction When Needed
+## Stage 13 - Skill Extraction When Needed
 
 If the same issue keeps happening, convert it into a reusable prompt or audit playbook under `docs/skills/`.
 
@@ -250,7 +259,7 @@ Examples:
 - requirement gap analysis prompt
 - plan audit prompt
 - closure audit prompt
-- domain-specific review checklist
+- reusable review checklist for a repeated method or audit pattern
 
 If the output is more of a reusable engineering lesson than a prompt, record it under `docs/lessons/`.
 
@@ -276,10 +285,10 @@ For most non-trivial tasks, the default loop is:
 2. write or update input/requirement files
 3. update design or architecture docs if the supported baseline changed
 4. write or update a plan when planning triggers apply
-5. audit the plan unless the micro-plan exception applies
+5. audit the plan
 6. implement
 7. verify
-8. run closure audit for created plans unless the micro-plan exception applies, and verify any micro-plan still fits the actual diff limits
+8. run closure audit for created plans
 9. record logs and bug notes when needed
 
 Add document audits, retrospectives, and reusable skills only when the problem pattern justifies the extra process.

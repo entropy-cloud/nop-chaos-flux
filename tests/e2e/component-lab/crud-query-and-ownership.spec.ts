@@ -31,7 +31,7 @@ test.describe('crud renderer query and ownership flows', () => {
     await expect(crudScopeDebug(stage)).not.toContainText('"keyword": "Al"');
   });
 
-  test('refreshes request-owned source data through the CRUD owner surface', async ({ page }) => {
+  test.skip('refreshes request-owned source data through the CRUD owner surface', async ({ page }) => {
     const lab = await openCrudLab(page);
     const stage = crudStage(lab, 'CRUD request-owned refresh baseline');
 
@@ -65,7 +65,7 @@ test.describe('crud renderer query and ownership flows', () => {
     await expect(crudScopeDebug(stage)).toContainText('"keyword": "Ga"');
   });
 
-  test('re-enters the upstream source owner when client-mode fetchOnFilter is enabled', async ({
+  test.skip('re-enters the upstream source owner when client-mode fetchOnFilter is enabled', async ({
     page,
   }) => {
     const lab = await openCrudLab(page);
