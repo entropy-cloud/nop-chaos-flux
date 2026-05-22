@@ -309,6 +309,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
       <NodeFrameWrapper
         templateNode={{
           type: 'wrap-probe',
+          component: { frameRootTag: 'div' },
           schema: {
             type: 'wrap-probe',
             label: 'Schema label',
@@ -339,6 +340,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
       <NodeFrameWrapper
         templateNode={{
           type: 'tag-list',
+          component: { frameRootTag: 'div' },
           schema: { type: 'tag-list', label: 'Tags' },
         } as any}
         definitionWrap

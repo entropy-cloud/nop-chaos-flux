@@ -610,4 +610,5 @@ export const arrayFieldRendererDefinition: RendererDefinition = {
       return [];
     },
   },
+  frameRootTag: 'div',
 };

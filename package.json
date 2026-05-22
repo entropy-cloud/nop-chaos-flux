@@ -45,6 +45,7 @@
     "check:audit-non-retained-renderer-references": "node scripts/audit/find-non-retained-renderer-references.mjs",
     "check:audit-react19-optimization-candidates": "node scripts/audit/find-react19-optimization-candidates.mjs",
     "check:audit-runtime-raw-schema-reads": "node scripts/audit/find-runtime-raw-schema-reads.mjs",
+    "check:audit-hardcoded-type-dispatch": "node scripts/audit/find-hardcoded-type-dispatch.mjs",
     "check:duplicates": "node scripts/check-duplicates.mjs",
     "check:duplicates:detail": "jscpd packages/ --config .jscpd.json",
     "lint": "node scripts/clean-src-artifacts.mjs && node scripts/verify-no-src-artifacts.mjs && node scripts/check-react19-legacy-apis.mjs && node scripts/check-active-doc-code-anchors.mjs && node scripts/check-package-css-exports.mjs && node scripts/check-renderer-definition-fields-only.mjs && node scripts/check-finite-prop-contracts.mjs && node scripts/check-i18n-keys.mjs && node scripts/check-schema-prop-coverage.mjs && turbo run lint",

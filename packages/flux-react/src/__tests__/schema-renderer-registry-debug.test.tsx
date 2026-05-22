@@ -26,6 +26,10 @@ const formRenderer: RendererDefinition = {
   type: 'form',
   component: (props: any) => <form>{props.regions.body?.render?.()}</form>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+  scopePolicy: 'form',
+  validationDefaults: {
+    defaultChildContractMode: 'ignore',
+  },
 };
 
 const openDialogButtonRenderer = {

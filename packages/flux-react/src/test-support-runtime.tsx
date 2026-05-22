@@ -163,6 +163,7 @@ export const cidProbeRenderer: RendererDefinition = {
 export const wrapProbeRenderer: RendererDefinition = {
   type: 'wrap-probe',
   wrap: true,
+  frameRootTag: 'div',
   component: (props) => (
     <Input
       aria-label={String(props.props.label ?? 'Wrap probe')}

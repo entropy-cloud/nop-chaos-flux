@@ -23,6 +23,9 @@ export const pageRenderer: RendererDefinition = {
   type: 'page',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+  validationDefaults: {
+    collectDescendantValidation: true,
+  },
 };
 
 export const cardRenderer: RendererDefinition = {
@@ -55,6 +58,9 @@ export const formRenderer: RendererDefinition = {
   scopePolicy: 'form',
   validation: {
     kind: 'container',
+  },
+  validationDefaults: {
+    defaultChildContractMode: 'ignore',
   },
 };
 

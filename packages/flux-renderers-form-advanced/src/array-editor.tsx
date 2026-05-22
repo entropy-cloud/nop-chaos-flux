@@ -420,4 +420,5 @@ export const arrayEditorRendererDefinition: RendererDefinition = {
       ];
     },
   },
+  frameRootTag: 'div',
 };

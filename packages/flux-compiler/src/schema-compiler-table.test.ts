@@ -1,13 +1,113 @@
 import { describe, expect, it } from 'vitest';
-import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import {
+  createRendererRegistry,
+  extractNestedSchemaRegions,
+  type CompileSchemaOptions,
+  type RendererDefinition,
+  type SchemaInput,
+  type TemplateNode,
+  type TemplateRegion,
+} from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from './index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+
+function normalizeTableColumns(
+  value: unknown,
+  path: string,
+  regions: Record<string, TemplateRegion>,
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
+  ) => TemplateNode | TemplateNode[],
+) {
+  if (!Array.isArray(value)) {
+    return value;
+  }
+
+  return value.map((column, index) => {
+    if (!column || typeof column !== 'object') {
+      return column;
+    }
+
+    return extractNestedSchemaRegions({
+      candidate: column as Record<string, unknown>,
+      itemRegionPath: `${path}.columns[${index}]`,
+      itemRegionKeyPrefix: `columns.${index}`,
+      rules: [
+        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+        {
+          key: 'buttons',
+          regionKeySuffix: 'buttons',
+          compiledKey: 'buttonsRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'cell',
+          regionKeySuffix: 'cell',
+          compiledKey: 'cellRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'body',
+          regionKeySuffix: 'quickEditBody',
+          compiledKey: 'quickEditBodyRegionKey',
+        },
+      ],
+      regions,
+      compileSchema,
+    }).value;
+  });
+}
+
+const tableDeepFields = [
+  {
+    key: 'columns',
+    nestedRegions: [
+      { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+      {
+        key: 'buttons',
+        regionKeySuffix: 'buttons',
+        compiledKey: 'buttonsRegionKey',
+        params: ['record', 'index'] as const,
+        isolate: true,
+      },
+      {
+        key: 'cell',
+        regionKeySuffix: 'cell',
+        compiledKey: 'cellRegionKey',
+        params: ['record', 'index'] as const,
+        isolate: true,
+      },
+      {
+        key: 'body',
+        regionKeySuffix: 'quickEditBody',
+        compiledKey: 'quickEditBodyRegionKey',
+      },
+    ],
+    normalize(input: {
+      value: unknown;
+      path: string;
+      regions: Record<string, TemplateRegion>;
+      compileSchema: (
+        input: SchemaInput,
+        options?: CompileSchemaOptions,
+        regionMeta?: { params?: readonly string[]; isolate?: boolean },
+      ) => TemplateNode | TemplateNode[];
+    }) {
+      return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
+    },
+  },
+];
 
 describe('createSchemaCompiler', () => {
   it('extracts table column label fragments into compiled regions', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
+      deepFields: tableDeepFields,
     };
     const textRenderer: RendererDefinition = {
       type: 'text',
@@ -39,6 +139,7 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
+      deepFields: tableDeepFields,
     };
     const textRenderer: RendererDefinition = {
       type: 'text',
@@ -71,6 +172,7 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
+      deepFields: tableDeepFields,
     };
     const textRenderer: RendererDefinition = {
       type: 'text',
@@ -106,6 +208,7 @@ describe('createSchemaCompiler', () => {
       type: 'table',
       component: () => null,
       fields: [{ key: 'empty', kind: 'value-or-region', regionKey: 'empty' }],
+      deepFields: tableDeepFields,
     };
     const textRenderer: RendererDefinition = {
       type: 'text',
@@ -138,6 +241,7 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
+      deepFields: tableDeepFields,
     };
     const textRenderer: RendererDefinition = {
       type: 'text',
@@ -174,6 +278,7 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
+      deepFields: tableDeepFields,
     };
     const textRenderer: RendererDefinition = {
       type: 'text',

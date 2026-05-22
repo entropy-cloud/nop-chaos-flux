@@ -1,5 +1,11 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { createRendererRegistry } from '@nop-chaos/flux-core';
+import type {
+  CompileSchemaOptions,
+  RendererDefinition,
+  SchemaInput,
+  TemplateNode,
+  TemplateRegion,
+} from '@nop-chaos/flux-core';
+import { createRendererRegistry, extractNestedSchemaRegions } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index.js';
 
@@ -11,6 +17,57 @@ export function createCompiler(...definitions: RendererDefinition[]) {
 }
 
 export const noop = () => null;
+
+function normalizeTableColumns(
+  value: unknown,
+  path: string,
+  regions: Record<string, TemplateRegion>,
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
+  ) => TemplateNode | TemplateNode[],
+) {
+  if (!Array.isArray(value)) {
+    return value;
+  }
+
+  return value.map((column, index) => {
+    if (!column || typeof column !== 'object') {
+      return column;
+    }
+
+    return extractNestedSchemaRegions({
+      candidate: column as Record<string, unknown>,
+      itemRegionPath: `${path}.columns[${index}]`,
+      itemRegionKeyPrefix: `columns.${index}`,
+      rules: [
+        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+        {
+          key: 'buttons',
+          regionKeySuffix: 'buttons',
+          compiledKey: 'buttonsRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'cell',
+          regionKeySuffix: 'cell',
+          compiledKey: 'cellRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'body',
+          regionKeySuffix: 'quickEditBody',
+          compiledKey: 'quickEditBodyRegionKey',
+        },
+      ],
+      regions,
+      compileSchema,
+    }).value;
+  });
+}
 
 export function compileNode(
   compiler: ReturnType<typeof createSchemaCompiler>,
@@ -99,6 +156,35 @@ export const recurseRenderer: RendererDefinition = {
 export const tabsRenderer: RendererDefinition = {
   type: 'tabs',
   component: noop,
+  deepFields: [
+    {
+      key: 'items',
+      nestedRegions: [
+        {
+          key: 'title',
+          regionKeySuffix: 'title',
+          compiledKey: 'titleRegionKey',
+          params: ['item', 'index', 'key'],
+          isolate: true,
+        },
+        {
+          key: 'body',
+          regionKeySuffix: 'body',
+          compiledKey: 'bodyRegionKey',
+          params: ['item', 'index', 'key'],
+          isolate: true,
+        },
+        {
+          key: 'toolbar',
+          regionKeySuffix: 'toolbar',
+          compiledKey: 'toolbarRegionKey',
+          params: ['item', 'index', 'key'],
+          isolate: true,
+        },
+      ],
+      booleanKeys: ['disabled'],
+    },
+  ],
   fields: [
     { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
     { key: 'onChange', kind: 'event' },
@@ -147,11 +233,45 @@ export const formRenderer: RendererDefinition = {
     { key: 'labelAlign', kind: 'prop' },
     { key: 'labelWidth', kind: 'prop' },
   ],
+  scopePolicy: 'form',
+  validationDefaults: {
+    defaultChildContractMode: 'ignore',
+  },
 };
 
 export const tableRenderer: RendererDefinition = {
   type: 'table',
   component: noop,
+  deepFields: [
+    {
+      key: 'columns',
+      nestedRegions: [
+        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+        {
+          key: 'buttons',
+          regionKeySuffix: 'buttons',
+          compiledKey: 'buttonsRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'cell',
+          regionKeySuffix: 'cell',
+          compiledKey: 'cellRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'body',
+          regionKeySuffix: 'quickEditBody',
+          compiledKey: 'quickEditBodyRegionKey',
+        },
+      ],
+      normalize(input) {
+        return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
+      },
+    },
+  ],
   fields: [
     { key: 'onRowClick', kind: 'event' },
     { key: 'onSortChange', kind: 'event' },
@@ -199,6 +319,36 @@ export const chartRenderer: RendererDefinition = {
 export const crudRenderer: RendererDefinition = {
   type: 'crud',
   component: noop,
+  deepFields: [
+    {
+      key: 'columns',
+      nestedRegions: [
+        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+        {
+          key: 'buttons',
+          regionKeySuffix: 'buttons',
+          compiledKey: 'buttonsRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'cell',
+          regionKeySuffix: 'cell',
+          compiledKey: 'cellRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'body',
+          regionKeySuffix: 'quickEditBody',
+          compiledKey: 'quickEditBodyRegionKey',
+        },
+      ],
+      normalize(input) {
+        return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
+      },
+    },
+  ],
   propContracts: {
     statusPath: { shape: { kind: 'string' }, displayName: 'Status Path' },
     source: { shape: { kind: 'union', anyOf: [] }, displayName: 'Source' },

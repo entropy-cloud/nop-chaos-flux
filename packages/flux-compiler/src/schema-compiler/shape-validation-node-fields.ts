@@ -26,7 +26,6 @@ import {
   hasClosedPropModel,
   isNamespacedSchemaKey,
 } from './shape-validation-utils.js';
-import { TABS_ITEM_BOOLEAN_FIELDS } from './tables.js';
 
 const BOOLEAN_META_KEYS = new Set(['when', 'visible', 'hidden', 'disabled']);
 
@@ -248,11 +247,13 @@ export function inspectSchemaNodeFields(
       });
     }
 
-    if (renderer.type === 'tabs' && key === 'items') {
+    const deepField = renderer.deepFields?.find((field) => field.key === key);
+
+    if (deepField?.booleanKeys?.length) {
       validateNestedBooleanFields({
         value,
         path: keyPath,
-        keys: TABS_ITEM_BOOLEAN_FIELDS,
+        keys: deepField.booleanKeys,
         diagnostics,
         enabled,
       });
@@ -304,40 +305,45 @@ export function inspectSchemaNodeFields(
     }
   }
 
-  if (schema.type === 'data-source') {
-    const hasFormula = schema.formula !== undefined;
-    const hasAction = schema.action !== undefined;
+  for (const artifact of renderer.compilation?.artifacts ?? []) {
+    if (artifact === 'data-source') {
+      const dataSourceSchema = schema as import('@nop-chaos/flux-core').DataSourceSchema;
+      const hasFormula = dataSourceSchema.formula !== undefined;
+      const hasAction = dataSourceSchema.action !== undefined;
 
-    if ((hasFormula && hasAction) || (!hasFormula && !hasAction)) {
-      emitSchemaDiagnostic(
-        diagnostics,
-        {
-          code: 'invalid-source-shape',
-          path: pointer,
-          message: 'data-source requires exactly one of formula or action.',
-        },
-        enabled,
-      );
+      if ((hasFormula && hasAction) || (!hasFormula && !hasAction)) {
+        emitSchemaDiagnostic(
+          diagnostics,
+          {
+            code: 'invalid-source-shape',
+            path: pointer,
+            message: 'data-source requires exactly one of formula or action.',
+          },
+          enabled,
+        );
+      }
+
+      if (
+        hasAction &&
+        dataSourceSchema.args &&
+        typeof dataSourceSchema.args === 'object' &&
+        'url' in (dataSourceSchema.args as object)
+      ) {
+        validateApiSchemaShape(
+          dataSourceSchema.args as import('@nop-chaos/flux-core').ApiSchema,
+          appendJsonPointer(pointer, 'args'),
+          diagnostics,
+          enabled,
+          'invalid-source-shape',
+        );
+      }
+
+      continue;
     }
 
-    if (
-      hasAction &&
-      schema.args &&
-      typeof schema.args === 'object' &&
-      'url' in (schema.args as object)
-    ) {
-      validateApiSchemaShape(
-        schema.args as import('@nop-chaos/flux-core').ApiSchema,
-        appendJsonPointer(pointer, 'args'),
-        diagnostics,
-        enabled,
-        'invalid-source-shape',
-      );
+    if (artifact === 'reaction') {
+      validateReactionShape(schema, pointer, diagnostics, enabled, actionContext);
     }
-  }
-
-  if (schema.type === 'reaction') {
-    validateReactionShape(schema, pointer, diagnostics, enabled, actionContext);
   }
 
   for (const lifecycleKey of ['onMount', 'onUnmount'] as const) {

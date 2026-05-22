@@ -1,9 +1,107 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import {
+  extractNestedSchemaRegions,
+  type CompileSchemaOptions,
+  type RendererDefinition,
+  type SchemaInput,
+  type TemplateNode,
+  type TemplateRegion,
+} from '@nop-chaos/flux-core';
 import {
   importHostRenderer,
   createTestCompiler,
 } from './schema-compiler-registry-fixtures.js';
+
+function normalizeTableColumns(
+  value: unknown,
+  path: string,
+  regions: Record<string, TemplateRegion>,
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
+  ) => TemplateNode | TemplateNode[],
+) {
+  if (!Array.isArray(value)) {
+    return value;
+  }
+
+  return value.map((column, index) => {
+    if (!column || typeof column !== 'object') {
+      return column;
+    }
+
+    return extractNestedSchemaRegions({
+      candidate: column as Record<string, unknown>,
+      itemRegionPath: `${path}.columns[${index}]`,
+      itemRegionKeyPrefix: `columns.${index}`,
+      rules: [
+        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+        {
+          key: 'buttons',
+          regionKeySuffix: 'buttons',
+          compiledKey: 'buttonsRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'cell',
+          regionKeySuffix: 'cell',
+          compiledKey: 'cellRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'body',
+          regionKeySuffix: 'quickEditBody',
+          compiledKey: 'quickEditBodyRegionKey',
+        },
+      ],
+      regions,
+      compileSchema,
+    }).value;
+  });
+}
+
+const tableDeepFields = [
+  {
+    key: 'columns',
+    nestedRegions: [
+      { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+      {
+        key: 'buttons',
+        regionKeySuffix: 'buttons',
+        compiledKey: 'buttonsRegionKey',
+        params: ['record', 'index'] as const,
+        isolate: true,
+      },
+      {
+        key: 'cell',
+        regionKeySuffix: 'cell',
+        compiledKey: 'cellRegionKey',
+        params: ['record', 'index'] as const,
+        isolate: true,
+      },
+      {
+        key: 'body',
+        regionKeySuffix: 'quickEditBody',
+        compiledKey: 'quickEditBodyRegionKey',
+      },
+    ],
+    normalize(input: {
+      value: unknown;
+      path: string;
+      regions: Record<string, TemplateRegion>;
+      compileSchema: (
+        input: SchemaInput,
+        options?: CompileSchemaOptions,
+        regionMeta?: { params?: readonly string[]; isolate?: boolean },
+      ) => TemplateNode | TemplateNode[];
+    }) {
+      return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
+    },
+  },
+];
 
 describe('createSchemaCompiler', () => {
   it('preserves xui:imports on compiled schema for runtime registration', () => {
@@ -27,6 +125,7 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
+      deepFields: tableDeepFields,
     };
     const buttonRenderer: RendererDefinition = {
       type: 'button',
@@ -55,6 +154,7 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
+      deepFields: tableDeepFields,
     };
     const textRendererLocal: RendererDefinition = {
       type: 'text',
@@ -82,6 +182,7 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
+      deepFields: tableDeepFields,
     };
     const textRendererLocal: RendererDefinition = {
       type: 'text',
@@ -106,11 +207,60 @@ describe('createSchemaCompiler', () => {
     expect(node.propsProgram.value.columns[0].cellRegionKey).toBe('columns.0.cell');
   });
 
+  it('extracts deep-field nested regions without requiring a custom normalizer', () => {
+    const variantFieldRenderer: RendererDefinition = {
+      type: 'variant-field',
+      component: () => null,
+      deepFields: [
+        {
+          key: 'variants',
+          nestedRegions: [
+            {
+              key: 'content',
+              regionKeySuffix: 'content',
+              compiledKey: 'contentRegionKey',
+            },
+            {
+              key: 'viewer',
+              regionKeySuffix: 'viewer',
+              compiledKey: 'viewerRegionKey',
+            },
+          ],
+        },
+      ],
+    };
+    const textRendererLocal: RendererDefinition = {
+      type: 'text',
+      component: () => null,
+    };
+    const compiler = createTestCompiler([variantFieldRenderer, textRendererLocal]);
+
+    const compiled = compiler.compile({
+      type: 'variant-field',
+      variants: [
+        {
+          key: 'alpha',
+          content: { type: 'text', text: 'Alpha editor' },
+          viewer: { type: 'text', text: 'Alpha viewer' },
+        },
+      ],
+    });
+    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+
+    expect(node.regions['variants.0.content']?.node).toBeTruthy();
+    expect(node.regions['variants.0.viewer']?.node).toBeTruthy();
+    expect(node.propsProgram.value.variants[0].content).toBeUndefined();
+    expect(node.propsProgram.value.variants[0].viewer).toBeUndefined();
+    expect(node.propsProgram.value.variants[0].contentRegionKey).toBe('variants.0.content');
+    expect(node.propsProgram.value.variants[0].viewerRegionKey).toBe('variants.0.viewer');
+  });
+
   it('treats table empty as a plain prop or compiled region based on field metadata', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
       fields: [{ key: 'empty', kind: 'value-or-region', regionKey: 'empty' }],
+      deepFields: tableDeepFields,
     };
     const textRendererLocal: RendererDefinition = {
       type: 'text',

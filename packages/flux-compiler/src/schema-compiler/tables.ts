@@ -4,7 +4,7 @@ import type {
   CompileSchemaOptions,
   SchemaInput,
 } from '@nop-chaos/flux-core';
-import { extractNestedSchemaRegions } from './regions.js';
+import { extractNestedSchemaRegions } from '@nop-chaos/flux-core';
 
 function normalizeBooleanLikeField(record: Record<string, unknown>, key: string) {
   const value = record[key];

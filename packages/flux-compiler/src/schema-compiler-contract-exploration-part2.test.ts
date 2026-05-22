@@ -140,6 +140,9 @@ describe('contract exploration: edge schemas', () => {
       type: 'data-source',
       component: () => null,
       fields: [],
+      compilation: {
+        artifacts: ['data-source'],
+      },
     };
     const compiler = makeCompiler([{
       type: 'page',
@@ -167,6 +170,9 @@ describe('contract exploration: edge schemas', () => {
       type: 'data-source',
       component: () => null,
       fields: [],
+      compilation: {
+        artifacts: ['data-source'],
+      },
     };
     const compiler = makeCompiler([{
       type: 'page',
@@ -196,6 +202,9 @@ describe('contract exploration: edge schemas', () => {
       type: 'reaction',
       component: () => null,
       fields: [],
+      compilation: {
+        artifacts: ['reaction'],
+      },
     };
     const compiler = makeCompiler([{
       type: 'page',

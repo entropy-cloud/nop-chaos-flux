@@ -18,6 +18,9 @@ const formRenderer: RendererDefinition = {
   validation: {
     kind: 'container',
   },
+  validationDefaults: {
+    defaultChildContractMode: 'ignore',
+  },
 };
 
 const inputRenderer: RendererDefinition = {

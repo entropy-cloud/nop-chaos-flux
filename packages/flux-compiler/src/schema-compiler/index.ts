@@ -1,5 +1,10 @@
-export { createTemplateRegion, extractNestedSchemaRegions } from './regions.js';
-export type { NestedRegionFieldRule } from './regions.js';
+export {
+  createTemplateRegion,
+  extractNestedSchemaRegions,
+  visitNestedSchemaRegions,
+  validateRegionParams,
+} from '@nop-chaos/flux-core';
+export type { NestedRegionFieldRule } from '@nop-chaos/flux-core';
 
 export { DEEP_FIELD_NORMALIZERS } from './tables.js';
 export type { DeepFieldNormalizer } from './tables.js';

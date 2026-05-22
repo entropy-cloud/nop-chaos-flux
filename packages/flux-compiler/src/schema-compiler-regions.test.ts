@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { extractNestedSchemaRegions, validateRegionParams } from './schema-compiler/regions.js';
+import { extractNestedSchemaRegions, validateRegionParams } from '@nop-chaos/flux-core';
 
 describe('schema-compiler regions', () => {
   it('rejects any $-prefixed region param name', () => {

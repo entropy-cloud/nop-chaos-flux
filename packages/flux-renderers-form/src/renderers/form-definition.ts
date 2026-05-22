@@ -261,6 +261,9 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'actionsClassName', kind: 'prop' },
   ],
   scopePolicy: 'form',
+  validationDefaults: {
+    defaultChildContractMode: 'ignore',
+  },
   componentRegistryPolicy: 'new',
   schemaValidator: validateFormSchema,
 };

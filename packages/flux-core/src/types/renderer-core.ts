@@ -25,11 +25,17 @@ import type {
   NodeInstance,
   NodeRuntimeState,
   ResolutionContext,
+  TemplateRegion,
   TemplateNode,
 } from './node-identity.js';
 import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component.js';
 import type { RendererEnv } from './renderer-api.js';
-import type { ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler.js';
+import type {
+  CompileSchemaOptions,
+  ResolvedNodeMeta,
+  ResolvedNodeProps,
+  SchemaCompiler,
+} from './renderer-compiler.js';
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks.js';
 import type { RendererPlugin } from './renderer-plugin.js';
 import type {
@@ -78,6 +84,41 @@ export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
    * where child validation is handled at runtime via registerField).
    */
   getChildFieldPathPrefix?(schema: S, ctx: ValidationCollectContext<S>): string | false | undefined;
+}
+
+export interface RendererDeepFieldRegionRule {
+  key: string;
+  regionKeySuffix: string;
+  compiledKey: string;
+  params?: readonly string[];
+  isolate?: boolean;
+}
+
+export interface RendererDeepFieldNormalizeInput {
+  value: unknown;
+  path: string;
+  regions: Record<string, TemplateRegion>;
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
+  ) => TemplateNode | TemplateNode[];
+}
+
+export interface RendererDeepFieldDefinition {
+  key: string;
+  nestedRegions?: readonly RendererDeepFieldRegionRule[];
+  booleanKeys?: readonly string[];
+  normalize?: (input: RendererDeepFieldNormalizeInput) => unknown;
+}
+
+export interface RendererValidationDefaults {
+  defaultChildContractMode?: ChildValidationMode;
+  collectDescendantValidation?: boolean;
+}
+
+export interface RendererCompilationDefinition {
+  artifacts?: readonly ('data-source' | 'reaction')[];
 }
 
 type BivariantCallback<Args extends readonly unknown[], Result> = {
@@ -280,7 +321,11 @@ export interface RendererDefinition<
   actionScopePolicy?: 'inherit' | 'new';
   componentRegistryPolicy?: 'inherit' | 'new';
   validation?: ValidationContributor<S>;
+  validationDefaults?: RendererValidationDefaults;
+  deepFields?: readonly RendererDeepFieldDefinition[];
+  compilation?: RendererCompilationDefinition;
   wrap?: boolean;
+  frameRootTag?: 'div' | 'label';
   /**
    * Whether this renderer supports static rendering (no client interaction needed).
    * Used by the compiler for bottom-up static analysis.

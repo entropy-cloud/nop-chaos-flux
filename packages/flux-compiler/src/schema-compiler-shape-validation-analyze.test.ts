@@ -1,8 +1,66 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import {
+  extractNestedSchemaRegions,
+  type CompileSchemaOptions,
+  type RendererDefinition,
+  type SchemaInput,
+  type TemplateNode,
+  type TemplateRegion,
+} from '@nop-chaos/flux-core';
 import { makeCompiler } from './schema-compiler-shape-validation-test-utils.js';
 import { createSchemaCompilerDiagnosticsContext } from './schema-compiler/diagnostics.js';
 import { validateFluxValueShape } from './schema-compiler/flux-value-shape-validation.js';
+
+function normalizeTableColumns(
+  value: unknown,
+  path: string,
+  regions: Record<string, TemplateRegion>,
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
+  ) => TemplateNode | TemplateNode[],
+) {
+  if (!Array.isArray(value)) {
+    return value;
+  }
+
+  return value.map((column, index) => {
+    if (!column || typeof column !== 'object') {
+      return column;
+    }
+
+    return extractNestedSchemaRegions({
+      candidate: column as Record<string, unknown>,
+      itemRegionPath: `${path}.columns[${index}]`,
+      itemRegionKeyPrefix: `columns.${index}`,
+      rules: [
+        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+        {
+          key: 'buttons',
+          regionKeySuffix: 'buttons',
+          compiledKey: 'buttonsRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'cell',
+          regionKeySuffix: 'cell',
+          compiledKey: 'cellRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'body',
+          regionKeySuffix: 'quickEditBody',
+          compiledKey: 'quickEditBodyRegionKey',
+        },
+      ],
+      regions,
+      compileSchema,
+    }).value;
+  });
+}
 
 describe('analyzeSchemaInput validation', () => {
   it('reports invalid root (non-object, non-array)', () => {
@@ -413,6 +471,36 @@ describe('analyzeSchemaInput validation', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
+      deepFields: [
+        {
+          key: 'columns',
+          nestedRegions: [
+            { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+            {
+              key: 'buttons',
+              regionKeySuffix: 'buttons',
+              compiledKey: 'buttonsRegionKey',
+              params: ['record', 'index'],
+              isolate: true,
+            },
+            {
+              key: 'cell',
+              regionKeySuffix: 'cell',
+              compiledKey: 'cellRegionKey',
+              params: ['record', 'index'],
+              isolate: true,
+            },
+            {
+              key: 'body',
+              regionKeySuffix: 'quickEditBody',
+              compiledKey: 'quickEditBodyRegionKey',
+            },
+          ],
+          normalize(input) {
+            return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
+          },
+        },
+      ],
     };
     const textRenderer: RendererDefinition = {
       type: 'text',

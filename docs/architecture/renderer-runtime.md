@@ -273,6 +273,115 @@ Do not write:
 
 `Boolean("false")` is `true`, so renderer-side truthiness checks are contract bugs. The compiler/runtime boundary owns expression execution and boolean normalization.
 
+## Declarative Configuration Principle (No Hardcoded Type Dispatch)
+
+The renderer system must be fully extensible without modifying core compiler or runtime code. This means:
+
+**No runtime code may hardcode renderer type names to select behavior.**
+
+Violations of this principle include:
+
+- comparing `templateNode.type` or `schema.type` against a fixed list of string literals in `if`/`switch` chains
+- using `renderer.type === 'xxx'` or `schema.type === 'xxx'` in compiler or runtime core to branch into type-specific logic
+
+Instead, all renderer-specific behavior must be declared on `RendererDefinition` so that each renderer self-describes its needs:
+
+| Current hardcoded location                                   | What it controls                                              | Declarative home                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `node-frame-wrapper.tsx` type list                           | Whether `FieldFrame` root uses `<div>` vs default tag         | `RendererDefinition.frameRootTag?: string`                               |
+| `shape-validation-deep-fields.ts` type checks                | Deep nested-region traversal rules (columns, items, variants) | `RendererDefinition.deepFields?: readonly RendererDeepFieldDefinition[]` |
+| `shape-validation-node-fields.ts` type checks                | Per-item boolean field validation inside deep item containers | `RendererDefinition.deepFields?: readonly RendererDeepFieldDefinition[]` |
+| `node-compiler.ts` `schema.type === 'form'`                  | Default child validation contract mode                        | `RendererDefinition.validationDefaults?.defaultChildContractMode`        |
+| `node-compiler.ts` `schema.type === 'page'`                  | Descendant validation-model collection without a form owner   | `RendererDefinition.validationDefaults?.collectDescendantValidation`     |
+| `node-compiler.ts` `data-source` / `reaction`                | Compile-time attachment of runtime artifacts                  | `RendererDefinition.compilation` metadata                                |
+| `shape-validation-node-fields.ts` `data-source` / `reaction` | Renderer-specific node shape validation                       | `RendererDefinition.schemaValidator(...)`                                |
+| `tables.ts` `DEEP_FIELD_NORMALIZERS` map                     | Deep field normalization keyed by renderer type               | `RendererDefinition.deepFields[].normalize(...)`                         |
+
+Existing mechanisms that already follow this principle:
+
+- `rendererTraits: readonly string[]` — semantic trait tags like `'trigger'`, `'semantic-owner'`, `'composite'`
+- `scopePolicy: ScopePolicy` — per-renderer scope boundary declaration
+- `wrap: boolean` — per-renderer FieldFrame opt-in
+- `fields: readonly SchemaFieldRule[]` — per-renderer field classification
+
+New renderers must be able to opt into any of the above behaviors by declaring appropriate metadata, without requiring changes to compiler or runtime core code.
+
+This principle is enforced by the `check:audit-hardcoded-type-dispatch` heuristic scanner.
+
+### Declarative Metadata Ownership
+
+The current baseline uses four distinct renderer-owned metadata surfaces for former hardcoded dispatch sites:
+
+1. `frameRootTag`
+2. `deepFields`
+3. `validationDefaults`
+4. `compilation`
+
+They have different responsibilities and must not be collapsed into one generic catch-all field.
+
+#### `frameRootTag`
+
+- Purpose: choose the semantic root tag used by `FieldFrame` when a wrapped renderer cannot safely use the default root element.
+- Owner: the renderer definition.
+- Current baseline use case: wrapped composite controls such as `array-editor`, `array-field`, `tag-list`, `condition-builder`, `key-value`, and `detail-field` declare `frameRootTag: 'div'`.
+- Boundary: this only controls wrapper root semantics. It does not own layout, styling, or validation behavior.
+
+#### `deepFields`
+
+- Purpose: declare renderer props that contain nested schema-bearing structures rather than ordinary scalar/object props.
+- Owner: the renderer definition.
+- Each entry may declare:
+  - the authored prop key
+  - how nested region-bearing items are traversed for shape validation
+  - which nested item fields are boolean-like and must follow boolean authoring rules
+  - how the field is normalized into compiled region keys during schema compilation
+- Current baseline use cases:
+  - `table.columns`
+  - `table.expandable`
+  - `crud.columns`
+  - `tabs.items`
+  - `variant-field.variants`
+- Boundary: `deepFields` is for nested schema-bearing authored props, not for ordinary top-level `fields` classification.
+
+#### `validationDefaults`
+
+- Purpose: declare renderer-owned default validation behavior that affects validation owner setup or descendant model collection even when the renderer's `validation` contributor does not state every default explicitly.
+- Owner: the renderer definition.
+- Current baseline use cases:
+  - `form` declares `defaultChildContractMode: 'ignore'`
+  - `page` declares `collectDescendantValidation: true`
+- Boundary: renderer-specific authored-schema shape checks still belong in `schemaValidator`, while per-field rule contribution still belongs in `validation`.
+
+#### `compilation`
+
+- Purpose: declare renderer-owned compile-time artifact requirements that the compiler recognizes and lowers automatically.
+- Owner: the renderer definition.
+- Current baseline use cases:
+  - `data-source` declares that compilation must attach `compiledSources`
+  - `reaction` declares that compilation must attach `compiledReactions`
+- Boundary:
+  - `compilation` is declarative metadata, not a renderer-local callback system.
+  - compiler still owns the actual lowering implementations and artifact attachment.
+  - renderer-specific schema shape checks belong in `schemaValidator`.
+  - generic prop/meta/event/region classification still belongs in `fields` and ordinary compiler logic.
+
+Special-case clarification:
+
+- `data-source` and `reaction` are special because their runtime renderers consume precompiled behavior artifacts from `TemplateNode` rather than only ordinary resolved props.
+- This does **not** make them exceptions to the no-hardcoded-type-dispatch rule.
+- The allowed model is: compiler automatically recognizes declarative compilation metadata on the renderer definition and lowers the required artifact.
+- The disallowed model is: compiler branches on `schema.type === 'data-source' | 'reaction'` to decide that behavior.
+
+### Validation Boundary Split
+
+Renderer-owned validation metadata is intentionally split across three separate surfaces:
+
+- `validation`: contributes field/container semantics and validation rules to the validation model.
+- `validationDefaults`: fills in renderer-owned defaults for owner boundary behavior or descendant collection.
+- `schemaValidator`: validates authored renderer-specific schema shape.
+
+This split avoids overloading `validation` with compile-time node-shape checks that are not part of the runtime validation model.
+
 ## Renderer-Level Static Metadata
 
 `RendererDefinition` is not only the runtime component-registration record.

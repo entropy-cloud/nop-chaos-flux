@@ -17,9 +17,7 @@ import type {
   TemplateRegion,
   XuiImportSpec,
 } from '@nop-chaos/flux-core';
-import { createNodeId, isSchemaInput } from '@nop-chaos/flux-core';
-import { createTemplateRegion } from './regions.js';
-import { DEEP_FIELD_NORMALIZERS } from './tables.js';
+import { createNodeId, createTemplateRegion, isSchemaInput } from '@nop-chaos/flux-core';
 import { classifyField, buildMetaProgram } from './fields.js';
 import { collectValidationModel } from './validation-collection.js';
 import {
@@ -51,7 +49,56 @@ import {
   normalizeValidationTriggers,
   normalizeValidationVisibilityTriggers,
 } from '../validation-lowering.js';
-import { normalizeHiddenFieldPolicy } from '@nop-chaos/flux-core';
+import { extractNestedSchemaRegions, normalizeHiddenFieldPolicy } from '@nop-chaos/flux-core';
+
+function normalizeDeepFieldNestedRegions(input: {
+  value: unknown;
+  path: string;
+  key: string;
+  rules?: readonly import('@nop-chaos/flux-core').RendererDeepFieldRegionRule[];
+  regions: Record<string, TemplateRegion>;
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
+  ) => TemplateNode | TemplateNode[];
+}) {
+  const rules = input.rules;
+
+  if (!rules?.length) {
+    return input.value;
+  }
+
+  if (Array.isArray(input.value)) {
+    return input.value.map((item, index) => {
+      if (!item || typeof item !== 'object') {
+        return item;
+      }
+
+      return extractNestedSchemaRegions({
+        candidate: item as Record<string, unknown>,
+        itemRegionPath: `${input.path}.${input.key}[${index}]`,
+        itemRegionKeyPrefix: `${input.key}.${index}`,
+        rules,
+        regions: input.regions,
+        compileSchema: input.compileSchema,
+      }).value;
+    });
+  }
+
+  if (!input.value || typeof input.value !== 'object') {
+    return input.value;
+  }
+
+  return extractNestedSchemaRegions({
+    candidate: input.value as Record<string, unknown>,
+    itemRegionPath: `${input.path}.${input.key}`,
+    itemRegionKeyPrefix: input.key,
+    rules,
+    regions: input.regions,
+    compileSchema: input.compileSchema,
+  }).value;
+}
 
 export type CompileSingleNodeFn = (
   schema: BaseSchema,
@@ -142,8 +189,6 @@ export function createCompileSingleNode(
     const regions: Record<string, TemplateRegion> = {};
     const rawLifecycleActions = extractLifecycleActions(schema);
     const rawEventPlans: Record<string, ActionSchema | ActionSchema[]> = {};
-    const deepNormalizers = DEEP_FIELD_NORMALIZERS[renderer.type] ?? {};
-
     const nodeImports = Array.isArray(fieldInspection.extensions?.['xui:imports'])
       ? (fieldInspection.extensions?.['xui:imports'] as unknown[]).filter(isImportSpecCandidate)
       : undefined;
@@ -322,41 +367,79 @@ export function createCompileSingleNode(
         continue;
       }
 
-      const normalizedValue = deepNormalizers[key]
-        ? deepNormalizers[key]({
-            value,
-            path,
-            regions,
-            compileSchema: (
-              s: SchemaInput,
-              o?: CompileSchemaOptions,
-              regionMeta?: { params?: readonly string[]; isolate?: boolean },
-            ) =>
-              compileSchemaToTemplateNodes(
-                s,
-                {
-                  ...o,
-                  schemaUrl: o?.schemaUrl ?? options.schemaUrl,
-                  preparedImports: o?.preparedImports ?? options.preparedImports,
-                  diagnostics: diagnostics.enabled
-                    ? {
-                        enabled: true,
-                        continueOnError: diagnostics.continueOnError,
-                        maxIssues: diagnostics.maxIssues,
-                        reporter: (issue) => diagnostics.emit(issue),
-                      }
-                    : o?.diagnostics,
-                  symbolTable: regionMeta?.params?.length
-                    ? pushRegionParamSymbols(
-                        o?.symbolTable ?? symbolTable,
-                        regionMeta.params,
-                        `${path}.${key}:slot`,
-                      )
-                    : (o?.symbolTable ?? symbolTable),
-                },
-                depth + 1,
-              ),
-          })
+      const deepField = renderer.deepFields?.find((field) => field.key === key);
+      const normalizedValue = deepField
+        ? (deepField.normalize
+            ? deepField.normalize({
+                value,
+                path,
+                regions,
+                compileSchema: (
+                  s: SchemaInput,
+                  o?: CompileSchemaOptions,
+                  regionMeta?: { params?: readonly string[]; isolate?: boolean },
+                ) =>
+                  compileSchemaToTemplateNodes(
+                    s,
+                    {
+                      ...o,
+                      schemaUrl: o?.schemaUrl ?? options.schemaUrl,
+                      preparedImports: o?.preparedImports ?? options.preparedImports,
+                      diagnostics: diagnostics.enabled
+                        ? {
+                            enabled: true,
+                            continueOnError: diagnostics.continueOnError,
+                            maxIssues: diagnostics.maxIssues,
+                            reporter: (issue) => diagnostics.emit(issue),
+                          }
+                        : o?.diagnostics,
+                      symbolTable: regionMeta?.params?.length
+                        ? pushRegionParamSymbols(
+                            o?.symbolTable ?? symbolTable,
+                            regionMeta.params,
+                            `${path}.${key}:slot`,
+                          )
+                        : (o?.symbolTable ?? symbolTable),
+                    },
+                    depth + 1,
+                  ),
+              })
+            : normalizeDeepFieldNestedRegions({
+                value,
+                path,
+                key,
+                rules: deepField.nestedRegions,
+                regions,
+                compileSchema: (
+                  s: SchemaInput,
+                  o?: CompileSchemaOptions,
+                  regionMeta?: { params?: readonly string[]; isolate?: boolean },
+                ) =>
+                  compileSchemaToTemplateNodes(
+                    s,
+                    {
+                      ...o,
+                      schemaUrl: o?.schemaUrl ?? options.schemaUrl,
+                      preparedImports: o?.preparedImports ?? options.preparedImports,
+                      diagnostics: diagnostics.enabled
+                        ? {
+                            enabled: true,
+                            continueOnError: diagnostics.continueOnError,
+                            maxIssues: diagnostics.maxIssues,
+                            reporter: (issue) => diagnostics.emit(issue),
+                          }
+                        : o?.diagnostics,
+                      symbolTable: regionMeta?.params?.length
+                        ? pushRegionParamSymbols(
+                            o?.symbolTable ?? symbolTable,
+                            regionMeta.params,
+                            `${path}.${key}:slot`,
+                          )
+                        : (o?.symbolTable ?? symbolTable),
+                    },
+                    depth + 1,
+                  ),
+              }))
         : value;
 
       compiledPropEntries[key] = expressionCompiler.compileValue(normalizedValue, {
@@ -485,7 +568,8 @@ export function createCompileSingleNode(
               | 'no-owner',
             childContractMode:
               renderer.validation?.childContractMode ??
-              (schema.type === 'form' ? 'ignore' : 'summary-gate'),
+              renderer.validationDefaults?.defaultChildContractMode ??
+              'summary-gate',
           }
         : undefined;
 
@@ -535,7 +619,7 @@ export function createCompileSingleNode(
       scopePlan,
       validationOwnerPlan,
       validationPlan:
-        renderer.scopePolicy === 'form' || schema.type === 'page'
+        renderer.scopePolicy === 'form' || renderer.validationDefaults?.collectDescendantValidation === true
           ? collectValidationModel(
               Object.values(regions)
                 .map((region) => region.node)
@@ -561,22 +645,25 @@ export function createCompileSingleNode(
 
     node.staticAnalysis = computeStaticAnalysis(node, schema);
 
-    if (schema.type === 'data-source') {
-      node.compiledSources = [
-        compileDataSource(node.id, schema as DataSourceSchema, expressionCompiler, {
-          ...compileOptions,
-          basePath: path,
-        }),
-      ];
-    }
+    for (const artifact of renderer.compilation?.artifacts ?? []) {
+      if (artifact === 'data-source') {
+        node.compiledSources = [
+          compileDataSource(node.id, schema as DataSourceSchema, expressionCompiler, {
+            ...compileOptions,
+            basePath: path,
+          }),
+        ];
+        continue;
+      }
 
-    if (schema.type === 'reaction') {
-      node.compiledReactions = [
-        compileReaction(node.id, schema as ReactionSchema, expressionCompiler, {
-          ...compileOptions,
-          basePath: path,
-        }),
-      ];
+      if (artifact === 'reaction') {
+        node.compiledReactions = [
+          compileReaction(node.id, schema as ReactionSchema, expressionCompiler, {
+            ...compileOptions,
+            basePath: path,
+          }),
+        ];
+      }
     }
 
     return node;

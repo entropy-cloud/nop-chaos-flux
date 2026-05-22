@@ -466,6 +466,7 @@ describe('reactive meta and draggable dialogs', () => {
         <NodeFrameWrapper
           templateNode={{
             type: 'wrap-probe',
+            component: { frameRootTag: 'div' },
             schema: {
               type: 'wrap-probe',
               frameWrap: true,
@@ -517,6 +518,7 @@ describe('reactive meta and draggable dialogs', () => {
         <NodeFrameWrapper
           templateNode={{
             type: 'wrap-probe',
+            component: { frameRootTag: 'div' },
             schema: { type: 'wrap-probe', frameWrap: true },
           } as any}
           definitionWrap={true}

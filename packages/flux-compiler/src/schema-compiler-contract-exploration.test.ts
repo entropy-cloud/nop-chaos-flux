@@ -55,6 +55,9 @@ const _formRenderer: RendererDefinition = {
   component: () => null,
   scopePolicy: 'form',
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+  validationDefaults: {
+    defaultChildContractMode: 'ignore',
+  },
 };
 
 const valueOrRegionRenderer: RendererDefinition = {

@@ -1,10 +1,7 @@
-import type {
-  TemplateRegion,
-  TemplateNode,
-  CompileSchemaOptions,
-  SchemaInput,
-} from '@nop-chaos/flux-core';
-import { isSchemaInput } from '@nop-chaos/flux-core';
+import type { TemplateRegion, TemplateNode } from './types/node-identity.js';
+import type { CompileSchemaOptions } from './types/renderer-compiler.js';
+import type { SchemaInput } from './types/schema.js';
+import { isSchemaInput } from './utils/schema.js';
 
 export type NestedRegionFieldRule = {
   key: string;
@@ -43,10 +40,7 @@ export function createTemplateRegion(
   key: string,
   value: unknown,
   path: string,
-  compileSchema: (
-    input: SchemaInput,
-    options?: CompileSchemaOptions,
-  ) => TemplateNode | TemplateNode[],
+  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[],
   regionMeta?: { params?: readonly string[]; isolate?: boolean },
 ): TemplateRegion {
   if (regionMeta?.params) {
@@ -100,7 +94,8 @@ export function extractNestedSchemaRegions(input: {
       regionKey,
       fieldValue,
       regionPath,
-      (schema, options) => input.compileSchema(schema, options, { params: rule.params, isolate: rule.isolate }),
+      (schema, options) =>
+        input.compileSchema(schema, options, { params: rule.params, isolate: rule.isolate }),
       { params: rule.params, isolate: rule.isolate },
     );
     delete nextValue[rule.key];

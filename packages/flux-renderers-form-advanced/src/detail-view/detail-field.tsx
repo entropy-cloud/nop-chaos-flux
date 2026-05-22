@@ -378,6 +378,7 @@ export const detailFieldRendererDefinition: RendererDefinition<DetailFieldSchema
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: DetailFieldRenderer,
   wrap: true,
+  frameRootTag: 'div',
   fields: [
     { key: 'name', kind: 'prop' },
     { key: 'viewer', kind: 'region', regionKey: 'viewer' },

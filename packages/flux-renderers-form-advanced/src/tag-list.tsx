@@ -142,5 +142,6 @@ export const tagListRendererDefinition: RendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: TagListRenderer,
   wrap: true,
+  frameRootTag: 'div',
   fields: formFieldRules,
 };

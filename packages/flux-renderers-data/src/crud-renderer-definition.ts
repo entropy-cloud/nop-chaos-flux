@@ -1,6 +1,58 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { extractNestedSchemaRegions } from '@nop-chaos/flux-core';
 import { CrudRenderer } from './crud-renderer.js';
 import { transformCrudAuthoringSchema, validateCrudSchema } from './data-schema-validation.js';
+
+function normalizeTableColumns(
+  value: unknown,
+  path: string,
+  regions: Record<string, import('@nop-chaos/flux-core').TemplateRegion>,
+  compileSchema: (
+    input: import('@nop-chaos/flux-core').SchemaInput,
+    options?: import('@nop-chaos/flux-core').CompileSchemaOptions,
+    regionMeta?: { params?: readonly string[]; isolate?: boolean },
+  ) => import('@nop-chaos/flux-core').TemplateNode | import('@nop-chaos/flux-core').TemplateNode[],
+) {
+  if (!Array.isArray(value)) {
+    return value;
+  }
+
+  return value.map((column, index) => {
+    if (!column || typeof column !== 'object') {
+      return column;
+    }
+
+    return extractNestedSchemaRegions({
+      candidate: column as Record<string, unknown>,
+      itemRegionPath: `${path}.columns[${index}]`,
+      itemRegionKeyPrefix: `columns.${index}`,
+      rules: [
+        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+        {
+          key: 'buttons',
+          regionKeySuffix: 'buttons',
+          compiledKey: 'buttonsRegionKey',
+          params: ['record', 'index'] as readonly string[],
+          isolate: true,
+        },
+        {
+          key: 'cell',
+          regionKeySuffix: 'cell',
+          compiledKey: 'cellRegionKey',
+          params: ['record', 'index'] as readonly string[],
+          isolate: true,
+        },
+        {
+          key: 'body',
+          regionKeySuffix: 'quickEditBody',
+          compiledKey: 'quickEditBodyRegionKey',
+        },
+      ],
+      regions,
+      compileSchema,
+    }).value;
+  });
+}
 
 export const crudRendererDefinition: RendererDefinition = {
   type: 'crud',
@@ -230,6 +282,36 @@ export const crudRendererDefinition: RendererDefinition = {
       handle: 'clearSelection',
       displayName: 'Clear Selection',
       description: 'Clear the current selection.',
+    },
+  ],
+  deepFields: [
+    {
+      key: 'columns',
+      nestedRegions: [
+        { key: 'label', regionKeySuffix: 'label', compiledKey: 'labelRegionKey' },
+        {
+          key: 'buttons',
+          regionKeySuffix: 'buttons',
+          compiledKey: 'buttonsRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'cell',
+          regionKeySuffix: 'cell',
+          compiledKey: 'cellRegionKey',
+          params: ['record', 'index'],
+          isolate: true,
+        },
+        {
+          key: 'body',
+          regionKeySuffix: 'quickEditBody',
+          compiledKey: 'quickEditBodyRegionKey',
+        },
+      ],
+      normalize(input) {
+        return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
+      },
     },
   ],
   scopeExportContracts: {

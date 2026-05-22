@@ -241,4 +241,5 @@ export const conditionBuilderRendererDefinition: RendererDefinition = {
     },
   },
   wrap: true,
+  frameRootTag: 'div',
 };

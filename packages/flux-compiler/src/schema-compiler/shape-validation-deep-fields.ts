@@ -3,14 +3,8 @@ import type {
   RendererPlugin,
   RendererRegistry,
 } from '@nop-chaos/flux-core';
+import { visitNestedSchemaRegions } from '@nop-chaos/flux-core';
 import type { SchemaCompilerDiagnosticsContext } from './diagnostics.js';
-import {
-  DEEP_FIELD_NORMALIZERS,
-  TABLE_COLUMN_REGION_FIELDS,
-  TABS_ITEM_REGION_FIELDS,
-  VARIANT_ITEM_REGION_FIELDS,
-} from './tables.js';
-import { visitNestedSchemaRegions } from './regions.js';
 import {
   createRegionTraversalState,
   type ValidationTraversalState,
@@ -39,82 +33,19 @@ export function analyzeDeepSchemaField(input: {
   startsHostBoundary: boolean;
   analyzeSchemaInput: AnalyzeSchemaInputFn;
 }): boolean {
-  if (!(input.key in (DEEP_FIELD_NORMALIZERS[input.renderer.type] ?? {}))) {
+  const deepField = input.renderer.deepFields?.find((field) => field.key === input.key);
+
+  if (!deepField) {
     return false;
   }
 
-  if (input.renderer.type === 'table' || input.renderer.type === 'crud') {
-    if (input.key === 'columns' && Array.isArray(input.value)) {
-      input.value.forEach((column, index) => {
-        if (!column || typeof column !== 'object' || Array.isArray(column)) {
-          return;
-        }
+  const nestedRegions = deepField.nestedRegions;
 
-        visitNestedSchemaRegions({
-          candidate: column as Record<string, unknown>,
-          itemRegionPath: `${input.path}.columns[${index}]`,
-          rules: TABLE_COLUMN_REGION_FIELDS,
-          visitRegion(region) {
-            input.analyzeSchemaInput(
-              region.value,
-              region.path,
-              input.registry,
-              input.plugins,
-              input.diagnostics,
-              createRegionTraversalState(
-                input.traversalState,
-                region.key,
-                region.params,
-                input.startsHostBoundary,
-              ),
-            );
-          },
-        });
-      });
-
-      return true;
-    }
-
-    if (input.renderer.type === 'table' && input.key === 'expandable') {
-      const expandable = input.value;
-      if (!expandable || typeof expandable !== 'object' || Array.isArray(expandable)) {
-        return true;
-      }
-
-      visitNestedSchemaRegions({
-        candidate: expandable as Record<string, unknown>,
-        itemRegionPath: `${input.path}.expandable`,
-        rules: [
-          {
-            key: 'expandedRow',
-            regionKeySuffix: 'expandedRow',
-            compiledKey: 'expandedRowRegionKey',
-            params: ['record', 'index'] as readonly string[],
-            isolate: true,
-          },
-        ],
-        visitRegion(region) {
-          input.analyzeSchemaInput(
-            region.value,
-            region.path,
-            input.registry,
-            input.plugins,
-            input.diagnostics,
-            createRegionTraversalState(
-              input.traversalState,
-              region.key,
-              region.params,
-              input.startsHostBoundary,
-            ),
-          );
-        },
-      });
-
-      return true;
-    }
+  if (!nestedRegions?.length) {
+    return true;
   }
 
-  if (input.renderer.type === 'tabs' && input.key === 'items' && Array.isArray(input.value)) {
+  if (Array.isArray(input.value)) {
     input.value.forEach((item, index) => {
       if (!item || typeof item !== 'object' || Array.isArray(item)) {
         return;
@@ -122,8 +53,8 @@ export function analyzeDeepSchemaField(input: {
 
       visitNestedSchemaRegions({
         candidate: item as Record<string, unknown>,
-        itemRegionPath: `${input.path}.items[${index}]`,
-        rules: TABS_ITEM_REGION_FIELDS,
+        itemRegionPath: `${input.path}.${input.key}[${index}]`,
+        rules: nestedRegions,
         visitRegion(region) {
           input.analyzeSchemaInput(
             region.value,
@@ -141,40 +72,33 @@ export function analyzeDeepSchemaField(input: {
         },
       });
     });
-
     return true;
   }
 
-  if (input.renderer.type === 'variant-field' && input.key === 'variants' && Array.isArray(input.value)) {
-    input.value.forEach((item, index) => {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        return;
-      }
-
-      visitNestedSchemaRegions({
-        candidate: item as Record<string, unknown>,
-        itemRegionPath: `${input.path}.variants[${index}]`,
-        rules: VARIANT_ITEM_REGION_FIELDS,
-        visitRegion(region) {
-          input.analyzeSchemaInput(
-            region.value,
-            region.path,
-            input.registry,
-            input.plugins,
-            input.diagnostics,
-            createRegionTraversalState(
-              input.traversalState,
-              region.key,
-              region.params,
-              input.startsHostBoundary,
-            ),
-          );
-        },
-      });
-    });
-
+  if (!input.value || typeof input.value !== 'object' || Array.isArray(input.value)) {
     return true;
   }
+
+  visitNestedSchemaRegions({
+    candidate: input.value as Record<string, unknown>,
+    itemRegionPath: `${input.path}.${input.key}`,
+    rules: nestedRegions,
+    visitRegion(region) {
+      input.analyzeSchemaInput(
+        region.value,
+        region.path,
+        input.registry,
+        input.plugins,
+        input.diagnostics,
+        createRegionTraversalState(
+          input.traversalState,
+          region.key,
+          region.params,
+          input.startsHostBoundary,
+        ),
+      );
+    },
+  });
 
   return true;
 }

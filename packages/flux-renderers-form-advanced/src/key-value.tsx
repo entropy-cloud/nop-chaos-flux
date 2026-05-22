@@ -453,6 +453,7 @@ export const keyValueRendererDefinition: RendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: KeyValueRenderer,
   wrap: true,
+  frameRootTag: 'div',
   fields: formFieldRules,
   validation: {
     kind: 'field',

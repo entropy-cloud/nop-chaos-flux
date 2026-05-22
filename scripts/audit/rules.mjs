@@ -536,6 +536,82 @@ export const runtimeRawSchemaReadRules = [
   },
 ];
 
+const hardcodedTypeDispatchSafePaths = [
+  /^packages\/flux-formula\/src\//,
+  /^packages\/spreadsheet-core\/src\//,
+  /^packages\/word-editor-core\/src\//,
+  /^packages\/report-designer-core\/src\//,
+  /^packages\/flow-designer-core\/src\//,
+  /^packages\/flow-designer-renderers\/src\//,
+  /^packages\/spreadsheet-renderers\/src\//,
+];
+
+const hardcodedTypeDispatchSafePatterns = [
+  /\btypeof\s+\w+\.type\s*===?\s*['"]/,
+  /\bnode\.type\s*===?\s*['"]Identifier/,
+  /\bnode\.property\.type\s*===?\s*['"]Identifier/,
+  /\bnode\.property\.type\s*===?\s*['"]Literal/,
+  /\bnode\.callee\.type\s*===?\s*['"]MemberExpression/,
+  /\bnode\.type\s*===?\s*['"]MemberExpression/,
+  /\bnode\.type\s*===?\s*['"]CallExpression/,
+  /\bsegment\.type\s*===?\s*['"]text/,
+  /\bchange\.type\s*===?\s*['"](?:remove|position)/,
+  /\bcmd\.type\s*===?\s*['"]/,
+  /\bresizeState\.type\s*===?\s*['"]/,
+  /\bcurrent\.type\s*===?\s*['"]/,
+  /\brecord\.type\b/,
+  /\bcolumnRecord\.type\b/,
+  /\bactionCtx\.event\b/,
+  /\bevent\.type\s*===?\s*['"]lifecycleHookError/,
+  /\bschemaRowSelection.*\.type\s*===?\s*['"]radio/,
+];
+
+function shouldIgnoreHardcodedTypeDispatch(relativePath, lineText) {
+  if (hardcodedTypeDispatchSafePaths.some((pattern) => pattern.test(relativePath))) {
+    return true;
+  }
+
+  if (hardcodedTypeDispatchSafePatterns.some((pattern) => pattern.test(lineText))) {
+    return true;
+  }
+
+  if (lineText.includes('value.type') && lineText.includes('source')) {
+    return true;
+  }
+
+  return false;
+}
+
+export const hardcodedTypeDispatchRules = [
+  {
+    id: 'hardcoded-type-dispatch',
+    severity: 'high',
+    description:
+      'Compiler or runtime core code compares renderer/schema/templateNode type against a fixed string literal instead of using declarative RendererDefinition metadata',
+    include: (filePath) => {
+      return (
+        /\.(ts|tsx)$/.test(filePath) &&
+        !isTestFile(filePath) &&
+        !filePath.includes('/test-support') &&
+        (filePath.includes('/flux-compiler/src/') ||
+          filePath.includes('/flux-react/src/') ||
+          filePath.includes('/flux-runtime/src/'))
+      );
+    },
+    patterns: [
+      /\brenderer\.type\s*===?\s*['"][a-z-]+['"]/g,
+      /\bschema\.type\s*===?\s*['"][a-z-]+['"]/g,
+      /\btemplateNode\.type\s*===?\s*['"][a-z-]+['"]/g,
+    ],
+    filterMatch: ({ relativePath, lineText }) => {
+      if (shouldIgnoreHardcodedTypeDispatch(relativePath, lineText)) {
+        return false;
+      }
+      return true;
+    },
+  },
+];
+
 export const allAuditSuspectRules = [
   ...reactiveRenderReadRules,
   ...asyncFailureRules,
@@ -545,4 +621,5 @@ export const allAuditSuspectRules = [
   ...testLeakRules,
   ...rendererMarkerRules,
   ...runtimeRawSchemaReadRules,
+  ...hardcodedTypeDispatchRules,
 ];

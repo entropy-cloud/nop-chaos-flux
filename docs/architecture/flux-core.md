@@ -196,7 +196,14 @@ Owns:
 - region extraction such as `body`, `actions`, and renderer-owned nested regions
 - field classification through renderer field metadata
 - compiled props, meta, event, and validation assembly
+- declarative compile-artifact lowering declared by renderer metadata
 - template graph construction, including template-local node ids and duplicate-`id` reporting by template path
+
+Current declarative lowering rule:
+
+- compiler may still perform renderer-specific lowering when a renderer requires compile-time artifacts that runtime consumes from `TemplateNode`
+- however, the trigger must come from declarative renderer metadata, not from hardcoded `schema.type === '...'` dispatch in compiler core
+- current baseline example: `data-source` and `reaction` declare compile-artifact requirements, and compiler lowers them into `TemplateNode.compiledSources` / `TemplateNode.compiledReactions`
 
 Current internal-id baseline:
 

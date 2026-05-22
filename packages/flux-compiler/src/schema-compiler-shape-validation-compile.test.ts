@@ -167,7 +167,13 @@ describe('compile and validate integration', () => {
   });
 
   it('reports invalid data-source with both formula and action', () => {
-    const renderer: RendererDefinition = { type: 'data-source', component: () => null };
+    const renderer: RendererDefinition = {
+      type: 'data-source',
+      component: () => null,
+      compilation: {
+        artifacts: ['data-source'],
+      },
+    };
     const compiler = makeCompiler([renderer]);
 
     expect(
@@ -183,7 +189,13 @@ describe('compile and validate integration', () => {
   });
 
   it('reports invalid data-source with neither formula nor action', () => {
-    const renderer: RendererDefinition = { type: 'data-source', component: () => null };
+    const renderer: RendererDefinition = {
+      type: 'data-source',
+      component: () => null,
+      compilation: {
+        artifacts: ['data-source'],
+      },
+    };
     const compiler = makeCompiler([renderer]);
 
     expect(compiler.validate?.({ type: 'data-source' })).toEqual(
@@ -197,7 +209,13 @@ describe('compile and validate integration', () => {
   });
 
   it('validates reaction actions', () => {
-    const renderer: RendererDefinition = { type: 'reaction', component: () => null };
+    const renderer: RendererDefinition = {
+      type: 'reaction',
+      component: () => null,
+      compilation: {
+        artifacts: ['reaction'],
+      },
+    };
     const compiler = makeCompiler([renderer]);
 
     expect(
@@ -210,7 +228,13 @@ describe('compile and validate integration', () => {
   });
 
   it('validates reaction watch and control fields', () => {
-    const renderer: RendererDefinition = { type: 'reaction', component: () => null };
+    const renderer: RendererDefinition = {
+      type: 'reaction',
+      component: () => null,
+      compilation: {
+        artifacts: ['reaction'],
+      },
+    };
     const compiler = makeCompiler([renderer]);
 
     expect(
@@ -314,6 +338,9 @@ describe('compile and validate integration', () => {
     const renderer: RendererDefinition = {
       type: 'data-source',
       component: () => null,
+      compilation: {
+        artifacts: ['data-source'],
+      },
       propSchema: { action: { type: 'string' }, args: { type: 'object' } },
       fields: [
         { key: 'action', kind: 'prop' },

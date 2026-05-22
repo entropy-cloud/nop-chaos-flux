@@ -55,13 +55,6 @@ export function NodeFrameWrapper(props: {
   const labelAlignValue =
     props.resolvedPropsValue.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined;
   const labelWidthValue = props.resolvedPropsValue.labelWidth as string | number | undefined;
-  const usesInteractiveControlRoot =
-    props.templateNode.type === 'array-editor' ||
-    props.templateNode.type === 'array-field' ||
-    props.templateNode.type === 'tag-list' ||
-    props.templateNode.type === 'condition-builder' ||
-    props.templateNode.type === 'key-value' ||
-    props.templateNode.type === 'detail-field';
 
   return (
     <FieldFrame
@@ -74,7 +67,7 @@ export function NodeFrameWrapper(props: {
       labelRemark={labelRemarkValue}
       labelAlign={labelAlignValue === 'inherit' ? undefined : labelAlignValue}
       labelWidth={labelWidthValue}
-      rootTag={usesInteractiveControlRoot ? 'div' : undefined}
+      rootTag={props.templateNode.component.frameRootTag}
       layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
       className={props.resolvedMeta.frameClassName}
       testid={props.resolvedMeta.testid}

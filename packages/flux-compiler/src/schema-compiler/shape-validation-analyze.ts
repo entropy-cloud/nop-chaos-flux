@@ -3,14 +3,13 @@ import type {
   RendererPlugin,
   RendererRegistry,
 } from '@nop-chaos/flux-core';
-import { isPlainObject, isSchemaInput } from '@nop-chaos/flux-core';
+import { isPlainObject, isSchemaInput, validateRegionParams } from '@nop-chaos/flux-core';
 import {
   appendJsonPointer,
   schemaPathToJsonPointer,
   type SchemaCompilerDiagnosticsContext,
 } from './diagnostics.js';
 import { classifyField } from './fields.js';
-import { validateRegionParams } from './regions.js';
 import { analyzeDeepSchemaField } from './shape-validation-deep-fields.js';
 import { inspectSchemaNodeFields } from './shape-validation-node-fields.js';
 import {

@@ -44,6 +44,9 @@ export const pageRenderer: RendererDefinition = {
   type: 'page',
   component: (props) => <section>{asReactNode(props.regions.body?.render())}</section>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+  validationDefaults: {
+    collectDescendantValidation: true,
+  },
 };
 
 export const fragmentRenderer: RendererDefinition = {
@@ -104,6 +107,9 @@ export const formRenderer: RendererDefinition = {
   componentRegistryPolicy: 'new',
   validation: {
     kind: 'container',
+  },
+  validationDefaults: {
+    defaultChildContractMode: 'ignore',
   },
 };
 
