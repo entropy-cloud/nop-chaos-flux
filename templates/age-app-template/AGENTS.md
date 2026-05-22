@@ -53,6 +53,7 @@ Do not jump from a feature request directly to code unless the route is already 
 12. Keep code comments minimal. Prefer self-explanatory code; add only rare comments when a local constraint is otherwise easy to misread.
 13. When a referenced file is not found at its expected path, check `docs/archive/` before concluding it does not exist. Archived files retain their original relative name under `docs/archive/`. Do not move files to `docs/archive/` without human approval.
 14. Treat reusable skills as method selectors, not substitutes for requirements, design, or architecture docs. Business knowledge belongs in owner docs first.
+15. When the same error pattern keeps recurring, do not stop at prose-only lessons. First promote it into a reusable audit prompt, checklist, or review playbook when that method is still missing. If the defect pattern still recurs, then evaluate promotion into a heuristic script, static check, lint rule, CI guard, or codemod, tuned to the copied project's real conventions and false-positive tolerance.
 
 ## Read This First
 
@@ -111,6 +112,8 @@ Use these when warranted by task complexity. Plan and closure audits are mandato
 - `docs/retrospectives/` for material requirement/prototype gaps
 - `docs/skills/` for reusable prompts after repeated failures
 - `docs/lessons/` for durable engineering lessons after repeated failures or important recoveries
+
+Use `multi-dimensional-audit-prompt.md` when work must be challenged across several dimensions at once. Use `open-ended-audit-prompt.md` when the standard checklist may miss hidden risks. These prompts are generic defaults and MUST be customized after copy to match the project's real owner docs, protected areas, verification model, and recurring failure patterns.
 
 ## Planning Rule
 

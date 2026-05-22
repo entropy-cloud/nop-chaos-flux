@@ -28,3 +28,5 @@ When reviewing work, check for:
 If a repeated instruction keeps reappearing in chat, promote it into `AGENTS.md`, `docs/architecture/`, or `docs/references/`.
 
 If a repeated review pattern keeps finding the same class of issue, promote it into `docs/skills/` or `docs/audits/`.
+
+If the same defect pattern keeps recurring after that, evaluate whether it should be promoted further into a heuristic script, static check, lint rule, CI guard, or codemod. Prefer lightweight checks first, and tune them to the copied project's real conventions, naming patterns, and false-positive tolerance.

@@ -77,7 +77,7 @@ This template turns the repo into a durable execution surface with a lean defaul
 6. verification
 7. closure
 
-For created plans, plan audit and closure audit are part of the default control loop. For more ambiguous or risky work, the template also provides optional document audit, retrospective, and skill-extraction layers.
+For created plans, plan audit and closure audit are part of the default control loop. For more ambiguous or risky work, the template also provides optional document audit plus multi-dimensional or open-ended audit styles, along with retrospective and skill-extraction layers.
 
 ## What This Template Includes
 
@@ -94,7 +94,7 @@ For created plans, plan audit and closure audit are part of the default control 
 - `docs/lessons/` - durable lessons extracted from repeated failures and recoveries
 - `docs/plans/` - execution plans with closure rules
 - `docs/audits/` - audit records and audit workflow guidance, including required plan/closure audit evidence for created plans
-- `docs/skills/` - optional reusable prompts, review playbooks, and audit prompt templates
+- `docs/skills/` - optional reusable prompts, review playbooks, and audit prompt templates; copied projects should tune them to local owner docs and risk areas
 - `docs/logs/` - daily development log guide and starter index
 - `docs/testing/` - manual and automated testing note guides
 - `docs/testing/known-good-baselines.md` - latest meaningful verification baselines
@@ -125,6 +125,8 @@ Trigger-based folders:
 Created plans require plan audit before implementation and closure audit before completion.
 
 Everything else is optional and should be used only when the project complexity justifies it.
+
+The audit prompts shipped in this template are generic defaults. After copying the template, you MUST adjust them to the real project's protected areas, owner-doc structure, deployment model, verification stack, and recurring failure patterns.
 
 ## Stable vs Dated Files
 
@@ -184,6 +186,8 @@ Use these only when needed:
 - `docs/retrospectives/` when prototype and implementation diverged materially
 - `docs/skills/` when the same issue repeats often enough to justify a reusable prompt
 - `docs/lessons/` when a repeatable lesson should outlive a single bug or retrospective
+
+If repeated error patterns keep reappearing, do not stop at prose-only notes. Consider promoting them progressively into reusable audit prompts, checklists, heuristic scripts, static checks, lint rules, CI guards, or codemods, tuned to the copied project's real conventions and false-positive tolerance.
 
 The full workflow is documented in `docs/process/application-development-workflow.md`.
 

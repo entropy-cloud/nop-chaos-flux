@@ -160,6 +160,10 @@ At minimum, challenge these risks:
 
 Use `docs/audits/` and the prompt templates under `docs/skills/`.
 
+For high-risk or cross-boundary work, add a multi-dimensional audit pass.
+When hidden problems are suspected outside the normal checklist, add an open-ended audit pass.
+These audit-style prompts are generic defaults and MUST be customized after copy to match the real project's owner docs, protected areas, verification stack, and recurring failure patterns.
+
 ## Stage 6 - Route The Task And Select Skills
 
 Before implementation, explicitly decide how the work should be executed:
@@ -201,6 +205,8 @@ The audit should test:
 - does the plan silently rely on unresolved requirement gaps
 
 If the audit finds blocking issues, revise the plan and repeat the audit until no major objection remains.
+
+If structured plan or closure audits repeatedly miss important issues, escalate with `multi-dimensional-audit-prompt.md` or `open-ended-audit-prompt.md` instead of repeating the same narrow audit forever.
 
 ## Stage 9 - Implement Small Complete Slices
 
@@ -259,9 +265,13 @@ Examples:
 - requirement gap analysis prompt
 - plan audit prompt
 - closure audit prompt
+- multi-dimensional audit prompt
+- open-ended audit prompt
 - reusable review checklist for a repeated method or audit pattern
 
 If the output is more of a reusable engineering lesson than a prompt, record it under `docs/lessons/`.
+
+If the same error pattern keeps recurring, do not stop at prose-only memory. Evaluate whether it should be promoted further into a heuristic script, static check, lint rule, CI guard, or codemod. These checks are project-specific and should be tuned to the copied project's real false-positive tolerance, naming conventions, protected areas, and verification model.
 
 ## Relationship To Spec-Driven Development
 
