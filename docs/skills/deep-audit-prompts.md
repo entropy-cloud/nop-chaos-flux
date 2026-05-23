@@ -256,6 +256,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 ├── 16-doc-code-consistency.md
 ├── 17-naming.md
 ├── 18-cross-package.md
+├── 19-error-propagation.md
+├── 20-accessibility.md
 └── summary.md
 
 ```
