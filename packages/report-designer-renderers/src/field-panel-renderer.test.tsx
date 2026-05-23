@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import React from 'react';
-import { describe, expect, it, afterEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, afterEach, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
@@ -12,18 +12,19 @@ import { ReportFieldPanelRenderer } from './field-panel-renderer.js';
 import { REPORT_FIELD_DRAG_MIME } from './report-field-panel.js';
 import './report-field-panel.css';
 
-let mockScopeData: Record<string, unknown> = {};
-let mockActionScope: { resolve: (action: string) => unknown } | undefined;
-let mockRuntime: Record<string, unknown> = {};
+const fluxReactMocks = vi.hoisted(() => ({
+  useCurrentActionScope: vi.fn(),
+  useOwnScopeSelector: vi.fn(),
+  useRendererRuntime: vi.fn(),
+}));
 
 vi.mock('@nop-chaos/flux-react', async () => {
   const actual = await vi.importActual<typeof import('@nop-chaos/flux-react')>('@nop-chaos/flux-react');
   return {
     ...actual,
-    useCurrentActionScope: () => mockActionScope,
-    useOwnScopeSelector: (selector: (data: Record<string, unknown>) => unknown) =>
-      selector(mockScopeData),
-    useRendererRuntime: () => mockRuntime,
+    useCurrentActionScope: fluxReactMocks.useCurrentActionScope,
+    useOwnScopeSelector: fluxReactMocks.useOwnScopeSelector,
+    useRendererRuntime: fluxReactMocks.useRendererRuntime,
   };
 });
 
@@ -64,16 +65,42 @@ const sampleFieldSources: FieldSourceSnapshot[] = [
 
 afterEach(() => {
   cleanup();
-  mockScopeData = {};
-  mockActionScope = undefined;
-  mockRuntime = {};
 });
+
+beforeEach(() => {
+  fluxReactMocks.useCurrentActionScope.mockReturnValue(undefined);
+  fluxReactMocks.useOwnScopeSelector.mockImplementation(
+    (selector: (data: Record<string, unknown>) => unknown) => selector({}),
+  );
+  fluxReactMocks.useRendererRuntime.mockReturnValue({});
+});
+
+function setFluxReactHookState(options?: {
+  scopeData?: Record<string, unknown>;
+  actionScope?: { resolve: (action: string) => unknown } | undefined;
+  runtime?: Record<string, unknown>;
+}) {
+  const scopeData = options?.scopeData ?? {};
+  fluxReactMocks.useCurrentActionScope.mockReturnValue(options?.actionScope);
+  fluxReactMocks.useOwnScopeSelector.mockImplementation(
+    (selector: (data: Record<string, unknown>) => unknown) => selector(scopeData),
+  );
+  fluxReactMocks.useRendererRuntime.mockReturnValue(options?.runtime ?? {});
+}
 
 function renderFieldPanel(
   schemaOverrides: Record<string, unknown> = {},
   scopeData: Record<string, unknown> = {},
+  hookOverrides?: {
+    actionScope?: { resolve: (action: string) => unknown } | undefined;
+    runtime?: Record<string, unknown>;
+  },
 ) {
-  mockScopeData = scopeData;
+  setFluxReactHookState({
+    scopeData,
+    actionScope: hookOverrides?.actionScope,
+    runtime: hookOverrides?.runtime,
+  });
   const registry = createDefaultRegistry();
   registerReportDesignerRenderers(registry);
   const SchemaRenderer = createSchemaRenderer();
@@ -245,14 +272,15 @@ describe('ReportFieldPanelRenderer', () => {
     const resolve = vi.fn((action: string) =>
       action === 'report-designer:dropFieldToTarget' ? resolved : undefined,
     );
-    mockActionScope = { resolve };
-    mockRuntime = { runtimeId: 'test-runtime' };
-    mockScopeData = {
+    const actionScope = { resolve };
+    const runtime = { runtimeId: 'test-runtime' };
+    const scopeData = {
       selectionTarget: {
         kind: 'cell',
         cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
       },
     };
+    setFluxReactHookState({ scopeData, actionScope, runtime });
 
     render(
       <ReportFieldPanelRenderer
@@ -320,9 +348,9 @@ describe('ReportFieldPanelRenderer', () => {
           },
         },
         {
-          runtime: mockRuntime,
+          runtime,
           scope: { id: 'field-scope' },
-          actionScope: mockActionScope,
+          actionScope,
         },
       );
     });
@@ -333,19 +361,21 @@ describe('ReportFieldPanelRenderer', () => {
     const notify = vi.fn();
     const invoke = vi.fn().mockRejectedValue(new Error('Insert failed'));
     const createScope = vi.fn(() => ({ id: 'field-scope' }));
-    mockActionScope = {
-      resolve: vi.fn(() => ({
-        method: 'dropFieldToTarget',
-        provider: { invoke },
-      })),
-    };
-    mockRuntime = { runtimeId: 'test-runtime', env: { notify } };
-    mockScopeData = {
-      selectionTarget: {
-        kind: 'cell',
-        cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+    setFluxReactHookState({
+      actionScope: {
+        resolve: vi.fn(() => ({
+          method: 'dropFieldToTarget',
+          provider: { invoke },
+        })),
       },
-    };
+      runtime: { runtimeId: 'test-runtime', env: { notify } },
+      scopeData: {
+        selectionTarget: {
+          kind: 'cell',
+          cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+        },
+      },
+    });
 
     render(
       <ReportFieldPanelRenderer
@@ -398,19 +428,21 @@ describe('ReportFieldPanelRenderer', () => {
     const notify = vi.fn();
     const invoke = vi.fn().mockResolvedValue({ ok: false, error: new Error('Resolved insert failed') });
     const createScope = vi.fn(() => ({ id: 'field-scope' }));
-    mockActionScope = {
-      resolve: vi.fn(() => ({
-        method: 'dropFieldToTarget',
-        provider: { invoke },
-      })),
-    };
-    mockRuntime = { runtimeId: 'test-runtime', env: { notify } };
-    mockScopeData = {
-      selectionTarget: {
-        kind: 'cell',
-        cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+    setFluxReactHookState({
+      actionScope: {
+        resolve: vi.fn(() => ({
+          method: 'dropFieldToTarget',
+          provider: { invoke },
+        })),
       },
-    };
+      runtime: { runtimeId: 'test-runtime', env: { notify } },
+      scopeData: {
+        selectionTarget: {
+          kind: 'cell',
+          cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+        },
+      },
+    });
 
     render(
       <ReportFieldPanelRenderer
