@@ -83,7 +83,7 @@ host scope 向下投影一套 canonical contract，不再把 compatibility alias
 | `selectionTarget` | object | 当前选择目标                                                                                                                                                                                                                                         |
 | `reportDocument`  | object | 当前报表文档快照                                                                                                                                                                                                                                     |
 | `workbook`        | object | 当前工作簿                                                                                                                                                                                                                                           |
-| `activeSheet`     | object | 当前活跃 sheet                                                                                                                                                                                                                                       |
+| `activeSheet`     | object | 当前活跃 sheet；它跟随当前 active-sheet baseline，而不是只在部分 `selectionTarget` 形态下才有值                                                                                                                                                      |
 | `activeCell`      | object | 当前活跃单元格                                                                                                                                                                                                                                       |
 | `activeRange`     | object | 当前活跃区域                                                                                                                                                                                                                                         |
 | `inspector`       | object | 当前 inspector 运行时状态                                                                                                                                                                                                                            |
@@ -109,7 +109,7 @@ host scope 向下投影一套 canonical contract，不再把 compatibility alias
 - `workbook` / `spreadsheet.workbook` 必须与 `reportDocument.spreadsheet` 指向同一条 canonical workbook baseline；save/export/host projection 不支持各自读取不同 spreadsheet snapshot。
 - `runtime.dirty` 是对外发布给 `statusPath` 和 host scope 的聚合 dirty；初次挂载时内部 spreadsheet clone 不能被误发布成外部 dirty 变更。
 - report owner 的 undo/redo 可用态读取 `designer.canUndo` / `designer.canRedo`；聚合跨-owner历史只通过 `runtime.canUndo` / `runtime.canRedo` 对外发布。
-- `spreadsheet.selection` 在 host projection 中发布结构化 selection target：cell/range 直接发布 anchor/range，row/column/sheet 也保留 `kind + sheetId + rows/columns` 形状，避免 schema 片段再猜测 canvas 内部选择状态。
+- `spreadsheet.selection` 在 host projection 中发布结构化 spreadsheet selection：`cell` 直接发布 anchor cell，`range` 直接发布 range，`row` / `column` 发布 `rows[]` / `columns[]`，`sheet` 发布 `kind + sheetId`，避免 schema 片段再猜测 canvas 内部选择状态。
 
 ### 7.2 Host Action Result Contract
 

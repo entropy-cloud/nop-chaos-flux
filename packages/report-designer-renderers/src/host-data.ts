@@ -10,30 +10,40 @@ import type {
 } from '@nop-chaos/report-designer-core';
 import { getFieldCount } from './helpers.js';
 
-function getActiveSheet(
-  snapshot: ReportDesignerRuntimeSnapshot,
-  target: ReportSelectionTarget | undefined,
-) {
+function getActiveSheet(snapshot: ReportDesignerRuntimeSnapshot) {
+  const workbook = snapshot.document.spreadsheet.workbook;
+  const target = snapshot.selectionTarget;
+
   switch (target?.kind) {
     case 'sheet':
-      return snapshot.document.spreadsheet.workbook.sheets.find(
-        (sheet) => sheet.id === target.sheetId,
-      );
+      return workbook.sheets.find((sheet) => sheet.id === target.sheetId);
+    case 'row':
+      return workbook.sheets.find((sheet) => sheet.id === target.sheetId);
+    case 'column':
+      return workbook.sheets.find((sheet) => sheet.id === target.sheetId);
     case 'cell':
-      return snapshot.document.spreadsheet.workbook.sheets.find(
-        (sheet) => sheet.id === target.cell.sheetId,
-      );
+      return workbook.sheets.find((sheet) => sheet.id === target.cell.sheetId);
     case 'range':
-      return snapshot.document.spreadsheet.workbook.sheets.find(
-        (sheet) => sheet.id === target.range.sheetId,
-      );
+      return workbook.sheets.find((sheet) => sheet.id === target.range.sheetId);
+    case 'workbook':
     default:
-      return undefined;
+      return workbook.sheets[0];
   }
 }
 
 function getSpreadsheetActiveSheet(snapshot: SpreadsheetRuntimeSnapshot) {
   return snapshot.document.workbook.sheets.find((sheet) => sheet.id === snapshot.activeSheetId);
+}
+
+function resolveActiveSheet(
+  snapshot: ReportDesignerRuntimeSnapshot,
+  spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
+) {
+  if (spreadsheetSnapshot) {
+    return getSpreadsheetActiveSheet(spreadsheetSnapshot);
+  }
+
+  return getActiveSheet(snapshot);
 }
 
 function getSpreadsheetSelectionTarget(snapshot: SpreadsheetRuntimeSnapshot) {
@@ -118,6 +128,7 @@ export interface ReportDesignerHostData {
 export function createHostData(
   core: ReportDesignerCore,
   snapshot: ReportDesignerRuntimeSnapshot,
+  spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
 ): ReportDesignerHostData {
   const fieldCount = getFieldCount(snapshot.fieldSources);
   const reportDocument = {
@@ -152,7 +163,7 @@ export function createHostData(
     selectionTarget: snapshot.selectionTarget,
     reportDocument,
     workbook: reportDocument.spreadsheet.workbook,
-    activeSheet: getActiveSheet(snapshot, snapshot.selectionTarget),
+    activeSheet: resolveActiveSheet(snapshot, spreadsheetSnapshot),
     documentName: snapshot.document.name,
     fieldCount,
   };
@@ -169,7 +180,7 @@ export function buildReportDesignerScopeData(
     : undefined;
   const reportDocument = snapshot.document;
   const workbook = reportDocument.spreadsheet.workbook;
-  const activeSheet = getActiveSheet(snapshot, snapshot.selectionTarget);
+  const activeSheet = resolveActiveSheet(snapshot, spreadsheetSnapshot);
 
   return {
     designer: {

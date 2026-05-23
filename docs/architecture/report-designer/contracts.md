@@ -351,6 +351,8 @@ export interface SpreadsheetHostSnapshot {
 }
 ```
 
+当前 Report Designer nested spreadsheet host baseline 还要求 `selection` 保持结构化 shape：`cell` 直接发布 anchor cell，`range` 直接发布显式 range，`row` / `column` 发布 `rows[]` / `columns[]`，`sheet` 发布 `sheetId`。
+
 ### 3.2 Bridge
 
 ```ts

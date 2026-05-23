@@ -190,11 +190,15 @@ interface ReportDesignerBridge extends SpreadsheetBridge {
 
 #### `activeSheet`
 
-当前激活 sheet。
+当前激活 sheet。对 `report-designer-page` 而言，这个便利字段跟随当前 active-sheet baseline，不会因为 `selectionTarget` 切到 `workbook`、`row` 或 `column` 就退化成 `undefined`。
 
 #### `selection`
 
-当前选区摘要。最小稳定要求是宿主 scope 能表达当前 selection target；更细的拆分字段可以按宿主快照演进。
+当前选区摘要仅适用于 nested `spreadsheet.selection` surface。对 `report-designer-page` 而言，top-level canonical current-target field 是 `selectionTarget`；当前 live baseline 下，nested spreadsheet selection 会稳定发布 `cell` / `range` / `rows[]` / `columns[]` / `sheetId` 这些结构化形态，而不是 opaque object。
+
+#### `selectionTarget`
+
+当前 canonical report selection target。它是 report-designer 顶层 host scope 上唯一受支持的 current-target surface，`workbook` / `sheet` / `row` / `column` / `cell` / `range` 语义都通过这里发布。
 
 #### `runtime`
 

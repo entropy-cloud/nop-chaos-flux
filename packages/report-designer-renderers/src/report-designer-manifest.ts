@@ -80,6 +80,57 @@ const selectionTargetShape: FluxValueShape = {
   ],
 };
 
+const spreadsheetSelectionShape: FluxValueShape = {
+  kind: 'union',
+  anyOf: [
+    { kind: 'null' },
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'literal', value: 'sheet' },
+        sheetId: { kind: 'string' },
+      },
+    },
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'literal', value: 'row' },
+        sheetId: { kind: 'string' },
+        rows: { kind: 'array', item: { kind: 'number' } },
+      },
+    },
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'literal', value: 'column' },
+        sheetId: { kind: 'string' },
+        columns: { kind: 'array', item: { kind: 'number' } },
+      },
+    },
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'literal', value: 'cell' },
+        sheetId: { kind: 'string' },
+        address: { kind: 'string' },
+        row: { kind: 'number' },
+        col: { kind: 'number' },
+      },
+    },
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'literal', value: 'range' },
+        sheetId: { kind: 'string' },
+        startRow: { kind: 'number' },
+        startCol: { kind: 'number' },
+        endRow: { kind: 'number' },
+        endCol: { kind: 'number' },
+      },
+    },
+  ],
+};
+
 const fieldDragPayloadShape: FluxValueShape = {
   kind: 'object',
   fields: {
@@ -156,7 +207,7 @@ const spreadsheetShape: FluxValueShape = {
   fields: {
     workbook: { kind: 'object', fields: {} },
     activeSheet: { kind: 'union', anyOf: [{ kind: 'null' }, { kind: 'object', fields: {} }] },
-    selection: { kind: 'object', fields: {} },
+    selection: spreadsheetSelectionShape,
     activeCell: { kind: 'union', anyOf: [{ kind: 'null' }, { kind: 'object', fields: {} }] },
     activeRange: { kind: 'union', anyOf: [{ kind: 'null' }, { kind: 'object', fields: {} }] },
     runtime: {

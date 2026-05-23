@@ -117,7 +117,7 @@ Inspector schema 运行时应始终注入稳定 host scope，而不是让局部 
 - `designer`
 - `runtime`
 
-其中 `activeCell`、`activeRange` 如需暴露，应被视为从 `selection` / `target` 派生的便利字段，而不是更高层级的固定主契约。
+其中 `activeCell`、`activeRange` 如需暴露，应被视为从 `selection` / `target` 派生的便利字段，而不是更高层级的固定主契约；`activeSheet` 也应保持为稳定 active-sheet convenience mirror，而不是只在部分 target 形态下存在的条件投影。
 
 这样 panel schema 可以稳定写成:
 
