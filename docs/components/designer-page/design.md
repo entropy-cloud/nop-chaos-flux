@@ -53,6 +53,7 @@
 - 当 `config.documentMode === 'tree'` 时，`designer-page` 承载的是 structured process tree，而不是自由 graph。
 - 画布上的 nodes/edges 在 tree mode 下是投影结果和交互桥接面，不是 authoring source of truth。
 - tree mode 当前不再维护 renderer-local React tree 副本；host 传入的 `treeDocument` 仍是唯一结构 owner，`DesignerCore` 只持有投影后的 graph/history 视图。
+- tree mode 的 saved baseline 也必须和 owner tree 绑定：`save()` 保存的是 projected graph 与 paired `treeDocument`，`restore()` 也必须一起回放两者，避免只恢复 graph 后又被较新的 owner tree 重新投影覆盖。
 - tree mode 下的结构编辑应通过结构化命令完成，例如插入链节点、插入 branch group、在 merge continuation 之前插入节点、删除节点、调整 branch 顺序。
 - tree mode 不应默认暴露自由连线、自由重连、手工拖拽排版这类 graph-first 操作。
 

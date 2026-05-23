@@ -413,7 +413,7 @@ interface DesignerPageSchema {
 - `graph`：直接以 `document` 初始化 `DesignerCore`
 - `tree`：先把 `treeDocument` 投影成 `GraphDocument`，然后在页面生命周期内复用同一个 `DesignerCore`，后续 tree 输入变化通过 `core.replaceDocument(projectedDoc, treeDocument)` 同步
 
-因此 tree 模式当前冻结基线是：`selection`、`history (undo/redo)`、`snapshot` 在 tree 编辑前后保持连续。`TreeDocument` 是 owner truth，history entry 必须同时记录 owner tree 与 projected graph；undo/redo 不能只回滚 graph projection 而把 owner tree 留在更“新”的版本。clipboard 仍由 core 提供单节点 copy/paste，但本文档不再把它写成 tree-mode closure 的额外共享承诺。
+因此 tree 模式当前冻结基线是：`selection`、`history (undo/redo)`、`snapshot`、以及 `save()` / `restore()` 在 tree 编辑前后保持连续。`TreeDocument` 是 owner truth，history entry 与 saved baseline 都必须同时记录 owner tree 与 projected graph；undo/redo 与 restore 都不能只回滚 graph projection 而把 owner tree 留在更“新”的版本。clipboard 仍由 core 提供单节点 copy/paste，但本文档不再把它写成 tree-mode closure 的额外共享承诺。
 
 ## Domain Examples
 

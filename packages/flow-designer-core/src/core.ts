@@ -53,6 +53,10 @@ export function createDesignerCore(
   initialDoc: GraphDocument,
   config: DesignerConfig,
 ): DesignerCore {
+  function cloneTreeDocument(tree: TreeDocument | undefined): TreeDocument | undefined {
+    return tree ? (JSON.parse(JSON.stringify(tree)) as TreeDocument) : undefined;
+  }
+
   let doc = cloneDocument(initialDoc);
   const normalizedConfig = normalizeConfig(config);
   let treeOwner:
@@ -62,6 +66,7 @@ export function createDesignerCore(
 
   let historyState: DesignerHistoryState = createHistoryState(doc, 0);
   let savedDoc: GraphDocument | null = cloneDocument(doc);
+  let savedTreeDocument: TreeDocument | undefined;
   let docRevision = 0;
   let savedRevision = 0;
 
@@ -123,6 +128,7 @@ export function createDesignerCore(
 
   function markHostDocumentSaved(nextDoc: GraphDocument) {
     savedDoc = cloneDocument(nextDoc);
+    savedTreeDocument = cloneTreeDocument(treeOwner?.getTreeDocument());
     savedRevision = docRevision;
   }
 
@@ -420,11 +426,13 @@ export function createDesignerCore(
     treeOwner = { getTreeDocument, setTreeDocument };
     if (!hadTreeOwner) {
       historyState = createHistoryState(doc, docRevision, treeOwner.getTreeDocument());
+      savedTreeDocument = cloneTreeDocument(treeOwner.getTreeDocument());
     }
   }
 
   function save(): void {
     savedDoc = cloneDocument(doc);
+    savedTreeDocument = cloneTreeDocument(treeOwner?.getTreeDocument());
     savedRevision = docRevision;
     emit({ type: 'dirtyChanged', isDirty: false });
   }
@@ -435,6 +443,9 @@ export function createDesignerCore(
     }
 
     replaceDocument(cloneDocument(savedDoc), savedRevision);
+    if (treeOwner && savedTreeDocument) {
+      treeOwner.setTreeDocument(cloneTreeDocument(savedTreeDocument)!);
+    }
     resetShellViewportFromDocument(shellState, doc);
     if (transactionStack.length === 0) pushHistory();
     emit({ type: 'documentChanged', doc });

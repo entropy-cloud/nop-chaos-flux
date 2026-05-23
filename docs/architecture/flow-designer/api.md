@@ -47,7 +47,7 @@ root 稳定导出：
 - `designer:*` 动作不是通过 root `actionHandlers` 注入，也不是通过修改 built-in action switch 实现，而是由 `designer-page` 在自身 `ActionScope` 边界内注册 `designer` namespace provider。
 - `designer-page` 负责创建 `DesignerCore`，并向内部 React renderer 子树暴露 `DesignerContext`；关于当前 snapshot 契约与 host scope 落地状态，见 `docs/architecture/flow-designer/runtime-snapshot.md`。
 - `designer-page` 当前还会把 designer host `scope` 与当前 `actionScope` 显式传给 `toolbar` / `inspector` / `dialogs` region render，因此这些 schema 片段不是仅靠“位于同一 React 子树”才可用，而是明确绑定到同一份 designer snapshot 视图与 namespace 边界。
-- 当前 `designer:save` 直接调用 `core.save()`；`designer:export` 直接返回 `core.exportDocument()` 的 JSON 字符串，当前 playground 通过本地 JSON dialog 展示导出结果而不是经 `env.functions.publishFlowExport` 回传。
+- 当前 `designer:save` 直接调用 `core.save()`；在 tree mode 下，这条 saved baseline 会和 paired `TreeDocument` 一起冻结，确保后续 `restore()` 回放 owner tree 与 projected graph 的同一版本。`designer:export` 直接返回 `core.exportDocument()` 的 JSON 字符串，当前 playground 通过本地 JSON dialog 展示导出结果而不是经 `env.functions.publishFlowExport` 回传。
 - 当前 clipboard 也是 core 自身能力，先支持单节点 copy/paste，并通过 `designer:copySelection` / `designer:pasteClipboard` 对外暴露。
 - `designer:navigate-back` 不是 Flow Designer 自身 manifest 发布的方法；它只作为 `designer-page` 对上游已存在返回动作的桥接别名存在于运行时 action-scope 解析链中。
 - 当前删除确认不通过专用 designer action 实现，而是由 `designer-page` 外围 schema 使用共享 `dialog` action 包装 `designer:deleteSelection`。

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDesignerCore } from './core.js';
-import type { DesignerConfig, GraphDocument } from './types.js';
+import type { DesignerConfig, GraphDocument, TreeDocument } from './types.js';
 
 function createTestDesignerConfig(): DesignerConfig {
   return {
@@ -108,6 +108,20 @@ function createDocumentWithEdgeChain(): GraphDocument {
   };
 }
 
+function createTreeDocument(label: string): TreeDocument {
+  return {
+    id: 'tree-1',
+    kind: 'flow-tree',
+    name: 'Tree Example',
+    version: '1.0.0',
+    root: {
+      id: 'root-1',
+      type: 'start',
+      data: { label },
+    },
+  };
+}
+
 describe('createDesignerCore', () => {
   it('adds, updates, and deletes nodes through shared core state', () => {
     const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
@@ -170,6 +184,32 @@ describe('createDesignerCore', () => {
     const exported = core.exportDocument();
     expect(exported).toContain('"name": "Example"');
     expect(exported).toContain('"nodes"');
+  });
+
+  it('restores tree owner state together with the saved graph baseline', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+    let treeDocument = createTreeDocument('Saved Tree');
+
+    core.setTreeOwner(
+      () => treeDocument,
+      (next) => {
+        treeDocument = next;
+      },
+    );
+
+    core.save();
+
+    treeDocument = createTreeDocument('Mutated Tree');
+    core.updateNode('task-1', { label: 'Task Updated' });
+
+    expect(core.getSnapshot().isDirty).toBe(true);
+    expect(treeDocument.root.data.label).toBe('Mutated Tree');
+
+    core.restore();
+
+    expect(core.getSnapshot().isDirty).toBe(false);
+    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe('Task');
+    expect(treeDocument.root.data.label).toBe('Saved Tree');
   });
 
   it('rejects duplicate edges when allowMultiEdge is false', () => {
