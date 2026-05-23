@@ -236,6 +236,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'title', kind: 'prop' },
       { key: 'defaultExpand', kind: 'prop' },
+      { key: 'dataPaths', kind: 'prop' },
     ],
   },
   {

@@ -233,7 +233,7 @@ describe('basic renderer coverage gaps', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://basic/coverage-gaps"
-        schema={{ type: 'page', body: [{ type: 'scope-debug' }] }}
+        schema={{ type: 'page', body: [{ type: 'scope-debug', defaultExpand: true }] }}
         data={circular}
         env={env}
         formulaCompiler={formulaCompiler}

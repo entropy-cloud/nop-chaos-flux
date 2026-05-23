@@ -294,6 +294,7 @@ const STRESS_SCENARIOS: SchemaInput[] = [
       {
         type: 'scope-debug',
         title: 'Full Perf Scope Snapshot',
+        defaultExpand: true,
         className: 'max-h-[280px] overflow-auto text-xs',
       },
     ],

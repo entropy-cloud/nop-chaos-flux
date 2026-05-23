@@ -530,6 +530,8 @@ export const zhCN: Resource = {
     },
     scopeDebug: {
       debug: '调试',
+      expand: '展开',
+      collapse: '折叠',
     },
     dynamicRenderer: {
       error: '错误: ',

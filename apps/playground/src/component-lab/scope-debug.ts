@@ -6,7 +6,7 @@ export function createScopeDebugNode(title: string): BaseSchema {
   return {
     type: COMPONENT_LAB_SCOPE_DEBUG_RENDERER_ID,
     title,
-    defaultExpand: false,
+    defaultExpand: true,
     testid: `scope-debug-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
   } as BaseSchema;
 }

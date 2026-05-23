@@ -531,6 +531,8 @@ export const enUS: Resource = {
     },
     scopeDebug: {
       debug: 'Debug',
+      expand: 'Expand',
+      collapse: 'Collapse',
     },
     dynamicRenderer: {
       error: 'Error: ',

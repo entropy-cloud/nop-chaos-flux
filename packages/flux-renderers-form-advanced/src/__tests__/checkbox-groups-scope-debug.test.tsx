@@ -170,6 +170,7 @@ describe('checkbox-group values and scope-debug', () => {
             {
               type: 'scope-debug',
               title: 'Form Scope',
+              defaultExpand: true,
             },
           ],
         }}

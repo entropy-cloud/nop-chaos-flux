@@ -175,5 +175,6 @@ export interface ScopeDebugSchema extends BaseSchema {
   type: 'scope-debug';
   title?: string;
   defaultExpand?: boolean;
+  dataPaths?: string[];
 }
 export type { DynamicRendererSchema };
