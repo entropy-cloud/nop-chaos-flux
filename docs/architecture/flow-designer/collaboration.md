@@ -209,7 +209,7 @@ flowchart TD
 
 如果要看 page-shell 与 focused tests 的 owner 边界，优先对照：
 
-- `packages/flow-designer-renderers/src/designer-page-shell.test.tsx`：statusPath、基本渲染、node toolbar shell contract
+- `packages/flow-designer-renderers/src/designer-page-status.test.tsx` 和 `packages/flow-designer-renderers/src/designer-page-rendering.test.tsx`：statusPath、基本渲染、node toolbar shell contract
 - `packages/flow-designer-renderers/src/designer-provider-and-manifest.test.tsx`：provider/manifest/renderer-definition contract
 
 ## 为什么 toolbar / inspector 可以直接用 `designer:*`
