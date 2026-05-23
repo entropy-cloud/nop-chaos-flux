@@ -24,6 +24,7 @@ This file is the top-level docs router.
 | Understand the lightweight default development workflow              | `docs/process/application-development-workflow.md`  | `AGENTS.md`                                                                                                                                    |
 | Choose the next AI-ready work item                                   | `docs/backlog/README.md`                            | `docs/context/ai-autonomy-policy.md`, active requirement and owner doc                                                                         |
 | Read raw PM, prototype, article, or card-set inputs                  | `docs/input/README.md`                              | the active file in `docs/input/`                                                                                                               |
+| Read explanatory methodology articles                                | `docs/articles/README.md`                           | the relevant article under `docs/articles/`                                                                                                    |
 | Clarify ambiguous requirements                                       | `docs/discussions/README.md`                        | `docs/requirements/00-requirement-synthesis-guide.md`                                                                                          |
 | Route a task before coding                                           | `AGENTS.md`                                         | `docs/skills/README.md`, the relevant owner doc, and `docs/plans/00-plan-authoring-and-execution-guide.md`                                     |
 | Decide whether an existing skill applies                             | `docs/skills/README.md`                             | the relevant owner doc and active requirement                                                                                                  |
@@ -88,6 +89,7 @@ Skills select the work method. They do not replace requirements, design, archite
 - `docs/architecture/` - stable technical baseline and module-boundary docs
 - `docs/lessons/` - durable engineering lessons extracted from repeated issues and recoveries
 - `docs/references/` - stable lookup guides and maintenance aids
+- `docs/articles/` - outward-facing methodology and explanatory articles
 - `docs/examples/` - small copyable skeletons for dated working documents
 - `docs/plans/` - execution plans with closure criteria
 - `docs/audits/` - audit methods and audit records, including required plan/closure audit evidence for created plans

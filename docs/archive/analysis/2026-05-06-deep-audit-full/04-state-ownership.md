@@ -103,12 +103,12 @@
 
 ## 总结
 
-| 严重程度 | 数量 | 关键发现 |
-|---------|------|---------|
-| P0 | 0 | — |
-| P1 | 0 | — |
-| P2 | 3 | object-field working value cache、surface localOpen+SurfaceStore、designer-page treeDocument |
-| P3 | 7 | array-editor/key-value/condition-builder ref 桥接、table-quick-edit、field-handlers、table axis hooks（非双状态）、variant-field、spreadsheet editing、flow-designer（合规） |
+| 严重程度 | 数量 | 关键发现                                                                                                                                                                     |
+| -------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P0       | 0    | —                                                                                                                                                                            |
+| P1       | 0    | —                                                                                                                                                                            |
+| P2       | 3    | object-field working value cache、surface localOpen+SurfaceStore、designer-page treeDocument                                                                                 |
+| P3       | 7    | array-editor/key-value/condition-builder ref 桥接、table-quick-edit、field-handlers、table axis hooks（非双状态）、variant-field、spreadsheet editing、flow-designer（合规） |
 
 **整体评估**: 未发现 P0 级别的双状态缺陷。复杂表单字段渲染器已收敛为"从 store 读取 + ref 桥接"模式。
 

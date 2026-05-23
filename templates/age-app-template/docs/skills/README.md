@@ -6,6 +6,8 @@ These are not one-off chat messages. They are reusable repo memory.
 
 Skills should primarily capture reusable work methods, review methods, or audit methods. Do not use a skill as a substitute for requirement truth, design truth, or architecture truth.
 
+A skill library is not the attractor. Without routing through `AGENTS.md`, `docs/index.md`, active requirements, and owner docs, a large skill library usually degenerates into structured vibe coding.
+
 These prompts are generic defaults for copied projects. After copying the template, you MUST customize them to the project's real owner docs, protected areas, verification stack, naming conventions, known failure modes, and false-positive tolerance.
 
 ## Skill Routing Rule
@@ -15,7 +17,11 @@ Before choosing a skill:
 1. Read the relevant requirement and owner docs first.
 2. Classify the task type using `AGENTS.md`.
 3. Choose the skill by matching the work method, not just the business label.
-4. If no existing skill clearly fits, record `Skill: none` and proceed with the normal docs-driven workflow.
+4. If multiple skills could fit, ask an independent subagent or reviewer to choose before implementation.
+5. If no existing skill clearly fits, record `Skill: none` and proceed with the normal docs-driven workflow.
+6. For non-trivial plans, record the skill selection basis and review result in the plan.
+
+Do not add broad business-scenario skills as a replacement for project-specific owner docs. If a scenario repeats often, first check whether routing, owner docs, or plan guidance are missing. Promote a skill only when the reusable work method is stable.
 
 ## Skill Registry
 

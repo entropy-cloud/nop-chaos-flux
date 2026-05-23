@@ -17,7 +17,7 @@
 // table-renderer.tsx:246-249
 const totalPages = useMemo(() => {
   if (!paginationEnabled) return 1;
-  return Math.ceil(source.length / pageSize);  // source.length = 当前页数据量
+  return Math.ceil(source.length / pageSize); // source.length = 当前页数据量
 }, [source.length, pageSize, paginationEnabled]);
 ```
 
@@ -87,7 +87,7 @@ export function generateCacheKey(api: ExecutableApiRequest): string {
   const method = api.method ?? 'get';
   const url = api.url;
   const dataStr = api.data ? stableStringify(api.data) : '';
-  return `${method}:${url}:${dataStr}`;  // 不包含 headers
+  return `${method}:${url}:${dataStr}`; // 不包含 headers
 }
 ```
 
@@ -215,7 +215,7 @@ if (dedupStrategy !== 'parallel') {
 
 ```ts
 currentForm.removeValue(name, index);
-void currentForm.validateSubtree(name);  // itemsRef 可能还是旧数据
+void currentForm.validateSubtree(name); // itemsRef 可能还是旧数据
 ```
 
 `validateSubtree` 是异步的，但 `validateChild` 中使用 `itemsRef.current[Number(match[1])]` 索引查找项目。删除第 2 项后 form 中变成 [A, C]，但 `itemsRef.current` 可能还是旧的 [A, B, C]，导致验证检查了错误位置的项目。
@@ -238,6 +238,7 @@ void currentForm.validateSubtree(name);  // itemsRef 可能还是旧数据
 ## 盲区自评
 
 本轮深入了 renderer 实现和异步数据流，但仍有盲区：
+
 - Word Editor 和 Report Designer 的业务逻辑未覆盖
 - Playwright E2E 测试的覆盖率和质量未评估
 - Vite 构建配置和 tree-shaking 效果未检查

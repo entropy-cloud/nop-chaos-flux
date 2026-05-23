@@ -5,7 +5,7 @@
 ### P2 发现（4 个）
 
 1. node-renderer.tsx 中 region.node/action 的不必要 as any（F3）
-2. use-surface-renderer.ts 通过 dispatch.__actionScope 隐式 any 属性传递上下文（F5，最具风险）
+2. use-surface-renderer.ts 通过 dispatch.\_\_actionScope 隐式 any 属性传递上下文（F5，最具风险）
 3. condition-builder types.ts 中 fields?: any[] 和 operators?: any（F8）
 4. wrapped-field-action.tsx 和 toolbar-button.tsx 中 KeyboardEvent→MouseEvent 断言（F10）
 

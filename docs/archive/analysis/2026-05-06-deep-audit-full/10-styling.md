@@ -17,7 +17,7 @@
 6. nop-debugger JS 注入 CSS 而非 CSS 文件（架构取舍）
 7. tree-renderer inline style 缩进（合规，动态几何值）
 8. tree-controls inline style 缩进（合规）
-9. word-editor 大量 var(--nop-*) 任意值 Tailwind 类（设计决策）
+9. word-editor 大量 var(--nop-\*) 任意值 Tailwind 类（设计决策）
 
 ### 正面发现
 

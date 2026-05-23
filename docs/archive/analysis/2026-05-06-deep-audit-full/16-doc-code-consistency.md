@@ -36,7 +36,7 @@
 ### 正面发现
 
 - is*/has* 前缀仅用于 boolean 返回值
-- use* 前缀仅用于 React hooks
+- use\* 前缀仅用于 React hooks
 - 文件命名统一 kebab-case
 
 ---

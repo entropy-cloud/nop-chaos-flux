@@ -6,12 +6,14 @@
 
 - **文件**: `docs/plans/281-deep-audit-2026-05-14-runtime-owner-lifecycle-validation-closure-plan.md:3,54-66`
 - **证据片段**:
+
   ```md
   > Plan Status: completed
   > Status: completed
 
   - [ ] Retained IDs `04-01/02/03/04/06/08` are fixed in live code, or a fresh live re-audit...
   ```
+
 - **严重程度**: P1
 - **现状**: completed 状态与未完成 checklist 同时存在。
 - **风险**: 后续读者会误以为该 plan 已闭环收口。

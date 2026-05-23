@@ -46,12 +46,12 @@ page, container, flex, button, text, icon, badge, tabs, dialog, drawer, fragment
 
 ## 总结
 
-| 严重程度 | 数量 | 问题 |
-|---------|------|------|
-| P0 | 0 | — |
-| P1 | 0 | — |
-| P2 | 4 | 4 个 widget 渲染器根元素未合并 props.meta.className |
-| P3 | 0 | — |
+| 严重程度 | 数量 | 问题                                                |
+| -------- | ---- | --------------------------------------------------- |
+| P0       | 0    | —                                                   |
+| P1       | 0    | —                                                   |
+| P2       | 4    | 4 个 widget 渲染器根元素未合并 props.meta.className |
+| P3       | 0    | —                                                   |
 
 **所有违规项为同一模式**：`wrap: true` 的 widget 渲染器在控件根元素上未合并 `props.meta.className`。
 

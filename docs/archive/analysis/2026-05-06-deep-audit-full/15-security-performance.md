@@ -38,7 +38,7 @@
 - **严重程度**: P3
 - **类别**: 性能
 - **规则编号**: P2
-- **现状**: O(options * selectedValues) 复杂度。
+- **现状**: O(options \* selectedValues) 复杂度。
 - **风险**: 典型场景规模小，无实际影响。
 - **建议**: 若未来出现大列表需求，可预转 Set。
 
@@ -76,20 +76,20 @@
 
 ## 已确认合规的区域
 
-| 检查项 | 结果 |
-|--------|------|
-| R2: eval/new Function | 通过 |
-| R3: fail-closed | 通过 |
-| R5: 安全假设文档化 | 通过 |
-| P1: JSON.stringify 热路径 | 通过 |
-| P2: O(n^2) 嵌套循环 | 通过 |
-| P3: 不可变更新 | 通过 |
-| P5: AbortController | 通过 |
-| P6: 关键路径可观察性 | 基本通过 |
-| P7: per-path 订阅 | 通过 |
-| React Compiler 兼容性 | 通过 |
-| startTransition 使用 | 通过 |
-| 表格虚拟化 | 通过 |
+| 检查项                    | 结果     |
+| ------------------------- | -------- |
+| R2: eval/new Function     | 通过     |
+| R3: fail-closed           | 通过     |
+| R5: 安全假设文档化        | 通过     |
+| P1: JSON.stringify 热路径 | 通过     |
+| P2: O(n^2) 嵌套循环       | 通过     |
+| P3: 不可变更新            | 通过     |
+| P5: AbortController       | 通过     |
+| P6: 关键路径可观察性      | 基本通过 |
+| P7: per-path 订阅         | 通过     |
+| React Compiler 兼容性     | 通过     |
+| startTransition 使用      | 通过     |
+| 表格虚拟化                | 通过     |
 
 ---
 

@@ -84,6 +84,7 @@ dirty: state.undoStack.length > 0,
 **是什么**
 
 `handleUndo` 恢复文档但不处理 `editing` 状态。如果用户正在编辑单元格 A1（draftValue 包含未提交值），触发 undo：
+
 1. 文档恢复到旧版本，A1 值可能已变
 2. 但 `editing` 状态仍指向 A1，`draftValue` 仍是编辑中的值
 3. 用户按 Enter 提交 → `draftValue` 覆盖 undo 后的值 → undo 效果被静默消除
@@ -209,6 +210,7 @@ Undo 栈有 `maxDepth` 限制，但 redo 栈没有。每次 undo 将当前文档
 四轮审查覆盖了：compiler pipeline、react 渲染层、action dispatch、runtime scope/store、异步数据流、formula 表达式系统、核心工具函数、renderer 实现、SSR 兼容性、undo/redo 系统完整性。
 
 仍然可能遗漏的方向：
+
 - **性能压力测试**：大规模 schema（10000+ 节点）的编译和渲染性能
 - **并发用户场景**：WebSocket 推送 + 多 tab 同时操作
 - **国际化的运行时正确性**（非 key 覆盖问题，而是 RTL 布局、日期格式化等）

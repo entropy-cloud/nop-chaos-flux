@@ -1,20 +1,24 @@
-# AGE App Template
+# Attractor-Guided Engineering Template
 
 This template is a lightweight application-layer project scaffold for AI-assisted product development.
 
 It is meant for ordinary business applications such as admin systems, portals, workflow apps, dashboards, internal tools, and CRUD-heavy domain products.
 
-It is designed for small and medium-sized projects.
+It is designed for small and medium-sized projects that already have a technical stack.
 
-It is not a framework-core template like `nop-chaos-flux`. It assumes the project is building an application on top of an existing technical stack, and that the main challenge is requirement clarification, scope control, durable documentation, and iterative implementation quality without heavyweight process overhead.
+It is not a starter app and does not include generated product code. Its purpose is to give a repository enough durable structure for humans and AI to share requirements, owner-doc baselines, plans, verification, and project memory without heavyweight process overhead.
 
 ## What AGE Means
 
 AGE means **Attractor-Guided Engineering**.
 
-In this template, an attractor is the stable structure a project should keep returning to during fast AI-assisted iteration.
+AGE starts from one question:
 
-For application projects, the attractor is carried by a small set of durable files:
+What should this repository keep converging toward as humans and AI change it over time?
+
+In this template, an attractor is the stable product, design, and architecture structure an application project should keep returning to during fast AI-assisted iteration.
+
+For application projects, the attractor is carried by a small set of durable owner files:
 
 - `docs/context/` - mandatory project context and source-of-truth rules
 - `docs/backlog/` - prioritized candidate work and AI-ready next actions
@@ -22,9 +26,69 @@ For application projects, the attractor is carried by a small set of durable fil
 - `docs/design/` - stable app-layer behavior and feature owner docs
 - `docs/architecture/` - stable technical structure and module boundaries
 
-Plans, logs, bugs, audits, and retrospectives are not the attractor itself. They are control and memory mechanisms that help the project trajectory stay close to the attractor.
+Plans, tests, audits, logs, bug notes, and verification are not the attractor. They are engineering harnesses: local controls that help prove a change moved the repo toward the attractor instead of merely completing a checklist.
 
-The practical goal is simple: prevent AI work from drifting into polished demos, hidden assumptions, and chat-only decisions.
+A change can pass tests and still fail AGE if it contradicts the owner-doc baseline, hides changed behavior only in a plan, or leaves future sessions unable to recover the current truth from repository files.
+
+## AGE Is Not Just Harness Engineering
+
+Harness-first engineering asks:
+
+- how do we constrain AI?
+- how do we verify output?
+- how do we audit and remember what happened?
+
+AGE asks a prior question:
+
+- what stable structure should the project keep returning to?
+
+Harnesses such as plans, tests, audits, logs, bug notes, and CI only become meaningful after the attractor exists. They do not define correctness by themselves. They measure, correct, and preserve the repository trajectory against owner-doc baselines.
+
+## AGE Is Not Spec-Driven Development
+
+Spec-driven workflows are useful when behavior changes should be organized as structured spec deltas.
+
+AGE does not force every fact through one spec/change/archive workflow and does not treat one spec tree as the universal source of truth.
+
+In AGE:
+
+- requirements answer what should be built now
+- design docs answer current supported app behavior
+- architecture docs answer current supported technical structure
+- plans answer how a non-trivial slice will close
+- tests and audits challenge completion claims
+- logs, bugs, and testing notes preserve trajectory memory
+
+Specs can still be useful. They are one possible harness, not the top-level organizing model.
+
+## AGE Is Not A Skill Library
+
+Reusable skills can help execute repeated work methods, but they are not the attractor and they cannot replace project-specific routing.
+
+A large skill library without routing usually becomes structured vibe coding: AI may execute familiar patterns quickly, but it still needs human correction to decide which owner docs matter, which skill applies, and what proof is required.
+
+In AGE, skills are method selectors. They must be routed through:
+
+- `AGENTS.md`
+- `docs/index.md`
+- active requirements
+- owner docs
+- plan skill-selection records
+
+If skill selection is ambiguous, an independent subagent or reviewer should choose before implementation. For non-trivial plans, each phase or item should record `Skill: <name>` or `Skill: none`.
+
+## Scope Of This Template
+
+This repository is an AGE template for application-layer projects.
+
+AGE itself is broader than this template. Framework-level projects can also use AGE, but they need project-specific owner docs, guides, routing rules, audit prompts, verification strategy, and review prompts shaped around their own attractor.
+
+Examples of deeper framework-specific AGE practice include:
+
+- [`nop-chaos-flux`](https://gitee.com/canonical-entropy/nop-chaos-flux) - frontend framework and low-code runtime practice with owner-doc precedence, plan closure, audit, bug, log, and AGE methodology
+- [`nop-entropy`](https://gitee.com/canonical-entropy/nop-entropy) - backend framework practice with its own normative docs and development-process memory
+
+Do not copy this application template unchanged into a framework-core repository and assume it is enough. Use it as a conceptual starting point, then define the framework's own attractor and guides.
 
 ## How This Template Was Made
 
@@ -32,11 +96,11 @@ This template was built by extracting the lightweight parts of the AI developmen
 
 The main references were:
 
-- `nop-chaos-flux` - owner-doc precedence, plan closure, audit, bug, log, and AGE methodology
-- `nop-chaos-next` - application-layer `design/`, `input/`, `logs/`, `bugs/`, `skills/`, and lightweight project docs practice
-- `nop-entropy` - distinction between normative AI-facing docs and development-process memory
+- [`nop-chaos-flux`](https://gitee.com/canonical-entropy/nop-chaos-flux) - owner-doc precedence, plan closure, audit, bug, log, and AGE methodology
+- [`nop-chaos-next`](https://gitee.com/canonical-entropy/nop-chaos-next) - application-layer `design/`, `input/`, `logs/`, `bugs`, `skills`, and lightweight project docs practice
+- [`nop-entropy`](https://gitee.com/canonical-entropy/nop-entropy) - distinction between normative AI-facing docs and development-process memory
 
-The template was then simplified through several review passes:
+The template was simplified through several review passes:
 
 1. Start with the core AGE file-in/file-out idea.
 2. Split raw inputs, requirements, app design, architecture, plans, logs, bugs, and lessons by responsibility.
@@ -44,7 +108,9 @@ The template was then simplified through several review passes:
 4. Add copyable examples for common dated documents.
 5. Move mandatory AI context out of `docs/references/` into `docs/context/`, because agents do not reliably read reference material unless it is part of the entry path.
 6. Add explicit AI autonomy, backlog, codebase map, and known-good baseline hooks so AI can choose safe next actions without rediscovering the repo every session.
-7. Keep advanced layers such as retrospectives, skills, testing notes, and analysis optional so the template remains usable for small and medium projects. Plan and closure audits are mandatory for created plans.
+7. Keep advanced layers such as retrospectives, skills, testing notes, and analysis optional so the template remains usable for small and medium projects.
+8. Require plan audit and closure audit for created plans.
+9. Make skill selection explicit in plans so reusable skills do not replace project-specific routing.
 
 Independent review found the template direction useful but warned about two risks: documentation theater and excessive process. The current version addresses those risks by keeping a lean default path and making optional layers explicit.
 
@@ -72,17 +138,20 @@ This template turns the repo into a durable execution surface with a lean defaul
 1. raw input collection
 2. requirement synthesis
 3. design baseline
-4. execution plan when planning triggers apply
-5. implementation
-6. verification
-7. closure
+4. route the task and select reusable skills when relevant
+5. execution plan when planning triggers apply
+6. implementation
+7. verification
+8. closure
 
-For created plans, plan audit and closure audit are part of the default control loop. For more ambiguous or risky work, the template also provides optional document audit plus multi-dimensional or open-ended audit styles, along with retrospective and skill-extraction layers.
+For created plans, plan audit and closure audit are part of the default control loop. For more ambiguous or risky work, the template also provides optional document audit, multi-dimensional audit, open-ended audit, retrospective, skill-extraction, and lesson layers.
 
 ## What This Template Includes
 
 - `AGENTS.md` - app-layer operating contract for AI agents
+- `START-HERE-after-copy.md` - Day 0 setup checklist after copying the template
 - `docs/index.md` - docs router and directory ownership baseline
+- `docs/articles/` - outward-facing methodology articles in English
 - `docs/context/` - mandatory AI context, source-of-truth precedence, and project-wide conventions
 - `docs/backlog/` - prioritized candidate work and AI autonomy labels for next actions
 - `docs/process/` - lightweight development workflow
@@ -92,7 +161,7 @@ For created plans, plan audit and closure audit are part of the default control 
 - `docs/design/` - stable app-layer owner docs for features, roles, flows, and app surfaces
 - `docs/architecture/` - cross-cutting technical baseline and module boundaries
 - `docs/lessons/` - durable lessons extracted from repeated failures and recoveries
-- `docs/plans/` - execution plans with closure rules
+- `docs/plans/` - execution plans with closure rules and skill selection records
 - `docs/audits/` - audit records and audit workflow guidance, including required plan/closure audit evidence for created plans
 - `docs/skills/` - optional reusable prompts, review playbooks, and audit prompt templates; copied projects should tune them to local owner docs and risk areas
 - `docs/logs/` - daily development log guide and starter index
@@ -119,14 +188,17 @@ For most small and medium projects, you only need these to start coding the firs
 Trigger-based folders:
 
 - `docs/plans/` when the planning triggers apply
+- `docs/audits/` when plan or closure audit evidence should be stored
 - `docs/logs/` when a real change lands
+- `docs/testing/` when manual or exploratory proof matters
 - `docs/bugs/` when a non-obvious bug is fixed or needs memory
+- `docs/skills/` when a repeatable method is stable enough to reuse
 
 Created plans require plan audit before implementation and closure audit before completion.
 
 Everything else is optional and should be used only when the project complexity justifies it.
 
-The audit prompts shipped in this template are generic defaults. After copying the template, you MUST adjust them to the real project's protected areas, owner-doc structure, deployment model, verification stack, and recurring failure patterns.
+The audit prompts and skills shipped in this template are generic defaults. After copying the template, you MUST adjust them to the real project's protected areas, owner-doc structure, deployment model, verification stack, naming conventions, known failure modes, and false-positive tolerance.
 
 ## Stable vs Dated Files
 
@@ -159,7 +231,7 @@ Do not push important work through chat alone.
 
 ## How To Start A New Project
 
-1. Copy `templates/age-app-template/` into a new repository root.
+1. Copy this template into a new repository root.
 2. Complete `START-HERE-after-copy.md`.
 3. Put PM notes, prototype links, card-set docs, article extracts, and external references into `docs/input/`.
 4. If the input is still ambiguous, capture clarification in `docs/discussions/` before implementation.
@@ -173,18 +245,20 @@ Do not push important work through chat alone.
 4. Update stable app design in `docs/design/` and technical baseline in `docs/architecture/`, and make them reference each other where needed instead of mixing both concerns into one file.
 5. Route the task and select candidate reusable skills.
 6. For work that changes contracts, data/model behavior, auth, integrations, cross-module behavior, spans more than one session, or is more than a very small low-risk edit, create a plan under `docs/plans/`.
-7. Audit the plan before implementation.
-8. Implement the smallest complete slice.
-9. Run verification.
-10. Run closure audit for created plans.
-11. Update logs and any affected docs.
+7. If skill selection is ambiguous, use an independent subagent or reviewer to choose before implementation.
+8. Record `Skill: <name>` or `Skill: none` per relevant phase or item.
+9. Audit the plan before implementation.
+10. Implement the smallest complete slice.
+11. Run verification.
+12. Run closure audit for created plans.
+13. Update logs and any affected docs.
 
 Use these only when needed:
 
 - `docs/audits/` for document audits and stored plan or closure audit records
 - `docs/testing/` for manual or exploratory proof
 - `docs/retrospectives/` when prototype and implementation diverged materially
-- `docs/skills/` when the same issue repeats often enough to justify a reusable prompt
+- `docs/skills/` when the same method repeats often enough to justify a reusable prompt
 - `docs/lessons/` when a repeatable lesson should outlive a single bug or retrospective
 
 If repeated error patterns keep reappearing, do not stop at prose-only notes. Consider promoting them progressively into reusable audit prompts, checklists, heuristic scripts, static checks, lint rules, CI guards, or codemods, tuned to the copied project's real conventions and false-positive tolerance.
@@ -197,18 +271,15 @@ The full workflow is documented in `docs/process/application-development-workflo
 - This template does not include generated application code.
 - This template does not replace your package manager, lint, test, or CI setup.
 - This template does not assume spec-driven development is the only valid artifact workflow.
+- This template is not a universal AGE template for framework-core repositories; framework projects need their own domain-specific owner docs and guides.
+- This template is not a generic skill library. Skills must be selected through project routing and owner docs.
 
-## Suggested First Prompt
+## Read More
 
-```text
-Read `AGENTS.md`, `docs/context/project-context.md`, `docs/context/ai-autonomy-policy.md`, `docs/context/codebase-map.md`, the active requirement listed there, and the active owner doc listed there.
+- `docs/articles/from-spec-driven-development-to-attractor-guided-engineering.md`
+- `docs/articles/attractor-before-harness-ai-large-scale-development-methodology.md`
+- `docs/articles/README.md`
 
-If the task changes source-of-truth boundaries or you are unsure where facts live, also read `docs/context/source-of-truth-and-precedence.md`.
+## License
 
-Do not generate a whole demo application.
-If raw inputs are ambiguous or incomplete, first write a requirement synthesis or clarification document instead of coding.
-
-If the scope changes contracts, data/model behavior, auth, integrations, cross-module behavior, spans more than one session, or is more than a very small low-risk edit, create or update a plan in `docs/plans/` only after the requirement and design baseline are stable enough.
-Every created plan needs independent plan audit before implementation and closure audit before completion.
-After landing changes, update the daily log, affected owner docs, and bug memory when needed.
-```
+MIT

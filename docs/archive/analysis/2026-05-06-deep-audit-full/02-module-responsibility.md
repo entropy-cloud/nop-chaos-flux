@@ -20,20 +20,20 @@
 
 ### P3 观察项（12 个）
 
-| 文件 | 行数 | 说明 |
-|------|------|------|
-| runtime-factory.ts | 558 | orchestrator，prepareSchema 可提取 |
-| hooks.ts | 539 | hooks 集合，职责单一 |
-| form-runtime.ts | 511 | FormRuntime 组装层 |
-| designer-xyflow-canvas.tsx | 577 | canvas 组件事件桥接 |
-| spreadsheet-grid.tsx | 565 | 表格网格渲染组件 |
-| word-editor-page.tsx | 538 | 编辑器页面 orchestrator |
-| designer-page.tsx | 532 | designer 页面 orchestrator |
-| parser.ts | 534 | 递归下降解析器，无需拆分 |
-| reaction-runtime.ts | 523 | reaction 注册+registry |
-| form-runtime-validation.ts | 523 | 验证执行引擎 |
-| styles-css.ts | 505 | 纯 CSS 常量 |
-| report-designer-demo.tsx | 505 | Playground demo |
+| 文件                       | 行数 | 说明                               |
+| -------------------------- | ---- | ---------------------------------- |
+| runtime-factory.ts         | 558  | orchestrator，prepareSchema 可提取 |
+| hooks.ts                   | 539  | hooks 集合，职责单一               |
+| form-runtime.ts            | 511  | FormRuntime 组装层                 |
+| designer-xyflow-canvas.tsx | 577  | canvas 组件事件桥接                |
+| spreadsheet-grid.tsx       | 565  | 表格网格渲染组件                   |
+| word-editor-page.tsx       | 538  | 编辑器页面 orchestrator            |
+| designer-page.tsx          | 532  | designer 页面 orchestrator         |
+| parser.ts                  | 534  | 递归下降解析器，无需拆分           |
+| reaction-runtime.ts        | 523  | reaction 注册+registry             |
+| form-runtime-validation.ts | 523  | 验证执行引擎                       |
+| styles-css.ts              | 505  | 纯 CSS 常量                        |
+| report-designer-demo.tsx   | 505  | Playground demo                    |
 
 ### 正面发现
 

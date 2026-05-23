@@ -57,9 +57,11 @@ if (sourceCascadeDepth > MAX_SOURCE_CASCADE_DEPTH) {
   return;
 }
 try {
-  controller.refresh().catch((error) => { /* 火后即忘 */ });
+  controller.refresh().catch((error) => {
+    /* 火后即忘 */
+  });
 } finally {
-  sourceCascadeDepth -= 1;  // refresh 还没完成就已经递减
+  sourceCascadeDepth -= 1; // refresh 还没完成就已经递减
 }
 ```
 
@@ -149,13 +151,13 @@ throw withRetryMetadata(error, {
 const errorWithRetry = result.error as { attempts?: unknown; failureCount?: unknown };
 
 // 协议 B: 假设 error 是 Error | string
-state.error instanceof Error ? state.error.message : String(state.error)
+state.error instanceof Error ? state.error.message : String(state.error);
 
 // 协议 C: 假设 error 是 { message: string }
-error?.message
+error?.message;
 
 // 协议 D: 假设 error 是 Error
-input.error instanceof Error ? input.error.message : String(input.error)
+input.error instanceof Error ? input.error.message : String(input.error);
 ```
 
 当协议 A 设置 `error = { attempts: 3 }`（无 `message`），协议 B 用 `instanceof Error` 检查后走 `String(error)` 得到 `"[object Object]"`。
@@ -261,6 +263,7 @@ Controller 的初始快照是 `{ sourceInputs: [], value: {} }`。`controller.ru
 **为什么值得关心**
 
 这不是纯美学问题。God Object 导致：
+
 1. 任何方法变更影响所有消费者和测试
 2. 新增功能时不知道该加在哪个接口上
 3. 测试 mock 的泛滥掩盖了真正的类型错误
@@ -276,8 +279,8 @@ Controller 的初始快照是 `{ sourceInputs: [], value: {} }`。`controller.ru
 - `packages/flux-core/src/types/renderer-core.ts:101-102`
 
 ```ts
-export type RendererResolvedProps<S extends BaseSchema = BaseSchema> =
-  Record<string, any> & Partial<S>;
+export type RendererResolvedProps<S extends BaseSchema = BaseSchema> = Record<string, any> &
+  Partial<S>;
 ```
 
 **是什么**
@@ -329,6 +332,7 @@ if (action.parallel !== undefined) {
 **是什么**
 
 `dispose()` 清理了 owned 集合但没有打破循环引用链：
+
 - `sourceRegistryRef.current` 仍持有 `runtime` 引用（通过闭包和输入参数）
 - `reactionRegistryRef.current`、`runtimeRef.current`、`actionDispatcherRef.current` 同理
 

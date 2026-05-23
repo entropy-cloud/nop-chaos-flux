@@ -8,6 +8,7 @@
 
 - **文件**: `docs/architecture/report-designer/design.md:404-410`; `packages/report-designer-renderers/src/host-data.ts:155-195`
 - **证据片段**:
+
   ```md
   ### `report-designer-page` 额外暴露
 
@@ -15,6 +16,7 @@
   - `selectionTarget` — 当前选择目标（canonical）
   - `selection`、`target` — `selectionTarget` 的兼容别名
   ```
+
   ```ts
   return {
     designer: {
@@ -25,6 +27,7 @@
     inspector: snapshot.inspector,
     inspectorPanels: snapshot.inspector.resolvedSchema,
   ```
+
 - **严重程度**: P2
 - **现状**: 文档称顶层 `selection`/`target` 是 `selectionTarget` 兼容别名；live `buildReportDesignerScopeData()` 发布 `selectionTarget`，未发布顶层 `selection/target`。
 - **风险**: 按文档编写的 schema 可能引用 runtime 不存在的 aliases，导致 expression silent failure 或自定义区域缺 state。

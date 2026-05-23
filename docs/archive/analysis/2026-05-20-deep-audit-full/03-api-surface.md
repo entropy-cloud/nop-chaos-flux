@@ -759,6 +759,7 @@
 - **文件**: `packages/flux-renderers-form-advanced/src/index.tsx:17-39`, `packages/flux-renderers-form-advanced/src/condition-builder/condition-builder.tsx:193-217`, `docs/components/condition-builder/design.md:15-20`, `docs/components/package-splitting-strategy.md:521-530`
 - **行号范围**: `index.tsx:17-39`, `condition-builder.tsx:193-217`, `condition-builder/design.md:15-20`, `package-splitting-strategy.md:521-530`
 - **证据片段**:
+
   ```ts
   export {
     ConditionBuilderRenderer,
@@ -769,6 +770,7 @@
   ...
   export const formAdvancedRendererDefinitions: RendererDefinition[] = [
   ```
+
   ```ts
   export const conditionBuilderRendererDefinition: RendererDefinition = {
     type: 'condition-builder',
@@ -776,11 +778,13 @@
     fields: formFieldRules,
     validation: {
   ```
+
   ```md
   - `type: 'condition-builder'`
   - `sourcePackage: '@nop-chaos/flux-renderers-form'`
   - 当前 fields: `label` 为 `value-or-region`
   ```
+
   ```md
   ### 3.5 `flux-renderers-form-advanced`（新包，从 form 拆出）
 
@@ -790,6 +794,7 @@
   | `tag-list` | runtime | 从 form 迁出 |
   | `key-value` | runtime | 从 form 迁出 |
   ```
+
 - **严重程度**: P2
 - **现状**: `condition-builder`、`array-editor`、`tag-list`、`key-value` 等已由 `@nop-chaos/flux-renderers-form-advanced` root entry 公开并进入 `formAdvancedRendererDefinitions` 注册主路径；但组件 owner 文档仍把 `sourcePackage` 写成 `@nop-chaos/flux-renderers-form`，且对应 `RendererDefinition` 没有 `sourcePackage` metadata 来给 authoring contract / inspector 提供 live 包归属。
 - **风险**: schema authoring、组件发现、包拆分维护和文档导航会把高级字段归到旧包；后续按文档从 `flux-renderers-form` 查找或导入组件会失败，也会掩盖这些组件对 `flux-renderers-form-advanced` 的真实发布边界。

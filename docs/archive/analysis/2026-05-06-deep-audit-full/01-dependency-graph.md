@@ -105,32 +105,41 @@ flux-core (0 deps)
 
 ## 逐条规则检查结果
 
-### 规则 (a): flux-core 不能依赖任何其他 @nop-chaos/* 包
+### 规则 (a): flux-core 不能依赖任何其他 @nop-chaos/\* 包
+
 **通过。**
 
 ### 规则 (b): flux-formula 只能依赖 flux-core
+
 **通过。**
 
 ### 规则 (c): flux-runtime 只能依赖 flux-core 和 flux-formula
+
 **偏差。** `flux-runtime` 实际依赖 `flux-core`, `flux-formula`, `flux-compiler`, `flux-action-core`。
 **校准判定（Calibration Pattern #5）**：已文档化的架构演进结果，`flux-runtime-module-boundaries.md` 明确记录了协作方。降级处理。
 
 ### 规则 (d): flux-react 不能依赖任何 renderers 包
+
 **通过。**
 
 ### 规则 (e): renderers 包对 core/formula/runtime 的依赖是否通过公开 API
+
 **通过。** 未发现通过 `/src/` 内部路径导入。
 
-### 规则 (f): *-core 包不能依赖 *-renderers 包
+### 规则 (f): _-core 包不能依赖 _-renderers 包
+
 **通过。**
 
 ### 规则 (g): spreadsheet-core 不能依赖 report-designer-core
+
 **通过。**
 
 ### 规则 (h): ui 的依赖是否合理
+
 **通过。** 仅依赖 `flux-i18n`。
 
 ### 规则 (i): tailwind-preset 和 theme-tokens 不依赖任何运行时包
+
 **通过。**
 
 ---
@@ -166,32 +175,32 @@ flux-core (0 deps)
 
 ## 合规的包清单
 
-| 包 | 状态 |
-|----|------|
-| flux-core | 完全合规 |
-| flux-formula | 完全合规 |
-| flux-compiler | 完全合规 |
-| flux-action-core | 完全合规 |
-| flux-i18n | 完全合规 |
-| flux-runtime | 合规（含文档已记录的扩展依赖） |
-| flux-react | 完全合规 |
-| ui | 完全合规 |
-| tailwind-preset | 完全合规 |
-| theme-tokens | 完全合规 |
-| flux-renderers-basic | 完全合规 |
-| flux-renderers-form | 完全合规 |
-| flux-renderers-form-advanced | 完全合规 |
-| flux-renderers-data | 完全合规 |
-| flux-code-editor | 完全合规 |
-| nop-debugger | 完全合规 |
-| flow-designer-core | 完全合规 |
-| flow-designer-renderers | 完全合规 |
-| spreadsheet-core | 完全合规 |
-| spreadsheet-renderers | 完全合规 |
-| report-designer-core | 完全合规 |
-| report-designer-renderers | 完全合规 |
-| word-editor-core | 完全合规 |
-| word-editor-renderers | P2 幽灵依赖 |
+| 包                           | 状态                           |
+| ---------------------------- | ------------------------------ |
+| flux-core                    | 完全合规                       |
+| flux-formula                 | 完全合规                       |
+| flux-compiler                | 完全合规                       |
+| flux-action-core             | 完全合规                       |
+| flux-i18n                    | 完全合规                       |
+| flux-runtime                 | 合规（含文档已记录的扩展依赖） |
+| flux-react                   | 完全合规                       |
+| ui                           | 完全合规                       |
+| tailwind-preset              | 完全合规                       |
+| theme-tokens                 | 完全合规                       |
+| flux-renderers-basic         | 完全合规                       |
+| flux-renderers-form          | 完全合规                       |
+| flux-renderers-form-advanced | 完全合规                       |
+| flux-renderers-data          | 完全合规                       |
+| flux-code-editor             | 完全合规                       |
+| nop-debugger                 | 完全合规                       |
+| flow-designer-core           | 完全合规                       |
+| flow-designer-renderers      | 完全合规                       |
+| spreadsheet-core             | 完全合规                       |
+| spreadsheet-renderers        | 完全合规                       |
+| report-designer-core         | 完全合规                       |
+| report-designer-renderers    | 完全合规                       |
+| word-editor-core             | 完全合规                       |
+| word-editor-renderers        | P2 幽灵依赖                    |
 
 ---
 
