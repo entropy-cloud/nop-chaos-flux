@@ -97,9 +97,18 @@
   box-sizing: border-box;
 }
 
-[data-slot='spreadsheet-column-header'],
-[data-slot='spreadsheet-row-header'],
-[data-slot='spreadsheet-corner-header'] {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-column-header'],
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-row-header'],
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-corner-header'],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-header'],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-row-header'],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-corner-header'] {
   text-align: center;
   vertical-align: middle;
   font-size: 12px;
@@ -112,7 +121,10 @@
   padding: 0;
 }
 
-[data-slot='spreadsheet-column-header'] {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-column-header'],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-header'] {
   position: sticky;
   top: 0;
   z-index: 10;
@@ -120,7 +132,10 @@
   min-width: 36px;
 }
 
-[data-slot='spreadsheet-row-header'] {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-row-header'],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-row-header'] {
   position: sticky;
   left: 0;
   z-index: 10;
@@ -129,7 +144,10 @@
   height: 22px;
 }
 
-[data-slot='spreadsheet-corner-header'] {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-corner-header'],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-corner-header'] {
   position: sticky;
   left: 0;
   top: 0;
@@ -140,25 +158,60 @@
   background: linear-gradient(135deg, rgb(248, 251, 255) 0%, rgb(232, 240, 255) 100%);
 }
 
-[data-slot='spreadsheet-column-header']:hover,
-[data-slot='spreadsheet-row-header']:hover,
-[data-slot='spreadsheet-corner-header']:hover {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-column-header']:hover,
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-row-header']:hover,
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-corner-header']:hover,
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-header']:hover,
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-row-header']:hover,
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-corner-header']:hover {
   background: rgb(241, 245, 249);
 }
 
-[data-slot='spreadsheet-column-header'][data-col-header-active],
-[data-slot='spreadsheet-row-header'][data-row-header-active],
-[data-slot='spreadsheet-corner-header'][data-sheet-header-active] {
+.nop-spreadsheet-page
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-header'][data-col-header-active],
+.nop-spreadsheet-page
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-row-header'][data-row-header-active],
+.nop-spreadsheet-page
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-corner-header'][data-sheet-header-active],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-header'][data-col-header-active],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-row-header'][data-row-header-active],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-corner-header'][data-sheet-header-active] {
   background: #dbeafe;
   color: #1d4ed8;
 }
 
-[data-slot='spreadsheet-column-header'][data-col-filtered] {
+.nop-spreadsheet-page
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-header'][data-col-filtered],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-header'][data-col-filtered] {
   color: rgb(29, 78, 216);
   background: linear-gradient(180deg, rgb(232, 244, 255) 0%, rgb(219, 234, 254) 100%);
 }
 
-[data-slot='spreadsheet-column-header'][data-col-filtered]
+.nop-spreadsheet-page
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-header'][data-col-filtered]
+  [data-slot='spreadsheet-header-button']::after,
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-header'][data-col-filtered]
   [data-slot='spreadsheet-header-button']::after {
   content: '';
   display: inline-block;
@@ -170,7 +223,10 @@
   vertical-align: middle;
 }
 
-[data-slot='spreadsheet-column-resize-handle'] {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-column-resize-handle'],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-resize-handle'] {
   position: absolute;
   top: 0;
   right: 0;
@@ -181,11 +237,19 @@
   transition: background 120ms ease;
 }
 
-[data-slot='spreadsheet-column-resize-handle']:hover {
+.nop-spreadsheet-page
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-resize-handle']:hover,
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-column-resize-handle']:hover {
   background: rgb(59, 130, 246);
 }
 
-[data-slot='spreadsheet-row-resize-handle'] {
+.nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-row-resize-handle'],
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-row-resize-handle'] {
   position: absolute;
   left: 0;
   bottom: 0;
@@ -196,7 +260,12 @@
   transition: background 120ms ease;
 }
 
-[data-slot='spreadsheet-row-resize-handle']:hover {
+.nop-spreadsheet-page
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-row-resize-handle']:hover,
+[data-slot='report-designer-spreadsheet-canvas']
+  [data-slot='spreadsheet-grid']
+  [data-slot='spreadsheet-row-resize-handle']:hover {
   background: rgb(59, 130, 246);
 }
 

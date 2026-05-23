@@ -466,4 +466,54 @@ describe('spreadsheet-page schema integration', () => {
     );
     expect(dispatch).not.toHaveBeenCalled();
   });
+
+  it('accepts the published search option vocabulary and forwards it unchanged', async () => {
+    const dispatch = vi.fn(async () => ({ ok: true, changed: false, data: null }));
+    const provider = createSpreadsheetActionProvider(dispatch);
+
+    const result = await provider.invoke(
+      'find',
+      {
+        options: {
+          query: 'hello',
+          matchWholeCell: true,
+          useRegex: true,
+        },
+      },
+      {} as any,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'spreadsheet:find',
+      options: {
+        query: 'hello',
+        matchWholeCell: true,
+        useRegex: true,
+      },
+    });
+  });
+
+  it('rejects legacy search option names that are no longer part of the published contract', async () => {
+    const dispatch = vi.fn(async () => ({ ok: true, changed: false }));
+    const provider = createSpreadsheetActionProvider(dispatch);
+
+    const result = await provider.invoke(
+      'find',
+      {
+        options: {
+          query: 'hello',
+          wholeCell: true,
+          includeFormulas: true,
+        },
+      },
+      {} as any,
+    );
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe(
+      'spreadsheet:find payload does not match the published host args contract.',
+    );
+    expect(dispatch).not.toHaveBeenCalled();
+  });
 });

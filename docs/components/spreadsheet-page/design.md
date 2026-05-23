@@ -82,6 +82,7 @@
 - runtime bridge、host snapshot、toolbar/body shell 和 spreadsheet namespace provider 分层实现。
 - `SpreadsheetToolbarProps` 继续作为稳定顶层契约，由 `packages/spreadsheet-renderers/src/spreadsheet-toolbar.tsx` 顶层 shell 编排。
 - 当前 live 实现已拆到 `packages/spreadsheet-renderers/src/spreadsheet-toolbar/` 子模块：`toolbar-groups.tsx` 负责 action groups，`find-replace-panel.tsx` 负责 find/replace UI，`cell-editor.tsx` 负责 cell/comment editor，`toolbar-status.tsx` 负责状态展示，`types.ts` 保持共享 prop/type 契约。
+- 当前公开的 search/find-replace host contract 以 `matchWholeCell` / `useRegex` 为 option vocabulary；未落地的 `includeFormulas` 不属于支持的对外搜索语义。
 
 ## 12. 风险、取舍与后续阶段
 

@@ -64,6 +64,12 @@ function matchesShape(value: unknown, shape: FluxValueShape): boolean {
       if (!isCommandRecord(value)) {
         return false;
       }
+      const allowedKeys = new Set(Object.keys(shape.fields));
+      for (const key of Object.keys(value)) {
+        if (!allowedKeys.has(key)) {
+          return false;
+        }
+      }
       const optional = new Set(shape.optional ?? []);
       for (const [key, fieldShape] of Object.entries(shape.fields)) {
         if (!(key in value)) {

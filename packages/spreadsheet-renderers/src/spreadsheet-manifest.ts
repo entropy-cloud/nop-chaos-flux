@@ -67,10 +67,10 @@ const findOptionsShape: FluxValueShape = {
     query: { kind: 'string' },
     searchScope: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] },
     matchCase: { kind: 'boolean' },
-    wholeCell: { kind: 'boolean' },
-    includeFormulas: { kind: 'boolean' },
+    matchWholeCell: { kind: 'boolean' },
+    useRegex: { kind: 'boolean' },
   },
-  optional: ['searchScope', 'matchCase', 'wholeCell', 'includeFormulas'],
+  optional: ['searchScope', 'matchCase', 'matchWholeCell', 'useRegex'],
 };
 
 const findResultShape: FluxValueShape = {
