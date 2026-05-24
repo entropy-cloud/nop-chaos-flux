@@ -254,6 +254,47 @@ describe('code-editor integration', () => {
     consoleError.mockRestore();
   });
 
+  it('binds validation state to the real CodeMirror content element', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    renderCodeEditorSchema({
+      type: 'form',
+      name: 'testForm',
+      data: {},
+      submitAction: {
+        action: 'ajax',
+        args: { url: '/api/test', method: 'post' },
+      },
+      body: [
+        {
+          type: 'code-editor',
+          name: 'script',
+          label: 'Script',
+          language: 'javascript',
+          required: true,
+          height: 200,
+        },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'submitForm' },
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByText('Submit'));
+
+    const error = await screen.findByRole('alert');
+    const content = document.querySelector('.cm-content');
+
+    expect(error.id).toBe('script-error');
+    expect(content?.getAttribute('aria-describedby')).toBe('script-error');
+    expect(content?.getAttribute('aria-errormessage')).toBe('script-error');
+    expect(content?.getAttribute('aria-invalid')).toBe('true');
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
   it('renders fullscreen editor with header bar when allowFullscreen is set', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 

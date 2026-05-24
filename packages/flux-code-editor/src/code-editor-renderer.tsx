@@ -56,6 +56,26 @@ export const codeEditorFieldRules: SchemaFieldRule[] = [
 
 export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   const scope = useRenderScope();
+  const name = String(props.props.name ?? '');
+  const forwardedProps = props as CodeEditorRendererProps & {
+    id?: string;
+    'aria-label'?: string;
+    'aria-labelledby'?: string;
+    'aria-describedby'?: string;
+    'aria-errormessage'?: string;
+    'aria-invalid'?: boolean;
+    onFocus?: React.FocusEventHandler<HTMLDivElement>;
+    onBlur?: React.FocusEventHandler<HTMLDivElement>;
+  };
+  const contentAttributes = Object.fromEntries(
+    Object.entries({
+      'aria-label': forwardedProps['aria-labelledby'] ? undefined : forwardedProps['aria-label'],
+      'aria-labelledby': forwardedProps['aria-labelledby'],
+      'aria-describedby': forwardedProps['aria-describedby'],
+      'aria-errormessage': forwardedProps['aria-errormessage'],
+      'aria-invalid': forwardedProps['aria-invalid'] ? 'true' : undefined,
+    }).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  );
 
   const language = (props.props.language as EditorLanguage) ?? 'plaintext';
   const mode = props.props.mode as EditorMode | undefined;
@@ -70,7 +90,6 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   const allowFullscreen = (props.props.allowFullscreen as boolean | undefined) ?? false;
   const expressionConfig = props.props.expressionConfig as ExpressionEditorConfig | undefined;
   const sqlConfig = props.props.sqlConfig as SQLEditorConfig | undefined;
-  const name = String(props.props.name ?? '');
   const labelContent = resolveRendererSlotContent(props, 'label');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const toggleFullscreen = () => setIsFullscreen((value) => !value);
@@ -136,6 +155,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
     placeholder,
     readOnly,
     extensions,
+    contentAttributes,
     onChange: handleChange,
     onFocus: handleFocus,
     onBlur: handleBlur,

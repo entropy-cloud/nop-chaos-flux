@@ -78,6 +78,12 @@ vi.mock('@codemirror/view', () => {
     },
   };
 
+  (EditorView as any).contentAttributes = {
+    of(attributes: unknown) {
+      return attributes;
+    },
+  };
+
   return {
     EditorView,
     placeholder: () => [],

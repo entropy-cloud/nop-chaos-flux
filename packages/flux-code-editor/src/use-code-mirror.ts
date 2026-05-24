@@ -4,11 +4,14 @@ import { EditorView, placeholder as cmPlaceholder } from '@codemirror/view';
 import { history } from '@codemirror/commands';
 import type { Extension } from '@codemirror/state';
 
+export type CodeMirrorContentAttributes = Record<string, string>;
+
 export interface UseCodeMirrorOptions {
   initialValue?: string;
   placeholder?: string;
   readOnly?: boolean;
   extensions?: Extension[];
+  contentAttributes?: CodeMirrorContentAttributes;
   onChange?: (value: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
@@ -23,6 +26,7 @@ export interface UseCodeMirrorResult {
 const readOnlyCompartment = new Compartment();
 const extensionsCompartment = new Compartment();
 const placeholderCompartment = new Compartment();
+const contentAttributesCompartment = new Compartment();
 
 function createEditorState(
   options: UseCodeMirrorOptions,
@@ -37,6 +41,9 @@ function createEditorState(
     readOnlyCompartment.of(EditorState.readOnly.of(options.readOnly ?? false)),
     extensionsCompartment.of(options.extensions ?? []),
     placeholderCompartment.of(options.placeholder ? cmPlaceholder(options.placeholder) : []),
+    contentAttributesCompartment.of(
+      EditorView.contentAttributes.of(options.contentAttributes ?? {}),
+    ),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
         callbacks.onChange(update.state.doc.toString());
@@ -143,6 +150,17 @@ export function useCodeMirror(options: UseCodeMirrorOptions): UseCodeMirrorResul
       ),
     });
   }, [options.placeholder]);
+
+  useEffect(() => {
+    const editorView = viewRef.current;
+    if (!editorView) return;
+
+    editorView.dispatch({
+      effects: contentAttributesCompartment.reconfigure(
+        EditorView.contentAttributes.of(options.contentAttributes ?? {}),
+      ),
+    });
+  }, [options.contentAttributes]);
 
   return { editorRef: containerRef, view };
 }
