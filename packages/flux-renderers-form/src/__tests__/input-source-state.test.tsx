@@ -46,6 +46,60 @@ describe('input renderer source state branches', () => {
     expect(trigger.getAttribute('aria-errormessage')).toBe(alert.id);
   });
 
+  it('announces async option loading as a polite status message', () => {
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/input-source-state#loading"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'select',
+              name: 'role',
+              label: 'Role',
+              options: [],
+              optionsSourceState: {
+                loading: true,
+                status: 'loading',
+              },
+            },
+            {
+              type: 'radio-group',
+              name: 'status',
+              label: 'Status',
+              options: [],
+              optionsSourceState: {
+                loading: true,
+                status: 'loading',
+              },
+            },
+            {
+              type: 'checkbox-group',
+              name: 'tags',
+              label: 'Tags',
+              options: [],
+              optionsSourceState: {
+                loading: true,
+                status: 'loading',
+              },
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    expect(document.querySelector('[data-slot="select-loading"]')?.getAttribute('role')).toBe('status');
+    expect(document.querySelector('[data-slot="select-loading"]')?.getAttribute('aria-live')).toBe('polite');
+    expect(document.querySelector('[data-slot="radio-group-loading"]')?.getAttribute('role')).toBe('status');
+    expect(document.querySelector('[data-slot="radio-group-loading"]')?.getAttribute('aria-live')).toBe('polite');
+    expect(document.querySelector('[data-slot="checkbox-group-loading"]')?.getAttribute('role')).toBe('status');
+    expect(document.querySelector('[data-slot="checkbox-group-loading"]')?.getAttribute('aria-live')).toBe('polite');
+  });
+
   it('publishes required semantics on select controls', () => {
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
 

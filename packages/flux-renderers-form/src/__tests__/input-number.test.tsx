@@ -393,6 +393,34 @@ describe('input-number renderer', () => {
     expect(await screen.findByText(/is required/i)).toBeTruthy();
   });
 
+  it('binds validation errors to the real number input via describedby and errormessage', async () => {
+    renderNumberField({
+      type: 'form',
+      data: {},
+      submitAction: {
+        action: 'ajax',
+        args: { url: '/api/test', method: 'post' },
+      },
+      body: [
+        { type: 'input-number', name: 'count', label: 'Count', required: true },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'submitForm' },
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByText('Submit'));
+
+    const error = await screen.findByText(/is required/i);
+    const input = getNumberInput();
+
+    expect(error.id).toBe('count-error');
+    expect(input.getAttribute('aria-describedby')).toBe('count-error');
+    expect(input.getAttribute('aria-errormessage')).toBe('count-error');
+  });
+
   it('renders with nop-input-number marker class', () => {
     renderNumberField({
       type: 'form',

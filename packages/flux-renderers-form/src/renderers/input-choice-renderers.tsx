@@ -112,7 +112,12 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
         </SelectContent>
       </Select>
       {loading ? (
-        <span data-slot="select-loading" role="status" className="flex items-center gap-1.5">
+        <span
+          data-slot="select-loading"
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-1.5"
+        >
           <Spinner className="size-4" aria-hidden="true" />
           <span>{t('flux.common.loading')}</span>
         </span>
@@ -236,7 +241,7 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
       data-slot="radio-group-wrapper"
     >
       {loading ? (
-        <span data-slot="radio-group-loading">
+        <span data-slot="radio-group-loading" role="status" aria-live="polite">
           <Spinner className="size-4" aria-hidden="true" />
           <span>{t('flux.common.loading')}</span>
         </span>
@@ -296,7 +301,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
       aria-describedby={errorMessage ? errorId : undefined}
     >
       {loading ? (
-        <span data-slot="checkbox-group-loading">
+        <span data-slot="checkbox-group-loading" role="status" aria-live="polite">
           <Spinner className="size-4" aria-hidden="true" />
           <span>{t('flux.common.loading')}</span>
         </span>
