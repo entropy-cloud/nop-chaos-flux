@@ -78,6 +78,8 @@ describe('WordEditorPage host projections', () => {
               dirty: boolean;
               wordCount: number;
               datasetCount: number;
+              totalPages: number;
+              scale: number;
             },
         );
         return (
@@ -86,6 +88,8 @@ describe('WordEditorPage host projections', () => {
             <span data-testid="runtime-dirty">{String(runtime.dirty)}</span>
             <span data-testid="runtime-word-count">{String(runtime.wordCount)}</span>
             <span data-testid="runtime-dataset-count">{String(runtime.datasetCount)}</span>
+            <span data-testid="runtime-total-pages">{String(runtime.totalPages)}</span>
+            <span data-testid="runtime-scale">{String(runtime.scale)}</span>
           </div>
         );
       },
@@ -107,6 +111,8 @@ describe('WordEditorPage host projections', () => {
       expect(screen.getByTestId('runtime-dirty').textContent).toBe('false');
       expect(screen.getByTestId('runtime-word-count').textContent).toBe('0');
       expect(screen.getByTestId('runtime-dataset-count').textContent).toBe('0');
+      expect(screen.getByTestId('runtime-total-pages').textContent).toBe('1');
+      expect(screen.getByTestId('runtime-scale').textContent).toBe('1');
     });
 
     datasetStore.add({ name: 'Customers' });

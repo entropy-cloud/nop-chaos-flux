@@ -171,6 +171,58 @@ describe('EditorCanvas', () => {
     expect(bridge.unmount).not.toHaveBeenCalled();
   });
 
+  it('writes superscript and subscript from range-style changes into selection state', () => {
+    let callbacks:
+      | {
+          onRangeStyleChange?: (payload: Record<string, unknown>) => void;
+        }
+      | undefined;
+    const bridge = {
+      mount: vi.fn((_container, _editorData, nextCallbacks) => {
+        callbacks = nextCallbacks;
+      }),
+      unmount: vi.fn(),
+      getValue: vi.fn(() => ({ data: { header: [], main: [], footer: [] } })),
+      getPaperSettings: vi.fn(() => null),
+      getWordCount: vi.fn(() => Promise.resolve(0)),
+    };
+    const editorStore = {
+      setDirty: vi.fn(),
+      setBridge: vi.fn(),
+      setReady: vi.fn(),
+      setPaperSettings: vi.fn(),
+      setWordCount: vi.fn(),
+      setSelection: vi.fn(),
+      setTotalPages: vi.fn(),
+      setScale: vi.fn(),
+      getState: vi.fn(() => ({
+        paperSettings: { width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] },
+      })),
+    };
+
+    render(<EditorCanvas editorStore={editorStore as any} bridge={bridge as any} />);
+
+    callbacks?.onRangeStyleChange?.({
+      bold: false,
+      italic: false,
+      underline: false,
+      strikeout: false,
+      superscript: true,
+      subscript: true,
+      font: null,
+      size: 16,
+      color: null,
+      highlight: null,
+      rowMargin: 0,
+      undo: false,
+      redo: false,
+    });
+
+    expect(editorStore.setSelection).toHaveBeenCalledWith(
+      expect.objectContaining({ superscript: true, subscript: true }),
+    );
+  });
+
   it('prefers recovered persisted documents over schema initialDocument', () => {
     const bridge = {
       mount: vi.fn(),

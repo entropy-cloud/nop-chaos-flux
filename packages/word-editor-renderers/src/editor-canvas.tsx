@@ -109,6 +109,8 @@ export function EditorCanvas({
             italic: payload.italic,
             underline: payload.underline,
             strikeout: payload.strikeout,
+            superscript: payload.superscript ?? false,
+            subscript: payload.subscript ?? false,
             font: payload.font,
             size: payload.size,
             color: payload.color,

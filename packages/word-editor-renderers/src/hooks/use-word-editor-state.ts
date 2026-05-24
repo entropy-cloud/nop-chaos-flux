@@ -38,16 +38,15 @@ declare global {
       getState(): {
         document: WordDocument | null;
         datasets: Dataset[];
-        runtime: {
-          ready: boolean;
-          dirty: boolean;
-          wordCount: number;
-          canUndo: boolean;
-          canRedo: boolean;
-          currentPage: number;
-          totalPages: number;
-          scale: number;
-        };
+      runtime: {
+        ready: boolean;
+        dirty: boolean;
+        wordCount: number;
+        canUndo: boolean;
+        canRedo: boolean;
+        totalPages: number;
+        scale: number;
+      };
       };
     };
   }
@@ -140,7 +139,6 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
       wordCount: state.wordCount,
       canUndo: state.selection.undo,
       canRedo: state.selection.redo,
-      currentPage: state.currentPage,
       totalPages: state.totalPages,
       scale: state.scale,
     }),
@@ -161,7 +159,6 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
       wordCount: editorRuntime.wordCount,
       canUndo: editorRuntime.canUndo,
       canRedo: editorRuntime.canRedo,
-      currentPage: editorRuntime.currentPage,
       totalPages: editorRuntime.totalPages,
       scale: editorRuntime.scale,
       datasetCount: datasets.length,

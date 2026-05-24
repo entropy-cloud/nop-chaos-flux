@@ -55,38 +55,59 @@ export const originalWindowConfirm = {
   value: window.confirm,
 };
 
-export const editorStoreState = {
-  isReady: true,
-  isDirty: false,
-  wordCount: 0,
-  currentPage: 1,
-  totalPages: 1,
-  scale: 1,
-  selection: {
-    bold: false,
-    italic: false,
-    underline: false,
-    strikeout: false,
-    superscript: false,
-    subscript: false,
-    font: null,
-    size: 16,
-    color: null,
-    highlight: null,
-    rowFlex: null,
-    level: null,
-    listType: null,
-    listStyle: null,
-    rowMargin: 0,
-    undo: false,
-    redo: false,
-  },
-};
+function createEditorStoreSnapshot() {
+  return {
+    isReady: true,
+    isDirty: false,
+    wordCount: 0,
+    currentPage: 1,
+    totalPages: 1,
+    scale: 1,
+    selection: {
+      bold: false,
+      italic: false,
+      underline: false,
+      strikeout: false,
+      superscript: false,
+      subscript: false,
+      font: null,
+      size: 16,
+      color: null,
+      highlight: null,
+      rowFlex: null,
+      level: null,
+      listType: null,
+      listStyle: null,
+      rowMargin: 0,
+      undo: false,
+      redo: false,
+    },
+  };
+}
+
+let editorStoreState = createEditorStoreSnapshot();
+
+export { editorStoreState };
+
+const editorListeners = new Set<() => void>();
 
 export const editorStore = {
-  subscribe: () => () => undefined,
+  subscribe: (listener: () => void) => {
+    editorListeners.add(listener);
+    return () => editorListeners.delete(listener);
+  },
   getState: () => editorStoreState,
   setDirty: vi.fn(),
+  setSelection: vi.fn((selection: Record<string, unknown>) => {
+    editorStoreState = {
+      ...editorStoreState,
+      selection: {
+        ...editorStoreState.selection,
+        ...selection,
+      },
+    };
+    for (const listener of editorListeners) listener();
+  }),
 };
 
 const datasetListeners = new Set<() => void>();
@@ -137,7 +158,9 @@ export function resetWordEditorActionMocks() {
     datasets: [],
     selectedDatasetId: null,
   };
+  editorStoreState = createEditorStoreSnapshot();
   editorStore.setDirty.mockClear();
+  editorStore.setSelection.mockClear();
   mockedCore.captureDocumentSnapshotMock.mockClear();
   mockedCore.persistSavedDocumentMock.mockClear();
   mockedCore.saveDatasetsMock.mockClear();

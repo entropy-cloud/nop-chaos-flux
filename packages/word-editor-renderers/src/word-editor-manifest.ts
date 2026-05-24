@@ -12,7 +12,16 @@ const chartShape: FluxValueShape = {
   fields: {
     id: { kind: 'string' },
     chartName: { kind: 'string' },
-    chartType: { kind: 'string' },
+    chartType: {
+      kind: 'union',
+      anyOf: [
+        { kind: 'literal', value: 'bar' },
+        { kind: 'literal', value: 'line' },
+        { kind: 'literal', value: 'pie' },
+        { kind: 'literal', value: 'scatter' },
+        { kind: 'literal', value: 'area' },
+      ],
+    },
     showChartName: { kind: 'boolean' },
     datasetId: { kind: 'string' },
     categoryField: { kind: 'string' },
@@ -20,6 +29,7 @@ const chartShape: FluxValueShape = {
     seriesField: { kind: 'array', item: { kind: 'string' } },
   },
   optional: ['seriesField'],
+  unknownKeys: 'reject',
 };
 
 const codeShape: FluxValueShape = {
@@ -27,10 +37,17 @@ const codeShape: FluxValueShape = {
   fields: {
     id: { kind: 'string' },
     codeName: { kind: 'string' },
-    codeType: { kind: 'string' },
+    codeType: {
+      kind: 'union',
+      anyOf: [
+        { kind: 'literal', value: 'barcode' },
+        { kind: 'literal', value: 'qrcode' },
+      ],
+    },
     datasetId: { kind: 'string' },
     valueField: { kind: 'string' },
   },
+  unknownKeys: 'reject',
 };
 
 const datasetShape: FluxValueShape = {
@@ -85,7 +102,6 @@ const wordEditorProjection: HostProjectionContract = {
           wordCount: { kind: 'number' },
           canUndo: { kind: 'boolean' },
           canRedo: { kind: 'boolean' },
-          currentPage: { kind: 'number' },
           totalPages: { kind: 'number' },
           scale: { kind: 'number' },
           datasetCount: { kind: 'number' },

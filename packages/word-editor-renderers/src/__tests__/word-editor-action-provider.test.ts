@@ -348,4 +348,52 @@ describe('createWordEditorActionProvider', () => {
     );
     expect(bridge.insertChart).not.toHaveBeenCalled();
   });
+
+  it('rejects chart and code enum values outside the published manifest union', async () => {
+    const bridge = { insertChart: vi.fn(), insertCode: vi.fn() } as unknown as CanvasEditorBridge;
+    const provider = createWordEditorActionProvider({
+      bridge,
+      editorStore: createMinimalEditorStore(),
+      datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
+      getCharts: () => [],
+      setCharts: () => undefined,
+      getCodes: () => [],
+      setCodes: () => undefined,
+      getPaperSettings: defaultPaperSettings,
+    });
+
+    const chartResult = await provider.invoke(
+      'insertChart',
+      {
+        id: 'chart-1',
+        chartName: 'Chart',
+        chartType: 'radar',
+        showChartName: true,
+        datasetId: 'ds',
+        categoryField: 'month',
+        valueField: ['value'],
+      } as unknown as Record<string, unknown>,
+      {} as ActionContext,
+    );
+    const codeResult = await provider.invoke(
+      'insertCode',
+      {
+        id: 'code-1',
+        codeName: 'Code',
+        codeType: 'aztec',
+        datasetId: 'ds',
+        valueField: 'value',
+      } as unknown as Record<string, unknown>,
+      {} as ActionContext,
+    );
+
+    expect(chartResult.ok).toBe(false);
+    expect((chartResult.error as Error).message).toBe(
+      'word-editor:insertChart payload does not match the published host args contract.',
+    );
+    expect(codeResult.ok).toBe(false);
+    expect((codeResult.error as Error).message).toBe(
+      'word-editor:insertCode payload does not match the published host args contract.',
+    );
+  });
 });
