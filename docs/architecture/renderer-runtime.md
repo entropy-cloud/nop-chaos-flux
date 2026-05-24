@@ -439,7 +439,7 @@ Current implementation baseline:
 
 - `packages/flux-core/src/types/renderer-core.ts` now defines `rendererClass`, `rendererTraits`, `propContracts`, `eventContracts`, `componentCapabilityContracts`, and `scopeExportContracts` directly on `RendererDefinition`
 - `packages/flux-core/src/types/renderer-authoring-contract.ts` provides the tooling-facing `ResolvedAuthoringContract` adapter over those fields
-- current pilot metadata is wired for `button`, `form`, `crud`, and `designer-page`
+- initial pilot metadata started with `button`, `form`, `crud`, and `designer-page`; current live coverage also includes renderers such as `tabs`, `table`, `chart`, and `code-editor`, so the renderer definitions remain the source of truth for exact coverage
 
 Authoring/runtime split reminder:
 

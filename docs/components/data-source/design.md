@@ -41,8 +41,8 @@
 
 ## 8. 事件、动作与组件句柄能力
 
-- 当前应优先支持 `component:refresh` 这类重新执行能力。
-- `component:cancel` 可以作为后续增强，但不应在当前文档中伪装成已落地句柄。
+- 当前刷新基线是 runtime-owned `refreshSource` action，通过 `targetId` 指向已注册 source；这不是 `component:refresh` 句柄分发。
+- `component:refresh` / `component:cancel` 可以作为后续增强，但当前文档不应把它们写成已落地组件句柄。
 - 事件优先走 action schema，而不是暴露 promise 回调函数。
 
 ## 9. 数据源、表达式、导入能力接入点

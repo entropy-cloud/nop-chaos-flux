@@ -54,6 +54,11 @@
 - `key-value`
 - `array-editor`
 - `condition-builder`
+- `object-field`
+- `array-field`
+- `variant-field`
+- `detail-field`
+- `detail-view`
 - `table`
 - `tree`
 - `data-source`
@@ -98,7 +103,6 @@
 - `input-file`
 - `input-image`
 - `input-month`
-- `input-number`
 - `input-quarter`
 - `input-table`
 - `input-time`
@@ -153,7 +157,7 @@
 
 ### P1
 
-- 继续实现并验证当前已文档化但尚未实现的 retained renderer，优先顺序建议：`list`、`card`、`link`、`empty`、`json-view`、`pagination`、`service`、`input-number`、日期时间 family。
+- 继续实现并验证当前已文档化但尚未实现的 retained renderer，优先顺序建议：`list`、`card`、`link`、`empty`、`json-view`、`pagination`、`service`、日期时间 family。
 - `crud` 已按组合/编译 lowering 落地；后续优先级应转向补强验证覆盖和继续扩展 retained 但尚未实现的数据 family。
 - Plan 78 已完成 retained family 的 owner-doc 覆盖，后续优先级应转向 retained renderer 的 runtime 实现与验证，而不是再把 retained doc 缺口重新留回候选区。
 

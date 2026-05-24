@@ -244,18 +244,20 @@ interface SurfaceStatusSummary {
 
 ## Built-In Actions And Handles
 
-surface owner 的典型 instance capability 是：
+surface owner 的目标态 instance capability 可以是：
 
 - `component:open`
 - `component:close`
 - `component:toggle`（可选，但推荐）
 
-对于内置 action authoring：
+当前 live authoring baseline：
 
 - 打开 surface 时对外保留 `openDialog` / `openDrawer`
 - 关闭 surface 时统一使用 `closeSurface`
-- runtime 内部应统一 lower 到单一 surface 内核，例如 `surface:open` / `surface:close`
+- runtime 内部统一 lower 到单一 surface 内核，例如 `surface:open` / `surface:close`
 - `closeDialog` / `closeDrawer` 不应成为长期正式基线
+
+当前 `dialog` / `drawer` renderer definitions 还没有发布 `componentCapabilityContracts`，因此不要把 `component:open` / `component:close` / `component:toggle` 当作已经支持的 live component handle。
 
 建议语义：
 

@@ -65,6 +65,7 @@
 - 最终尺寸变更通过 canonical `spreadsheet:resizeRow` / `spreadsheet:resizeColumn` command surface 提交。旧 mouse-drag handle 仍可保留，但它不再暴露 interactive `role="separator"` / focus target 语义。
 - 默认 spreadsheet page host 的 outside-click edit-save 也必须走与 Enter/blur 相同的 save result contract：如果 bridge save 失败或取消，编辑器保持打开并发布对应失败/取消状态，而不是静默吞掉结果。
 - 默认 shared grid/header/sheet-tab/find-replace/cell-editor 文案必须走 `flux-i18n`，不能在 renderer 内硬编码英文或中文字符串；ARIA label 与 placeholder 也属于同一 i18n contract。
+- Spreadsheet toolbar 中表示当前样式/对齐状态的 toggle 类按钮必须把视觉 active state 同步为 `aria-pressed`，不能只依赖 `data-toolbar-active` 或 outline/ghost variant 传达状态。
 
 ## 9. 数据源、表达式、导入能力接入点
 

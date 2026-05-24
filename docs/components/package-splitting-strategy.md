@@ -98,17 +98,17 @@ flux-core → flux-formula → flux-runtime → flux-react → renderer-*
 
 ---
 
-## 2. 最终包结构
+## 2. 目标包结构
 
 ### 2.1 总览
 
-```
+```text
 packages/
 ├── flux-renderers-basic/          # 结构节点 + 表面 owner + 基础动作/展示
-├── flux-renderers-content/        # 纯内容展示与反馈（新包）
-├── flux-renderers-layout/         # 高级布局与流程容器（新包）
+├── flux-renderers-content/        # 纯内容展示与反馈（目标态；当前尚未创建）
+├── flux-renderers-layout/         # 高级布局与流程容器（目标态；当前尚未创建）
 ├── flux-renderers-form/           # 表单 owner + 核心表单字段
-├── flux-renderers-form-advanced/  # 复合/高级表单字段（新包，从 form 拆出）
+├── flux-renderers-form-advanced/  # 复合/高级表单字段（当前已存在，已从 form 拆出）
 ├── flux-renderers-data/           # 数据展示与复合数据工作流
 ├── flux-code-editor/              # 代码编辑器（不变）
 ├── flow-designer-*/               # 不变
@@ -119,6 +119,8 @@ packages/
 ```
 
 ### 2.2 `@nop-chaos/flux-renderers-basic` — 结构与基础
+
+当前 live baseline 只有 `flux-renderers-basic`、`flux-renderers-form`、`flux-renderers-form-advanced`、`flux-renderers-data`、`flux-code-editor` 以及各领域 renderer 包实际存在于 workspace。`flux-renderers-content` 与 `flux-renderers-layout` 仍是目标态拆包方向，不应被当作已落地 package。
 
 **职责**：无 UI 结构节点、页面级 owner、表面 owner（dialog/drawer）、基础动作触发器、最基础的展示单元。
 
@@ -592,25 +594,39 @@ src/
 
 ### 4.1 Renderer 包依赖矩阵
 
-| 包依赖 →      | flux-core | flux-formula | flux-runtime | flux-react | flux-renderers-basic | flux-renderers-form | ui  | echarts | @dnd-kit |
-| ------------- | :-------: | :----------: | :----------: | :--------: | :------------------: | :-----------------: | :-: | :-----: | :------: |
-| basic         |     x     |      x       |      x       |     x      |                      |                     |  x  |         |          |
-| content       |     x     |      x       |      x       |     x      |                      |                     |  x  |         |          |
-| layout        |     x     |      x       |      x       |     x      |                      |                     |  x  |         |          |
-| form          |     x     |      x       |      x       |     x      |          x           |                     |  x  |         |          |
-| form-advanced |     x     |      x       |      x       |     x      |          x           |          x          |  x  |         |    x     |
-| data          |     x     |      x       |      x       |     x      |         x\*          |                     |  x  |    x    |          |
-| code-editor   |     x     |      x       |      x       |     x      |                      |                     |  x  |         |          |
+当前表格以 live `package.json` 为准，区分 runtime `dependencies` 与 dev/test `devDependencies`。目标态未创建 package 只保留说明，不再伪装成当前 runtime 依赖事实。
+
+#### Runtime Dependencies
+
+| 包依赖 →      | flux-core | flux-react | flux-runtime | flux-formula | flux-renderers-basic | flux-renderers-form |   ui   | echarts | @dnd-kit |
+| ------------- | :-------: | :--------: | :----------: | :----------: | :------------------: | :-----------------: | :----: | :-----: | :------: |
+| basic         |     x     |     x      |              |              |                      |                     |   x    |         |          |
+| content       |  target   |   target   |    target    |    target    |                      |                     | target |         |          |
+| layout        |  target   |   target   |    target    |    target    |                      |                     | target |         |          |
+| form          |     x     |     x      |              |              |                      |                     |   x    |         |          |
+| form-advanced |     x     |     x      |      x       |              |                      |          x          |   x    |         |    x     |
+| data          |     x     |     x      |              |              |                      |                     |   x    |  peer   |          |
+| code-editor   |     x     |     x      |              |              |                      |                     |   x    |         |          |
+
+#### Dev/Test Dependencies
+
+| 包依赖 →      | flux-runtime | flux-formula | flux-renderers-basic | flux-renderers-form |
+| ------------- | :----------: | :----------: | :------------------: | :-----------------: |
+| basic         |      x       |      x       |                      |                     |
+| form          |              |      x       |          x           |                     |
+| form-advanced |              |      x       |          x           |                     |
+| data          |      x       |      x       |                      |          x          |
+| code-editor   |              |              |                      |                     |
 
 说明：
 
-- `x` = 有直接运行时 import 依赖。
-- `x*` = 当前无此依赖，`crud` 实现后因 lowering 引入。
-- 空白 = 不依赖。
-- `flux-renderers-form` 依赖 `flux-renderers-basic` 是因为 form 渲染器引用 basic 的 schema 定义和类型（如 `dialog` 作为 form 的提交确认面）。
-- `flux-renderers-form-advanced` 依赖 `flux-renderers-form` 是因为复合字段需要 form owner 类型、field-utils 和 shared/ 模块。这是一个**暂时性的层级依赖**：如果后续 shared/ 和 field-utils 中的通用逻辑下沉到 `flux-react`，此依赖可以消除。
-- `flux-renderers-layout` 不依赖 `flux-renderers-basic`：layout 组件的 schema 独立定义，不需要 lowering 到 basic 组件。
-- renderer 包之间 **不存在横向依赖**（content 不依赖 layout，layout 不依赖 content 等）。
+- `x` = live `package.json dependencies` / `devDependencies` 中存在直接依赖。
+- `peer` = 当前通过 `peerDependencies` 暴露，而不是本包 runtime `dependencies`。
+- `target` = 目标态拆包推演，当前 workspace 尚未创建该 package。
+- `flux-renderers-form-advanced -> flux-renderers-form` 是当前真实 runtime 依赖；复合字段仍复用 form owner/field 基础能力。
+- `flux-renderers-form` 当前不依赖 `flux-renderers-basic`；相关测试/fixtures 依赖存在于 `devDependencies`，不应被写成 runtime 拓扑。
+- `flux-renderers-data` 当前不依赖 `flux-renderers-basic`；若未来 lowering/实现变化引入该依赖，应在落地时再更新此矩阵。
+- renderer 包之间并非“一律没有横向依赖”；当前 live baseline 至少已有 `form-advanced -> form` 这一条运行时依赖。
 
 ### 4.2 无环证明
 
@@ -698,7 +714,7 @@ core → formula → runtime → react → basic
 
 **目标**：补齐 `flux-renderers-form` 和 `flux-renderers-form-advanced` 的 `targetContract` 组件。
 
-- [ ] `input-number`, 日期时间族（wave 2）。
+- [ ] 日期时间族（wave 2）。
 - [ ] `input-file`, `input-image`, `editor`（wave 3）。
 - [ ] `combo`, `picker`, `transfer`, `input-table`（wave 4）。
 

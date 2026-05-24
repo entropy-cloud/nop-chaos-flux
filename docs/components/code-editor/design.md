@@ -102,6 +102,7 @@ interface CodeEditorSchema extends BaseSchema {
 - 编辑器容器遵循 field-level renderer 的样式契约，不引入工作台级 layout 假设。
 - 全屏能力仍属于组件 feature，不意味着它是平台宿主。
 - fullscreen close button 与 variable-panel copy/insert actions 属于组件内 chrome；当前 live baseline要求这些 action labels 接入现有 `flux.codeEditor` locale 命名空间，而不是继续硬编码英文。
+- CodeMirror 的真实 focus target 是内部 `.cm-content`，因此字段级可访问性语义不能只停留在外层 wrapper。当前 live baseline要求 `useCodeMirror` 通过 `EditorView.contentAttributes` 把 `aria-describedby`、`aria-errormessage`、`aria-invalid` 等状态桥接到 `.cm-content`，这样字段错误与屏幕阅读器读出的编辑面保持一致。
 
 ## 11. 实现拆分建议
 

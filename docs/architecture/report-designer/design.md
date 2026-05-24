@@ -124,7 +124,7 @@
 
 ## 4. 为什么要分成 Spreadsheet 和 Report Designer 两层
 
-参考 `packages/flux-react/src/index.tsx:479`，当前体系已经具备:
+参考 `packages/flux-react/src/schema-renderer.tsx`、`packages/flux-react/src/hooks.ts`、`packages/flux-react/src/dialog-host.tsx` 与 `packages/flux-react/src/workbench/hooks.ts`，当前体系已经具备:
 
 - registry 驱动 renderer 发现
 - schema compile 和动态值编译缓存

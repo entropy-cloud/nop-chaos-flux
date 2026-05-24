@@ -12,6 +12,7 @@
 - 对应 AMIS `FieldSet` renderer（upstream `FieldSet.tsx` implementation）。
 - AMIS 的 FieldSet 委托给 `Collapse` 组件渲染，用 `wrapperComponent="fieldset"` 和 `headingComponent="legend"` 控制 DOM。
 - Flux 的 `fieldset` 应同样复用折叠逻辑，但保持为独立 type，不混入 FieldFrame 或 collapse 的通用交互。
+- 当前 collapsible baseline 已收敛到 `@nop-chaos/ui` `Collapsible` primitive；`fieldset` 通过 `CollapsibleTrigger` / `CollapsibleContent` 承载 disclosure 契约，但仍保留 `<legend>` 作为标题 host，而不是把分组标题降级为普通按钮容器。
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -55,6 +56,7 @@ fieldset 不传播 mode/labelAlign/labelWidth。AMIS 的 `subFormMode` / `subFor
 - `fieldset` 不创建 scope，不持有表单数据。
 - 折叠/展开状态是 `fieldset` 自身的 UI 交互状态。
 - 当 `collapsible: true` 时，折叠状态由组件内部管理；外部可通过 `collapsed` 设置初始值。
+- `collapsible: true` 时，受控/非受控 disclosure 语义、`aria-expanded`、`aria-controls` 与键盘切换行为由共享 `Collapsible` primitive 提供，`fieldset` 只保留组装与样式职责。
 - 子字段的验证状态归外层 `FormRuntime`，不归 `fieldset`。
 
 ## 8. 事件、动作与组件句柄能力
@@ -66,13 +68,7 @@ fieldset 不传播 mode/labelAlign/labelWidth。AMIS 的 `subFormMode` / `subFor
 
 ```
 <fieldset class="nop-fieldset [className]">
-  <legend
-    data-slot="fieldset-title"
-    role="button"               <!-- collapsible 时 -->
-    tabindex="0"                <!-- collapsible 时 -->
-    aria-expanded="true|false"  <!-- collapsible 时 -->
-    aria-controls="{cid}-body"  <!-- collapsible 时 -->
-  >{title}</legend>
+  <legend data-slot="fieldset-title">{title}</legend>
   <div
     id="{cid}-body"             <!-- collapsible 时 -->
     data-slot="fieldset-body"
@@ -86,7 +82,7 @@ fieldset 不传播 mode/labelAlign/labelWidth。AMIS 的 `subFormMode` / `subFor
 - `data-slot="fieldset-title"`: 标题区域
 - `data-slot="fieldset-body"`: 子字段内容区域
 - 当 `collapsible: true` 时，body 区域可折叠，根节点添加 `data-collapsible` 和 `data-collapsed` 属性
-- collapsible fieldset 的 `<legend>` 添加 `role="button"`、`tabindex="0"`、`aria-expanded`、`aria-controls` 属性，支持键盘 Enter/Space 切换折叠
+- collapsible fieldset 使用 `@nop-chaos/ui` `Collapsible` primitive，标题 host 仍是 `<legend>`，并通过 primitive 注入 `role="button"`、`tabindex="0"`、`aria-expanded`、`aria-controls` 与键盘切换行为
 - 视觉样式（边框、间距、标题样式）由 schema `className` 和 host CSS 控制，不在 renderer 中硬编码
 
 ## 10. 布局配置

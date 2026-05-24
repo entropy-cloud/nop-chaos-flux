@@ -66,10 +66,10 @@ Current live implementation note:
 
 ## 8. 事件、动作与组件句柄能力
 
-- 推荐支持 `component:open`、`component:close`，可选支持 `component:toggle`。
+- 当前 live baseline 仍以 `openDialog` / `closeSurface` 为正式入口；`component:open`、`component:close`、`component:toggle` 仍属于 future capability 方向，不应伪装成已落地句柄。
 - `onOpen`、`onClose` 通过 action schema 触发。
 - `example.json` 应同时展示 `onOpen` / `onClose` 的最小事件示例。
-- `component:open` / `component:close` 解决的是 surface control，不应替代 dialog 内 form 的 `component:submit` 或其他更具体 semantic owner 入口。
+- 如果未来补齐 `component:open` / `component:close`，它们解决的也只是 surface control，不应替代 dialog 内 form 的 `component:submit` 或其他更具体 semantic owner 入口。
 - 内置动作 authoring 应优先使用 `openDialog` / `closeSurface`；runtime 内部不应为 `dialog` 单独再长出第二套 open/close 内核。
 
 ## 9. 数据源、表达式、导入能力接入点

@@ -331,6 +331,11 @@ UI primitive 对齐补充规则：
 - `key-value`
 - `array-editor`
 - `condition-builder`
+- `object-field`
+- `array-field`
+- `variant-field`
+- `detail-field`
+- `detail-view`
 - `table`
 - `tree`
 - `data-source`
@@ -377,7 +382,6 @@ UI primitive 对齐补充规则：
 - `input-file`
 - `input-image`
 - `input-month`
-- `input-number`
 - `input-quarter`
 - `input-table`
 - `input-time`

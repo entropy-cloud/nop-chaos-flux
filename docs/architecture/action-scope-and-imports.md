@@ -1202,7 +1202,7 @@ Do not try to model imported library capabilities by pretending they are compone
 
 ### Renderer Runtime Surface
 
-The runtime already needs an action-scope-aware dispatch path, and the contract should remain consistent with the current `RendererRuntime.dispatch()` shape in `packages/flux-core/src/index.ts:881`.
+The runtime already needs an action-scope-aware dispatch path, and the contract should remain consistent with the current `RendererRuntime.dispatch()` shape in `packages/flux-core/src/types/renderer-core.ts` (the root `packages/flux-core/src/index.ts` entry only re-exports that type surface).
 
 One reasonable evolution path is:
 
