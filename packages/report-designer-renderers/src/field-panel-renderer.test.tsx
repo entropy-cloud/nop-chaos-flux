@@ -194,6 +194,16 @@ describe('ReportFieldPanelRenderer', () => {
     expect(screen.getByText('User Info')).toBeTruthy();
   });
 
+  it('localizes the field count summary in the panel header', () => {
+    renderFieldPanel(
+      { fieldSources: sampleFieldSources },
+      { designer: { documentName: 'Sales Report', fieldCount: 3 } },
+    );
+
+    expect(screen.getByText('Sales Report')).toBeTruthy();
+    expect(screen.getByText('3 字段')).toBeTruthy();
+  });
+
   it('falls back to scope fieldSources when schema has none', () => {
     renderFieldPanel({}, { fieldSources: sampleFieldSources });
 

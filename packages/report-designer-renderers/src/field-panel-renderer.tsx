@@ -138,12 +138,16 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
       {hasRendererSlotContent(titleContent) ? (
         <header data-slot="report-designer-section-header">
           <h3>{titleContent}</h3>
-          <span>{designer?.fieldCount ?? getFieldCount(fieldSources)} fields</span>
+          <span>
+            {designer?.fieldCount ?? getFieldCount(fieldSources)} {t('flux.reportDesigner.fields')}
+          </span>
         </header>
       ) : designer?.documentName ? (
         <header data-slot="report-designer-section-header">
           <h3>{designer.documentName}</h3>
-          <span>{designer?.fieldCount ?? getFieldCount(fieldSources)} fields</span>
+          <span>
+            {designer?.fieldCount ?? getFieldCount(fieldSources)} {t('flux.reportDesigner.fields')}
+          </span>
         </header>
       ) : null}
       {fieldSources.length === 0 ? (
