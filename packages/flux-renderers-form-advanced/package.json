@@ -20,6 +20,7 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-renderers-form": "workspace:*",
+    "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/ui": "workspace:*"
   },
   "peerDependencies": {
@@ -36,7 +37,6 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@nop-chaos/flux-renderers-data": "workspace:*",
-    "@nop-chaos/flux-runtime": "workspace:*",
     "lucide-react": "^1.7.0",
     "react": "^19.0.0"
   }
