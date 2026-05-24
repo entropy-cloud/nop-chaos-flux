@@ -146,6 +146,21 @@ describe('SpreadsheetToolbar', () => {
     );
   });
 
+  it('publishes pressed state for active style and alignment buttons', async () => {
+    await setupI18n();
+    render(<SpreadsheetToolbar {...createProps()} />);
+
+    const boldButton = screen.getAllByRole('button', { name: 'Bold Ctrl+B' })[0];
+    const italicButton = screen.getAllByRole('button', { name: 'Italic Ctrl+I' })[0];
+    const alignCenterButton = screen.getAllByRole('button', { name: 'Align Center' })[0];
+    const alignLeftButton = screen.getAllByRole('button', { name: 'Align Left' })[0];
+
+    expect(boldButton.getAttribute('aria-pressed')).toBe('true');
+    expect(italicButton.getAttribute('aria-pressed')).toBe('false');
+    expect(alignCenterButton.getAttribute('aria-pressed')).toBe('true');
+    expect(alignLeftButton.getAttribute('aria-pressed')).toBe('false');
+  });
+
   it('disables mutation controls in readOnly mode while keeping find available', async () => {
     await setupI18n();
     render(<SpreadsheetToolbar {...createProps({ readOnly: true })} />);

@@ -22,6 +22,7 @@ export function ToolbarButton(props: ToolbarButtonProps) {
       disabled={props.disabled}
       className={props.className}
       data-toolbar-active={props.active || undefined}
+      aria-pressed={props.active}
       aria-label={t(props.label)}
       title={t(props.label)}
     >
