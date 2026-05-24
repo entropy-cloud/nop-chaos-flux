@@ -43,7 +43,7 @@ Under that v1 baseline:
 - What is not valid to reopen without new evidence: “replace it with `<Button>` because the repo prefers shadcn/ui controls”
 - Primary evidence:
   - `docs/logs/2026/05-03.md`
-  - `docs/plans/212-renderer-workbench-contract-and-accessibility-closure-plan.md`
+- `docs/archive/plans/212-renderer-workbench-contract-and-accessibility-closure-plan.md`
 
 ### 2. Declarative Surface Historical Double-State Fixes Already Belong To Plan 211
 
@@ -53,7 +53,7 @@ Under that v1 baseline:
 - What is still valid to report: a distinct residual defect that remains after the historical fix, such as the later close-reopen hazard from overlapping effect cleanup on scope churn
 - What is not valid to reopen without new evidence: “surface still has two sources of truth” when the live code no longer uses the old `localOpen` pattern
 - Primary evidence:
-  - `docs/plans/211-runtime-state-reactivity-and-safety-closure-plan.md`
+- `docs/archive/plans/211-runtime-state-reactivity-and-safety-closure-plan.md`
   - `docs/logs/2026/05-06.md`
   - `docs/architecture/surface-owner.md`
 
@@ -65,7 +65,7 @@ Under that v1 baseline:
 - What is still valid to report: live hot-path `as any`, broken generic narrowing, or new render-time mutation introduced after the 211 fix
 - What is not valid to reopen without new evidence: the already-fixed render-phase prepared-import installation defect
 - Primary evidence:
-  - `docs/plans/211-runtime-state-reactivity-and-safety-closure-plan.md`
+- `docs/archive/plans/211-runtime-state-reactivity-and-safety-closure-plan.md`
   - `docs/logs/2026/05-06.md`
   - `docs/architecture/renderer-runtime.md`
 
@@ -77,8 +77,8 @@ Under that v1 baseline:
 - What is still valid to report: a live supported-baseline violation, data loss, invalid owner/publication behavior, or a newly proven user-visible failure mode
 - What is not valid to reopen without new evidence: a known draft cache or transitional state mirror that earlier review already classified as an acceptable tradeoff for the current baseline
 - Primary evidence:
-  - `docs/analysis/2026-05-06-deep-audit-full/04-state-ownership.md`
-  - `docs/plans/217-deep-audit-2026-05-06-confirmed-defect-remediation-plan.md`
+- `docs/archive/analysis/2026-05-06-deep-audit-full/04-state-ownership.md`
+- `docs/archive/plans/217-deep-audit-2026-05-06-confirmed-defect-remediation-plan.md`
 
 ### 5. Summary Themes Do Not Replace Item-By-Item Ownership Adjudication
 
@@ -88,9 +88,9 @@ Under that v1 baseline:
 - What is still valid to report: an item that has no explicit owner, no explicit deferral, and no explicit “already-owned elsewhere” adjudication
 - What is not valid to do: assume “not in the summary theme set” means “does not need routing”
 - Primary evidence:
-  - `docs/analysis/2026-05-06-deep-audit-full/summary.md`
-  - `docs/analysis/2026-05-06-deep-audit-full/review-results.md`
-  - `docs/plans/217-deep-audit-2026-05-06-confirmed-defect-remediation-plan.md`
+- `docs/archive/analysis/2026-05-06-deep-audit-full/summary.md`
+- `docs/archive/analysis/2026-05-06-deep-audit-full/review-results.md`
+- `docs/archive/plans/217-deep-audit-2026-05-06-confirmed-defect-remediation-plan.md`
 
 ## Maintenance
 

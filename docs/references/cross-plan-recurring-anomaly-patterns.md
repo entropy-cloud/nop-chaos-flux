@@ -30,11 +30,11 @@ Symptoms:
 
 Where it appeared:
 
-- `docs/plans/146-domain-host-projection-and-vocabulary-convergence-plan.md`
-- `docs/plans/166-module-hygiene-and-designer-async-cleanup-plan.md`
-- `docs/plans/170-field-interaction-reactivity-and-async-safety-successor-plan.md`
-- `docs/plans/175-review-4-findings-remediation-plan.md`
-- `docs/plans/180-report-preview-cancellation-and-stale-result-plan.md`
+- `docs/archive/plans/146-domain-host-projection-and-vocabulary-convergence-plan.md`
+- `docs/archive/plans/166-module-hygiene-and-designer-async-cleanup-plan.md`
+- `docs/archive/plans/170-field-interaction-reactivity-and-async-safety-successor-plan.md`
+- `docs/archive/plans/175-review-4-findings-remediation-plan.md`
+- `docs/archive/plans/180-report-preview-cancellation-and-stale-result-plan.md`
 - `docs/bugs/37-report-designer-demo-selection-bridge-inspector-stuck-on-sheet-fix.md`
 - `docs/bugs/38-report-designer-preview-cancellation-and-stale-result-fix.md`
 
@@ -52,9 +52,9 @@ Symptoms:
 
 Where it appeared:
 
-- `docs/plans/165-reactive-subscription-precision-plan.md`
+- `docs/archive/plans/165-reactive-subscription-precision-plan.md`
 - `docs/bugs/32-react19-external-store-derived-snapshot-loop-fix.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/05-reactive-precision.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/05-reactive-precision.md`
 
 Current recording status:
 
@@ -77,9 +77,9 @@ Symptoms:
 
 Where it appeared:
 
-- `docs/plans/178-validation-owner-bootstrap-and-hidden-participation-plan.md`
-- `docs/analysis/2026-05-02-deep-audit-full/08-validation.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/08-validation.md`
+- `docs/archive/plans/178-validation-owner-bootstrap-and-hidden-participation-plan.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full/08-validation.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/08-validation.md`
 
 Current recording status:
 
@@ -102,9 +102,9 @@ Symptoms:
 
 Where it appeared:
 
-- `docs/plans/179-container-default-gap-contract-successor-plan.md`
+- `docs/archive/plans/179-container-default-gap-contract-successor-plan.md`
 - `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/10-styling.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/10-styling.md`
 
 Current recording status:
 
@@ -151,9 +151,9 @@ Symptoms:
 
 Where it appeared:
 
-- `docs/plans/181-word-editor-dataset-vocabulary-convergence-plan.md`
-- `docs/analysis/2026-05-02-deep-audit-full/18-cross-package.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/18-cross-package.md`
+- `docs/archive/plans/181-word-editor-dataset-vocabulary-convergence-plan.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full/18-cross-package.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/18-cross-package.md`
 
 Current recording status:
 
@@ -172,7 +172,7 @@ Where it appeared:
 
 - `docs/bugs/22-spreadsheet-integration-test-scope-reactive-read-fix.md`
 - `docs/bugs/23-stale-js-artifacts-shadow-source-in-vitest-fix.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/05-reactive-precision.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/05-reactive-precision.md`
 
 Current recording status:
 
@@ -195,8 +195,8 @@ Symptoms:
 
 Where it appeared:
 
-- `docs/analysis/2026-05-02-deep-audit-full/12-field-slot.md`
-- `docs/analysis/2026-05-02-deep-audit-full/09-renderer-contract.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full/12-field-slot.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full/09-renderer-contract.md`
 - related follow-ups in plans touching `FieldFrame` / field metadata convergence
 
 Current recording status:
@@ -242,8 +242,8 @@ Symptoms:
 Where it appeared:
 
 - `docs/bugs/28-reaction-debounce-timer-leak-on-dispose.md`
-- `docs/analysis/2026-05-01-deep-audit-full-2/summary.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/06-async-safety.md`
+- `docs/archive/analysis/2026-05-01-deep-audit-full-2/summary.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/06-async-safety.md`
 
 Current recording status:
 
@@ -288,9 +288,9 @@ Symptoms:
 
 Where it appeared:
 
-- `docs/plans/160-swallowed-exception-remediation-plan.md`
-- `docs/analysis/2026-05-01-deep-audit-full-2/summary.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/06-async-safety.md`
+- `docs/archive/plans/160-swallowed-exception-remediation-plan.md`
+- `docs/archive/analysis/2026-05-01-deep-audit-full-2/summary.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/06-async-safety.md`
 
 Current recording status:
 
@@ -314,10 +314,10 @@ Symptoms:
 
 Where it appeared:
 
-- `docs/plans/167-test-quality-and-reliability-improvement-plan.md`
-- `docs/plans/162-designer-page-and-report-selection-audit-remediation-plan.md`
-- `docs/plans/175-review-4-findings-remediation-plan.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/14-test-coverage.md`
+- `docs/archive/plans/167-test-quality-and-reliability-improvement-plan.md`
+- `docs/archive/plans/162-designer-page-and-report-selection-audit-remediation-plan.md`
+- `docs/archive/plans/175-review-4-findings-remediation-plan.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/14-test-coverage.md`
 
 Current recording status:
 
@@ -340,10 +340,10 @@ Symptoms:
 
 Where it appeared:
 
-- `docs/plans/156-reference-doc-sync-and-audit-consensus-plan.md`
-- `docs/plans/162-designer-page-and-report-selection-audit-remediation-plan.md`
-- `docs/plans/181-word-editor-dataset-vocabulary-convergence-plan.md`
-- `docs/analysis/2026-04-30-references-doc-code-consistency-audit.md`
+- `docs/archive/plans/156-reference-doc-sync-and-audit-consensus-plan.md`
+- `docs/archive/plans/162-designer-page-and-report-selection-audit-remediation-plan.md`
+- `docs/archive/plans/181-word-editor-dataset-vocabulary-convergence-plan.md`
+- `docs/archive/analysis/2026-04-30-references-doc-code-consistency-audit.md`
 
 Current recording status:
 
@@ -366,9 +366,9 @@ Symptoms:
 
 Where it appeared:
 
-- `docs/plans/158-code-quality-redundancy-and-duplication-remediation-plan.md`
-- `docs/plans/169-complex-renderer-contract-and-field-slot-convergence-plan.md`
-- `docs/analysis/2026-05-02-deep-audit-full/03-api-surface.md`
+- `docs/archive/plans/158-code-quality-redundancy-and-duplication-remediation-plan.md`
+- `docs/archive/plans/169-complex-renderer-contract-and-field-slot-convergence-plan.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full/03-api-surface.md`
 
 Current recording status:
 

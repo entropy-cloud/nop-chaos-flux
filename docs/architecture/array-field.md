@@ -274,7 +274,7 @@ interface ArrayFieldSchema extends BaseSchema {
 
 源码证据：
 
-- `packages/amis/src/renderers/Form/InputArray.tsx` 头部注释直接写明：`InputArray 数组输入框。combo 的别名。`
+- upstream AMIS `InputArray.tsx` 头部注释直接写明：`InputArray 数组输入框。combo 的别名。`
 - 实现上，`InputArray` 会把 `items` 规范成最多一个元素，然后传给 `Combo`，并强制：
   - `flat`
   - `multiple`

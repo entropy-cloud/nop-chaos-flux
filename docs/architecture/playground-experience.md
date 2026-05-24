@@ -159,5 +159,5 @@ Benefits:
 - `docs/architecture/debugger-runtime.md`
 - `docs/architecture/performance-diagnostics-and-e2e-design.md`
 - `docs/architecture/frontend-baseline.md`
-- `docs/analysis/2026-03-21-framework-debugger-design.md`
+- `docs/archive/analysis/2026-03-21-framework-debugger-design.md`
 - `docs/references/maintenance-checklist.md`

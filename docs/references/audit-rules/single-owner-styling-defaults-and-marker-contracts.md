@@ -55,9 +55,9 @@ Review checks:
 
 ## Evidence From This Repository
 
-- `docs/plans/179-container-default-gap-contract-successor-plan.md`
+- `docs/archive/plans/179-container-default-gap-contract-successor-plan.md`
 - `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/10-styling.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/10-styling.md`
 
 ## Primary Architecture Anchors
 

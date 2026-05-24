@@ -22,6 +22,7 @@ Audit guardrail:
 
 - do not treat append-only history files under `docs/logs/` as defects just because they exceed the active-doc size guideline
 - size-based doc cleanup should focus on active owner docs whose current baseline becomes hard to maintain, not on logs/discussions/analysis files that are intentionally historical
+- `pnpm check:active-doc-code-anchors` is a hard gate for active owner docs under `docs/architecture/`, `docs/components/`, `docs/references/`, plus `docs/index.md`; historical/execution trees such as `docs/archive/`, `docs/analysis/`, `docs/logs/`, and `docs/plans/` are intentionally excluded
 
 ## Fast Path
 
@@ -33,7 +34,7 @@ If you do not know where to start, check these first:
 4. `docs/references/renderer-interfaces.md` if public or semi-public contracts changed
 5. `docs/examples/user-management-schema.md` if authoring semantics or action behavior changed
 6. latest documentation design review under `docs/analysis/` when planning broad refactors:
-   - `docs/analysis/2026-04-01-docs-design-review-2026-03-29.md`
+   - `docs/archive/analysis/2026-04-01-docs-design-review-2026-03-29.md`
 7. `docs/references/refactoring-guidelines.md` when planning or reviewing any refactoring
 8. `docs/architecture/security-design-requirements.md` for boundary/safety-sensitive changes
 9. `docs/architecture/performance-design-requirements.md` for hot-path/perf-sensitive changes
@@ -162,7 +163,7 @@ Review:
 - `docs/architecture/form-validation.md`
 - `docs/references/terminology.md`
 - `docs/references/renderer-interfaces.md`
-- `docs/analysis/2026-03-19-form-validation-comparison.md` only if the higher-level comparison conclusion changes
+- `docs/archive/analysis/2026-03-19-form-validation-comparison.md` only if the higher-level comparison conclusion changes
 
 ## 8. Workspace or tooling baseline changes
 

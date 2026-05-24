@@ -9,7 +9,7 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 对应 AMIS `FieldSet` renderer（`packages/amis/src/renderers/Form/FieldSet.tsx`）。
+- 对应 AMIS `FieldSet` renderer（upstream `FieldSet.tsx` implementation）。
 - AMIS 的 FieldSet 委托给 `Collapse` 组件渲染，用 `wrapperComponent="fieldset"` 和 `headingComponent="legend"` 控制 DOM。
 - Flux 的 `fieldset` 应同样复用折叠逻辑，但保持为独立 type，不混入 FieldFrame 或 collapse 的通用交互。
 

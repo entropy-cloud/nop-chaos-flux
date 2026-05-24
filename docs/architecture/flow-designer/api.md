@@ -273,6 +273,12 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
 }
 ```
 
+Result:
+
+```ts
+{ ok: true, transactionId?: string } | { ok: false, reason: 'unavailable' | 'missing-transaction' }
+```
+
 ### `designer:rollbackTransaction`
 
 ```ts
@@ -280,6 +286,12 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
   action: 'designer:rollbackTransaction',
   transactionId?: string
 }
+```
+
+Result:
+
+```ts
+{ ok: true, transactionId?: string } | { ok: false, reason: 'unavailable' | 'missing-transaction' }
 ```
 
 ### 其他建议内建动作

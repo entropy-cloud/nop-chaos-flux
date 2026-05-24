@@ -84,15 +84,15 @@ Review checks:
 
 ## Evidence From This Repository
 
-- `docs/analysis/2026-05-02-adversarial-audit-review-4.md`
-- `docs/plans/146-domain-host-projection-and-vocabulary-convergence-plan.md`
-- `docs/plans/166-module-hygiene-and-designer-async-cleanup-plan.md`
-- `docs/plans/170-field-interaction-reactivity-and-async-safety-successor-plan.md`
-- `docs/plans/180-report-preview-cancellation-and-stale-result-plan.md`
+- `docs/archive/analysis/2026-05-02-adversarial-audit-review-4.md`
+- `docs/archive/plans/146-domain-host-projection-and-vocabulary-convergence-plan.md`
+- `docs/archive/plans/166-module-hygiene-and-designer-async-cleanup-plan.md`
+- `docs/archive/plans/170-field-interaction-reactivity-and-async-safety-successor-plan.md`
+- `docs/archive/plans/180-report-preview-cancellation-and-stale-result-plan.md`
 - `docs/bugs/37-report-designer-demo-selection-bridge-inspector-stuck-on-sheet-fix.md`
 - `docs/bugs/32-react19-external-store-derived-snapshot-loop-fix.md`
 - `docs/bugs/38-report-designer-preview-cancellation-and-stale-result-fix.md`
-- `docs/plans/175-review-4-findings-remediation-plan.md`
+- `docs/archive/plans/175-review-4-findings-remediation-plan.md`
 
 ## Primary Architecture Anchors
 

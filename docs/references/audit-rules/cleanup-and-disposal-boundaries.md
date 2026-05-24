@@ -55,8 +55,8 @@ Review checks:
 ## Evidence From This Repository
 
 - `docs/bugs/28-reaction-debounce-timer-leak-on-dispose.md`
-- `docs/analysis/2026-05-01-deep-audit-full-2/summary.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/06-async-safety.md`
+- `docs/archive/analysis/2026-05-01-deep-audit-full-2/summary.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/06-async-safety.md`
 
 ## Primary Architecture Anchors
 

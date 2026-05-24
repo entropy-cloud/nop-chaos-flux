@@ -12,7 +12,7 @@ This is a normative design requirements document.
 - `docs/architecture/renderer-runtime.md`
 - `docs/architecture/flux-runtime-module-boundaries.md`
 - `docs/architecture/flow-designer/design.md`
-- `docs/analysis/2026-03-31-deep-architecture-analysis.md`
+- `docs/archive/analysis/2026-03-31-deep-architecture-analysis.md`
 
 ## Performance Boundary Principles
 

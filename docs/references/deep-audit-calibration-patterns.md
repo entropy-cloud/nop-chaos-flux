@@ -49,7 +49,7 @@ Each pattern records:
 - Why this is noisy: file size alone does not prove mixed ownership, bad API shape, or active maintenance pain.
 - Keep only when: the file also shows mixed responsibilities, entrypoint logic leakage, documented owner drift, repeated re-inflation after a prior split, or crosses the repo's hard `>700` line rule.
 - Notes: this repo already accepts some orchestrator-style large files when the ownership remains coherent.
-- Source history: `docs/analysis/2026-04-17-deep-audit-meta-review.md`
+- Source history: `docs/archive/analysis/2026-04-17-deep-audit-meta-review.md`
 
 ### 2. Public Renderer Dependencies On Core Runtime Packages
 
@@ -57,7 +57,7 @@ Each pattern records:
 - Why this is noisy: `renderers -> flux-core/flux-formula/flux-runtime` through stable public APIs is an allowed repo shape, not a defect by itself.
 - Keep only when: the dependency uses private paths, creates a cycle, leaks undocumented private coupling, or causes concrete manifest / ownership / maintenance problems.
 - Notes: idealized ladder diagrams are not sufficient evidence.
-- Source history: `docs/analysis/2026-04-17-deep-audit-meta-review.md`
+- Source history: `docs/archive/analysis/2026-04-17-deep-audit-meta-review.md`
 
 ### 3. Raw HTML As Automatic UI Contract Violation
 
@@ -65,7 +65,7 @@ Each pattern records:
 - Why this is noisy: some browser-native controls and high-performance host surfaces are better served by raw elements.
 - Keep only when: an equivalent `@nop-chaos/ui` abstraction exists, the replacement has clear benefit, and the current raw element creates a real consistency, accessibility, contract, or maintenance problem.
 - Notes: `input[type=file]`, `input[type=color]`, spreadsheet-like grid surfaces, and similar host-specialized controls are common exceptions.
-- Source history: `docs/analysis/2026-04-17-deep-audit-meta-review.md`
+- Source history: `docs/archive/analysis/2026-04-17-deep-audit-meta-review.md`
 
 ### 4. Shared Cross-Domain Renderer Reuse As Boundary Violation
 
@@ -73,7 +73,7 @@ Each pattern records:
 - Why this is noisy: some renderer packages intentionally act as reusable bridges or public shared surfaces.
 - Keep only when: the dependency breaks a documented owner boundary, blocks packaging, relies on internal paths, or creates a real lifecycle / publishing problem.
 - Notes: do not mechanically treat `report-designer-renderers -> spreadsheet-renderers`-style reuse as wrong.
-- Source history: `docs/analysis/2026-04-17-deep-audit-meta-review.md`
+- Source history: `docs/archive/analysis/2026-04-17-deep-audit-meta-review.md`
 
 ### 5. Evolving Intermediate State Mistaken For Live Contract Breakage
 
@@ -110,7 +110,7 @@ Each pattern records:
 - Why this is noisy: not every composite or advanced field should be forced into the same shell model.
 - Keep only when: the current renderer directly violates the active shell contract, duplicates outer chrome ownership, or produces real UX / validation inconsistencies.
 - Notes: prioritize direct `wrap` conflicts and duplicated outer chrome, not blanket migration.
-- Source history: `docs/analysis/2026-04-17-deep-audit-meta-review.md`
+- Source history: `docs/archive/analysis/2026-04-17-deep-audit-meta-review.md`
 
 ### 10. Cross-Package Consistency Ideas Reported As Current Defects
 
@@ -118,7 +118,7 @@ Each pattern records:
 - Why this is noisy: convergence directions are not the same as current correctness issues.
 - Keep only when: inconsistent shapes already break shared tooling, public contracts, migration paths, or create repeated maintenance churn in active areas.
 - Notes: "package B does this differently from package A" is not enough on its own.
-- Source history: `docs/analysis/2026-04-17-deep-audit-meta-review.md`
+- Source history: `docs/archive/analysis/2026-04-17-deep-audit-meta-review.md`
 
 ## Maintenance
 

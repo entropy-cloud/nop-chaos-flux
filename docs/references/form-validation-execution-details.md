@@ -871,7 +871,7 @@ If schema is replaced at runtime, owner lifecycle must define how to:
 
 The current technical proposal is captured in:
 
-1. `docs/analysis/2026-04-11-dynamic-schema-hot-reload-and-validation-owner-lifecycle.md`
+1. `docs/archive/analysis/2026-04-11-dynamic-schema-hot-reload-and-validation-owner-lifecycle.md`
 
 ### Recommended Cross-Owner Projection Pattern
 

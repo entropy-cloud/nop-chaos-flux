@@ -56,7 +56,7 @@ Review checks:
 ## Evidence From This Repository
 
 - `docs/bugs/19-code-editor-label-click-forwarding-triggers-fullscreen-fix.md`
-- `docs/analysis/2026-05-02-deep-audit-full/12-field-slot.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full/12-field-slot.md`
 
 ## Primary Architecture Anchors
 

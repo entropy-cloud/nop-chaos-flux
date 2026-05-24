@@ -56,10 +56,10 @@ Review checks:
 
 ## Evidence From This Repository
 
-- `docs/plans/156-reference-doc-sync-and-audit-consensus-plan.md`
-- `docs/plans/162-designer-page-and-report-selection-audit-remediation-plan.md`
-- `docs/plans/181-word-editor-dataset-vocabulary-convergence-plan.md`
-- `docs/analysis/2026-04-30-references-doc-code-consistency-audit.md`
+- `docs/archive/plans/156-reference-doc-sync-and-audit-consensus-plan.md`
+- `docs/archive/plans/162-designer-page-and-report-selection-audit-remediation-plan.md`
+- `docs/archive/plans/181-word-editor-dataset-vocabulary-convergence-plan.md`
+- `docs/archive/analysis/2026-04-30-references-doc-code-consistency-audit.md`
 
 ## Primary Architecture Anchors
 

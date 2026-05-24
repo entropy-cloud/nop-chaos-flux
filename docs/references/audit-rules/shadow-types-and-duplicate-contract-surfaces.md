@@ -55,9 +55,9 @@ Review checks:
 
 ## Evidence From This Repository
 
-- `docs/plans/158-code-quality-redundancy-and-duplication-remediation-plan.md`
-- `docs/plans/169-complex-renderer-contract-and-field-slot-convergence-plan.md`
-- `docs/analysis/2026-05-02-deep-audit-full/03-api-surface.md`
+- `docs/archive/plans/158-code-quality-redundancy-and-duplication-remediation-plan.md`
+- `docs/archive/plans/169-complex-renderer-contract-and-field-slot-convergence-plan.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full/03-api-surface.md`
 
 ## Primary Architecture Anchors
 

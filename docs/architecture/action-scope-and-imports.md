@@ -331,6 +331,7 @@ Use it in two different envelopes:
 Current code anchor:
 
 - shared method contract: `packages/flux-core/src/schema-diagnostics/manifest.ts`
+- shared host payload validator: `packages/flux-core/src/schema-diagnostics/value-shape-runtime.ts`
 - ordinary renderer capability metadata: `packages/flux-core/src/types/renderer-core.ts`
 
 This does not imply that every capability-bearing renderer is a host boundary.
@@ -347,6 +348,12 @@ Do not collapse those two envelopes into one because:
 - host manifest also carries projection, family, version, and publication attribution, which ordinary component handles do not need
 
 Cross-reference: `docs/architecture/capability-contract-model.md`
+
+Provider-boundary rule:
+
+- namespace providers should validate payloads against the shared `FluxValueShape` runtime helper before dispatching bridge/core commands
+- omitted `args` means the method accepts no payload; providers should return a stable contract error instead of coercing arbitrary objects to `{}`
+- methods that publish closed object args with `unknownKeys: 'reject'` must reject extra keys consistently across compiler and runtime
 
 ### DOM Ref Access
 

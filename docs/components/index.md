@@ -41,7 +41,7 @@ docs/components/
 - 目录名使用 schema `type` 或稳定组件名，例如 `tabs`、`table`、`form`。
 - 组件有明显子域时，可以在组件目录内继续拆分，如 `design.md`、`actions.md`、`notes.md`，但 `design.md` 和 `example.json` 仍应作为最小必备文件。
 - 文档描述的是 Flux 最终 DSL 下的契约，不直接复制 AMIS 的 React 实现细节。
-- 历史上的 `docs/component-list.md` 已退役；组件规划与优先级统一收敛到 `docs/components/roadmap.md`。
+- 历史上的组件总表已退役；组件规划与优先级统一收敛到 `docs/components/roadmap.md`。
 - AMIS 保留/合并/废弃清单与分波次补文档路线统一维护在 `docs/components/amis-baseline-matrix.md`。
 
 ## 单组件文档建议结构
@@ -578,4 +578,4 @@ UI primitive 对齐补充规则：
 
 建议后续新增组件时，先把目录加到这里，再补对应 `design.md` 与 `example.json`，保持组件索引与实际文档覆盖同步。
 
-组件优先级和实现路线请统一维护在 `docs/components/roadmap.md`，不要再恢复顶层 `docs/component-list.md`。
+组件优先级和实现路线请统一维护在 `docs/components/roadmap.md`，不要再恢复历史组件总表。

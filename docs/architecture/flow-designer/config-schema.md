@@ -30,7 +30,7 @@ interface DesignerPageSchema {
 - `statusPath` 当前也已落地，用于向宿主外部发布 `DesignerHostStatusSummary` 这类窄摘要，不与 region host scope 混用
 - 当前真正生效的 dialog 路径，是 toolbar / inspector / 其他 schema 片段通过共享 `dialog` action 打开 `SchemaRenderer` 自带的 dialog runtime
 - 仍然需要区分两件事：一是 `dialogs` region 片段本身现在已经会挂载；二是通过共享 `dialog` action 打开的弹窗仍然是另一条 dialog runtime 路径
-- `packages/flow-designer-renderers/src/designer-page-shell.test.tsx` 现在也有正向回归测试锁定该现状：直接传入 `dialogs` schema 会出现在页面上，避免文档与 live behavior 再次漂移
+- `packages/flow-designer-renderers/src/designer-page-rendering.test.tsx` 现在有正向回归测试锁定该现状：直接传入 `dialogs` schema 会出现在页面上，避免文档与 live behavior 再次漂移
 - 根据 `docs/architecture/designer-workbench-shell.md`，左侧 palette 与右侧 inspector 的 canonical existence 来自 resolved config，而不是来自 renderer 私有固定栏位；没有 resolved panel definition 时，该侧应整体隐藏而不是保留空 rail
 
 ### 1.1 树模式文档字段

@@ -71,11 +71,9 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-g
   - deep table column normalization
   - compiled form-validation model assembly
 - `packages/flux-compiler/src/schema-compiler/index.ts`
-  - compiler submodule composition
+  - compiler submodule composition and re-exports for nested region helpers now owned by `@nop-chaos/flux-core`
 - `packages/flux-compiler/src/schema-compiler/fields.ts`
   - renderer field classification helpers and meta-program compilation
-- `packages/flux-compiler/src/schema-compiler/regions.ts`
-  - region extraction and nested child normalization helpers
 - `packages/flux-compiler/src/schema-compiler/tables.ts`
   - table-specific deep normalization helpers
 - `packages/flux-compiler/src/schema-compiler/validation-collection.ts`
@@ -358,8 +356,8 @@ For a new built-in sync rule:
 1. Add schema extraction in `packages/flux-runtime/src/validation/rules.ts` if the rule has schema syntax.
 2. Add the validator implementation in `packages/flux-runtime/src/validation/validators.ts`.
 3. Add default messaging in `packages/flux-runtime/src/validation/message.ts` if needed.
-4. Add focused coverage in `packages/flux-runtime/src/validation/validators.test.ts` or `packages/flux-runtime/src/validation/registry.test.ts`.
-5. Add or update integration coverage in active runtime test files such as `packages/flux-runtime/src/index.test.ts`, `packages/flux-runtime/src/form-runtime-validation.test.ts`, or other colocated runtime contract tests when behavior changes.
+4. Add focused coverage in existing runtime validation suites such as `packages/flux-runtime/src/__tests__/validation-rules.test.ts`, `packages/flux-runtime/src/validation/validation-lifecycle-contracts.test.ts`, or other colocated validation contract tests.
+5. Add or update integration coverage in active runtime test files such as `packages/flux-runtime/src/__tests__/runtime-validation.test.ts`, `packages/flux-runtime/src/__tests__/runtime-validation-compiled.test.ts`, `packages/flux-runtime/src/__tests__/owner-validation-lifecycle-contracts.test.ts`, or other colocated runtime contract tests when behavior changes.
 
 For async rules:
 

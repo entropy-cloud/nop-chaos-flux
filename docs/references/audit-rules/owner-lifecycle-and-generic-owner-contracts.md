@@ -57,7 +57,7 @@ Review checks:
 
 ## Evidence From This Repository
 
-- `docs/analysis/2026-05-03-audit-rules-review/owner-lifecycle-and-generic-owner-contracts.md`
+- `docs/logs/2026/05-03.md`
 - `packages/flux-runtime/src/runtime-factory.ts`
 - `packages/flux-runtime/src/__tests__/runtime-status-and-imports.test.ts`
 

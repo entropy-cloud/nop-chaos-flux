@@ -69,6 +69,7 @@ type FluxValueShape =
       kind: 'object';
       fields: Record<string, FluxValueShape>;
       optional?: readonly string[];
+      unknownKeys?: 'allow' | 'reject';
       description?: string;
     }
   | { kind: 'union'; anyOf: readonly FluxValueShape[]; description?: string }
@@ -82,6 +83,12 @@ Important rule:
 - `FluxValueShape` is a **serializable contract IR**
 - it is not a renderer-local runtime validation object
 - it is not host-exclusive
+
+Object-field rule:
+
+- `kind: 'object'` is open by default
+- set `unknownKeys: 'reject'` when the published contract is a closed object and extra keys must fail validation
+- host manifests and ordinary renderer metadata must not rely on package-local extra-key behavior; compiler and runtime validation should consume the same `FluxValueShape` semantics
 
 ## Shared Method Contract
 

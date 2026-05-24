@@ -113,17 +113,19 @@ interface WordEditorConfig {
 
 host scope 向下投影四个只读字段：
 
-| 字段        | 来源                                                           | 时效性                                                                           | 说明                                                                                                                                                                 |
-| ----------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `document`  | `savedDocument.data`（autosave 回调写入），null 时回退到空骨架 | **滞后** — 由 `EditorCanvas` 内部 500ms 防抖 autosave 回调驱动，不是实时编辑内容 | consumer 不应假定 `document` 反映当前屏幕上的实时编辑状态；若需实时脏标记，应读 `runtime.dirty`                                                                      |
-| `datasets`  | `dataset-store`                                                | 实时                                                                             | 响应 dataset-store mutation                                                                                                                                          |
-| `runtime`   | `editor-store` + `dataset-store` 计数 + React state 计数       | 实时                                                                             | 聚合字段：`ready`/`dirty`/`wordCount`/`canUndo`/`canRedo`/`currentPage`/`totalPages`/`scale` 来自 editor-store；`datasetCount`/`chartCount`/`codeCount` 来自独立订阅 |
-| `selection` | `editor-store`                                                 | 实时                                                                             | 当前选区格式化快照                                                                                                                                                   |
+| 字段        | 来源                                                           | 时效性                                                                           | 说明                                                                                                                                                   |
+| ----------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `document`  | `savedDocument.data`（autosave 回调写入），null 时回退到空骨架 | **滞后** — 由 `EditorCanvas` 内部 500ms 防抖 autosave 回调驱动，不是实时编辑内容 | consumer 不应假定 `document` 反映当前屏幕上的实时编辑状态；若需实时脏标记，应读 `runtime.dirty`                                                        |
+| `datasets`  | `dataset-store`                                                | 实时                                                                             | 响应 dataset-store mutation                                                                                                                            |
+| `runtime`   | `editor-store` + `dataset-store` 计数 + React state 计数       | 实时                                                                             | 聚合字段：`ready`/`dirty`/`wordCount`/`canUndo`/`canRedo`/`totalPages`/`scale` 来自 editor-store；`datasetCount`/`chartCount`/`codeCount` 来自独立订阅 |
+| `selection` | `editor-store`                                                 | 实时                                                                             | 当前选区格式化快照                                                                                                                                     |
 
 关键约束：
 
 - `document` 与 `runtime`/`selection` 存在时效差异：`runtime.dirty=true` 时 `document` 可能仍为上一次 autosave 时的内容。
 - `runtime` 中 `datasetCount`/`chartCount`/`codeCount` 不从 editor-store selector 内读取，而是由独立订阅聚合，避免跨 store 热路径污染。
+- `runtime.currentPage` 不再属于公开 host projection，因为当前 canvas bridge 没有可靠的生产页码变更回调；对外只保留真实可接线的 `totalPages` / `scale` 页面摘要字段。
+- `selection.superscript` / `selection.subscript` 与其余格式化布尔位一样，必须直接反映 live range-style payload，而不是停留在默认 `false`。
 - 若存在 recovered persisted state，则 `document` 应先发布 recovered persisted snapshot，而不是继续停留在 schema `initialDocument`。
 - `datasets` 的 schema 输入只作为首次 seed；一旦存在 recovered persisted datasets，remount 后 host projection 继续发布 persisted datasets，而不是被 schema `datasets` 重置。
 - `statusPath.busy` 必须在显式保存进行中发布 `true`，保存完成或失败后再回落到 `false`。

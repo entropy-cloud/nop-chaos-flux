@@ -70,10 +70,10 @@ Review checks:
 
 ## Evidence From This Repository
 
-- `docs/plans/165-reactive-subscription-precision-plan.md`
+- `docs/archive/plans/165-reactive-subscription-precision-plan.md`
 - `docs/bugs/32-react19-external-store-derived-snapshot-loop-fix.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/05-reactive-precision.md`
-- `docs/analysis/2026-05-01-deep-audit-full-2/summary.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/05-reactive-precision.md`
+- `docs/archive/analysis/2026-05-01-deep-audit-full-2/summary.md`
 
 ## Primary Architecture Anchors
 

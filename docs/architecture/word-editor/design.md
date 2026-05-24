@@ -155,6 +155,8 @@ The host scope projects four read-only fields (`document`, `datasets`, `runtime`
 - `document` is populated by the `EditorCanvas` debounced autosave callback (~500ms lag). It is a persisted snapshot, not the real-time editor content. When `runtime.dirty` is true, `document` may still reflect a previous autosave state.
 - `runtime`, `selection`, and `datasets` are real-time, driven by their respective Zustand stores via `useSyncExternalStoreWithSelector`.
 - The `runtime` field aggregates editor-store state with cross-store counts (`datasetCount`, `chartCount`, `codeCount`) via independent subscriptions, avoiding cross-store hot-path contamination inside the editor-store selector.
+- `runtime.currentPage` is not part of the current supported host projection baseline because the shipped canvas bridge does not provide a trustworthy production page-change callback; the published runtime summary is limited to fields that the bridge actually drives (`ready`, `dirty`, `wordCount`, `canUndo`, `canRedo`, `totalPages`, `scale`).
+- `selection.superscript` and `selection.subscript` are part of the supported live formatting snapshot and must be copied from the range-style bridge payload just like `bold`, `italic`, `underline`, and `strikeout`.
 
 Save and autosave truth rules:
 

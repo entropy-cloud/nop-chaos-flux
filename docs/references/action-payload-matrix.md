@@ -265,4 +265,4 @@ Compatibility note:
 - `docs/architecture/action-algebra-formal-spec.md`
 - `docs/architecture/action-graph-authoring.md`
 - `docs/references/flux-json-conventions.md`
-- `docs/plans/119-action-precompile-and-args-unification-plan.md`
+- `docs/archive/plans/119-action-precompile-and-args-unification-plan.md`

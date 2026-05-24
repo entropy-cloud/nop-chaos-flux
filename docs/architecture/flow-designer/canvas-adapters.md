@@ -141,7 +141,7 @@ Reconnect completion must carry both the edge id and the source/target pair prod
 When changing React Flow bridge behavior, keep coverage in at least these places:
 
 - `packages/flow-designer-renderers/src/canvas-bridge.test.tsx`
-- `packages/flow-designer-renderers/src/designer-page-shell.test.tsx`
+- `packages/flow-designer-renderers/src/designer-page-rendering.test.tsx`
 
 Minimum regression areas:
 
@@ -157,4 +157,4 @@ Minimum regression areas:
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 - `packages/flow-designer-renderers/src/designer-xyflow-canvas/designer-xyflow-canvas.tsx`
 - `packages/flow-designer-renderers/src/canvas-bridge.test.tsx`
-- `packages/flow-designer-renderers/src/designer-page-shell.test.tsx`
+- `packages/flow-designer-renderers/src/designer-page-rendering.test.tsx`

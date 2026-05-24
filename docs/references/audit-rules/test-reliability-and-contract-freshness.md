@@ -62,10 +62,10 @@ Review checks:
 
 ## Evidence From This Repository
 
-- `docs/plans/167-test-quality-and-reliability-improvement-plan.md`
-- `docs/plans/162-designer-page-and-report-selection-audit-remediation-plan.md`
-- `docs/plans/175-review-4-findings-remediation-plan.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/14-test-coverage.md`
+- `docs/archive/plans/167-test-quality-and-reliability-improvement-plan.md`
+- `docs/archive/plans/162-designer-page-and-report-selection-audit-remediation-plan.md`
+- `docs/archive/plans/175-review-4-findings-remediation-plan.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/14-test-coverage.md`
 
 ## Primary Architecture Anchors
 

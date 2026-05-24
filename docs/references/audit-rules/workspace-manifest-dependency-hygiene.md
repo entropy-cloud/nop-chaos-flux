@@ -65,8 +65,8 @@ Current repo verification path:
 
 ## Evidence From This Repository
 
-- `docs/analysis/2026-05-03-deep-audit-full/01-dependency-graph.md`
-- `docs/analysis/2026-05-03-deep-audit-full/summary.md`
+- `docs/archive/analysis/2026-05-03-deep-audit-full/01-dependency-graph.md`
+- `docs/archive/analysis/2026-05-03-deep-audit-full/summary.md`
 
 ## Primary Architecture Anchors
 

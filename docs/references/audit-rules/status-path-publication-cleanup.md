@@ -55,8 +55,8 @@ Review checks:
 
 ## Evidence From This Repository
 
-- `docs/analysis/2026-05-03-deep-audit-full/07-lifecycle.md`
-- `docs/analysis/2026-05-03-deep-audit-full/summary.md`
+- `docs/archive/analysis/2026-05-03-deep-audit-full/07-lifecycle.md`
+- `docs/archive/analysis/2026-05-03-deep-audit-full/summary.md`
 
 ## Primary Architecture Anchors
 

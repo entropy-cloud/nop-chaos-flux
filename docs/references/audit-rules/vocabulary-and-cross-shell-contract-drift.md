@@ -55,9 +55,9 @@ Review checks:
 
 ## Evidence From This Repository
 
-- `docs/plans/181-word-editor-dataset-vocabulary-convergence-plan.md`
-- `docs/analysis/2026-05-02-deep-audit-full/18-cross-package.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/18-cross-package.md`
+- `docs/archive/plans/181-word-editor-dataset-vocabulary-convergence-plan.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full/18-cross-package.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full-3/18-cross-package.md`
 
 ## Primary Architecture Anchors
 

@@ -666,56 +666,23 @@ core → formula → runtime → react → basic
 
 ### Phase 3：从 `flux-renderers-form` 拆出 `flux-renderers-form-advanced`
 
-**目标**：将 `flux-renderers-form` 从 ~16K 行精简到 ~4K 行。
+**状态**：已完成。`@nop-chaos/flux-renderers-form-advanced` 已是当前 workspace 包，承载复杂字段与高级表单渲染器；`@nop-chaos/flux-renderers-form` 继续保留基础字段、表单 owner 和共享表单基础能力。
 
-**迁移步骤**（遵循 AGENTS.md 的文件重构方法论）：
+**当前基线**：
 
-1. **创建新包**：`packages/flux-renderers-form-advanced/`（package.json、tsconfig、vitest.config）。
+- `packages/flux-renderers-form-advanced/` 已存在并作为正式 workspace 包参与 `typecheck` / `build` / `test` / `lint`
+- 高复杂度 renderer 当前由 `@nop-chaos/flux-renderers-form-advanced` owning，例如 `condition-builder`、`variant-field`、`detail-view`、`detail-field`、`object-field`、`array-field`、`tag-list`、`key-value`、`input-tree`、`tree-select`
+- `@nop-chaos/flux-renderers-form-advanced` 依赖 `@nop-chaos/flux-renderers-form` 提供共享表单基础能力，依赖方向保持 `form-advanced -> form`
+- `@nop-chaos/flux-renderers-form` 已不再持有这批 advanced renderer 的实现 owner，也不再声明迁移前的 `@dnd-kit` 运行时依赖
+- playground/runtime registry 需要同时装配 form 和 form-advanced renderer definitions，不能把 advanced renderer 误认为仍集中在 `flux-renderers-form`
 
-2. **复制模块**：先把以下模块复制到新包（保持原位不动）：
-   - `renderers/condition-builder/` → `src/condition-builder/`
-   - `renderers/variant-field*` → `src/variant-field/`
-   - `renderers/detail-view*`, `renderers/detail-field*`, `renderers/detail-surface*` → `src/detail-view/`
-   - `renderers/projected-*` → `src/detail-view/`
-   - `renderers/value-adaptation-helper.ts` → `src/detail-view/`
-   - `renderers/object-field*` → `src/composite-field/`
-   - `renderers/array-field*`, `renderers/array-field-runtime*` → `src/composite-field/`
-   - `renderers/composite-item-id.ts`, `renderers/composite-schemas.ts` → `src/composite-field/`
-   - `renderers/array-editor.tsx` → `src/array-editor.tsx`
-   - `renderers/tag-list.tsx` → `src/tag-list.tsx`
-   - `renderers/key-value.tsx` → `src/key-value.tsx`
-   - `renderers/input-tree.tsx`, `renderers/tree-select.tsx`, `renderers/tree-controls.tsx` → `src/`
-   - `tree-options.ts` → `src/tree-options.ts`
-   - `renderers/test-support.tsx` → `src/test-support.tsx`
-   - **不迁移** `renderers/shared/`（留在 form，避免循环依赖）
+**维护规则**：
 
-3. **复制测试文件**：
-   - `__tests__/composite-form-*.test.tsx`（5 个 + support） → `src/__tests__/`
-   - `__tests__/composite-item-id.test.tsx` → `src/__tests__/`
-   - `__tests__/form-array-validation.test.tsx` → `src/__tests__/`
-   - `__tests__/form-double-edit-regression.test.tsx` → `src/__tests__/`
-   - `__tests__/form-source-options.test.tsx` → `src/__tests__/`
-   - `__tests__/form-tree-checkbox-fields.test.tsx` → `src/__tests__/`
-   - 其他与迁移模块相关的测试文件
+- 新增基础字段或共享表单基础设施时，优先评估 `@nop-chaos/flux-renderers-form`
+- 新增复杂组合字段、detail/composite family、或需要独立高级依赖的控件时，优先评估 `@nop-chaos/flux-renderers-form-advanced`
+- 若后续还要继续拆包，应在新的 active 计划中记录，不要把本段已完成迁移重新写成待执行步骤
 
-4. **更新 import 路径**：
-   - 所有迁移模块内部的相对 import 路径需要根据新目录结构调整。
-   - 对 `@nop-chaos/flux-renderers-form` 的引用改为 `import { ... } from '@nop-chaos/flux-renderers-form'`（workspace 依赖）。
-   - 特别是：`shared/` 模块（label, error, help-text）的引用从相对路径改为通过 `@nop-chaos/flux-renderers-form` 的公开 export。
-
-5. **验证新包**：`typecheck && build && test` 通过。
-
-6. **替换原包**：
-   - 从 `flux-renderers-form/src/` 删除已迁移的文件。
-   - 更新 `flux-renderers-form/src/index.tsx`：保留核心字段和 form owner 的 export，移除已迁移的 renderer export。
-   - 确保 `shared/` 模块作为公开 export 暴露，供 form-advanced 引用。
-   - 更新 `flux-renderers-form/package.json` 移除 `@dnd-kit` 依赖。
-
-7. **全量验证**：`pnpm typecheck && pnpm build && pnpm test && pnpm lint`。
-
-8. **更新 playground**：更新 registry 装配，同时注册 form 和 form-advanced 的 renderer。
-
-**预估工作量**：主要是文件移动和 import 更新，新增代码少。重点在于 import 路径变更和测试文件迁移。
+**历史说明**：本阶段的迁移步骤已完成；若需要查看迁移过程，请查阅对应的历史计划/日志，而不是按本文件把它重新当作待执行路线。
 
 ### Phase 4：扩展 `flux-renderers-data`
 

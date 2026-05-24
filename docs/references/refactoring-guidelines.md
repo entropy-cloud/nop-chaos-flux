@@ -41,10 +41,10 @@
 
 ## 变动文件清单
 
-| File                      | Change       | Lines affected |
-| ------------------------- | ------------ | -------------- |
-| `packages/xxx/src/yyy.ts` | 提取辅助函数 | ~30            |
-| `packages/xxx/src/zzz.ts` | 调用方更新   | ~5             |
+| File                                 | Change       | Lines affected |
+| ------------------------------------ | ------------ | -------------- |
+| `packages/<owner>/src/<helper>.ts`   | 提取辅助函数 | ~30            |
+| `packages/<owner>/src/<consumer>.ts` | 调用方更新   | ~5             |
 
 ## 风险与回退
 

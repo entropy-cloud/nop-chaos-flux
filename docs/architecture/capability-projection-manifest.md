@@ -521,6 +521,7 @@ Required capabilities of that reused shape contract:
 
 - primitive scalar kinds
 - object fields plus optional keys
+- open versus closed object semantics via explicit extra-key policy
 - array item shape
 - enum/literal values
 - union-like alternatives
@@ -547,6 +548,18 @@ Manifest projection fields describe what schema may read, not what schema may wr
 Even if a projection field looks like ordinary object data, writing to that path through `setValue` is not automatically valid.
 
 Writes still go through capabilities.
+
+### Rule 2: No-Args Methods Are Explicit
+
+If a published host method does not accept any payload, leave `args` absent and reject any non-`undefined` payload at both compile time and runtime.
+
+If a host method intentionally accepts an empty object payload, publish `args: { kind: 'object', fields: {}, unknownKeys: 'reject' }` instead of relying on omitted `args`.
+
+### Rule 3: Absent Projection Values Must Match The Published Union
+
+If a projection field is published as a `null | object` union, runtime bridges should publish `null` for the absent case rather than omitting the field or returning `undefined`.
+
+Use omission only when the field itself is not part of the published projection contract.
 
 ### Rule 2: Projection Describes Published Shape, Not Internal Snapshot
 

@@ -56,9 +56,9 @@ Review checks:
 
 ## Evidence From This Repository
 
-- `docs/plans/169-complex-renderer-contract-and-field-slot-convergence-plan.md`
-- `docs/analysis/2026-05-02-deep-audit-full/12-field-slot.md`
-- `docs/analysis/2026-05-02-deep-audit-full/09-renderer-contract.md`
+- `docs/archive/plans/169-complex-renderer-contract-and-field-slot-convergence-plan.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full/12-field-slot.md`
+- `docs/archive/analysis/2026-05-02-deep-audit-full/09-renderer-contract.md`
 
 ## Primary Architecture Anchors
 

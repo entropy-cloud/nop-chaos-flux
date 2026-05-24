@@ -153,7 +153,7 @@ Why:
 
 Bug evidence:
 
-- `docs/analysis/2026-05-02-adversarial-audit-review-4.md`
+- `docs/archive/analysis/2026-05-02-adversarial-audit-review-4.md`
 - `docs/bugs/37-report-designer-demo-selection-bridge-inspector-stuck-on-sheet-fix.md`
 - `docs/bugs/38-report-designer-preview-cancellation-and-stale-result-fix.md`
 
