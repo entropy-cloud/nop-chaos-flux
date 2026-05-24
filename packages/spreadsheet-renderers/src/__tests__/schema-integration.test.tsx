@@ -467,6 +467,75 @@ describe('spreadsheet-page schema integration', () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
+  it('rejects payloads for no-args spreadsheet host methods', async () => {
+    const dispatch = vi.fn(async () => ({ ok: true, changed: false }));
+    const provider = createSpreadsheetActionProvider(dispatch);
+
+    const result = await provider.invoke('undo', { unexpected: true }, {} as any);
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe(
+      'spreadsheet:undo payload does not match the published host args contract.',
+    );
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid spreadsheet literal unions published by the host contract', async () => {
+    const dispatch = vi.fn(async () => ({ ok: true, changed: false }));
+    const provider = createSpreadsheetActionProvider(dispatch);
+
+    const selectionResult = await provider.invoke(
+      'setSelection',
+      {
+        selection: {
+          kind: 'current',
+          sheetId: 'sheet-1',
+        },
+      },
+      {} as any,
+    );
+    const searchResult = await provider.invoke(
+      'find',
+      {
+        options: {
+          query: 'hello',
+          searchScope: 'current',
+        },
+      },
+      {} as any,
+    );
+
+    expect(selectionResult.ok).toBe(false);
+    expect((selectionResult.error as Error).message).toBe(
+      'spreadsheet:setSelection payload does not match the published host args contract.',
+    );
+    expect(searchResult.ok).toBe(false);
+    expect((searchResult.error as Error).message).toBe(
+      'spreadsheet:find payload does not match the published host args contract.',
+    );
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('rejects unknown keys for closed spreadsheet object contracts', async () => {
+    const dispatch = vi.fn(async () => ({ ok: true, changed: false }));
+    const provider = createSpreadsheetActionProvider(dispatch);
+
+    const result = await provider.invoke(
+      'setCellValue',
+      {
+        cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0, extra: true },
+        value: 'next',
+      },
+      {} as any,
+    );
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe(
+      'spreadsheet:setCellValue payload does not match the published host args contract.',
+    );
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
   it('accepts the published search option vocabulary and forwards it unchanged', async () => {
     const dispatch = vi.fn(async () => ({ ok: true, changed: false, data: null }));
     const provider = createSpreadsheetActionProvider(dispatch);

@@ -29,8 +29,8 @@ describe('deriveHostSnapshot', () => {
     expect(host.workbook).toBe(runtime.document.workbook);
     expect(host.activeSheet).toBe(runtime.document.workbook.sheets[0]);
     expect(host.selection.kind).toBe('none');
-    expect(host.activeCell).toBeUndefined();
-    expect(host.activeRange).toBeUndefined();
+    expect(host.activeCell).toBeNull();
+    expect(host.activeRange).toBeNull();
     expect(host.runtime.readonly).toBe(false);
     expect(host.runtime.dirty).toBe(false);
     expect(host.runtime.zoom).toBe(1);
@@ -55,7 +55,7 @@ describe('deriveHostSnapshot', () => {
       row: 2,
       col: 1,
     });
-    expect(host.activeRange).toBeUndefined();
+    expect(host.activeRange).toBeNull();
   });
 
   it('should derive activeRange from range selection', async () => {
@@ -78,7 +78,7 @@ describe('deriveHostSnapshot', () => {
       endRow: 2,
       endCol: 3,
     });
-    expect(host.activeCell).toBeUndefined();
+    expect(host.activeCell).toBeNull();
   });
 
   it('should reflect undo/redo state', async () => {
@@ -220,8 +220,8 @@ describe('createSpreadsheetBridge', () => {
 
     const snap = bridge.getSnapshot();
     expect(snap.selection.kind).toBe('row');
-    expect(snap.activeCell).toBeUndefined();
-    expect(snap.activeRange).toBeUndefined();
+    expect(snap.activeCell).toBeNull();
+    expect(snap.activeRange).toBeNull();
   });
 
   it('should return correct host snapshot for column selection', async () => {

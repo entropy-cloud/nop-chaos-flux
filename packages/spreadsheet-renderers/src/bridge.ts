@@ -14,8 +14,8 @@ export interface SpreadsheetHostSnapshot {
   workbook: WorkbookDocument;
   activeSheet?: WorksheetDocument;
   selection: SpreadsheetSelection;
-  activeCell?: SpreadsheetCellRef;
-  activeRange?: SpreadsheetRange;
+  activeCell: SpreadsheetCellRef | null;
+  activeRange: SpreadsheetRange | null;
   runtime: {
     canUndo: boolean;
     canRedo: boolean;
@@ -36,8 +36,8 @@ export interface SpreadsheetBridge {
 export function deriveHostSnapshot(runtime: SpreadsheetRuntimeSnapshot): SpreadsheetHostSnapshot {
   const activeSheet = runtime.document.workbook.sheets.find((s) => s.id === runtime.activeSheetId);
 
-  let activeCell: SpreadsheetCellRef | undefined;
-  let activeRange: SpreadsheetRange | undefined;
+  let activeCell: SpreadsheetCellRef | null = null;
+  let activeRange: SpreadsheetRange | null = null;
 
   if (runtime.selection.kind === 'cell' && runtime.selection.anchor) {
     activeCell = runtime.selection.anchor;
