@@ -14,6 +14,7 @@ interface DingFlowAddNodeMenuProps {
   items: DingFlowMenuItem[];
   onSelect: (type: string) => void;
   onClose: () => void;
+  returnFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
 export function DingFlowAddNodeMenu({
@@ -22,6 +23,7 @@ export function DingFlowAddNodeMenu({
   items,
   onSelect,
   onClose,
+  returnFocusRef,
 }: DingFlowAddNodeMenuProps) {
   const firstButtonRef = React.useRef<HTMLButtonElement | null>(null);
   const itemRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
@@ -42,9 +44,14 @@ export function DingFlowAddNodeMenu({
     itemRefs.current[normalizedIndex]?.focus();
   }
 
+  function closeMenu() {
+    onClose();
+    returnFocusRef?.current?.focus();
+  }
+
   return (
     <>
-      <div className="fixed inset-0 z-[100]" aria-hidden="true" onClick={onClose} />
+      <div className="fixed inset-0 z-[100]" aria-hidden="true" onClick={closeMenu} />
       <div
         className="fixed z-[101] flex gap-4 rounded-lg border border-border bg-popover px-5 py-3 shadow-lg"
         style={{ left: screenX - 100, top: screenY - 110 }}
@@ -77,7 +84,7 @@ export function DingFlowAddNodeMenu({
 
           if (event.key === 'Escape') {
             event.preventDefault();
-            onClose();
+            closeMenu();
           }
         }}
       >
@@ -100,6 +107,7 @@ export function DingFlowAddNodeMenu({
             onClick={(e) => {
               e.stopPropagation();
               onSelect(item.type);
+              returnFocusRef?.current?.focus();
             }}
           >
             <div

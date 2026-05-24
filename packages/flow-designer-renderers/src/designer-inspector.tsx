@@ -151,7 +151,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={`Move branch ${index + 1} left`}
+                      aria-label={t('flux.flowDesigner.inspector.moveBranchLeft', { index: index + 1 })}
                       disabled={!canMoveLeft}
                       onClick={() =>
                         dispatch({
@@ -168,7 +168,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={`Move branch ${index + 1} right`}
+                      aria-label={t('flux.flowDesigner.inspector.moveBranchRight', { index: index + 1 })}
                       disabled={!canMoveRight}
                       onClick={() =>
                         dispatch({
@@ -185,7 +185,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={`Delete branch ${index + 1}`}
+                      aria-label={t('flux.flowDesigner.inspector.deleteBranch', { index: index + 1 })}
                       className="hover:bg-destructive/15 hover:text-destructive"
                       disabled={branchItems.length <= 2}
                       onClick={() =>

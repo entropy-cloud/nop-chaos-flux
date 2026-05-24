@@ -12,5 +12,4 @@ export {
   flowDesignerRendererDefinitions,
   registerFlowDesignerRenderers,
   extendFlowDesignerRegistry,
-  createFlowDesignerRegistry,
 } from './renderer-definitions.js';

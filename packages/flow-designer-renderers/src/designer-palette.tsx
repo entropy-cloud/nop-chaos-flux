@@ -4,7 +4,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
 import { DesignerIcon } from './designer-icon.js';
 import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge.js';
-import { Button, cn } from '@nop-chaos/ui';
+import { Button, Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
 
 const PALETTE_APPEARANCE_BY_ID: Record<string, string> = {
   start: 'fd-palette-appearance-start',
@@ -106,26 +106,29 @@ export function DesignerPaletteContent(props: {
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto p-3">
         {filteredGroups.map((group) => (
-          <div
+          <Collapsible
             key={group.id}
-            className="fd-panel-card rounded-lg border border-border p-2.5 mb-3 last:mb-0"
+            open={expandedGroups.has(group.id)}
+            onOpenChange={() => toggleGroup(group.id)}
           >
-            <Button
-              type="button"
-              variant="ghost"
-              data-slot="designer-palette-group-header"
-              className="fd-panel-caption mb-2 flex w-full items-center justify-start gap-1.5 px-1 text-xs font-semibold uppercase tracking-[0.18em]"
-              onClick={() => toggleGroup(group.id)}
-              aria-expanded={expandedGroups.has(group.id)}
-              aria-controls={`designer-palette-group-${group.id}`}
-            >
-              <span className="text-[10px] text-muted-foreground">
-                {expandedGroups.has(group.id) ? '▼' : '▶'}
-              </span>
-              <span>{group.label}</span>
-            </Button>
-            {expandedGroups.has(group.id) && (
-              <div id={`designer-palette-group-${group.id}`}>
+            <div className="fd-panel-card rounded-lg border border-border p-2.5 mb-3 last:mb-0">
+              <CollapsibleTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    data-slot="designer-palette-group-header"
+                    className="fd-panel-caption mb-2 flex w-full items-center justify-start gap-1.5 px-1 text-xs font-semibold uppercase tracking-[0.18em]"
+                  />
+                }
+              >
+                <span className="text-[10px] text-muted-foreground">
+                  {expandedGroups.has(group.id) ? '▼' : '▶'}
+                </span>
+                <span>{group.label}</span>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div id={`designer-palette-group-${group.id}`}>
                 {group.nodeTypes.map((ntId) => {
                   const nt = nodeTypesById.get(ntId);
                   if (!nt) return null;
@@ -176,11 +179,12 @@ export function DesignerPaletteContent(props: {
                         <DesignerIcon icon="plus" />
                       </Button>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    );
+                  })}
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
         ))}
       </div>
     </div>

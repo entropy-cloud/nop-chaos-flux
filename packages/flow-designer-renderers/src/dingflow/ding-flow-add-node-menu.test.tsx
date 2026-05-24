@@ -1,9 +1,13 @@
 // @vitest-environment happy-dom
 
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { DingFlowAddNodeMenu } from './ding-flow-add-node-menu.js';
+
+afterEach(() => {
+  cleanup();
+});
 
 describe('DingFlowAddNodeMenu', () => {
   it('implements roving menu keyboard navigation', () => {
@@ -40,5 +44,55 @@ describe('DingFlowAddNodeMenu', () => {
     end.focus();
     fireEvent.keyDown(screen.getByRole('menu', { name: 'Add node' }), { key: 'Home' });
     expect(task.tabIndex).toBe(0);
+  });
+
+  it('restores focus to the trigger when Escape closes the menu', () => {
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    const returnFocusRef = { current: trigger };
+    const onClose = vi.fn();
+
+    const rendered = render(
+      <DingFlowAddNodeMenu
+        screenX={100}
+        screenY={100}
+        items={[{ type: 'task', label: 'Task', color: '#000', icon: <span>T</span> }]}
+        onSelect={vi.fn()}
+        onClose={onClose}
+        returnFocusRef={returnFocusRef}
+      />,
+    );
+
+    fireEvent.keyDown(within(rendered.container).getByRole('menu', { name: 'Add node' }), {
+      key: 'Escape',
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
+  it('restores focus to the trigger after selecting a menu item', () => {
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    const returnFocusRef = { current: trigger };
+    const onSelect = vi.fn();
+
+    const rendered = render(
+      <DingFlowAddNodeMenu
+        screenX={100}
+        screenY={100}
+        items={[{ type: 'task', label: 'Task', color: '#000', icon: <span>T</span> }]}
+        onSelect={onSelect}
+        onClose={vi.fn()}
+        returnFocusRef={returnFocusRef}
+      />,
+    );
+
+    fireEvent.click(within(rendered.container).getByRole('menuitem', { name: 'Task' }));
+
+    expect(onSelect).toHaveBeenCalledWith('task');
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
   });
 });

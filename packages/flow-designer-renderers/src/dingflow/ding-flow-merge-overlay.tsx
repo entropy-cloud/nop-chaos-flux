@@ -9,20 +9,23 @@ interface DingFlowMergeOverlayProps {
   onClick: (e: React.MouseEvent) => void;
 }
 
-export function DingFlowMergeOverlay({ onClick }: DingFlowMergeOverlayProps) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      className={DINGFLOW_PLUS_BUTTON_CLASSNAME}
-      style={{ width: BTN_DIAMETER, height: BTN_DIAMETER }}
-      aria-label={t('flux.flowDesigner.addMergeNode')}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick(e);
-      }}
-    >
-      <Plus size={16} />
-    </Button>
-  );
-}
+export const DingFlowMergeOverlay = React.forwardRef<HTMLButtonElement, DingFlowMergeOverlayProps>(
+  function DingFlowMergeOverlay({ onClick }, ref) {
+    return (
+      <Button
+        ref={ref}
+        type="button"
+        variant="ghost"
+        className={DINGFLOW_PLUS_BUTTON_CLASSNAME}
+        style={{ width: BTN_DIAMETER, height: BTN_DIAMETER }}
+        aria-label={t('flux.flowDesigner.addMergeNode')}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick(e);
+        }}
+      >
+        <Plus size={16} />
+      </Button>
+    );
+  },
+);

@@ -5,6 +5,7 @@ import type { DesignerPageSchemaInput } from './schemas.js';
 
 describe('flow-designer-renderers public surface', () => {
   it('keeps xyflow internals and renderer-only helpers off the root entry', () => {
+    expect('createFlowDesignerRegistry' in flowDesigner).toBe(false);
     expect('DesignerXyflowCanvasBridge' in flowDesigner).toBe(false);
     expect('renderDesignerCanvasBridge' in flowDesigner).toBe(false);
     expect('DesignerXyflowCanvas' in flowDesigner).toBe(false);
@@ -21,6 +22,10 @@ describe('flow-designer-renderers public surface', () => {
   });
 
   it('exposes renderer internals through the unstable entry', () => {
+    expect(typeof flowDesignerUnstable.createFlowDesignerRegistry).toBe('function');
+    expect(typeof flowDesignerUnstable.extendFlowDesignerRegistry).toBe('function');
+    expect(typeof flowDesignerUnstable.registerFlowDesignerRenderers).toBe('function');
+    expect(Array.isArray(flowDesignerUnstable.flowDesignerRendererDefinitions)).toBe(true);
     expect(typeof flowDesignerUnstable.DesignerXyflowCanvasBridge).toBe('function');
     expect(typeof flowDesignerUnstable.renderDesignerCanvasBridge).toBe('function');
     expect(typeof flowDesignerUnstable.DesignerXyflowCanvas).toBe('function');

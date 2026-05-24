@@ -20,6 +20,7 @@ interface PopoverState {
   screenX: number;
   screenY: number;
   sourceKind: 'node' | 'branch-group' | 'merge';
+  returnFocusRef: React.RefObject<HTMLElement | null>;
 }
 
 export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode }) {
@@ -64,6 +65,14 @@ export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode 
         }),
     [config.nodeTypes],
   );
+  const triggerRefs = React.useRef(new Map<string, HTMLButtonElement | null>());
+
+  const setTriggerRef = useCallback(
+    (key: string) => (node: HTMLButtonElement | null) => {
+      triggerRefs.current.set(key, node);
+    },
+    [],
+  );
 
   const handlePlusClick = useCallback(
     (
@@ -71,8 +80,10 @@ export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode 
       clientX: number,
       clientY: number,
       sourceKind: 'node' | 'branch-group' | 'merge',
+      trigger: HTMLButtonElement | null,
     ) => {
-      setPopover({ sourceId, screenX: clientX, screenY: clientY, sourceKind });
+      const returnFocusRef = { current: trigger } as React.RefObject<HTMLElement | null>;
+      setPopover({ sourceId, screenX: clientX, screenY: clientY, sourceKind, returnFocusRef });
     },
     [],
   );
@@ -106,13 +117,29 @@ export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode 
           >
             {overlay.kind === 'addCondition' ? (
               <DingFlowAddBranchOverlay
+                ref={setTriggerRef(overlay.id)}
                 onClick={(e) =>
-                  handlePlusClick(overlay.sourceId, e.clientX, e.clientY, 'branch-group')
+                  handlePlusClick(
+                    overlay.sourceId,
+                    e.clientX,
+                    e.clientY,
+                    'branch-group',
+                    triggerRefs.current.get(overlay.id) ?? null,
+                  )
                 }
               />
             ) : (
               <DingFlowMergeOverlay
-                onClick={(e) => handlePlusClick(overlay.sourceId, e.clientX, e.clientY, 'merge')}
+                ref={setTriggerRef(overlay.id)}
+                onClick={(e) =>
+                  handlePlusClick(
+                    overlay.sourceId,
+                    e.clientX,
+                    e.clientY,
+                    'merge',
+                    triggerRefs.current.get(overlay.id) ?? null,
+                  )
+                }
               />
             )}
           </div>
@@ -125,6 +152,7 @@ export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode 
           items={menuItems}
           onSelect={handleSelect}
           onClose={handleClose}
+          returnFocusRef={popover.returnFocusRef}
         />
       )}
     </>

@@ -24,3 +24,9 @@ export {
   type DesignerXyflowCanvasProps,
   DESIGNER_PALETTE_NODE_MIME,
 } from './designer-xyflow-canvas/index.js';
+export {
+  createFlowDesignerRegistry,
+  extendFlowDesignerRegistry,
+  flowDesignerRendererDefinitions,
+  registerFlowDesignerRenderers,
+} from './renderer-definitions.js';

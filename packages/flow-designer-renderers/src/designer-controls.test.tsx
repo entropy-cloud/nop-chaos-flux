@@ -265,6 +265,8 @@ describe('flow designer controls', () => {
     render(<DesignerPaletteContent />);
     const header = screen.getByRole('button', { name: /Basic/ });
     expect(header.getAttribute('aria-expanded')).toBe('true');
+    expect(document.querySelector('[data-slot="collapsible"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="collapsible-content"]')).toBeTruthy();
     fireEvent.click(header);
     expect(screen.getByRole('button', { name: /Basic/ }).getAttribute('aria-expanded')).toBe('false');
   });
@@ -365,7 +367,11 @@ describe('flow designer controls', () => {
       data: { label: 'Renamed Branch 1' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move branch 2 left' }));
+    expect(screen.getByRole('button', { name: '将分支 1 向左移动' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '将分支 1 向右移动' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '删除分支 1' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: '将分支 2 向左移动' }));
     expect(mockState.context.dispatch).toHaveBeenCalledWith({
       type: 'moveBranch',
       nodeId: 'node-1',
@@ -373,7 +379,7 @@ describe('flow designer controls', () => {
       direction: 'left',
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete branch 3' }));
+    fireEvent.click(screen.getByRole('button', { name: '删除分支 3' }));
     expect(mockState.context.dispatch).toHaveBeenCalledWith({
       type: 'deleteBranch',
       nodeId: 'node-1',
@@ -396,7 +402,7 @@ describe('flow designer controls', () => {
       branchId: 'b2',
     });
 
-    const branchButton = screen.getByRole('button', { name: /分支 3/ });
+    const branchButton = screen.getByRole('button', { name: '分支 3 b3' });
     expect(branchButton.getAttribute('aria-pressed')).toBe('false');
     fireEvent.click(branchButton);
     expect(mockState.context.dispatch).toHaveBeenCalledWith({
