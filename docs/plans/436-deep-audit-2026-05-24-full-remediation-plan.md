@@ -156,6 +156,7 @@ Targets: `packages/flow-designer-renderers`, `packages/report-designer-renderers
 
 - Item Types: `Fix | Decision | Proof`
 - Progress 2026-05-24: shared host payload validation now lives in `packages/flux-core/src/schema-diagnostics/value-shape-runtime.ts`, compiler/runtime both reject payloads for no-args methods, `FluxObjectShape` now publishes explicit `unknownKeys` semantics, spreadsheet/report/word manifests were tightened to live literal unions, and focused contract tests are green for `@nop-chaos/flux-core`, `@nop-chaos/flux-compiler`, `@nop-chaos/spreadsheet-renderers`, `@nop-chaos/report-designer-renderers`, and `@nop-chaos/word-editor-renderers`.
+- Progress 2026-05-24 (continued): `designer-page` no longer publishes the drifted `$designer` `scopeExportContracts` alias and now matches the other domain-host renderers' hostContract-only publication model; table selection/sort/filter events now publish the same semantic `event + scope + evaluationBindings` context shape already used by pagination, with focused proof in `@nop-chaos/flow-designer-renderers` and `@nop-chaos/flux-renderers-data` (`维度18-07`, `维度18-08`).
 
 - [ ] Close Flow contract drifts: `moveNodes.deltas`, `moveBranch.direction`, provider coercion, and command adapter bypasses from `维度03-02`, `维度03-06`, and `维度18-04`.
 - [ ] Close Report contract drifts: `preview.mode`, no-args methods, projection `null/undefined` semantics, and manifest/runtime projection mismatch from `维度03-03`, `维度03-09`, and `维度03-14`.

@@ -65,6 +65,7 @@
 
 - 当前事件已覆盖行点击、排序、过滤、分页、选择和刷新。
 - `onPageChange` 的 live payload 现已回到统一 supported 语义：若分页 UI 触发来自真实交互事件，则 handler 会收到原始 UI event，同时 `evaluationBindings` / semantic payload 始终包含 `type: 'table:page-change'` 与 `{ page, pageSize, pagination }` 摘要。
+- `onSelectionChange`、`onSortChange`、`onFilterChange` 现在也遵循同一事件上下文模型：handler 会收到 semantic `event`、`scope` 和 `evaluationBindings`，其中 payload 分别稳定发布 `type: 'table:selection-change'`、`type: 'table:sort-change'`、`type: 'table:filter-change'`，避免只靠临时 scope 注入读取交互状态。
 - 当前组件句柄基线是 `component:refresh`、`component:getSelection`、`component:setSelection`。
 - quick-edit save contracts 是 action props，不是 event fields：`quickSaveAction` / `quickSaveItemAction` 由 quick-edit cell 直接 dispatch 到 row scope。
 - `component:refresh` 触发的是 table instance capability；如果表格显示 loading，优先读取其上游 query/source owner 状态，而不是假设 table 自己就是请求 owner。

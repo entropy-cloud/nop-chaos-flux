@@ -449,6 +449,7 @@ Authoring/runtime split reminder:
 - property editing UI itself is better owned by `inspector`/schema for designer-like scenarios; `editorType` should not be treated as the primary architecture path for attribute editing
 - `scopeExportContracts` describes narrow readonly Flux-native exports such as `$form` and `$crud`; it is not host projection
 - `hostContract` remains host-only and should appear only on `domain-host-renderer`
+- `domain-host-renderer` families should not publish parallel `$designer` / `$report` / `$spreadsheet` aliases through `scopeExportContracts` unless the live runtime actually exports those keys and all host families follow the same rule
 
 Representative mapping:
 

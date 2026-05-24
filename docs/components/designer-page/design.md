@@ -25,7 +25,7 @@
 - `title` 当前是已接线的 `value-or-region` host page title surface，而不是仅文档声明未消费字段。
 - `document` / `treeDocument` 与 `config` 是宿主输入；当前 live baseline 不只要求“至少提供一种文档输入”，还要求 graph mode 提供 `document`、tree mode 提供 `treeDocument`，并且 formal schema validation 会对缺失前置条件报错，而不是只在运行时退回 fallback shell。
 - `statusPath` 是当前支持的宿主外部摘要发布入口，而不是 future-only 设计草案。
-- `$designer` 是刻意保留的 additive host-summary export，用于给 page 内 schema 片段读取只读 designer 摘要；它不替代 host manifest projection，也不提升为通用 page 全局数据别名。
+- `designer-page` 当前不再发布额外的 `$designer` Flux-native scope export。designer 只读数据入口统一来自 host projection / host scope，而不是并行的 renderer metadata 别名。
 
 ## 5. 字段分类
 
