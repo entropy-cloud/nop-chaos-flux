@@ -212,6 +212,28 @@ describe('createDesignerCore', () => {
     expect(treeDocument.root.data.label).toBe('Saved Tree');
   });
 
+  it('rolls back tree owner state together with transaction graph state', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+    let treeDocument = createTreeDocument('Before Transaction');
+
+    core.setTreeOwner(
+      () => treeDocument,
+      (next) => {
+        treeDocument = next;
+      },
+    );
+
+    const txId = core.beginTransaction('tree rollback');
+    treeDocument = createTreeDocument('After Transaction');
+    core.updateNode('task-1', { label: 'Updated In Tx' });
+
+    const result = core.rollbackTransaction(txId);
+
+    expect(result).toEqual({ ok: true, transactionId: txId });
+    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe('Task');
+    expect(treeDocument.root.data.label).toBe('Before Transaction');
+  });
+
   it('rejects duplicate edges when allowMultiEdge is false', () => {
     const core = createDesignerCore(
       createDocumentWithEdgeChain(),

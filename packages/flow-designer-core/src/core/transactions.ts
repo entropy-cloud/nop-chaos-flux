@@ -1,15 +1,18 @@
 import type { GraphDocument } from '../types.js';
 import { cloneDocument, generateId } from './clone.js';
+import type { TreeDocument } from '../types.js';
 
 export interface DesignerTransaction {
   id: string;
   label: string;
   snapshotBefore: GraphDocument;
+  treeSnapshotBefore?: TreeDocument;
 }
 
 export function beginTransactionState(
   stack: DesignerTransaction[],
   doc: GraphDocument,
+  treeDocument: TreeDocument | undefined,
   label?: string,
   transactionId?: string,
 ): { stack: DesignerTransaction[]; id: string } {
@@ -18,13 +21,14 @@ export function beginTransactionState(
     id,
     stack: [
       ...stack,
-      {
-        id,
-        label: label ?? '',
-        snapshotBefore: cloneDocument(doc),
-      },
-    ],
-  };
+        {
+          id,
+          label: label ?? '',
+          snapshotBefore: cloneDocument(doc),
+          treeSnapshotBefore: treeDocument ? (JSON.parse(JSON.stringify(treeDocument)) as TreeDocument) : undefined,
+        },
+      ],
+    };
 }
 
 export function commitTransactionState(
@@ -78,6 +82,7 @@ export function rollbackTransactionState(
 ): {
   stack: DesignerTransaction[];
   snapshotBefore: GraphDocument;
+  treeSnapshotBefore?: TreeDocument;
   rolledBackIds: string[];
 } | null {
   if (stack.length === 0) {
@@ -86,11 +91,14 @@ export function rollbackTransactionState(
 
   if (!transactionId) {
     const txn = stack[stack.length - 1];
-    return {
-      stack: stack.slice(0, -1),
-      snapshotBefore: cloneDocument(txn.snapshotBefore),
-      rolledBackIds: [txn.id],
-    };
+      return {
+        stack: stack.slice(0, -1),
+        snapshotBefore: cloneDocument(txn.snapshotBefore),
+        treeSnapshotBefore: txn.treeSnapshotBefore
+          ? (JSON.parse(JSON.stringify(txn.treeSnapshotBefore)) as TreeDocument)
+          : undefined,
+        rolledBackIds: [txn.id],
+      };
   }
 
   const index = stack.findIndex((txn) => txn.id === transactionId);
@@ -108,6 +116,9 @@ export function rollbackTransactionState(
   return {
     stack: stack.slice(0, index),
     snapshotBefore: cloneDocument(txn.snapshotBefore),
+    treeSnapshotBefore: txn.treeSnapshotBefore
+      ? (JSON.parse(JSON.stringify(txn.treeSnapshotBefore)) as TreeDocument)
+      : undefined,
     rolledBackIds,
   };
 }

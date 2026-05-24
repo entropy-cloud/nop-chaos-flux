@@ -480,17 +480,30 @@ export function createDesignerCore(
   }
 
   function beginTransaction(label?: string, transactionId?: string): string {
-    const nextState = beginTransactionState(transactionStack, doc, label, transactionId);
+    const nextState = beginTransactionState(
+      transactionStack,
+      doc,
+      treeOwner?.getTreeDocument(),
+      label,
+      transactionId,
+    );
     transactionStack = nextState.stack;
     const { id } = nextState;
     emit({ type: 'transactionStarted', transactionId: id, label });
     return id;
   }
 
-  function commitTransaction(transactionId?: string): void {
+  function commitTransaction(transactionId?: string): {
+    ok: boolean;
+    transactionId?: string;
+    reason?: 'unavailable' | 'missing-transaction';
+  } {
     const result = commitTransactionState(transactionStack, transactionId);
     if (!result?.committedId) {
-      return;
+      return {
+        ok: false,
+        reason: transactionStack.length === 0 ? 'unavailable' : 'missing-transaction',
+      };
     }
 
     transactionStack = result.stack;
@@ -498,16 +511,27 @@ export function createDesignerCore(
       pushHistory();
     }
     emit({ type: 'transactionCommitted', transactionId: result.committedId });
+    return { ok: true, transactionId: result.committedId };
   }
 
-  function rollbackTransaction(transactionId?: string): void {
+  function rollbackTransaction(transactionId?: string): {
+    ok: boolean;
+    transactionId?: string;
+    reason?: 'unavailable' | 'missing-transaction';
+  } {
     const result = rollbackTransactionState(transactionStack, transactionId);
     if (!result) {
-      return;
+      return {
+        ok: false,
+        reason: transactionStack.length === 0 ? 'unavailable' : 'missing-transaction',
+      };
     }
 
     transactionStack = result.stack;
     replaceDocument(result.snapshotBefore, getCurrentRevision(historyState) ?? docRevision);
+    if (treeOwner && result.treeSnapshotBefore) {
+      treeOwner.setTreeDocument(result.treeSnapshotBefore);
+    }
     resetShellViewportFromDocument(shellState, doc);
     for (const rolledBackId of result.rolledBackIds) {
       emit({ type: 'transactionRolledBack', transactionId: rolledBackId });
@@ -516,6 +540,7 @@ export function createDesignerCore(
     emit({ type: 'documentChanged', doc });
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     updateDirtyState();
+    return { ok: true, transactionId: result.rolledBackIds[0] };
   }
 
   return {

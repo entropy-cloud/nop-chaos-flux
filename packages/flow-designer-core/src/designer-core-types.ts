@@ -83,7 +83,7 @@ export interface DesignerCore {
   layoutNodes(positions: Map<string, { x: number; y: number }>): void;
 
   beginTransaction(label?: string, transactionId?: string): string;
-  commitTransaction(transactionId?: string): void;
-  rollbackTransaction(transactionId?: string): void;
+  commitTransaction(transactionId?: string): { ok: boolean; transactionId?: string; reason?: 'unavailable' | 'missing-transaction' };
+  rollbackTransaction(transactionId?: string): { ok: boolean; transactionId?: string; reason?: 'unavailable' | 'missing-transaction' };
   isInTransaction(): boolean;
 }
