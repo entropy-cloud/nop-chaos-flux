@@ -175,39 +175,39 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           </Button>
         </div>
       </div>
-      <Tabs data-orientation="horizontal" className="flex min-h-0 flex-1 flex-col gap-0">
+      <Tabs
+        value={activePanel}
+        onValueChange={(value) => setActivePanel(value as 'datasets' | 'fields')}
+        data-orientation="horizontal"
+        className="flex min-h-0 flex-1 flex-col gap-0"
+      >
         <TabsList variant="line" className="w-full rounded-none border-b border-border px-0 shrink-0">
-        <TabsTrigger
-          value="datasets"
-          data-state={activePanel === 'datasets' ? 'active' : 'inactive'}
-          onClick={() => setActivePanel('datasets')}
-          className="flex-1 py-2.5"
-        >
-          <Database className="w-3.5 h-3.5" />
-          <span>{t('flux.wordEditor.datasets')}</span>
-        </TabsTrigger>
-        <TabsTrigger
-          value="fields"
-          data-state={activePanel === 'fields' ? 'active' : 'inactive'}
-          onClick={() => setActivePanel('fields')}
-          className="flex-1 py-2.5"
-        >
-          <Columns className="w-3.5 h-3.5" />
-          <span>{t('flux.wordEditor.fields')}</span>
-        </TabsTrigger>
+          <TabsTrigger
+            value="datasets"
+            className="flex-1 py-2.5"
+          >
+            <Database className="w-3.5 h-3.5" />
+            <span>{t('flux.wordEditor.datasets')}</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="fields"
+            className="flex-1 py-2.5"
+          >
+            <Columns className="w-3.5 h-3.5" />
+            <span>{t('flux.wordEditor.fields')}</span>
+          </TabsTrigger>
         </TabsList>
-      <TabsContent value={activePanel} className="flex-1 min-h-0 overflow-y-auto">
-        {activePanel === 'datasets' ? (
+        <TabsContent value="datasets" className="flex-1 min-h-0 overflow-y-auto">
           <DatasetPanel
             store={datasetStore}
             onAddDataset={actions.handleAddDataset}
             onEditDataset={actions.handleEditDataset}
             showHeader={false}
           />
-        ) : (
+        </TabsContent>
+        <TabsContent value="fields" className="flex-1 min-h-0 overflow-y-auto">
           <FieldList store={datasetStore} onFieldClick={actions.handleFieldClick} showHeader={false} />
-        )}
-      </TabsContent>
+        </TabsContent>
       </Tabs>
     </div>
   );

@@ -29,6 +29,9 @@ describe('word editor dialog accessibility', () => {
 
     expect(screen.getByLabelText('Name *')).toBeTruthy();
     expect(screen.getByLabelText('Type')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Add Column' }));
+    expect(screen.getByPlaceholderText('Column description')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Remove column 1' })).toBeTruthy();
 
     rerender(<CodeDialog open={true} onClose={() => undefined} onSave={() => undefined} />);
 

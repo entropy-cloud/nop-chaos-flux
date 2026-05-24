@@ -95,75 +95,72 @@ export function ExprInsertDialog({
         </DialogHeader>
 
         <DialogBody>
-          <Tabs data-orientation="horizontal" className="flex-col gap-0">
+          <Tabs
+            value={exprType}
+            onValueChange={(value) => setExprType(value as ExprType)}
+            data-orientation="horizontal"
+            className="flex-col gap-0"
+          >
             <TabsList className="mb-4">
-              <TabsTrigger
-                value="el"
-                data-state={exprType === 'el' ? 'active' : 'inactive'}
-                onClick={() => setExprType('el')}
-              >
+              <TabsTrigger value="el">
                 {t('flux.wordEditor.elExpression')}
               </TabsTrigger>
-              <TabsTrigger
-                value="xpl"
-                data-state={exprType === 'xpl' ? 'active' : 'inactive'}
-                onClick={() => setExprType('xpl')}
-              >
+              <TabsTrigger value="xpl">
                 {t('flux.wordEditor.xplTag')}
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value={exprType} className="mb-4">
-              {exprType === 'el' ? (
-                <Textarea
-                  id={expressionInputId}
-                  aria-label={t('flux.wordEditor.elExpression')}
-                  value={expression}
-                  onChange={(e) => setExpression(e.target.value)}
-                  placeholder="${entity.fieldName}"
-                  className="min-h-[80px]"
-                />
-              ) : (
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor={tagNameInputId}>{t('flux.wordEditor.tagName')}</Label>
-                    <NativeSelect
-                      id={tagNameInputId}
-                      value={selectedTag}
-                      onChange={(e) => {
-                        setSelectedTag(e.target.value);
-                        setTagAttrs({});
-                      }}
-                      className="w-full"
-                    >
-                      {availableTags.map((tag) => (
-                        <NativeSelectOption key={tag} value={tag}>
-                          {tag}
-                        </NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                  </div>
+            <TabsContent value="el" className="mb-4">
+              <Textarea
+                id={expressionInputId}
+                aria-label={t('flux.wordEditor.elExpression')}
+                value={expression}
+                onChange={(e) => setExpression(e.target.value)}
+                placeholder="${entity.fieldName}"
+                className="min-h-[80px]"
+              />
+            </TabsContent>
 
-                  {currentTagDef && currentTagDef.defaultAttrs && (
-                    <div className="space-y-2">
-                      {Object.entries(currentTagDef.defaultAttrs).map(([attrName]) => (
-                        <div key={attrName}>
-                          <Label htmlFor={`expr-insert-attr-${attrName}`}>{attrName}</Label>
-                          <Input
-                            id={`expr-insert-attr-${attrName}`}
-                            value={tagAttrs[attrName] || ''}
-                            onChange={(e) =>
-                              setTagAttrs((prev) => ({ ...prev, [attrName]: e.target.value }))
-                            }
-                            placeholder={currentTagDef.defaultAttrs?.[attrName] || ''}
-                            size="sm"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
+            <TabsContent value="xpl" className="mb-4">
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor={tagNameInputId}>{t('flux.wordEditor.tagName')}</Label>
+                  <NativeSelect
+                    id={tagNameInputId}
+                    value={selectedTag}
+                    onChange={(e) => {
+                      setSelectedTag(e.target.value);
+                      setTagAttrs({});
+                    }}
+                    className="w-full"
+                  >
+                    {availableTags.map((tag) => (
+                      <NativeSelectOption key={tag} value={tag}>
+                        {tag}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
                 </div>
-              )}
+
+                {currentTagDef && currentTagDef.defaultAttrs && (
+                  <div className="space-y-2">
+                    {Object.entries(currentTagDef.defaultAttrs).map(([attrName]) => (
+                      <div key={attrName}>
+                        <Label htmlFor={`expr-insert-attr-${attrName}`}>{attrName}</Label>
+                        <Input
+                          id={`expr-insert-attr-${attrName}`}
+                          value={tagAttrs[attrName] || ''}
+                          onChange={(e) =>
+                            setTagAttrs((prev) => ({ ...prev, [attrName]: e.target.value }))
+                          }
+                          placeholder={currentTagDef.defaultAttrs?.[attrName] || ''}
+                          size="sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         </DialogBody>

@@ -230,7 +230,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                                 onChange={(e) =>
                                   handleColumnChange(index, 'description', e.target.value)
                                 }
-                                placeholder="Column description"
+                                placeholder={t('flux.wordEditor.columnDescriptionPlaceholder')}
                                 size="sm"
                               />
                             </div>
@@ -240,8 +240,8 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                             variant="ghost"
                             size="icon-xs"
                             onClick={() => handleRemoveColumn(index)}
-                            title="Remove column"
-                            aria-label={`Remove column ${index + 1}`}
+                            title={t('flux.wordEditor.removeColumn')}
+                            aria-label={t('flux.wordEditor.removeColumnWithIndex', { index: index + 1 })}
                             className="mt-5 text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="w-4 h-4" />

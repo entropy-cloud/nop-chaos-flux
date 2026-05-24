@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createContext, useContext } from 'react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import type { TemplateExpr } from '@nop-chaos/word-editor-core';
 import { ExprInsertDialog } from '../dialogs/expr-insert-dialog.js';
+
+const TabsMockContext = createContext<((value: string) => void) | undefined>(undefined);
 
 vi.mock('@nop-chaos/ui', () => {
   return {
@@ -42,13 +45,28 @@ vi.mock('@nop-chaos/ui', () => {
       </select>
     ),
     NativeSelectOption: ({ value, children }: any) => <option value={value}>{children}</option>,
-    Tabs: ({ children }: any) => <div data-testid="tabs">{children}</div>,
-    TabsList: ({ children }: any) => <div data-testid="tabs-list">{children}</div>,
-    TabsTrigger: ({ children, onClick, ...props }: any) => (
-      <button type="button" data-testid="tabs-trigger" onClick={onClick} {...props}>
-        {children}
-      </button>
+    Tabs: ({ children, onValueChange }: any) => (
+      <TabsMockContext.Provider value={onValueChange}>
+        <div data-testid="tabs">{children}</div>
+      </TabsMockContext.Provider>
     ),
+    TabsList: ({ children }: any) => <div data-testid="tabs-list">{children}</div>,
+    TabsTrigger: ({ children, value, onClick, ...props }: any) => {
+      const onValueChange = useContext(TabsMockContext);
+      return (
+        <button
+          type="button"
+          data-testid="tabs-trigger"
+          onClick={(event) => {
+            onClick?.(event);
+            onValueChange?.(value);
+          }}
+          {...props}
+        >
+          {children}
+        </button>
+      );
+    },
     TabsContent: ({ children }: any) => <div data-testid="tabs-content">{children}</div>,
     Label: ({ children, ...props }: any) => (
       <label data-testid="label" {...props}>
