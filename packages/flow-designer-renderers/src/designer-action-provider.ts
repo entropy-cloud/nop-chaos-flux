@@ -1,8 +1,5 @@
-import type {
-  ActionNamespaceProvider,
-  FluxValueShape,
-  HostCapabilityContract,
-} from '@nop-chaos/flux-core';
+import { validateHostMethodPayload } from '@nop-chaos/flux-core';
+import type { ActionNamespaceProvider, HostCapabilityContract } from '@nop-chaos/flux-core';
 import type { DesignerCore } from '@nop-chaos/flow-designer-core';
 import { createDesignerCommandAdapter } from './designer-command-adapter.js';
 import type { DesignerCommandAdapter } from './designer-command-adapter.js';
@@ -11,49 +8,8 @@ import { FLOW_DESIGNER_HOST_METHOD_CONTRACTS } from './designer-manifest.js';
 
 type CommandRecord = Record<string, unknown>;
 
-function isCommandRecord(payload: unknown): payload is CommandRecord {
-  return Boolean(payload) && typeof payload === 'object' && !Array.isArray(payload);
-}
-
-function matchesShape(value: unknown, shape: FluxValueShape): boolean {
-  switch (shape.kind) {
-    case 'unknown':
-      return true;
-    case 'string':
-      return typeof value === 'string';
-    case 'number':
-      return typeof value === 'number' && Number.isFinite(value);
-    case 'boolean':
-      return typeof value === 'boolean';
-    case 'null':
-      return value === null;
-    case 'literal':
-      return value === shape.value;
-    case 'array':
-      return Array.isArray(value) && value.every((item) => matchesShape(item, shape.item));
-    case 'union':
-      return shape.anyOf.some((variant) => matchesShape(value, variant));
-    case 'object': {
-      if (!isCommandRecord(value)) {
-        return false;
-      }
-      const optional = new Set(shape.optional ?? []);
-      for (const [key, fieldShape] of Object.entries(shape.fields)) {
-        if (!(key in value)) {
-          if (!optional.has(key)) {
-            return false;
-          }
-          continue;
-        }
-        if (!matchesShape(value[key], fieldShape)) {
-          return false;
-        }
-      }
-      return true;
-    }
-    default:
-      return false;
-  }
+function isCommandRecord(value: unknown): value is CommandRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function validateMethodPayload(
@@ -61,28 +17,10 @@ function validateMethodPayload(
   payload: unknown,
 ): { ok: true; args: CommandRecord } | { ok: false; error: Error } {
   const contract = (FLOW_DESIGNER_HOST_METHOD_CONTRACTS as HostCapabilityContract['methods'])[method];
-  if (!contract?.args) {
-    if (payload === undefined) {
-      return { ok: true, args: {} };
-    }
-    if (isCommandRecord(payload)) {
-      return { ok: true, args: payload };
-    }
-    return {
-      ok: false,
-      error: new Error(`designer:${method} does not accept a non-object payload.`),
-    };
-  }
-
-  const args = payload === undefined ? {} : payload;
-  if (!matchesShape(args, contract.args)) {
-    return {
-      ok: false,
-      error: new Error(`designer:${method} payload does not match the published host args contract.`),
-    };
-  }
-
-  return { ok: true, args: args as CommandRecord };
+  const validation = validateHostMethodPayload('designer', method, payload, contract);
+  return validation.ok
+    ? { ok: true, args: validation.args as CommandRecord }
+    : validation;
 }
 
 function mapPublishedResult(method: string, actionResult: ReturnType<typeof toActionResult>) {
@@ -91,18 +29,14 @@ function mapPublishedResult(method: string, actionResult: ReturnType<typeof toAc
   }
 
   if (method === 'addNode' || method === 'duplicateNode') {
-    const nodeId =
-      isCommandRecord(actionResult.data) && typeof actionResult.data.id === 'string'
-        ? actionResult.data.id
-        : undefined;
+    const data = actionResult.data;
+    const nodeId = isCommandRecord(data) && typeof data.id === 'string' ? data.id : undefined;
     return { ...actionResult, data: nodeId ? { nodeId } : undefined };
   }
 
   if (method === 'addEdge') {
-    const edgeId =
-      isCommandRecord(actionResult.data) && typeof actionResult.data.id === 'string'
-        ? actionResult.data.id
-        : undefined;
+    const data = actionResult.data;
+    const edgeId = isCommandRecord(data) && typeof data.id === 'string' ? data.id : undefined;
     return { ...actionResult, data: edgeId ? { edgeId } : undefined };
   }
 
@@ -442,12 +376,14 @@ export function createDesignerActionProvider(
           return { ok: true, data: txId };
         }
         case 'commitTransaction': {
-          core.commitTransaction(typeof args.transactionId === 'string' ? args.transactionId : undefined);
-          return { ok: true };
+          return core.commitTransaction(
+            typeof args.transactionId === 'string' ? args.transactionId : undefined,
+          );
         }
         case 'rollbackTransaction': {
-          core.rollbackTransaction(typeof args.transactionId === 'string' ? args.transactionId : undefined);
-          return { ok: true };
+          return core.rollbackTransaction(
+            typeof args.transactionId === 'string' ? args.transactionId : undefined,
+          );
         }
         case 'toggleNodeSelection': {
           core.toggleNodeSelection(args.nodeId as string);

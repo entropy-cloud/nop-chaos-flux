@@ -101,6 +101,8 @@ describe('createDesignerActionProvider', () => {
       toggleGrid: () => undefined,
       save: () => undefined,
       restore: () => undefined,
+      commitTransaction: () => ({ ok: true, transactionId: 'tx-1' }),
+      rollbackTransaction: () => ({ ok: true, transactionId: 'tx-2' }),
     } as any;
 
     const provider = createDesignerActionProvider(core);
@@ -120,11 +122,28 @@ describe('createDesignerActionProvider', () => {
       { source: 'n1', target: 'n2', sourcePort: 'out-1', targetPort: 'in-1' },
       {} as any,
     );
+    const commitResult = await provider.invoke('commitTransaction', { transactionId: 'tx-1' }, {} as any);
+    const rollbackResult = await provider.invoke('rollbackTransaction', { transactionId: 'tx-2' }, {} as any);
 
     expect(addResult).toMatchObject({ ok: true, data: { nodeId: 'n1' } });
     expect(exportResult).toMatchObject({ ok: true, data: '{"ok":true}' });
     expect(branchResult).toMatchObject({ ok: true });
     expect(addEdgeResult).toMatchObject({ ok: true, data: { edgeId: 'e1' } });
+    expect(commitResult).toEqual({ ok: true, transactionId: 'tx-1' });
+    expect(rollbackResult).toEqual({ ok: true, transactionId: 'tx-2' });
+  });
+
+  it('returns structured non-success result for missing transaction ids', async () => {
+    const provider = createDesignerActionProvider({
+      commitTransaction: () => ({ ok: false, reason: 'missing-transaction' }),
+      rollbackTransaction: () => ({ ok: false, reason: 'unavailable' }),
+    } as any);
+
+    const commitResult = await provider.invoke('commitTransaction', { transactionId: 'missing' }, {} as any);
+    const rollbackResult = await provider.invoke('rollbackTransaction', undefined, {} as any);
+
+    expect(commitResult).toEqual({ ok: false, reason: 'missing-transaction' });
+    expect(rollbackResult).toEqual({ ok: false, reason: 'unavailable' });
   });
 
   it('rejects payloads that do not match the published manifest args contract', async () => {
@@ -147,6 +166,11 @@ describe('createDesignerActionProvider', () => {
 
     const addNodeResult = await provider.invoke('addNode', { position: { x: 1, y: 2 } }, {} as any);
     const toggleResult = await provider.invoke('toggleNodeSelection', { edgeId: 'e1' }, {} as any);
+    const moveBranchResult = await provider.invoke(
+      'moveBranch',
+      { nodeId: 'node-1', branchId: 'branch-1', direction: 'up' },
+      {} as any,
+    );
 
     expect(addNodeResult).toMatchObject({
       ok: false,
@@ -158,6 +182,12 @@ describe('createDesignerActionProvider', () => {
       ok: false,
       error: expect.objectContaining({
         message: 'designer:toggleNodeSelection payload does not match the published host args contract.',
+      }),
+    });
+    expect(moveBranchResult).toMatchObject({
+      ok: false,
+      error: expect.objectContaining({
+        message: 'designer:moveBranch payload does not match the published host args contract.',
       }),
     });
   });
@@ -322,15 +352,7 @@ describe('flowDesignerRendererDefinitions', () => {
     );
     expect(designerPageDef?.propContracts?.config?.required).toBe(true);
     expect(designerPageDef?.propContracts?.statusPath).toBeTruthy();
-    expect(designerPageDef?.scopeExportContracts?.$designer?.kind).toBe('object');
-    expect(designerPageDef?.scopeExportContracts?.$designer?.fields).toMatchObject({
-      kind: { kind: 'literal', value: 'designer' },
-      dirty: { kind: 'boolean' },
-      canUndo: { kind: 'boolean' },
-      canRedo: { kind: 'boolean' },
-      selectionKind: { kind: 'union' },
-      selectionCount: { kind: 'number' },
-    });
+    expect(designerPageDef?.scopeExportContracts).toBeUndefined();
     expect(designerPageDef?.hostContract?.family).toBe('designer');
     expect(designerPageDef?.hostContract?.defaultVersion).toBe('1.0');
     expect(designerPageDef?.hostContract?.capabilityPublication).toMatchObject({

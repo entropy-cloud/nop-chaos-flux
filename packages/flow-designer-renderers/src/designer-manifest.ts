@@ -199,7 +199,14 @@ const designerCapabilities: HostCapabilityContract = {
         fields: {
           nodeId: { kind: 'string' },
           branchId: { kind: 'string' },
-          direction: { kind: 'string', description: 'left or right' },
+          direction: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'left' },
+              { kind: 'literal', value: 'right' },
+            ],
+            description: 'left or right',
+          },
         },
       },
       description: 'Move a branch left or right within a tree-mode branch group',
@@ -310,6 +317,21 @@ const designerCapabilities: HostCapabilityContract = {
         },
         optional: ['transactionId'],
       },
+      result: {
+        kind: 'object',
+        fields: {
+          ok: { kind: 'boolean' },
+          transactionId: { kind: 'string' },
+          reason: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'unavailable' },
+              { kind: 'literal', value: 'missing-transaction' },
+            ],
+          },
+        },
+        optional: ['transactionId', 'reason'],
+      },
       description: 'Commit current transaction',
     },
     rollbackTransaction: {
@@ -319,6 +341,21 @@ const designerCapabilities: HostCapabilityContract = {
           transactionId: { kind: 'string' },
         },
         optional: ['transactionId'],
+      },
+      result: {
+        kind: 'object',
+        fields: {
+          ok: { kind: 'boolean' },
+          transactionId: { kind: 'string' },
+          reason: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'unavailable' },
+              { kind: 'literal', value: 'missing-transaction' },
+            ],
+          },
+        },
+        optional: ['transactionId', 'reason'],
       },
       description: 'Rollback current transaction',
     },
