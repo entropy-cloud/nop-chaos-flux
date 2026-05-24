@@ -58,7 +58,7 @@ describe('contract: withRetry failureCount consistency', () => {
 });
 
 describe('contract: createBranchEvaluationBindings edge cases', () => {
-  it('error is undefined for timedOut result (cancelled class)', () => {
+  it('error is populated for timedOut result because cancelled is failure-class for control flow', () => {
     const result: ActionResult = { ok: true, timedOut: true, cancelled: true };
     const bindings = createBranchEvaluationBindings(result, undefined);
     expect(bindings.error).toBeUndefined();

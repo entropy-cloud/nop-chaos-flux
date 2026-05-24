@@ -228,13 +228,13 @@ async function runParallelActions(
   );
 
   const representativeFailure = results.find(
-    (result) => { const cls = classifyActionResult(result); return cls === 'failure' || cls === 'cancelled'; },
+    (result) => isFailureClass(result),
   );
   const representativeError =
     representativeFailure ? createParallelFailureError(representativeFailure) : undefined;
 
   return finishAction(ctx, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
-    ok: results.every((result) => { const cls = classifyActionResult(result); return cls !== 'failure' && cls !== 'cancelled'; }),
+    ok: results.every((result) => !isFailureClass(result)),
     data: results,
     results,
     error: representativeError,
@@ -536,7 +536,7 @@ async function dispatch(
           evaluationBindings: branchBindings,
         },
       );
-    } else if (resultClass === 'failure' && normalizedAction.onError) {
+    } else if (isFailureClass(result) && normalizedAction.onError) {
       const eventType =
         typeof (actionCtx.event as { type?: unknown } | undefined)?.type === 'string'
           ? (actionCtx.event as { type: string }).type
@@ -583,8 +583,8 @@ async function dispatch(
 
     reportUnhandledFailureClass(ctx, currentActionCtx, result, Boolean(normalizedAction.onError));
 
-    if ((resultClass === 'success' || resultClass === 'failure' || resultClass === 'cancelled') && normalizedAction.onSettled) {
-      const settledEventType = resultClass === 'failure' ? 'actionSettledError' : 'actionSettled';
+    if ((resultClass === 'success' || isFailureClass(result)) && normalizedAction.onSettled) {
+      const settledEventType = isFailureClass(result) ? 'actionSettledError' : 'actionSettled';
 
       try {
         const settledResult = await dispatch(
@@ -630,7 +630,7 @@ async function dispatch(
       }
     }
 
-    if (resultClass === 'failure' && !normalizedAction.control?.continueOnError) {
+    if (isFailureClass(result) && !normalizedAction.control?.continueOnError) {
       return hasOwnDefined(previous, 'onErrorError') ? previous : result;
     }
   }

@@ -8,14 +8,21 @@ import {
   staticCompiled,
 } from './action-dispatcher-test-support.js';
 
-describe('cancelled result does not trigger onError handler', () => {
-  it('skips onError when action returns cancelled result', async () => {
+describe('cancelled result follows failure-class semantics', () => {
+  it('runs onError when action returns cancelled result', async () => {
+    const order: string[] = [];
     const adapter = createMockAdapter({
-      invokeBuiltInAction: vi.fn(async () => ({
-        ok: false,
-        cancelled: true,
-        error: new Error('aborted'),
-      })),
+      invokeBuiltInAction: vi.fn(async (invocation) => {
+        order.push(invocation.action);
+        if (invocation.action === 'setValue') {
+          return {
+            ok: false,
+            cancelled: true,
+            error: new Error('aborted'),
+          };
+        }
+        return { ok: true };
+      }),
     });
     const { dispatcher, runtime } = createTestDispatcher({ adapter });
 
@@ -42,7 +49,7 @@ describe('cancelled result does not trigger onError handler', () => {
     );
 
     expect(result.cancelled).toBe(true);
-    expect(adapter.invokeBuiltInAction).toHaveBeenCalledOnce();
+    expect(order).toEqual(['setValue', 'showToast']);
   });
 
   it('runs onSettled for cancelled result', async () => {
@@ -84,7 +91,7 @@ describe('cancelled result does not trigger onError handler', () => {
     expect(order).toContain('showToast');
   });
 
-  it('does not stop chain for cancelled result', async () => {
+  it('stops chain for cancelled result when continueOnError is not set', async () => {
     const order: string[] = [];
     const adapter = createMockAdapter({
       invokeBuiltInAction: vi.fn(async (invocation) => {
@@ -105,6 +112,42 @@ describe('cancelled result does not trigger onError handler', () => {
           targeting: {},
           control: {},
           source: { action: 'setValue', args: { path: 'first', value: 1 } },
+        },
+        {
+          action: 'setValue',
+          payload: { args: staticCompiled({ path: 'second', value: 2 }) },
+          targeting: {},
+          control: {},
+          source: { action: 'setValue', args: { path: 'second', value: 2 } },
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(order).toEqual(['setValue']);
+  });
+
+  it('continues after cancelled result only when continueOnError is true', async () => {
+    const order: string[] = [];
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: vi.fn(async (invocation) => {
+        order.push(invocation.action);
+        if (invocation.args && (invocation.args as Record<string, unknown>).path === 'first') {
+          return { ok: false, cancelled: true };
+        }
+        return { ok: true };
+      }),
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'setValue',
+          payload: { args: staticCompiled({ path: 'first', value: 1 }) },
+          targeting: {},
+          control: { continueOnError: true },
+          source: { action: 'setValue', args: { path: 'first', value: 1 }, continueOnError: true },
         },
         {
           action: 'setValue',

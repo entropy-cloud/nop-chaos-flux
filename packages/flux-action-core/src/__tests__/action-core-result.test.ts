@@ -67,12 +67,12 @@ describe('isFailureClass', () => {
     expect(isFailureClass({ ok: false })).toBe(true);
   });
 
-  it('returns false for cancelled', () => {
-    expect(isFailureClass({ ok: false, cancelled: true })).toBe(false);
+  it('returns true for cancelled', () => {
+    expect(isFailureClass({ ok: false, cancelled: true })).toBe(true);
   });
 
-  it('returns false for timedOut', () => {
-    expect(isFailureClass({ ok: false, timedOut: true })).toBe(false);
+  it('returns true for timedOut', () => {
+    expect(isFailureClass({ ok: false, timedOut: true })).toBe(true);
   });
 
   it('returns false for success', () => {
@@ -175,11 +175,11 @@ describe('createBranchEvaluationBindings result classification integration', () 
     expect(bindings.error).toBeUndefined();
   });
 
-  it('does not expose error for cancelled result', () => {
+  it('exposes error for cancelled result because cancelled is failure-class for control flow', () => {
     const error = new Error('cancelled');
     const result: ActionResult = { ok: false, cancelled: true, error };
     const bindings = createBranchEvaluationBindings(result, undefined);
-    expect(bindings.error).toBeUndefined();
+    expect(bindings.error).toBe(error);
   });
 
   it('chains prevResult through multiple branches', () => {

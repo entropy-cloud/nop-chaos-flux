@@ -80,7 +80,8 @@ export function classifyActionResult(result: ActionResult): ActionResultClass {
 }
 
 export function isFailureClass(result: ActionResult): boolean {
-  return classifyActionResult(result) === 'failure';
+  const resultClass = classifyActionResult(result);
+  return resultClass === 'failure' || resultClass === 'cancelled';
 }
 
 function getBindingValue(bindings: Record<string, unknown>, path: string): unknown {

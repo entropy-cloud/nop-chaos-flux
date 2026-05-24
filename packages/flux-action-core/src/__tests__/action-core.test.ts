@@ -124,6 +124,14 @@ describe('isFailureClass', () => {
   it('returns false for skipped results', () => {
     expect(isFailureClass({ ok: true, skipped: true })).toBe(false);
   });
+
+  it('returns true for cancelled results', () => {
+    expect(isFailureClass({ ok: false, cancelled: true })).toBe(true);
+  });
+
+  it('returns true for timed out results', () => {
+    expect(isFailureClass({ ok: false, timedOut: true })).toBe(true);
+  });
 });
 
 describe('normalizeActionResult', () => {
