@@ -69,7 +69,7 @@ describe('report designer host action provider', () => {
       throw thrown;
     });
 
-    const result = await provider.invoke('save', {}, {} as any);
+    const result = await provider.invoke('save', undefined, {} as any);
 
     expect(result.ok).toBe(false);
     expect(result.error).toBe(thrown);
@@ -101,6 +101,26 @@ describe('report designer host action provider', () => {
     expect((result.error as Error).message).toBe(
       'report-designer:updateMeta payload does not match the published host args contract.',
     );
+  });
+
+  it('rejects preview modes outside the published command union', async () => {
+    const provider = createReportDesignerActionProvider(async () => ({ ok: true, changed: false }));
+
+    const result = await provider.invoke('preview', { mode: 'modal' }, {} as any);
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe(
+      'report-designer:preview payload does not match the published host args contract.',
+    );
+  });
+
+  it('rejects payloads for no-args report-designer host methods', async () => {
+    const provider = createReportDesignerActionProvider(async () => ({ ok: true, changed: false }));
+
+    const result = await provider.invoke('save', {}, {} as any);
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe('report-designer:save does not accept a payload.');
   });
 
   it('rejects field drops that target non-cell report selections', async () => {

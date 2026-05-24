@@ -39,7 +39,7 @@ import { createReportDesignerActionProvider } from './host-action-provider.js';
 import { createReportFieldDragPayload, ReportFieldPanel } from './report-field-panel.js';
 import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
 import { getFieldCount } from './helpers.js';
-import { useReportDesignerHostScope } from './host-data.js';
+import { buildAggregatedRuntimeSummary, useReportDesignerHostScope } from './host-data.js';
 import type { ReportDesignerPageSchema } from './types.js';
 
 export interface ReportPageSnapshotSlice {
@@ -529,6 +529,7 @@ export function ReportDesignerPageRenderer(
     : undefined;
   const statusPath =
     typeof props.props.statusPath === 'string' ? props.props.statusPath : undefined;
+  const aggregatedRuntime = buildAggregatedRuntimeSummary(snapshot, spreadsheetSnapshot);
 
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -544,10 +545,10 @@ export function ReportDesignerPageRenderer(
     statusPath,
     {
       kind: 'report-designer',
-      dirty: snapshot.dirty || spreadsheetSnapshot.dirty,
+      dirty: aggregatedRuntime.dirty,
       busy: snapshot.preview.running,
-      canUndo: snapshot.canUndo || spreadsheetSnapshot.history.canUndo,
-      canRedo: snapshot.canRedo || spreadsheetSnapshot.history.canRedo,
+      canUndo: aggregatedRuntime.canUndo,
+      canRedo: aggregatedRuntime.canRedo,
       previewRunning: snapshot.preview.running,
       selectionKind: snapshot.selectionTarget?.kind,
       fieldSourceCount: snapshot.fieldSources.length,

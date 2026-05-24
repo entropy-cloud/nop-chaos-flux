@@ -31,6 +31,33 @@ describe('buildReportDesignerScopeData', () => {
     expect(runtime.dirty).toBe(true);
   });
 
+  it('aggregates spreadsheet-only dirty and history into top-level runtime summary', async () => {
+    const spreadsheet = createEmptyDocument();
+    const document = createReportTemplateDocument(spreadsheet, 'Spreadsheet Runtime Report');
+    const core = createReportDesignerCore({
+      document,
+      config: { kind: 'report-template' },
+    });
+    const spreadsheetCore = createSpreadsheetCore({ document: spreadsheet });
+
+    await spreadsheetCore.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId: spreadsheet.workbook.sheets[0]!.id, address: 'A1', row: 0, col: 0 },
+      value: 'changed',
+    });
+
+    const scopeData = buildReportDesignerScopeData(core, core.getSnapshot(), spreadsheetCore.getSnapshot());
+    const runtime = scopeData.runtime as { dirty?: boolean; canUndo?: boolean; canRedo?: boolean };
+    const designer = scopeData.designer as { dirty?: boolean; canUndo?: boolean; canRedo?: boolean };
+
+    expect(designer.dirty).toBe(false);
+    expect(designer.canUndo).toBe(false);
+    expect(designer.canRedo).toBe(false);
+    expect(runtime.dirty).toBe(true);
+    expect(runtime.canUndo).toBe(true);
+    expect(runtime.canRedo).toBe(false);
+  });
+
   it('keeps canonical report designer projection vocabulary aligned', () => {
     const spreadsheet = createEmptyDocument();
     const document = createReportTemplateDocument(spreadsheet, 'Vocabulary Report');
@@ -59,6 +86,26 @@ describe('buildReportDesignerScopeData', () => {
     expect(designer).toHaveProperty('canUndo', false);
     expect(designer).toHaveProperty('canRedo', false);
     expect(Array.isArray(designer.fieldSources)).toBe(true);
+  });
+
+  it('normalizes absent host projection fields to null where the manifest publishes null unions', async () => {
+    const spreadsheet = createEmptyDocument();
+    const document = createReportTemplateDocument(spreadsheet, 'Null Projection Report');
+    const core = createReportDesignerCore({
+      document,
+      config: { kind: 'report-template' },
+    });
+    await core.setSelectionTarget(undefined);
+
+    const scopeData = buildReportDesignerScopeData(core, core.getSnapshot());
+
+    expect(scopeData.selectionTarget).toBeNull();
+    expect((scopeData.runtime as { previewMode?: unknown }).previewMode).toBeNull();
+    expect(scopeData.activeCell).toBeNull();
+    expect(scopeData.activeRange).toBeNull();
+    expect(scopeData.meta).toBeNull();
+    expect(scopeData.inspectorPanels).toBeNull();
+    expect(scopeData.spreadsheet).toBeNull();
   });
 
   it('keeps top-level activeSheet aligned with workbook and row/column targets', async () => {
@@ -150,12 +197,20 @@ describe('buildReportDesignerScopeData', () => {
   it('publishes structured spreadsheet.selection shape in the manifest', () => {
     const selectionShape = REPORT_DESIGNER_MANIFEST_V1.projection.fields.spreadsheet.schema;
 
-    expect(selectionShape.kind).toBe('object');
-    if (selectionShape.kind !== 'object') {
+    expect(selectionShape.kind).toBe('union');
+    if (selectionShape.kind !== 'union') {
       return;
     }
 
-    const spreadsheetSelection = selectionShape.fields.selection;
+    const spreadsheetObject = selectionShape.anyOf.find(
+      (variant) => variant.kind === 'object',
+    );
+    expect(spreadsheetObject?.kind).toBe('object');
+    if (!spreadsheetObject || spreadsheetObject.kind !== 'object') {
+      return;
+    }
+
+    const spreadsheetSelection = spreadsheetObject.fields.selection;
     expect(spreadsheetSelection.kind).toBe('union');
     if (spreadsheetSelection.kind !== 'union') {
       return;

@@ -10,6 +10,23 @@ import type {
 } from '@nop-chaos/report-designer-core';
 import { getFieldCount } from './helpers.js';
 
+export interface ReportDesignerAggregatedRuntimeSummary {
+  canUndo: boolean;
+  canRedo: boolean;
+  dirty: boolean;
+}
+
+export function buildAggregatedRuntimeSummary(
+  snapshot: ReportDesignerRuntimeSnapshot,
+  spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
+): ReportDesignerAggregatedRuntimeSummary {
+  return {
+    canUndo: snapshot.canUndo || Boolean(spreadsheetSnapshot?.history.canUndo),
+    canRedo: snapshot.canRedo || Boolean(spreadsheetSnapshot?.history.canRedo),
+    dirty: snapshot.dirty || Boolean(spreadsheetSnapshot?.dirty),
+  };
+}
+
 function getActiveSheet(snapshot: ReportDesignerRuntimeSnapshot) {
   const workbook = snapshot.document.spreadsheet.workbook;
   const target = snapshot.selectionTarget;
@@ -76,8 +93,8 @@ function getSpreadsheetSelectionTarget(snapshot: SpreadsheetRuntimeSnapshot) {
 
 function buildSpreadsheetScopeData(snapshot: SpreadsheetRuntimeSnapshot) {
   const activeSheet = getSpreadsheetActiveSheet(snapshot);
-  const activeCell = snapshot.selection.kind === 'cell' ? snapshot.selection.anchor : undefined;
-  const activeRange = snapshot.selection.kind === 'range' ? snapshot.selection.range : undefined;
+  const activeCell = snapshot.selection.kind === 'cell' ? (snapshot.selection.anchor ?? null) : null;
+  const activeRange = snapshot.selection.kind === 'range' ? (snapshot.selection.range ?? null) : null;
 
   return {
     workbook: snapshot.document.workbook,
@@ -103,9 +120,9 @@ export interface ReportDesignerHostData {
     documentId: string;
     documentName: string;
     selectionTarget: ReportSelectionTarget | undefined;
-    selectionKind: ReportSelectionTarget['kind'] | undefined;
+    selectionKind: ReportSelectionTarget['kind'] | null;
     inspector: ReportDesignerRuntimeSnapshot['inspector'];
-    inspectorPanels: ReportDesignerRuntimeSnapshot['inspector']['resolvedSchema'] | undefined;
+    inspectorPanels: ReportDesignerRuntimeSnapshot['inspector']['resolvedSchema'] | null;
     fieldDrag: ReportDesignerRuntimeSnapshot['fieldDrag'];
     preview: ReportDesignerRuntimeSnapshot['preview'];
     activeMeta: ReportDesignerRuntimeSnapshot['activeMeta'];
@@ -148,9 +165,9 @@ export function createHostData(
       documentId: snapshot.document.id,
       documentName: snapshot.document.name,
       selectionTarget: snapshot.selectionTarget,
-      selectionKind: snapshot.selectionTarget?.kind,
+      selectionKind: snapshot.selectionTarget?.kind ?? null,
       inspector: snapshot.inspector,
-      inspectorPanels: snapshot.inspector.resolvedSchema,
+      inspectorPanels: snapshot.inspector.resolvedSchema ?? null,
       fieldDrag: snapshot.fieldDrag,
       preview: snapshot.preview,
       activeMeta: snapshot.activeMeta,
@@ -175,6 +192,7 @@ export function buildReportDesignerScopeData(
   spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
 ): Record<string, unknown> {
   const fieldCount = getFieldCount(snapshot.fieldSources);
+  const runtime = buildAggregatedRuntimeSummary(snapshot, spreadsheetSnapshot);
   const spreadsheet = spreadsheetSnapshot
     ? buildSpreadsheetScopeData(spreadsheetSnapshot)
     : undefined;
@@ -202,27 +220,27 @@ export function buildReportDesignerScopeData(
       fieldCount,
     },
     runtime: {
-      canUndo: snapshot.canUndo,
-      canRedo: snapshot.canRedo,
+      canUndo: runtime.canUndo,
+      canRedo: runtime.canRedo,
       previewRunning: snapshot.preview.running,
-      previewMode: snapshot.preview.mode,
-      dirty: snapshot.dirty,
+      previewMode: snapshot.preview.mode ?? null,
+      dirty: runtime.dirty,
     },
-    spreadsheet,
-    selectionTarget: snapshot.selectionTarget,
+    spreadsheet: spreadsheet ?? null,
+    selectionTarget: snapshot.selectionTarget ?? null,
     reportDocument,
     workbook,
-    activeSheet,
+    activeSheet: activeSheet ?? null,
     activeCell:
-      snapshot.selectionTarget?.kind === 'cell' ? snapshot.selectionTarget.cell : undefined,
+      snapshot.selectionTarget?.kind === 'cell' ? snapshot.selectionTarget.cell : null,
     activeRange:
-      snapshot.selectionTarget?.kind === 'range' ? snapshot.selectionTarget.range : undefined,
+      snapshot.selectionTarget?.kind === 'range' ? snapshot.selectionTarget.range : null,
     documentName: snapshot.document.name,
     fieldSources: snapshot.fieldSources,
     fieldCount,
     inspector: snapshot.inspector,
-    inspectorPanels: snapshot.inspector.resolvedSchema,
-    meta: snapshot.activeMeta,
+    inspectorPanels: snapshot.inspector.resolvedSchema ?? null,
+    meta: snapshot.activeMeta ?? null,
     preview: snapshot.preview,
   };
 }

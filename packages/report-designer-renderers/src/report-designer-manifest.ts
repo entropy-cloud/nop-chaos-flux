@@ -11,6 +11,7 @@ const metadataBagShape: FluxValueShape = {
   kind: 'object',
   fields: {},
   description: 'Report designer metadata bag.',
+  unknownKeys: 'allow',
 };
 
 const selectionTargetShape: FluxValueShape = {
@@ -249,7 +250,7 @@ const reportDesignerProjection: HostProjectionContract = {
           fieldSourceCount: { kind: 'number' },
           fieldCount: { kind: 'number' },
         },
-        optional: ['selectionKind', 'activeMeta', 'inspectorPanels'],
+        optional: ['selectionTarget', 'selectionKind', 'activeMeta', 'inspectorPanels'],
       },
       description: 'Primary report-designer host projection.',
     },
@@ -258,7 +259,10 @@ const reportDesignerProjection: HostProjectionContract = {
       description: 'Readonly report-designer runtime summary.',
     },
     spreadsheet: {
-      schema: spreadsheetShape,
+      schema: {
+        kind: 'union',
+        anyOf: [{ kind: 'null' }, spreadsheetShape],
+      },
       description: 'Nested spreadsheet projection exposed inside report designer.',
     },
     inspector: {
@@ -273,8 +277,12 @@ const reportDesignerProjection: HostProjectionContract = {
       description: 'Resolved inspector schema for the current target.',
     },
     meta: {
-      schema: metadataBagShape,
+      schema: {
+        kind: 'union',
+        anyOf: [{ kind: 'null' }, metadataBagShape],
+      },
       description: 'Current active metadata bag.',
+      deprecated: false,
     },
     selectionTarget: {
       schema: selectionTargetShape,
@@ -369,7 +377,15 @@ const reportDesignerCapabilities: HostCapabilityContract = {
       args: {
         kind: 'object',
         fields: {
-          mode: { kind: 'string' },
+          mode: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'inline' },
+              { kind: 'literal', value: 'dialog' },
+              { kind: 'literal', value: 'replace-page' },
+              { kind: 'literal', value: 'download' },
+            ],
+          },
           args: { kind: 'object', fields: {} },
         },
         optional: ['mode', 'args'],

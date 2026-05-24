@@ -9,6 +9,7 @@ import type {
   FieldDragState,
   MetadataBag,
 } from '@nop-chaos/report-designer-core';
+import { buildAggregatedRuntimeSummary } from './host-data.js';
 
 export interface ReportDesignerHostSnapshot extends SpreadsheetHostSnapshot {
   designer: {
@@ -71,17 +72,26 @@ export function deriveDesignerHostSnapshot(
   spreadsheet: SpreadsheetHostSnapshot,
   designer: ReportDesignerRuntimeSnapshot,
 ): ReportDesignerHostSnapshot {
-  const runtimeDirty = designer.dirty || spreadsheet.runtime.dirty;
-  const runtimeCanUndo = designer.canUndo || spreadsheet.runtime.canUndo;
-  const runtimeCanRedo = designer.canRedo || spreadsheet.runtime.canRedo;
+  const runtime = buildAggregatedRuntimeSummary(designer, {
+    document: { workbook: spreadsheet.workbook },
+    activeSheetId: spreadsheet.activeSheet?.id ?? '',
+    selection: { kind: 'none' },
+    history: {
+      canUndo: spreadsheet.runtime.canUndo,
+      canRedo: spreadsheet.runtime.canRedo,
+    },
+    readonly: spreadsheet.runtime.readonly,
+    dirty: spreadsheet.runtime.dirty,
+    viewport: spreadsheet.runtime.viewport,
+  } as never);
 
   return {
     ...spreadsheet,
     runtime: {
       ...spreadsheet.runtime,
-      dirty: runtimeDirty,
-      canUndo: runtimeCanUndo,
-      canRedo: runtimeCanRedo,
+      dirty: runtime.dirty,
+      canUndo: runtime.canUndo,
+      canRedo: runtime.canRedo,
     },
     designer: {
       kind: designer.document.kind,
