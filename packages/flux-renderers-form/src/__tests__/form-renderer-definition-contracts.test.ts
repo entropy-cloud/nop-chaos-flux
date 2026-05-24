@@ -59,6 +59,27 @@ describe('form renderer definition contracts', () => {
     }
   });
 
+  it('all input renderers publish form sourcePackage discovery metadata', () => {
+    const inputTypes = [
+      'input-text',
+      'input-email',
+      'input-password',
+      'select',
+      'textarea',
+      'checkbox',
+      'switch',
+      'radio-group',
+      'checkbox-group',
+      'input-number',
+    ];
+    for (const type of inputTypes) {
+      const def = formRendererDefinitions.find((d) => d.type === type);
+      expect(def?.sourcePackage, `${type} should publish form sourcePackage`).toBe(
+        '@nop-chaos/flux-renderers-form',
+      );
+    }
+  });
+
   it('all input renderers have validation', () => {
     const inputTypes = [
       'input-text',

@@ -83,6 +83,8 @@ describe('fieldset collapsible interaction', () => {
     expect(legend.getAttribute('tabindex')).toBe('0');
     expect(legend.getAttribute('aria-expanded')).toBe('false');
     expect(legend.getAttribute('aria-controls')).toBe('42-body');
+    expect(document.querySelector('[data-slot="collapsible"]')).toBeTruthy();
+    expect(document.getElementById('42-body')).toBeTruthy();
     expect(legend.className).toContain('focus-visible:ring-2');
     expect(legend.className).toContain('focus-visible:ring-ring');
 
@@ -153,6 +155,7 @@ describe('fieldset collapsible interaction', () => {
     expect(legend.getAttribute('aria-expanded')).toBe('true');
 
     fireEvent.keyDown(legend, { key: ' ' });
+    fireEvent.keyUp(legend, { key: ' ' });
 
     expect(legend.getAttribute('aria-expanded')).toBe('false');
   });

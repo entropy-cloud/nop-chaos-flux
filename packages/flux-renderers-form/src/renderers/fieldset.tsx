@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, hasRendererSlotContent } from '@nop-chaos/flux-react';
 import { resolveGap } from '@nop-chaos/flux-react';
-import { cn } from '@nop-chaos/ui';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 
 export interface FieldsetSchema extends BaseSchema {
@@ -24,19 +24,6 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
   const [collapsed, setCollapsed] = useState(Boolean(slotProps.collapsed) && collapsible);
   const fieldsetGap = resolveGap(slotProps.gap as number | string | undefined);
 
-  const toggle = () => {
-    if (collapsible) {
-      setCollapsed((prev) => !prev);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (collapsible && (e.key === 'Enter' || e.key === ' ')) {
-        e.preventDefault();
-        setCollapsed((prev) => !prev);
-      }
-    };
-
   const bodyStyle = collapsed ? { display: 'none', ...fieldsetGap.style } : fieldsetGap.style;
 
   return (
@@ -47,45 +34,62 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
       data-collapsible={collapsible || undefined}
       data-collapsed={(collapsible && collapsed) || undefined}
     >
-      {title ? (
-        <legend
-          data-slot="fieldset-title"
-          className={cn(
-            collapsible && 'flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-ring rounded-sm outline-none',
-            slotProps.titleClassName,
-          )}
-          onClick={toggle}
-          onKeyDown={collapsible ? handleKeyDown : undefined}
-          tabIndex={collapsible ? 0 : undefined}
-          role={collapsible ? 'button' : undefined}
-          aria-expanded={collapsible ? !collapsed : undefined}
-          aria-controls={collapsible ? `${props.meta.cid}-body` : undefined}
-          style={collapsible ? { cursor: 'pointer' } : undefined}
-        >
-          {collapsible ? (
-            collapsed ? (
-              <ChevronRightIcon
-                data-slot="fieldset-collapse-icon"
-                className="size-4 shrink-0 text-muted-foreground"
-              />
-            ) : (
-              <ChevronDownIcon
-                data-slot="fieldset-collapse-icon"
-                className="size-4 shrink-0 text-muted-foreground"
-              />
-            )
-          ) : null}
-          {title}
-        </legend>
-      ) : null}
-      <div
-        id={collapsible ? `${props.meta.cid}-body` : undefined}
-        data-slot="fieldset-body"
-        className={cn(fieldsetGap.className, slotProps.bodyClassName)}
-        style={bodyStyle}
-      >
-        {hasRendererSlotContent(bodyContent) ? bodyContent : null}
-      </div>
+      <Collapsible open={!collapsed} onOpenChange={(open) => setCollapsed(!open)}>
+        {title ? (
+          collapsible ? (
+            <CollapsibleTrigger
+              nativeButton={false}
+              aria-controls={`${props.meta.cid}-body`}
+              render={
+                <legend
+                  data-slot="fieldset-title"
+                  className={cn(
+                    'flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-ring rounded-sm outline-none',
+                    slotProps.titleClassName,
+                  )}
+                  style={{ cursor: 'pointer' }}
+                />
+              }
+            >
+              {collapsed ? (
+                <ChevronRightIcon
+                  data-slot="fieldset-collapse-icon"
+                  className="size-4 shrink-0 text-muted-foreground"
+                />
+              ) : (
+                <ChevronDownIcon
+                  data-slot="fieldset-collapse-icon"
+                  className="size-4 shrink-0 text-muted-foreground"
+                />
+              )}
+              {title}
+            </CollapsibleTrigger>
+          ) : (
+            <legend data-slot="fieldset-title" className={slotProps.titleClassName}>
+              {title}
+            </legend>
+          )
+        ) : null}
+        {collapsible ? (
+          <CollapsibleContent
+            keepMounted
+            id={`${props.meta.cid}-body`}
+            data-slot="fieldset-body"
+            className={cn(fieldsetGap.className, slotProps.bodyClassName)}
+            style={bodyStyle}
+          >
+            {hasRendererSlotContent(bodyContent) ? bodyContent : null}
+          </CollapsibleContent>
+        ) : (
+          <div
+            data-slot="fieldset-body"
+            className={cn(fieldsetGap.className, slotProps.bodyClassName)}
+            style={bodyStyle}
+          >
+            {hasRendererSlotContent(bodyContent) ? bodyContent : null}
+          </div>
+        )}
+      </Collapsible>
     </fieldset>
   );
 }

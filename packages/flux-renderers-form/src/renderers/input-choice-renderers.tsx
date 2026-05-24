@@ -140,6 +140,7 @@ export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) 
     readOnly: props.props.readOnly,
   });
   const textareaValue = value as string;
+  const errorId = name ? `${name}-error` : undefined;
 
   return (
     <Textarea
@@ -151,6 +152,8 @@ export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) 
       aria-label={String((props.props.label ?? name) || '') || undefined}
       aria-required={props.props.required ? true : undefined}
       aria-invalid={presentation.showError ? true : undefined}
+      aria-describedby={presentation.showError ? errorId : undefined}
+      aria-errormessage={presentation.showError ? errorId : undefined}
       placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
       className={props.meta.className}
       onFocus={handlers.onFocus}

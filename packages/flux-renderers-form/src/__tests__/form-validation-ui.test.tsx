@@ -193,6 +193,69 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
     expect(field?.hasAttribute('data-field-invalid')).toBe(true);
   });
 
+  it('binds validation errors to the real input-text and textarea controls', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/validation-ui"
+        schema={{
+          type: 'form',
+          data: {
+            title: '',
+            notes: '',
+          },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/post',
+              method: 'post',
+            },
+          },
+          body: [
+            {
+              type: 'input-text',
+              name: 'title',
+              label: 'Title',
+              required: true,
+            },
+            {
+              type: 'textarea',
+              name: 'notes',
+              label: 'Notes',
+              required: true,
+            },
+          ],
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit post',
+              onClick: {
+                action: 'submitForm',
+              },
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Submit post'));
+
+    await screen.findByText('Title is required');
+    await screen.findByText('Notes is required');
+
+    const titleInput = screen.getByRole('textbox', { name: 'Title' });
+    const notesTextarea = screen.getByRole('textbox', { name: 'Notes' });
+
+    expect(titleInput.getAttribute('aria-describedby')).toBe('title-error');
+    expect(titleInput.getAttribute('aria-errormessage')).toBe('title-error');
+    expect(notesTextarea.getAttribute('aria-describedby')).toBe('notes-error');
+    expect(notesTextarea.getAttribute('aria-errormessage')).toBe('notes-error');
+  });
+
   it('keeps form semantic markers free of implicit layout classes', () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);

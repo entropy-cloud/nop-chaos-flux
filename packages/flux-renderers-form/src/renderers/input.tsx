@@ -35,6 +35,7 @@ export function createInputRenderer(inputType: string) {
       readOnly: props.props.readOnly,
     });
     const inputValue = value as string;
+    const errorId = name ? `${name}-error` : undefined;
 
     return (
       <Input
@@ -46,6 +47,8 @@ export function createInputRenderer(inputType: string) {
         aria-label={String((props.props.label ?? name) || '') || undefined}
         aria-required={props.props.required ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}
+        aria-describedby={presentation.showError ? errorId : undefined}
+        aria-errormessage={presentation.showError ? errorId : undefined}
         placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
         className={props.meta.className}
         onFocus={handlers.onFocus}
@@ -94,6 +97,7 @@ export function createFieldValidation(
 export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-text',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
     component: createInputRenderer('text'),
     fields: formFieldRules,
     validation: createFieldValidation(),
@@ -102,6 +106,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'input-email',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
     component: createInputRenderer('email'),
     fields: formFieldRules,
     validation: createFieldValidation(undefined, true),
@@ -110,6 +115,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'input-password',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
     component: createInputRenderer('password'),
     fields: formFieldRules,
     validation: createFieldValidation(),
@@ -118,6 +124,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'select',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
@@ -129,6 +136,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'textarea',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: formFieldRules,
     component: TextareaRenderer,
     validation: createFieldValidation(),
@@ -137,6 +145,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'checkbox',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: formFieldRules,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
@@ -145,6 +154,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'switch',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: formFieldRules,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
@@ -153,6 +163,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'radio-group',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
@@ -164,6 +175,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'checkbox-group',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
@@ -175,6 +187,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   },
   {
     type: 'input-number',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
     fields: formFieldRules,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
