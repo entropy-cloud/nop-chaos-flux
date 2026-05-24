@@ -279,7 +279,8 @@ describe('NopDebuggerPanel', () => {
 
     render(<NopDebuggerPanel controller={controller} />);
 
-    expect(screen.getByText('Action completed')).toBeTruthy();
+    const visiblePanel = screen.getAllByRole('tabpanel').find((panel) => !panel.hasAttribute('hidden'));
+    expect(visiblePanel?.textContent).toContain('Action completed');
   });
 
   it('exposes accessible labels on JSON expand toggles', () => {
@@ -366,6 +367,8 @@ describe('NopDebuggerPanel', () => {
     render(<NopDebuggerPanel controller={controller} />);
 
     expect(screen.getByRole('tablist', { name: '调试器标签页' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: '时间线' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getAllByRole('tabpanel').some((panel) => !panel.hasAttribute('hidden'))).toBe(true);
     expect(screen.getByPlaceholderText('搜索事件、/regex/ 或 path:body.0')).toBeTruthy();
     expect(screen.getByRole('button', { name: '选择元素' })).toBeTruthy();
     expect(screen.getByRole('button', { name: '最小化' })).toBeTruthy();

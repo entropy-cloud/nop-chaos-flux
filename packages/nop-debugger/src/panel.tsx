@@ -1,7 +1,7 @@
 import { useDeferredValue, useEffect, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
-import { Button } from '@nop-chaos/ui';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } from './types.js';
 import { buildOverview } from './diagnostics.js';
@@ -429,88 +429,86 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         </div>
       </div>
 
-      <div className="ndbg-tabs" role="tablist" aria-label={t('flux.debugger.tabsLabel')}>
-        {(['overview', 'timeline', 'network', 'node'] as NopDebuggerTab[]).map((tab) => (
-          <Button
-            key={tab}
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="ndbg-tab"
-            data-active={chrome.activeTab === tab ? '' : undefined}
-            onClick={() => props.controller.setActiveTab(tab)}
-          >
-            {tabLabels[tab]}
-          </Button>
-        ))}
-      </div>
+      <Tabs
+        value={chrome.activeTab}
+        onValueChange={(value) => props.controller.setActiveTab(value as NopDebuggerTab)}
+        className="gap-0"
+      >
+        <TabsList className="ndbg-tabs h-auto w-full justify-start rounded-none bg-transparent p-0" aria-label={t('flux.debugger.tabsLabel')}>
+          {(['overview', 'timeline', 'network', 'node'] as NopDebuggerTab[]).map((tab) => (
+            <TabsTrigger key={tab} value={tab} className="ndbg-tab rounded-none px-3 py-2 data-[active]:bg-transparent">
+              {tabLabels[tab]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      {chrome.activeTab === 'overview' ? (
-        <OverviewTab
-          overview={overview}
-          paused={chrome.paused}
-          strictMode={chrome.strictMode}
-          latestTrace={latestTrace}
-          latestTraceSummary={latestTraceSummary}
-        />
-      ) : null}
+        <TabsContent value="overview">
+          <OverviewTab
+            overview={overview}
+            paused={chrome.paused}
+            strictMode={chrome.strictMode}
+            latestTrace={latestTrace}
+            latestTraceSummary={latestTraceSummary}
+          />
+        </TabsContent>
 
-      {chrome.activeTab === 'timeline' ? (
-        <TimelineTab
-          filters={filters}
-          searchText={searchText}
-          setSearchText={handleSearchTextChange}
-          submitSearch={handleSearchSubmit}
-          searchHistory={searchHistory}
-          applySearchHistory={handleSearchHistorySelect}
-          errorsOnly={errorsOnly}
-          toggleErrorsOnly={toggleErrorsOnly}
-          filterLabels={filterLabels}
-          toggleFilter={(filter) => props.controller.toggleFilter(filter)}
-          errorGroups={errorGroups}
-          errorGroupExpanded={errorGroupExpanded}
-          setErrorGroupExpanded={setErrorGroupExpanded}
-          activeTimelineEvents={activeTimelineEvents}
-          expandedId={expandedId}
-          setExpandedId={setExpandedId}
-        />
-      ) : null}
+        <TabsContent value="timeline">
+          <TimelineTab
+            filters={filters}
+            searchText={searchText}
+            setSearchText={handleSearchTextChange}
+            submitSearch={handleSearchSubmit}
+            searchHistory={searchHistory}
+            applySearchHistory={handleSearchHistorySelect}
+            errorsOnly={errorsOnly}
+            toggleErrorsOnly={toggleErrorsOnly}
+            filterLabels={filterLabels}
+            toggleFilter={(filter) => props.controller.toggleFilter(filter)}
+            errorGroups={errorGroups}
+            errorGroupExpanded={errorGroupExpanded}
+            setErrorGroupExpanded={setErrorGroupExpanded}
+            activeTimelineEvents={activeTimelineEvents}
+            expandedId={expandedId}
+            setExpandedId={setExpandedId}
+          />
+        </TabsContent>
 
-      {chrome.activeTab === 'network' ? (
-        <NetworkTab
-          mergedRequests={mergedRequests}
-          networkExpandedKey={networkExpandedKey}
-          setNetworkExpandedKey={setNetworkExpandedKey}
-        />
-      ) : null}
+        <TabsContent value="network">
+          <NetworkTab
+            mergedRequests={mergedRequests}
+            networkExpandedKey={networkExpandedKey}
+            setNetworkExpandedKey={setNetworkExpandedKey}
+          />
+        </TabsContent>
 
-      {chrome.activeTab === 'node' ? (
-        <NodeTab
-          componentTree={componentTree}
-          scanComponentTree={scanComponentTree}
-          inspectMode={inspectMode}
-          inspectData={inspectData}
-          selectedElement={selectedElement}
-          setSelectedElement={(element) => {
-            setSelectedElement(element);
-            if (element == null) {
-              setInspectData(null);
-            }
-          }}
-          inspectTreeItem={inspectTreeItem}
-          nodeIdInput={nodeIdInput}
-          onNodeIdInputChange={setNodeIdInput}
-          nodeDiagnostics={nodeDiagnostics}
-          expandedId={expandedId}
-          setExpandedId={setExpandedId}
-          formTab={formTab}
-          setFormTab={setFormTab}
-          evalInput={evalInput}
-          setEvalInput={setEvalInput}
-          evalResult={evalResult}
-          handleEvalExpression={handleEvalExpression}
-        />
-      ) : null}
+        <TabsContent value="node">
+          <NodeTab
+            componentTree={componentTree}
+            scanComponentTree={scanComponentTree}
+            inspectMode={inspectMode}
+            inspectData={inspectData}
+            selectedElement={selectedElement}
+            setSelectedElement={(element) => {
+              setSelectedElement(element);
+              if (element == null) {
+                setInspectData(null);
+              }
+            }}
+            inspectTreeItem={inspectTreeItem}
+            nodeIdInput={nodeIdInput}
+            onNodeIdInputChange={setNodeIdInput}
+            nodeDiagnostics={nodeDiagnostics}
+            expandedId={expandedId}
+            setExpandedId={setExpandedId}
+            formTab={formTab}
+            setFormTab={setFormTab}
+            evalInput={evalInput}
+            setEvalInput={setEvalInput}
+            evalResult={evalResult}
+            handleEvalExpression={handleEvalExpression}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
