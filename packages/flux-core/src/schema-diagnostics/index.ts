@@ -142,3 +142,4 @@ export function createSchemaDiagnosticCollector() {
 }
 
 export * from './manifest.js';
+export * from './value-shape-runtime.js';

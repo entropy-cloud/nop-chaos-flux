@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type {
   CapabilityMethodContract,
+  HostCapabilityMethod,
   HostCapabilityProjectionManifest,
   HostManifestResolver,
 } from './manifest.js';
+import { matchesFluxValueShape, validateHostMethodPayload } from './value-shape-runtime.js';
 
 describe('host manifest contracts', () => {
   it('supports resolved and unsupported-version resolver results', () => {
@@ -74,5 +76,44 @@ describe('host manifest contracts', () => {
 
     expect(method.args?.kind).toBe('object');
     expect(method.result?.kind).toBe('boolean');
+  });
+
+  it('allows unknown object keys by default but supports explicit closed-object semantics', () => {
+    expect(
+      matchesFluxValueShape(
+        { value: 'ok', extra: true },
+        {
+          kind: 'object',
+          fields: { value: { kind: 'string' } },
+        },
+      ),
+    ).toBe(true);
+
+    expect(
+      matchesFluxValueShape(
+        { value: 'ok', extra: true },
+        {
+          kind: 'object',
+          fields: { value: { kind: 'string' } },
+          unknownKeys: 'reject',
+        },
+      ),
+    ).toBe(false);
+  });
+
+  it('rejects payloads for no-args host methods', () => {
+    const noArgsMethod: HostCapabilityMethod = {
+      description: 'No payload accepted',
+    };
+
+    expect(validateHostMethodPayload('designer', 'undo', undefined, noArgsMethod)).toEqual({
+      ok: true,
+      args: {},
+    });
+
+    expect(validateHostMethodPayload('designer', 'undo', {}, noArgsMethod)).toEqual({
+      ok: false,
+      error: new Error('designer:undo does not accept a payload.'),
+    });
   });
 });

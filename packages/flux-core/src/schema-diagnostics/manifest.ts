@@ -47,6 +47,7 @@ export interface FluxObjectShape extends FluxValueShapeBase {
   kind: 'object';
   fields: Readonly<Record<string, FluxValueShape>>;
   optional?: readonly string[];
+  unknownKeys?: 'allow' | 'reject';
 }
 
 export interface FluxArrayShape extends FluxValueShapeBase {
