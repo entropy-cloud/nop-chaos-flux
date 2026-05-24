@@ -209,6 +209,21 @@ export function validateFluxValueShape(
 
       let valid = true;
       const record = value as Record<string, unknown>;
+      if (shape.unknownKeys === 'reject') {
+        const allowedKeys = new Set(Object.keys(shape.fields));
+        for (const key of Object.keys(record)) {
+          if (!allowedKeys.has(key)) {
+            diagnostics.emit({
+              code: issue.code,
+              path: appendJsonPointer(path, key),
+              message: `${issue.messagePrefix ?? 'Unknown field.'} Field ${JSON.stringify(key)} is not allowed by this contract.`,
+              source: issue.source,
+            });
+            valid = false;
+          }
+        }
+      }
+
       for (const [fieldName, fieldShape] of Object.entries(shape.fields)) {
         const fieldValue = record[fieldName];
         const fieldPath = appendJsonPointer(path, fieldName);

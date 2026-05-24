@@ -109,6 +109,16 @@ export function validateHostAction(
     return false;
   }
 
+  if (!method.args && args !== undefined) {
+    diagnostics.emit({
+      code: 'invalid-host-capability-args',
+      path: appendJsonPointer(path, 'args'),
+      message: `${manifest.family} capability args are invalid. Method "${parsed.method}" does not accept args.`,
+      source: 'host-contract',
+    });
+    return false;
+  }
+
   if (method.args) {
     const argsPath = appendJsonPointer(path, 'args');
     const validationResult = validateFluxValueShape(

@@ -96,6 +96,44 @@ describe('host action validation', () => {
     ]);
   });
 
+  it('rejects args for host methods that publish no args contract', () => {
+    const noArgsManifest = {
+      ...designerManifest,
+      capabilities: {
+        ...designerManifest.capabilities,
+        methods: {
+          ...designerManifest.capabilities.methods,
+          clearSelection: {
+            description: 'Clear selection',
+          },
+        },
+      },
+    };
+    const context = createHostActionValidationContext({
+      family: 'designer',
+      version: '1.0.0',
+      manifest: noArgsManifest,
+      capabilityPublication: {
+        mode: 'whole-owner',
+        transitiveInheritance: true,
+      },
+    });
+    const diagnostics = createSchemaCompilerDiagnosticsContext(
+      { diagnostics: { enabled: true } },
+      'validate',
+    );
+
+    validateHostAction('designer:clearSelection', {}, '/onClick', diagnostics, context);
+
+    expect(diagnostics.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'invalid-host-capability-args',
+        path: '/onClick/args',
+        source: 'host-contract',
+      }),
+    ]);
+  });
+
   it('propagates schemaUrl as sourceLocation.file on emitted diagnostics', () => {
     const diagnostics = createSchemaCompilerDiagnosticsContext(
       { diagnostics: { enabled: true } },
