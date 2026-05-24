@@ -238,27 +238,6 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
       },
     },
     schemaValidator: validateDesignerPageSchema,
-    scopeExportContracts: {
-      $designer: {
-        kind: 'object',
-        fields: {
-          kind: { kind: 'literal', value: 'designer' },
-          dirty: { kind: 'boolean' },
-          busy: { kind: 'boolean' },
-          canUndo: { kind: 'boolean' },
-          canRedo: { kind: 'boolean' },
-          selectionKind: {
-            kind: 'union',
-            anyOf: [
-              { kind: 'literal', value: 'node' },
-              { kind: 'literal', value: 'edge' },
-              { kind: 'literal', value: 'none' },
-            ],
-          },
-          selectionCount: { kind: 'number' },
-        },
-      },
-    },
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'statusPath', kind: 'prop' },
