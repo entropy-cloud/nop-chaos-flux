@@ -3,6 +3,7 @@ import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { buildTableRowEntries, toStringArray } from './table-data.js';
+import { createTableEventContext } from './table-event-context.js';
 import type { TableRowEntry } from './types.js';
 
 export function useTableSelection(
@@ -77,12 +78,24 @@ export function useTableSelection(
         }
       });
 
-      onSelectionChange?.(null, {
-        scope: helpers.createScope(
-          { selectedRowKeys: Array.from(nextKeys) },
-          { scopeKey: 'selection', pathSuffix: 'selection' },
-        ),
-      });
+      const nextSelectedRowKeys = Array.from(nextKeys);
+      const payload = {
+        type: 'table:selection-change',
+        selectedRowKeys: nextSelectedRowKeys,
+        selection: {
+          selectedRowKeys: nextSelectedRowKeys,
+        },
+      };
+
+      onSelectionChange?.(
+        null,
+        createTableEventContext(payload, {
+          helpers,
+          scopeKey: 'selection',
+          pathSuffix: 'selection',
+          event: payload,
+        }),
+      );
     },
     [helpers, normalizedRows, onSelectionChange, renderScope, selectionOwnership, selectionStatePath],
   );
@@ -113,12 +126,24 @@ export function useTableSelection(
         }
       });
 
-      onSelectionChange?.(null, {
-        scope: helpers.createScope(
-          { selectedRowKeys: Array.from(newSet) },
-          { scopeKey: 'selection', pathSuffix: 'selection' },
-        ),
-      });
+      const nextSelectedRowKeys = Array.from(newSet);
+      const payload = {
+        type: 'table:selection-change',
+        selectedRowKeys: nextSelectedRowKeys,
+        selection: {
+          selectedRowKeys: nextSelectedRowKeys,
+        },
+      };
+
+      onSelectionChange?.(
+        null,
+        createTableEventContext(payload, {
+          helpers,
+          scopeKey: 'selection',
+          pathSuffix: 'selection',
+          event: payload,
+        }),
+      );
     },
     [
       helpers,
@@ -141,12 +166,25 @@ export function useTableSelection(
           renderScope.update(selectionStatePath, Array.from(nextKeys));
         }
       });
-      onSelectionChange?.(null, {
-        scope: helpers.createScope(
-          { selectedRowKeys: Array.from(nextKeys) },
-          { scopeKey: 'selection', pathSuffix: 'selection' },
-        ),
-      });
+
+      const nextSelectedRowKeys = Array.from(nextKeys);
+      const payload = {
+        type: 'table:selection-change',
+        selectedRowKeys: nextSelectedRowKeys,
+        selection: {
+          selectedRowKeys: nextSelectedRowKeys,
+        },
+      };
+
+      onSelectionChange?.(
+        null,
+        createTableEventContext(payload, {
+          helpers,
+          scopeKey: 'selection',
+          pathSuffix: 'selection',
+          event: payload,
+        }),
+      );
     },
     [selectionOwnership, selectionStatePath, onSelectionChange, helpers, renderScope],
   );

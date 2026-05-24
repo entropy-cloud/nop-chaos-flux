@@ -2,6 +2,7 @@ import { startTransition, useCallback, useMemo, useState } from 'react';
 import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
+import { createTableEventContext } from './table-event-context.js';
 import type { FilterState } from './types.js';
 
 export function useTableFilter(
@@ -108,12 +109,28 @@ export function useTableFilter(
         }
       });
 
-      onFilterChange?.(null, {
-        scope: helpers.createScope(
-          { column: columnName, filters: Array.from(currentFilters), keyword: current.keyword },
-          { scopeKey: 'filter', pathSuffix: 'filter' },
-        ),
-      });
+      const filters = Array.from(currentFilters);
+      const payload = {
+        type: 'table:filter-change',
+        column: columnName,
+        filters,
+        keyword: current.keyword,
+        filter: {
+          column: columnName,
+          filters,
+          keyword: current.keyword,
+        },
+      };
+
+      onFilterChange?.(
+        null,
+        createTableEventContext(payload, {
+          helpers,
+          scopeKey: 'filter',
+          pathSuffix: 'filter',
+          event: payload,
+        }),
+      );
       onFilterStateChange?.(newFilters);
     },
     [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, onFilterStateChange, renderScope],
@@ -147,12 +164,28 @@ export function useTableFilter(
         }
       });
 
-      onFilterChange?.(null, {
-        scope: helpers.createScope(
-          { column: columnName, filters: Array.from(current.values), keyword },
-          { scopeKey: 'filter', pathSuffix: 'filter' },
-        ),
-      });
+      const filters = Array.from(current.values);
+      const payload = {
+        type: 'table:filter-change',
+        column: columnName,
+        filters,
+        keyword,
+        filter: {
+          column: columnName,
+          filters,
+          keyword,
+        },
+      };
+
+      onFilterChange?.(
+        null,
+        createTableEventContext(payload, {
+          helpers,
+          scopeKey: 'filter',
+          pathSuffix: 'filter',
+          event: payload,
+        }),
+      );
       onFilterStateChange?.(newFilters);
     },
     [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, onFilterStateChange, renderScope],
@@ -183,12 +216,27 @@ export function useTableFilter(
         }
       });
 
-      onFilterChange?.(null, {
-        scope: helpers.createScope(
-          { column: columnName, filters: [], keyword: '' },
-          { scopeKey: 'filter', pathSuffix: 'filter' },
-        ),
-      });
+      const payload = {
+        type: 'table:filter-change',
+        column: columnName,
+        filters: [],
+        keyword: '',
+        filter: {
+          column: columnName,
+          filters: [],
+          keyword: '',
+        },
+      };
+
+      onFilterChange?.(
+        null,
+        createTableEventContext(payload, {
+          helpers,
+          scopeKey: 'filter',
+          pathSuffix: 'filter',
+          event: payload,
+        }),
+      );
       onFilterStateChange?.(newFilters);
     },
     [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, onFilterStateChange, renderScope],

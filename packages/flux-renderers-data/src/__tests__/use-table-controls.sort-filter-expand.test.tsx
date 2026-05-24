@@ -56,6 +56,29 @@ describe('useTableSort', () => {
     });
     expect(api.sortState).toEqual({ column: 'name', direction: null });
     expect(onSortChange).toHaveBeenCalled();
+    expect(onSortChange).toHaveBeenLastCalledWith(null, {
+      event: {
+        type: 'table:sort-change',
+        column: 'name',
+        direction: null,
+        sort: { column: 'name', direction: null },
+      },
+      scope: {
+        value: {
+          type: 'table:sort-change',
+          column: 'name',
+          direction: null,
+          sort: { column: 'name', direction: null },
+        },
+        options: { scopeKey: 'sort', pathSuffix: 'sort' },
+      },
+      evaluationBindings: {
+        type: 'table:sort-change',
+        column: 'name',
+        direction: null,
+        sort: { column: 'name', direction: null },
+      },
+    });
   });
 
   it('reads and updates scope-backed sort state', () => {
@@ -161,6 +184,32 @@ describe('useTableFilter', () => {
     });
     expect(api.filterState).toEqual({});
     expect(onFilterChange).toHaveBeenCalled();
+    expect(onFilterChange).toHaveBeenLastCalledWith(null, {
+      event: {
+        type: 'table:filter-change',
+        column: 'name',
+        filters: [],
+        keyword: '',
+        filter: { column: 'name', filters: [], keyword: '' },
+      },
+      scope: {
+        value: {
+          type: 'table:filter-change',
+          column: 'name',
+          filters: [],
+          keyword: '',
+          filter: { column: 'name', filters: [], keyword: '' },
+        },
+        options: { scopeKey: 'filter', pathSuffix: 'filter' },
+      },
+      evaluationBindings: {
+        type: 'table:filter-change',
+        column: 'name',
+        filters: [],
+        keyword: '',
+        filter: { column: 'name', filters: [], keyword: '' },
+      },
+    });
     expect(onFilterStateChange).toHaveBeenLastCalledWith({});
   });
 

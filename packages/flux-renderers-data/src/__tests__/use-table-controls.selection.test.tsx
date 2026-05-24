@@ -51,6 +51,26 @@ describe('useTableSelection', () => {
     });
     expect(Array.from(api.selectedRowKeys)).toEqual(['2']);
     expect(onSelectionChange).toHaveBeenCalled();
+    expect(onSelectionChange).toHaveBeenLastCalledWith(null, {
+      event: {
+        type: 'table:selection-change',
+        selectedRowKeys: ['2'],
+        selection: { selectedRowKeys: ['2'] },
+      },
+      scope: {
+        value: {
+          type: 'table:selection-change',
+          selectedRowKeys: ['2'],
+          selection: { selectedRowKeys: ['2'] },
+        },
+        options: { scopeKey: 'selection', pathSuffix: 'selection' },
+      },
+      evaluationBindings: {
+        type: 'table:selection-change',
+        selectedRowKeys: ['2'],
+        selection: { selectedRowKeys: ['2'] },
+      },
+    });
   });
 
   it('uses controlled and scope-backed selection ownership', () => {

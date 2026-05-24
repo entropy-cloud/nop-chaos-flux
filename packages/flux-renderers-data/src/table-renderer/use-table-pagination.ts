@@ -3,6 +3,7 @@ import { getIn, shallowEqual, type FluxActionEvent, type RendererComponentProps 
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { toPositiveNumber } from './table-data.js';
+import { createTableEventContext } from './table-event-context.js';
 
 function createPaginationEventContext(args: {
   helpers: RendererComponentProps<TableSchema>['helpers'];
@@ -20,14 +21,12 @@ function createPaginationEventContext(args: {
     },
   };
 
-  return {
+  return createTableEventContext(payload, {
+    helpers: args.helpers,
+    scopeKey: 'pagination',
+    pathSuffix: 'pagination',
     event: args.uiEvent,
-    scope: args.helpers.createScope(payload, {
-      scopeKey: 'pagination',
-      pathSuffix: 'pagination',
-    }),
-    evaluationBindings: payload,
-  };
+  });
 }
 
 export function useTablePagination(

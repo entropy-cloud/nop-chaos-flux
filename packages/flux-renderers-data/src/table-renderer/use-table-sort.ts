@@ -2,6 +2,7 @@ import { startTransition, useCallback, useMemo, useState } from 'react';
 import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
+import { createTableEventContext } from './table-event-context.js';
 import type { SortState } from './types.js';
 
 function toSortDirection(value: unknown): SortState['direction'] {
@@ -100,12 +101,25 @@ export function useTableSort(
         }
       });
 
-      onSortChange?.(null, {
-        scope: helpers.createScope(
-          { column: columnName, direction: newDirection },
-          { scopeKey: 'sort', pathSuffix: 'sort' },
-        ),
-      });
+      const payload = {
+        type: 'table:sort-change',
+        column: columnName,
+        direction: newDirection,
+        sort: {
+          column: columnName,
+          direction: newDirection,
+        },
+      };
+
+      onSortChange?.(
+        null,
+        createTableEventContext(payload, {
+          helpers,
+          scopeKey: 'sort',
+          pathSuffix: 'sort',
+          event: payload,
+        }),
+      );
     },
     [columns, helpers, onSortChange, renderScope, sortOwnership, sortState, sortStatePath],
   );
