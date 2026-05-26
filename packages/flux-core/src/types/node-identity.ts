@@ -4,10 +4,19 @@ import type {
   CompiledDataSource,
   CompiledReaction,
 } from './compilation.js';
-import type { CompiledActionProgram } from './actions.js';
+import type {
+  CompiledRendererContract,
+  TemplateCompiledActionProgram,
+} from './compiled-renderer-contract.js';
+import type { ResolvedNodeMeta, ResolvedNodeProps } from './resolved-node-types.js';
 import type { BaseSchema, SchemaPath } from './schema.js';
 import type { ScopeDependencySet, ScopeRef } from './scope.js';
-import type { WrapProvidersFn } from './renderer-compiler.js';
+
+type WrapProvidersFn = (
+  wrapProvider: (kind: string, value: unknown, children: unknown) => unknown,
+  values: Record<string, unknown>,
+  children: unknown,
+) => unknown;
 
 /**
  * Compiler-computed static analysis results.
@@ -85,10 +94,10 @@ export interface NodeRuntimeState {
   props?: RuntimeValueState<Record<string, unknown>>;
   metaDependencies?: ScopeDependencySet;
   propsDependencies?: ScopeDependencySet;
-  resolvedMeta?: import('./renderer-compiler.js').ResolvedNodeMeta;
+  resolvedMeta?: ResolvedNodeMeta;
   resolvedProps?: Readonly<Record<string, unknown>>;
-  _staticPropsResult?: import('./renderer-compiler.js').ResolvedNodeProps;
-  _lastPropsResult?: import('./renderer-compiler.js').ResolvedNodeProps;
+  _staticPropsResult?: ResolvedNodeProps;
+  _lastPropsResult?: ResolvedNodeProps;
 }
 
 export type NodeMetaProgram = {
@@ -127,15 +136,15 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   templatePath: SchemaPath;
   schemaUrl?: string;
   rendererType: string;
-  component: import('./renderer-core.js').RendererDefinition<S>;
+  component: CompiledRendererContract<S>;
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
   metaProgram: NodeMetaProgram;
   structuralWhen?: CompiledRuntimeValue<boolean | unknown>;
   structuralFields?: Readonly<Record<string, CompiledRuntimeValue<unknown>>>;
-  eventPlans: Readonly<Record<string, CompiledActionProgram>>;
+  eventPlans: Readonly<Record<string, TemplateCompiledActionProgram>>;
   lifecycleActions?: Readonly<{
-    onMount?: CompiledActionProgram;
-    onUnmount?: CompiledActionProgram;
+    onMount?: TemplateCompiledActionProgram;
+    onUnmount?: TemplateCompiledActionProgram;
   }>;
   regions: Readonly<Record<string, TemplateRegion>>;
   providerPlan?: TemplateProviderPlan;
@@ -172,7 +181,7 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
    * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
    */
   compiledReactions?: readonly CompiledReaction[];
-  namedActionPlans?: Readonly<Record<string, import('./actions.js').CompiledActionProgram>>;
+  namedActionPlans?: Readonly<Record<string, TemplateCompiledActionProgram>>;
 }
 
 export interface RepeatedTemplate {

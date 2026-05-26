@@ -17,6 +17,7 @@ export type FluxValueShapeKind =
   | 'boolean'
   | 'null'
   | 'object'
+  | 'record'
   | 'array'
   | 'union'
   | 'literal'
@@ -50,6 +51,11 @@ export interface FluxObjectShape extends FluxValueShapeBase {
   unknownKeys?: 'allow' | 'reject';
 }
 
+export interface FluxRecordShape extends FluxValueShapeBase {
+  kind: 'record';
+  value: FluxValueShape;
+}
+
 export interface FluxArrayShape extends FluxValueShapeBase {
   kind: 'array';
   item: FluxValueShape;
@@ -75,6 +81,7 @@ export type FluxValueShape =
   | FluxBooleanShape
   | FluxNullShape
   | FluxObjectShape
+  | FluxRecordShape
   | FluxArrayShape
   | FluxUnionShape
   | FluxLiteralShape

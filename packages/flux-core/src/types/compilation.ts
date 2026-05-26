@@ -1,12 +1,107 @@
+import type { ComponentHandleRegistryCore } from './component-handle-core.js';
 import type {
-  ActionNamespaceProvider,
-  ActionScope,
+  CompiledExpression,
+  CompiledRuntimeValue,
+  CompiledStringTemplate,
+  CompiledValueEvaluator,
+  CompiledValueNode,
+  DynamicRuntimeValue,
+  ImportHelperDefinition,
+  ImportedLibraryStaticMeta,
+  RuntimeValueState,
+} from './compiled-value-types.js';
+import type {
+  SchemaDiagnosticCode,
+  SchemaDiagnosticSeverity,
+  SchemaDiagnosticSource,
+} from './schema-diagnostics-types.js';
+import type { ScopeRef } from './scope.js';
+import type { RequestDedupStrategy, XuiImportSpec } from './schema-base-types.js';
+import type {
+  ActionContext,
+  ActionResult,
+  ActionScopeDebugSnapshot,
   CompiledActionProgram,
-  ImportedLibraryModule,
 } from './actions.js';
-import type { EvalContext, ScopeDependencySet, ScopeRef } from './scope.js';
-import type { RendererEnv } from './renderer.js';
-import type { RequestDedupStrategy } from './schema.js';
+
+export type {
+  CompiledExpression,
+  CompiledRuntimeValue,
+  CompiledStringTemplate,
+  CompiledValueNode,
+  DynamicRuntimeValue,
+  ImportHelperDefinition,
+  ImportParameterDefinition,
+  ImportedLibraryStaticMeta,
+  RuntimeValueState,
+  ValueEvaluationResult,
+} from './compiled-value-types.js';
+
+type ImportActionNamespaceProvider = {
+  kind?: 'host' | 'import';
+  invoke(
+    method: string,
+    payload: Record<string, unknown> | undefined,
+    ctx: unknown,
+  ): Promise<ActionResult> | ActionResult;
+  dispose?(): void;
+  release?(): void;
+  listMethods?(): readonly string[];
+};
+
+type ImportResolvedActionHandler = {
+  namespace: string;
+  method: string;
+  provider: ImportActionNamespaceProvider;
+  sourceScopeId: string;
+};
+
+type ImportActionScope = {
+  id: string;
+  parent?: ImportActionScope;
+  resolve(actionName: string): ImportResolvedActionHandler | undefined;
+  registerNamespace(namespace: string, provider: ImportActionNamespaceProvider): () => void;
+  unregisterNamespace(namespace: string): void;
+  listNamespaces(): readonly string[];
+  getDebugSnapshot?(): ActionScopeDebugSnapshot;
+};
+
+type ImportContextNodeInstance = {
+  templateNode: {
+    id: string;
+    templatePath?: string;
+  };
+  instancePath?: readonly unknown[];
+  scope?: ScopeRef;
+  state?: unknown;
+  cid?: number;
+};
+
+type ImportedLibraryModuleLike = {
+  createNamespace(
+    context: {
+      runtime: ActionContext['runtime'];
+      env: import('./actions.js').ImportedNamespaceContext['env'];
+      actionScope: ImportActionScope;
+      componentRegistry?: ComponentHandleRegistryCore;
+      scope: ScopeRef;
+      spec: XuiImportSpec;
+      nodeInstance?: ImportContextNodeInstance;
+    },
+  ): Promise<ImportActionNamespaceProvider> | ImportActionNamespaceProvider;
+  createExpressionHelpers?(
+    context: {
+      runtime: ActionContext['runtime'];
+      env: import('./actions.js').ImportedNamespaceContext['env'];
+      actionScope: ImportActionScope;
+      componentRegistry?: ComponentHandleRegistryCore;
+      scope: ScopeRef;
+      spec: XuiImportSpec;
+      nodeInstance?: ImportContextNodeInstance;
+    },
+  ): Promise<Record<string, unknown>> | Record<string, unknown>;
+  getStaticMeta?(): ImportedLibraryStaticMeta | Promise<ImportedLibraryStaticMeta>;
+};
 
 export type CompileSymbolKind =
   | 'builtin-namespace'
@@ -23,25 +118,10 @@ export interface SymbolInfo {
   memberDefinitions?: Readonly<Record<string, ImportHelperDefinition>>;
 }
 
-export interface ImportParameterDefinition {
-  name: string;
-  required?: boolean;
-}
-
-export interface ImportHelperDefinition {
-  kind?: 'function' | 'value';
-  params?: readonly ImportParameterDefinition[];
-}
-
-export interface ImportedLibraryStaticMeta {
-  helpers?: Readonly<Record<string, ImportHelperDefinition>>;
-  namespaceMethods?: readonly string[];
-}
-
 export interface PreparedImportSpec {
   schemaUrl: string;
-  spec: import('./schema.js').XuiImportSpec;
-  resolvedSpec: import('./schema.js').XuiImportSpec;
+  spec: XuiImportSpec;
+  resolvedSpec: XuiImportSpec;
   staticMeta?: ImportedLibraryStaticMeta;
 }
 
@@ -58,19 +138,19 @@ export interface CompileSymbolTable {
 }
 
 export interface ModuleCache {
-  get(absUrl: string): ImportedLibraryModule | undefined;
-  set(absUrl: string, module: ImportedLibraryModule): void;
+  get(absUrl: string): ImportedLibraryModuleLike | undefined;
+  set(absUrl: string, module: ImportedLibraryModuleLike): void;
   has(absUrl: string): boolean;
-  getPending(absUrl: string): Promise<ImportedLibraryModule> | undefined;
-  setPending(absUrl: string, promise: Promise<ImportedLibraryModule>): void;
+  getPending(absUrl: string): Promise<ImportedLibraryModuleLike> | undefined;
+  setPending(absUrl: string, promise: Promise<ImportedLibraryModuleLike>): void;
   removePending(absUrl: string): void;
   clear(): void;
 }
 
 export interface ImportStackEntry {
   alias: string;
-  spec: import('./schema.js').XuiImportSpec;
-  actionProvider?: ActionNamespaceProvider;
+  spec: XuiImportSpec;
+  actionProvider?: ImportActionNamespaceProvider;
   expressionHelpers?: Readonly<Record<string, unknown>>;
   staticMeta?: ImportedLibraryStaticMeta;
 }
@@ -80,53 +160,39 @@ export interface ImportFrame {
   ownerNodeId: string;
   parentFrameId?: string;
   parentFrame?: ImportFrame;
-  actionScope?: ActionScope;
+  actionScope?: ImportActionScope;
   entries: Readonly<Record<string, ImportStackEntry>>;
 }
 
 export interface ImportStack {
   readonly frames: readonly ImportFrame[];
   preload(input: {
-    imports?: readonly import('./schema.js').XuiImportSpec[];
+    imports?: readonly XuiImportSpec[];
     schemaUrl: string;
   }): Promise<void>;
   push(input: {
     ownerNodeId: string;
     parentFrameId?: string;
-    imports?: readonly import('./schema.js').XuiImportSpec[];
-    actionScope?: ActionScope;
-    componentRegistry?: import('./renderer-component.js').ComponentHandleRegistry;
+    imports?: readonly XuiImportSpec[];
+    actionScope?: ImportActionScope;
+    componentRegistry?: ComponentHandleRegistryCore;
     scope: ScopeRef;
     schemaUrl: string;
-    nodeInstance?: import('./node-identity.js').NodeInstance;
+    nodeInstance?: ImportContextNodeInstance;
   }): Promise<ImportFrame | undefined>;
   installPrepared(input: {
     ownerNodeId: string;
     parentFrame?: ImportFrame;
     imports?: readonly PreparedImportSpec[];
-    actionScope?: ActionScope;
-    componentRegistry?: import('./renderer-component.js').ComponentHandleRegistry;
+    actionScope?: ImportActionScope;
+    componentRegistry?: ComponentHandleRegistryCore;
     scope: ScopeRef;
-    nodeInstance?: import('./node-identity.js').NodeInstance;
+    nodeInstance?: ImportContextNodeInstance;
   }): ImportFrame | undefined;
   pop(frameId: string): void;
   resolveAlias(alias: string, frameId?: string): ImportStackEntry | undefined;
   currentBindings(frameId?: string): Readonly<Record<string, unknown>>;
   dispose(): void;
-}
-
-export interface CompiledExpression<T = unknown> {
-  kind: 'expression';
-  source: string;
-  staticValue?: T;
-  exec(context: EvalContext | object, env: RendererEnv): T;
-}
-
-export interface CompiledStringTemplate<T = unknown> {
-  kind: 'template';
-  source: string;
-  staticValue?: T;
-  exec(context: EvalContext | object, env: RendererEnv): T;
 }
 
 export interface ExpressionCompileOptions {
@@ -135,11 +201,11 @@ export interface ExpressionCompileOptions {
   sourcePath?: string;
   transform?: (value: unknown) => unknown;
   reportDiagnostic?: (issue: {
-    code: import('../schema-diagnostics/index.js').SchemaDiagnosticCode;
+    code: SchemaDiagnosticCode;
     message: string;
     path: string;
-    severity?: import('../schema-diagnostics/index.js').SchemaDiagnosticSeverity;
-    source?: import('../schema-diagnostics/index.js').SchemaDiagnosticSource;
+    severity?: SchemaDiagnosticSeverity;
+    source?: SchemaDiagnosticSource;
     cause?: unknown;
   }) => void;
 }
@@ -156,122 +222,11 @@ export interface FormulaCompiler {
   ): CompiledStringTemplate<T>;
 }
 
-export interface StaticValueNode<T = unknown> {
-  kind: 'static-node';
-  value: T;
-}
-
-export interface ExpressionValueNode<T = unknown> {
-  kind: 'expression-node';
-  source: string;
-  compiled: CompiledExpression<T>;
-}
-
-export interface TemplateValueNode<T = unknown> {
-  kind: 'template-node';
-  source: string;
-  compiled: CompiledStringTemplate<T>;
-}
-
-export interface ArrayValueNode {
-  kind: 'array-node';
-  items: ReadonlyArray<CompiledValueNode<unknown>>;
-}
-
-export interface ObjectValueNode {
-  kind: 'object-node';
-  keys: readonly string[];
-  entries: Readonly<Record<string, CompiledValueNode<unknown>>>;
-}
-
-export type CompiledValueNode<T = unknown> =
-  | StaticValueNode<T>
-  | ExpressionValueNode<T>
-  | TemplateValueNode<T>
-  | ArrayValueNode
-  | ObjectValueNode;
-
-export type DynamicValueNode<T = unknown> =
-  | ExpressionValueNode<T>
-  | TemplateValueNode<T>
-  | ArrayValueNode
-  | ObjectValueNode;
-
-export interface LeafValueState<T = unknown> {
-  kind: 'leaf-state';
-  initialized: boolean;
-  lastValue?: T;
-  dependencies?: ScopeDependencySet;
-}
-
-export interface ArrayValueState<T = unknown[]> {
-  kind: 'array-state';
-  initialized: boolean;
-  lastValue?: T;
-  items: RuntimeValueStateNode[];
-}
-
-export interface ObjectValueState<T = Record<string, unknown>> {
-  kind: 'object-state';
-  initialized: boolean;
-  lastValue?: T;
-  entries: Record<string, RuntimeValueStateNode>;
-}
-
-export type RuntimeValueStateNode<T = unknown> =
-  | LeafValueState<T>
-  | ArrayValueState
-  | ObjectValueState;
-
-export interface RuntimeValueState<T = unknown> {
-  root: RuntimeValueStateNode<T>;
-}
-
-export interface ValueEvaluationResult<T = unknown> {
-  value: T;
-  changed: boolean;
-  reusedReference: boolean;
-}
-
-export interface StaticRuntimeValue<T = unknown> {
-  kind: 'static';
-  isStatic: true;
-  node: StaticValueNode<T>;
-  value: T;
-}
-
-export interface DynamicRuntimeValue<T = unknown> {
-  kind: 'dynamic';
-  isStatic: false;
-  node: DynamicValueNode<T>;
-  transform?: (value: unknown) => unknown;
-  createState(): RuntimeValueState<T>;
-  exec(
-    context: EvalContext,
-    env: RendererEnv,
-    state?: RuntimeValueState<T>,
-  ): ValueEvaluationResult<T>;
-}
-
-export type CompiledRuntimeValue<T = unknown> = StaticRuntimeValue<T> | DynamicRuntimeValue<T>;
-
-export interface ExpressionCompiler {
+export interface ExpressionCompiler extends CompiledValueEvaluator {
   formulaCompiler: FormulaCompiler;
   compileNode<T = unknown>(input: T, options?: ExpressionCompileOptions): CompiledValueNode<T>;
   compileValue<T = unknown>(input: T, options?: ExpressionCompileOptions): CompiledRuntimeValue<T>;
   createState<T = unknown>(input: DynamicRuntimeValue<T>): RuntimeValueState<T>;
-  evaluateValue<T = unknown>(
-    input: CompiledRuntimeValue<T>,
-    scope: ScopeRef,
-    env: RendererEnv,
-    state?: RuntimeValueState<T>,
-  ): T;
-  evaluateWithState<T = unknown>(
-    input: DynamicRuntimeValue<T>,
-    scope: ScopeRef,
-    env: RendererEnv,
-    state: RuntimeValueState<T>,
-  ): ValueEvaluationResult<T>;
 }
 
 /**

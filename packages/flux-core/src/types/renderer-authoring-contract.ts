@@ -6,11 +6,13 @@ import type {
 } from '../schema-diagnostics/index.js';
 import type {
   RendererDefinition,
+} from './renderer-core.js';
+import type {
   RendererEventContract,
   RendererPropContract,
   RendererRendererClass,
   RendererCapabilityContract,
-} from './renderer-core.js';
+} from './renderer-definition-types.js';
 
 export interface ResolvedAuthoringContract {
   rendererType: string;

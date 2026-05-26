@@ -5,7 +5,26 @@ import type {
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { getIn, normalizeRootPath, parsePath } from '@nop-chaos/flux-core';
-import { createEvalContext } from './evaluate.js';
+
+export function createEvalContext(scope: ScopeRef): EvalContext {
+  let materialized: Record<string, any> | undefined;
+
+  return {
+    resolve(path: string) {
+      return scope.get(path);
+    },
+    has(path: string) {
+      return scope.has(path);
+    },
+    materialize() {
+      if (!materialized) {
+        materialized = scope.materializeVisible();
+      }
+
+      return materialized;
+    },
+  };
+}
 
 function normalizeTrackedPath(path: string): string | undefined {
   return normalizeRootPath(path);

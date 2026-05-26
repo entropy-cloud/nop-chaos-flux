@@ -1,27 +1,80 @@
-import type { ActionSchema, ActionShapeFields } from './actions.js';
+import type {
+  ActionSchema,
+  CompiledActionProgram,
+} from './actions.js';
 import type {
   CompileSymbolTable,
   CompiledRuntimeValue,
   ExpressionCompileOptions,
   ExpressionCompiler,
 } from './compilation.js';
-import type { CompileSchemaOptions } from './renderer-compiler.js';
+import type { SchemaCompileDiagnosticsOptions } from './schema-diagnostics-types.js';
+import type {
+  OperationControlConfig,
+  SchemaObject,
+  SchemaPath,
+  SchemaValue,
+  XuiImportSpec,
+} from './schema-base-types.js';
 
-export type Primitive = string | number | boolean | bigint | symbol | null | undefined;
+export type {
+  ApiSchema,
+  ExecutableApiRequest,
+  OperationControlConfig,
+  PreparedApiRequest,
+  Primitive,
+  RequestDedupStrategy,
+  SchemaObject,
+  SchemaPath,
+  SchemaValue,
+  XuiImportSpec,
+} from './schema-base-types.js';
 
-export type SchemaValue = Primitive | SchemaObject | ReadonlyArray<SchemaValue> | SchemaValue[];
-
-export interface SchemaObject {
-  [key: string]: SchemaValue;
+export interface FieldCompileSchemaOptions {
+  basePath?: SchemaPath;
+  parentPath?: SchemaPath;
+  schemaUrl?: string;
+  signal?: AbortSignal;
+  parentScopePolicy?: ScopePolicy;
+  symbolTable?: CompileSymbolTable;
+  preparedImports?: ReadonlyMap<string, import('./compilation.js').PreparedImportSpec>;
+  importLoader?: import('./actions.js').ImportedLibraryLoader;
+  resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
+  diagnostics?: SchemaCompileDiagnosticsOptions;
+  validation?: import('./schema-validation-types.js').SchemaCompileValidationOptions;
 }
-
-export type SchemaPath = string;
 
 export type ValidationTrigger = 'change' | 'blur' | 'submit';
 export type ValidationVisibilityTrigger = 'touched' | 'dirty' | 'visited' | 'submit';
 export type ScopePolicy = 'inherit' | 'form';
 export type SchemaFieldKind = 'meta' | 'prop' | 'region' | 'value-or-region' | 'event' | 'ignored';
 export type FrameWrapMode = boolean | 'label' | 'group' | 'none';
+
+export interface ActionShapeLikeFields extends SchemaObject {
+  action?: string;
+  _targetCid?: number;
+  _targetTemplateId?: string;
+  targetId?: string;
+  componentId?: string;
+  componentName?: string;
+  dialogId?: string;
+  surfaceId?: string;
+  args?: Record<string, SchemaValue>;
+  control?: OperationControlConfig;
+  timeout?: number;
+  retry?: OperationControlConfig['retry'];
+  debounce?: number;
+  when?: boolean | string;
+  parallel?: ActionSchemaLike[];
+  continueOnError?: boolean;
+  then?: ActionSchemaLike | ActionSchemaLike[];
+  onError?: ActionSchemaLike | ActionSchemaLike[];
+  onSettled?: ActionSchemaLike | ActionSchemaLike[];
+}
+
+export interface ActionSchemaLike extends ActionShapeLikeFields {
+  action: string;
+}
 
 export interface BaseSchema extends SchemaObject {
   type: string;
@@ -40,8 +93,8 @@ export interface BaseSchema extends SchemaObject {
   frameWrap?: FrameWrapMode;
   validateOn?: ValidationTrigger | ValidationTrigger[];
   showErrorOn?: ValidationVisibilityTrigger | ValidationVisibilityTrigger[];
-  onMount?: ActionSchema | ActionSchema[];
-  onUnmount?: ActionSchema | ActionSchema[];
+  onMount?: ActionSchemaLike | ActionSchemaLike[];
+  onUnmount?: ActionSchemaLike | ActionSchemaLike[];
   'xui:imports'?: XuiImportSpec[];
 }
 
@@ -113,56 +166,16 @@ export interface FieldCompileContext {
     sourcePath?: string,
     options?: Omit<ExpressionCompileOptions, 'sourcePath'>,
   ) => CompiledRuntimeValue<T>;
-  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => unknown;
+  compileActions: (
+    input: ActionSchema | ActionSchema[],
+    sourcePath?: string,
+    options?: Omit<ExpressionCompileOptions, 'sourcePath'>,
+  ) => CompiledActionProgram;
+  compileSchema: (input: SchemaInput, options?: FieldCompileSchemaOptions) => unknown;
 }
 
 export type FieldCompileFn = (value: unknown, context: FieldCompileContext) => unknown;
 
-export type RequestDedupStrategy = 'cancel-previous' | 'parallel' | 'ignore-new';
-
-export interface OperationControlConfig extends SchemaObject {
-  timeout?: number;
-  retry?: {
-    times: number;
-    delay?: number;
-    strategy?: 'fixed' | 'exponential';
-    maxDelay?: number;
-  };
-  debounce?: number;
-  throttle?: number;
-  cacheTTL?: number;
-  cacheKey?: string;
-  dedup?: RequestDedupStrategy;
-}
-
-export interface ApiSchema extends SchemaObject {
-  url: string;
-  method?: string;
-  data?: SchemaValue;
-  params?: SchemaValue;
-  headers?: Record<string, string>;
-  includeScope?: '*' | string[];
-  responseAdaptor?: string;
-  requestAdaptor?: string;
-}
-
-export interface ExecutableApiRequest extends SchemaObject {
-  url: string;
-  method?: string;
-  data?: SchemaValue;
-  headers?: Record<string, string>;
-  params?: never;
-  includeScope?: never;
-  responseAdaptor?: never;
-  requestAdaptor?: never;
-}
-
-export interface PreparedApiRequest {
-  request: ExecutableApiRequest;
-  data: SchemaValue | undefined;
-  params: Record<string, unknown> | undefined;
-  finalUrl: string;
-}
 
 export interface BaseDataSourceSchema extends BaseSchema {
   type: 'data-source';
@@ -176,7 +189,7 @@ export interface BaseDataSourceSchema extends BaseSchema {
   mergeKey?: string;
 }
 
-export interface SourceActionSchema extends ActionShapeFields {
+export interface SourceActionSchema extends ActionShapeLikeFields {
   action?: string;
   formula?: SchemaValue;
 }
@@ -185,7 +198,7 @@ export interface SourceSchema extends SourceActionSchema {
   type: 'source';
 }
 
-export interface FormulaDataSourceSchema extends BaseDataSourceSchema, ActionShapeFields {
+export interface FormulaDataSourceSchema extends BaseDataSourceSchema, ActionShapeLikeFields {
   formula: SchemaValue;
   action?: never;
   api?: never;
@@ -209,17 +222,11 @@ export interface ReactionSchema extends BaseSchema {
   immediate?: boolean;
   debounce?: number;
   once?: boolean;
-  actions: ActionSchema;
+  actions: ActionSchemaLike;
 }
 
 export interface DynamicRendererSchema extends BaseSchema {
   type: 'dynamic-renderer';
-  loadAction: ActionSchema;
+  loadAction: ActionSchemaLike;
   body?: SchemaInput;
-}
-
-export interface XuiImportSpec extends SchemaObject {
-  from: string;
-  as: string;
-  options?: Record<string, SchemaValue>;
 }

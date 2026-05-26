@@ -4,7 +4,6 @@ import type {
   CompiledActionProgram,
   OperationControlConfig,
 } from '@nop-chaos/flux-core';
-import { compileActions } from '@nop-chaos/flux-compiler';
 import type { ActionDispatcherContext } from './types.js';
 
 export function isRequestBackedAction(action: CompiledActionNode): boolean {
@@ -34,7 +33,11 @@ export function normalizeCompiledActionProgram(
     return cached;
   }
 
-  const compiled = compileActions(action, ctx.runtime.expressionCompiler);
+  if (!ctx.expressionCompiler || !ctx.actionProgramCompiler) {
+    throw new Error('Action dispatcher requires precompiled actions or an injected action compiler');
+  }
+
+  const compiled = ctx.actionProgramCompiler.compile(action, ctx.expressionCompiler);
   ctx.compiledProgramCache.set(action as object, compiled);
   return compiled;
 }

@@ -13,8 +13,7 @@
     }
   },
   "dependencies": {
-    "@nop-chaos/flux-core": "workspace:*",
-    "@nop-chaos/flux-compiler": "workspace:*"
+    "@nop-chaos/flux-core": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

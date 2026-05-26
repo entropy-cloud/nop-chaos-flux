@@ -1,6 +1,9 @@
 import type { ActionContext, ActionScope } from './actions.js';
 import type { FormulaCompiler, ImportFrame, ModuleCache } from './compilation.js';
-import type { CompiledTemplate, InstanceFrame, NodeInstance, TemplateNode } from './node-identity.js';
+import type { InstanceFrame, NodeInstance } from './node-identity.js';
+import type {
+  RenderNodeMeta,
+} from './render-fragment-types.js';
 import type { ComponentHandleRegistry } from './renderer-component.js';
 import type { RendererEnv } from './renderer-api.js';
 import type {
@@ -21,26 +24,9 @@ import type {
   SurfaceRuntime,
   ValidationScopeRuntime,
 } from './runtime.js';
-import type { SchemaInput, SchemaPath } from './schema.js';
+import type { SchemaInput } from './schema.js';
 import type { ScopeRef } from './scope.js';
 import type { ValidationError } from './validation.js';
-
-export interface RenderFragmentOptions {
-  /**
-   * Local bindings to inject into the child scope created for this fragment.
-   * For parameterized regions, these values are published under the reserved $slot
-   * frame rather than flattened into ordinary top-level scope names.
-   */
-  bindings?: Record<string, unknown>;
-  scope?: ScopeRef;
-  instancePath?: readonly InstanceFrame[];
-  scopeKey?: string;
-  isolate?: boolean;
-  pathSuffix?: string;
-  actionScope?: ActionScope;
-  componentRegistry?: ComponentHandleRegistry;
-  ownerNodeInstance?: NodeInstance;
-}
 
 export interface StructuralLoopBindings {
   itemName: string;
@@ -65,42 +51,12 @@ export interface StructuralLoopRenderContext {
   ): RendererRenderOutput;
 }
 
-export interface RenderRegionHandle<R = RendererRenderOutput> {
-  key: string;
-  templateNode: TemplateNode | readonly TemplateNode[] | null;
-  /**
-   * Declared parameter names for this region (from renderer metadata).
-   * When present, bindings passed to render() will be published under the
-   * reserved $slot frame rather than flattened into ordinary scope names.
-   * The $slot frame also carries $parent to support nested slot ancestry.
-   */
-  params?: readonly string[];
-  render(options?: {
-    scope?: ScopeRef;
-    /**
-     * Local slot bindings to publish as $slot.xxx in the region subtree.
-     * For parameterized regions (params is declared), these are wrapped in
-     * a $slot frame: { $slot: { ...bindings, $parent: outerSlotFrame } }.
-     * For unparameterized regions, these are merged into the scope directly.
-     */
-    bindings?: Record<string, unknown>;
-    instancePath?: readonly InstanceFrame[];
-    scopeKey?: string;
-    isolate?: boolean;
-    pathSuffix?: string;
-    actionScope?: ActionScope;
-    componentRegistry?: ComponentHandleRegistry;
-    ownerNodeInstance?: NodeInstance;
-  }): R;
-}
-
-export type RenderNodeInput =
-  | SchemaInput
-  | TemplateNode
-  | readonly TemplateNode[]
-  | CompiledTemplate
-  | null
-  | undefined;
+export type {
+  RenderFragmentOptions,
+  RenderNodeInput,
+  RenderNodeMeta,
+  RenderRegionHandle,
+} from './render-fragment-types.js';
 
 /**
  * The reserved $slot frame published into child scopes for parameterized regions.
@@ -166,15 +122,6 @@ export interface RendererHookApi {
   useCurrentNodeInstance(): NodeInstance | undefined;
   useStructuralLoopContext(): StructuralLoopRenderContext | undefined;
   useRenderFragment(): RendererHelpers['render'];
-}
-
-export interface RenderNodeMeta {
-  id: string;
-  path: SchemaPath;
-  type: string;
-  cid?: number;
-  templateNode: TemplateNode;
-  node: NodeInstance;
 }
 
 export interface SchemaRendererProps {

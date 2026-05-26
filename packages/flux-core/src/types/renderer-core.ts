@@ -14,30 +14,31 @@ import type {
   ImportStack,
   ModuleCache,
   PreparedImportSpec,
-  SymbolInfo,
 } from './compilation.js';
 import type {
-  CapabilityMethodContract,
-  FluxValueShape,
-  RendererHostContract,
-} from '../schema-diagnostics/index.js';
-import type {
-  NodeInstance,
   NodeRuntimeState,
   ResolutionContext,
-  TemplateRegion,
   TemplateNode,
 } from './node-identity.js';
-import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component.js';
+import type { NodeInstance } from './node-identity.js';
+import type { ComponentHandleRegistryCore, ComponentTarget } from './component-handle-core.js';
+import type { ComponentHandleRegistry } from './renderer-component.js';
 import type { RendererEnv } from './renderer-api.js';
+import type { SchemaCompiler } from './renderer-compiler.js';
+import type { ResolvedNodeMeta, ResolvedNodeProps } from './resolved-node-types.js';
 import type {
-  CompileSchemaOptions,
-  ResolvedNodeMeta,
-  ResolvedNodeProps,
-  SchemaCompiler,
-} from './renderer-compiler.js';
-import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks.js';
+  RenderFragmentOptions,
+  RenderNodeInput,
+  RenderRegionHandle,
+} from './render-fragment-types.js';
 import type { RendererPlugin } from './renderer-plugin.js';
+import type {
+  RendererCompilationDefinition,
+  RendererDeepFieldDefinition,
+  RendererDefinitionShape,
+  RendererValidationDefaults,
+  ValidationContributor,
+} from './renderer-definition-types.js';
 import type {
   DataSourceController,
   DataSourceRegistration,
@@ -48,78 +49,14 @@ import type {
 } from './runtime.js';
 import type {
   BaseSchema,
-  SchemaFieldRule,
   SchemaInput,
   SchemaPath,
-  ScopePolicy,
   SourceSchema,
   XuiImportSpec,
 } from './schema.js';
 import type { CreateScopeOptions, ScopeRef } from './scope.js';
-import type {
-  ChildValidationMode,
-  CompiledFormValidationModel,
-  ValidationOwnerBoundaryKind,
-  ValidationRule,
-} from './validation.js';
+import type { CompiledFormValidationModel } from './validation.js';
 import type { CompiledTemplate } from './node-identity.js';
-
-export interface ValidationCollectContext<S extends BaseSchema = BaseSchema> {
-  schema: S;
-  renderer: RendererDefinition<S>;
-  path: SchemaPath;
-  fieldPathPrefix?: string;
-}
-
-export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
-  kind: 'field' | 'container' | 'none';
-  valueKind?: 'scalar' | 'array' | 'object';
-  ownerResolution?: ValidationOwnerBoundaryKind;
-  childContractMode?: ChildValidationMode;
-  getFieldPath?(schema: S, ctx: ValidationCollectContext<S>): string | undefined;
-  collectRules?(schema: S, ctx: ValidationCollectContext<S>): ValidationRule[];
-  /**
-   * Returns the prefix to use for child field paths during validation compilation.
-   * Return `false` to skip validation compilation for child nodes (useful for array-field
-   * where child validation is handled at runtime via registerField).
-   */
-  getChildFieldPathPrefix?(schema: S, ctx: ValidationCollectContext<S>): string | false | undefined;
-}
-
-export interface RendererDeepFieldRegionRule {
-  key: string;
-  regionKeySuffix: string;
-  compiledKey: string;
-  params?: readonly string[];
-  isolate?: boolean;
-}
-
-export interface RendererDeepFieldNormalizeInput {
-  value: unknown;
-  path: string;
-  regions: Record<string, TemplateRegion>;
-  compileSchema: (
-    input: SchemaInput,
-    options?: CompileSchemaOptions,
-    regionMeta?: { params?: readonly string[]; isolate?: boolean },
-  ) => TemplateNode | TemplateNode[];
-}
-
-export interface RendererDeepFieldDefinition {
-  key: string;
-  nestedRegions?: readonly RendererDeepFieldRegionRule[];
-  booleanKeys?: readonly string[];
-  normalize?: (input: RendererDeepFieldNormalizeInput) => unknown;
-}
-
-export interface RendererValidationDefaults {
-  defaultChildContractMode?: ChildValidationMode;
-  collectDescendantValidation?: boolean;
-}
-
-export interface RendererCompilationDefinition {
-  artifacts?: readonly ('data-source' | 'reaction')[];
-}
 
 type BivariantCallback<Args extends readonly unknown[], Result> = {
   bivarianceHack(...args: Args): Result;
@@ -231,6 +168,7 @@ export interface SourceObserver {
     scope: ScopeRef;
     entries: readonly AnonymousSourceEntry[];
     baseValue?: Readonly<Record<string, unknown>>;
+    ctx?: Partial<ActionContext>;
   }): void;
   dispose(): void;
 }
@@ -251,101 +189,25 @@ export interface RendererComponentProps<
   node: NodeInstance<S>;
   props: Readonly<P>;
   meta: ResolvedNodeMeta;
-  regions: Readonly<Record<string, RenderRegionHandle>>;
+  regions: Readonly<Record<string, RenderRegionHandle<RendererRenderOutput>>>;
   events: Readonly<Record<string, RendererEventHandler | undefined>>;
   helpers: RendererHelpers;
-}
-
-export type RendererRendererClass =
-  | 'instance-renderer'
-  | 'flux-owner-renderer'
-  | 'domain-host-renderer';
-
-export interface RendererPropContract {
-  shape: FluxValueShape;
-  displayName: string;
-  description?: string;
-  editorType?: string;
-  defaultValue?: unknown;
-  required?: boolean;
-}
-
-export interface RendererEventContract {
-  displayName: string;
-  description?: string;
-  payload?: FluxValueShape;
-}
-
-/**
- * Ordinary renderer capability metadata reuses the shared method-contract language but keeps
- * a renderer-local envelope instead of adopting the host manifest envelope.
- */
-export interface RendererCapabilityContract extends CapabilityMethodContract {
-  handle: string;
-  displayName: string;
 }
 
 export interface RendererDefinition<
   S extends BaseSchema = BaseSchema,
   P extends Record<string, unknown> = RendererResolvedProps<S>,
-> {
+> extends RendererDefinitionShape<S> {
   type: S['type'];
   component?: BivariantCallback<[RendererComponentProps<S, P>], RendererRenderOutput>;
-  displayName?: string;
-  icon?: string;
-  category?: string;
-  defaultSchema?: Partial<S>;
-  propSchema?: Record<string, unknown>;
-  rendererClass?: RendererRendererClass;
-  rendererTraits?: readonly string[];
-  propContracts?: Readonly<Record<string, RendererPropContract>>;
-  eventContracts?: Readonly<Record<string, RendererEventContract>>;
-  componentCapabilityContracts?: readonly RendererCapabilityContract[];
   /**
    * Narrow readonly Flux-native exports such as $form or $crud summaries.
    * This is not host projection and must not be used as a host-manifest substitute.
    */
-  scopeExportContracts?: Readonly<Record<string, FluxValueShape>>;
-  injectedLocals?: Readonly<Record<string, Omit<SymbolInfo, 'name'>>>;
-  sourcePackage?: string;
-  fields?: readonly SchemaFieldRule[];
-  authoringTransform?: BivariantCallback<
-    [import('../schema-diagnostics/index.js').RendererAuthoringTransformContext<S>],
-    S
-  >;
-  schemaValidator?: BivariantCallback<
-    [import('../schema-diagnostics/index.js').RendererSchemaValidationContext<S>],
-    void
-  >;
-  scopePolicy?: ScopePolicy;
-  actionScopePolicy?: 'inherit' | 'new';
-  componentRegistryPolicy?: 'inherit' | 'new';
   validation?: ValidationContributor<S>;
   validationDefaults?: RendererValidationDefaults;
   deepFields?: readonly RendererDeepFieldDefinition[];
   compilation?: RendererCompilationDefinition;
-  wrap?: boolean;
-  frameRootTag?: 'div' | 'label';
-  /**
-   * Whether this renderer supports static rendering (no client interaction needed).
-   * Used by the compiler for bottom-up static analysis.
-   *
-   * - true: display-only renderers (text, image, container, flex, heading, etc.)
-   * - false: interactive renderers (input, button, select, form, etc.)
-   *
-   * Default: false (safe default - assume interactive unless declared otherwise)
-   *
-   * @see docs/plans/131-static-analysis-optimization-plan.md
-   */
-  staticCapable?: boolean;
-  /**
-   * Host contract metadata for publishing owner renderers.
-   * Only renderers that act as host boundaries (e.g., designer-page, report-designer-page)
-   * should define this field.
-   *
-   * See: docs/architecture/capability-projection-manifest.md
-   */
-  hostContract?: RendererHostContract;
 }
 
 export interface RendererRegistry {
@@ -379,7 +241,7 @@ export interface RendererRuntime {
   allocateMountedCid(): number;
   resolveTarget(
     target: ComponentTarget,
-    ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistry },
+    ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistryCore },
   ): NodeInstance | undefined;
   resolveNodeMeta(node: TemplateNode, scope: ScopeRef, state?: NodeRuntimeState): ResolvedNodeMeta;
   resolveNodeProps(
@@ -399,7 +261,7 @@ export interface RendererRuntime {
   releaseActionScope(actionScope: ActionScope): void;
   createComponentHandleRegistry(input?: {
     id?: string;
-    parent?: ComponentHandleRegistry;
+    parent?: ComponentHandleRegistryCore;
   }): ComponentHandleRegistry;
   resolvePreparedImports(input: {
     imports?: readonly XuiImportSpec[];
@@ -408,7 +270,7 @@ export interface RendererRuntime {
   ensureImportedNamespaces(input: {
     imports?: readonly PreparedImportSpec[];
     actionScope?: ActionScope;
-    componentRegistry?: ComponentHandleRegistry;
+    componentRegistry?: ComponentHandleRegistryCore;
     scope: ScopeRef;
     schemaUrl: string;
     nodeInstance?: NodeInstance;

@@ -1,25 +1,23 @@
-import type { ActionContext, ActionResult } from './actions.js';
 import type { InspectResult, NodeInstance } from './node-identity.js';
-import type { ResolvedNodeMeta, ResolvedNodeProps } from './renderer-compiler.js';
 import type { ScopeRef } from './scope.js';
+import type {
+  ComponentCapabilities,
+  ComponentHandle,
+  ComponentHandleRegistryCore,
+} from './component-handle-core.js';
 
-export interface ComponentTarget {
-  _targetCid?: number;
-  componentId?: string;
-  componentName?: string;
-}
-
-export interface ComponentCapabilities {
-  store?: unknown;
-  invoke(
-    method: string,
-    payload: Record<string, unknown> | undefined,
-    ctx: ActionContext,
-  ): Promise<ActionResult> | ActionResult;
-  hasMethod?(method: string): boolean;
-  listMethods?(): readonly string[];
-  getDebugData?(): Record<string, unknown> | undefined;
-}
+type ComponentHandleResolvedMeta = {
+  id?: string;
+  className?: string;
+  frameClassName?: string;
+  when?: boolean;
+  visible?: boolean;
+  hidden?: boolean;
+  disabled?: boolean;
+  testid?: string;
+  changed?: boolean;
+  cid?: number;
+};
 
 export interface ComponentHandleDebugData {
   debugEntryId?: number;
@@ -28,8 +26,8 @@ export interface ComponentHandleDebugData {
   rendererType?: string;
   nodeInstance?: NodeInstance;
   scope?: ScopeRef;
-  resolvedMeta?: ResolvedNodeMeta;
-  resolvedProps?: ResolvedNodeProps['value'];
+  resolvedMeta?: ComponentHandleResolvedMeta;
+  resolvedProps?: Readonly<Record<string, unknown>>;
   sourceHints?: {
     fieldName?: string;
     formValue?: unknown;
@@ -37,16 +35,6 @@ export interface ComponentHandleDebugData {
     metaRules?: Partial<Record<'visible' | 'hidden' | 'disabled', string>>;
   };
   updatedAt?: number;
-}
-
-export interface ComponentHandle {
-  _cid?: number;
-  _mounted?: boolean;
-  id?: string;
-  name?: string;
-  type: string;
-  ref?: HTMLElement | null;
-  capabilities: ComponentCapabilities;
 }
 
 export interface ComponentHandleDebugEntry {
@@ -62,24 +50,13 @@ export interface ComponentHandleRegistryDebugSnapshot {
   handles: ComponentHandleDebugEntry[];
 }
 
-export interface ComponentHandleRegistry {
-  id: string;
-  parent?: ComponentHandleRegistry;
+export interface ComponentHandleRegistry extends ComponentHandleRegistryCore {
   debugEnabled?: boolean;
   setDebugEnabled?(enabled: boolean): void;
   subscribeDebugEnabled?(listener: () => void): () => void;
-  register(
-    handle: ComponentHandle,
-    options?: {
-      cid?: number;
-    },
-  ): () => void;
-  unregister(handle: ComponentHandle): void;
-  resolve(target: ComponentTarget): ComponentHandle | undefined;
   inspectCid?(cid: number): InspectResult;
   getHandleByCid?(cid: number): ComponentHandle | undefined;
   setHandleDebugData?(cid: number, data: ComponentHandleDebugData | undefined): void;
   getHandleDebugData?(cid: number): ComponentHandleDebugData | undefined;
   getDebugSnapshot?(): ComponentHandleRegistryDebugSnapshot;
-  dispose?(): void;
 }

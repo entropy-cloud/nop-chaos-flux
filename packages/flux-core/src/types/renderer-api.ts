@@ -1,6 +1,7 @@
+import type { ExpressionExecutionEnv } from './expression-env-types.js';
 import type { ActionMonitorPayload, ActionResult, ImportedLibraryLoader } from './actions.js';
 import type { ScopeRef } from './scope.js';
-import type { ExecutableApiRequest, SchemaPath } from './schema.js';
+import type { ExecutableApiRequest, SchemaPath } from './schema-base-types.js';
 
 export interface ApiRequestContext {
   scope: ScopeRef;
@@ -54,7 +55,7 @@ export interface RendererMonitor {
   onApiRequest?(payload: ApiMonitorPayload): void;
 }
 
-export interface RendererEnv {
+export interface RendererEnv extends ExpressionExecutionEnv {
   fetcher: ApiFetcher;
   notify: (level: 'info' | 'success' | 'warning' | 'error', message: string) => void;
   navigate?: (to: string | number, options?: { replace?: boolean }) => void;

@@ -1,7 +1,21 @@
+import type { SchemaValue } from '@nop-chaos/flux-core';
 import { describe, expect, it, vi } from 'vitest';
 import { staticCompiled } from './action-dispatcher-test-support.js';
 import { createActionDispatcher } from '../action-dispatcher.js';
 import { createActionCtx, createMockAdapter, createTestDispatcher, makeCompiledProgram } from './action-dispatcher-test-support.js';
+
+function compileSingleAction(action: { action: string; args?: Record<string, SchemaValue> }) {
+  return makeCompiledProgram([
+    {
+      action: action.action,
+      when: undefined,
+      payload: { args: staticCompiled(action.args ?? {}) },
+      targeting: {},
+      control: {},
+      source: action,
+    },
+  ]);
+}
 
 describe('action-dispatcher diagnostic error guards', () => {
   it('preserves the primary action failure when error diagnostics throw', async () => {
@@ -26,7 +40,12 @@ describe('action-dispatcher diagnostic error guards', () => {
       getEnv: () => base.env,
       evaluator: base.evaluator,
       adapter,
-      runtime: base.runtime,
+      expressionCompiler: base.runtime.expressionCompiler,
+      actionProgramCompiler: {
+        compile: vi.fn((action) =>
+          compileSingleAction(action as { action: string; args?: Record<string, SchemaValue> }),
+        ),
+      },
       onActionError,
       plugins: [plugin as any],
     });
@@ -35,6 +54,7 @@ describe('action-dispatcher diagnostic error guards', () => {
       makeCompiledProgram([
         {
           action: 'showToast',
+          when: undefined,
           payload: { args: staticCompiled({ message: 'hi' }) },
           targeting: {},
           control: {},
@@ -75,7 +95,12 @@ describe('action-dispatcher diagnostic error guards', () => {
       getEnv: () => base.env,
       evaluator: base.evaluator,
       adapter,
-      runtime: base.runtime,
+      expressionCompiler: base.runtime.expressionCompiler,
+      actionProgramCompiler: {
+        compile: vi.fn((action) =>
+          compileSingleAction(action as { action: string; args?: Record<string, SchemaValue> }),
+        ),
+      },
       plugins: [firstPlugin as any, secondPlugin as any],
     });
 
@@ -83,6 +108,7 @@ describe('action-dispatcher diagnostic error guards', () => {
       makeCompiledProgram([
         {
           action: 'showToast',
+          when: undefined,
           payload: { args: staticCompiled({ message: 'hi' }) },
           targeting: {},
           control: {},

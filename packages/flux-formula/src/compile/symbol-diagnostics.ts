@@ -1,5 +1,6 @@
 import type {
   ExpressionCompileOptions,
+  ImportParameterDefinition,
   SchemaDiagnosticCode,
   SchemaDiagnosticSeverity,
 } from '@nop-chaos/flux-core';
@@ -157,7 +158,7 @@ function emitSymbolDiagnostics(ast: FormulaAstNode, options?: ExpressionCompileO
         const definition = path.length > 1 ? resolved?.memberDefinitions?.[path[1]] : undefined;
         if (definition?.kind === 'function' && definition.params) {
           const requiredCount = definition.params.filter(
-            (param) => param.required !== false,
+            (param: ImportParameterDefinition) => param.required !== false,
           ).length;
           const maxCount = definition.params.length;
           if (node.arguments.length < requiredCount || node.arguments.length > maxCount) {

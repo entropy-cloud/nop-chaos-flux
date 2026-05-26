@@ -101,6 +101,42 @@ describe('host manifest contracts', () => {
     ).toBe(false);
   });
 
+  it('validates record shapes as string-keyed dictionaries', () => {
+    expect(
+      matchesFluxValueShape(
+        { a: { dx: 1, dy: 2 }, b: { dx: -3, dy: 4 } },
+        {
+          kind: 'record',
+          value: {
+            kind: 'object',
+            fields: {
+              dx: { kind: 'number' },
+              dy: { kind: 'number' },
+            },
+            unknownKeys: 'reject',
+          },
+        },
+      ),
+    ).toBe(true);
+
+    expect(
+      matchesFluxValueShape(
+        { a: { dx: 1, dy: 'bad' } },
+        {
+          kind: 'record',
+          value: {
+            kind: 'object',
+            fields: {
+              dx: { kind: 'number' },
+              dy: { kind: 'number' },
+            },
+            unknownKeys: 'reject',
+          },
+        },
+      ),
+    ).toBe(false);
+  });
+
   it('rejects payloads for no-args host methods', () => {
     const noArgsMethod: HostCapabilityMethod = {
       description: 'No payload accepted',

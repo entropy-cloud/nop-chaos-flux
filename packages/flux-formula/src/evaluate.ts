@@ -7,32 +7,11 @@ import type {
   RendererEnv,
   RuntimeValueState,
   RuntimeValueStateNode,
-  ScopeRef,
   TemplateValueNode,
   ValueEvaluationResult,
 } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
-import { createScopeDependencyCollector } from './scope.js';
-
-function createEvalContext(scope: ScopeRef): EvalContext {
-  let materialized: Record<string, any> | undefined;
-
-  return {
-    resolve(path: string) {
-      return scope.get(path);
-    },
-    has(path: string) {
-      return scope.has(path);
-    },
-    materialize() {
-      if (!materialized) {
-        materialized = scope.materializeVisible();
-      }
-
-      return materialized;
-    },
-  };
-}
+import { createEvalContext, createScopeDependencyCollector } from './scope.js';
 
 function createLeafState<T = unknown>(): RuntimeValueState<T> {
   return {

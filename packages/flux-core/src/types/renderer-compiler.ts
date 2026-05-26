@@ -1,9 +1,4 @@
 import type {
-  SchemaCompileDiagnosticsOptions,
-  SchemaCompileValidationOptions,
-  SchemaDiagnostic,
-} from '../schema-diagnostics/index.js';
-import type {
   BaseSchema,
   SchemaFieldRule,
   SchemaInput,
@@ -13,31 +8,15 @@ import type {
 import type { CompiledCidState } from '../compiled-cid.js';
 import type { CompiledTemplate } from './node-identity.js';
 import type { CompileSymbolTable } from './compilation.js';
+import type { RendererDefinitionShape } from './renderer-definition-types.js';
+import type { SchemaCompileDiagnosticsOptions, SchemaDiagnostic } from './schema-diagnostics-types.js';
+import type { SchemaCompileValidationOptions } from './schema-validation-types.js';
 
 export type WrapProvidersFn = (
   wrapProvider: (kind: string, value: unknown, children: unknown) => unknown,
   values: Record<string, unknown>,
   children: unknown,
 ) => unknown;
-
-export interface ResolvedNodeProps {
-  value: Readonly<Record<string, unknown>>;
-  changed: boolean;
-  reusedReference: boolean;
-}
-
-export interface ResolvedNodeMeta {
-  id?: string;
-  className?: string;
-  frameClassName?: string;
-  when?: boolean;
-  visible: boolean;
-  hidden: boolean;
-  disabled: boolean;
-  testid?: string;
-  changed: boolean;
-  cid?: number;
-}
 
 export interface CompileSchemaOptions {
   basePath?: SchemaPath;
@@ -65,7 +44,7 @@ export interface CompileNodeOptions {
   schemaUrl?: string;
   symbolTable?: CompileSymbolTable;
   preparedImports?: ReadonlyMap<string, import('./compilation.js').PreparedImportSpec>;
-  renderer: import('./renderer-core.js').RendererDefinition;
+  renderer: RendererDefinitionShape;
   fieldRules?: readonly SchemaFieldRule[];
   diagnostics?: { enabled?: boolean };
 }

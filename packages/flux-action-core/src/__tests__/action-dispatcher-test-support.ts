@@ -125,7 +125,21 @@ export function createTestDispatcher(options?: {
     getEnv: () => env,
     evaluator,
     adapter,
-    runtime,
+    expressionCompiler: runtime.expressionCompiler,
+    actionProgramCompiler: {
+      compile: vi.fn((action) => {
+        if (
+          action &&
+          typeof action === 'object' &&
+          'nodes' in action &&
+          Array.isArray((action as CompiledActionProgram).nodes)
+        ) {
+          return action as CompiledActionProgram;
+        }
+
+        return makeCompiledProgram([]);
+      }),
+    },
   });
 
   return { dispatcher, adapter, env, evaluator, runtime };

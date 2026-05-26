@@ -2,12 +2,20 @@ import type {
   ActionContext,
   ActionResult,
   ActionRuntimeAdapter,
+  ActionSchema,
   CompiledActionProgram,
+  ExpressionCompiler,
   RendererEnv,
   RendererPlugin,
-  RendererRuntime,
 } from '@nop-chaos/flux-core';
 import type { ActionEvaluator } from '../action-core.js';
+
+export interface ActionProgramCompiler {
+  compile(
+    action: ActionSchema | ActionSchema[],
+    compiler: ExpressionCompiler,
+  ): CompiledActionProgram;
+}
 
 export interface ActionDispatcherConfig {
   getEnv: () => RendererEnv;
@@ -15,7 +23,8 @@ export interface ActionDispatcherConfig {
   onActionError?: (error: unknown, ctx: ActionContext) => void;
   evaluator: ActionEvaluator;
   adapter: ActionRuntimeAdapter;
-  runtime: RendererRuntime;
+  expressionCompiler?: ExpressionCompiler;
+  actionProgramCompiler?: ActionProgramCompiler;
 }
 
 export interface PendingDebounceEntry {
@@ -30,7 +39,8 @@ export interface ActionDispatcherContext {
   onActionError?: (error: unknown, ctx: ActionContext) => void;
   evaluator: ActionEvaluator;
   adapter: ActionRuntimeAdapter;
-  runtime: RendererRuntime;
+  expressionCompiler?: ExpressionCompiler;
+  actionProgramCompiler?: ActionProgramCompiler;
   compiledProgramCache: WeakMap<object, CompiledActionProgram>;
   pendingDebounces: Map<string, PendingDebounceEntry>;
   rootAbortController: AbortController;

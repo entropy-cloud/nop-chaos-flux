@@ -22,6 +22,8 @@ export function matchesFluxValueShape(value: unknown, shape: FluxValueShape): bo
       return value === null;
     case 'literal':
       return value === shape.value;
+    case 'record':
+      return isRecord(value) && Object.values(value).every((entry) => matchesFluxValueShape(entry, shape.value));
     case 'array':
       return Array.isArray(value) && value.every((item) => matchesFluxValueShape(item, shape.item));
     case 'union':

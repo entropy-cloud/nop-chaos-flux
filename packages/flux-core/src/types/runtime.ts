@@ -1,5 +1,6 @@
 import type { ActionResult } from './actions.js';
 import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance.js';
+import type { ComponentHandleRegistryCore } from './component-handle-core.js';
 import type { NodeInstance, TemplateNode } from './node-identity.js';
 import type { ScopeRef } from './scope.js';
 import type {
@@ -18,13 +19,13 @@ import type {
   ChildValidationContractRegistration,
 } from './validation.js';
 import type { ActionScope } from './actions.js';
-import type {
-  ComponentHandleRegistry,
-  RenderNodeInput,
-  RenderRegionHandle,
-  RendererRuntime,
-  ResolvedNodeMeta,
-} from './renderer.js';
+import type { RenderNodeInput, RenderRegionHandle } from './render-fragment-types.js';
+
+type SurfaceNodeMeta = {
+  className?: string;
+  testid?: string;
+  cid?: number;
+};
 
 export interface FieldState {
   touched?: true;
@@ -190,13 +191,13 @@ export interface OwnedSurfaceStateBase {
   ownerScope?: ScopeRef;
   validationOwner?: ValidationScopeRuntime;
   actionScope?: ActionScope;
-  componentRegistry?: ComponentHandleRegistry;
+  componentRegistry?: ComponentHandleRegistryCore;
   ownerTemplateNode?: TemplateNode;
   ownerNodeInstance?: NodeInstance;
   title?: RenderNodeInput | string;
   body?: RenderNodeInput;
   actions?: RenderNodeInput;
-  meta?: Pick<ResolvedNodeMeta, 'className' | 'testid' | 'cid'>;
+  meta?: SurfaceNodeMeta;
   regionHandles?: Readonly<Record<string, RenderRegionHandle>>;
   controlledOpen?: boolean;
   onOpen?: () => Promise<ActionResult> | ActionResult | void;
@@ -242,19 +243,18 @@ export interface SurfaceRuntime {
     kind: 'dialog' | 'drawer' | 'sheet';
     surface: Record<string, any>;
     scope: ScopeRef;
-    runtime: RendererRuntime;
     surfaceId?: string;
     options?: {
       ownerScope?: ScopeRef;
       actionScope?: ActionScope;
-      componentRegistry?: ComponentHandleRegistry;
+      componentRegistry?: ComponentHandleRegistryCore;
       validationPlan?: CompiledFormValidationModel;
       ownerTemplateNode?: TemplateNode;
       ownerNodeInstance?: NodeInstance;
       title?: RenderNodeInput | string;
       body?: RenderNodeInput;
       actions?: RenderNodeInput;
-      meta?: Pick<ResolvedNodeMeta, 'className' | 'testid' | 'cid'>;
+      meta?: SurfaceNodeMeta;
       regionHandles?: Readonly<Record<string, RenderRegionHandle>>;
       controlledOpen?: boolean;
       onOpen?: () => Promise<ActionResult> | ActionResult | void;
@@ -327,9 +327,17 @@ export interface ValidationScopeRuntime {
   readonly scope?: ScopeRef;
   readonly validation?: CompiledFormValidationModel;
 
-  validateAt(path: string, reason?: ValidationReason): Promise<ValidationResult>;
-  validateSubtree(path: string, reason?: ValidationReason): Promise<FormValidationResult>;
-  validateAll(reason?: ValidationReason): Promise<FormValidationResult>;
+  validateAt(
+    path: string,
+    reason?: ValidationReason,
+    options?: { signal?: AbortSignal },
+  ): Promise<ValidationResult>;
+  validateSubtree(
+    path: string,
+    reason?: ValidationReason,
+    options?: { signal?: AbortSignal },
+  ): Promise<FormValidationResult>;
+  validateAll(reason?: ValidationReason, options?: { signal?: AbortSignal }): Promise<FormValidationResult>;
 
   applyChangesAndRevalidate(input: ApplyScopeChangesInput): Promise<FormValidationResult>;
   applyExternalErrors(input: ApplyExternalErrorsInput): ScopeValidationStateSnapshot;
@@ -370,7 +378,11 @@ export interface FormRuntime extends ValidationScopeRuntime {
   readonly canSubmit: boolean;
   readonly allTouched: boolean;
   setLifecycleHandlers(handlers?: FormLifecycleHandlers): void;
-  validateField(path: string, reason?: ValidationReason): Promise<ValidationResult>;
+  validateField(
+    path: string,
+    reason?: ValidationReason,
+    options?: { signal?: AbortSignal },
+  ): Promise<ValidationResult>;
   validateForm(
     reason?: ValidationReason,
     options?: { signal?: AbortSignal },

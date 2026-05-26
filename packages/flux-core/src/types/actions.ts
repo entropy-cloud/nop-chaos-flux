@@ -1,15 +1,99 @@
-import type { NodeInstance, InstanceFrame } from './node-identity.js';
 import type {
   ApiSchema,
-  SchemaObject,
-  SchemaValue,
-  SchemaPath,
   OperationControlConfig,
-} from './schema.js';
+  SchemaObject,
+  SchemaPath,
+  SchemaValue,
+  XuiImportSpec,
+} from './schema-base-types.js';
+import type { ImportedLibraryStaticMeta, CompiledRuntimeValue } from './compiled-value-types.js';
 import type { ScopeRef } from './scope.js';
-import type { ComponentHandleRegistry, RendererRuntime, RendererEnv } from './renderer.js';
-import type { FormRuntime, PageRuntime, SurfaceRuntime } from './runtime.js';
-import type { CompiledRuntimeValue } from './compilation.js';
+import type { ComponentHandleRegistryCore } from './component-handle-core.js';
+
+type ActionInstanceFrame = {
+  repeatedTemplateId: string;
+  instanceKey: string;
+};
+
+type ActionContextNodeInstance = {
+  cid?: number;
+  instancePath?: readonly ActionInstanceFrame[];
+  templateNode: {
+    id: string;
+    templatePath?: string;
+  };
+  scope: ScopeRef;
+  state?: unknown;
+};
+
+type ActionContextRuntime = {
+  env: {
+    notify: (level: 'info' | 'success' | 'warning' | 'error', message: string) => void;
+  };
+  expressionCompiler: unknown;
+  dispatch(
+    action: ActionSchema | ActionSchema[] | CompiledActionProgram,
+    ctx: ActionContext,
+  ): Promise<ActionResult>;
+};
+
+type ActionContextForm = {
+  id: string;
+  setValues(values: Record<string, unknown>): void;
+  submit(options?: { interactionId?: string; signal?: AbortSignal }): Promise<ActionResult>;
+};
+
+type ActionContextPage = {
+  refresh(): void;
+  store: {
+    getState(): {
+      refreshTick: number;
+    };
+  };
+};
+
+type ActionContextSurfaceRuntime = {
+  open(input: {
+    kind: 'dialog' | 'drawer' | 'sheet';
+    surface: Record<string, any>;
+    scope: ScopeRef;
+    surfaceId?: string;
+    options?: {
+      ownerScope?: ScopeRef;
+      actionScope?: ActionScope;
+      componentRegistry?: ComponentHandleRegistryCore;
+      validationPlan?: {
+        order: string[];
+        behavior: {
+          triggers: ('change' | 'blur' | 'submit')[];
+          showErrorOn: ('touched' | 'dirty' | 'visited' | 'submit')[];
+        };
+        dependents: Record<string, string[]>;
+        nodes?: Record<string, unknown>;
+        rootPath?: string;
+        ownerId?: string;
+      };
+      ownerNodeInstance?: ActionContextNodeInstance;
+      title?: unknown;
+      body?: unknown;
+      actions?: unknown;
+      meta?: unknown;
+      regionHandles?: Readonly<Record<string, unknown>>;
+      controlledOpen?: boolean;
+      onOpen?: () => Promise<ActionResult> | ActionResult | void;
+      onClose?: () => Promise<ActionResult> | ActionResult | void;
+    };
+  }): string;
+  close(surfaceId?: string): void;
+  closeTop(): void;
+};
+
+type ActionContextRendererEnv = {
+  fetcher?: unknown;
+  notify?: (level: 'info' | 'success' | 'warning' | 'error', message: string) => void;
+  importLoader?: ImportedLibraryLoader;
+  resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
+};
 
 export interface SetValueActionArgs extends SchemaObject {
   path?: string;
@@ -179,19 +263,19 @@ export interface FluxActionEvent {
 }
 
 export interface ActionContext {
-  runtime: RendererRuntime;
+  runtime: ActionContextRuntime;
   scope: ScopeRef;
-  instancePath?: readonly InstanceFrame[];
-  nodeInstance?: NodeInstance;
+  instancePath?: readonly ActionInstanceFrame[];
+  nodeInstance?: ActionContextNodeInstance;
   getInstanceKey?: () => string | undefined;
   interactionId?: string;
   signal?: AbortSignal;
   actionScope?: ActionScope;
-  componentRegistry?: ComponentHandleRegistry;
+  componentRegistry?: ComponentHandleRegistryCore;
   event?: FluxActionEvent;
-  form?: FormRuntime;
-  page?: PageRuntime;
-  surfaceRuntime?: SurfaceRuntime;
+  form?: ActionContextForm;
+  page?: ActionContextPage;
+  surfaceRuntime?: ActionContextSurfaceRuntime;
   dialogId?: string;
   prevResult?: ActionResult;
   evaluationBindings?: Record<string, unknown>;
@@ -245,31 +329,29 @@ export interface ImportedLibraryModule {
   createExpressionHelpers?(
     context: ImportedNamespaceContext,
   ): Promise<Record<string, unknown>> | Record<string, unknown>;
-  getStaticMeta?():
-    | import('./compilation.js').ImportedLibraryStaticMeta
-    | Promise<import('./compilation.js').ImportedLibraryStaticMeta>;
+  getStaticMeta?(): ImportedLibraryStaticMeta | Promise<ImportedLibraryStaticMeta>;
 }
 
 export interface ImportedLibraryLoader {
   load(
-    spec: import('./schema.js').XuiImportSpec,
+    spec: XuiImportSpec,
     signal?: AbortSignal,
   ): Promise<ImportedLibraryModule>;
 }
 
 export interface ImportedNamespaceContext {
-  runtime: RendererRuntime;
-  env: RendererEnv;
+  runtime: ActionContextRuntime;
+  env: ActionContextRendererEnv;
   actionScope: ActionScope;
-  componentRegistry?: ComponentHandleRegistry;
+  componentRegistry?: ComponentHandleRegistryCore;
   scope: ScopeRef;
-  spec: import('./schema.js').XuiImportSpec;
-  nodeInstance?: NodeInstance;
+  spec: XuiImportSpec;
+  nodeInstance?: ActionContextNodeInstance;
 }
 
 export interface ActionMonitorPayload {
   actionType: string;
-  instancePath?: readonly InstanceFrame[];
+  instancePath?: readonly ActionInstanceFrame[];
   nodeId?: string;
   path?: SchemaPath;
   interactionId?: string;

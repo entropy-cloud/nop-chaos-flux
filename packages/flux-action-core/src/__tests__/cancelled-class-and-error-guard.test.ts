@@ -225,7 +225,6 @@ describe('onError dispatch throwing is caught', () => {
           compiled.isStatic ? compiled.value : (undefined as T),
       },
       adapter,
-      runtime,
       onActionError,
     });
 
