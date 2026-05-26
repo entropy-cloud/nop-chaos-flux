@@ -7,6 +7,10 @@ export interface ActionValidationContext {
   hostContext?: HostActionValidationContext;
   symbolTable?: import('@nop-chaos/flux-core').CompileSymbolTable;
   visibleImports?: ReadonlyMap<string, import('@nop-chaos/flux-core').PreparedImportSpec | undefined>;
+  componentTargets?: ReadonlyMap<
+    string,
+    import('./shape-validation-traversal.js').ComponentTargetContractResolution
+  >;
   strictMode?: boolean;
 }
 
@@ -197,9 +201,11 @@ export function validateActionShape(
   } else {
     const resolution = classifyActionSelector({
       action: value.action,
+      actionValue: value,
       symbolTable: actionContext?.symbolTable,
       visibleImports: actionContext?.visibleImports,
       hostContext: actionContext?.hostContext,
+      componentTargets: actionContext?.componentTargets,
     });
 
     validateActionSelector({
@@ -208,6 +214,7 @@ export function validateActionShape(
       diagnostics,
       enabled,
       strictMode: actionContext?.strictMode,
+      args: value.args,
     });
 
     if (enabled && actionContext?.hostContext && resolution.class === 'host-namespaced') {

@@ -1,5 +1,6 @@
 import type {
   ArrayValueState,
+  CompiledActionProgram,
   CompiledRuntimeValue,
   EvalContext,
   ObjectValueState,
@@ -29,6 +30,29 @@ function isCompiledRuntimeValue(value: unknown): value is CompiledRuntimeValue<u
     'isStatic' in value &&
     'node' in value
   );
+}
+
+function isCompiledActionProgram(value: unknown): value is CompiledActionProgram {
+  return Boolean(
+    value && typeof value === 'object' && 'nodes' in value && Array.isArray((value as { nodes?: unknown }).nodes),
+  );
+}
+
+function isCompiledTemplateNode(value: unknown): boolean {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      'templateNodeId' in value &&
+      typeof (value as { templateNodeId?: unknown }).templateNodeId === 'number' &&
+      'propsProgram' in value &&
+      'metaProgram' in value &&
+      'regions' in value,
+  );
+}
+
+function isCompiledTemplateFragment(value: unknown): boolean {
+  return isCompiledTemplateNode(value) ||
+    (Array.isArray(value) && value.every((item) => isCompiledTemplateNode(item)));
 }
 
 function createStaticRuntimeValue<T>(value: T): CompiledRuntimeValue<T> {
@@ -73,6 +97,14 @@ export function compileRuntimeValueTree<T = unknown>(
 ): CompiledRuntimeValue<EvaluatedRuntimeTree<T>> {
   if (isCompiledRuntimeValue(value)) {
     return value as CompiledRuntimeValue<EvaluatedRuntimeTree<T>>;
+  }
+
+  if (isCompiledActionProgram(value)) {
+    return createStaticRuntimeValue(value as EvaluatedRuntimeTree<T>);
+  }
+
+  if (isCompiledTemplateFragment(value)) {
+    return createStaticRuntimeValue(value as EvaluatedRuntimeTree<T>);
   }
 
   if (Array.isArray(value)) {

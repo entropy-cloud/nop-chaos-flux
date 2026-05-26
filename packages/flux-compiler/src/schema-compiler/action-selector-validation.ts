@@ -1,7 +1,12 @@
-import type { CompileSymbolTable, PreparedImportSpec } from '@nop-chaos/flux-core';
+import type {
+  CompileSymbolTable,
+  PreparedImportSpec,
+  RendererCapabilityContract,
+} from '@nop-chaos/flux-core';
 import { getBuiltInActionDescriptor } from '@nop-chaos/flux-core';
 import { appendJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics.js';
 import { isInsideCapableRegion, parseNamespacedAction, type HostActionValidationContext } from './host-action-validation.js';
+import { validateFluxValueShape } from './flux-value-shape-validation.js';
 
 export type ActionSelectorClass =
   | 'built-in'
@@ -19,6 +24,30 @@ export interface ActionSelectorResolution {
   parsedNamespace?: { namespace: string; method: string };
   importMeta?: PreparedImportSpec;
   isAlias?: boolean;
+  componentContract?: RendererCapabilityContract;
+}
+
+function resolveComponentContract(input: {
+  action: string;
+  parsedNamespace: { namespace: string; method: string };
+  componentTargets?: ReadonlyMap<
+    string,
+    import('./shape-validation-traversal.js').ComponentTargetContractResolution
+  >;
+  actionValue?: Record<string, unknown>;
+}): RendererCapabilityContract | undefined {
+  const componentId =
+    typeof input.actionValue?.componentId === 'string' ? input.actionValue.componentId : undefined;
+  if (!componentId) {
+    return undefined;
+  }
+
+  const target = input.componentTargets?.get(componentId);
+  if (!target) {
+    return undefined;
+  }
+
+  return target.componentCapabilityContracts.find((contract) => contract.handle === input.parsedNamespace.method);
 }
 
 function findImportMetaByAlias(
@@ -34,9 +63,14 @@ function findImportMetaByAlias(
 
 export function classifyActionSelector(input: {
   action: string;
+  actionValue?: Record<string, unknown>;
   symbolTable?: CompileSymbolTable;
   visibleImports?: ReadonlyMap<string, PreparedImportSpec | undefined>;
   hostContext?: HostActionValidationContext;
+  componentTargets?: ReadonlyMap<
+    string,
+    import('./shape-validation-traversal.js').ComponentTargetContractResolution
+  >;
 }): ActionSelectorResolution {
   const builtIn = getBuiltInActionDescriptor(input.action);
   if (builtIn) {
@@ -51,10 +85,17 @@ export function classifyActionSelector(input: {
   const parsed = parseNamespacedAction(input.action);
   if (parsed) {
     if (parsed.namespace === 'component') {
+      const componentContract = resolveComponentContract({
+        action: input.action,
+        parsedNamespace: parsed,
+        componentTargets: input.componentTargets,
+        actionValue: input.actionValue,
+      });
       return {
         class: 'component-targeted',
         action: input.action,
         parsedNamespace: parsed,
+        ...(componentContract ? { componentContract } : {}),
       };
     }
 
@@ -107,6 +148,7 @@ export function validateActionSelector(input: {
   diagnostics: SchemaCompilerDiagnosticsContext;
   enabled: boolean;
   strictMode?: boolean;
+  args?: unknown;
 }) {
   if (!input.enabled) {
     return;
@@ -137,6 +179,38 @@ export function validateActionSelector(input: {
   }
 
   if (resolution.class === 'component-targeted') {
+    if (resolution.componentContract && resolution.parsedNamespace) {
+      if (!resolution.componentContract.args && input.args !== undefined) {
+        diagnostics.emit({
+          code: 'invalid-host-capability-args',
+          path: appendJsonPointer(input.path, 'args'),
+          message: `Component capability args are invalid. Method "${resolution.parsedNamespace.method}" does not accept args.`,
+          source: 'core',
+        });
+        return;
+      }
+
+      if (resolution.componentContract.args) {
+        const argsPath = appendJsonPointer(input.path, 'args');
+        const valid = validateFluxValueShape(
+          input.args,
+          resolution.componentContract.args,
+          argsPath,
+          diagnostics,
+          {
+            code: 'invalid-host-capability-args',
+            source: 'core',
+            messagePrefix: 'Component capability args are invalid.',
+          },
+        );
+        if (!valid) {
+          return;
+        }
+      }
+
+      return;
+    }
+
     diagnostics.emit({
       code: 'unvalidated-component-target',
       path: actionPath,

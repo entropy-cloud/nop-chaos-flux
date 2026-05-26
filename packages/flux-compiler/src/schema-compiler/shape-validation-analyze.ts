@@ -69,7 +69,11 @@ export function analyzeSchemaInput(
   registry: RendererRegistry,
   plugins: readonly RendererPlugin[] | undefined,
   diagnostics: SchemaCompilerDiagnosticsContext,
-  traversalState: ValidationTraversalState = createDefaultValidationTraversalState(diagnostics),
+  traversalState: ValidationTraversalState = createDefaultValidationTraversalState(
+    diagnostics,
+    inputValue,
+    registry,
+  ),
 ) {
   if (diagnostics.hasReachedLimit()) {
     return;
@@ -160,6 +164,7 @@ export function analyzeSchemaInput(
     traversalState.hostContext,
   );
   const nodeState: ValidationTraversalState = {
+    componentTargets: traversalState.componentTargets,
     ...nodeTraversal,
     symbolTable: nextSymbolTable,
     visibleImports: nextVisibleImports,
@@ -169,6 +174,7 @@ export function analyzeSchemaInput(
     hostContext: nodeState.hostContext,
     symbolTable: nodeState.symbolTable,
     visibleImports: nodeState.visibleImports,
+    componentTargets: nodeState.componentTargets,
     strictMode: diagnostics.validation.strictMode,
   };
 

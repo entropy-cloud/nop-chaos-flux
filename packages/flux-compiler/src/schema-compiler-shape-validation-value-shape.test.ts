@@ -108,4 +108,40 @@ describe('shape validation finite prop and value-shape diagnostics', () => {
 
     expect(compiler.validate?.({ type: 'button', variant: '${expr}' } as any)).toEqual([]);
   });
+
+  it('validates record value shapes with keyed entry diagnostics', () => {
+    const diagnostics = createSchemaCompilerDiagnosticsContext(undefined, 'validate');
+
+    const valid = validateFluxValueShape(
+      { nodeA: { dx: 1, dy: 'bad' } },
+      {
+        kind: 'record',
+        value: {
+          kind: 'object',
+          fields: {
+            dx: { kind: 'number' },
+            dy: { kind: 'number' },
+          },
+          unknownKeys: 'reject',
+        },
+      },
+      '/deltas',
+      diagnostics,
+      {
+        code: 'invalid-property-value',
+        source: 'core',
+        messagePrefix: 'Invalid deltas payload.',
+      },
+    );
+
+    expect(valid).toBe(false);
+    expect(diagnostics.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-property-value',
+          path: '/deltas/nodeA/dy',
+        }),
+      ]),
+    );
+  });
 });

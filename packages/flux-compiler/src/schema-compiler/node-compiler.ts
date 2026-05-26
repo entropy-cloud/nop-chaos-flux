@@ -1,3 +1,6 @@
+import {
+  toCompiledRendererContract,
+} from '@nop-chaos/flux-core';
 import type {
   ActionSchema,
   BaseSchema,
@@ -326,6 +329,22 @@ export function createCompileSingleNode(
               reportDiagnostic:
                 compileValueOptions?.reportDiagnostic ?? ((issue) => diagnostics.emit(issue)),
             }),
+          compileActions: (
+            input: ActionSchema | ActionSchema[],
+            sourcePathOverride?: string,
+            compileActionOptions?: Omit<
+              import('@nop-chaos/flux-core').ExpressionCompileOptions,
+              'sourcePath'
+            >,
+          ) =>
+            compileActions(input, expressionCompiler, {
+              ...compileActionOptions,
+              symbolTable: compileActionOptions?.symbolTable ?? symbolTable,
+              sourcePath: sourcePathOverride ?? `${path}.${key}`,
+              basePath: sourcePathOverride ?? `${path}.${key}`,
+              reportDiagnostic:
+                compileActionOptions?.reportDiagnostic ?? ((issue) => diagnostics.emit(issue)),
+            }),
           compileSchema: (input: SchemaInput, compileOptions?: CompileSchemaOptions) =>
             compileSchemaToTemplateNodes(
               input,
@@ -604,7 +623,7 @@ export function createCompileSingleNode(
       templatePath: path,
       schemaUrl: (options as CompileNodeOptions & { schemaUrl?: string }).schemaUrl,
       rendererType: renderer.type,
-      component: renderer,
+      component: toCompiledRendererContract(renderer),
       propsProgram,
       metaProgram,
       structuralWhen,

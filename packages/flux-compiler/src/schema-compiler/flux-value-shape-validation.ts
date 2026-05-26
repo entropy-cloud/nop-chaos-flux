@@ -63,6 +63,8 @@ export function summarizeExpectedFluxValueShape(shape: FluxValueShape): string {
       return shape.kind;
     case 'literal':
       return describeLiteral(shape.value);
+    case 'record':
+      return `record<${summarizeExpectedFluxValueShape(shape.value)}>`;
     case 'array':
       return `array<${summarizeExpectedFluxValueShape(shape.item)}>`;
     case 'object': {
@@ -173,6 +175,27 @@ export function validateFluxValueShape(
         return false;
       }
       return true;
+
+    case 'record': {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        diagnostics.emit({
+          code: issue.code,
+          path,
+          message: `${issue.messagePrefix ?? 'Expected record.'} Received ${summarizeActualSchemaValue(value)}.`,
+          source: issue.source,
+        });
+        return false;
+      }
+
+      let valid = true;
+      const record = value as Record<string, unknown>;
+      for (const [key, entry] of Object.entries(record)) {
+        if (!validateFluxValueShape(entry, shape.value, appendJsonPointer(path, key), diagnostics, issue)) {
+          valid = false;
+        }
+      }
+      return valid;
+    }
 
     case 'array': {
       if (!Array.isArray(value)) {

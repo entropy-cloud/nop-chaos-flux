@@ -1,4 +1,4 @@
-import type { BaseSchema, RendererDefinition } from '@nop-chaos/flux-core';
+import type { BaseSchema, RendererCapabilityContract, RendererDefinition } from '@nop-chaos/flux-core';
 import { schemaPathToJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics.js';
 import {
   createHostActionValidationContext,
@@ -9,18 +9,74 @@ export interface ValidationTraversalState {
   hostContext?: HostActionValidationContext;
   symbolTable?: import('@nop-chaos/flux-core').CompileSymbolTable;
   visibleImports?: ReadonlyMap<string, import('@nop-chaos/flux-core').PreparedImportSpec | undefined>;
+  componentTargets?: ReadonlyMap<string, ComponentTargetContractResolution>;
   startsHostBoundary: boolean;
+}
+
+export interface ComponentTargetContractResolution {
+  rendererType: string;
+  componentCapabilityContracts: readonly RendererCapabilityContract[];
+}
+
+function collectComponentTargets(
+  inputValue: unknown,
+  out: Map<string, ComponentTargetContractResolution | null>,
+  registry: import('@nop-chaos/flux-core').RendererRegistry,
+) {
+  if (Array.isArray(inputValue)) {
+    inputValue.forEach((entry) => collectComponentTargets(entry, out, registry));
+    return;
+  }
+
+  if (!inputValue || typeof inputValue !== 'object') {
+    return;
+  }
+
+  const schema = inputValue as BaseSchema;
+  if (typeof schema.type === 'string') {
+    const renderer = registry.get(schema.type);
+    if (renderer && typeof schema.id === 'string' && schema.id.length > 0) {
+      const nextEntry: ComponentTargetContractResolution = {
+        rendererType: renderer.type,
+        componentCapabilityContracts: renderer.componentCapabilityContracts ?? [],
+      };
+      const previous = out.get(schema.id);
+      if (!previous) {
+        out.set(schema.id, nextEntry);
+      } else {
+        out.set(schema.id, null);
+      }
+    }
+  }
+
+  for (const value of Object.values(schema)) {
+    collectComponentTargets(value, out, registry);
+  }
 }
 
 export function createDefaultValidationTraversalState(
   diagnostics: SchemaCompilerDiagnosticsContext,
+  inputValue?: unknown,
+  registry?: import('@nop-chaos/flux-core').RendererRegistry,
 ): ValidationTraversalState {
+  const componentTargets = new Map<string, ComponentTargetContractResolution>();
+  if (inputValue !== undefined && registry) {
+    const rawTargets = new Map<string, ComponentTargetContractResolution | null>();
+    collectComponentTargets(inputValue, rawTargets, registry);
+    for (const [id, resolution] of rawTargets) {
+      if (resolution) {
+        componentTargets.set(id, resolution);
+      }
+    }
+  }
+
   return {
     hostContext: diagnostics.validation.hostContractContext
       ? createHostActionValidationContext(diagnostics.validation.hostContractContext)
       : undefined,
     symbolTable: undefined,
     visibleImports: undefined,
+    componentTargets,
     startsHostBoundary: false,
   };
 }
