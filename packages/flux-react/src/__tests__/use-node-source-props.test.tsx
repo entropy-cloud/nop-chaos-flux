@@ -85,8 +85,9 @@ function Probe(props: {
   node: { sourcePropKeys: string[]; sourceStatePropKeys: Record<string, string> };
   propsValue: Record<string, unknown>;
   scope: ScopeRef;
+  ctx?: Record<string, unknown>;
 }) {
-  const value = useNodeSourceProps(props.node as any, props.propsValue, props.scope);
+  const value = useNodeSourceProps(props.node as any, props.propsValue, props.scope, props.ctx as any);
   return <pre data-testid="value">{stringifyValue(value)}</pre>;
 }
 
@@ -216,6 +217,43 @@ describe('useNodeSourceProps', () => {
     expect(observer.run).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('value').textContent).toContain('observerLabel');
     expect(screen.getByTestId('value').textContent).toContain('cyclic');
+  });
+
+  it('re-runs sources when caller action context changes', () => {
+    const observer = createObserver('ctx');
+    const runtime = createRuntime([observer]);
+    const scope = createScope();
+    const node = {
+      sourcePropKeys: ['items'],
+      sourceStatePropKeys: { items: 'itemsState' },
+    };
+    const firstCtx = { actionScope: { id: 'action-a' } };
+    const secondCtx = { actionScope: { id: 'action-b' } };
+
+    const { rerender } = render(
+      <RuntimeContext.Provider value={runtime}>
+        <Probe
+          node={node}
+          propsValue={{ items: { type: 'source', action: 'loadItems' } }}
+          scope={scope}
+          ctx={firstCtx}
+        />
+      </RuntimeContext.Provider>,
+    );
+
+    rerender(
+      <RuntimeContext.Provider value={runtime}>
+        <Probe
+          node={node}
+          propsValue={{ items: { type: 'source', action: 'loadItems' } }}
+          scope={scope}
+          ctx={secondCtx}
+        />
+      </RuntimeContext.Provider>,
+    );
+
+    expect(observer.run).toHaveBeenNthCalledWith(1, expect.objectContaining({ ctx: firstCtx }));
+    expect(observer.run).toHaveBeenNthCalledWith(2, expect.objectContaining({ ctx: secondCtx }));
   });
 
   it('cleans up again after a false-to-true-to-false lifecycle cycle', () => {

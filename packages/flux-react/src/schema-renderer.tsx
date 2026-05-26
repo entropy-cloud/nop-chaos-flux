@@ -364,10 +364,12 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
           ) {
             console.warn('[flux-react] Schema import preload failed', error);
           }
+          const reportedError =
+            error instanceof Error ? error : new Error(String(error), { cause: error });
           reportImportFailure({
             env: props.env,
-            error: error instanceof Error ? error : new Error(String(error)),
-            message: error instanceof Error ? error.message : String(error),
+            error: reportedError,
+            message: reportedError.message,
             phase: 'compile',
             path: props.schemaUrl,
           });

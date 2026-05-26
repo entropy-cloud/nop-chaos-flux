@@ -56,6 +56,15 @@ const edgeIdArrayShape: FluxValueShape = {
   item: { kind: 'string' },
 };
 
+const nodeDeltaShape: FluxValueShape = {
+  kind: 'object',
+  fields: {
+    dx: { kind: 'number' },
+    dy: { kind: 'number' },
+  },
+  unknownKeys: 'reject',
+};
+
 const nodeResultShape: FluxValueShape = {
   kind: 'object',
   fields: { nodeId: { kind: 'string' } },
@@ -397,8 +406,8 @@ const designerCapabilities: HostCapabilityContract = {
         kind: 'object',
         fields: {
           deltas: {
-            kind: 'object',
-            fields: {},
+            kind: 'record',
+            value: nodeDeltaShape,
             description: 'Map of nodeId to {dx, dy} deltas',
           },
         },

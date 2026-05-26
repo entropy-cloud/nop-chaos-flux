@@ -4,12 +4,15 @@ import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { RenderNodes } from '@nop-chaos/flux-react/unstable';
+import { createSchemaRenderer, RenderNodes } from '@nop-chaos/flux-react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { createExpressionCompiler } from '@nop-chaos/flux-formula';
+import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { flowDesignerRendererDefinitions } from './index.js';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
 import { normalizeConfig } from '@nop-chaos/flow-designer-core';
+import { createRendererEnv } from './test-support.js';
 
 afterEach(() => cleanup());
 
@@ -229,60 +232,42 @@ describe('Node body expression rendering', () => {
     expect(edgeType?.body).toEqual({ type: 'text', body: '${condition}', className: 'text-sm' });
   });
 
-  it('still evaluates non-schema config leaves through the custom compile path', async () => {
-    const SchemaRenderer = createSchemaRenderer([textWithBody, ...flowDesignerRendererDefinitions]);
-
-    render(
-      <SchemaRenderer
-        schemaUrl="test://designer-config-leaf-compile"
-        schema={{
-          type: 'designer-page',
-          document: TEST_DOC,
-          config: '${$scope.config}',
-        }}
-        data={{
-          config: {
-            ...TEST_CONFIG,
-            palette: {
-              groups: [{ id: 'basic', label: '${paletteLabel}', nodeTypes: ['start'] }],
-            },
-            nodeTypes: [
-              {
-                ...TEST_CONFIG.nodeTypes[0],
-                label: '${nodeTypeLabel}',
-              },
-            ],
-          },
-          paletteLabel: 'Basic Nodes',
-          nodeTypeLabel: 'Start Node',
-        }}
-        env={env}
-        formulaCompiler={createFormulaCompiler()}
-      />,
-    );
-
-    await waitFor(() => {
-      const designerPage = screen.queryByTestId('designer-page-root')
-        ?? document.querySelector('[data-runtime-id]');
-      expect(designerPage).toBeTruthy();
-    }, { timeout: 3000 });
-
-    const normalized = normalizeConfig({
-      ...TEST_CONFIG,
-      palette: {
-        groups: [{ id: 'basic', label: 'Basic Nodes', nodeTypes: ['start'] }],
-      },
-      nodeTypes: [
-        {
-          ...TEST_CONFIG.nodeTypes[0],
-          label: 'Start Node',
-        },
-      ],
+  it('treats source-provided config as pass-through and does not recursively compile runtime leaves', async () => {
+    const registry = createRendererRegistry([textWithBody, ...flowDesignerRendererDefinitions]);
+    const runtime = createRendererRuntime({
+      registry,
+      env: createRendererEnv(),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
-    expect(normalized.palette.groups[0]?.label).toBe('Basic Nodes');
-    expect(normalized.nodeTypes.get('start')?.label).toBe('Start Node');
-    expect(normalized.nodeTypes.get('start')?.body).toEqual({ type: 'text', body: '${label}' });
+    const compiled = runtime.compile({
+      type: 'designer-page',
+      document: TEST_DOC,
+      config: '${config}',
+    });
+    const page = runtime.createPageRuntime({
+      config: {
+        ...TEST_CONFIG,
+        palette: {
+          groups: [{ id: 'basic', label: '${paletteLabel}', nodeTypes: ['start'] }],
+        },
+        nodeTypes: [
+          {
+            ...TEST_CONFIG.nodeTypes[0],
+            label: '${nodeTypeLabel}',
+          },
+        ],
+      },
+      paletteLabel: 'Basic Nodes',
+      nodeTypeLabel: 'Start Node',
+    });
+
+    const resolved = runtime.resolveNodeProps(compiled.root as any, page.scope);
+    const config = (resolved.value as Record<string, any>).config;
+
+    expect(config.palette.groups[0]?.label).toBe('${paletteLabel}');
+    expect(config.nodeTypes[0]?.label).toBe('${nodeTypeLabel}');
+    expect(config.nodeTypes[0]?.body).toBeTruthy();
   });
 
   it('resolves nodeType.body expressions from spread config data', async () => {

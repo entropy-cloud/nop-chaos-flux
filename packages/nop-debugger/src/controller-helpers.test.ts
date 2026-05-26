@@ -73,6 +73,9 @@ describe('controller helpers', () => {
 
     expect(formatErrorDetail('plain text')).toBe('plain text');
     expect(formatErrorDetail(new Error('boom'))).toContain('boom');
+    expect(formatErrorDetail(new Error('outer', { cause: { code: 'E_INNER' } }))).toContain(
+      'Caused by: {"code":"E_INNER"}',
+    );
     expect(formatErrorDetail({ code: 500 })).toBe('{"code":500}');
     expect(formatActionResult(undefined)).toBe('completed');
     expect(formatActionResult({ ok: false, cancelled: true })).toBe('cancelled');

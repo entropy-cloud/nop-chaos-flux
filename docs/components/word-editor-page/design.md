@@ -108,6 +108,7 @@ interface WordEditorConfig {
 - `word-editor-page` 属于 `Domain Host Owner`：内部读面是 host projection，宿主外部若需要观测状态，应通过窄 `statusPath` 摘要。
 - 页边距对话框以 `editor-store.paperSettings` 为 owner truth：打开时从当前 paper settings hydrate，确认时同时回写 store 与 canvas bridge 的 `executeSetPaperMargin(...)` 路径。
 - hyperlink 与 page margins dialog 输入当前都要求稳定程序化标签：不得仅依赖 placeholder 或相邻视觉文本。当前 live baseline 至少固定了 hyperlink display/url 与四个 margin 输入的 accessible name。
+- `EditorCanvas` host wrapper 必须显式发布可访问边界：当前支持基线是带稳定名称与说明文本的 focusable `region`，用于标记文档编辑区域并在第三方 canvas surface 无法完整暴露给辅助技术时提供责任边界与 fallback guidance。
 
 ### 7.1 Host Projection Contract
 
@@ -160,6 +161,7 @@ host scope 向下投影四个只读字段：
 - 工作台布局使用 `WorkbenchShell` 组件，支持左右面板折叠。
 - 工具栏使用 Ribbon 风格分组布局。
 - playground 入口现在通过 `SchemaRenderer` + `registerWordEditorRenderers()` 渲染，而不是直接 lazy import 页面组件。
+- package-owned Word Editor theme fallbacks now live on `.nop-word-editor-page` itself rather than `.nop-theme-root`; shared `--nop-*` tokens remain host-owned, and stylesheet fallbacks must wrap shared HSL fragment tokens with `hsl(var(...))` before deriving page chrome colors.
 
 当前 runtime 状态说明：
 

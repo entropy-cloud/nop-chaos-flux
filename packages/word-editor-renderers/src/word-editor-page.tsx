@@ -21,6 +21,25 @@ import { useWordEditorSave } from './hooks/use-word-editor-save.js';
 import { useWordEditorActions } from './hooks/use-word-editor-actions.js';
 import type { WordEditorPageSchema } from './types.js';
 
+function collectDocumentText(value: unknown): string {
+  if (!Array.isArray(value)) {
+    return '';
+  }
+
+  const parts = value
+    .map((item) => {
+      if (!item || typeof item !== 'object') {
+        return '';
+      }
+
+      const text = 'value' in item ? item.value : undefined;
+      return typeof text === 'string' ? text.trim() : '';
+    })
+    .filter((part) => part.length > 0);
+
+  return parts.join(' ').trim();
+}
+
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }
@@ -31,8 +50,6 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     actionScope,
     activePanel,
     bridge,
-    charts,
-    codes,
     datasetDialogOpen,
     datasetStore,
     editingDataset,
@@ -49,13 +66,12 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     rightCollapsed,
     rootRef,
     setActivePanel,
-    setCharts,
-    setCodes,
     setDatasetDialogOpen,
     setEditingDatasetId,
     setLeftCollapsed,
     setRightCollapsed,
     setSavedDocument,
+    savedDocument,
     titleContent,
     wordCount,
     setIsSaving,
@@ -67,6 +83,9 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     mountedRef,
     setSaving: setIsSaving,
   });
+  const savedPreviewText = collectDocumentText(savedDocument?.data.main);
+  const initialPreviewText = collectDocumentText(recoveredState.document?.data.main ?? initialDocument?.main);
+  const visiblePreviewText = savedPreviewText || initialPreviewText;
 
   const handleAutosave = useCallback((saved: SavedDocumentData) => {
     setSavedDocument(saved);
@@ -84,8 +103,6 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     editingDatasetId,
     setDatasetDialogOpen,
     setEditingDatasetId,
-    setCharts,
-    setCodes,
     onBack: props.events.onBack as
       | ((event: React.MouseEvent<HTMLButtonElement>) => unknown)
       | undefined,
@@ -133,6 +150,17 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           <Save className="w-4 h-4" />
           {saveMessage || t('flux.wordEditor.save')}
         </Button>
+      </div>
+      <div className="flex items-center justify-between gap-3 border-b border-border/70 bg-[var(--nop-nav-surface)] px-4 py-2 text-xs text-muted-foreground">
+        <div className="min-w-0 flex-1">
+          <span className="font-medium text-foreground">{t('flux.wordEditor.documentPreview')}</span>
+          <span className="ml-2 truncate" data-testid="word-editor-saved-preview">
+            {visiblePreviewText || t('flux.wordEditor.noDocumentData')}
+          </span>
+        </div>
+        <span className="shrink-0" data-testid="word-editor-save-status">
+          {saveMessage || (isSaving ? t('flux.common.saving') : isDirty ? t('flux.common.unsaved') : t('flux.wordEditor.saved'))}
+        </span>
       </div>
       {props.regions.toolbar ? (
         asReactNode(
@@ -219,8 +247,6 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           bridge={bridge}
           initialDocument={initialDocument}
           recoveredDocument={recoveredState.document}
-          charts={charts}
-          codes={codes}
           onAutosave={handleAutosave}
         />
       </div>

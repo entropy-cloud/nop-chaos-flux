@@ -130,6 +130,8 @@ function lowerCommonStep(step: TaskFlowStep): NopTaskStep {
       if (step.props.autoCancelUnfinished) result.autoCancelUnfinished = true;
       if (step.props.aggregator) result.aggregator = step.props.aggregator;
       break;
+    case 'end':
+      break;
   }
 
   return result;

@@ -6,20 +6,39 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = path.join(__dirname, '..');
 const packagesDir = path.join(rootDir, 'packages');
 
+function collectCssTargets(target, targets = []) {
+  if (typeof target === 'string') {
+    targets.push(target);
+    return targets;
+  }
+
+  if (!target || typeof target !== 'object') {
+    return targets;
+  }
+
+  for (const nestedTarget of Object.values(target)) {
+    collectCssTargets(nestedTarget, targets);
+  }
+
+  return targets;
+}
+
 function collectCssExports(exportsField) {
   if (!exportsField || typeof exportsField !== 'object') {
     return [];
   }
 
   return Object.entries(exportsField)
-    .filter(([subpath, target]) => subpath.endsWith('.css') && typeof target === 'string')
-    .map(([subpath, target]) => ({ subpath, target }));
+    .filter(([subpath]) => subpath.endsWith('.css'))
+    .map(([subpath, target]) => ({ subpath, targets: collectCssTargets(target) }))
+    .filter((cssExport) => cssExport.targets.length > 0);
 }
 
 async function main() {
   const packageEntries = await readdir(packagesDir, { withFileTypes: true });
   const problems = [];
-  let checkedCount = 0;
+  let checkedSubpathCount = 0;
+  let checkedTargetCount = 0;
 
   for (const entry of packageEntries) {
     if (!entry.isDirectory()) {
@@ -35,18 +54,19 @@ async function main() {
     }
 
     for (const cssExport of collectCssExports(packageJson.exports)) {
-      checkedCount += 1;
+      checkedSubpathCount += 1;
+      checkedTargetCount += cssExport.targets.length;
 
-      if (cssExport.target.includes('/src/')) {
-        problems.push(
-          `${packageJson.name} ${cssExport.subpath} points at source asset ${cssExport.target}`,
-        );
-      }
+      for (const target of cssExport.targets) {
+        if (target.includes('/src/')) {
+          problems.push(`${packageJson.name} ${cssExport.subpath} points at source asset ${target}`);
+        }
 
-      if (!cssExport.target.startsWith('./dist/')) {
-        problems.push(
-          `${packageJson.name} ${cssExport.subpath} must point at ./dist/* but found ${cssExport.target}`,
-        );
+        if (!target.startsWith('./dist/')) {
+          problems.push(
+            `${packageJson.name} ${cssExport.subpath} must point at ./dist/* but found ${target}`,
+          );
+        }
       }
     }
   }
@@ -59,7 +79,9 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`[check-package-css-exports] Verified ${checkedCount} CSS export targets`);
+  console.log(
+    `[check-package-css-exports] Verified ${checkedSubpathCount} CSS export subpaths across ${checkedTargetCount} resolved targets`,
+  );
 }
 
 main().catch((error) => {

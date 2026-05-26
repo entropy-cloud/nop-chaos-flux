@@ -44,6 +44,7 @@ export function createInputRenderer(inputType: string) {
         name={name || undefined}
         value={inputValue}
         disabled={presentation.effectiveDisabled}
+        readOnly={presentation.readOnly}
         aria-label={String((props.props.label ?? name) || '') || undefined}
         aria-required={props.props.required ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}

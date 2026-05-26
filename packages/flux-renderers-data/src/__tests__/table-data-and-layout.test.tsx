@@ -438,7 +438,7 @@ describe('table row rendering helpers', () => {
 
     fireEvent.click(screen.getByText('Cell region'));
     expect(onToggleExpand).toHaveBeenCalledWith('r1');
-    expect(document.querySelector('[data-slot="checkbox"][data-shape="circle"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="radio-group-item"]')).toBeTruthy();
     expect(screen.getByText('Email')).toBeTruthy();
     expect(screen.getByText('alice@example.com')).toBeTruthy();
     expect(screen.getByTestId('helper-expanded.r1')).toBeTruthy();

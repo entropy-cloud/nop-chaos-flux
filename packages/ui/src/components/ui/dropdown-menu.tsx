@@ -16,6 +16,29 @@ function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />;
 }
 
+function DropdownMenuPositioner({ className, ...props }: MenuPrimitive.Positioner.Props) {
+  return (
+    <MenuPrimitive.Positioner
+      data-slot="dropdown-menu-positioner"
+      className={cn('isolate z-50 outline-none', className)}
+      {...props}
+    />
+  );
+}
+
+function DropdownMenuPopup({ className, ...props }: MenuPrimitive.Popup.Props) {
+  return (
+    <MenuPrimitive.Popup
+      data-slot="dropdown-menu-popup"
+      className={cn(
+        'z-50 rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-none',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 function DropdownMenuContent({
   align = 'start',
   alignOffset = 0,
@@ -241,6 +264,8 @@ export {
   DropdownMenu,
   DropdownMenuPortal,
   DropdownMenuTrigger,
+  DropdownMenuPositioner,
+  DropdownMenuPopup,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuLabel,

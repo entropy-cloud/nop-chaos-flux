@@ -111,6 +111,16 @@ describe('createItemScope (scalar)', () => {
     scope.update('sub.path', 'val');
     expect(parent.update).toHaveBeenCalledWith('items.0.sub.path', 'val');
   });
+
+  it('blocks writes when the projected item scope is readOnly', () => {
+    const parent = createMockScope({ items: ['a'] });
+    const scope = createItemScope(parent, 'items', 0, 'scalar', true, 'id-0');
+
+    expect(() => scope.update('value', 'blocked')).toThrow(/readOnly projected owner scope/i);
+    expect(() => scope.merge?.({ value: 'blocked' })).toThrow(/readOnly projected owner scope/i);
+    expect(() => scope.replace?.({ value: 'blocked' })).toThrow(/readOnly projected owner scope/i);
+    expect(parent.update).not.toHaveBeenCalled();
+  });
 });
 
 describe('createItemScope (object)', () => {
@@ -175,6 +185,16 @@ describe('createItemScope (object)', () => {
     scope.replace!({ name: 'Bob' });
     expect(parent.update).toHaveBeenCalledWith('contacts.0', { name: 'Bob' });
     expect(parent.replace).not.toHaveBeenCalled();
+  });
+
+  it('blocks object item writes when the projected scope is readOnly', () => {
+    const parent = createMockScope({ contacts: [{ name: 'Alice' }] });
+    const scope = createItemScope(parent, 'contacts', 0, 'object', true, 'id-0');
+
+    expect(() => scope.update('name', 'Bob')).toThrow(/readOnly projected owner scope/i);
+    expect(() => scope.merge?.({ name: 'Bob' })).toThrow(/readOnly projected owner scope/i);
+    expect(() => scope.replace?.({ name: 'Bob' })).toThrow(/readOnly projected owner scope/i);
+    expect(parent.update).not.toHaveBeenCalled();
   });
 });
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FormRuntime } from '@nop-chaos/flux-core';
-import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
+import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,

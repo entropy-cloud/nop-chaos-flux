@@ -64,6 +64,7 @@ type FluxValueShape =
   | { kind: 'boolean'; description?: string }
   | { kind: 'null'; description?: string }
   | { kind: 'literal'; value: string | number | boolean | null; description?: string }
+  | { kind: 'record'; value: FluxValueShape; description?: string }
   | { kind: 'array'; item: FluxValueShape; description?: string }
   | {
       kind: 'object';
@@ -89,6 +90,11 @@ Object-field rule:
 - `kind: 'object'` is open by default
 - set `unknownKeys: 'reject'` when the published contract is a closed object and extra keys must fail validation
 - host manifests and ordinary renderer metadata must not rely on package-local extra-key behavior; compiler and runtime validation should consume the same `FluxValueShape` semantics
+
+Dictionary rule:
+
+- use `kind: 'record'` when the contract is a string-keyed dictionary whose entries all share the same value shape
+- prefer `record` over `object` when field names are data-driven identifiers such as node ids, column ids, or keyed host payload maps
 
 ## Shared Method Contract
 
@@ -165,7 +171,7 @@ Normative distinction inside that adapter:
 
 - `editableProps` = author-editable schema fields for this renderer type, not runtime-resolved `props.props`
 - `events` = author-declarable event entry points for this renderer type
-- `componentCapabilityContracts` = instance-targeted methods that tooling may surface for `component:<method>` authoring
+- `componentCapabilityContracts` = instance-targeted methods that tooling may surface for `component:<method>` authoring; runtime dispatch also uses the resolved target renderer definition to validate published args/result shapes when that metadata exists
 - `scopeExports` = narrow readonly Flux-native exports such as owner summaries, not host projection
 - `hostProjection` = readonly host/domain projection published only by `domain-host-renderer`
 - `hostActions` = namespaced host/domain capability methods published only by `domain-host-renderer`
@@ -258,6 +264,11 @@ Renderer metadata needs concepts that host manifest does not:
 - optional editor UI hints (`editorType`) for tooling/debugger use, but these should not be the primary architecture path for designer property editing
 - default schema values
 - layout or builder metadata
+
+Current enforcement boundary:
+
+- compile-time consumes `componentCapabilityContracts` when a `component:<method>` action targets a unique statically-known `componentId` whose renderer definition is present in the same schema/registry; duplicate ids and `componentName` targets remain warning-only because they still lack stable target-binding metadata
+- runtime dispatch consumes `componentCapabilityContracts` when a resolved component handle's `type` matches a registered renderer definition, rejecting payloads/results that drift from the published contract
 
 Important rule:
 

@@ -1,5 +1,9 @@
 import React from 'react';
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type {
+  ActionSchema,
+  RendererComponentProps,
+  RendererDefinition,
+} from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import {
   useCurrentForm,
@@ -52,13 +56,25 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   );
   const validationMessage = t('flux.common.detailDraftValidationError');
   const openFailureMessage = t('flux.common.saveFailed');
+  const confirmFailureMessage = t('flux.common.saveFailed');
   const effectiveDisabled = props.props.disabled ?? false;
 
+  function logDetailViewAsyncError(action: 'open' | 'confirm', error: unknown) {
+    console.warn(`[detail-view] ${action} failed`, error);
+  }
+
+  function toAsyncFailureMessage(error: unknown, fallback: string) {
+    return error instanceof Error && error.message ? error.message : fallback;
+  }
+
   function reportOpenFailure(error: unknown) {
-    runtime.env.notify?.(
-      'warning',
-      error instanceof Error && error.message ? error.message : openFailureMessage,
-    );
+    runtime.env.notify?.('warning', toAsyncFailureMessage(error, openFailureMessage));
+  }
+
+  function reportConfirmFailure(error: unknown) {
+    const message = toAsyncFailureMessage(error, confirmFailureMessage);
+    setDraftErrorSafe(message);
+    runtime.env.notify?.('warning', message);
   }
 
   const formProjectedValue = useCurrentFormState(
@@ -542,7 +558,10 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
             confirming={confirming}
             onCancel={handleCancel}
             onConfirm={() => {
-              handleConfirm().catch(() => undefined);
+              handleConfirm().catch((error) => {
+                logDetailViewAsyncError('confirm', error);
+                reportConfirmFailure(error);
+              });
             }}
           />
         }
@@ -553,6 +572,28 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       </DetailSurface>
     </div>
   );
+}
+
+function compileDetailValueAdaptationAction(value: unknown, context: {
+  compileActions: (
+    input: ActionSchema | ActionSchema[],
+    sourcePath?: string,
+  ) => import('@nop-chaos/flux-core').CompiledActionProgram;
+  sourcePath: string;
+}) {
+  if (!value) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return context.compileActions(value, context.sourcePath);
+  }
+
+  if (typeof value === 'object' && value !== null && 'action' in value) {
+    return context.compileActions(value as ActionSchema, context.sourcePath);
+  }
+
+  return value;
 }
 
 export const detailViewRendererDefinition: RendererDefinition<DetailViewSchema> = {
@@ -569,9 +610,9 @@ export const detailViewRendererDefinition: RendererDefinition<DetailViewSchema> 
     { key: 'triggerLabel', kind: 'prop' },
     { key: 'readOnly', kind: 'prop' },
     { key: 'surface', kind: 'prop' },
-    { key: 'transformInAction', kind: 'prop' },
-    { key: 'validateValueAction', kind: 'prop' },
-    { key: 'transformOutAction', kind: 'prop' },
+    { key: 'transformInAction', kind: 'prop', compile: compileDetailValueAdaptationAction },
+    { key: 'validateValueAction', kind: 'prop', compile: compileDetailValueAdaptationAction },
+    { key: 'transformOutAction', kind: 'prop', compile: compileDetailValueAdaptationAction },
   ],
   scopePolicy: 'form',
   validation: {

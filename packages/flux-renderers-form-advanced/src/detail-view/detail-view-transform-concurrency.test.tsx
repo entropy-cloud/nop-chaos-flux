@@ -229,6 +229,69 @@ describe('detail-view renderer concurrency behavior', () => {
     expect(screen.getByTestId('viewer-status').textContent).toBe('draft');
   });
 
+  it('reports detail-view confirm failures through draft error and env.notify', async () => {
+    cleanup();
+    const notify = vi.fn();
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async (method: string) => {
+            if (method === 'toDraft') {
+              return { ok: true, data: { name: 'Alpha' } };
+            }
+
+            throw new Error('detail view confirm failed');
+          },
+        }),
+      })),
+    };
+    const SchemaRenderer = createPageSchemaRenderer([scopeStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-transform-concurrency.test.tsx#confirm-failure"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'form',
+              name: 'testForm',
+              data: { summary: { name: 'Original' } },
+              body: [
+                {
+                  type: 'detail-view',
+                  name: 'summary',
+                  triggerLabel: 'Edit',
+                  'xui:imports': [{ from: 'detail-view-lib', as: 'detailViewLib' }],
+                  transformInAction: { action: 'detailViewLib:toDraft' },
+                  transformOutAction: { action: 'detailViewLib:toValue' },
+                  content: [{ type: 'input-text', name: 'name', label: 'Name' }],
+                },
+              ],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, notify, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit')).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit'));
+    await waitFor(() => expect(screen.getByLabelText('Name')).toBeTruthy());
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith(
+        'warning',
+        '[flux] transformOut failed: detail view confirm failed',
+      );
+      expect(screen.getByText('[flux] transformOut failed: detail view confirm failed')).toBeTruthy();
+      expect(screen.getByLabelText('Name')).toBeTruthy();
+    });
+  });
+
   it('keeps form-owned sibling observers unchanged when async transformOut returns an invalid final value', async () => {
     cleanup();
     let resolveCommit: ((value: { ok: true; data: { updates: { title: string } } }) => void) | undefined;

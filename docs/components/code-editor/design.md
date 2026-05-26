@@ -103,6 +103,7 @@ interface CodeEditorSchema extends BaseSchema {
 - 全屏能力仍属于组件 feature，不意味着它是平台宿主。
 - fullscreen close button 与 variable-panel copy/insert actions 属于组件内 chrome；当前 live baseline要求这些 action labels 接入现有 `flux.codeEditor` locale 命名空间，而不是继续硬编码英文。
 - CodeMirror 的真实 focus target 是内部 `.cm-content`，因此字段级可访问性语义不能只停留在外层 wrapper。当前 live baseline要求 `useCodeMirror` 通过 `EditorView.contentAttributes` 把 `aria-describedby`、`aria-errormessage`、`aria-invalid` 等状态桥接到 `.cm-content`，这样字段错误与屏幕阅读器读出的编辑面保持一致。
+- 当前 live baseline下，code-editor 默认 chrome token 不再写死浅色 rgba/hex 调色板；toolbar/header/variable-panel/result 等包级视觉默认从共享 semantic tokens（`--background`、`--foreground`、`--muted*`、`--accent`、`--border`、`--ring`）派生，所以 host 主题变量会在默认路径上直接生效，而 `editorTheme` 只负责编辑器内核/显式暗色覆盖路径。
 
 ## 11. 实现拆分建议
 

@@ -51,13 +51,14 @@ function createDynamicRendererState(loadAction?: DynamicRendererSchema['loadActi
 export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSchema>) {
   'use no memo';
 
-  const loadAction = props.props.loadAction;
+  const loadAction = props.schema.loadAction;
+  const loadActionHandler = props.events.loadAction;
   const loadActionKey = getLoadActionKey(loadAction);
   const [state, setState] = useState<DynamicRendererState>(() => createDynamicRendererState(loadAction));
   const visibleState = state.loadActionKey === loadActionKey ? state : createDynamicRendererState(loadAction);
 
   useEffect(() => {
-    if (!loadAction) {
+    if (!loadAction || !loadActionHandler) {
       return;
     }
 
@@ -65,9 +66,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
     const loadSchema = async () => {
       try {
-        const result = await props.helpers.dispatch(loadAction, {
-          signal: controller.signal,
-        });
+        const result = await loadActionHandler(undefined, { signal: controller.signal });
 
         if (controller.signal.aborted) return;
 
@@ -105,7 +104,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     return () => {
       controller.abort();
     };
-  }, [loadAction, loadActionKey, props.helpers]);
+  }, [loadAction, loadActionHandler, loadActionKey]);
 
   if (visibleState.error) {
     return (

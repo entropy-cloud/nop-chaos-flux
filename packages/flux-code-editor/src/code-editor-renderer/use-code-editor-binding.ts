@@ -6,6 +6,7 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { getIn } from '@nop-chaos/flux-core';
+import { useEffect, useRef } from 'react';
 import type { CodeEditorRendererProps } from './shared.js';
 
 export function useCodeEditorBinding(props: CodeEditorRendererProps, name: string) {
@@ -14,6 +15,7 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
   const currentValidationScope = useCurrentValidationScope();
   const hasName = name.length > 0;
   const readOnly = props.props.readOnly || props.props.disabled || false;
+  const valueRef = useRef<string>(String(props.props.value ?? ''));
 
   const formValue = useCurrentFormState(
     (state) => (hasName ? getIn(state.values, name) : undefined),
@@ -34,6 +36,32 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
   } else {
     value = String(props.props.value ?? '');
   }
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    const owner = currentForm ?? currentValidationScope;
+
+    if (!owner || !hasName) {
+      return;
+    }
+
+    return owner.registerField({
+      path: name,
+      childPaths: [],
+      getValue() {
+        return valueRef.current;
+      },
+      syncValue() {
+        return valueRef.current;
+      },
+      validateChild() {
+        return [];
+      },
+    }).unregister;
+  }, [currentForm, currentValidationScope, hasName, name]);
 
   const handleChange = (newValue: string) => {
     if (readOnly) {

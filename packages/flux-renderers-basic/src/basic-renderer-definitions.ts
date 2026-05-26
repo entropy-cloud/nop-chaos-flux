@@ -281,7 +281,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       }
     },
     fields: [
-      { key: 'loadAction', kind: 'prop' },
+      { key: 'loadAction', kind: 'event' },
       { key: 'body', kind: 'region', regionKey: 'body' },
     ],
   },

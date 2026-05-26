@@ -274,7 +274,6 @@ describe('ReportFieldPanelRenderer', () => {
 
   it('dispatches field insertion to the current selection target', async () => {
     const invoke = vi.fn().mockResolvedValue({ ok: true });
-    const createScope = vi.fn(() => ({ id: 'field-scope' }));
     const resolved = {
       method: 'dropFieldToTarget',
       provider: { invoke },
@@ -308,9 +307,7 @@ describe('ReportFieldPanelRenderer', () => {
           meta: {},
           regions: {},
           events: {},
-          helpers: {
-            createScope,
-          },
+          helpers: {},
         } as any)}
       />,
     );
@@ -323,25 +320,6 @@ describe('ReportFieldPanelRenderer', () => {
 
     await waitFor(() => {
       expect(resolve).toHaveBeenCalledWith('report-designer:dropFieldToTarget');
-      expect(createScope).toHaveBeenCalledWith(
-        {
-          field: {
-            type: 'field',
-            sourceId: 'source-1',
-            fieldId: 'field-1',
-            label: 'User Name',
-            data: expect.objectContaining({ id: 'field-1', label: 'User Name' }),
-          },
-          target: {
-            kind: 'cell',
-            cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
-          },
-        },
-        {
-          scopeKey: 'report-field-panel:source-1:field-1',
-          pathSuffix: 'fieldPanel.source-1.field-1',
-        },
-      );
       expect(invoke).toHaveBeenCalledWith(
         'dropFieldToTarget',
         {
@@ -359,8 +337,21 @@ describe('ReportFieldPanelRenderer', () => {
         },
         {
           runtime,
-          scope: { id: 'field-scope' },
+          scope: {},
           actionScope,
+          evaluationBindings: {
+            field: {
+              type: 'field',
+              sourceId: 'source-1',
+              fieldId: 'field-1',
+              label: 'User Name',
+              data: expect.objectContaining({ id: 'field-1', label: 'User Name' }),
+            },
+            target: {
+              kind: 'cell',
+              cell: { sheetId: 'sheet-1', address: 'A1', row: 0, col: 0 },
+            },
+          },
         },
       );
     });

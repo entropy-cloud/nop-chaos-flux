@@ -84,6 +84,7 @@ Current live implementation note:
 - 视觉和可访问性交互复用 `@nop-chaos/ui` Dialog。
 - 标准 shell 结构应为 `DialogContent -> DialogHeader? -> DialogBody -> DialogFooter?`。
 - `DialogContent` 负责弹层壳行为；默认 body spacing 应归 `DialogBody`，不要把正文 padding/gap 放回 `DialogContent`。
+- 当 `@nop-chaos/ui` `Dialog` 启用 `draggable` 时，header 必须发布真实可聚焦的拖动把手按钮，而不是只保留 pointer drag。当前支持基线是 `Move dialog` drag handle，支持方向键移动、`Shift` 大步长移动与 `Home` 重置位置。
 
 ## 11. 与其他容器的边界
 

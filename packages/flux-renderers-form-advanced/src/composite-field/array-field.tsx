@@ -9,6 +9,9 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import {
+  FormContext,
+  ScopeContext,
+  ValidationContext,
   useCurrentForm,
   useCurrentFormModelGeneration,
   useCurrentFormState,
@@ -17,7 +20,6 @@ import {
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas.js';
@@ -193,30 +195,27 @@ const ArrayItem = React.memo(ArrayItemView, (prev, next) => {
   );
 });
 
-function getScalarItemFieldSchema(itemSchema: ArrayFieldSchema['item'] | undefined): BaseSchema | undefined {
-  const item = Array.isArray(itemSchema) ? itemSchema[0] : itemSchema;
+type ScalarItemValidationMetadata = {
+  label?: string;
+  required?: boolean;
+};
 
-  if (!item || Array.isArray(item) || typeof item !== 'object') {
+function getScalarItemValidationMetadata(
+  value: unknown,
+): ScalarItemValidationMetadata | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return undefined;
   }
 
-  return item as BaseSchema;
-}
+  const record = value as Record<string, unknown>;
+  const label = typeof record.label === 'string' && record.label ? record.label : undefined;
+  const required = record.required === true ? true : undefined;
 
-function getScalarItemFieldSchemaFromRegion(
-  templateNode:
-    | import('@nop-chaos/flux-core').TemplateNode
-    | readonly import('@nop-chaos/flux-core').TemplateNode[]
-    | null
-    | undefined,
-): BaseSchema | undefined {
-  const node = Array.isArray(templateNode) ? templateNode[0] : templateNode;
-
-  if (!node || typeof node !== 'object') {
+  if (label === undefined && required === undefined) {
     return undefined;
   }
 
-  return node.schema as BaseSchema;
+  return { label, required };
 }
 
 function collectScalarArrayItemErrors(input: {
@@ -227,11 +226,18 @@ function collectScalarArrayItemErrors(input: {
   required: boolean;
 }) {
   if (!input.required) {
-    return [] as Array<{ path: string; rule: 'required'; message: string; sourceKind: 'runtime-registration' }>;
+    return [] as Array<{
+      path: string;
+      ownerPath: string;
+      rule: 'required';
+      message: string;
+      sourceKind: 'runtime-registration';
+    }>;
   }
 
   const errors: Array<{
     path: string;
+    ownerPath: string;
     rule: 'required';
     message: string;
     sourceKind: 'runtime-registration';
@@ -251,6 +257,7 @@ function collectScalarArrayItemErrors(input: {
     if (value === '' || value === undefined || value === null) {
       errors.push({
         path,
+        ownerPath: path,
         rule: 'required',
         message: `${input.childLabel} is required`,
         sourceKind: 'runtime-registration',
@@ -376,11 +383,15 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       itemRepeatedTemplateId,
     ],
   );
-  const scalarItemField =
-    itemKind === 'scalar'
-      ? getScalarItemFieldSchemaFromRegion(props.regions.item?.templateNode) ??
-        getScalarItemFieldSchema(props.props.item)
-      : undefined;
+  const scalarItemField = React.useMemo(
+    () =>
+      itemKind === 'scalar'
+        ? getScalarItemValidationMetadata(props.props.scalarItemValidation)
+        : undefined,
+    [itemKind, props.props.scalarItemValidation],
+  );
+  const scalarItemLabel = scalarItemField?.label;
+  const scalarItemRequired = scalarItemField?.required === true;
   const scalarChildPaths = React.useMemo(
     () => (itemKind === 'scalar' && name ? items.map((_, index) => `${name}.${index}`) : []),
     [itemKind, items, name],
@@ -456,11 +467,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       return;
     }
 
-    const childLabel =
-      typeof scalarItemField?.label === 'string' && scalarItemField.label
-        ? scalarItemField.label
-        : 'Item';
-    const isRequired = Boolean(scalarItemField?.required);
+    const childLabel = scalarItemLabel && scalarItemLabel.length > 0 ? scalarItemLabel : 'Item';
     const registrations = scalarChildPaths.map((path) => {
       const index = Number(path.slice(name.length + 1));
 
@@ -475,7 +482,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
             arrayPath: name,
             childPaths: [path],
             childLabel,
-            required: isRequired,
+            required: scalarItemRequired,
           });
         },
       });
@@ -486,18 +493,14 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
         registration.unregister();
       }
     };
-  }, [itemKind, modelGeneration, name, parentForm, scalarChildPaths, scalarItemField, items]);
+  }, [itemKind, modelGeneration, name, parentForm, scalarChildPaths, scalarItemLabel, scalarItemRequired, items]);
 
   React.useEffect(() => {
     if (!parentForm || !name || itemKind !== 'scalar') {
       return;
     }
 
-    const childLabel =
-      typeof scalarItemField?.label === 'string' && scalarItemField.label
-        ? scalarItemField.label
-        : 'Item';
-    const isRequired = Boolean(scalarItemField?.required);
+    const childLabel = scalarItemLabel && scalarItemLabel.length > 0 ? scalarItemLabel : 'Item';
     const sourceId = `array-field:${parentForm.id}:${name}`;
     const childOwnerId = `${parentForm.id}:${name}:array-field`;
 
@@ -514,7 +517,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
           arrayPath: name,
           childPaths: scalarChildPaths,
           childLabel,
-          required: isRequired,
+          required: scalarItemRequired,
         });
         return {
           ready: true,
@@ -531,7 +534,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
           items,
           arrayPath: name,
           childLabel,
-          required: isRequired,
+          required: scalarItemRequired,
         });
         return {
           ok: errors.length === 0,
@@ -544,7 +547,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       parentForm.unregisterChildContract(childOwnerId);
       parentForm.applyExternalErrors({ sourceId, errors: [], replace: true });
     };
-  }, [itemKind, items, name, parentForm, scalarChildPaths, scalarItemField]);
+  }, [itemKind, items, name, parentForm, scalarChildPaths, scalarItemLabel, scalarItemRequired]);
 
   return (
     <div
@@ -595,6 +598,7 @@ export const arrayFieldRendererDefinition: RendererDefinition = {
     { key: 'addable', kind: 'prop' },
     { key: 'removable', kind: 'prop' },
     { key: 'readOnly', kind: 'prop' },
+    { key: 'scalarItemValidation', kind: 'prop' },
     { key: 'item', kind: 'region', regionKey: 'item', params: ['index', 'value'] },
   ],
   validation: {
@@ -611,4 +615,25 @@ export const arrayFieldRendererDefinition: RendererDefinition = {
     },
   },
   frameRootTag: 'div',
+  authoringTransform(context) {
+    if (context.schema.type !== 'array-field') {
+      return context.schema;
+    }
+
+    const schema = context.schema as ArrayFieldSchema & { scalarItemValidation?: unknown };
+    if (schema.itemKind !== 'scalar') {
+      return schema;
+    }
+
+    const item = Array.isArray(schema.item) ? schema.item[0] : schema.item;
+    const scalarItemValidation = getScalarItemValidationMetadata(item);
+    if (!scalarItemValidation) {
+      return schema;
+    }
+
+    return {
+      ...schema,
+      scalarItemValidation,
+    };
+  },
 };

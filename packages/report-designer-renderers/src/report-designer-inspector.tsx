@@ -27,9 +27,8 @@ function selectInspectorSlice(data: Record<string, unknown>): InspectorSlice {
 export function ReportInspectorRenderer(props: RendererComponentProps<ReportInspectorLikeSchema>) {
   const slice = useOwnScopeSelector(selectInspectorSlice, shallowEqual);
   const { hasSelection } = slice;
-  const body = (props.props.body ?? slice.inspectorBody ?? slice.resolvedSchema) as
-    | SchemaInput
-    | undefined;
+  const authoredBody = props.regions.body?.render() as React.ReactNode;
+  const dynamicBody = (slice.inspectorBody ?? slice.resolvedSchema) as SchemaInput | undefined;
   const emptyLabel = String(props.props.emptyLabel ?? t('flux.reportDesigner.noPanels'));
   const noSelectionLabel = String(
     props.props.noSelectionLabel ?? t('flux.reportDesigner.noSelection'),
@@ -47,7 +46,7 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
     );
   }
 
-  if (!body) {
+  if (!authoredBody && !dynamicBody) {
     return (
       <section
         className={cn('nop-report-inspector', props.meta.className)}
@@ -65,11 +64,12 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
-      {
-        props.helpers.render(body, {
-          pathSuffix: 'inspector-body',
-        }) as React.ReactNode
-      }
+      {authoredBody ??
+        (dynamicBody
+          ? (props.helpers.render(dynamicBody, {
+              pathSuffix: 'inspector-body',
+            }) as React.ReactNode)
+          : null)}
     </section>
   );
 }

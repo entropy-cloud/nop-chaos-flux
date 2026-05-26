@@ -143,7 +143,7 @@ describe('CRUD renderer', () => {
     expect(screen.getByText('No rows for Platform')).toBeTruthy();
   });
 
-  it('renders queryForm through an internal form schema', async () => {
+  it('renders queryForm through the internal precompiled form region', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
 

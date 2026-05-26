@@ -90,17 +90,12 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
       },
       {
         runtime,
-        scope: props.helpers.createScope(
-          {
-            field: fieldPayload,
-            target: selectionTarget,
-          },
-          {
-            scopeKey: `report-field-panel:${source.id}:${field.id}`,
-            pathSuffix: `fieldPanel.${source.id}.${field.id}`,
-          },
-        ),
+        scope: props.node.scope,
         actionScope,
+        evaluationBindings: {
+          field: fieldPayload,
+          target: selectionTarget,
+        },
       },
     );
 

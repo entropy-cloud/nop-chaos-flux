@@ -53,7 +53,8 @@ describe('debugger adapters', () => {
     ]);
     expect(events[1]).toMatchObject({
       actionType: 'submitForm',
-      rendererType: 'form',
+      nodeId: 'node-1',
+      path: 'body.0',
     });
   });
 
@@ -132,9 +133,10 @@ describe('debugger adapters', () => {
     });
     decoratedEnv.monitor?.onError?.({
       phase: 'action',
-      error: new Error('monitor failed'),
+      error: new Error('monitor failed', { cause: { code: 'E_MONITOR', token: 'secret' } }),
       nodeId: 'node-1',
       path: 'body.0',
+      details: { provider: 'host', token: 'detail-secret' },
     });
     decoratedEnv.notify('warning', 'watch out');
     await decoratedEnv.fetcher(
@@ -160,6 +162,9 @@ describe('debugger adapters', () => {
     );
     const apiEndEvent = snapshot.events.find((event: NopDebugEvent) => event.kind === 'api:end');
     const notifyEvent = snapshot.events.find((event: NopDebugEvent) => event.kind === 'notify');
+    const errorEvent = snapshot.events.find(
+      (event: NopDebugEvent) => event.kind === 'error' && event.source === 'monitor.onError',
+    );
 
     expect(baseMonitor.onRenderStart).toHaveBeenCalled();
     expect(baseMonitor.onApiRequest).toHaveBeenCalledTimes(2);
@@ -174,6 +179,14 @@ describe('debugger adapters', () => {
       method: 'POST',
       status: 200,
       responseType: 'object',
+    });
+    expect(errorEvent?.detail).toContain('Caused by:');
+    expect(errorEvent?.exportedData).toMatchObject({
+      error: {
+        message: 'monitor failed',
+        cause: { code: 'E_MONITOR', token: '[MASKED]' },
+      },
+      details: { provider: 'host', token: '[MASKED]' },
     });
     expect(notifyEvent).toMatchObject({ summary: 'warning: watch out' });
   });
@@ -210,7 +223,12 @@ describe('debugger adapters', () => {
     expect(store.getSnapshot().events[0]).toMatchObject({
       kind: 'error',
       nodeId: 'node-root',
-      rendererType: 'form',
+      path: 'body.9',
+      exportedData: {
+        error: {
+          message: 'root failed',
+        },
+      },
     });
   });
 

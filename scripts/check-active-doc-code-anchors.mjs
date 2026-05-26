@@ -3,7 +3,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
-const rootDir = path.join(__dirname, '..');
+const rootDir = process.env.NOP_ACTIVE_DOC_ROOT
+  ? path.resolve(process.env.NOP_ACTIVE_DOC_ROOT)
+  : path.join(__dirname, '..');
 
 const activeDocRoots = ['docs/architecture', 'docs/components', 'docs/references'];
 const explicitActiveDocs = ['docs/index.md'];

@@ -85,6 +85,29 @@ function getTreeItemNodeId(element: HTMLDivElement | undefined): string | undefi
   return element?.dataset.treeNodeId;
 }
 
+function collectTreeNodeIdsInto(
+  nodes: readonly TreeNodeRecord[],
+  nodeIds: Set<string>,
+  childrenKey: string,
+  keyField: string,
+  parentTreeNodeId?: string,
+) {
+  
+  nodes.forEach((node, index) => {
+    const nodeKey = toNodeKey(node, keyField, index);
+    const treeNodeId = createTreeNodeId(parentTreeNodeId, nodeKey);
+    nodeIds.add(treeNodeId);
+
+    collectTreeNodeIdsInto(
+      toTreeNodes(getIn(node, childrenKey)),
+      nodeIds,
+      childrenKey,
+      keyField,
+      treeNodeId,
+    );
+  });
+}
+
 function collectTreeNodeIds(
   nodes: readonly TreeNodeRecord[],
   childrenKey: string,
@@ -92,19 +115,7 @@ function collectTreeNodeIds(
   parentTreeNodeId?: string,
 ): Set<string> {
   const nodeIds = new Set<string>();
-
-  nodes.forEach((node, index) => {
-    const nodeKey = toNodeKey(node, keyField, index);
-    const treeNodeId = createTreeNodeId(parentTreeNodeId, nodeKey);
-    nodeIds.add(treeNodeId);
-
-    collectTreeNodeIds(toTreeNodes(getIn(node, childrenKey)), childrenKey, keyField, treeNodeId).forEach(
-      (childTreeNodeId) => {
-        nodeIds.add(childTreeNodeId);
-      },
-    );
-  });
-
+  collectTreeNodeIdsInto(nodes, nodeIds, childrenKey, keyField, parentTreeNodeId);
   return nodeIds;
 }
 

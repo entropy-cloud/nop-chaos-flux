@@ -1,4 +1,5 @@
 import type {
+  ActionContext,
   ActionResult,
   AnonymousSourceEntry,
   RendererRuntime,
@@ -63,7 +64,8 @@ export function createSourceObserver(runtime: RendererRuntime): SourceObserver {
   function run(input: {
     scope: ScopeRef;
     entries: readonly AnonymousSourceEntry[];
-      baseValue?: Readonly<Record<string, unknown>>;
+    baseValue?: Readonly<Record<string, unknown>>;
+    ctx?: Partial<ActionContext>;
   }) {
     const baseValue = input.baseValue ?? {};
     const nextInputs = input.entries.map((entry) => entry.source);
@@ -92,7 +94,7 @@ export function createSourceObserver(runtime: RendererRuntime): SourceObserver {
           const result = await runtime.executeSource({
             source: entry.source,
             scope: input.scope,
-            ctx: { signal: controller.signal },
+            ctx: { ...input.ctx, signal: controller.signal },
           });
           return { entry, result } as const;
         } catch (error) {

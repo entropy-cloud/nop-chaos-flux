@@ -20,8 +20,8 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
   const slotProps = props.props as FieldsetSchema;
   const title = typeof slotProps.title === 'string' ? slotProps.title : undefined;
   const bodyContent = resolveRendererSlotContent(props, 'body');
-  const collapsible = Boolean(slotProps.collapsible);
-  const [collapsed, setCollapsed] = useState(Boolean(slotProps.collapsed) && collapsible);
+  const collapsible = slotProps.collapsible === true;
+  const [collapsed, setCollapsed] = useState(slotProps.collapsed === true && collapsible);
   const fieldsetGap = resolveGap(slotProps.gap as number | string | undefined);
 
   const bodyStyle = collapsed ? { display: 'none', ...fieldsetGap.style } : fieldsetGap.style;
@@ -103,5 +103,9 @@ export const fieldsetRendererDefinition: RendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-form',
   defaultSchema: { type: 'fieldset', body: [] },
   component: FieldsetRenderer,
-  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+  fields: [
+    { key: 'collapsible', kind: 'prop', valueType: 'boolean' },
+    { key: 'collapsed', kind: 'prop', valueType: 'boolean' },
+    { key: 'body', kind: 'region', regionKey: 'body' },
+  ],
 };

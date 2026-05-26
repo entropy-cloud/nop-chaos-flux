@@ -48,6 +48,18 @@ function failWithError(error: Error): ActionResult {
   return { ok: false, error };
 }
 
+function toActionError(error: unknown): Error {
+  if (error instanceof Error) {
+    return error;
+  }
+
+  if (typeof error === 'string' && error.length > 0) {
+    return new Error(error);
+  }
+
+  return new Error(String(error), { cause: error });
+}
+
 function toAbortError(reason: unknown, message: string): Error {
   if (reason instanceof Error) {
     return reason;
@@ -68,10 +80,6 @@ export function createWordEditorActionProvider(input: {
   bridge: CanvasEditorBridge;
   editorStore: EditorStoreApi;
   datasetStore: DatasetStoreApi;
-  getCharts(): DocChart[];
-  setCharts(next: DocChart[]): void;
-  getCodes(): DocCode[];
-  setCodes(next: DocCode[]): void;
   getPaperSettings(): PaperSettings;
   saveEvent?:
     | ((event?: SavedDocumentData, ctx?: Partial<ActionContext>) => Promise<ActionResult>)
@@ -84,94 +92,102 @@ export function createWordEditorActionProvider(input: {
       return ['save', 'insertField', 'insertChart', 'insertCode', 'undo', 'redo'];
     },
     async invoke(method, payload, ctx) {
-      switch (method) {
-        case 'save': {
-          let saved: SavedDocumentData;
-          try {
-            saved = captureDocumentSnapshot(input.bridge, {
-              paperSettings: input.getPaperSettings(),
-            });
-          } catch (error) {
-            const normalizedError = error instanceof Error ? error : new Error(String(error));
-            return failWithError(
-              new Error('Unable to save word document.', {
-                cause: normalizedError,
-              }),
-            );
-          }
-          if (input.saveEvent) {
-            const result = await input.saveEvent(saved, ctx);
-            if (!result.ok) {
-              return result;
+      try {
+        switch (method) {
+          case 'save': {
+            let saved: SavedDocumentData;
+            try {
+              saved = captureDocumentSnapshot(input.bridge, {
+                paperSettings: input.getPaperSettings(),
+              });
+            } catch (error) {
+              const normalizedError =
+                error instanceof Error ? error : new Error(String(error), { cause: error });
+              return failWithError(
+                new Error('Unable to save word document.', {
+                  cause: normalizedError,
+                }),
+              );
             }
+            if (input.saveEvent) {
+              const result = await input.saveEvent(saved, ctx);
+              if (!result.ok) {
+                return result;
+              }
+            }
+            if (ctx.signal?.aborted) {
+              return {
+                ok: false,
+                cancelled: true,
+                error: toAbortError(ctx.signal.reason, 'Word document save was aborted.'),
+              };
+            }
+            try {
+              persistSavedDocument(saved);
+              saveDatasets(input.datasetStore.getAll());
+            } catch (error) {
+              const normalizedError =
+                error instanceof Error ? error : new Error(String(error), { cause: error });
+              return failWithError(
+                new Error('Unable to save word document.', {
+                  cause: normalizedError,
+                }),
+              );
+            }
+            input.editorStore.setDirty(false);
+            input.onDocumentSaved?.(saved);
+            return ok({ saved: true });
           }
-          if (ctx.signal?.aborted) {
-            return {
-              ok: false,
-              cancelled: true,
-              error: toAbortError(ctx.signal.reason, 'Word document save was aborted.'),
-            };
+          case 'insertField': {
+            if (typeof payload?.datasetName !== 'string' || typeof payload?.fieldName !== 'string') {
+              return fail('insertField requires datasetName and fieldName.');
+            }
+            input.bridge.insertFieldExpression(payload.datasetName, payload.fieldName);
+            return ok();
           }
-          try {
-            persistSavedDocument(saved);
-            saveDatasets(input.datasetStore.getAll());
-          } catch (error) {
-            const normalizedError = error instanceof Error ? error : new Error(String(error));
-            return failWithError(
-              new Error('Unable to save word document.', {
-                cause: normalizedError,
-              }),
-            );
+          case 'insertChart': {
+            const payloadValidation = validateMethodPayload(method, payload);
+            if (!payloadValidation.ok) {
+              return { ok: false, error: payloadValidation.error };
+            }
+            const chart = payloadValidation.args as unknown as DocChart;
+            const domainValidation = validateDocChart(chart ?? {});
+            if (!chart?.id || !domainValidation.valid) {
+              return fail('insertChart requires a complete chart payload.');
+            }
+            input.bridge.insertChart(chart);
+            return ok({ chartId: chart.id });
           }
-          input.editorStore.setDirty(false);
-          input.onDocumentSaved?.(saved);
-          return ok({ saved: true });
+          case 'insertCode': {
+            const payloadValidation = validateMethodPayload(method, payload);
+            if (!payloadValidation.ok) {
+              return { ok: false, error: payloadValidation.error };
+            }
+            const code = payloadValidation.args as unknown as DocCode;
+            const domainValidation = validateDocCode(code ?? {});
+            if (!code?.id || !domainValidation.valid) {
+              return fail('insertCode requires a complete code payload.');
+            }
+            input.bridge.insertCode(code);
+            return ok({ codeId: code.id });
+          }
+          case 'undo': {
+            input.bridge.undo();
+            return ok();
+          }
+          case 'redo': {
+            input.bridge.redo();
+            return ok();
+          }
+          default:
+            return fail(`Unknown word-editor method: ${method}`);
         }
-        case 'insertField': {
-          if (typeof payload?.datasetName !== 'string' || typeof payload?.fieldName !== 'string') {
-            return fail('insertField requires datasetName and fieldName.');
-          }
-          input.bridge.insertFieldExpression(payload.datasetName, payload.fieldName);
-          return ok();
-        }
-        case 'insertChart': {
-          const payloadValidation = validateMethodPayload(method, payload);
-          if (!payloadValidation.ok) {
-            return { ok: false, error: payloadValidation.error };
-          }
-          const chart = payloadValidation.args as unknown as DocChart;
-          const domainValidation = validateDocChart(chart ?? {});
-          if (!chart?.id || !domainValidation.valid) {
-            return fail('insertChart requires a complete chart payload.');
-          }
-          input.bridge.insertChart(chart);
-          input.setCharts([...input.getCharts(), chart]);
-          return ok({ chartId: chart.id });
-        }
-        case 'insertCode': {
-          const payloadValidation = validateMethodPayload(method, payload);
-          if (!payloadValidation.ok) {
-            return { ok: false, error: payloadValidation.error };
-          }
-          const code = payloadValidation.args as unknown as DocCode;
-          const domainValidation = validateDocCode(code ?? {});
-          if (!code?.id || !domainValidation.valid) {
-            return fail('insertCode requires a complete code payload.');
-          }
-          input.bridge.insertCode(code);
-          input.setCodes([...input.getCodes(), code]);
-          return ok({ codeId: code.id });
-        }
-        case 'undo': {
-          input.bridge.undo();
-          return ok();
-        }
-        case 'redo': {
-          input.bridge.redo();
-          return ok();
-        }
-        default:
-          return fail(`Unknown word-editor method: ${method}`);
+      } catch (error) {
+        return {
+          ok: false,
+          error: toActionError(error),
+          cause: error,
+        } satisfies ActionResult;
       }
     },
   };

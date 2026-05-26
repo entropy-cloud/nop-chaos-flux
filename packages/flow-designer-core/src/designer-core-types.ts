@@ -47,8 +47,8 @@ export interface DesignerCore {
   selectBranch(ownerNodeId: string, branchId: string | null): void;
   clearSelection(): void;
 
-  toggleNodeSelection(nodeId: string): void;
-  toggleEdgeSelection(edgeId: string): void;
+  toggleNodeSelection(nodeId: string): { ok: true } | { ok: false; reason: 'missing-node' };
+  toggleEdgeSelection(edgeId: string): { ok: true } | { ok: false; reason: 'missing-edge' };
   selectAllNodes(): void;
   setSelection(nodeIds: string[], edgeIds: string[]): void;
   moveNodes(deltas: Record<string, { dx: number; dy: number }>): void;

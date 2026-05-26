@@ -24,6 +24,7 @@ import type { CanvasConfig, DesignerSnapshot } from '@nop-chaos/flow-designer-co
 import { useMinimapNavigation } from './use-minimap-navigation.js';
 import { useXyflowSync } from './use-xyflow-sync.js';
 import { useXyflowInteractions } from './use-xyflow-interactions.js';
+import { PortConnectionA11yContext } from './port-connection-a11y-context.js';
 
 export const DESIGNER_PALETTE_NODE_MIME = 'application/x-flow-designer-node-type';
 
@@ -32,13 +33,14 @@ export interface DesignerXyflowCanvasProps {
   canvasConfig?: CanvasConfig;
   nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>;
   pendingConnectionSourceId: string | null;
+  pendingConnectionSourcePortId: string | null;
   reconnectingEdgeId: string | null;
   showMinimap?: boolean;
   showControls?: boolean;
   onPaneClick(): void;
   onNodeSelect(nodeId: string, event?: React.MouseEvent): void;
   onEdgeSelect(edgeId: string, event?: React.MouseEvent): void;
-  onStartConnection(nodeId: string, event?: React.MouseEvent): void;
+  onStartConnection(nodeId: string, event?: React.MouseEvent, sourcePort?: string): void;
   onCancelConnection(nodeId: string, event?: React.MouseEvent): void;
   onCompleteConnection(
     nodeId: string,
@@ -127,6 +129,18 @@ function TreeModeOverlays({
 }
 
 export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
+  const {
+    pendingConnectionSourceId,
+    pendingConnectionSourcePortId,
+    reconnectingEdgeId,
+    snapshot,
+    onStartConnection,
+    onCancelConnection,
+    onCompleteConnection,
+    onStartReconnect,
+    onCancelReconnect,
+    onCompleteReconnect,
+  } = props;
   const xyflowNodeTypes = useMemo(
     () => ({
       designerNode: DesignerXyflowNode,
@@ -216,14 +230,51 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     onEdgeSelect: props.onEdgeSelect,
     onPaneClick: props.onPaneClick,
   });
+  const portConnectionA11yValue = useMemo(
+    () => ({
+      pendingConnectionSourceId,
+      pendingConnectionSourcePortId,
+      reconnectingEdgeId,
+      activeEdge: snapshot.activeEdge,
+      onStartConnection: (nodeId: string, sourcePort?: string) => onStartConnection(nodeId, undefined, sourcePort),
+      onCancelConnection: (nodeId: string) => onCancelConnection(nodeId, undefined),
+      onCompleteConnection: (nodeId: string, sourcePort?: string, targetPort?: string) =>
+        onCompleteConnection(nodeId, undefined, sourcePort, targetPort),
+      onStartReconnect: (edgeId: string) => onStartReconnect(edgeId, undefined),
+      onCancelReconnect: (edgeId: string) => onCancelReconnect(edgeId, undefined),
+      onCompleteReconnect: (
+        edgeId: string,
+        sourceId: string,
+        nodeId: string,
+        sourcePort?: string,
+        targetPort?: string,
+      ) => onCompleteReconnect(edgeId, sourceId, nodeId, undefined, sourcePort, targetPort),
+    }),
+    [
+      pendingConnectionSourceId,
+      pendingConnectionSourcePortId,
+      reconnectingEdgeId,
+      snapshot.activeEdge,
+      onStartConnection,
+      onCancelConnection,
+      onCompleteConnection,
+      onStartReconnect,
+      onCancelReconnect,
+      onCompleteReconnect,
+    ],
+  );
 
   return (
-    <ReactFlowProvider>
-      <div
-        className="absolute inset-0 fd-xyflow-surface rounded-xl overflow-hidden"
-        ref={surfaceRef}
-      >
-        <ReactFlow
+    <PortConnectionA11yContext.Provider value={portConnectionA11yValue}>
+      <ReactFlowProvider>
+        <div
+          className="absolute inset-0 fd-xyflow-surface rounded-xl overflow-hidden"
+          ref={surfaceRef}
+          role="region"
+          tabIndex={0}
+          aria-label="Flow designer canvas"
+        >
+          <ReactFlow
           nodes={localNodes}
           edges={renderedEdges}
           nodeTypes={xyflowNodeTypes}
@@ -306,24 +357,24 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           }}
         >
           {showBackground && (
-            <Background
-              gap={gridSize}
-              size={1}
-              variant={backgroundVariant}
-              color="var(--fd-grid-color)"
-            />
-          )}
+              <Background
+                gap={gridSize}
+                size={1}
+                variant={backgroundVariant}
+                color="var(--fd-grid-color, rgba(148, 163, 184, 0.26))"
+              />
+            )}
           {showMinimap && (
             <MiniMap
               className="fd-xyflow-minimap !rounded-2xl !border !border-border"
               pannable
               zoomable
-              bgColor="var(--fd-minimap-bg)"
+              bgColor="var(--fd-minimap-bg, rgba(219, 234, 254, 0.5))"
               offsetScale={0}
-              nodeColor={() => 'var(--fd-minimap-node)'}
-              nodeStrokeColor={() => 'var(--fd-edge-stroke)'}
+              nodeColor={() => 'var(--fd-minimap-node, rgba(15, 23, 42, 0.92))'}
+              nodeStrokeColor={() => 'var(--fd-edge-stroke, hsl(var(--primary)))'}
               nodeBorderRadius={4}
-              maskColor="var(--fd-minimap-mask)"
+              maskColor="var(--fd-minimap-mask, rgba(255, 255, 255, 0.55))"
             />
           )}
           {showControls && <Controls className="fd-xyflow-controls" showInteractive={false} />}
@@ -335,8 +386,9 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
               onPlusButtonClick={props.onPlusButtonClick}
             />
           )}
-        </ReactFlow>
-      </div>
-    </ReactFlowProvider>
+          </ReactFlow>
+        </div>
+      </ReactFlowProvider>
+    </PortConnectionA11yContext.Provider>
   );
 }

@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import type { ScopeRef, SourceObserver, SourceSchema } from '@nop-chaos/flux-core';
-import { useRenderScope, useRendererRuntime } from './hooks.js';
+import {
+  useRenderScopeContext,
+  useRendererRuntimeContext,
+} from './runtime-context-hooks.js';
 
 export function isSourceSchema(value: unknown): value is SourceSchema {
   return (
@@ -18,8 +21,8 @@ export function useSourceValue<T>(
   input: unknown,
   options?: { scope?: ScopeRef },
 ): SourceValueState<T> {
-  const runtime = useRendererRuntime();
-  const activeScope = useRenderScope();
+  const runtime = useRendererRuntimeContext();
+  const activeScope = useRenderScopeContext();
   const scope = options?.scope ?? activeScope;
   const source = useMemo(() => (isSourceSchema(input) ? input : undefined), [input]);
   const observer = useMemo<SourceObserver>(() => runtime.createSourceObserver(), [runtime]);

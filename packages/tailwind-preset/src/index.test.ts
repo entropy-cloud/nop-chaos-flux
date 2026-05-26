@@ -11,6 +11,7 @@ describe('nopTailwindPreset', () => {
     const primary = colors?.primary as Record<string, unknown> | undefined;
     const sidebar = colors?.sidebar as Record<string, unknown> | undefined;
     const destructive = colors?.destructive as Record<string, unknown> | undefined;
+    const popover = colors?.popover as Record<string, unknown> | undefined;
 
     expect(colors).toMatchObject({
       border: 'hsl(var(--border))',
@@ -26,14 +27,18 @@ describe('nopTailwindPreset', () => {
       foreground: 'hsl(var(--primary-foreground))',
     });
     expect(sidebar).toMatchObject({
-      DEFAULT: 'var(--sidebar)',
-      foreground: 'var(--sidebar-foreground)',
-      border: 'var(--sidebar-border)',
-      ring: 'var(--sidebar-ring)',
+      DEFAULT: 'hsl(var(--sidebar, var(--card)))',
+      foreground: 'hsl(var(--sidebar-foreground, var(--foreground)))',
+      border: 'hsl(var(--sidebar-border, var(--border)))',
+      ring: 'hsl(var(--sidebar-ring, var(--ring)))',
+    });
+    expect(popover).toMatchObject({
+      DEFAULT: 'hsl(var(--popover, var(--card)))',
+      foreground: 'hsl(var(--popover-foreground, var(--card-foreground)))',
     });
     expect(destructive).toMatchObject({
-      DEFAULT: 'hsl(var(--danger))',
-      foreground: 'hsl(var(--primary-foreground))',
+      DEFAULT: 'hsl(var(--destructive, var(--danger)))',
+      foreground: 'hsl(var(--destructive-foreground, var(--primary-foreground)))',
     });
   });
 

@@ -60,6 +60,33 @@ export function useDialogDrag(
     [baseTransform],
   );
 
+  const clampOffset = React.useCallback((el: HTMLElement, rawOffset: Offset): Offset => {
+    const previousTransform = el.style.transform;
+    el.style.transform = `${baseTransform} translate(${rawOffset.x}px, ${rawOffset.y}px)`;
+    const rect = el.getBoundingClientRect();
+    el.style.transform = previousTransform;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const minVisible = 30;
+
+    let clampedX = rawOffset.x;
+    let clampedY = rawOffset.y;
+
+    if (rect.left < minVisible) {
+      clampedX = rawOffset.x + (minVisible - rect.left);
+    } else if (rect.right > vw - minVisible) {
+      clampedX = rawOffset.x - (rect.right - (vw - minVisible));
+    }
+
+    if (rect.top < minVisible) {
+      clampedY = rawOffset.y + (minVisible - rect.top);
+    } else if (rect.bottom > vh - minVisible) {
+      clampedY = rawOffset.y - (rect.bottom - (vh - minVisible));
+    }
+
+    return { x: clampedX, y: clampedY };
+  }, [baseTransform]);
+
   const handlePointerMove = React.useCallback(
     (e: PointerEvent) => {
       const dragState = dragStateRef.current;
@@ -73,32 +100,11 @@ export function useDialogDrag(
         y: dragState.initialOffset.y + (e.clientY - dragState.startY),
       };
 
-      el.style.transform = `${baseTransform} translate(${rawOffset.x}px, ${rawOffset.y}px)`;
-      const rect = el.getBoundingClientRect();
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const minVisible = 30;
-
-      let clampedX = rawOffset.x;
-      let clampedY = rawOffset.y;
-
-      if (rect.left < minVisible) {
-        clampedX = rawOffset.x + (minVisible - rect.left);
-      } else if (rect.right > vw - minVisible) {
-        clampedX = rawOffset.x - (rect.right - (vw - minVisible));
-      }
-
-      if (rect.top < minVisible) {
-        clampedY = rawOffset.y + (minVisible - rect.top);
-      } else if (rect.bottom > vh - minVisible) {
-        clampedY = rawOffset.y - (rect.bottom - (vh - minVisible));
-      }
-
-      const nextOffset = { x: clampedX, y: clampedY };
+      const nextOffset = clampOffset(el, rawOffset);
       setOffset(nextOffset);
       applyTransform(el, nextOffset);
     },
-    [applyTransform, baseTransform, setOffset],
+    [applyTransform, clampOffset, setOffset],
   );
 
   const stopDrag = React.useCallback(
@@ -188,6 +194,23 @@ export function useDialogDrag(
     }
   }, [applyTransform, setOffset]);
 
+  const moveBy = React.useCallback(
+    (deltaX: number, deltaY: number) => {
+      const el = internalRef.current;
+      if (!el) {
+        return;
+      }
+      const currentOffset = getOffset();
+      const nextOffset = clampOffset(el, {
+        x: currentOffset.x + deltaX,
+        y: currentOffset.y + deltaY,
+      });
+      setOffset(nextOffset);
+      applyTransform(el, nextOffset);
+    },
+    [applyTransform, clampOffset, getOffset, setOffset],
+  );
+
   React.useEffect(() => {
     return () => {
       const el = internalRef.current;
@@ -200,5 +223,5 @@ export function useDialogDrag(
     };
   }, [handlePointerMove, stopDrag]);
 
-  return { contentRef, handlePointerDown, resetPosition };
+  return { contentRef, handlePointerDown, resetPosition, moveBy };
 }

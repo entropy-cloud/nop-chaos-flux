@@ -25,6 +25,7 @@
 4. 显式隔离应使用现有术语 `isolate`，不要再引入 `isolateScope`、`noParentScope` 之类并行名字。
 5. 不提供 `$parentScope` 这种通用后门读取。
 6. 如果一个隔离子树仍需要少量父级数据，应显式复制/投影这些字段，而不是重新打开任意父级穿透。
+7. 一次性 event/evaluation payload 默认不是新的 owner scope；如果只需要给 action/expression 暴露临时数据，应优先使用 `evaluationBindings`，而不是创建短命 child scope。
 
 ## Default Inheritance
 

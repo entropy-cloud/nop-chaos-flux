@@ -2,6 +2,7 @@ import React from 'react';
 import type {
   ActionSchema,
   ChildValidationMode,
+  CompiledActionProgram,
   FormRuntime,
   RendererComponentProps,
   ValidationScopeRuntime,
@@ -70,7 +71,7 @@ export function useDetailAdaptationAction(input: {
   const { helpers, parentScope, parentForm, node } = input;
 
   return React.useCallback(
-    (actionSchema: ActionSchema | ActionSchema[]) =>
+    (actionSchema: ActionSchema | ActionSchema[] | CompiledActionProgram) =>
       helpers.dispatch(actionSchema, {
         scope: parentScope,
         form: parentForm ?? undefined,

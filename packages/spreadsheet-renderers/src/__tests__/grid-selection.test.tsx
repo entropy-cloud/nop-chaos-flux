@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
 import {
@@ -39,6 +39,39 @@ describe('spreadsheet grid selection', () => {
     expect(firstRow?.getAttribute('aria-rowindex')).toBe('1');
     expect(firstCell?.getAttribute('aria-rowindex')).toBe('1');
     expect(firstCell?.getAttribute('aria-colindex')).toBe('1');
+  });
+
+  it('publishes bound field metadata through gridcell accessible names', async () => {
+    resetFluxI18n();
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+    await changeLanguage('en-US');
+
+    const documentModel = createEmptyDocument('grid-bound-cell-accessibility');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+
+    render(
+      <SpreadsheetGridHarness
+        sheetId={sheetId}
+        bridge={bridge}
+        getCellMetadata={(row, col) =>
+          row === 0 && col === 0
+            ? {
+                field: {
+                  sourceId: 'sales',
+                  fieldId: 'amount',
+                  data: { label: 'Amount' },
+                },
+              }
+            : undefined
+        }
+      />,
+    );
+
+    const boundCell = screen.getByRole('gridcell', { name: 'Cell A1, bound to field Amount' });
+    expect(boundCell.getAttribute('data-cell-bound')).toBe('true');
+    expect(boundCell.querySelector('[data-slot="spreadsheet-bound-indicator"]')?.textContent).toBe('fx');
   });
 
   it('updates the spreadsheet viewport contract on scroll', async () => {
@@ -599,5 +632,35 @@ describe('spreadsheet grid selection', () => {
     }
 
     expect(offsetsSpy.mock.calls.length).toBe(callsAfterMeasure);
+  });
+
+  it('syncs DOM scroll position from runtime viewport updates', async () => {
+    const documentModel = createEmptyDocument('runtime-viewport-sync');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const grid = container.querySelector('[role="grid"]') as HTMLElement | null;
+    expect(grid).toBeTruthy();
+
+    if (!grid) {
+      return;
+    }
+
+    Object.defineProperty(grid, 'scrollTop', { value: 0, configurable: true, writable: true });
+    Object.defineProperty(grid, 'scrollLeft', { value: 0, configurable: true, writable: true });
+
+    await act(async () => {
+      await core.dispatch({
+        type: 'spreadsheet:setViewport',
+        viewport: { scrollX: 56, scrollY: 132, zoom: 1 },
+      });
+    });
+
+    await waitFor(() => {
+      expect(grid.scrollTop).toBe(132);
+      expect(grid.scrollLeft).toBe(56);
+    });
   });
 });

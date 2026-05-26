@@ -1,11 +1,17 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { reportRuntimeHostIssue, type RendererComponentProps, type RenderNodeInput } from '@nop-chaos/flux-core';
+import {
+  reportRuntimeHostIssue,
+  type RendererComponentProps,
+  type RenderNodeInput,
+  type ScopeRef,
+} from '@nop-chaos/flux-core';
 import type { ReportDesignerHostStatusSummary } from '@nop-chaos/report-designer-core';
 import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useCurrentActionScope,
+  useHostScope,
   useRendererEnv,
   useStatusPathPublication,
   WorkbenchShell,
@@ -13,7 +19,6 @@ import {
 import {
   createEmptyDocument,
   createSpreadsheetCore,
-  type SpreadsheetRuntimeSnapshot,
 } from '@nop-chaos/spreadsheet-core';
 import {
   createSpreadsheetBridge,
@@ -39,98 +44,26 @@ import { createReportDesignerActionProvider } from './host-action-provider.js';
 import { createReportFieldDragPayload, ReportFieldPanel } from './report-field-panel.js';
 import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
 import { getFieldCount } from './helpers.js';
-import { buildAggregatedRuntimeSummary, useReportDesignerHostScope } from './host-data.js';
+import { buildReportDesignerScopeData } from './host-data.js';
+import {
+  equalReportPageSnapshot,
+  equalReportSpreadsheetRuntimeSnapshot,
+  equalReportSpreadsheetSnapshot,
+  selectReportPageSnapshot,
+  selectReportSpreadsheetRuntimeSnapshot,
+  selectReportSpreadsheetSnapshot,
+  type ReportPageSnapshotSlice,
+} from './page-renderer-snapshots.js';
 import type { ReportDesignerPageSchema } from './types.js';
 
-export interface ReportPageSnapshotSlice {
-  document: ReportTemplateDocument;
-  spreadsheetSyncSource?: ReportTemplateDocument['spreadsheet'];
-  dirty: boolean;
-  canUndo: boolean;
-  canRedo: boolean;
-  selectionTarget: ReturnType<ReportDesignerCore['getSnapshot']>['selectionTarget'];
-  inspector: ReturnType<ReportDesignerCore['getSnapshot']>['inspector'];
-  fieldDrag: ReturnType<ReportDesignerCore['getSnapshot']>['fieldDrag'];
-  preview: ReturnType<ReportDesignerCore['getSnapshot']>['preview'];
-  activeMeta: ReturnType<ReportDesignerCore['getSnapshot']>['activeMeta'];
-  fieldSources: ReturnType<ReportDesignerCore['getSnapshot']>['fieldSources'];
-}
-
-export function selectReportPageSnapshot(
-  snapshot: ReturnType<ReportDesignerCore['getSnapshot']>,
-): ReportPageSnapshotSlice {
-  return {
-    document: snapshot.document,
-    spreadsheetSyncSource: snapshot.spreadsheetSyncSource,
-    dirty: snapshot.dirty,
-    canUndo: snapshot.canUndo,
-    canRedo: snapshot.canRedo,
-    selectionTarget: snapshot.selectionTarget,
-    inspector: snapshot.inspector,
-    fieldDrag: snapshot.fieldDrag,
-    preview: snapshot.preview,
-    activeMeta: snapshot.activeMeta,
-    fieldSources: snapshot.fieldSources,
-  };
-}
-
-export function equalReportPageSnapshot(a: ReportPageSnapshotSlice, b: ReportPageSnapshotSlice) {
-  return (
-    a.document === b.document &&
-    a.spreadsheetSyncSource === b.spreadsheetSyncSource &&
-    a.dirty === b.dirty &&
-    a.canUndo === b.canUndo &&
-    a.canRedo === b.canRedo &&
-    a.selectionTarget === b.selectionTarget &&
-    a.inspector === b.inspector &&
-    a.fieldDrag === b.fieldDrag &&
-    a.preview === b.preview &&
-    a.activeMeta === b.activeMeta &&
-    a.fieldSources === b.fieldSources
-  );
-}
-
-export interface ReportSpreadsheetSnapshotSlice {
-  document: SpreadsheetRuntimeSnapshot['document'];
-  activeSheetId: SpreadsheetRuntimeSnapshot['activeSheetId'];
-  selection: SpreadsheetRuntimeSnapshot['selection'];
-  history: SpreadsheetRuntimeSnapshot['history'];
-  dirty: boolean;
-  readonly: boolean;
-  viewport: SpreadsheetRuntimeSnapshot['viewport'];
-  layout: SpreadsheetRuntimeSnapshot['layout'];
-}
-
-export function selectReportSpreadsheetSnapshot(
-  snapshot: SpreadsheetRuntimeSnapshot,
-): ReportSpreadsheetSnapshotSlice {
-  return {
-    document: snapshot.document,
-    activeSheetId: snapshot.activeSheetId,
-    selection: snapshot.selection,
-    history: snapshot.history,
-    dirty: snapshot.dirty,
-    readonly: snapshot.readonly,
-    viewport: snapshot.viewport,
-    layout: snapshot.layout,
-  };
-}
-
-export function equalReportSpreadsheetSnapshot(
-  a: ReportSpreadsheetSnapshotSlice,
-  b: ReportSpreadsheetSnapshotSlice,
-) {
-  return (
-    a.document === b.document &&
-    a.activeSheetId === b.activeSheetId &&
-    a.selection === b.selection &&
-    a.history === b.history &&
-    a.dirty === b.dirty &&
-    a.readonly === b.readonly &&
-    a.viewport === b.viewport &&
-    a.layout === b.layout
-  );
-}
+export {
+  equalReportPageSnapshot,
+  equalReportSpreadsheetRuntimeSnapshot,
+  equalReportSpreadsheetSnapshot,
+  selectReportPageSnapshot,
+  selectReportSpreadsheetRuntimeSnapshot,
+  selectReportSpreadsheetSnapshot,
+};
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -279,6 +212,36 @@ function hasConfiguredInspector(config: ReportDesignerConfig): boolean {
   );
 }
 
+function ReportDesignerHostScopeSync(props: {
+  core: ReportDesignerCore;
+  snapshot: ReportPageSnapshotSlice;
+  spreadsheetCore: ReturnType<typeof createSpreadsheetCore>;
+  scope: ScopeRef;
+}) {
+  const spreadsheetSnapshot = useSyncExternalStoreWithSelector(
+    props.spreadsheetCore.subscribe,
+    props.spreadsheetCore.getSnapshot,
+    props.spreadsheetCore.getSnapshot,
+    selectReportSpreadsheetSnapshot,
+    equalReportSpreadsheetSnapshot,
+  );
+  const scopeData = useMemo(
+    () =>
+      buildReportDesignerScopeData(
+        props.core,
+        props.snapshot as ReturnType<ReportDesignerCore['getSnapshot']>,
+        spreadsheetSnapshot,
+      ),
+    [props.core, props.snapshot, spreadsheetSnapshot],
+  );
+
+  useLayoutEffect(() => {
+    props.scope.replace?.(scopeData);
+  }, [props.scope, scopeData]);
+
+  return null;
+}
+
 export function ReportDesignerPageRenderer(
   props: RendererComponentProps<ReportDesignerPageSchema>,
 ) {
@@ -327,10 +290,15 @@ export function ReportDesignerPageRenderer(
   const reportDesignerProvider = useMemo(
     () =>
       createReportDesignerActionProvider(
-        (command: ReportDesignerCommand) =>
-          core.dispatch(command) as Promise<ReportDesignerCommandResult>,
+        async (command: ReportDesignerCommand) => {
+          const result = (await core.dispatch(command)) as ReportDesignerCommandResult;
+          if (command.type === 'report-designer:save' && result.ok && !result.cancelled) {
+            spreadsheetCore.acceptCurrentDocumentAsSaved();
+          }
+          return result;
+        },
       ),
-    [core],
+    [core, spreadsheetCore],
   );
   const actionScope = useCurrentActionScope();
 
@@ -438,8 +406,8 @@ export function ReportDesignerPageRenderer(
     spreadsheetCore.subscribe,
     spreadsheetCore.getSnapshot,
     spreadsheetCore.getSnapshot,
-    selectReportSpreadsheetSnapshot,
-    equalReportSpreadsheetSnapshot,
+    selectReportSpreadsheetRuntimeSnapshot,
+    equalReportSpreadsheetRuntimeSnapshot,
   );
   const syncingSpreadsheetFromReportRef = useRef(false);
   const lastSyncedSpreadsheetRef = useRef(spreadsheetSnapshot.document);
@@ -480,11 +448,14 @@ export function ReportDesignerPageRenderer(
     core.syncSpreadsheetDocument(spreadsheetSnapshot.document);
   }, [core, spreadsheetSnapshot.document]);
 
-  const reportDesignerScope = useReportDesignerHostScope(
-    core,
-    snapshot,
+  const reportDesignerScope = useHostScope(
+    buildReportDesignerScopeData(
+      core,
+      snapshot as ReturnType<ReportDesignerCore['getSnapshot']>,
+      spreadsheetCore.getSnapshot(),
+    ),
     props.path,
-    spreadsheetSnapshot,
+    'report-designer',
   );
 
   const toolbarSchema = props.props.toolbar as RenderNodeInput | undefined;
@@ -529,7 +500,11 @@ export function ReportDesignerPageRenderer(
     : undefined;
   const statusPath =
     typeof props.props.statusPath === 'string' ? props.props.statusPath : undefined;
-  const aggregatedRuntime = buildAggregatedRuntimeSummary(snapshot, spreadsheetSnapshot);
+  const aggregatedRuntime = {
+    canUndo: snapshot.canUndo || spreadsheetSnapshot.history.canUndo,
+    canRedo: snapshot.canRedo || spreadsheetSnapshot.history.canRedo,
+    dirty: snapshot.dirty || spreadsheetSnapshot.dirty,
+  };
 
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -648,36 +623,43 @@ export function ReportDesignerPageRenderer(
     : undefined;
 
   return (
-    <WorkbenchShell
-      className={cn('nop-report-designer', props.meta.className)}
-      data-testid={props.meta.testid || undefined}
-      data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
-      header={headerSlot}
-      leftPanel={leftPanelSlot}
-      leftCollapsed={leftCollapsed}
-      onLeftToggle={() => setLeftCollapsed((v) => !v)}
-      leftLabel={t('flux.reportDesigner.expandFieldPanel')}
-      canvas={
-        hasRendererSlotContent(asReactNode(bodyContent)) ? (
-          asReactNode(bodyContent)
-        ) : (
-          <ReportSpreadsheetCanvas
-            core={core}
-            snapshot={snapshot}
-            spreadsheetBridge={spreadsheetBridge}
-            spreadsheetSnapshot={spreadsheetSnapshot}
-          />
-        )
-      }
-      rightPanel={rightPanelSlot}
-      rightCollapsed={rightCollapsed}
-      onRightToggle={() => setRightCollapsed((v) => !v)}
-      rightLabel={t('flux.reportDesigner.expandInspector')}
-      dialogs={
-        hasRendererSlotContent(asReactNode(dialogsContent))
-          ? asReactNode(dialogsContent)
-          : undefined
-      }
-    />
+    <>
+      <ReportDesignerHostScopeSync
+        core={core}
+        snapshot={snapshot}
+        spreadsheetCore={spreadsheetCore}
+        scope={reportDesignerScope}
+      />
+      <WorkbenchShell
+        className={cn('nop-report-designer', props.meta.className)}
+        data-testid={props.meta.testid || undefined}
+        data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
+        header={headerSlot}
+        leftPanel={leftPanelSlot}
+        leftCollapsed={leftCollapsed}
+        onLeftToggle={() => setLeftCollapsed((v) => !v)}
+        leftLabel={t('flux.reportDesigner.expandFieldPanel')}
+        canvas={
+          hasRendererSlotContent(asReactNode(bodyContent)) ? (
+            asReactNode(bodyContent)
+          ) : (
+            <ReportSpreadsheetCanvas
+              core={core}
+              snapshot={snapshot}
+              spreadsheetBridge={spreadsheetBridge}
+            />
+          )
+        }
+        rightPanel={rightPanelSlot}
+        rightCollapsed={rightCollapsed}
+        onRightToggle={() => setRightCollapsed((v) => !v)}
+        rightLabel={t('flux.reportDesigner.expandInspector')}
+        dialogs={
+          hasRendererSlotContent(asReactNode(dialogsContent))
+            ? asReactNode(dialogsContent)
+            : undefined
+        }
+      />
+    </>
   );
 }

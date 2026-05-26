@@ -26,6 +26,7 @@
 - `document` / `treeDocument` 与 `config` 是宿主输入；当前 live baseline 不只要求“至少提供一种文档输入”，还要求 graph mode 提供 `document`、tree mode 提供 `treeDocument`，并且 formal schema validation 会对缺失前置条件报错，而不是只在运行时退回 fallback shell。
 - `statusPath` 是当前支持的宿主外部摘要发布入口，而不是 future-only 设计草案。
 - `designer-page` 当前不再发布额外的 `$designer` Flux-native scope export。designer 只读数据入口统一来自 host projection / host scope，而不是并行的 renderer metadata 别名。
+- `config` 仍是宿主输入，但其中 schema-bearing nested leaves（如 `nodeTypes[].body`、`quickActions`、`edgeTypes[].body`、`createDialog.body`、`inspector.body`）现在由 `designer-page` 的 custom field compilation path 预编译为 `TemplateNode` fragments，并作为 atomic compiled values 保留到运行时；Flow consumption paths continue to render them through `RenderNodes` / `helpers.render(...)` without recompiling raw authored schema at render time.
 
 ## 5. 字段分类
 
@@ -72,6 +73,8 @@
 - 根节点保留 `nop-designer` marker。
 - 视觉壳是设计器工作台，不应和普通页面共享隐式布局假设。
 - Flow Designer 主题收敛到 `className` / `classAliases` / node-edge `appearance` / `fd-theme-root` CSS variables；当前 live baseline 不再把 `config.themeStyles` 视为受支持的主路径样式入口。
+- 当前 live baseline 下，Flow Designer package CSS 不再在 `.fd-theme-root` / `.nop-designer` 根上重声明默认 `--fd-*` token。包内默认值通过各视觉使用点的 fallback 读取提供，host 仍可在任意祖先作用域覆写 `--fd-*`。
+- palette 图标外观当前优先走 `nodeType.appearance.borderColor` / `resolveNodeTypeAccent()` 派生的 `--fd-palette-accent` 路径；内置默认色只作为 fallback，而不是继续依赖 `nodeType.id -> css class -> hex gradient` 的私有映射表。
 - 当前 live baseline 下，DingFlow add-node 浮层若声明 `role="menu"`，则必须提供 roving focus 与 `Arrow` / `Home` / `End` 键盘模型；canvas 上可聚焦 node / edge 交互根若声明 `role="button"`，则必须提供稳定 `aria-label`，并通过 `aria-pressed` 暴露 selected state。
 
 ## 11. 实现拆分建议

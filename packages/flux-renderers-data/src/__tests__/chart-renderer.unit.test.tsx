@@ -378,4 +378,24 @@ describe('ChartRenderer', () => {
     expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).toContain('Revenue');
     expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).toContain('Expenses');
   });
+
+  it('filters malformed chart series and invalid chart types instead of crashing render', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'bogus',
+            source: [{ month: 'Jan', value: 3 }],
+            xAxis: { dataKey: 'month' },
+            series: [null, { name: 'Broken', data: [null, { value: 'bad' }] }, { name: 'Revenue', type: 'line', data: [1, { name: 'Feb', value: 2 }] }],
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId('BarChart')).toBeTruthy();
+    expect(screen.getAllByTestId('Bar')).toHaveLength(2);
+    expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).toContain('Revenue');
+    expect(document.querySelector('[data-slot="chart-empty"]')).toBeNull();
+  });
 });

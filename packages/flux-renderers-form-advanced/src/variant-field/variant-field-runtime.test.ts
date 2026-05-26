@@ -206,6 +206,16 @@ describe('createVariantScope', () => {
     expect(parent.update).toHaveBeenCalledWith('payload', { other: 'data' });
   });
 
+  it('blocks variant scope writes when readOnly is true', () => {
+    const parent = createMockScope({ payload: { nested: 'deep' } });
+    const scope = createVariantScope(parent, 'payload', 'object', true);
+
+    expect(() => scope.update('value.nested', 'updated')).toThrow(/readOnly projected owner scope/i);
+    expect(() => scope.merge?.({ value: 'beta' })).toThrow(/readOnly projected owner scope/i);
+    expect(() => scope.replace?.({ value: 'beta' })).toThrow(/readOnly projected owner scope/i);
+    expect(parent.update).not.toHaveBeenCalled();
+  });
+
   it('readOwn returns snapshot with value variant readOnly', () => {
     const parent = createMockScope({ payload: 'alpha' });
     const scope = createVariantScope(parent, 'payload', 'text', true);

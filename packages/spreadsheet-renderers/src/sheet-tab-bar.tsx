@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { WorksheetDocument } from '@nop-chaos/spreadsheet-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
@@ -57,6 +57,13 @@ export function SheetTabBar({
       setRenameValue(currentName);
     };
 
+  useEffect(() => {
+    if (renamingSheetId) {
+      renameInputRef.current?.focus();
+      renameInputRef.current?.select();
+    }
+  }, [renamingSheetId]);
+
   const handleRenameSubmit = () => {
     if (renamingSheetId && onRenameSheet && renameValue.trim()) {
       onRenameSheet(renamingSheetId, renameValue.trim());
@@ -96,19 +103,26 @@ export function SheetTabBar({
 
   return (
     <>
-      <div className="ss-sheet-bar">
-        <div className="ss-sheet-bar-tabs">
+      <div className="ss-sheet-bar" data-slot="spreadsheet-sheet-bar">
+        <div className="ss-sheet-bar-tabs" data-slot="spreadsheet-sheet-bar-tabs">
           {visibleSheets.map((sheet) => {
             const isActive = sheet.id === activeSheetId;
             const isRenaming = renamingSheetId === sheet.id;
 
             return (
-              <div key={sheet.id} className="ss-sheet-tab-item" data-active={isActive || undefined}>
+              <div
+                key={sheet.id}
+                className="ss-sheet-tab-item"
+                data-slot="spreadsheet-sheet-tab-item"
+                data-active={isActive || undefined}
+              >
                 {isRenaming ? (
                   <Input
                     ref={renameInputRef}
                     className="ss-sheet-tab-rename"
+                    data-slot="spreadsheet-sheet-tab-rename"
                     value={renameValue}
+                    aria-label={t('flux.sheet.renameSheetAriaLabel', { name: sheet.name })}
                     onChange={(e) => setRenameValue(e.target.value)}
                     onBlur={handleRenameSubmit}
                     onKeyDown={handleRenameKeyDown}
@@ -121,15 +135,23 @@ export function SheetTabBar({
                     variant="ghost"
                     size="xs"
                     className="ss-sheet-tab"
+                    data-slot="spreadsheet-sheet-tab"
                     data-active={isActive || undefined}
                     onClick={() => handleTabClick(sheet.id)}
                     onDoubleClick={() => handleTabDoubleClick(sheet.id, sheet.name)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'F2') {
+                        e.preventDefault();
+                        handleTabDoubleClick(sheet.id, sheet.name);
+                      }
+                    }}
                     disabled={readOnly}
                   >
                     {sheet.name}
                     {sheet.tabColor && (
                       <span
                         className="ss-sheet-tab-color"
+                        data-slot="spreadsheet-sheet-tab-color"
                         style={{ backgroundColor: sheet.tabColor }}
                       />
                     )}
@@ -140,12 +162,13 @@ export function SheetTabBar({
                     type="button"
                     variant="ghost"
                     size="icon-xs"
-                     className="ss-sheet-tab-close"
-                     onClick={(e) => handleCloseClick(e, sheet.id, sheet.name)}
-                     aria-label={t('flux.sheet.removeSheetAriaLabel', { name: sheet.name })}
-                     title={t('flux.sheet.removeSheetAriaLabel', { name: sheet.name })}
-                     disabled={readOnly}
-                   >
+                    className="ss-sheet-tab-close"
+                    data-slot="spreadsheet-sheet-tab-close"
+                    onClick={(e) => handleCloseClick(e, sheet.id, sheet.name)}
+                    aria-label={t('flux.sheet.removeSheetAriaLabel', { name: sheet.name })}
+                    title={t('flux.sheet.removeSheetAriaLabel', { name: sheet.name })}
+                    disabled={readOnly}
+                  >
                     ×
                   </Button>
                 ) : null}
@@ -157,6 +180,7 @@ export function SheetTabBar({
           variant="ghost"
           size="icon-xs"
           className="ss-sheet-add"
+          data-slot="spreadsheet-sheet-add"
           onClick={onAddSheet}
           aria-label={t('flux.sheet.addSheetAriaLabel')}
           disabled={readOnly}

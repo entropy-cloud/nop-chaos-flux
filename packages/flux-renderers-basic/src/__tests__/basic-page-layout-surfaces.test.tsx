@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
@@ -74,7 +74,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               defaultOpen: true,
               body: [{ type: 'text', text: 'Dialog body' }],
             },
-            { type: 'text', text: '${ui?.dialogStatus?.open}' },
+            { type: 'text', text: '${ui?.dialogStatus?.open}', testid: 'dialog-open-status' },
           ],
         }}
         env={env}
@@ -82,10 +82,12 @@ describe('basicRendererDefinitions page and layout behavior', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByText('true')).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId('dialog-open-status').textContent).toBe('true'));
 
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button'));
-    await waitFor(() => expect(screen.getByText('false')).toBeTruthy());
+    const closeButton = screen.getByRole('dialog').querySelector('[data-slot="dialog-close"]');
+    expect(closeButton).toBeTruthy();
+    fireEvent.click(closeButton!);
+    await waitFor(() => expect(screen.getByTestId('dialog-open-status').textContent).toBe('false'));
     cleanup();
   });
 
@@ -101,7 +103,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
           defaultOpen: true,
           body: [{ type: 'text', text: 'Dialog body' }],
         },
-        { type: 'text', text: '${ui?.dialogStatus?.open}' },
+        { type: 'text', text: '${ui?.dialogStatus?.open}', testid: 'dialog-open-status' },
       ],
     } as const;
     const { rerender } = render(
@@ -113,12 +115,14 @@ describe('basicRendererDefinitions page and layout behavior', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByText('true')).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId('dialog-open-status').textContent).toBe('true'));
 
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button'));
+    const closeButton = screen.getByRole('dialog').querySelector('[data-slot="dialog-close"]');
+    expect(closeButton).toBeTruthy();
+    fireEvent.click(closeButton!);
 
     await waitFor(() => {
-      expect(screen.getByText('false')).toBeTruthy();
+      expect(screen.getByTestId('dialog-open-status').textContent).toBe('false');
       expect(screen.queryByRole('dialog')).toBeNull();
     });
 
@@ -132,7 +136,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('false')).toBeTruthy();
+      expect(screen.getByTestId('dialog-open-status').textContent).toBe('false');
       expect(screen.queryByRole('dialog')).toBeNull();
     });
   });
@@ -519,6 +523,33 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     expect(screen.getByText('Dialog body')).toBeTruthy();
   });
 
+  it('opens a defaultOpen declarative dialog after commit without render-phase scope allocation', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout#surface-default-open"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dialog',
+              title: 'Dialog title',
+              defaultOpen: true,
+              body: [{ type: 'text', text: 'Dialog body' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeTruthy());
+    expect(document.querySelector('[data-slot="dialog-body"]')).toBeTruthy();
+    cleanup();
+  });
+
   it('calls declarative dialog onClose once when closed from the local close control', async () => {
     const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: null })) as RendererEnv['fetcher'];
     const SchemaRenderer = createBasicSchemaRenderer();
@@ -548,7 +579,9 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
     await waitFor(() => expect(screen.getByRole('dialog')).toBeTruthy());
 
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button'));
+    const closeButton = screen.getByRole('dialog').querySelector('[data-slot="dialog-close"]');
+    expect(closeButton).toBeTruthy();
+    fireEvent.click(closeButton!);
 
     await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
     view.unmount();

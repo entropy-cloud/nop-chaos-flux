@@ -220,6 +220,44 @@ describe('spreadsheet-page schema integration', () => {
     });
   });
 
+  it('falls back to a safe empty spreadsheet document for malformed runtime props', async () => {
+    const schema = {
+      type: 'spreadsheet-page',
+      document: { bad: true },
+      config: { defaultRowHeight: 28, maxUndoDepth: 'bad' },
+      readOnly: 'yes',
+      body: [
+        { type: 'read-only-probe' },
+        { type: 'top-level-read-only-probe' },
+        { type: 'a1-value-probe' },
+      ],
+    } as any;
+
+    const registry = createDefaultRegistry([
+      a1ProbeRenderer,
+      readOnlyProbeRenderer,
+      topLevelReadOnlyProbeRenderer,
+    ]);
+    registerSpreadsheetRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://spreadsheet/renderers-invalid-props"
+        schema={schema}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('read-only-value').textContent).toBe('false');
+      expect(screen.getByTestId('top-level-read-only-value').textContent).toBe('false');
+      expect(screen.getByTestId('a1-value').textContent).toBe('');
+    });
+  });
+
   it('publishes spreadsheet host status through statusPath', async () => {
     const sheetDocument = createEmptyDocument('status-spreadsheet');
     const schema = defineSpreadsheetPageSchema({
@@ -309,7 +347,7 @@ describe('spreadsheet-page schema integration', () => {
       expect(document.querySelector('[data-slot="spreadsheet-default-host"]')).toBeTruthy();
       expect(document.querySelector('[data-slot="spreadsheet-default-toolbar"]')).toBeTruthy();
       expect(document.querySelector('[data-slot="spreadsheet-grid"]')).toBeTruthy();
-      expect(document.querySelector('.ss-sheet-bar')).toBeTruthy();
+      expect(document.querySelector('[data-slot="spreadsheet-sheet-bar"]')).toBeTruthy();
     });
   });
 

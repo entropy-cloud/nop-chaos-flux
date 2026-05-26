@@ -1,4 +1,8 @@
-import './__tests__/data-tree-and-chart.test';
+import './__tests__/data-tree-rendering-and-status.test';
+import './__tests__/data-chart-handles.test';
+import './__tests__/data-repeated-instance-path.test';
+import './__tests__/data-tree-interaction.test';
+import './__tests__/data-tree-large-render.test';
 import './__tests__/data-table.test';
 import './__tests__/data-source.test';
 import './__tests__/data-crud-rendering.test';

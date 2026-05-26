@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { EditorCanvas } from '../editor-canvas.js';
 
 const mockedCore = vi.hoisted(() => ({
@@ -41,6 +42,8 @@ describe('EditorCanvas', () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
+    resetFluxI18n();
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
     Object.defineProperty(globalThis, 'localStorage', {
       value: {
         getItem: vi.fn(() => null),
@@ -55,6 +58,7 @@ describe('EditorCanvas', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    resetFluxI18n();
     if (originalLocalStorage) {
       Object.defineProperty(globalThis, 'localStorage', {
         value: originalLocalStorage,
@@ -67,6 +71,7 @@ describe('EditorCanvas', () => {
   });
 
   it('autosaves from the live canvas snapshot and store-owned paper settings', async () => {
+    await changeLanguage('en-US');
     let onContentChange: (() => void) | undefined;
     const bridge = {
       mount: vi.fn((_container, _editorData, callbacks) => {
@@ -125,6 +130,7 @@ describe('EditorCanvas', () => {
   });
 
   it('does not remount the editor bridge when charts and codes props change', async () => {
+    await changeLanguage('en-US');
     const bridge = {
       mount: vi.fn(),
       unmount: vi.fn(),
@@ -282,6 +288,7 @@ describe('EditorCanvas', () => {
   });
 
   it('does not write autosave snapshots directly to localStorage on each content change', async () => {
+    await changeLanguage('en-US');
     let onContentChange: (() => void) | undefined;
     const bridge = {
       mount: vi.fn((_container, _editorData, callbacks) => {
@@ -317,5 +324,44 @@ describe('EditorCanvas', () => {
 
     expect(globalThis.localStorage.setItem).not.toHaveBeenCalled();
     expect(mockedCore.captureDocumentSnapshotMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('publishes an accessible canvas host region with fallback guidance', async () => {
+    await changeLanguage('en-US');
+    const bridge = {
+      mount: vi.fn(),
+      unmount: vi.fn(),
+      getValue: vi.fn(() => ({ data: { header: [], main: [], footer: [] } })),
+      getPaperSettings: vi.fn(() => null),
+      getWordCount: vi.fn(() => Promise.resolve(0)),
+    };
+    const editorStore = {
+      setDirty: vi.fn(),
+      setBridge: vi.fn(),
+      setReady: vi.fn(),
+      setPaperSettings: vi.fn(),
+      setWordCount: vi.fn(),
+      setSelection: vi.fn(),
+      setTotalPages: vi.fn(),
+      setScale: vi.fn(),
+      getState: vi.fn(() => ({
+        paperSettings: { width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] },
+      })),
+    };
+
+    const { container } = render(<EditorCanvas editorStore={editorStore as any} bridge={bridge as any} />);
+
+    const region = screen.getByRole('region', { name: 'Document editing canvas' });
+    expect(region.getAttribute('tabindex')).toBe('0');
+    expect(region.textContent).toContain(
+      'This canvas host marks the document editing area. Use the toolbar and side panels for available editing controls if the embedded editor surface is not fully exposed to assistive technology.',
+    );
+    expect(container.querySelector('[data-slot="word-editor-canvas-surface"]')).toBeTruthy();
+    expect(bridge.mount).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      expect.any(Object),
+      expect.any(Object),
+      expect.any(Object),
+    );
   });
 });

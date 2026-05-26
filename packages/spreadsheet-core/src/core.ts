@@ -19,6 +19,7 @@ export interface SpreadsheetCore {
   subscribe(listener: () => void): () => void;
   dispatch(command: SpreadsheetCommand): Promise<SpreadsheetCommandResult>;
   replaceDocument(nextDocument: SpreadsheetDocument): void;
+  acceptCurrentDocumentAsSaved(): void;
   exportDocument(): SpreadsheetDocument;
   getClipboard(): ClipboardData | null;
 }
@@ -83,6 +84,18 @@ export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): Sp
         undoStack: [],
         redoStack: [],
         transactionDoc: null,
+      });
+    },
+
+    acceptCurrentDocumentAsSaved() {
+      const state = store.getState();
+      if (!state.dirty) {
+        return;
+      }
+
+      store.setState({
+        ...state,
+        dirty: false,
       });
     },
 

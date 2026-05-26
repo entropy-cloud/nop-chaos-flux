@@ -336,6 +336,82 @@ describe('DesignerPage auto layout guards', () => {
     });
   });
 
+  it('preserves non-Error initial auto-layout failures through monitor cause', async () => {
+    const notify = vi.fn();
+    const onError = vi.fn();
+    const structuredFailure = { code: 'E_LAYOUT', nodeId: 'node-1' };
+    const failingEnv = {
+      ...testEnv,
+      notify,
+      monitor: { onError },
+    };
+
+    testState.rejectNextTreeLayout = false;
+    const { layoutTreeWithElk } = await import('@nop-chaos/flow-designer-core');
+    vi.mocked(layoutTreeWithElk).mockImplementationOnce(async () => {
+      throw structuredFailure;
+    });
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'designer-page',
+              treeDocument: {
+                id: 'doc-4',
+                kind: 'test-tree',
+                name: 'Broken cause',
+                version: '1.0.0',
+                root: {
+                  id: 'node-1',
+                  type: 'task',
+                  data: { label: 'Task 1' },
+                },
+              },
+              config: {
+                ...createTestConfig(),
+                documentMode: 'tree',
+                treeConfig: {
+                  layout: { direction: 'TB', nodeSpacing: 80, layerSpacing: 120 },
+                  showGatewayNodes: true,
+                  showMergeNodes: true,
+                  autoLayout: true,
+                },
+                statusPath: 'designerStatus',
+              },
+              statusPath: 'designerStatus',
+            },
+            {
+              type: 'designer-status-probe',
+            },
+          ],
+        } as any}
+        env={failingEnv as RendererEnv}
+        formulaCompiler={formulaCompiler}
+        data={{ designerStatus: undefined }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phase: 'render',
+          error: expect.objectContaining({
+            message: 'Auto-layout failed',
+            cause: structuredFailure,
+          }),
+          details: expect.objectContaining({
+            reason: 'designer-auto-layout-failed',
+            documentId: 'doc-4',
+            documentMode: 'tree',
+          }),
+        }),
+      );
+    });
+  });
+
   it('recreates the ELK owner after cleanup before tree remount work resumes', async () => {
     const firstView = render(
       <SchemaRenderer

@@ -6,6 +6,7 @@ export type DesignerCommandReason =
   | 'duplicate-edge'
   | 'missing-edge'
   | 'missing-node'
+  | 'missing-selection-target'
   | 'self-loop'
   | 'unchanged'
   | 'unknown-node-type'

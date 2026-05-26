@@ -19,6 +19,32 @@ export interface PendingKeyboardContextMenuRequest {
   element: HTMLElement;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getBoundFieldLabel(metadata: unknown): string | null {
+  if (!isRecord(metadata)) {
+    return null;
+  }
+
+  const field = metadata.field;
+  if (typeof field === 'string' && field.trim()) {
+    return field.trim();
+  }
+
+  if (!isRecord(field)) {
+    return null;
+  }
+
+  const fieldData = field.data;
+  if (isRecord(fieldData) && typeof fieldData.label === 'string' && fieldData.label.trim()) {
+    return fieldData.label.trim();
+  }
+
+  return typeof field.fieldId === 'string' && field.fieldId.trim() ? field.fieldId.trim() : null;
+}
+
 export interface SpreadsheetGridTableShellProps {
   snapshot: SpreadsheetGridProps['snapshot'];
   viewport: SpreadsheetGridViewportState;
@@ -134,13 +160,25 @@ function SpreadsheetGridCell({
   const isSelected = selectedCell?.row === row && selectedCell?.col === col;
   const inRange = isInRange(row, col);
   const hasComment = !!cell?.comment;
-  const hasBinding = getCellMetadata ? getCellMetadata(row, col) : undefined;
+  const cellMetadata = getCellMetadata ? getCellMetadata(row, col) : undefined;
+  const boundFieldLabel = getBoundFieldLabel(cellMetadata);
   const frozen = snapshot.activeSheet?.frozen;
   const isFrozenCell = frozen && (row < (frozen.row ?? 0) || col < (frozen.col ?? 0));
   const mergeInfo = getMergeInfo(row, col);
   const isEditing = editingCell?.row === row && editingCell?.col === col;
   const isDropTarget = dropTargetCell?.row === row && dropTargetCell?.col === col && !!draggingField;
   const isFillHandleCell = selectedRange && row === selectedRange.endRow && col === selectedRange.endCol && !isEditing;
+  const cellValueText = cell?.value != null ? String(cell.value) : '';
+  const boundCellAriaLabel =
+    boundFieldLabel == null
+      ? undefined
+      : cellValueText
+        ? t('flux.spreadsheet.boundCellWithValueAriaLabel', {
+            cell: addr,
+            value: cellValueText,
+            field: boundFieldLabel,
+          })
+        : t('flux.spreadsheet.boundCellAriaLabel', { cell: addr, field: boundFieldLabel });
 
   if (mergeInfo.isMerged && !mergeInfo.isTopLeft) {
     return null;
@@ -159,6 +197,7 @@ function SpreadsheetGridCell({
       role="gridcell"
       aria-rowindex={row + 1}
       aria-colindex={col + 1}
+      aria-label={boundCellAriaLabel}
       className={cellStyle.className}
       style={style}
       tabIndex={isSelected ? 0 : -1}
@@ -168,7 +207,7 @@ function SpreadsheetGridCell({
       data-cell-active={isSelected || undefined}
       data-cell-selected={isSelected || undefined}
       data-range-highlight={inRange || undefined}
-      data-cell-bound={hasBinding ? true : undefined}
+      data-cell-bound={boundFieldLabel ? true : undefined}
       data-cell-comment={hasComment || undefined}
       data-cell-frozen={isFrozenCell || undefined}
       data-cell-merged={mergeInfo.isMerged || undefined}
@@ -208,7 +247,12 @@ function SpreadsheetGridCell({
         />
       ) : (
         <>
-          {cell?.value != null ? String(cell.value) : ''}
+          {boundFieldLabel ? (
+            <span data-slot="spreadsheet-bound-indicator" aria-hidden="true">
+              fx
+            </span>
+          ) : null}
+          {cellValueText}
           {isFillHandleCell ? (
             <div
               className="ss-fill-handle"

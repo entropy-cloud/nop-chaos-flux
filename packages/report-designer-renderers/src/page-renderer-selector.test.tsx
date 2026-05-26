@@ -9,8 +9,10 @@ import { createReportTemplateDocument } from '@nop-chaos/report-designer-core';
 import {
   equalReportPageSnapshot,
   equalReportSpreadsheetSnapshot,
+  equalReportSpreadsheetRuntimeSnapshot,
   selectReportPageSnapshot,
   selectReportSpreadsheetSnapshot,
+  selectReportSpreadsheetRuntimeSnapshot,
 } from './page-renderer.js';
 
 function createStore<T>(initial: T) {
@@ -151,5 +153,84 @@ describe('report-designer page snapshot selectors', () => {
 
     expect(renderCount).toBe(2);
     expect(screen.getByTestId('report-sheet-readonly').textContent).toBe('true');
+  });
+
+  it('keeps report shell spreadsheet selector stable across selection and viewport churn', () => {
+    const spreadsheet = createEmptyDocument('report-spreadsheet-runtime-selector-test');
+    const activeSheet = spreadsheet.workbook.sheets[0];
+    const baseSnapshot = {
+      document: spreadsheet,
+      activeSheetId: activeSheet.id,
+      activeSheet,
+      selection: { kind: 'sheet', sheetId: activeSheet.id },
+      history: { canUndo: false, canRedo: false },
+      dirty: false,
+      readonly: false,
+      viewport: { zoom: 1, scrollX: 0, scrollY: 0 },
+      layout: { visibleRange: { sheetId: activeSheet.id, startRow: 0, startCol: 0, endRow: 10, endCol: 10 } },
+    } as any;
+    const store = createStore(baseSnapshot);
+    let renderCount = 0;
+
+    function Probe() {
+      const snapshot = useSyncExternalStoreWithSelector(
+        store.subscribe,
+        store.getSnapshot,
+        store.getSnapshot,
+        selectReportSpreadsheetRuntimeSnapshot,
+        equalReportSpreadsheetRuntimeSnapshot,
+      );
+      return <span data-testid="report-sheet-dirty">{String(snapshot.dirty)}</span>;
+    }
+
+    render(
+      <Profiler
+        id="report-spreadsheet-runtime-probe"
+        onRender={() => {
+          renderCount += 1;
+        }}
+      >
+        <Probe />
+      </Profiler>,
+    );
+    expect(renderCount).toBe(1);
+
+    act(() => {
+      store.update({
+        ...baseSnapshot,
+        selection: {
+          kind: 'cell',
+          sheetId: activeSheet.id,
+          anchor: { sheetId: activeSheet.id, address: 'A1', row: 0, col: 0 },
+        },
+      });
+    });
+
+    act(() => {
+      store.update({
+        ...baseSnapshot,
+        viewport: { zoom: 1, scrollX: 120, scrollY: 240 },
+      });
+    });
+
+    act(() => {
+      store.update({
+        ...baseSnapshot,
+        layout: {
+          visibleRange: { sheetId: activeSheet.id, startRow: 10, startCol: 0, endRow: 20, endCol: 10 },
+        },
+      });
+    });
+
+    expect(renderCount).toBe(1);
+
+    act(() => {
+      store.update({
+        ...baseSnapshot,
+        history: { canUndo: true, canRedo: false },
+      });
+    });
+
+    expect(renderCount).toBe(2);
   });
 });

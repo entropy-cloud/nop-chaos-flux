@@ -220,7 +220,6 @@ describe('flow designer controls', () => {
   });
 
   it('dispatches addNode from palette item button click', () => {
-    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
     mockState.context.config = {
       ...mockState.context.config,
       nodeTypes: [
@@ -245,12 +244,55 @@ describe('flow designer controls', () => {
       nodeType: 'task',
       position: { x: 180, y: 120 },
     });
-    expect(document.querySelector('[data-type="task"]')?.className).toContain(
-      'fd-palette-appearance-task',
-    );
-    expect(screen.getByText('拖拽或点击添加')).toBeTruthy();
+    expect(document.querySelector('[data-type="task"]')?.className).toContain('fd-palette-swatch');
+    expect((document.querySelector('[data-type="task"]') as HTMLElement | null)?.style.getPropertyValue('--fd-palette-accent')).toBe('#3b82f6');
+    expect(screen.getByText('拖拽放置，或点击在当前选择附近添加')).toBeTruthy();
     expect(screen.getByRole('button', { name: '添加Task' })).toBeTruthy();
-    randomSpy.mockRestore();
+  });
+
+  it('prefers node appearance accent over hardcoded palette id classes', () => {
+    mockState.context.config = {
+      ...mockState.context.config,
+      nodeTypes: [
+        { id: 'task', label: 'Task', appearance: { borderColor: 'rgb(12, 34, 56)' } },
+      ],
+      palette: {
+        groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task'] }],
+      },
+    };
+
+    render(<DesignerPaletteContent />);
+    const swatch = document.querySelector('[data-type="task"]') as HTMLElement | null;
+    expect(swatch?.className).toContain('fd-palette-swatch');
+    expect(swatch?.className).not.toContain('fd-palette-appearance-task');
+    expect(swatch?.style.getPropertyValue('--fd-palette-accent')).toBe('rgb(12, 34, 56)');
+  });
+
+  it('adds palette nodes near the active node when one is selected', () => {
+    mockState.snapshot = createSnapshot({
+      activeNode: {
+        id: 'node-1',
+        type: 'task',
+        position: { x: 40, y: 80 },
+        data: { label: 'Task 1' },
+      },
+    });
+    mockState.context.config = {
+      ...mockState.context.config,
+      nodeTypes: [{ id: 'task', label: 'Task' }],
+      palette: {
+        groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task'] }],
+      },
+    };
+
+    render(<DesignerPaletteContent />);
+    fireEvent.click(screen.getByRole('button', { name: 'Task' }));
+
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({
+      type: 'addNode',
+      nodeType: 'task',
+      position: { x: 260, y: 80 },
+    });
   });
 
   it('uses disclosure button semantics for palette group headers', () => {
@@ -466,7 +508,6 @@ describe('flow designer controls', () => {
   });
 
   it('opens createDialog-configured node types instead of dispatching addNode immediately', () => {
-    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
     mockState.context.config = {
       ...mockState.context.config,
       nodeTypes: [
@@ -493,6 +534,5 @@ describe('flow designer controls', () => {
     expect(mockState.context.dispatch).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: 'addNode' }),
     );
-    randomSpy.mockRestore();
   });
 });

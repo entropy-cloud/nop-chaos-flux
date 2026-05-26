@@ -2,9 +2,10 @@ import React from 'react';
 import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 import { isSchema } from '@nop-chaos/flux-core';
-import { RenderNodes } from '@nop-chaos/flux-react/unstable';
+import { RenderNodes } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { useEdgeTypeConfig, useDesignerContext } from '../designer-context.js';
+import { focusDesignerCanvasSurface } from '../designer-canvas-focus.js';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import type { DesignerFlowEdgeData } from './types.js';
 import { DesignerIcon } from '../designer-icon.js';
@@ -17,7 +18,7 @@ function isSchemaInput(value: unknown): value is SchemaInput {
 export function DesignerXyflowEdge(props: EdgeProps) {
   const edgeData = (props.data as DesignerFlowEdgeData | undefined) ?? undefined;
   const edgeType = useEdgeTypeConfig(edgeData?.typeId ?? props.type ?? 'default');
-  const { dispatch } = useDesignerContext();
+  const { dispatch, core } = useDesignerContext();
 
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX: props.sourceX,
@@ -63,6 +64,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
   const handleDeleteEdge = (e: React.MouseEvent) => {
     e.stopPropagation();
     dispatch({ type: 'deleteEdge', edgeId: props.id });
+    focusDesignerCanvasSurface(core);
   };
 
   const appearance = edgeType?.appearance;
@@ -77,7 +79,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
 
   const edgeStyle: React.CSSProperties = {
     stroke: edgeData?.__fdBranchFocused
-      ? 'var(--primary)'
+      ? 'hsl(var(--primary))'
       : (appearance?.stroke ?? 'var(--fd-edge-stroke)'),
     strokeWidth: edgeData?.__fdBranchFocused
       ? Math.max((appearance?.strokeWidth ?? 2) + 1, 3)
@@ -141,6 +143,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
           <div
             role="toolbar"
             tabIndex={0}
+            aria-label={`Edge actions for ${edgeLabel}`}
             data-slot="designer-edge-actions"
             className="fd-edge-actions inline-flex items-center gap-1.5 p-1 rounded-[10px] border border-border"
             style={{

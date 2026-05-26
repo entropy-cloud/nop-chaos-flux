@@ -8,9 +8,11 @@ import type {
 } from '@nop-chaos/flux-core';
 import { actionAdapter, getIn, setIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
-import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
 import {
+  FormContext,
+  ScopeContext,
+  ValidationContext,
+  resolveRendererSlotContent,
   useCurrentForm,
   useCurrentValidationScope,
   useCurrentFormState,

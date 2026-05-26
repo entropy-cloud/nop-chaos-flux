@@ -32,6 +32,7 @@ function createValidationOwner() {
     visitField: vi.fn(),
     touchField: vi.fn(),
     validateAt: vi.fn(async () => ({ ok: false, errors: [{ message: 'required' }] })),
+    registerField: vi.fn(() => ({ unregister: vi.fn() })),
   } as any;
 }
 
@@ -75,6 +76,9 @@ describe('useCodeEditorBinding', () => {
     expect(validationOwner.touchField).toHaveBeenCalledWith('script');
     expect(validationOwner.validateAt).toHaveBeenCalledWith('script', 'change');
     expect(validationOwner.validateAt).toHaveBeenCalledWith('script', 'blur');
+    expect(validationOwner.registerField).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'script', childPaths: [] }),
+    );
     expect(scope.store.subscribe).toHaveBeenCalledWith(expect.any(Function));
   });
 
@@ -97,6 +101,7 @@ describe('useCodeEditorBinding', () => {
       touchField: vi.fn(),
       validateField: vi.fn(async () => ({ ok: true, errors: [] })),
       setValue: vi.fn(),
+      registerField: vi.fn(() => ({ unregister: vi.fn() })),
     } as any;
 
     render(
@@ -111,6 +116,9 @@ describe('useCodeEditorBinding', () => {
 
     expect(formSubscribeToPath).toHaveBeenCalledWith('script', expect.any(Function));
     expect(formSubscribeToSubmitting).toHaveBeenCalledWith(expect.any(Function));
+    expect(form.registerField).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'script', childPaths: [] }),
+    );
     expect(scope.store.subscribe).not.toHaveBeenCalled();
   });
 });

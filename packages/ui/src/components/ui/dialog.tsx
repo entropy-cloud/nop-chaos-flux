@@ -6,7 +6,7 @@ import { t } from '../../lib/i18n.js';
 
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
-import { XIcon } from 'lucide-react';
+import { GripHorizontalIcon, XIcon } from 'lucide-react';
 import { useDialogDrag } from './use-dialog-drag.js';
 
 interface DialogContextValue {
@@ -17,12 +17,25 @@ interface DialogContextValue {
   containerElement: HTMLElement | null;
 }
 
+interface DialogDragContextValue {
+  enabled: boolean;
+  descriptionId?: string;
+  moveBy: (deltaX: number, deltaY: number) => void;
+  resetPosition: () => void;
+}
+
 const DialogContext = React.createContext<DialogContextValue>({
   draggable: false,
   noOverlay: false,
   noCenter: false,
   closeOnOutsideClick: true,
   containerElement: null,
+});
+
+const DialogDragContext = React.createContext<DialogDragContextValue>({
+  enabled: false,
+  moveBy: () => {},
+  resetPosition: () => {},
 });
 
 function Dialog({
@@ -77,7 +90,7 @@ function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) 
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        'isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+        'isolate z-50 bg-[var(--nop-dialog-backdrop,hsl(var(--popover,0_0%_0%)_/_0.1))] duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
         isContained ? 'absolute inset-0' : 'fixed inset-0',
         className,
       )}
@@ -107,6 +120,7 @@ const DialogContent = React.forwardRef<
   ref,
 ) {
   const { draggable, noOverlay, noCenter, containerElement } = React.useContext(DialogContext);
+  const descriptionId = React.useId();
   const isContained = containerElement != null;
   const effectiveBaseTransform = noCenter
     ? isContained
@@ -115,9 +129,18 @@ const DialogContent = React.forwardRef<
     : isContained
       ? 'translate(-50%, -50%)'
       : (baseTransform ?? 'translate(-50%, -50%)');
-  const { contentRef, handlePointerDown } = useDialogDrag(
+  const { contentRef, handlePointerDown, moveBy, resetPosition } = useDialogDrag(
     { enabled: draggable, offsetRef, baseTransform: effectiveBaseTransform },
     ref,
+  );
+  const dragContextValue = React.useMemo(
+    () => ({
+      enabled: draggable,
+      descriptionId,
+      moveBy,
+      resetPosition,
+    }),
+    [descriptionId, draggable, moveBy, resetPosition],
   );
 
   return (
@@ -145,7 +168,14 @@ const DialogContent = React.forwardRef<
         }
         onPointerDown={draggable ? handlePointerDown : props.onPointerDown}
       >
-        {children}
+        <DialogDragContext.Provider value={dragContextValue}>
+          {children}
+          {draggable ? (
+            <p id={descriptionId} className="sr-only">
+              {t('flux.dialog.moveDialogInstructions')}
+            </p>
+          ) : null}
+        </DialogDragContext.Provider>
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
@@ -164,17 +194,72 @@ DialogContent.displayName = 'DialogContent';
 
 function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   const { draggable } = React.useContext(DialogContext);
+  const dragContext = React.useContext(DialogDragContext);
+  const { onKeyDown, ...restProps } = props;
+  const forwardedOnKeyDown = onKeyDown as ((event: React.KeyboardEvent<HTMLElement>) => void) | undefined;
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    forwardedOnKeyDown?.(event);
+    if (event.defaultPrevented || !dragContext.enabled) {
+      return;
+    }
+
+    const step = event.shiftKey ? 48 : 16;
+    switch (event.key) {
+      case 'ArrowLeft':
+        event.preventDefault();
+        dragContext.moveBy(-step, 0);
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        dragContext.moveBy(step, 0);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        dragContext.moveBy(0, -step);
+        break;
+      case 'ArrowDown':
+        event.preventDefault();
+        dragContext.moveBy(0, step);
+        break;
+      case 'Home':
+        event.preventDefault();
+        dragContext.resetPosition();
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <div
       data-slot="dialog-header"
       className={cn(
-        'flex flex-col gap-2 p-4 pb-0',
+        'relative flex flex-col gap-2 p-4 pb-0',
+        draggable && 'pl-12',
         draggable && 'cursor-grab select-none',
         className,
       )}
-      {...props}
-    />
+      {...restProps}
+    >
+      {dragContext.enabled ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="absolute top-3 left-3 cursor-grab"
+          data-slot="dialog-drag-handle"
+          aria-roledescription={t('flux.dialog.dragHandleRoleDescription')}
+          aria-label={t('flux.dialog.moveDialog')}
+          aria-describedby={dragContext.descriptionId}
+          aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home"
+          onKeyDown={handleKeyDown}
+        >
+          <GripHorizontalIcon />
+        </Button>
+      ) : null}
+      {props.children}
+    </div>
   );
 }
 

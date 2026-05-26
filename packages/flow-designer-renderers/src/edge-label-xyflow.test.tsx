@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
@@ -10,16 +10,18 @@ import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-cor
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import { DesignerContext } from './designer-context.js';
 import { createDesignerCommandAdapter } from './designer-command-adapter.js';
+import { registerDesignerCanvasFocusHandler } from './designer-canvas-focus.js';
 
 afterEach(() => cleanup());
 
 vi.mock('@xyflow/react', () => {
   return {
-    BaseEdge: ({ ..._props }: any) => <svg data-testid="base-edge" />,
+    BaseEdge: ({ style, ..._props }: any) => <svg data-testid="base-edge" data-style={JSON.stringify(style ?? null)} />,
     EdgeLabelRenderer: ({ children }: any) => (
       <div data-testid="edge-label-renderer">{children}</div>
     ),
     getBezierPath: () => ['M 0 0 C 100 0 200 0 300 0', 150, 0],
+    Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
     useNodesState: () => [[], () => {}, () => {}],
     useEdgesState: () => [[], () => {}, () => {}],
   };
@@ -82,7 +84,12 @@ function createDesignerContextValue(config: DesignerConfig, doc: GraphDocument) 
   return {
     core,
     commandAdapter: adapter,
-    dispatch: (cmd: any) => adapter.dispatch(cmd),
+    dispatch: (cmd: any) => {
+      if (typeof (adapter as any).dispatch === 'function') {
+        return (adapter as any).dispatch(cmd);
+      }
+      return core.execute?.(cmd) ?? { ok: true };
+    },
     config,
   };
 }
@@ -172,5 +179,111 @@ describe('DesignerXyflowEdge label rendering', () => {
       const edge = screen.getByRole('button', { name: 'Selected Edge 审批连线' });
       expect(edge.getAttribute('aria-pressed')).toBe('true');
     });
+  });
+
+  it('uses public primary token color for branch-focused edge chrome', async () => {
+    const ctx = createDesignerContextValue(TEST_CONFIG, TEST_DOC);
+
+    const edgeHostRenderer: RendererDefinition = {
+      type: 'edge-host',
+      component: () => (
+        <DesignerContext.Provider value={ctx}>
+          <DesignerXyflowEdge
+            id="edge-1"
+            source="node-1"
+            target="node-2"
+            sourceX={0}
+            sourceY={0}
+            targetX={300}
+            targetY={0}
+            sourcePosition="right"
+            targetPosition="left"
+            data={{
+              condition: '触发条件',
+              lineStyle: 'solid',
+              typeId: 'default',
+              label: '审批连线',
+              __fdBranchFocused: true,
+            }}
+            selected={false}
+            type="designerEdge"
+          />
+        </DesignerContext.Provider>
+      ),
+      fields: [],
+      staticCapable: true,
+    };
+
+    const LocalRenderer = createSchemaRenderer([textWithBody, edgeHostRenderer]);
+    render(
+      <LocalRenderer
+        schemaUrl="test://edge-render-branch-focused"
+        schema={{ type: 'edge-host' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      const baseEdge = screen.getByTestId('base-edge');
+      const style = JSON.parse(baseEdge.getAttribute('data-style') ?? 'null');
+      expect(style).toMatchObject({
+        stroke: 'hsl(var(--primary))',
+        strokeWidth: 3,
+      });
+    });
+  });
+
+  it('restores focus to the canvas after deleting an edge from the toolbar', async () => {
+    const ctx = createDesignerContextValue(TEST_CONFIG, TEST_DOC);
+    const canvas = document.createElement('div');
+    canvas.tabIndex = 0;
+    canvas.setAttribute('role', 'region');
+    canvas.setAttribute('aria-label', 'Flow designer canvas');
+    document.body.appendChild(canvas);
+    const unregister = registerDesignerCanvasFocusHandler(ctx.core, () => canvas.focus());
+
+    const edgeHostRenderer: RendererDefinition = {
+      type: 'edge-host',
+      component: () => (
+        <DesignerContext.Provider value={ctx}>
+          <DesignerXyflowEdge
+            id="edge-1"
+            source="node-1"
+            target="node-2"
+            sourceX={0}
+            sourceY={0}
+            targetX={300}
+            targetY={0}
+            sourcePosition="right"
+            targetPosition="left"
+            data={{ condition: '触发条件', lineStyle: 'solid', typeId: 'default', label: '审批连线' }}
+            selected={true}
+            type="designerEdge"
+          />
+        </DesignerContext.Provider>
+      ),
+      fields: [],
+      staticCapable: true,
+    };
+
+    const LocalRenderer = createSchemaRenderer([textWithBody, edgeHostRenderer]);
+    render(
+      <LocalRenderer
+        schemaUrl="test://edge-delete-focus"
+        schema={{ type: 'edge-host' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('designer-edge-delete'));
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(canvas);
+    });
+
+    unregister();
+    canvas.remove();
   });
 });

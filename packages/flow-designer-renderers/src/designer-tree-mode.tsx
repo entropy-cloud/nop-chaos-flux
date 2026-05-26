@@ -19,8 +19,71 @@ function toComparableTreeGraphDocument(document: GraphDocument) {
   };
 }
 
+function areRecordsEqual(
+  left: Record<string, unknown> | undefined,
+  right: Record<string, unknown> | undefined,
+): boolean {
+  if (left === right) {
+    return true;
+  }
+  if (!left || !right) {
+    return left === right;
+  }
+
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  return leftKeys.every((key) => {
+    const leftValue = left[key];
+    const rightValue = right[key];
+    if (Array.isArray(leftValue) || Array.isArray(rightValue)) {
+      return Array.isArray(leftValue) && Array.isArray(rightValue) && areArraysEqual(leftValue, rightValue);
+    }
+    if (leftValue && rightValue && typeof leftValue === 'object' && typeof rightValue === 'object') {
+      return areRecordsEqual(
+        leftValue as Record<string, unknown>,
+        rightValue as Record<string, unknown>,
+      );
+    }
+    return Object.is(leftValue, rightValue);
+  });
+}
+
+function areArraysEqual(left: unknown[], right: unknown[]): boolean {
+  if (left === right) {
+    return true;
+  }
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((value, index) => {
+    const other = right[index];
+    if (Array.isArray(value) || Array.isArray(other)) {
+      return Array.isArray(value) && Array.isArray(other) && areArraysEqual(value, other);
+    }
+    if (value && other && typeof value === 'object' && typeof other === 'object') {
+      return areRecordsEqual(value as Record<string, unknown>, other as Record<string, unknown>);
+    }
+    return Object.is(value, other);
+  });
+}
+
 function areTreeGraphDocumentsEqual(left: GraphDocument, right: GraphDocument): boolean {
-  return JSON.stringify(toComparableTreeGraphDocument(left)) === JSON.stringify(toComparableTreeGraphDocument(right));
+  const comparableLeft = toComparableTreeGraphDocument(left);
+  const comparableRight = toComparableTreeGraphDocument(right);
+  return (
+    comparableLeft.id === comparableRight.id &&
+    comparableLeft.kind === comparableRight.kind &&
+    comparableLeft.name === comparableRight.name &&
+    comparableLeft.version === comparableRight.version &&
+    areRecordsEqual(comparableLeft.meta, comparableRight.meta) &&
+    areArraysEqual(comparableLeft.nodes, comparableRight.nodes) &&
+    areArraysEqual(comparableLeft.edges, comparableRight.edges)
+  );
 }
 
 function readDesignerResolvedProp<T>(

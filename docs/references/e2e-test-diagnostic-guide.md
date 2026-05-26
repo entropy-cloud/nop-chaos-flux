@@ -11,6 +11,13 @@
 - **Default port**: 4175 (via `PLAYWRIGHT_PORT` env var)
 - **Dev server**: `pnpm --filter @nop-chaos/flux-playground dev --host 127.0.0.1 --port ${port} --strictPort`
 
+## Supported Vs Diagnostic Specs
+
+- The default `tests/e2e/` Playwright run is the supported user-path suite.
+- Specs whose main purpose is screenshot capture, DOM/HTML dumping, console dump collection, React fiber inspection, or `window.__NOP_DEBUGGER_API__` probing are diagnostic helpers, not supported proof.
+- Until the repo adds a separate diagnostic Playwright project, keep those helpers explicitly isolated with `test.skip(...)` or `test.describe.skip(...)` so they do not mix with the supported gate.
+- When converting a diagnostic helper into supported coverage, replace the probe with a user-visible assertion path instead of just unskipping the old test.
+
 ## Project-Specific Inline Diagnostic Script
 
 ```bash

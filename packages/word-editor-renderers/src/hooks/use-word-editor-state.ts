@@ -18,14 +18,10 @@ import {
   createSavedDocumentData,
   loadRecoveredState,
   normalizeDatasets,
-  normalizeDocCharts,
-  normalizeDocCodes,
   normalizeWordDocument,
 } from '@nop-chaos/word-editor-core';
 import type {
   Dataset,
-  DocChart,
-  DocCode,
   SavedDocumentData,
   WordDocument,
 } from '@nop-chaos/word-editor-core';
@@ -80,8 +76,6 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
   const datasetStore = useMemo(() => createDatasetStore(), []);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const mountedRef = useRef(true);
-  const [charts, setCharts] = useState<DocChart[]>(() => normalizeDocCharts(props.props.initialCharts));
-  const [codes, setCodes] = useState<DocCode[]>(() => normalizeDocCodes(props.props.initialCodes));
   const [savedDocument, setSavedDocument] = useState<SavedDocumentData | null>(() => {
     return recoveredState.document ??
       (initialDocument
@@ -162,10 +156,10 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
       totalPages: editorRuntime.totalPages,
       scale: editorRuntime.scale,
       datasetCount: datasets.length,
-      chartCount: charts.length,
-      codeCount: codes.length,
+      chartCount: savedDocument?.data.charts?.length ?? 0,
+      codeCount: savedDocument?.data.codes?.length ?? 0,
     }),
-    [charts.length, codes.length, datasets.length, editorRuntime],
+    [datasets.length, editorRuntime, savedDocument?.data.charts?.length, savedDocument?.data.codes?.length],
   );
 
   const hostScopeData = useMemo(
@@ -187,18 +181,12 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
         bridge,
         editorStore,
         datasetStore,
-        getCharts: () => charts,
-        setCharts,
-        getCodes: () => codes,
-        setCodes,
         getPaperSettings: () => editorStore.getState().paperSettings,
         saveEvent: props.events.onSave,
         onDocumentSaved: handleDocumentSaved,
       }),
     [
       bridge,
-      charts,
-      codes,
       datasetStore,
       editorStore,
       props.events.onSave,
@@ -228,8 +216,8 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
         canRedo: editorRuntime.canRedo,
         wordCount: editorRuntime.wordCount,
       datasetCount: datasets.length,
-        chartCount: charts.length,
-        codeCount: codes.length,
+        chartCount: savedDocument?.data.charts?.length ?? 0,
+        codeCount: savedDocument?.data.codes?.length ?? 0,
       },
   );
 
@@ -265,10 +253,6 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
     recoveredState,
     rootRef,
     mountedRef,
-    charts,
-    setCharts,
-    codes,
-    setCodes,
     savedDocument,
     setSavedDocument,
     isDirty,

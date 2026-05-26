@@ -385,12 +385,12 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       sharedState.childContracts.delete(childOwnerId);
     },
 
-    validateAt(path, reason) {
-      return thisForm.validateField(path, reason);
+    validateAt(path, reason, options?) {
+      return thisForm.validateField(path, reason, options);
     },
 
-    validateAll(reason) {
-      return thisForm.validateForm(reason);
+    validateAll(reason, options?) {
+      return thisForm.validateForm(reason, options);
     },
 
     setLifecycleHandlers(handlers) {
@@ -412,16 +412,16 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       );
     },
 
-    async validateField(path, reason?) {
-      return validatePath(sharedState, path, reason);
+    async validateField(path, reason?, options?) {
+      return validatePath(sharedState, path, reason, options);
     },
 
     async validateForm(reason?, options?) {
       return ownerRuntime.validateForm(reason, options);
     },
 
-    async validateSubtree(path, reason?) {
-      return ownerRuntime.validateSubtree(path, reason);
+    async validateSubtree(path, reason?, options?) {
+      return ownerRuntime.validateSubtree(path, reason, options);
     },
 
     getError(path) {

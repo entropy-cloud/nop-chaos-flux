@@ -167,6 +167,49 @@ describe('runtime factory utilities', () => {
     });
   });
 
+  it('preserves non-Error preload import causes', async () => {
+    const sourceError = { code: 'E_IMPORT', provider: 'demo-loader' };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        importLoader: {
+          load: vi.fn(async () => {
+            throw sourceError;
+          }),
+        },
+      },
+      schemaCompiler: {
+        compile: vi.fn(),
+        compileNode: vi.fn(),
+        prepare: vi.fn().mockResolvedValue({
+          preparedImports: new Map([
+            [
+              'demo',
+              {
+                schemaUrl: '/schema.json',
+                spec: { from: 'demo-lib', as: 'demo' },
+                resolvedSpec: { from: 'demo-lib', as: 'demo' },
+              },
+            ],
+          ]),
+        }),
+      } as unknown as SchemaCompiler,
+    });
+
+    await expect(
+      runtime.prepareSchema?.(
+        { type: 'text', text: 'hello' },
+        {
+          schemaUrl: '/schema.json',
+        },
+      ),
+    ).rejects.toMatchObject({
+      message: 'Imported namespace demo failed to load: [object Object]',
+      cause: sourceError,
+    });
+  });
+
   it('resolves prepared import urls, updates env references, and disposes idempotently', async () => {
     const executeDispose = vi.fn();
     const runtime = createRendererRuntime({

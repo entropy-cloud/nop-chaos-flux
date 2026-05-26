@@ -201,3 +201,9 @@ When adding or changing renderer DOM markers:
 - Is this a state signal? Use `data-*` or `aria-*`.
 - Is this only visual? Use Tailwind or schema-driven classes, not semantic markers.
 - Is this a one-time migration concern? Put it in `docs/plans/`, not here.
+
+Additional package-CSS guardrails that follow from the current live baseline:
+
+- package-owned selectors such as debugger `.ndbg-*` internals must be anchored under a stable package root (`.nop-debugger`, `.nop-debugger-launcher`, package `data-slot`, etc.) instead of publishing bare global helper classes
+- package CSS may read host/public CSS variables with fallback values, but it must not publish shared token defaults onto `.nop-theme-root` or other global theme roots from a late-loaded runtime stylesheet
+- when a package owns reusable chrome but the visible color should follow config/runtime metadata, prefer a tokenized slot/state path (for example Flow Designer palette `--fd-palette-accent`) over hardcoded id-to-class presentation tables

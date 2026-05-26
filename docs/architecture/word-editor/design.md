@@ -1,7 +1,7 @@
 # Word Editor Architecture
 
 > Owner Doc Status: Active
-> Last Updated: 2026-05-19
+> Last Updated: 2026-05-25
 
 ## Overview
 
@@ -153,8 +153,10 @@ The renderer publishes the `word-editor` host family manifest, host projection s
 The host scope projects four read-only fields (`document`, `datasets`, `runtime`, `selection`) with mixed timing semantics:
 
 - `document` is populated by the `EditorCanvas` debounced autosave callback (~500ms lag). It is a persisted snapshot, not the real-time editor content. When `runtime.dirty` is true, `document` may still reflect a previous autosave state.
+- `EditorCanvas` must also publish a truthful host accessibility boundary around the third-party canvas surface: the live baseline is a focusable named `region` with helper description text that marks the document editing area and points users toward toolbar/side-panel controls when the embedded editor surface is not fully exposed to assistive technology.
 - `runtime`, `selection`, and `datasets` are real-time, driven by their respective Zustand stores via `useSyncExternalStoreWithSelector`.
 - The `runtime` field aggregates editor-store state with cross-store counts (`datasetCount`, `chartCount`, `codeCount`) via independent subscriptions, avoiding cross-store hot-path contamination inside the editor-store selector.
+- `runtime.chartCount` and `runtime.codeCount` follow the same persisted/autosaved `savedDocument.data` baseline as host `document`; they must not be derived from transient dialog-local or pre-save canvas metadata.
 - `runtime.currentPage` is not part of the current supported host projection baseline because the shipped canvas bridge does not provide a trustworthy production page-change callback; the published runtime summary is limited to fields that the bridge actually drives (`ready`, `dirty`, `wordCount`, `canUndo`, `canRedo`, `totalPages`, `scale`).
 - `selection.superscript` and `selection.subscript` are part of the supported live formatting snapshot and must be copied from the range-style bridge payload just like `bold`, `italic`, `underline`, and `strikeout`.
 
@@ -179,6 +181,7 @@ Save and autosave truth rules:
 - `word-editor:insertChart` / `word-editor:insertCode` provider enforcement now matches the published manifest contract and rejects payloads the core validators would later discard
 - `word-editor:insertChart` / `word-editor:insertCode` manifest metadata also publishes the success result shape (`chartId` / `codeId`) returned by the provider
 - chart/code dialogs use the same `validateDocChart` / `validateDocCode` gate as the provider path, so invalid metadata is rejected before insertion and before persisted recovery drift can occur
+- the `word-editor:*` namespace provider now owns a stable provider-boundary error contract for all published methods, not only `save`: bridge/store throws from `insertField`, `insertChart`, `insertCode`, `undo`, and `redo` are normalized into `ActionResult` failures instead of rejecting past the namespace boundary
 - watermark commands are not part of the supported persisted truth surface and therefore are not a supported authoring surface in the current page UI
 - built-in toolbar and page-control chrome use the `flux.wordEditor.*` locale namespace instead of hardcoded English strings
 

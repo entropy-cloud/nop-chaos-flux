@@ -195,6 +195,65 @@ describe('variant-field renderer detection behavior', () => {
     });
   });
 
+  it('passes the default detection payload through the detectVariantAction event channel', async () => {
+    cleanup();
+    const invoke = vi.fn(async (_method: string, payload: Record<string, unknown> | undefined) => ({
+      ok: true,
+      data: { variant: payload?.value ? 'second' : 'first' },
+    }));
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke,
+        }),
+      })),
+    };
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-detection.test.tsx#event-channel"
+        schema={{
+          type: 'form',
+          data: {
+            payload: { raw: true },
+          },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              defaultVariant: 'first',
+              'xui:imports': [{ from: 'variant-lib', as: 'variantLib' }],
+              detectVariantAction: { action: 'variantLib:detect' },
+              variants: [
+                {
+                  key: 'first',
+                  label: 'First',
+                  content: [{ type: 'input-text', name: 'value', label: 'First Value' }],
+                },
+                {
+                  key: 'second',
+                  label: 'Second',
+                  content: [{ type: 'input-text', name: 'value', label: 'Second Value' }],
+                },
+              ],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(invoke).toHaveBeenCalledTimes(1));
+    expect(invoke).toHaveBeenCalledWith(
+      'detect',
+      expect.objectContaining({ value: { raw: true }, variants: ['first', 'second'] }),
+      expect.anything(),
+    );
+  });
+
   it('ignores detectVariantAction results when a built-in match already resolves the variant', async () => {
     cleanup();
     const invoke = vi.fn(async () => ({

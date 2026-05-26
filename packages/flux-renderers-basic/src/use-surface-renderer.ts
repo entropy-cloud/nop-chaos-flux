@@ -3,6 +3,7 @@ import type {
   ActionScope,
   ComponentHandleRegistry,
   RendererComponentProps,
+  ScopeRef,
   SurfaceEntry,
   SurfaceStatusSummary,
 } from '@nop-chaos/flux-core';
@@ -29,6 +30,14 @@ function getSurfaceScopeId(
   kind: 'dialog' | 'drawer',
 ) {
   return `${surfaceId}:${kind}-scope`;
+}
+
+function disposeSurfaceScope(runtime: { disposeScope: (scopeId: string) => void }, scope: ScopeRef | undefined) {
+  if (!scope) {
+    return;
+  }
+
+  runtime.disposeScope(scope.id);
 }
 
 export function useSurfaceRenderer(
@@ -74,6 +83,8 @@ export function useSurfaceRenderer(
   const [openingData, setOpeningData] = React.useState<Record<string, unknown> | undefined>(() =>
     effectiveOpen ? resolvedData : undefined,
   );
+  const [declarativeScope, setDeclarativeScope] = React.useState<ScopeRef | undefined>(undefined);
+  const declarativeScopeRef = React.useRef<ScopeRef | undefined>(undefined);
   const lastOpenRef = React.useRef(effectiveOpen);
   const closeHandledRef = React.useRef(false);
   const eventHandlers = React.useMemo(
@@ -107,29 +118,49 @@ export function useSurfaceRenderer(
     lastOpenRef.current = effectiveOpen;
   }, [effectiveOpen, resolvedData]);
 
-  const declarativeScope = React.useMemo(
-    () =>
-      runtime.createChildScope(
-        node.scope,
-        {
-          dialogId: id,
-          ...(openingData ?? {}),
-          ...(kind === 'drawer' ? { drawerId: id } : {}),
-        },
-        {
-          scopeKey: `${getSurfaceScopeId(id, kind)}:${openRevision}`,
-          pathSuffix: kind,
-        },
-      ),
-    [id, kind, node.scope, openRevision, openingData, runtime],
-  );
+  React.useLayoutEffect(() => {
+    if (!effectiveOpen) {
+      const current = declarativeScopeRef.current;
+      declarativeScopeRef.current = undefined;
+      disposeSurfaceScope(runtime, current);
+      setDeclarativeScope(undefined);
+      return;
+    }
+
+    const nextScope = runtime.createChildScope(
+      node.scope,
+      {
+        dialogId: id,
+        ...(openingData ?? {}),
+        ...(kind === 'drawer' ? { drawerId: id } : {}),
+      },
+      {
+        scopeKey: `${getSurfaceScopeId(id, kind)}:${openRevision}`,
+        pathSuffix: kind,
+      },
+    );
+
+    const current = declarativeScopeRef.current;
+    if (current === nextScope) {
+      return;
+    };
+
+    declarativeScopeRef.current = nextScope;
+    disposeSurfaceScope(runtime, current);
+    setDeclarativeScope(nextScope);
+  }, [effectiveOpen, id, kind, node.scope, openRevision, openingData, runtime]);
   const cleanupRef = React.useRef({
     surfaceRuntime,
     id,
     kind,
     statusPath,
+    ownerScope: node.scope,
     declarativeScope,
   });
+
+  React.useEffect(() => {
+    declarativeScopeRef.current = declarativeScope;
+  }, [declarativeScope]);
 
   React.useEffect(() => {
     cleanupRef.current = {
@@ -137,9 +168,10 @@ export function useSurfaceRenderer(
       id,
       kind,
       statusPath,
+      ownerScope: node.scope,
       declarativeScope,
     };
-  }, [declarativeScope, id, kind, statusPath, surfaceRuntime]);
+  }, [declarativeScope, id, kind, node.scope, statusPath, surfaceRuntime]);
 
   const dispatchMetadata = readDispatchMetadata(helpers.dispatch);
   const actionScope = dispatchMetadata.actionScope;
@@ -185,7 +217,7 @@ export function useSurfaceRenderer(
   const actionsNode = regions.actions?.templateNode ?? resolvedProps.actions;
 
   const openSurface = React.useCallback(() => {
-    if (!surfaceRuntime) {
+    if (!surfaceRuntime || !declarativeScope) {
       return;
     }
 
@@ -239,7 +271,6 @@ export function useSurfaceRenderer(
       kind,
       surface: entry.surface,
       scope: entry.scope,
-      runtime,
       surfaceId: entry.id,
       options: {
         actionScope: entry.actionScope,
@@ -269,7 +300,6 @@ export function useSurfaceRenderer(
     meta,
     node,
     regions,
-    runtime,
     surfacePayload,
     surfaceRuntime,
     templateNode,
@@ -282,6 +312,9 @@ export function useSurfaceRenderer(
     }
 
     if (effectiveOpen) {
+      if (!declarativeScope) {
+        return;
+      }
       closedPublishedRef.current = false;
       closeHandledRef.current = false;
       openSurface();
@@ -294,7 +327,7 @@ export function useSurfaceRenderer(
         surfaceRuntime.publishClosed({
           surfaceId: id,
           kind,
-          scope: declarativeScope,
+          scope: declarativeScope ?? node.scope,
           statusPath,
         });
         closedPublishedRef.current = true;
@@ -312,12 +345,12 @@ export function useSurfaceRenderer(
       surfaceRuntime.publishClosed({
         surfaceId: id,
         kind,
-        scope: declarativeScope,
+        scope: declarativeScope ?? node.scope,
         statusPath,
       });
       closedPublishedRef.current = true;
     }
-  }, [declarativeScope, effectiveOpen, id, kind, openSurface, statusPath, surfaceRuntime]);
+  }, [declarativeScope, effectiveOpen, id, kind, node.scope, openSurface, statusPath, surfaceRuntime]);
 
   React.useEffect(() => {
     return () => {
@@ -334,13 +367,16 @@ export function useSurfaceRenderer(
         current.surfaceRuntime?.publishClosed({
           surfaceId: current.id,
           kind: current.kind,
-          scope: current.declarativeScope,
+          scope: current.declarativeScope ?? current.ownerScope,
           statusPath: current.statusPath,
         });
         closedPublishedRef.current = true;
       }
+
+      declarativeScopeRef.current = undefined;
+      disposeSurfaceScope(runtime, current.declarativeScope);
     };
-  }, []);
+  }, [runtime]);
 
   const lastEntriesRef = React.useRef<SurfaceEntry[] | undefined>(undefined);
   const lastSummaryRef = React.useRef<SurfaceStatusSummary | undefined>(undefined);

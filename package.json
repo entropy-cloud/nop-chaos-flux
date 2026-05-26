@@ -20,6 +20,7 @@
     "tsc6": "tsc6",
     "test": "turbo run test --concurrency=2",
     "test:coverage": "turbo run test --concurrency=2 -- --coverage",
+    "test:scripts": "vitest run --config vitest.scripts.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "check:react19": "node scripts/check-react19-legacy-apis.mjs",

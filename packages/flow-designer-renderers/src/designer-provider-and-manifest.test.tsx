@@ -142,8 +142,146 @@ describe('createDesignerActionProvider', () => {
     const commitResult = await provider.invoke('commitTransaction', { transactionId: 'missing' }, {} as any);
     const rollbackResult = await provider.invoke('rollbackTransaction', undefined, {} as any);
 
-    expect(commitResult).toEqual({ ok: false, reason: 'missing-transaction' });
-    expect(rollbackResult).toEqual({ ok: false, reason: 'unavailable' });
+    expect(commitResult).toMatchObject({
+      ok: false,
+      cause: {
+        reason: 'missing-transaction',
+        result: { ok: false, reason: 'missing-transaction' },
+      },
+      reason: 'missing-transaction',
+    });
+    expect(rollbackResult).toMatchObject({
+      ok: false,
+      cause: {
+        reason: 'unavailable',
+        result: { ok: false, reason: 'unavailable' },
+      },
+      reason: 'unavailable',
+    });
+  });
+
+  it('returns structured failures for missing selection and batch-update targets', async () => {
+    const provider = createDesignerActionProvider({
+      getSnapshot: () => ({
+        doc: {
+          id: 'doc-1',
+          kind: 'flow',
+          name: 'Example',
+          version: '1.0.0',
+          nodes: [{ id: 'node-1', type: 'task', position: { x: 0, y: 0 }, data: {} }],
+          edges: [{ id: 'edge-1', type: 'default', source: 'node-1', target: 'node-1', data: {} }],
+          viewport: { x: 0, y: 0, zoom: 1 },
+        },
+      }),
+      toggleNodeSelection: () => ({ ok: false, reason: 'missing-node' }),
+      toggleEdgeSelection: () => ({ ok: false, reason: 'missing-edge' }),
+      setSelection: vi.fn(),
+      moveNodes: vi.fn(),
+      updateMultipleNodes: vi.fn(),
+    } as any);
+
+    const toggleNodeResult = await provider.invoke(
+      'toggleNodeSelection',
+      { nodeId: 'missing-node' },
+      {} as any,
+    );
+    const toggleEdgeResult = await provider.invoke(
+      'toggleEdgeSelection',
+      { edgeId: 'missing-edge' },
+      {} as any,
+    );
+    const setSelectionResult = await provider.invoke(
+      'setSelection',
+      { nodeIds: ['node-1'], edgeIds: ['missing-edge'] },
+      {} as any,
+    );
+    const moveNodesResult = await provider.invoke(
+      'moveNodes',
+      { deltas: { 'missing-node': { dx: 1, dy: 2 } } },
+      {} as any,
+    );
+    const updateNodesResult = await provider.invoke(
+      'updateMultipleNodes',
+      { updates: [{ nodeId: 'missing-node', data: { label: 'x' } }] },
+      {} as any,
+    );
+
+    expect(toggleNodeResult).toMatchObject({
+      ok: false,
+      cause: { reason: 'missing-node' },
+      reason: 'missing-node',
+    });
+    expect(toggleEdgeResult).toMatchObject({
+      ok: false,
+      cause: { reason: 'missing-edge' },
+      reason: 'missing-edge',
+    });
+    expect(setSelectionResult).toMatchObject({
+      ok: false,
+      cause: { reason: 'missing-selection-target' },
+      reason: 'missing-selection-target',
+    });
+    expect(moveNodesResult).toMatchObject({
+      ok: false,
+      cause: { reason: 'missing-node' },
+      reason: 'missing-node',
+    });
+    expect(updateNodesResult).toMatchObject({
+      ok: false,
+      cause: { reason: 'missing-node' },
+      reason: 'missing-node',
+    });
+  });
+
+  it('uses ActionResult-shaped causes for direct core tail-method failures', async () => {
+    const provider = createDesignerActionProvider({
+      commitTransaction: () => ({ ok: false, reason: 'missing-transaction' }),
+      rollbackTransaction: () => ({ ok: false, reason: 'unavailable' }),
+      toggleNodeSelection: () => ({ ok: false, reason: 'missing-node' }),
+      getSnapshot: () => ({
+        doc: {
+          id: 'doc-1',
+          kind: 'flow',
+          name: 'Example',
+          version: '1.0.0',
+          nodes: [],
+          edges: [],
+          viewport: { x: 0, y: 0, zoom: 1 },
+        },
+      }),
+    } as any);
+
+    const commitResult = await provider.invoke('commitTransaction', { transactionId: 'missing' }, {} as any);
+    const rollbackResult = await provider.invoke('rollbackTransaction', undefined, {} as any);
+    const toggleNodeResult = await provider.invoke('toggleNodeSelection', { nodeId: 'missing-node' }, {} as any);
+
+    expect(commitResult).toMatchObject({
+      ok: false,
+      error: undefined,
+      cause: {
+        reason: 'missing-transaction',
+        result: { ok: false, reason: 'missing-transaction' },
+      },
+      reason: 'missing-transaction',
+    });
+    expect(rollbackResult).toMatchObject({
+      ok: false,
+      error: undefined,
+      cause: {
+        reason: 'unavailable',
+        result: { ok: false, reason: 'unavailable' },
+      },
+      reason: 'unavailable',
+    });
+    expect(toggleNodeResult).toMatchObject({
+      ok: false,
+      error: undefined,
+      cause: {
+        reason: 'missing-node',
+        result: { ok: false, reason: 'missing-node' },
+      },
+      reason: 'missing-node',
+    });
   });
 
   it('rejects payloads that do not match the published manifest args contract', async () => {
@@ -171,6 +309,11 @@ describe('createDesignerActionProvider', () => {
       { nodeId: 'node-1', branchId: 'branch-1', direction: 'up' },
       {} as any,
     );
+    const moveNodesResult = await provider.invoke(
+      'moveNodes',
+      { deltas: { 'node-1': { dx: 1, dy: 'bad' } } },
+      {} as any,
+    );
 
     expect(addNodeResult).toMatchObject({
       ok: false,
@@ -188,6 +331,12 @@ describe('createDesignerActionProvider', () => {
       ok: false,
       error: expect.objectContaining({
         message: 'designer:moveBranch payload does not match the published host args contract.',
+      }),
+    });
+    expect(moveNodesResult).toMatchObject({
+      ok: false,
+      error: expect.objectContaining({
+        message: 'designer:moveNodes payload does not match the published host args contract.',
       }),
     });
   });

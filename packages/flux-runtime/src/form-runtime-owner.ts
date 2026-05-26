@@ -552,7 +552,11 @@ export function buildFormOwnerRuntime(input: {
     } as FormValidationResult;
   }
 
-  async function validateSubtree(path: string, reason?: ValidationReason) {
+  async function validateSubtree(
+    path: string,
+    reason?: ValidationReason,
+    options?: { signal?: AbortSignal },
+  ) {
     if (reason === 'submit' || reason === 'commit') {
       supersedeLowerPriorityWork(path);
     }
@@ -580,7 +584,11 @@ export function buildFormOwnerRuntime(input: {
       const fieldErrors: Record<string, ValidationError[]> = {};
 
       for (const targetPath of targetPaths) {
-        const result = await validatePath(input.sharedState, targetPath, reason);
+        if (options?.signal?.aborted) {
+          throw Object.assign(new Error('Validation aborted'), { name: 'AbortError' });
+        }
+
+        const result = await validatePath(input.sharedState, targetPath, reason, options);
 
         if (!result.ok) {
           fieldErrors[targetPath] = result.errors;
@@ -606,7 +614,11 @@ export function buildFormOwnerRuntime(input: {
     const fieldErrors: Record<string, ValidationError[]> = {};
 
     for (const targetPath of targetPaths) {
-      const result = await validatePath(input.sharedState, targetPath, reason);
+      if (options?.signal?.aborted) {
+        throw Object.assign(new Error('Validation aborted'), { name: 'AbortError' });
+      }
+
+      const result = await validatePath(input.sharedState, targetPath, reason, options);
 
       if (!result.ok) {
         fieldErrors[targetPath] = result.errors;

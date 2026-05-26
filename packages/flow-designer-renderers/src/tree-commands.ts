@@ -8,8 +8,41 @@ import type {
   TreeNodeBranch,
 } from '@nop-chaos/flow-designer-core';
 
-function cloneTree<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+function cloneTreeValue<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => cloneTreeValue(item)) as T;
+  }
+
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>).map(([key, entryValue]) => [
+      key,
+      cloneTreeValue(entryValue),
+    ]);
+    return Object.fromEntries(entries) as T;
+  }
+
+  return value;
+}
+
+function cloneTreeNode(node: TreeNode): TreeNode {
+  return {
+    ...node,
+    data: cloneTreeValue(node.data),
+    child: node.child ? cloneTreeNode(node.child) : undefined,
+    branches: node.branches?.map((branch) => ({
+      ...branch,
+      data: cloneTreeValue(branch.data),
+      child: branch.child ? cloneTreeNode(branch.child) : undefined,
+    })),
+  };
+}
+
+function cloneTree(tree: TreeDocument): TreeDocument {
+  return {
+    ...tree,
+    meta: tree.meta ? cloneTreeValue(tree.meta) : undefined,
+    root: cloneTreeNode(tree.root),
+  };
 }
 
 function isNormalizedDesignerConfig(

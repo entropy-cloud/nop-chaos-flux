@@ -18,9 +18,9 @@ import {
   useActionDispatcher,
   useCurrentForm,
   useOwnScopeSelector,
-  useRenderFragment,
   useScopeSelector,
 } from '../hooks.js';
+import { useRenderFragment } from '../use-render-fragment.js';
 import { env } from '../test-support.js';
 
 afterEach(() => {

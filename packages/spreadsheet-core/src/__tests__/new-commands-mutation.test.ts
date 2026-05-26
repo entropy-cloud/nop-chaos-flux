@@ -260,6 +260,20 @@ describe('selection commands', () => {
     expect(snap.selection.kind).toBe('column');
     expect(snap.selection.columns).toEqual([2]);
   });
+
+  it('should no-op when the requested selection is unchanged', async () => {
+    const selection = {
+      kind: 'cell' as const,
+      sheetId,
+      anchor: { sheetId, address: 'A1', row: 0, col: 0 },
+    };
+
+    await core.dispatch({ type: 'spreadsheet:setSelection', selection });
+    const result = await core.dispatch({ type: 'spreadsheet:setSelection', selection });
+
+    expect(result).toMatchObject({ ok: true, changed: false });
+    expect(core.getSnapshot().selection).toEqual(selection);
+  });
 });
 
 describe('cell style commands', () => {

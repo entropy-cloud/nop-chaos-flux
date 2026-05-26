@@ -28,6 +28,7 @@ Exceptions are rare and must be explicit in the test body.
 - If a test intentionally triggers `pageerror`, call `allowPageErrors(n)` with the exact allowed count.
 - Do not silently filter new errors in individual specs.
 - CI forbids `test.only(...)` and `describe.only(...)` through `playwright.config.ts`; keep focused E2E runs local-only.
+- Diagnostic-only specs that primarily capture screenshots, dump DOM/HTML, print console state, inspect React fiber internals, or query `window.__NOP_DEBUGGER_API__` must be explicitly isolated with `test.skip(...)` / `test.describe.skip(...)` unless and until the suite gains a dedicated non-supported diagnostic project.
 
 Example: a debugger test that intentionally injects one runtime error may allow one debugger-related error event only if it really reaches Playwright's `console.error` or `pageerror` channels.
 
@@ -47,6 +48,7 @@ Do not assert zero errors before the page's supported ready signal is visible.
 - Do not simulate compliance by calling `assertTrackedPageErrors(page)` on an untracked page object.
 - Do not treat debug-only probes such as `[data-slot="scope-debug-json"]` as the primary success oracle for supported E2E coverage.
 - Do not treat synthetic test hooks or `page.evaluate()`-dispatched custom events as substitutes for a real user interaction path when the supported claim is about visible end-to-end behavior.
+- Do not leave screenshot-generation, HTML dump, console dump, or debugger-internal inspection specs active in the default supported suite.
 
 ## References
 

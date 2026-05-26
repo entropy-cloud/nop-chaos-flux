@@ -3,6 +3,7 @@ import type {
   BaseSchema,
   CompileSchemaOptions,
   CompiledTemplate,
+  NodeInstance,
   RenderFragmentOptions,
   RenderNodeInput,
   RendererComponentProps,
@@ -13,11 +14,14 @@ import type {
 } from '@nop-chaos/flux-core';
 import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import {
-  useRendererRuntime,
-  useRenderScope,
   useCurrentActionScope,
   useCurrentComponentRegistry,
-} from './hooks.js';
+  useRenderInstancePath,
+} from './context-hooks.js';
+import {
+  useRenderScopeContext,
+  useRendererRuntimeContext,
+} from './runtime-context-hooks.js';
 import { NodeMetaContext, RenderInstancePathContext } from './contexts.js';
 import { createFragmentScopeChange } from './fragment-scope.js';
 import { NodeRenderer } from './node-renderer.js';
@@ -240,12 +244,12 @@ export function hasRendererSlotContent(content: React.ReactNode): boolean {
 
 export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFragmentOptions }) {
   'use no memo';
-  const runtime = useRendererRuntime();
-  const currentScope = useRenderScope();
+  const runtime = useRendererRuntimeContext();
+  const currentScope = useRenderScopeContext();
   const currentActionScope = useCurrentActionScope();
   const currentComponentRegistry = useCurrentComponentRegistry();
   const currentNodeMeta = useContext(NodeMetaContext);
-  const currentInstancePath = useContext(RenderInstancePathContext);
+  const currentInstancePath = useRenderInstancePath();
   const fragmentScopeCacheKey = useId();
   const options = props.options;
   const explicitScope = options?.scope;
@@ -439,6 +443,21 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const scope = fragmentScope ?? explicitScope ?? currentScope;
   const instancePath =
     options?.instancePath ?? ownerNodeInstance?.instancePath ?? currentInstancePath;
+  const renderFragment = React.useCallback(
+    (renderInput: RenderNodeInput, renderOptions?: RenderFragmentOptions) => {
+      const nextOwnerNodeInstance =
+        renderOptions?.ownerNodeInstance ?? ownerNodeInstance ?? getInputNodeInstance(renderInput);
+
+      return React.createElement(RenderNodes, {
+        input: renderInput,
+        options: {
+          ...renderOptions,
+          ownerNodeInstance: nextOwnerNodeInstance,
+        },
+      });
+    },
+    [ownerNodeInstance],
+  );
 
   if (!compiled) {
     return null;
@@ -456,6 +475,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
             <NodeRenderer
               key={node.id}
               node={node}
+              renderFragment={renderFragment}
               scope={scope}
               actionScope={actionScope}
               componentRegistry={componentRegistry}
@@ -475,10 +495,17 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
       <NodeRenderer
         key={compiled.templateNodeId}
         node={compiled}
+        renderFragment={renderFragment}
         scope={scope}
         actionScope={actionScope}
         componentRegistry={componentRegistry}
       />
     </RenderInstancePathContext.Provider>
   );
+}
+
+function getInputNodeInstance(input: RenderNodeInput): NodeInstance | undefined {
+  return input && typeof input === 'object' && 'nodeInstance' in input
+    ? ((input as { nodeInstance?: NodeInstance }).nodeInstance ?? undefined)
+    : undefined;
 }

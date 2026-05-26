@@ -14,8 +14,6 @@ import {
   resolveInitialVariant,
 } from './variant-field-matching.js';
 import {
-  getAuthoredVariantOption,
-  injectDetectVariantArgs,
   reportVariantFieldFailure,
   type BaseNodeInstance,
   type VariantResolvedOption,
@@ -44,9 +42,9 @@ export function useVariantFieldController({
   runtimeNotify,
   variants,
 }: UseVariantFieldControllerInput) {
-  const authoredSchema = props.templateNode.schema as VariantFieldSchema | undefined;
+  const dispatchHelper = props.helpers.dispatch;
+  const nodeInstance = props.node as BaseNodeInstance;
   const detectVariantAction = props.events.detectVariantAction;
-  const authoredDetectVariantAction = authoredSchema?.detectVariantAction;
   const matchedKey = detectMatchedVariant(
     variants,
     currentValue,
@@ -115,21 +113,14 @@ export function useVariantFieldController({
         value: currentValue,
         variants: variants.map((variant) => variant.key),
       };
-      const result = authoredDetectVariantAction
-        ? await props.helpers.dispatch(injectDetectVariantArgs(authoredDetectVariantAction, payload), {
-            scope: parentScope,
-            form: parentForm ?? undefined,
-            page: undefined,
-            nodeInstance: props.node as BaseNodeInstance,
-            signal: abortController.signal,
-          })
-        : await detectVariantAction(payload, {
-            scope: parentScope,
-            form: parentForm ?? undefined,
-            page: undefined,
-            nodeInstance: props.node as BaseNodeInstance,
-            signal: abortController.signal,
-          });
+      const result = await detectVariantAction(payload, {
+        scope: parentScope,
+        form: parentForm ?? undefined,
+        page: undefined,
+        nodeInstance: props.node as BaseNodeInstance,
+        evaluationBindings: payload,
+        signal: abortController.signal,
+      });
 
       if (detectAbortControllerRef.current === abortController) {
         detectAbortControllerRef.current = null;
@@ -165,13 +156,11 @@ export function useVariantFieldController({
       reportVariantFieldFailure(runtimeNotify, error);
     }
   }, [
-    authoredDetectVariantAction,
     currentValue,
     detectVariantAction,
     matchedKey,
     parentForm,
     parentScope,
-    props.helpers,
     props.node,
     runtimeNotify,
     variants,
@@ -200,23 +189,21 @@ export function useVariantFieldController({
 
       const nextOptionIndex = variants.findIndex((variant) => variant.key === key);
       const nextOption = nextOptionIndex >= 0 ? variants[nextOptionIndex] : undefined;
-      const authoredNextOption =
-        nextOptionIndex >= 0 ? getAuthoredVariantOption(authoredSchema, key, nextOptionIndex) : undefined;
 
       if (nextOption && parentForm && name) {
         let nextValue = nextOption.initialValue !== undefined ? nextOption.initialValue : null;
 
-        if (authoredNextOption?.transformInAction) {
+        if (nextOption.transformInAction) {
           const dispatchAction: AdapterDispatch = (action, ctx) =>
-            props.helpers.dispatch(action, {
+            dispatchHelper(action, {
               scope: ctx?.scope ?? parentScope,
               form: ctx?.form ?? parentForm,
               page: undefined,
-              nodeInstance: props.node as BaseNodeInstance,
+              nodeInstance,
               signal: abortController.signal,
             });
           const adapter = actionAdapter(
-            authoredNextOption.transformInAction,
+            nextOption.transformInAction,
             undefined,
             undefined,
             dispatchAction,
@@ -261,7 +248,7 @@ export function useVariantFieldController({
 
       setUserSelectedKey(key);
     },
-    [activeKey, authoredSchema, currentValue, name, parentForm, parentScope, props.helpers, props.node, readOnly, variants],
+    [activeKey, currentValue, dispatchHelper, name, nodeInstance, parentForm, parentScope, readOnly, variants],
   );
 
   const triggerVariantSwitch = React.useCallback(

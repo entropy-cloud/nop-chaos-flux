@@ -10,16 +10,21 @@ import type {
   ActionScope,
   ComponentHandleRegistry,
   NodeRuntimeState,
+  RenderFragmentOptions,
+  RenderNodeInput,
   ScopeRef,
   TemplateNode,
 } from '@nop-chaos/flux-core';
 import { createNamedActionProvider, XUI_ACTIONS_NAMESPACE } from '@nop-chaos/flux-core';
 import { NodeErrorBoundary } from './node-error-boundary.js';
+import type { RenderOutput } from './react-contracts.js';
+import {
+  useCurrentImportFrame,
+} from './context-hooks.js';
 import {
   useRenderInstancePath,
-  useRendererRuntime,
-  useCurrentImportFrame,
-} from './hooks.js';
+} from './context-hooks.js';
+import { useRendererRuntimeContext } from './runtime-context-hooks.js';
 import { createNodeInstance, createTemplateNodeRuntimeState } from './node-instance.js';
 import { useNodeScopes } from './use-node-scopes.js';
 import { NodeRendererResolved } from './node-renderer-resolved.js';
@@ -59,11 +64,12 @@ function createImportFrameStore() {
 
 export const NodeRenderer = memo(function NodeRenderer(props: {
   node: TemplateNode;
+  renderFragment: (input: RenderNodeInput, options?: RenderFragmentOptions) => RenderOutput;
   scope: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
 }) {
-  const runtime = useRendererRuntime();
+  const runtime = useRendererRuntimeContext();
   const instancePath = useRenderInstancePath();
   const parentImportFrame = useCurrentImportFrame();
   const mountedCid = useMountedCid(runtime);
@@ -225,6 +231,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     <NodeErrorBoundary nodeId={props.node.id}>
       <NodeRendererResolved
         node={props.node}
+        renderFragment={props.renderFragment}
         scope={renderScope}
         actionScope={resolvedActionScope}
         componentRegistry={activeComponentRegistry}

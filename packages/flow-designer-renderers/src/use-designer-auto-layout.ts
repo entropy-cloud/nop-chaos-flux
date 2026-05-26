@@ -12,6 +12,7 @@ type DesignerCoreLike = ReturnType<typeof createDesignerCore>;
 export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerConfig) {
   const [layoutBusy, setLayoutBusy] = useState(false);
   const [layoutError, setLayoutError] = useState<string | null>(null);
+  const [layoutFailure, setLayoutFailure] = useState<Error | null>(null);
   const layoutRequestRef = useRef(0);
   const initialTreeAutolayoutDoneRef = useRef(false);
   const elkOwnerRef = useRef<ReturnType<typeof createElkLayoutOwner> | null>(null);
@@ -32,6 +33,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
     layoutRequestRef.current = requestId;
     setLayoutBusy(true);
     setLayoutError(null);
+    setLayoutFailure(null);
     const doc = core.getDocument();
     if (doc.nodes.length === 0) {
       if (layoutRequestRef.current === requestId) {
@@ -75,7 +77,10 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
       core.layoutNodes(positions);
     } catch (error) {
       if (layoutRequestRef.current === requestId) {
-        setLayoutError(error instanceof Error ? error.message : 'Auto-layout failed');
+        const normalizedError =
+          error instanceof Error ? error : new Error('Auto-layout failed', { cause: error });
+        setLayoutError(normalizedError.message);
+        setLayoutFailure(normalizedError);
       }
       throw error;
     } finally {
@@ -107,6 +112,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
     layoutRequestRef.current = requestId;
     setLayoutBusy(true);
     setLayoutError(null);
+    setLayoutFailure(null);
 
     void layoutTreeWithElk(
       doc.nodes,
@@ -127,9 +133,10 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
         if (layoutRequestRef.current !== requestId) {
           return;
         }
-        const layoutError =
-          error instanceof Error ? error : new Error('Auto-layout failed');
-        setLayoutError(layoutError.message);
+        const normalizedError =
+          error instanceof Error ? error : new Error('Auto-layout failed', { cause: error });
+        setLayoutError(normalizedError.message);
+        setLayoutFailure(normalizedError);
       })
       .finally(() => {
         if (layoutRequestRef.current === requestId) {
@@ -148,6 +155,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
   return {
     layoutBusy,
     layoutError,
+    layoutFailure,
     handleAutoLayout,
   };
 }

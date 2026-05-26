@@ -98,6 +98,8 @@ Current panel baseline:
 
 - built-in panel chrome, launcher labels, tooltips, placeholders, and JSON-viewer disclosure labels resolve through the `flux.debugger` locale namespace rather than hardcoded English
 - debugger disclosure and selection triggers use shared `@nop-chaos/ui` button semantics with native button behavior plus `aria-expanded`/content relationships instead of hand-authored `role="button"` widgets
+- debugger-owned visuals read `var(--nop-debugger-*, fallback)` at `.nop-debugger` / `.nop-debugger-launcher` surfaces instead of publishing defaults onto `.nop-theme-root`, so host token overrides remain stable even though debugger CSS is injected at runtime
+- runtime-injected stylesheet selectors for debugger internals stay anchored under debugger-owned roots (`.nop-debugger`, `.nop-debugger-launcher`) rather than exposing bare global `.ndbg-*` hooks
 
 ## Unified Event Model
 
@@ -123,6 +125,12 @@ Shared event concepts include:
 - `interactionId`
 - `scopeChain`
 - inspect payloads keyed by `cid`
+
+Current error-event baseline:
+
+- debugger `error` events keep a short text `detail` summary for the timeline, but they should also expose a structured redacted payload through `exportedData`
+- for monitor-driven error events, that structured payload should include the normalized error shape plus nested `Error.cause` and monitor `details` when available
+- debugger formatting may collapse the human-readable timeline string, but it must not drop already-preserved `cause` / `details` from the machine-readable event payload
 
 Current async-governance diagnostics baseline:
 

@@ -17,6 +17,14 @@ const state = vi.hoisted(() => ({
 
 vi.mock('@nop-chaos/flux-react', () => ({
   FieldFrame: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  FormContext: { Provider: ({ children }: { children?: React.ReactNode }) => <>{children}</> },
+  ScopeContext: { Provider: ({ children }: { children?: React.ReactNode }) => <>{children}</> },
+  ValidationContext: {
+    Provider: ({ value, children }: { value: unknown; children?: React.ReactNode }) => {
+      state.validationContextValue = value;
+      return <>{children}</>;
+    },
+  },
   useCurrentForm: () => state.parentForm,
   useCurrentValidationScope: () => state.parentValidationOwner,
   useRenderScope: () => state.parentScope,
@@ -26,17 +34,6 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentFormState: () => undefined,
   resolveRendererSlotContent: () => undefined,
   toFieldRemarkProps: () => undefined,
-}));
-
-vi.mock('@nop-chaos/flux-react/unstable', () => ({
-  FormContext: { Provider: ({ children }: { children?: React.ReactNode }) => <>{children}</> },
-  ScopeContext: { Provider: ({ children }: { children?: React.ReactNode }) => <>{children}</> },
-  ValidationContext: {
-    Provider: ({ value, children }: { value: unknown; children?: React.ReactNode }) => {
-      state.validationContextValue = value;
-      return <>{children}</>;
-    },
-  },
 }));
 
 vi.mock('@nop-chaos/ui', () => ({
@@ -311,7 +308,7 @@ describe('variant-field generic owner contracts', () => {
     ).toMatchObject({ kind: 'ignored' });
   });
 
-  it('uses the authored nested transformInAction schema instead of the resolved variant copy', async () => {
+  it('uses the resolved nested transformInAction from normalized variants', async () => {
     state.parentScope = {
       id: 'form-scope',
       path: '$form',
@@ -413,11 +410,11 @@ describe('variant-field generic owner contracts', () => {
       expect(dispatch).toHaveBeenCalled();
     });
     expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'variantLib:authored', args: { reason: 'authored' } }),
+      expect.objectContaining({ action: 'variantLib:resolved', args: { reason: 'resolved' } }),
       expect.objectContaining({ form: state.parentForm, scope: state.parentScope }),
     );
     expect(dispatch).not.toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'variantLib:resolved' }),
+      expect.objectContaining({ action: 'variantLib:authored' }),
       expect.anything(),
     );
     expect(state.parentForm.setValue).toHaveBeenCalledWith('payload', { amount: 12 });

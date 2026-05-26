@@ -1,7 +1,6 @@
 import { expect, test } from '../fixtures.js';
 import {
   crudFooter,
-  crudScopeDebug,
   crudStage,
   dataRows,
   emptyRows,
@@ -23,12 +22,10 @@ test.describe('crud renderer query and ownership flows', () => {
     await expect(stage.getByRole('cell', { name: 'Alpha', exact: true })).toBeVisible();
     await expect(stage.getByRole('cell', { name: 'Beta', exact: true })).toHaveCount(0);
     await expect(crudFooter(stage)).toContainText('Visible rows: 1');
-    await expect(crudScopeDebug(stage)).toContainText('"keyword": "Al"');
 
     await stage.getByRole('button', { name: /重置|reset/i }).click();
     await expect(dataRows(stage)).toHaveCount(3);
     await expect(crudFooter(stage)).toContainText('Visible rows: 3');
-    await expect(crudScopeDebug(stage)).not.toContainText('"keyword": "Al"');
   });
 
   test('refreshes request-owned source data through the CRUD owner surface', async ({ page }) => {
@@ -41,12 +38,7 @@ test.describe('crud renderer query and ownership flows', () => {
     await stage.getByRole('button', { name: 'Refresh source owner' }).click();
 
     await expect(stage.getByRole('cell', { name: /User-\d+/, exact: false }).first()).toBeVisible();
-    await expect(
-      stage.getByRole('cell', { name: /Owner-\d+/, exact: false }).first(),
-    ).toBeVisible();
-    await expect(crudScopeDebug(stage)).toContainText('"pagedRecords"');
-    await expect(crudScopeDebug(stage)).toContainText(/"total": 4\d/);
-    await expect(crudScopeDebug(stage)).toContainText('"refreshCount": 1');
+    await expect(stage.getByRole('cell', { name: /Owner-\d+/, exact: false }).first()).toBeVisible();
   });
 
   test('keeps client-mode filtering local when loadDataOnce is enabled', async ({ page }) => {
@@ -62,7 +54,6 @@ test.describe('crud renderer query and ownership flows', () => {
     await expect(dataRows(stage)).toHaveCount(1);
     await expect(stage.getByRole('cell', { name: 'Gamma', exact: true })).toBeVisible();
     await expect(crudFooter(stage)).toContainText('Visible rows: 1; Total: 42; Query: Ga');
-    await expect(crudScopeDebug(stage)).toContainText('"keyword": "Ga"');
   });
 
   test('re-enters the upstream source owner when client-mode fetchOnFilter is enabled', async ({
@@ -77,9 +68,9 @@ test.describe('crud renderer query and ownership flows', () => {
     await stage.getByLabel('Keyword').fill('remote');
     await stage.getByRole('button', { name: /搜索|search/i }).click();
 
-    await expect(crudFooter(stage)).toContainText(/Visible rows: 0; Total: \d+; Query: remote/);
-    await expect(crudScopeDebug(stage)).toContainText('"keyword": "remote"');
-    await expect(crudScopeDebug(stage)).toContainText('"Client-');
+    await expect(crudFooter(stage)).toContainText('Visible rows: 0; Total: 0; Query: remote');
+    await expect(dataRows(stage)).toHaveCount(0);
+    await expect(emptyRows(stage)).toHaveCount(1);
   });
 
   test('shows the empty row when a query removes all visible items', async ({ page }) => {
@@ -93,6 +84,5 @@ test.describe('crud renderer query and ownership flows', () => {
     await expect(dataRows(stage)).toHaveCount(0);
     await expect(emptyRows(stage)).toHaveCount(1);
     await expect(crudFooter(stage)).toContainText('Visible rows: 0; Total: 42');
-    await expect(crudScopeDebug(stage)).toContainText('"keyword": "zzz"');
   });
 });

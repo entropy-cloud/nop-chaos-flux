@@ -1,11 +1,6 @@
 import React from 'react';
-import type {
-  BaseSchema,
-  InstanceFrame,
-  RendererComponentProps,
-  ScopeRef,
-} from '@nop-chaos/flux-core';
-import { Button, Checkbox, TableCell, TableRow } from '@nop-chaos/ui';
+import type { InstanceFrame, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
+import { Button, Checkbox, RadioGroupItem, TableCell, TableRow } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema } from '../schemas.js';
@@ -212,12 +207,8 @@ function DataRowView({
           onClick={(event) => event.stopPropagation()}
         >
           {schemaProps.rowSelection.type === 'radio' ? (
-            <Checkbox
-              shape="circle"
-              checked={isSelected}
-              role="radio"
-              aria-checked={isSelected}
-              onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))}
+            <RadioGroupItem
+              value={rowKey}
               aria-label={t('flux.table.selectRow')}
             />
           ) : (
@@ -240,7 +231,7 @@ function DataRowView({
             ? parentProps.regions[column.buttonsRegionKey]
             : undefined;
 
-        if (column.type === 'operation' && (buttonRegion || Array.isArray(column.buttons))) {
+        if (column.type === 'operation' && buttonRegion) {
           return (
             <TableCell
               key={column.name ?? `op-${columnIndex}`}
@@ -268,18 +259,7 @@ function DataRowView({
                         pathSuffix: `buttons.${columnIndex}`,
                       }),
                     )
-                  : (column.buttons ?? []).map((button: BaseSchema, buttonIndex: number) => (
-                      <div key={button.id ?? button.name ?? `btn-${buttonIndex}`}>
-                        {asReactNode(
-                          helpers.render(button, {
-                            scope: rowScope,
-                            bindings: { record: entry.record, index: entry.sourceIndex },
-                            instancePath: rowInstancePath,
-                            pathSuffix: `buttons.${buttonIndex}`,
-                          }),
-                        )}
-                      </div>
-                    ))}
+                  : null}
               </div>
             </TableCell>
           );

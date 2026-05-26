@@ -158,6 +158,7 @@ Practical ownership split:
 - `@nop-chaos/flux-core` owns only the host-neutral callable contract shape for renderer definitions and fragment helpers
 - `@nop-chaos/flux-react` owns the React-specialized aliases for `RendererDefinition`, `RenderRegionHandle`, `RendererHelpers`, and `SchemaRendererComponent`, plus the active React hook surface exported from `packages/flux-react/src/hooks.ts`
 - source lifecycle semantics remain runtime-owned even when React helpers expose source-enabled props; React host code should mount, subscribe, and dispose, but must not invent a parallel source-controller model
+- source-enabled prop execution must preserve the same merged renderer action context shape that `helpers.executeSource(...)` uses for the same node, including action scope, component registry, form/page/surface handles, and evaluation bindings
 
 ## NodeRenderer Responsibilities
 
@@ -234,6 +235,7 @@ Meaning:
 - `templateNode.lifecycleActions` carries compiled `onMount` / `onUnmount` actions when the schema declares them
 - `templateNode.structuralWhen` is the compiled structural-activation guard for node-local `when`; React/runtime code owns executing this guard before renderer render and lifecycle/effect participation
 - `templateNode.structuralFields` is a generic `Record<string, CompiledRuntimeValue>` holding fields declared with `lazyEval: true` on `SchemaFieldRule`. The compiler compiles these fields into this record instead of `propsProgram`, and each renderer evaluates them at a time and scope of its choosing via `helpers.evaluateCompiled()`. Currently used by `loop` / `recurse` `itemData`, but any renderer can declare lazy-eval fields.
+- renderer event handlers consume `Partial<ActionContext>`; component capability handlers receive the looser `ComponentCapabilityActionContext`, so renderer/package adapters must explicitly bridge only the fields they actually need instead of assuming the capability context is a full action context
 
 `RendererHelpers` also expose two evaluation channels:
 
@@ -246,6 +248,7 @@ Current helper lifecycle baseline:
 - `helpers.createScope(patch?, options?)` creates a child scope for renderer-owned local materialization needs
 - `helpers.disposeScope(scopeId)` is the matching explicit teardown hook for renderer-owned scope lifecycles such as table row-scope eviction or unmount cleanup
 - renderers that retain child scopes across renders must dispose those scopes explicitly when the owning renderer no longer materializes them
+- one-off event payloads that only need expression visibility should prefer `evaluationBindings` overlays over creating disposable runtime-owned child scopes
 
 ### Resolved Boolean Props
 
@@ -342,6 +345,11 @@ They have different responsibilities and must not be collapsed into one generic 
   - `tabs.items`
   - `variant-field.variants`
 - Boundary: `deepFields` is for nested schema-bearing authored props, not for ordinary top-level `fields` classification.
+
+Custom field compilation note:
+
+- Some renderer-owned schema-bearing props are not modeled as `deepFields`, but still need compile-time-owned nested schema transport. The live baseline allows `SchemaFieldRule.compile` to precompile renderer-specific nested artifacts such as `CompiledActionProgram` or `TemplateNode` fragments, as long as those values are preserved as atomic compiled leaves instead of being recursively rewritten back into ordinary runtime value trees.
+- This is the current closure path for `designer-page.config` nested schema leaves and detail owner value-adaptation action slots.
 
 #### `validationDefaults`
 

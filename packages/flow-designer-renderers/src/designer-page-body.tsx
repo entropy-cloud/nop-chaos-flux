@@ -91,6 +91,14 @@ interface DesignerTestConnectDetail {
   targetPort?: string;
 }
 
+interface DesignerTestReconnectDetail {
+  edgeId: string;
+  source: string;
+  target: string;
+  sourcePort?: string;
+  targetPort?: string;
+}
+
 export function DesignerPageBody({
   rendererProps: props,
   core,
@@ -127,7 +135,10 @@ export function DesignerPageBody({
     typeof readDesignerResolvedProp<string>(props, 'statusPath') === 'string'
       ? readDesignerResolvedProp<string>(props, 'statusPath')
       : undefined;
-  const { layoutBusy, layoutError, handleAutoLayout } = useDesignerAutoLayout(core, config);
+  const { layoutBusy, layoutError, layoutFailure, handleAutoLayout } = useDesignerAutoLayout(
+    core,
+    config,
+  );
 
   const isTreeMode = config.documentMode === 'tree';
 
@@ -284,14 +295,14 @@ export function DesignerPageBody({
 
     reportHostIssue({
       message: layoutError,
-      error: new Error(layoutError),
+      error: layoutFailure ?? new Error(layoutError),
       details: {
         reason: 'designer-auto-layout-failed',
         documentId: statusSnapshot.doc.id,
         documentMode: config.documentMode,
       },
     });
-  }, [config.documentMode, layoutError, reportHostIssue, statusSnapshot.doc.id]);
+  }, [config.documentMode, layoutError, layoutFailure, reportHostIssue, statusSnapshot.doc.id]);
 
   const ctxValue = useMemo<DesignerContextValue>(
     () =>
@@ -405,6 +416,9 @@ export function DesignerPageBody({
     }
 
     const handleTestConnect = (event: Event) => {
+      if (isTreeMode) {
+        return;
+      }
       const detail = (event as CustomEvent<DesignerTestConnectDetail>).detail;
       if (!detail?.source || !detail?.target) {
         return;
@@ -419,11 +433,32 @@ export function DesignerPageBody({
       });
     };
 
+    const handleTestReconnect = (event: Event) => {
+      if (isTreeMode) {
+        return;
+      }
+      const detail = (event as CustomEvent<DesignerTestReconnectDetail>).detail;
+      if (!detail?.edgeId || !detail?.source || !detail?.target) {
+        return;
+      }
+
+      dispatch({
+        type: 'reconnectEdge',
+        edgeId: detail.edgeId,
+        source: detail.source,
+        target: detail.target,
+        sourcePort: detail.sourcePort,
+        targetPort: detail.targetPort,
+      });
+    };
+
     window.addEventListener('nop-designer:test-connect', handleTestConnect as EventListener);
+    window.addEventListener('nop-designer:test-reconnect', handleTestReconnect as EventListener);
     return () => {
       window.removeEventListener('nop-designer:test-connect', handleTestConnect as EventListener);
+      window.removeEventListener('nop-designer:test-reconnect', handleTestReconnect as EventListener);
     };
-  }, [dispatch]);
+  }, [dispatch, isTreeMode]);
 
   return (
     <DesignerContext.Provider value={ctxValue}>

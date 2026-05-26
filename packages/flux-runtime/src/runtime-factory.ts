@@ -27,6 +27,7 @@ import { createCompiledCidState } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { FormulaRegistry } from '@nop-chaos/flux-formula';
 import { createActionDispatcher } from '@nop-chaos/flux-action-core';
+import { compileActions } from '@nop-chaos/flux-compiler';
 import { createActionRuntimeAdapter } from './action-adapter.js';
 import { createActionScope } from './action-scope.js';
 import { createApiCacheStore } from './async-data/api-cache.js';
@@ -316,7 +317,7 @@ export function createRendererRuntime(input: {
           } catch (error) {
             const wrappedError = new Error(
               `Imported namespace ${prepared.spec.as} failed to load: ${error instanceof Error ? error.message : String(error)}`,
-              error instanceof Error ? { cause: error } : undefined,
+              { cause: error },
             );
             if (error instanceof Error && error.stack) {
               wrappedError.stack = error.stack;
@@ -592,7 +593,11 @@ export function createRendererRuntime(input: {
     onActionError: input.onActionError,
     evaluator: { evaluate, compileValue, evaluateCompiled },
     adapter,
-    runtime,
+    expressionCompiler,
+    actionProgramCompiler: {
+      compile: (action: ActionSchema | ActionSchema[], compiler: ExpressionCompiler) =>
+        compileActions(action, compiler),
+    },
   });
 
   actionDispatcherRef.current = (action, ctx) => {

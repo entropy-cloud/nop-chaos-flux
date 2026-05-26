@@ -51,6 +51,7 @@ import {
   toStringArray,
   shallowEqualRecords,
 } from '@nop-chaos/flux-core';
+import { toPartialActionContext } from './table-renderer/capability-action-context.js';
 
 export function normalizePagination(value: unknown, fallbackPageSize: number): CrudPaginationState {
   const record = toRecord(value);
@@ -267,7 +268,7 @@ export function useCrudHandle(
           async invoke(method, _payload, ctx) {
             switch (method) {
               case 'refresh':
-                handleRefresh(ctx);
+                handleRefresh(toPartialActionContext(ctx));
                 return { ok: true };
               case 'getSelection':
                 return { ok: true, data: internalTableRef.current?.getSelection?.() ?? [] };

@@ -277,14 +277,14 @@ export function createProjectedValidationRuntime(
     get validation() {
       return getProjectedValidation();
     },
-    validateAt(path, reason) {
-      return parentOwner.validateAt(options.prefixPath(path), reason);
+    validateAt(path, reason, validateOptions) {
+      return parentOwner.validateAt(options.prefixPath(path), reason, validateOptions);
     },
-    validateSubtree(path, reason) {
-      return parentOwner.validateSubtree(options.prefixPath(path), reason);
+    validateSubtree(path, reason, validateOptions) {
+      return parentOwner.validateSubtree(options.prefixPath(path), reason, validateOptions);
     },
-    validateAll(reason) {
-      return parentOwner.validateSubtree(options.ownerRootPath ?? '', reason);
+    validateAll(reason, validateOptions) {
+      return parentOwner.validateSubtree(options.ownerRootPath ?? '', reason, validateOptions);
     },
     applyChangesAndRevalidate(input) {
       return parentOwner.applyChangesAndRevalidate({

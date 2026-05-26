@@ -3,16 +3,18 @@ import type { NodeProps } from '@xyflow/react';
 import { NodeToolbar, Position } from '@xyflow/react';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import { isSchema, mergeClassAliases } from '@nop-chaos/flux-core';
-import { RenderNodes, ClassAliasesContext } from '@nop-chaos/flux-react/unstable';
+import { RenderNodes, ClassAliasesContext } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { useNodeTypeConfig, useDesignerContext } from '../designer-context.js';
 import { renderPorts } from './render-ports.js';
 import type { DesignerFlowNodeData } from './types.js';
 import { DesignerIcon } from '../designer-icon.js';
 import { Button, cn } from '@nop-chaos/ui';
+import { focusDesignerCanvasSurface } from '../designer-canvas-focus.js';
 import { DingFlowPlusButton } from '../dingflow/index.js';
 import type { TreeNodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import { resolveNodeTypeAccent, resolveNodeTypeMeta } from '../designer-node-appearance.js';
+import { PortConnectionA11yContext } from './port-connection-a11y-context.js';
 
 function isSchemaInput(value: unknown): value is SchemaInput {
   return isSchema(value);
@@ -21,7 +23,8 @@ function isSchemaInput(value: unknown): value is SchemaInput {
 export function DesignerXyflowNode(props: NodeProps) {
   const data = props.data as DesignerFlowNodeData;
   const nodeType = useNodeTypeConfig(data.typeId);
-  const { dispatch, config, onPlusButtonClick } = useDesignerContext();
+  const { dispatch, config, onPlusButtonClick, core } = useDesignerContext();
+  const portConnectionA11y = React.useContext(PortConnectionA11yContext);
   const [showToolbar, setShowToolbar] = useState(false);
   const hideToolbarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -85,9 +88,10 @@ export function DesignerXyflowNode(props: NodeProps) {
       onDelete: () => {
         if (!isDeletable) return;
         dispatch({ type: 'deleteNode', nodeId: props.id });
+        focusDesignerCanvasSurface(core);
       },
     }),
-    [dispatch, props.id, isDeletable],
+    [core, dispatch, props.id, isDeletable],
   );
   const effectiveClassAliases = useMemo(
     () => mergeClassAliases(props.data?.__fdInheritedClassAliases as Record<string, string> | undefined, config.classAliases),
@@ -143,7 +147,7 @@ export function DesignerXyflowNode(props: NodeProps) {
       s.borderColor = appearance.borderColor;
     }
     if (data.__fdBranchFocused) {
-      s.boxShadow = '0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent)';
+      s.boxShadow = '0 0 0 3px color-mix(in oklab, hsl(var(--primary)) 22%, transparent)';
     }
     return Object.keys(s).length > 0 ? s : undefined;
   }, [nodeType, props.selected, data.__fdBranchFocused]);
@@ -156,6 +160,22 @@ export function DesignerXyflowNode(props: NodeProps) {
           ? data.typeLabel
           : props.id;
   const nodeAriaLabel = `${props.selected ? 'Selected ' : ''}Node ${nodeLabel}`;
+  const portOptions = isTreeMode
+    ? undefined
+    : {
+        nodeId: props.id,
+        nodeLabel,
+        activeEdge: portConnectionA11y.activeEdge,
+        pendingConnectionSourceId: portConnectionA11y.pendingConnectionSourceId,
+        pendingConnectionSourcePortId: portConnectionA11y.pendingConnectionSourcePortId,
+        reconnectingEdgeId: portConnectionA11y.reconnectingEdgeId,
+        onStartConnection: portConnectionA11y.onStartConnection,
+        onCancelConnection: portConnectionA11y.onCancelConnection,
+        onCompleteConnection: portConnectionA11y.onCompleteConnection,
+        onStartReconnect: portConnectionA11y.onStartReconnect,
+        onCancelReconnect: portConnectionA11y.onCancelReconnect,
+        onCompleteReconnect: portConnectionA11y.onCompleteReconnect,
+      };
 
   if (!nodeType?.body || !isSchemaInput(nodeType.body)) {
     return (
@@ -171,7 +191,7 @@ export function DesignerXyflowNode(props: NodeProps) {
         onMouseLeave={scheduleHideToolbar}
         onKeyDown={handleNodeKeyDown}
       >
-        {renderPorts(nodeType?.ports, isTreeMode)}
+        {renderPorts(nodeType?.ports, isTreeMode, portOptions)}
         <strong>{data.label}</strong>
         <small>{data.typeLabel}</small>
       </div>
@@ -193,7 +213,7 @@ export function DesignerXyflowNode(props: NodeProps) {
         onMouseLeave={scheduleHideToolbar}
         onKeyDown={handleNodeKeyDown}
       >
-        {renderPorts(nodeType.ports, isTreeMode)}
+        {renderPorts(nodeType.ports, isTreeMode, portOptions)}
         {isTreeMode && treeNodeType?.tree?.isTerminal ? (
           <div className="flex flex-col items-center justify-center w-full h-full">
             <div
@@ -224,6 +244,7 @@ export function DesignerXyflowNode(props: NodeProps) {
           <div
             role="toolbar"
             tabIndex={0}
+            aria-label={`Node actions for ${nodeLabel}`}
             className="flex items-center gap-1.5 p-1 rounded-xl bg-popover/96 border border-border shadow-lg"
             data-slot="designer-node-toolbar"
             onMouseEnter={showToolbarNow}
@@ -235,8 +256,8 @@ export function DesignerXyflowNode(props: NodeProps) {
               }
             }}
           >
-            {hasQuickActions ? (
-              <ClassAliasesContext.Provider value={effectiveClassAliases}>
+             {hasQuickActions ? (
+               <ClassAliasesContext.Provider value={effectiveClassAliases}>
                 <RenderNodes
                   input={nodeType.quickActions!}
                   options={{
@@ -248,8 +269,8 @@ export function DesignerXyflowNode(props: NodeProps) {
                     pathSuffix: 'node.quickActions',
                   }}
                 />
-              </ClassAliasesContext.Provider>
-            ) : (
+               </ClassAliasesContext.Provider>
+             ) : (
               <div className="flex gap-1">
                 <Button
                   type="button"

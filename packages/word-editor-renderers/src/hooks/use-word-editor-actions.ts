@@ -17,8 +17,6 @@ interface UseWordEditorActionsParams {
   editingDatasetId: string | null;
   setDatasetDialogOpen: (value: boolean) => void;
   setEditingDatasetId: (value: string | null) => void;
-  setCharts: React.Dispatch<React.SetStateAction<DocChart[]>>;
-  setCodes: React.Dispatch<React.SetStateAction<DocCode[]>>;
   onBack?: (event: React.MouseEvent<HTMLButtonElement>) => unknown;
 }
 
@@ -29,8 +27,6 @@ export function useWordEditorActions({
   editingDatasetId,
   setDatasetDialogOpen,
   setEditingDatasetId,
-  setCharts,
-  setCodes,
   onBack,
 }: UseWordEditorActionsParams) {
   const handleBack = useCallback(
@@ -119,9 +115,8 @@ export function useWordEditorActions({
         return;
       }
       bridge.insertChart(_chart);
-      setCharts((current) => [...current, _chart]);
     },
-    [bridge, setCharts],
+    [bridge],
   );
 
   const handleCodeSave = useCallback(
@@ -130,9 +125,8 @@ export function useWordEditorActions({
         return;
       }
       bridge.insertCode(_code);
-      setCodes((current) => [...current, _code]);
     },
-    [bridge, setCodes],
+    [bridge],
   );
 
   return {

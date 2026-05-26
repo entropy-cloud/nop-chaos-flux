@@ -282,7 +282,6 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
 
     const surfaceId = surfaceRuntime.open({
       kind: 'dialog',
-      runtime,
       scope: runtime.createChildScope(page.scope, { dialogId: 'd1' }, { pathSuffix: 'dialog' }),
       surface: {
         title: 'Dialog',

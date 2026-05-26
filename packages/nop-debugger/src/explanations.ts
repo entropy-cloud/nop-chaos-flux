@@ -362,12 +362,7 @@ function evaluateMetaRule(
         collector,
       },
       {
-        fetcher: async () => {
-          throw new Error('API calls are not available during expression evaluation.');
-        },
-        notify() {
-          return undefined;
-        },
+        monitor: undefined,
       },
     );
     const dependencies = finalize();

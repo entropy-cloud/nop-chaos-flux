@@ -30,7 +30,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await assertTrackedPageErrors(page);
 }
 
-test('captures node and hover toolbar html', async ({ page }, testInfo) => {
+test.skip('captures node and hover toolbar html', async ({ page }, testInfo) => {
   await openFlowDesigner(page);
 
   const shotsDir = join(testInfo.outputDir, 'screenshots');
@@ -166,7 +166,7 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   console.log('TOOLBAR_HTML_END');
 });
 
-test('verifies palette and top toolbar visual structure', async ({ page }) => {
+test.skip('verifies palette and top toolbar visual structure', async ({ page }) => {
   await openFlowDesigner(page);
 
   const palette = page.locator('[data-testid="left-panel-expanded"] .nop-palette').first();

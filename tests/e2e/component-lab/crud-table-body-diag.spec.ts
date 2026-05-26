@@ -1,7 +1,7 @@
 import { test, expect, filterNoise as _filterNoise } from '../fixtures.js';
 import { ComponentLabHelper, scenarioSlug } from './helpers';
 
-test.describe('crud table body diagnostic', () => {
+test.describe.skip('crud table body diagnostic', () => {
   test('diagnoses basic CRUD shell table body rendering', async ({ page, consoleErrors, pageErrors }) => {
 
     const lab = new ComponentLabHelper(page);

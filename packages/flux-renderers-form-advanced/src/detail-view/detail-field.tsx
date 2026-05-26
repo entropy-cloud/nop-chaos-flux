@@ -1,5 +1,10 @@
 import React from 'react';
-import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type {
+  ActionSchema,
+  BaseSchema,
+  RendererComponentProps,
+  RendererDefinition,
+} from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import {
@@ -373,6 +378,28 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   );
 }
 
+function compileDetailValueAdaptationAction(value: unknown, context: {
+  compileActions: (
+    input: ActionSchema | ActionSchema[],
+    sourcePath?: string,
+  ) => import('@nop-chaos/flux-core').CompiledActionProgram;
+  sourcePath: string;
+}) {
+  if (!value) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return context.compileActions(value, context.sourcePath);
+  }
+
+  if (typeof value === 'object' && value !== null && 'action' in value) {
+    return context.compileActions(value as ActionSchema, context.sourcePath);
+  }
+
+  return value;
+}
+
 export const detailFieldRendererDefinition: RendererDefinition<DetailFieldSchema> = {
   type: 'detail-field',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
@@ -387,9 +414,9 @@ export const detailFieldRendererDefinition: RendererDefinition<DetailFieldSchema
     { key: 'triggerLabel', kind: 'prop' },
     { key: 'readOnly', kind: 'prop' },
     { key: 'surface', kind: 'prop' },
-    { key: 'transformInAction', kind: 'prop' },
-    { key: 'validateValueAction', kind: 'prop' },
-    { key: 'transformOutAction', kind: 'prop' },
+    { key: 'transformInAction', kind: 'prop', compile: compileDetailValueAdaptationAction },
+    { key: 'validateValueAction', kind: 'prop', compile: compileDetailValueAdaptationAction },
+    { key: 'transformOutAction', kind: 'prop', compile: compileDetailValueAdaptationAction },
   ],
   scopePolicy: 'form',
   validation: {

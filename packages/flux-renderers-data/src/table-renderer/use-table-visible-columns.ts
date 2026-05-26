@@ -32,7 +32,14 @@ export function useTableVisibleColumns(
     [columns],
   );
 
-  const [localVisibleColumns, setLocalVisibleColumns] = useState<string[]>(defaultVisibleColumns);
+  const defaultVisibleColumnsSet = useMemo(
+    () => new Set(defaultVisibleColumns),
+    [defaultVisibleColumns],
+  );
+
+  const [localVisibleColumnOverrides, setLocalVisibleColumnOverrides] = useState<
+    Record<string, boolean>
+  >({});
   const [localOrderedColumns, setLocalOrderedColumns] = useState<string[]>(defaultOrderedColumns);
   const scopeVisibleColumns = useScopeSelector(
     (scopeData) =>
@@ -61,7 +68,9 @@ export function useTableVisibleColumns(
   const visibleColumns = enabled
     ? toggledStatePath
       ? scopeVisibleColumns ?? defaultVisibleColumns
-      : localVisibleColumns
+      : defaultOrderedColumns.filter(
+          (key) => localVisibleColumnOverrides[key] ?? defaultVisibleColumnsSet.has(key),
+        )
     : defaultVisibleColumns;
 
   const visibleColumnsSet = useMemo(() => new Set(visibleColumns), [visibleColumns]);
@@ -90,11 +99,30 @@ export function useTableVisibleColumns(
         if (toggledStatePath) {
           renderScope.update(toggledStatePath, next);
         } else {
-          setLocalVisibleColumns(next);
+          setLocalVisibleColumnOverrides((current) => {
+            const defaultVisible = defaultVisibleColumnsSet.has(columnKey);
+            if (visible === defaultVisible) {
+              if (!(columnKey in current)) {
+                return current;
+              }
+
+              const { [columnKey]: _removed, ...rest } = current;
+              return rest;
+            }
+
+            if (current[columnKey] === visible) {
+              return current;
+            }
+
+            return {
+              ...current,
+              [columnKey]: visible,
+            };
+          });
         }
       });
     },
-    [renderScope, toggledStatePath, visibleColumns],
+    [defaultVisibleColumnsSet, renderScope, toggledStatePath, visibleColumns],
   );
 
   const moveColumn = useCallback(

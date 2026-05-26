@@ -4,7 +4,32 @@ import {
   type RendererSchemaValidationContext,
 } from '@nop-chaos/flux-core';
 import type { CrudSchema } from './crud-schema.js';
+import { createCrudQueryFormId } from './crud-query-form-id.js';
 import type { TableSchema } from './schemas.js';
+
+function createCrudQueryFormRegion(schema: CrudSchema, path: string) {
+  const queryForm = schema.queryForm;
+  if (!queryForm?.body) {
+    return undefined;
+  }
+
+  const region: BaseSchema & Record<string, unknown> = {
+    type: 'form',
+    id: createCrudQueryFormId(schema.id, path),
+    body: queryForm.body,
+    mode: queryForm.layout === 'horizontal' ? 'horizontal' : 'normal',
+  };
+
+  if (queryForm.actions !== undefined) {
+    region.actions = queryForm.actions;
+  }
+
+  if (queryForm.statusPath !== undefined) {
+    region.statusPath = queryForm.statusPath;
+  }
+
+  return region;
+}
 
 function escapeJsonPointerSegment(segment: string) {
   return segment.replace(/~/g, '~0').replace(/\//g, '~1');
@@ -218,5 +243,10 @@ export function transformCrudAuthoringSchema(
     });
   }
 
-  return schema;
+  const baseSchema = schema as CrudSchema;
+  const queryFormRegion = createCrudQueryFormRegion(baseSchema, context.path);
+
+  return queryFormRegion
+    ? ({ ...baseSchema, queryFormRegion } as CrudSchema & { queryFormRegion: BaseSchema })
+    : baseSchema;
 }

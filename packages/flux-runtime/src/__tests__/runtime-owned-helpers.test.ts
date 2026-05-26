@@ -5,7 +5,6 @@ import type {
   CompiledFormValidationModel,
   CompiledValidationRule,
   PageRuntime,
-  RendererRuntime,
   SurfaceRuntime,
   ValidationRule,
 } from '@nop-chaos/flux-core';
@@ -392,7 +391,6 @@ describe('createRuntimeOwnedFactories', () => {
     expect(validationResult.errors[0]?.message).toBe('invalid');
     expect(dispatchAction).toHaveBeenCalled();
 
-    const runtime = {} as RendererRuntime;
     const surfaceRuntime = factories.createSurfaceRuntime();
     const surfaceId = surfaceRuntime.open({
       kind: 'dialog',
@@ -403,7 +401,6 @@ describe('createRuntimeOwnedFactories', () => {
         parent: parentScope,
         initialData: {},
       }),
-      runtime,
       options: {},
     });
     expect(typeof surfaceId).toBe('string');

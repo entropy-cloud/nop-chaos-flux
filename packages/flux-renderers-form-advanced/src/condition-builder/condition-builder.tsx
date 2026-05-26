@@ -129,8 +129,6 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
         fields={fields}
         schema={schemaProps}
         className={props.meta.className}
-        testid={props.meta.testid}
-        cid={props.meta.cid}
         operatorsOverride={operatorsOverride}
         onChange={syncValue}
         disabled={presentation.effectiveDisabled || presentation.fieldState.submitting}
@@ -160,8 +158,6 @@ function PickerModeContent({
   fields,
   schema,
   className,
-  testid,
-  cid,
   operatorsOverride,
   onChange,
   disabled,
@@ -170,8 +166,6 @@ function PickerModeContent({
   fields: ConditionField[];
   schema: ConditionBuilderSchema;
   className?: string;
-  testid?: string;
-  cid?: number;
   operatorsOverride?: ConditionOperatorOverrides;
   onChange: (v: ConditionGroupValue) => void;
   disabled?: boolean;
@@ -179,7 +173,7 @@ function PickerModeContent({
   const hasConditions = value.children.length > 0;
 
   return (
-    <div className={cn('nop-condition-builder', className)} data-testid={testid} data-cid={cid}>
+    <div className={cn('nop-condition-builder', className)}>
       <Popover>
         <PopoverTrigger
           render={

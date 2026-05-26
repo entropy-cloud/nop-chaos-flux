@@ -121,6 +121,7 @@ export interface CrudSchema extends BaseSchema {
   name?: string;
   statusPath?: string;
   queryForm?: CrudQueryFormConfig;
+  queryFormRegion?: SchemaInput;
   source?: SchemaValue;
   listActions?: SchemaInput;
   toolbar?: SchemaInput;

@@ -9,43 +9,14 @@ async function waitForIdleFrame(page: import('@playwright/test').Page) {
   );
 }
 
-async function readRecoveredMainText(page: import('@playwright/test').Page) {
-  return page.evaluate(() => {
-    const probe = window.__NOP_WORD_EDITOR_PROBE__;
-    const main = probe?.getState().document?.main ?? [];
-    return main
-      .map((item) =>
-        item && typeof item === 'object' && 'value' in item ? String(item.value ?? '') : '',
-      )
-      .join(' ');
-  });
+function savedPreview(page: import('@playwright/test').Page) {
+  return page.getByTestId('word-editor-saved-preview');
 }
 
 async function openWordEditor(page: import('@playwright/test').Page) {
-  await page.goto('/');
-
-  const signInButton = page.getByRole('button', { name: 'Sign in' });
-  if (await signInButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await signInButton.click();
-
-    if (await signInButton.isVisible({ timeout: 1500 }).catch(() => false)) {
-      await page.getByRole('textbox', { name: 'Username' }).fill('admin');
-      await page.getByRole('textbox', { name: 'Password' }).fill('123456');
-      await signInButton.click();
-    }
-
-    if (await signInButton.isVisible({ timeout: 1500 }).catch(() => false)) {
-      await page.getByRole('textbox', { name: 'Username' }).fill('nop');
-      await page.getByRole('textbox', { name: 'Password' }).fill('123');
-      await signInButton.click();
-    }
-  }
-
-  await expect(signInButton).toHaveCount(0, { timeout: 10000 });
-
-  await page.getByRole('button', { name: 'Word Editor' }).click();
-
-  await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 30000 });
+  await page.goto('/#/word-editor', { waitUntil: 'commit' });
+  await expect(page.locator('.nop-word-editor-page')).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByRole('button', { name: '保存' })).toBeVisible({ timeout: 90_000 });
   await assertTrackedPageErrors(page);
 }
 
@@ -53,7 +24,7 @@ test.describe('Word Editor Page', () => {
   test('opens word editor page', async ({ page }) => {
     await openWordEditor(page);
 
-    await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Word Editor|Word 编辑器/ })).toBeVisible();
     await expect(page.getByRole('button', { name: '保存' })).toBeVisible();
   });
 
@@ -122,7 +93,7 @@ test.describe('Word Editor Page', () => {
 
     const wordCountDisplay = page.locator('[class*="tabular-nums"]').first();
     await expect(wordCountDisplay).toBeVisible();
-    await expect.poll(() => readRecoveredMainText(page), { timeout: 10000 }).toContain(marker);
+    await expect(savedPreview(page)).toContainText(marker, { timeout: 10000 });
   });
 
   test('formatting toolbar buttons are visible and respond without breaking the editor surface', async ({ page }) => {
@@ -141,7 +112,7 @@ test.describe('Word Editor Page', () => {
     await underlineButton.click();
 
     await expect(boldButton).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Word Editor|Word 编辑器/ })).toBeVisible();
     await assertTrackedPageErrors(page);
   });
 
@@ -202,26 +173,8 @@ test.describe('Word Editor Page', () => {
     await expect(saveButton).toBeVisible({ timeout: 15000 });
     await saveButton.click();
 
-    await expect
-      .poll(
-        async () => {
-          return page.evaluate(() => {
-            const raw = window.localStorage.getItem('nop-word-editor-document');
-            if (!raw) {
-              return null;
-            }
-
-            try {
-              const parsed = JSON.parse(raw) as { savedAt?: string };
-              return typeof parsed.savedAt === 'string' ? parsed.savedAt : null;
-            } catch {
-              return null;
-            }
-          });
-        },
-        { timeout: 5000 },
-      )
-      .not.toBeNull();
+    await expect(page.getByTestId('word-editor-save-status')).toContainText('已保存', { timeout: 5000 });
+    await expect(savedPreview(page)).not.toContainText('无文档数据');
   });
 
   test('search toolbar action opens the search panel', async ({ page }) => {

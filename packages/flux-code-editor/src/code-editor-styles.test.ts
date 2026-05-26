@@ -12,4 +12,12 @@ describe('code-editor stylesheet contract', () => {
     expect(styles).not.toContain("\n[data-slot='code-editor-header']");
     expect(styles).not.toContain("\n[data-slot='code-editor-result-header']");
   });
+
+  it('derives default chrome tokens from shared theme variables', () => {
+    expect(styles).toContain('--nop-code-editor-toolbar-bg: color-mix(in srgb, hsl(var(--background)) 88%, hsl(var(--foreground)) 12%);');
+    expect(styles).toContain('--nop-code-editor-header-title-fg: hsl(var(--foreground));');
+    expect(styles).toContain('--nop-code-editor-var-item-value-fg: hsl(var(--muted-foreground));');
+    expect(styles).not.toContain('--nop-code-editor-toolbar-bg: rgba(0, 0, 0, 0.03);');
+    expect(styles).not.toContain('--nop-code-editor-header-title-fg: #333;');
+  });
 });

@@ -1,4 +1,5 @@
 export { useSnapshot } from './use-snapshot.js';
+export { useSnapshotSelector } from './use-snapshot.js';
 export type { DragState } from './use-selection.js';
 export { useSelection } from './use-selection.js';
 export { useEditing } from './use-editing.js';

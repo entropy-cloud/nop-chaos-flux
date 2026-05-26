@@ -61,9 +61,9 @@ function createManagedValidationScopeRuntime(formRuntime: FormRuntime): Validati
     get validation() {
       return formRuntime.validation;
     },
-    validateAt: (path, reason) => formRuntime.validateAt(path, reason),
-    validateSubtree: (path, reason) => formRuntime.validateSubtree(path, reason),
-    validateAll: (reason) => formRuntime.validateAll(reason),
+    validateAt: (path, reason, options) => formRuntime.validateAt(path, reason, options),
+    validateSubtree: (path, reason, options) => formRuntime.validateSubtree(path, reason, options),
+    validateAll: (reason, options) => formRuntime.validateAll(reason, options),
     applyChangesAndRevalidate: (input) => formRuntime.applyChangesAndRevalidate(input),
     applyExternalErrors: (input) => formRuntime.applyExternalErrors(input),
     getFieldState: (path) => formRuntime.getFieldState(path),

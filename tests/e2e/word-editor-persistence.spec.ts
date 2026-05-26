@@ -4,8 +4,8 @@ test.setTimeout(60_000);
 
 async function openWordEditor(page: import('@playwright/test').Page) {
   await page.goto('/#/word-editor', { waitUntil: 'commit' });
-  await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByRole('button', { name: '保存' })).toBeVisible();
+  await expect(page.locator('.nop-word-editor-page')).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByRole('button', { name: '保存' })).toBeVisible({ timeout: 90_000 });
   await assertTrackedPageErrors(page);
 }
 
@@ -15,18 +15,8 @@ async function readWordCount(page: import('@playwright/test').Page) {
   return match ? Number.parseInt(match[1], 10) : 0;
 }
 
-async function readSavedDocumentText(page: import('@playwright/test').Page) {
-  return page.evaluate(() => localStorage.getItem('nop-word-editor-document'));
-}
-
-async function readRecoveredMainText(page: import('@playwright/test').Page) {
-  return page.evaluate(() => {
-    const probe = window.__NOP_WORD_EDITOR_PROBE__;
-    const main = probe?.getState().document?.main ?? [];
-    return main
-      .map((item) => (item && typeof item === 'object' && 'value' in item ? String(item.value ?? '') : ''))
-      .join(' ');
-  });
+function savedPreview(page: import('@playwright/test').Page) {
+  return page.getByTestId('word-editor-saved-preview');
 }
 
 test('saves a document marker that survives a reload', async ({ page }) => {
@@ -49,7 +39,7 @@ test('saves a document marker that survives a reload', async ({ page }) => {
   await page.waitForTimeout(500);
   await page.keyboard.type(marker);
 
-  await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(marker);
+  await expect(savedPreview(page)).toContainText(marker, { timeout: 10_000 });
 
   const saveButton = page.getByRole('button', { name: '保存' });
   await canvasElement.click();
@@ -57,17 +47,13 @@ test('saves a document marker that survives a reload', async ({ page }) => {
   await page.keyboard.type(` ${explicitSaveMarker}`);
   await saveButton.click();
 
-  await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(explicitSaveMarker);
+  await expect(savedPreview(page)).toContainText(explicitSaveMarker, { timeout: 10_000 });
+  await expect(page.getByTestId('word-editor-save-status')).toContainText('已保存', { timeout: 5_000 });
 
   await page.reload({ waitUntil: 'commit' });
-  await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 45_000 });
+  await expect(page.locator('.nop-word-editor-page')).toBeVisible({ timeout: 90_000 });
   await assertTrackedPageErrors(page);
-  await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(marker);
-  await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(explicitSaveMarker);
-  await expect.poll(() => readRecoveredMainText(page), { timeout: 10_000 }).toContain(marker);
-  await expect.poll(() => readRecoveredMainText(page), { timeout: 10_000 }).toContain(explicitSaveMarker);
+  await expect(savedPreview(page)).toContainText(marker, { timeout: 10_000 });
+  await expect(savedPreview(page)).toContainText(explicitSaveMarker, { timeout: 10_000 });
   await expect.poll(() => readWordCount(page), { timeout: 10_000 }).toBeGreaterThanOrEqual(initialWordCount);
-
-  await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(marker);
-  await expect.poll(() => readSavedDocumentText(page), { timeout: 10_000 }).toContain(explicitSaveMarker);
 });

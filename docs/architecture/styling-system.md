@@ -159,6 +159,7 @@ The authoritative list is `packages/ui/src/index.ts`. Current core components:
 - Repo-level shared UI token defaults belong to `@nop-chaos/theme-tokens`, not to `apps/playground` or other host-private stylesheets.
 - When `@nop-chaos/ui` components consume stable utility families exposed through `@nop-chaos/tailwind-preset`, the backing CSS variables must exist in the public `theme-tokens` stylesheet on the supported path.
 - Current explicit baseline: shared sidebar utilities such as `bg-sidebar`, `text-sidebar-foreground`, and sidebar border/ring mappings depend on `--sidebar*` defaults provided by `packages/theme-tokens/src/styles.css`.
+- Current explicit baseline: `--sidebar*` defaults are published as raw HSL fragments (`var(--card)`, `var(--foreground)`, `var(--border)`, etc.), and utility mappings in `@nop-chaos/tailwind-preset` are responsible for wrapping them with `hsl(var(...))` when emitting public color utilities.
 - Playground or host apps may override these variables for product-specific theming, but those overrides are not the owner of the default cross-package contract.
 
 ### How to add a new shadcn/ui component

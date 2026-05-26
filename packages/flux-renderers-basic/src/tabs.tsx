@@ -224,11 +224,8 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           ownedAxis.setValue(String(next));
           const payload = createTabsChangePayload(items, String(next));
           void props.events.onChange?.(payload, {
-            scope: props.helpers.createScope(
-              payload,
-              { scopeKey: 'tabs', pathSuffix: 'tabs' },
-            ),
             event: payload,
+            evaluationBindings: payload,
           });
         }}
         orientation={orientation}

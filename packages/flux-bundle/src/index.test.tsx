@@ -84,7 +84,8 @@ describe('@nop-chaos/flux public entry contract', () => {
     expect(defaultSpacingStyles).toContain(".nop-schema-root-fallback[data-mode='loading']");
     expect(defaultSpacingStyles).toContain(".nop-schema-root-fallback [data-slot='schema-root-fallback-message']");
     expect(formRendererStyles).toContain(".nop-form [data-slot='radio-group-wrapper']");
-    expect(styles).not.toContain(`.${FLUX_ROOT_CLASS} [data-slot='field-label']`);
-    expect(styles).not.toContain(`.${FLUX_ROOT_CLASS} [data-slot='select-wrapper']`);
+    expect(defaultSpacingStyles).not.toContain(`.${FLUX_ROOT_CLASS} .nop-page`);
+    expect(defaultSpacingStyles).not.toContain(`.${FLUX_ROOT_CLASS} .nop-form`);
+    expect(formRendererStyles).not.toContain(`.${FLUX_ROOT_CLASS} [data-slot='select-wrapper']`);
   });
 });

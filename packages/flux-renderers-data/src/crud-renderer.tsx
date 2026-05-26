@@ -2,13 +2,13 @@ import { useEffect, useRef } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
+  createReadonlyScopeBinding,
   hasRendererSlotContent,
   useCurrentComponentRegistry,
   useRenderScope,
   useRendererEnv,
   useSchemaProps,
 } from '@nop-chaos/flux-react';
-import { createReadonlyScopeBinding } from '@nop-chaos/flux-react/unstable';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Separator, cn } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema.js';
@@ -26,6 +26,7 @@ import {
   type InternalTableHandle,
 } from './crud-renderer-state.js';
 import { CrudToolbarBlocks, normalizeToolbarBlocks } from './crud-renderer-toolbar.js';
+import { createCrudQueryFormId } from './crud-query-form-id.js';
 import type { TableSchema } from './schemas.js';
 import {
   createCrudOwnerPaths,
@@ -170,7 +171,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     });
   };
 
-  const queryFormId = `${props.id}-query-form`;
+  const queryFormId = createCrudQueryFormId(props.schema.id, props.path);
   const { handleQuerySubmit, handleQueryReset } = useCrudQueryBridge({
     componentRegistry,
     queryFormId,
@@ -307,30 +308,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     events: tableEvents,
     helpers: props.helpers,
   };
-  const queryFormSchema: BaseSchema | null = (() => {
-    const queryForm = normalizedSchema.queryForm;
-    if (!queryForm?.body) {
-      return null;
-    }
-
-      const base: Record<string, unknown> = {
-        type: 'form',
-        id: queryFormId,
-        data: queryState.values,
-        body: queryForm.body,
-        mode: queryForm.layout === 'horizontal' ? 'horizontal' : 'normal',
-      };
-
-    if (queryForm.actions !== undefined) {
-      base.actions = queryForm.actions;
-    }
-
-    if (queryForm.statusPath !== undefined) {
-      base.statusPath = queryForm.statusPath;
-    }
-
-    return base as BaseSchema;
-  })();
+  const hasQueryForm = Boolean(props.regions.queryFormRegion?.templateNode);
 
   const handleToolbarPageChange = (page: number) => {
     scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });
@@ -355,10 +333,13 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
     >
-      {queryFormSchema ? (
+      {hasQueryForm ? (
         <div className="nop-crud-query" data-slot="crud-query">
           {asReactNode(
-            props.helpers.render(queryFormSchema, { pathSuffix: 'queryForm', scope: crudScope }),
+            props.regions.queryFormRegion?.render({
+              pathSuffix: 'queryForm',
+              scope: crudScope,
+            }),
           )}
           <div className="mt-2 flex gap-2" data-slot="crud-query-controls">
             <Button variant="outline" size="sm" onClick={handleQuerySubmitWithFeedback}>

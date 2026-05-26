@@ -1,11 +1,15 @@
 // @vitest-environment happy-dom
 
+import React from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react';
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { flowDesignerRendererDefinitions } from './index.js';
+import { basicTestRendererDefinitions } from './index-test-support.js';
 
 beforeEach(async () => {
   resetFluxI18n();
@@ -16,68 +20,6 @@ beforeEach(async () => {
 afterEach(() => {
   resetFluxI18n();
 });
-
-vi.mock('./canvas-bridge', async () => {
-  const actual = await vi.importActual<typeof import('./canvas-bridge.js')>('./canvas-bridge');
-
-  function MockXyflowBridge(props: any) {
-    return (
-      <div>
-        <div>{`nodes:${props.snapshot?.doc?.nodes?.length ?? 0}`}</div>
-        <div>{`pending:${props.pendingConnectionSourceId ?? 'none'}`}</div>
-        <div>{`reconnecting:${props.reconnectingEdgeId ?? 'none'}`}</div>
-        <button type="button" onClick={(event) => props.onStartConnection('node-1', event)}>
-          Start connection node-1
-        </button>
-        <button type="button" onClick={(event) => props.onCompleteConnection('node-2', event)}>
-          Complete connection node-2
-        </button>
-        <button
-          type="button"
-          onClick={(event) =>
-            props.onCompleteConnection('node-2', event, 'out-primary', 'in-primary')
-          }
-        >
-          Complete connection node-2 with ports
-        </button>
-        <button type="button" onClick={(event) => props.onStartReconnect('edge-2', event)}>
-          Start reconnect edge-2
-        </button>
-        <button
-          type="button"
-          onClick={(event) => props.onCompleteReconnect('edge-2', 'node-1', 'node-2', event)}
-        >
-          Complete reconnect edge-2 to node-2
-        </button>
-        <button
-          type="button"
-          onClick={(event) =>
-            props.onCompleteReconnect(
-              'edge-2',
-              'node-1',
-              'node-2',
-              event,
-              'out-secondary',
-              'in-secondary',
-            )
-          }
-        >
-          Complete reconnect edge-2 to node-2 with ports
-        </button>
-      </div>
-    );
-  }
-
-  return {
-    ...actual,
-    DesignerXyflowCanvasBridge: MockXyflowBridge,
-    renderDesignerCanvasBridge(props: any) {
-      return <MockXyflowBridge {...props} />;
-    },
-  };
-});
-
-import { flowDesignerRendererDefinitions } from './index.js';
 
 function createTestConfig(): DesignerConfig {
   return {
@@ -152,19 +94,71 @@ function createRendererEnv(notify = vi.fn()) {
   };
 }
 
-function renderDesignerPage(document: GraphDocument, notify = vi.fn()) {
-  const SchemaRenderer = createSchemaRenderer([
-    ...flowDesignerRendererDefinitions,
-    {
-      type: 'text',
-      component: (props: any) => <span>{String(props.props.text ?? '')}</span>,
+function StatusProbe() {
+  const status = useScopeSelector(
+    (data: Record<string, unknown>) => {
+      if (typeof data.selectionKind !== 'string' || typeof data.selectionCount !== 'number') {
+        return undefined;
+      }
+
+      return {
+        selectionKind: data.selectionKind,
+        selectionCount: data.selectionCount,
+        doc:
+          typeof data.doc === 'object' && data.doc !== null
+            ? (data.doc as { nodeCount?: number; edgeCount?: number })
+            : undefined,
+      };
     },
+  );
+  return (
+    <span data-testid="designer-status-probe">
+      {status
+        ? `${status.selectionKind}:${status.selectionCount}:${status.doc?.nodeCount ?? -1}:${status.doc?.edgeCount ?? -1}`
+        : ''}
+    </span>
+  );
+}
+
+function getNodeCount(container: HTMLElement) {
+  return container.querySelectorAll('.react-flow__node').length;
+}
+
+function getEdgeCount(container: HTMLElement) {
+  return container.querySelectorAll('.react-flow__edge').length;
+}
+
+const statusProbeRenderer = {
+  type: 'designer-status-probe',
+  component: StatusProbe,
+} as RendererDefinition;
+
+function createSchemaRendererForTests() {
+  return createSchemaRenderer([
+    ...basicTestRendererDefinitions,
+    ...flowDesignerRendererDefinitions,
+    statusProbeRenderer,
   ]);
+}
+
+function renderDesignerPage(document: GraphDocument, notify = vi.fn()) {
+  const SchemaRenderer = createSchemaRendererForTests();
 
   const view = render(
     <SchemaRenderer
       schemaUrl="test://flow/xyflow-render"
-      schema={{ type: 'designer-page', document, config: createTestConfig() } as any}
+      schema={{
+        type: 'page',
+        body: [
+          {
+            type: 'designer-page',
+            document,
+            config: createTestConfig(),
+            statusPath: 'designerStatus',
+            dialogs: { type: 'designer-status-probe' },
+          },
+        ],
+      } as any}
       env={createRendererEnv(notify)}
       formulaCompiler={createFormulaCompiler()}
     />,
@@ -195,19 +189,33 @@ describe('designer-page live xyflow intent retention', () => {
       ],
       viewport: { x: 0, y: 0, zoom: 1 },
     });
-    const canvas = within(view.container);
 
-    fireEvent.click(canvas.getByText('Start connection node-1'));
-    expect(canvas.getByText('pending:node-1')).toBeTruthy();
+    const sourcePort = within(view.container).getByRole('button', {
+      name: 'Start connection from output port default on node Task 1',
+    });
+    fireEvent.keyDown(sourcePort, { key: 'Enter' });
 
-    fireEvent.click(canvas.getByText('Complete connection node-2'));
+    await waitFor(() => {
+      expect(within(view.container).getByTestId('designer-status-probe').textContent).toBe('none:0:2:1');
+      expect(within(view.container).getByRole('button', {
+        name: 'Cancel connection from output port default on node Task 1',
+      })).toBeTruthy();
+    });
+
+    window.dispatchEvent(
+      new CustomEvent('nop-designer:test-connect', {
+        detail: { source: 'node-1', target: 'node-2' },
+      }),
+    );
 
     await waitFor(() => {
       expect(view.notify).toHaveBeenCalledWith(
         'warning',
         'Duplicate edges are not supported in the playground example.',
       );
-      expect(canvas.getByText('pending:node-1')).toBeTruthy();
+      expect(within(view.container).getByRole('button', {
+        name: 'Cancel connection from output port default on node Task 1',
+      })).toBeTruthy();
     });
   });
 
@@ -240,19 +248,33 @@ describe('designer-page live xyflow intent retention', () => {
       ],
       viewport: { x: 0, y: 0, zoom: 1 },
     });
-    const canvas = within(view.container);
 
-    fireEvent.click(canvas.getByText('Start reconnect edge-2'));
-    expect(canvas.getByText('reconnecting:edge-2')).toBeTruthy();
+    window.dispatchEvent(
+      new CustomEvent('nop-designer:test-start-reconnect', {
+        detail: { edgeId: 'edge-2' },
+      }),
+    );
 
-    fireEvent.click(canvas.getByText('Complete reconnect edge-2 to node-2'));
+    await waitFor(() => {
+      expect(within(view.container).getByRole('button', {
+        name: 'Cancel reconnect from output port default on node Task 1',
+      })).toBeTruthy();
+    });
+
+    window.dispatchEvent(
+      new CustomEvent('nop-designer:test-reconnect', {
+        detail: { edgeId: 'edge-2', source: 'node-1', target: 'node-2' },
+      }),
+    );
 
     await waitFor(() => {
       expect(view.notify).toHaveBeenCalledWith(
         'warning',
         'Duplicate edges are not supported in the playground example.',
       );
-      expect(canvas.getByText('reconnecting:edge-2')).toBeTruthy();
+      expect(within(view.container).getByRole('button', {
+        name: 'Cancel reconnect from output port default on node Task 1',
+      })).toBeTruthy();
     });
   });
 
@@ -269,64 +291,67 @@ describe('designer-page live xyflow intent retention', () => {
       edges: [],
       viewport: { x: 0, y: 0, zoom: 1 },
     });
-    const canvas = within(view.container);
 
-    fireEvent.click(canvas.getByText('Start connection node-1'));
-    fireEvent.click(canvas.getByText('Complete connection node-2 with ports'));
+    window.dispatchEvent(
+      new CustomEvent('nop-designer:test-connect', {
+        detail: { source: 'node-1', target: 'node-2', sourcePort: 'out-primary', targetPort: 'in-primary' },
+      }),
+    );
 
     await waitFor(() => {
       expect(view.notify).not.toHaveBeenCalled();
-      expect(canvas.getByText('pending:none')).toBeTruthy();
+      expect(within(view.container).getByTestId('designer-status-probe').textContent).toBe('none:0:2:1');
+      expect(getNodeCount(view.container)).toBe(2);
+      expect(getEdgeCount(view.container)).toBe(0);
     });
   });
 
   it('opens createDialog-configured palette nodes before creating them', async () => {
-    const SchemaRenderer = createSchemaRenderer([
-      ...flowDesignerRendererDefinitions,
-      {
-        type: 'text',
-        component: (props: any) => <span>{String(props.props.text ?? '')}</span>,
-      },
-    ]);
+    const SchemaRenderer = createSchemaRendererForTests();
 
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/xyflow-create-dialog"
-        schema={
-          {
-            type: 'designer-page',
-            document: {
-              id: 'doc-1',
-              kind: 'flow',
-              name: 'Example',
-              version: '1.0.0',
-              nodes: [],
-              edges: [],
-              viewport: { x: 0, y: 0, zoom: 1 },
-            },
-            config: {
-              ...createTestConfig(),
-              nodeTypes: [
-                {
-                  id: 'task',
-                  label: 'Task',
-                  body: { type: 'text', text: 'Task' },
-                  defaults: { label: 'Task' },
-                  createDialog: {
-                    title: 'Create Task',
-                    body: { type: 'text', text: 'Create dialog body' },
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'designer-page',
+              document: {
+                id: 'doc-1',
+                kind: 'flow',
+                name: 'Example',
+                version: '1.0.0',
+                nodes: [],
+                edges: [],
+                viewport: { x: 0, y: 0, zoom: 1 },
+              },
+              dialogs: { type: 'designer-status-probe' },
+              statusPath: 'designerStatus',
+              config: {
+                ...createTestConfig(),
+                nodeTypes: [
+                  {
+                    id: 'task',
+                    label: 'Task',
+                    body: { type: 'text', text: 'Task' },
+                    defaults: { label: 'Task' },
+                    createDialog: {
+                      title: 'Create Task',
+                      body: { type: 'text', text: 'Create dialog body' },
+                    },
                   },
-                },
-                {
-                  id: 'end',
-                  label: 'End',
-                  body: { type: 'text', text: 'End' },
-                  defaults: { label: 'End' },
-                },
-              ],
+                  {
+                    id: 'end',
+                    label: 'End',
+                    body: { type: 'text', text: 'End' },
+                    defaults: { label: 'End' },
+                  },
+                ],
+              },
             },
-          } as any
-        }
+          ],
+        } as any}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
       />,
@@ -340,59 +365,72 @@ describe('designer-page live xyflow intent retention', () => {
       expect(document.body.textContent).toContain('Create dialog body');
     });
 
-    expect(within(view.container).getByText('nodes:0')).toBeTruthy();
+    expect(within(view.container).getByTestId('designer-status-probe').textContent).toBe('none:0:0:0');
+    expect(getNodeCount(view.container)).toBe(0);
+    expect(getEdgeCount(view.container)).toBe(0);
 
     fireEvent.click(within(document.body).getByRole('button', { name: 'Create' }));
 
     await waitFor(() => {
-      expect(within(view.container).getByText('nodes:1')).toBeTruthy();
+      expect(within(view.container).getByTestId('designer-status-probe').textContent).toBe('none:0:1:0');
+      expect(getNodeCount(view.container)).toBe(1);
+      expect(getEdgeCount(view.container)).toBe(0);
     });
   });
 
   it('does not keep free-graph connect intent in tree mode', async () => {
-    const SchemaRenderer = createSchemaRenderer([
-      ...flowDesignerRendererDefinitions,
-      {
-        type: 'text',
-        component: (props: any) => <span>{String(props.props.text ?? '')}</span>,
-      },
-    ]);
+    const SchemaRenderer = createSchemaRendererForTests();
 
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/xyflow-tree-mode"
-        schema={
-          {
-            type: 'designer-page',
-            treeDocument: {
-              id: 'tree-1',
-              kind: 'dingtalk-workflow',
-              name: 'Tree Example',
-              version: '1.0.0',
-              root: {
-                id: 'node-1',
-                type: 'dt-approval',
-                data: { label: 'Task 1' },
-                child: {
-                  id: 'node-2',
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'designer-page',
+              treeDocument: {
+                id: 'tree-1',
+                kind: 'dingtalk-workflow',
+                name: 'Tree Example',
+                version: '1.0.0',
+                root: {
+                  id: 'node-1',
                   type: 'dt-approval',
-                  data: { label: 'Task 2' },
+                  data: { label: 'Task 1' },
+                  child: {
+                    id: 'node-2',
+                    type: 'dt-approval',
+                    data: { label: 'Task 2' },
+                  },
                 },
               },
+              config: createTreeTestConfig(),
+              statusPath: 'designerStatus',
+              dialogs: { type: 'designer-status-probe' },
             },
-            config: createTreeTestConfig(),
-          } as any
-        }
+          ],
+        } as any}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
       />,
     );
 
-    const canvas = within(view.container);
-    fireEvent.click(canvas.getByText('Start connection node-1'));
-    expect(canvas.getByText('pending:none')).toBeTruthy();
+    window.dispatchEvent(
+      new CustomEvent('nop-designer:test-connect', {
+        detail: { source: 'node-1', target: 'node-2' },
+      }),
+    );
 
-    fireEvent.click(canvas.getByText('Start reconnect edge-2'));
-    expect(canvas.getByText('reconnecting:none')).toBeTruthy();
+    window.dispatchEvent(
+      new CustomEvent('nop-designer:test-reconnect', {
+        detail: { edgeId: 'edge-2', source: 'node-1', target: 'node-2' },
+      }),
+    );
+
+    await waitFor(() => {
+      expect(within(view.container).getByTestId('designer-status-probe').textContent).toBe('none:0:2:1');
+      expect(getNodeCount(view.container)).toBe(2);
+    });
   });
 });

@@ -2,7 +2,7 @@ import { memo } from 'react';
 import type { EdgeProps } from '@xyflow/react';
 import { BaseEdge, EdgeLabelRenderer } from '@xyflow/react';
 import { isSchema } from '@nop-chaos/flux-core';
-import { RenderNodes } from '@nop-chaos/flux-react/unstable';
+import { RenderNodes } from '@nop-chaos/flux-react';
 import { useEdgeTypeConfig } from '../designer-context.js';
 
 import { BRANCH_SHORT_LEG, MERGE_SHORT_LEG, CONNECTOR_COLOR } from './dingflow-constants.js';
@@ -21,7 +21,7 @@ function DingFlowEdgeInner({ sourceX, sourceY, targetX, targetY, markerEnd, data
 
   const edgeStyle: Record<string, string | number> = {
     stroke: edgeData.__fdBranchFocused
-      ? 'var(--primary)'
+      ? 'hsl(var(--primary))'
       : (appearance?.stroke ?? CONNECTOR_COLOR),
     strokeWidth: edgeData.__fdBranchFocused
       ? Math.max((appearance?.strokeWidth as number ?? 2) + 1, 3)

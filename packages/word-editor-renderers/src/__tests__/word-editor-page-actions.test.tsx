@@ -150,7 +150,7 @@ describe('WordEditorPage actions and events', () => {
     expect(invoke).toHaveBeenCalledTimes(1);
     resolveSave?.({ ok: true });
     await waitFor(() => {
-      expect(screen.getByText('已保存')).toBeTruthy();
+      expect(screen.getByTestId('word-editor-save-status').textContent).toBe('已保存');
     });
   });
 

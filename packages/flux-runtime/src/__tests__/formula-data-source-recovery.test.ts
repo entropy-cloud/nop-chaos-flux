@@ -187,4 +187,51 @@ describe('createFormulaDataSourceController', () => {
       ]),
     );
   });
+
+  it('preserves non-Error startup failures on failureReason cause', async () => {
+    const structuredFailure = { code: 'E_FORMULA', detail: 'bad dependency' };
+    const scope = createMockScope();
+    const controller = createFormulaDataSourceController({
+      runtime: {
+        env: {
+          notify: vi.fn(),
+        },
+        expressionCompiler: {
+          compileValue: (_formula: unknown) => ({
+            isStatic: false,
+            kind: 'dynamic',
+            createState: () => ({
+              root: { kind: 'leaf-state', initialized: false },
+            }),
+            exec: () => {
+              throw structuredFailure;
+            },
+          }),
+          evaluateWithState: () => {
+            throw structuredFailure;
+          },
+          evaluateValue: () => 42,
+          createState: () => ({
+            root: { kind: 'leaf-state', initialized: false },
+          }),
+        },
+      } as unknown as RendererRuntime,
+      scope,
+      targetPath: 'result',
+      formula: '${someFormula}',
+    });
+
+    controller.start();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(controller.getState()).toMatchObject({
+      status: 'error',
+      failureReason: expect.objectContaining({
+        message: '[object Object]',
+        cause: structuredFailure,
+      }),
+      error: structuredFailure,
+    });
+  });
 });

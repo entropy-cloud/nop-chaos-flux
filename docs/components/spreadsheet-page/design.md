@@ -66,6 +66,8 @@
 - 默认 spreadsheet page host 的 outside-click edit-save 也必须走与 Enter/blur 相同的 save result contract：如果 bridge save 失败或取消，编辑器保持打开并发布对应失败/取消状态，而不是静默吞掉结果。
 - 默认 shared grid/header/sheet-tab/find-replace/cell-editor 文案必须走 `flux-i18n`，不能在 renderer 内硬编码英文或中文字符串；ARIA label 与 placeholder 也属于同一 i18n contract。
 - Spreadsheet toolbar 中表示当前样式/对齐状态的 toggle 类按钮必须把视觉 active state 同步为 `aria-pressed`，不能只依赖 `data-toolbar-active` 或 outline/ghost variant 传达状态。
+- Sheet tab rename 必须提供完整键盘等价路径：active sheet tab 可通过 `F2` 进入 rename，rename input 必须带基于当前 sheet 名称的可访问名称，而不是只依赖 pointer-only double-click 或无名 textbox。
+- Report/Spreadsheet 绑定单元格不能只靠背景色表达语义：绑定 cell 必须同时发布非颜色 marker，并把绑定字段信息并入 `gridcell` 可访问名称或描述。
 
 ## 9. 数据源、表达式、导入能力接入点
 

@@ -67,10 +67,11 @@ describe('DocPreviewPage', () => {
     });
   });
 
-  it('provides package-owned word-editor token fallbacks on nop theme roots', () => {
+  it('provides package-owned word-editor token fallbacks on the word-editor root', () => {
     const packageStyles = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8');
 
-    expect(packageStyles).toContain('.nop-theme-root');
+    expect(packageStyles).toContain('.nop-word-editor-page');
+    expect(packageStyles).not.toContain('.nop-theme-root');
     expect(packageStyles).toContain('--nop-app-bg:');
     expect(packageStyles).toContain('--nop-border:');
     expect(packageStyles).toContain('--nop-playground-stage-bg:');

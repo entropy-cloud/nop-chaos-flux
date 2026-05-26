@@ -31,6 +31,8 @@ import type {
   TextareaSchema,
 } from '../schemas.js';
 
+type ChoiceOption = { label: string; value: string | number | boolean };
+
 const stringValueAdapter = stringAdapter();
 const booleanValueAdapter = booleanStringAdapter();
 const checkboxGroupAdapter: ValueAdapter<unknown, unknown[]> & { __syncIn: true; __syncOut: true } = {
@@ -65,6 +67,36 @@ function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
   return t('flux.form.failedToLoadOptions');
 }
 
+function getChoiceOptionKey(value: ChoiceOption['value']): string {
+  return String(value);
+}
+
+function sanitizeChoiceOptions(value: unknown): ChoiceOption[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object') {
+      return [];
+    }
+
+    const candidate = entry as { label?: unknown; value?: unknown };
+    if (
+      typeof candidate.label !== 'string' ||
+      !(
+        typeof candidate.value === 'string' ||
+        typeof candidate.value === 'number' ||
+        typeof candidate.value === 'boolean'
+      )
+    ) {
+      return [];
+    }
+
+    return [{ label: candidate.label, value: candidate.value }];
+  });
+}
+
 export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
@@ -73,7 +105,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     required: props.props.required,
     readOnly: props.props.readOnly,
   });
-  const options = Array.isArray(props.props.options) ? props.props.options : [];
+  const options = sanitizeChoiceOptions(props.props.options);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const ariaLabel = String(props.props.label ?? name);
   const loading = optionsSourceState?.loading === true;
@@ -87,7 +119,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
       <Select
         value={selectedValue}
         disabled={loading || presentation.effectiveDisabled}
-        onValueChange={(nextValue) => handlers.onChange(nextValue)}
+        onValueChange={presentation.interactive ? (nextValue) => handlers.onChange(nextValue) : undefined}
       >
         <SelectTrigger
           id={name ? `${name}-control` : undefined}
@@ -105,7 +137,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
+            <SelectItem key={getChoiceOptionKey(option.value)} value={option.value}>
               {option.label}
             </SelectItem>
           ))}
@@ -149,6 +181,7 @@ export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) 
       value={textareaValue}
       rows={typeof props.props.rows === 'number' ? props.props.rows : 4}
       disabled={presentation.effectiveDisabled}
+      readOnly={presentation.readOnly}
       aria-label={String((props.props.label ?? name) || '') || undefined}
       aria-required={props.props.required ? true : undefined}
       aria-invalid={presentation.showError ? true : undefined}
@@ -181,6 +214,7 @@ export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) 
         id={name ? `${name}-control` : undefined}
         checked={checked}
         disabled={presentation.effectiveDisabled}
+        aria-readonly={presentation.readOnly ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}
         aria-label={optionLabel ?? name}
         onFocus={handlers.onFocus}
@@ -209,6 +243,7 @@ export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
         id={name ? `${name}-control` : undefined}
         checked={checked}
         disabled={presentation.effectiveDisabled}
+        aria-readonly={presentation.readOnly ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}
         aria-label={String(props.props.label ?? name)}
         onFocus={handlers.onFocus}
@@ -230,7 +265,7 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
     required: props.props.required,
     readOnly: props.props.readOnly,
   });
-  const options = Array.isArray(props.props.options) ? props.props.options : [];
+  const options = sanitizeChoiceOptions(props.props.options);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = optionsSourceState?.loading === true;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
@@ -253,18 +288,23 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
         data-slot="radio-group-options"
         value={selectedValue}
         disabled={loading || presentation.effectiveDisabled}
+        aria-readonly={presentation.readOnly ? true : undefined}
         aria-label={groupLabel}
         aria-required={props.props.required ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}
         aria-describedby={errorMessage ? errorId : undefined}
         aria-errormessage={errorMessage ? errorId : undefined}
         onFocus={handlers.onFocus}
-        onValueChange={(nextValue) => handlers.onChange(nextValue)}
+        onValueChange={presentation.interactive ? (nextValue) => handlers.onChange(nextValue) : undefined}
         onBlur={handlers.onBlur}
       >
         {options.map((option) => (
-          <Label key={option.value} data-slot="radio-group-item">
-            <RadioGroupItem value={option.value} aria-label={option.label} disabled={loading} />
+          <Label key={getChoiceOptionKey(option.value)} data-slot="radio-group-item">
+            <RadioGroupItem
+              value={option.value}
+              aria-label={option.label}
+              disabled={loading || presentation.effectiveDisabled}
+            />
             <span data-slot="radio-group-item-label">{option.label}</span>
           </Label>
         ))}
@@ -287,7 +327,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
     readOnly: props.props.readOnly,
   });
   const selectedValues = value as unknown[];
-  const options = Array.isArray(props.props.options) ? props.props.options : [];
+  const options = sanitizeChoiceOptions(props.props.options);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = optionsSourceState?.loading === true;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
@@ -301,6 +341,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
       role="group"
       aria-label={groupLabel}
       aria-required={props.props.required ? true : undefined}
+      aria-readonly={presentation.readOnly ? true : undefined}
       aria-describedby={errorMessage ? errorId : undefined}
     >
       {loading ? (
@@ -313,7 +354,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
         const checked = selectedValues.some((candidate: unknown) => Object.is(candidate, option.value));
 
         return (
-          <Label key={option.value} data-slot="checkbox-group-item">
+          <Label key={getChoiceOptionKey(option.value)} data-slot="checkbox-group-item">
             <Checkbox
               checked={checked}
               disabled={loading || presentation.effectiveDisabled}
@@ -323,6 +364,10 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
               aria-errormessage={errorMessage ? errorId : undefined}
               onFocus={handlers.onFocus}
               onCheckedChange={(nextChecked) => {
+                if (!presentation.interactive) {
+                  return;
+                }
+
                 const checkedValue = Boolean(nextChecked);
                 const nextValue = checkedValue
                   ? [...selectedValues, option.value]

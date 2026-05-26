@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from './bridge.js';
 import {
-  useSnapshot,
+  useSnapshotSelector,
   useSelection,
   useEditing,
   useFillHandle,
@@ -145,7 +145,23 @@ export function useSpreadsheetInteractions(
   config: SpreadsheetInteractionsConfig,
 ): SpreadsheetInteractionsReturn {
   const { bridge, sheetId, onLog } = config;
-  const snapshot = useSnapshot(bridge);
+  const workbook = useSnapshotSelector(bridge, (snapshot) => snapshot.workbook);
+  const activeSheet = useSnapshotSelector(bridge, (snapshot) => snapshot.activeSheet);
+  const selection = useSnapshotSelector(bridge, (snapshot) => snapshot.selection);
+  const activeCell = useSnapshotSelector(bridge, (snapshot) => snapshot.activeCell);
+  const activeRange = useSnapshotSelector(bridge, (snapshot) => snapshot.activeRange);
+  const runtime = useSnapshotSelector(bridge, (snapshot) => snapshot.runtime);
+  const snapshot = useMemo<SpreadsheetHostSnapshot>(
+    () => ({
+      workbook,
+      activeSheet,
+      selection,
+      activeCell,
+      activeRange,
+      runtime,
+    }),
+    [activeCell, activeRange, activeSheet, runtime, selection, workbook],
+  );
   const readOnly = snapshot.runtime.readonly;
   const selectedCell = snapshot.activeCell
     ? { row: snapshot.activeCell.row, col: snapshot.activeCell.col }

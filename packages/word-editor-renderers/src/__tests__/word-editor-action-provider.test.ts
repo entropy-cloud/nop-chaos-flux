@@ -106,10 +106,6 @@ describe('createWordEditorActionProvider', () => {
       bridge: {} as CanvasEditorBridge,
       editorStore: editorStore as EditorStoreApi,
       datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
-      getCharts: () => [mockChart()],
-      setCharts: () => undefined,
-      getCodes: () => [mockCode()],
-      setCodes: () => undefined,
       getPaperSettings: defaultPaperSettings,
       saveEvent: async () => ({ ok: false, error: new Error('save failed') }),
     });
@@ -128,10 +124,6 @@ describe('createWordEditorActionProvider', () => {
       bridge: {} as CanvasEditorBridge,
       editorStore: editorStore as EditorStoreApi,
       datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
-      getCharts: () => [mockChart()],
-      setCharts: () => undefined,
-      getCodes: () => [mockCode()],
-      setCodes: () => undefined,
       getPaperSettings: defaultPaperSettings,
       saveEvent,
       onDocumentSaved,
@@ -154,10 +146,6 @@ describe('createWordEditorActionProvider', () => {
       bridge: {} as CanvasEditorBridge,
       editorStore: editorStore as EditorStoreApi,
       datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
-      getCharts: () => [mockChart()],
-      setCharts: () => undefined,
-      getCodes: () => [mockCode()],
-      setCodes: () => undefined,
       getPaperSettings: defaultPaperSettings,
     });
 
@@ -175,6 +163,31 @@ describe('createWordEditorActionProvider', () => {
     expect(editorStore.setDirty).not.toHaveBeenCalledWith(false);
   });
 
+  it('preserves non-Error persist failures through nested causes', async () => {
+    const editorStore: PartialEditorStoreApi = { setDirty: vi.fn() };
+    const structuredFailure = { code: 'E_STORAGE', quota: 'full' };
+    const provider = createWordEditorActionProvider({
+      bridge: {} as CanvasEditorBridge,
+      editorStore: editorStore as EditorStoreApi,
+      datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
+      getPaperSettings: defaultPaperSettings,
+    });
+
+    const { persistSavedDocument } = await import('@nop-chaos/word-editor-core');
+    vi.mocked(persistSavedDocument).mockImplementationOnce(() => {
+      throw structuredFailure;
+    });
+
+    const result = await provider.invoke('save', undefined, {} as ActionContext);
+
+    expect(result.ok).toBe(false);
+    expect((result.error as Error).message).toBe('Unable to save word document.');
+    expect((result.error as Error).cause).toMatchObject({
+      message: '[object Object]',
+      cause: structuredFailure,
+    });
+  });
+
   it('does not persist recovery baseline when host save fails', async () => {
     const editorStore: PartialEditorStoreApi = { setDirty: vi.fn() };
     const onDocumentSaved = vi.fn();
@@ -182,10 +195,6 @@ describe('createWordEditorActionProvider', () => {
       bridge: {} as CanvasEditorBridge,
       editorStore: editorStore as EditorStoreApi,
       datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
-      getCharts: () => [mockChart()],
-      setCharts: () => undefined,
-      getCodes: () => [mockCode()],
-      setCodes: () => undefined,
       getPaperSettings: defaultPaperSettings,
       saveEvent: async () => ({ ok: false, error: new Error('save failed') }),
       onDocumentSaved,
@@ -219,10 +228,6 @@ describe('createWordEditorActionProvider', () => {
       bridge: {} as CanvasEditorBridge,
       editorStore: editorStore as EditorStoreApi,
       datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
-      getCharts: () => [mockChart()],
-      setCharts: () => undefined,
-      getCodes: () => [mockCode()],
-      setCodes: () => undefined,
       getPaperSettings: defaultPaperSettings,
       saveEvent,
     });
@@ -240,10 +245,6 @@ describe('createWordEditorActionProvider', () => {
       bridge: {} as CanvasEditorBridge,
       editorStore: editorStore as EditorStoreApi,
       datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
-      getCharts: () => [mockChart()],
-      setCharts: () => undefined,
-      getCodes: () => [mockCode()],
-      setCodes: () => undefined,
       getPaperSettings: defaultPaperSettings,
       saveEvent: async (): Promise<ActionResult> => ({ ok: true }),
       onDocumentSaved,
@@ -269,10 +270,6 @@ describe('createWordEditorActionProvider', () => {
       bridge,
       editorStore: createMinimalEditorStore(),
       datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
-      getCharts: () => [],
-      setCharts: () => undefined,
-      getCodes: () => [],
-      setCodes: () => undefined,
       getPaperSettings: defaultPaperSettings,
     });
 
@@ -296,10 +293,6 @@ describe('createWordEditorActionProvider', () => {
       bridge,
       editorStore: createMinimalEditorStore(),
       datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
-      getCharts: () => [],
-      setCharts: () => undefined,
-      getCodes: () => [],
-      setCodes: () => undefined,
       getPaperSettings: defaultPaperSettings,
     });
 
@@ -321,10 +314,6 @@ describe('createWordEditorActionProvider', () => {
       bridge,
       editorStore: createMinimalEditorStore(),
       datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
-      getCharts: () => [],
-      setCharts: () => undefined,
-      getCodes: () => [],
-      setCodes: () => undefined,
       getPaperSettings: defaultPaperSettings,
     });
 
@@ -355,10 +344,6 @@ describe('createWordEditorActionProvider', () => {
       bridge,
       editorStore: createMinimalEditorStore(),
       datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
-      getCharts: () => [],
-      setCharts: () => undefined,
-      getCodes: () => [],
-      setCodes: () => undefined,
       getPaperSettings: defaultPaperSettings,
     });
 
@@ -395,5 +380,58 @@ describe('createWordEditorActionProvider', () => {
     expect((codeResult.error as Error).message).toBe(
       'word-editor:insertCode payload does not match the published host args contract.',
     );
+  });
+
+  it('normalizes bridge throws from insertField into ActionResult failures', async () => {
+    const bridgeError = new Error('insert failed');
+    const bridge = {
+      insertFieldExpression: vi.fn(() => {
+        throw bridgeError;
+      }),
+    } as unknown as CanvasEditorBridge;
+    const provider = createWordEditorActionProvider({
+      bridge,
+      editorStore: createMinimalEditorStore(),
+      datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
+      getPaperSettings: defaultPaperSettings,
+    });
+
+    const result = await provider.invoke(
+      'insertField',
+      { datasetName: 'orders', fieldName: 'id' },
+      {} as ActionContext,
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: bridgeError,
+      cause: bridgeError,
+    });
+  });
+
+  it('normalizes non-Error bridge throws from undo into ActionResult failures', async () => {
+    const bridgeFailure = { code: 'E_UNDO', detail: 'history empty' };
+    const bridge = {
+      undo: vi.fn(() => {
+        throw bridgeFailure;
+      }),
+    } as unknown as CanvasEditorBridge;
+    const provider = createWordEditorActionProvider({
+      bridge,
+      editorStore: createMinimalEditorStore(),
+      datasetStore: { getAll: () => [] } as PartialDatasetStoreApi as DatasetStoreApi,
+      getPaperSettings: defaultPaperSettings,
+    });
+
+    const result = await provider.invoke('undo', undefined, {} as ActionContext);
+
+    expect(result).toMatchObject({
+      ok: false,
+      cause: bridgeFailure,
+      error: expect.objectContaining({
+        message: '[object Object]',
+        cause: bridgeFailure,
+      }),
+    });
   });
 });

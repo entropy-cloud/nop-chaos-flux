@@ -40,18 +40,61 @@ const COLORS = [
   'hsl(var(--chart-5))',
 ];
 
+function isChartType(value: unknown): value is ChartType {
+  return value === 'bar' || value === 'line' || value === 'pie' || value === 'scatter';
+}
+
+function isChartDatum(value: unknown): value is number | { name?: string; value: number } {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return true;
+  }
+
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as { name?: unknown; value?: unknown };
+  return (
+    typeof candidate.value === 'number' &&
+    Number.isFinite(candidate.value) &&
+    (candidate.name === undefined || typeof candidate.name === 'string')
+  );
+}
+
+function sanitizeSeries(value: unknown): ChartSeriesSchema[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object') {
+      return [];
+    }
+
+    const candidate = entry as Record<string, unknown>;
+    return [
+      {
+        name: typeof candidate.name === 'string' ? candidate.name : undefined,
+        type: isChartType(candidate.type) ? candidate.type : undefined,
+        data: Array.isArray(candidate.data) ? candidate.data.filter(isChartDatum) : undefined,
+        dataRegionKey: typeof candidate.dataRegionKey === 'string' ? candidate.dataRegionKey : undefined,
+      },
+    ];
+  });
+}
+
 export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
   const chartRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
-  const chartType = (props.props.chartType as ChartType) ?? 'bar';
+  const chartType = isChartType(props.props.chartType) ? props.props.chartType : 'bar';
   const titleContent = resolveRendererSlotContent(props, 'title');
   const titleText = typeof props.props.title === 'string' ? props.props.title : undefined;
   const source = Array.isArray(props.props.source)
     ? (props.props.source as Array<Record<string, unknown>>)
     : [];
-  const series = Array.isArray(props.props.series) ? (props.props.series as ChartSeriesSchema[]) : [];
+  const series = sanitizeSeries(props.props.series);
   const componentId =
     typeof props.props.componentId === 'string' ? props.props.componentId : props.id;
   const xAxis = props.props.xAxis as { dataKey?: string; label?: string } | undefined;

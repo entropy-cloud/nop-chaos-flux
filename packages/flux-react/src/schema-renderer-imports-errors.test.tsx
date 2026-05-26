@@ -67,6 +67,46 @@ describe('createSchemaRenderer import failures and retries', () => {
     });
   });
 
+  it('preserves non-Error preload failure causes in monitor events', async () => {
+    const structuredFailure = { code: 'E_PRELOAD', provider: 'broken-loader' };
+    const notify = vi.fn();
+    const onError = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([pageRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          'xui:imports': [{ from: 'broken-lib', as: 'broken' }],
+        }}
+        env={{
+          ...env,
+          notify,
+          monitor: { onError },
+          importLoader: {
+            load: vi.fn(async () => {
+              throw structuredFailure;
+            }),
+          },
+        }}
+        formulaCompiler={sharedFormulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phase: 'compile',
+          error: expect.objectContaining({
+            message: 'Imported namespace broken failed to load: [object Object]',
+            cause: structuredFailure,
+          }),
+        }),
+      );
+    });
+  });
+
   it('warns in development when imported namespace setup fails during render', async () => {
     const importLoader = {
       load: vi.fn(async () => {

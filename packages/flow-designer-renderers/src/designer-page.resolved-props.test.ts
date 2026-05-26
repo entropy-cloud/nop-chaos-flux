@@ -1,13 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { flowDesignerRendererDefinitions } from './index.js';
 import { createTestConfig, createRendererEnv } from './test-support.js';
 
+const textRenderer: RendererDefinition = {
+  type: 'text',
+  component: () => null,
+  fields: [
+    { key: 'text', kind: 'prop', allowSource: true },
+    { key: 'body', kind: 'prop' },
+  ],
+  staticCapable: true,
+};
+
 describe('designer-page resolved props contract', () => {
   it('resolves document and statusPath through renderer prop fields', () => {
-    const registry = createRendererRegistry(flowDesignerRendererDefinitions);
+    const registry = createRendererRegistry([textRenderer, ...flowDesignerRendererDefinitions]);
     const runtime = createRendererRuntime({
       registry,
       env: createRendererEnv(),
@@ -46,7 +56,7 @@ describe('designer-page resolved props contract', () => {
   });
 
   it('preserves nested schemas in config while resolving ordinary leaves', () => {
-    const registry = createRendererRegistry(flowDesignerRendererDefinitions);
+    const registry = createRendererRegistry([textRenderer, ...flowDesignerRendererDefinitions]);
     const runtime = createRendererRuntime({
       registry,
       env: createRendererEnv(),
@@ -99,7 +109,9 @@ describe('designer-page resolved props contract', () => {
 
     expect(config.palette.groups[0].label).toBe('Basic Nodes');
     expect(config.nodeTypes[0].label).toBe('Start Node');
-    expect(config.nodeTypes[0].body).toEqual({ type: 'text', text: '${label}' });
-    expect(config.edgeTypes[0].body).toEqual({ type: 'text', text: '${condition}' });
+    expect(config.nodeTypes[0].body).toBeTruthy();
+    expect(config.edgeTypes[0].body).toBeTruthy();
+    expect(config.nodeTypes[0].body).not.toEqual({ type: 'text', text: '${label}' });
+    expect(config.edgeTypes[0].body).not.toEqual({ type: 'text', text: '${condition}' });
   });
 });

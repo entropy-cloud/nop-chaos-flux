@@ -1,4 +1,5 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useId } from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import type { WordEditorData } from '@nop-chaos/word-editor-core';
 import type { EditorStoreApi } from '@nop-chaos/word-editor-core';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
@@ -25,6 +26,8 @@ export function EditorCanvas({
   codes,
   onAutosave,
 }: EditorCanvasProps) {
+  const descriptionId = useId();
+  const regionLabel = t('flux.wordEditor.canvasRegionLabel');
   const containerRef = useRef<HTMLDivElement>(null);
   const chartsRef = useRef<DocChart[] | undefined>(charts);
   const codesRef = useRef<DocCode[] | undefined>(codes);
@@ -159,5 +162,19 @@ export function EditorCanvas({
     };
   }, [bridge, editorStore, initialDocument, recoveredDocument]);
 
-  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
+  return (
+    <div
+      role="region"
+      tabIndex={0}
+      aria-label={regionLabel}
+      aria-describedby={descriptionId}
+      data-slot="word-editor-canvas-region"
+      style={{ width: '100%', height: '100%' }}
+    >
+      <p id={descriptionId} className="sr-only">
+        {t('flux.wordEditor.canvasRegionDescription')}
+      </p>
+      <div ref={containerRef} data-slot="word-editor-canvas-surface" style={{ width: '100%', height: '100%' }} />
+    </div>
+  );
 }

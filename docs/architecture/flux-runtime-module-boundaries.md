@@ -205,6 +205,12 @@ Note:
   - debounce utilities for action execution
   - re-exported by `flux-action-core` (`cancelPendingDebounce`, `scheduleDebounce`)
 
+Runtime compiler ownership rule:
+
+- `@nop-chaos/flux-action-core` must stay compiler-independent at runtime.
+- Action dispatch consumes injected `actionProgramCompiler` / `expressionCompiler` contracts from runtime assembly instead of importing `@nop-chaos/flux-compiler` directly.
+- `packages/flux-runtime/src/runtime-factory.ts` is the owner that wires compiler implementations into the action dispatcher/runtime adapter boundary.
+
 ### Action adapter and runtime-specific execution (`flux-runtime`)
 
 - `packages/flux-runtime/src/action-adapter.ts`

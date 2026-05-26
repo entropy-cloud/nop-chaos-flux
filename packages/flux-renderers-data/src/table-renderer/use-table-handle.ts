@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
+import { toPartialActionContext } from './capability-action-context.js';
 import { toSelectionPayload } from './table-data.js';
 
 export function useTableHandle(
@@ -16,7 +17,8 @@ export function useTableHandle(
   setSelectionExternal: (keys: Set<string>) => void,
 ) {
   const componentRegistry = useCurrentComponentRegistry();
-  const { helpers, events } = props;
+  const { events } = props;
+  const nodeScope = props.node?.scope;
 
   const tableHandle = useMemo<ComponentHandle>(
     () => ({
@@ -24,28 +26,21 @@ export function useTableHandle(
       type: 'table',
       capabilities: {
         invoke(method, payload, ctx) {
+          const actionContext = toPartialActionContext(ctx);
           switch (method) {
             case 'refresh': {
               if (events.onRefresh) {
-                events.onRefresh(null, {
-                  scope: ctx.scope,
-                  actionScope: ctx.actionScope,
-                  componentRegistry: ctx.componentRegistry,
-                  form: ctx.form,
-                  page: ctx.page,
-                  nodeInstance: ctx.nodeInstance,
-                });
-              } else {
-                events.onPageChange?.(null, {
-                  scope: helpers.createScope(
-                    { page: currentPage, pageSize },
-                    { scopeKey: 'pagination', pathSuffix: 'pagination' },
-                  ),
-                  actionScope: ctx.actionScope,
-                  componentRegistry: ctx.componentRegistry,
-                  form: ctx.form,
-                  page: ctx.page,
-                  nodeInstance: ctx.nodeInstance,
+                events.onRefresh(null, actionContext);
+                } else {
+                  const payload = { page: currentPage, pageSize };
+                  events.onPageChange?.(null, {
+                    scope: nodeScope ?? ctx?.scope,
+                    actionScope: actionContext.actionScope,
+                    componentRegistry: actionContext.componentRegistry,
+                    form: actionContext.form,
+                  page: actionContext.page,
+                  nodeInstance: actionContext.nodeInstance,
+                  evaluationBindings: payload,
                 });
               }
               return { ok: true, data: { page: currentPage, pageSize } };
@@ -84,8 +79,8 @@ export function useTableHandle(
     }),
     [
       props.id,
+      nodeScope,
       events,
-      helpers,
       currentPage,
       pageSize,
       selectedRowKeys,

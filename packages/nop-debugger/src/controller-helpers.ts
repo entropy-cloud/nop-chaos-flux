@@ -57,9 +57,14 @@ export function createSessionId(id: string) {
   return `${id}:${Date.now().toString(36)}`;
 }
 
-export function formatErrorDetail(error: unknown) {
+export function formatErrorDetail(error: unknown): string {
   if (error instanceof Error) {
-    return error.stack ?? error.message;
+    const detail = error.stack ?? error.message;
+    if (error.cause === undefined) {
+      return detail;
+    }
+
+    return `${detail}\nCaused by: ${formatErrorDetail(error.cause)}`;
   }
 
   if (typeof error === 'string') {
@@ -71,6 +76,20 @@ export function formatErrorDetail(error: unknown) {
   } catch {
     return String(error);
   }
+}
+
+export function normalizeErrorForExport(error: unknown): unknown {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      cause:
+        error.cause === undefined ? undefined : normalizeErrorForExport(error.cause),
+    };
+  }
+
+  return error;
 }
 
 export function formatActionResult(result: ActionResult | undefined) {

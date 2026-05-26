@@ -450,14 +450,7 @@ export function buildEvaluateNodeExpression(
       return {
         expression: args.expression,
         ok: true,
-        value: compiled.exec(inspectResult.scopeChain[0].data, {
-          fetcher: async () => {
-            throw new Error('API calls are not available during expression evaluation.');
-          },
-          notify() {
-            return undefined;
-          },
-        }),
+        value: compiled.exec(inspectResult.scopeChain[0].data, {}),
         usedScopeLabel: inspectResult.scopeChain[0].label,
       };
     } catch (error) {

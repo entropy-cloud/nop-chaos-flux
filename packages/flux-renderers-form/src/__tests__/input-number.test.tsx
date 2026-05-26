@@ -358,6 +358,20 @@ describe('input-number renderer', () => {
     expect((screen.getByLabelText('Increase') as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('marks the native control readOnly and keeps steppers disabled when field is readOnly', () => {
+    renderNumberField({
+      type: 'form',
+      data: { count: 5 },
+      body: [{ type: 'input-number', name: 'count', label: 'Count', readOnly: true }],
+    });
+
+    const input = getNumberInput();
+    expect(input.readOnly).toBe(true);
+    expect(input.disabled).toBe(false);
+    expect((screen.getByLabelText('Decrease') as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByLabelText('Increase') as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it('shows placeholder when value is empty', () => {
     renderNumberField({
       type: 'form',
@@ -422,13 +436,18 @@ describe('input-number renderer', () => {
   });
 
   it('renders with nop-input-number marker class', () => {
-    renderNumberField({
+    const view = renderNumberField({
       type: 'form',
       data: { count: 5 },
-      body: [{ type: 'input-number', name: 'count', label: 'Count' }],
+      body: [{ type: 'input-number', name: 'count', label: 'Count', testid: 'count-field' }],
     });
 
     const marker = document.querySelector('.nop-input-number');
     expect(marker).toBeTruthy();
+    const fieldRoot = view.container.querySelector('.nop-field[data-testid="count-field"]');
+    expect(fieldRoot).toBeTruthy();
+    expect(fieldRoot?.getAttribute('data-cid')).toBeTruthy();
+    expect(marker?.getAttribute('data-testid')).toBeNull();
+    expect(marker?.getAttribute('data-cid')).toBeNull();
   });
 });

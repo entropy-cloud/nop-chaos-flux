@@ -1,10 +1,14 @@
 // @vitest-environment happy-dom
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { DesignerXyflowCanvasBridge, renderDesignerCanvasBridge } from './canvas-bridge.js';
 import { DesignerXyflowNode } from './designer-xyflow-canvas/index.js';
+import { DesignerContext } from './designer-context.js';
+import { registerDesignerCanvasFocusHandler } from './designer-canvas-focus.js';
+import { PortConnectionA11yContext } from './designer-xyflow-canvas/port-connection-a11y-context.js';
 
 const mockState: { latestReactFlowProps: any } = {
   latestReactFlowProps: null,
@@ -14,8 +18,8 @@ vi.mock('@xyflow/react', () => ({
   Background: () => null,
   BackgroundVariant: { Dots: 'dots', Lines: 'lines', Cross: 'cross' },
   Controls: () => null,
-  Handle: ({ id, className, style }: any) => {
-    return <div data-testid={`handle-${id}`} className={className} style={style}></div>;
+  Handle: ({ id, className, style, ...props }: any) => {
+    return <div data-testid={`handle-${id}`} className={className} style={style} {...props}></div>;
   },
   MiniMap: () => null,
   Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
@@ -58,6 +62,12 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
 }
 
 vi.mock('@nop-chaos/flux-react', () => ({
+  ClassAliasesContext: {
+    Provider: ({ children }: { children: React.ReactNode }) => children,
+  },
+  RenderNodes: ({ input }: { input: any }) => {
+    return input ? <div data-testid="rendered-body">{String(input?.type ?? 'unknown')}</div> : null;
+  },
   useRendererRuntime: () => ({
     createChildScope: (parent: any, data: any) => ({
       store: { setSnapshot: vi.fn() },
@@ -76,16 +86,20 @@ vi.mock('@nop-chaos/flux-react/unstable', () => ({
   },
 }));
 
-vi.mock('./designer-context', () => ({
-  useDesignerContext: () => ({
-    config: { classAliases: undefined },
-    dispatch: vi.fn(),
-    core: { getConfig: vi.fn() },
-  }),
-  useNodeTypeConfig: (typeId: string) => {
-    if (typeId === 'task') {
-      return {
-        id: 'task',
+vi.mock('./designer-context', async () => {
+  const React = await import('react');
+  const DesignerContext = React.createContext<any>(null);
+  return {
+    DesignerContext,
+    useDesignerContext: () => React.useContext(DesignerContext) ?? {
+      config: { classAliases: undefined },
+      dispatch: vi.fn(),
+      core: { getConfig: vi.fn() },
+    },
+    useNodeTypeConfig: (typeId: string) => {
+      if (typeId === 'task') {
+        return {
+          id: 'task',
         label: 'Task Node',
         body: { type: 'flex', items: [] },
         ports: [
@@ -120,11 +134,11 @@ vi.mock('./designer-context', () => ({
       };
     }
     return undefined;
-  },
-  useEdgeTypeConfig: (typeId: string) => {
-    if (typeId === 'default') {
-      return {
-        id: 'default',
+    },
+    useEdgeTypeConfig: (typeId: string) => {
+      if (typeId === 'default') {
+        return {
+          id: 'default',
         label: 'Default Edge',
         appearance: {
           stroke: '#666',
@@ -133,19 +147,27 @@ vi.mock('./designer-context', () => ({
       };
     }
     return undefined;
-  },
-  useNormalizedConfig: () => ({
-    nodeTypes: new Map([
-      ['task', { id: 'task', label: 'Task', body: { type: 'text' } }],
-      ['start', { id: 'start', label: 'Start', body: { type: 'text' } }],
-      ['end', { id: 'end', label: 'End', body: { type: 'text' } }],
-    ]),
-    edgeTypes: new Map([['default', { id: 'default', label: 'Default' }]]),
-  }),
-}));
+    },
+    useNormalizedConfig: () => ({
+      nodeTypes: new Map([
+        ['task', { id: 'task', label: 'Task', body: { type: 'text' } }],
+        ['start', { id: 'start', label: 'Start', body: { type: 'text' } }],
+        ['end', { id: 'end', label: 'End', body: { type: 'text' } }],
+      ]),
+      edgeTypes: new Map([['default', { id: 'default', label: 'Default' }]]),
+    }),
+  };
+});
 
-beforeEach(() => {
+beforeEach(async () => {
   mockState.latestReactFlowProps = null;
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
 });
 
 function createSnapshot(): DesignerSnapshot {
@@ -217,6 +239,7 @@ describe('DesignerXyflowCanvasBridge', () => {
       <DesignerXyflowCanvasBridge
         snapshot={createSnapshot()}
         pendingConnectionSourceId={null}
+        pendingConnectionSourcePortId={null}
         reconnectingEdgeId={null}
         onPaneClick={vi.fn()}
         onNodeSelect={vi.fn()}
@@ -252,9 +275,9 @@ describe('DesignerXyflowCanvasBridge', () => {
       { container: view.container },
     );
 
-    expect(screen.getByTestId('handle-in').className).toContain('task-port-in');
-    expect(screen.getByTestId('handle-in').className).toContain('!w-3');
-    expect(screen.getByTestId('handle-out').className).toContain('!w-3');
+    expect(screen.getByTestId('designer-handle-target-in').className).toContain('task-port-in');
+    expect(screen.getByTestId('designer-handle-target-in').className).toContain('!w-3');
+    expect(screen.getByTestId('designer-handle-source-out').className).toContain('!w-3');
   });
 
   it('translates xyflow callbacks into the bridge contract', () => {
@@ -272,6 +295,7 @@ describe('DesignerXyflowCanvasBridge', () => {
       <DesignerXyflowCanvasBridge
         snapshot={createSnapshot()}
         pendingConnectionSourceId={null}
+        pendingConnectionSourcePortId={null}
         reconnectingEdgeId={null}
         onPaneClick={onPaneClick}
         onNodeSelect={onNodeSelect}
@@ -304,7 +328,7 @@ describe('DesignerXyflowCanvasBridge', () => {
       targetHandle: 'in-primary',
     };
     expect(() => mockState.latestReactFlowProps.onConnect(mockConnection)).not.toThrow();
-    expect(onStartConnection).toHaveBeenCalledWith('node-1', undefined);
+    expect(onStartConnection).toHaveBeenCalledWith('node-1', undefined, 'out-primary');
     expect(onCompleteConnection).toHaveBeenCalledWith(
       'node-2',
       undefined,
@@ -338,6 +362,7 @@ describe('DesignerXyflowCanvasBridge', () => {
       <DesignerXyflowCanvasBridge
         snapshot={createSnapshot()}
         pendingConnectionSourceId={null}
+        pendingConnectionSourcePortId={null}
         reconnectingEdgeId={null}
         onPaneClick={vi.fn()}
         onNodeSelect={vi.fn()}
@@ -399,9 +424,142 @@ describe('DesignerXyflowCanvasBridge', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: '编辑节点' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: '复制节点' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: '删除节点' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Edit node' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Duplicate node' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete node' })).toBeTruthy();
+  });
+
+  it('supports keyboard connection controls on rendered ports', () => {
+    document.body.innerHTML = '';
+    const onStartConnection = vi.fn();
+    const onCancelConnection = vi.fn();
+    const onCompleteConnection = vi.fn();
+    const onStartReconnect = vi.fn();
+    const onCancelReconnect = vi.fn();
+    const onCompleteReconnect = vi.fn();
+
+    const view = render(
+      <PortConnectionA11yContext.Provider
+        value={{
+          pendingConnectionSourceId: null,
+          pendingConnectionSourcePortId: null,
+          reconnectingEdgeId: 'edge-1',
+          activeEdge: {
+            id: 'edge-1',
+            type: 'default',
+            source: 'node-1',
+            target: 'node-2',
+            sourcePort: 'out',
+            targetPort: 'in',
+            data: { label: 'Edge 1' },
+          },
+          onStartConnection,
+          onCancelConnection,
+          onCompleteConnection,
+          onStartReconnect,
+          onCancelReconnect,
+          onCompleteReconnect,
+        }}
+      >
+        <DesignerXyflowNode
+          id="node-1"
+          selected={true}
+          data={{ typeId: 'task', label: 'Task 1', typeLabel: 'Task' }}
+          xPos={20}
+          yPos={40}
+          dragging={false}
+          zIndex={1}
+          isConnectable={true}
+          type="task"
+        />
+      </PortConnectionA11yContext.Provider>,
+    );
+
+    const reconnectPort = screen.getByRole('button', {
+      name: 'Cancel reconnect from output port out on node Task 1',
+    });
+    fireEvent.keyDown(reconnectPort, { key: 'Enter' });
+    expect(onCancelReconnect).toHaveBeenCalledWith('edge-1');
+
+    view.rerender(
+      <PortConnectionA11yContext.Provider
+        value={{
+          pendingConnectionSourceId: 'node-1',
+          pendingConnectionSourcePortId: 'out',
+          reconnectingEdgeId: null,
+          activeEdge: null,
+          onStartConnection,
+          onCancelConnection,
+          onCompleteConnection,
+          onStartReconnect,
+          onCancelReconnect,
+          onCompleteReconnect,
+        }}
+      >
+        <DesignerXyflowNode
+          id="node-2"
+          selected={false}
+          data={{ typeId: 'end', label: 'End Node', typeLabel: 'End' }}
+          xPos={220}
+          yPos={40}
+          dragging={false}
+          zIndex={1}
+          isConnectable={true}
+          type="end"
+        />
+      </PortConnectionA11yContext.Provider>,
+    );
+
+    const completePort = screen.getByRole('button', {
+      name: 'Complete connection to input port in on node End Node',
+    });
+    fireEvent.keyDown(completePort, { key: 'Enter' });
+    expect(onCompleteConnection).toHaveBeenCalledWith('node-2', 'out', 'in');
+  });
+
+  it('restores focus to the canvas after deleting a node from the toolbar', async () => {
+    document.body.innerHTML = '';
+    const dispatch = vi.fn();
+    const core = { getConfig: vi.fn() } as any;
+    const canvas = document.createElement('div');
+    canvas.tabIndex = 0;
+    canvas.setAttribute('role', 'region');
+    canvas.setAttribute('aria-label', 'Flow designer canvas');
+    document.body.appendChild(canvas);
+    const unregister = registerDesignerCanvasFocusHandler(core, () => canvas.focus());
+
+    render(
+      <DesignerContext.Provider
+        value={{
+          core,
+          commandAdapter: { dispatch } as any,
+          dispatch,
+          config: { classAliases: undefined },
+        }}
+      >
+        <DesignerXyflowNode
+          id="node-1"
+          selected={true}
+          data={{ typeId: 'task', label: 'Task 1', typeLabel: 'Task' }}
+          xPos={20}
+          yPos={40}
+          dragging={false}
+          zIndex={1}
+          isConnectable={true}
+          type="task"
+        />
+      </DesignerContext.Provider>,
+    );
+
+    fireEvent.click(screen.getByTestId('designer-node-delete'));
+
+    expect(dispatch).toHaveBeenCalledWith({ type: 'deleteNode', nodeId: 'node-1' });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(canvas);
+    });
+
+    unregister();
+    canvas.remove();
   });
 });
 
@@ -410,6 +568,7 @@ describe('renderDesignerCanvasBridge', () => {
     const result = renderDesignerCanvasBridge({
       snapshot: createSnapshot(),
       pendingConnectionSourceId: null,
+      pendingConnectionSourcePortId: null,
       reconnectingEdgeId: null,
       onPaneClick: vi.fn(),
       onNodeSelect: vi.fn(),

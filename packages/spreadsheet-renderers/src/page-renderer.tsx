@@ -12,6 +12,7 @@ import {
 import { t } from '@nop-chaos/flux-i18n';
 import {
   createSpreadsheetCore,
+  createEmptyDocument,
   type SpreadsheetConfig,
   type SpreadsheetCommand,
   type SpreadsheetCommandResult,
@@ -89,11 +90,49 @@ function renderFallbackBody(snapshot: SpreadsheetRuntimeSnapshot) {
   );
 }
 
+function isSpreadsheetDocument(value: unknown): value is SpreadsheetDocument {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const workbook = candidate.workbook;
+  if (!workbook || typeof workbook !== 'object') {
+    return false;
+  }
+
+  const sheets = (workbook as Record<string, unknown>).sheets;
+  return Array.isArray(sheets);
+}
+
+function sanitizeSpreadsheetConfig(value: unknown): SpreadsheetConfig | undefined {
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const config: SpreadsheetConfig = {};
+
+  if (typeof candidate.defaultRowHeight === 'number') {
+    config.defaultRowHeight = candidate.defaultRowHeight;
+  }
+  if (typeof candidate.defaultColumnWidth === 'number') {
+    config.defaultColumnWidth = candidate.defaultColumnWidth;
+  }
+  if (typeof candidate.maxUndoDepth === 'number') {
+    config.maxUndoDepth = candidate.maxUndoDepth;
+  }
+
+  return Object.keys(config).length > 0 ? config : undefined;
+}
+
 export function SpreadsheetPageRenderer(props: RendererComponentProps<SpreadsheetPageSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
-  const resolvedDocument = props.props.document as SpreadsheetDocument;
-  const resolvedConfig = props.props.config as SpreadsheetConfig | undefined;
-  const resolvedReadOnly = props.props.readOnly as boolean | undefined;
+  const resolvedDocument = isSpreadsheetDocument(props.props.document)
+    ? props.props.document
+    : createEmptyDocument(`spreadsheet-page:${props.id}`);
+  const resolvedConfig = sanitizeSpreadsheetConfig(props.props.config);
+  const resolvedReadOnly = typeof props.props.readOnly === 'boolean' ? props.props.readOnly : undefined;
 
   const spreadsheetCore = useMemo(
     () =>

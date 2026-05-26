@@ -93,6 +93,7 @@ Design rules:
 - `runtime` stays React-independent where possible
 - `react` focuses on integration, context, and hooks
 - `flux-bundle` is the supported host-facing release facade published as `@nop-chaos/flux`
+- `flux-action-core` is a runtime execution layer, not a compiler owner; compile implementations enter through runtime wiring, not direct package dependency
 - renderer packages are split by capability instead of one giant renderer package
 - `playground` remains the first integration surface for new behavior
 
@@ -157,6 +158,7 @@ Current CI verification baseline:
 - `pnpm test` runs workspace tests without `--passWithNoTests`, so zero discovered tests now fail the default gate
 - `pnpm test:coverage` is the dedicated CI coverage job that executes package Vitest thresholds
 - `playwright.config.ts` enables `forbidOnly` in CI so focused E2E runs cannot silently shrink the default gate
+- boundary-affecting package changes are expected to keep `pnpm audit:deps`, `pnpm check:workspace-manifest-deps`, and `pnpm check:flux-bundle-pack` green together
 
 Source artifact policy:
 

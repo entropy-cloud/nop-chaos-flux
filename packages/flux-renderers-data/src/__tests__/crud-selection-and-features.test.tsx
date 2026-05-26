@@ -140,7 +140,7 @@ describe('CRUD selection and features', () => {
     expect(inspectSelectedButton.hasAttribute('disabled')).toBe(true);
     expect(screen.getByText(/Selected rows: 0; Keys:/)).toBeTruthy();
 
-    const radios = document.querySelectorAll('[data-slot="checkbox"][data-shape="circle"]');
+    const radios = document.querySelectorAll('[data-slot="radio-group-item"]');
     expect(radios.length).toBe(2);
 
     fireEvent.click(radios[0] as HTMLElement);

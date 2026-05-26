@@ -1,6 +1,6 @@
 import React from 'react';
 import type { InstanceFrame, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
-import { TableBody, TableCell, TableRow } from '@nop-chaos/ui';
+import { RadioGroup, TableBody, TableCell, TableRow } from '@nop-chaos/ui';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { TableSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
@@ -117,55 +117,66 @@ function NonVirtualBody({
 }: TableBodyRowsProps) {
   const schemaProps = props.props as TableSchema;
   const helpers = props.helpers;
+  const radioSelectionValue =
+    schemaProps.rowSelection?.type === 'radio' ? Array.from(selectedRowKeys)[0] : undefined;
 
-  return (
-    <TableBody>
-      {processedData.length === 0 ? (
-        <TableRow data-slot="table-empty-row">
-          <TableCell colSpan={columnCount} data-slot="table-empty-cell">
-            {emptyContent}
-          </TableCell>
-        </TableRow>
-      ) : (
-        processedData.map((entry) => {
-          const cacheKey = entry.cacheKey ?? entry.rowKey;
-          const rowScope = rowScopeCache.get(cacheKey);
-          if (!rowScope) return null;
+  const rows =
+    processedData.length === 0 ? (
+      <TableRow data-slot="table-empty-row">
+        <TableCell colSpan={columnCount} data-slot="table-empty-cell">
+          {emptyContent}
+        </TableCell>
+      </TableRow>
+    ) : (
+      processedData.map((entry) => {
+        const cacheKey = entry.cacheKey ?? entry.rowKey;
+        const rowScope = rowScopeCache.get(cacheKey);
+        if (!rowScope) return null;
 
-          const rowKey = cacheKey;
-          const rowInstancePath: InstanceFrame[] = [
-            ...(props.node.instancePath ?? []),
-            { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey },
-          ];
-          const isExpanded = expandedRowKeys.has(rowKey);
-          const isSelected = selectedRowKeys.has(rowKey);
-          const isEven = entry.sourceIndex % 2 === 0;
+        const rowKey = cacheKey;
+        const rowInstancePath: InstanceFrame[] = [
+          ...(props.node.instancePath ?? []),
+          { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey },
+        ];
+        const isExpanded = expandedRowKeys.has(rowKey);
+        const isSelected = selectedRowKeys.has(rowKey);
+        const isEven = entry.sourceIndex % 2 === 0;
 
-          return (
-            <React.Fragment key={rowKey}>
-              {renderDataRow(
-                {
-                  kind: 'data',
-                  entry,
-                  rowScope,
-                  rowKey,
-                  rowInstancePath,
-                  isExpanded,
-                  isSelected,
-                  isEven,
-                },
-                schemaProps,
-                columns,
-                helpers,
-                props,
-                fixedColumnLayout,
-                showExpandColumn,
-                expandRowByClick,
-                onToggleExpand,
-                onSelectRow,
-                isStriped,
-              )}
-              {isExpanded && schemaProps.expandable?.expandedRowRegionKey
+        return (
+          <React.Fragment key={rowKey}>
+            {renderDataRow(
+              {
+                kind: 'data',
+                entry,
+                rowScope,
+                rowKey,
+                rowInstancePath,
+                isExpanded,
+                isSelected,
+                isEven,
+              },
+              schemaProps,
+              columns,
+              helpers,
+              props,
+              fixedColumnLayout,
+              showExpandColumn,
+              expandRowByClick,
+              onToggleExpand,
+              onSelectRow,
+              isStriped,
+            )}
+            {isExpanded && schemaProps.expandable?.expandedRowRegionKey
+              ? renderExpandedRow(
+                  { kind: 'expanded', rowKey, columnCount },
+                  schemaProps,
+                  helpers,
+                  props,
+                  rowScopeCache,
+                  rowRepeatedTemplateId,
+                  responsiveHiddenColumns,
+                )
+              : isExpanded && responsiveHiddenColumns.length > 0
                 ? renderExpandedRow(
                     { kind: 'expanded', rowKey, columnCount },
                     schemaProps,
@@ -175,23 +186,26 @@ function NonVirtualBody({
                     rowRepeatedTemplateId,
                     responsiveHiddenColumns,
                   )
-                : isExpanded && responsiveHiddenColumns.length > 0
-                  ? renderExpandedRow(
-                      { kind: 'expanded', rowKey, columnCount },
-                      schemaProps,
-                      helpers,
-                      props,
-                      rowScopeCache,
-                      rowRepeatedTemplateId,
-                      responsiveHiddenColumns,
-                    )
-                  : null}
-            </React.Fragment>
-          );
-        })
-      )}
-    </TableBody>
-  );
+                : null}
+          </React.Fragment>
+        );
+      })
+    );
+
+  if (schemaProps.rowSelection?.type === 'radio') {
+    return (
+      <RadioGroup
+        render={<TableBody />}
+        className={undefined}
+        value={radioSelectionValue}
+        onValueChange={(value) => onSelectRow(String(value), true)}
+      >
+        {rows}
+      </RadioGroup>
+    );
+  }
+
+  return <TableBody>{rows}</TableBody>;
 }
 
 /* eslint-disable react-hooks/incompatible-library */

@@ -389,7 +389,7 @@ describe('table internal components', () => {
     expect(onSelectRow).toHaveBeenCalledWith('1', true);
   });
 
-  it('renders data rows with radio selection cells (circle shape)', () => {
+  it('renders data rows with shared radio selection cells', () => {
     const onSelectRow = vi.fn();
     const rowScopeCache = new Map<string, any>([
       ['1', makeRowScope({ name: 'Alice' }, 0)],
@@ -440,8 +440,13 @@ describe('table internal components', () => {
     const selectCells = document.querySelectorAll('[data-slot="table-select-cell"]');
     expect(selectCells.length).toBe(2);
 
-    const radios = document.querySelectorAll('[data-slot="checkbox"][data-shape="circle"]');
+    const radioGroup = document.querySelector('[data-slot="radio-group"]');
+    expect(radioGroup).toBeTruthy();
+
+    const radios = document.querySelectorAll('[data-slot="radio-group-item"]');
     expect(radios.length).toBe(2);
+    expect(radios[0].getAttribute('aria-checked')).toBe('true');
+    expect(radios[1].getAttribute('aria-checked')).toBe('false');
 
     fireEvent.click(radios[1]);
     expect(onSelectRow).toHaveBeenCalledWith('2', true);

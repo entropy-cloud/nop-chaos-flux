@@ -300,10 +300,14 @@ describe('condition-builder renderer integration', () => {
       />,
     );
 
-    const root = view.container.querySelector('.nop-condition-builder.custom-picker-root');
-    expect(root).toBeTruthy();
-    expect(root?.getAttribute('data-testid')).toBe('picker-root');
-    expect(root?.getAttribute('data-cid')).toBeTruthy();
+    const fieldRoot = view.container.querySelector('.nop-field[data-testid="picker-root"]');
+    expect(fieldRoot).toBeTruthy();
+    expect(fieldRoot?.getAttribute('data-cid')).toBeTruthy();
+
+    const pickerRoot = view.container.querySelector('.nop-condition-builder.custom-picker-root');
+    expect(pickerRoot).toBeTruthy();
+    expect(pickerRoot?.getAttribute('data-testid')).toBeNull();
+    expect(pickerRoot?.getAttribute('data-cid')).toBeNull();
   });
 
   it('does not mutate form state when rendered readOnly', async () => {

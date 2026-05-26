@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
+import { basicRendererDefinitions } from '../basic-renderer-definitions.js';
 
 beforeEach(async () => {
   resetFluxI18n();
@@ -15,6 +16,11 @@ afterEach(() => {
 });
 
 describe('basicRendererDefinitions dynamic-renderer', () => {
+  it('publishes loadAction as an event field', () => {
+    const dynamicRenderer = basicRendererDefinitions.find((definition) => definition.type === 'dynamic-renderer');
+    expect(dynamicRenderer?.fields?.find((field) => field.key === 'loadAction')?.kind).toBe('event');
+  });
+
   it('renders body content while loading', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     render(

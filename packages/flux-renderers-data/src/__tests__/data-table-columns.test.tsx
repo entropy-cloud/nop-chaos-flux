@@ -335,6 +335,68 @@ describe('dataRendererDefinitions table columns', () => {
     });
   });
 
+  it('reconciles local visible columns when schema columns change', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    const rendered = render(
+      <SchemaRenderer
+        schemaUrl="test://data/table-column-settings-local-reconcile"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              columnSettings: { enabled: true },
+              columns: [
+                { label: 'Name', name: 'name' },
+                { label: 'Email', name: 'email' },
+              ],
+              source: [{ id: 1, name: 'Alice', email: 'alice@example.com' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: t('flux.table.columns') }));
+    fireEvent.click(screen.getByRole('menuitemcheckbox', { name: 'Email' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('alice@example.com')).toBeNull();
+    });
+
+    rendered.rerender(
+      <SchemaRenderer
+        schemaUrl="test://data/table-column-settings-local-reconcile"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              columnSettings: { enabled: true },
+              columns: [
+                { label: 'Name', name: 'name' },
+                { label: 'Email', name: 'email', hidden: true },
+                { label: 'Role', name: 'role' },
+              ],
+              source: [{ id: 1, name: 'Alice', email: 'alice@example.com', role: 'Admin' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Alice')).toBeTruthy();
+      expect(screen.getByText('Admin')).toBeTruthy();
+      expect(screen.queryByText('alice@example.com')).toBeNull();
+    });
+  });
+
   it('renders inline column settings when overlay is disabled', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer();

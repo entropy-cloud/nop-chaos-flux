@@ -1,5 +1,5 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { extractNestedSchemaRegions } from '@nop-chaos/flux-core';
+import { createTemplateRegion, extractNestedSchemaRegions, isSchemaInput } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import { DataSourceRenderer } from './data-source-renderer.js';
 import { validateTableSchema } from './data-schema-validation.js';
@@ -27,7 +27,7 @@ function normalizeTableColumns(
       return column;
     }
 
-    return extractNestedSchemaRegions({
+    const normalizedColumn = extractNestedSchemaRegions({
       candidate: column as Record<string, unknown>,
       itemRegionPath: `${path}.columns[${index}]`,
       itemRegionKeyPrefix: `columns.${index}`,
@@ -55,7 +55,39 @@ function normalizeTableColumns(
       ],
       regions,
       compileSchema,
-    }).value;
+    }).value as Record<string, unknown>;
+
+    const quickEdit = normalizedColumn.quickEdit;
+    if (
+      quickEdit &&
+      typeof quickEdit === 'object' &&
+      !Array.isArray(quickEdit) &&
+      isSchemaInput((quickEdit as Record<string, unknown>).body)
+    ) {
+      const quickEditBodyRegionKey =
+        typeof normalizedColumn.quickEditBodyRegionKey === 'string'
+          ? normalizedColumn.quickEditBodyRegionKey
+          : `columns.${index}.quickEditBody`;
+      const quickEditBodyRegionPath = `${path}.columns[${index}].quickEdit.body`;
+
+      regions[quickEditBodyRegionKey] = createTemplateRegion(
+        quickEditBodyRegionKey,
+        (quickEdit as Record<string, unknown>).body,
+        quickEditBodyRegionPath,
+        compileSchema,
+      );
+
+      const nextQuickEdit = { ...(quickEdit as Record<string, unknown>) };
+      delete nextQuickEdit.body;
+
+      return {
+        ...normalizedColumn,
+        quickEdit: nextQuickEdit,
+        quickEditBodyRegionKey,
+      };
+    }
+
+    return normalizedColumn;
   });
 }
 

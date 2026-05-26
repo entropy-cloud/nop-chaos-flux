@@ -32,9 +32,6 @@ function createRowScope(record: Record<string, unknown>) {
 function createHelpers() {
   return {
     dispatch: vi.fn(async () => ({ ok: true })),
-    render: vi.fn((body, _options) =>
-      React.createElement('input', { 'aria-label': body.label ?? 'Custom body' }),
-    ),
   } as any;
 }
 
@@ -94,7 +91,6 @@ describe('resolveTableQuickEditConfig', () => {
     ).toEqual({
       mode: 'inline',
       saveImmediately: false,
-      body: { type: 'input-text' },
     });
     expect(resolveTableQuickEditConfig({ type: 'text', quickEdit: undefined })).toBeUndefined();
   });
@@ -185,22 +181,24 @@ describe('TableQuickEditCell', () => {
   });
 
   it('renders custom inline body and tracks dirty state through change capture', async () => {
-    const customBody = { type: 'input-text', label: 'Custom body' };
-    const customHelpers = createHelpers();
-    customHelpers.render.mockImplementation((_body: any, options: any) => (
-      <input
-        aria-label="Custom body"
-        defaultValue={String((options?.scope.get('record') as Record<string, unknown>)?.name ?? '')}
-        onChange={(event) => options?.scope.update('record.name', event.target.value)}
-      />
-    ));
     const { rowScope } = renderCell({
       column: {
         name: 'name',
         label: 'Name',
-        quickEdit: { body: customBody },
+        quickEdit: {},
+        quickEditBodyRegionKey: 'quickBody',
       },
-      helpers: customHelpers,
+      regions: {
+        quickBody: {
+          render: (options: any) => (
+            <input
+              aria-label="Custom body"
+              defaultValue={String((options?.scope.get('record') as Record<string, unknown>)?.name ?? '')}
+              onChange={(event) => options?.scope.update('record.name', event.target.value)}
+            />
+          ),
+        },
+      },
     });
 
     const customInput = screen.getByRole('textbox', { name: 'Custom body' }) as HTMLInputElement;
@@ -214,7 +212,7 @@ describe('TableQuickEditCell', () => {
 
     fireEvent.click(saveButton);
     await waitFor(() => {
-      expect(customHelpers.dispatch).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('button', { name: t('flux.common.save') })).toBeTruthy();
     });
     expect(rowScope.get('record')).toMatchObject({ name: 'changed' });
   });
@@ -257,7 +255,19 @@ describe('TableQuickEditCell', () => {
       column: {
         name: 'name',
         label: 'Edit Name',
-        quickEdit: { mode: 'dialog', body: { type: 'input-text', label: 'Dialog body' } },
+        quickEdit: { mode: 'dialog' },
+        quickEditBodyRegionKey: 'dialogBody',
+      },
+      regions: {
+        dialogBody: {
+          render: (options: any) => (
+            <input
+              aria-label="Dialog body"
+              defaultValue={String((options?.scope.get('record') as Record<string, unknown>)?.name ?? '')}
+              onChange={(event) => options?.scope.update('record.name', event.target.value)}
+            />
+          ),
+        },
       },
     });
 
@@ -298,7 +308,19 @@ describe('TableQuickEditCell', () => {
       column: {
         name: 'name',
         label: 'Edit Name',
-        quickEdit: { mode: 'dialog', body: { type: 'input-text', label: 'Dialog body' } },
+        quickEdit: { mode: 'dialog' },
+        quickEditBodyRegionKey: 'dialogBody',
+      },
+      regions: {
+        dialogBody: {
+          render: (options: any) => (
+            <input
+              aria-label="Dialog body"
+              defaultValue={String((options?.scope.get('record') as Record<string, unknown>)?.name ?? '')}
+              onChange={(event) => options?.scope.update('record.name', event.target.value)}
+            />
+          ),
+        },
       },
     });
 

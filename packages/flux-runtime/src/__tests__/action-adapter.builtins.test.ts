@@ -1,44 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ComponentActionInvocation, NamespacedActionInvocation } from '@nop-chaos/flux-core';
-import { createActionRuntimeAdapter } from '../action-adapter.js';
-import { createActionScope } from '../action-scope.js';
+import { createActionRuntimeAdapter, createBuiltInInvocation, createCtx } from './action-adapter.test-support.js';
 import { createScopeRef } from '../scope.js';
-
-function createAdapter() {
-  return createActionRuntimeAdapter({
-    getEnv: () => ({ notify: vi.fn() }) as any,
-    expressionCompiler: {} as any,
-    evaluate: <T>(target: unknown) => target as T,
-    executeApiRequest: vi.fn() as any,
-    runtime: {
-      env: { notify: vi.fn() },
-      createChildScope: vi.fn(),
-      refreshDataSource: vi.fn(),
-    } as any,
-    createSurfaceScope: vi.fn(),
-  });
-}
-
-function createCtx(overrides: Record<string, unknown> = {}) {
-  return {
-    runtime: { env: { notify: vi.fn() } },
-    scope: createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} }),
-    ...overrides,
-  } as any;
-}
-
-function createBuiltInInvocation(
-  action: string,
-  args?: Record<string, unknown>,
-  targeting?: Record<string, unknown>,
-) {
-  return {
-    action,
-    args,
-    targeting: targeting ?? {},
-    actionNode: {},
-  } as any;
-}
 
 describe('createActionRuntimeAdapter direct branches', () => {
   it('covers dialog, drawer, toast, submit, refresh, and unsupported built-in action branches', async () => {
@@ -209,7 +171,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
       ),
     ).resolves.toEqual({ ok: true, data: { drawerId: 'drawer-1' } });
     expect(createSurfaceScope).toHaveBeenCalledWith('drawer', openDrawerCtx, { recordId: 2 });
-  
+
     await expect(
       adapter.invokeBuiltInAction(
         createBuiltInInvocation('showToast', { level: 'warning', message: 'Heads up' }),
@@ -288,169 +250,23 @@ describe('createActionRuntimeAdapter direct branches', () => {
       ),
     ).resolves.toMatchObject({ ok: false, cancelled: true, error: expect.any(Error) });
   });
-
-  it('fails component actions when registry is missing, resolve throws, or no handle exists', async () => {
-    const adapter = createAdapter();
-
-    await expect(
-      adapter.invokeComponentAction(
-        {
-          method: 'submit',
-          target: { componentId: 'form-1' },
-          payload: undefined,
-        } as ComponentActionInvocation,
-        createCtx({ componentRegistry: undefined }),
-      ),
-    ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
-
-    await expect(
-      adapter.invokeComponentAction(
-        {
-          method: 'submit',
-          target: { componentId: 'form-1' },
-          payload: undefined,
-        } as ComponentActionInvocation,
-        createCtx({
-          componentRegistry: {
-            resolve: () => {
-              throw new Error('bad resolve');
-            },
-          },
-        }),
-      ),
-    ).resolves.toMatchObject({ ok: false, error: new Error('bad resolve'), componentId: 'form-1' });
-
-    await expect(
-      adapter.invokeComponentAction(
-        {
-          method: 'submit',
-          target: { componentName: 'named-form' },
-          payload: undefined,
-        } as ComponentActionInvocation,
-        createCtx({
-          componentRegistry: {
-            resolve: () => undefined,
-          },
-        }),
-      ),
-    ).resolves.toMatchObject({ ok: false, error: expect.any(Error), componentName: 'named-form' });
-  });
-
-  it('rejects unsupported component methods and wraps primitive invocation results', async () => {
-    const adapter = createAdapter();
-    const handle = {
-      id: 'form-1',
-      name: 'profile',
-      type: 'form',
-      capabilities: {
-        hasMethod: () => false,
-        listMethods: () => ['submit'],
-        invoke: vi.fn(),
-      },
-    };
-
-    await expect(
-      adapter.invokeComponentAction(
-        {
-          method: 'reset',
-          target: { componentId: 'form-1' },
-          payload: undefined,
-        } as ComponentActionInvocation,
-        createCtx({
-          componentRegistry: { resolve: () => handle },
-        }),
-      ),
-    ).resolves.toMatchObject({
-      ok: false,
-      error: expect.any(Error),
-      componentId: 'form-1',
-      componentType: 'form',
-    });
-
-    const primitiveHandle = {
-      id: 'button-1',
-      name: 'action-button',
-      type: 'button',
-      capabilities: {
-        hasMethod: () => true,
-        listMethods: () => ['click'],
-        invoke: vi.fn().mockResolvedValue('clicked'),
-      },
-    };
-
-    await expect(
-      adapter.invokeComponentAction(
-        {
-          method: 'click',
-          payload: { via: 'test' },
-          target: { componentId: 'button-1' },
-        } as ComponentActionInvocation,
-        createCtx({
-          componentRegistry: { resolve: () => primitiveHandle },
-        }),
-      ),
-    ).resolves.toEqual({
-      ok: true,
-      data: 'clicked',
-      componentId: 'button-1',
-      componentName: 'action-button',
-      componentType: 'button',
-    });
-  });
-
-  it('fails namespaced actions without action scope or missing handlers and forwards resolved handlers', async () => {
-    const adapter = createAdapter();
-
-    await expect(
-      adapter.invokeNamespacedAction(
-        {
-          actionName: 'dialog:open',
-          namespace: 'dialog',
-          method: 'open',
-          payload: undefined,
-        } as NamespacedActionInvocation,
-        createCtx({ actionScope: undefined }),
-      ),
-    ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
-
-    const emptyScope = createActionScope({ id: 'action-scope-1' });
-    await expect(
-      adapter.invokeNamespacedAction(
-        {
-          actionName: 'dialog:open',
-          namespace: 'dialog',
-          method: 'open',
-          payload: undefined,
-        } as NamespacedActionInvocation,
-        createCtx({ actionScope: emptyScope }),
-      ),
-    ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
-
-    const provider = {
-      kind: 'dialog',
-      invoke: vi.fn().mockResolvedValue({ ok: true, data: { opened: true } }),
-    } as any;
-    emptyScope.registerNamespace('dialog', provider);
-    const ctx = createCtx({ actionScope: emptyScope });
-
-    await expect(
-      adapter.invokeNamespacedAction(
-        {
-          actionName: 'dialog:open',
-          namespace: 'dialog',
-          method: 'open',
-          payload: { title: 'Test' },
-        } as NamespacedActionInvocation,
-        ctx,
-      ),
-    ).resolves.toEqual({ ok: true, data: { opened: true } });
-    expect(provider.invoke).toHaveBeenCalledWith('open', { title: 'Test' }, ctx);
-  });
 });
 
 describe('built-in scope-write and submit semantics', () => {
   it('setValue always writes current scope even when form exists', async () => {
-    const adapter = createAdapter();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify: vi.fn() }) as any,
+      expressionCompiler: {} as any,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as any,
+      runtime: {
+        env: { notify: vi.fn() },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+        registry: { get: vi.fn(() => undefined) },
+      } as any,
+      createSurfaceScope: vi.fn(),
+    });
     const form = { id: 'form-1', setValue: vi.fn() };
     const scopeUpdate = vi.fn();
     const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
@@ -466,7 +282,19 @@ describe('built-in scope-write and submit semantics', () => {
   });
 
   it('setValue no longer uses componentId as a path fallback', async () => {
-    const adapter = createAdapter();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify: vi.fn() }) as any,
+      expressionCompiler: {} as any,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as any,
+      runtime: {
+        env: { notify: vi.fn() },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+        registry: { get: vi.fn(() => undefined) },
+      } as any,
+      createSurfaceScope: vi.fn(),
+    });
     const scopeUpdate = vi.fn();
     const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
     scope.update = scopeUpdate;
@@ -481,7 +309,19 @@ describe('built-in scope-write and submit semantics', () => {
   });
 
   it('setValue uses scope without formId even when form exists', async () => {
-    const adapter = createAdapter();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify: vi.fn() }) as any,
+      expressionCompiler: {} as any,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as any,
+      runtime: {
+        env: { notify: vi.fn() },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+        registry: { get: vi.fn(() => undefined) },
+      } as any,
+      createSurfaceScope: vi.fn(),
+    });
     const form = { id: 'form-1', setValue: vi.fn() };
     const scopeUpdate = vi.fn();
     const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
@@ -497,7 +337,19 @@ describe('built-in scope-write and submit semantics', () => {
   });
 
   it('setValue uses scope without form when no form exists', async () => {
-    const adapter = createAdapter();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify: vi.fn() }) as any,
+      expressionCompiler: {} as any,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as any,
+      runtime: {
+        env: { notify: vi.fn() },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+        registry: { get: vi.fn(() => undefined) },
+      } as any,
+      createSurfaceScope: vi.fn(),
+    });
     const scopeUpdate = vi.fn();
     const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
     scope.update = scopeUpdate;
@@ -511,7 +363,19 @@ describe('built-in scope-write and submit semantics', () => {
   });
 
   it('setValues uses current form runtime when one exists', async () => {
-    const adapter = createAdapter();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify: vi.fn() }) as any,
+      expressionCompiler: {} as any,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as any,
+      runtime: {
+        env: { notify: vi.fn() },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+        registry: { get: vi.fn(() => undefined) },
+      } as any,
+      createSurfaceScope: vi.fn(),
+    });
     const form = { id: 'form-1', setValues: vi.fn() };
     const scopeUpdate = vi.fn();
     const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
@@ -528,7 +392,19 @@ describe('built-in scope-write and submit semantics', () => {
   });
 
   it('setValues honors args.path inside the current form runtime', async () => {
-    const adapter = createAdapter();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify: vi.fn() }) as any,
+      expressionCompiler: {} as any,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as any,
+      runtime: {
+        env: { notify: vi.fn() },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+        registry: { get: vi.fn(() => undefined) },
+      } as any,
+      createSurfaceScope: vi.fn(),
+    });
     const form = { id: 'form-1', setValue: vi.fn(), setValues: vi.fn() };
 
     const result = await adapter.invokeBuiltInAction(
@@ -554,7 +430,19 @@ describe('built-in scope-write and submit semantics', () => {
   });
 
   it('setValues no longer uses targetId as a base-path fallback', async () => {
-    const adapter = createAdapter();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify: vi.fn() }) as any,
+      expressionCompiler: {} as any,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as any,
+      runtime: {
+        env: { notify: vi.fn() },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+        registry: { get: vi.fn(() => undefined) },
+      } as any,
+      createSurfaceScope: vi.fn(),
+    });
     const form = { id: 'form-1', setValue: vi.fn(), setValues: vi.fn() };
 
     const result = await adapter.invokeBuiltInAction(
@@ -575,7 +463,19 @@ describe('built-in scope-write and submit semantics', () => {
   });
 
   it('submitForm returns error when there is no current form runtime', async () => {
-    const adapter = createAdapter();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify: vi.fn() }) as any,
+      expressionCompiler: {} as any,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as any,
+      runtime: {
+        env: { notify: vi.fn() },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+        registry: { get: vi.fn(() => undefined) },
+      } as any,
+      createSurfaceScope: vi.fn(),
+    });
 
     const result = await adapter.invokeBuiltInAction(
       createBuiltInInvocation('submitForm'),
@@ -586,7 +486,19 @@ describe('built-in scope-write and submit semantics', () => {
   });
 
   it('submitForm forwards abort signal to the current form', async () => {
-    const adapter = createAdapter();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify: vi.fn() }) as any,
+      expressionCompiler: {} as any,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as any,
+      runtime: {
+        env: { notify: vi.fn() },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+        registry: { get: vi.fn(() => undefined) },
+      } as any,
+      createSurfaceScope: vi.fn(),
+    });
     const controller = new AbortController();
     const form = {
       submit: vi.fn().mockResolvedValue({ ok: true, data: { submitted: true } }),
@@ -604,16 +516,26 @@ describe('built-in scope-write and submit semantics', () => {
     );
 
     expect(result).toMatchObject({ ok: true, data: { submitted: true } });
-    expect(form.submit).toHaveBeenCalledWith(
-      {
-        interactionId: 'submit-local',
-        signal: controller.signal,
-      },
-    );
+    expect(form.submit).toHaveBeenCalledWith({
+      interactionId: 'submit-local',
+      signal: controller.signal,
+    });
   });
 
   it('submitForm preserves current-form failures', async () => {
-    const adapter = createAdapter();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify: vi.fn() }) as any,
+      expressionCompiler: {} as any,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as any,
+      runtime: {
+        env: { notify: vi.fn() },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+        registry: { get: vi.fn(() => undefined) },
+      } as any,
+      createSurfaceScope: vi.fn(),
+    });
     const submitError = new Error('submit failed');
     const form = { submit: vi.fn().mockRejectedValue(submitError) };
 

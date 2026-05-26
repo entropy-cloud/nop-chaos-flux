@@ -2,12 +2,13 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import '@nop-chaos/spreadsheet-renderers/canvas-styles.css';
 import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { useRendererEnv } from '@nop-chaos/flux-react';
-import { cellAddress, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
+import { useBridgeSnapshot, useRendererEnv } from '@nop-chaos/flux-react';
+import { cellAddress } from '@nop-chaos/spreadsheet-core';
 import {
   SheetTabBar,
   SpreadsheetGrid,
   type SpreadsheetBridge,
+  type SpreadsheetHostSnapshot,
   useSpreadsheetInteractions,
 } from '@nop-chaos/spreadsheet-renderers';
 import type {
@@ -28,23 +29,22 @@ export interface ReportSpreadsheetCanvasProps {
   core: ReportDesignerCore;
   snapshot: ReportDesignerRuntimeSnapshot;
   spreadsheetBridge: SpreadsheetBridge;
-  spreadsheetSnapshot: SpreadsheetRuntimeSnapshot;
 }
 
 export function ReportSpreadsheetCanvas({
   core,
   snapshot,
   spreadsheetBridge,
-  spreadsheetSnapshot,
 }: ReportSpreadsheetCanvasProps) {
   const env = useRendererEnv();
+  const spreadsheetSnapshot = useBridgeSnapshot(spreadsheetBridge) as SpreadsheetHostSnapshot;
   const designerBridge = useMemo(
     () => createReportDesignerBridge(spreadsheetBridge, core),
     [spreadsheetBridge, core],
   );
 
   const sheetId =
-    spreadsheetSnapshot.activeSheetId || snapshot.document.spreadsheet.workbook.sheets[0]?.id || '';
+    spreadsheetSnapshot.activeSheet?.id || snapshot.document.spreadsheet.workbook.sheets[0]?.id || '';
 
   const interactions = useSpreadsheetInteractions({
     bridge: spreadsheetBridge,

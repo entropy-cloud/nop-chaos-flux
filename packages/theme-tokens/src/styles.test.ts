@@ -20,10 +20,13 @@ describe('@nop-chaos/theme-tokens styles contract', () => {
     expect(styles).toContain('--radius-sm:');
     expect(styles).toContain('--radius-md:');
     expect(styles).toContain('--shadow-sm:');
-    expect(styles).toContain('--sidebar: hsl(var(--card));');
-    expect(styles).toContain('--sidebar-border: hsl(var(--border));');
+    expect(styles).toContain('--sidebar: var(--card);');
+    expect(styles).toContain('--sidebar-border: var(--border);');
     expect(styles).toContain('--primary-foreground:');
     expect(styles).toContain('--background:');
+    expect(styles).toContain('--popover: var(--card);');
+    expect(styles).toContain('--popover-foreground: var(--card-foreground);');
+    expect(styles).toContain('--border: 214 32% 91%;');
   });
 
   it('defines all supported theme root selectors', () => {

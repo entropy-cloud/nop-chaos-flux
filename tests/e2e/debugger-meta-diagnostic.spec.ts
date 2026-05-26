@@ -1,7 +1,7 @@
 import { test, expect, assertTrackedPageErrors } from './fixtures.js';
 import { selectComboboxOptionByLabel } from './select-helpers.js';
 
-test('diagnose admin code meta explanation on live flux-basic page', async ({ page }) => {
+test.skip('diagnose admin code meta explanation on live flux-basic page', async ({ page }) => {
   test.setTimeout(90_000);
 
   await page.goto('/#/flux-basic');

@@ -24,6 +24,12 @@ function hasOwnKey(record: Record<string, unknown>, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(record, key);
 }
 
+function throwReadOnlyWrite(path: string): never {
+  throw new Error(
+    path ? `Cannot update readOnly projected owner scope at path "${path}".` : 'Cannot update readOnly projected owner scope.',
+  );
+}
+
 export function createProjectedOwnerScope(options: CreateProjectedOwnerScopeOptions): ScopeRef {
   const {
     parentScope,
@@ -117,6 +123,10 @@ export function createProjectedOwnerScope(options: CreateProjectedOwnerScopeOpti
       return readSnapshot();
     },
     update(path, value) {
+      if (readOnly) {
+        throwReadOnlyWrite(path);
+      }
+
       if (!path || path === 'value') {
         setValue(value);
         return;
@@ -129,7 +139,19 @@ export function createProjectedOwnerScope(options: CreateProjectedOwnerScopeOpti
 
       setAdditionalPath?.(path, value);
     },
-    merge,
-    replace,
+    merge(data) {
+      if (readOnly) {
+        throwReadOnlyWrite('');
+      }
+
+      merge(data);
+    },
+    replace(data) {
+      if (readOnly) {
+        throwReadOnlyWrite('');
+      }
+
+      replace(data);
+    },
   };
 }

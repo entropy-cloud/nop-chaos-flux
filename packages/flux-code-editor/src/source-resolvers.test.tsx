@@ -69,25 +69,25 @@ describe('source resolver hooks', () => {
       <ResolverProbe
         scope={createScope({})}
         expressionConfig={{
-          variables: [{ name: 'foo', label: 'Foo' }],
-          functions: [{ label: 'Math', children: [{ name: 'sum', insertText: 'sum()' }] }],
+          variables: [{ label: 'Foo', value: 'foo' }],
+          functions: [{ groupName: 'Math', items: [{ name: 'sum', description: 'sum()' }] }],
         }}
       />,
     );
 
-    expect(screen.getByTestId('resolver-output').textContent).toContain('"name":"foo"');
+    expect(screen.getByTestId('resolver-output').textContent).toContain('"value":"foo"');
     expect(screen.getByTestId('resolver-output').textContent).toContain('"name":"sum"');
   });
 
   it('resolves variables, tables, and sql variables from scope-backed refs', () => {
     render(
-      <ResolverProbe
-        scope={createScope({
-          editor: {
-            variables: [{ name: 'foo', label: 'Foo' }],
+        <ResolverProbe
+          scope={createScope({
+            editor: {
+            variables: [{ label: 'Foo', value: 'foo' }],
             sql: {
               tables: [{ name: 'users', columns: [{ name: 'id', type: 'int' }] }],
-              variables: [{ name: 'tenantId', label: 'Tenant' }],
+              variables: [{ label: 'Tenant', value: 'tenantId' }],
             },
           },
         })}
@@ -104,9 +104,9 @@ describe('source resolver hooks', () => {
     );
 
     const output = screen.getByTestId('resolver-output').textContent ?? '';
-    expect(output).toContain('"name":"foo"');
+    expect(output).toContain('"value":"foo"');
     expect(output).toContain('"name":"users"');
-    expect(output).toContain('"name":"tenantId"');
+    expect(output).toContain('"value":"tenantId"');
   });
 
   it('returns empty arrays when scope-backed branches are missing', () => {
@@ -128,6 +128,45 @@ describe('source resolver hooks', () => {
 
     expect(screen.getByTestId('resolver-output').textContent).toBe(
       JSON.stringify({ variables: [], functions: [], tables: [], sqlVariables: [] }),
+    );
+  });
+
+  it('filters malformed static and scope-backed resolver items', () => {
+    render(
+      <ResolverProbe
+        scope={createScope({
+          editor: {
+            variables: [null, { label: 'Tenant', value: 'tenant.id' }, { label: 'Broken' }],
+            tables: [
+              { name: 'users', columns: [{ name: 'id', type: 'BIGINT' }] },
+              { name: 'broken', columns: [{ name: 'oops' }] },
+            ],
+            sqlVariables: [{ label: 'Env', value: 'env.id' }, { value: 'broken' }],
+          },
+        })}
+        expressionConfig={{
+          variables: { source: 'scope', scopePath: 'editor', path: 'variables' },
+          functions: [
+            { groupName: 'Logic', items: [{ name: 'IF' }, { description: 'broken' }] },
+            { groupName: 'Broken', items: [] },
+          ],
+        }}
+        sqlConfig={{
+          tables: { source: 'scope', scopePath: 'editor', path: 'tables' },
+          variablePanel: {
+            variables: { source: 'scope', scopePath: 'editor', path: 'sqlVariables' },
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId('resolver-output').textContent).toBe(
+      JSON.stringify({
+        variables: [{ label: 'Tenant', value: 'tenant.id', children: [] }],
+        functions: [{ groupName: 'Logic', items: [{ name: 'IF' }] }],
+        tables: [{ name: 'users', columns: [{ name: 'id', type: 'BIGINT' }] }],
+        sqlVariables: [{ label: 'Env', value: 'env.id', children: [] }],
+      }),
     );
   });
 });

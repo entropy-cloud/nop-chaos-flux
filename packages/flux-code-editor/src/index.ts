@@ -57,7 +57,7 @@ export { useCodeMirror } from './use-code-mirror.js';
 export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror.js';
 
 export { CodeEditorRenderer };
-export const codeEditorRendererDefinition = {
+export const codeEditorRendererDefinition: typeof _codeEditorRendererDefinition = {
   ..._codeEditorRendererDefinition,
   component: LazyCodeEditorRenderer,
 };

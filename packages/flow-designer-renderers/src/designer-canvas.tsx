@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { renderDesignerCanvasBridge } from './canvas-bridge.js';
+import { registerDesignerCanvasFocusHandler } from './designer-canvas-focus.js';
 import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
 import { DingFlowAddNodeMenu, type DingFlowMenuItem } from './dingflow/index.js';
 import { createDingFlowMenuCommand } from './dingflow/dingflow-command-dispatch.js';
@@ -63,6 +64,7 @@ export function DesignerCanvasContent(props: {
   };
 } = {}) {
   const { core, dispatch, config } = useDesignerContext();
+  const surfaceFocusRef = React.useRef<HTMLDivElement | null>(null);
   const snapshot = useDesignerSnapshotSelector(
     (state) => ({
       doc: state.doc,
@@ -93,11 +95,13 @@ export function DesignerCanvasContent(props: {
       left.viewport === right.viewport,
   );
   const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);
+  const [pendingConnectionSourcePortId, setPendingConnectionSourcePortId] = useState<string | null>(null);
   const [reconnectingEdgeId, setReconnectingEdgeId] = useState<string | null>(null);
   const [popover, setPopover] = useState<PopoverState | null>(null);
 
   const handlePaneClick = useCallback(() => {
     setPendingConnectionSourceId(null);
+    setPendingConnectionSourcePortId(null);
     setReconnectingEdgeId(null);
     setPopover(null);
     dispatch({ type: 'clearSelection' });
@@ -116,6 +120,47 @@ export function DesignerCanvasContent(props: {
   );
 
   useEffect(() => registerDesignerPlusButtonHandler(core, handlePlusButtonClick), [core, handlePlusButtonClick]);
+  useEffect(
+    () =>
+      registerDesignerCanvasFocusHandler(core, () => {
+        window.setTimeout(() => {
+          surfaceFocusRef.current?.focus();
+        }, 0);
+      }),
+    [core],
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleTestStartReconnect = (event: Event) => {
+      if (config.documentMode === 'tree') {
+        return;
+      }
+
+      const detail = (event as CustomEvent<{ edgeId?: string }>).detail;
+      if (!detail?.edgeId) {
+        return;
+      }
+
+      setPendingConnectionSourceId(null);
+      setPendingConnectionSourcePortId(null);
+      setReconnectingEdgeId(detail.edgeId);
+      dispatch({ type: 'selectEdge', edgeId: detail.edgeId });
+    };
+
+    window.addEventListener(
+      'nop-designer:test-start-reconnect',
+      handleTestStartReconnect as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        'nop-designer:test-start-reconnect',
+        handleTestStartReconnect as EventListener,
+      );
+    };
+  }, [config.documentMode, dispatch]);
 
   const menuItems = useMemo<DingFlowMenuItem[]>(
     () =>
@@ -202,22 +247,25 @@ export function DesignerCanvasContent(props: {
     canvasConfig: config.canvas,
     nodeTypeSizeMap,
     pendingConnectionSourceId,
+    pendingConnectionSourcePortId,
     reconnectingEdgeId,
     onPaneClick: handlePaneClick,
     onNodeSelect: handleNodeClick,
     onEdgeSelect: handleEdgeClick,
-    onStartConnection: (nodeId: string, event?: React.MouseEvent) => {
+    onStartConnection: (nodeId: string, event?: React.MouseEvent, sourcePort?: string) => {
       if (config.documentMode === 'tree') {
         return;
       }
       event?.stopPropagation();
       setReconnectingEdgeId(null);
       setPendingConnectionSourceId(nodeId);
+      setPendingConnectionSourcePortId(sourcePort ?? null);
     },
     onCancelConnection: (nodeId: string, event?: React.MouseEvent) => {
       event?.stopPropagation();
       if (pendingConnectionSourceId === nodeId) {
         setPendingConnectionSourceId(null);
+        setPendingConnectionSourcePortId(null);
       }
     },
     onCompleteConnection: (
@@ -238,11 +286,12 @@ export function DesignerCanvasContent(props: {
         type: 'addEdge',
         source: pendingConnectionSourceId,
         target: nodeId,
-        sourcePort,
+        sourcePort: sourcePort ?? pendingConnectionSourcePortId ?? undefined,
         targetPort,
       });
       if (result.ok) {
         setPendingConnectionSourceId(null);
+        setPendingConnectionSourcePortId(null);
       }
     },
     onStartReconnect: (edgeId: string, event?: React.MouseEvent) => {
@@ -251,6 +300,7 @@ export function DesignerCanvasContent(props: {
       }
       event?.stopPropagation();
       setPendingConnectionSourceId(null);
+      setPendingConnectionSourcePortId(null);
       setReconnectingEdgeId(edgeId);
     },
     onCancelReconnect: (edgeId: string, event?: React.MouseEvent) => {
@@ -340,6 +390,10 @@ export function DesignerCanvasContent(props: {
       className={props.rootProps?.className}
       data-testid={props.rootProps?.['data-testid']}
       data-cid={props.rootProps?.['data-cid']}
+      ref={surfaceFocusRef}
+      role="region"
+      tabIndex={0}
+      aria-label="Flow designer canvas"
     >
       {canvas}
       {popover && (

@@ -311,4 +311,46 @@ describe('input renderer source state branches', () => {
       expect(screen.getByTestId('form-state:tags').textContent).toBe('[]');
     });
   });
+
+  it('ignores malformed choice options from dynamic sources instead of rendering broken items', async () => {
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/input-source-state#invalid-options"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'select',
+              name: 'role',
+              label: 'Role',
+              options: [null, { label: 'Admin' }, { value: 'editor' }, { label: 'Viewer', value: 'viewer' }],
+            },
+            {
+              type: 'radio-group',
+              name: 'status',
+              label: 'Status',
+              options: [{ label: 'Draft', value: 'draft' }, { label: 'Broken', value: 1 }, 'bad'],
+            },
+            {
+              type: 'checkbox-group',
+              name: 'tags',
+              label: 'Tags',
+              options: [{ label: 'Stable', value: 'stable' }, { label: 1, value: 'bad' }, undefined],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Role' }));
+    expect(await screen.findByRole('option', { name: 'Viewer' })).toBeTruthy();
+    expect(screen.queryByRole('option', { name: 'Admin' })).toBeNull();
+    expect(screen.getByRole('radio', { name: /Draft/ })).toBeTruthy();
+    expect(screen.queryByRole('radio', { name: 'Broken' })).toBeNull();
+    expect(screen.getByRole('checkbox', { name: /Stable/ })).toBeTruthy();
+  });
 });

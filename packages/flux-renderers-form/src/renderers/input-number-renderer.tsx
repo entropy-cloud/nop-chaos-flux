@@ -79,8 +79,6 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
     <div
       className={cn('nop-input-number', props.meta.className)}
       data-slot="field-control"
-      data-testid={props.meta.testid}
-      data-cid={props.meta.cid}
     >
       <div className="relative flex items-center">
         {prefix ? (
@@ -94,6 +92,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
           name={name || undefined}
           value={numericValue !== undefined ? numericValue : ''}
           disabled={presentation.effectiveDisabled}
+          readOnly={presentation.readOnly}
           aria-label={String((props.props.label ?? name) || '') || undefined}
           aria-required={props.props.required ? true : undefined}
           aria-invalid={presentation.showError ? true : undefined}
@@ -118,7 +117,6 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
           }}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          readOnly={props.props.readOnly}
         />
         {suffix ? (
           <span data-slot="suffix" className="pointer-events-none absolute right-3 text-sm text-muted-foreground">

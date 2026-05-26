@@ -250,7 +250,8 @@ export function createFormulaDataSourceController(input: {
             fetchStatus: 'idle',
             error,
             failureCount: current.failureCount + 1,
-            failureReason: error instanceof Error ? error : new Error(String(error)),
+            failureReason:
+              error instanceof Error ? error : new Error(String(error), { cause: error }),
           }));
         });
     },

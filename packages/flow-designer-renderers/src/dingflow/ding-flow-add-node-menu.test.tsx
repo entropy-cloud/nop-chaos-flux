@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { DingFlowAddNodeMenu } from './ding-flow-add-node-menu.js';
 
 afterEach(() => {
@@ -10,7 +10,7 @@ afterEach(() => {
 });
 
 describe('DingFlowAddNodeMenu', () => {
-  it('implements roving menu keyboard navigation', () => {
+  it('implements roving menu keyboard navigation', async () => {
     render(
       <DingFlowAddNodeMenu
         screenX={100}
@@ -29,7 +29,7 @@ describe('DingFlowAddNodeMenu', () => {
     const branch = screen.getByRole('menuitem', { name: 'Branch' });
     const end = screen.getByRole('menuitem', { name: 'End' });
 
-    expect(task.tabIndex).toBe(0);
+    await waitFor(() => expect(task.tabIndex).toBe(0));
     expect(branch.tabIndex).toBe(-1);
     expect(end.tabIndex).toBe(-1);
 
@@ -46,13 +46,13 @@ describe('DingFlowAddNodeMenu', () => {
     expect(task.tabIndex).toBe(0);
   });
 
-  it('restores focus to the trigger when Escape closes the menu', () => {
+  it('restores focus to the trigger when Escape closes the menu', async () => {
     const trigger = document.createElement('button');
     document.body.appendChild(trigger);
     const returnFocusRef = { current: trigger };
     const onClose = vi.fn();
 
-    const rendered = render(
+    render(
       <DingFlowAddNodeMenu
         screenX={100}
         screenY={100}
@@ -63,22 +63,22 @@ describe('DingFlowAddNodeMenu', () => {
       />,
     );
 
-    fireEvent.keyDown(within(rendered.container).getByRole('menu', { name: 'Add node' }), {
+    fireEvent.keyDown(screen.getByRole('menu', { name: 'Add node' }), {
       key: 'Escape',
     });
 
     expect(onClose).toHaveBeenCalledTimes(1);
-    expect(document.activeElement).toBe(trigger);
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
     trigger.remove();
   });
 
-  it('restores focus to the trigger after selecting a menu item', () => {
+  it('restores focus to the trigger after selecting a menu item', async () => {
     const trigger = document.createElement('button');
     document.body.appendChild(trigger);
     const returnFocusRef = { current: trigger };
     const onSelect = vi.fn();
 
-    const rendered = render(
+    render(
       <DingFlowAddNodeMenu
         screenX={100}
         screenY={100}
@@ -89,10 +89,10 @@ describe('DingFlowAddNodeMenu', () => {
       />,
     );
 
-    fireEvent.click(within(rendered.container).getByRole('menuitem', { name: 'Task' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Task' }));
 
     expect(onSelect).toHaveBeenCalledWith('task');
-    expect(document.activeElement).toBe(trigger);
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
     trigger.remove();
   });
 });

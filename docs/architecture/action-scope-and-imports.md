@@ -607,6 +607,11 @@ For namespaced host providers and renderer-owned host bridges, the triggering `r
 - if a renderer-owned bridge adds host-specific context such as Flow Designer command `reason` or a create-dialog submitAction failed result, keep that structured context reachable from `ActionResult.cause` and any emitted monitor details
 - structured `{ ok: false, cancelled: true }` and `{ ok: false, cancelled: true, timedOut: true }` results remain the canonical cancellation vocabulary even when a renderer decides to notify or report the failure locally
 
+The same preservation rule applies to imported namespace setup failures:
+
+- schema preload and runtime import-load wrappers may add alias/schema context to the outer error message, but they should keep the original loader rejection on `Error.cause` even when that rejection is a non-`Error` structured payload
+- monitor/report surfaces that forward import failures should report that normalized wrapper `Error` instead of replacing the rejection with a fresh cause-less string error
+
 In practice this means payload should be authored under `args`:
 
 ```json

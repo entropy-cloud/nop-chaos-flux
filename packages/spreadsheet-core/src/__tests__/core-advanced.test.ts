@@ -249,6 +249,36 @@ describe('replaceDocument/exportDocument', () => {
 
     expect(core.getSnapshot().document.name).toBe('Doc2');
   });
+
+  it('accepts the current document as the saved baseline without resetting view state', async () => {
+    const doc = createEmptyDocument('doc-accept-saved');
+    const sheetId = doc.workbook.sheets[0].id;
+    const core = createSpreadsheetCore({ document: doc });
+
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'saved',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setSelection',
+      selection: {
+        kind: 'cell',
+        sheetId,
+        anchor: { sheetId, address: 'A1', row: 0, col: 0 },
+      },
+    });
+
+    expect(core.getSnapshot().dirty).toBe(true);
+    expect(core.getSnapshot().selection.kind).toBe('cell');
+
+    core.acceptCurrentDocumentAsSaved();
+
+    expect(core.getSnapshot().dirty).toBe(false);
+    expect(core.getSnapshot().document.workbook.sheets[0].cells?.['A1']?.value).toBe('saved');
+    expect(core.getSnapshot().selection.kind).toBe('cell');
+    expect(core.getSnapshot().history.canUndo).toBe(true);
+  });
 });
 
 describe('subscribe', () => {

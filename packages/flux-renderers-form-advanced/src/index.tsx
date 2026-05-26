@@ -1,8 +1,4 @@
-import {
-  registerRendererDefinitions,
-  type RendererDefinition,
-  type RendererRegistry,
-} from '@nop-chaos/flux-core';
+import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
 import { arrayEditorRendererDefinition } from './array-editor.js';
 import { arrayFieldRendererDefinition } from './composite-field/array-field.js';
 import { conditionBuilderRendererDefinition } from './condition-builder/condition-builder.js';
@@ -35,7 +31,7 @@ export * from './composite-field/composite-schemas.js';
 export * from './composite-field/composite-item-id.js';
 export * from './tree-options.js';
 
-export const formAdvancedRendererDefinitions: RendererDefinition[] = [
+export const formAdvancedRendererDefinitions = [
   ...treeControlRendererDefinitions,
   tagListRendererDefinition,
   keyValueRendererDefinition,
@@ -46,8 +42,11 @@ export const formAdvancedRendererDefinitions: RendererDefinition[] = [
   variantFieldRendererDefinition,
   detailFieldRendererDefinition,
   detailViewRendererDefinition,
-];
+] as RendererDefinition[];
 
 export function registerFormAdvancedRenderers(registry: RendererRegistry) {
-  return registerRendererDefinitions(registry, formAdvancedRendererDefinitions);
+  for (const definition of formAdvancedRendererDefinitions) {
+    registry.register(definition as RendererDefinition);
+  }
+  return registry;
 }

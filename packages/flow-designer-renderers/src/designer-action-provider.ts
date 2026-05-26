@@ -43,6 +43,34 @@ function mapPublishedResult(method: string, actionResult: ReturnType<typeof toAc
   return actionResult;
 }
 
+function mapCoreResult(
+  result:
+    | { ok: true; transactionId?: string }
+    | { ok: false; reason: 'missing-node' | 'missing-edge' | 'missing-selection-target' | 'missing-transaction' | 'unavailable' },
+  data?: unknown,
+) {
+  if (result.ok) {
+    return data === undefined ? { ok: true } : { ok: true, data };
+  }
+
+  return {
+    ok: false,
+    error: undefined,
+    cause: { reason: result.reason, result: { ...result, data } },
+    reason: result.reason,
+  };
+}
+
+function mapTransactionResult(result: {
+  ok: boolean;
+  transactionId?: string;
+  reason?: 'missing-transaction' | 'unavailable';
+}) {
+  return result.ok
+    ? { ok: true, transactionId: result.transactionId }
+    : mapCoreResult({ ok: false, reason: result.reason ?? 'unavailable' });
+}
+
 export function createDesignerActionProvider(
   core: DesignerCore,
   adapterInput?: DesignerCommandAdapter,
@@ -376,22 +404,24 @@ export function createDesignerActionProvider(
           return { ok: true, data: txId };
         }
         case 'commitTransaction': {
-          return core.commitTransaction(
+          const result = core.commitTransaction(
             typeof args.transactionId === 'string' ? args.transactionId : undefined,
           );
+          return mapTransactionResult(result);
         }
         case 'rollbackTransaction': {
-          return core.rollbackTransaction(
+          const result = core.rollbackTransaction(
             typeof args.transactionId === 'string' ? args.transactionId : undefined,
           );
+          return mapTransactionResult(result);
         }
         case 'toggleNodeSelection': {
-          core.toggleNodeSelection(args.nodeId as string);
-          return { ok: true };
+          const result = core.toggleNodeSelection(args.nodeId as string);
+          return mapCoreResult(result);
         }
         case 'toggleEdgeSelection': {
-          core.toggleEdgeSelection(args.edgeId as string);
-          return { ok: true };
+          const result = core.toggleEdgeSelection(args.edgeId as string);
+          return mapCoreResult(result);
         }
         case 'selectAllNodes': {
           core.selectAllNodes();
@@ -400,17 +430,31 @@ export function createDesignerActionProvider(
         case 'setSelection': {
           const nodeIds = Array.isArray(args.nodeIds) ? args.nodeIds.map(String) : [];
           const edgeIds = Array.isArray(args.edgeIds) ? args.edgeIds.map(String) : [];
+          const snapshot = core.getSnapshot();
+          const nodeSet = new Set(snapshot.doc.nodes.map((node) => node.id));
+          const edgeSet = new Set(snapshot.doc.edges.map((edge) => edge.id));
+          if (nodeIds.some((nodeId) => !nodeSet.has(nodeId)) || edgeIds.some((edgeId) => !edgeSet.has(edgeId))) {
+            return mapCoreResult({ ok: false, reason: 'missing-selection-target' });
+          }
           core.setSelection(nodeIds, edgeIds);
           return { ok: true };
         }
         case 'moveNodes': {
-          core.moveNodes(args.deltas as Record<string, { dx: number; dy: number }>);
+          const deltas = args.deltas as Record<string, { dx: number; dy: number }>;
+          const nodeSet = new Set(core.getSnapshot().doc.nodes.map((node) => node.id));
+          if (Object.keys(deltas).some((nodeId) => !nodeSet.has(nodeId))) {
+            return mapCoreResult({ ok: false, reason: 'missing-node' });
+          }
+          core.moveNodes(deltas);
           return { ok: true };
         }
         case 'updateMultipleNodes': {
-          core.updateMultipleNodes(
-            args.updates as Array<{ nodeId: string; data: Record<string, unknown> }>,
-          );
+          const updates = args.updates as Array<{ nodeId: string; data: Record<string, unknown> }>;
+          const nodeSet = new Set(core.getSnapshot().doc.nodes.map((node) => node.id));
+          if (updates.some((update) => !nodeSet.has(update.nodeId))) {
+            return mapCoreResult({ ok: false, reason: 'missing-node' });
+          }
+          core.updateMultipleNodes(updates);
           return { ok: true };
         }
         default:

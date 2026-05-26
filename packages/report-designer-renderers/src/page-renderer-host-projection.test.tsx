@@ -136,6 +136,52 @@ describe('ReportDesignerPageRenderer host projection contracts', { timeout: 1500
     });
   });
 
+  it('clears aggregated runtime dirty after report save acknowledges spreadsheet edits', async () => {
+    const spreadsheet = createEmptyDocument('page-renderer-save-dirty');
+    const sheetId = spreadsheet.workbook.sheets[0].id;
+
+    renderReportDesignerPage({
+      toolbar: [
+        {
+          type: 'action-button',
+          label: 'Edit cell',
+          onClick: {
+            action: 'spreadsheet:setCellValue',
+            args: {
+              cell: { sheetId, address: 'A1', row: 0, col: 0 },
+              value: 'Changed',
+            },
+          },
+        },
+        {
+          type: 'action-button',
+          label: 'Save report',
+          onClick: {
+            action: 'report-designer:save',
+          },
+        },
+        { type: 'report-runtime-dirty-probe' },
+      ],
+      document: createReportTemplateDocument(spreadsheet, 'Save Dirty Report') as any,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('report-runtime-dirty').textContent).toBe('false');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit cell' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('report-runtime-dirty').textContent).toBe('true');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save report' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('report-runtime-dirty').textContent).toBe('false');
+    });
+  });
+
   it('projects canonical selectionTarget into report designer host scope and keeps it reactive', async () => {
     renderReportDesignerPage({
       toolbar: [

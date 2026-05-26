@@ -65,7 +65,7 @@ const dropAdapter: FieldDropAdapter = {
   id: 'basic-field-drop',
   canHandle: () => true,
   mapDropToMetaPatch: ({ field }) => ({
-    binding: {
+    field: {
       type: field.type,
       sourceId: field.sourceId,
       fieldId: field.fieldId,
@@ -94,6 +94,7 @@ export function ReportDesignerDemo() {
   } | null>(null);
   const [paletteCollapsed, setPaletteCollapsed] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
+  const [fieldInsertError, setFieldInsertError] = useState<string | null>(null);
 
   const fieldCount = useMemo(
     () => fieldSources.reduce((sum, fs) => sum + fs.groups.reduce((gs, g) => gs + g.fields.length, 0), 0),
@@ -346,6 +347,9 @@ export function ReportDesignerDemo() {
       });
 
       if (!designerResult.ok || designerResult.cancelled) {
+        const designerError = designerResult.error instanceof Error
+          ? designerResult.error
+          : new Error(designerResult.cancelled ? 'Field insert cancelled' : 'Field insert failed');
         const rollbackResult =
           previousCellValue == null
             ? await spreadsheetBridge.dispatch({
@@ -360,18 +364,21 @@ export function ReportDesignerDemo() {
               });
 
         if (!rollbackResult.ok) {
-          throw rollbackResult.error instanceof Error
+          const rollbackError = rollbackResult.error instanceof Error
             ? rollbackResult.error
             : new Error('Field insert rollback failed');
+          throw new Error(`${designerError.message}; rollback failed: ${rollbackError.message}`);
         }
 
-        throw designerResult.error instanceof Error
-          ? designerResult.error
-          : new Error(designerResult.cancelled ? 'Field insert cancelled' : 'Field insert failed');
+        throw designerError;
       }
     },
     [designerBridge, sheetId, snapshot.activeSheet?.cells, spreadsheetBridge],
   );
+
+  const reportFieldInsertError = useCallback((error: unknown) => {
+    setFieldInsertError(error instanceof Error && error.message ? error.message : 'Field insert failed');
+  }, []);
 
   const handleFieldDrop = useCallback(async (event?: React.DragEvent<HTMLDivElement>) => {
     const dragPayload = event ? readReportFieldDragPayload(event) : undefined;
@@ -386,11 +393,14 @@ export function ReportDesignerDemo() {
     const targetCell = dropTargetCell || selectedCell;
     if (!field || !targetCell) return;
     try {
+      setFieldInsertError(null);
       await insertFieldAtCell(field, targetCell);
+    } catch (error) {
+      reportFieldInsertError(error);
     } finally {
       setDraggingField(null);
     }
-  }, [draggingField, dropTargetCell, insertFieldAtCell, selectedCell]);
+  }, [draggingField, dropTargetCell, insertFieldAtCell, reportFieldInsertError, selectedCell]);
 
   const canInsertField = useCallback(() => Boolean(selectedCell), [selectedCell]);
 
@@ -399,9 +409,14 @@ export function ReportDesignerDemo() {
       if (!selectedCell) {
         return;
       }
-      await insertFieldAtCell({ sourceId, fieldId, label }, selectedCell);
+      setFieldInsertError(null);
+      try {
+        await insertFieldAtCell({ sourceId, fieldId, label }, selectedCell);
+      } catch (error) {
+        reportFieldInsertError(error);
+      }
     },
-    [insertFieldAtCell, selectedCell],
+    [insertFieldAtCell, reportFieldInsertError, selectedCell],
   );
 
   const frozen = snapshot.activeSheet?.frozen;
@@ -428,6 +443,11 @@ export function ReportDesignerDemo() {
         density="flush"
         header={
           <div data-slot="report-demo-header">
+            {fieldInsertError ? (
+              <div data-slot="report-demo-field-insert-error" role="alert" className="px-4 py-2 text-sm text-destructive">
+                {fieldInsertError}
+              </div>
+            ) : null}
             <SpreadsheetToolbar
               selectedCell={selectedCell}
               cellAddress={currentCellAddr}

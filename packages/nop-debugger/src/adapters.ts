@@ -16,6 +16,7 @@ import {
   createRequestKey,
   formatActionResult,
   formatErrorDetail,
+  normalizeErrorForExport,
   normalizeCompiledRoot,
   summarizeApi,
   summarizeValueShape,
@@ -81,7 +82,6 @@ export function createDebuggerPlugin(store: NopDebuggerStore, enabled = true): R
         instancePath: ctx.instancePath,
         nodeId: ctx.nodeInstance?.templateNode.id,
         path: ctx.nodeInstance?.templateNode.templatePath,
-        rendererType: ctx.nodeInstance?.templateNode.rendererType,
       });
       return action;
     },
@@ -233,6 +233,13 @@ export function decorateDebuggerEnv(input: {
         detail: formatErrorDetail(payload.error),
         nodeId: payload.nodeId,
         path: payload.path,
+        exportedData: redactData(
+          {
+            error: normalizeErrorForExport(payload.error),
+            details: payload.details,
+          },
+          input.redaction,
+        ),
       });
       baseMonitor?.onError?.(payload);
     },
@@ -360,6 +367,8 @@ export function appendActionErrorEvent(
     instancePath: ctx.instancePath,
     nodeId: ctx.nodeInstance?.templateNode.id,
     path: ctx.nodeInstance?.templateNode.templatePath,
-    rendererType: ctx.nodeInstance?.templateNode.rendererType,
+    exportedData: {
+      error: normalizeErrorForExport(error),
+    },
   });
 }

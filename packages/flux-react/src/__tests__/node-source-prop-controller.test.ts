@@ -52,6 +52,16 @@ function createScope() {
   } as any;
 }
 
+function createActionScope(id: string) {
+  return {
+    id,
+    resolve: vi.fn(),
+    registerNamespace: vi.fn(() => () => undefined),
+    unregisterNamespace: vi.fn(),
+    listNamespaces: vi.fn(() => []),
+  };
+}
+
 async function flushAsync() {
   await Promise.resolve();
   await Promise.resolve();
@@ -288,6 +298,27 @@ describe('createNodeSourcePropController', () => {
       2,
       expect.objectContaining({ scope: secondScope }),
     );
+  });
+
+  it('rebinds the source observer when the caller action context changes', () => {
+    const { observer } = createObserverMock();
+    const controller = createNodeSourcePropController(
+      {
+        sourcePropKeys: ['items'],
+        sourceStatePropKeys: { items: 'itemsState' },
+      } as any,
+      { createSourceObserver: () => observer } as any,
+    );
+
+    const scope = createScope();
+    const firstCtx = { actionScope: createActionScope('scope-a') };
+    const secondCtx = { actionScope: createActionScope('scope-b') };
+
+    controller.run({ items: { type: 'source', action: 'loadItems' } }, scope, firstCtx);
+    controller.run({ items: { type: 'source', action: 'loadItems' } }, scope, secondCtx);
+
+    expect(observer.run).toHaveBeenNthCalledWith(1, expect.objectContaining({ scope, ctx: firstCtx }));
+    expect(observer.run).toHaveBeenNthCalledWith(2, expect.objectContaining({ scope, ctx: secondCtx }));
   });
 
   it('rebinds nested source entries when the lexical scope changes', () => {

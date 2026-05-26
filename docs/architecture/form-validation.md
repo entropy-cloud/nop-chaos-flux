@@ -156,13 +156,18 @@ The core runtime abstraction exists for any scope that has validation semantics:
 
 Key APIs:
 
-- `validateAt(path, reason)` — validate single path
-- `validateSubtree(path, reason)` — validate path and descendants
-- `validateAll(reason)` — validate entire scope
+- `validateAt(path, reason, options?)` — validate single path
+- `validateSubtree(path, reason, options?)` — validate path and descendants
+- `validateAll(reason, options?)` — validate entire scope
 - `getFieldState(path)` — read field validation state
 - `getScopeState()` — read scope summary state
 - `registerField(state)` — register field participation
 - `notifyFieldHidden(path, hidden)` — publish hidden-field participation changes to the current owner
+
+Current live baseline note:
+
+- `options?.signal` is now part of the public owner-validation carrier and is forwarded through `FormRuntime`, managed validation scopes, and projected validation runtimes
+- omitting `options` remains supported and preserves the prior no-options call shape
 
 ### FormRuntime
 

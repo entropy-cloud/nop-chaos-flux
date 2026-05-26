@@ -7,6 +7,11 @@ import type {
   SelectRowCommand,
   SelectColumnCommand,
 } from '../commands.js';
+import type { SpreadsheetSelection } from '../types.js';
+
+function selectionsEqual(left: SpreadsheetSelection, right: SpreadsheetSelection): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
 
 export const handleSetActiveSheet: CommandHandler<SetActiveSheetCommand> = (store, command) => {
   const state = store.getState();
@@ -21,6 +26,10 @@ export const handleSetActiveSheet: CommandHandler<SetActiveSheetCommand> = (stor
 };
 
 export const handleSetSelection: CommandHandler<SetSelectionCommand> = (store, command) => {
+  const state = store.getState();
+  if (selectionsEqual(state.selection, command.selection)) {
+    return { ok: true, changed: false, data: state.selection };
+  }
   store.setState({ selection: command.selection, editing: undefined });
   return { ok: true, changed: true };
 };

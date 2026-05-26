@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { FormContext, FormLayoutContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
 import { reportRuntimeHostIssue, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
 import {
+  FormContext,
+  FormLayoutContext,
+  ScopeContext,
+  createFormComponentHandle,
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useCurrentActionScope,
@@ -11,10 +14,7 @@ import {
   useRendererRuntime,
 } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
-import {
-  createFormComponentHandle,
-  type FormLayoutContextValue,
-} from '@nop-chaos/flux-react/unstable';
+import type { FormLayoutContextValue } from '@nop-chaos/flux-react';
 import { resolveGap } from '@nop-chaos/flux-react';
 import type { FormSchema } from '../schemas.js';
 function createFormLifecycleScope(

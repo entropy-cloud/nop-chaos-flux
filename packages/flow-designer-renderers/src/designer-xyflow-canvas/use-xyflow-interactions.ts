@@ -21,7 +21,7 @@ export interface UseXyflowInteractionsParams {
   onDeleteNode(nodeId: string, event?: React.MouseEvent): void;
   onMoveNode(nodeId: string, event?: React.MouseEvent, position?: { x: number; y: number }): void;
   onDeleteEdge(edgeId: string, event?: React.MouseEvent): void;
-  onStartConnection(nodeId: string, event?: React.MouseEvent): void;
+  onStartConnection(nodeId: string, event?: React.MouseEvent, sourcePort?: string): void;
   onCompleteConnection(
     nodeId: string,
     event?: React.MouseEvent,
@@ -126,7 +126,7 @@ export function useXyflowInteractions({
       return;
     }
 
-    onStartConnection(connection.source, undefined);
+    onStartConnection(connection.source, undefined, connection.sourceHandle ?? undefined);
     onCompleteConnection(
       connection.target,
       undefined,

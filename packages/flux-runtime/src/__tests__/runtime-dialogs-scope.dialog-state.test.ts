@@ -323,7 +323,6 @@ describe('createRendererRuntime - dialog state', () => {
         body: [{ type: 'text', text: 'Compiled body' }],
       },
       scope: page.scope,
-      runtime,
       options: {
         ownerNodeInstance,
       },

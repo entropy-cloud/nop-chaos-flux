@@ -101,9 +101,12 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - `designer-page.shortcuts`，用于在宿主层把键盘事件映射到已有 `designer:*` / shared action 链
 - 单一 `@xyflow/react` canvas bridge，经由 `DesignerCanvasContent` host 映射到 command adapter dispatch
 - Xyflow bridge、palette/canvas internals、和 `designer-context` hooks 属于 renderer implementation surface；若 package 内部或高级集成确实需要，走 `@nop-chaos/flow-designer-renderers/unstable`，不再由 root entry 冻结
-- Flow-designer interactive affordances that declare widget semantics must also ship the matching accessibility contract: DingFlow add-node overlays using `role="menu"` must implement roving item focus plus `Arrow` / `Home` / `End` navigation, and focusable node/edge canvas roots using `role="button"` must expose stable `aria-label` and selected state through `aria-pressed` instead of relying on arbitrary schema body text or visual-only styling.
+- Flow-designer interactive affordances that declare widget semantics must also ship the matching accessibility contract: DingFlow add-node overlays now run on the shared `@nop-chaos/ui` dropdown/menu primitive baseline and must preserve its roving item focus plus `Arrow` / `Home` / `End` navigation behavior, while focusable node/edge canvas roots using `role="button"` must expose stable `aria-label` and selected state through `aria-pressed` instead of relying on arbitrary schema body text or visual-only styling.
 - The same DingFlow add-node overlay contract now also requires deterministic focus return: closing the menu with `Escape`, outside click, or item selection must restore focus to the branch/merge trigger button that opened it when that trigger still exists.
+- Flow node and edge destructive quick actions now also require deterministic post-delete focus recovery: when a node toolbar or edge toolbar delete action removes the currently focused control, focus must move to the stable canvas surface region rather than falling through to `body` or an already-unmounted toolbar button.
 - Palette group disclosure now belongs to the shared `@nop-chaos/ui` `Collapsible` primitive contract rather than a renderer-local `Button + aria-expanded` implementation, so group expand/collapse semantics stay aligned with the repository's supported disclosure baseline.
+- Palette add-node accessibility must also provide a deterministic non-drag path: click/keyboard activation now inserts the chosen node type near the current active node when one exists, otherwise at the stable default insertion anchor, so non-pointer users are no longer routed through random placement.
+- Graph-mode port handles now also belong to the supported accessibility contract: source and target ports are real focusable controls with localized names, and `Enter` / `Space` / `Escape` drive start, complete, and cancel connect/reconnect through the same host command path as pointer interactions instead of leaving port editing pointer-only.
 
 ### 3.3 `@xyflow/react` 适配边界
 
@@ -278,6 +281,8 @@ interface DesignerPageSchema {
 - 并行节点
 - 端口级最大连接数
 - 明确的 handle 定义
+
+当前 live baseline 还要求 graph mode 端口交互具备完整键盘等价路径：source handle 可以开始/取消 connect 或 reconnect，target handle 可以完成 connect 或 reconnect，且这些动作直接复用同一条 `DesignerCanvasContent -> DesignerCommandAdapter -> DesignerCore` 命令链，不引入第二套边编辑状态机。
 
 ## 9. 属性编辑与创建流程
 

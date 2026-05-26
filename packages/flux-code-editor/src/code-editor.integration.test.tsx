@@ -18,6 +18,7 @@ const env: RendererEnv = {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 const registry = createDefaultRegistry();
@@ -398,6 +399,39 @@ describe('code-editor integration', () => {
     fireEvent.click(field!);
 
     expect(screen.queryByText('Current user')).toBeNull();
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('keeps node-level test metadata on the wrapped field root only', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const view = renderCodeEditorSchema({
+      type: 'page',
+      body: [
+        {
+          type: 'form',
+          name: 'testForm',
+          body: [
+            {
+              type: 'code-editor',
+              name: 'script',
+              label: 'Script',
+              language: 'javascript',
+              testid: 'code-editor-field',
+            },
+          ],
+        },
+      ],
+    });
+
+    const fieldRoot = view.container.querySelector('.nop-field[data-testid="code-editor-field"]');
+    const editorRoot = view.container.querySelector('.nop-code-editor');
+    expect(fieldRoot).toBeTruthy();
+    expect(fieldRoot?.getAttribute('data-cid')).toBeTruthy();
+    expect(editorRoot).toBeTruthy();
+    expect(editorRoot?.getAttribute('data-testid')).toBeNull();
+    expect(editorRoot?.getAttribute('data-cid')).toBeNull();
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });

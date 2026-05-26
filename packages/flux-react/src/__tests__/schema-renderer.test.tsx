@@ -1,11 +1,16 @@
 // @vitest-environment happy-dom
 
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import * as fluxRuntime from '@nop-chaos/flux-runtime';
 import { env, pageRenderer, textRenderer } from '../test-support-core.js';
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe('SchemaRenderer callbacks', () => {
   it('calls onRuntimeChange on mount and null on unmount', async () => {

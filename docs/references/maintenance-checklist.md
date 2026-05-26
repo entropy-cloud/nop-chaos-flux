@@ -170,7 +170,7 @@ Review:
 Examples:
 
 - root script changes in `package.json`
-- audit script coverage/placement changes such as new hard gates or check-chain wiring moves
+- audit script coverage/placement changes such as new hard gates, check-chain wiring moves, or expanded coverage for existing gates like object-form CSS exports
 - workspace package layout changes
 - baseline tooling upgrades that alter expectations
 

@@ -10,6 +10,7 @@ const testMocks = vi.hoisted(() => ({
   reportRuntimeHostIssue: vi.fn(),
   mockUseRendererEnv: vi.fn(),
   mockUseSpreadsheetInteractions: vi.fn(),
+  lastSpreadsheetGridProps: undefined as any,
 }));
 
 vi.mock('@nop-chaos/flux-core', async () => {
@@ -25,6 +26,7 @@ vi.mock('@nop-chaos/flux-react', async () => {
   return {
     ...actual,
     useRendererEnv: () => testMocks.mockUseRendererEnv(),
+    useBridgeSnapshot: (bridge: { getSnapshot: () => unknown }) => bridge.getSnapshot(),
   };
 });
 
@@ -34,7 +36,10 @@ vi.mock('@nop-chaos/spreadsheet-renderers', async () => {
   );
   return {
     ...actual,
-    SpreadsheetGrid: (props: any) => <div data-testid="spreadsheet-grid" {...props} />,
+    SpreadsheetGrid: (props: any) => {
+      testMocks.lastSpreadsheetGridProps = props;
+      return <div data-testid="spreadsheet-grid" />;
+    },
     SheetTabBar: () => <div data-testid="sheet-tab-bar" />,
     useSpreadsheetInteractions: (...args: any[]) => testMocks.mockUseSpreadsheetInteractions(...args),
   };
@@ -49,6 +54,7 @@ describe('ReportSpreadsheetCanvas', () => {
     testMocks.mockUseRendererEnv.mockReset();
     testMocks.mockUseRendererEnv.mockReturnValue({ notify: testMocks.notify });
     testMocks.mockUseSpreadsheetInteractions.mockReset();
+    testMocks.lastSpreadsheetGridProps = undefined;
   });
 
   it('rolls back the spreadsheet cell when designer field drop fails', async () => {
@@ -149,13 +155,6 @@ describe('ReportSpreadsheetCanvas', () => {
         core={core}
         snapshot={snapshot}
         spreadsheetBridge={spreadsheetBridge}
-        spreadsheetSnapshot={{
-          activeSheetId: sheetId,
-          runtime: { readonly: false },
-          workbook: { sheets: [{ id: sheetId, name: 'Sheet1' }] },
-          activeSheet: { id: sheetId, cells: {}, merges: [] },
-          selection: { kind: 'none' },
-        } as any}
       />,
     );
 
@@ -189,6 +188,99 @@ describe('ReportSpreadsheetCanvas', () => {
           },
         }),
       );
+    });
+  });
+
+  it('passes report cell metadata through to the spreadsheet grid', () => {
+    const spreadsheet = createEmptyDocument('report-spreadsheet-cell-metadata');
+    const sheetId = spreadsheet.workbook.sheets[0]?.id ?? '';
+    const document = createReportTemplateDocument(spreadsheet, 'Metadata Grid');
+    const core = createReportDesignerCore({ document, config: { kind: 'report-template' } });
+    const snapshot = core.getSnapshot();
+
+    core.setMetadata(
+      {
+        kind: 'cell',
+        cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      },
+      {
+        field: {
+          sourceId: 'sales',
+          fieldId: 'amount',
+          data: { label: 'Amount' },
+        },
+      },
+    );
+
+    const spreadsheetBridge = {
+      dispatch: vi.fn(),
+      getSnapshot: vi.fn(() => ({
+        activeSheetId: sheetId,
+        activeSheet: {
+          id: sheetId,
+          cells: {},
+        },
+      })),
+    } as any;
+
+    testMocks.mockUseSpreadsheetInteractions.mockReturnValue({
+      snapshot: {
+        runtime: { readonly: false },
+        workbook: { sheets: [{ id: sheetId, name: 'Sheet1' }] },
+        activeSheet: { id: sheetId, cells: {}, merges: [] },
+        selection: { kind: 'none' },
+      },
+      selectedCell: { row: 0, col: 0 },
+      editingCell: null,
+      editValue: '',
+      editSaveState: { status: 'idle' },
+      editingCellRef: { current: null },
+      fillHandleState: { isFilling: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0, currentRow: 0, currentCol: 0 },
+      isFillPreview: () => false,
+      handleFillHandleMouseDown: vi.fn(),
+      handleEditSave: vi.fn(),
+      handleEditCancel: vi.fn(),
+      handleEditValueChange: vi.fn(),
+      handleCellClick: vi.fn(),
+      handleCellDoubleClick: vi.fn(),
+      handleCellMouseDown: vi.fn(),
+      handleCellMouseEnter: vi.fn(),
+      handleColumnResizeStart: vi.fn(),
+      handleRowResizeStart: vi.fn(),
+      columnWidths: {},
+      rowHeights: {},
+      gridRef: { current: null },
+      isInRange: () => false,
+      getMergeInfo: () => ({ isMerged: false, isTopLeft: false, rowSpan: 1, colSpan: 1 }),
+      handleAddSheet: vi.fn(),
+      handleRemoveSheet: vi.fn(),
+      handleRenameSheet: vi.fn(),
+      dropTargetCell: null,
+      handleFieldDragOver: vi.fn(),
+      handleFieldDragLeave: vi.fn(),
+      handleFieldDrop: vi.fn(),
+      getSelectedRange: () => null,
+      handleSelectRow: vi.fn(),
+      handleSelectColumn: vi.fn(),
+      handleSelectAll: vi.fn(),
+      handleFillHandleDoubleClick: vi.fn(),
+    });
+
+    const view = render(
+      <ReportSpreadsheetCanvas
+        core={core}
+        snapshot={snapshot}
+        spreadsheetBridge={spreadsheetBridge}
+      />,
+    );
+
+    expect(view.container.querySelector('[data-testid="spreadsheet-grid"]')).toBeTruthy();
+    expect(testMocks.lastSpreadsheetGridProps?.getCellMetadata?.(0, 0)).toEqual({
+      field: {
+        sourceId: 'sales',
+        fieldId: 'amount',
+        data: { label: 'Amount' },
+      },
     });
   });
 });

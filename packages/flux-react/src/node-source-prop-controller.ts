@@ -1,4 +1,5 @@
 import type {
+  ActionContext,
   RendererRuntime,
   ResolvedNodeProps,
   ScopeRef,
@@ -42,6 +43,7 @@ interface ControllerRunState {
   scopeStore: ScopeRef['store'] | undefined;
   entries: readonly ResolvedSourceEntry[];
   baseValue: ResolvedNodeProps['value'];
+  ctx: Partial<ActionContext> | undefined;
 }
 
 function createSyntheticSourceKey(path: string) {
@@ -216,7 +218,7 @@ function materializeResolvedSources(
 export interface NodeSourcePropController {
   getSnapshot(): ControllerSnapshot;
   subscribe(listener: () => void): () => void;
-  run(propsValue: ResolvedNodeProps['value'], scope: ScopeRef): void;
+  run(propsValue: ResolvedNodeProps['value'], scope: ScopeRef, ctx?: Partial<ActionContext>): void;
   dispose(): void;
 }
 
@@ -261,7 +263,19 @@ export function createNodeSourcePropController(
     return true;
   }
 
-  function run(propsValue: ResolvedNodeProps['value'], scope: ScopeRef) {
+  function syncSnapshot(nextSnapshot: ControllerSnapshot) {
+    if (
+      sameInputs(currentSnapshot.sourceInputs, nextSnapshot.sourceInputs) &&
+      shallowEqual(currentSnapshot.value, nextSnapshot.value)
+    ) {
+      return currentSnapshot;
+    }
+
+    currentSnapshot = nextSnapshot;
+    return currentSnapshot;
+  }
+
+  function run(propsValue: ResolvedNodeProps['value'], scope: ScopeRef, ctx?: Partial<ActionContext>) {
     const sourceEntries = collectSourceEntries(propsValue, sourcePropKeys, sourceStatePropKeys);
     const baseValue = sanitizeSourceInputs(propsValue, sourceEntries);
     const nextRunState: ControllerRunState = {
@@ -270,6 +284,7 @@ export function createNodeSourcePropController(
       scopeStore: scope.store,
       entries: sourceEntries,
       baseValue,
+      ctx,
     };
 
     if (
@@ -277,6 +292,7 @@ export function createNodeSourcePropController(
       currentRunState.scopeId === nextRunState.scopeId &&
       currentRunState.scopePath === nextRunState.scopePath &&
       currentRunState.scopeStore === nextRunState.scopeStore &&
+      currentRunState.ctx === nextRunState.ctx &&
       arePlainObjectsEqual(currentRunState.baseValue, nextRunState.baseValue) &&
       areResolvedSourceEntriesEqual(currentRunState.entries, nextRunState.entries)
     ) {
@@ -301,6 +317,7 @@ export function createNodeSourcePropController(
       scope,
       entries: sourceEntries,
       baseValue,
+      ctx,
     });
   }
 
@@ -311,11 +328,10 @@ export function createNodeSourcePropController(
   return {
     getSnapshot: () => {
       const resolvedValue = resolveMaterializedValue();
-      updateSnapshot({
+      return syncSnapshot({
         sourceInputs: currentSnapshot.sourceInputs,
         value: resolvedValue,
       });
-      return currentSnapshot;
     },
     subscribe(listener) {
       return observer.subscribe(() => {

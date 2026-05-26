@@ -73,4 +73,20 @@ describe('Drawer', () => {
 
     container.remove();
   });
+
+  it('uses token-backed overlay chrome instead of hardcoded black alpha', () => {
+    cleanup();
+
+    render(
+      <Drawer open>
+        <DrawerContent>Drawer overlay contract</DrawerContent>
+      </Drawer>,
+    );
+
+    const overlay = document.body.querySelector('[data-slot="drawer-overlay"]');
+    expect(overlay?.className).toContain(
+      'bg-[var(--nop-drawer-backdrop,var(--nop-dialog-backdrop,hsl(var(--popover,0_0%_0%)_/_0.1)))]',
+    );
+    expect(overlay?.className).not.toContain('bg-black/10');
+  });
 });

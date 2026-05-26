@@ -270,6 +270,7 @@ Current baseline note:
 - formula `data-source` uses `name` as the normative publication path for both api and formula producers
 - current formula-source baseline publishes on mount and explicit refresh using the shared runtime registry, but it does not yet implement the full dependency-indexed lazy invalidation model described below
 - current `DataSourceController` baseline now exposes `DataSourceState` via `getState()` with legacy status fields such as `started`, `status`, `fetchStatus`, `stale`, `data`, `error`, `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`, and now also includes additive convenience fields such as `hasData`, `hasError`, `isInitialLoading`, `isRefreshing`, and `inFlightCount`; action-backed remote sources drive fetch lifecycle while formula sources publish the same public contract with synchronous semantics
+- when a formula-source startup failure is adapted into `failureReason`, non-`Error` payloads must stay reachable through `Error.cause` rather than being flattened into `String(error)` only; `error` may still preserve the raw thrown payload alongside that normalized diagnostic error
 - current runtime baseline now also exposes explicit source refresh by id at the runtime boundary; refresh remains scope-scoped first, so duplicate source ids in different scopes do not collapse into one page-global namespace
 - current `refreshSource` targets a registered source id through `targetId`; source refresh is built-in runtime-entry targeting rather than component-handle targeting
 - current source runtime now has a dependency-aware invalidation baseline: formula sources automatically recompute and action-backed remote sources automatically refresh when changed scope paths hit the dependencies collected from formula evaluation or request-config evaluation
@@ -790,6 +791,7 @@ The source abstraction is responsible for value production, not for built-in loa
 Contract layering rule for `statusPath`:
 
 - canonical core state is the owner-defined source snapshot: `status`, `fetchStatus`, `stale`, `data`, `error`, `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, `failureReason`
+- `failureReason` is the normalized diagnostics-facing `Error` surface; if the underlying failure payload was not already an `Error`, runtime should preserve the original payload on `failureReason.cause`
 - derived convenience projection may add helper booleans derived from that core state, such as `hasData`, `hasError`, `isInitialLoading`, `isRefreshing`, and `inFlightCount`
 - compatibility aliases such as older summary vocabulary must be treated separately from derived helpers; they are not part of the preferred long-term contract just because they are also additive
 

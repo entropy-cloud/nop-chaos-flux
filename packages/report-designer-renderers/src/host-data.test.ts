@@ -101,10 +101,12 @@ describe('buildReportDesignerScopeData', () => {
 
     expect(scopeData.selectionTarget).toBeNull();
     expect((scopeData.runtime as { previewMode?: unknown }).previewMode).toBeNull();
+    expect((scopeData.designer as { selectionKind?: unknown }).selectionKind).toBeNull();
     expect(scopeData.activeCell).toBeNull();
     expect(scopeData.activeRange).toBeNull();
     expect(scopeData.meta).toBeNull();
     expect(scopeData.inspectorPanels).toBeNull();
+    expect((scopeData.designer as { inspectorPanels?: unknown }).inspectorPanels).toBeNull();
     expect(scopeData.spreadsheet).toBeNull();
   });
 

@@ -108,8 +108,6 @@ export function SpreadsheetGrid({
     | { axis: 'column'; index: number; size: string }
     | null
   >(null);
-  const [scrollTop, setScrollTop] = useState(snapshot.runtime.viewport?.scrollY ?? 0);
-  const [scrollLeft, setScrollLeft] = useState(snapshot.runtime.viewport?.scrollX ?? 0);
   const [viewportHeight, setViewportHeight] = useState(600);
   const [viewportWidth, setViewportWidth] = useState(800);
   const keyboardCellRef = useRef<{ row: number; col: number }>(selectedCell ?? { row: 0, col: 0 });
@@ -177,8 +175,6 @@ export function SpreadsheetGrid({
   const handleScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
-    setScrollTop(el.scrollTop);
-    setScrollLeft(el.scrollLeft);
     if (el.clientHeight !== viewportHeight) setViewportHeight(el.clientHeight);
     if (el.clientWidth !== viewportWidth) setViewportWidth(el.clientWidth);
     void bridge.dispatch({
@@ -196,13 +192,19 @@ export function SpreadsheetGrid({
     if (!el) {
       return;
     }
-    if (el.scrollTop !== scrollTop) {
-      el.scrollTop = scrollTop;
+    if (el.scrollTop !== snapshot.runtime.viewport.scrollY) {
+      el.scrollTop = snapshot.runtime.viewport.scrollY;
     }
-    if (el.scrollLeft !== scrollLeft) {
-      el.scrollLeft = scrollLeft;
+    if (el.scrollLeft !== snapshot.runtime.viewport.scrollX) {
+      el.scrollLeft = snapshot.runtime.viewport.scrollX;
     }
-  }, [scrollLeft, scrollTop]);
+    if (el.clientHeight !== viewportHeight) {
+      setViewportHeight(el.clientHeight);
+    }
+    if (el.clientWidth !== viewportWidth) {
+      setViewportWidth(el.clientWidth);
+    }
+  }, [snapshot.runtime.viewport.scrollX, snapshot.runtime.viewport.scrollY, viewportHeight, viewportWidth]);
 
   const offsets = useMemo(
     () =>
@@ -224,8 +226,8 @@ export function SpreadsheetGrid({
         snapshot,
         selectedCell,
         frozen,
-        scrollTop,
-        scrollLeft,
+        scrollTop: snapshot.runtime.viewport.scrollY,
+        scrollLeft: snapshot.runtime.viewport.scrollX,
         viewportHeight,
         viewportWidth,
       }, offsets);

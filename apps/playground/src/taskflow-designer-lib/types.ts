@@ -6,7 +6,8 @@ export type TaskFlowStepType =
   | 'parallel'
   | 'if'
   | 'choose'
-  | 'delay';
+  | 'delay'
+  | 'end';
 
 export type TaskFlowEdgeKind =
   | 'taskflow-next'
@@ -15,6 +16,28 @@ export type TaskFlowEdgeKind =
   | 'taskflow-wait-error';
 
 export type SourcePort = 'next' | 'error' | 'wait' | 'wait-error';
+
+export const TASKFLOW_STEP_TYPES = [
+  'script',
+  'invoke',
+  'sequential',
+  'graph',
+  'parallel',
+  'if',
+  'choose',
+  'delay',
+  'end',
+] as const satisfies readonly TaskFlowStepType[];
+
+export const TASKFLOW_TREE_BRANCH_TYPES = [
+  'then',
+  'else',
+  'case',
+  'otherwise',
+  'parallel-body',
+] as const;
+
+export type TaskFlowTreeBranchType = (typeof TASKFLOW_TREE_BRANCH_TYPES)[number];
 
 export const SOURCE_PORT_TO_EDGE_KIND: Record<SourcePort, TaskFlowEdgeKind> = {
   'next': 'taskflow-next',
@@ -142,7 +165,8 @@ export type TaskFlowStepProps =
   | { type: 'parallel'; joinType?: string; autoCancelUnfinished?: boolean; aggregator?: string }
   | { type: 'if'; condition?: string }
   | { type: 'choose'; decider?: string }
-  | { type: 'delay'; delayMillisExpr: string };
+  | { type: 'delay'; delayMillisExpr: string }
+  | { type: 'end' };
 
 export interface TaskFlowTreeBranch {
   id: string;

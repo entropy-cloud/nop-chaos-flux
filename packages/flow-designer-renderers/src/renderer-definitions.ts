@@ -70,8 +70,14 @@ function compileDesignerConfig(value: unknown, context: FieldCompileContext): un
   for (const [key, child] of Object.entries(record)) {
     const childPath = `${context.sourcePath}.${key}`;
 
-    if (isSchemaInput(child)) {
-      result[key] = child;
+    if (
+      isSchemaInput(child) &&
+      (key === 'body' || key === 'quickActions' || (key === 'inspector' && context.sourcePath.endsWith('.inspector')))
+    ) {
+      result[key] = context.compileSchema(child, {
+        basePath: childPath,
+        parentPath: context.sourcePath,
+      });
       continue;
     }
 

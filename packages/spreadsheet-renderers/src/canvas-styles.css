@@ -26,12 +26,12 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  border: 1px solid var(--nop-border, rgb(215, 224, 238));
+  border: 1px solid var(--nop-border);
   border-radius: 14px;
   background: linear-gradient(
     180deg,
-    var(--nop-background, rgb(255, 255, 255)) 0%,
-    color-mix(in srgb, var(--nop-background, rgb(255, 255, 255)) 92%, rgb(235, 244, 255)) 100%
+    var(--nop-background) 0%,
+    color-mix(in srgb, var(--nop-background) 92%, rgb(235, 244, 255)) 100%
   );
   box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08);
   user-select: none;
@@ -598,6 +598,21 @@
 
 .ss-cell[data-cell-bound] {
   background-color: #f0f8ff;
+  position: relative;
+  outline: 1px dashed #94a3b8;
+  outline-offset: -2px;
+}
+
+.ss-cell [data-slot='spreadsheet-bound-indicator'] {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 700;
+  text-transform: lowercase;
+  color: #1d4ed8;
+  pointer-events: none;
 }
 
 .ss-cell[data-cell-comment] {
@@ -673,19 +688,19 @@
 
 /* Sheet Tab Bar */
 
-.ss-sheet-bar {
+[data-slot='spreadsheet-sheet-bar'] {
   display: flex;
   align-items: stretch;
   height: 32px;
-  border-top: 1px solid var(--border, #e2e8f0);
-  background: var(--nop-surface, #ffffff);
+  border-top: 1px solid var(--nop-border);
+  background: var(--nop-surface);
   font-size: 12px;
-  color: var(--nop-body-copy, #64748b);
+  color: var(--nop-body-copy);
   user-select: none;
   -webkit-user-select: none;
 }
 
-.ss-sheet-bar-tabs {
+[data-slot='spreadsheet-sheet-bar-tabs'] {
   display: flex;
   align-items: stretch;
   overflow-x: auto;
@@ -694,17 +709,17 @@
   padding: 0 4px;
 }
 
-.ss-sheet-bar-tabs::-webkit-scrollbar {
+[data-slot='spreadsheet-sheet-bar-tabs']::-webkit-scrollbar {
   height: 0;
 }
 
-.ss-sheet-tab-item {
+[data-slot='spreadsheet-sheet-tab-item'] {
   position: relative;
   display: inline-flex;
   align-items: center;
 }
 
-.ss-sheet-tab {
+[data-slot='spreadsheet-sheet-tab'] {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -712,7 +727,7 @@
   padding: 0 24px 0 12px;
   cursor: pointer;
   white-space: nowrap;
-  color: var(--nop-body-copy, #64748b);
+  color: var(--nop-body-copy);
   font-size: 12px;
   font-weight: 500;
   height: 100%;
@@ -723,32 +738,32 @@
   box-shadow: none;
 }
 
-.ss-sheet-tab::after {
+[data-slot='spreadsheet-sheet-tab']::after {
   content: '';
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   height: 2px;
-  background: var(--nop-accent, hsl(222.2 47.4% 50.2%));
+  background: var(--nop-accent);
   opacity: 0;
   transition: opacity 0.15s ease;
   border-radius: 1px 1px 0 0;
 }
 
-.ss-sheet-tab:hover {
-  color: var(--nop-text-strong, #0f172a);
+[data-slot='spreadsheet-sheet-tab']:hover {
+  color: var(--nop-text-strong);
 }
 
-.ss-sheet-tab[data-active] {
-  color: var(--nop-text-strong, #0f172a);
+[data-slot='spreadsheet-sheet-tab'][data-active] {
+  color: var(--nop-text-strong);
 }
 
-.ss-sheet-tab[data-active]::after {
+[data-slot='spreadsheet-sheet-tab'][data-active]::after {
   opacity: 1;
 }
 
-.ss-sheet-tab-color {
+[data-slot='spreadsheet-sheet-tab-color'] {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -768,25 +783,25 @@
   opacity: 1;
 }
 
-.ss-sheet-tab-rename {
+[data-slot='spreadsheet-sheet-tab-rename'] {
   font-size: 12px;
   padding: 3px 6px;
-  border: 2px solid var(--ring, hsl(223 64% 48%));
+  border: 2px solid var(--nop-ring);
   border-radius: 2px;
   outline: none;
-  background-color: var(--background, #ffffff);
-  color: var(--foreground, #0f172a);
+  background-color: var(--nop-background);
+  color: var(--nop-text-strong);
   min-width: 80px;
   height: 20px;
   box-sizing: border-box;
   box-shadow: 0 0 0 3px hsl(223 64% 48% / 0.15);
 }
 
-.ss-sheet-tab-rename:focus {
+[data-slot='spreadsheet-sheet-tab-rename']:focus {
   box-shadow: 0 0 0 3px hsl(223 64% 48% / 0.25);
 }
 
-.ss-sheet-tab-close {
+[data-slot='spreadsheet-sheet-tab-close'] {
   position: absolute;
   top: 50%;
   right: 6px;
@@ -798,7 +813,7 @@
   height: 16px;
   font-size: 14px;
   line-height: 1;
-  color: var(--nop-body-copy, #64748b);
+  color: var(--nop-body-copy);
   cursor: pointer;
   border-radius: 3px;
   opacity: 0;
@@ -806,28 +821,28 @@
   font-weight: 300;
 }
 
-.ss-sheet-tab-item:hover .ss-sheet-tab-close,
-.ss-sheet-tab-item:focus-within .ss-sheet-tab-close {
+[data-slot='spreadsheet-sheet-tab-item']:hover [data-slot='spreadsheet-sheet-tab-close'],
+[data-slot='spreadsheet-sheet-tab-item']:focus-within [data-slot='spreadsheet-sheet-tab-close'] {
   opacity: 1;
 }
 
-.ss-sheet-tab-close:hover {
-  background-color: hsl(0 84% 60% / 0.15);
-  color: var(--destructive, hsl(0 84% 60%));
+[data-slot='spreadsheet-sheet-tab-close']:hover {
+  background-color: color-mix(in srgb, var(--nop-destructive) 15%, transparent);
+  color: var(--nop-destructive);
 }
 
-.ss-sheet-tab-close:active {
-  background-color: hsl(0 84% 60% / 0.25);
+[data-slot='spreadsheet-sheet-tab-close']:active {
+  background-color: color-mix(in srgb, var(--nop-destructive) 25%, transparent);
 }
 
-.ss-sheet-add {
+[data-slot='spreadsheet-sheet-add'] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 28px;
   cursor: pointer;
-  color: var(--nop-body-copy, #64748b);
+  color: var(--nop-body-copy);
   font-size: 20px;
   font-weight: 300;
   line-height: 1;
@@ -838,10 +853,10 @@
   box-shadow: none;
 }
 
-.ss-sheet-add:hover {
-  color: var(--nop-accent, hsl(222.2 47.4% 50.2%));
+[data-slot='spreadsheet-sheet-add']:hover {
+  color: var(--nop-accent);
 }
 
-.ss-sheet-add:active {
-  color: var(--nop-accent, hsl(222.2 47.4% 50.2%));
+[data-slot='spreadsheet-sheet-add']:active {
+  color: var(--nop-accent);
 }

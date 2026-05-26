@@ -1,31 +1,37 @@
 import { useCallback, useContext, useMemo } from 'react';
 import type {
-  ActionScope,
-  ComponentHandleRegistry,
   DataSourceStatusSummary,
-  ImportFrame,
-  PageRuntime,
-  RenderNodeMeta,
   RendererRuntime,
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { getIn, parsePath } from '@nop-chaos/flux-core';
 import {
-  ActionScopeContext,
-  ComponentRegistryContext,
-  ImportFrameContext,
-  NodeMetaContext,
-  PageContext,
-  RenderInstancePathContext,
-  RuntimeContext,
-  ScopeContext,
-  StructuralLoopContext,
-  SurfaceContext,
   FormLayoutContext,
   type FormLayoutContextValue,
-  useRequiredContext,
 } from './contexts.js';
-import { createHelpers } from './helpers.js';
+import {
+  useCurrentActionScope,
+  useCurrentComponentRegistry,
+  useCurrentImportFrame,
+  useCurrentNodeInstance,
+  useCurrentNodeMeta,
+  useCurrentPage,
+  useRenderInstancePath,
+  useCurrentSurfaceRuntime,
+  useStructuralLoopContext,
+} from './context-hooks.js';
+import { useRenderScopeContext, useRendererRuntimeContext } from './runtime-context-hooks.js';
+export {
+  useCurrentActionScope,
+  useCurrentComponentRegistry,
+  useCurrentImportFrame,
+  useCurrentNodeInstance,
+  useCurrentNodeMeta,
+  useCurrentPage,
+  useRenderInstancePath,
+  useCurrentSurfaceRuntime,
+  useStructuralLoopContext,
+} from './context-hooks.js';
 import {
   createFormModelGenerationSubscribe,
   createScopeSubscribe,
@@ -64,29 +70,11 @@ export {
 } from './hooks/use-form-hooks.js';
 
 export function useRendererRuntime(): RendererRuntime {
-  return useRequiredContext(RuntimeContext, 'RendererRuntime');
+  return useRendererRuntimeContext();
 }
 
 export function useRenderScope(): ScopeRef {
-  return useRequiredContext(ScopeContext, 'RenderScope');
-}
-
-export function useRenderInstancePath():
-  | readonly import('@nop-chaos/flux-core').InstanceFrame[]
-  | undefined {
-  return useContext(RenderInstancePathContext);
-}
-
-export function useCurrentActionScope(): ActionScope | undefined {
-  return useContext(ActionScopeContext);
-}
-
-export function useCurrentComponentRegistry(): ComponentHandleRegistry | undefined {
-  return useContext(ComponentRegistryContext);
-}
-
-export function useCurrentImportFrame(): ImportFrame | undefined {
-  return useContext(ImportFrameContext);
+  return useRenderScopeContext();
 }
 
 export function useRendererEnv() {
@@ -171,55 +159,8 @@ export function useDataSourceStatus(
   );
 }
 
-export function useCurrentPage(): PageRuntime | undefined {
-  return useContext(PageContext);
-}
-
-export function useCurrentSurfaceRuntime() {
-  return useContext(SurfaceContext);
-}
-
-export function useCurrentNodeMeta(): RenderNodeMeta {
-  return useRequiredContext(NodeMetaContext, 'NodeMeta');
-}
-
-export function useCurrentNodeInstance() {
-  return useContext(NodeMetaContext)?.node ?? undefined;
-}
-
-export function useStructuralLoopContext() {
-  return useContext(StructuralLoopContext);
-}
-
 export function useActionDispatcher() {
   return useRendererRuntime().dispatch;
-}
-
-export function useRenderFragment() {
-  const runtime = useRendererRuntime();
-  const scope = useRenderScope();
-  const actionScope = useCurrentActionScope();
-  const componentRegistry = useCurrentComponentRegistry();
-  const form = useCurrentForm();
-  const page = useCurrentPage();
-  const surfaceRuntime = useCurrentSurfaceRuntime();
-  const nodeMeta = useContext(NodeMetaContext);
-
-  return useMemo(
-    () =>
-      createHelpers({
-        runtime,
-        scope,
-        actionScope,
-        componentRegistry,
-        form,
-        page,
-        surfaceRuntime,
-        nodeInstance: nodeMeta?.node ?? undefined,
-        dialogId: scope.get('dialogId') as string | undefined,
-      }).render,
-    [runtime, scope, actionScope, componentRegistry, form, page, surfaceRuntime, nodeMeta],
-  );
 }
 
 export function useCurrentFormModelGeneration(): number {
@@ -269,7 +210,6 @@ export const rendererHooks = {
   useCurrentNodeMeta,
   useCurrentNodeInstance,
   useStructuralLoopContext,
-  useRenderFragment,
   useCurrentFormModelGeneration,
   useFormLayout,
   useStrictMode,

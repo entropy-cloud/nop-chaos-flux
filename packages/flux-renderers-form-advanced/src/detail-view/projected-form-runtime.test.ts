@@ -229,6 +229,58 @@ describe('projected form runtime helpers', () => {
     });
   });
 
+  it('forwards validation options through projected validation runtime helpers', async () => {
+    const signal = new AbortController().signal;
+    const parentOwner = {
+      store: {
+        getState: vi.fn(() => ({ values: { profile: { name: 'Alice' } }, fieldStates: {} })),
+        subscribe: vi.fn(() => () => undefined),
+        subscribeToPath: vi.fn(() => () => undefined),
+        subscribeToPaths: vi.fn(() => () => undefined),
+        subscribeToSubmitting: vi.fn(() => () => undefined),
+        getPathState: vi.fn(),
+        getFieldState: vi.fn(),
+      },
+      scope: { id: 'scope', path: '$scope', parent: undefined, store: undefined, get: vi.fn(), has: vi.fn(), readOwn: vi.fn(), readVisible: vi.fn(), materializeVisible: vi.fn(), update: vi.fn(), merge: vi.fn() },
+      validation: undefined,
+      lifecycleState: 'active',
+      modelGeneration: 1,
+      scopeId: 'scope-id',
+      rootPath: 'profile',
+      validateAt: vi.fn().mockResolvedValue({ ok: true, errors: [] }),
+      validateSubtree: vi.fn().mockResolvedValue({ ok: true, errors: [], fieldErrors: {} }),
+      validateAll: vi.fn().mockResolvedValue({ ok: true, errors: [], fieldErrors: {} }),
+      applyChangesAndRevalidate: vi.fn(),
+      applyExternalErrors: vi.fn(),
+      getFieldState: vi.fn(),
+      getScopeState: vi.fn(),
+      getScopeRootErrors: vi.fn(() => []),
+      isPathOwned: vi.fn(() => true),
+      registerField: vi.fn(),
+      updateFieldRegistration: vi.fn(),
+      notifyFieldHidden: vi.fn(),
+      touchField: vi.fn(),
+      visitField: vi.fn(),
+      refreshCompiledModel: vi.fn(),
+      dispose: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
+    } as any;
+
+    const projectedOwner = createProjectedValidationRuntime(parentOwner, {
+      ownerRootPath: 'profile',
+      prefixPath: (path) => (path ? `profile.${path}` : 'profile'),
+    });
+
+    await projectedOwner.validateAt('name', 'blur', { signal });
+    await projectedOwner.validateSubtree('name', 'commit', { signal });
+    await projectedOwner.validateAll('submit', { signal });
+
+    expect(parentOwner.validateAt).toHaveBeenCalledWith('profile.name', 'blur', { signal });
+    expect(parentOwner.validateSubtree).toHaveBeenCalledWith('profile.name', 'commit', { signal });
+    expect(parentOwner.validateSubtree).toHaveBeenCalledWith('profile', 'submit', { signal });
+  });
+
   it('remaps external-error and childPath updates into the owner subtree', () => {
     const parentForm = {
       applyExternalErrors: vi.fn(() => ({ valid: false, hasErrors: true, validating: false, ready: true, lifecycleState: 'active', modelGeneration: 1 })),

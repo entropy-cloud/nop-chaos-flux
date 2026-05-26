@@ -20,10 +20,6 @@ export function crudFooter(stage: Locator): Locator {
   return stage.locator('[data-slot="crud-footer-toolbar"]');
 }
 
-export function crudScopeDebug(stage: Locator): Locator {
-  return stage.locator('[data-slot="scope-debug-json"]');
-}
-
 export function dataRows(stage: Locator): Locator {
   return stage.locator('tbody tr[data-slot="table-row"]');
 }

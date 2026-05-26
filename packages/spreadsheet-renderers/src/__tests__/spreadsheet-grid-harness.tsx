@@ -5,6 +5,7 @@ import { SpreadsheetGrid, useSpreadsheetInteractions } from '../index.js';
 export function SpreadsheetGridHarness(props: {
   sheetId: string;
   bridge: SpreadsheetBridge;
+  getCellMetadata?: (row: number, col: number) => unknown;
 }) {
   const interactions = useSpreadsheetInteractions({
     bridge: props.bridge,
@@ -47,6 +48,7 @@ export function SpreadsheetGridHarness(props: {
       onEditCancel={interactions.handleEditCancel}
       dropTargetCell={interactions.dropTargetCell}
       draggingField={null}
+      getCellMetadata={props.getCellMetadata}
     />
   );
 }

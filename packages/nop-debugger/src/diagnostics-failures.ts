@@ -15,7 +15,7 @@ import {
   buildInteractionTrace,
   buildNodeDiagnostics,
   buildOverview,
-} from './diagnostics.js';
+} from './diagnostics-core.js';
 
 const EMPTY_PINNED_ERRORS: NopDebuggerPinnedErrors = { earliest: [], latest: [] };
 

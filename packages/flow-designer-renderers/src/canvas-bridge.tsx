@@ -3,7 +3,7 @@ import {
   DesignerXyflowCanvas,
   type DesignerXyflowCanvasProps,
   DESIGNER_PALETTE_NODE_MIME,
-} from './designer-xyflow-canvas/index.js';
+} from './designer-xyflow-canvas/designer-xyflow-canvas.js';
 
 export interface DesignerCanvasBridgeProps extends DesignerXyflowCanvasProps {}
 

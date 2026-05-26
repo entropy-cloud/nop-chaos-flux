@@ -3,7 +3,6 @@ import type {
   ExecutableApiRequest,
   ExpressionCompiler,
   ApiSchema,
-  FormRuntime,
   OperationControlConfig,
   PreparedApiRequest,
   RendererEnv,
@@ -22,7 +21,7 @@ export interface ApiRequestExecutor {
     actionType: string,
     api: ApiSchema | ExecutableApiRequest,
     scope: ScopeRef,
-    form?: FormRuntime,
+    form?: { id: string },
     options?: { signal?: AbortSignal; interactionId?: string; control?: OperationControlConfig },
   ): Promise<ApiResponse<T>>;
   dispose(): void;
@@ -144,7 +143,7 @@ function createRequestKey(
   actionType: string,
   api: ExecutableApiRequest,
   scope: ScopeRef,
-  form?: FormRuntime,
+  form?: { id: string },
 ): string {
   const owner = form?.id ?? scope.id;
   return [
@@ -427,7 +426,7 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
     actionType: string,
     api: ApiSchema | ExecutableApiRequest,
     scope: ScopeRef,
-    form?: FormRuntime,
+    form?: { id: string },
     options?: { signal?: AbortSignal; interactionId?: string; control?: OperationControlConfig },
   ) {
     const executableApi = finalizeApiRequest(api as ApiSchema).request;

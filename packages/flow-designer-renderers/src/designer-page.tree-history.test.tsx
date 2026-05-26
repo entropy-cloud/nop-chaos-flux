@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { DesignerCore } from '@nop-chaos/flow-designer-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { render, waitFor } from '@testing-library/react';
@@ -88,6 +88,66 @@ describe('DesignerPageRenderer tree history continuity', () => {
     });
 
     expect(createDesignerCoreMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not replace the core document on rerenders that keep the same treeDocument reference', async () => {
+    const SchemaRenderer = createDesignerPageSchemaRenderer();
+    const createDesignerCoreMock = getCreateDesignerCoreMock();
+    const config = createTreeTestConfig();
+    const treeDocument = {
+      id: 'tree-stable-ref',
+      kind: 'test-tree',
+      name: 'Stable Ref Tree',
+      version: '1.0',
+      root: {
+        id: 'start',
+        type: 'start',
+        data: { label: 'Start' },
+        child: {
+          id: 'task-1',
+          type: 'task',
+          data: { label: 'Task 1' },
+        },
+      },
+    };
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-stable-ref"
+        schema={{
+          type: 'designer-page',
+          treeDocument,
+          config,
+          className: 'first-pass',
+        }}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const core = createDesignerCoreMock.mock.results[0]?.value as DesignerCore | undefined;
+    expect(core).toBeTruthy();
+    const replaceDocumentSpy = core ? vi.spyOn(core, 'replaceDocument') : undefined;
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-stable-ref"
+        schema={{
+          type: 'designer-page',
+          treeDocument,
+          config,
+          className: 'second-pass',
+        }}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(createDesignerCoreMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(replaceDocumentSpy).not.toHaveBeenCalled();
   });
 
   it('preserves selection and undo history continuity across treeDocument updates', async () => {

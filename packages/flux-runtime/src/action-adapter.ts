@@ -11,7 +11,13 @@ import type {
   RendererRuntime,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import { isSchema, isSchemaArray, reportRuntimeHostIssue } from '@nop-chaos/flux-core';
+import {
+  isSchema,
+  isSchemaArray,
+  matchesFluxValueShape,
+  reportRuntimeHostIssue,
+  validateHostMethodPayload,
+} from '@nop-chaos/flux-core';
 import type { ApiRequestExecutor } from './async-data/request-runtime.js';
 import { executeRuntimeAjaxAction } from './runtime-action-helpers.js';
 
@@ -32,6 +38,27 @@ export interface ActionAdapterInput {
 
 export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRuntimeAdapter {
   const { getEnv, expressionCompiler, evaluate, executeApiRequest, runtime } = input;
+
+  function createComponentContractFailureResult(
+    handle: import('@nop-chaos/flux-core').ComponentHandle,
+    error: Error,
+  ): ActionResult {
+    return {
+      ok: false,
+      error,
+      componentId: handle.id,
+      componentName: handle.name,
+      componentType: handle.type,
+    };
+  }
+
+  function resolveComponentCapabilityContract(
+    handle: import('@nop-chaos/flux-core').ComponentHandle,
+    method: string,
+  ) {
+    const definition = runtime.registry.get(handle.type);
+    return definition?.componentCapabilityContracts?.find((contract) => contract.handle === method);
+  }
 
   function resolveSurfaceValidationPlan(surface: Record<string, unknown>) {
     const body = surface.body;
@@ -173,7 +200,6 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             kind: 'dialog',
             surface: invocation.args ?? {},
             scope: dialogScope,
-            runtime,
             options: {
               ownerScope: ctx.scope,
               actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
@@ -233,7 +259,6 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             kind: 'drawer',
             surface: invocation.args ?? {},
             scope: drawerScope,
-            runtime,
             options: {
               ownerScope: ctx.scope,
               actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
@@ -357,6 +382,19 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         }
       }
 
+      const capabilityContract = resolveComponentCapabilityContract(handle, invocation.method);
+      if (capabilityContract) {
+        const payloadValidation = validateHostMethodPayload(
+          `component<${handle.type}>`,
+          invocation.method,
+          invocation.payload,
+          capabilityContract,
+        );
+        if (!payloadValidation.ok) {
+          return createComponentContractFailureResult(handle, payloadValidation.error);
+        }
+      }
+
       const payloadWithSignal =
         ctx.signal && invocation.payload && typeof invocation.payload === 'object'
           ? { ...invocation.payload, signal: ctx.signal }
@@ -369,6 +407,18 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         result && typeof result === 'object' && 'ok' in (result as object)
           ? (result as ActionResult)
           : { ok: true, data: result };
+      if (
+        capabilityContract?.result &&
+        baseResult.ok &&
+        !matchesFluxValueShape(baseResult.data, capabilityContract.result)
+      ) {
+        return createComponentContractFailureResult(
+          handle,
+          new Error(
+            `component<${handle.type}>:${invocation.method} result does not match the published component result contract.`,
+          ),
+        );
+      }
       return {
         ...baseResult,
         componentId: handle.id,
@@ -393,7 +443,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
 
       return resolved.provider.invoke(
         resolved.method,
-        invocation.payload,
+        invocation.payload ?? ctx.evaluationBindings,
         ctx,
       ) as Promise<ActionResult>;
     },

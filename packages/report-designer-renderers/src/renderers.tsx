@@ -1,4 +1,10 @@
-import type { BaseSchema, FieldCompileContext, RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
+import type {
+  BaseSchema,
+  FieldCompileContext,
+  RendererDefinition,
+  RendererRegistry,
+  RendererSchemaValidationContext,
+} from '@nop-chaos/flux-core';
 import type { RendererAuthoringTransformContext } from '@nop-chaos/flux-core';
 import { registerRendererDefinitions } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
@@ -144,7 +150,9 @@ function compileToolbarItemsOverride(
   });
 }
 
-function validateReportToolbarItems(context: import('@nop-chaos/flux-core').RendererSchemaValidationContext<ReportToolbarSchema>) {
+function validateReportToolbarItems(
+  context: RendererSchemaValidationContext<ReportToolbarSchema>,
+) {
   const items = context.schema.itemsOverride;
   if (!Array.isArray(items)) {
     return;
@@ -193,7 +201,7 @@ function compileToolbarItem(
 
 export type { ReportDesignerPageSchemaInput, ReportDesignerPageSchema };
 
-export const reportDesignerRendererDefinitions: RendererDefinition[] = [
+export const reportDesignerRendererDefinitions: RendererDefinition<any>[] = [
   {
     type: 'report-inspector-shell',
     component: LazyReportInspectorShellRenderer,
@@ -207,7 +215,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
     type: 'report-inspector',
     component: LazyReportInspectorRenderer,
     fields: [
-      { key: 'body', kind: 'prop' },
+      { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'emptyLabel', kind: 'prop' },
       { key: 'noSelectionLabel', kind: 'prop' },
     ],

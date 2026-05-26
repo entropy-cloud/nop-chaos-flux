@@ -7,7 +7,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await assertTrackedPageErrors(page);
 }
 
-test('synthetic connect event updates the live edge count', async ({ page }) => {
+test.skip('diagnostic synthetic connect event updates the live edge count', async ({ page }) => {
   await openFlowDesigner(page);
 
   const edgeCount = page.locator('.react-flow__edge');
@@ -31,33 +31,25 @@ test('synthetic connect event updates the live edge count', async ({ page }) => 
   await expect(page.getByText('7 条连线')).toBeVisible({ timeout: 10_000 });
 });
 
-test.skip('dragging from a real source handle to a real target handle creates a visible edge', async ({ page }) => {
+test('keyboard connection from a real source handle to a real target handle creates a visible edge', async ({ page }) => {
   await openFlowDesigner(page);
 
   const edgeCount = page.locator('.react-flow__edge');
   await expect(edgeCount).toHaveCount(6);
 
-  const sourceHandle = page.getByTestId('designer-handle-source-out').first();
-  const targetHandle = page.getByTestId('designer-handle-target-in').last();
+  const sourceHandle = page.getByRole('button', {
+    name: '从节点 发送欢迎邮件 的输出端口 out开始连线',
+  });
   await expect(sourceHandle).toBeVisible();
+  await sourceHandle.focus();
+  await sourceHandle.press('Enter');
+
+  const targetHandle = page.getByRole('button', {
+    name: '完成到节点 结束 的输入端口 in的连线',
+  });
   await expect(targetHandle).toBeVisible();
-
-  const sourceBox = await sourceHandle.boundingBox();
-  const targetBox = await targetHandle.boundingBox();
-  expect(sourceBox).toBeTruthy();
-  expect(targetBox).toBeTruthy();
-
-  await page.mouse.move(
-    sourceBox!.x + sourceBox!.width / 2,
-    sourceBox!.y + sourceBox!.height / 2,
-  );
-  await page.mouse.down();
-  await page.mouse.move(
-    targetBox!.x + targetBox!.width / 2,
-    targetBox!.y + targetBox!.height / 2,
-    { steps: 12 },
-  );
-  await page.mouse.up();
+  await targetHandle.focus();
+  await targetHandle.press('Enter');
 
   await expect(edgeCount).toHaveCount(7, { timeout: 10_000 });
   await expect(page.getByText('7 条连线')).toBeVisible({ timeout: 10_000 });

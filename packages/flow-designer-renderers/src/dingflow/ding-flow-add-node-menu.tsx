@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@nop-chaos/ui';
+import { DropdownMenu, DropdownMenuItem, DropdownMenuPortal, DropdownMenuPopup, DropdownMenuPositioner, cn } from '@nop-chaos/ui';
 
 export interface DingFlowMenuItem {
   type: string;
@@ -25,101 +25,93 @@ export function DingFlowAddNodeMenu({
   onClose,
   returnFocusRef,
 }: DingFlowAddNodeMenuProps) {
-  const firstButtonRef = React.useRef<HTMLButtonElement | null>(null);
-  const itemRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
-  const [activeIndex, setActiveIndex] = React.useState(0);
+  const firstItemRef = React.useRef<HTMLDivElement | null>(null);
+  const focusTimeoutRef = React.useRef<number | null>(null);
+  const anchor = React.useMemo(
+    () => ({
+      getBoundingClientRect: () =>
+        DOMRect.fromRect({
+          x: screenX,
+          y: screenY,
+          width: 0,
+          height: 0,
+        }),
+    }),
+    [screenX, screenY],
+  );
 
   React.useEffect(() => {
-    firstButtonRef.current?.focus();
+    focusTimeoutRef.current = window.setTimeout(() => {
+      firstItemRef.current?.focus();
+    }, 0);
+
+    return () => {
+      if (focusTimeoutRef.current !== null) {
+        window.clearTimeout(focusTimeoutRef.current);
+      }
+    };
   }, []);
-
-  React.useEffect(() => {
-    const nextIndex = Math.min(activeIndex, Math.max(items.length - 1, 0));
-    setActiveIndex(nextIndex);
-  }, [activeIndex, items.length]);
-
-  function focusItem(nextIndex: number) {
-    const normalizedIndex = ((nextIndex % items.length) + items.length) % items.length;
-    setActiveIndex(normalizedIndex);
-    itemRefs.current[normalizedIndex]?.focus();
-  }
 
   function closeMenu() {
     onClose();
-    returnFocusRef?.current?.focus();
+    window.setTimeout(() => {
+      returnFocusRef?.current?.focus();
+    }, 0);
   }
 
   return (
-    <>
-      <div className="fixed inset-0 z-[100]" aria-hidden="true" onClick={closeMenu} />
-      <div
-        className="fixed z-[101] flex gap-4 rounded-lg border border-border bg-popover px-5 py-3 shadow-lg"
-        style={{ left: screenX - 100, top: screenY - 110 }}
-        role="menu"
-        aria-label="Add node"
-        onKeyDown={(event) => {
-          if (items.length > 0 && event.key === 'ArrowRight') {
-            event.preventDefault();
-            focusItem(activeIndex + 1);
-            return;
-          }
-
-          if (items.length > 0 && event.key === 'ArrowLeft') {
-            event.preventDefault();
-            focusItem(activeIndex - 1);
-            return;
-          }
-
-          if (items.length > 0 && event.key === 'Home') {
-            event.preventDefault();
-            focusItem(0);
-            return;
-          }
-
-          if (items.length > 0 && event.key === 'End') {
-            event.preventDefault();
-            focusItem(items.length - 1);
-            return;
-          }
-
-          if (event.key === 'Escape') {
-            event.preventDefault();
-            closeMenu();
-          }
-        }}
-      >
-        {items.map((item, index) => (
-          <Button
-            key={item.type}
-            ref={(node) => {
-              itemRefs.current[index] = node;
-              if (index === 0) {
-                firstButtonRef.current = node;
-              }
-            }}
-            type="button"
-            variant="ghost"
-            className="h-auto flex-col gap-1 px-0 py-0"
-            role="menuitem"
-            aria-label={item.label}
-            tabIndex={index === activeIndex ? 0 : -1}
-            onFocus={() => setActiveIndex(index)}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(item.type);
-              returnFocusRef?.current?.focus();
-            }}
+    <DropdownMenu
+      modal={false}
+      open
+      orientation="horizontal"
+      onOpenChange={(open) => {
+        if (!open) {
+          closeMenu();
+        }
+      }}
+    >
+      <DropdownMenuPortal>
+        <DropdownMenuPositioner
+          anchor={anchor}
+          positionMethod="fixed"
+          side="top"
+          sideOffset={110}
+          align="center"
+          alignOffset={100}
+          collisionAvoidance={{ side: 'none', align: 'none', fallbackAxisSide: 'none' }}
+        >
+          <DropdownMenuPopup
+            aria-label="Add node"
+            finalFocus={returnFocusRef}
+            className="z-[101] flex gap-4 rounded-lg border border-border bg-popover px-5 py-3 shadow-lg outline-none"
           >
-            <div
-              className="flex items-center justify-center rounded-full text-white"
-              style={{ width: 50, height: 50, backgroundColor: item.color }}
-            >
-              {item.icon}
-            </div>
-            <span className="text-xs text-muted-foreground">{item.label}</span>
-          </Button>
-        ))}
-      </div>
-    </>
+            {items.map((item) => (
+              <DropdownMenuItem
+                key={item.type}
+                ref={item === items[0] ? firstItemRef : undefined}
+                closeOnClick={false}
+                aria-label={item.label}
+                className={cn(
+                  'flex cursor-default flex-col items-center gap-1 rounded-md px-0 py-0 outline-none select-none',
+                  'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-popover',
+                )}
+                onClick={() => {
+                  onSelect(item.type);
+                  closeMenu();
+                }}
+              >
+                <div
+                  className="flex items-center justify-center rounded-full text-white"
+                  style={{ width: 50, height: 50, backgroundColor: item.color }}
+                >
+                  {item.icon}
+                </div>
+                <span className="text-xs text-muted-foreground">{item.label}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuPopup>
+        </DropdownMenuPositioner>
+      </DropdownMenuPortal>
+    </DropdownMenu>
   );
 }

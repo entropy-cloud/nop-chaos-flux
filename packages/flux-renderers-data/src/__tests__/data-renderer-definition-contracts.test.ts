@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { dataRendererDefinitions } from '../index.js';
 import { crudRendererDefinition } from '../crud-renderer-definition.js';
+import { transformCrudAuthoringSchema } from '../data-schema-validation.js';
 
 describe('data renderer definition contracts', () => {
   const _LAYOUT_RENDERER_TYPES = new Set(['table', 'crud']);
@@ -95,6 +96,34 @@ describe('data renderer definition contracts', () => {
 
   it('crud event contracts include onSelectionChange with payload shape', () => {
     expect(crudRendererDefinition.eventContracts?.onSelectionChange?.payload?.kind).toBe('object');
+  });
+
+  it('crud compiles queryForm through an internal queryFormRegion instead of runtime raw schema rendering', () => {
+    expect(crudRendererDefinition.fields?.find((field) => field.key === 'queryForm')?.kind).toBe('prop');
+    expect(crudRendererDefinition.fields?.find((field) => field.key === 'queryFormRegion')?.kind).toBe(
+      'region',
+    );
+
+    const transformed = transformCrudAuthoringSchema({
+      schema: {
+        type: 'crud',
+        queryForm: {
+          body: [{ type: 'text', text: 'Query filters' }],
+          actions: [{ type: 'text', text: 'Search actions' }],
+          statusPath: 'ui.queryFormStatus',
+          layout: 'horizontal',
+        },
+      } as any,
+      path: '$.body[0]',
+      emit: () => undefined,
+    } as any);
+
+    expect((transformed as any).queryFormRegion).toMatchObject({
+      type: 'form',
+      id: 'body-0-query-form',
+      statusPath: 'ui.queryFormStatus',
+      mode: 'horizontal',
+    });
   });
 
   it('no data renderer has hostContract', () => {

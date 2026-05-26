@@ -19,6 +19,10 @@ import {
   textRenderer,
 } from '../test-support.js';
 
+function renderFragmentStub(): null {
+  return null;
+}
+
 describe('createSchemaRenderer compilation and boundary flags', () => {
   it('compiles runtime boundary flags for form, scope, provider, and class alias changes', () => {
     const runtime = createRendererRuntime({
@@ -68,11 +72,11 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     const createChildScopeSpy = vi.spyOn(runtime, 'createChildScope');
 
     render(
-      <RuntimeContext.Provider value={runtime}>
-        <ScopeContext.Provider value={page.scope}>
-          <NodeRenderer node={root} scope={page.scope} />
-        </ScopeContext.Provider>
-      </RuntimeContext.Provider>,
+        <RuntimeContext.Provider value={runtime}>
+          <ScopeContext.Provider value={page.scope}>
+            <NodeRenderer node={root} renderFragment={renderFragmentStub} scope={page.scope} />
+          </ScopeContext.Provider>
+        </RuntimeContext.Provider>,
     );
 
     expect(screen.getByText('No imports')).toBeTruthy();
@@ -119,13 +123,13 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     try {
       expect(() =>
         render(
-          <RuntimeContext.Provider value={runtime}>
-            <ScopeContext.Provider value={page.scope}>
-              <>
-                <NodeRenderer node={root} scope={page.scope} />
-                <CrashOnRender />
-              </>
-            </ScopeContext.Provider>
+            <RuntimeContext.Provider value={runtime}>
+              <ScopeContext.Provider value={page.scope}>
+                <>
+                  <NodeRenderer node={root} renderFragment={renderFragmentStub} scope={page.scope} />
+                  <CrashOnRender />
+                </>
+              </ScopeContext.Provider>
           </RuntimeContext.Provider>,
         ),
       ).toThrow('abort render');
@@ -161,11 +165,16 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     } as any);
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
     render(
-      <RuntimeContext.Provider value={runtime}>
-        <ScopeContext.Provider value={page.scope}>
-          <NodeRenderer node={root} scope={page.scope} actionScope={actionScope} />
-        </ScopeContext.Provider>
-      </RuntimeContext.Provider>,
+        <RuntimeContext.Provider value={runtime}>
+          <ScopeContext.Provider value={page.scope}>
+            <NodeRenderer
+              node={root}
+              renderFragment={renderFragmentStub}
+              scope={page.scope}
+              actionScope={actionScope}
+            />
+          </ScopeContext.Provider>
+        </RuntimeContext.Provider>,
     );
 
     expect(screen.getByText('Imports')).toBeTruthy();
@@ -218,7 +227,12 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     render(
       <RuntimeContext.Provider value={runtime}>
         <ScopeContext.Provider value={page.scope}>
-          <NodeRenderer node={root} scope={page.scope} actionScope={rootActionScope} />
+          <NodeRenderer
+            node={root}
+            renderFragment={renderFragmentStub}
+            scope={page.scope}
+            actionScope={rootActionScope}
+          />
         </ScopeContext.Provider>
       </RuntimeContext.Provider>,
     );
@@ -252,11 +266,11 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     const resolveClassAliasesSpy = vi.spyOn(fluxCore, 'resolveClassAliases');
 
     render(
-      <RuntimeContext.Provider value={runtime}>
-        <ScopeContext.Provider value={page.scope}>
-          <NodeRenderer node={root} scope={page.scope} />
-        </ScopeContext.Provider>
-      </RuntimeContext.Provider>,
+        <RuntimeContext.Provider value={runtime}>
+          <ScopeContext.Provider value={page.scope}>
+            <NodeRenderer node={root} renderFragment={renderFragmentStub} scope={page.scope} />
+          </ScopeContext.Provider>
+        </RuntimeContext.Provider>,
     );
 
     expect(screen.getByText('No aliases')).toBeTruthy();

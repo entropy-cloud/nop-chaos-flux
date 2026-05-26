@@ -8,12 +8,11 @@ import type {
   TemplateNode,
   TemplateRegion,
 } from '@nop-chaos/flux-core';
-import { extractNestedSchemaRegions, getIn, isSchema, isSchemaArray } from '@nop-chaos/flux-core';
+import { extractNestedSchemaRegions, getIn } from '@nop-chaos/flux-core';
 import {
   resolveRendererSlotContent,
   useCurrentForm,
   useCurrentFormState,
-  useRenderFragment,
   useCurrentValidationScope,
   useRenderScope,
   useRendererRuntime,
@@ -28,11 +27,9 @@ import { VariantFieldView } from './variant-field-view.js';
 
 export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldSchema>) {
   const runtime = useRendererRuntime();
-  const authoredSchema = props.templateNode.schema as VariantFieldSchema | undefined;
   const parentForm = useCurrentForm();
   const parentValidationOwner = useCurrentValidationScope();
   const parentScope = useRenderScope();
-  const renderFragment = useRenderFragment();
   const schemaProps = props.props;
   const name = String(schemaProps.name ?? '');
   const readOnly = schemaProps.readOnly === true;
@@ -78,25 +75,8 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   });
   const resolvedHintContent = resolveRendererSlotContent(props, 'hint');
   const resolvedDescriptionContent = resolveRendererSlotContent(props, 'description');
-  const rawHintContent =
-    isSchema(authoredSchema?.hint) || isSchemaArray(authoredSchema?.hint)
-      ? authoredSchema.hint
-      : resolvedHintContent;
-  const rawDescriptionContent =
-    isSchema(authoredSchema?.description) || isSchemaArray(authoredSchema?.description)
-      ? authoredSchema.description
-      : resolvedDescriptionContent;
-  const toReactNode = (value: unknown): React.ReactNode => value as React.ReactNode;
-  const renderSlotContent = (value: unknown): React.ReactNode => {
-    if (isSchema(value) || isSchemaArray(value)) {
-      return toReactNode(renderFragment(value));
-    }
-
-    return toReactNode(value);
-  };
-  const hintContent =
-    renderSlotContent(rawHintContent);
-  const descriptionContent = renderSlotContent(rawDescriptionContent);
+  const hintContent = resolvedHintContent as React.ReactNode;
+  const descriptionContent = resolvedDescriptionContent as React.ReactNode;
 
   return (
     <VariantFieldView

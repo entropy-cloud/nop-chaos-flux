@@ -30,6 +30,22 @@ import {
 } from './types.js';
 import { useCodeMirror } from './use-code-mirror.js';
 
+function isEditorMode(value: unknown): value is EditorMode {
+  return value === 'expression' || value === 'template' || value === 'code';
+}
+
+function isEditorTheme(value: unknown): value is 'light' | 'dark' {
+  return value === 'light' || value === 'dark';
+}
+
+function sanitizeExpressionConfig(value: unknown): ExpressionEditorConfig | undefined {
+  return value && typeof value === 'object' ? (value as ExpressionEditorConfig) : undefined;
+}
+
+function sanitizeSqlConfig(value: unknown): SQLEditorConfig | undefined {
+  return value && typeof value === 'object' ? (value as SQLEditorConfig) : undefined;
+}
+
 export const codeEditorFieldRules: SchemaFieldRule[] = [
   { key: 'label', kind: 'value-or-region', regionKey: 'label' },
   ...formFieldChromeRules,
@@ -78,18 +94,18 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   );
 
   const language = (props.props.language as EditorLanguage) ?? 'plaintext';
-  const mode = props.props.mode as EditorMode | undefined;
+  const mode = isEditorMode(props.props.mode) ? props.props.mode : undefined;
   const readOnly = props.props.readOnly || props.props.disabled || false;
   const placeholder = props.props.placeholder as string | undefined;
-  const editorTheme = (props.props.editorTheme as 'light' | 'dark') ?? 'light';
+  const editorTheme = isEditorTheme(props.props.editorTheme) ? props.props.editorTheme : 'light';
   const lineNumbers =
     (props.props.lineNumbers as boolean | undefined) ?? getDefaultLineNumbers(language);
   const folding = (props.props.folding as boolean | undefined) ?? false;
   const autoHeight =
     (props.props.autoHeight as boolean | undefined) ?? getDefaultAutoHeight(language);
   const allowFullscreen = (props.props.allowFullscreen as boolean | undefined) ?? false;
-  const expressionConfig = props.props.expressionConfig as ExpressionEditorConfig | undefined;
-  const sqlConfig = props.props.sqlConfig as SQLEditorConfig | undefined;
+  const expressionConfig = sanitizeExpressionConfig(props.props.expressionConfig);
+  const sqlConfig = sanitizeSqlConfig(props.props.sqlConfig);
   const labelContent = resolveRendererSlotContent(props, 'label');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const toggleFullscreen = () => setIsFullscreen((value) => !value);
@@ -180,8 +196,6 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   return (
     <div
       className={cn('nop-code-editor', props.meta.className)}
-      data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
-      data-testid={props.meta.testid}
       data-theme={editorTheme}
       data-fullscreen={isFullscreen || undefined}
       data-has-toolbar={showToolbar || undefined}

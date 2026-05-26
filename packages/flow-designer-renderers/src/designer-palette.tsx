@@ -5,33 +5,13 @@ import { useDesignerContext, useDesignerSnapshotSelector } from './designer-cont
 import { DesignerIcon } from './designer-icon.js';
 import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge.js';
 import { Button, Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
+import { resolveNodeTypeAccent } from './designer-node-appearance.js';
 
-const PALETTE_APPEARANCE_BY_ID: Record<string, string> = {
-  start: 'fd-palette-appearance-start',
-  end: 'fd-palette-appearance-end',
-  task: 'fd-palette-appearance-task',
-  process: 'fd-palette-appearance-process',
-  condition: 'fd-palette-appearance-condition',
-  branch: 'fd-palette-appearance-condition',
-  merge: 'fd-palette-appearance-merge',
-  parallel: 'fd-palette-appearance-parallel',
-  http: 'fd-palette-appearance-http',
-  database: 'fd-palette-appearance-data',
-  table: 'fd-palette-appearance-data',
-  'tf-start': 'fd-palette-appearance-start',
-  'tf-end': 'fd-palette-appearance-end',
-  'tf-script': 'fd-palette-appearance-task',
-  'tf-invoke': 'fd-palette-appearance-parallel',
-  'tf-if': 'fd-palette-appearance-condition',
-  'tf-choose': 'fd-palette-appearance-condition',
-  'tf-sequential': 'fd-palette-appearance-task',
-  'tf-delay': 'fd-palette-appearance-data',
-  'tf-graph': 'fd-palette-appearance-parallel',
-  'tf-parallel': 'fd-palette-appearance-parallel',
-};
+const DEFAULT_INSERT_POSITION = { x: 180, y: 120 };
+const ACTIVE_NODE_INSERT_OFFSET = { x: 220, y: 0 };
 
-function resolvePaletteAppearance(nodeType: NodeTypeConfig) {
-  return PALETTE_APPEARANCE_BY_ID[nodeType.id] ?? 'fd-palette-appearance-default';
+function resolvePaletteAccent(nodeType: NodeTypeConfig) {
+  return resolveNodeTypeAccent(nodeType.id, nodeType) ?? 'hsl(var(--primary))';
 }
 
 export function DesignerPaletteContent(props: {
@@ -43,6 +23,7 @@ export function DesignerPaletteContent(props: {
   };
 } = {}) {
   const { config, dispatch, openCreateDialog } = useDesignerContext();
+  const activeNode = useDesignerSnapshotSelector((s) => s.activeNode);
   const activeNodeType = useDesignerSnapshotSelector((s) => s.activeNode?.type);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     new Set(['basic', 'logic', 'execution']),
@@ -66,14 +47,19 @@ export function DesignerPaletteContent(props: {
 
   const handleAddNode = useCallback(
     (nodeType: NodeTypeConfig) => {
-      const position = { x: 180 + Math.random() * 200, y: 120 + Math.random() * 200 };
+      const position = activeNode?.position
+        ? {
+            x: activeNode.position.x + ACTIVE_NODE_INSERT_OFFSET.x,
+            y: activeNode.position.y + ACTIVE_NODE_INSERT_OFFSET.y,
+          }
+        : DEFAULT_INSERT_POSITION;
       if (nodeType.createDialog && openCreateDialog) {
         openCreateDialog(nodeType, position);
         return;
       }
       dispatch({ type: 'addNode', nodeType: nodeType.id, position });
     },
-    [dispatch, openCreateDialog],
+    [activeNode, dispatch, openCreateDialog],
   );
 
   const filteredGroups = paletteGroups.filter((g) => g.nodeTypes.length > 0);
@@ -154,14 +140,16 @@ export function DesignerPaletteContent(props: {
                         }}
                         title={nt.description ?? nt.label}
                       >
-                        <span
-                          className={cn(
-                            'w-8 h-8 rounded-lg inline-flex items-center justify-center text-white shrink-0',
-                            resolvePaletteAppearance(nt),
-                          )}
-                          data-type={nt.id}
-                          aria-hidden="true"
-                        >
+                         <span
+                           className={cn(
+                             'fd-palette-swatch w-8 h-8 rounded-lg inline-flex items-center justify-center text-white shrink-0',
+                           )}
+                           style={{
+                             '--fd-palette-accent': resolvePaletteAccent(nt),
+                           } as React.CSSProperties}
+                           data-type={nt.id}
+                           aria-hidden="true"
+                         >
                           {nt.icon ? <DesignerIcon icon={nt.icon} className="text-white" /> : '◇'}
                         </span>
                         <span className="text-sm font-medium text-foreground whitespace-nowrap overflow-hidden text-ellipsis">

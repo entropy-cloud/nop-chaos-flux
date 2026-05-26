@@ -250,11 +250,11 @@ export function createNodeRuntime(input: {
     const propsProgram = node.propsProgram;
     const execution =
       propsProgram.kind === 'static'
-        ? (state?._staticPropsResult ?? {
+        ? ((state?._staticPropsResult ?? {
             value: propsProgram.value,
             changed: false,
             reusedReference: true,
-          })
+          }) as ResolvedNodeProps)
         : input.expressionCompiler.evaluateWithState(
             propsProgram,
             scope,

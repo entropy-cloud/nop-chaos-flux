@@ -313,6 +313,26 @@ export function createDesignerCore(
     selectionController.selectBranch(ownerNodeId, branchId);
   }
 
+  function toggleNodeSelection(nodeId: string): { ok: true } | { ok: false; reason: 'missing-node' } {
+    const exists = doc.nodes.some((node) => node.id === nodeId);
+    if (!exists) {
+      return { ok: false, reason: 'missing-node' };
+    }
+
+    selectionController.toggleNodeSelection(nodeId);
+    return { ok: true };
+  }
+
+  function toggleEdgeSelection(edgeId: string): { ok: true } | { ok: false; reason: 'missing-edge' } {
+    const exists = doc.edges.some((edge) => edge.id === edgeId);
+    if (!exists) {
+      return { ok: false, reason: 'missing-edge' };
+    }
+
+    selectionController.toggleEdgeSelection(edgeId);
+    return { ok: true };
+  }
+
   function moveNodes(deltas: Record<string, { dx: number; dy: number }>): void {
     moveNodesCommand(buildNodeCtx(), deltas);
   }
@@ -561,8 +581,8 @@ export function createDesignerCore(
     selectEdge: selectionController.selectEdge,
     selectBranch,
     clearSelection: selectionController.clearSelection,
-    toggleNodeSelection: selectionController.toggleNodeSelection,
-    toggleEdgeSelection: selectionController.toggleEdgeSelection,
+    toggleNodeSelection,
+    toggleEdgeSelection,
     selectAllNodes: selectionController.selectAllNodes,
     setSelection: selectionController.setSelection,
     moveNodes,

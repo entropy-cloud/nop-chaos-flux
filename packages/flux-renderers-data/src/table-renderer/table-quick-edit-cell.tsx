@@ -23,7 +23,6 @@ function asReactNode(value: unknown): React.ReactNode {
 interface ResolvedTableQuickEditConfig {
   mode: 'inline' | 'dialog';
   saveImmediately: boolean;
-  body?: TableColumnQuickEditConfig['body'];
 }
 
 export function resolveTableQuickEditConfig(
@@ -53,7 +52,6 @@ export function resolveTableQuickEditConfig(
   return {
     mode: config.mode === 'dialog' ? 'dialog' : 'inline',
     saveImmediately: config.saveImmediately === true,
-    body: config.body,
   };
 }
 
@@ -75,7 +73,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const quickEditBodyRegion =
     typeof column.quickEditBodyRegionKey === 'string' ? regions[column.quickEditBodyRegionKey] : undefined;
-  const hasCustomBody = config?.body !== undefined || Boolean(quickEditBodyRegion);
+  const hasCustomBody = Boolean(quickEditBodyRegion);
 
   const saveAction = quickSaveItemAction ?? quickSaveAction;
   const mode = config?.mode ?? 'inline';
@@ -114,14 +112,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
             pathSuffix: `quickEdit.${field ?? 'custom'}`,
           }),
         )
-      : config?.body
-        ? asReactNode(
-            helpers.render(config.body, {
-              scope: draftRowScope,
-              pathSuffix: `quickEdit.${field ?? 'custom'}`,
-            }),
-          )
-        : null
+      : null
   ) : (
     <Input
       name={`quick-edit-${field}`}
