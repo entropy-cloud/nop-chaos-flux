@@ -16,4 +16,12 @@ describe('Textarea', () => {
     expect(textarea).toHaveProperty('disabled', true);
     expect(textarea.className).toContain('custom-textarea');
   });
+
+  it('accepts the React 19 ref prop contract', () => {
+    const ref = React.createRef<HTMLTextAreaElement>();
+
+    render(<Textarea ref={ref} aria-label="Notes with ref" />);
+
+    expect(ref.current).toBe(screen.getByRole('textbox', { name: 'Notes with ref' }));
+  });
 });

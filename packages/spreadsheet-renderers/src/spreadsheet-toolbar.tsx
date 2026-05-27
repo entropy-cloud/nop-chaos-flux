@@ -1,4 +1,3 @@
-import { SpreadsheetCellEditor } from './spreadsheet-toolbar/cell-editor.js';
 import { SpreadsheetFindReplacePanel } from './spreadsheet-toolbar/find-replace-panel.js';
 import { SpreadsheetToolbarGroups } from './spreadsheet-toolbar/toolbar-groups.js';
 import { SpreadsheetToolbarStatus } from './spreadsheet-toolbar/toolbar-status.js';
@@ -9,7 +8,7 @@ export type { SpreadsheetToolbarProps, StyleToolType } from './spreadsheet-toolb
 export function SpreadsheetToolbar(props: SpreadsheetToolbarProps) {
   return (
     <>
-      <div className="rd-toolbar" data-slot="spreadsheet-toolbar">
+      <div className="rd-toolbar rd-toolbar--single-row" data-slot="spreadsheet-toolbar">
         <SpreadsheetToolbarGroups {...props} />
         <SpreadsheetToolbarStatus
           selectedCell={props.selectedCell}
@@ -19,7 +18,6 @@ export function SpreadsheetToolbar(props: SpreadsheetToolbarProps) {
       </div>
 
       <SpreadsheetFindReplacePanel {...props} />
-      <SpreadsheetCellEditor {...props} />
     </>
   );
 }

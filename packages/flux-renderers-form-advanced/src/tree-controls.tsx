@@ -477,6 +477,7 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     wrap: true,
+    frameRootTag: 'div',
     component: InputTreeRenderer,
   },
   {

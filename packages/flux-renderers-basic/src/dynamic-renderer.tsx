@@ -4,6 +4,7 @@ import type {
   DynamicRendererSchema,
   RendererComponentProps,
 } from '@nop-chaos/flux-core';
+import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { cn, Spinner } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { asReactNode } from './utils.js';
@@ -51,14 +52,28 @@ function createDynamicRendererState(loadAction?: DynamicRendererSchema['loadActi
 export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSchema>) {
   'use no memo';
 
-  const loadAction = props.schema.loadAction;
-  const loadActionHandler = props.events.loadAction;
-  const loadActionKey = getLoadActionKey(loadAction);
+  const scope = useRenderScope();
+  const loadActionKey = useScopeSelector(
+    () =>
+      getLoadActionKey(
+        props.helpers.evaluate(props.schema.loadAction, scope) as
+          | DynamicRendererSchema['loadAction']
+          | undefined,
+      ),
+    Object.is,
+  );
+  const loadAction = props.helpers.evaluate(props.schema.loadAction, scope) as
+    | DynamicRendererSchema['loadAction']
+    | undefined;
   const [state, setState] = useState<DynamicRendererState>(() => createDynamicRendererState(loadAction));
   const visibleState = state.loadActionKey === loadActionKey ? state : createDynamicRendererState(loadAction);
 
   useEffect(() => {
-    if (!loadAction || !loadActionHandler) {
+    const evaluatedLoadAction = props.helpers.evaluate(props.schema.loadAction, scope) as
+      | DynamicRendererSchema['loadAction']
+      | undefined;
+
+    if (!evaluatedLoadAction) {
       return;
     }
 
@@ -66,7 +81,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
 
     const loadSchema = async () => {
       try {
-        const result = await loadActionHandler(undefined, { signal: controller.signal });
+        const result = await props.helpers.dispatch(evaluatedLoadAction, { signal: controller.signal });
 
         if (controller.signal.aborted) return;
 
@@ -104,7 +119,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     return () => {
       controller.abort();
     };
-  }, [loadAction, loadActionHandler, loadActionKey]);
+  }, [loadActionKey, props.helpers, props.schema.loadAction, scope]);
 
   if (visibleState.error) {
     return (

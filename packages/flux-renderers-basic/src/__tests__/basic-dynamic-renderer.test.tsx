@@ -5,6 +5,14 @@ import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 import { basicRendererDefinitions } from '../basic-renderer-definitions.js';
 
+type MockFetcher = RendererEnv['fetcher'] & ReturnType<typeof vi.fn>;
+
+function createMockFetcher(
+  implementation: (...args: Parameters<RendererEnv['fetcher']>) => Promise<unknown>,
+): MockFetcher {
+  return vi.fn(implementation) as unknown as MockFetcher;
+}
+
 beforeEach(async () => {
   resetFluxI18n();
   initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
@@ -46,11 +54,11 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
   });
 
   it('replaces body with loaded schema on success', async () => {
-    const fetcher = vi.fn(async () => ({
+    const fetcher = createMockFetcher(async () => ({
       ok: true,
       status: 200,
       data: { type: 'text', text: 'Dynamic content loaded' },
-    })) as RendererEnv['fetcher'];
+    }));
     const SchemaRenderer = createBasicSchemaRenderer();
     render(
       <SchemaRenderer
@@ -75,11 +83,11 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
   });
 
   it('shows request error when loadAction fails', async () => {
-    const fetcher = vi.fn(async () => ({
+    const fetcher = createMockFetcher(async () => ({
       ok: false,
       status: 500,
       data: null,
-    })) as RendererEnv['fetcher'];
+    }));
     const SchemaRenderer = createBasicSchemaRenderer();
     render(
       <SchemaRenderer
@@ -103,11 +111,11 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
   });
 
   it('shows an error when the action returns an invalid schema payload', async () => {
-    const fetcher = vi.fn(async () => ({
+    const fetcher = createMockFetcher(async () => ({
       ok: true,
       status: 200,
       data: { text: 'Missing type field' },
-    })) as RendererEnv['fetcher'];
+    }));
     const SchemaRenderer = createBasicSchemaRenderer();
     render(
       <SchemaRenderer
@@ -182,6 +190,76 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
 
     pendingResolves.shift()?.({ ok: true, status: 200, data: { type: 'text', text: 'Second schema' } });
     await waitFor(() => expect(screen.getByText('Second schema')).toBeTruthy());
+    cleanup();
+  });
+
+  it('reloads when the resolved loadAction changes through scope data', async () => {
+    const fetcher = createMockFetcher(async (api) => {
+      const request = api as { url?: string };
+      if (request.url === '/api/text') {
+        return {
+          ok: true,
+          status: 200,
+          data: { type: 'text', text: 'Loaded text schema' },
+        };
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        data: { type: 'badge', text: 'Loaded badge schema', level: 'success' },
+      };
+    });
+    const SchemaRenderer = createBasicSchemaRenderer();
+
+    const schema = {
+      type: 'page',
+      body: [
+        { type: 'text', text: 'Current kind: ${schemaType}' },
+        {
+          type: 'dynamic-renderer',
+          loadAction: {
+            action: 'ajax',
+            args: {
+              url: '${schemaType === "text" ? "/api/text" : "/api/badge"}',
+            },
+          },
+          body: { type: 'text', text: 'Loading...' },
+        },
+      ],
+    } as const;
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer"
+        schema={schema}
+        data={{ schemaType: 'badge' }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Current kind: badge')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Loaded badge schema')).toBeTruthy());
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer"
+        schema={schema}
+        data={{ schemaType: 'text' }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Current kind: text')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Loaded text schema')).toBeTruthy());
+    expect(fetcher.mock.calls.map(([api]) => {
+      const request = api as { url?: string };
+      return request.url;
+    })).toEqual(
+      expect.arrayContaining(['/api/badge', '/api/text']),
+    );
     cleanup();
   });
 });

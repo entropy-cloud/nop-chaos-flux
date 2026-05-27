@@ -49,6 +49,8 @@ const LazyDesignerFieldRenderer = useEagerRenderersInTests
 function compileDesignerConfig(value: unknown, context: FieldCompileContext): unknown {
   const normalizeBooleanLikeCandidate = (candidate: unknown): boolean | undefined =>
     typeof candidate === 'boolean' ? candidate : undefined;
+  const isToolbarRuntimeField = (path: string) =>
+    /\.toolbar\.items\.\d+\.(text|body|level|disabled|active|visible)$/.test(path);
 
   if (!isPlainObject(value) && context.sourcePath.endsWith('.config')) {
     return context.compileValue(value);
@@ -69,6 +71,11 @@ function compileDesignerConfig(value: unknown, context: FieldCompileContext): un
 
   for (const [key, child] of Object.entries(record)) {
     const childPath = `${context.sourcePath}.${key}`;
+
+    if (isToolbarRuntimeField(childPath)) {
+      result[key] = child;
+      continue;
+    }
 
     if (
       isSchemaInput(child) &&

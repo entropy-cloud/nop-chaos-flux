@@ -22,11 +22,14 @@ describe('@nop-chaos/theme-tokens styles contract', () => {
     expect(styles).toContain('--shadow-sm:');
     expect(styles).toContain('--sidebar: var(--card);');
     expect(styles).toContain('--sidebar-border: var(--border);');
+    expect(styles).toContain('--surface-primary:');
+    expect(styles).toContain('--surface-overlay:');
     expect(styles).toContain('--primary-foreground:');
     expect(styles).toContain('--background:');
     expect(styles).toContain('--popover: var(--card);');
     expect(styles).toContain('--popover-foreground: var(--card-foreground);');
     expect(styles).toContain('--border: 214 32% 91%;');
+    expect(styles).not.toContain('--host-primary:');
   });
 
   it('defines all supported theme root selectors', () => {
@@ -55,6 +58,10 @@ describe('@nop-chaos/theme-tokens styles contract', () => {
       expect(blockText).toContain('--border:');
       expect(blockText).toContain('--chart-1:');
       expect(blockText).toContain('--chart-5:');
+      expect(blockText).toContain('--surface-primary:');
+      expect(blockText).toContain('--surface-hover:');
+      expect(blockText).toContain('--surface-overlay:');
+      expect(blockText).not.toContain('--host-');
     }
   });
 });

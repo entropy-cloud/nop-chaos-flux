@@ -11,8 +11,29 @@ type MockContext = {
   config: any;
   dispatch: ReturnType<typeof vi.fn>;
   openCreateDialog?: ReturnType<typeof vi.fn>;
+  designerScope?: any;
   core: { subscribe: () => () => void; getSnapshot: () => any };
 };
+
+function readExpressionValue(data: Record<string, unknown>, expression: string): unknown {
+  return expression.split('.').reduce<unknown>((value, segment) => {
+    if (value == null || typeof value !== 'object') {
+      return undefined;
+    }
+    return (value as Record<string, unknown>)[segment.trim()];
+  }, data);
+}
+
+function evaluateTemplateExpression(data: Record<string, unknown>, expression: string): string {
+  const ternaryMatch = expression.match(/^(.+?)\?\s*'([^']*)'\s*:\s*'([^']*)'$/);
+  if (ternaryMatch) {
+    const [, condition, whenTrue, whenFalse] = ternaryMatch;
+    return readExpressionValue(data, condition.trim()) ? whenTrue : whenFalse;
+  }
+
+  const resolved = readExpressionValue(data, expression.trim());
+  return resolved == null ? '' : String(resolved);
+}
 
 const mockState: {
   context: MockContext;
@@ -48,7 +69,15 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentActionScope: () => ({
     resolve: mockState.resolve,
   }),
-  useRendererRuntime: () => ({ env: { notify: mockState.notify } }),
+  useRendererRuntime: () => ({
+    env: { notify: mockState.notify },
+    evaluate: (target: string, scope: { materializeVisible?: () => Record<string, unknown> }) => {
+      const data = scope?.materializeVisible?.() ?? {};
+      return target.replace(/\$\{([^}]+)\}/g, (_, expression: string) =>
+        evaluateTemplateExpression(data, expression),
+      );
+    },
+  }),
   useRenderScope: () => ({}),
 }));
 
@@ -83,6 +112,9 @@ describe('flow designer controls', () => {
       config: { toolbar: { items: [] }, palette: { groups: [] }, nodeTypes: [] },
       dispatch: vi.fn(),
       openCreateDialog: vi.fn(),
+      designerScope: {
+        materializeVisible: () => mockState.snapshot,
+      },
       core: { subscribe: () => () => {}, getSnapshot: () => mockState.snapshot },
     };
   });
@@ -143,6 +175,25 @@ describe('flow designer controls', () => {
 
     expect(onExportToggle).toHaveBeenCalledTimes(1);
     expect(mockState.context.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('renders toolbar text templates against the live designer snapshot scope', () => {
+    mockState.context.config = {
+      ...mockState.context.config,
+      toolbar: {
+        items: [
+          { type: 'title', body: '${doc.name}' },
+          { type: 'text', text: 'Container: ${doc.name}' },
+          { type: 'badge', text: '${doc.nodes.length} nodes', level: "${isDirty ? 'warning' : 'success'}" },
+        ],
+      },
+    };
+
+    render(<DesignerToolbarContent />);
+
+    expect(screen.getByText('Test Flow')).toBeTruthy();
+    expect(screen.getByText('Container: Test Flow')).toBeTruthy();
+    expect(screen.getByText('1 nodes')).toBeTruthy();
   });
 
   it('routes built-in toolbar switches through ActionScope', async () => {

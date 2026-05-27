@@ -297,6 +297,62 @@ describe('spreadsheet grid selection', () => {
     });
   });
 
+  it('keeps grid keyboard navigation working after a mouse cell selection', async () => {
+    const documentModel = createEmptyDocument('grid-click-then-arrow-navigation');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell[data-row="0"][data-col="0"]') as HTMLElement | null;
+    const grid = container.querySelector('[role="grid"]') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+    expect(grid).toBeTruthy();
+
+    fireEvent.mouseDown(firstCell!, { button: 0 });
+    fireEvent.click(firstCell!);
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(grid);
+      expect(core.getSnapshot().selection.anchor?.address).toBe('A1');
+    });
+
+    fireEvent.keyDown(grid!, { key: 'ArrowRight' });
+    fireEvent.keyDown(grid!, { key: 'ArrowDown' });
+
+    await waitFor(() => {
+      expect(core.getSnapshot().selection.anchor?.address).toBe('B2');
+    });
+  });
+
+  it('starts inline editing from Enter after a mouse cell selection', async () => {
+    const documentModel = createEmptyDocument('grid-click-then-enter-editing');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell[data-row="0"][data-col="0"]') as HTMLElement | null;
+    const grid = container.querySelector('[role="grid"]') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+    expect(grid).toBeTruthy();
+
+    fireEvent.mouseDown(firstCell!, { button: 0 });
+    fireEvent.click(firstCell!);
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(grid);
+      expect(core.getSnapshot().selection.anchor?.address).toBe('A1');
+    });
+
+    fireEvent.keyDown(grid!, { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-slot="spreadsheet-cell-editor-input"]')).toBeTruthy();
+      expect(firstCell?.getAttribute('data-cell-editing')).toBe('true');
+    });
+  });
+
   it('keeps the cell editor open when setCellValue dispatch fails', async () => {
     const documentModel = createEmptyDocument('edit-failure-keeps-draft');
     const core = createSpreadsheetCore({ document: documentModel });
@@ -600,6 +656,80 @@ describe('spreadsheet grid selection', () => {
       expect(logs).toContain('Cell save failed: save failed');
       expect(core.getSnapshot().selection.anchor?.address).toBe('B2');
     });
+  });
+
+  it('starts inline cell editing from F2 on the active cell', async () => {
+    const documentModel = createEmptyDocument('grid-f2-editing');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell[data-row="0"][data-col="0"]') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+    fireEvent.click(firstCell!);
+
+    const grid = container.querySelector('[role="grid"]') as HTMLElement | null;
+    expect(grid).toBeTruthy();
+    fireEvent.keyDown(grid!, { key: 'F2' });
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-slot="spreadsheet-cell-editor-input"]')).toBeTruthy();
+      expect(firstCell?.getAttribute('data-cell-editing')).toBe('true');
+    });
+  });
+
+  it('uses the dedicated compact inline editor without introducing shared Input sizing attrs', async () => {
+    const documentModel = createEmptyDocument('grid-compact-inline-editor');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell[data-row="0"][data-col="0"]') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+    fireEvent.click(firstCell!);
+
+    const grid = container.querySelector('[role="grid"]') as HTMLElement | null;
+    expect(grid).toBeTruthy();
+    fireEvent.keyDown(grid!, { key: 'F2' });
+
+    await waitFor(() => {
+      const editor = container.querySelector('[data-slot="spreadsheet-cell-editor-input"]') as HTMLInputElement | null;
+      expect(editor).toBeTruthy();
+      expect(editor?.tagName).toBe('INPUT');
+      expect(editor?.getAttribute('data-size')).toBeNull();
+      expect(editor?.className).toContain('ss-cell-edit-input');
+    });
+  });
+
+  it('moves focus into the inline editor so subsequent typing updates the cell draft', async () => {
+    const documentModel = createEmptyDocument('grid-inline-editor-focus');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell[data-row="0"][data-col="0"]') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+    fireEvent.click(firstCell!);
+
+    const grid = container.querySelector('[role="grid"]') as HTMLElement | null;
+    expect(grid).toBeTruthy();
+    fireEvent.keyDown(grid!, { key: 'F2' });
+
+    const editor = await waitFor(() => {
+      const next = container.querySelector('[data-slot="spreadsheet-cell-editor-input"]') as HTMLInputElement | null;
+      expect(next).toBeTruthy();
+      return next as HTMLInputElement;
+    });
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(editor);
+    });
+
+    fireEvent.change(editor, { target: { value: 'Hello' } });
+    expect(editor.value).toBe('Hello');
   });
 
   it('does not rebuild viewport offsets on ordinary scroll renders', async () => {

@@ -68,12 +68,11 @@ describe('SpreadsheetToolbar', () => {
     await setupI18n();
     const { container } = render(<SpreadsheetToolbar {...createProps({ frozen: true })} />);
 
-    expect(screen.getByLabelText('A1')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-toolbar-cell-address"]')?.textContent).toBe('A1');
     expect(screen.getByText('Frozen')).toBeTruthy();
     expect(container.querySelector('[data-slot="spreadsheet-toolbar"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="spreadsheet-toolbar-group"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="spreadsheet-toolbar-status"]')).toBeTruthy();
-    expect(container.querySelector('[data-slot="spreadsheet-toolbar-cell-address"]')?.textContent).toBe('A1');
     expect(container.querySelector('[data-slot="spreadsheet-toolbar-frozen-badge"]')?.textContent).toBe(
       'Frozen',
     );
@@ -99,7 +98,7 @@ describe('SpreadsheetToolbar', () => {
     expect(screen.getByPlaceholderText('Replace with...')).toBeTruthy();
   });
 
-  it('renders cell and comment editors when a cell and comment input are active', async () => {
+  it('does not render a toolbar cell value editor even when comment input is active', async () => {
     await setupI18n();
     const { container } = render(
       <SpreadsheetToolbar
@@ -107,15 +106,8 @@ describe('SpreadsheetToolbar', () => {
       />,
     );
 
-    expect(screen.getAllByDisplayValue('hello').length).toBeGreaterThan(0);
-    expect(screen.getByDisplayValue('note')).toBeTruthy();
-    expect(screen.getByText('Delete')).toBeTruthy();
-    expect(screen.getAllByPlaceholderText('Enter cell value').length).toBeGreaterThan(0);
-    expect(screen.getAllByPlaceholderText('Add comment...').length).toBeGreaterThan(0);
-    expect(container.querySelector('[data-slot="spreadsheet-cell-editor"]')).toBeTruthy();
-    expect(container.querySelector('[data-slot="spreadsheet-cell-value-input"]')).toBeTruthy();
-    expect(container.querySelector('[data-slot="spreadsheet-comment-editor"]')).toBeTruthy();
-    expect(container.querySelector('[data-slot="spreadsheet-comment-input"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="spreadsheet-cell-editor"]')).toBeNull();
+    expect(container.querySelector('[data-slot="spreadsheet-cell-value-input"]')).toBeNull();
   });
 
   it('keeps style and auxiliary actions wired through the shell', async () => {

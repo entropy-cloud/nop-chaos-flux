@@ -281,9 +281,6 @@ importers:
 
   packages/flux-action-core:
     dependencies:
-      '@nop-chaos/flux-compiler':
-        specifier: workspace:*
-        version: link:../flux-compiler
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
@@ -623,6 +620,9 @@ importers:
       '@nop-chaos/flux-renderers-form':
         specifier: workspace:*
         version: link:../flux-renderers-form
+      '@nop-chaos/flux-runtime':
+        specifier: workspace:*
+        version: link:../flux-runtime
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
@@ -636,9 +636,6 @@ importers:
       '@nop-chaos/flux-renderers-data':
         specifier: workspace:*
         version: link:../flux-renderers-data
-      '@nop-chaos/flux-runtime':
-        specifier: workspace:*
-        version: link:../flux-runtime
       lucide-react:
         specifier: ^1.7.0
         version: 1.7.0(react@19.2.4)

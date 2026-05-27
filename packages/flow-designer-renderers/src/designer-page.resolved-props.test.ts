@@ -114,4 +114,49 @@ describe('designer-page resolved props contract', () => {
     expect(config.nodeTypes[0].body).not.toEqual({ type: 'text', text: '${label}' });
     expect(config.edgeTypes[0].body).not.toEqual({ type: 'text', text: '${condition}' });
   });
+
+  it('does not eagerly resolve toolbar text templates from config before designer host scope exists', () => {
+    const registry = createRendererRegistry([textRenderer, ...flowDesignerRendererDefinitions]);
+    const runtime = createRendererRuntime({
+      registry,
+      env: createRendererEnv(),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = runtime.compile({
+      type: 'designer-page',
+      document: '${document}',
+      config: {
+        ...createTestConfig(),
+        toolbar: {
+          items: [
+            { type: 'title', body: '${doc.name}' },
+            { type: 'text', text: 'Container: ${doc.name}' },
+            { type: 'badge', text: '${doc.nodes.length} nodes', level: "${isDirty ? 'warning' : 'success'}" },
+          ],
+        },
+      },
+    });
+    const node = compiled.root as any;
+
+    const page = runtime.createPageRuntime({
+      document: {
+        id: 'doc-runtime-3',
+        kind: 'flow',
+        name: 'Runtime Example',
+        version: '1.0.0',
+        nodes: [],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 },
+      },
+    });
+
+    const resolved = runtime.resolveNodeProps(node, page.scope);
+    const config = (resolved.value as Record<string, any>).config;
+
+    expect(config.toolbar.items[0].body).toBe('${doc.name}');
+    expect(config.toolbar.items[1].text).toBe('Container: ${doc.name}');
+    expect(config.toolbar.items[2].text).toBe('${doc.nodes.length} nodes');
+    expect(config.toolbar.items[2].level).toBe("${isDirty ? 'warning' : 'success'}");
+  });
 });

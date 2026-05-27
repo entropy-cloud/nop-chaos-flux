@@ -18,52 +18,11 @@ type ToolbarSnapshot = Pick<
   | 'doc'
 >;
 
-function readState(name: string, snapshot: ToolbarSnapshot) {
-  switch (name) {
-    case 'canUndo':
-      return snapshot.canUndo;
-    case 'canRedo':
-      return snapshot.canRedo;
-    case 'isDirty':
-      return snapshot.isDirty;
-    case 'gridEnabled':
-      return snapshot.gridEnabled;
-    case 'paletteCollapsed':
-      return snapshot.paletteCollapsed;
-    case 'inspectorCollapsed':
-      return snapshot.inspectorCollapsed;
-    default:
-      return undefined;
-  }
-}
-
-function evalTextTemplate(template: string | undefined, snapshot: ToolbarSnapshot) {
-  if (!template) return '';
-
-  const normalized = template.replace(/\{\{([^}]+)\}\}/g, '${$1}');
-  const trimmed = normalized.trim();
-  if (trimmed.startsWith('${') && trimmed.endsWith('}')) {
-    const expr = trimmed.slice(2, -1).trim();
-    const ternaryMatch = expr.match(/^([A-Za-z0-9_.]+)\s*\?\s*'([^']*)'\s*:\s*'([^']*)'$/);
-    if (ternaryMatch) {
-      const [, cond, left, right] = ternaryMatch;
-      return readState(cond, snapshot) === true ? left : right;
-    }
-  }
-
-  return normalized.replace(/\$\{([^}]+)\}/g, (_full, exprSource: string) => {
-    const expr = exprSource.trim();
-    if (expr === 'doc.name') return snapshot.doc.name;
-    if (expr === 'doc.nodes.length') return String(snapshot.doc.nodes.length);
-    if (expr === 'doc.edges.length') return String(snapshot.doc.edges.length);
-    if (expr === 'isDirty') return String(snapshot.isDirty);
-    if (expr === 'canUndo') return String(snapshot.canUndo);
-    if (expr === 'canRedo') return String(snapshot.canRedo);
-    if (expr === 'gridEnabled') return String(snapshot.gridEnabled);
-    if (expr === 'paletteCollapsed') return String(snapshot.paletteCollapsed);
-    if (expr === 'inspectorCollapsed') return String(snapshot.inspectorCollapsed);
+function normalizeTemplateSource(template: string | undefined) {
+  if (!template) {
     return '';
-  });
+  }
+  return template.replace(/\{\{([^}]+)\}\}/g, '${$1}');
 }
 
 export function DesignerToolbarContent(props: {
@@ -72,8 +31,8 @@ export function DesignerToolbarContent(props: {
   onAutoLayout?: () => void;
   autoLayoutBusy?: boolean;
 }) {
-  const { config } = useDesignerContext();
-  const snapshot = useDesignerSnapshotSelector<ToolbarSnapshot>((state) => ({
+  const { config, designerScope } = useDesignerContext();
+  useDesignerSnapshotSelector<ToolbarSnapshot>((state) => ({
     canUndo: state.canUndo,
     canRedo: state.canRedo,
     isDirty: state.isDirty,
@@ -84,8 +43,19 @@ export function DesignerToolbarContent(props: {
   }), shallowEqual);
   const actionScope = useCurrentActionScope();
   const runtime = useRendererRuntime();
-  const scope = useRenderScope();
+  const renderScope = useRenderScope();
+  const scope = designerScope ?? renderScope;
   const env = runtime.env;
+
+  const resolveToolbarValue = useCallback(
+    <T,>(value: T): T => {
+      if (typeof value === 'string') {
+        return runtime.evaluate(normalizeTemplateSource(value), scope) as T;
+      }
+      return value;
+    },
+    [runtime, scope],
+  );
 
   const invokeAction = useCallback(
     async (action: string) => {
@@ -122,11 +92,47 @@ export function DesignerToolbarContent(props: {
   );
 
   const items = useMemo(() => {
-    return (config.toolbar?.items ?? []).map((item, index) => ({
-      key: `${item.type}:${index}`,
-      item,
-    }));
-  }, [config.toolbar?.items]);
+    return (config.toolbar?.items ?? []).map((item, index) => {
+      const key = `${item.type}:${index}`;
+      if (item.type === 'title') {
+        return { key, item: { ...item, body: String(resolveToolbarValue(item.body) ?? '') } };
+      }
+      if (item.type === 'text') {
+        return { key, item: { ...item, text: String(resolveToolbarValue(item.text) ?? '') } };
+      }
+      if (item.type === 'badge') {
+        return {
+          key,
+          item: {
+            ...item,
+            text: String(resolveToolbarValue(item.text) ?? ''),
+            level: String(resolveToolbarValue(item.level) ?? ''),
+          },
+        };
+      }
+      if (item.type === 'button') {
+        return {
+          key,
+          item: {
+            ...item,
+            disabled: resolveToolbarValue(item.disabled) === true,
+            active: resolveToolbarValue(item.active) === true,
+          },
+        };
+      }
+      if (item.type === 'switch') {
+        return {
+          key,
+          item: {
+            ...item,
+            disabled: resolveToolbarValue(item.disabled) === true,
+            active: resolveToolbarValue(item.active) === true,
+          },
+        };
+      }
+      return { key, item };
+    });
+  }, [config.toolbar?.items, resolveToolbarValue]);
 
   if (items.length === 0) {
     return null;
@@ -153,7 +159,7 @@ export function DesignerToolbarContent(props: {
             <div key={key} className="mr-auto flex items-center gap-2 min-w-0">
               <div>
                 <div className="text-sm font-semibold text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
-                  {evalTextTemplate(item.body, snapshot)}
+                  {item.body}
                 </div>
               </div>
             </div>
@@ -161,7 +167,7 @@ export function DesignerToolbarContent(props: {
         }
 
         if (item.type === 'badge') {
-          const level = evalTextTemplate(item.level, snapshot);
+          const level = item.level;
           return (
             <Badge
               key={key}
@@ -169,7 +175,7 @@ export function DesignerToolbarContent(props: {
                 level === 'success' ? 'success' : level === 'warning' ? 'warning' : 'secondary'
               }
             >
-              {evalTextTemplate(item.text, snapshot)}
+              {item.text}
             </Badge>
           );
         }
@@ -177,7 +183,7 @@ export function DesignerToolbarContent(props: {
         if (item.type === 'text') {
           return (
             <span key={key} className="text-sm text-muted-foreground whitespace-nowrap">
-              {evalTextTemplate(item.text, snapshot)}
+              {item.text}
             </span>
           );
         }

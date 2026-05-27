@@ -29,4 +29,28 @@ describe('RadioGroup', () => {
     expect(list.getAttribute('aria-checked')).toBe('true');
     expect(board.getAttribute('aria-checked')).toBe('false');
   });
+
+  it('does not force grid layout classes when render overrides the host element', () => {
+    render(
+      <table>
+        <RadioGroup render={<tbody />} value="b" aria-label="Row selection">
+          <tr>
+            <td>
+              <RadioGroupItem value="a" aria-label="Row A" />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <RadioGroupItem value="b" aria-label="Row B" />
+            </td>
+          </tr>
+        </RadioGroup>
+      </table>,
+    );
+
+    const group = screen.getByRole('radiogroup', { name: 'Row selection' });
+    expect(group.tagName).toBe('TBODY');
+    expect(group.className).not.toContain('grid');
+    expect(group.className).not.toContain('gap-2');
+  });
 });

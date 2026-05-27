@@ -68,6 +68,50 @@
 - Spreadsheet toolbar 中表示当前样式/对齐状态的 toggle 类按钮必须把视觉 active state 同步为 `aria-pressed`，不能只依赖 `data-toolbar-active` 或 outline/ghost variant 传达状态。
 - Sheet tab rename 必须提供完整键盘等价路径：active sheet tab 可通过 `F2` 进入 rename，rename input 必须带基于当前 sheet 名称的可访问名称，而不是只依赖 pointer-only double-click 或无名 textbox。
 - Report/Spreadsheet 绑定单元格不能只靠背景色表达语义：绑定 cell 必须同时发布非颜色 marker，并把绑定字段信息并入 `gridcell` 可访问名称或描述。
+- Excel-like cell editing baseline is selection-first, not auto-edit-on-focus: single click / focus only updates the active cell; editing begins through double-click, `Enter`, `F2`, or direct text entry that replaces the current cell content draft.
+- The supported cell-value editing surface is the inline editor rendered inside the active grid cell. The toolbar must not render a separate cell-value input or formula-bar-like duplicate editor by default.
+- In report-designer surfaces, richer cell metadata and binding configuration remain owned by the right inspector/property panel. Inline grid editing only covers the cell's displayed value text and must not introduce a second competing property-edit surface under the toolbar.
+- Spreadsheet cell inline editing is an explicit high-density canvas exception to the general `@nop-chaos/ui` input usage rule: when the shared `Input` size/border contract cannot fit the fixed cell box without changing row height, the spreadsheet package may use a dedicated inline editor input that matches the canvas cell metrics exactly. This exception is limited to grid-cell inline editing only and must stay documented plus regression-tested.
+
+### 8.1 Excel-Like Cell Interaction Contract
+
+This section defines the intended user-visible spreadsheet interaction model. When live behavior differs, this contract wins.
+
+**Selection mode**
+
+- Single click on a cell moves the active cell to that position.
+- Single click does **not** enter edit mode.
+- Mouse drag from a cell extends the selection range.
+- Single click on a different cell while another cell is being edited first resolves the current edit (save/cancel by existing result contract), then moves the active cell.
+- Row/column headers remain selection surfaces, not value-edit surfaces.
+
+**Keyboard navigation while not editing**
+
+- `ArrowUp` / `ArrowDown` / `ArrowLeft` / `ArrowRight` move the active cell.
+- `Shift + Arrow*` is the expected future range-extension model; until fully implemented, ordinary arrow navigation must still keep the active cell stable and predictable.
+- `Enter` enters inline edit mode for the active cell.
+- `F2` enters inline edit mode for the active cell.
+- Typing a printable character while a cell is selected enters inline edit mode and seeds the draft with that character, replacing the previous displayed value draft baseline just like Excel's overwrite-on-direct-entry behavior.
+
+**Entering edit mode**
+
+- Mouse path: double-click enters inline edit mode for the clicked cell.
+- Keyboard paths: `Enter`, `F2`, or direct text entry enter inline edit mode for the active cell.
+- Focus must move into the inline editor immediately after edit mode opens so subsequent typing edits text, not the grid shell.
+
+**While editing**
+
+- The inline editor lives inside the active cell box.
+- Arrow keys operate on text caret/navigation inside the editor, not spreadsheet selection movement.
+- `Enter` commits the draft.
+- `Escape` cancels the draft.
+- Blur / outside click follows the same save-result contract as other commit paths.
+
+**Report Designer specialization**
+
+- Spreadsheet inline editing only covers the cell's displayed value text.
+- Richer cell semantics such as binding metadata, report field wiring, and other domain properties belong to the right inspector/property panel.
+- Report Designer must not add a second toolbar-lower editor or formula-bar-style duplicate editing surface unless the owner docs are explicitly revised to support that model.
 
 ## 9. 数据源、表达式、导入能力接入点
 
@@ -84,7 +128,7 @@
 
 - runtime bridge、host snapshot、toolbar/body shell 和 spreadsheet namespace provider 分层实现。
 - `SpreadsheetToolbarProps` 继续作为稳定顶层契约，由 `packages/spreadsheet-renderers/src/spreadsheet-toolbar.tsx` 顶层 shell 编排。
-- 当前 live 实现已拆到 `packages/spreadsheet-renderers/src/spreadsheet-toolbar/` 子模块：`toolbar-groups.tsx` 负责 action groups，`find-replace-panel.tsx` 负责 find/replace UI，`cell-editor.tsx` 负责 cell/comment editor，`toolbar-status.tsx` 负责状态展示，`types.ts` 保持共享 prop/type 契约。
+- 当前 live 实现已拆到 `packages/spreadsheet-renderers/src/spreadsheet-toolbar/` 子模块：`toolbar-groups.tsx` 负责 action groups，`find-replace-panel.tsx` 负责 find/replace UI，`toolbar-status.tsx` 负责状态展示，`types.ts` 保持共享 prop/type 契约。cell value editor 已从 toolbar shell 移除，值编辑 baseline 以 grid cell inline editor 为准。
 - 当前公开的 search/find-replace host contract 以 `matchWholeCell` / `useRegex` 为 option vocabulary；未落地的 `includeFormulas` 不属于支持的对外搜索语义。
 
 ## 12. 风险、取舍与后续阶段

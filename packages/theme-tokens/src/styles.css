@@ -60,6 +60,12 @@
   --sidebar-ring: var(--ring);
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
+  --surface-primary: rgba(255, 255, 255, 0.55);
+  --surface-secondary: rgba(255, 255, 255, 0.4);
+  --surface-ghost: rgba(255, 255, 255, 0.25);
+  --surface-highlight: rgba(255, 255, 255, 0.75);
+  --surface-hover: rgba(255, 255, 255, 0.55);
+  --surface-overlay: rgba(15, 23, 42, 0.4);
 }
 
 :root[data-theme='classic'][data-mode='light'] {
@@ -112,6 +118,12 @@
   --app-tabs-bg: rgba(255, 255, 255, 0.72);
   --card-surface: rgba(255, 255, 255, 0.72);
   --border-surface: rgba(255, 255, 255, 0.55);
+  --surface-primary: rgba(255, 255, 255, 0.55);
+  --surface-secondary: rgba(255, 255, 255, 0.4);
+  --surface-ghost: rgba(255, 255, 255, 0.25);
+  --surface-highlight: rgba(255, 255, 255, 0.75);
+  --surface-hover: rgba(255, 255, 255, 0.55);
+  --surface-overlay: rgba(15, 23, 42, 0.4);
   background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 45%, #f9f7ff 100%);
 }
 
@@ -165,6 +177,12 @@
   --app-tabs-bg: rgba(15, 23, 42, 0.76);
   --card-surface: rgba(30, 41, 59, 0.82);
   --border-surface: rgba(148, 163, 184, 0.16);
+  --surface-primary: rgba(15, 23, 42, 0.55);
+  --surface-secondary: rgba(15, 23, 42, 0.4);
+  --surface-ghost: rgba(15, 23, 42, 0.25);
+  --surface-highlight: rgba(15, 23, 42, 0.5);
+  --surface-hover: rgba(15, 23, 42, 0.55);
+  --surface-overlay: rgba(15, 23, 42, 0.4);
   background: linear-gradient(180deg, #07111f 0%, #0f172a 52%, #111c34 100%);
 }
 
@@ -218,6 +236,12 @@
   --app-tabs-bg: rgba(255, 255, 255, 0.46);
   --card-surface: rgba(255, 255, 255, 0.68);
   --border-surface: rgba(255, 255, 255, 0.52);
+  --surface-primary: rgba(255, 255, 255, 0.55);
+  --surface-secondary: rgba(255, 255, 255, 0.4);
+  --surface-ghost: rgba(255, 255, 255, 0.25);
+  --surface-highlight: rgba(255, 255, 255, 0.75);
+  --surface-hover: rgba(255, 255, 255, 0.55);
+  --surface-overlay: rgba(15, 23, 42, 0.4);
   background: linear-gradient(135deg, #e6fbf4 0%, #eef7fb 33%, #f3f0ff 66%, #fce7f3 100%);
 }
 
@@ -271,5 +295,11 @@
   --app-tabs-bg: rgba(15, 23, 42, 0.48);
   --card-surface: rgba(30, 41, 59, 0.84);
   --border-surface: rgba(255, 255, 255, 0.12);
+  --surface-primary: rgba(15, 23, 42, 0.55);
+  --surface-secondary: rgba(15, 23, 42, 0.4);
+  --surface-ghost: rgba(15, 23, 42, 0.25);
+  --surface-highlight: rgba(15, 23, 42, 0.5);
+  --surface-hover: rgba(15, 23, 42, 0.55);
+  --surface-overlay: rgba(15, 23, 42, 0.4);
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
 }

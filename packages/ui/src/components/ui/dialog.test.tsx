@@ -80,7 +80,7 @@ describe('Dialog', () => {
     );
 
     const overlay = document.body.querySelector('[data-slot="dialog-overlay"]');
-    expect(overlay?.className).toContain('bg-[var(--nop-dialog-backdrop,hsl(var(--popover,0_0%_0%)_/_0.1))]');
+    expect(overlay?.className).toContain('bg-surface-overlay');
     expect(overlay?.className).not.toContain('bg-black/10');
   });
 });

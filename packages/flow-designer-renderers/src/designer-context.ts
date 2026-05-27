@@ -24,6 +24,7 @@ export interface DesignerContextValue {
     command: import('./designer-command-adapter.js').DesignerCommand,
   ) => import('./designer-command-adapter.js').DesignerCommandResult;
   config: DesignerConfig;
+  designerScope?: ScopeRef;
   focusCanvasSurface?: () => void;
   openCreateDialog?: (nodeType: NodeTypeConfig, position: { x: number; y: number }) => void;
   onPlusButtonClick?: (

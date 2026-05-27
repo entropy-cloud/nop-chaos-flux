@@ -534,6 +534,7 @@ export function ReportDesignerDemo() {
         canvas={
           <div
             ref={gridRef}
+            data-slot="report-designer-spreadsheet-canvas"
             className="flex flex-col h-full min-h-0"
             onDragOver={(e) => e.preventDefault()}
             onDrop={(event) => {

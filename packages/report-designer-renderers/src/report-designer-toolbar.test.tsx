@@ -71,6 +71,19 @@ describe('report-toolbar renderer', () => {
     expect(document.querySelector('[data-testid="report-toolbar"]')).toBeNull();
   });
 
+  it('keeps the toolbar on a single horizontal row with overflow instead of wrapping', () => {
+    renderToolbarInPage({});
+    const toolbar = document.querySelector('.nop-report-toolbar') as HTMLElement | null;
+    expect(toolbar).toBeTruthy();
+    if (!toolbar) {
+      throw new Error('Expected toolbar root');
+    }
+
+    expect(toolbar.className).toContain('flex-nowrap');
+    expect(toolbar.className).toContain('overflow-x-auto');
+    expect(toolbar.className).not.toContain('flex-wrap');
+  });
+
   it('renders with itemsOverride that adds a button', () => {
     renderToolbarInPage({
       itemsOverride: [

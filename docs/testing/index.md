@@ -24,6 +24,7 @@ docs/testing/
 
 ### 2026-05
 
+- [05-26](2026/05-26.md) — input-tree 点击条目会意外切换整节点展开状态；Report Designer 按钮区被拆成多行窄按钮排布
 - [05-19](2026/05-19.md) — Performance Table StrictMode `$slot.record` 渲染错误；Collapsible fieldset 无展开/收缩图标
 - [05-18](2026/05-18.md) — flux basic 表格前几行 Inspect 按钮无法稳定弹出对话框
 - [05-11](2026/05-11.md) — tabs with form 值丢失、flux basic Inspect 对话框未打开、array child items 删除无效、Report Designer 面板无收起按钮、字段面板无 margin、sheet tab 抖动与样式不统一

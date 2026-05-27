@@ -172,6 +172,26 @@ export function SpreadsheetGrid({
       });
     };
 
+  const focusGridRoot = () => {
+      scrollRef.current?.focus();
+    };
+
+  const handleGridCellClick = (row: number, col: number) => {
+      keyboardCellRef.current = clampCell(row, col);
+      onCellClick(row, col);
+      focusGridRoot();
+    };
+
+  const handleGridCellMouseDown = (row: number, col: number, event: React.MouseEvent) => {
+      keyboardCellRef.current = clampCell(row, col);
+      onCellMouseDown(row, col, event);
+    };
+
+  const handleGridCellDoubleClick = (row: number, col: number) => {
+      keyboardCellRef.current = clampCell(row, col);
+      onCellDoubleClick(row, col);
+    };
+
   const handleScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
@@ -315,6 +335,14 @@ export function SpreadsheetGrid({
             onCellDoubleClick(active.row, active.col);
             return;
           }
+          if (event.key === 'F2') {
+            if (readonly) {
+              return;
+            }
+            event.preventDefault();
+            onCellDoubleClick(active.row, active.col);
+            return;
+          }
           if (
             event.key.length === 1 &&
             !event.ctrlKey &&
@@ -356,9 +384,9 @@ export function SpreadsheetGrid({
           getCellMetadata={getCellMetadata}
           isInRange={isInRange}
           isFillPreview={isFillPreview}
-          onCellClick={onCellClick}
-          onCellDoubleClick={onCellDoubleClick}
-          onCellMouseDown={onCellMouseDown}
+           onCellClick={handleGridCellClick}
+           onCellDoubleClick={handleGridCellDoubleClick}
+           onCellMouseDown={handleGridCellMouseDown}
           onCellMouseEnter={onCellMouseEnter}
           onSelectRow={onSelectRow}
           onSelectColumn={onSelectColumn}

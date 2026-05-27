@@ -197,7 +197,7 @@ function NonVirtualBody({
       <RadioGroup
         render={<TableBody />}
         className={undefined}
-        value={radioSelectionValue}
+        value={radioSelectionValue ?? ''}
         onValueChange={(value) => onSelectRow(String(value), true)}
       >
         {rows}

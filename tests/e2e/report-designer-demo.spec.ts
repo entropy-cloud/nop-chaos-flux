@@ -83,6 +83,71 @@ test('spreadsheet grid exposes row and column headers', async ({ page }) => {
   await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible();
 });
 
+test('spreadsheet headers stay sticky while the grid scrolls', async ({ page }) => {
+  await openReportDesignerDemo(page);
+
+  const grid = page.locator('[data-slot="spreadsheet-grid"]');
+  const columnHeader = page.locator('[data-slot="spreadsheet-column-header"]').first();
+  const rowHeader = page.locator('[data-slot="spreadsheet-row-header"]').first();
+
+  await expect(grid).toBeVisible();
+  await expect(columnHeader).toBeVisible();
+  await expect(rowHeader).toBeVisible();
+
+  const before = await page.evaluate(() => {
+    const gridEl = document.querySelector('[data-slot="spreadsheet-grid"]') as HTMLElement | null;
+    const columnHeaderEl = document.querySelector('[data-slot="spreadsheet-column-header"]') as HTMLElement | null;
+    const rowHeaderEl = document.querySelector('[data-slot="spreadsheet-row-header"]') as HTMLElement | null;
+    if (!gridEl || !columnHeaderEl || !rowHeaderEl) {
+      return null;
+    }
+    const gridRect = gridEl.getBoundingClientRect();
+    const columnRect = columnHeaderEl.getBoundingClientRect();
+    const rowRect = rowHeaderEl.getBoundingClientRect();
+    return {
+      columnDeltaTop: Math.round(columnRect.top - gridRect.top),
+      rowDeltaLeft: Math.round(rowRect.left - gridRect.left),
+      columnPosition: getComputedStyle(columnHeaderEl).position,
+      rowPosition: getComputedStyle(rowHeaderEl).position,
+    };
+  });
+
+  expect(before).not.toBeNull();
+  expect(before?.columnPosition).toBe('sticky');
+  expect(before?.rowPosition).toBe('sticky');
+
+  await grid.evaluate((el) => {
+    const node = el as HTMLElement;
+    node.scrollTop = 240;
+    node.scrollLeft = 160;
+    node.dispatchEvent(new Event('scroll', { bubbles: true }));
+  });
+
+  const after = await page.evaluate(() => {
+    const gridEl = document.querySelector('[data-slot="spreadsheet-grid"]') as HTMLElement | null;
+    const columnHeaderEl = document.querySelector('[data-slot="spreadsheet-column-header"]') as HTMLElement | null;
+    const rowHeaderEl = document.querySelector('[data-slot="spreadsheet-row-header"]') as HTMLElement | null;
+    if (!gridEl || !columnHeaderEl || !rowHeaderEl) {
+      return null;
+    }
+    const gridRect = gridEl.getBoundingClientRect();
+    const columnRect = columnHeaderEl.getBoundingClientRect();
+    const rowRect = rowHeaderEl.getBoundingClientRect();
+    return {
+      columnDeltaTop: Math.round(columnRect.top - gridRect.top),
+      rowDeltaLeft: Math.round(rowRect.left - gridRect.left),
+      columnPosition: getComputedStyle(columnHeaderEl).position,
+      rowPosition: getComputedStyle(rowHeaderEl).position,
+    };
+  });
+
+  expect(after).not.toBeNull();
+  expect(after?.columnPosition).toBe('sticky');
+  expect(after?.rowPosition).toBe('sticky');
+  expect(Math.abs((after?.columnDeltaTop ?? 999) - (before?.columnDeltaTop ?? 0))).toBeLessThanOrEqual(1);
+  expect(Math.abs((after?.rowDeltaLeft ?? 999) - (before?.rowDeltaLeft ?? 0))).toBeLessThanOrEqual(1);
+});
+
 test('clicking a spreadsheet cell keeps the inspector surface active', async ({ page }) => {
   await openReportDesignerDemo(page);
 
@@ -100,6 +165,24 @@ test('clicking a spreadsheet cell keeps the inspector surface active', async ({ 
 test('toolbar exposes localized spreadsheet controls on the live surface', async ({ page }) => {
   await openReportDesignerDemo(page);
 
+  const toolbarLayout = await page.locator('.rd-toolbar').evaluate((el) => {
+    const style = window.getComputedStyle(el as HTMLElement);
+    const rect = (el as HTMLElement).getBoundingClientRect();
+    const buttonRects = Array.from(el.querySelectorAll('button')).slice(0, 20).map((button) => {
+      const buttonRect = button.getBoundingClientRect();
+      return Math.round(buttonRect.top - rect.top);
+    });
+    return {
+      flexWrap: style.flexWrap,
+      height: rect.height,
+      rowCount: [...new Set(buttonRects)].length,
+    };
+  });
+
+  expect(toolbarLayout.flexWrap).toBe('nowrap');
+  expect(toolbarLayout.rowCount).toBe(1);
+  expect(toolbarLayout.height).toBeLessThan(80);
+
   const toolbarButtons = page.locator('.rd-toolbar button');
   const count = await toolbarButtons.count();
   expect(count).toBeGreaterThan(10);
@@ -110,6 +193,16 @@ test('toolbar exposes localized spreadsheet controls on the live surface', async
   await expect(page.getByRole('button', { name: '重做 Ctrl+Y' })).toBeVisible();
   await expect(page.getByRole('button', { name: '查找替换 Ctrl+F' })).toBeVisible();
   await expect(page.getByRole('button', { name: '取消冻结' })).toBeVisible();
+});
+
+test('selecting a cell does not render the removed toolbar cell editor', async ({ page }) => {
+  await openReportDesignerDemo(page);
+
+  await page.locator('.ss-cell').nth(5).click();
+
+  await expect(page.locator('[data-slot="spreadsheet-cell-editor"]')).toHaveCount(0);
+  await expect(page.locator('[data-slot="spreadsheet-cell-value-input"]')).toHaveCount(0);
+  await expect(page.getByPlaceholder('输入单元格值')).toHaveCount(0);
 });
 
 test('dragging a field onto a cell writes the cell value and binds report metadata', async ({

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nopTailwindPreset } from './index';
+import { createNopTailwindPreset, nopTailwindPreset } from './index';
 
 describe('nopTailwindPreset', () => {
   it('defines the repo dark mode baseline', () => {
@@ -40,6 +40,12 @@ describe('nopTailwindPreset', () => {
       DEFAULT: 'hsl(var(--destructive, var(--danger)))',
       foreground: 'hsl(var(--destructive-foreground, var(--primary-foreground)))',
     });
+    expect(nopTailwindPreset.theme?.extend?.backgroundColor).toMatchObject({
+      surface: 'var(--surface-primary)',
+      'surface-secondary': 'var(--surface-secondary)',
+      'surface-hover': 'var(--surface-hover)',
+      'surface-overlay': 'var(--surface-overlay)',
+    });
   });
 
   it('exports key radius and shadow token mappings', () => {
@@ -62,10 +68,32 @@ describe('nopTailwindPreset', () => {
 
   it('registers expected animation extensions and plugin', () => {
     expect(nopTailwindPreset.theme?.extend?.animation).toMatchObject({
+      'caret-blink': 'caretBlink 1s steps(2, start) infinite',
       'fade-in-up': 'fadeInUp 0.4s ease forwards',
       float: 'float 22s ease-in-out infinite',
     });
     expect(nopTailwindPreset.plugins).toHaveLength(1);
     expect(nopTailwindPreset.plugins?.[0]).toBeTruthy();
+  });
+
+  it('merges host tailwind extensions through the factory entrypoint', () => {
+    const preset = createNopTailwindPreset({
+      colors: {
+        host: {
+          primary: 'hsl(var(--host-primary))',
+        },
+      },
+    });
+
+    expect(preset.theme?.extend).toMatchObject({
+      colors: {
+        host: {
+          primary: 'hsl(var(--host-primary))',
+        },
+      },
+      backgroundColor: {
+        surface: 'var(--surface-primary)',
+      },
+    });
   });
 });

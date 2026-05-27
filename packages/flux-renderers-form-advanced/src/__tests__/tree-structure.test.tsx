@@ -371,6 +371,58 @@ describe('tree controls - DOM structure, markers, and expand/collapse', () => {
     });
   });
 
+  it('does not collapse input-tree parent nodes when clicking the node label', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/tree-structure.test.tsx#input-tree-label-click"
+        schema={
+          {
+            type: 'form',
+            body: [
+              {
+                type: 'input-tree',
+                name: 'department',
+                label: 'Department',
+                treeMode: 'radio',
+                options: [
+                  {
+                    label: 'Engineering',
+                    value: 'eng',
+                    children: [
+                      { label: 'Platform', value: 'platform' },
+                      { label: 'Runtime', value: 'runtime' },
+                    ],
+                  },
+                ],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Engineering')).toBeTruthy();
+      expect(screen.getByText('Platform')).toBeTruthy();
+      expect(screen.getByText('Runtime')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText('Engineering'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Platform')).toBeTruthy();
+      expect(screen.getByText('Runtime')).toBeTruthy();
+    });
+    expect(screen.getByRole('treeitem', { name: 'Engineering' }).getAttribute('aria-expanded')).toBe(
+      'true',
+    );
+  });
+
   it('applies shared tree keyboard semantics inside tree-select popovers', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs]);

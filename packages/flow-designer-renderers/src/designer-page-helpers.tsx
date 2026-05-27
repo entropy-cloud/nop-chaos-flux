@@ -147,6 +147,7 @@ export function createDesignerContextValue(args: {
   commandAdapter: DesignerContextValue['commandAdapter'];
   dispatch: DesignerContextValue['dispatch'];
   config: DesignerContextValue['config'];
+  designerScope?: DesignerContextValue['designerScope'];
   openCreateDialog: DesignerContextValue['openCreateDialog'];
   onPlusButtonClick: DesignerContextValue['onPlusButtonClick'];
   reportHostIssue?: DesignerContextValue['reportHostIssue'];
@@ -156,6 +157,7 @@ export function createDesignerContextValue(args: {
     commandAdapter: args.commandAdapter,
     dispatch: args.dispatch,
     config: args.config,
+    designerScope: args.designerScope,
     openCreateDialog: args.openCreateDialog,
     onPlusButtonClick: args.onPlusButtonClick,
     reportHostIssue: args.reportHostIssue,

@@ -71,7 +71,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
   return (
     <div
       className={cn(
-        'nop-report-toolbar min-h-[44px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-lg bg-background shadow-sm',
+        'nop-report-toolbar min-h-[44px] overflow-x-auto overflow-y-hidden px-3 py-2 flex flex-nowrap items-center gap-2 border border-border rounded-lg bg-background shadow-sm',
         props.meta.className,
       )}
       data-testid={props.meta.testid || undefined}
@@ -84,13 +84,18 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
         }
         switch (item.type) {
           case 'divider':
-            return <span key={item.id ?? `divider-${index}`} className="w-px h-[18px] bg-border" />;
+            return (
+              <span
+                key={item.id ?? `divider-${index}`}
+                className="h-[18px] w-px shrink-0 bg-border"
+              />
+            );
           case 'spacer':
             return <span key={item.id ?? `spacer-${index}`} className="flex-1" />;
           case 'title': {
             const text = evalTextTemplate(item.text ?? item.body, runtimeSnapshot);
             return (
-              <div key={item.id ?? `title-${index}`} className="font-semibold">
+              <div key={item.id ?? `title-${index}`} className="shrink-0 whitespace-nowrap font-semibold">
                 {text}
               </div>
             );
@@ -100,6 +105,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
             return (
               <Badge
                 key={item.id ?? `badge-${index}`}
+                className="shrink-0"
                 variant={item.level === 'secondary' ? 'secondary' : 'default'}
               >
                 {text}
@@ -109,7 +115,10 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
           case 'text': {
             const text = evalTextTemplate(item.text ?? item.body, runtimeSnapshot);
             return (
-              <span key={item.id ?? `text-${index}`} className="text-muted-foreground">
+              <span
+                key={item.id ?? `text-${index}`}
+                className="shrink-0 whitespace-nowrap text-muted-foreground"
+              >
                 {text}
               </span>
             );
@@ -124,6 +133,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
                 variant={item.intent === 'danger' ? 'destructive' : item.intent === 'primary' ? 'default' : 'outline'}
                 size="sm"
                 disabled={disabled}
+                className="shrink-0"
                 data-active={active || undefined}
                   onClick={() => {
                     void handleButtonClick(item);
@@ -138,7 +148,10 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
             const disabled = evalBooleanLike(item.disabled, runtimeSnapshot) === true;
             const switchId = `report-toolbar-switch-${item.id ?? index}`;
             return (
-              <span key={item.id ?? `switch-${index}`} className="flex items-center gap-1.5">
+              <span
+                key={item.id ?? `switch-${index}`}
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap"
+              >
                 {item.label ? (
                   <span className="text-sm text-muted-foreground" id={switchId}>
                     {item.label}

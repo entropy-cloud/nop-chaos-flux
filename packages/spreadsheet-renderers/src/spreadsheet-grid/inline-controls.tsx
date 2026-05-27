@@ -1,4 +1,4 @@
-import { Input } from '@nop-chaos/ui';
+import { useLayoutEffect, useRef } from 'react';
 
 export interface SpreadsheetCellEditorProps {
   value: string;
@@ -15,12 +15,26 @@ export function SpreadsheetCellEditor({
   onSave,
   onCancel,
 }: SpreadsheetCellEditorProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    if (!input || readOnly) {
+      return;
+    }
+
+    input.focus();
+    input.select();
+  }, [readOnly]);
+
   return (
-    <Input
+    // Spreadsheet inline editing is a documented canvas-density exception: the editor must
+    // match the fixed 22px cell box exactly, which the shared Input size contract does not.
+    <input
+      ref={inputRef}
       type="text"
       className="ss-cell-edit-input"
       data-slot="spreadsheet-cell-editor-input"
-      size="sm"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onBlur={onSave}

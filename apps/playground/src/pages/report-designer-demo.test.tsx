@@ -36,6 +36,48 @@ afterEach(() => {
 });
 
 describe('ReportDesignerDemo', () => {
+  it('keeps the live spreadsheet toolbar on a single horizontal row', async () => {
+    initFluxI18n();
+
+    const { container } = render(<ReportDesignerDemo />);
+    const toolbar = container.querySelector('.rd-toolbar') as HTMLElement | null;
+
+    expect(toolbar).toBeTruthy();
+    if (!toolbar) {
+      throw new Error('Expected spreadsheet toolbar root');
+    }
+
+    expect(toolbar.className).toContain('rd-toolbar--single-row');
+  });
+
+  it('does not render the toolbar cell value editor after selecting a cell', async () => {
+    initFluxI18n();
+
+    const { container } = render(<ReportDesignerDemo />);
+    const firstCell = container.querySelector('td.ss-cell[data-row="0"][data-col="0"]') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+
+    fireEvent.click(firstCell!);
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-slot="spreadsheet-cell-editor"]')).toBeNull();
+      expect(container.querySelector('[data-slot="spreadsheet-cell-value-input"]')).toBeNull();
+    });
+  });
+
+  it('marks the live spreadsheet canvas root so spreadsheet canvas CSS can target the page', () => {
+    initFluxI18n();
+
+    const { container } = render(<ReportDesignerDemo />);
+    const canvas = container.querySelector('[data-slot="report-designer-spreadsheet-canvas"]') as HTMLElement | null;
+    const columnHeader = container.querySelector('[data-slot="spreadsheet-column-header"]') as HTMLElement | null;
+    const rowHeader = container.querySelector('[data-slot="spreadsheet-row-header"]') as HTMLElement | null;
+
+    expect(canvas).toBeTruthy();
+    expect(columnHeader).toBeTruthy();
+    expect(rowHeader).toBeTruthy();
+  });
+
   it('inserts a field into the selected cell through the field panel insert button', async () => {
     initFluxI18n();
 

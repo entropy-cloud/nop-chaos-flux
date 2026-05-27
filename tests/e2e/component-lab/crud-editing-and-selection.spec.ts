@@ -83,7 +83,7 @@ test.describe('crud renderer editing and selection flows', () => {
     await expect(inspectSelected).toBeDisabled();
     await expect(crudFooter(stage)).toContainText('Selected rows: 0');
 
-    const radios = stage.locator('tbody [data-slot="checkbox"][data-shape="circle"]');
+    const radios = stage.locator('tbody [data-slot="radio-group-item"]');
     await expect(radios).toHaveCount(3);
 
     await radios.nth(0).click();
@@ -93,5 +93,23 @@ test.describe('crud renderer editing and selection flows', () => {
     await radios.nth(1).click();
     await expect(crudFooter(stage)).toContainText('Selected rows: 1; Keys: 2');
     await expect(crudFooter(stage)).not.toContainText('Keys: 1,2');
+
+    const alignment = await stage.evaluate((root) => {
+      const headerCells = Array.from(root.querySelectorAll('thead [data-slot="table-head"]')) as HTMLElement[];
+      const bodyRow = root.querySelector('tbody tr[data-slot="table-row"]');
+      const bodyCells = bodyRow
+        ? (Array.from(bodyRow.querySelectorAll('td')) as HTMLElement[])
+        : [];
+
+      return {
+        headerLefts: headerCells.map((cell) => Math.round(cell.getBoundingClientRect().left)),
+        bodyLefts: bodyCells.map((cell) => Math.round(cell.getBoundingClientRect().left)),
+      };
+    });
+
+    expect(alignment.headerLefts.length).toBeGreaterThanOrEqual(2);
+    expect(alignment.bodyLefts.length).toBeGreaterThanOrEqual(2);
+    expect(Math.abs(alignment.headerLefts[0]! - alignment.bodyLefts[1]!)).toBeLessThanOrEqual(2);
+    expect(Math.abs(alignment.headerLefts[1]! - alignment.bodyLefts[2]!)).toBeLessThanOrEqual(2);
   });
 });
