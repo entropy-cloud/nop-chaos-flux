@@ -24,7 +24,7 @@
   "peerDependencies": {
     "@nop-chaos/ui": "*",
     "i18next": "^26.0.0",
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-i18next": "^17.0.0",
@@ -43,7 +43,7 @@
     "@nop-chaos/ui": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.17.0",
     "zustand": "^5.0.12"
   },
   "scripts": {

@@ -39,7 +39,7 @@
     "sql-formatter": "^15.7.3"
   },
   "peerDependencies": {
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },
   "devDependencies": {
@@ -47,7 +47,7 @@
     "@nop-chaos/flux-renderers-data": "workspace:*",
     "@nop-chaos/flux-renderers-form": "workspace:*",
     "@testing-library/react": "^16.3.0",
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },
   "scripts": {

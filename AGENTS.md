@@ -8,6 +8,8 @@
 
 Packages live under `packages/` as `@nop-chaos/<name>`. Use `ls packages/` and read individual `package.json` for the full list and dependency graph. Key layers: `flux-core` → `flux-formula` → `flux-compiler` → `flux-action-core` → `flux-runtime` → `flux-react` → `flux-renderers-*`.
 
+**Before reading source files for type signatures or hook APIs**, check `docs/references/quick-reference.md` first — it compresses the most-frequently-needed types, hooks, and renderer patterns into a single file, replacing the need to read `renderer-core.ts`, `runtime.ts`, `hooks.ts`, `schema.ts`, `actions.ts`, etc.
+
 ---
 
 ## Commands
@@ -64,20 +66,21 @@ When creating, revising, executing, or auditing a file under `docs/plans/`, you 
 
 ### By Task
 
-| Task                                                          | Read first                                                                  | Then read                                                                                                     |
-| ------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Modify any renderer component (JSX, props, hooks)             | `docs/architecture/renderer-runtime.md`                                     | `docs/references/renderer-interfaces.md`                                                                      |
-| Add or change a renderer's styling, className, or layout      | `docs/architecture/styling-system.md`                                       | `docs/architecture/theme-compatibility.md`                                                                    |
-| Change CSS, Tailwind utilities, or design tokens              | `docs/architecture/styling-system.md` → "Renderer Styling Contract" section | `docs/architecture/renderer-markers-and-selectors.md`                                                         |
-| Work on Flow Designer canvas, nodes, edges, or interactions   | `docs/architecture/flow-designer/design.md`                                 | `docs/architecture/flow-designer/collaboration.md`, `docs/architecture/flow-designer/canvas-adapters.md`      |
-| Work on Report Designer or Spreadsheet Editor                 | `docs/architecture/report-designer/design.md`                               | `docs/architecture/report-designer/config-schema.md`, `docs/architecture/report-designer/inspector-design.md` |
-| Draft, execute, or audit a plan under `docs/plans/`           | `docs/plans/00-plan-authoring-and-execution-guide.md`                       | `docs/logs/00-log-writing-guide.md`                                                                           |
-| Change form validation, error display, or field participation | `docs/architecture/form-validation.md`                                      | `docs/architecture/flux-runtime-module-boundaries.md`                                                         |
-| Add new actions, event handlers, or `xui:import` usage        | `docs/architecture/action-scope-and-imports.md`                             | `docs/architecture/renderer-runtime.md`                                                                       |
-| Change package boundaries, create a new package, or move code | `docs/architecture/flux-runtime-module-boundaries.md`                       | `docs/architecture/frontend-baseline.md`                                                                      |
-| Change core architecture (compilation, scope, expressions)    | `docs/architecture/flux-core.md`                                            | `docs/references/terminology.md`                                                                              |
-| Run or debug e2e tests (Playwright)                           | `docs/references/e2e-test-diagnostic-guide.md`                              | `playwright.config.ts`                                                                                        |
-| Debug a CSS class not being generated in a monorepo package   | `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`    | `apps/playground/src/styles.css` (check `@source` directive)                                                  |
+| Task                                                          | Read first                                                                    | Then read                                                                                                     |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Look up types, hooks, store APIs, or renderer patterns        | `docs/references/quick-reference.md`                                          | Source files only if quick-reference lacks the detail                                                         |
+| Modify any renderer component (JSX, props, hooks)             | `docs/references/quick-reference.md`, `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md`                                                                      |
+| Add or change a renderer's styling, className, or layout      | `docs/architecture/styling-system.md`                                         | `docs/architecture/theme-compatibility.md`                                                                    |
+| Change CSS, Tailwind utilities, or design tokens              | `docs/architecture/styling-system.md` → "Renderer Styling Contract" section   | `docs/architecture/renderer-markers-and-selectors.md`                                                         |
+| Work on Flow Designer canvas, nodes, edges, or interactions   | `docs/architecture/flow-designer/design.md`                                   | `docs/architecture/flow-designer/collaboration.md`, `docs/architecture/flow-designer/canvas-adapters.md`      |
+| Work on Report Designer or Spreadsheet Editor                 | `docs/architecture/report-designer/design.md`                                 | `docs/architecture/report-designer/config-schema.md`, `docs/architecture/report-designer/inspector-design.md` |
+| Draft, execute, or audit a plan under `docs/plans/`           | `docs/plans/00-plan-authoring-and-execution-guide.md`                         | `docs/logs/00-log-writing-guide.md`                                                                           |
+| Change form validation, error display, or field participation | `docs/architecture/form-validation.md`                                        | `docs/architecture/flux-runtime-module-boundaries.md`                                                         |
+| Add new actions, event handlers, or `xui:import` usage        | `docs/architecture/action-scope-and-imports.md`                               | `docs/architecture/renderer-runtime.md`                                                                       |
+| Change package boundaries, create a new package, or move code | `docs/architecture/flux-runtime-module-boundaries.md`                         | `docs/architecture/frontend-baseline.md`                                                                      |
+| Change core architecture (compilation, scope, expressions)    | `docs/architecture/flux-core.md`                                              | `docs/references/terminology.md`                                                                              |
+| Run or debug e2e tests (Playwright)                           | `docs/references/e2e-test-diagnostic-guide.md`                                | `playwright.config.ts`                                                                                        |
+| Debug a CSS class not being generated in a monorepo package   | `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`      | `apps/playground/src/styles.css` (check `@source` directive)                                                  |
 
 ### By Code Location
 

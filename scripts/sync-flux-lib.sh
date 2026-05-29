@@ -18,6 +18,7 @@ if [ ! -f "$CONSUMER_DIR/pnpm-workspace.yaml" ]; then
 fi
 
 FLUX_LIB_DIR="$CONSUMER_DIR/flux-lib"
+PACKAGE_VERSION="$(node -p "require('./packages/flux-bundle/package.json').version")"
 
 echo "=== Building @nop-chaos/ui and packing @nop-chaos/flux ==="
 cd "$FLUX_ROOT"
@@ -44,7 +45,7 @@ rm -rf "$dst/node_modules"
 
 echo "OK: ui"
 
-TARBALL_PATH="$FLUX_ROOT/dist-packages/nop-chaos-flux-0.1.0.tgz"
+TARBALL_PATH="$FLUX_ROOT/dist-packages/nop-chaos-flux-$PACKAGE_VERSION.tgz"
 
 echo ""
 echo "=== Done ==="
@@ -53,5 +54,5 @@ echo "host-facing Flux tarball ready at: $TARBALL_PATH"
 echo ""
 echo "Supported next steps in nop-chaos-next:"
 echo "  1. Keep only flux-lib/ui as a synced workspace package"
-echo "  2. Add @nop-chaos/flux via file:.../dist-packages/nop-chaos-flux-0.1.0.tgz"
+echo "  2. Add @nop-chaos/flux via file:.../dist-packages/nop-chaos-flux-$PACKAGE_VERSION.tgz"
 echo "  3. Do not sync flux-core/flux-react/flux-renderers-* into flux-lib/"

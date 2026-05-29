@@ -29,7 +29,7 @@ describe('@nop-chaos/flux public entry contract', () => {
     expect(packageJsonFromCwd.exports?.['./style.css']).toBe('./dist/style.css');
     expect(packageJsonFromCwd.peerDependencies).toMatchObject({
       '@nop-chaos/ui': '*',
-      'lucide-react': '^1.7.0',
+      'lucide-react': '^1.17.0',
       react: '^19.0.0',
       'react-dom': '^19.0.0',
       zustand: '^5.0.12',

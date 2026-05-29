@@ -145,8 +145,7 @@ function analyzeTsComplexity(content, filePath) {
   const loops =
     (content.match(/\bfor\s*\(/g) || []).length +
     (content.match(/\bwhile\s*\(/g) || []).length +
-    (content.match(/\bfor await/g) || []).length +
-    (content.match(/\.\w+\(/g) || []).length;
+    (content.match(/\bfor await\s*\(/g) || []).length;
 
   const imports = (content.match(/^import\s/gm) || []).length;
   const exports = (content.match(/^export\s/gm) || []).length;
@@ -434,6 +433,7 @@ ${[...docsCategories.entries()]
   Avg function length : ${avgFuncLen} lines
   Branch statements   : ${formatNumber(complexityAcc.branches)}
   Branch density      : ${branchDensity} per 1000 LOC
+  Loop statements     : ${formatNumber(complexityAcc.loops)}
   Import statements   : ${formatNumber(complexityAcc.imports)}
   Export statements   : ${formatNumber(complexityAcc.exports)}
   Import/Export ratio : ${complexityAcc.exports > 0 ? (complexityAcc.imports / complexityAcc.exports).toFixed(2) : 'N/A'}`);

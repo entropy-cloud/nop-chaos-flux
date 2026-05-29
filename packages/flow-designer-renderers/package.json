@@ -37,7 +37,7 @@
     "use-sync-external-store": "^1.6.0"
   },
   "peerDependencies": {
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },
   "devDependencies": {
@@ -45,7 +45,7 @@
     "@nop-chaos/flux-runtime": "workspace:*",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   }
 }

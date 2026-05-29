@@ -28,7 +28,7 @@
     "@nop-chaos/ui": "workspace:*"
   },
   "peerDependencies": {
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },
   "scripts": {
@@ -43,7 +43,7 @@
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   }
 }

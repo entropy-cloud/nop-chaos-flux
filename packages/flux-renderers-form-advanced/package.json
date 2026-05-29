@@ -24,7 +24,7 @@
     "@nop-chaos/ui": "workspace:*"
   },
   "peerDependencies": {
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },
   "scripts": {
@@ -37,7 +37,7 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@nop-chaos/flux-renderers-data": "workspace:*",
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   }
 }

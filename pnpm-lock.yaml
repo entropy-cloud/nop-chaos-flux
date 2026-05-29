@@ -207,8 +207,8 @@ importers:
         specifier: ^12.10.2
         version: 12.10.2(@types/react@19.2.14)(immer@11.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -273,8 +273,8 @@ importers:
         specifier: ^19.0.4
         version: 19.2.3(@types/react@19.2.14)
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -325,8 +325,8 @@ importers:
         specifier: ^16.3.0
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -410,8 +410,8 @@ importers:
         specifier: ^16.3.0
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -483,8 +483,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -514,8 +514,8 @@ importers:
         specifier: workspace:*
         version: link:../flux-runtime
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -551,8 +551,8 @@ importers:
         specifier: workspace:*
         version: link:../flux-runtime
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -591,8 +591,8 @@ importers:
         specifier: ^16.3.0
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -637,8 +637,8 @@ importers:
         specifier: workspace:*
         version: link:../flux-renderers-data
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -693,8 +693,8 @@ importers:
         specifier: workspace:*
         version: link:../flux-renderers-form
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -786,8 +786,8 @@ importers:
         specifier: workspace:*
         version: link:../flux-runtime
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -849,8 +849,8 @@ importers:
         specifier: ^19.0.10
         version: 19.2.14
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       recharts:
         specifier: ^3.8.1
         version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@18.3.1)(react@19.2.4)(redux@5.0.1)
@@ -914,8 +914,8 @@ importers:
         specifier: ^15.11.0
         version: 15.11.7
       lucide-react:
-        specifier: ^1.7.0
-        version: 1.7.0(react@19.2.4)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -4105,8 +4105,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@1.7.0:
-    resolution: {integrity: sha512-yI7BeItCLZJTXikmK4KNUGCKoGzSvbKlfCvw44bU4fXAL6v3gYS4uHD1jzsLkfwODYwI6Drw5Tu9Z5ulDe0TSg==}
+  lucide-react@1.17.0:
+    resolution: {integrity: sha512-9FA9evdox/JQL5PT57fdA1x/yg8T7knJ98+zjTL3UfKza6pflQUUh3XtaQIHKvnsJw1lmsEyHVlt5jchYxOQ5w==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -8623,7 +8623,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@1.7.0(react@19.2.4):
+  lucide-react@1.17.0(react@19.2.4):
     dependencies:
       react: 19.2.4
 
