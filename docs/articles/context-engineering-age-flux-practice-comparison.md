@@ -85,6 +85,22 @@
 
 这里的方法论重点不是“多写文档”，而是把仓库从状态检查对象改成轨迹收敛对象。一个任务通过测试仍可能失败，因为它可能违背 owner-doc baseline、把行为变化藏在 plan 里，或让未来 session 无法从仓库文件恢复当前事实。AGE 试图让每一轮 AI 生成都被拉回同一个长期结构，而不是只在局部任务上看起来合理。
 
+### AGE 中真正要保持的结构
+
+如果只说 owner-doc、plan、audit，很容易把 AGE 误读成文档流程。更准确地说，AGE 要保持的是仓库内部的语义权威拓扑：领域概念、语义承诺、实现位置、证明证据、审计记忆和后续义务之间的关系。
+
+这和 agent skill 的组织轴不同。Skill 更像语义级 hash map：`task intent -> matched skill -> procedure bundle`。它回答“当前任务要加载哪套做法”。AGE 回答的是另一个问题：`domain concept -> semantic commitment -> implementation location -> proof evidence -> audit/memory -> follow-up obligation` 是否仍可恢复。前者是外部能力调用，后者是仓库自身的结构。
+
+从这个角度看，AGE 的状态空间也不是源码空间。源码只回答当前实现是什么，不能单独回答系统应该向哪里收敛、哪个设计拥有解释权、哪个测试证明哪条承诺、某次偏离为什么被接受。AGE 的状态由 code、tests、owner docs、requirements、plans、logs、bug notes、schemas、DSL/model files、CI 配置和审计证据共同组成。它们不是并列材料，而是同一组语义承诺在不同载体上的分布。
+
+PHS/结构保持的类比能进一步说明这点。AGE 中真正需要保存的不是文件数量，而是跨 session 仍有效的语义承诺总量。一个承诺从 raw input 进入 requirement，再进入 owner doc、code、test、log，并不是“复制了很多文档”，而是同一承诺的 active authority 在不同载体之间重新分配。正确实现不是让信息移动一下，而是把合法变化义务转换成稳定、可恢复、可证明的仓库状态。
+
+可以借用 `q/p` 来描述这件事：`q` 是稳定状态表示，回答“系统现在是什么”；`p` 是变化义务表示，回答“系统为什么需要继续动、往哪里动”。例如“当前不支持 CSV 导出”可能是稳定事实，也可能是尚未完成的高优先级需求。只看 `q` 无法区分，必须看 `p`。AGE 的 plan、requirement、bug report、audit finding 和 failing test 往往携带 `p`；owner docs、live code、schema、public types 和 passing tests 往往承载 `q`。一次正确的开发，就是把合法的 `p` 转换成稳定的 `q`，并用 proof relation 证明这个转换真的完成。
+
+类似地，AGE 需要区分 `J-flow` 和 `R-flow`。`J-flow` 是语义承诺在正确拓扑中的路由和转换，例如 input 进入 requirement、requirement 引用 owner doc、plan 绑定 live baseline、test 连接到行为承诺。它保证承诺没有被放错地方，但不一定减少不确定性。`R-flow` 才是真正降低自由语义不确定性的动作：人类裁剪 scope、requirement 写出 acceptance criteria、owner doc 吸收稳定 baseline、测试证明行为、closure audit 推翻或确认完成叙事。把 `J-flow` 误认为 `R-flow`，就是把“信息移动了”误判成“系统收敛了”。
+
+这也是 AGE 比普通文档模板更深的地方。它关心的是保结构：表达形式可以变，关键约束、耦合关系、权威关系和证明关系不能丢。`AGENTS.md`、`docs/index.md`、owner docs、tests、plans、audits、logs、bugs、freshness/autonomy 规则共同形成 repo 坐标系，把 chat 中时变、隐式、强耦合的信息变成可路由、可审计、可恢复的仓库状态。
+
 ## 四、两种 attractor 的真正差异
 
 两个项目都使用 attractor，但它们回答的问题不同。
@@ -97,6 +113,7 @@
 | carrier 是什么   | 上下文、示例、retrieval、protocol shell、prompt template                      | durable owner files 和 source-of-truth precedence                                                           |
 | harness 是什么   | trajectory tracing、basin analysis、perturbation testing、field audit         | plan audit、closure audit、tests、logs、bugs、known-good baseline                                           |
 | 具体演化         | 新信息注入、resonance、decay、persistence、retrieval、回答 collapse           | 需求进入、代码修改、文档更新、测试验证、审计关闭、日志/bug 记录                                             |
+| 保持的结构       | 概念重心、语义相似性、记忆持久模式、推理路径倾向                              | 语义承诺、owner/proof/precedence/freshness 关系、`p -> q` 转换证据                                          |
 | 主要风险         | 模型收敛到错误解释、语义漂移、记忆衰减                                        | 仓库通过局部检查但长期结构漂移                                                                              |
 | 成功标准         | 推理路径稳定、上下文能引导或修正语义收敛                                      | 多轮变更后仓库仍能回到 owner-doc baseline                                                                   |
 
@@ -104,29 +121,29 @@
 
 `Context-Engineering` 把模型推理时的上下文组织、记忆激活和解释路径建模为动态系统。它的 attractor 是语义状态的收敛结构，所以重点是如何通过上下文改变模型推理的流向。这里的轨迹更接近“推理和记忆状态如何变化”的建模轨迹，不是 Git 历史那种外部可审计轨迹。
 
-AGE Template 把仓库和协作过程看作动态系统。它的演化对象是软件开发本身：需求被解释、代码被修改、文档被更新、测试和审计给出证据、日志和 bug note 保存轨迹。attractor 是项目结构的收敛方向，所以重点是如何通过 owner-doc 和 harness 防止 AI 高速生成把仓库推离长期结构。
+AGE Template 把仓库和协作过程看作动态系统。它的演化对象是软件开发本身：需求被解释、代码被修改、文档被更新、测试和审计给出证据、日志和 bug note 保存轨迹。attractor 是项目结构的收敛方向，所以重点是如何通过 owner-doc 和 harness 防止 AI 高速生成把仓库推离长期结构。更细地说，AGE 要防止的不是“文件没更新”，而是语义承诺在跨载体转换中泄漏、降权、失去 owner，或者只完成了 `J-flow` 而没有真正完成 `R-flow`。
 
 ## 五、评价对比
 
-从实用价值看，AGE Template 更直接。它给的是可复制的仓库结构、source-of-truth 规则、plan audit、closure audit、known-good baseline 和日志/bug/testing 归档方式。团队可以把模板复制进项目，然后按目录职责开始工作。它的价值不依赖复杂理论是否完全成立，而是来自文件职责清晰、冲突处理明确、任务关闭可审计。
+从实用价值看，AGE Template 更直接。它给的是可复制的仓库结构、source-of-truth 规则、plan audit、closure audit、known-good baseline 和日志/bug/testing 归档方式。团队可以把模板复制进项目，然后按目录职责开始工作。它的价值不依赖复杂理论是否完全成立，而是来自文件职责清晰、冲突处理明确、任务关闭可审计。更重要的是，它把“任务完成”改写为“合法变化义务是否已经变成稳定状态承诺”，这比 checklist 更接近真实工程闭环。
 
 `Context-Engineering` 的实用价值更分散。它适合学习上下文工程、设计 prompt、分析 memory/retrieval/reasoning 的交互，也适合启发一些 agent workflow 或审计 prompt 的设计。但它不是一个拿来即用的工程治理模板。代码示例多是 toy model、template 或 placeholder，距离生产级“语义场系统”还有距离。
 
 从理论深度看，`Context-Engineering` 覆盖面更广。它把 prompt、few-shot、memory、retrieval、cognitive tools、protocol shell、field、resonance、attractor、emergence 等内容放在一张大图里，理论野心更大。但这个深度有两面：概念联系丰富，同时也容易把启发式隐喻写得像已完成的形式化理论。读者需要区分“有助于思考的建模语言”和“已经工程验证的数学对象”。
 
-AGE Template 的理论范围更窄，但概念落点更硬。它不试图解释模型内部推理，而是把 AI 协作下的软件开发重新表述为 repository state space、attractor、trajectory、control。这个框架的优点是对象清楚：代码、文档、测试、计划、审计、日志都在仓库里，可读、可 diff、可审计。它的理论深度不在数学形式化，而在把“长期结构漂移”从隐性架构直觉变成可讨论、可记录、可关闭的工程对象。
+AGE Template 的理论范围更窄，但概念落点更硬。它不试图解释模型内部推理，而是把 AI 协作下的软件开发重新表述为 repository state space、attractor、trajectory、control。这个框架的优点是对象清楚：代码、文档、测试、计划、审计、日志都在仓库里，可读、可 diff、可审计。它的理论深度不在数学形式化，而在把“长期结构漂移”从隐性架构直觉变成可讨论、可记录、可关闭的工程对象。若继续用结构保持语言展开，AGE 的深度在于语义承诺守恒、权威权重重分配、`p -> q` 转换、`J-flow/R-flow` 区分和 repo 坐标化。
 
 从实际创新性看，两个项目的创新点不同。
 
-| 维度       | Context-Engineering                                    | AGE Template                                        |
-| ---------- | ------------------------------------------------------ | --------------------------------------------------- |
-| 实用价值   | 高价值知识库和提示/协议设计参考；代码多为演示          | 可直接复制到项目的协作治理模板                      |
-| 理论深度   | 覆盖范围广，概念体系丰富，但形式化和实现验证不足       | 范围较窄，但对象清晰，和仓库工程实践贴合            |
-| 实际创新性 | 把上下文工程组织成 field/attractor/protocol 的统一语言 | 把 AI 软件开发明确建模为仓库轨迹收敛问题            |
-| 主要风险   | 概念过多，容易把隐喻误读为可测理论                     | 模板过轻，复杂框架项目需要扩展 owner-doc 和验证体系 |
-| 最适合场景 | 学习、研究、prompt/agent workflow 设计                 | 中小应用项目的 AI 协作落地                          |
+| 维度       | Context-Engineering                                    | AGE Template                                                                      |
+| ---------- | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| 实用价值   | 高价值知识库和提示/协议设计参考；代码多为演示          | 可直接复制到项目的协作治理模板，并把完成条件落到 owner/proof/closure              |
+| 理论深度   | 覆盖范围广，概念体系丰富，但形式化和实现验证不足       | 范围较窄，但对象清晰，可继续展开为语义承诺、`q/p`、`J-flow/R-flow` 和 repo 坐标系 |
+| 实际创新性 | 把上下文工程组织成 field/attractor/protocol 的统一语言 | 把 AI 软件开发明确建模为仓库轨迹收敛和保结构问题                                  |
+| 主要风险   | 概念过多，容易把隐喻误读为可测理论                     | 模板过轻，复杂框架项目需要扩展 owner-doc 和验证体系                               |
+| 最适合场景 | 学习、研究、prompt/agent workflow 设计                 | 中小应用项目的 AI 协作落地                                                        |
 
-如果只看“是否能马上改变团队工作方式”，AGE Template 更强。如果看“是否提供一套理解上下文工程的概念语言”，`Context-Engineering` 更丰富。如果看“实际创新性”，AGE Template 的贡献更集中：它把 AI 协作中的软件开发漂移问题落到仓库文件和关闭机制上；`Context-Engineering` 的贡献更像知识整合和概念框架，把许多上下文技术组织到 field/attractor 语言下。
+如果只看“是否能马上改变团队工作方式”，AGE Template 更强。如果看“是否提供一套理解上下文工程的概念语言”，`Context-Engineering` 更丰富。如果看“实际创新性”，AGE Template 的贡献更集中：它把 AI 协作中的软件开发漂移问题落到仓库文件、语义权威拓扑和关闭机制上；`Context-Engineering` 的贡献更像知识整合和概念框架，把许多上下文技术组织到 field/attractor 语言下。
 
 ## 六、互补关系
 
