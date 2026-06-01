@@ -212,6 +212,18 @@ Follow `docs/skills/deprecated-feature-cleanup.md`. Core rule: code `@deprecated
 
 ---
 
+## Test Strategy Tiers
+
+When writing a plan under `docs/plans/`, declare a test strategy tier in the `## Test Strategy` section:
+
+| Tier                  | When                                                                       | Expectation                                                                                       |
+| --------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Must automate**     | Auth, public API contracts, streaming back-pressure, core regression paths | Write a failing test first, then implement. Proof items must precede Fix items in Execution Plan. |
+| **Should have tests** | General features, non-critical paths                                       | Add tests in same PR; verify with commands + manual review.                                       |
+| **Not applicable**    | Pure docs, comments, no behavioral change                                  | State reason in one line.                                                                         |
+
+Changing external API, routing, or auth logic **must not** use "Not applicable".
+
 ## Verification Checklist
 
 Before finishing any task:
@@ -223,6 +235,16 @@ Before finishing any task:
 - [ ] Formatting handled by Husky pre-commit hook (no manual `format:check` needed)
 - [ ] `docs/logs/` updated (for significant changes)
 - [ ] Relevant architecture docs updated (if design changed)
+
+## Collaboration Discipline
+
+Default path: **one task → one agent conversation → one review-and-close chain → one PR**.
+
+- The same conversation may chain through plan → review → implement → self-check → sign-off → archive. Switch "hats" between stages (see Fresh Context below).
+- **Fresh Context**: When doing plan audit, closure audit, or independent re-review, input only the three-piece set: **task plan + diff summary + verification output**. Do not paste the full implementation process history.
+- **Human gates**: Agent MUST NOT self-approve plan creation, closure, or merge. "NEVER commit unless explicitly asked" already covers this; this section makes the gate explicit for plans and audits too.
+- **Chain vs gate**: Small bug fixes, docs, single-file changes may chain (implement → self-check → prepare review materials). Cross-module, contract, or architecture changes require explicit human gates between stages.
+- Avoid opening multiple conversations for the same task — context splits make closure and accountability harder to align.
 
 ## Bug Fix Test Coverage Rule
 

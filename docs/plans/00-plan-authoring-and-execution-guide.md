@@ -175,6 +175,20 @@
 - <<说明>>
 - <<说明>>
 
+## Failure Paths
+
+> 可选章节。涉及错误处理、API 契约、鉴权、外部集成的计划强烈建议填写。
+
+| 可测场景编号（可选）     | 触发         | 行为（含状态码/错误码） | 可重试 | 用户可见表现     |
+| ------------------------ | ------------ | ----------------------- | ------ | ---------------- |
+| <<如 auth-invalid-code>> | <<触发条件>> | <<预期行为>>            | 是/否  | <<用户看到什么>> |
+
+## Test Strategy
+
+档位选择（三选一）：`必须自动化` / `建议有测` / `不适用：理由`
+
+本档选择：<<档位>>
+
 ## Execution Plan
 
 <<顺序任务用 Phase；并行任务用 Workstream。二选一即可，不要求同时使用。>>
@@ -310,6 +324,8 @@ Follow-up:
 8. 为每个 execution item 标记类型：`Fix`、`Decision`、`Proof`、`Follow-up`。如果一个项已经被确认为 live defect 或 contract drift，就不能写成 `Follow-up`。
 9. 如果某个 Phase 改了代码或行为，该 Phase 的 exit criteria 必须列出需要更新的 `docs/architecture/`、`docs/components/` 或 `docs/logs/` 条目；如果不需要 owner-doc 更新，也要显式写出 `No owner-doc update required`。文档更新不是全局收尾工作，而是 Phase 内的工作。`docs/architecture/` 下的文档只写最终设计状态（见 Minimum Rules 第 14 条）。
 10. 当你犹豫“要不要新开一个 successor plan”时，先尝试在当前 owner plan 内新增一个 phase / workstream，并问自己：这样是否已经足够诚实地表达不同 proof 或 owner-doc obligations？如果足够，就不要新增 plan 文件。
+11. `## Failure Paths`：涉及错误处理、API 契约、鉴权、外部集成的计划应填写。每行至少包含触发条件、预期行为（含状态码/错误码）、是否可重试、用户可见表现。缺这一节，实现时容易只写 happy path。纯重构、纯文档、纯内部实现可跳过并写明“不适用”。
+12. `## Test Strategy`：声明本轮计划对测试投入的风险匹配策略。鉴权、对外 API 契约、核心回归路径应选“必须自动化”；一般功能选“建议有测”；纯文档/无行为变更选“不适用”并附理由。选“必须自动化”时，对应的 Proof 项应在 Fix/Implement 之前。
 
 ### When Executing
 
