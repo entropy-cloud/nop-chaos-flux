@@ -86,9 +86,9 @@ describe('detail value adaptation helpers', () => {
         { workingValue: 'working', originalValue: 'raw', name: 'field' },
         runner,
       ),
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       valid: false,
-      issues: [{ level: 'error', message: 'boom' }],
+      issues: [{ level: 'error', message: 'boom', cause: 'boom' }],
     });
   });
 

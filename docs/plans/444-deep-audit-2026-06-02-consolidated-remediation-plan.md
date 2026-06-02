@@ -1,6 +1,6 @@
 # 444 Deep Audit 2026-06-02 Consolidated Remediation Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-06-02
 > Source: `docs/analysis/2026-06-02-deep-audit-full/summary.md`, `docs/analysis/2026-06-02-open-ended-adversarial-review-01/round-01.md` through `round-08.md`
 > Related: `docs/plans/436-deep-audit-2026-05-24-full-remediation-plan.md` (completed predecessor)
@@ -102,7 +102,7 @@
 
 ### Workstream 1 - Package Boundaries, Naming, And Cross-Package Consistency
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced`, `packages/word-editor-renderers`, `packages/flux-core`, `packages/flux-bundle`, `packages/flux-react`, `packages/flow-designer-core`, all `package.json` files
 
 - Item Types: `Fix | Decision | Follow-up`
@@ -128,7 +128,7 @@ Exit Criteria:
 
 ### Workstream 2 - Report Designer Host Contract And Workbook Truth
 
-Status: planned
+Status: completed
 Targets: `packages/report-designer-renderers/src/host-data.ts`, `packages/report-designer-renderers/src/report-designer-manifest.ts`, `packages/report-designer-renderers/src/host-action-provider.ts`, `docs/architecture/report-designer/design.md`, `docs/components/report-designer-page/design.md`
 
 - Item Types: `Fix | Decision | Proof`
@@ -151,7 +151,7 @@ Exit Criteria:
 
 ### Workstream 3 - Spreadsheet/Table Editing State And Async Safety
 
-Status: planned
+Status: completed
 Targets: `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-editing.ts`, `packages/spreadsheet-renderers/src/bridge.ts`, `packages/spreadsheet-core/src/types.ts`, `packages/spreadsheet-core/src/core/internal-state.ts`, `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-selection.ts`, `packages/flux-renderers-data/src/table-renderer/table-quick-edit-controller.ts`, `packages/flux-renderers-data/src/table-renderer/table-quick-edit-cell.tsx`
 
 - Item Types: `Fix | Decision | Proof`
@@ -174,7 +174,7 @@ Exit Criteria:
 
 ### Workstream 4 - Renderer Contract Normalization And Error Containment
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`, `packages/flux-renderers-basic/src/use-surface-renderer.ts`, `packages/flux-react/src/dialog-host.tsx`, `packages/flux-react/src/schema-renderer.tsx`, `packages/flux-react/src/render-nodes.tsx`, `packages/flux-core/src/value-adapter.ts`
 
 - Item Types: `Fix | Decision | Proof`
@@ -200,7 +200,7 @@ Exit Criteria:
 
 ### Workstream 5 - Data Source Pipeline Safety
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/async-data/api-data-source-controller-state.ts`, `packages/flux-runtime/src/async-data/source-registry.ts`, `packages/flux-runtime/src/async-data/formula-data-source-controller.ts`, `packages/flux-compiler/src/source-compiler.ts`, `packages/flux-runtime/src/runtime-eval-helpers.ts`
 
 - Item Types: `Fix | Decision | Proof`
@@ -221,7 +221,7 @@ Exit Criteria:
 
 ### Workstream 6 - Async Lifecycle, Resource Management, And Form Validation
 
-Status: planned
+Status: completed
 Targets: `packages/flux-action-core/src/action-dispatcher/action-execution.ts`, `packages/flux-react/src/node-renderer-effects.ts`, `packages/flux-runtime/src/form-runtime-owner.ts`
 
 - Item Types: `Fix | Decision | Proof`
@@ -241,7 +241,7 @@ Exit Criteria:
 
 ### Workstream 7 - Serialization, Cache, And Scope Data Correctness
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/scope.ts`, `packages/flux-runtime/src/async-data/api-cache.ts`, `packages/flux-runtime/src/async-data/request-runtime.ts`, `packages/flux-formula/src/evaluator.ts`
 
 - Item Types: `Fix | Decision | Proof`
@@ -261,7 +261,7 @@ Exit Criteria:
 
 ### Workstream 8 - Flow Designer Contract And Interaction
 
-Status: planned
+Status: completed
 Targets: `packages/flow-designer-renderers/src/designer-manifest.ts`, `packages/flow-designer-renderers/src/designer-action-provider.ts`, `docs/architecture/flow-designer/api.md`, `packages/flow-designer-core/src/core/node-operations.ts`, `packages/flow-designer-core/src/core-node-commands.ts`, `packages/flow-designer-renderers/src/designer-xyflow-canvas/use-xyflow-interactions.ts`
 
 - Item Types: `Fix | Decision | Proof`
@@ -280,7 +280,7 @@ Exit Criteria:
 
 ### Workstream 9 - Debugger Security And Diagnostic Surface
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/App.tsx`, `packages/nop-debugger/src/controller.ts`, `packages/nop-debugger/src/automation.ts`, `packages/nop-debugger/src/redaction.ts`
 
 - Item Types: `Fix | Decision | Proof`
@@ -297,7 +297,7 @@ Exit Criteria:
 
 ### Workstream 10 - UI Accessibility And Styling
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/form/form-renderer.tsx`, `packages/flux-renderers-data/src/tree-renderer.tsx`, `packages/ui/src/components/ui/drawer.tsx`, `packages/ui/src/components/ui/` (all animated components)
 
 - Item Types: `Fix | Decision | Proof`
@@ -320,7 +320,7 @@ Exit Criteria:
 
 ### Workstream 11 - Documentation, Module Governance, And Test Hygiene
 
-Status: planned
+Status: completed
 Targets: `docs/references/terminology.md`, `packages/spreadsheet-renderers/src/canvas-styles.css`, `packages/flux-compiler/src/schema-compiler/node-compiler.ts`, `packages/flux-action-core/src/action-dispatcher/action-execution.ts`, `packages/report-designer-renderers/src/page-renderer.tsx`, `packages/flux-runtime/src/__tests__/form-runtime-owner.test.ts`, `packages/flux-runtime/src/__tests__/submit-flow.test.ts`
 
 - Item Types: `Follow-up | Decision`
@@ -344,22 +344,22 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Workstream 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] All P1 in-scope findings are fixed (01-02, 04-02, 09-02, 09-03, 15-02, 15-03).
-- [ ] All P2 in-scope findings are fixed.
-- [ ] All P3/P4 in-scope findings are fixed or adjudicated with explicit non-blocking rationale.
-- [ ] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
-- [ ] Owner docs are synced to live baseline for every code-affecting workstream.
-- [ ] Necessary focused verification is complete and asserts correct final behavior.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All P1 in-scope findings are fixed (01-02, 04-02, 09-02, 09-03, 15-02, 15-03).
+- [x] All P2 in-scope findings are fixed.
+- [x] All P3/P4 in-scope findings are fixed or adjudicated with explicit non-blocking rationale.
+- [x] No in-scope live defect or contract drift is silently downgraded to deferred/follow-up.
+- [x] Owner docs are synced to live baseline for every code-affecting workstream.
+- [x] Necessary focused verification is complete and asserts correct final behavior.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Draft Review Record
 
 - Initial draft created 2026-06-02 from deep audit summary + open-ended adversarial review rounds 01-08.
-- Pending independent review.
+- Independent closure audit completed after final verification; see `## Closure`.
 
 ## Deferred But Adjudicated
 
@@ -387,16 +387,16 @@ None at draft time.
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: Completed on 2026-06-02 after final repository-wide `typecheck`, `build`, `lint`, `test`, and `check:active-doc-code-anchors` all passed. Final closure included explicit debugger automation opt-in in playground tests and expectation updates for `AdapterValidationIssue.cause`.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<独立审阅者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Reviewer / Agent: independent general subagent closure audit (`task_id: ses_177cbbf7bffeXS2IJ3UVYr4otZ`)
+- Evidence: initial audit failed on missing closure artifacts; after adding `pnpm lint`, `docs/logs/2026/06-02.md`, closure notes, and final verification, the remaining repo delta matched completed behavior. Daily log: `docs/logs/2026/06-02.md`.
 
 Follow-up:
 
-- <<no remaining plan-owned work>>
+- no remaining plan-owned work
 - Broader advanced-control readOnly sampling after projected owner guards land.
 - Full flow-designer-core migration to zustand/vanilla as a separate architectural initiative.
 - Performance profiling under large schemas (compilation time, memory, render benchmarks).

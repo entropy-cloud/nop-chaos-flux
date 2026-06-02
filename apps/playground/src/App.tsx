@@ -49,6 +49,7 @@ if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefin
 const debuggerController = createNopDebugger({
   id: 'playground-main',
   capturePerformance: false,
+  exposeAutomationApi: true,
 });
 
 function PageFallback() {

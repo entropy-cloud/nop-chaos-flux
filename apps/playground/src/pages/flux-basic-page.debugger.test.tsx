@@ -58,6 +58,7 @@ describe('FluxBasicPage debugger wiring', () => {
     const debuggerController = createNopDebugger({
       id: 'playground-flux-basic-page-test',
       enabled: true,
+      exposeAutomationApi: true,
     });
 
     render(<FluxBasicPage debuggerController={debuggerController} onBack={() => undefined} />);
@@ -153,6 +154,7 @@ describe('FluxBasicPage debugger wiring', () => {
     const debuggerController = createNopDebugger({
       id: 'playground-flux-basic-page-strict-test',
       enabled: true,
+      exposeAutomationApi: true,
     });
 
     try {
@@ -194,6 +196,7 @@ describe('FluxBasicPage debugger wiring', () => {
     const debuggerController = createNopDebugger({
       id: 'playground-flux-basic-page-inspect-dialog-test',
       enabled: true,
+      exposeAutomationApi: true,
     });
 
     try {
@@ -226,6 +229,7 @@ describe('FluxBasicPage debugger wiring', () => {
     const debuggerController = createNopDebugger({
       id: 'playground-flux-basic-page-inspect-dialog-all-rows-test',
       enabled: true,
+      exposeAutomationApi: true,
     });
 
     try {
@@ -269,6 +273,7 @@ describe('FluxBasicPage debugger wiring', () => {
     const debuggerController = createNopDebugger({
       id: 'playground-flux-basic-page-array-delete-test',
       enabled: true,
+      exposeAutomationApi: true,
     });
 
     render(<FluxBasicPage debuggerController={debuggerController} onBack={() => undefined} />);
