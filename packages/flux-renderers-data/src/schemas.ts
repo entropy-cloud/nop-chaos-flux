@@ -132,6 +132,7 @@ export interface TreeSchema extends BaseSchema {
   initiallyExpanded?: boolean | number;
   expandOnClickNode?: boolean;
   statusPath?: string;
+  multiple?: boolean;
 }
 
 export * from './chart-schemas.js';

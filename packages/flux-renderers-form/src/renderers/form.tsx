@@ -154,6 +154,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const initialValuesRef = useRef(initialValues);
   const mountedFormRef = useRef(false);
   const activeOwnedFormRef = useRef<ReturnType<typeof runtime.createFormRuntime> | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   const ownedForm = useMemo(
     () =>
@@ -355,6 +356,32 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     };
   }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm, props.path, runtime]);
 
+  useEffect(() => {
+    let prevSubmitting = ownedForm.store.getState().submitting;
+
+    const unsubscribe = ownedForm.store.subscribe(() => {
+      const state = ownedForm.store.getState();
+      const justStoppedSubmitting = prevSubmitting && !state.submitting;
+      prevSubmitting = state.submitting;
+
+      if (justStoppedSubmitting && state.submitAttempted) {
+        const hasFieldErrors = Object.values(state.fieldStates).some(
+          (fs) => fs.errors && fs.errors.length > 0,
+        );
+        if (hasFieldErrors) {
+          requestAnimationFrame(() => {
+            const firstInvalid = sectionRef.current?.querySelector('[aria-invalid="true"]');
+            if (firstInvalid instanceof HTMLElement) {
+              firstInvalid.focus();
+            }
+          });
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [ownedForm.store]);
+
   const formMode = (props.props as FormSchema).mode;
   const formLabelAlign = (props.props as FormSchema).labelAlign;
   const formLabelWidth = (props.props as FormSchema).labelWidth;
@@ -382,6 +409,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       <ScopeContext.Provider value={ownedForm.scope}>
         <FormLayoutContext.Provider value={formLayoutValue}>
           <section
+            ref={sectionRef}
             className={cn('nop-form', props.meta.className)}
             data-testid={props.meta.testid || undefined}
             data-cid={props.meta.cid || undefined}

@@ -157,7 +157,7 @@ describe('FormRenderer lifecycle wiring', () => {
     const register = vi.fn(() => registerCleanup);
     const ownedForm = {
       scope: ownedScope,
-      store: { getState: () => ({ values: { username: 'Alice' } }) },
+      store: { getState: () => ({ values: { username: 'Alice' }, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn((handlers: unknown) => {
         lifecycleHandlers.push(handlers);
@@ -313,7 +313,7 @@ describe('FormRenderer lifecycle wiring', () => {
     const onSubmitSuccess = vi.fn(async () => undefined);
     const ownedForm = {
       scope: ownedScope,
-      store: { getState: () => ({ values: {} }) },
+      store: { getState: () => ({ values: {}, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn((handlers: unknown) => {
         lifecycleHandlers.push(handlers);
@@ -368,7 +368,7 @@ describe('FormRenderer lifecycle wiring', () => {
     const ownedScope = makeScope({ id: 'owned-stable', visible: { username: 'Alice' } });
     const ownedForm = {
       scope: ownedScope,
-      store: { getState: () => ({ values: { username: 'Alice' } }) },
+      store: { getState: () => ({ values: { username: 'Alice' }, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
     } as any;
@@ -420,13 +420,13 @@ describe('FormRenderer lifecycle wiring', () => {
     const parentScope = makeScope({ id: 'parent', visible: { parentValue: 'plain' } });
     const firstOwnedForm = {
       scope: makeScope({ id: 'owned-first', visible: {} }),
-      store: { getState: () => ({ values: { username: 'Alice' } }) },
+      store: { getState: () => ({ values: { username: 'Alice' }, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
     } as any;
     const secondOwnedForm = {
       scope: makeScope({ id: 'owned-second', visible: {} }),
-      store: { getState: () => ({ values: { username: 'Alice' } }) },
+      store: { getState: () => ({ values: { username: 'Alice' }, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
     } as any;
@@ -489,7 +489,7 @@ describe('FormRenderer lifecycle wiring', () => {
     );
     const ownedForm = {
       scope: ownedScope,
-      store: { getState: () => ({ values: {} }) },
+      store: { getState: () => ({ values: {}, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
     } as any;
@@ -536,7 +536,7 @@ describe('FormRenderer lifecycle wiring', () => {
     const successfulInitAction = vi.fn(async () => ({ ok: true }));
     const ownedForm = {
       scope: ownedScope,
-      store: { getState: () => ({ values: {} }) },
+      store: { getState: () => ({ values: {}, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
       dispose: vi.fn(),
       setLifecycleHandlers: vi.fn(),
     } as any;

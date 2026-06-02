@@ -150,6 +150,7 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saveError, setSaveError] = useState<unknown>(undefined);
   const savingRef = useRef(false);
+  const saveGenerationRef = useRef(0);
   const lastFieldRef = useRef(field);
   const lastRecordValueRef = useRef(initialValue);
   const lastRecordRef = useRef<Record<string, unknown>>({ ...record });
@@ -324,10 +325,14 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     }
 
     savingRef.current = true;
+    const generation = ++saveGenerationRef.current;
     setSaving(true);
     setSaveError(undefined);
     try {
       const result = await helpers.dispatch(saveAction, { scope: draftRowScope });
+      if (saveGenerationRef.current !== generation) {
+        return;
+      }
       if (isExplicitActionFailure(result)) {
         throw result.error ?? new Error('Save action returned ok=false');
       }
@@ -341,11 +346,16 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
       setBodyDirty(false);
       setDialogOpen(false);
     } catch (error) {
+      if (saveGenerationRef.current !== generation) {
+        return;
+      }
       setSaveError(error);
       onSaveError?.(error);
     } finally {
-      savingRef.current = false;
-      setSaving(false);
+      if (saveGenerationRef.current === generation) {
+        savingRef.current = false;
+        setSaving(false);
+      }
     }
   }, [dirty, draftRowScope, draftValue, field, helpers, onSaveError, rowScope, saveAction]);
 

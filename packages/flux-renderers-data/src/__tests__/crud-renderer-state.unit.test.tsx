@@ -34,8 +34,8 @@ function StatusProbe(props: { scope?: any; statusPath?: string; summary: any }) 
   return null;
 }
 
-function HandleProbe(props: { inputProps: any; internalTableRef: any; handleRefresh: () => void }) {
-  useCrudHandle(props.inputProps, props.internalTableRef, props.handleRefresh);
+function HandleProbe(props: { inputProps: any; selectedRowKeys: unknown[]; clearSelection: () => void; handleRefresh: () => void }) {
+  useCrudHandle(props.inputProps, props.selectedRowKeys, props.clearSelection, props.handleRefresh);
   return null;
 }
 
@@ -176,14 +176,14 @@ describe('useCrudHandle', () => {
     mockState.currentRegistry = { register };
 
     const handleRefresh = vi.fn();
-    const getSelection = vi.fn(() => ['r1']);
     const clearSelection = vi.fn();
-    const internalTableRef = { current: { getSelection, clearSelection } };
+    const selectedRowKeys = ['r1'];
 
     const { unmount } = render(
       <HandleProbe
         inputProps={{ meta: { cid: 3 }, id: 'crud-1', props: { name: 'users' } }}
-        internalTableRef={internalTableRef}
+        selectedRowKeys={selectedRowKeys}
+        clearSelection={clearSelection}
         handleRefresh={handleRefresh}
       />,
     );
@@ -219,7 +219,8 @@ describe('useCrudHandle', () => {
     const { rerender } = render(
       <HandleProbe
         inputProps={{ meta: {}, id: 'crud-1', props: {} }}
-        internalTableRef={{ current: {} }}
+        selectedRowKeys={[]}
+        clearSelection={() => {}}
         handleRefresh={() => {}}
       />,
     );
@@ -230,7 +231,8 @@ describe('useCrudHandle', () => {
     rerender(
       <HandleProbe
         inputProps={{ meta: { cid: 1 }, id: 'crud-1', props: {} }}
-        internalTableRef={{ current: {} }}
+        selectedRowKeys={[]}
+        clearSelection={() => {}}
         handleRefresh={() => {}}
       />,
     );

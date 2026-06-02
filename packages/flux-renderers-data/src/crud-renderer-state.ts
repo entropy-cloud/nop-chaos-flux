@@ -240,7 +240,8 @@ export function useCrudStatusPublisher(
 
 export function useCrudHandle(
   props: RendererComponentProps<CrudSchema>,
-  internalTableRef: React.RefObject<InternalTableHandle>,
+  selectedRowKeys: unknown[],
+  clearSelection: () => void,
   handleRefresh: (ctx?: Partial<ActionContext>) => void,
 ) {
   const componentRegistry = useCurrentComponentRegistry();
@@ -271,9 +272,9 @@ export function useCrudHandle(
                 handleRefresh(toPartialActionContext(ctx));
                 return { ok: true };
               case 'getSelection':
-                return { ok: true, data: internalTableRef.current?.getSelection?.() ?? [] };
+                return { ok: true, data: selectedRowKeys };
               case 'clearSelection':
-                internalTableRef.current?.clearSelection?.();
+                clearSelection();
                 return { ok: true };
               default:
                 return { ok: false, error: new Error(`Unknown method: ${method}`) };
@@ -283,7 +284,7 @@ export function useCrudHandle(
       },
       { cid },
     );
-  }, [componentRegistry, cid, handleRefresh, id, internalTableRef, name]);
+  }, [clearSelection, componentRegistry, cid, handleRefresh, id, name, selectedRowKeys]);
 }
 
 export function useCrudRuntimeState(args: {

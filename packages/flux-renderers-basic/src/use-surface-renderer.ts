@@ -1,29 +1,12 @@
 import React from 'react';
 import type {
-  ActionScope,
-  ComponentHandleRegistry,
   RendererComponentProps,
   ScopeRef,
   SurfaceEntry,
   SurfaceStatusSummary,
 } from '@nop-chaos/flux-core';
-import { useCurrentSurfaceRuntime, useRendererRuntime } from '@nop-chaos/flux-react';
+import { useCurrentActionScope, useCurrentComponentRegistry, useCurrentSurfaceRuntime, useRendererRuntime } from '@nop-chaos/flux-react';
 import type { DialogSchema, DrawerSchema } from './schemas.js';
-
-type DispatchMetadataCarrier = typeof import('@nop-chaos/flux-core') extends infer _T
-  ? {
-      __actionScope?: ActionScope;
-      __componentRegistry?: ComponentHandleRegistry;
-    }
-  : never;
-
-function readDispatchMetadata(dispatch: RendererComponentProps<DialogSchema>['helpers']['dispatch']) {
-  const carrier = dispatch as typeof dispatch & DispatchMetadataCarrier;
-  return {
-    actionScope: carrier.__actionScope,
-    componentRegistry: carrier.__componentRegistry,
-  };
-}
 
 function getSurfaceScopeId(
   surfaceId: string,
@@ -56,7 +39,7 @@ export function useSurfaceRenderer(
   props: RendererComponentProps<DialogSchema> | RendererComponentProps<DrawerSchema>,
   kind: 'dialog' | 'drawer',
 ) {
-  const { id, node, templateNode, props: resolvedProps, meta: resolvedMeta, regions, events, helpers } = props;
+  const { id, node, templateNode, props: resolvedProps, meta: resolvedMeta, regions, events } = props;
   const runtime = useRendererRuntime();
   const surfaceRuntime = useCurrentSurfaceRuntime();
   const controlledOpen = resolvedProps.open;
@@ -173,9 +156,8 @@ export function useSurfaceRenderer(
     };
   }, [declarativeScope, id, kind, node.scope, statusPath, surfaceRuntime]);
 
-  const dispatchMetadata = readDispatchMetadata(helpers.dispatch);
-  const actionScope = dispatchMetadata.actionScope;
-  const componentRegistry = dispatchMetadata.componentRegistry;
+  const actionScope = useCurrentActionScope();
+  const componentRegistry = useCurrentComponentRegistry();
   const handleSurfaceOpenChange = React.useCallback(
     (nextOpen: boolean) => {
       if (controlledOpen === undefined) {
@@ -188,14 +170,14 @@ export function useSurfaceRenderer(
         }
 
         closeHandledRef.current = true;
-        void eventHandlers.onClose?.();
+        void eventHandlers.onClose?.({ surfaceId: id, kind, open: false });
         return;
       }
 
       closeHandledRef.current = false;
-      void eventHandlers.onOpen?.();
+      void eventHandlers.onOpen?.({ surfaceId: id, kind, open: true });
     },
-    [controlledOpen, eventHandlers, id, surfaceRuntime],
+    [controlledOpen, eventHandlers, id, kind, surfaceRuntime],
   );
   const surfacePayload = React.useMemo(
     () => ({
@@ -236,8 +218,8 @@ export function useSurfaceRenderer(
       meta,
       regionHandles: regions,
       controlledOpen: controlledOpen !== undefined,
-      onOpen: () => eventHandlers.onOpen?.(),
-      onClose: () => eventHandlers.onClose?.(),
+      onOpen: () => eventHandlers.onOpen?.({ surfaceId: id, kind, open: true }),
+      onClose: () => eventHandlers.onClose?.({ surfaceId: id, kind, open: false }),
     };
 
     const existing = surfaceRuntime.store.getState().entries.find((candidate) => candidate.id === id);

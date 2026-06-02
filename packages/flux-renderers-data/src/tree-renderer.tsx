@@ -274,6 +274,7 @@ function TreeNodeRenderer(props: {
             role="treeitem"
             aria-expanded={hasChildren ? open : undefined}
             aria-level={depth + 1}
+            aria-selected={isTabbable}
             data-depth={depth}
             data-tree-node-id={treeNodeId}
             tabIndex={isTabbable ? 0 : -1}
@@ -405,6 +406,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
     fallback: t('flux.common.noData'),
   });
   const treeLabel = String(schemaProps.label || schemaProps.title || props.id || 'Tree');
+  const multiple = schemaProps.multiple === true;
   const statusPath =
     typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;
   const repeatedTemplateId = createTreeNodeRepeatedTemplateId(props.id);
@@ -510,6 +512,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
         data-cid={props.meta.cid || undefined}
         role="tree"
         aria-label={treeLabel}
+        aria-multiselectable={multiple || undefined}
       >
         {hasRendererSlotContent(emptyContent) ? (
           <div data-slot="tree-empty">{emptyContent}</div>
@@ -526,6 +529,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
       data-cid={props.meta.cid || undefined}
       role="tree"
       aria-label={treeLabel}
+      aria-multiselectable={multiple || undefined}
     >
       {data.map((node, index) => (
         <TreeNodeRenderer

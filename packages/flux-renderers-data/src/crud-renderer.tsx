@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
@@ -12,6 +12,7 @@ import {
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Separator, cn } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema.js';
+import type { TableSchema } from './schemas.js';
 import { normalizeCrudSchema } from './crud-schema.js';
 import { TableRenderer } from './table-renderer.js';
 import {
@@ -23,11 +24,9 @@ import {
   useCrudHandle,
   useCrudRuntimeState,
   useCrudStatusPublisher,
-  type InternalTableHandle,
 } from './crud-renderer-state.js';
 import { CrudToolbarBlocks, normalizeToolbarBlocks } from './crud-renderer-toolbar.js';
 import { createCrudQueryFormId } from './crud-query-form-id.js';
-import type { TableSchema } from './schemas.js';
 import {
   createCrudOwnerPaths,
   useCrudQueryBridge,
@@ -95,7 +94,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const source = resolvedSource.rows.length > 0 ? resolvedSource.rows : EMPTY_ROWS;
   const effectiveQuery = queryState.refreshCount > 0 ? queryState.values : defaultQuery;
   const filteredRows = applyQueryToRows(source, effectiveQuery);
-  const internalTableRef = useRef<InternalTableHandle>({});
   const queryStatePath = ownerPaths.queryStatePath;
   const queryDraftStatePath = `${queryStatePath}.$draft`;
   const paginationStatePath = ownerPaths.paginationStatePath;
@@ -133,9 +131,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const crudScope = createReadonlyScopeBinding(scope, '$crud', () => summary);
 
   const handleRefresh = (ctx?: CrudRefreshContext) => {
-    internalTableRef.current?.refreshSource?.();
     if (normalizedSchema.autoClearSelectionOnRefresh) {
-      internalTableRef.current?.clearSelection?.();
       scope?.update(selectionStatePath, []);
     }
 
@@ -187,7 +183,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     onQueryReset: props.events.onQueryReset,
   });
 
-  useCrudHandle(props, internalTableRef, handleRefresh);
   useCrudStatusPublisher(scope, normalizedSchema.statusPath, summary);
 
   function resolveCrudSlotContent(
@@ -229,7 +224,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const hasListActions = hasRendererSlotContent(asReactNode(listActionsContent));
   const hasFooterToolbar = hasRendererSlotContent(asReactNode(footerToolbarContent));
 
-  const tableSchema: TableSchema = (() => {
+  const tableSchema = (() => {
     const base: Record<string, unknown> = {
       type: 'table',
       id: `${props.id}-table`,
@@ -309,6 +304,12 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     helpers: props.helpers,
   };
   const hasQueryForm = Boolean(props.regions.queryFormRegion?.templateNode);
+
+  const handleClearSelection = () => {
+    scope?.update(selectionStatePath, []);
+  };
+
+  useCrudHandle(props, selectedRowKeys, handleClearSelection, handleRefresh);
 
   const handleToolbarPageChange = (page: number) => {
     scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });
