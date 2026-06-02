@@ -147,18 +147,132 @@ API 级结论：
 
 ## 4. Designer Actions
 
-Flow Designer 扩展现有 action schema，新增一组 graph action。
+Flow Designer exposes all actions through the `designer` host namespace. The authoritative contract is defined in `designer-manifest.ts` and implemented in `designer-action-provider.ts`.
 
 ### `designer:addNode`
 
 ```ts
 {
   action: 'designer:addNode',
-  nodeType: 'task',
+  nodeType: string,
   position?: { x: number, y: number },
   data?: Record<string, unknown>
 }
 ```
+
+Result: `{ nodeId: string }` on success.
+
+### `designer:addBranch`
+
+```ts
+{
+  action: 'designer:addBranch',
+  nodeId: string,
+  branchData?: Record<string, unknown>,
+  childType?: string,
+  childData?: Record<string, unknown>
+}
+```
+
+Add a branch to a tree-mode branch group.
+
+### `designer:addEdge`
+
+```ts
+{
+  action: 'designer:addEdge',
+  source: string,
+  target: string,
+  sourcePort?: string,
+  targetPort?: string,
+  data?: Record<string, unknown>
+}
+```
+
+Result: `{ edgeId: string }` on success.
+
+### `designer:deleteNode`
+
+```ts
+{
+  action: 'designer:deleteNode',
+  nodeId: string
+}
+```
+
+### `designer:deleteBranch`
+
+```ts
+{
+  action: 'designer:deleteBranch',
+  nodeId: string,
+  branchId: string
+}
+```
+
+### `designer:deleteEdge`
+
+```ts
+{
+  action: 'designer:deleteEdge',
+  edgeId: string
+}
+```
+
+### `designer:deleteSelection`
+
+```ts
+{
+  action: 'designer:deleteSelection';
+}
+```
+
+### `designer:duplicateNode`
+
+```ts
+{
+  action: 'designer:duplicateNode',
+  nodeId: string
+}
+```
+
+Result: `{ nodeId: string }` on success (the new node's ID).
+
+### `designer:moveNode`
+
+```ts
+{
+  action: 'designer:moveNode',
+  nodeId: string,
+  position: { x: number, y: number }
+}
+```
+
+Move a node to an absolute position. Coordinates are clamped to [-10000, 10000]; non-finite values are rejected.
+
+### `designer:moveBranch`
+
+```ts
+{
+  action: 'designer:moveBranch',
+  nodeId: string,
+  branchId: string,
+  direction: 'left' | 'right'
+}
+```
+
+Move a branch left or right within a tree-mode branch group.
+
+### `designer:moveNodes`
+
+```ts
+{
+  action: 'designer:moveNodes',
+  deltas: Record<string, { dx: number, dy: number }>
+}
+```
+
+Move multiple nodes by relative deltas. Non-finite delta values are rejected; resulting positions are clamped to [-10000, 10000].
 
 ### `designer:updateNodeData`
 
@@ -166,9 +280,11 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
 {
   action: 'designer:updateNodeData',
   nodeId: string,
-  patch: Record<string, unknown>
+  data: Record<string, unknown>
 }
 ```
+
+Partial merge update of node data.
 
 ### `designer:updateEdgeData`
 
@@ -176,9 +292,24 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
 {
   action: 'designer:updateEdgeData',
   edgeId: string,
-  patch: Record<string, unknown>
+  data: Record<string, unknown>
 }
 ```
+
+Partial merge update of edge data.
+
+### `designer:updateBranchData`
+
+```ts
+{
+  action: 'designer:updateBranchData',
+  nodeId: string,
+  branchId: string,
+  data: Record<string, unknown>
+}
+```
+
+Update branch header data in a tree-mode branch group.
 
 ### `designer:updateMultipleNodes`
 
@@ -192,14 +323,84 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
 }
 ```
 
-### `designer:moveNodes`
+### `designer:reconnectEdge`
 
 ```ts
 {
-  action: 'designer:moveNodes',
-  deltas: Record<string, { dx: number, dy: number }>
+  action: 'designer:reconnectEdge',
+  edgeId: string,
+  source: string,
+  target: string,
+  sourcePort?: string,
+  targetPort?: string
 }
 ```
+
+### `designer:selectNode`
+
+```ts
+{
+  action: 'designer:selectNode',
+  nodeId: string | null
+}
+```
+
+### `designer:selectEdge`
+
+```ts
+{
+  action: 'designer:selectEdge',
+  edgeId: string | null
+}
+```
+
+### `designer:selectBranch`
+
+```ts
+{
+  action: 'designer:selectBranch',
+  nodeId: string,
+  branchId: string | null
+}
+```
+
+### `designer:toggleNodeSelection`
+
+```ts
+{
+  action: 'designer:toggleNodeSelection',
+  nodeId: string
+}
+```
+
+### `designer:toggleEdgeSelection`
+
+```ts
+{
+  action: 'designer:toggleEdgeSelection',
+  edgeId: string
+}
+```
+
+### `designer:selectAllNodes`
+
+```ts
+{
+  action: 'designer:selectAllNodes';
+}
+```
+
+Idempotent.
+
+### `designer:clearSelection`
+
+```ts
+{
+  action: 'designer:clearSelection';
+}
+```
+
+Idempotent.
 
 ### `designer:setSelection`
 
@@ -211,46 +412,94 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
 }
 ```
 
-### `designer:addEdge`
+### `designer:copySelection`
 
 ```ts
 {
-  action: 'designer:addEdge',
-  source: string,
-  target: string,
-  sourcePort?: string,
-  targetPort?: string,
-  edgeType?: string,
-  data?: Record<string, unknown>
+  action: 'designer:copySelection';
 }
 ```
 
-### `designer:deleteSelection`
+### `designer:pasteClipboard`
 
 ```ts
 {
-  action: 'designer:deleteSelection';
+  action: 'designer:pasteClipboard';
 }
 ```
 
-### `designer:openInspector`
+### `designer:undo`
 
 ```ts
 {
-  action: 'designer:openInspector',
-  target?: {
-    type: 'node' | 'edge',
-    id: string
-  }
+  action: 'designer:undo';
 }
 ```
 
-### `designer:autoLayout`
+### `designer:redo`
 
 ```ts
 {
-  action: 'designer:autoLayout',
-  algorithm?: 'dagre' | 'elk' | 'preset'
+  action: 'designer:redo';
+}
+```
+
+### `designer:toggleGrid`
+
+```ts
+{
+  action: 'designer:toggleGrid';
+}
+```
+
+### `designer:togglePalette`
+
+```ts
+{
+  action: 'designer:togglePalette';
+}
+```
+
+### `designer:toggleInspector`
+
+```ts
+{
+  action: 'designer:toggleInspector';
+}
+```
+
+### `designer:setViewport`
+
+```ts
+{
+  action: 'designer:setViewport',
+  viewport: { x: number, y: number, zoom: number }
+}
+```
+
+### `designer:export`
+
+```ts
+{
+  action: 'designer:export';
+}
+```
+
+Result: JSON string of the current document. Idempotent.
+
+### `designer:save`
+
+```ts
+{
+  action: 'designer:save';
+}
+```
+
+### `designer:restore`
+
+```ts
+{
+  action: 'designer:restore';
 }
 ```
 
@@ -263,6 +512,8 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
   transactionId?: string
 }
 ```
+
+Result: `{ transactionId: string }`.
 
 ### `designer:commitTransaction`
 
@@ -293,15 +544,6 @@ Result:
 ```ts
 { ok: true, transactionId?: string } | { ok: false, reason: 'unavailable' | 'missing-transaction' }
 ```
-
-### 其他建议内建动作
-
-- `designer:duplicateSelection`
-- `designer:undo`
-- `designer:redo`
-- `designer:fitView`
-- `designer:disconnect`
-- `designer:exportDocument`
 
 Port-aware contract note:
 

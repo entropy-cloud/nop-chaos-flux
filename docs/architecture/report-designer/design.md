@@ -446,13 +446,20 @@ Current retained/removed matrix:
 
 Dirty 语义收敛规则:
 
-- `document.spreadsheet` 是 report-designer 对外发布、`save` / `exportDocument()` 返回、以及 host scope `spreadsheet.workbook`/`workbook` 投影所共同依赖的 canonical spreadsheet subtree
+- Single workbook baseline: `reportDocument.spreadsheet.workbook`, top-level `workbook`, and `spreadsheet.workbook` always resolve to the same canonical owner — spreadsheet runtime when live editing, report snapshot otherwise. Both `createHostData` and `buildReportDesignerScopeData` derive workbook from this single source, apply a defensive shallow copy, and wire all three references to the same object so schema expressions cannot observe divergent workbook versions.
 - 内部 `spreadsheet-core` 可以维护自己的编辑态与 history store，但支持路径下的 report-owned mutation 必须把同步后的 spreadsheet document 回写到 report document，再由 host projection 读取同一份 canonical snapshot；不能让 canvas、save/export、host scope 各自停留在不同 workbook 版本
 - `designer.dirty` 只表示 report-designer canonical document 相对 saved baseline 是否仍有未保存变更；默认 `report-designer:save` 与 `importTemplate` 都会推进这条 report-owned saved baseline
 - `runtime.dirty` 表示对宿主发布的聚合 dirty，等于 `designer.dirty || spreadsheet.runtime.dirty`
 - bridge、status summary、host scope 必须使用这同一套定义，不能把 `designer.dirty` 再降级成 spreadsheet-only dirty
 - supported editable document mutations (`setMetadata`, spreadsheet subtree sync, template import) must participate in the same undo/redo + dirty baseline as ordinary designer editing; out-of-band document replacement must stay explicit instead of masquerading as normal editable history
 - 默认 report toolbar 的 `undo/redo` 可用态必须读取 report owner 本身的 `designer.canUndo` / `designer.canRedo`；聚合历史只保留在 `runtime.canUndo` / `runtime.canRedo` 供真正聚合动作或 status summary 使用
+
+Action result envelope:
+
+- `report-designer:preview`, `report-designer:save`, and `report-designer:exportTemplate` return structured discriminated envelope results with fields `{ ok, cancelled?, changed?, error?, data? }`, declared in the manifest as explicit `FluxValueShape` objects instead of `kind: 'unknown'`.
+- `preview` data envelope includes `{ mode, output? }` when present.
+- `exportTemplate` data envelope includes `{ format, content? }` when present.
+- `save` data envelope is generic `{ data? }`.
 
 Toolbar action contract baseline:
 

@@ -376,6 +376,25 @@ It supports:
 - `stopWhen` expression for conditional polling termination
 - `includeScope` on its `ApiSchema` for automatic scope variable injection
 
+## Data Source Naming Convention (`data-source` vs `source`)
+
+The codebase uses three distinct names for data-source-related concepts. They are **not** interchangeable.
+
+| Name                   | Layer                     | Meaning                                                                                                                                                                                                                  |
+| ---------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `data-source`          | Schema type discriminator | The `type` field on `DataSourceSchema` nodes (`type: 'data-source'`). Used as a non-rendering source declaration that publishes a derived value into scope via the `data-source` compilation artifact.                   |
+| `source`               | Renderer prop key         | The canonical prop name on data-consuming renderers (e.g., table, chart) for receiving row/data values from scope or inline declarations. Maps to `SourceSchema` internally when the value is `{ type: 'source', ... }`. |
+| `source` (schema type) | Compiled inline source    | The `type` field on `SourceSchema` objects (`type: 'source'`). Used for inline data declarations embedded as prop values on renderers, supporting `action`, `formula`, and `path` fields.                                |
+
+Canonical mapping:
+
+- Schema authors write `type: 'data-source'` for standalone data-fetching nodes
+- Schema authors write `source: { type: 'source', action: '...' }` as a prop value for inline data bindings on renderers
+- The compiler produces `data-source` artifacts from `DataSourceSchema` nodes and resolves `SourceSchema` prop values through the source-observer system
+- Renderers read the resolved data through the `source` prop key; **never** `dataSource`
+
+All renderer definitions and prop contracts use `source` as the prop key. The camelCase form `dataSource` does not appear as a prop key anywhere in the codebase.
+
 ## `includeScope`
 
 An `ApiSchema` field that controls automatic scope variable injection into request data.
@@ -436,6 +455,42 @@ It can carry:
 The chained action result from the previous action in a `then` sequence.
 
 It allows later actions to consume outputs from earlier ones without inventing ad hoc wiring.
+
+## `ComponentRegistry`
+
+The runtime registry for component handle lookup and inspection, keyed by `ComponentTarget`.
+
+It enables the debugger, inspector, and test automation to resolve a mounted component instance by path or `cid`. The compile-time `ComponentHandleRegistryCore` interface lives in `flux-core`; the full `ComponentHandleRegistry` with debug extensions lives in `flux-react`.
+
+## `RuntimeContext`
+
+The informal term for the collective runtime state accessible to renderer components through hooks such as `useRendererRuntime()`, `useRenderScope()`, and `useCurrentForm()`.
+
+There is no single `RuntimeContext` type in the codebase; the concept refers to the composition of `RendererRuntime`, `ScopeRef`, `ActionScope`, `PageRuntime`, `FormRuntime`, and `SurfaceRuntime` instances that are contextually available at a given render point.
+
+## `FieldFrame`
+
+The shared field-chrome component in `@nop-chaos/flux-react` that renders label, required indicator, hint, description, error messages, and ARIA attributes for wrapped field renderers.
+
+Renderers declare `wrap: true` in their `RendererDefinition` to opt into `FieldFrame` wrapping via `NodeFrameWrapper`. Layout and spacing come from `@layer base` CSS rules using design tokens, not from renderer component code.
+
+## `Slot` (`SlotFrame`)
+
+The author-facing expression scope for template region parameters, exposed as `$slot.xxx` in expressions.
+
+Defined as `SlotFrame` in `flux-core`, it carries named parameters passed into a region at render time and supports `$slot.$parent` for nested-slot fallback lookups. Region parameter symbols are compiled by the schema compiler and pushed into the compile-time symbol table.
+
+## `ScopeSelector`
+
+The React hook `useScopeSelector(selector, equalityFn?)` from `@nop-chaos/flux-react` that subscribes a renderer component to reactive scope data with fine-grained path-based invalidation.
+
+It bridges `useSyncExternalStore` and the `ScopeRef` change-notification system, allowing renderers to read derived scope values without subscribing to the entire scope.
+
+## `ActionScope`
+
+The hierarchical action namespace resolution chain used at runtime to look up named action handlers by dotted path (e.g., `report-designer:save`).
+
+Defined in `flux-core` as an interface with `resolve()`, `registerNamespace()`, and `unregisterNamespace()` methods. Each scope node has an optional `parent` for chain-of-responsibility fallback. It is distinct from `ScopeRef` (data scope) and `ImportFrame` (expression helper alias scope); `ActionScope` carries imported capability providers for action resolution only.
 
 ## Related Documents
 
