@@ -5,6 +5,17 @@
  * Uses a hybrid strategy: finite-value properties → CSS classes, continuous-value properties → inline styles.
  * Interaction states use data-* attributes (compatible with shadcn/ui pattern).
  *
+ * HYBRID CSS PATTERN NOTE
+ * This file uses data-slot CSS selectors alongside traditional CSS classes (ss-cell, ss-row, etc.).
+ * This hybrid pattern is necessary because canvas-rendered spreadsheet cells are produced by
+ * imperative DOM construction that does not go through the React/Tailwind pipeline. Tailwind
+ * utilities cannot be applied to cells created outside React component rendering, so raw CSS
+ * classes with data-slot selectors are the correct approach here.
+ *
+ * This is an intentional exception to the Tailwind-first styling convention documented in
+ * docs/architecture/styling-system.md. Widget renderers that use React components should
+ * continue to use Tailwind utilities and cn() per the standard convention.
+ *
  * See docs/architecture/report-designer/spreadsheet-canvas-css.md for full design rationale.
  */
 

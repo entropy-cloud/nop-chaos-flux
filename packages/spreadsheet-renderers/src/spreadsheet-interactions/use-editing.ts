@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback } from 'react';
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
 
@@ -19,11 +19,16 @@ export function useEditing(
   selectedCell: { row: number; col: number } | null,
   cellValue: string,
 ) {
-  const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
-  const [editValue, setEditValue] = useState('');
-  const [editSaveState, setEditSaveState] = useState<EditSaveState>({ status: 'idle' });
-  const editingCellRef = useRef<{ row: number; col: number } | null>(null);
-  const editValueRef = useRef('');
+  const core = bridge.getCore();
+  const editingCell = snapshot.editing ?? null;
+
+  const coreEditing = core.getSnapshot().editing;
+  const editValue = coreEditing ? String(coreEditing.draftValue ?? '') : '';
+  const editSaveState: EditSaveState = coreEditing
+    ? coreEditing.saveStatus === 'idle'
+      ? { status: 'idle' }
+      : { status: coreEditing.saveStatus, message: coreEditing.saveMessage ?? '' }
+    : { status: 'idle' };
 
   const handleCellDoubleClick = useCallback(
     (row: number, col: number) => {
@@ -32,71 +37,62 @@ export function useEditing(
       }
       const addr = cellAddress(row, col);
       const cell = snapshot.activeSheet?.cells?.[addr];
-      const editCell = { row, col };
       const val = cell?.value != null ? String(cell.value) : '';
-      setEditSaveState({ status: 'idle' });
-      setEditingCell(editCell);
-      editingCellRef.current = editCell;
-      setEditValue(val);
-      editValueRef.current = val;
+      core.startEditing({ sheetId, address: addr, row, col }, val);
     },
-    [snapshot],
+    [snapshot, core, sheetId],
   );
 
   const handleEditSave = useCallback(async () => {
-    const currentEditCell = editingCellRef.current;
-    if (!currentEditCell) return;
+    const editingState = core.getSnapshot().editing;
+    if (!editingState) return;
     if (snapshot.runtime.readonly) {
-      editingCellRef.current = null;
-      editValueRef.current = '';
-      setEditingCell(null);
-      setEditValue('');
+      core.clearEditing();
       return;
     }
-    const currentEditValue = editValueRef.current;
-    const addr = cellAddress(currentEditCell.row, currentEditCell.col);
-    setEditSaveState({ status: 'saving', message: 'Saving cell...' });
+    const { cell, draftValue } = editingState;
+    if (cell.row < 0 || cell.col < 0) {
+      core.clearEditing();
+      return;
+    }
+    const targetSheet = snapshot.workbook.sheets.find((s) => s.id === cell.sheetId);
+    if (!targetSheet) {
+      core.clearEditing();
+      return;
+    }
+    const addr = cellAddress(cell.row, cell.col);
+    core.setEditSaveStatus('saving', 'Saving cell...');
     const result = await bridge.dispatch({
       type: 'spreadsheet:setCellValue',
-      cell: { sheetId, address: addr, row: currentEditCell.row, col: currentEditCell.col },
-      value: currentEditValue,
+      cell: { sheetId, address: addr, row: cell.row, col: cell.col },
+      value: String(draftValue ?? ''),
     });
 
     if ('cancelled' in result && result.cancelled) {
-      setEditSaveState({ status: 'cancelled', message: 'Cell save cancelled' });
+      core.setEditSaveStatus('cancelled', 'Cell save cancelled');
       return;
     }
 
     if (!result.ok) {
-      setEditSaveState({
-        status: 'failed',
-        message: getResultMessage('Cell save failed', result.error),
-      });
+      core.setEditSaveStatus('failed', getResultMessage('Cell save failed', result.error));
       return;
     }
 
     if (result.ok) {
-      editingCellRef.current = null;
-      editValueRef.current = '';
-      setEditingCell(null);
-      setEditValue('');
-      setEditSaveState({ status: 'idle' });
+      core.clearEditing();
     }
-  }, [bridge, sheetId, snapshot.runtime.readonly]);
+  }, [bridge, core, sheetId, snapshot]);
 
   const handleEditCancel = useCallback(() => {
-    editingCellRef.current = null;
-    editValueRef.current = '';
-    setEditingCell(null);
-    setEditValue('');
-    setEditSaveState({ status: 'idle' });
-  }, []);
+    core.clearEditing();
+  }, [core]);
 
-  const handleEditValueChange = useCallback((value: string) => {
-    setEditValue(value);
-    editValueRef.current = value;
-    setEditSaveState({ status: 'idle' });
-  }, []);
+  const handleEditValueChange = useCallback(
+    (value: string) => {
+      core.updateEditValue(value);
+    },
+    [core],
+  );
 
   const handleCellValueSave = useCallback(async () => {
     if (!selectedCell) return;
@@ -117,11 +113,8 @@ export function useEditing(
 
   return {
     editingCell,
-    setEditingCell,
     editValue,
     editSaveState,
-    editingCellRef,
-    editValueRef,
     handleCellDoubleClick,
     handleEditSave,
     handleEditCancel,

@@ -22,7 +22,7 @@ import {
   RuntimeContext,
   ScopeContext,
   SurfaceContext,
-} from '../../../flux-react/src/contexts.js';
+} from '@nop-chaos/flux-react';
 
 function SaveProbe(props: {
   actionProvider: ActionNamespaceProvider;

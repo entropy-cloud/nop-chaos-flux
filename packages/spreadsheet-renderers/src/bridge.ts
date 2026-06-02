@@ -16,6 +16,7 @@ export interface SpreadsheetHostSnapshot {
   selection: SpreadsheetSelection;
   activeCell: SpreadsheetCellRef | null;
   activeRange: SpreadsheetRange | null;
+  editing?: { row: number; col: number };
   runtime: {
     canUndo: boolean;
     canRedo: boolean;
@@ -52,6 +53,9 @@ export function deriveHostSnapshot(runtime: SpreadsheetRuntimeSnapshot): Spreads
     selection: runtime.selection,
     activeCell,
     activeRange,
+    editing: runtime.editing
+      ? { row: runtime.editing.cell.row, col: runtime.editing.cell.col }
+      : undefined,
     runtime: {
       canUndo: runtime.history.canUndo,
       canRedo: runtime.history.canRedo,

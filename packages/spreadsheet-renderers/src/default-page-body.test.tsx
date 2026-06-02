@@ -53,7 +53,7 @@ function createInteractions() {
     currentCell: { style: { fontWeight: 'bold' } },
     columnWidths: {},
     rowHeights: {},
-    editingCell: null,
+    editingCell: null as { row: number; col: number } | null,
     editValue: '',
     fillHandleState: null,
     dropTargetCell: null,
@@ -70,7 +70,6 @@ function createInteractions() {
     setCommentText: vi.fn(),
     hasComment: false,
     gridRef: { current: null },
-    editingCellRef: { current: null },
     isInRange: vi.fn(() => false),
     isFillPreview: vi.fn(() => false),
     getSelectedRange: vi.fn(() => null),
@@ -155,7 +154,7 @@ describe('DefaultSpreadsheetPageBody', () => {
 
   it('routes outside clicks through handleEditSave when an editor is active', () => {
     const interactions = createInteractions();
-    interactions.editingCellRef = { current: { row: 0, col: 0 } } as any;
+    interactions.editingCell = { row: 0, col: 0 };
     mockInteractions.mockReturnValue(interactions);
 
     const view = render(
@@ -229,7 +228,7 @@ describe('DefaultSpreadsheetPageBody', () => {
 
   it('does not route input clicks through handleEditSave while editing remains inside the cell editor', () => {
     const interactions = createInteractions();
-    interactions.editingCellRef = { current: { row: 0, col: 0 } } as any;
+    interactions.editingCell = { row: 0, col: 0 };
     mockInteractions.mockReturnValue(interactions);
 
     const view = render(

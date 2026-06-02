@@ -56,8 +56,6 @@ export interface SpreadsheetInteractionsReturn {
   editingCell: { row: number; col: number } | null;
   editValue: string;
   editSaveState: ReturnType<typeof useEditing>['editSaveState'];
-  editingCellRef: React.RefObject<{ row: number; col: number } | null>;
-  editValueRef: React.RefObject<string>;
   handleEditSave: () => Promise<void>;
   handleEditCancel: () => void;
   handleEditValueChange: (value: string) => void;
@@ -151,6 +149,7 @@ export function useSpreadsheetInteractions(
   const activeCell = useSnapshotSelector(bridge, (snapshot) => snapshot.activeCell);
   const activeRange = useSnapshotSelector(bridge, (snapshot) => snapshot.activeRange);
   const runtime = useSnapshotSelector(bridge, (snapshot) => snapshot.runtime);
+  const editing = useSnapshotSelector(bridge, (snapshot) => snapshot.editing);
   const snapshot = useMemo<SpreadsheetHostSnapshot>(
     () => ({
       workbook,
@@ -158,9 +157,10 @@ export function useSpreadsheetInteractions(
       selection,
       activeCell,
       activeRange,
+      editing,
       runtime,
     }),
-    [activeCell, activeRange, activeSheet, runtime, selection, workbook],
+    [activeCell, activeRange, activeSheet, editing, runtime, selection, workbook],
   );
   const readOnly = snapshot.runtime.readonly;
   const selectedCell = snapshot.activeCell
@@ -171,11 +171,8 @@ export function useSpreadsheetInteractions(
 
   const {
     editingCell,
-    setEditingCell,
     editValue,
     editSaveState,
-    editingCellRef,
-    editValueRef,
     handleCellDoubleClick,
     handleEditSave,
     handleEditCancel,
@@ -200,9 +197,6 @@ export function useSpreadsheetInteractions(
     bridge,
     sheetId,
     addLog,
-    editingCellRef,
-    editValueRef,
-    setEditingCell,
     setCommentText,
     setCellValue,
   );
@@ -320,14 +314,14 @@ export function useSpreadsheetInteractions(
   );
 
   const onCanvasMouseDown = useCallback(() => {
-    if (editingCellRef.current) {
+    if (editingCell) {
       void handleEditSave().catch((error) => {
         if (!isAbortLike(error)) {
           addLog(formatFailureMessage('Cell save failed', error));
         }
       });
     }
-  }, [addLog, handleEditSave, editingCellRef]);
+  }, [addLog, editingCell, handleEditSave]);
 
   const handleCellValueChange = useCellValueSync({
     bridge,
@@ -352,8 +346,6 @@ export function useSpreadsheetInteractions(
     editingCell,
     editValue,
     editSaveState,
-    editingCellRef,
-    editValueRef,
     handleEditSave,
     handleEditCancel,
     handleEditValueChange,

@@ -30,7 +30,15 @@ export const handleSetSelection: CommandHandler<SetSelectionCommand> = (store, c
   if (selectionsEqual(state.selection, command.selection)) {
     return { ok: true, changed: false, data: state.selection };
   }
-  store.setState({ selection: command.selection, editing: undefined });
+  const editingCell = state.editing?.cell;
+  const nextEditing =
+    editingCell &&
+    command.selection.kind === 'cell' &&
+    command.selection.anchor?.row === editingCell.row &&
+    command.selection.anchor?.col === editingCell.col
+      ? state.editing
+      : undefined;
+  store.setState({ selection: command.selection, editing: nextEditing });
   return { ok: true, changed: true };
 };
 

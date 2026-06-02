@@ -77,7 +77,6 @@ export function DefaultSpreadsheetPageBody(props: {
     setCommentText,
     hasComment,
     gridRef,
-    editingCellRef,
     isInRange,
     isFillPreview,
     getSelectedRange,
@@ -143,7 +142,7 @@ export function DefaultSpreadsheetPageBody(props: {
       onMouseDown={(event) => {
         const target = event.target as HTMLElement | null;
         const isEditingInput = target?.closest('input.ss-cell-edit-input');
-        if (editingCellRef.current && !isEditingInput) {
+        if (editingCell && !isEditingInput) {
           void handleEditSave();
         }
       }}

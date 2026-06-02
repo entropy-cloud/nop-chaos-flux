@@ -62,9 +62,6 @@ export function useSelection(
   bridge: SpreadsheetBridge,
   sheetId: string,
   addLog: (msg: string) => void,
-  editingCellRef: React.RefObject<{ row: number; col: number } | null>,
-  editValueRef: React.RefObject<string>,
-  setEditingCell: (cell: { row: number; col: number } | null) => void,
   setCommentText: (text: string) => void,
   setCellValue: (value: string) => void,
 ) {
@@ -103,30 +100,33 @@ export function useSelection(
   );
 
   const commitEditingCell = useCallback(async () => {
-    const currentEditCell = editingCellRef.current;
-    if (!currentEditCell) {
+    const core = bridge.getCore();
+    const editingState = core.getSnapshot().editing;
+    if (!editingState) {
       return;
     }
 
-    const currentEditValue = editValueRef.current;
-    const addr = cellAddress(currentEditCell.row, currentEditCell.col);
-    // eslint-disable-next-line react-compiler/react-compiler
-    editingCellRef.current = null;
-    editValueRef.current = '';
-    setEditingCell(null);
+    const { cell, draftValue } = editingState;
+    if (cell.row < 0 || cell.col < 0 || cell.row >= totalRows || cell.col >= totalCols) {
+      core.clearEditing();
+      return;
+    }
+
+    const addr = cellAddress(cell.row, cell.col);
+    core.clearEditing();
 
     try {
       await bridge.dispatch({
         type: 'spreadsheet:setCellValue',
-        cell: { sheetId, address: addr, row: currentEditCell.row, col: currentEditCell.col },
-        value: currentEditValue,
+        cell: { sheetId, address: addr, row: cell.row, col: cell.col },
+        value: String(draftValue ?? ''),
       });
     } catch (error) {
       if (!isAbortLike(error)) {
         addLog(formatFailureMessage('Cell save failed', error));
       }
     }
-  }, [addLog, bridge, editValueRef, editingCellRef, setEditingCell, sheetId]);
+  }, [addLog, bridge, sheetId]);
 
   const syncSelectionToCore = useCallback(
     async (selection: SpreadsheetSelection) => {

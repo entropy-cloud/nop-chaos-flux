@@ -19,6 +19,7 @@ export type {
   SpreadsheetCellRef,
   SpreadsheetRange,
   SpreadsheetEditingState,
+  EditSaveStatus,
   SpreadsheetHistoryState,
   SpreadsheetLayoutSummary,
   SpreadsheetFrozenPane,

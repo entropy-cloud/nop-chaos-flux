@@ -3,6 +3,8 @@ import type {
   SpreadsheetConfig,
   SpreadsheetDocument,
   SpreadsheetRuntimeSnapshot,
+  SpreadsheetCellRef,
+  EditSaveStatus,
   ClipboardData,
 } from './types.js';
 import { createDefaultViewport } from './types.js';
@@ -22,6 +24,10 @@ export interface SpreadsheetCore {
   acceptCurrentDocumentAsSaved(): void;
   exportDocument(): SpreadsheetDocument;
   getClipboard(): ClipboardData | null;
+  startEditing(cell: SpreadsheetCellRef, initialValue: unknown): void;
+  updateEditValue(value: unknown): void;
+  setEditSaveStatus(status: EditSaveStatus, message?: string): void;
+  clearEditing(): void;
 }
 
 export interface CreateSpreadsheetCoreOptions {
@@ -105,6 +111,37 @@ export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): Sp
 
     getClipboard() {
       return store.getState().clipboard;
+    },
+
+    startEditing(cell: SpreadsheetCellRef, initialValue: unknown) {
+      store.setState({
+        editing: {
+          cell,
+          initialValue,
+          draftValue: initialValue,
+          saveStatus: 'idle',
+        },
+      });
+    },
+
+    updateEditValue(value: unknown) {
+      const state = store.getState();
+      if (!state.editing) return;
+      store.setState({
+        editing: { ...state.editing, draftValue: value, saveStatus: 'idle' },
+      });
+    },
+
+    setEditSaveStatus(status: EditSaveStatus, message?: string) {
+      const state = store.getState();
+      if (!state.editing) return;
+      store.setState({
+        editing: { ...state.editing, saveStatus: status, saveMessage: message },
+      });
+    },
+
+    clearEditing() {
+      store.setState({ editing: undefined });
     },
   };
 }

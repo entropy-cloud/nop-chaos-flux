@@ -190,11 +190,15 @@ export interface SpreadsheetRange {
   endCol: number;
 }
 
+export type EditSaveStatus = 'idle' | 'saving' | 'cancelled' | 'failed';
+
 export interface SpreadsheetEditingState {
   cell: SpreadsheetCellRef;
-  editorId: string;
+  editorId?: string;
   initialValue: unknown;
   draftValue: unknown;
+  saveStatus: EditSaveStatus;
+  saveMessage?: string;
 }
 
 export interface SpreadsheetHistoryState {
