@@ -49,9 +49,10 @@ import {
   explainNodeMeta,
   explainNodeValue,
 } from './explanations.js';
-import { normalizeRedactionOptions } from './redaction.js';
+import { normalizeRedactionOptions, redactData } from './redaction.js';
 import { createDebuggerStore } from './store.js';
 import type {
+  NopComponentInspectResult,
   NopDebugEvent,
   NopDebugEventQuery,
   NopDebuggerAutomationApi,
@@ -93,7 +94,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const debuggerId = options.id ?? 'default';
   const sessionId = createSessionId(debuggerId);
   const maxEvents = options.maxEvents ?? 400;
-  const exposeAutomationApi = options.exposeAutomationApi ?? true;
+  const exposeAutomationApi = options.exposeAutomationApi ?? false;
   const redaction = normalizeRedactionOptions(options.redaction);
   const persistedPosition = loadPersistedPosition(debuggerId);
   const persistedPanelOpen = loadPersistedPanelOpen(debuggerId);
@@ -273,13 +274,22 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       persistPosition(debuggerId, position);
     },
     inspectByCid(cid: number) {
-      return currentInspectByCid(cid);
+      const raw = currentInspectByCid(cid);
+      return raw ? (redactData(raw, redaction) as NopComponentInspectResult) : undefined;
     },
     inspectByElement(element: HTMLElement) {
-      return currentInspectByElement(element);
+      const raw = currentInspectByElement(element);
+      return raw ? (redactData(raw, redaction) as NopComponentInspectResult) : undefined;
     },
     evaluateNodeExpression(args: { cid: number; expression: string }) {
-      return currentEvaluateNodeExpression(args);
+      const raw = currentEvaluateNodeExpression(args);
+      if (!raw.ok || raw.value === undefined) {
+        return raw;
+      }
+      return {
+        ...raw,
+        value: redactData(raw.value, redaction),
+      };
     },
     explainNodeValue: explainValue,
     explainNodeMeta: explainMeta,

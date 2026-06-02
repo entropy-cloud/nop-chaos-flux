@@ -339,10 +339,12 @@ describe('nop-debugger automation api', () => {
     const first = createNopDebugger({
       id: 'first-controller',
       enabled: true,
+      exposeAutomationApi: true,
     });
     const second = createNopDebugger({
       id: 'second-controller',
       enabled: true,
+      exposeAutomationApi: true,
     });
 
     expect(getNopDebuggerAutomationApi()).toBe(second.automation);
@@ -351,6 +353,28 @@ describe('nop-debugger automation api', () => {
       expect.arrayContaining(['first-controller', 'second-controller']),
     );
     expect(window.__NOP_DEBUGGER_HUB__?.activeControllerId).toBe('second-controller');
+  });
+
+  it('does not expose automation api on window by default', () => {
+    createNopDebugger({
+      id: 'default-off-controller',
+      enabled: true,
+    });
+
+    expect(window.__NOP_DEBUGGER_API__).toBeUndefined();
+    expect(window.__NOP_DEBUGGER_HUB__).toBeUndefined();
+  });
+
+  it('exposes automation api on window only when exposeAutomationApi is true', () => {
+    const controller = createNopDebugger({
+      id: 'explicit-on-controller',
+      enabled: true,
+      exposeAutomationApi: true,
+    });
+
+    expect(window.__NOP_DEBUGGER_API__).toBe(controller.automation);
+    expect(window.__NOP_DEBUGGER_HUB__).toBeDefined();
+    expect(window.__NOP_DEBUGGER_HUB__?.activeControllerId).toBe('explicit-on-controller');
   });
 
   it('records state:snapshot events when an action scope with debug snapshot is attached', () => {
