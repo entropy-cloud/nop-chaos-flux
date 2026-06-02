@@ -8,3 +8,5 @@ export { projectTree } from './tree-projection.js';
 export type { ProjectionResult } from './tree-projection.js';
 export { layoutStructuredTree, layoutTreeWithElk, simpleTreeLayout } from './tree-layout.js';
 export { registerTreeDomainAdapter, getTreeDomainAdapter, listTreeDomainAdapters } from './tree-domain.js';
+export { createDesignerStoreAdapter } from './adapters/designer-store-adapter.js';
+export type { DesignerStoreAdapter } from './adapters/designer-store-adapter.js';

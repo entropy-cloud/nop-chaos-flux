@@ -1,5 +1,17 @@
 import type { GraphDocument, GraphNode, NormalizedDesignerConfig } from '../types.js';
 
+const COORD_MIN = -10000;
+const COORD_MAX = 10000;
+
+function clampCoordinate(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(COORD_MIN, Math.min(COORD_MAX, Math.round(value)));
+}
+
+function clampPosition(pos: { x: number; y: number }): { x: number; y: number } {
+  return { x: clampCoordinate(pos.x), y: clampCoordinate(pos.y) };
+}
+
 export function addNodeToDocument(doc: GraphDocument, node: GraphNode): GraphDocument {
   return {
     ...doc,
@@ -65,10 +77,14 @@ export function moveNodesInDocument(
       return node;
     }
 
-    const nextPosition = {
+    if (!Number.isFinite(delta.dx) || !Number.isFinite(delta.dy)) {
+      return node;
+    }
+
+    const nextPosition = clampPosition({
       x: node.position.x + delta.dx,
       y: node.position.y + delta.dy,
-    };
+    });
     if (node.position.x === nextPosition.x && node.position.y === nextPosition.y) {
       return node;
     }
@@ -103,7 +119,11 @@ export function updateMultipleNodesInDocument(
     return {
       ...node,
       ...patch,
-      position: patch.position ? { ...patch.position } : node.position,
+      position: patch.position
+        ? (Number.isFinite(patch.position.x) && Number.isFinite(patch.position.y)
+          ? clampPosition(patch.position)
+          : node.position)
+        : node.position,
       data: patch.data ? { ...node.data, ...patch.data } : node.data,
     };
   });
@@ -127,12 +147,16 @@ export function layoutNodesInDocument(
     if (!nextPosition) {
       return node;
     }
-    if (node.position.x === nextPosition.x && node.position.y === nextPosition.y) {
+    if (!Number.isFinite(nextPosition.x) || !Number.isFinite(nextPosition.y)) {
+      return node;
+    }
+    const clamped = clampPosition(nextPosition);
+    if (node.position.x === clamped.x && node.position.y === clamped.y) {
       return node;
     }
     return {
       ...node,
-      position: { ...nextPosition },
+      position: clamped,
     };
   });
 

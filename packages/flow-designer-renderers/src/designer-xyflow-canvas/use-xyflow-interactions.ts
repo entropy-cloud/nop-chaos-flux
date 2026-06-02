@@ -84,9 +84,12 @@ export function useXyflowInteractions({
         }
 
         if (change.type === 'position' && change.dragging === false && change.position) {
+          if (!Number.isFinite(change.position.x) || !Number.isFinite(change.position.y)) {
+            continue;
+          }
           const position = {
-            x: Math.round(change.position.x),
-            y: Math.round(change.position.y),
+            x: Math.max(-10000, Math.min(10000, Math.round(change.position.x))),
+            y: Math.max(-10000, Math.min(10000, Math.round(change.position.y))),
           };
           const signature = normalizePositionSignature(position);
           lastCommittedPositionsRef.current.set(change.id, signature);
