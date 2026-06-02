@@ -206,7 +206,18 @@ export function buildUrlWithParams(
         }
       }
     } else if (typeof value === 'object') {
-      searchParams.append(key, JSON.stringify(value));
+      try {
+        const safeObj: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+          if (v === undefined) { safeObj[k] = '[undefined]'; }
+          else if (typeof v === 'number' && Number.isNaN(v)) { safeObj[k] = '[NaN]'; }
+          else if (typeof v === 'number' && !Number.isFinite(v)) { safeObj[k] = `[${v}]`; }
+          else { safeObj[k] = v; }
+        }
+        searchParams.append(key, JSON.stringify(safeObj));
+      } catch {
+        searchParams.append(key, String(value));
+      }
     } else {
       searchParams.append(key, String(value));
     }

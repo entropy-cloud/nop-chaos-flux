@@ -76,6 +76,7 @@ export function useNodeLifecycleActions(input: {
 }) {
   const latestHelpersRef = useRef(input.helpers);
   const latestLifecycleActionsRef = useRef(input.lifecycleActions);
+  const lastInitKeyRef = useRef<unknown>(undefined);
 
   useEffect(() => {
     latestHelpersRef.current = input.helpers;
@@ -87,15 +88,22 @@ export function useNodeLifecycleActions(input: {
       return;
     }
 
-    const lifecycleActions = latestLifecycleActionsRef.current;
+    const key = input.nodeInstance;
+    const alreadyMounted = lastInitKeyRef.current === key;
+    lastInitKeyRef.current = key;
 
-    if (lifecycleActions?.onMount) {
-      void latestHelpersRef.current.dispatch(lifecycleActions.onMount, {
-        nodeInstance: input.nodeInstance,
-      });
+    if (!alreadyMounted) {
+      const lifecycleActions = latestLifecycleActionsRef.current;
+
+      if (lifecycleActions?.onMount) {
+        void latestHelpersRef.current.dispatch(lifecycleActions.onMount, {
+          nodeInstance: input.nodeInstance,
+        });
+      }
     }
 
     return () => {
+      lastInitKeyRef.current = undefined;
       const currentLifecycleActions = latestLifecycleActionsRef.current;
 
       if (currentLifecycleActions?.onUnmount) {

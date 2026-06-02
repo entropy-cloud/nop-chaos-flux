@@ -133,13 +133,21 @@ export function evaluateControllerStopCondition(
   }
 
   try {
-    return input.runtime.evaluate<boolean>(input.stopWhen, input.scope) ?? false;
+    if (input.stopWhen.isStatic) {
+      return input.stopWhen.value ?? false;
+    }
+    return input.runtime.evaluateCompiled<boolean>(input.stopWhen, input.scope) ?? false;
   } catch (error) {
     if (
       error instanceof Error &&
       error.cause instanceof Error &&
       error.cause.message === 'Cannot access member of null or undefined'
     ) {
+      if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production') {
+        console.warn(
+          `[stopWhen] null-member access during evaluation (scope may not yet have data): ${String(input.stopWhen)}`,
+        );
+      }
       return false;
     }
     updateControllerState(input, mutable, (current) => toStopConditionErrorState(current, error));

@@ -31,7 +31,7 @@ export interface CreateApiDataSourceControllerInput {
   mergeKey?: string;
   statusPath?: string;
   interval?: number;
-  stopWhen?: string;
+  stopWhen?: CompiledRuntimeValue<boolean>;
   silent?: boolean;
   initialData?: unknown;
   control?: OperationControlConfig;

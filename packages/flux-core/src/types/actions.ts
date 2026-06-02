@@ -88,6 +88,12 @@ type ActionContextSurfaceRuntime = {
   closeTop(): void;
 };
 
+/**
+ * Reduced environment available inside action execution contexts.
+ * Unlike `RendererEnv` (which extends `ExpressionExecutionEnv` with full browser capabilities),
+ * this type makes `fetcher` and `notify` optional because actions may execute outside the
+ * browser — e.g. server-side rendering or headless tests — where those services are unavailable.
+ */
 type ActionContextRendererEnv = {
   fetcher?: unknown;
   notify?: (level: 'info' | 'success' | 'warning' | 'error', message: string) => void;

@@ -4,10 +4,16 @@ export { createAutoRendererComponent, ensureRendererComponent } from './auto-ren
 export { createLazyRendererComponent } from './lazy-renderer-component.js';
 export type { LazyRendererOptions } from './lazy-renderer-component.js';
 export {
+  ActionScopeContext,
   ClassAliasesContext,
+  ComponentRegistryContext,
   FormContext,
   FormLayoutContext,
+  NodeMetaContext,
+  PageContext,
+  RuntimeContext,
   ScopeContext,
+  SurfaceContext,
   ValidationContext,
 } from './contexts.js';
 export type { FormLayoutContextValue } from './contexts.js';

@@ -28,6 +28,8 @@ export interface AdapterValidationIssue {
   level: 'error' | 'warning';
   message: string;
   path?: string;
+  value?: unknown;
+  cause?: unknown;
 }
 
 export interface ValueAdapter<
@@ -99,6 +101,7 @@ function toValidationIssues(error: unknown): AdapterValidationIssue[] {
     {
       level: 'error',
       message: error instanceof Error ? error.message : String(error ?? 'Validation failed'),
+      cause: error,
     },
   ];
 }

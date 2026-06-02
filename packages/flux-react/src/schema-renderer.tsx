@@ -130,22 +130,29 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const activeRootActionScopeRef = useRef<import('@nop-chaos/flux-core').ActionScope | null>(null);
     const onActionErrorRef = useRef(props.onActionError);
     onActionErrorRef.current = props.onActionError;
+    const creationErrorRef = useRef<unknown>(null);
     const runtime = useMemo(() => {
-      const resolvedRegistry = props.registry ?? registry;
-      const expressionCompiler = createExpressionCompiler(
-        props.formulaCompiler ?? createFormulaCompiler(),
-      );
+      creationErrorRef.current = null;
+      try {
+        const resolvedRegistry = props.registry ?? registry;
+        const expressionCompiler = createExpressionCompiler(
+          props.formulaCompiler ?? createFormulaCompiler(),
+        );
 
-      return createRendererRuntime({
-        registry: resolvedRegistry,
-        env: envRef.current,
-        expressionCompiler,
-        plugins: props.plugins,
-        pageStore: props.pageStore,
-        moduleCache: props.moduleCache,
-        strictMode: isStrictValidationEnabled(props.strictValidation),
-        onActionError: (error, ctx) => onActionErrorRef.current?.(error, ctx),
-      });
+        return createRendererRuntime({
+          registry: resolvedRegistry,
+          env: envRef.current,
+          expressionCompiler,
+          plugins: props.plugins,
+          pageStore: props.pageStore,
+          moduleCache: props.moduleCache,
+          strictMode: isStrictValidationEnabled(props.strictValidation),
+          onActionError: (error, ctx) => onActionErrorRef.current?.(error, ctx),
+        });
+      } catch (error) {
+        creationErrorRef.current = error;
+        return undefined as unknown as import('@nop-chaos/flux-core').RendererRuntime;
+      }
     }, [
       props.formulaCompiler,
       props.plugins,
@@ -158,8 +165,28 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const pageData = props.data ?? EMPTY_SCOPE_DATA;
     const initialPageDataRef = useRef(pageData);
     const initialDataAppliedRef = useRef(false);
-    const page = useMemo(() => runtime.createPageRuntime(initialPageDataRef.current), [runtime]);
-    const ownedSurfaceRuntime = useMemo(() => runtime.createSurfaceRuntime(), [runtime]);
+    const page = useMemo(() => {
+      if (creationErrorRef.current) {
+        return undefined as unknown as import('@nop-chaos/flux-core').PageRuntime;
+      }
+      try {
+        return runtime.createPageRuntime(initialPageDataRef.current);
+      } catch (error) {
+        creationErrorRef.current = error;
+        return undefined as unknown as import('@nop-chaos/flux-core').PageRuntime;
+      }
+    }, [runtime]);
+    const ownedSurfaceRuntime = useMemo(() => {
+      if (creationErrorRef.current) {
+        return undefined as unknown as import('@nop-chaos/flux-core').SurfaceRuntime;
+      }
+      try {
+        return runtime.createSurfaceRuntime();
+      } catch (error) {
+        creationErrorRef.current = error;
+        return undefined as unknown as import('@nop-chaos/flux-core').SurfaceRuntime;
+      }
+    }, [runtime]);
 
     useEffect(() => {
       const attachExternalPageStoreSync = (page as PageRuntimeWithExternalSync).__attachExternalPageStoreSync;
@@ -382,6 +409,10 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [runtime, props.schema, props.schemaUrl, props.env, hasSchemaImports]);
 
     const strictMode = isStrictValidationEnabled(props.strictValidation);
+
+    if (creationErrorRef.current) {
+      return <SchemaRootError error={creationErrorRef.current} />;
+    }
 
     if (prepareError) {
       return <SchemaRootError error={prepareError} />;

@@ -392,6 +392,35 @@ describe('evaluateAst', () => {
     );
   });
 
+  it('blocks Object.prototype method names from member access', () => {
+    createFormulaCompiler();
+    const ctx = createContext({ obj: { safe: 1 } });
+
+    const blockedKeys = [
+      'toString', 'valueOf', 'hasOwnProperty',
+      'isPrototypeOf', 'propertyIsEnumerable',
+      '__defineGetter__', '__defineSetter__',
+      '__lookupGetter__', '__lookupSetter__',
+    ];
+
+    for (const key of blockedKeys) {
+      expect(() => evaluateAst(parseFormula(`obj.${key}`), { env, context: ctx })).toThrow(
+        /not allowed/,
+      );
+    }
+  });
+
+  it('blocks Object.prototype method names via computed access', () => {
+    createFormulaCompiler();
+    const blockedKeys = ['toString', 'valueOf', 'hasOwnProperty'];
+    for (const key of blockedKeys) {
+      const ctx = createContext({ obj: { safe: 1 }, key });
+      expect(() => evaluateAst(parseFormula('obj[key]'), { env, context: ctx })).toThrow(
+        /not allowed/,
+      );
+    }
+  });
+
   it('blocks dangerous keys via computed member access', () => {
     createFormulaCompiler();
     const ctx = createContext({ obj: { safe: 1 }, key: 'constructor' });

@@ -88,7 +88,7 @@ describe('extractScopeData', () => {
   it('handles null and falsy scope values', () => {
     const scope = createTestScope({ a: null, b: undefined, c: 0, d: '' });
     const result = extractScopeData(scope, ['a', 'b', 'c', 'd']);
-    expect(result).toEqual({ a: null, c: 0, d: '' });
+    expect(result).toEqual({ a: null, b: undefined, c: 0, d: '' });
   });
 });
 

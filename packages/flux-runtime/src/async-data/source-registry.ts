@@ -151,7 +151,7 @@ export function createRuntimeSourceRegistry(input: {
           mergeKey: evaluateCompiledValue(compiled.mergeKey),
           statusPath,
           interval: evaluateCompiledValue(compiled.interval),
-          stopWhen: extractExpressionSource(compiled.stopWhen),
+          stopWhen: compiled.stopWhen as import('@nop-chaos/flux-core').CompiledRuntimeValue<boolean> | undefined,
           silent: evaluateCompiledValue(compiled.silent),
           initialData: evaluateCompiledValue(compiled.initialData),
           control: compiled.control

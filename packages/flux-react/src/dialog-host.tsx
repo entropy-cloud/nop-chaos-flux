@@ -154,7 +154,7 @@ function DialogView(props: {
         <SurfaceScopeProviders {...surfaceContext}>
           {titleNode && (
             <DialogHeader>
-              <DialogTitle>{titleNode}</DialogTitle>
+              <DialogTitle><SurfaceBodyBoundary surfaceId={surface.id}>{titleNode}</SurfaceBodyBoundary></DialogTitle>
             </DialogHeader>
           )}
           <DialogBody>
@@ -162,7 +162,7 @@ function DialogView(props: {
               {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
             </SurfaceBodyBoundary>
           </DialogBody>
-          {actionsNode ? <DialogFooter>{actionsNode}</DialogFooter> : null}
+          {actionsNode ? <DialogFooter><SurfaceBodyBoundary surfaceId={surface.id}>{actionsNode}</SurfaceBodyBoundary></DialogFooter> : null}
         </SurfaceScopeProviders>
       </DialogContent>
     </Dialog>
@@ -251,7 +251,7 @@ function DrawerView(props: {
         <SurfaceScopeProviders {...surfaceContext}>
           {titleNode && (
             <DrawerHeader>
-              <DrawerTitle>{titleNode}</DrawerTitle>
+              <DrawerTitle><SurfaceBodyBoundary surfaceId={surface.id}>{titleNode}</SurfaceBodyBoundary></DrawerTitle>
             </DrawerHeader>
           )}
           <DrawerBody>
@@ -259,7 +259,7 @@ function DrawerView(props: {
               {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
             </SurfaceBodyBoundary>
           </DrawerBody>
-          {actionsNode ? <DrawerFooter>{actionsNode}</DrawerFooter> : null}
+          {actionsNode ? <DrawerFooter><SurfaceBodyBoundary surfaceId={surface.id}>{actionsNode}</SurfaceBodyBoundary></DrawerFooter> : null}
         </SurfaceScopeProviders>
       </DrawerContent>
     </Drawer>

@@ -109,7 +109,23 @@ function sanitizeSnapshot(data: Record<string, any>): Record<string, any> {
 }
 
 function sanitizeValue(value: unknown): unknown {
-  if (value === null || typeof value !== 'object') return value;
+  if (value === null || value === undefined) return value;
+  if (typeof value !== 'object') {
+    if (Number.isNaN(value)) return null;
+    if (value === Infinity || value === -Infinity) return null;
+    return value;
+  }
+  if (value instanceof Date) return value.toISOString();
+  if (value instanceof Map) {
+    const obj: Record<string, unknown> = {};
+    for (const [k, v] of value) {
+      obj[String(k)] = sanitizeValue(v);
+    }
+    return obj;
+  }
+  if (value instanceof Set) {
+    return Array.from(value).map(sanitizeValue);
+  }
   if (Array.isArray(value)) return value.map(sanitizeValue);
   const obj = value as Record<string, any>;
   const keys = Object.keys(obj);
@@ -120,7 +136,7 @@ function sanitizeValue(value: unknown): unknown {
       hasDangerous = true;
     }
     const val = obj[keys[i]];
-    if (val !== null && typeof val === 'object') {
+    if (val !== null && val !== undefined && typeof val === 'object') {
       hasNestedObject = true;
     }
   }

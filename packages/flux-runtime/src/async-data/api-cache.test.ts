@@ -319,17 +319,19 @@ describe('createApiCacheStore', () => {
   });
 
   describe('stableStringify', () => {
-    it('returns undefined for undefined input', () => {
-      expect(stableStringify(undefined)).toBeUndefined();
+    it('handles undefined input with sentinel', () => {
+      expect(stableStringify(undefined)).toBe('"[undefined]"');
     });
 
     it('returns a string for null input', () => {
       expect(stableStringify(null)).toBe('null');
     });
 
-    it('returns a string for NaN and Infinity input', () => {
-      expect(typeof stableStringify(NaN)).toBe('string');
-      expect(typeof stableStringify(Infinity)).toBe('string');
+    it('produces distinct sentinel strings for NaN and Infinity input', () => {
+      expect(stableStringify(NaN)).toBe('"[NaN]"');
+      expect(stableStringify(Infinity)).toBe('"[Infinity]"');
+      expect(stableStringify(-Infinity)).toBe('"[-Infinity]"');
+      expect(stableStringify(NaN)).not.toBe(stableStringify(Infinity));
     });
 
     it('produces stable output regardless of object key order', () => {
@@ -370,6 +372,48 @@ describe('createApiCacheStore', () => {
           { cacheTTL: 1000 },
         ),
       ).toBe('get:/api/test:{"Authorization":"Bearer token"}:');
+    });
+  });
+
+  describe('NaN / Infinity cache key distinctness', () => {
+    it('produces distinct keys for NaN vs Infinity vs -Infinity vs null', () => {
+      const nan = stableStringify(NaN);
+      const inf = stableStringify(Infinity);
+      const negInf = stableStringify(-Infinity);
+      const nul = stableStringify(null);
+
+      expect(nan).not.toBe(inf);
+      expect(nan).not.toBe(negInf);
+      expect(nan).not.toBe(nul);
+      expect(inf).not.toBe(negInf);
+      expect(inf).not.toBe(nul);
+      expect(negInf).not.toBe(nul);
+    });
+
+    it('produces distinct cache keys for objects containing NaN vs Infinity', () => {
+      const keyNan = generateCacheKey({ url: '/api/test', method: 'get', data: { v: NaN } });
+      const keyInf = generateCacheKey({ url: '/api/test', method: 'get', data: { v: Infinity } });
+      const keyNegInf = generateCacheKey({ url: '/api/test', method: 'get', data: { v: -Infinity } });
+      const keyZero = generateCacheKey({ url: '/api/test', method: 'get', data: { v: 0 } });
+
+      expect(keyNan).not.toBe(keyInf);
+      expect(keyNan).not.toBe(keyNegInf);
+      expect(keyInf).not.toBe(keyNegInf);
+      expect(keyZero).not.toBe(keyNan);
+    });
+
+    it('produces distinct cache keys for arrays containing NaN vs Infinity', () => {
+      const keyNan = generateCacheKey({ url: '/api/test', method: 'get', data: [NaN] });
+      const keyInf = generateCacheKey({ url: '/api/test', method: 'get', data: [Infinity] });
+
+      expect(keyNan).not.toBe(keyInf);
+    });
+
+    it('handles undefined as distinct from null in cache keys', () => {
+      const keyUndef = stableStringify(undefined);
+      const keyNull = stableStringify(null);
+
+      expect(keyUndef).not.toBe(keyNull);
     });
   });
 });

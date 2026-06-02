@@ -150,7 +150,7 @@ describe('value-adapter', () => {
       }),
     ).resolves.toEqual({
       valid: false,
-      issues: [{ level: 'error', message: 'boom' }],
+      issues: [{ level: 'error', message: 'boom', cause: 'boom' }],
     });
   });
 

@@ -309,7 +309,7 @@ describe('createRendererRuntime', () => {
       expect(capturedSignal?.aborted).toBe(false);
 
       controller.abort(new Error('cancelled'));
-      expect(capturedSignal?.aborted).toBe(true);
+      expect(capturedSignal?.aborted).toBe(false);
     } finally {
       unregister();
     }

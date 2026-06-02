@@ -256,6 +256,7 @@ export function createFormulaDataSourceController(input: {
         });
     },
     stop() {
+      started = false;
       stopped = true;
       updateState((current) => ({
         ...current,
@@ -263,9 +264,18 @@ export function createFormulaDataSourceController(input: {
       }));
     },
     async refresh() {
+      if (stopped) {
+        stopped = false;
+        started = true;
+        updateState((current) => ({
+          ...current,
+          started: true,
+        }));
+      }
       publish();
     },
     reset() {
+      started = false;
       stopped = true;
       if (input.targetPath) {
         input.scope.update(input.targetPath, undefined);

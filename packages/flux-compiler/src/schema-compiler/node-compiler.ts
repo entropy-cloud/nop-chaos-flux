@@ -54,6 +54,16 @@ import {
 } from '../validation-lowering.js';
 import { extractNestedSchemaRegions, normalizeHiddenFieldPolicy } from '@nop-chaos/flux-core';
 
+// [Plan 444 / 02-N1] Extraction evaluation: this file (~690 lines) contains a single large
+// compileSingleNode closure that handles field classification, region compilation, prop
+// compilation, action/event compilation, validation, imports, and template node construction
+// in one pass. The sections share substantial mutable state (symbolTable, regions,
+// compiledPropEntries, sourcePropKeys, rawEventPlans). Helper functions
+// (normalizeDeepFieldNestedRegions, createCompileFailureNode, etc.) are already extracted.
+// Splitting the main closure would require passing significant shared state between modules,
+// reducing clarity without improving maintainability.
+// Decision: current cohesion is acceptable, no extraction needed.
+
 function normalizeDeepFieldNestedRegions(input: {
   value: unknown;
   path: string;

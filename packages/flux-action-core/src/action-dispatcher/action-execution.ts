@@ -34,6 +34,15 @@ import { finishAction } from './action-runners.js';
 import { runBuiltInAction } from './built-in-actions.js';
 import { runComponentAction, runNamespacedAction, runNamedAction } from './action-runners.js';
 
+// [Plan 444 / 02-N2] Extraction evaluation: this file (~688 lines) implements the action
+// dispatch pipeline as a clear call chain: dispatch → runActionWithDebounce →
+// runSingleActionWithRetry → runSingleActionWithTimeout → runSingleAction → built-in/
+// component/named/namespaced runners. Utility functions (mergeAbortSignals, reportActionError,
+// reportUnhandledFailureClass, etc.) are small and well-scoped. The dispatch function handles
+// then/onError/onSettled branching which is the core of action sequencing and shares the
+// ActionDispatcherContext throughout. Splitting would break the natural pipeline readability.
+// Decision: current cohesion is acceptable, no extraction needed.
+
 const caughtFailureResults = new WeakSet<ActionResult>();
 
 function createFailureError(message: string, cause?: unknown): Error {
@@ -84,17 +93,22 @@ function getFailureMetadata(
   };
 }
 
-function mergeAbortSignals(rootSignal: AbortSignal, actionSignal?: AbortSignal): AbortSignal {
+function mergeAbortSignals(rootSignal: AbortSignal, actionSignal?: AbortSignal): {
+  signal: AbortSignal;
+  cleanup: () => void;
+} {
+  const noop = { signal: rootSignal, cleanup() {} };
+
   if (!actionSignal || actionSignal === rootSignal) {
-    return rootSignal;
+    return noop;
   }
 
   if (rootSignal.aborted) {
-    return rootSignal;
+    return noop;
   }
 
   if (actionSignal.aborted) {
-    return actionSignal;
+    return { signal: actionSignal, cleanup() {} };
   }
 
   const controller = new AbortController();
@@ -107,19 +121,20 @@ function mergeAbortSignals(rootSignal: AbortSignal, actionSignal?: AbortSignal):
   const onRootAbort = () => abortFrom(rootSignal);
   const onActionAbort = () => abortFrom(actionSignal);
 
-  rootSignal.addEventListener('abort', onRootAbort, { once: true });
-  actionSignal.addEventListener('abort', onActionAbort, { once: true });
+  rootSignal.addEventListener('abort', onRootAbort);
+  actionSignal.addEventListener('abort', onActionAbort);
 
-  controller.signal.addEventListener(
-    'abort',
-    () => {
-      rootSignal.removeEventListener('abort', onRootAbort);
-      actionSignal.removeEventListener('abort', onActionAbort);
-    },
-    { once: true },
-  );
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    rootSignal.removeEventListener('abort', onRootAbort);
+    actionSignal.removeEventListener('abort', onActionAbort);
+  };
 
-  return controller.signal;
+  controller.signal.addEventListener('abort', cleanup, { once: true });
+
+  return { signal: controller.signal, cleanup };
 }
 
 function reportActionError(
@@ -493,149 +508,156 @@ async function dispatch(
   action: ActionSchema | ActionSchema[] | CompiledActionProgram,
   actionCtx: ActionContext,
 ): Promise<ActionResult> {
-  const mergedSignal = mergeAbortSignals(ctx.rootAbortController.signal, actionCtx.signal);
+  const { signal: mergedSignal, cleanup: mergedSignalCleanup } = mergeAbortSignals(
+    ctx.rootAbortController.signal,
+    actionCtx.signal,
+  );
   const baseActionCtx =
     mergedSignal === actionCtx.signal ? actionCtx : { ...actionCtx, signal: mergedSignal };
   const actions = normalizeCompiledActionProgram(action, ctx).nodes;
   let previous: ActionResult = { ok: true };
 
-  for (const current of actions) {
-    if (baseActionCtx.signal?.aborted) {
-      previous = createCancelledResult(baseActionCtx.signal.reason);
-      break;
-    }
+  try {
+    for (const current of actions) {
+      if (baseActionCtx.signal?.aborted) {
+        previous = createCancelledResult(baseActionCtx.signal.reason);
+        break;
+      }
 
-    const currentActionCtx = {
-      ...baseActionCtx,
-      interactionId: baseActionCtx.interactionId ?? createInteractionId(),
-      prevResult: previous,
-      evaluationBindings: baseActionCtx.evaluationBindings,
-    };
-    const normalizedAction = applyActionControl(current, resolveActionControl(current));
-    const result = await runActionWithDebounce(ctx, normalizedAction, currentActionCtx);
-    const resultClass = classifyActionResult(result);
+      const currentActionCtx = {
+        ...baseActionCtx,
+        interactionId: baseActionCtx.interactionId ?? createInteractionId(),
+        prevResult: previous,
+        evaluationBindings: baseActionCtx.evaluationBindings,
+      };
+      const normalizedAction = applyActionControl(current, resolveActionControl(current));
+      const result = await runActionWithDebounce(ctx, normalizedAction, currentActionCtx);
+      const resultClass = classifyActionResult(result);
 
-    previous = result;
+      previous = result;
 
-    const branchBindings = mergeEvaluationBindings(
-      actionCtx.evaluationBindings,
-      createBranchEvaluationBindings(result, currentActionCtx.prevResult),
-    );
-
-    if (resultClass === 'success' && normalizedAction.then) {
-      previous = await dispatch(
-        ctx,
-        {
-          nodes: normalizedAction.then,
-          isFullyStatic: false,
-        },
-        {
-          ...baseActionCtx,
-          interactionId: currentActionCtx.interactionId,
-          prevResult: result,
-          evaluationBindings: branchBindings,
-        },
+      const branchBindings = mergeEvaluationBindings(
+        actionCtx.evaluationBindings,
+        createBranchEvaluationBindings(result, currentActionCtx.prevResult),
       );
-    } else if (isFailureClass(result) && normalizedAction.onError) {
-      const eventType =
-        typeof (actionCtx.event as { type?: unknown } | undefined)?.type === 'string'
-          ? (actionCtx.event as { type: string }).type
-          : 'actionError';
-      try {
+
+      if (resultClass === 'success' && normalizedAction.then) {
         previous = await dispatch(
           ctx,
           {
-            nodes: normalizedAction.onError,
+            nodes: normalizedAction.then,
             isFullyStatic: false,
           },
           {
             ...baseActionCtx,
             interactionId: currentActionCtx.interactionId,
             prevResult: result,
-            event: {
-              ...(baseActionCtx.event && typeof baseActionCtx.event === 'object'
-                ? (baseActionCtx.event as Record<string, unknown>)
-                : {}),
-              type: eventType,
-              result,
-              error: result.error,
-              prevResult: currentActionCtx.prevResult,
-            },
             evaluationBindings: branchBindings,
           },
         );
+      } else if (isFailureClass(result) && normalizedAction.onError) {
+        const eventType =
+          typeof (actionCtx.event as { type?: unknown } | undefined)?.type === 'string'
+            ? (actionCtx.event as { type: string }).type
+            : 'actionError';
+        try {
+          previous = await dispatch(
+            ctx,
+            {
+              nodes: normalizedAction.onError,
+              isFullyStatic: false,
+            },
+            {
+              ...baseActionCtx,
+              interactionId: currentActionCtx.interactionId,
+              prevResult: result,
+              event: {
+                ...(baseActionCtx.event && typeof baseActionCtx.event === 'object'
+                  ? (baseActionCtx.event as Record<string, unknown>)
+                  : {}),
+                type: eventType,
+                result,
+                error: result.error,
+                prevResult: currentActionCtx.prevResult,
+              },
+              evaluationBindings: branchBindings,
+            },
+          );
 
-        if (classifyActionResult(previous) === 'failure') {
+          if (classifyActionResult(previous) === 'failure') {
+            previous = {
+              ...result,
+              onErrorError: hasOwnDefined(previous, 'error') ? previous.error : previous,
+            };
+          }
+        } catch (error) {
+          reportActionError(ctx, error, currentActionCtx);
+
           previous = {
             ...result,
-            onErrorError: hasOwnDefined(previous, 'error') ? previous.error : previous,
+            onErrorError: error,
           };
         }
-      } catch (error) {
-        reportActionError(ctx, error, currentActionCtx);
-
-        previous = {
-          ...result,
-          onErrorError: error,
-        };
       }
-    }
 
-    reportUnhandledFailureClass(ctx, currentActionCtx, result, Boolean(normalizedAction.onError));
+      reportUnhandledFailureClass(ctx, currentActionCtx, result, Boolean(normalizedAction.onError));
 
-    if ((resultClass === 'success' || isFailureClass(result)) && normalizedAction.onSettled) {
-      const settledEventType = isFailureClass(result) ? 'actionSettledError' : 'actionSettled';
+      if ((resultClass === 'success' || isFailureClass(result)) && normalizedAction.onSettled) {
+        const settledEventType = isFailureClass(result) ? 'actionSettledError' : 'actionSettled';
 
-      try {
-        const settledResult = await dispatch(
-          ctx,
-          {
-            nodes: normalizedAction.onSettled,
-            isFullyStatic: false,
-          },
-          {
-            ...baseActionCtx,
-            interactionId: currentActionCtx.interactionId,
-            prevResult: result,
-            event: {
-              ...(baseActionCtx.event && typeof baseActionCtx.event === 'object'
-                ? (baseActionCtx.event as Record<string, unknown>)
-                : {}),
-              type: settledEventType,
-              result,
-              error: isFailureClass(result) ? result.error : undefined,
-              prevResult: currentActionCtx.prevResult,
-              settled: true,
+        try {
+          const settledResult = await dispatch(
+            ctx,
+            {
+              nodes: normalizedAction.onSettled,
+              isFullyStatic: false,
             },
-            evaluationBindings: branchBindings,
-          },
-        );
+            {
+              ...baseActionCtx,
+              interactionId: currentActionCtx.interactionId,
+              prevResult: result,
+              event: {
+                ...(baseActionCtx.event && typeof baseActionCtx.event === 'object'
+                  ? (baseActionCtx.event as Record<string, unknown>)
+                  : {}),
+                type: settledEventType,
+                result,
+                error: isFailureClass(result) ? result.error : undefined,
+                prevResult: currentActionCtx.prevResult,
+                settled: true,
+              },
+              evaluationBindings: branchBindings,
+            },
+          );
 
-        if (classifyActionResult(settledResult) === 'failure') {
+          if (classifyActionResult(settledResult) === 'failure') {
+            previous = {
+              ...previous,
+              settledError: settledResult.error,
+            };
+          }
+        } catch (error) {
+          reportActionError(ctx, error, currentActionCtx);
+
+          const message = error instanceof Error ? error.message : String(error);
+          ctx.getEnv().notify('error', message);
+
           previous = {
             ...previous,
-            settledError: settledResult.error,
+            settledError: error,
           };
         }
-      } catch (error) {
-        reportActionError(ctx, error, currentActionCtx);
+      }
 
-        const message = error instanceof Error ? error.message : String(error);
-        ctx.getEnv().notify('error', message);
-
-        previous = {
-          ...previous,
-          settledError: error,
-        };
+      if (isFailureClass(result) && !normalizedAction.control?.continueOnError) {
+        return hasOwnDefined(previous, 'onErrorError') ? previous : result;
       }
     }
 
-    if (isFailureClass(result) && !normalizedAction.control?.continueOnError) {
-      return hasOwnDefined(previous, 'onErrorError') ? previous : result;
-    }
+    return previous;
+  } finally {
+    mergedSignalCleanup();
   }
-
-  return previous;
 }
 
 export function createActionDispatcher(config: ActionDispatcherConfig) {

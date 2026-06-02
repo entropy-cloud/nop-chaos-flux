@@ -312,7 +312,7 @@ export interface RendererRuntime {
     scope: ScopeRef;
     targetPath?: string;
     interval?: number;
-    stopWhen?: string;
+    stopWhen?: CompiledRuntimeValue<boolean>;
     silent?: boolean;
     initialData?: unknown;
     compiledResultMapping?: CompiledRuntimeValue<unknown>;

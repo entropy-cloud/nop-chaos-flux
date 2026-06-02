@@ -7,7 +7,13 @@ const defaultRegistry = createFormulaRegistry();
 installBuiltins(defaultRegistry);
 
 const MAX_EVAL_DEPTH = 256;
-const DANGEROUS_MEMBER_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const DANGEROUS_MEMBER_KEYS = new Set([
+  '__proto__', 'constructor', 'prototype',
+  'toString', 'valueOf', 'hasOwnProperty',
+  'isPrototypeOf', 'propertyIsEnumerable',
+  '__defineGetter__', '__defineSetter__',
+  '__lookupGetter__', '__lookupSetter__',
+]);
 
 interface LambdaFrame {
   values: Record<string, unknown>;

@@ -30,7 +30,7 @@ describe('createDataSourceController', () => {
       scope: page.scope,
       targetPath: 'job',
       interval: 10,
-      stopWhen: '${job.status === "done"}',
+      stopWhen: runtime.expressionCompiler.compileValue('${job.status === "done"}') as unknown as import('@nop-chaos/flux-core').CompiledRuntimeValue<boolean>,
     });
 
     controller.start();
@@ -72,10 +72,10 @@ describe('createDataSourceController', () => {
       scope: page.scope,
       targetPath: 'job',
       interval: 10,
-      stopWhen: '${job.status === "running"}',
+      stopWhen: runtime.expressionCompiler.compileValue('${job.status === "running"}') as unknown as import('@nop-chaos/flux-core').CompiledRuntimeValue<boolean>,
     });
 
-    vi.spyOn(runtime, 'evaluate').mockImplementation(() => {
+    vi.spyOn(runtime, 'evaluateCompiled').mockImplementation(() => {
       throw new Error('stopWhen exploded');
     });
 

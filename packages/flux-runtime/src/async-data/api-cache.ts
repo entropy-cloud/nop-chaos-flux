@@ -30,6 +30,16 @@ interface StableStringifyResult {
   bounded: boolean;
 }
 
+function serializePrimitive(value: unknown): string {
+  if (value === undefined) return '"[undefined]"';
+  if (typeof value === 'number') {
+    if (Number.isNaN(value)) return '"[NaN]"';
+    if (value === Infinity) return '"[Infinity]"';
+    if (value === -Infinity) return '"[-Infinity]"';
+  }
+  return JSON.stringify(value);
+}
+
 function stableStringifyInternal(
   value: unknown,
   seen: WeakSet<object>,
@@ -42,7 +52,7 @@ function stableStringifyInternal(
   }
 
   if (value === null || typeof value !== 'object') {
-    return { value: JSON.stringify(value), bounded: false };
+    return { value: serializePrimitive(value), bounded: false };
   }
 
   if (depth >= MAX_STRINGIFY_DEPTH) {
@@ -72,7 +82,7 @@ function stableStringifyInternal(
     result: stableStringifyInternal(record[key], seen, depth + 1, budget),
   }));
   const result = `{${entries
-    .map((entry) => `${JSON.stringify(entry.key)}:${entry.result.value}`)
+    .map((entry) => `${serializePrimitive(entry.key)}:${entry.result.value}`)
     .join(',')}}`;
   seen.delete(value);
   return {
@@ -117,7 +127,7 @@ function hashValue64(value: unknown): string {
 
   const visit = (current: unknown): string => {
     if (current === null || typeof current !== 'object') {
-      return `primitive:${JSON.stringify(current)}`;
+      return `primitive:${serializePrimitive(current)}`;
     }
 
     const existingId = seen.get(current);
@@ -136,7 +146,7 @@ function hashValue64(value: unknown): string {
     const record = current as Record<string, unknown>;
     const keys = Object.keys(record).sort();
     return `object:${currentId}:{${keys
-      .map((key) => `${JSON.stringify(key)}:${visit(record[key])}`)
+      .map((key) => `${serializePrimitive(key)}:${visit(record[key])}`)
       .join(',')}}`;
   };
 

@@ -176,6 +176,10 @@ export function normalizeNodeInput(
       return extractTemplateNodes(compiled);
     }
 
+    if (runtime.strictMode) {
+      console.warn('[flux] normalizeNodeInput: unrecognized input', input);
+    }
+
     return null;
   }
 
@@ -190,6 +194,10 @@ export function normalizeNodeInput(
   if (isSchema(input)) {
     const compiled = runtime.schemaCompiler.compile(input, strictOptions);
     return extractTemplateNodes(compiled);
+  }
+
+  if (runtime.strictMode) {
+    console.warn('[flux] normalizeNodeInput: unrecognized input', input);
   }
 
   return null;
@@ -460,6 +468,9 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   );
 
   if (!compiled) {
+    if (runtime.strictMode && props.input) {
+      return <div style={{ opacity: 0.3 }}>{'unknown type'}</div>;
+    }
     return null;
   }
 
