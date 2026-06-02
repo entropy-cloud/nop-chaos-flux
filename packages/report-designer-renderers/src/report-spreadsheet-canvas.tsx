@@ -59,7 +59,6 @@ export function ReportSpreadsheetCanvas({
     editingCell,
     editValue,
     editSaveState,
-    editingCellRef,
     fillHandleState,
     isFillPreview,
     handleFillHandleMouseDown,
@@ -238,7 +237,7 @@ export function ReportSpreadsheetCanvas({
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleFieldDropOnCell}
       onMouseDown={(e) => {
-        if (editingCellRef.current && (e.target as HTMLElement).tagName !== 'INPUT') {
+        if (editingCell && (e.target as HTMLElement).tagName !== 'INPUT') {
           void handleEditSave();
         }
       }}

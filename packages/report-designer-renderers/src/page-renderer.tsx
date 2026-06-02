@@ -65,6 +65,16 @@ export {
   selectReportSpreadsheetSnapshot,
 };
 
+// [Plan 444 / 02-N3] Extraction evaluation: this file (~665 lines) contains
+// ReportDesignerPageRenderer — a complex page renderer managing report designer core,
+// spreadsheet core, action scope registration, bidirectional snapshot synchronization,
+// and workbench layout. Helper components (ChevronIcon, renderPanelFrame,
+// ReportDesignerHostScopeSync) and resolver functions are already inlined. Snapshot
+// selectors are extracted to page-renderer-snapshots.ts. The main component is large but
+// cohesive — it manages a single report designer instance's full lifecycle and rendering.
+// Splitting would scatter lifecycle management across files without clear responsibility gain.
+// Decision: current cohesion is acceptable, no extraction needed.
+
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }

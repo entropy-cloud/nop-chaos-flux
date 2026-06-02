@@ -142,21 +142,47 @@ export interface ReportDesignerHostData {
   fieldCount: number;
 }
 
+function defensiveCopyWorkbook(
+  workbook: ReportDesignerRuntimeSnapshot['document']['spreadsheet']['workbook'],
+) {
+  return {
+    ...workbook,
+    sheets: [...workbook.sheets],
+  };
+}
+
+function resolveCanonicalWorkbook(
+  snapshot: ReportDesignerRuntimeSnapshot,
+  spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
+) {
+  if (spreadsheetSnapshot) {
+    return spreadsheetSnapshot.document.workbook;
+  }
+  return snapshot.document.spreadsheet.workbook;
+}
+
+function buildCanonicalReportDocument(
+  snapshot: ReportDesignerRuntimeSnapshot,
+  workbook: ReportDesignerRuntimeSnapshot['document']['spreadsheet']['workbook'],
+) {
+  const doc = snapshot.document;
+  return {
+    ...doc,
+    spreadsheet: {
+      ...doc.spreadsheet,
+      workbook,
+    },
+  };
+}
+
 export function createHostData(
   core: ReportDesignerCore,
   snapshot: ReportDesignerRuntimeSnapshot,
   spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
 ): ReportDesignerHostData {
   const fieldCount = getFieldCount(snapshot.fieldSources);
-  const reportDocument = {
-    ...snapshot.document,
-    spreadsheet: {
-      ...snapshot.document.spreadsheet,
-      workbook: {
-        ...snapshot.document.spreadsheet.workbook,
-      },
-    },
-  };
+  const workbook = defensiveCopyWorkbook(resolveCanonicalWorkbook(snapshot, spreadsheetSnapshot));
+  const reportDocument = buildCanonicalReportDocument(snapshot, workbook);
 
   return {
     designer: {
@@ -179,7 +205,7 @@ export function createHostData(
     },
     selectionTarget: snapshot.selectionTarget,
     reportDocument,
-    workbook: reportDocument.spreadsheet.workbook,
+    workbook,
     activeSheet: resolveActiveSheet(snapshot, spreadsheetSnapshot),
     documentName: snapshot.document.name,
     fieldCount,
@@ -196,8 +222,8 @@ export function buildReportDesignerScopeData(
   const spreadsheet = spreadsheetSnapshot
     ? buildSpreadsheetScopeData(spreadsheetSnapshot)
     : undefined;
-  const reportDocument = snapshot.document;
-  const workbook = reportDocument.spreadsheet.workbook;
+  const workbook = defensiveCopyWorkbook(resolveCanonicalWorkbook(snapshot, spreadsheetSnapshot));
+  const reportDocument = buildCanonicalReportDocument(snapshot, workbook);
   const activeSheet = resolveActiveSheet(snapshot, spreadsheetSnapshot);
 
   return {

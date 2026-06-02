@@ -5,7 +5,7 @@ import {
   createReportTemplateDocument,
 } from '@nop-chaos/report-designer-core';
 import { REPORT_DESIGNER_MANIFEST_V1 } from './report-designer-manifest.js';
-import { buildReportDesignerScopeData } from './host-data.js';
+import { buildReportDesignerScopeData, createHostData } from './host-data.js';
 
 describe('buildReportDesignerScopeData', () => {
   it('publishes designer.dirty separately from aggregated runtime.dirty', async () => {
@@ -238,18 +238,19 @@ describe('buildReportDesignerScopeData', () => {
     );
   });
 
-  it('does not replace canonical reportDocument/workbook with spreadsheet snapshot aliases', () => {
+  it('unifies workbook identity: reportDocument.spreadsheet.workbook === workbook when live editing', async () => {
     const spreadsheet = createEmptyDocument();
-    const document = createReportTemplateDocument(spreadsheet, 'Canonical Report');
+    const document = createReportTemplateDocument(spreadsheet, 'Workbook Identity Report');
     const core = createReportDesignerCore({
       document,
       config: { kind: 'report-template' },
     });
     const spreadsheetCore = createSpreadsheetCore({ document: spreadsheet });
-    void spreadsheetCore.dispatch({
+
+    await spreadsheetCore.dispatch({
       type: 'spreadsheet:setCellValue',
       cell: { sheetId: spreadsheet.workbook.sheets[0]!.id, address: 'A1', row: 0, col: 0 },
-      value: 'draft-only',
+      value: 'live-edit',
     });
 
     const scopeData = buildReportDesignerScopeData(
@@ -258,8 +259,113 @@ describe('buildReportDesignerScopeData', () => {
       spreadsheetCore.getSnapshot(),
     );
 
-    expect((scopeData.reportDocument as any).spreadsheet.workbook.sheets[0]?.cells?.A1).toBeUndefined();
-    expect((scopeData.workbook as any).sheets[0]?.cells?.A1).toBeUndefined();
-    expect((scopeData.spreadsheet as any).workbook.sheets[0]?.cells?.A1?.value).toBe('draft-only');
+    const topWorkbook = scopeData.workbook as Record<string, unknown>;
+    const docWorkbook = (scopeData.reportDocument as any).spreadsheet.workbook as Record<string, unknown>;
+
+    expect(topWorkbook).toBe(docWorkbook);
+    expect((topWorkbook as any).sheets[0]?.cells?.A1?.value).toBe('live-edit');
+    expect((docWorkbook as any).sheets[0]?.cells?.A1?.value).toBe('live-edit');
+  });
+
+  it('unifies workbook identity: reportDocument.spreadsheet.workbook === workbook without spreadsheet snapshot', () => {
+    const spreadsheet = createEmptyDocument();
+    const document = createReportTemplateDocument(spreadsheet, 'Workbook Identity No SS');
+    const core = createReportDesignerCore({
+      document,
+      config: { kind: 'report-template' },
+    });
+
+    const scopeData = buildReportDesignerScopeData(core, core.getSnapshot());
+    const topWorkbook = scopeData.workbook as Record<string, unknown>;
+    const docWorkbook = (scopeData.reportDocument as any).spreadsheet.workbook as Record<string, unknown>;
+
+    expect(topWorkbook).toBe(docWorkbook);
+  });
+
+  it('defensively copies workbook so mutations do not leak into core state', async () => {
+    const spreadsheet = createEmptyDocument();
+    const document = createReportTemplateDocument(spreadsheet, 'Immutability Report');
+    const core = createReportDesignerCore({
+      document,
+      config: { kind: 'report-template' },
+    });
+
+    const scopeData = buildReportDesignerScopeData(core, core.getSnapshot());
+    const topWorkbook = scopeData.workbook as any;
+
+    const originalSheetCount = topWorkbook.sheets.length;
+    topWorkbook.sheets.push({ id: 'rogue', name: 'Rogue', order: 99 });
+
+    const scopeData2 = buildReportDesignerScopeData(core, core.getSnapshot());
+    const topWorkbook2 = scopeData2.workbook as any;
+    expect(topWorkbook2.sheets.length).toBe(originalSheetCount);
+  });
+
+  it('createHostData uses same defensive copy strategy as buildReportDesignerScopeData', () => {
+    const spreadsheet = createEmptyDocument();
+    const document = createReportTemplateDocument(spreadsheet, 'Host Data Copy');
+    const core = createReportDesignerCore({
+      document,
+      config: { kind: 'report-template' },
+    });
+
+    const hostData = createHostData(core, core.getSnapshot());
+    expect(hostData.workbook).toBe(hostData.reportDocument.spreadsheet.workbook);
+
+    const mutableWorkbook = hostData.workbook as any;
+    mutableWorkbook.sheets.push({ id: 'rogue', name: 'Rogue', order: 99 });
+
+    const hostData2 = createHostData(core, core.getSnapshot());
+    expect((hostData2.workbook as any).sheets.length).toBe(spreadsheet.workbook.sheets.length);
+  });
+
+  it('createHostData with spreadsheet snapshot uses spreadsheet as canonical workbook owner', async () => {
+    const spreadsheet = createEmptyDocument();
+    const document = createReportTemplateDocument(spreadsheet, 'Host Data SS Owner');
+    const core = createReportDesignerCore({
+      document,
+      config: { kind: 'report-template' },
+    });
+    const spreadsheetCore = createSpreadsheetCore({ document: spreadsheet });
+
+    await spreadsheetCore.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId: spreadsheet.workbook.sheets[0]!.id, address: 'B2', row: 1, col: 1 },
+      value: 'live-value',
+    });
+
+    const hostData = createHostData(core, core.getSnapshot(), spreadsheetCore.getSnapshot());
+    expect(hostData.workbook).toBe(hostData.reportDocument.spreadsheet.workbook);
+    expect((hostData.workbook as any).sheets[0]?.cells?.B2?.value).toBe('live-value');
+  });
+});
+
+describe('manifest structured action results', () => {
+  it('declares preview result as structured envelope instead of unknown', () => {
+    const previewMethod = REPORT_DESIGNER_MANIFEST_V1.capabilities.methods.preview;
+    const result = previewMethod.result!;
+    expect(result.kind).toBe('object');
+    if (result.kind !== 'object') return;
+    expect(result.fields).toHaveProperty('ok');
+    expect(result.fields.ok).toEqual({ kind: 'boolean' });
+    expect(result).not.toEqual({ kind: 'unknown' });
+  });
+
+  it('declares save result as structured envelope instead of unknown', () => {
+    const saveMethod = REPORT_DESIGNER_MANIFEST_V1.capabilities.methods.save;
+    const result = saveMethod.result!;
+    expect(result.kind).toBe('object');
+    if (result.kind !== 'object') return;
+    expect(result.fields).toHaveProperty('ok');
+    expect(result.fields.ok).toEqual({ kind: 'boolean' });
+  });
+
+  it('declares exportTemplate result as structured envelope with format/content data', () => {
+    const exportMethod = REPORT_DESIGNER_MANIFEST_V1.capabilities.methods.exportTemplate;
+    const result = exportMethod.result!;
+    expect(result.kind).toBe('object');
+    if (result.kind !== 'object') return;
+    expect(result.fields).toHaveProperty('ok');
+    expect(result.fields).toHaveProperty('data');
   });
 });

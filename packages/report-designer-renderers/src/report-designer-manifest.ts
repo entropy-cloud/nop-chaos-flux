@@ -153,8 +153,69 @@ const cellOrRangeTargetShape: FluxValueShape = {
   ),
 };
 
-const opaqueResultShape: FluxValueShape = {
-  kind: 'unknown',
+const reportDesignerResultEnvelopeShape: FluxValueShape = {
+  kind: 'object',
+  fields: {
+    ok: { kind: 'boolean' },
+    cancelled: { kind: 'boolean' },
+    changed: { kind: 'boolean' },
+    error: { kind: 'union', anyOf: [{ kind: 'null' }, { kind: 'string' }] },
+    data: { kind: 'unknown' },
+  },
+  optional: ['cancelled', 'changed', 'error', 'data'],
+  description: 'Discriminated envelope for report-designer action results.',
+};
+
+const previewResultEnvelopeShape: FluxValueShape = {
+  kind: 'object',
+  fields: {
+    ok: { kind: 'boolean' },
+    cancelled: { kind: 'boolean' },
+    changed: { kind: 'boolean' },
+    error: { kind: 'union', anyOf: [{ kind: 'null' }, { kind: 'string' }] },
+    data: {
+      kind: 'union',
+      anyOf: [
+        { kind: 'null' },
+        {
+          kind: 'object',
+          fields: {
+            mode: { kind: 'string' },
+            output: { kind: 'unknown' },
+          },
+          optional: ['output'],
+        },
+      ],
+    },
+  },
+  optional: ['cancelled', 'changed', 'error', 'data'],
+  description: 'Discriminated envelope for report-designer:preview results.',
+};
+
+const exportTemplateResultEnvelopeShape: FluxValueShape = {
+  kind: 'object',
+  fields: {
+    ok: { kind: 'boolean' },
+    cancelled: { kind: 'boolean' },
+    changed: { kind: 'boolean' },
+    error: { kind: 'union', anyOf: [{ kind: 'null' }, { kind: 'string' }] },
+    data: {
+      kind: 'union',
+      anyOf: [
+        { kind: 'null' },
+        {
+          kind: 'object',
+          fields: {
+            format: { kind: 'string' },
+            content: { kind: 'unknown' },
+          },
+          optional: ['content'],
+        },
+      ],
+    },
+  },
+  optional: ['cancelled', 'changed', 'error', 'data'],
+  description: 'Discriminated envelope for report-designer:exportTemplate results.',
 };
 
 const fieldSourcesShape: FluxValueShape = {
@@ -390,7 +451,7 @@ const reportDesignerCapabilities: HostCapabilityContract = {
         },
         optional: ['mode', 'args'],
       },
-      result: opaqueResultShape,
+      result: previewResultEnvelopeShape,
       description: 'Run report preview.',
     },
     stopPreview: {
@@ -403,7 +464,7 @@ const reportDesignerCapabilities: HostCapabilityContract = {
       description: 'Redo last report-designer change.',
     },
     save: {
-      result: opaqueResultShape,
+      result: reportDesignerResultEnvelopeShape,
       description: 'Persist the report template.',
     },
     importTemplate: {
@@ -423,7 +484,7 @@ const reportDesignerCapabilities: HostCapabilityContract = {
         },
         optional: ['format'],
       },
-      result: opaqueResultShape,
+      result: exportTemplateResultEnvelopeShape,
       description: 'Export the report template.',
     },
   },

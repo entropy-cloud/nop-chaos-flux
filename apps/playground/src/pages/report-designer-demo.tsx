@@ -212,7 +212,6 @@ export function ReportDesignerDemo() {
     getSelectedRange,
     editingCell,
     editValue,
-    editingCellRef,
     handleEditSave,
     handleEditCancel,
     handleEditValueChange,
@@ -542,7 +541,7 @@ export function ReportDesignerDemo() {
               void handleFieldDrop(event);
             }}
             onMouseDown={(e) => {
-              if (editingCellRef.current && (e.target as HTMLElement).tagName !== 'INPUT') {
+              if (editingCell && (e.target as HTMLElement).tagName !== 'INPUT') {
                 handleEditSave();
               }
             }}
