@@ -55,5 +55,6 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --ignore-pattern \"**/*.d.ts\" --cache --cache-location node_modules/.cache/eslint"
-  }
+  },
+  "description": "Base UI component library built on shadcn/ui conventions (Radix + Tailwind)"
 }

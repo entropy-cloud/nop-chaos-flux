@@ -53,5 +53,6 @@
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint",
     "pack:release": "node ../../scripts/pack-flux-bundle.mjs",
     "check:pack": "node ../../scripts/check-flux-bundle-pack.mjs"
-  }
+  },
+  "description": "All-in-one bundle exporting the full Flux renderer stack"
 }

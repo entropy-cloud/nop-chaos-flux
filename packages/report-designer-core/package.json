@@ -27,5 +27,6 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
-  }
+  },
+  "description": "Core logic and data model for the report designer"
 }

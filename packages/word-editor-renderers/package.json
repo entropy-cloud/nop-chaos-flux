@@ -46,5 +46,6 @@
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "recharts": "^3.8.1"
-  }
+  },
+  "description": "React renderers for the word editor"
 }

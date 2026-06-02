@@ -40,5 +40,6 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
-  }
+  },
+  "description": "React renderers for the spreadsheet editor"
 }

@@ -38,5 +38,6 @@
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "recharts": "^3.8.1"
-  }
+  },
+  "description": "Data display renderers: table, list, cards, and pagination"
 }

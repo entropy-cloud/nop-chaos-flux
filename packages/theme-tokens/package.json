@@ -20,5 +20,6 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "lint": "eslint \"src/**/*.ts\" --cache --cache-location node_modules/.cache/eslint"
-  }
+  },
+  "description": "CSS custom-property design tokens for theming across the Flux ecosystem"
 }

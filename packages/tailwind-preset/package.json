@@ -23,5 +23,6 @@
   },
   "dependencies": {
     "tailwindcss-animate": "^1.0.7"
-  }
+  },
+  "description": "Shared Tailwind CSS preset with design tokens and utility extensions"
 }

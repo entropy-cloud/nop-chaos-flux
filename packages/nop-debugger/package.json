@@ -36,5 +36,6 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
-  }
+  },
+  "description": "Developer tools and debugging utilities for the Flux framework"
 }

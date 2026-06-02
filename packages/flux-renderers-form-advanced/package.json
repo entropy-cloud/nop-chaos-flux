@@ -39,5 +39,6 @@
     "@nop-chaos/flux-renderers-data": "workspace:*",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0"
-  }
+  },
+  "description": "Advanced form renderers: condition builder, tag list, and detail views"
 }

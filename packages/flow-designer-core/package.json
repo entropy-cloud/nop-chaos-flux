@@ -27,5 +27,6 @@
   },
   "devDependencies": {
     "zustand": "^5.0.12"
-  }
+  },
+  "description": "Core logic and data model for the flow designer canvas"
 }
