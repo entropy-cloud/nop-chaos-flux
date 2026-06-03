@@ -302,3 +302,13 @@ pnpm --filter @nop-chaos/flow-designer-core build
 MIT，见 [LICENSE](LICENSE)。
 
 Flux 受到 [Baidu AMIS](https://github.com/baidu/amis) 的启发。这个仓库中的部分内容借助 AI 辅助来研究现有 AMIS 的行为和实现，再用 Flux 自己的架构、契约和编码规则重新表达。
+
+## 作者微信和微信讨论群
+
+![](https://gitee.com/canonical-entropy/nop-entropy/raw/master/wechat-group.png)
+
+添加微信时请注明：加入Nop平台群
+
+## 微信公众号
+
+![](https://gitee.com/canonical-entropy/nop-entropy/raw/master/wechat-public-account.jpg)

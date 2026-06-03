@@ -302,3 +302,13 @@ If you are implementing or contributing:
 MIT — see [LICENSE](LICENSE).
 
 Flux is informed by [Baidu AMIS](https://github.com/baidu/amis). Parts of this repository were rewritten with AI assistance to study existing AMIS behavior and implementations, then re-express those ideas through Flux's own architecture, contracts, and coding rules.
+
+## 作者微信和微信讨论群
+
+![](https://gitee.com/canonical-entropy/nop-entropy/raw/master/wechat-group.png)
+
+添加微信时请注明：加入Nop平台群
+
+## 微信公众号
+
+![](https://gitee.com/canonical-entropy/nop-entropy/raw/master/wechat-public-account.jpg)
