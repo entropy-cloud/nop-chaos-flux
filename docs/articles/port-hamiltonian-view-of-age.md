@@ -4,7 +4,7 @@
 >
 > Harness Engineering 关注如何约束、验证、审计 AI 生成；AGE 进一步追问：这些控制机制到底要把仓库轨迹拉回到什么长期结构？
 >
-> AGE 的详细介绍参见我此前的文章：[Attractor Before Harness: AI 大规模开发的方法论](https://mp.weixin.qq.com/s/TwMkUDLNo2-bIrXrfvPqIw)。本文聚焦方法论类比：借助非线性动力系统控制的语言，特别是 PHS（port-Hamiltonian systems）的结构保持术语和 Immersion and Invariance 的目标流形图像，解释 AGE 中一些已经存在、但尚未被充分命名的结构：语义承诺如何守恒，变化义务如何转换，文档拓扑如何保持结构，AI 会话如何在跨时间的仓库中恢复同一个系统现实。
+> AGE 的详细介绍参见我此前的文章：[Attractor Before Harness: AI 大规模开发的方法论](https://mp.weixin.qq.com/s/TwMkUDLNo2-bIrXrfvPqIw) 。 本文聚焦方法论类比：借助非线性动力系统控制的语言，特别是 PHS（port-Hamiltonian systems）的结构保持术语和 Immersion and Invariance 的目标流形图像，解释 AGE 中一些已经存在、但尚未被充分命名的结构：语义承诺如何守恒，变化义务如何转换，文档拓扑如何保持结构，AI 会话如何在跨时间的仓库中恢复同一个系统现实。
 
 ## 一、为什么需要这个类比
 
