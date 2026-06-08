@@ -31,12 +31,13 @@ Planning-with-Files是一个流行的claude code插件，它为claude code补充
 
 ### 自动化层：AGE Goal Driver vs PwF hooks/loop
 
-| 维度 | AGE Goal Driver | PwF |
-| **自动化方式** | 独立进程状态机 + XML 标签协议 | IDE hook 自动注入 + session catchup |
-| **断点续传** | `detectStartPhase` 脚本检查 repo 状态 | `session-catchup.py` 从 IDE session store 恢复对话 |
-| **计划校验** | `check-plan-checklist.mjs` 扫描 Closure Gates 勾选状态 | `check-complete.sh` 统计 phase status 计数 |
-| **循环结构** | 双循环状态机（Outer 审计驱动 + Inner 执行驱动） | `/plan-loop` tick 驱动 + Stop hook 检查 |
-| **运行时依赖** | Node.js 独立进程，不依赖 IDE 原语 | 依赖 IDE hook 系统（5 类 hooks） |
+| 维度           | AGE Goal Driver                                        | PwF                                                |
+| -------------- | ------------------------------------------------------ | -------------------------------------------------- |
+| **自动化方式** | 独立进程状态机 + XML 标签协议                          | IDE hook 自动注入 + session catchup                |
+| **断点续传**   | `detectStartPhase` 脚本检查 repo 状态                  | `session-catchup.py` 从 IDE session store 恢复对话 |
+| **计划校验**   | `check-plan-checklist.mjs` 扫描 Closure Gates 勾选状态 | `check-complete.sh` 统计 phase status 计数         |
+| **循环结构**   | 双循环状态机（Outer 审计驱动 + Inner 执行驱动）        | `/plan-loop` tick 驱动 + Stop hook 检查            |
+| **运行时依赖** | Node.js 独立进程，不依赖 IDE 原语                      | 依赖 IDE hook 系统（5 类 hooks）                   |
 
 ## 二、AGE Plan 的独有特征（规范层）
 
