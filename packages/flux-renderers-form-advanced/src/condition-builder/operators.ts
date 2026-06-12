@@ -129,9 +129,12 @@ export function resolveOperators(
   schemaOverride: ConditionOperatorOverrides | undefined,
 ): ConditionOperatorInfo[] {
   const builtIn = OPERATORS_BY_TYPE[fieldType];
-  if (!builtIn) return [];
+  const fieldOverrideOperators = fieldOverride;
+  const schemaOverrideOperators = schemaOverride?.operatorsByType?.[fieldType];
 
-  const rawOps = fieldOverride ?? schemaOverride?.operatorsByType?.[fieldType] ?? builtIn.operators;
+  const rawOps = fieldOverrideOperators ?? schemaOverrideOperators ?? builtIn?.operators;
+
+  if (!rawOps || rawOps.length === 0) return [];
 
   return rawOps.map((op) => {
     if (typeof op === 'string') {

@@ -45,6 +45,7 @@ This is a normative design requirements document.
 
 - Expensive deep compare/stringify operations should not run per interaction tick.
 - Debugger and performance instrumentation must be explicitly gated. Disabled mode must not execute equivalent render/update event append work, deep payload shaping, or debug-data capture just because the tooling package is present.
+- Runtime-owned store diagnostics follow the same rule: disabled mode must avoid commit-buffer append work and deep snapshot cloning, and enabled mode must keep retained history bounded.
 
 ## Mandatory Requirements
 

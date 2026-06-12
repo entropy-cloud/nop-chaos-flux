@@ -1,6 +1,10 @@
 import { createStore } from 'zustand/vanilla';
 import type {
   FieldState,
+  FormStoreCommitDiagnostic,
+  FormStoreCommitDiagnosticKind,
+  FormStoreDiagnosticsOptions,
+  FormStoreDiagnosticsSnapshot,
   FormPathState,
   FormStoreApi,
   FormStoreState,
@@ -23,6 +27,17 @@ interface FormStoreSummaryState {
 type InternalFormStoreState = FormStoreState & {
   summary: FormStoreSummaryState;
 };
+
+const DEFAULT_MAX_RECENT_COMMITS = 50;
+
+interface FormStoreDiagnosticsState {
+  enabled: boolean;
+  sequence: number;
+  commitCount: number;
+  droppedCommitCount: number;
+  maxRecentCommits: number;
+  recentCommits: FormStoreCommitDiagnostic[];
+}
 
 function countFieldStateErrors(fieldState: FieldState | undefined): number {
   return fieldState?.errors?.length ?? 0;
@@ -112,6 +127,42 @@ function fieldStateEqual(left: FieldState | undefined, right: FieldState | undef
   );
 }
 
+function clampMaxRecentCommits(value: number | undefined): number {
+  if (!Number.isFinite(value)) {
+    return DEFAULT_MAX_RECENT_COMMITS;
+  }
+
+  return Math.max(1, Math.trunc(value as number));
+}
+
+function createDiagnosticsSnapshot(state: FormStoreDiagnosticsState): FormStoreDiagnosticsSnapshot {
+  return {
+    enabled: state.enabled,
+    commitCount: state.commitCount,
+    recentCommits: state.recentCommits.slice(),
+    droppedCommitCount: state.droppedCommitCount,
+  };
+}
+
+function createDiagnosticsState(options?: FormStoreDiagnosticsOptions): FormStoreDiagnosticsState {
+  return {
+    enabled: false,
+    sequence: 0,
+    commitCount: 0,
+    droppedCommitCount: 0,
+    maxRecentCommits: clampMaxRecentCommits(options?.maxRecentCommits),
+    recentCommits: [],
+  };
+}
+
+function buildChangedPaths(input: Iterable<string>): readonly string[] {
+  return Array.from(new Set(input));
+}
+
+function buildChangedKinds(input: Iterable<FormStoreCommitDiagnosticKind>): readonly FormStoreCommitDiagnosticKind[] {
+  return Array.from(new Set(input));
+}
+
 function mergeFieldState(
   existing: FieldState | undefined,
   patch: Partial<FieldState>,
@@ -160,6 +211,45 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
   const pathListeners = new Map<string, Set<() => void>>();
   const descendantPathListeners = new Map<string, Set<() => void>>();
   const submittingListeners = new Set<() => void>();
+  const diagnostics = createDiagnosticsState();
+
+  function captureCommit(input: {
+    changedPaths: Iterable<string>;
+    changedKinds: Iterable<FormStoreCommitDiagnosticKind>;
+  }) {
+    if (!diagnostics.enabled) {
+      return;
+    }
+
+    const changedPaths = buildChangedPaths(input.changedPaths);
+    const changedKinds = buildChangedKinds(input.changedKinds);
+
+    if (changedPaths.length === 0 && changedKinds.length === 0) {
+      return;
+    }
+
+    diagnostics.sequence += 1;
+    diagnostics.commitCount += 1;
+
+    const commit: FormStoreCommitDiagnostic = {
+      timestamp: Date.now(),
+      sequence: diagnostics.sequence,
+      ownerId: 'form-store',
+      changedPaths,
+      changedKinds,
+    };
+
+    if (diagnostics.recentCommits.length >= diagnostics.maxRecentCommits) {
+      diagnostics.recentCommits.shift();
+      diagnostics.droppedCommitCount += 1;
+    }
+
+    diagnostics.recentCommits.push(commit);
+  }
+
+  function getDiagnosticsSnapshot(): FormStoreDiagnosticsSnapshot {
+    return createDiagnosticsSnapshot(diagnostics);
+  }
 
   function notifyPathListeners(listeners: Set<() => void> | undefined) {
     if (!listeners) {
@@ -329,7 +419,11 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     }
   }
 
-  function diffAndNotifyValuePaths(before: Record<string, any>, after: Record<string, any>) {
+  function diffAndNotifyValuePaths(
+    before: Record<string, any>,
+    after: Record<string, any>,
+    options?: { capture?: boolean },
+  ) {
     const changedPaths = new Set<string>();
     collectChangedValuePaths(before, after, changedPaths);
 
@@ -338,6 +432,11 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     }
 
     notifyValuePathListeners(changedPaths);
+    if (options?.capture !== false) {
+      captureCommit({ changedPaths, changedKinds: ['values'] });
+    }
+
+    return changedPaths;
   }
 
   function notifySubmitting() {
@@ -385,6 +484,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       store.setState({ fieldStates: { ...current, [path]: next }, summary: nextSummary });
     }
     notifyPath(path);
+    captureCommit({ changedPaths: [path], changedKinds: ['fieldStates'] });
   }
 
   return {
@@ -454,6 +554,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       }
       store.setState({ submitting });
       notifySubmitting();
+      captureCommit({ changedPaths: ['*'], changedKinds: ['submitting'] });
     },
     setSubmitAttempted(submitAttempted) {
       if (store.getState().submitAttempted === submitAttempted) {
@@ -461,6 +562,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       }
       store.setState({ submitAttempted });
       notifySubmitting();
+      captureCommit({ changedPaths: ['*'], changedKinds: ['submitAttempted'] });
     },
     batchUpdate(updates) {
       const before = store.getState();
@@ -472,9 +574,14 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
           : undefined),
       });
       const after = store.getState();
+      const changedPaths = new Set<string>();
+      const changedKinds = new Set<FormStoreCommitDiagnosticKind>();
 
       if (updates.values !== undefined && before.values !== after.values) {
-        diffAndNotifyValuePaths(before.values, after.values);
+        for (const path of diffAndNotifyValuePaths(before.values, after.values, { capture: false })) {
+          changedPaths.add(path);
+        }
+        changedKinds.add('values');
       }
 
       if (updates.fieldStates !== undefined) {
@@ -482,6 +589,10 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
         diffAndNotifyFieldStates(before.fieldStates, after.fieldStates, changed);
         for (const path of changed) {
           notifyPath(path);
+          changedPaths.add(path);
+        }
+        if (changed.size > 0) {
+          changedKinds.add('fieldStates');
         }
       }
 
@@ -490,7 +601,34 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
         (updates.submitAttempted !== undefined && before.submitAttempted !== after.submitAttempted)
       ) {
         notifySubmitting();
+        if (updates.submitting !== undefined && before.submitting !== after.submitting) {
+          changedKinds.add('submitting');
+        }
+        if (updates.submitAttempted !== undefined && before.submitAttempted !== after.submitAttempted) {
+          changedKinds.add('submitAttempted');
+        }
+        changedPaths.add('*');
       }
+
+      if (changedKinds.size > 0) {
+        captureCommit({ changedPaths, changedKinds });
+      }
+    },
+    startDiagnosticsSession(options) {
+      diagnostics.enabled = true;
+      diagnostics.maxRecentCommits = clampMaxRecentCommits(options?.maxRecentCommits);
+    },
+    stopDiagnosticsSession() {
+      diagnostics.enabled = false;
+    },
+    clearDiagnosticsSession() {
+      diagnostics.sequence = 0;
+      diagnostics.commitCount = 0;
+      diagnostics.droppedCommitCount = 0;
+      diagnostics.recentCommits = [];
+    },
+    getDiagnosticsSnapshot() {
+      return getDiagnosticsSnapshot();
     },
   };
 }

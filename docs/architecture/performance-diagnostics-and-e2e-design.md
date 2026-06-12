@@ -293,6 +293,12 @@ If this stricter target becomes required, `array-field` needs either keyed item-
 | `subscriberWakeupCount`                           | temporary low-level instrumentation                                                  | optional, used only when optimizing subscription fanout  |
 | DOM mutation summary                              | optional MutationObserver                                                            | secondary sanity check, not primary proof                |
 
+Current form-store diagnostics baseline:
+
+- runtime-owned form-store diagnostics now provide an explicitly gated bounded session surface for `commitCount`, `changedPaths`, `changedKinds`, and `droppedCommitCount`
+- focused tests and future diagnostics pages should prefer that runtime-owned surface over ad-hoc store subscriptions when they need normalized commit truth
+- debugger integration remains downstream bridge work; the runtime diagnostics contract itself is owned by `docs/architecture/form-store-diagnostics.md`
+
 ### Metrics That Should Not Be Hard Gates
 
 | Metric                               | Reason                                              |

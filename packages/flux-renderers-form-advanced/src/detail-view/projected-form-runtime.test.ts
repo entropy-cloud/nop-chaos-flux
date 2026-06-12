@@ -53,6 +53,65 @@ describe('projected form runtime helpers', () => {
     expect(customProjectedStore.getState().values).toEqual({ alias: { name: 'Alice' } });
   });
 
+  it('re-bases diagnostics snapshots into projected relative paths', () => {
+    const parentState = {
+      values: {
+        profile: { name: 'Alice' },
+      },
+      fieldStates: {},
+      submitting: false,
+      submitAttempted: false,
+    } as any;
+    const parentStore = {
+      getState: vi.fn(() => parentState),
+      getFieldState: vi.fn(),
+      setFieldState: vi.fn(),
+      subscribe: vi.fn(() => () => undefined),
+      subscribeToPath: vi.fn(() => () => undefined),
+      subscribeToPaths: vi.fn(() => () => undefined),
+      subscribeToSubmitting: vi.fn(() => () => undefined),
+      getPathState: vi.fn(),
+      startDiagnosticsSession: vi.fn(),
+      stopDiagnosticsSession: vi.fn(),
+      clearDiagnosticsSession: vi.fn(),
+      getDiagnosticsSnapshot: vi.fn(() => ({
+        enabled: true,
+        commitCount: 2,
+        droppedCommitCount: 0,
+        recentCommits: [
+          {
+            timestamp: 1,
+            sequence: 1,
+            ownerId: 'form-store',
+            changedPaths: ['profile.name', '*', 'other.path'],
+            changedKinds: ['values'],
+          },
+        ],
+      })),
+    } as any;
+
+    const projectedStore = createProjectedFormStore(parentStore, {
+      ownerRootPath: 'profile',
+    });
+
+    projectedStore.startDiagnosticsSession({ maxRecentCommits: 5 });
+    projectedStore.stopDiagnosticsSession();
+    projectedStore.clearDiagnosticsSession();
+
+    expect(parentStore.startDiagnosticsSession).toHaveBeenCalledWith({ maxRecentCommits: 5 });
+    expect(parentStore.stopDiagnosticsSession).toHaveBeenCalled();
+    expect(parentStore.clearDiagnosticsSession).toHaveBeenCalled();
+    expect(projectedStore.getDiagnosticsSnapshot()).toMatchObject({
+      enabled: true,
+      commitCount: 2,
+      recentCommits: [
+        {
+          changedPaths: ['name', '*', '*'],
+        },
+      ],
+    });
+  });
+
   it('maps projected runtime operations and honors explicit overrides', () => {
     const registerHandle = { unregister: vi.fn() };
     const parentForm = {

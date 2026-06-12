@@ -1,5 +1,28 @@
 import { isRecord } from '@nop-chaos/flux-core';
-import type { ConditionItemValue, ConditionValueNode } from './types.js';
+import type { ConditionGroupValue, ConditionItemValue, ConditionValueNode } from './types.js';
+
+export function sanitizeRight(v: unknown): unknown {
+  if (v == null) return undefined;
+  if (Array.isArray(v)) {
+    const hasDefined = v.some((e) => e !== undefined && e !== null);
+    if (!hasDefined) return undefined;
+    return v;
+  }
+  return v;
+}
+
+export function sanitizeNode(
+  node: ConditionGroupValue | ConditionItemValue,
+): ConditionGroupValue | ConditionItemValue {
+  if ('children' in node) {
+    return {
+      ...node,
+      children: (node as ConditionGroupValue).children.map(sanitizeNode),
+    };
+  }
+  const item = node as ConditionItemValue;
+  return { ...item, right: sanitizeRight(item.right) };
+}
 
 export function computeUsedFields(children: ConditionValueNode[], excludeId?: string): Set<string> {
   const used = new Set<string>();

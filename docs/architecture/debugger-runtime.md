@@ -258,6 +258,12 @@ Stable automation-facing methods include:
 - `explainNodeFailure()`
 - `explainNodeAsync()`
 
+Current store-diagnostics routing baseline:
+
+- form-store commit diagnostics are runtime-owned and specified by `docs/architecture/form-store-diagnostics.md`
+- debugger-side consumption of that bounded snapshot surface is a downstream bridge concern, not a debugger-owned capture mechanism
+- successor bridge ownership currently lives in `docs/plans/446-form-store-debugger-bridge-plan.md`
+
 AI/E2E should prefer these APIs over panel DOM inspection.
 
 ### AI-First Explanation Contracts

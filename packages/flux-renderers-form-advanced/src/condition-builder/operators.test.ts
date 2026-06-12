@@ -110,9 +110,38 @@ describe('operators', () => {
       expect(ops[0]).toEqual({ label: '等于', value: 'equal' });
     });
 
-    it('returns empty array for unknown field type', () => {
+    it('returns empty array for unknown field type with no overrides', () => {
       const ops = resolveOperators('unknown_type', undefined, undefined);
       expect(ops).toEqual([]);
+    });
+
+    it('returns field-level override operators for unknown field type', () => {
+      resetFluxI18n();
+      initFluxI18n();
+      const ops = resolveOperators('roleId', ['equal', 'not_equal', 'in'], undefined);
+      expect(ops).toHaveLength(3);
+      expect(ops[0].value).toBe('equal');
+      expect(ops[2].value).toBe('in');
+    });
+
+    it('returns schema-level override operators for unknown field type', () => {
+      resetFluxI18n();
+      initFluxI18n();
+      const schemaOverride = {
+        operatorsByType: { roleId: ['equal', 'not_equal'] },
+      };
+      const ops = resolveOperators('roleId', undefined, schemaOverride);
+      expect(ops).toHaveLength(2);
+      expect(ops[0].value).toBe('equal');
+    });
+
+    it('field override takes precedence over schema override for unknown type', () => {
+      const schemaOverride = {
+        operatorsByType: { roleId: ['equal'] },
+      };
+      const ops = resolveOperators('roleId', ['in', 'not_in'], schemaOverride);
+      expect(ops).toHaveLength(2);
+      expect(ops[0].value).toBe('in');
     });
 
     it('uses field-level operator override', () => {

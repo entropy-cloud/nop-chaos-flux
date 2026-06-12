@@ -55,7 +55,7 @@ export function createSchemaCompiler(input: {
   }
 
   function throwIfSchemaDiagnosticsFailed(options: CompileSchemaOptions | undefined, diagnostics: ReturnType<typeof createSchemaCompilerDiagnosticsContext>) {
-    if (!diagnostics.enabled || !shouldFailOnSchemaDiagnostics()) {
+    if (!diagnostics.enabled || diagnostics.continueOnError || !shouldFailOnSchemaDiagnostics()) {
       return;
     }
 

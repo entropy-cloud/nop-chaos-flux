@@ -3,6 +3,9 @@ import type {
   CompiledFormValidationModel,
   CompiledValidationNode,
   FieldRegistrationHandle,
+  FormStoreCommitDiagnostic,
+  FormStoreDiagnosticsOptions,
+  FormStoreDiagnosticsSnapshot,
   FormRuntime,
   FormStoreApi,
   FormStoreState,
@@ -106,6 +109,29 @@ function projectValidationModel(
   };
 }
 
+function translateProjectedDiagnosticsSnapshot(
+  snapshot: FormStoreDiagnosticsSnapshot,
+  binding: ReturnType<typeof createPathBinding>,
+): FormStoreDiagnosticsSnapshot {
+  if (!snapshot.enabled) {
+    return snapshot;
+  }
+
+  return {
+    ...snapshot,
+    recentCommits: snapshot.recentCommits.map((commit): FormStoreCommitDiagnostic => ({
+      ...commit,
+      changedPaths: commit.changedPaths.map((path) => {
+        if (path === '*') {
+          return path;
+        }
+
+        return binding.toRelative(path) ?? '*';
+      }),
+    })),
+  };
+}
+
 export function createProjectedFormStore(
   parentStore: FormStoreApi,
   options: CreateProjectedFormStoreOptions,
@@ -166,6 +192,18 @@ export function createProjectedFormStore(
     },
     getPathState(relativePath) {
       return parentStore.getPathState(binding.toAbsolute(relativePath));
+    },
+    startDiagnosticsSession(options?: FormStoreDiagnosticsOptions) {
+      parentStore.startDiagnosticsSession(options);
+    },
+    stopDiagnosticsSession() {
+      parentStore.stopDiagnosticsSession();
+    },
+    clearDiagnosticsSession() {
+      parentStore.clearDiagnosticsSession();
+    },
+    getDiagnosticsSnapshot() {
+      return translateProjectedDiagnosticsSnapshot(parentStore.getDiagnosticsSnapshot(), binding);
     },
   };
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { render, fireEvent, cleanup, screen } from '@testing-library/react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
+import type { ScopeRef } from '@nop-chaos/flux-core';
 import { ValueInput } from './value-input.js';
 import type { ConditionField } from './types.js';
 
@@ -8,6 +9,52 @@ afterEach(cleanup);
 
 const textField: ConditionField = { name: 'name', label: 'Name', type: 'text' };
 const numberField: ConditionField = { name: 'age', label: 'Age', type: 'number' };
+
+function createProjectedScope(): ScopeRef {
+  const state: Record<string, unknown> = { value: 'alpha' };
+
+  return {
+    id: 'scope-1',
+    path: 'page.filters.item-1',
+    parent: undefined,
+    store: {
+      getSnapshot: () => state,
+      getLastChange: () => undefined,
+      setSnapshot: () => undefined,
+      subscribe: () => () => undefined,
+    },
+    get(path: string) {
+      return state[path];
+    },
+    has(path: string) {
+      return path in state;
+    },
+    get value() {
+      return state;
+    },
+    readOwn() {
+      return state;
+    },
+    readVisible() {
+      return state;
+    },
+    materializeVisible() {
+      return state;
+    },
+    update(path: string, value: unknown) {
+      state[path] = value;
+    },
+    merge(data: Record<string, unknown>) {
+      Object.assign(state, data);
+    },
+    replace(data: Record<string, unknown>) {
+      for (const key of Object.keys(state)) {
+        delete state[key];
+      }
+      Object.assign(state, data);
+    },
+  } as ScopeRef;
+}
 
 describe('ValueInput', () => {
   it('returns null for empty operator', () => {
@@ -107,14 +154,53 @@ describe('ValueInput', () => {
     expect(onChange).toHaveBeenCalledWith('hello');
   });
 
-  it('renders text input as fallback for custom field type', () => {
-    const customField = { name: 'x', label: 'X', type: 'custom' } as ConditionField;
-    const { container } = render(
-      <ValueInput field={customField} op="equal" value="test" onChange={() => {}} />,
+  it('fails honestly when a custom field omits schema rendering support', () => {
+    const customField: ConditionField = {
+      name: 'roleId',
+      label: 'Role',
+      type: 'custom',
+      value: { type: 'input-text', name: 'value', label: 'Role value' } as any,
+    };
+
+    expect(() =>
+      render(
+        <ValueInput
+          field={customField}
+          op="equal"
+          value="admin"
+          onChange={() => {}}
+          projectedScope={createProjectedScope()}
+        />,
+      ),
+    ).toThrow(/requires schema rendering support/i);
+  });
+
+  it('renders a custom field through the provided schema render hook', () => {
+    const renderCustomSchema = vi.fn(() => <div data-testid="custom-editor">custom</div>);
+    const customField: ConditionField = {
+      name: 'roleId',
+      label: 'Role',
+      type: 'custom',
+      value: { type: 'input-text', name: 'value', label: 'Role value' } as any,
+    };
+    const projectedScope = createProjectedScope();
+
+    render(
+      <ValueInput
+        field={customField}
+        op="equal"
+        value="admin"
+        onChange={() => {}}
+        projectedScope={projectedScope}
+        renderCustomSchema={renderCustomSchema}
+      />,
     );
-    const input = container.querySelector('input') as HTMLInputElement;
-    expect(input.type).toBe('text');
-    expect(input.value).toBe('test');
+
+    expect(screen.getByTestId('custom-editor')).toBeTruthy();
+    expect(renderCustomSchema).toHaveBeenCalledWith(
+      customField.value,
+      expect.objectContaining({ field: customField, op: 'equal', value: 'admin', scope: projectedScope }),
+    );
   });
 
   it('uses NativeSelect markers for multi-select add control', () => {

@@ -1,7 +1,7 @@
 # Form Validation Runtime Types Reference
 
 > Reference Status: Active
-> Last Updated: 2026-05-17
+> Last Updated: 2026-06-12
 > Owner Doc: `docs/architecture/form-validation.md`
 
 This document is the live-code reference for the exported validation runtime types.
@@ -192,6 +192,27 @@ interface FormStoreState {
   submitAttempted: boolean;
 }
 
+type FormStoreCommitDiagnosticKind = 'values' | 'fieldStates' | 'submitting' | 'submitAttempted';
+
+interface FormStoreCommitDiagnostic {
+  timestamp: number;
+  sequence: number;
+  ownerId: string;
+  changedPaths: readonly string[];
+  changedKinds: readonly FormStoreCommitDiagnosticKind[];
+}
+
+interface FormStoreDiagnosticsSnapshot {
+  enabled: boolean;
+  commitCount: number;
+  recentCommits: readonly FormStoreCommitDiagnostic[];
+  droppedCommitCount: number;
+}
+
+interface FormStoreDiagnosticsOptions {
+  maxRecentCommits?: number;
+}
+
 interface FormPathState {
   errors: ValidationError[] | undefined;
   validating: boolean;
@@ -268,6 +289,10 @@ interface FormStoreApi {
   setSubmitting(submitting: boolean): void;
   setSubmitAttempted(submitAttempted: boolean): void;
   batchUpdate(updates: Partial<FormStoreState>): void;
+  startDiagnosticsSession(options?: FormStoreDiagnosticsOptions): void;
+  stopDiagnosticsSession(): void;
+  clearDiagnosticsSession(): void;
+  getDiagnosticsSnapshot(): FormStoreDiagnosticsSnapshot;
 }
 ```
 
@@ -275,6 +300,7 @@ Current live note:
 
 - `subscribeToModelGeneration` is optional because projected runtimes and test doubles may forward it conditionally
 - listeners are notified when the current owner swaps to a newer compiled validation model generation; React hooks use this to re-register or refresh subscriptions across model replacement
+- form-store diagnostics sessions are explicitly gated; `stopDiagnosticsSession()` stops future capture without implicitly clearing retained bounded history, and `clearDiagnosticsSession()` owns reset semantics
 
 ## Child Contract Types
 

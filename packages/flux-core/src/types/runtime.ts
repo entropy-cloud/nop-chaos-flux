@@ -42,6 +42,31 @@ export interface FormStoreState {
   submitAttempted: boolean;
 }
 
+export type FormStoreCommitDiagnosticKind =
+  | 'values'
+  | 'fieldStates'
+  | 'submitting'
+  | 'submitAttempted';
+
+export interface FormStoreCommitDiagnostic {
+  timestamp: number;
+  sequence: number;
+  ownerId: string;
+  changedPaths: readonly string[];
+  changedKinds: readonly FormStoreCommitDiagnosticKind[];
+}
+
+export interface FormStoreDiagnosticsSnapshot {
+  enabled: boolean;
+  commitCount: number;
+  recentCommits: readonly FormStoreCommitDiagnostic[];
+  droppedCommitCount: number;
+}
+
+export interface FormStoreDiagnosticsOptions {
+  maxRecentCommits?: number;
+}
+
 export interface FormErrorQuery {
   path?: string;
   ownerPath?: string;
@@ -97,6 +122,10 @@ export interface FormStoreApi {
   setSubmitting(submitting: boolean): void;
   setSubmitAttempted(submitAttempted: boolean): void;
   batchUpdate(updates: Partial<FormStoreState>): void;
+  startDiagnosticsSession(options?: FormStoreDiagnosticsOptions): void;
+  stopDiagnosticsSession(): void;
+  clearDiagnosticsSession(): void;
+  getDiagnosticsSnapshot(): FormStoreDiagnosticsSnapshot;
 }
 
 export interface ValidationStoreApi {

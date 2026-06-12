@@ -465,6 +465,11 @@ Form state uses a normalized flat structure:
 - `getPathState(path)` — snapshot for useSyncExternalStore
 - `getFieldState(path)` / `setFieldState(path, state)` — direct access
 
+Current diagnostics baseline:
+
+- `FormStoreApi` now also exposes an explicitly gated bounded diagnostics session surface via `startDiagnosticsSession(options?)`, `stopDiagnosticsSession()`, `clearDiagnosticsSession()`, and `getDiagnosticsSnapshot()`
+- this diagnostics surface is runtime-owned commit truth for tests/diagnostics consumers and does not replace the production per-path subscription contract above
+
 This per-path subscription model ensures O(1) hook wake-up cost per field change, regardless of form size.
 
 ### Canonical Identity

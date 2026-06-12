@@ -2,6 +2,16 @@ export const STRICT_VALIDATION_KEY = '__FLUX_STRICT_VALIDATION__' as const;
 export const FAIL_ON_SCHEMA_DIAGNOSTICS_KEY = '__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__' as const;
 
 function readGlobalFlag(): boolean | undefined {
+  if (typeof globalThis === 'undefined') {
+    return undefined;
+  }
+
+  const globalRecord = globalThis as Record<string, unknown>;
+
+  if (STRICT_VALIDATION_KEY in globalRecord) {
+    return globalRecord[STRICT_VALIDATION_KEY] === true;
+  }
+
   const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
     ?.env;
 
@@ -11,16 +21,6 @@ function readGlobalFlag(): boolean | undefined {
 
   if (processEnv?.[STRICT_VALIDATION_KEY] === 'false') {
     return false;
-  }
-
-  if (typeof globalThis === 'undefined') {
-    return undefined;
-  }
-
-  const globalRecord = globalThis as Record<string, unknown>;
-
-  if (STRICT_VALIDATION_KEY in globalRecord) {
-    return globalRecord[STRICT_VALIDATION_KEY] === true;
   }
 
   if (typeof window !== 'undefined') {

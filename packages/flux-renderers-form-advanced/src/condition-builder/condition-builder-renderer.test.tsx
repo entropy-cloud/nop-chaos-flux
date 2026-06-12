@@ -143,6 +143,210 @@ describe('condition-builder renderer integration', () => {
     });
   });
 
+  it('renders schema-driven custom value editors and writes back through the value binding', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allDefs);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#custom-form"
+        schema={
+          {
+            type: 'form',
+            data: {
+              filters: {
+                id: 'root',
+                conjunction: 'and',
+                children: [
+                  {
+                    id: 'item-1',
+                    left: { type: 'field', field: 'roleId' },
+                    op: 'equal',
+                    right: 'admin',
+                  },
+                ],
+              },
+            },
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                fields: [
+                  {
+                    name: 'roleId',
+                    label: 'Role',
+                    type: 'custom',
+                    operators: ['equal'],
+                    value: {
+                      type: 'input-text',
+                      name: 'value',
+                      label: 'Role value',
+                    },
+                  },
+                ],
+              },
+              {
+                type: 'form-state-probe',
+                name: 'filters',
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const input = (await screen.findByLabelText('Role value')) as HTMLInputElement;
+    expect(input.value).toBe('admin');
+
+    fireEvent.change(input, { target: { value: 'manager' } });
+
+    await waitFor(() => {
+      expect(
+        JSON.parse(screen.getByTestId('form-state:filters').textContent ?? 'null'),
+      ).toMatchObject({
+        children: [
+          {
+            left: { field: 'roleId', type: 'field' },
+            right: 'manager',
+          },
+        ],
+      });
+    });
+  });
+
+  it('renders schema-driven custom value editors without a form owner and writes back through page scope', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allDefs);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#custom-page"
+        schema={
+          {
+            type: 'page',
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                fields: [
+                  {
+                    name: 'roleId',
+                    label: 'Role',
+                    type: 'custom',
+                    operators: ['equal'],
+                    value: {
+                      type: 'input-text',
+                      name: 'value',
+                      label: 'Role value',
+                    },
+                  },
+                ],
+              },
+              {
+                type: 'scope-state-probe',
+                name: 'filters',
+              },
+            ],
+          } as any
+        }
+        data={{
+          filters: {
+            id: 'root',
+            conjunction: 'and',
+            children: [
+              {
+                id: 'item-1',
+                left: { type: 'field', field: 'roleId' },
+                op: 'equal',
+                right: 'admin',
+              },
+            ],
+          },
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const input = (await screen.findByLabelText('Role value')) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'manager' } });
+
+    await waitFor(() => {
+      expect(
+        JSON.parse(screen.getByTestId('scope-state:filters').textContent ?? 'null'),
+      ).toMatchObject({
+        children: [
+          {
+            left: { field: 'roleId', type: 'field' },
+            right: 'manager',
+          },
+        ],
+      });
+    });
+  });
+
+  it('fails honestly when custom editor schema targets an unsupported renderer', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allDefs);
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#invalid-custom"
+        schema={
+          {
+            type: 'form',
+            data: {
+              filters: {
+                id: 'root',
+                conjunction: 'and',
+                children: [
+                  {
+                    id: 'item-1',
+                    left: { type: 'field', field: 'roleId' },
+                    op: 'equal',
+                    right: 'admin',
+                  },
+                ],
+              },
+            },
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                fields: [
+                  {
+                    name: 'roleId',
+                    label: 'Role',
+                    type: 'custom',
+                    operators: ['equal'],
+                    value: {
+                      type: 'missing-renderer',
+                      name: 'value',
+                      label: 'Broken value',
+                    },
+                  },
+                ],
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(view.container.querySelector('[data-slot="condition-item"]')).toBeTruthy();
+    });
+    expect(screen.queryByDisplayValue('admin')).toBeNull();
+    expect(screen.queryByLabelText('Condition value')).toBeNull();
+  });
+
   it('updates page scope when used without a form owner', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer(allDefs);

@@ -1,5 +1,8 @@
 import type {
   FieldState,
+  FormStoreCommitDiagnostic,
+  FormStoreDiagnosticsOptions,
+  FormStoreDiagnosticsSnapshot,
   FormPathState,
   FormStoreApi,
   FormStoreState,
@@ -179,6 +182,34 @@ function unwrapOwnedFormStore(store: FormStoreApi): FormStoreApi {
   return ownedFormStoreMetadata.get(store)?.baseStore ?? store;
 }
 
+function translateOwnedDiagnosticsSnapshot(
+  snapshot: FormStoreDiagnosticsSnapshot,
+  ownerId: string,
+): FormStoreDiagnosticsSnapshot {
+  if (!snapshot.enabled) {
+    return snapshot;
+  }
+
+  const prefix = `${ownerId}${OWNED_FIELD_STATE_SEPARATOR}`;
+
+  return {
+    ...snapshot,
+    recentCommits: snapshot.recentCommits.map((commit): FormStoreCommitDiagnostic => ({
+      ...commit,
+      ownerId,
+      changedPaths: commit.changedPaths
+        .map((path) => {
+          if (path === '*' || !path.startsWith(prefix)) {
+            return path;
+          }
+
+          return path.slice(prefix.length);
+        })
+        .filter((path) => path === '*' || !path.includes(OWNED_FIELD_STATE_SEPARATOR)),
+    })),
+  };
+}
+
 export function createOwnedFormStore(baseStore: FormStoreApi, ownerId: string): FormStoreApi {
   const resolvedBaseStore = unwrapOwnedFormStore(baseStore);
   let cachedBaseFieldStates: Record<string, FieldState> | undefined;
@@ -294,6 +325,18 @@ export function createOwnedFormStore(baseStore: FormStoreApi, ownerId: string): 
         ...updates,
         fieldStates: replaceOwnedFieldStates(currentState.fieldStates, ownerId, updates.fieldStates),
       });
+    },
+    startDiagnosticsSession(options?: FormStoreDiagnosticsOptions) {
+      resolvedBaseStore.startDiagnosticsSession(options);
+    },
+    stopDiagnosticsSession() {
+      resolvedBaseStore.stopDiagnosticsSession();
+    },
+    clearDiagnosticsSession() {
+      resolvedBaseStore.clearDiagnosticsSession();
+    },
+    getDiagnosticsSnapshot() {
+      return translateOwnedDiagnosticsSnapshot(resolvedBaseStore.getDiagnosticsSnapshot(), ownerId);
     },
   };
 

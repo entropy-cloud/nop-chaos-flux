@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import type { BaseSchema, FormRuntime, ScopeRef, ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { PlusIcon, GroupIcon, Trash2Icon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
@@ -41,6 +42,18 @@ interface ConditionGroupProps {
   onRemove?: () => void;
   disabled?: boolean;
   depth: number;
+  renderCustomSchema?: (schema: BaseSchema, options: RenderCustomSchemaOptions) => React.ReactNode;
+  projectedFormFactory?: (item: ConditionItemValue) => FormRuntime | undefined;
+  projectedScopeFactory?: (item: ConditionItemValue) => ScopeRef;
+  projectedValidationFactory?: (item: ConditionItemValue) => ValidationScopeRuntime | undefined;
+}
+
+interface RenderCustomSchemaOptions {
+  field: Extract<ConditionField, { type: 'custom' }>;
+  op: string;
+  value: unknown;
+  disabled?: boolean;
+  scope: ScopeRef;
 }
 
 export function ConditionGroup({
@@ -52,6 +65,10 @@ export function ConditionGroup({
   onRemove,
   disabled,
   depth,
+  renderCustomSchema,
+  projectedFormFactory,
+  projectedScopeFactory,
+  projectedValidationFactory,
 }: ConditionGroupProps) {
   const {
     builderMode = 'full',
@@ -169,6 +186,10 @@ export function ConditionGroup({
                   onRemove={() => handleChildRemove(index)}
                   disabled={disabled}
                   depth={depth + 1}
+                  renderCustomSchema={renderCustomSchema}
+                  projectedFormFactory={projectedFormFactory}
+                  projectedScopeFactory={projectedScopeFactory}
+                  projectedValidationFactory={projectedValidationFactory}
                 />
               )}
             </SortableItem>
@@ -189,6 +210,10 @@ export function ConditionGroup({
                   uniqueFields={uniqueFields}
                   draggable={draggable}
                   dragHandleProps={dragHandleProps}
+                  renderCustomSchema={renderCustomSchema}
+                  projectedForm={projectedFormFactory?.(child)}
+                  projectedScope={projectedScopeFactory?.(child)}
+                  projectedValidationOwner={projectedValidationFactory?.(child)}
                 />
               )}
             </SortableItem>
@@ -205,33 +230,41 @@ export function ConditionGroup({
       )}
       {value.children.map((child, index) =>
         'children' in child ? (
-          <ConditionGroup
-            key={child.id}
+            <ConditionGroup
+              key={child.id}
+              value={child}
+              schema={schema}
+              fields={fields}
+              operatorsOverride={operatorsOverride}
+              onChange={(v) => handleChildChange(index, v)}
+              onRemove={() => handleChildRemove(index)}
+              disabled={disabled}
+              depth={depth + 1}
+              renderCustomSchema={renderCustomSchema}
+              projectedFormFactory={projectedFormFactory}
+              projectedScopeFactory={projectedScopeFactory}
+              projectedValidationFactory={projectedValidationFactory}
+            />
+          ) : (
+            <ConditionItem
+              key={child.id}
             value={child}
-            schema={schema}
             fields={fields}
             operatorsOverride={operatorsOverride}
             onChange={(v) => handleChildChange(index, v)}
             onRemove={() => handleChildRemove(index)}
             disabled={disabled}
-            depth={depth + 1}
-          />
-        ) : (
-          <ConditionItem
-            key={child.id}
-            value={child}
-            fields={fields}
-            operatorsOverride={operatorsOverride}
-            onChange={(v) => handleChildChange(index, v)}
-            onRemove={() => handleChildRemove(index)}
-            disabled={disabled}
-            searchable={searchable}
-            usedFields={uniqueFields ? computeUsedFields(value.children, child.id) : undefined}
-            uniqueFields={uniqueFields}
-            draggable={draggable}
-          />
-        ),
-      )}
+              searchable={searchable}
+              usedFields={uniqueFields ? computeUsedFields(value.children, child.id) : undefined}
+              uniqueFields={uniqueFields}
+              draggable={draggable}
+              renderCustomSchema={renderCustomSchema}
+              projectedForm={projectedFormFactory?.(child)}
+              projectedScope={projectedScopeFactory?.(child)}
+              projectedValidationOwner={projectedValidationFactory?.(child)}
+            />
+          ),
+        )}
     </>
   );
 

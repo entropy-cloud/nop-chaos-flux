@@ -146,6 +146,9 @@ vi.mock('@nop-chaos/ui', () => {
   ));
   (MockBadge as any).displayName = 'Badge';
 
+  const MockSpinner = forwardRef((props: any, ref: any) => <div ref={ref} data-testid="mock-spinner" {...props} />);
+  (MockSpinner as any).displayName = 'Spinner';
+
   return {
     cn: (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' '),
     Combobox: MockCombobox,
@@ -164,6 +167,7 @@ vi.mock('@nop-chaos/ui', () => {
     Button: MockButton,
     Input: MockInput,
     Badge: MockBadge,
+    Spinner: MockSpinner,
   };
 });
 

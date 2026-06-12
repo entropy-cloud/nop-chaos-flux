@@ -1,11 +1,13 @@
 import React from 'react';
+import type { BaseSchema, FormRuntime, ScopeRef, ValidationScopeRuntime } from '@nop-chaos/flux-core';
+import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@nop-chaos/ui';
 import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import { Badge } from '@nop-chaos/ui';
-import type { ConditionField, ConditionSelectField } from './types.js';
+import type { ConditionCustomField, ConditionField, ConditionSelectField } from './types.js';
 
 interface ValueInputProps {
   inputIdPrefix?: string;
@@ -14,9 +16,45 @@ interface ValueInputProps {
   value: unknown;
   onChange: (value: unknown) => void;
   disabled?: boolean;
+  renderCustomSchema?: (schema: BaseSchema, options: RenderCustomSchemaOptions) => React.ReactNode;
+  projectedForm?: FormRuntime;
+  projectedScope?: ScopeRef;
+  projectedValidationOwner?: ValidationScopeRuntime;
 }
 
-export function ValueInput({ inputIdPrefix, field, op, value, onChange, disabled }: ValueInputProps) {
+interface RenderCustomSchemaOptions {
+  field: ConditionCustomField;
+  op: string;
+  value: unknown;
+  disabled?: boolean;
+  scope: ScopeRef;
+}
+
+interface CustomValueEditorHostProps extends RenderCustomSchemaOptions {
+  schema: BaseSchema;
+  renderSchema: NonNullable<ValueInputProps['renderCustomSchema']>;
+  form?: FormRuntime;
+  scope: ScopeRef;
+  validationOwner?: ValidationScopeRuntime;
+}
+
+function coerceScalar(v: unknown): unknown {
+  if (Array.isArray(v)) return undefined;
+  return v;
+}
+
+export function ValueInput({
+  inputIdPrefix,
+  field,
+  op,
+  value,
+  onChange,
+  disabled,
+  renderCustomSchema,
+  projectedForm,
+  projectedScope,
+  projectedValidationOwner,
+}: ValueInputProps) {
   if (!op) return null;
   if (op === 'is_empty' || op === 'is_not_empty') return null;
 
@@ -24,28 +62,79 @@ export function ValueInput({ inputIdPrefix, field, op, value, onChange, disabled
     return <BetweenInput field={field} value={value} onChange={onChange} disabled={disabled} />;
   }
 
+  if (field.type === 'custom' && field.value) {
+    if (!projectedScope) {
+      throw new Error(
+        `Condition builder custom field "${field.name}" requires a projected scope, but none was provided.`,
+      );
+    }
+    if (!renderCustomSchema) {
+      throw new Error(
+        `Condition builder custom field "${field.name}" requires schema rendering support, but none was provided.`,
+      );
+    }
+
+    return (
+      <CustomValueEditorHost
+        schema={field.value}
+        field={field}
+        op={op}
+        value={value}
+        disabled={disabled}
+        renderSchema={renderCustomSchema}
+        form={projectedForm}
+        scope={projectedScope}
+        validationOwner={projectedValidationOwner}
+      />
+    );
+  }
+
+  const scalar = coerceScalar(value);
+
   switch (field.type) {
     case 'text':
       return (
         <TextInput
           inputId={inputIdPrefix}
-          value={value}
+          value={scalar}
           onChange={onChange}
           disabled={disabled}
           placeholder={field.placeholder}
         />
       );
     case 'number':
-      return <NumberInput inputId={inputIdPrefix} value={value} onChange={onChange} disabled={disabled} />;
+      return <NumberInput inputId={inputIdPrefix} value={scalar} onChange={onChange} disabled={disabled} />;
     case 'select':
       return (
         <SelectInput inputId={inputIdPrefix} field={field} op={op} value={value} onChange={onChange} disabled={disabled} />
       );
     case 'boolean':
-      return <BooleanInput inputId={inputIdPrefix} field={field} value={value} onChange={onChange} disabled={disabled} />;
+      return <BooleanInput inputId={inputIdPrefix} field={field} value={scalar} onChange={onChange} disabled={disabled} />;
     default:
-      return <TextInput inputId={inputIdPrefix} value={value} onChange={onChange} disabled={disabled} />;
+      return <TextInput inputId={inputIdPrefix} value={scalar} onChange={onChange} disabled={disabled} />;
   }
+}
+
+function CustomValueEditorHost({
+  schema,
+  field,
+  op,
+  value,
+  disabled,
+  renderSchema,
+  form,
+  scope,
+  validationOwner,
+}: CustomValueEditorHostProps) {
+  return (
+    <FormContext.Provider value={form}>
+      <ScopeContext.Provider value={scope}>
+        <ValidationContext.Provider value={validationOwner}>
+          {renderSchema(schema, { field, op, value, disabled, scope })}
+        </ValidationContext.Provider>
+      </ScopeContext.Provider>
+    </FormContext.Provider>
+  );
 }
 
 function TextInput({

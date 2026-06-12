@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import type { BaseSchema, FormRuntime, ScopeRef, ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { GripVerticalIcon, Trash2Icon } from 'lucide-react';
 import { Button } from '@nop-chaos/ui';
 import type {
@@ -26,6 +27,18 @@ interface ConditionItemProps {
   uniqueFields?: boolean;
   draggable?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
+  renderCustomSchema?: (schema: BaseSchema, options: RenderCustomSchemaOptions) => React.ReactNode;
+  projectedForm?: FormRuntime;
+  projectedScope?: ScopeRef;
+  projectedValidationOwner?: ValidationScopeRuntime;
+}
+
+interface RenderCustomSchemaOptions {
+  field: Extract<ConditionField, { type: 'custom' }>;
+  op: string;
+  value: unknown;
+  disabled?: boolean;
+  scope: ScopeRef;
 }
 
 function findField(fields: ConditionField[], fieldName: string): ConditionField | undefined {
@@ -52,6 +65,10 @@ export function ConditionItem({
   uniqueFields,
   draggable,
   dragHandleProps,
+  renderCustomSchema,
+  projectedForm,
+  projectedScope,
+  projectedValidationOwner,
 }: ConditionItemProps) {
   const itemId = value.id;
   const resolvedField = useMemo(
@@ -145,6 +162,10 @@ export function ConditionItem({
         value={value.right}
         onChange={handleValueChange}
         disabled={disabled}
+        renderCustomSchema={renderCustomSchema}
+        projectedForm={projectedForm}
+        projectedScope={projectedScope}
+        projectedValidationOwner={projectedValidationOwner}
       />
 
       {!disabled && (
