@@ -47,6 +47,7 @@ Do not assert zero errors before the page's supported ready signal is visible.
 - Do not weaken the gate with broad noise filters beyond the shared fixture-level known-noise list.
 - Do not simulate compliance by calling `assertTrackedPageErrors(page)` on an untracked page object.
 - Do not treat debug-only probes such as `[data-slot="scope-debug-json"]` as the primary success oracle for supported E2E coverage.
+- Do not assert exact `scope-debug-json` text as if it were the canonical submitted payload format; it is a diagnostic serialization view that is JSON-like for ordinary values but may use explicit sentinels such as `@function` or `@circular` for non-JSON runtime data.
 - Do not treat synthetic test hooks or `page.evaluate()`-dispatched custom events as substitutes for a real user interaction path when the supported claim is about visible end-to-end behavior.
 - Do not leave screenshot-generation, HTML dump, console dump, or debugger-internal inspection specs active in the default supported suite.
 

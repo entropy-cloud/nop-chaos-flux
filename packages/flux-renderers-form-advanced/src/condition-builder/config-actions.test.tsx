@@ -53,6 +53,33 @@ describe('condition-builder config integration action behavior', () => {
       expect(newGroup.children[0]).toHaveProperty('op');
     });
 
+    it('uses the resolved default operator from field operator vocabulary', () => {
+      const onChange = vi.fn();
+      renderGroup(
+        {
+          fields: [
+            {
+              name: 'status',
+              label: 'Status',
+              type: 'text',
+              operators: ['eq', 'neq'],
+              defaultOp: 'eq',
+            },
+          ] as any,
+        },
+        makeEmptyGroup(),
+        onChange,
+      );
+
+      fireEvent.click(screen.queryAllByText('Add condition')[0]);
+      const newGroup = onChange.mock.calls[0][0];
+      expect(newGroup.children[0]).toMatchObject({
+        left: { type: 'field', field: 'status' },
+        op: 'eq',
+        right: undefined,
+      });
+    });
+
     it('adds a nested group on click', () => {
       const onChange = vi.fn();
       renderGroup({ builderMode: 'full' }, makeEmptyGroup(), onChange);

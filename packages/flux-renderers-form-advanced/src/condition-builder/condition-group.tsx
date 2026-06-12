@@ -20,6 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type {
+  BaseConditionField,
   ConditionBuilderSchema,
   ConditionConjunction,
   ConditionField,
@@ -30,6 +31,7 @@ import type {
 } from './types.js';
 import { ConditionItem } from './condition-item.js';
 import { genId } from './id-utils.js';
+import { resolveDefaultOp } from './operators.js';
 import { computeUsedFields } from './utils.js';
 import { WrappedFieldAction } from '../wrapped-field-action.js';
 
@@ -123,7 +125,12 @@ export function ConditionGroup({
   const handleAddCondition = useCallback(() => {
     const firstField = fields.find((f) => f.type !== 'group');
     const fieldName = firstField?.name ?? '';
-    const defaultOp = firstField?.defaultOp ?? 'equal';
+    const fieldType = firstField?.type ?? 'text';
+    const defaultOp = resolveDefaultOp(
+      fieldType,
+      (firstField as BaseConditionField | undefined)?.defaultOp,
+      operatorsOverride,
+    );
     const newItem: ConditionItemValue = {
       id: genId('item'),
       left: { type: 'field', field: fieldName },
@@ -131,7 +138,7 @@ export function ConditionGroup({
       right: undefined,
     };
     onChange({ ...value, children: [...value.children, newItem] });
-  }, [fields, value, onChange]);
+  }, [fields, onChange, operatorsOverride, value]);
 
   const handleAddGroup = useCallback(() => {
     const newGroup: ConditionGroupValue = {

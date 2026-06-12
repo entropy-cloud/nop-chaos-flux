@@ -143,6 +143,54 @@ describe('condition-builder renderer integration', () => {
     });
   });
 
+  it('keeps newly added conditions undefined-valued instead of serializing [undefined]', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allDefs);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#multi-add"
+        schema={
+          {
+            type: 'form',
+            data: {
+              filters: { id: 'root', conjunction: 'and', children: [] },
+            },
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                fields: [{ name: 'status', label: 'Status', type: 'text' }],
+              },
+              {
+                type: 'form-state-probe',
+                name: 'filters',
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByText('Add condition'));
+    fireEvent.click(await screen.findByText('Add condition'));
+
+    await waitFor(() => {
+      const raw = screen.getByTestId('form-state:filters').textContent ?? 'null';
+      expect(raw).not.toContain('[undefined]');
+
+      const parsed = JSON.parse(raw);
+      expect(parsed.children).toHaveLength(2);
+      expect(parsed.children[0]).toMatchObject({ op: 'equal' });
+      expect(parsed.children[1]).toMatchObject({ op: 'equal' });
+      expect('right' in parsed.children[0]).toBe(false);
+      expect('right' in parsed.children[1]).toBe(false);
+    });
+  });
+
   it('renders schema-driven custom value editors and writes back through the value binding', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer(allDefs);

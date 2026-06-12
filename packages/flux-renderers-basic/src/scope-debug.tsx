@@ -5,45 +5,83 @@ import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { ScopeDebugSchema } from './schemas.js';
 
-function stringifyDebugValue(value: unknown) {
-  const seen = new WeakSet<object>();
-  const json = JSON.stringify(value, (_key, currentValue: unknown) => {
-    if (currentValue === undefined) {
-      return '[undefined]';
-    }
+const OMIT = Symbol('scope-debug-omit');
 
-    if (typeof currentValue === 'function') {
-      return '[function]';
-    }
+type SanitizedDebugValue =
+  | null
+  | boolean
+  | number
+  | string
+  | SanitizedDebugValue[]
+  | { [key: string]: SanitizedDebugValue };
 
-    if (typeof currentValue === 'bigint') {
-      return `${currentValue.toString()}n`;
-    }
-
-    if (currentValue instanceof Error) {
-      return {
-        name: currentValue.name,
-        message: currentValue.message,
-        stack: currentValue.stack,
-      };
-    }
-
-    if (currentValue && typeof currentValue === 'object') {
-      if (seen.has(currentValue as object)) {
-        return '[circular]';
-      }
-
-      seen.add(currentValue as object);
-    }
-
-    return currentValue;
-  });
-
-  if (json === undefined) {
-    return '{\n  "value": "[undefined]"\n}';
+function sanitizeDebugValue(
+  value: unknown,
+  seen: WeakSet<object>,
+  inArray: boolean,
+): SanitizedDebugValue | typeof OMIT {
+  if (value === undefined) {
+    return inArray ? null : OMIT;
   }
 
-  return JSON.stringify(JSON.parse(json), null, 2);
+  if (typeof value === 'function') {
+    return '@function';
+  }
+
+  if (typeof value === 'symbol') {
+    return `@symbol:${String(value.description ?? '')}`;
+  }
+
+  if (typeof value === 'bigint') {
+    return `@bigint:${value.toString()}`;
+  }
+
+  if (value instanceof Error) {
+    return {
+      name: value.name,
+      message: value.message,
+      stack: value.stack ?? '',
+    };
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value as SanitizedDebugValue;
+  }
+
+  if (seen.has(value)) {
+    return '@circular';
+  }
+
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => {
+      const sanitized = sanitizeDebugValue(entry, seen, true);
+      return sanitized === OMIT ? null : sanitized;
+    });
+  }
+
+  const result: Record<string, SanitizedDebugValue> = {};
+
+  for (const [key, entry] of Object.entries(value)) {
+    const sanitized = sanitizeDebugValue(entry, seen, false);
+    if (sanitized !== OMIT) {
+      result[key] = sanitized;
+    }
+  }
+
+  return result;
+}
+
+function stringifyDebugValue(value: unknown) {
+  const seen = new WeakSet<object>();
+  const sanitized = sanitizeDebugValue(value, seen, false);
+
+  if (sanitized === OMIT) {
+    return 'undefined';
+  }
+
+  return JSON.stringify(sanitized, null, 2);
 }
 
 export function ScopeDebugRenderer(props: RendererComponentProps<ScopeDebugSchema>) {

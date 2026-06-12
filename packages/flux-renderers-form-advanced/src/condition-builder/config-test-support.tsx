@@ -217,7 +217,7 @@ export function renderGroup(
     <ConditionGroup
       value={groupValue}
       schema={fullSchema}
-      fields={testFields}
+      fields={(schema.fields as ConditionField[] | undefined) ?? testFields}
       operatorsOverride={options?.operatorsOverride}
       onChange={handleChange}
       disabled={options?.disabled}

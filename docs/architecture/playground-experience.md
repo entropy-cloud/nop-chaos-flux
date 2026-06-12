@@ -104,6 +104,8 @@ The Component Lab shell (`apps/playground/src/component-lab/component-lab-page.t
 
 This page is the canonical shared-renderer verification surface.
 
+`scope-debug` is allowed on lab/scenario pages as a diagnostic aid, but its output is still a debug serialization surface rather than a supported product result channel. Current live baseline: it follows `JSON.stringify` semantics for ordinary JSON values, omits object properties whose value is `undefined`, renders `undefined` array entries as `null`, and uses explicit sentinel encodings such as `@function`, `@bigint:<value>`, and `@circular` for non-JSON runtime values.
+
 ## Debugger UX Contract
 
 The debugger should use a three-state product model:

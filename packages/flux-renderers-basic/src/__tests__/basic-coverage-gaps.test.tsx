@@ -220,13 +220,14 @@ describe('basic renderer coverage gaps', () => {
     cleanup();
   });
 
-  it('formats scope debug values for undefined, functions, bigint, errors, and circular references', () => {
+  it('formats scope debug values with JSON-like undefined semantics and explicit special encodings', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const circular: Record<string, unknown> = {
       missing: undefined,
       fn: () => 'value',
       count: 12n,
       problem: new Error('boom'),
+      list: [1, undefined, () => 'value'],
     };
     circular.self = circular;
 
@@ -242,11 +243,12 @@ describe('basic renderer coverage gaps', () => {
 
     expect(screen.getByText('Scope Debug')).toBeTruthy();
     const debugText = document.querySelector('[data-slot="scope-debug-json"]')?.textContent ?? '';
-    expect(debugText).toContain('[undefined]');
-    expect(debugText).toContain('[function]');
-    expect(debugText).toContain('12n');
+    expect(debugText).not.toContain('"missing"');
+    expect(debugText).toContain('"fn": "@function"');
+    expect(debugText).toContain('"count": "@bigint:12"');
     expect(debugText).toContain('"message": "boom"');
-    expect(debugText).toContain('[circular]');
+    expect(debugText).toContain('"self": "@circular"');
+    expect(debugText).toContain('"list": [\n    1,\n    null,\n    "@function"\n  ]');
     cleanup();
   });
 
