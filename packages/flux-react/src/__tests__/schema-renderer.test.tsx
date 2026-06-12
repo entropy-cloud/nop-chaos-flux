@@ -2,14 +2,18 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import * as fluxRuntime from '@nop-chaos/flux-runtime';
-import { env, pageRenderer, textRenderer } from '../test-support-core.js';
+import { createExpressionCompiler } from '../test-support.js';
+import { env, eventTextRenderer, pageRenderer, textRenderer } from '../test-support-core.js';
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  delete (globalThis as Record<string, unknown>).__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__;
 });
 
 describe('SchemaRenderer callbacks', () => {
@@ -184,6 +188,82 @@ describe('SchemaRenderer data update', () => {
 });
 
 describe('SchemaRenderer import preparation', () => {
+  it('fails fast on strict schema diagnostics in automated test environments', () => {
+    (globalThis as Record<string, unknown>).__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__ = true;
+
+    const SchemaRenderer = createSchemaRenderer([
+      eventTextRenderer,
+      {
+        type: 'form',
+        component: () => null,
+        componentCapabilityContracts: [{ handle: 'submit', displayName: 'Submit' }],
+      },
+      pageRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema-invalid-submit.json"
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'form', id: 'my-form' },
+            {
+              type: 'event-text',
+              text: 'Broken',
+              onClick: {
+                action: 'component:submit',
+                componentId: 'my-form',
+                args: { method: 'post', url: '/api/save' },
+              },
+            },
+          ],
+        } as any}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        strictValidation
+      />, 
+    );
+
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([
+        eventTextRenderer,
+        pageRenderer,
+        {
+          type: 'form',
+          component: () => null,
+          componentCapabilityContracts: [{ handle: 'submit', displayName: 'Submit' }],
+        },
+      ]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    expect(
+      compiler.validate?.({
+        type: 'page',
+        body: [
+          { type: 'form', id: 'my-form' },
+          {
+            type: 'event-text',
+            text: 'Broken',
+            onClick: {
+              action: 'component:submit',
+              componentId: 'my-form',
+              args: { method: 'post', url: '/api/save' },
+            },
+          },
+        ],
+      }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-host-capability-args',
+          path: '/body/1/onClick/args',
+        }),
+      ]),
+    );
+  });
+
   it('shows a root fallback when import preparation fails', async () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const failingLoader = {

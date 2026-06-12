@@ -41,6 +41,39 @@ export function createSchemaCompiler(input: {
     input.plugins,
   );
 
+  function shouldFailOnSchemaDiagnostics(): boolean {
+    const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
+      ?.env;
+    const globalRecord = globalThis as Record<string, unknown>;
+
+    return (
+      processEnv?.__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__ === 'true' ||
+      processEnv?.VITEST === 'true' ||
+      processEnv?.PLAYWRIGHT === 'true' ||
+      globalRecord.__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__ === true
+    );
+  }
+
+  function throwIfSchemaDiagnosticsFailed(options: CompileSchemaOptions | undefined, diagnostics: ReturnType<typeof createSchemaCompilerDiagnosticsContext>) {
+    if (!diagnostics.enabled || !shouldFailOnSchemaDiagnostics()) {
+      return;
+    }
+
+    const errorDiagnostics = diagnostics.diagnostics.filter((issue) => issue.severity === 'error');
+    if (errorDiagnostics.length === 0) {
+      return;
+    }
+
+    const first = errorDiagnostics[0];
+    const location = first.sourceLocation?.file ? `${first.sourceLocation.file} ` : '';
+    throw new Error(
+      `Schema compile diagnostics failed: ${location}${first.path} ${first.code} ${first.message}`.trim(),
+      {
+        cause: errorDiagnostics,
+      },
+    );
+  }
+
   function compileSchemaToTemplateNodes(
     schema: SchemaInput,
     options: CompileSchemaOptions = {},
@@ -113,6 +146,7 @@ export function createSchemaCompiler(input: {
         root: nodes,
         repeatedTemplates: new Map(),
       });
+      throwIfSchemaDiagnosticsFailed(options, diagnostics);
       return Array.isArray(template.root)
         ? (template.root as TemplateNode[])
         : ([template.root] as TemplateNode[]);
@@ -153,6 +187,7 @@ export function createSchemaCompiler(input: {
       root: node,
       repeatedTemplates: new Map(),
     });
+    throwIfSchemaDiagnosticsFailed(options, diagnostics);
     return template.root as TemplateNode | TemplateNode[];
   }
 

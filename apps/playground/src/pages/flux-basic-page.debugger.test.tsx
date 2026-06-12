@@ -290,4 +290,41 @@ describe('FluxBasicPage debugger wiring', () => {
       expect(within(form as HTMLElement).queryByPlaceholderText('Reviewer 1')).toBeNull();
     });
   });
+
+  it('shows key-value validation feedback on submit after adding an empty row', async () => {
+    const debuggerController = createNopDebugger({
+      id: 'playground-flux-basic-page-key-value-submit-test',
+      enabled: true,
+      exposeAutomationApi: true,
+    });
+
+    render(<FluxBasicPage debuggerController={debuggerController} onBack={() => undefined} />);
+
+    const submitButton = await screen.findByRole('button', { name: 'Submit key-value demo' });
+    const form = submitButton.closest('.nop-form');
+
+    expect(form).toBeTruthy();
+
+    fireEvent.click(within(form as HTMLElement).getByRole('button', { name: 'Add metadata pair' }));
+
+    const api = getNopDebuggerAutomationApi('playground-flux-basic-page-key-value-submit-test');
+    api?.clear();
+
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Entry 1 key is required')).toBeTruthy();
+    });
+
+    expect(
+      api
+        ?.getSnapshot()
+        .events.some(
+          (event) =>
+            event.kind === 'api:end' &&
+            (event.summary?.includes('/api/composite-demo') ||
+              event.detail?.includes('/api/composite-demo')),
+        ),
+    ).toBe(false);
+  });
 });

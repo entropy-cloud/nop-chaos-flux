@@ -386,6 +386,45 @@ describe('host action validation xui:actions validation', () => {
     );
   });
 
+  it('rejects component submit args when the published capability does not accept a payload', () => {
+    const formRendererWithContracts: RendererDefinition = {
+      type: 'form',
+      component: () => null,
+      componentCapabilityContracts: [
+        {
+          handle: 'submit',
+          displayName: 'Submit',
+        },
+      ],
+    };
+    const compiler = createCompiler(pageRenderer, eventRenderer, formRendererWithContracts);
+
+    expect(
+      compiler.validate?.({
+        type: 'page',
+        body: [
+          { type: 'form', id: 'my-form' },
+          {
+            type: 'event-text',
+            text: 'Hello',
+            onClick: {
+              action: 'component:submit',
+              componentId: 'my-form',
+              args: { method: 'post', url: '/api/save' },
+            },
+          },
+        ],
+      } as any),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-host-capability-args',
+          path: '/body/1/onClick/args',
+        }),
+      ]),
+    );
+  });
+
   it('keeps component selectors warning-only when componentId is duplicate or componentName-based', () => {
     const formRendererWithContracts: RendererDefinition = {
       type: 'form',

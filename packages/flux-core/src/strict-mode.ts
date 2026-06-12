@@ -1,6 +1,18 @@
 export const STRICT_VALIDATION_KEY = '__FLUX_STRICT_VALIDATION__' as const;
+export const FAIL_ON_SCHEMA_DIAGNOSTICS_KEY = '__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__' as const;
 
 function readGlobalFlag(): boolean | undefined {
+  const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
+    ?.env;
+
+  if (processEnv?.[STRICT_VALIDATION_KEY] === 'true') {
+    return true;
+  }
+
+  if (processEnv?.[STRICT_VALIDATION_KEY] === 'false') {
+    return false;
+  }
+
   if (typeof globalThis === 'undefined') {
     return undefined;
   }
@@ -63,10 +75,36 @@ export function isStrictValidationEnabled(explicitOverride?: boolean): boolean {
   return false;
 }
 
+export function shouldFailOnSchemaDiagnostics(): boolean {
+  const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
+    ?.env;
+
+  if (processEnv?.[FAIL_ON_SCHEMA_DIAGNOSTICS_KEY] === 'true') {
+    return true;
+  }
+
+  if (typeof globalThis !== 'undefined') {
+    const globalRecord = globalThis as Record<string, unknown>;
+    if (globalRecord[FAIL_ON_SCHEMA_DIAGNOSTICS_KEY] === true) {
+      return true;
+    }
+  }
+
+  return processEnv?.VITEST === 'true' || processEnv?.PLAYWRIGHT === 'true';
+}
+
 export function setStrictValidationGlobal(enabled: boolean): void {
   if (typeof globalThis === 'undefined') {
     return;
   }
 
   (globalThis as Record<string, unknown>)[STRICT_VALIDATION_KEY] = enabled;
+}
+
+export function setFailOnSchemaDiagnosticsGlobal(enabled: boolean): void {
+  if (typeof globalThis === 'undefined') {
+    return;
+  }
+
+  (globalThis as Record<string, unknown>)[FAIL_ON_SCHEMA_DIAGNOSTICS_KEY] = enabled;
 }

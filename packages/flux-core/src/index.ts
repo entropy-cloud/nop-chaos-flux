@@ -46,8 +46,11 @@ export {
 export type { NestedRegionFieldRule, RegionCompileSchema } from './nested-regions.js';
 
 export {
+  FAIL_ON_SCHEMA_DIAGNOSTICS_KEY,
   STRICT_VALIDATION_KEY,
   isStrictValidationEnabled,
+  shouldFailOnSchemaDiagnostics,
+  setFailOnSchemaDiagnosticsGlobal,
   setStrictValidationGlobal,
 } from './strict-mode.js';
 

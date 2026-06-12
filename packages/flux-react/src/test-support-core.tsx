@@ -40,6 +40,15 @@ export const textRenderer: RendererDefinition = {
   fields: [{ key: 'text', kind: 'prop', allowSource: true }],
 };
 
+export const eventTextRenderer: RendererDefinition = {
+  type: 'event-text',
+  component: (props) => <span>{String(props.props.text ?? '')}</span>,
+  fields: [
+    { key: 'text', kind: 'prop', allowSource: true },
+    { key: 'onClick', kind: 'event' },
+  ],
+};
+
 export const pageRenderer: RendererDefinition = {
   type: 'page',
   component: (props) => <section>{asReactNode(props.regions.body?.render())}</section>,

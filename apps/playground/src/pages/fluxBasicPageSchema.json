@@ -270,6 +270,13 @@
                       "type": "form",
                       "id": "kv-visibility-form",
                       "showErrorOn": ["touched", "submit"],
+                      "submitAction": {
+                        "action": "ajax",
+                        "args": {
+                          "method": "post",
+                          "url": "/api/composite-demo"
+                        }
+                      },
                       "data": {
                         "metadata": [{ "key": "", "value": "prod" }]
                       },
@@ -287,11 +294,7 @@
                           "label": "Submit key-value demo",
                           "onClick": {
                             "action": "component:submit",
-                            "componentId": "kv-visibility-form",
-                            "args": {
-                              "method": "post",
-                              "url": "/api/composite-demo"
-                            }
+                            "componentId": "kv-visibility-form"
                           }
                         }
                       ]
@@ -322,6 +325,13 @@
                       "type": "form",
                       "id": "array-visibility-form",
                       "showErrorOn": "submit",
+                      "submitAction": {
+                        "action": "ajax",
+                        "args": {
+                          "method": "post",
+                          "url": "/api/composite-demo"
+                        }
+                      },
                       "data": {
                         "reviewers": [{ "value": "" }]
                       },
@@ -339,11 +349,7 @@
                           "label": "Submit array demo",
                           "onClick": {
                             "action": "component:submit",
-                            "componentId": "array-visibility-form",
-                            "args": {
-                              "method": "post",
-                              "url": "/api/composite-demo"
-                            }
+                            "componentId": "array-visibility-form"
                           }
                         }
                       ]
