@@ -135,4 +135,36 @@ describe('condition-builder conjunction toggle diagnostics', () => {
     expect(commitLog.length).toBeLessThanOrEqual(2);
     expect(commitLog.at(-1)?.conjunction).toBe('or');
   });
+
+  it('does not animate conjunction pill state changes', async () => {
+    renderConditionBuilder();
+
+    const andButton = await screen.findByRole('button', { name: 'AND' });
+    const orButton = screen.getByRole('button', { name: 'OR' });
+
+    expect(andButton.className).toContain('transition-none');
+    expect(orButton.className).toContain('transition-none');
+    expect(andButton.className).not.toContain('transition-colors');
+    expect(orButton.className).not.toContain('transition-colors');
+  });
+
+  it('keeps selected conjunction hover styles aligned with the selected state', async () => {
+    renderConditionBuilder();
+
+    const andButton = await screen.findByRole('button', { name: 'AND' });
+    const orButton = screen.getByRole('button', { name: 'OR' });
+
+    expect(andButton.className).toContain('hover:bg-primary');
+    expect(andButton.className).toContain('hover:text-primary-foreground');
+    expect(orButton.className).not.toContain('hover:bg-primary');
+
+    fireEvent.click(orButton);
+
+    await waitFor(() => {
+      expect(orButton.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    expect(orButton.className).toContain('hover:bg-primary');
+    expect(orButton.className).toContain('hover:text-primary-foreground');
+  });
 });

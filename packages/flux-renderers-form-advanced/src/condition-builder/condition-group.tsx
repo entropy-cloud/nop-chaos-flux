@@ -258,9 +258,9 @@ export function ConditionGroup({
                   size="xs"
                   aria-pressed={value.conjunction === 'and'}
                   className={cn(
-                    'px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors',
+                    'px-2.5 py-0.5 rounded-full text-xs font-medium transition-none',
                     value.conjunction === 'and'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      ? 'bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground'
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                   onClick={() => handleConjunctionChange('and')}
@@ -273,9 +273,9 @@ export function ConditionGroup({
                   size="xs"
                   aria-pressed={value.conjunction === 'or'}
                   className={cn(
-                    'px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors',
+                    'px-2.5 py-0.5 rounded-full text-xs font-medium transition-none',
                     value.conjunction === 'or'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      ? 'bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground'
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                   onClick={() => handleConjunctionChange('or')}
