@@ -40,6 +40,7 @@ import {
 } from './async-data/data-source-runtime.js';
 import { createImportManager } from './imports.js';
 import { createImportStack } from './import-stack.js';
+import { createFormStoreDiagnosticsBridge } from './form-store-diagnostics-bridge.js';
 import { createHostProjectionScope } from './runtime-host-projection-scope.js';
 import { createNodeRuntime } from './node-runtime.js';
 import { createRuntimeNodeResolver } from './node-resolver.js';
@@ -132,6 +133,7 @@ export function createRendererRuntime(input: {
   const ownedSurfaceRuntimes = new Set<SurfaceRuntime>();
   const ownedValidationScopes = new Set<ValidationScopeRuntime>();
   const ownedFormRuntimes = new Set<FormRuntime>();
+  const formStoreDiagnosticsBridge = createFormStoreDiagnosticsBridge(ownedFormRuntimes);
   let disposed = false;
   const moduleCache = input.moduleCache ?? createModuleCache();
   const ownsModuleCache = !input.moduleCache;
@@ -498,6 +500,9 @@ export function createRendererRuntime(input: {
     },
     getAsyncOwnerDebugSnapshot() {
       return asyncGovernance.getSnapshot();
+    },
+    getFormStoreDiagnosticsBridge() {
+      return formStoreDiagnosticsBridge;
     },
     setEnv(env: RendererEnv) {
       envRef.current = env;
