@@ -43,6 +43,8 @@ type DataRowRenderProps = {
   onToggleExpand: (rowKey: string) => void;
   onSelectRow: (rowKey: string, checked: boolean) => void;
   isStriped: boolean;
+  isRowCheckable?: (rowKey: string) => boolean;
+  isAtMaxSelection?: boolean;
 };
 
 function areColumnsRenderEquivalent(
@@ -130,10 +132,16 @@ function DataRowView({
   onToggleExpand,
   onSelectRow,
   isStriped,
+  isRowCheckable,
+  isAtMaxSelection,
 }: DataRowRenderProps) {
   const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
   const hasRowClickHandler = Boolean(parentProps.events.onRowClick);
   const isRowClickable = hasRowClickHandler || expandRowByClick;
+
+  const rowCheckboxDisabled =
+    (isRowCheckable ? !isRowCheckable(rowKey) : false) ||
+    (isAtMaxSelection === true && !isSelected);
 
   const handleRowClick = (event: React.MouseEvent<HTMLTableRowElement>) => {
     if (hasRowClickHandler) {
@@ -209,11 +217,13 @@ function DataRowView({
           {schemaProps.rowSelection.type === 'radio' ? (
             <RadioGroupItem
               value={rowKey}
+              disabled={isRowCheckable ? !isRowCheckable(rowKey) : undefined}
               aria-label={t('flux.table.selectRow')}
             />
           ) : (
             <Checkbox
               checked={isSelected}
+              disabled={rowCheckboxDisabled || undefined}
               onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))}
               aria-label={t('flux.table.selectRow')}
             />
@@ -358,7 +368,9 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.expandRowByClick === next.expandRowByClick &&
     prev.onToggleExpand === next.onToggleExpand &&
     prev.onSelectRow === next.onSelectRow &&
-    prev.isStriped === next.isStriped
+    prev.isStriped === next.isStriped &&
+    prev.isRowCheckable === next.isRowCheckable &&
+    prev.isAtMaxSelection === next.isAtMaxSelection
   );
 });
 
@@ -374,6 +386,8 @@ export function renderDataRow(
   onToggleExpand: (rowKey: string) => void,
   onSelectRow: (rowKey: string, checked: boolean) => void,
   isStriped: boolean,
+  isRowCheckable?: (rowKey: string) => boolean,
+  isAtMaxSelection?: boolean,
 ) {
   return (
     <MemoizedDataRow
@@ -388,6 +402,8 @@ export function renderDataRow(
       onToggleExpand={onToggleExpand}
       onSelectRow={onSelectRow}
       isStriped={isStriped}
+      isRowCheckable={isRowCheckable}
+      isAtMaxSelection={isAtMaxSelection}
     />
   );
 }

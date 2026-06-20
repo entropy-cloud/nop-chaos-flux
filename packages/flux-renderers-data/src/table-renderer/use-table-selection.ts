@@ -17,13 +17,25 @@ export function useTableSelection(
   const selectionStatePath =
     typeof schemaProps.selectionStatePath === 'string' ? schemaProps.selectionStatePath : undefined;
 
+  const rowSelection = schemaProps.rowSelection;
+  const keepOnPageChange = rowSelection?.keepOnPageChange === true;
+  const maxSelectionLength =
+    typeof rowSelection?.maxSelectionLength === 'number' && rowSelection.maxSelectionLength > 0
+      ? rowSelection.maxSelectionLength
+      : undefined;
+  const checkableWhen =
+    typeof rowSelection?.checkableWhen === 'string' && rowSelection.checkableWhen.length > 0
+      ? rowSelection.checkableWhen
+      : undefined;
+  const isRadio = rowSelection?.type === 'radio';
+
   const [localSelectedRowKeys, setLocalSelectedRowKeys] = useState<Set<string>>(
-    new Set(schemaProps.rowSelection?.selectedRowKeys ?? []),
+    new Set(rowSelection?.selectedRowKeys ?? []),
   );
 
   const controlledSelectedRowKeys = useMemo(
-    () => new Set(toStringArray(schemaProps.rowSelection?.selectedRowKeys)),
-    [schemaProps.rowSelection?.selectedRowKeys],
+    () => new Set(toStringArray(rowSelection?.selectedRowKeys)),
+    [rowSelection?.selectedRowKeys],
   );
 
   const scopeSelectedRowKeys = useScopeSelector(
@@ -58,17 +70,97 @@ export function useTableSelection(
     [schemaProps.rowKey, source],
   );
 
-  const allSelected = useMemo(
-    () =>
-      normalizedRows.length > 0 && normalizedRows.every((row) => selectedRowKeys.has(row.rowKey)),
-    [normalizedRows, selectedRowKeys],
+  const checkableRowKeys = useMemo(() => {
+    if (!checkableWhen) {
+      return null;
+    }
+
+    const checkable = new Set<string>();
+    for (const row of normalizedRows) {
+      let isCheckable = true;
+      try {
+        const rowScope = helpers.createScope({
+          record: row.record,
+          index: row.sourceIndex,
+        });
+        const wrapped = `\${${checkableWhen}}`;
+        const result = helpers.evaluate(wrapped, rowScope);
+        isCheckable = Boolean(result);
+      } catch {
+        isCheckable = false;
+      }
+      if (isCheckable) {
+        checkable.add(row.rowKey);
+      }
+    }
+    return checkable;
+  }, [checkableWhen, normalizedRows, helpers]);
+
+  const isRowCheckable = useCallback(
+    (rowKey: string) => {
+      if (!checkableRowKeys) {
+        return true;
+      }
+      return checkableRowKeys.has(rowKey);
+    },
+    [checkableRowKeys],
   );
+
+  const isAtMaxSelection = useMemo(() => {
+    if (!maxSelectionLength || isRadio) {
+      return false;
+    }
+    return selectedRowKeys.size >= maxSelectionLength;
+  }, [maxSelectionLength, isRadio, selectedRowKeys.size]);
+
+  const allSelected = useMemo(() => {
+    const selectableRows = checkableRowKeys
+      ? normalizedRows.filter((row) => checkableRowKeys.has(row.rowKey))
+      : normalizedRows;
+    return (
+      selectableRows.length > 0 &&
+      selectableRows.every((row) => selectedRowKeys.has(row.rowKey))
+    );
+  }, [normalizedRows, selectedRowKeys, checkableRowKeys]);
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
-      const nextKeys = checked
-        ? new Set(normalizedRows.map((row) => row.rowKey))
-        : new Set<string>();
+      const currentRowKeys = (
+        checkableRowKeys
+          ? normalizedRows.filter((row) => checkableRowKeys.has(row.rowKey))
+          : normalizedRows
+      ).map((row) => row.rowKey);
+
+      let nextKeys: Set<string>;
+
+      if (checked) {
+        if (keepOnPageChange) {
+          nextKeys = new Set(selectedRowKeys);
+          for (const key of currentRowKeys) {
+            if (maxSelectionLength && nextKeys.size >= maxSelectionLength) {
+              break;
+            }
+            nextKeys.add(key);
+          }
+        } else {
+          nextKeys = new Set<string>();
+          for (const key of currentRowKeys) {
+            if (maxSelectionLength && nextKeys.size >= maxSelectionLength) {
+              break;
+            }
+            nextKeys.add(key);
+          }
+        }
+      } else {
+        if (keepOnPageChange) {
+          const currentPageSet = new Set(currentRowKeys);
+          nextKeys = new Set(
+            Array.from(selectedRowKeys).filter((key) => !currentPageSet.has(key)),
+          );
+        } else {
+          nextKeys = new Set<string>();
+        }
+      }
 
       startTransition(() => {
         if (selectionOwnership === 'local') {
@@ -97,19 +189,35 @@ export function useTableSelection(
         }),
       );
     },
-    [helpers, normalizedRows, onSelectionChange, renderScope, selectionOwnership, selectionStatePath],
+    [
+      helpers,
+      normalizedRows,
+      onSelectionChange,
+      renderScope,
+      selectionOwnership,
+      selectionStatePath,
+      keepOnPageChange,
+      maxSelectionLength,
+      selectedRowKeys,
+      checkableRowKeys,
+    ],
   );
-
-  const isRadio = schemaProps.rowSelection?.type === 'radio';
 
   const handleSelectRow = useCallback(
     (rowKey: string, checked: boolean) => {
+      if (checked && checkableRowKeys && !checkableRowKeys.has(rowKey)) {
+        return;
+      }
+
       const baseSet = selectionOwnership === 'local' ? localSelectedRowKeys : selectedRowKeys;
 
       let newSet: Set<string>;
       if (isRadio) {
         newSet = checked ? new Set([rowKey]) : new Set<string>();
       } else {
+        if (checked && maxSelectionLength && baseSet.size >= maxSelectionLength) {
+          return;
+        }
         newSet = new Set(baseSet);
         if (checked) {
           newSet.add(rowKey);
@@ -154,6 +262,8 @@ export function useTableSelection(
       selectedRowKeys,
       selectionOwnership,
       selectionStatePath,
+      checkableRowKeys,
+      maxSelectionLength,
     ],
   );
 
@@ -195,5 +305,8 @@ export function useTableSelection(
     handleSelectAll,
     handleSelectRow,
     setSelectionExternal,
+    isRowCheckable,
+    isAtMaxSelection,
+    checkableRowKeys,
   };
 }

@@ -104,8 +104,7 @@ export interface CrudSelectionConfig extends SchemaObject {
   type?: 'checkbox' | 'radio';
   keepOnPageChange?: boolean;
   maxSelectionLength?: number;
-  maxKeepSelectionLength?: number;
-  checkableWhen?: SchemaValue;
+  checkableWhen?: string;
 }
 
 export interface CrudMigrationHints extends SchemaObject {

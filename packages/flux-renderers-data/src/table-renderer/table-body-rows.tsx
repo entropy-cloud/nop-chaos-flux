@@ -27,6 +27,8 @@ interface TableBodyRowsProps {
   expandRowByClick: boolean;
   onToggleExpand: (rowKey: string) => void;
   onSelectRow: (rowKey: string, checked: boolean) => void;
+  isRowCheckable?: (rowKey: string) => boolean;
+  isAtMaxSelection?: boolean;
   virtualEnabled?: boolean;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
 }
@@ -48,6 +50,8 @@ export function TableBodyRows({
   expandRowByClick,
   onToggleExpand,
   onSelectRow,
+  isRowCheckable,
+  isAtMaxSelection,
   virtualEnabled,
   scrollRef,
 }: TableBodyRowsProps) {
@@ -70,6 +74,8 @@ export function TableBodyRows({
         expandRowByClick={expandRowByClick}
         onToggleExpand={onToggleExpand}
         onSelectRow={onSelectRow}
+        isRowCheckable={isRowCheckable}
+        isAtMaxSelection={isAtMaxSelection}
       />
     );
   }
@@ -92,6 +98,8 @@ export function TableBodyRows({
       expandRowByClick={expandRowByClick}
       onToggleExpand={onToggleExpand}
       onSelectRow={onSelectRow}
+      isRowCheckable={isRowCheckable}
+      isAtMaxSelection={isAtMaxSelection}
       scrollRef={scrollRef}
     />
   );
@@ -114,6 +122,8 @@ function NonVirtualBody({
   expandRowByClick,
   onToggleExpand,
   onSelectRow,
+  isRowCheckable,
+  isAtMaxSelection,
 }: TableBodyRowsProps) {
   const schemaProps = props.props as TableSchema;
   const helpers = props.helpers;
@@ -165,6 +175,8 @@ function NonVirtualBody({
               onToggleExpand,
               onSelectRow,
               isStriped,
+              isRowCheckable,
+              isAtMaxSelection,
             )}
             {isExpanded && schemaProps.expandable?.expandedRowRegionKey
               ? renderExpandedRow(
@@ -225,6 +237,8 @@ function VirtualBody({
   expandRowByClick,
   onToggleExpand,
   onSelectRow,
+  isRowCheckable,
+  isAtMaxSelection,
   emptyContent,
   scrollRef,
 }: TableBodyRowsProps) {
@@ -315,6 +329,8 @@ function VirtualBody({
                     onToggleExpand,
                     onSelectRow,
                     isStriped,
+                    isRowCheckable,
+                    isAtMaxSelection,
                   )}
                 </React.Fragment>
               );

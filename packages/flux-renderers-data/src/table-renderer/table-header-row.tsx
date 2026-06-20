@@ -37,6 +37,7 @@ interface TableHeaderRowProps {
   onSearch: (column: string, keyword: string) => void;
   onClearFilters: (column: string) => void;
   onSelectAll: (checked: boolean) => void;
+  selectAllDisabled?: boolean;
 }
 
 export function TableHeaderRow({
@@ -54,6 +55,7 @@ export function TableHeaderRow({
   onSearch,
   onClearFilters,
   onSelectAll,
+  selectAllDisabled,
 }: TableHeaderRowProps) {
   const schemaProps = props.props as TableSchema;
 
@@ -79,6 +81,7 @@ export function TableHeaderRow({
             <Checkbox
               checked={allSelected && selectedRowCount === sourceLength && sourceLength > 0}
               indeterminate={!allSelected && selectedRowCount > 0}
+              disabled={selectAllDisabled || undefined}
               onCheckedChange={(checked) => onSelectAll(Boolean(checked))}
               aria-label={t('flux.table.selectAll')}
             />

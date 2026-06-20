@@ -97,6 +97,9 @@ export interface TableSchema extends BaseSchema {
   rowSelection?: {
     type?: 'checkbox' | 'radio';
     selectedRowKeys?: string[];
+    keepOnPageChange?: boolean;
+    maxSelectionLength?: number;
+    checkableWhen?: string;
   };
   expandable?: {
     expandedRowKeys?: string[];

@@ -191,8 +191,15 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const [inlineColumnSettingsOpen, setInlineColumnSettingsOpen] = useState(false);
   const { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage } =
     useTablePagination(tableSchemaProps, props.events.onPageChange, helpers);
-  const { selectedRowKeys, allSelected, handleSelectAll, handleSelectRow, setSelectionExternal } =
-    useTableSelection(tableSchemaProps, source, props.events.onSelectionChange, helpers);
+  const {
+    selectedRowKeys,
+    allSelected,
+    handleSelectAll,
+    handleSelectRow,
+    setSelectionExternal,
+    isRowCheckable,
+    isAtMaxSelection,
+  } = useTableSelection(tableSchemaProps, source, props.events.onSelectionChange, helpers);
   const { sortState, handleSort } = useTableSort(
     tableSchemaProps,
     props.events.onSortChange,
@@ -454,6 +461,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
               onSearch={handleSearch}
               onClearFilters={clearFilters}
               onSelectAll={handleSelectAll}
+              selectAllDisabled={isAtMaxSelection && !allSelected}
             />
           </TableHeader>
 
@@ -474,6 +482,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             expandRowByClick={expandRowByClick}
             onToggleExpand={handleToggleExpand}
             onSelectRow={handleSelectRow}
+            isRowCheckable={isRowCheckable}
+            isAtMaxSelection={isAtMaxSelection}
             virtualEnabled={virtualEnabled}
             scrollRef={scrollRef}
           />

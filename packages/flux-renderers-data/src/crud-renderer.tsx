@@ -252,7 +252,13 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     };
 
     if (normalizedSchema.selection) {
-      base.rowSelection = { type: normalizedSchema.selection.type ?? 'checkbox', selectedRowKeys };
+      base.rowSelection = {
+        type: normalizedSchema.selection.type ?? 'checkbox',
+        selectedRowKeys,
+        keepOnPageChange: normalizedSchema.selection.keepOnPageChange,
+        maxSelectionLength: normalizedSchema.selection.maxSelectionLength,
+        checkableWhen: normalizedSchema.selection.checkableWhen,
+      };
     }
 
     if (normalizedSchema.onRefresh) {

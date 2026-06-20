@@ -27,6 +27,7 @@ export function resetTableControlTestState() {
 export function createHelpers() {
   return {
     createScope: vi.fn((value: unknown, options?: unknown) => ({ value, options })),
+    evaluate: vi.fn((target: unknown) => target),
   } as any;
 }
 
