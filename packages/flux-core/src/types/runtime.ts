@@ -67,6 +67,29 @@ export interface FormStoreDiagnosticsOptions {
   maxRecentCommits?: number;
 }
 
+export interface FormStoreDiagnosticsOwnerQuery {
+  formId?: string;
+  formName?: string;
+  scopeId?: string;
+}
+
+export interface FormStoreDiagnosticsOwnerSummary {
+  formId: string;
+  formName?: string;
+  scopeId: string;
+}
+
+export interface FormStoreDiagnosticsBridge {
+  listOwners(): FormStoreDiagnosticsOwnerSummary[];
+  startSession(
+    query: FormStoreDiagnosticsOwnerQuery,
+    options?: FormStoreDiagnosticsOptions,
+  ): boolean;
+  stopSession(query: FormStoreDiagnosticsOwnerQuery): boolean;
+  clearSession(query: FormStoreDiagnosticsOwnerQuery): boolean;
+  getSnapshot(query: FormStoreDiagnosticsOwnerQuery): FormStoreDiagnosticsSnapshot | undefined;
+}
+
 export interface FormErrorQuery {
   path?: string;
   ownerPath?: string;

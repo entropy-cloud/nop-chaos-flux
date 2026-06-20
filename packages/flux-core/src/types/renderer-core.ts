@@ -335,6 +335,7 @@ export interface RendererRuntime {
   getSourceDebugSnapshot?(): SourceRegistryDebugSnapshot;
   getReactionDebugSnapshot?(): ReactionRegistryDebugSnapshot;
   getAsyncOwnerDebugSnapshot?(): AsyncOwnerDebugSnapshot;
+  getFormStoreDiagnosticsBridge?(): import('./runtime.js').FormStoreDiagnosticsBridge;
   moduleCache: ModuleCache;
   setEnv(env: RendererEnv): void;
   dispose(): void;
