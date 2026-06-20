@@ -1,4 +1,5 @@
-import type { ChangeEvent, ComponentProps } from 'react';
+import type { ChangeEvent, ComponentProps, ReactNode } from 'react';
+import { useState } from 'react';
 import {
   type BaseSchema,
   stringAdapter,
@@ -16,7 +17,7 @@ import {
   InputGroupText,
   cn,
 } from '@nop-chaos/ui';
-import { XIcon } from 'lucide-react';
+import { Eye, EyeOff, XIcon } from 'lucide-react';
 import { formFieldRules, useFormFieldController } from '../field-utils.js';
 import type {
   InputSchema,
@@ -43,6 +44,7 @@ export const inputEnhancementFieldRules: SchemaFieldRule[] = [
   { key: 'trimContents', kind: 'prop', valueType: 'boolean' },
   { key: 'showCounter', kind: 'prop', valueType: 'boolean' },
   { key: 'nativeAutoComplete', kind: 'prop' },
+  { key: 'revealPassword', kind: 'prop', valueType: 'boolean' },
   { key: 'placeholder', kind: 'prop' },
   { key: 'minLength', kind: 'prop' },
   { key: 'maxLength', kind: 'prop' },
@@ -74,6 +76,7 @@ type InputGroupFieldControlProps = FrameInjectedAriaProps & {
   counterText?: string;
   showClearButton?: boolean;
   onClear?: () => void;
+  revealSlot?: ReactNode;
 };
 
 function InputGroupFieldControl(props: InputGroupFieldControlProps) {
@@ -92,6 +95,7 @@ function InputGroupFieldControl(props: InputGroupFieldControlProps) {
     counterText,
     showClearButton,
     onClear,
+    revealSlot,
   } = props;
 
   const ownId = inputProps.id;
@@ -127,7 +131,7 @@ function InputGroupFieldControl(props: InputGroupFieldControlProps) {
         </InputGroupAddon>
       ) : null}
       <InputGroupInput {...mergedInputProps} />
-      {suffix || counterText !== undefined || showClearButton ? (
+      {suffix || counterText !== undefined || showClearButton || revealSlot ? (
         <InputGroupAddon align="inline-end">
           {suffix ? <InputGroupText>{suffix}</InputGroupText> : null}
           {counterText !== undefined ? (
@@ -145,6 +149,7 @@ function InputGroupFieldControl(props: InputGroupFieldControlProps) {
               <XIcon className="pointer-events-none" />
             </InputGroupButton>
           ) : null}
+          {revealSlot}
         </InputGroupAddon>
       ) : null}
     </InputGroup>
@@ -162,6 +167,10 @@ export function createInputRenderer(inputType: string) {
     });
     const inputValue = (value as string | undefined) ?? '';
     const errorId = name ? `${name}-error` : undefined;
+
+    const revealEnabled = inputType === 'password' && props.props.revealPassword === true;
+    const [revealed, setRevealed] = useState(false);
+    const actualInputType = revealEnabled && revealed ? 'text' : inputType;
 
     const nativeAttrs: { minLength?: number; maxLength?: number; pattern?: string } = {};
     if (typeof props.props.minLength === 'number') {
@@ -202,6 +211,10 @@ export function createInputRenderer(inputType: string) {
       handlers.onChange('');
     }
 
+    function handleRevealToggle() {
+      setRevealed((prev) => !prev);
+    }
+
     const counterText =
       showCounter && typeof inputValue === 'string'
         ? maxLength !== undefined
@@ -209,11 +222,29 @@ export function createInputRenderer(inputType: string) {
           : `${inputValue.length}`
         : undefined;
 
-    const hasInlineEndSlot = Boolean(suffix) || clearable || showCounter;
+    const revealSlot = revealEnabled ? (
+      <InputGroupButton
+        size="icon-xs"
+        variant="ghost"
+        data-slot="input-password-reveal"
+        aria-label={revealed ? 'Hide password' : 'Show password'}
+        aria-pressed={revealed}
+        disabled={!presentation.interactive}
+        onClick={handleRevealToggle}
+      >
+        {revealed ? (
+          <EyeOff className="pointer-events-none" />
+        ) : (
+          <Eye className="pointer-events-none" />
+        )}
+      </InputGroupButton>
+    ) : null;
+
+    const hasInlineEndSlot = Boolean(suffix) || clearable || showCounter || revealEnabled;
     const needsInputGroup = Boolean(prefix) || hasInlineEndSlot;
 
     const sharedInputProps: ComponentProps<typeof InputGroupInput> = {
-      type: inputType,
+      type: actualInputType,
       id: name ? `${name}-control` : undefined,
       name: name || undefined,
       value: inputValue,
@@ -247,6 +278,7 @@ export function createInputRenderer(inputType: string) {
         counterText={counterText}
         showClearButton={showClearButton}
         onClear={handleClear}
+        revealSlot={revealSlot}
       />
     );
   };
