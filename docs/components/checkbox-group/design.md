@@ -10,6 +10,26 @@
 - 当前已支持 `options`，并声明为 source-enabled field。
 - 全选、分组、最大选择数等能力可作为后续增强，但仍围绕数组值输出。
 
+### Flux 决策表
+
+> Flux 决策主语。amis 仅作参考之一，**非标尺**。option 形状坚持 shadcn `{label,value}` 标准。Flux 按 `existing-components-improvement-analysis.md` §0.2 原则裁决，命名对齐 X3 基线（`docs/references/naming-conventions.md` §2/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。
+
+| 能力                                                              | 采纳                | 不采纳     | 理由                                                |
+| ----------------------------------------------------------------- | ------------------- | ---------- | --------------------------------------------------- |
+| 多选扁平 `options`（`{label,value}`）、数组值                     | **实现**            | —          | 当前基线；option 形状对齐 X3 §2/§4.3                |
+| `options` source 加载态                                           | **实现**            | —          | 当前基线                                            |
+| group 级 `disabled`/`readOnly`/`required`                         | **实现**            | —          | 当前基线                                            |
+| `checkAll` + 半选 indeterminate                                   | **计划实现（E2c）** | —          | 真实高频需求                                        |
+| `maxSelected`/`minSelected`                                       | **计划实现（E2c）** | —          | design §4 已提及，补 schema field                   |
+| per-option `disabled` + `disabledTip`                             | **计划实现（E2c）** | —          | 常见表单需求                                        |
+| `columnsCount` 多列                                               | **暂不实现**        | —          | 布局归 `flex`，场景窄                               |
+| `optionType: 'button'`（按钮式/分段）                             | **暂不实现**        | —          | 后续按需                                            |
+| `menuTpl` 模板                                                    | **暂不实现**        | —          | 受控 option region 未开放                           |
+| `creatable`/`addApi`、`editable`/`removable`                      | **暂不实现**        | —          | 场景窄，后续按需                                    |
+| amis 值编码 `valueField`/`labelField`/`joinValues`/`extractValue` | —                   | **不采纳** | 用 `{label,value}` 标准形状（X3 §3 值编码 amis 化） |
+| amis 组件级 `api`                                                 | —                   | **不采纳** | 请求下沉 data-source（X3 §1/§3）                    |
+| amis `mobileUI` 双实现                                            | —                   | **不采纳** | 走响应式（见 mobile-roadmap，X3 §3）                |
+
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'checkbox-group'`

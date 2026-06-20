@@ -7,8 +7,27 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前已支持 `options`，并且 `options` 已通过 field metadata 声明为 `allowSource`。
-- 搜索、多选、分组和复杂 option 渲染属于后续能力，但仍应围绕单一 `select` type 演进。
+- amis 仅作参考之一，**非标尺**。Flux 按 `existing-components-improvement-analysis.md` §0.2 原则裁决。当前 `select` 是单选 NativeSelect，**缺搜索过滤、多选、远程异步搜索、虚拟滚动、clearable、creatable、分组、option 模板**（用户反馈的"缺输入过滤"为头号缺口），属 P0 改进项 E1a。
+- `placeholder` **已实现**（文档历史版本误列为"后续补齐"，已校正）。
+
+### Flux 决策表
+
+> Flux 决策主语。amis 仅作参考之一，**非标尺**。命名对齐 X3 基线（`docs/references/naming-conventions.md` §2/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。`—` 表示该侧无内容。
+
+| 能力                                                                                        | 采纳                                                                                                  | 不采纳                                                   | 理由                                                                                 |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 单选 + 静态/异步 `options`（`{label,value}` 标准形状）                                      | **实现**：`options`（source-enabled，一次性异步加载）+ `placeholder`/`disabled`/`readOnly`/`required` | —                                                        | 当前基线；option 形状对齐 X3 §2（`{label,value}`，不用 amis 值编码）                 |
+| 输入搜索过滤                                                                                | **计划实现（E1a）**：`searchable` + `filterOption`（shadcn Combobox 命名 + 高亮）                     | amis 组件级 `autoComplete` SchemaApi 生命周期            | 头号缺口；命名对齐 shadcn/ui Combobox；请求下沉 data-source + action（X3 §1/§3）     |
+| 多选                                                                                        | **计划实现（E1a）**：`multiple`（tag 模式渲染选中项）                                                 | amis `checkAll`/`defaultCheckAll`（归 `checkbox-group`） | 多选是 select 核心能力；全选语义归离散多选集合字段（checkbox-group）                 |
+| `clearable` 清空                                                                            | **计划实现（E1a）**：`clearable`（明确布尔，对齐 shadcn）                                             | —                                                        | 命名对齐 X3 §2（肯定式布尔）                                                         |
+| 虚拟滚动（大 option 集）                                                                    | **计划实现（E1a）**：复用 table 的 virtual 模式                                                       | —                                                        | 大 option 集性能                                                                     |
+| 分组 option                                                                                 | **计划实现（E1a）**：嵌套 `options` 或 `groups: { label, options }[]`                                 | amis `children` 混合扁平编码                             | 命名对齐 X3 §4.3（不用 amis 扁平编码）                                               |
+| option 模板渲染                                                                             | **计划实现（E1a）**：受控 option label region                                                         | —                                                        | 自定义 option 展示                                                                   |
+| 远程异步搜索（debounce）                                                                    | **计划实现（E1a）**：走 data-source，不在组件开 `api`                                                 | amis 组件级 `api`/`initFetch`                            | 请求下沉 data-source + action（X3 §1/§3）                                            |
+| `creatable`/`editable`/`removable` option                                                   | **暂不实现**                                                                                          | —                                                        | 场景窄，后续按需                                                                     |
+| amis 多模式 `selectMode`（table/group/tree/chained/associated）                             | —                                                                                                     | **不采纳**                                               | 多模式归 tree-select/picker/transfer 等独立组件，不塞进 select（X3 §1 "核心已简化"） |
+| amis 值编码 `valueField`/`labelField`/`joinValues`/`extractValue`/`delimiter`/`simpleValue` | —                                                                                                     | **不采纳**                                               | 用 shadcn `{label,value}` 标准形状；如需扩展按命名规范单独立项（X3 §3）              |
+| amis 皮肤/双实现 `borderMode`/`overlay`/`mobileUI`/`hideSelected`/`showInvalidMatch`        | —                                                                                                     | **不采纳**                                               | amis 皮肤变体/双实现坏设计；移动端走响应式（见 mobile-roadmap，X3 §3）               |
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -20,7 +39,7 @@
 ## 4. schema 设计
 
 - 继承 `InputSchema` 并增加 `options`。
-- 建议后续补齐 `multiple`、`searchable`、`clearable`、`placeholder` 等常用字段，但命名应尽量对齐 `@nop-chaos/ui` 的选择器接口。
+- E1a 将补齐 `multiple`、`searchable`、`clearable`、`filterOption` 等字段，命名对齐 shadcn/ui Combobox（不采纳 amis `joinValues`/`extractValue`/`selectMode` 等命名，见 §2 决策表）。`placeholder` 已实现。
 
 ## 5. 字段分类
 

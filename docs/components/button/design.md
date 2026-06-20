@@ -10,6 +10,31 @@
 - 当前已实现 `label`、`variant`、`size`、`disabled` 和 `onClick`。
 - 链接按钮、加载态、图标前后缀和确认语义应作为后续增强，但仍保持单一 `button` type。
 
+### Flux 决策表
+
+> Flux 决策主语。amis 仅作参考之一，**非标尺**。新增字段**命名对齐 shadcn/ui Button**。Flux 按 `existing-components-improvement-analysis.md` §0.2 原则裁决，命名对齐 X3 基线（`docs/references/naming-conventions.md` §2/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。
+
+| 能力              | 采纳                                                                    | 不采纳                                                                                     | 理由                                                                           |
+| ----------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| 基线动作触发      | **实现**：`label`/`disabled`/`onClick`                                  | —                                                                                          | 当前基线                                                                       |
+| 视觉变体          | **实现**：`variant`（default/destructive/outline/secondary/ghost/link） | amis `level`（info/success/warning/dark/light/...）                                        | 命名对齐 shadcn Button（X3 §2 `variant` 6 值受控词表）                         |
+| 尺寸              | **实现**：`size`（8 值）                                                | —                                                                                          | 当前基线；对齐 shadcn Button size 词表（X3 §2）                                |
+| 图标              | **计划实现（E2e）**：`icon` + `rightIcon`                               | —                                                                                          | 命名对齐 shadcn Button                                                         |
+| 加载态            | **计划实现（E2e）**：`loading`（+ `loadingOn`）                         | —                                                                                          | 显式状态归属（见 §7），不在按钮内静默持有                                      |
+| tooltip           | **计划实现（E2e）**：`tooltip` + `disabledTip`                          | —                                                                                          | 高频可用性                                                                     |
+| 全宽              | **计划实现（E2e）**：`block`                                            | —                                                                                          | shadcn 命名（X3 §4.1 肯定式布尔）                                              |
+| toggle 态         | **计划实现（E2e）**：`active`                                           | —                                                                                          | 命名对齐 shadcn Button                                                         |
+| 动作触发协议      | **实现**：Flux action graph（`onClick` 事件 + action）                  | amis `actionType` 判别树（ajax/dialog/drawer/toast/copy/reload/email/download/saveAs/url） | 走 Flux action graph，点击逻辑不塞进 button（X3 §1/§3）；amis 复杂判别树不引入 |
+| 请求/异步         | —                                                                       | **不采纳**：amis 组件级 `api`/`asyncApi`                                                   | 请求下沉 action（X3 §1/§3）                                                    |
+| 全局热键          | —                                                                       | **不采纳**：`hotKey`                                                                       | 全局热键属宿主/独立方案                                                        |
+| 倒计时            | —                                                                       | **不采纳**：`countDown`/`countDownTpl`                                                     | 低频，引入 localStorage 耦合                                                   |
+| 菜单项模式        | —                                                                       | **不采纳**：`isMenuItem`                                                                   | 独立 menu 组件族                                                               |
+| 选中要求/条件禁用 | —                                                                       | **不采纳**：`requireSelected`/`disabledOnAction`                                           | 用 action graph 条件门                                                         |
+| 反馈/消息/载荷    | —                                                                       | **不采纳**：`feedback`/`messages`/`payload`                                                | 走 action 层（X3 §3）                                                          |
+| 鼠标进出事件      | —                                                                       | **不采纳**：`onMouseEnter`/`onMouseLeave`                                                  | 用 action graph 事件                                                           |
+
+**BY-DESIGN**：`confirmText` 确认语义走 action 层（不在 button 内置 dialog）；`body` region 暂不开放，自定义内容优先升级 `label` 为 `value-or-region`（见 §6）。
+
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'button'`

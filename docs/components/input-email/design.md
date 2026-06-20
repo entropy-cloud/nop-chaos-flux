@@ -12,6 +12,17 @@
 - `minLength`/`maxLength`/`pattern` 同 input-text，已实现（双重生效：编译期 `collectSchemaValidationRules` 收集为 validation rule + `createInputRenderer` 透传原生 `<input>` 属性）。详见 `input-text/design.md` §2、§3。
 - 文档应明确它不是第二套字段体系，只是字符串输入的语义别名。
 
+### Flux 决策表
+
+> Flux 决策主语。文本输入族共享面（`name`/`placeholder`/`required`/`minLength`/`maxLength`/`pattern` 双重生效/prefix/suffix/clearable/trimContents/showCounter/autoComplete/nativeAutoComplete/input-mask/amis `addOn`/amis `transform`/amis `borderMode`/amis `clearValueOnEmpty`/amis 组件级 `api`）见 `input-text/design.md` §2 Flux 决策表，本表只列 input-email **特化差异**。命名对齐 X3 基线（`docs/references/naming-conventions.md`）。列：`能力 | 采纳 | 不采纳 | 理由`。
+
+| 能力                                     | 采纳                                                                        | 不采纳             | 理由                                                              |
+| ---------------------------------------- | --------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------- |
+| HTML input type                          | **实现**：`type='input-email'` → 渲染 `<input type="email">`                | —                  | 邮箱语义特化；浏览器原生邮箱键盘/校验辅助                         |
+| 默认校验规则                             | **实现**：`createFieldValidation(undefined, true)` 附带默认 email validator | —                  | email 字段默认校验是核心语义，不是可选 addon                      |
+| 远端邮箱可用性校验                       | **计划实现**：走 `validate.api`（async rule）                               | —                  | 异步校验走统一 validate action，不加进 renderer 内部（见 §9）     |
+| 邮箱特化字段（如 `multiple` 多邮箱输入） | —                                                                           | **不采纳**（首版） | 用 input-text + tag-list 组合替代；避免破坏输入族统一性（见 §12） |
+
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'input-email'`

@@ -13,6 +13,33 @@
 - 长期基线应把 declarative dialog 与 built-in `openDialog` 打开的 dialog 收敛成同一 surface family runtime，而不是保留两套生命周期。
 - 文档基线应优先围绕 title/body/actions/open-state 这些稳定能力，不急于覆盖全部历史 mode。
 
+### Flux 决策表
+
+> Flux 决策主语。amis 仅作参考之一，**非标尺**。命名对齐 shadcn/ui、请求下沉 data-source + action、移动端走响应式（X3 §1/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。
+
+| 能力                                                            | 采纳                                           | 不采纳     | 理由                                                                             |
+| --------------------------------------------------------------- | ---------------------------------------------- | ---------- | -------------------------------------------------------------------------------- |
+| `title`/`body`/`actions` region                                 | **实现**：三 region shell                      | —          | 当前基线                                                                         |
+| `data`/`open`/`defaultOpen`/`statusPath`                        | **实现**：受控/非受控打开态 + 状态发布         | —          | 当前基线                                                                         |
+| `closeOnOutsideClick`/`container`/`showMask`                    | **实现**                                       | —          | 当前基线                                                                         |
+| `onOpen`/`onClose` 事件                                         | **实现**：走 action schema                     | —          | 当前基线                                                                         |
+| 共享 `SurfaceRuntime` + declarative/`openDialog` 漏斗同栈       | **实现**：runtime 子 scope、重新打开新建 scope | —          | 当前基线                                                                         |
+| `closeOnEsc`（Esc 关闭）                                        | **计划实现（E2f）**                            | —          | 高频交互                                                                         |
+| `size` 预设（xs/sm/md/lg/xl/full）                              | **计划实现（E2f）**                            | —          | 对齐 shadcn size 语义（X3 §2）                                                   |
+| `width`/`height` 显式尺寸                                       | **计划实现（E2f）**                            | —          | size 之上的精确覆盖                                                              |
+| 独立 `header`/`footer` region（当前 footer 折进 `actions`）     | **计划实现（E2f）**                            | —          | header/footer 与 actions 解耦；命名沿用 region 语义（X3 §4.5）                   |
+| `confirm`（actions 省略时自动生成 cancel/confirm 按钮）         | **计划实现（E2f）**                            | —          | confirm 语义叠在 surface 之上，不混进 open-state                                 |
+| `showCloseButton` toggle                                        | **计划实现（E2f）**                            | —          | 显式开关，替代隐式假设                                                           |
+| `draggable` + 拖把（schema 暴露）                               | **暂不实现**                                   | —          | UI primitive 已支持拖把，schema 未暴露；非高频                                   |
+| `allowFullscreen` + setFullScreen                               | **暂不实现**                                   | —          | dialog 场景低频                                                                  |
+| `dialogType: 'confirm'` 类型判别                                | **暂不实现**                                   | —          | 用 `confirm` 布尔 + surface 语义，不引入判别树（X3 §4.2）                        |
+| `showErrorMsg`/`showLoading` 叠层                               | **暂不实现**                                   | —          | 走 statusPath + 外部组件表达                                                     |
+| `lazyRender`/`lazySchema`                                       | **暂不实现**                                   | —          | 当前重新打开即新建 scope，按需再评估                                             |
+| 动画/过渡钩子（entered/exited 驱动生命周期事件）                | **暂不实现**                                   | —          | 低频，后续按需                                                                   |
+| amis 文本/参数包 `msg`/`confirmText`/`cancelText`/`inputParams` | —                                              | **不采纳** | 用 Flux action + surface 表达，不在组件塞文本/参数包（X3 §3 button amis 化同源） |
+| amis 组件级 `api` 生命周期                                      | —                                              | **不采纳** | 请求下沉 data-source + action，不开短路径（X3 §1/§3）                            |
+| amis `mobileUI`（小屏全屏覆盖）                                 | —                                              | **不采纳** | 走响应式（见 mobile-roadmap），不引入双实现标志位（X3 §3）                       |
+
 ## 3. Flux 中的 renderer/type 定义
 
 - 当前 `type: 'dialog'`

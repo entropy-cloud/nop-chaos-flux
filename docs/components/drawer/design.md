@@ -13,6 +13,29 @@
 - 长期基线应把 declarative drawer 与 built-in `openDrawer` 打开的 drawer 收敛成同一 surface family runtime，而不是保留两套生命周期。
 - 首版应优先保留方向、打开态和内容区，不额外复制一整套 dialog 专属字段别名。
 
+### Flux 决策表
+
+> Flux 决策主语。amis 仅作参考之一，**非标尺**。命名对齐 shadcn/ui、请求下沉 data-source + action、移动端走响应式（X3 §1/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。
+>
+> ⚠️ **不对称 bug（E2f 修复）**：`dialog` 有 `closeOnOutsideClick`，`drawer` schema 无 `closeOnOutside` —— 这是显式 bug。E2f 补齐 `closeOnOutside`，与 dialog 对齐命名，消除表面族契约不对称。
+
+| 能力                                                            | 采纳                          | 不采纳     | 理由                                                                           |
+| --------------------------------------------------------------- | ----------------------------- | ---------- | ------------------------------------------------------------------------------ |
+| `title`/`body`/`actions` region                                 | **实现**：同 dialog 三 region | —          | 当前基线                                                                       |
+| `side`（left/right/top/bottom）                                 | **实现**：drawer 专属方向     | —          | 当前基线                                                                       |
+| `data`/`open`/`defaultOpen`/`statusPath`/`container`/`showMask` | **实现**：共享 SurfaceRuntime | —          | 当前基线                                                                       |
+| `onOpen`/`onClose` 事件                                         | **实现**：走 action schema    | —          | 当前基线                                                                       |
+| `closeOnOutside`（修不对称 bug）                                | **计划实现（E2f）**           | —          | dialog 有 `closeOnOutsideClick`，drawer 缺失，显式 bug，补齐（命名对齐表面族） |
+| `closeOnEsc`                                                    | **计划实现（E2f）**           | —          | 高频交互                                                                       |
+| `size` 预设                                                     | **计划实现（E2f）**           | —          | 对齐 shadcn size 语义（X3 §2）                                                 |
+| `width`（左右）/`height`（上下）显式尺寸                        | **计划实现（E2f）**           | —          | drawer 方向相关尺寸                                                            |
+| 独立 `header`/`footer` region                                   | **计划实现（E2f）**           | —          | 与 dialog 一致，解耦 actions；命名沿用 region 语义（X3 §4.5）                  |
+| `resizable`（拖拽调整 drawer 尺寸）                             | **计划实现（E2f）**           | —          | drawer 常见需求                                                                |
+| `bodyClassName`/`headerClassName`/`footerClassName`             | **计划实现（E2f）**           | —          | 当前连 bodyClassName 都不暴露                                                  |
+| amis 文本/参数包 `msg`/`confirmText`/`cancelText`/`inputParams` | —                             | **不采纳** | 同 dialog 原则；用 Flux action + surface（X3 §3 button amis 化同源）           |
+| amis 组件级 `api` 生命周期                                      | —                             | **不采纳** | 请求下沉 data-source + action（X3 §1/§3）                                      |
+| amis `mobileUI`                                                 | —                             | **不采纳** | 走响应式（见 mobile-roadmap），不引入双实现标志位（X3 §3）                     |
+
 ## 3. Flux 中的 renderer/type 定义
 
 - 当前 `type: 'drawer'`

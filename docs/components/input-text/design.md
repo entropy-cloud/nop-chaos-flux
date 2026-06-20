@@ -16,23 +16,24 @@
 
 ### Flux 决策表
 
-| 能力                                           | 决定                | 理由                                                                                                                        |
-| ---------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `name`/`placeholder`/`required`                | **实现**            | 字段基线                                                                                                                    |
-| `minLength`/`maxLength`/`pattern`              | **实现**            | schema 声明 → 编译期 `collectSchemaValidationRules` 收集为 validation rule + `createInputRenderer` 透传原生属性（双重生效） |
-| `label` field rule                             | **实现**            | 统一 field frame                                                                                                            |
-| prefix/suffix 前后缀                           | **计划实现（E2a）** | shadcn Input addon 模式；高频                                                                                               |
-| `clearable` 清空按钮                           | **计划实现（E2a）** | 明确布尔命名，对齐 shadcn                                                                                                   |
-| `trimContents` blur 自动 trim                  | **计划实现（E2a）** | 常见需求                                                                                                                    |
-| `showCounter` 字数计数                         | **计划实现（E2a）** | 与 maxLength 配合                                                                                                           |
-| `autoComplete` 异步建议下拉                    | **计划实现（E2a）** | 走 data-source，不在组件开 api                                                                                              |
-| `nativeAutoComplete`（HTML autocomplete 属性） | **计划实现（E2a）** | 浏览器原生 autofill                                                                                                         |
-| 输入掩码 input-mask                            | **暂不实现**        | 场景窄，后续按需                                                                                                            |
-| amis `addOn` 按钮 addon                        | **不采纳**          | 用 prefix/suffix + button 组合替代                                                                                          |
-| amis `transform: {lowerCase, upperCase}`       | **暂不实现**        | 属 formatter 层，可由表达式/后处理                                                                                          |
-| amis `borderMode`                              | **不采纳**          | amis 皮肤变体，与 shadcn/ui 风格不匹配                                                                                      |
-| amis `clearValueOnEmpty`                       | **不采纳**          | 通用字段行为，由 form 层统一处理                                                                                            |
-| amis 组件级 `api`/`initFetch`                  | **不采纳**          | 请求下沉 data-source + action                                                                                               |
+> Flux 决策主语。amis 仅作参考之一，**非标尺**。Flux 按自身原则（命名标准化 + shadcn/ui 对齐、核心简化、请求下沉）裁决能力，命名对齐 X3 基线（`docs/references/naming-conventions.md` §2/§3）。参见 `docs/components/existing-components-improvement-analysis.md` §0.2 与 §5 不采纳清单。列：`能力 | 采纳 | 不采纳 | 理由`。本表为**文本输入族（input-text/email/password）共享面**，input-email/input-password 各自特化差异见其 design.md 独立小表。
+
+| 能力                                               | 采纳                                                                                                                                  | 不采纳                        | 理由                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------ |
+| 字段基线                                           | **实现**：`name`/`placeholder`/`required`                                                                                             | —                             | 当前基线                                                     |
+| 长度/模式约束（`minLength`/`maxLength`/`pattern`） | **实现**：schema 声明 → 编译期 `collectSchemaValidationRules` 收集为 validation rule + `createInputRenderer` 透传原生属性（双重生效） | —                             | 见 §2 上方双重生效路径说明                                   |
+| `label` field rule                                 | **实现**：统一 field frame                                                                                                            | —                             | 当前基线                                                     |
+| prefix/suffix 前后缀                               | **计划实现（E2a）**：shadcn Input addon 模式                                                                                          | —                             | 高频；命名对齐 X3 §2（`prefix`/`suffix`）                    |
+| `clearable` 清空按钮                               | **计划实现（E2a）**                                                                                                                   | —                             | 明确布尔命名，对齐 shadcn（X3 §2/§4.1 肯定式）               |
+| `trimContents` blur 自动 trim                      | **计划实现（E2a）**                                                                                                                   | —                             | 常见需求                                                     |
+| `showCounter` 字数计数                             | **计划实现（E2a）**                                                                                                                   | —                             | 与 maxLength 配合                                            |
+| `autoComplete` 异步建议下拉                        | **计划实现（E2a）**：走 data-source                                                                                                   | amis 组件级 `api`/`initFetch` | 请求下沉 data-source + action，不在组件开 api（X3 §1/§3）    |
+| `nativeAutoComplete`（HTML autocomplete 属性）     | **计划实现（E2a）**                                                                                                                   | —                             | 浏览器原生 autofill                                          |
+| 输入掩码 input-mask                                | **暂不实现**                                                                                                                          | —                             | 场景窄，后续按需                                             |
+| amis `addOn` 按钮 addon                            | —                                                                                                                                     | **不采纳**                    | 用 prefix/suffix + button 组合替代                           |
+| amis `transform: {lowerCase, upperCase}`           | **暂不实现**                                                                                                                          | —                             | 属 formatter 层，可由表达式/后处理                           |
+| amis `borderMode`                                  | —                                                                                                                                     | **不采纳**                    | amis 皮肤变体，与 shadcn/ui 风格不匹配（X3 §3 样式 amis 化） |
+| amis `clearValueOnEmpty`                           | —                                                                                                                                     | **不采纳**                    | 通用字段行为，由 form 层统一处理                             |
 
 ## 3. Flux 中的 renderer/type 定义
 

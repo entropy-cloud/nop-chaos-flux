@@ -8,7 +8,26 @@
 ## 2. 与 AMIS 或既有产品的能力对照
 
 - 当前已实现 `rows` 和输入基线字段。
-- 自动高度、字数统计和 Markdown 模式都应作为后续增强，而不是让 `textarea` 兼任富文本编辑器。
+- 自动高度、字数计数应作为后续增强；Markdown 模式不在 textarea 范围（用独立 markdown renderer）。
+
+### Flux 决策表
+
+> Flux 决策主语。amis 仅作参考之一，**非标尺**。命名对齐 shadcn/ui、请求下沉 data-source + action（X3 §1/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。文本输入族共享面（prefix/suffix/clearable/trimContents/showCounter/native maxLength/minLength-maxLength-pattern 双重生效）见 `input-text/design.md` §2 Flux 决策表，本表只列 textarea 特化差异。
+
+| 能力                                                           | 采纳                                         | 不采纳     | 理由                                                     |
+| -------------------------------------------------------------- | -------------------------------------------- | ---------- | -------------------------------------------------------- |
+| 多行基线                                                       | **实现**：`stringAdapter` + `rows`（默认 4） | —          | 当前基线                                                 |
+| 禁用/只读                                                      | **实现**：`disabled`/`readOnly`              | —          | 当前基线                                                 |
+| `placeholder`/`className`/aria                                 | **实现**                                     | —          | 当前基线                                                 |
+| focus/change/blur 事件接入                                     | **实现**                                     | —          | 当前基线                                                 |
+| `minRows`/`maxRows` 自动高度（react-textarea-autosize 或等价） | **计划实现（E2b）**                          | —          | 长文本高频需求                                           |
+| `showCounter` 字数计数                                         | **计划实现（E2b）**                          | —          | 长文本高频需求（与 input-text 共享命名）                 |
+| `clearable` 清空                                               | **计划实现（E2b）**                          | —          | 对齐 shadcn 输入族（X3 §2/§4.1）                         |
+| `trimContents`（blur 自动 trim）                               | **计划实现（E2b）**                          | —          | 数据卫生（与 input-text 共享命名）                       |
+| 原生 `maxLength`                                               | **计划实现（E2b）**                          | —          | 传到 `<textarea>` 原生属性                               |
+| amis `borderMode`                                              | —                                            | **不采纳** | Flux 样式系统（marker + Tailwind，X3 §3 样式 amis 化）   |
+| amis markdown 模式                                             | —                                            | **不采纳** | 用独立 markdown renderer，不让 textarea 兼任富文本编辑器 |
+| amis 组件级 `api`                                              | —                                            | **不采纳** | 请求下沉 data-source + action（X3 §1/§3）                |
 
 ## 3. Flux 中的 renderer/type 定义
 
