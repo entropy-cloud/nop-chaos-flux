@@ -1,9 +1,13 @@
 import React from 'react';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
 import {
+  cascadeDeselectParent,
+  cascadeSelectParent,
+  deriveCheckedState,
   flattenTreeOptions,
   isTreeSelectionChecked,
   toggleTreeSelection,
+  type TreeCheckedState,
   type TreeOptionConfig,
   type TreeOptionMeta,
 } from './tree-options.js';
@@ -71,6 +75,8 @@ export function useTreeOptionNodeController(input: {
   option: TreeOptionMeta;
   value: unknown;
   multiple: boolean;
+  cascade?: boolean;
+  onlyLeaf?: boolean;
   disabled: boolean;
   onChange: (value: unknown) => void;
   expanded: boolean;
@@ -84,6 +90,8 @@ export function useTreeOptionNodeController(input: {
     option,
     value,
     multiple,
+    cascade,
+    onlyLeaf,
     disabled,
     onChange,
     expanded,
@@ -93,7 +101,15 @@ export function useTreeOptionNodeController(input: {
     onMoveFocus,
     onFocusItem,
   } = input;
-  const checked = isTreeSelectionChecked(value, option.value, multiple);
+  const cascadeEnabled = Boolean(cascade && multiple);
+  const checkedState: TreeCheckedState = cascadeEnabled
+    ? deriveCheckedState(option, Array.isArray(value) ? value : [], Boolean(onlyLeaf))
+    : {
+        checked: isTreeSelectionChecked(value, option.value, multiple),
+        indeterminate: false,
+      };
+  const checked = checkedState.checked;
+  const indeterminate = checkedState.indeterminate;
   const hasChildren = option.children.length > 0;
 
   const handleSelect = React.useCallback(() => {
@@ -101,8 +117,27 @@ export function useTreeOptionNodeController(input: {
       return;
     }
 
+    if (cascadeEnabled) {
+      const current = Array.isArray(value) ? value : [];
+      const nextChecked = deriveCheckedState(option, current, Boolean(onlyLeaf)).checked;
+      onChange(
+        nextChecked
+          ? cascadeDeselectParent(current, option, Boolean(onlyLeaf))
+          : cascadeSelectParent(current, option, Boolean(onlyLeaf)),
+      );
+      return;
+    }
+
     onChange(toggleTreeSelection(value, option.value, multiple));
-  }, [disabled, multiple, onChange, option.value, value]);
+  }, [
+    cascadeEnabled,
+    disabled,
+    multiple,
+    onChange,
+    onlyLeaf,
+    option,
+    value,
+  ]);
 
   const handleKeyDown = React.useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -188,6 +223,7 @@ export function useTreeOptionNodeController(input: {
   return {
     expanded,
     checked,
+    indeterminate,
     hasChildren,
     focused,
     itemId,

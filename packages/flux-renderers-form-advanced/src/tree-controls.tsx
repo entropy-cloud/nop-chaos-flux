@@ -47,6 +47,8 @@ function TreeOptionNode(props: {
   option: TreeOptionMeta;
   value: unknown;
   multiple: boolean;
+  cascade: boolean;
+  onlyLeaf: boolean;
   showPathLabel: boolean;
   disabled: boolean;
   onChange: (value: unknown) => void;
@@ -63,6 +65,7 @@ function TreeOptionNode(props: {
   const itemId = createTreeItemId(props.treeId, props.option);
   const {
     checked,
+    indeterminate,
     hasChildren,
     handleSelect,
     handleKeyDown,
@@ -91,6 +94,7 @@ function TreeOptionNode(props: {
         aria-level={props.option.depth + 1}
         aria-expanded={hasChildren ? expanded : undefined}
         aria-selected={checked}
+        aria-checked={indeterminate ? 'mixed' : undefined}
         aria-disabled={props.disabled || undefined}
         tabIndex={props.disabled ? -1 : focused ? 0 : -1}
         onClick={props.disabled ? undefined : handleSelect}
@@ -124,6 +128,7 @@ function TreeOptionNode(props: {
         {props.multiple ? (
           <Checkbox
             checked={checked}
+            indeterminate={indeterminate}
             aria-label={props.option.label}
             aria-hidden="true"
             tabIndex={-1}
@@ -143,6 +148,8 @@ function TreeOptionNode(props: {
                   option={child}
                   value={props.value}
                   multiple={props.multiple}
+                  cascade={props.cascade}
+                  onlyLeaf={props.onlyLeaf}
                   showPathLabel={props.showPathLabel}
                   disabled={props.disabled}
                   onChange={props.onChange}
@@ -165,6 +172,8 @@ function TreeOptionList(props: {
   options: TreeOptionMeta[];
   value: unknown;
   multiple: boolean;
+  cascade: boolean;
+  onlyLeaf: boolean;
   showPathLabel: boolean;
   searchable: boolean;
   disabled: boolean;
@@ -260,6 +269,8 @@ function TreeOptionList(props: {
               option={option}
               value={props.value}
               multiple={props.multiple}
+              cascade={props.cascade}
+              onlyLeaf={props.onlyLeaf}
               showPathLabel={props.showPathLabel}
               disabled={props.disabled}
               onChange={props.onChange}
@@ -315,6 +326,8 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           options={options}
           value={value}
           multiple={multiple}
+          cascade={props.props.cascade === true}
+          onlyLeaf={props.props.onlyLeaf === true}
           showPathLabel={props.props.showPathLabel === true}
           searchable={props.props.searchable === true}
           disabled={
@@ -428,6 +441,8 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             options={options}
             value={value}
             multiple={multiple}
+            cascade={props.props.cascade === true}
+            onlyLeaf={props.props.onlyLeaf === true}
             showPathLabel={props.props.showPathLabel === true}
             searchable={props.props.searchable === true}
             disabled={

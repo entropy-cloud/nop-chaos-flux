@@ -76,8 +76,6 @@ export interface InputTreeSchema extends InputSchema {
   cascade?: boolean;
   searchable?: boolean;
   onlyLeaf?: boolean;
-  showIcon?: boolean;
-  showOutline?: boolean;
   showPathLabel?: boolean;
 }
 
@@ -91,7 +89,6 @@ export interface TreeSelectSchema extends InputSchema {
   cascade?: boolean;
   searchable?: boolean;
   onlyLeaf?: boolean;
-  showIcon?: boolean;
   showPathLabel?: boolean;
   clearable?: boolean;
   placeholder?: string;

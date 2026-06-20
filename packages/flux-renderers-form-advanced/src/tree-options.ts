@@ -152,3 +152,108 @@ export function toggleTreeSelection(
 
   return exists ? current.filter((entry) => !Object.is(entry, candidate)) : [...current, candidate];
 }
+
+export interface TreeCheckedState {
+  checked: boolean;
+  indeterminate: boolean;
+}
+
+function toArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function includesValue(values: unknown[], candidate: unknown): boolean {
+  return values.some((entry) => Object.is(entry, candidate));
+}
+
+function collectAllDescendantValues(option: TreeOptionMeta): unknown[] {
+  const collected: unknown[] = [];
+  for (const child of option.children) {
+    collected.push(child.value);
+    if (child.children.length > 0) {
+      collected.push(...collectAllDescendantValues(child));
+    }
+  }
+  return collected;
+}
+
+function collectLeafDescendantValues(option: TreeOptionMeta): unknown[] {
+  const collected: unknown[] = [];
+  for (const child of option.children) {
+    if (child.children.length === 0) {
+      collected.push(child.value);
+    } else {
+      collected.push(...collectLeafDescendantValues(child));
+    }
+  }
+  return collected;
+}
+
+function collectSelectableDescendantValues(
+  option: TreeOptionMeta,
+  onlyLeaf: boolean,
+): unknown[] {
+  return onlyLeaf ? collectLeafDescendantValues(option) : collectAllDescendantValues(option);
+}
+
+function collectCascadeGroupValues(
+  option: TreeOptionMeta,
+  onlyLeaf: boolean,
+): unknown[] {
+  if (option.children.length === 0) {
+    return [option.value];
+  }
+  const descendants = collectSelectableDescendantValues(option, onlyLeaf);
+  return onlyLeaf ? descendants : [option.value, ...descendants];
+}
+
+export function cascadeSelectParent(
+  values: unknown[],
+  parent: TreeOptionMeta,
+  onlyLeaf: boolean,
+): unknown[] {
+  const current = toArray(values);
+  const group = collectCascadeGroupValues(parent, onlyLeaf);
+  const next = [...current];
+  for (const candidate of group) {
+    if (!includesValue(next, candidate)) {
+      next.push(candidate);
+    }
+  }
+  return next;
+}
+
+export function cascadeDeselectParent(
+  values: unknown[],
+  parent: TreeOptionMeta,
+  onlyLeaf: boolean,
+): unknown[] {
+  const current = toArray(values);
+  const group = collectCascadeGroupValues(parent, onlyLeaf);
+  return current.filter((entry) => !group.some((candidate) => Object.is(candidate, entry)));
+}
+
+export function deriveCheckedState(
+  parent: TreeOptionMeta,
+  values: unknown[],
+  onlyLeaf: boolean,
+): TreeCheckedState {
+  const current = toArray(values);
+  if (parent.children.length === 0) {
+    return { checked: includesValue(current, parent.value), indeterminate: false };
+  }
+  const descendants = collectSelectableDescendantValues(parent, onlyLeaf);
+  if (descendants.length === 0) {
+    return { checked: false, indeterminate: false };
+  }
+  const selectedCount = descendants.filter((candidate) =>
+    includesValue(current, candidate),
+  ).length;
+  if (selectedCount === 0) {
+    return { checked: false, indeterminate: false };
+  }
+  if (selectedCount === descendants.length) {
+    return { checked: true, indeterminate: false };
+  }
+  return { checked: false, indeterminate: true };
+}
