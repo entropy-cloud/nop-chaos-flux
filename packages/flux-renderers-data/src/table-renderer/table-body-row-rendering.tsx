@@ -1,16 +1,59 @@
 import React from 'react';
 import type { InstanceFrame, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { Button, Checkbox, RadioGroupItem, TableCell, TableRow } from '@nop-chaos/ui';
-import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
+import { ChevronDownIcon, ChevronRightIcon, GripVerticalIcon, CopyIcon, CheckIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell.js';
 import type { TableRowEntry } from './types.js';
+import type { TreeRowEntry } from './use-table-tree.js';
+import type { RowDragSortApi } from './use-row-drag-sort.js';
+import { copyToClipboard } from './copy-to-clipboard.js';
 import { getCellRowSpan, type CombinePlan } from './combine-cells.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
+}
+
+function indentStyle(level: number): React.CSSProperties {
+  if (level <= 0) return {};
+  return { paddingLeft: `${level * 1.25}rem` };
+}
+
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = React.useState(false);
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const onClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    const result = await copyToClipboard(value);
+    if (result.success) {
+      setCopied(true);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), 1500);
+    }
+  };
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-xs"
+      data-slot="table-cell-copy-button"
+      className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-primary"
+      onClick={onClick}
+      aria-label={copied ? 'Copied' : 'Copy to clipboard'}
+    >
+      {copied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}
+    </Button>
+  );
 }
 
 export interface FlattenedRow {
@@ -48,6 +91,11 @@ type DataRowRenderProps = {
   isAtMaxSelection?: boolean;
   combinePlan?: CombinePlan;
   rowIndex: number;
+  treeMode?: boolean;
+  expandedTreeRowKeys?: Set<string>;
+  onToggleTreeExpand?: (rowKey: string) => void;
+  draggable?: boolean;
+  rowDragSortApi?: RowDragSortApi | null;
 };
 
 function areColumnsRenderEquivalent(
@@ -139,10 +187,23 @@ function DataRowView({
   isAtMaxSelection,
   combinePlan,
   rowIndex,
+  treeMode,
+  expandedTreeRowKeys,
+  onToggleTreeExpand,
+  draggable,
+  rowDragSortApi,
 }: DataRowRenderProps) {
   const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
   const hasRowClickHandler = Boolean(parentProps.events.onRowClick);
   const isRowClickable = hasRowClickHandler || expandRowByClick;
+
+  const treeEntry = treeMode ? (entry as TreeRowEntry) : undefined;
+  const treeLevel = treeEntry?.level ?? 0;
+  const treeHasChildren = treeEntry?.hasChildren ?? false;
+  const isTreeExpanded = treeEntry ? expandedTreeRowKeys?.has(rowKey) === true : false;
+  const dragHandleProps = draggable && rowDragSortApi
+    ? rowDragSortApi.dragHandleProps(rowKey, rowIndex)
+    : null;
 
   const rowCheckboxDisabled =
     (isRowCheckable ? !isRowCheckable(rowKey) : false) ||
@@ -180,12 +241,33 @@ function DataRowView({
       data-interactive={isRowClickable || undefined}
       data-expanded={isExpanded || undefined}
       data-striped={isStriped && isEven ? true : undefined}
+      data-tree-row={treeMode || undefined}
+      data-level={treeMode ? treeLevel : undefined}
+      data-tree-expanded={treeMode && isTreeExpanded ? true : undefined}
+      data-draggable={draggable || undefined}
+      data-dragging={rowDragSortApi?.draggingRowKey === rowKey || undefined}
+      data-drag-over={rowDragSortApi?.dragOverRowKey === rowKey || undefined}
       onClick={isRowClickable ? handleRowClick : undefined}
       onKeyDown={isRowClickable ? handleRowKeyDown : undefined}
       tabIndex={isRowClickable ? 0 : -1}
       className={isRowClickable ? 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none' : undefined}
     >
-      {showExpandColumn ? (
+      {draggable && dragHandleProps ? (
+        <TableCell
+          data-slot="table-drag-cell"
+          className="w-10 text-center text-muted-foreground"
+          style={{ cursor: 'grab' }}
+        >
+          <span
+            {...dragHandleProps}
+            className="inline-flex h-6 w-6 items-center justify-center rounded hover:bg-accent"
+          >
+            <GripVerticalIcon className="size-4" />
+          </span>
+        </TableCell>
+      ) : null}
+
+      {showExpandColumn && !treeMode ? (
         <TableCell
           data-slot="table-expand-cell"
           className={fixedColumnLayout.getExpandCellProps().className}
@@ -252,6 +334,33 @@ function DataRowView({
           return null;
         }
 
+        const isFirstDataColumn = columnIndex === 0;
+        const treeToggle = treeMode && isFirstDataColumn && treeHasChildren ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            data-slot="table-tree-toggle"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleTreeExpand?.(rowKey);
+            }}
+            className="mr-1 inline-flex h-5 w-5 items-center justify-center rounded hover:bg-accent"
+            aria-label={isTreeExpanded ? t('flux.table.collapse') : t('flux.table.expand')}
+            aria-expanded={isTreeExpanded}
+          >
+            {isTreeExpanded ? (
+              <ChevronDownIcon className="size-3" />
+            ) : (
+              <ChevronRightIcon className="size-3" />
+            )}
+          </Button>
+        ) : null;
+        const treeSpacer = treeMode && isFirstDataColumn && !treeHasChildren && treeLevel > 0 ? (
+          <span data-slot="table-tree-spacer" className="mr-1 inline-block h-5 w-5" />
+        ) : null;
+        const treeIndentStyle = treeMode && isFirstDataColumn ? indentStyle(treeLevel) : undefined;
+
         if (column.type === 'operation' && buttonRegion) {
           return (
             <TableCell
@@ -295,12 +404,15 @@ function DataRowView({
               style={{
                 ...(column.width ? { width: column.width } : undefined),
                 ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
+                ...treeIndentStyle,
               }}
               rowSpan={rowSpan}
               data-fixed={
                 fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
               }
             >
+              {treeToggle}
+              {treeSpacer}
               {asReactNode(
                 cellRegion.render({
                   scope: rowScope,
@@ -322,12 +434,15 @@ function DataRowView({
               style={{
                 ...(column.width ? { width: column.width } : undefined),
                 ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
+                ...treeIndentStyle,
               }}
               rowSpan={rowSpan}
               data-fixed={
                 fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
               }
             >
+              {treeToggle}
+              {treeSpacer}
               <TableQuickEditCell
                 column={column}
                 rowScope={rowScope}
@@ -348,13 +463,23 @@ function DataRowView({
             style={{
               ...(column.width ? { width: column.width } : undefined),
               ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
+              ...treeIndentStyle,
             }}
             rowSpan={rowSpan}
             data-fixed={
               fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
             }
           >
-            {column.name ? String(entry.record[column.name] ?? '') : ''}
+            {treeToggle}
+            {treeSpacer}
+            <span className="inline-flex items-center">
+              <span>
+                {column.name ? String(entry.record[column.name] ?? '') : ''}
+              </span>
+              {column.copyable === true && column.name ? (
+                <CopyButton value={String(entry.record[column.name] ?? '')} />
+              ) : null}
+            </span>
           </TableCell>
         );
       })}
@@ -387,7 +512,12 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.onSelectRow === next.onSelectRow &&
     prev.isStriped === next.isStriped &&
     prev.isRowCheckable === next.isRowCheckable &&
-    prev.isAtMaxSelection === next.isAtMaxSelection
+    prev.isAtMaxSelection === next.isAtMaxSelection &&
+    prev.treeMode === next.treeMode &&
+    prev.expandedTreeRowKeys === next.expandedTreeRowKeys &&
+    prev.onToggleTreeExpand === next.onToggleTreeExpand &&
+    prev.draggable === next.draggable &&
+    prev.rowDragSortApi === next.rowDragSortApi
   );
 });
 
@@ -407,6 +537,11 @@ export function renderDataRow(
   isAtMaxSelection?: boolean,
   combinePlan?: CombinePlan,
   rowIndex: number = 0,
+  treeMode?: boolean,
+  expandedTreeRowKeys?: Set<string>,
+  onToggleTreeExpand?: (rowKey: string) => void,
+  draggable?: boolean,
+  rowDragSortApi?: RowDragSortApi | null,
 ) {
   return (
     <MemoizedDataRow
@@ -425,6 +560,11 @@ export function renderDataRow(
       isAtMaxSelection={isAtMaxSelection}
       combinePlan={combinePlan}
       rowIndex={rowIndex}
+      treeMode={treeMode}
+      expandedTreeRowKeys={expandedTreeRowKeys}
+      onToggleTreeExpand={onToggleTreeExpand}
+      draggable={draggable}
+      rowDragSortApi={rowDragSortApi}
     />
   );
 }

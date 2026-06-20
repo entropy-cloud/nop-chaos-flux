@@ -57,6 +57,8 @@ export interface TableColumnSchema extends BaseSchema {
   resizable?: boolean;
   minWidth?: number;
   maxWidth?: number;
+  children?: TableColumnSchema[];
+  copyable?: boolean;
 }
 
 export interface TableSummaryCell extends SchemaObject {
@@ -105,6 +107,12 @@ export interface TableSchema extends BaseSchema {
   prefixRow?: TableSummaryRow;
   affixRow?: TableSummaryRow;
   combineNum?: number;
+  draggable?: boolean;
+  orderField?: string;
+  rowChildrenField?: string;
+  columnWidthsOwnership?: 'local' | 'controlled' | 'scope';
+  columnWidthsStatePath?: string;
+  multiSort?: boolean;
   pagination?: {
     enabled?: boolean;
     currentPage?: number;

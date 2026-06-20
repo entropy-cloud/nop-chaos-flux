@@ -1,5 +1,5 @@
 import { getIn, toPositiveNumber, toStringArray } from '@nop-chaos/flux-core';
-import type { FilterState, SortState, TableRowEntry } from './types.js';
+import type { FilterState, MultiSortState, SortEntry, SortState, TableRowEntry } from './types.js';
 
 function toRowRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -72,24 +72,46 @@ export function warnOnDuplicateRowKeys(entries: TableRowEntry[]): void {
   }
 }
 
+function compareValues(aVal: unknown, bVal: unknown): number {
+  if (aVal === bVal) return 0;
+  if (aVal == null) return 1;
+  if (bVal == null) return -1;
+  return String(aVal).localeCompare(String(bVal), undefined, { numeric: true });
+}
+
+function toSortEntries(sortState: SortState | MultiSortState | undefined): SortEntry[] {
+  if (!sortState) return [];
+  if (Array.isArray(sortState)) {
+    return sortState.filter(
+      (entry): entry is SortEntry =>
+        Boolean(entry && typeof entry.column === 'string' && entry.direction && entry.column.length > 0),
+    );
+  }
+  if (sortState.column && sortState.direction) {
+    return [{ column: sortState.column, direction: sortState.direction }];
+  }
+  return [];
+}
+
 export function processTableData(
   source: unknown[],
   rowKeyField: string | undefined,
-  sortState: SortState,
+  sortState: SortState | MultiSortState,
   filterState: FilterState,
 ): TableRowEntry[] {
   let data = buildTableRowEntries(source, rowKeyField);
   warnOnDuplicateRowKeys(data);
 
-  if (sortState.column && sortState.direction) {
+  const sortEntries = toSortEntries(sortState);
+  if (sortEntries.length > 0) {
     data.sort((a, b) => {
-      const aVal = a.record[sortState.column];
-      const bVal = b.record[sortState.column];
-      if (aVal === bVal) return 0;
-      if (aVal == null) return 1;
-      if (bVal == null) return -1;
-      const comparison = String(aVal).localeCompare(String(bVal), undefined, { numeric: true });
-      return sortState.direction === 'asc' ? comparison : -comparison;
+      for (const entry of sortEntries) {
+        const comparison = compareValues(a.record[entry.column], b.record[entry.column]);
+        if (comparison !== 0) {
+          return entry.direction === 'asc' ? comparison : -comparison;
+        }
+      }
+      return 0;
     });
   }
 

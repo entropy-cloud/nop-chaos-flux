@@ -24,6 +24,11 @@ import {
 import type { FixedColumnLayout } from '../table-renderer/fixed-columns.js';
 import type { TableRowEntry } from '../table-renderer/types.js';
 
+vi.mock('@nop-chaos/flux-react', () => ({
+  useRenderScope: () => ({ update: vi.fn() }),
+  useScopeSelector: () => undefined,
+}));
+
 afterEach(cleanup);
 
 function makeParentProps(overrides: Record<string, unknown> = {}) {

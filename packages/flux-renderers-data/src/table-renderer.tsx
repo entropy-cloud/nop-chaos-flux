@@ -47,6 +47,9 @@ import {
 import { useTableHandle } from './table-renderer/use-table-handle.js';
 import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache.js';
 import { useColumnResize } from './table-renderer/use-column-resize.js';
+import { useTableTree } from './table-renderer/use-table-tree.js';
+import { useRowDragSort } from './table-renderer/use-row-drag-sort.js';
+import { extractLeafColumns, hasNestedColumns } from './table-renderer/table-header-tree.js';
 import type { TableResponsiveConfig } from './schemas.js';
 
 function asReactNode(value: unknown): React.ReactNode {
@@ -204,7 +207,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     isRowCheckable,
     isAtMaxSelection,
   } = useTableSelection(tableSchemaProps, source, props.events.onSelectionChange, helpers);
-  const { sortState, handleSort } = useTableSort(
+  const { sortState, sortEntries, handleSort } = useTableSort(
     tableSchemaProps,
     props.events.onSortChange,
     tableColumns,
@@ -234,18 +237,29 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const responsiveHiddenColumns = responsiveExpandActive
     ? responsiveColumns.hiddenColumns
     : EMPTY_TABLE_COLUMNS;
+  const nestedHeadersActive = !responsiveExpandActive && hasNestedColumns(mainColumns);
+  const leafBodyColumns = useMemo(
+    () => (nestedHeadersActive ? extractLeafColumns(mainColumns) : mainColumns),
+    [mainColumns, nestedHeadersActive],
+  );
   const showExpandColumn = Boolean(schemaProps.expandable) || responsiveHiddenColumns.length > 0;
   const expandRowByClick =
     schemaProps.expandable?.expandRowByClick === true ||
     (responsiveExpandActive && schemaProps.responsive?.expandTrigger === 'row');
 
   const filteredData = useMemo(
-    () => processTableData(source, schemaProps.rowKey, sortState, filterState),
-    [source, schemaProps.rowKey, sortState, filterState],
+    () => processTableData(source, schemaProps.rowKey, sortEntries.length > 0 ? sortEntries : sortState, filterState),
+    [source, schemaProps.rowKey, sortState, sortEntries, filterState],
   );
+  const {
+    treeMode,
+    treeRows: treeFlattenedData,
+    expandedTreeRowKeys,
+    handleToggleTreeExpand,
+  } = useTableTree(tableSchemaProps, filteredData);
   const processedData = useMemo(
-    () => paginateTableData(filteredData, paginationEnabled, currentPage, pageSize),
-    [filteredData, paginationEnabled, currentPage, pageSize],
+    () => paginateTableData(treeFlattenedData, paginationEnabled, currentPage, pageSize),
+    [treeFlattenedData, paginationEnabled, currentPage, pageSize],
   );
   const fixedColumnLayout = useMemo(
     () => createFixedColumnLayout(tableSchemaProps, mainColumns, showExpandColumn),
@@ -253,18 +267,26 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   );
 
   const columnResizeEnabled = schemaProps.columnResize !== false;
-  const resizeApi = useColumnResize(tableColumns, schemaProps.columnResize);
+  const resizeApi = useColumnResize(
+    nestedHeadersActive ? leafBodyColumns : tableColumns,
+    schemaProps.columnResize,
+    {
+      columnWidthsOwnership: schemaProps.columnWidthsOwnership,
+      columnWidthsStatePath: schemaProps.columnWidthsStatePath,
+    },
+  );
   const effectiveMainColumns = useMemo(() => {
+    const baseColumns = nestedHeadersActive ? leafBodyColumns : mainColumns;
     if (
       !columnResizeEnabled ||
       Object.keys(resizeApi.widths).length === 0 ||
-      mainColumns !== tableColumns
+      baseColumns !== (nestedHeadersActive ? leafBodyColumns : mainColumns)
     ) {
-      return mainColumns;
+      return baseColumns;
     }
 
     let changed = false;
-    const next = mainColumns.map((column, index) => {
+    const next = baseColumns.map((column, index) => {
       const key = column.name ?? `column-${index}`;
       const override = resizeApi.widths[key];
       if (override === undefined || override === column.width) {
@@ -273,10 +295,18 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       changed = true;
       return { ...column, width: override };
     });
-    return changed ? next : mainColumns;
-  }, [columnResizeEnabled, mainColumns, resizeApi.widths, tableColumns]);
+    return changed ? next : baseColumns;
+  }, [columnResizeEnabled, leafBodyColumns, mainColumns, nestedHeadersActive, resizeApi.widths]);
 
   const rowScopeCache = useTableRowScopeCache(processedData, ownerKey, helpers, props.path);
+
+  const rowDragSortApi = useRowDragSort({
+    enabled: schemaProps.draggable === true,
+    orderField: schemaProps.orderField,
+    statePath: schemaProps.columnWidthsStatePath,
+    ownership: 'local',
+    rows: processedData,
+  });
 
   useTableHandle(
     props,
@@ -292,14 +322,17 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
   const totalPages = useMemo(() => {
     if (!paginationEnabled) return 1;
-    return Math.max(1, Math.ceil(filteredData.length / pageSize));
-  }, [filteredData.length, pageSize, paginationEnabled]);
+    return Math.max(1, Math.ceil(treeFlattenedData.length / pageSize));
+  }, [treeFlattenedData.length, pageSize, paginationEnabled]);
 
   const isLoading = schemaProps.loading === true;
   const isStriped = schemaProps.stripe === true;
   const isBordered = schemaProps.bordered === true;
   const columnCount =
-    mainColumns.length + (schemaProps.rowSelection ? 1 : 0) + (showExpandColumn ? 1 : 0);
+    (nestedHeadersActive ? leafBodyColumns : mainColumns).length +
+    (schemaProps.rowSelection ? 1 : 0) +
+    (showExpandColumn ? 1 : 0) +
+    (schemaProps.draggable ? 1 : 0);
   const columnSettingsOverlay = schemaProps.columnSettings?.overlay !== false;
   const columnSettingsAlignmentClass =
     schemaProps.columnSettings?.align === 'left' ? 'items-start' : 'items-end';
@@ -479,6 +512,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
               columns={mainColumns}
               sourceLength={filteredData.length}
               sortState={sortState}
+              sortEntries={sortEntries}
+              multiSort={schemaProps.multiSort}
               filterState={filterState}
               allSelected={allSelected}
               selectedRowCount={selectedRowKeys.size}
@@ -532,6 +567,11 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             virtualEnabled={virtualEnabled}
             scrollRef={scrollRef}
             combineNum={schemaProps.combineNum}
+            treeMode={treeMode}
+            expandedTreeRowKeys={expandedTreeRowKeys}
+            onToggleTreeExpand={handleToggleTreeExpand}
+            rowDragSortApi={rowDragSortApi}
+            draggable={schemaProps.draggable === true}
           />
 
           {schemaProps.affixRow ? (
@@ -552,12 +592,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         {isLoading ? <TableLoadingOverlay loadingContent={loadingContent} /> : null}
       </div>
 
-      {paginationEnabled && filteredData.length > 0 ? (
+      {paginationEnabled && treeFlattenedData.length > 0 ? (
         <TablePaginationBar
           currentPage={currentPage}
           pageSize={pageSize}
           totalPages={totalPages}
-          totalRows={filteredData.length}
+          totalRows={treeFlattenedData.length}
           pageSizeOptions={schemaProps.pagination?.pageSizeOptions}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}

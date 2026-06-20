@@ -7,6 +7,7 @@ import type { FixedColumnLayout } from './fixed-columns.js';
 import type { TableRowEntry } from './types.js';
 import { buildFlattenedItems, renderDataRow, renderExpandedRow } from './table-body-row-rendering.js';
 import { computeCombinePlan, type CombinePlan } from './combine-cells.js';
+import type { RowDragSortApi } from './use-row-drag-sort.js';
 
 const DEFAULT_ROW_ESTIMATE = 44;
 const OVERSCAN = 5;
@@ -33,6 +34,11 @@ interface TableBodyRowsProps {
   virtualEnabled?: boolean;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
   combineNum?: number;
+  treeMode?: boolean;
+  expandedTreeRowKeys?: Set<string>;
+  onToggleTreeExpand?: (rowKey: string) => void;
+  rowDragSortApi?: RowDragSortApi | null;
+  draggable?: boolean;
 }
 
 export function TableBodyRows({
@@ -57,6 +63,11 @@ export function TableBodyRows({
   virtualEnabled,
   scrollRef,
   combineNum,
+  treeMode,
+  expandedTreeRowKeys,
+  onToggleTreeExpand,
+  rowDragSortApi,
+  draggable,
 }: TableBodyRowsProps) {
   if (!virtualEnabled || processedData.length === 0) {
     return (
@@ -80,6 +91,11 @@ export function TableBodyRows({
         isRowCheckable={isRowCheckable}
         isAtMaxSelection={isAtMaxSelection}
         combineNum={combineNum}
+        treeMode={treeMode}
+        expandedTreeRowKeys={expandedTreeRowKeys}
+        onToggleTreeExpand={onToggleTreeExpand}
+        rowDragSortApi={rowDragSortApi}
+        draggable={draggable}
       />
     );
   }
@@ -106,6 +122,11 @@ export function TableBodyRows({
       isAtMaxSelection={isAtMaxSelection}
       scrollRef={scrollRef}
       combineNum={combineNum}
+      treeMode={treeMode}
+      expandedTreeRowKeys={expandedTreeRowKeys}
+      onToggleTreeExpand={onToggleTreeExpand}
+      rowDragSortApi={rowDragSortApi}
+      draggable={draggable}
     />
   );
 }
@@ -130,6 +151,11 @@ function NonVirtualBody({
   isRowCheckable,
   isAtMaxSelection,
   combineNum,
+  treeMode,
+  expandedTreeRowKeys,
+  onToggleTreeExpand,
+  rowDragSortApi,
+  draggable,
 }: TableBodyRowsProps) {
   const schemaProps = props.props as TableSchema;
   const helpers = props.helpers;
@@ -190,6 +216,11 @@ function NonVirtualBody({
               isAtMaxSelection,
               combinePlan,
               rowIndex,
+              treeMode,
+              expandedTreeRowKeys,
+              onToggleTreeExpand,
+              draggable,
+              rowDragSortApi,
             )}
             {isExpanded && schemaProps.expandable?.expandedRowRegionKey
               ? renderExpandedRow(
@@ -255,6 +286,11 @@ function VirtualBody({
   emptyContent,
   scrollRef,
   combineNum,
+  treeMode,
+  expandedTreeRowKeys,
+  onToggleTreeExpand,
+  rowDragSortApi,
+  draggable,
 }: TableBodyRowsProps) {
   const parentRef = scrollRef;
   const schemaProps = props.props as TableSchema;
@@ -352,6 +388,11 @@ function VirtualBody({
                     isAtMaxSelection,
                     combinePlan,
                     virtualRow.index,
+                    treeMode,
+                    expandedTreeRowKeys,
+                    onToggleTreeExpand,
+                    draggable,
+                    rowDragSortApi,
                   )}
                 </React.Fragment>
               );
