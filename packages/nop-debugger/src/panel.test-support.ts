@@ -175,6 +175,11 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
       getNodeAnomalies: () => undefined,
       getRecentFailures: () => [],
       getAsyncOwnerDebugSnapshot: () => ({ owners: [] }),
+      listFormStoreDiagnosticsOwners: () => [],
+      startFormStoreDiagnosticsSession: () => false,
+      stopFormStoreDiagnosticsSession: () => false,
+      clearFormStoreDiagnosticsSession: () => false,
+      getFormStoreDiagnosticsSnapshot: () => undefined,
       createDiagnosticReport: () => ({
         controllerId: 'panel-test',
         sessionId: 'session-test',
@@ -253,6 +258,11 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
     getNodeAnomalies: () => undefined,
     getRecentFailures: () => [],
     getAsyncOwnerDebugSnapshot: () => ({ owners: [] }),
+    listFormStoreDiagnosticsOwners: () => [],
+    startFormStoreDiagnosticsSession: () => false,
+    stopFormStoreDiagnosticsSession: () => false,
+    clearFormStoreDiagnosticsSession: () => false,
+    getFormStoreDiagnosticsSnapshot: () => undefined,
     getOverview: () => emptyOverview,
     createDiagnosticReport: vi.fn(() => metricReport),
     exportSession: () => ({

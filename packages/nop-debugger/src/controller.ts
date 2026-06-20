@@ -157,6 +157,21 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     getRecentFailures(getSnapshot().events, options);
   const getAsyncOwnerDebugSnapshot = () =>
     runtime?.getAsyncOwnerDebugSnapshot?.() ?? { owners: [] };
+  const listFormStoreDiagnosticsOwners = () =>
+    runtime?.getFormStoreDiagnosticsBridge?.().listOwners() ?? [];
+  const startFormStoreDiagnosticsSession = (
+    query: Parameters<NopDebuggerController['startFormStoreDiagnosticsSession']>[0],
+    options?: Parameters<NopDebuggerController['startFormStoreDiagnosticsSession']>[1],
+  ): boolean => runtime?.getFormStoreDiagnosticsBridge?.().startSession(query, options) ?? false;
+  const stopFormStoreDiagnosticsSession = (
+    query: Parameters<NopDebuggerController['stopFormStoreDiagnosticsSession']>[0],
+  ): boolean => runtime?.getFormStoreDiagnosticsBridge?.().stopSession(query) ?? false;
+  const clearFormStoreDiagnosticsSession = (
+    query: Parameters<NopDebuggerController['clearFormStoreDiagnosticsSession']>[0],
+  ): boolean => runtime?.getFormStoreDiagnosticsBridge?.().clearSession(query) ?? false;
+  const getFormStoreDiagnosticsSnapshot = (
+    query: Parameters<NopDebuggerController['getFormStoreDiagnosticsSnapshot']>[0],
+  ) => runtime?.getFormStoreDiagnosticsBridge?.().getSnapshot(query);
   const explainValue = (query: Parameters<NopDebuggerController['explainNodeValue']>[0]) =>
     explainNodeValue({
       query,
@@ -233,6 +248,11 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     getNodeAnomalies: getNodeAnomaliesSummary,
     getRecentFailures: getRecentFailuresSummary,
     getAsyncOwnerDebugSnapshot,
+    listFormStoreDiagnosticsOwners,
+    startFormStoreDiagnosticsSession,
+    stopFormStoreDiagnosticsSession,
+    clearFormStoreDiagnosticsSession,
+    getFormStoreDiagnosticsSnapshot,
     createDiagnosticReport: createReport,
     exportSession,
     waitForEvent,
@@ -372,6 +392,11 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     getNodeAnomalies: getNodeAnomaliesSummary,
     getRecentFailures: getRecentFailuresSummary,
     getAsyncOwnerDebugSnapshot,
+    listFormStoreDiagnosticsOwners,
+    startFormStoreDiagnosticsSession,
+    stopFormStoreDiagnosticsSession,
+    clearFormStoreDiagnosticsSession,
+    getFormStoreDiagnosticsSnapshot,
     getOverview,
     createDiagnosticReport: createReport,
     exportSession,

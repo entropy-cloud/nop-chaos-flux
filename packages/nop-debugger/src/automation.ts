@@ -1,4 +1,4 @@
-import type { AsyncOwnerDebugSnapshot } from '@nop-chaos/flux-core';
+import type { AsyncOwnerDebugSnapshot, FormStoreDiagnosticsOptions, FormStoreDiagnosticsOwnerQuery, FormStoreDiagnosticsOwnerSummary, FormStoreDiagnosticsSnapshot } from '@nop-chaos/flux-core';
 import type {
   NopComponentInspectResult,
   NopDebugEvent,
@@ -54,6 +54,16 @@ export function createAutomationApi(input: {
     limit?: number;
   }): NopDebuggerFailureSummary[];
   getAsyncOwnerDebugSnapshot(): AsyncOwnerDebugSnapshot;
+  listFormStoreDiagnosticsOwners(): FormStoreDiagnosticsOwnerSummary[];
+  startFormStoreDiagnosticsSession(
+    query: FormStoreDiagnosticsOwnerQuery,
+    options?: FormStoreDiagnosticsOptions,
+  ): boolean;
+  stopFormStoreDiagnosticsSession(query: FormStoreDiagnosticsOwnerQuery): boolean;
+  clearFormStoreDiagnosticsSession(query: FormStoreDiagnosticsOwnerQuery): boolean;
+  getFormStoreDiagnosticsSnapshot(
+    query: FormStoreDiagnosticsOwnerQuery,
+  ): FormStoreDiagnosticsSnapshot | undefined;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
@@ -94,6 +104,11 @@ export function createAutomationApi(input: {
     getNodeAnomalies: input.getNodeAnomalies,
     getRecentFailures: input.getRecentFailures,
     getAsyncOwnerDebugSnapshot: input.getAsyncOwnerDebugSnapshot,
+    listFormStoreDiagnosticsOwners: input.listFormStoreDiagnosticsOwners,
+    startFormStoreDiagnosticsSession: input.startFormStoreDiagnosticsSession,
+    stopFormStoreDiagnosticsSession: input.stopFormStoreDiagnosticsSession,
+    clearFormStoreDiagnosticsSession: input.clearFormStoreDiagnosticsSession,
+    getFormStoreDiagnosticsSnapshot: input.getFormStoreDiagnosticsSnapshot,
     createDiagnosticReport: input.createDiagnosticReport,
     exportSession: input.exportSession,
     waitForEvent: input.waitForEvent,

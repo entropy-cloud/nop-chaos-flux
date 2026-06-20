@@ -209,6 +209,11 @@ describe('debugger automation helpers', () => {
     const getRecentFailures = vi.fn(() => []);
     const asyncOwnerSnapshot: AsyncOwnerDebugSnapshot = { owners: [] };
     const getAsyncOwnerDebugSnapshot = vi.fn(() => asyncOwnerSnapshot);
+    const listFormStoreDiagnosticsOwners = vi.fn(() => []);
+    const startFormStoreDiagnosticsSession = vi.fn(() => false);
+    const stopFormStoreDiagnosticsSession = vi.fn(() => false);
+    const clearFormStoreDiagnosticsSession = vi.fn(() => false);
+    const getFormStoreDiagnosticsSnapshot = vi.fn(() => undefined);
     const evaluateNodeExpression = vi.fn(() => ({ expression: 'x', ok: true, value: 1 }));
     const explainNodeValue = vi.fn(() => createValueExplanation());
     const explainNodeMeta = vi.fn(() => createMetaExplanation());
@@ -233,6 +238,11 @@ describe('debugger automation helpers', () => {
       getNodeAnomalies,
       getRecentFailures,
       getAsyncOwnerDebugSnapshot,
+      listFormStoreDiagnosticsOwners,
+      startFormStoreDiagnosticsSession,
+      stopFormStoreDiagnosticsSession,
+      clearFormStoreDiagnosticsSession,
+      getFormStoreDiagnosticsSnapshot,
       createDiagnosticReport,
       exportSession,
       waitForEvent,
@@ -378,6 +388,11 @@ describe('debugger automation helpers', () => {
       getNodeAnomalies: () => undefined,
       getRecentFailures: () => [],
       getAsyncOwnerDebugSnapshot: () => ({ owners: [] }),
+      listFormStoreDiagnosticsOwners: () => [],
+      startFormStoreDiagnosticsSession: () => false,
+      stopFormStoreDiagnosticsSession: () => false,
+      clearFormStoreDiagnosticsSession: () => false,
+      getFormStoreDiagnosticsSnapshot: () => undefined,
       createDiagnosticReport: () => report,
       exportSession: () => exportPayload,
       waitForEvent: async () => waitedEvent,

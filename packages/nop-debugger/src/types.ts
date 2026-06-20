@@ -3,6 +3,11 @@ import type {
   ActionScope,
   AsyncOwnerDebugSnapshot,
   ComponentHandleRegistry,
+  FormStoreDiagnosticsBridge,
+  FormStoreDiagnosticsOptions,
+  FormStoreDiagnosticsOwnerQuery,
+  FormStoreDiagnosticsOwnerSummary,
+  FormStoreDiagnosticsSnapshot,
   InstanceFrame,
   ResolvedAuthoringContract,
   RendererEnv,
@@ -362,6 +367,16 @@ export interface NopDebuggerAutomationApi {
     limit?: number;
   }): NopDebuggerFailureSummary[];
   getAsyncOwnerDebugSnapshot(): AsyncOwnerDebugSnapshot;
+  listFormStoreDiagnosticsOwners(): FormStoreDiagnosticsOwnerSummary[];
+  startFormStoreDiagnosticsSession(
+    query: FormStoreDiagnosticsOwnerQuery,
+    options?: FormStoreDiagnosticsOptions,
+  ): boolean;
+  stopFormStoreDiagnosticsSession(query: FormStoreDiagnosticsOwnerQuery): boolean;
+  clearFormStoreDiagnosticsSession(query: FormStoreDiagnosticsOwnerQuery): boolean;
+  getFormStoreDiagnosticsSnapshot(
+    query: FormStoreDiagnosticsOwnerQuery,
+  ): FormStoreDiagnosticsSnapshot | undefined;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
@@ -383,6 +398,11 @@ export interface NopDebuggerAutomationApi {
   setActiveTab(tab: NopDebuggerTab): void;
   setPanelPosition(position: { x: number; y: number }): void;
 }
+
+export type NopFormStoreDiagnosticsOwnerQuery = FormStoreDiagnosticsOwnerQuery;
+export type NopFormStoreDiagnosticsOwnerSummary = FormStoreDiagnosticsOwnerSummary;
+export type NopFormStoreDiagnosticsSnapshot = FormStoreDiagnosticsSnapshot;
+export type NopFormStoreDiagnosticsBridge = FormStoreDiagnosticsBridge;
 
 export interface NopDebuggerHub {
   activeControllerId?: string;
@@ -445,6 +465,16 @@ export interface NopDebuggerController {
     limit?: number;
   }): NopDebuggerFailureSummary[];
   getAsyncOwnerDebugSnapshot(): AsyncOwnerDebugSnapshot;
+  listFormStoreDiagnosticsOwners(): FormStoreDiagnosticsOwnerSummary[];
+  startFormStoreDiagnosticsSession(
+    query: FormStoreDiagnosticsOwnerQuery,
+    options?: FormStoreDiagnosticsOptions,
+  ): boolean;
+  stopFormStoreDiagnosticsSession(query: FormStoreDiagnosticsOwnerQuery): boolean;
+  clearFormStoreDiagnosticsSession(query: FormStoreDiagnosticsOwnerQuery): boolean;
+  getFormStoreDiagnosticsSnapshot(
+    query: FormStoreDiagnosticsOwnerQuery,
+  ): FormStoreDiagnosticsSnapshot | undefined;
   getOverview(): NopDebuggerOverview;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
