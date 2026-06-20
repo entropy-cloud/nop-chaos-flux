@@ -1,0 +1,15 @@
+{
+  "name": "components",
+  "description": "Build the core component renderers (markdown, html, link, image, json-view, separator, card, progress, spinner, empty, list, etc.)",
+  "roadmapPath": "docs/components/roadmap.md",
+  "plansDir": "docs/plans",
+  "contextDir": "docs/context",
+  "sourceDir": "packages",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "commitFormat": "feat(<scope>): <description>"
+}
