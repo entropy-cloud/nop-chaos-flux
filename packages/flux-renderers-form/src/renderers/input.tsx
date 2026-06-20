@@ -37,6 +37,17 @@ export function createInputRenderer(inputType: string) {
     const inputValue = value as string;
     const errorId = name ? `${name}-error` : undefined;
 
+    const nativeAttrs: { minLength?: number; maxLength?: number; pattern?: string } = {};
+    if (typeof props.props.minLength === 'number') {
+      nativeAttrs.minLength = props.props.minLength;
+    }
+    if (typeof props.props.maxLength === 'number') {
+      nativeAttrs.maxLength = props.props.maxLength;
+    }
+    if (typeof props.props.pattern === 'string' && props.props.pattern) {
+      nativeAttrs.pattern = props.props.pattern;
+    }
+
     return (
       <Input
         type={inputType}
@@ -55,6 +66,7 @@ export function createInputRenderer(inputType: string) {
         onFocus={handlers.onFocus}
         onChange={(event) => handlers.onChange(event.target.value)}
         onBlur={handlers.onBlur}
+        {...nativeAttrs}
       />
     );
   };
