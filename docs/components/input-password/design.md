@@ -7,8 +7,11 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
+- amis 仅作参考之一，**非标尺**。能力裁决与决策表见 `input-text/design.md` §2 Flux 决策表（本组件沿用）。
 - 当前最小能力与 `input-text` 一致。
+- `minLength`/`maxLength`/`pattern` 同 input-text，已实现（双重生效：编译期 `collectSchemaValidationRules` 收集为 validation rule + `createInputRenderer` 透传原生 `<input>` 属性）。详见 `input-text/design.md` §2、§3。
 - 显示切换、强度提示和自动生成密码属于后续增强，不应在首版文档里直接固化成复杂协议。
+- **revealPassword 显示切换** 为 E2a-bis 工作项（基础能力，amis 默认开启，当前 Flux 缺失）。
 
 ## 3. Flux 中的 renderer/type 定义
 

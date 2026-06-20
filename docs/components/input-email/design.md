@@ -7,7 +7,9 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
+- amis 仅作参考之一，**非标尺**。能力裁决与决策表见 `input-text/design.md` §2 Flux 决策表（本组件沿用）。
 - 当前能力与 `input-text` 基本一致，但 validation contributor 默认附带 email 规则。
+- `minLength`/`maxLength`/`pattern` 同 input-text，已实现（双重生效：编译期 `collectSchemaValidationRules` 收集为 validation rule + `createInputRenderer` 透传原生 `<input>` 属性）。详见 `input-text/design.md` §2、§3。
 - 文档应明确它不是第二套字段体系，只是字符串输入的语义别名。
 
 ## 3. Flux 中的 renderer/type 定义
