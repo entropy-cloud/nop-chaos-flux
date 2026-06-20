@@ -1,11 +1,22 @@
+import type { ChangeEvent, ComponentProps } from 'react';
 import {
   type BaseSchema,
   stringAdapter,
   type RendererComponentProps,
   type RendererDefinition,
   type RendererSchemaValidationContext,
+  type SchemaFieldRule,
 } from '@nop-chaos/flux-core';
-import { Input } from '@nop-chaos/ui';
+import {
+  Input,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+  cn,
+} from '@nop-chaos/ui';
+import { XIcon } from 'lucide-react';
 import { formFieldRules, useFormFieldController } from '../field-utils.js';
 import type {
   InputSchema,
@@ -25,6 +36,121 @@ export function validateInputFieldSchema(context: RendererSchemaValidationContex
   validateHiddenFieldPolicySchema(context);
 }
 
+export const inputEnhancementFieldRules: SchemaFieldRule[] = [
+  { key: 'prefix', kind: 'prop' },
+  { key: 'suffix', kind: 'prop' },
+  { key: 'clearable', kind: 'prop', valueType: 'boolean' },
+  { key: 'trimContents', kind: 'prop', valueType: 'boolean' },
+  { key: 'showCounter', kind: 'prop', valueType: 'boolean' },
+  { key: 'nativeAutoComplete', kind: 'prop' },
+  { key: 'placeholder', kind: 'prop' },
+  { key: 'minLength', kind: 'prop' },
+  { key: 'maxLength', kind: 'prop' },
+  { key: 'pattern', kind: 'prop' },
+  { key: 'validate', kind: 'prop' },
+  { key: 'hiddenFieldPolicy', kind: 'prop' },
+];
+
+function mergeAriaSpace(...values: Array<string | undefined | false>): string | undefined {
+  const tokens = values.filter((v): v is string => Boolean(v && v.trim()));
+  return tokens.length > 0 ? tokens.join(' ') : undefined;
+}
+
+type FrameInjectedAriaProps = {
+  id?: string;
+  'aria-labelledby'?: string;
+  'aria-describedby'?: string;
+  'aria-errormessage'?: string;
+  'aria-invalid'?: boolean;
+  onFocus?: (event: unknown) => void;
+  onBlur?: (event: unknown) => void;
+};
+
+type InputGroupFieldControlProps = FrameInjectedAriaProps & {
+  className?: string;
+  inputProps: ComponentProps<typeof InputGroupInput>;
+  prefix?: string;
+  suffix?: string;
+  counterText?: string;
+  showClearButton?: boolean;
+  onClear?: () => void;
+};
+
+function InputGroupFieldControl(props: InputGroupFieldControlProps) {
+  const {
+    className,
+    id: injectedId,
+    'aria-labelledby': injectedLabelledBy,
+    'aria-describedby': injectedDescribedBy,
+    'aria-errormessage': injectedErrorMessage,
+    'aria-invalid': injectedInvalid,
+    onFocus: injectedFocus,
+    onBlur: injectedBlur,
+    inputProps,
+    prefix,
+    suffix,
+    counterText,
+    showClearButton,
+    onClear,
+  } = props;
+
+  const ownId = inputProps.id;
+  const ownLabelledBy = inputProps['aria-labelledby'];
+  const ownDescribedBy = inputProps['aria-describedby'];
+  const ownErrorMessage = inputProps['aria-errormessage'];
+  const ownInvalid = inputProps['aria-invalid'];
+  const ownFocus = inputProps.onFocus as ((event: unknown) => void) | undefined;
+  const ownBlur = inputProps.onBlur as ((event: unknown) => void) | undefined;
+
+  const mergedInputProps = {
+    ...inputProps,
+    id: ownId ?? injectedId,
+    'aria-labelledby': mergeAriaSpace(ownLabelledBy, injectedLabelledBy),
+    'aria-describedby': mergeAriaSpace(ownDescribedBy, injectedDescribedBy),
+    'aria-errormessage': ownErrorMessage ?? injectedErrorMessage,
+    'aria-invalid': ownInvalid ?? injectedInvalid,
+    onFocus: (event: unknown) => {
+      injectedFocus?.(event);
+      ownFocus?.(event);
+    },
+    onBlur: (event: unknown) => {
+      ownBlur?.(event);
+      injectedBlur?.(event);
+    },
+  };
+
+  return (
+    <InputGroup className={className}>
+      {prefix ? (
+        <InputGroupAddon align="inline-start">
+          <InputGroupText>{prefix}</InputGroupText>
+        </InputGroupAddon>
+      ) : null}
+      <InputGroupInput {...mergedInputProps} />
+      {suffix || counterText !== undefined || showClearButton ? (
+        <InputGroupAddon align="inline-end">
+          {suffix ? <InputGroupText>{suffix}</InputGroupText> : null}
+          {counterText !== undefined ? (
+            <span data-slot="input-counter" className="text-xs text-muted-foreground tabular-nums">
+              {counterText}
+            </span>
+          ) : null}
+          {showClearButton ? (
+            <InputGroupButton
+              size="icon-xs"
+              variant="ghost"
+              aria-label="Clear"
+              onClick={onClear}
+            >
+              <XIcon className="pointer-events-none" />
+            </InputGroupButton>
+          ) : null}
+        </InputGroupAddon>
+      ) : null}
+    </InputGroup>
+  );
+}
+
 export function createInputRenderer(inputType: string) {
   return function InputRenderer(props: RendererComponentProps<InputSchema>) {
     const name = String(props.props.name ?? '');
@@ -34,39 +160,93 @@ export function createInputRenderer(inputType: string) {
       required: props.props.required,
       readOnly: props.props.readOnly,
     });
-    const inputValue = value as string;
+    const inputValue = (value as string | undefined) ?? '';
     const errorId = name ? `${name}-error` : undefined;
 
     const nativeAttrs: { minLength?: number; maxLength?: number; pattern?: string } = {};
     if (typeof props.props.minLength === 'number') {
       nativeAttrs.minLength = props.props.minLength;
     }
-    if (typeof props.props.maxLength === 'number') {
-      nativeAttrs.maxLength = props.props.maxLength;
+    const maxLength = typeof props.props.maxLength === 'number' ? props.props.maxLength : undefined;
+    if (maxLength !== undefined) {
+      nativeAttrs.maxLength = maxLength;
     }
     if (typeof props.props.pattern === 'string' && props.props.pattern) {
       nativeAttrs.pattern = props.props.pattern;
     }
 
+    const prefix = typeof props.props.prefix === 'string' && props.props.prefix ? props.props.prefix : undefined;
+    const suffix = typeof props.props.suffix === 'string' && props.props.suffix ? props.props.suffix : undefined;
+    const clearable = props.props.clearable === true;
+    const trimContents = props.props.trimContents === true;
+    const showCounter = props.props.showCounter === true;
+    const nativeAutoComplete =
+      typeof props.props.nativeAutoComplete === 'string' && props.props.nativeAutoComplete
+        ? props.props.nativeAutoComplete
+        : undefined;
+
+    const showClearButton =
+      clearable && presentation.interactive && typeof inputValue === 'string' && inputValue.length > 0;
+
+    function handleBlur() {
+      if (trimContents && typeof inputValue === 'string' && inputValue.length > 0) {
+        const trimmed = inputValue.trim();
+        if (trimmed !== inputValue) {
+          handlers.onChange(trimmed);
+        }
+      }
+      handlers.onBlur();
+    }
+
+    function handleClear() {
+      handlers.onChange('');
+    }
+
+    const counterText =
+      showCounter && typeof inputValue === 'string'
+        ? maxLength !== undefined
+          ? `${inputValue.length} / ${maxLength}`
+          : `${inputValue.length}`
+        : undefined;
+
+    const hasInlineEndSlot = Boolean(suffix) || clearable || showCounter;
+    const needsInputGroup = Boolean(prefix) || hasInlineEndSlot;
+
+    const sharedInputProps: ComponentProps<typeof InputGroupInput> = {
+      type: inputType,
+      id: name ? `${name}-control` : undefined,
+      name: name || undefined,
+      value: inputValue,
+      disabled: presentation.effectiveDisabled,
+      readOnly: presentation.readOnly,
+      'aria-label': String((props.props.label ?? name) || '') || undefined,
+      'aria-required': props.props.required ? true : undefined,
+      'aria-invalid': presentation.showError ? true : undefined,
+      'aria-describedby': presentation.showError ? errorId : undefined,
+      'aria-errormessage': presentation.showError ? errorId : undefined,
+      placeholder: props.props.placeholder ? String(props.props.placeholder) : undefined,
+      onFocus: handlers.onFocus,
+      onChange: (event: ChangeEvent<HTMLInputElement>) => handlers.onChange(event.target.value),
+      onBlur: handleBlur,
+      ...(nativeAutoComplete ? { autoComplete: nativeAutoComplete } : {}),
+      ...nativeAttrs,
+    };
+
+    if (!needsInputGroup) {
+      return (
+        <Input {...sharedInputProps} className={props.meta.className} />
+      );
+    }
+
     return (
-      <Input
-        type={inputType}
-        id={name ? `${name}-control` : undefined}
-        name={name || undefined}
-        value={inputValue}
-        disabled={presentation.effectiveDisabled}
-        readOnly={presentation.readOnly}
-        aria-label={String((props.props.label ?? name) || '') || undefined}
-        aria-required={props.props.required ? true : undefined}
-        aria-invalid={presentation.showError ? true : undefined}
-        aria-describedby={presentation.showError ? errorId : undefined}
-        aria-errormessage={presentation.showError ? errorId : undefined}
-        placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
-        className={props.meta.className}
-        onFocus={handlers.onFocus}
-        onChange={(event) => handlers.onChange(event.target.value)}
-        onBlur={handlers.onBlur}
-        {...nativeAttrs}
+      <InputGroupFieldControl
+        className={cn('nop-input-group', props.meta.className)}
+        inputProps={sharedInputProps}
+        prefix={prefix}
+        suffix={suffix}
+        counterText={counterText}
+        showClearButton={showClearButton}
+        onClear={handleClear}
       />
     );
   };
@@ -112,7 +292,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     type: 'input-text',
     sourcePackage: '@nop-chaos/flux-renderers-form',
     component: createInputRenderer('text'),
-    fields: formFieldRules,
+    fields: [...formFieldRules, ...inputEnhancementFieldRules],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     wrap: true,
@@ -121,7 +301,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     type: 'input-email',
     sourcePackage: '@nop-chaos/flux-renderers-form',
     component: createInputRenderer('email'),
-    fields: formFieldRules,
+    fields: [...formFieldRules, ...inputEnhancementFieldRules],
     validation: createFieldValidation(undefined, true),
     schemaValidator: validateInputFieldSchema,
     wrap: true,
@@ -130,7 +310,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     type: 'input-password',
     sourcePackage: '@nop-chaos/flux-renderers-form',
     component: createInputRenderer('password'),
-    fields: formFieldRules,
+    fields: [...formFieldRules, ...inputEnhancementFieldRules],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     wrap: true,
