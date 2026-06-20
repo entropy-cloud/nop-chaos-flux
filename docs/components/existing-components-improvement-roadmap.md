@@ -1,6 +1,6 @@
 # Existing Components Improvement Roadmap
 
-> Last Updated: 2026-06-21 (X5 done)
+> Last Updated: 2026-06-21 (E1a done)
 > Source: `docs/components/existing-components-improvement-analysis.md`（v2 分析报告）、`docs/components/amis-baseline-matrix.md`
 > 关联：`roadmap.md`（新增组件，独立）、`mobile-roadmap.md`（移动端响应式，独立）
 
@@ -39,7 +39,7 @@
 - E0d condition-builder 漂移修复: `done`
 - X3 命名规范基线（naming-conventions.md）: `done`
 - X5 design.md Flux 决策表（P0/P1 硬前置）: `done`
-- E1a select 能力补齐: `todo`
+- E1a select 能力补齐: `done`
 - E1b table 列宽与聚合: `todo`
 - E1c table 高级能力: `todo`
 - E1d crud 数据生命周期: `todo`

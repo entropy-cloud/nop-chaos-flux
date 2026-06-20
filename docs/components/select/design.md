@@ -4,30 +4,31 @@
 
 - `select` 是离散单选或多选字段的基础下拉控件。
 - 它负责 option 选择与值绑定，不负责数据查询和分页式远程列表浏览。
+- E1a 已补齐：搜索过滤、多选（tag 模式）、clearable、分组 option、虚拟滚动。底层从 `Select` 原语族迁移到 `@nop-chaos/ui` Combobox 原语族（base-ui）。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- amis 仅作参考之一，**非标尺**。Flux 按 `existing-components-improvement-analysis.md` §0.2 原则裁决。当前 `select` 是单选 NativeSelect，**缺搜索过滤、多选、远程异步搜索、虚拟滚动、clearable、creatable、分组、option 模板**（用户反馈的"缺输入过滤"为头号缺口），属 P0 改进项 E1a。
-- `placeholder` **已实现**（文档历史版本误列为"后续补齐"，已校正）。
+- amis 仅作参考之一，**非标尺**。Flux 按 `existing-components-improvement-analysis.md` §0.2 原则裁决。E1a 已实现搜索过滤、多选、虚拟滚动、clearable、分组。未实现：creatable/editable/removable option、option 模板 region（deferred）、远程异步搜索 debounce（走 data-source 组合层）。
+- `placeholder` **已实现**。
 
 ### Flux 决策表
 
 > Flux 决策主语。amis 仅作参考之一，**非标尺**。命名对齐 X3 基线（`docs/references/naming-conventions.md` §2/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。`—` 表示该侧无内容。
 
-| 能力                                                                                        | 采纳                                                                                                  | 不采纳                                                   | 理由                                                                                 |
-| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| 单选 + 静态/异步 `options`（`{label,value}` 标准形状）                                      | **实现**：`options`（source-enabled，一次性异步加载）+ `placeholder`/`disabled`/`readOnly`/`required` | —                                                        | 当前基线；option 形状对齐 X3 §2（`{label,value}`，不用 amis 值编码）                 |
-| 输入搜索过滤                                                                                | **计划实现（E1a）**：`searchable` + `filterOption`（shadcn Combobox 命名 + 高亮）                     | amis 组件级 `autoComplete` SchemaApi 生命周期            | 头号缺口；命名对齐 shadcn/ui Combobox；请求下沉 data-source + action（X3 §1/§3）     |
-| 多选                                                                                        | **计划实现（E1a）**：`multiple`（tag 模式渲染选中项）                                                 | amis `checkAll`/`defaultCheckAll`（归 `checkbox-group`） | 多选是 select 核心能力；全选语义归离散多选集合字段（checkbox-group）                 |
-| `clearable` 清空                                                                            | **计划实现（E1a）**：`clearable`（明确布尔，对齐 shadcn）                                             | —                                                        | 命名对齐 X3 §2（肯定式布尔）                                                         |
-| 虚拟滚动（大 option 集）                                                                    | **计划实现（E1a）**：复用 table 的 virtual 模式                                                       | —                                                        | 大 option 集性能                                                                     |
-| 分组 option                                                                                 | **计划实现（E1a）**：嵌套 `options` 或 `groups: { label, options }[]`                                 | amis `children` 混合扁平编码                             | 命名对齐 X3 §4.3（不用 amis 扁平编码）                                               |
-| option 模板渲染                                                                             | **计划实现（E1a）**：受控 option label region                                                         | —                                                        | 自定义 option 展示                                                                   |
-| 远程异步搜索（debounce）                                                                    | **计划实现（E1a）**：走 data-source，不在组件开 `api`                                                 | amis 组件级 `api`/`initFetch`                            | 请求下沉 data-source + action（X3 §1/§3）                                            |
-| `creatable`/`editable`/`removable` option                                                   | **暂不实现**                                                                                          | —                                                        | 场景窄，后续按需                                                                     |
-| amis 多模式 `selectMode`（table/group/tree/chained/associated）                             | —                                                                                                     | **不采纳**                                               | 多模式归 tree-select/picker/transfer 等独立组件，不塞进 select（X3 §1 "核心已简化"） |
-| amis 值编码 `valueField`/`labelField`/`joinValues`/`extractValue`/`delimiter`/`simpleValue` | —                                                                                                     | **不采纳**                                               | 用 shadcn `{label,value}` 标准形状；如需扩展按命名规范单独立项（X3 §3）              |
-| amis 皮肤/双实现 `borderMode`/`overlay`/`mobileUI`/`hideSelected`/`showInvalidMatch`        | —                                                                                                     | **不采纳**                                               | amis 皮肤变体/双实现坏设计；移动端走响应式（见 mobile-roadmap，X3 §3）               |
+| 能力                                                                                        | 采纳                                                                                                                   | 不采纳                                                   | 理由                                                                                       |
+| ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 单选 + 静态/异步 `options`（`{label,value}` 标准形状）                                      | **实现**：`options`（source-enabled，一次性异步加载）+ `placeholder`/`disabled`/`readOnly`/`required`                  | —                                                        | 当前基线；option 形状对齐 X3 §2（`{label,value}`，不用 amis 值编码）                       |
+| 输入搜索过滤                                                                                | **实现**：`searchable` + `filterOption`（shadcn Combobox 命名）；ComboboxInput + 前端 contains 匹配                    | amis 组件级 `autoComplete` SchemaApi 生命周期            | 头号缺口；命名对齐 shadcn/ui Combobox；请求下沉 data-source + action（X3 §1/§3）           |
+| 多选                                                                                        | **实现**：`multiple`（tag 模式渲染选中项，ComboboxChips + ComboboxChip）                                               | amis `checkAll`/`defaultCheckAll`（归 `checkbox-group`） | 多选是 select 核心能力；全选语义归离散多选集合字段（checkbox-group）                       |
+| `clearable` 清空                                                                            | **实现**：`clearable`（明确布尔，对齐 shadcn）；searchable 用 ComboboxInput showClear，non-searchable 用 ComboboxClear | —                                                        | 命名对齐 X3 §2（肯定式布尔）                                                               |
+| 虚拟滚动（大 option 集）                                                                    | **实现**：`virtual` + `@tanstack/react-virtual`（option 数 > 100 时虚拟化 ComboboxList）                               | —                                                        | 大 option 集性能                                                                           |
+| 分组 option                                                                                 | **实现**：`groups: { label: string; options: SelectOptionSchema[] }[]`（与 `options` 互斥）                            | amis `children` 混合扁平编码                             | 命名对齐 X3 §4.3（不用 amis 扁平编码）                                                     |
+| option 模板渲染                                                                             | **暂不实现（后续 plan）**：受控 option label region                                                                    | —                                                        | 当前 `label` 已承载文本展示；自定义模板需 region 编译通道，deferred（见 plan Deferred 节） |
+| 远程异步搜索（debounce）                                                                    | **实现（入口预留）**：`filterOption: false` 禁用前端过滤；搜索关键字驱动 data-source 刷新属组合层                      | amis 组件级 `api`/`initFetch`                            | 请求下沉 data-source + action（X3 §1/§3）                                                  |
+| `creatable`/`editable`/`removable` option                                                   | **暂不实现**                                                                                                           | —                                                        | 场景窄，后续按需                                                                           |
+| amis 多模式 `selectMode`（table/group/tree/chained/associated）                             | —                                                                                                                      | **不采纳**                                               | 多模式归 tree-select/picker/transfer 等独立组件，不塞进 select（X3 §1 "核心已简化"）       |
+| amis 值编码 `valueField`/`labelField`/`joinValues`/`extractValue`/`delimiter`/`simpleValue` | —                                                                                                                      | **不采纳**                                               | 用 shadcn `{label,value}` 标准形状；如需扩展按命名规范单独立项（X3 §3）                    |
+| amis 皮肤/双实现 `borderMode`/`overlay`/`mobileUI`/`hideSelected`/`showInvalidMatch`        | —                                                                                                                      | **不采纳**                                               | amis 皮肤变体/双实现坏设计；移动端走响应式（见 mobile-roadmap，X3 §3）                     |
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -39,13 +40,25 @@
 ## 4. schema 设计
 
 - 继承 `InputSchema` 并增加 `options`。
-- E1a 将补齐 `multiple`、`searchable`、`clearable`、`filterOption` 等字段，命名对齐 shadcn/ui Combobox（不采纳 amis `joinValues`/`extractValue`/`selectMode` 等命名，见 §2 决策表）。`placeholder` 已实现。
+- E1a 补齐字段（命名对齐 shadcn/ui Combobox，X3 §2；不采纳 amis `joinValues`/`extractValue`/`selectMode` 等命名，见 §2 决策表）：
+  - `multiple?: boolean`（肯定式布尔；多选 tag 模式）
+  - `searchable?: boolean`（肯定式布尔；popup 内输入过滤）
+  - `clearable?: boolean`（肯定式布尔；清空按钮）
+  - `filterOption?: boolean | { ignoreCase?: boolean }`（默认随 `searchable: true` 开启；`false` 禁用前端过滤用于远程搜索场景）
+  - `searchPlaceholder?: string`
+  - `noResultsText?: string`（默认 "无匹配项"）
+  - `groups?: { label: string; options: SelectOptionSchema[] }[]`（与 `options` 互斥；不用 amis `children` 扁平编码，X3 §4.3）
+  - `virtual?: boolean`（option 数超阈值时虚拟滚动）
+  - `SelectOptionSchema.value` 放宽为 `string | number | boolean`（与 `sanitizeChoiceOptions` 实际行为对齐）
+  - `SelectOptionSchema.disabled?: boolean`
+- `placeholder` 已实现。
 
 ## 5. 字段分类
 
 - `label`: `value-or-region`
 - `options`: `value`，允许 source-enabled value
-- `placeholder`、`multiple`、`searchable`: `value`
+- `groups`: `value`
+- `placeholder`、`multiple`、`searchable`、`clearable`、`filterOption`、`searchPlaceholder`、`noResultsText`、`virtual`: `value`
 
 ## 6. regions 与 slot 约定
 
@@ -70,20 +83,19 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点保留 `nop-select-wrapper` marker and `data-slot="select-wrapper"` marker.
-- 当前表单 `type: 'select'` 单选 renderer uses `@nop-chaos/ui` `NativeSelect` as the stable browser-interaction baseline; popup/headless select remains a UI primitive for richer future modes.
-- 视觉层复用 `@nop-chaos/ui` Select 或 NativeSelect，不再引入第二套 mode 命名。
-
-### `NativeSelect` public contract baseline
-
-- `NativeSelect` 属于 `@nop-chaos/ui` 的公开 UI primitive，不应只通过内部文件路径或 synthetic DOM 事件来定义契约。
-- `disabled` 的支持语义以真实原生 `<select disabled>` 交互为准；不要把测试里手工触发 `change` 后 handler 仍被调用视为 supported contract。
-- `value` / `defaultValue` / `onChange` 语义应保持与原生 `<select>` 一致，由上层 renderer 负责把 schema/runtime 值绑定到该公开接口。
-- renderer 或测试如果要证明 disabled 行为，应优先断言真实禁用状态与公开入口行为，而不是把事件系统的可人工触发性写成长期基线。
+- E1a 后 renderer 使用 `@nop-chaos/ui` Combobox 原语族（base-ui）：`Combobox`/`ComboboxTrigger`/`ComboboxValue`（non-searchable）/`ComboboxInput`（searchable）/`ComboboxChips`+`ComboboxChip`（multiple）/`ComboboxContent`/`ComboboxList`/`ComboboxItem`/`ComboboxGroup`+`ComboboxLabel`（分组）/`ComboboxEmpty`/`ComboboxClear`。
+- loading 态保留 `data-slot="select-loading"`（role=status）；error 态保留 `data-slot="select-error"`（role=alert）。
+- 不再使用 `Select`/`SelectTrigger`/`SelectValue`/`SelectContent`/`SelectItem`（已迁移到 Combobox）。
+- 视觉层复用 `@nop-chaos/ui` Combobox，不再引入第二套 mode 命名。
 
 ## 11. 实现拆分建议
 
-- option 归一化、source state 展示和 field chrome 应分离。
+- option 归一化（`sanitizeChoiceOptions`/`sanitizeChoiceGroups`）、source state 展示、field chrome、虚拟滚动（`VirtualizedComboboxList`/`StaticComboboxList`）已分离。
+- searchable 过滤逻辑在 renderer 内（`matchChoiceLabel` + `filterOption` 配置），不走 base-ui 内建 filter（自行控制以保证 `filterOption: false` 远程搜索场景）。
 
 ## 12. 风险、取舍与后续阶段
 
-- 多选、搜索和远程源一旦混在一起，很容易使契约过宽；文档需要持续强调“单一 value 字段 + 明确 option 输入”原则。
+- 多选、搜索和远程源一旦混在一起，很容易使契约过宽；文档需要持续强调"单一 value 字段 + 明确 option 输入"原则。
+- Combobox 迁移后，`SelectOptionSchema.value` 从 `string` 放宽为 `string | number | boolean`；renderer 内部以 `Object.is` 匹配 option，不需 amis 值编码。
+- 虚拟滚动（`virtual: true`）对 base-ui Combobox 的键盘导航有影响：仅可见 option 参与导航（scroll 后其余 option 进入 DOM）。对 < 100 option 的场景无影响（走 `StaticComboboxList`）。
+- option 模板 region 为 deferred（见 plan `Deferred But Adjudicated` 节），当前 `label` 承载文本展示。
