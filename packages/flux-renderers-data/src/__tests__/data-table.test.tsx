@@ -515,8 +515,8 @@ describe('dataRendererDefinitions table behavior', () => {
     expect(checkboxes[1].getAttribute('aria-checked')).toBe('true');
 
     const selects = screen.getAllByRole('combobox');
-    expect(selects[0].querySelector('[data-slot="select-value"]')?.textContent).toContain('apac');
-    expect(selects[1].querySelector('[data-slot="select-value"]')?.textContent).toContain('emea');
+    expect(selects[0].textContent?.toLowerCase()).toContain('apac');
+    expect(selects[1].textContent?.toLowerCase()).toContain('emea');
   });
 
   it('preserves raw slot field names for table cell render props', async () => {

@@ -9,10 +9,17 @@ import type {
 export interface SelectOptionSchema {
   [key: string]: import('@nop-chaos/flux-core').SchemaValue;
   label: string;
-  value: string;
+  value: string | number | boolean;
+  disabled?: boolean;
 }
 
 export type SelectOptionsValue = SelectOptionSchema[] | SourceSchema;
+
+export interface SelectOptionGroup {
+  [key: string]: import('@nop-chaos/flux-core').SchemaValue;
+  label: string;
+  options: SelectOptionSchema[];
+}
 
 export interface InputSchema extends BoundFieldSchemaBase {
   placeholder?: string;
@@ -52,6 +59,14 @@ export type { FieldsetSchema } from './renderers/fieldset.js';
 
 export interface SelectSchema extends InputSchema {
   options?: SelectOptionsValue;
+  groups?: SelectOptionGroup[];
+  multiple?: boolean;
+  searchable?: boolean;
+  clearable?: boolean;
+  filterOption?: boolean | { ignoreCase?: boolean };
+  searchPlaceholder?: string;
+  noResultsText?: string;
+  virtual?: boolean;
 }
 
 export interface TextareaSchema extends InputSchema {
