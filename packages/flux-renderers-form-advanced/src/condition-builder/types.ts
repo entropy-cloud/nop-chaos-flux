@@ -141,6 +141,12 @@ export interface ConditionOperatorOverrides extends SchemaObject {
 export type ConditionFieldSchemaValue = ConditionField & SchemaValue;
 export type ConditionOperatorOverridesSchemaValue = ConditionOperatorOverrides & SchemaValue;
 
+export interface ConditionFormulaConfig extends SchemaObject {
+  enabled?: boolean;
+  formula?: string;
+  source?: string;
+}
+
 export interface ConditionBuilderSchema extends BaseSchema {
   type: 'condition-builder';
   name: string;
@@ -149,13 +155,14 @@ export interface ConditionBuilderSchema extends BaseSchema {
   builderMode?: 'full' | 'simple';
   embed?: boolean;
   title?: string;
-  selectMode?: 'list' | 'tree' | 'chained';
   searchable?: boolean;
   draggable?: boolean;
   showAndOr?: boolean;
   showNot?: boolean;
   showIf?: boolean;
   uniqueFields?: boolean;
+  formulas?: ConditionFormulaConfig;
+  formulaForIf?: ConditionFormulaConfig;
   operators?: ConditionOperatorOverridesSchemaValue;
   addBtnVisibleOn?: string;
   addGroupBtnVisibleOn?: string;

@@ -99,6 +99,8 @@ export const zhCN: Resource = {
       operatorLabel: '条件操作符',
       valueLabel: '条件值',
       reorderCondition: '重新排序条件',
+      ifExpressionPlaceholder: 'if 表达式，如 ${age > 18}',
+      ifExpressionLabel: '组级 if 表达式',
       operators: {
         equal: '等于',
         notEqual: '不等于',

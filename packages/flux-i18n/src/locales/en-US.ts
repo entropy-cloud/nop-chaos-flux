@@ -99,6 +99,8 @@ export const enUS: Resource = {
       operatorLabel: 'Condition operator',
       valueLabel: 'Condition value',
       reorderCondition: 'Reorder condition',
+      ifExpressionPlaceholder: 'if expression, e.g. ${age > 18}',
+      ifExpressionLabel: 'Group if expression',
       operators: {
         equal: 'Equals',
         notEqual: 'Does not equal',

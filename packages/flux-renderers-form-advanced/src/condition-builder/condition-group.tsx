@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import type { BaseSchema, FormRuntime, ScopeRef, ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { PlusIcon, GroupIcon, Trash2Icon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { cn } from '@nop-chaos/ui';
+import { cn, Input } from '@nop-chaos/ui';
 import {
   DndContext,
   closestCenter,
@@ -76,6 +76,7 @@ export function ConditionGroup({
     builderMode = 'full',
     showAndOr = true,
     showNot = false,
+    showIf = false,
     draggable = false,
     searchable = false,
     uniqueFields = false,
@@ -104,6 +105,14 @@ export function ConditionGroup({
   const handleNotToggle = useCallback(() => {
     onChange({ ...value, not: !value.not });
   }, [value, onChange]);
+
+  const handleIfChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const next = e.target.value;
+      onChange({ ...value, if: next === '' ? undefined : next });
+    },
+    [value, onChange],
+  );
 
   const handleChildChange = useCallback(
     (index: number, child: ConditionValueNode) => {
@@ -289,7 +298,7 @@ export function ConditionGroup({
       )}
 
       <div className="rounded-lg border border-border bg-card pl-0">
-        {(showAndOr || showNot || (depth > 0 && onRemove && !disabled)) && (
+        {(showAndOr || showNot || showIf || (depth > 0 && onRemove && !disabled)) && (
           <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border bg-muted/30 rounded-t-lg">
             {showAndOr && !isSimple ? (
               <div className="flex items-center rounded-full border border-border p-0.5 bg-background">
@@ -346,11 +355,27 @@ export function ConditionGroup({
               </WrappedFieldAction>
             )}
 
+            {showIf && (
+              <Input
+                data-slot="condition-group-if-input"
+                type="text"
+                value={value.if ?? ''}
+                onChange={handleIfChange}
+                disabled={disabled}
+                placeholder={t('conditionBuilder.ifExpressionPlaceholder')}
+                aria-label={t('conditionBuilder.ifExpressionLabel')}
+                className="ml-auto h-7 text-xs min-w-[120px] max-w-[200px]"
+              />
+            )}
+
             {depth > 0 && onRemove && !disabled && (
               <WrappedFieldAction
                 variant="ghost"
                 size="icon-xs"
-                className="ml-auto text-muted-foreground hover:text-destructive transition-colors"
+                className={cn(
+                  showIf ? 'ml-1' : 'ml-auto',
+                  'text-muted-foreground hover:text-destructive transition-colors',
+                )}
                 onClick={onRemove}
                 title={removeGroupLabel}
                 aria-label={removeGroupLabel}
