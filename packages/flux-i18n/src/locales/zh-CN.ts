@@ -54,6 +54,7 @@ export const zhCN: Resource = {
       selectRow: '选择行',
       collapse: '收起',
       search: '搜索',
+      resizeColumn: '调整列宽',
     },
     form: {
       required: '必填',

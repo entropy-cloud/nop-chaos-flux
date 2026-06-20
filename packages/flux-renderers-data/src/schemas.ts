@@ -54,6 +54,19 @@ export interface TableColumnSchema extends BaseSchema {
   filterable?: boolean | TableColumnFilterConfig;
   filterOptions?: TableColumnFilterOption[];
   quickEdit?: boolean | TableColumnQuickEditConfig;
+  resizable?: boolean;
+  minWidth?: number;
+  maxWidth?: number;
+}
+
+export interface TableSummaryCell extends SchemaObject {
+  column: string;
+  value: SchemaInput | string;
+  align?: 'left' | 'center' | 'right';
+}
+
+export interface TableSummaryRow extends SchemaObject {
+  cells: TableSummaryCell[];
 }
 
 export interface TableColumnSchemaInput extends Omit<TableColumnSchema, 'label'> {
@@ -87,6 +100,11 @@ export interface TableSchema extends BaseSchema {
   scrollHeight?: number;
   columnSettings?: TableColumnSettingsConfig;
   responsive?: TableResponsiveConfig;
+  columnResize?: boolean;
+  affixHeader?: boolean;
+  prefixRow?: TableSummaryRow;
+  affixRow?: TableSummaryRow;
+  combineNum?: number;
   pagination?: {
     enabled?: boolean;
     currentPage?: number;

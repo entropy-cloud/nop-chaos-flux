@@ -6,6 +6,7 @@ import type { TableSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import type { TableRowEntry } from './types.js';
 import { buildFlattenedItems, renderDataRow, renderExpandedRow } from './table-body-row-rendering.js';
+import { computeCombinePlan, type CombinePlan } from './combine-cells.js';
 
 const DEFAULT_ROW_ESTIMATE = 44;
 const OVERSCAN = 5;
@@ -31,6 +32,7 @@ interface TableBodyRowsProps {
   isAtMaxSelection?: boolean;
   virtualEnabled?: boolean;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
+  combineNum?: number;
 }
 
 export function TableBodyRows({
@@ -54,6 +56,7 @@ export function TableBodyRows({
   isAtMaxSelection,
   virtualEnabled,
   scrollRef,
+  combineNum,
 }: TableBodyRowsProps) {
   if (!virtualEnabled || processedData.length === 0) {
     return (
@@ -76,6 +79,7 @@ export function TableBodyRows({
         onSelectRow={onSelectRow}
         isRowCheckable={isRowCheckable}
         isAtMaxSelection={isAtMaxSelection}
+        combineNum={combineNum}
       />
     );
   }
@@ -101,6 +105,7 @@ export function TableBodyRows({
       isRowCheckable={isRowCheckable}
       isAtMaxSelection={isAtMaxSelection}
       scrollRef={scrollRef}
+      combineNum={combineNum}
     />
   );
 }
@@ -124,11 +129,17 @@ function NonVirtualBody({
   onSelectRow,
   isRowCheckable,
   isAtMaxSelection,
+  combineNum,
 }: TableBodyRowsProps) {
   const schemaProps = props.props as TableSchema;
   const helpers = props.helpers;
   const radioSelectionValue =
     schemaProps.rowSelection?.type === 'radio' ? Array.from(selectedRowKeys)[0] : undefined;
+
+  const combinePlan: CombinePlan = React.useMemo(
+    () => computeCombinePlan(processedData, columns, combineNum, { virtualEnabled: false }),
+    [processedData, columns, combineNum],
+  );
 
   const rows =
     processedData.length === 0 ? (
@@ -138,7 +149,7 @@ function NonVirtualBody({
         </TableCell>
       </TableRow>
     ) : (
-      processedData.map((entry) => {
+      processedData.map((entry, rowIndex) => {
         const cacheKey = entry.cacheKey ?? entry.rowKey;
         const rowScope = rowScopeCache.get(cacheKey);
         if (!rowScope) return null;
@@ -177,6 +188,8 @@ function NonVirtualBody({
               isStriped,
               isRowCheckable,
               isAtMaxSelection,
+              combinePlan,
+              rowIndex,
             )}
             {isExpanded && schemaProps.expandable?.expandedRowRegionKey
               ? renderExpandedRow(
@@ -241,10 +254,16 @@ function VirtualBody({
   isAtMaxSelection,
   emptyContent,
   scrollRef,
+  combineNum,
 }: TableBodyRowsProps) {
   const parentRef = scrollRef;
   const schemaProps = props.props as TableSchema;
   const helpers = props.helpers;
+
+  const combinePlan: CombinePlan = React.useMemo(
+    () => computeCombinePlan(processedData, columns, combineNum, { virtualEnabled: true }),
+    [processedData, columns, combineNum],
+  );
 
   const flattenedItems = React.useMemo(
     () =>
@@ -331,6 +350,8 @@ function VirtualBody({
                     isStriped,
                     isRowCheckable,
                     isAtMaxSelection,
+                    combinePlan,
+                    virtualRow.index,
                   )}
                 </React.Fragment>
               );

@@ -18,6 +18,8 @@ import {
   DropdownMenuTrigger,
   Label,
   Table,
+  TableBody,
+  TableFooter,
   TableHeader,
   cn,
 } from '@nop-chaos/ui';
@@ -31,6 +33,7 @@ import {
 import { TableBodyRows } from './table-renderer/table-body-rows.js';
 import { createFixedColumnLayout } from './table-renderer/fixed-columns.js';
 import { TableHeaderRow } from './table-renderer/table-header-row.js';
+import { TableSummaryRowView } from './table-renderer/table-summary-row.js';
 import { TableLoadingOverlay } from './table-renderer/table-loading-overlay.js';
 import { TablePaginationBar } from './table-renderer/table-pagination-bar.js';
 import {
@@ -43,6 +46,7 @@ import {
 } from './table-renderer/use-table-controls.js';
 import { useTableHandle } from './table-renderer/use-table-handle.js';
 import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache.js';
+import { useColumnResize } from './table-renderer/use-column-resize.js';
 import type { TableResponsiveConfig } from './schemas.js';
 
 function asReactNode(value: unknown): React.ReactNode {
@@ -247,6 +251,30 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     () => createFixedColumnLayout(tableSchemaProps, mainColumns, showExpandColumn),
     [tableSchemaProps, mainColumns, showExpandColumn],
   );
+
+  const columnResizeEnabled = schemaProps.columnResize !== false;
+  const resizeApi = useColumnResize(tableColumns, schemaProps.columnResize);
+  const effectiveMainColumns = useMemo(() => {
+    if (
+      !columnResizeEnabled ||
+      Object.keys(resizeApi.widths).length === 0 ||
+      mainColumns !== tableColumns
+    ) {
+      return mainColumns;
+    }
+
+    let changed = false;
+    const next = mainColumns.map((column, index) => {
+      const key = column.name ?? `column-${index}`;
+      const override = resizeApi.widths[key];
+      if (override === undefined || override === column.width) {
+        return column;
+      }
+      changed = true;
+      return { ...column, width: override };
+    });
+    return changed ? next : mainColumns;
+  }, [columnResizeEnabled, mainColumns, resizeApi.widths, tableColumns]);
 
   const rowScopeCache = useTableRowScopeCache(processedData, ownerKey, helpers, props.path);
 
@@ -462,12 +490,29 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
               onClearFilters={clearFilters}
               onSelectAll={handleSelectAll}
               selectAllDisabled={isAtMaxSelection && !allSelected}
+              columnResize={schemaProps.columnResize}
+              resizeApi={resizeApi}
+              affixHeader={schemaProps.affixHeader}
             />
           </TableHeader>
 
+          {schemaProps.prefixRow ? (
+            <TableBody>
+              <TableSummaryRowView
+                row={schemaProps.prefixRow}
+                variant="prefix"
+                columns={effectiveMainColumns}
+                showExpandColumn={showExpandColumn}
+                hasSelection={Boolean(schemaProps.rowSelection)}
+                fixedColumnLayout={fixedColumnLayout}
+                parentProps={props}
+              />
+            </TableBody>
+          ) : null}
+
           <TableBodyRows
             props={props}
-            columns={mainColumns}
+            columns={effectiveMainColumns}
             processedData={processedData}
             rowScopeCache={rowScopeCache}
             rowRepeatedTemplateId={rowRepeatedTemplateId}
@@ -486,7 +531,22 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             isAtMaxSelection={isAtMaxSelection}
             virtualEnabled={virtualEnabled}
             scrollRef={scrollRef}
+            combineNum={schemaProps.combineNum}
           />
+
+          {schemaProps.affixRow ? (
+            <TableFooter data-slot="table-footer-row">
+              <TableSummaryRowView
+                row={schemaProps.affixRow}
+                variant="affix"
+                columns={effectiveMainColumns}
+                showExpandColumn={showExpandColumn}
+                hasSelection={Boolean(schemaProps.rowSelection)}
+                fixedColumnLayout={fixedColumnLayout}
+                parentProps={props}
+              />
+            </TableFooter>
+          ) : null}
         </Table>
 
         {isLoading ? <TableLoadingOverlay loadingContent={loadingContent} /> : null}

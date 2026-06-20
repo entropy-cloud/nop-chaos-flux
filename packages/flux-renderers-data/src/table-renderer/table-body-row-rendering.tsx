@@ -7,6 +7,7 @@ import type { TableSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell.js';
 import type { TableRowEntry } from './types.js';
+import { getCellRowSpan, type CombinePlan } from './combine-cells.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -45,6 +46,8 @@ type DataRowRenderProps = {
   isStriped: boolean;
   isRowCheckable?: (rowKey: string) => boolean;
   isAtMaxSelection?: boolean;
+  combinePlan?: CombinePlan;
+  rowIndex: number;
 };
 
 function areColumnsRenderEquivalent(
@@ -134,6 +137,8 @@ function DataRowView({
   isStriped,
   isRowCheckable,
   isAtMaxSelection,
+  combinePlan,
+  rowIndex,
 }: DataRowRenderProps) {
   const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
   const hasRowClickHandler = Boolean(parentProps.events.onRowClick);
@@ -240,6 +245,12 @@ function DataRowView({
           typeof column.buttonsRegionKey === 'string'
             ? parentProps.regions[column.buttonsRegionKey]
             : undefined;
+        const rowSpan = combinePlan
+          ? getCellRowSpan(combinePlan, rowIndex, column, columnIndex)
+          : undefined;
+        if (rowSpan === 0) {
+          return null;
+        }
 
         if (column.type === 'operation' && buttonRegion) {
           return (
@@ -250,6 +261,7 @@ function DataRowView({
                 ...(column.width ? { width: column.width } : undefined),
                 ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
               }}
+              rowSpan={rowSpan}
               data-fixed={
                 fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
               }
@@ -284,6 +296,7 @@ function DataRowView({
                 ...(column.width ? { width: column.width } : undefined),
                 ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
               }}
+              rowSpan={rowSpan}
               data-fixed={
                 fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
               }
@@ -310,6 +323,7 @@ function DataRowView({
                 ...(column.width ? { width: column.width } : undefined),
                 ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
               }}
+              rowSpan={rowSpan}
               data-fixed={
                 fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
               }
@@ -335,6 +349,7 @@ function DataRowView({
               ...(column.width ? { width: column.width } : undefined),
               ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
             }}
+            rowSpan={rowSpan}
             data-fixed={
               fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
             }
@@ -359,6 +374,8 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.schemaProps.rowSelection?.type === next.schemaProps.rowSelection?.type &&
     prev.schemaProps.quickSaveAction === next.schemaProps.quickSaveAction &&
     prev.schemaProps.quickSaveItemAction === next.schemaProps.quickSaveItemAction &&
+    prev.combinePlan === next.combinePlan &&
+    prev.rowIndex === next.rowIndex &&
     areColumnsRenderEquivalent(prev.columns, next.columns) &&
     prev.helpers === next.helpers &&
     prev.parentProps.events.onRowClick === next.parentProps.events.onRowClick &&
@@ -388,6 +405,8 @@ export function renderDataRow(
   isStriped: boolean,
   isRowCheckable?: (rowKey: string) => boolean,
   isAtMaxSelection?: boolean,
+  combinePlan?: CombinePlan,
+  rowIndex: number = 0,
 ) {
   return (
     <MemoizedDataRow
@@ -404,6 +423,8 @@ export function renderDataRow(
       isStriped={isStriped}
       isRowCheckable={isRowCheckable}
       isAtMaxSelection={isAtMaxSelection}
+      combinePlan={combinePlan}
+      rowIndex={rowIndex}
     />
   );
 }

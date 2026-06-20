@@ -54,6 +54,7 @@ export const enUS: Resource = {
       selectRow: 'Select Row',
       collapse: 'Collapse',
       search: 'Search',
+      resizeColumn: 'Resize Column',
     },
     form: {
       required: 'Required',
