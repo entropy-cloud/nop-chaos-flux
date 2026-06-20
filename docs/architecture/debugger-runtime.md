@@ -257,12 +257,18 @@ Stable automation-facing methods include:
 - `explainNodeMeta()`
 - `explainNodeFailure()`
 - `explainNodeAsync()`
+- `listFormStoreDiagnosticsOwners()`
+- `startFormStoreDiagnosticsSession(query, options?)`
+- `stopFormStoreDiagnosticsSession(query)`
+- `clearFormStoreDiagnosticsSession(query)`
+- `getFormStoreDiagnosticsSnapshot(query)`
 
 Current store-diagnostics routing baseline:
 
 - form-store commit diagnostics are runtime-owned and specified by `docs/architecture/form-store-diagnostics.md`
-- debugger-side consumption of that bounded snapshot surface is a downstream bridge concern, not a debugger-owned capture mechanism
-- successor bridge ownership currently lives in `docs/plans/446-form-store-debugger-bridge-plan.md`
+- debugger-side consumption of that bounded snapshot surface goes through the runtime-owned `FormStoreDiagnosticsBridge` exposed by `RendererRuntime.getFormStoreDiagnosticsBridge()`
+- debugger automation forwards that bridge through `listFormStoreDiagnosticsOwners`, `startFormStoreDiagnosticsSession`, `stopFormStoreDiagnosticsSession`, `clearFormStoreDiagnosticsSession`, and `getFormStoreDiagnosticsSnapshot`; each call accepts an owner selector (`formId` / `formName` / `scopeId`) and returns bounded payloads only
+- the debugger does not own capture: every session control delegates to the underlying `FormStoreApi` session, preserving the runtime-owned commit-truth contract landed by plan 445
 
 AI/E2E should prefer these APIs over panel DOM inspection.
 

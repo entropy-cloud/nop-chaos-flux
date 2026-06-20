@@ -286,8 +286,9 @@ V1 behavior:
 Current live boundary:
 
 - the runtime-owned diagnostics surface is landed
-- debugger automation wiring remains explicit successor work owned by `docs/plans/446-form-store-debugger-bridge-plan.md`
-- no current live contract should imply that the debugger bridge already exists merely because the runtime diagnostics surface now does
+- debugger automation consumes the runtime-owned surface through an explicit `FormStoreDiagnosticsBridge` exposed by `RendererRuntime.getFormStoreDiagnosticsBridge()` and forwarded by the debugger automation API (`listFormStoreDiagnosticsOwners`, `startFormStoreDiagnosticsSession`, `stopFormStoreDiagnosticsSession`, `clearFormStoreDiagnosticsSession`, `getFormStoreDiagnosticsSnapshot`)
+- the bridge selects form owners via `formId`, `formName`, or `scopeId`; an empty query resolves only when exactly one form owner exists, otherwise hosts must narrow the selector so that automation never silently picks the wrong owner
+- the bridge does not own capture: every session control forwards to the underlying `FormStoreApi` session, preserving the runtime-owned commit-truth contract landed by plan 445
 
 The debugger must not become the only way to access store diagnostics. Focused tests and diagnostics pages should be able to query runtime-owned data directly.
 

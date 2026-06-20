@@ -297,7 +297,7 @@ Current form-store diagnostics baseline:
 
 - runtime-owned form-store diagnostics now provide an explicitly gated bounded session surface for `commitCount`, `changedPaths`, `changedKinds`, and `droppedCommitCount`
 - focused tests and future diagnostics pages should prefer that runtime-owned surface over ad-hoc store subscriptions when they need normalized commit truth
-- debugger integration remains downstream bridge work; the runtime diagnostics contract itself is owned by `docs/architecture/form-store-diagnostics.md`
+- debugger integration is wired through the runtime-owned `FormStoreDiagnosticsBridge` exposed by `RendererRuntime.getFormStoreDiagnosticsBridge()`; the runtime diagnostics contract itself is owned by `docs/architecture/form-store-diagnostics.md`
 
 ### Metrics That Should Not Be Hard Gates
 
