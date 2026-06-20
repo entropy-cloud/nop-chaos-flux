@@ -156,16 +156,16 @@ drawer 缺 `closeOnOutside`（与 dialog 不对称 bug）；两者缺 `closeOnEs
 
 > 优先级最高的正确性修复。字段名以 Flux 实际 schema 为准。
 
-| #   | 组件                            | Flux schema 字段                                                                 | 声明位置                               | 实现现状                                                                                                                 | 风险                                        |
-| --- | ------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
-| 1   | `condition-builder`             | `showIf?: boolean`                                                               | `types.ts:157`                         | `condition-group.tsx` 从不读                                                                                             | 设了无效                                    |
-| 2   | `condition-builder`             | `selectMode?: 'list'\|'tree'\|'chained'`                                         | `types.ts:152`                         | 仅实现 list                                                                                                              | 设 tree/chained 无效                        |
-| 3   | `condition-builder`             | `formulas`/`formulaForIf`                                                        | `design.md:46-48` 示例                 | `types.ts` 无字段                                                                                                        | 文档与代码契约不符（反向变体）              |
-| 4   | `crud`                          | `keepOnPageChange`/`maxSelectionLength`/`maxKeepSelectionLength`/`checkableWhen` | `crud-schema.ts:103-109`               | **已修复（E0c）**：`keepOnPageChange`/`maxSelectionLength`/`checkableWhen` 已实现消费；`maxKeepSelectionLength` 已删字段 | ~~设跨页保留无效~~ 已修复                   |
-| 5   | `input-tree`                    | `cascade?: boolean`                                                              | `schemas.ts:76`                        | `toggleTreeSelection` 只翻转单值                                                                                         | 设级联无效                                  |
-| 6   | `input-tree`                    | `showIcon`/`showOutline`                                                         | `schemas.ts:79-80`                     | 不渲染图标                                                                                                               | 设图标无效                                  |
-| 7   | `tree-select`                   | `cascade`/`showIcon`                                                             | `schemas.ts:91,94`（无 `showOutline`） | 同 input-tree                                                                                                            | 同上                                        |
-| 8   | `input-text`/`email`/`password` | `minLength`/`maxLength`/`pattern`                                                | `schemas.ts:19-21`                     | 既不收集为校验也不传原生属性                                                                                             | 设长度限制无效；`design.md:10` 谎称"已实现" |
+| #   | 组件                            | Flux schema 字段                                                                 | 声明位置                               | 实现现状                                                                                                                    | 风险                                        |
+| --- | ------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| 1   | `condition-builder`             | `showIf?: boolean`                                                               | `types.ts:157`                         | **已修复（E0d）**：`showIf: true` 时渲染组级 `if` 输入并写入 `value.if`                                                     | ~~设了无效~~ 已修复                         |
+| 2   | `condition-builder`             | `selectMode?: 'list'\|'tree'\|'chained'`                                         | `types.ts:152`                         | **已修复（E0d）**：整体删字段（收敛 list-only），`ConditionBuilderSchema` 不再声明 `selectMode`                             | ~~设 tree/chained 无效~~ 已修复             |
+| 3   | `condition-builder`             | `formulas`/`formulaForIf`                                                        | `design.md:46-48` 示例                 | **已修复（E0d）**：进 types.ts（声明 `ConditionFormulaConfig` + `formulas?`/`formulaForIf?`，DESIGN-ACK-NOT-IMPL，E3 求值） | ~~文档与代码契约不符（反向变体）~~ 已修复   |
+| 4   | `crud`                          | `keepOnPageChange`/`maxSelectionLength`/`maxKeepSelectionLength`/`checkableWhen` | `crud-schema.ts:103-109`               | **已修复（E0c）**：`keepOnPageChange`/`maxSelectionLength`/`checkableWhen` 已实现消费；`maxKeepSelectionLength` 已删字段    | ~~设跨页保留无效~~ 已修复                   |
+| 5   | `input-tree`                    | `cascade?: boolean`                                                              | `schemas.ts:76`                        | `toggleTreeSelection` 只翻转单值                                                                                            | 设级联无效                                  |
+| 6   | `input-tree`                    | `showIcon`/`showOutline`                                                         | `schemas.ts:79-80`                     | 不渲染图标                                                                                                                  | 设图标无效                                  |
+| 7   | `tree-select`                   | `cascade`/`showIcon`                                                             | `schemas.ts:91,94`（无 `showOutline`） | 同 input-tree                                                                                                               | 同上                                        |
+| 8   | `input-text`/`email`/`password` | `minLength`/`maxLength`/`pattern`                                                | `schemas.ts:19-21`                     | 既不收集为校验也不传原生属性                                                                                                | 设长度限制无效；`design.md:10` 谎称"已实现" |
 
 **处理策略（每项三选一，待 Q3 裁决）：** 补实现 / 删字段 / 标 deprecated。
 
@@ -313,7 +313,7 @@ graph TD
 
 ## 9. 待决问题（v2，已剔除已决项）
 
-1. **Q1 命名规范基线：** 是否先产出一份 `naming-conventions.md`（shadcn 对齐的属性命名基线）作为 X3 的依据？建议是。
+1. **Q1 命名规范基线（已裁决 = yes）：** 产出 `naming-conventions.md`（shadcn 对齐的属性命名基线）作为 X3 的依据。**已由 X3 落地**（2026-06-21）：见 `docs/references/naming-conventions.md`（含命名原则、shadcn/ui 映射表、amis 不采纳清单、按字段类型命名规则、新增字段审查 checklist）。
 2. **Q2 crud cards/list 模式归属：** crud 支持多 render 模式（table/cards/list）的改进归本 roadmap，还是等主 roadmap 的 list(W1c)/cards(W2a) 落地后作为它们的集成？倾向后者（依赖关系）。
 3. **Q3 契约漂移处理策略：** 每个漂移字段补实现/删/deprecate？逐项裁决。E0 批前置门槛。
 4. **Q4 改进 roadmap 是否单列文件：** 建议 `existing-components-improvement-roadmap.md` 与 `mobile-roadmap.md` 单列，与 `roadmap.md` 并列。
@@ -328,4 +328,4 @@ graph TD
 
 - **数据来源：** 5 个 explore agent + 2 轮 review agent（v1）；v2 按用户 6 条指令重构。
 - **v2 变更可信度：** 不采纳清单（§5）严格按用户指令；保留项的 shadcn 命名方向基于 `@nop-chaos/ui` 现有导出（Button variant、Select 等）。
-- **局限：** 命名规范基线（X3/Q1）尚未成文，当前 shadcn 命名映射是初步建议，需在 `naming-conventions.md` 落地后校准。
+- **局限：** ~~命名规范基线（X3/Q1）尚未成文~~ **已由 X3 落地**（2026-06-21）：shadcn 命名映射与 amis 不采纳清单已收口进 `docs/references/naming-conventions.md`，本报告 §0.2/§5 的初步建议以该基线为准；如 X5 实施中发现映射需修订，回写该基线并记 `Last Updated`。
