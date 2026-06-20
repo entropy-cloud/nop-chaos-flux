@@ -53,6 +53,21 @@ export const inputEnhancementFieldRules: SchemaFieldRule[] = [
   { key: 'hiddenFieldPolicy', kind: 'prop' },
 ];
 
+export const textareaEnhancementFieldRules: SchemaFieldRule[] = [
+  { key: 'rows', kind: 'prop' },
+  { key: 'minRows', kind: 'prop' },
+  { key: 'maxRows', kind: 'prop' },
+  { key: 'clearable', kind: 'prop', valueType: 'boolean' },
+  { key: 'trimContents', kind: 'prop', valueType: 'boolean' },
+  { key: 'showCounter', kind: 'prop', valueType: 'boolean' },
+  { key: 'placeholder', kind: 'prop' },
+  { key: 'minLength', kind: 'prop' },
+  { key: 'maxLength', kind: 'prop' },
+  { key: 'pattern', kind: 'prop' },
+  { key: 'validate', kind: 'prop' },
+  { key: 'hiddenFieldPolicy', kind: 'prop' },
+];
+
 function mergeAriaSpace(...values: Array<string | undefined | false>): string | undefined {
   const tokens = values.filter((v): v is string => Boolean(v && v.trim()));
   return tokens.length > 0 ? tokens.join(' ') : undefined;
@@ -370,7 +385,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
   {
     type: 'textarea',
     sourcePackage: '@nop-chaos/flux-renderers-form',
-    fields: formFieldRules,
+    fields: [...formFieldRules, ...textareaEnhancementFieldRules],
     component: TextareaRenderer,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,

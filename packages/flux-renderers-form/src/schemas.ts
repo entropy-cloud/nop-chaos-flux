@@ -78,6 +78,8 @@ export interface SelectSchema extends InputSchema {
 
 export interface TextareaSchema extends InputSchema {
   rows?: number;
+  minRows?: number;
+  maxRows?: number;
 }
 
 export interface RadioGroupSchema extends InputSchema {
