@@ -239,6 +239,7 @@ Exit Criteria:
 - Why Not Blocking Closure: 本 plan 做 local-only 状态（resize 宽度存在组件 state，卸载后丢失）。Scope-level 持久化（`columnWidthsOwnership`/`columnWidthsStatePath`）需要 ownership 模型扩展 + 上层 crud 集成验证，复杂度独立于 resize 基础行为。
 - Successor Required: yes
 - Successor Path: 后续 column-widths-persistence plan，或随 E1c（table 高级能力）一并收口。
+- **Resolved (2026-06-21)**: 已由 E1c plan (`docs/plans/2026-06-21-0527-e1c-table-advanced-capabilities-plan.md`) Phase 7 收口。`useColumnResize` 已接 `columnWidthsOwnership`/`columnWidthsStatePath`：`scope` 时 resize 结果写 `columnWidthsStatePath`（`Record<columnName, width>`）；缺 path 退化为 local（dev warn，Failure Path `e1c-widths-scope-no-path`）；`controlled` 只读上游；`local` 保持 baseline。focused 单测 `packages/flux-renderers-data/src/__tests__/table-e1c-column-widths-persistence.test.tsx` 覆盖 scope 写入/读取、controlled 只读、local baseline、缺 path 退化、merge 初始+scope。
 
 ## Non-Blocking Follow-ups
 
