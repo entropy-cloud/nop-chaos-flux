@@ -35,7 +35,7 @@
 
 - E0a 输入校验漂移修复: `done`
 - E0b 树级联漂移修复: `done`
-- E0c CRUD 选择漂移修复: `todo`
+- E0c CRUD 选择漂移修复: `done`
 - E0d condition-builder 漂移修复: `todo`
 - X3 命名规范基线（naming-conventions.md）: `todo`
 - X5 design.md Flux 决策表（P0/P1 硬前置）: `todo`

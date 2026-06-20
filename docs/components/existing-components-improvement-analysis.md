@@ -156,16 +156,16 @@ drawer 缺 `closeOnOutside`（与 dialog 不对称 bug）；两者缺 `closeOnEs
 
 > 优先级最高的正确性修复。字段名以 Flux 实际 schema 为准。
 
-| #   | 组件                            | Flux schema 字段                                                                 | 声明位置                               | 实现现状                                            | 风险                                        |
-| --- | ------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------- | ------------------------------------------- |
-| 1   | `condition-builder`             | `showIf?: boolean`                                                               | `types.ts:157`                         | `condition-group.tsx` 从不读                        | 设了无效                                    |
-| 2   | `condition-builder`             | `selectMode?: 'list'\|'tree'\|'chained'`                                         | `types.ts:152`                         | 仅实现 list                                         | 设 tree/chained 无效                        |
-| 3   | `condition-builder`             | `formulas`/`formulaForIf`                                                        | `design.md:46-48` 示例                 | `types.ts` 无字段                                   | 文档与代码契约不符（反向变体）              |
-| 4   | `crud`                          | `keepOnPageChange`/`maxSelectionLength`/`maxKeepSelectionLength`/`checkableWhen` | `crud-schema.ts:103-109`               | `useTableSelection`/`crud-renderer-state.ts` 不消费 | 设跨页保留无效                              |
-| 5   | `input-tree`                    | `cascade?: boolean`                                                              | `schemas.ts:76`                        | `toggleTreeSelection` 只翻转单值                    | 设级联无效                                  |
-| 6   | `input-tree`                    | `showIcon`/`showOutline`                                                         | `schemas.ts:79-80`                     | 不渲染图标                                          | 设图标无效                                  |
-| 7   | `tree-select`                   | `cascade`/`showIcon`                                                             | `schemas.ts:91,94`（无 `showOutline`） | 同 input-tree                                       | 同上                                        |
-| 8   | `input-text`/`email`/`password` | `minLength`/`maxLength`/`pattern`                                                | `schemas.ts:19-21`                     | 既不收集为校验也不传原生属性                        | 设长度限制无效；`design.md:10` 谎称"已实现" |
+| #   | 组件                            | Flux schema 字段                                                                 | 声明位置                               | 实现现状                                                                                                                 | 风险                                        |
+| --- | ------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
+| 1   | `condition-builder`             | `showIf?: boolean`                                                               | `types.ts:157`                         | `condition-group.tsx` 从不读                                                                                             | 设了无效                                    |
+| 2   | `condition-builder`             | `selectMode?: 'list'\|'tree'\|'chained'`                                         | `types.ts:152`                         | 仅实现 list                                                                                                              | 设 tree/chained 无效                        |
+| 3   | `condition-builder`             | `formulas`/`formulaForIf`                                                        | `design.md:46-48` 示例                 | `types.ts` 无字段                                                                                                        | 文档与代码契约不符（反向变体）              |
+| 4   | `crud`                          | `keepOnPageChange`/`maxSelectionLength`/`maxKeepSelectionLength`/`checkableWhen` | `crud-schema.ts:103-109`               | **已修复（E0c）**：`keepOnPageChange`/`maxSelectionLength`/`checkableWhen` 已实现消费；`maxKeepSelectionLength` 已删字段 | ~~设跨页保留无效~~ 已修复                   |
+| 5   | `input-tree`                    | `cascade?: boolean`                                                              | `schemas.ts:76`                        | `toggleTreeSelection` 只翻转单值                                                                                         | 设级联无效                                  |
+| 6   | `input-tree`                    | `showIcon`/`showOutline`                                                         | `schemas.ts:79-80`                     | 不渲染图标                                                                                                               | 设图标无效                                  |
+| 7   | `tree-select`                   | `cascade`/`showIcon`                                                             | `schemas.ts:91,94`（无 `showOutline`） | 同 input-tree                                                                                                            | 同上                                        |
+| 8   | `input-text`/`email`/`password` | `minLength`/`maxLength`/`pattern`                                                | `schemas.ts:19-21`                     | 既不收集为校验也不传原生属性                                                                                             | 设长度限制无效；`design.md:10` 谎称"已实现" |
 
 **处理策略（每项三选一，待 Q3 裁决）：** 补实现 / 删字段 / 标 deprecated。
 
@@ -207,21 +207,21 @@ drawer 缺 `closeOnOutside`（与 dialog 不对称 bug）；两者缺 `closeOnEs
 
 **第 0 批：契约漂移修复（正确性）— 门槛 Q3**
 
-| 工作项 | 内容                                                                                      | 组件                      |
-| ------ | ----------------------------------------------------------------------------------------- | ------------------------- |
-| E0a    | `minLength`/`maxLength`/`pattern` 收集为校验规则 + 传原生属性 + 文档校正                  | input-text/email/password |
-| E0b    | `cascade` 实现父子传播+indeterminate；`showIcon`/`showOutline` 实现或删                   | input-tree/tree-select    |
-| E0c    | `keepOnPageChange`/`maxSelectionLength`/`maxKeepSelectionLength`/`checkableWhen` 消费或删 | crud                      |
-| E0d    | `showIf`/`selectMode`/`formulas` 实现或删                                                 | condition-builder         |
+| 工作项 | 内容                                                                                                    | 组件                      |
+| ------ | ------------------------------------------------------------------------------------------------------- | ------------------------- |
+| E0a    | `minLength`/`maxLength`/`pattern` 收集为校验规则 + 传原生属性 + 文档校正                                | input-text/email/password |
+| E0b    | `cascade` 实现父子传播+indeterminate；`showIcon`/`showOutline` 实现或删                                 | input-tree/tree-select    |
+| E0c    | `keepOnPageChange`/`maxSelectionLength`/`checkableWhen` 实现；`maxKeepSelectionLength` 删字段（已完成） | crud                      |
+| E0d    | `showIf`/`selectMode`/`formulas` 实现或删                                                               | condition-builder         |
 
 **第 1 批：P0 核心选择与数据 — 门槛 Q1（命名规范）、Q2（crud 模式归属）**
 
-| 工作项 | 内容                                                                                                                                       | 组件   |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| E1a    | select 能力补齐：搜索/多选/clearable/虚拟滚动/分组（**shadcn Combobox 命名**）                                                             | select |
-| E1b    | table 列宽 resize + sticky header + 聚合行 + 单元格合并                                                                                    | table  |
-| E1c    | table 高级：树表 + 行拖拽 + 多列排序 + 多级表头 + copyable 单元格                                                                          | table  |
-| E1d    | crud 数据生命周期：轮询刷新（走 data-source）+ 可折叠查询区 + 无限滚动 + 跨页选择（修 E0c）+ cards/list 模式（**依赖主 roadmap W1c/W2a**） | crud   |
+| 工作项 | 内容                                                                                                                                              | 组件   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| E1a    | select 能力补齐：搜索/多选/clearable/虚拟滚动/分组（**shadcn Combobox 命名**）                                                                    | select |
+| E1b    | table 列宽 resize + sticky header + 聚合行 + 单元格合并                                                                                           | table  |
+| E1c    | table 高级：树表 + 行拖拽 + 多列排序 + 多级表头 + copyable 单元格                                                                                 | table  |
+| E1d    | crud 数据生命周期：轮询刷新（走 data-source）+ 可折叠查询区 + 无限滚动 + cards/list 模式（**依赖主 roadmap W1c/W2a**；跨页选择保留已由 E0c 实现） | crud   |
 
 **第 2 批：P1 表单与表面**
 
