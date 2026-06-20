@@ -23,7 +23,7 @@
 | `revealPassword` 显示切换 | **计划实现（E2a-bis）**：显式 reveal toggle 按钮                   | —                  | 基础能力，amis 默认开启，当前 Flux 缺失；明文状态为 `local` UI state，不写入表单值（见 §7）                                           |
 | 密码强度指示              | **暂不实现**                                                       | —                  | 后续按需；密码强度规则优先通过验证或辅助渲染层接入（见 §9）                                                                           |
 | 自动生成密码              | —                                                                  | **不采纳**（首版） | 引入随机生成逻辑耦合，后续如有需要按独立 feature plan 评估                                                                            |
-| 密码管理器专用字段        | —                                                                  | **不采纳**         | 浏览器原生 `autocomplete="current-password"`/`"new-password"` 已覆盖（见 input-text `nativeAutoComplete` 计划）；不在 schema 平行发明 |
+| 密码管理器专用字段        | —                                                                  | **不采纳**         | 浏览器原生 `autocomplete="current-password"`/`"new-password"` 已覆盖（见 input-text `nativeAutoComplete` 实现）；不在 schema 平行发明 |
 
 ## 3. Flux 中的 renderer/type 定义
 
