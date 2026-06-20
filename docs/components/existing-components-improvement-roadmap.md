@@ -40,7 +40,7 @@
 - X3 命名规范基线（naming-conventions.md）: `done`
 - X5 design.md Flux 决策表（P0/P1 硬前置）: `done`
 - E1a select 能力补齐: `done`
-- E1b table 列宽与聚合: `todo`
+- E1b table 列宽与聚合: `done`
 - E1c table 高级能力: `todo`
 - E1d crud 数据生命周期: `todo`
 - E2a 文本输入增强: `todo`

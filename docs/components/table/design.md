@@ -18,36 +18,36 @@
 
 > Flux 决策主语。amis 仅作参考之一，**非标尺**。命名对齐 shadcn/ui、请求下沉 data-source + action、前端不做导出、不学 amis 散落条件属性与皮肤枚举（X3 §1/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。
 
-| 能力                                                                                                  | 采纳                | 不采纳     | 理由                                                             |
-| ----------------------------------------------------------------------------------------------------- | ------------------- | ---------- | ---------------------------------------------------------------- |
-| 列定义 / 分页 / 行选择（单页 checkbox/radio）                                                         | **实现**            | —          | 当前基线                                                         |
-| 左/右固定列（fixed columns）                                                                          | **实现**            | —          | 当前基线                                                         |
-| 可展开行（expandable detail row）                                                                     | **实现**            | —          | 当前基线                                                         |
-| 单列排序（sortable，single）                                                                          | **实现**            | —          | 当前基线                                                         |
-| 列头搜索/过滤（header search-filter + active trigger + clear）                                        | **实现**            | —          | 当前基线（首版稳定）                                             |
-| 虚拟滚动（`virtualThreshold`）                                                                        | **实现**            | —          | 当前基线                                                         |
-| quick edit（inline / dialog 双保存路径 + saving feedback）                                            | **实现**            | —          | 当前基线                                                         |
-| 列显隐 + 最小上下移动（`columnSettings` visibility/order，inline/dropdown）                           | **实现**            | —          | 当前基线                                                         |
-| 响应式列折叠（`responsive.mode: 'expand'`）                                                           | **实现**            | —          | 当前基线（首版）                                                 |
-| empty slot / loading / stripe / bordered                                                              | **实现**            | —          | 当前基线                                                         |
-| 事件 + 句柄（onRow/Sort/Filter/Page/Selection/Refresh + component:refresh/getSelection/setSelection） | **实现**            | —          | 当前基线                                                         |
-| 列宽拖拽 resize                                                                                       | **计划实现（E1b）** | —          | amis 默认开，企业后台常规需求                                    |
-| 表头吸顶 sticky header（`affixHeader`）                                                               | **计划实现（E1b）** | —          | 长表常规需求                                                     |
-| 聚合行 footer（`prefixRow`/`affixRow`）                                                               | **计划实现（E1b）** | —          | 当前 footer 是通用 region，非聚合行                              |
-| 单元格合并（`combineNum` / colSpan-rowSpan）                                                          | **计划实现（E1b）** | —          | 分组报表常规需求                                                 |
-| 树表 / 嵌套子行                                                                                       | **计划实现（E1c）** | —          | 当前 expandable 仅单层 detail                                    |
-| 行拖拽排序（`draggable` + `orderField`）                                                              | **计划实现（E1c）** | —          | 依赖 E1b 收口                                                    |
-| 多列排序                                                                                              | **计划实现（E1c）** | —          | 当前严格单列                                                     |
-| 多级表头（嵌套表头分组）                                                                              | **计划实现（E1c）** | —          | 复杂报表需求                                                     |
-| copyable 单元格                                                                                       | **计划实现（E1c）** | —          | 复制到剪贴板                                                     |
-| popOver 单元格                                                                                        | **计划实现（E1c）** | —          | 单元格详情弹层                                                   |
-| `showIndex` 自增索引列                                                                                | **暂不实现**        | —          | 可由数据/列定义派生                                              |
-| 浮动 `itemActions`                                                                                    | **暂不实现**        | —          | 用 operation 列按钮表达                                          |
-| `autoFillHeight`（容器填充内滚动）                                                                    | **暂不实现**        | —          | 与上游 loading/ownership 耦合，后续按需                          |
-| `lazyRenderAfter`                                                                                     | **暂不实现**        | —          | 虚拟滚动已覆盖大表主场景                                         |
-| 导出 Excel/CSV                                                                                        | —                   | **不采纳** | 后台职责，前端不做（analysis §5 / X3 §3）                        |
-| amis `rowClassNameExpr`                                                                               | —                   | **不采纳** | 用 Flux 样式系统 marker class 表达行视觉态（X3 §3 样式 amis 化） |
-| amis `tableLayout: 'fixed'\|'auto'`                                                                   | —                   | **不采纳** | 用样式系统控制，不开皮肤枚举（X3 §3 样式 amis 化）               |
+| 能力                                                                                                  | 采纳                | 不采纳     | 理由                                                                                                                                                                                                  |
+| ----------------------------------------------------------------------------------------------------- | ------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 列定义 / 分页 / 行选择（单页 checkbox/radio）                                                         | **实现**            | —          | 当前基线                                                                                                                                                                                              |
+| 左/右固定列（fixed columns）                                                                          | **实现**            | —          | 当前基线                                                                                                                                                                                              |
+| 可展开行（expandable detail row）                                                                     | **实现**            | —          | 当前基线                                                                                                                                                                                              |
+| 单列排序（sortable，single）                                                                          | **实现**            | —          | 当前基线                                                                                                                                                                                              |
+| 列头搜索/过滤（header search-filter + active trigger + clear）                                        | **实现**            | —          | 当前基线（首版稳定）                                                                                                                                                                                  |
+| 虚拟滚动（`virtualThreshold`）                                                                        | **实现**            | —          | 当前基线                                                                                                                                                                                              |
+| quick edit（inline / dialog 双保存路径 + saving feedback）                                            | **实现**            | —          | 当前基线                                                                                                                                                                                              |
+| 列显隐 + 最小上下移动（`columnSettings` visibility/order，inline/dropdown）                           | **实现**            | —          | 当前基线                                                                                                                                                                                              |
+| 响应式列折叠（`responsive.mode: 'expand'`）                                                           | **实现**            | —          | 当前基线（首版）                                                                                                                                                                                      |
+| empty slot / loading / stripe / bordered                                                              | **实现**            | —          | 当前基线                                                                                                                                                                                              |
+| 事件 + 句柄（onRow/Sort/Filter/Page/Selection/Refresh + component:refresh/getSelection/setSelection） | **实现**            | —          | 当前基线                                                                                                                                                                                              |
+| 列宽拖拽 resize                                                                                       | **实现**            | —          | amis 默认开，企业后台常规需求。表级 `columnResize` 总开关 + 列级 `resizable`/`minWidth`/`maxWidth`；本地状态（scope-level 持久化归 follow-up）。drag handle：`data-slot="table-column-resize-handle"` |
+| 表头吸顶 sticky header（`affixHeader`）                                                               | **实现**            | —          | 长表常规需求。`affixHeader: true` 应用 `position: sticky; top: 0` 到 `<TableHeader>` 行；与 `scrollHeight`/虚拟滚动容器共存                                                                           |
+| 聚合行 footer（`prefixRow`/`affixRow`）                                                               | **实现**            | —          | `prefixRow` 在数据行前渲染；`affixRow` 渲染为 `<tfoot>` 复用 `TableFooter` UI 原语。`TableSummaryRow.cells[]` 按 column name 对齐，支持 `${expr}` 求值                                                |
+| 单元格合并（`combineNum` / colSpan-rowSpan）                                                          | **实现**            | —          | 分组报表常规需求。amis 语义：前 N 列连续相同值的行合并 rowSpan；被合并 cell 不渲染。virtual 开启时退化为不合并（已在 §4/§12 标注）                                                                    |
+| 树表 / 嵌套子行                                                                                       | **计划实现（E1c）** | —          | 当前 expandable 仅单层 detail                                                                                                                                                                         |
+| 行拖拽排序（`draggable` + `orderField`）                                                              | **计划实现（E1c）** | —          | 依赖 E1b 收口                                                                                                                                                                                         |
+| 多列排序                                                                                              | **计划实现（E1c）** | —          | 当前严格单列                                                                                                                                                                                          |
+| 多级表头（嵌套表头分组）                                                                              | **计划实现（E1c）** | —          | 复杂报表需求                                                                                                                                                                                          |
+| copyable 单元格                                                                                       | **计划实现（E1c）** | —          | 复制到剪贴板                                                                                                                                                                                          |
+| popOver 单元格                                                                                        | **计划实现（E1c）** | —          | 单元格详情弹层                                                                                                                                                                                        |
+| `showIndex` 自增索引列                                                                                | **暂不实现**        | —          | 可由数据/列定义派生                                                                                                                                                                                   |
+| 浮动 `itemActions`                                                                                    | **暂不实现**        | —          | 用 operation 列按钮表达                                                                                                                                                                               |
+| `autoFillHeight`（容器填充内滚动）                                                                    | **暂不实现**        | —          | 与上游 loading/ownership 耦合，后续按需                                                                                                                                                               |
+| `lazyRenderAfter`                                                                                     | **暂不实现**        | —          | 虚拟滚动已覆盖大表主场景                                                                                                                                                                              |
+| 导出 Excel/CSV                                                                                        | —                   | **不采纳** | 后台职责，前端不做（analysis §5 / X3 §3）                                                                                                                                                             |
+| amis `rowClassNameExpr`                                                                               | —                   | **不采纳** | 用 Flux 样式系统 marker class 表达行视觉态（X3 §3 样式 amis 化）                                                                                                                                      |
+| amis `tableLayout: 'fixed'\|'auto'`                                                                   | —                   | **不采纳** | 用样式系统控制，不开皮肤枚举（X3 §3 样式 amis 化）                                                                                                                                                    |
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -62,6 +62,12 @@
 - 当前已落地 `paginationOwnership`、`selectionOwnership`、`paginationStatePath`、`selectionStatePath`。
 - `columnSettings` 当前 live 语义是：`enabled` 打开列管理入口，`toggledColumnsStatePath` / `orderedColumnsStatePath` 可接入 scope owner，`overlay: false` 时以内联面板渲染，未声明或非 `false` 时使用 dropdown overlay；`draggable` 仍未落地，不应误读为 live drag-sort。
 - `responsive` 不再只是 schema surface：`mode: 'expand'` 已接通首版 more-columns baseline，`breakpoint` 控制激活阈值，`expandTrigger: 'row'` 可让整行打开 detail row。更完整的 responsive parity（例如 richer trigger/layout 策略）仍待后续收敛。
+- E1b 列宽/聚合/合并字段：
+  - 表级 `columnResize?: boolean`（总开关，缺省按列 `resizable` 推导：任一列 `resizable: true` 即开），`columnResize: false` 全表禁用 drag handle。
+  - 列级 `resizable?: boolean`、`minWidth?: number`、`maxWidth?: number`：列宽 drag 约束，状态为组件 local（卸载丢失），scope-level 持久化归 follow-up。
+  - 表级 `affixHeader?: boolean`：滚动容器（`scrollHeight` 或虚拟滚动容器）内 `position: sticky; top: 0` 表头吸顶。无滚动容器时无副作用。
+  - 表级 `prefixRow?: TableSummaryRow`（顶部）+ `affixRow?: TableSummaryRow`（底部）：聚合行声明，`TableSummaryRow = { cells: Array<{ column: string; value: SchemaInput | string; align?: 'left'|'center'|'right' }> }`。cells 按 `column` name 对齐，缺失列渲染空 `<td>`。`prefixRow` 渲染在 `<thead>` 之后的 `<tbody>` 前部 summary 行（不与 `header` region 混用），`affixRow` 渲染为 `<tfoot>`（复用 `TableFooter` UI 原语），均位于 `<Table>` 内部、对齐列宽。聚合 value 支持 `${expr}` 透传到 row/table scope 求值，本表不做独立聚合引擎。
+  - 表级 `combineNum?: number`：amis 语义，前 N 列做连续相同值行合并（rowSpan）；被合并的 cell 不重复渲染。combine 作用在数据行（`prefixRow`/`affixRow` 不参与合并）。combine + virtual 组合存在限制：rowSpan 跨越的行可能未渲染（虚拟化裁剪），故 virtual 开启时 combine 退化为 per-row 计算（不跨虚拟裁剪），design.md §12 标注。
 - 目标设计中，table 若需要对外暴露自身的只读交互状态摘要，也应复用 `statusPath`，而不是发明第二套外部读取命名。
 - `data` 的目标语义应与其他 scope-owning 节点保持一致：初始化 table shell own scope patch。
 - `rowData` 的目标语义是显式声明每个 isolated row scope 还需要哪些额外字段投影，避免 `$parentScope` 一类隐式穿透。
@@ -69,6 +75,7 @@
 ## 5. 字段分类
 
 - `columns`、`pagination`、`rowSelection`、`expandable`、`data`、`rowData`: `value`
+- `columnResize`、`affixHeader`、`prefixRow`、`affixRow`、`combineNum`：`value`（声明式 schema surface，非 region/event）
 - `empty`: `value-or-region`
 - 各类 `onXxx`: `event`
 
@@ -84,6 +91,7 @@
 - `columnSettings.toggledColumnsStatePath` / `orderedColumnsStatePath` 现在也构成 table visible-columns / ordered-columns 的 scope owner 接入点；CRUD 等上层组合 renderer 应复用这些 path，而不是重新维护平行列状态。
 - 对这些 scope-owned 列状态，显式空数组也是有效 owner 值：`[]` 表示当前没有可见列或没有保留的列顺序，不应再被 fallback defaults 覆盖。
 - 展开仍是 table-local interaction state，尚未收口到独立外部可写 owner path。
+- **E1b 列宽 resize 状态**：当前是 table-local interaction state（`useColumnResize` 在组件内维护 `Record<string, number>`，卸载即丢）。scope-level 持久化（`columnWidthsOwnership`/`columnWidthsStatePath`）是 follow-up，不在本 baseline。
 - 当前 header search/filter 已有可观察的基础行为：列头菜单可驱动 keyword/filter state 并影响本地数据处理；但 richer filter source/search UX、统一 ownership 收口和更完整回归证据仍属于后续 table-heavy parity。
 - 当前 header search/filter 已有可观察且更稳定的行为：列头菜单可驱动 keyword/filter state、通过 active trigger 表达当前列已有筛选，并提供按列 clear action 一次性清理 keyword + option filters。更丰富的 filter source/search UX 与 ownership 收口仍属于后续 table-heavy parity。
 - row-level `onRowClick` / `expandRowByClick` 现已具备与鼠标一致的 Enter/Space 键盘激活路径；交互行保持原生 table row 语义，不改写成 fake button role。
@@ -123,14 +131,20 @@
 - 列归一化、ownership 状态桥接、selection 句柄和分页 UI 拆分为独立模块。
 - `table` renderer 本身更适合作为 orchestration shell：负责拼装列、行、slot、handle、responsive 分支和 `@nop-chaos/ui` Table 结构，而不是继续把分页、选择、排序、过滤、展开、列显隐再塞回一个巨型 view 文件。
 - 对 `table` 这类复杂 renderer，首选拆分方向是 shared hooks / helpers，而不是再抽一个新的本地 headless controller：例如 `useTablePagination`、`useTableSelection`、`useTableSort`、`useTableFilter`、`useTableExpand`、`useTableVisibleColumns` 这类 capability 维度的 hook 更符合当前 owner 模型。
-- 只有当某个局部子特性重新出现“同一文件混合 dirty/open/save/restore/keyboard/derived label + JSX”这类控件级行为复杂度时，才考虑局部 controller hook；不要把整个 `table` 重新包装成一个新的 renderer-local headless system。
+- 只有当某个局部子特性重新出现"同一文件混合 dirty/open/save/restore/keyboard/derived label + JSX"这类控件级行为复杂度时，才考虑局部 controller hook；不要把整个 `table` 重新包装成一个新的 renderer-local headless system。
 - 纯数据处理应继续优先放在 helper 层，例如行数据处理、固定列布局、responsive 列拆分和 repeated-template id 解析；如果 helper 已经足够解决复杂度，就不要再追加 hook 抽象。
 - 如果未来需要进一步下沉复杂度，更可能正确的方向是 table family shared runtime/helper 收敛，而不是在 `table-renderer.tsx` 之上再发明第二层通用 controller 协议。
 - 拆分判断应遵循 `docs/references/renderer-implementation-guidelines.md`：对 `table` 这类 orchestration renderer，优先保留薄 shell + shared hooks/helpers 的结构，不机械追求 local headless 化。
+- **E1b capability 模块（已落地）**：
+  - `useColumnResize`（`table-renderer/use-column-resize.ts`）：列宽 local 状态管理 + min/max clamp + pointer drag handler。能力维度 hook，符合 owner 模型。
+  - `combine-cells`（`table-renderer/combine-cells.ts`）：纯 helper，按 amis `combineNum` 语义计算 rowSpan plan；virtual 开启时退化为 no-merge plan。
+  - `table-summary-row`（`table-renderer/table-summary-row.tsx`：聚合行渲染组件，cells 按 column name 对齐，cell value 支持 `${expr}` 经 `helpers.evaluate` 求值。`prefixRow` 渲染为独立 `<TableBody>`（位于 thead 后、数据行前）；`affixRow` 渲染为 `<TableFooter>` 复用 UI 原语。
 
 ## 12. 风险、取舍与后续阶段
 
 - 表格是复杂状态最容易失控的组件，需要持续坚持 ownership 模型。
 - 列级渲染定制必须控制边界，避免引回任意 React 函数 slot。
-- `columnSettings` 容易在“字段已声明”与“完整 parity 已完成”之间产生误读；当前只应把 visibility/order/inline-vs-overlay entry 当作 live baseline。
+- `columnSettings` 容易在"字段已声明"与"完整 parity 已完成"之间产生误读；当前只应把 visibility/order/inline-vs-overlay entry 当作 live baseline。
 - `responsive` 已有首版窄屏列折叠/展开 UX，但仍不是完整 parity；后续应继续收敛 richer trigger/layout 细节，而不是把当前第一版 baseline 误写成终态。
+- **E1b 列宽 resize + ownership**：当前列宽 resize 状态为组件 local（卸载即丢），scope-level 持久化（`columnWidthsOwnership`/`columnWidthsStatePath`）归 follow-up plan 或随 E1c 一并收口。`columnResize` 总开关与列级 `resizable`/`minWidth`/`maxWidth` 是当前 live baseline，drag handle 使用 `data-slot="table-column-resize-handle"`。
+- **E1b combineNum + virtual 共存限制**：`combineNum` 合并基于连续行相同值计算 rowSpan，被合并 cell 不重复渲染。虚拟滚动裁剪窗口外的行不会被渲染，跨窗口的 rowSpan 会断裂。因此 `virtualEnabled: true` 时 combinePlan 退化为不合并（每行独立 span=1），避免行高/jump 错乱；如需合并请关闭虚拟滚动（避免 `virtualThreshold` 触发）。design.md §4 已标注。
