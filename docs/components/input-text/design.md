@@ -54,6 +54,8 @@
   - `trimContents?: boolean` — blur 时自动 trim 首尾空白（onChange 不 trim）。
   - `showCounter?: boolean` — 字数计数，有 `maxLength` 时显示 `n / max`，无时显示 `n`。
   - `nativeAutoComplete?: string` — HTML `autocomplete` 属性透传（如 `'on'`/`'off'`/`'email'`/`'current-password'`）。
+- E2a-bis 新增字段（声明在共享 `InputSchema`，但**仅 input-password renderer 消费**；input-text/email 即便声明 `revealPassword: true` 也不渲染 reveal toggle）：
+  - `revealPassword?: boolean` — `true` 时在 InputGroup inline-end addon 渲染 reveal toggle 按钮（Eye/EyeOff）。详见 `input-password/design.md` §2/§4。
 - 建议正式契约同时允许 `label`、`hint`、`description` 这类 field frame 字段。
 
 ## 5. 字段分类

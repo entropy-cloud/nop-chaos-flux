@@ -215,7 +215,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- E2a-bis（password reveal 切换）依赖本 plan 的 InputGroup + clearable 基础，后续 plan 启动。
+- ~~E2a-bis（password reveal 切换）依赖本 plan 的 InputGroup + clearable 基础，后续 plan 启动。~~ **已由 E2a-bis plan（`docs/plans/2026-06-21-0527-e2a-bis-password-reveal-plan.md`）收口。**
 - 若 `transform: {lowerCase, upperCase}` 后续有需求，归 formatter 层独立评估。
 
 ## Closure
@@ -242,6 +242,6 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- E2a-bis（password reveal 切换）后续 plan，依赖本 plan 已落地的 InputGroup + clearable 基础。
+- ~~E2a-bis（password reveal 切换）后续 plan，依赖本 plan 已落地的 InputGroup + clearable 基础。~~ **已由 E2a-bis plan 收口（2026-06-21）。**
 - autoComplete (data-source 异步建议下拉) 已显式 deferred 到 successor plan，非本 plan 剩余工作。
 - 无 plan-owned 剩余 debt。
