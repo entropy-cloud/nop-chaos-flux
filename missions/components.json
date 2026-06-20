@@ -3,13 +3,19 @@
   "description": "Build the core component renderers (markdown, html, link, image, json-view, separator, card, progress, spinner, empty, list, etc.)",
   "roadmapPath": "docs/components/roadmap.md",
   "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
   "contextDir": "docs/context",
-  "sourceDir": "packages",
+  "moduleDir": "packages",
   "commands": {
     "test": "pnpm test",
     "build": "pnpm build",
     "lint": "pnpm lint",
     "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/multi-dimensional-audit-prompt.md",
+    "openAudit": "docs/skills/open-ended-audit-prompt.md"
   },
   "commitFormat": "feat(<scope>): <description>"
 }
