@@ -1,6 +1,6 @@
 # Existing Components Improvement Roadmap
 
-> Last Updated: 2026-06-21 (E2a-bis done)
+> Last Updated: 2026-06-21 (E2b done)
 > Source: `docs/components/existing-components-improvement-analysis.md`（v2 分析报告）、`docs/components/amis-baseline-matrix.md`
 > 关联：`roadmap.md`（新增组件，独立）、`mobile-roadmap.md`（移动端响应式，独立）
 
@@ -45,7 +45,7 @@
 - E1d crud 数据生命周期: `todo`
 - E2a 文本输入增强: `done`
 - E2a-bis password reveal: `done`
-- E2b textarea 自动高度: `todo`
+- E2b textarea 自动高度: `done`
 - E2c checkbox-group 选择增强: `todo`
 - E2d 树族异步与级联: `todo`
 - E2e button 能力补齐: `todo`
