@@ -12,6 +12,29 @@
 - 当前仓库已落地基础 condition group 编辑、字段清单、值输入与 required 校验。
 - 更复杂的嵌套逻辑、运算符扩展、异步字段元数据加载、公式增强属于后续阶段。
 
+### Flux 决策表
+
+amis 仅作参考之一，**非标尺**。Flux 按 `existing-components-improvement-analysis.md` §0.2 原则裁决。condition-builder 已覆盖约 80% 主流程；下列决策区分已实现基线、契约漂移修复（E0d 已收口）与未来增强。
+
+| 能力                                                                               | 决定                                             | 理由                                                                                                                                                                                                                                                                   |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AND/OR 嵌套组 + `not`                                                              | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
+| `showAndOr`、`builderMode: full\|simple`、`embed`                                  | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
+| field-type → operator → value 三层映射 + operator 三级覆盖（field/schema/builtin） | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
+| `searchable` field select、`uniqueFields`                                          | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
+| `draggable`（dnd-kit 重排）                                                        | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
+| `maxDepth`、`maxItemsPerGroup`                                                     | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
+| 值消毒（`sanitizeRight`/`sanitizeNode`）、AMIS 格式转换、必填校验                  | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
+| i18n（`conditionBuilder.*`）                                                       | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
+| `showIf`（按组 `if` 条件）                                                         | **实现**（E0d 收口）                             | 值槽 `ConditionGroupValue.if?: string` 已存在；组级条件是规则引擎常见能力；实现成本低，符合 declarative schema 原则。语义见 §7.4                                                                                                                                       |
+| `selectMode: tree`/`chained`                                                       | **不采纳（删字段）**（E0d 收口）                 | list 模式已通过 `ConditionFieldGroup` 扁平化 + `searchable` 覆盖；tree/chained 增加复杂度但边际价值低、非高频业务需求；按 §0.2 "核心已简化" 原则收敛为 list-only 并从 `ConditionBuilderSchema` 整体删字段。若 E3 出现明确树形/级联需求，再以独立 feature plan 重新引入 |
+| `formulas`/`formulaForIf`（formula 集成，值侧可为公式）                            | **进 types.ts**（DESIGN-ACK-NOT-IMPL，E0d 收口） | 提供 E3 实现的稳定契约；遵循 crud `matchFunc` 先例（声明 + deferred）。运行时 DESIGN-ACK-NOT-IMPL：字段被类型接受，但当前 runtime 静默忽略（不消费、不冒泡、不报错），实际 formula 求值/集成属 E3 P2 批。类型形状见 §4                                                 |
+| 异步 field/operator 元数据加载（`source` 走 api）                                  | **计划实现（E3 P2 批）**                         | 走 source；当前 `types.ts` 仅允许 `source?: string`（scope 路径）                                                                                                                                                                                                      |
+| `simple` 模式真正扁平单组限制                                                      | **暂不实现**                                     | 当前 simple 仅隐藏 AND/OR 开关，仍允许嵌套                                                                                                                                                                                                                             |
+| `description`/per-field description、`isRequired`、`labelsAndOp` 显示模式          | **暂不实现**                                     | 后续按需                                                                                                                                                                                                                                                               |
+| amis 组件级 `api`/`initFetch` SchemaApi 生命周期                                   | **不采纳**                                       | 请求下沉 data-source + action（见 analysis §0.2/§5）                                                                                                                                                                                                                   |
+| amis `mobileUI` 双实现                                                             | **不采纳**                                       | 移动端走响应式（见 mobile-roadmap）                                                                                                                                                                                                                                    |
+
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'condition-builder'`
@@ -35,7 +58,6 @@ interface ConditionBuilderSchema extends BaseSchema {
   embed?: boolean;
   title?: string;
 
-  selectMode?: 'list' | 'tree' | 'chained';
   searchable?: boolean;
 
   draggable?: boolean;
@@ -62,6 +84,16 @@ interface ConditionBuilderSchema extends BaseSchema {
 }
 ```
 
+`selectMode` 字段已由 E0d 删除（收敛为 list-only，见 §2 决策表）。`formulas` / `formulaForIf` 由 E0d 进 `types.ts`（DESIGN-ACK-NOT-IMPL，运行时静默忽略，实际求值属 E3 P2 批）。`ConditionFormulaConfig` 最小形状（足以让 E3 实现，运行时当前不消费）：
+
+```ts
+interface ConditionFormulaConfig extends SchemaObject {
+  enabled?: boolean;
+  formula?: string;
+  source?: string;
+}
+```
+
 关键输入：
 
 - 条件字段定义：`fields`
@@ -80,7 +112,7 @@ Operator naming baseline:
 
 - `label`: `value-or-region`
 - `fields`、`source`、`operators`、`formulas`、`formulaForIf`: `value`
-- `builderMode`、`embed`、`selectMode`、`searchable`、`draggable`、`showAndOr`、`showNot`、`showIf`、`uniqueFields`: `value`
+- `builderMode`、`embed`、`searchable`、`draggable`、`showAndOr`、`showNot`、`showIf`、`uniqueFields`: `value`
 - `addConditionLabel`、`addGroupLabel`、`removeConditionLabel`、`removeGroupLabel`、`placeholder`: `value`
 
 ## 6. regions 与 slot 约定
@@ -134,6 +166,21 @@ interface ConditionItemValue {
 实现位置：`sanitizeRight()` 和 `sanitizeNode()` 在 `utils.ts` 中，由 `condition-builder.tsx` 的 `toGroupValue()` 和 `convertAmisRule()` 调用。
 
 此外，`ValueInput` 组件在分发给具体输入控件前，对非 between 运算符调用 `coerceScalar(value)` 将数组值回退为 `undefined`，防止 `String([undefined])` → `"[undefined]"` 被渲染到输入框。
+
+### 7.4 组级 `if` 条件输入（`showIf`）
+
+`showIf` 控制是否在每个条件组的头部渲染一个组级 `if` 表达式输入位，绑定到 `ConditionGroupValue.if?: string`（值结构层的槽位早已存在，E0d 之前 schema 层 `showIf` 设了但无人读 — 即漂移 #1）。
+
+最终语义（E0d 固化）：
+
+- `showIf: true`：在每个 `ConditionGroup` 头部（与 conjunction/not/add 控件同一行的右侧）渲染一个最小文本输入（`@nop-chaos/ui` 的 `Input`），placeholder 标注其用途。
+  - 读写绑定：输入值读写 `value.if`（string）。空输入对应 `value.if === undefined`（不写入空串）。
+  - 缺省值：`value.if` 缺省为 `undefined`，不强制生成。
+  - `disabled` 透传：组 `disabled` 时 if 输入也 disabled。
+  - 不破坏现有 conjunction/not/add/remove 控件布局；if 输入位于同一头部行的尾端，邻近组删除按钮。
+- `showIf: false`（或缺省）：不渲染 if 输入；即使 `value.if` 已存在（外部写入），UI 也不暴露它。
+- 表达式求值属消费方职责（E3 formula 集成或宿主规则引擎）：本组件只负责"写入 if 表达式串"，不负责"求值 if"。`formulas`/`formulaForIf` 字段已进 types.ts（DESIGN-ACK-NOT-IMPL，见 §2/§4），其求值属 E3 P2 批。
+- 边界：`showIf` 与 `addGroupBtnVisibleOn`（表达式开关，控制"添加组"按钮可见性）正交 —— 前者是组内 if 输入渲染开关，后者是按钮可见性表达式，互不影响。
 
 ## 7.2 字段类型 → 运算符 → 值控件映射
 
