@@ -34,7 +34,7 @@
 > **全文件唯一动态状态区。** 状态流转：draft review 通过 → `todo` 改 `planned`；closure audit 通过 → `planned` 改 `done`（不得提前）。
 
 - E0a 输入校验漂移修复: `done`
-- E0b 树级联漂移修复: `todo`
+- E0b 树级联漂移修复: `done`
 - E0c CRUD 选择漂移修复: `todo`
 - E0d condition-builder 漂移修复: `todo`
 - X3 命名规范基线（naming-conventions.md）: `todo`

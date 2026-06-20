@@ -15,6 +15,29 @@ AMIS 已有成熟参考：
 
 Flux 不必一次性照搬全部能力，但应承认该组件属于独立 field family，而不是把它压回普通 `tree` 或 `select`。
 
+### Flux 决策表
+
+amis 仅作参考之一，**非标尺**。Flux 按 `existing-components-improvement-analysis.md` §0.2 原则裁决。
+
+| 能力                                                                                                                 | 决定                 | 理由                                                                                                                                                                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `treeMode: normal\|radio\|checkbox`                                                                                  | **实现**             | 当前基线                                                                                                                                                                                                                                       |
+| `options` source（一次性异步加载 + 加载/错误态）                                                                     | **实现**             | 当前基线                                                                                                                                                                                                                                       |
+| 自定义 `childrenKey`/`labelField`/`valueField`                                                                       | **实现**             | 当前基线                                                                                                                                                                                                                                       |
+| 本地搜索（`searchable`）+ zero-results empty state + clear affordance + roving focus（同步 `aria-activedescendant`） | **实现**             | 当前基线                                                                                                                                                                                                                                       |
+| `showPathLabel`、`onlyLeaf`                                                                                          | **实现**             | 当前基线                                                                                                                                                                                                                                       |
+| 全键盘导航                                                                                                           | **实现**             | 当前基线                                                                                                                                                                                                                                       |
+| `cascade` 级联半选 + indeterminate                                                                                   | **实现**             | 多选树刚需；父子传播 + indeterminate 派生（E0b 收口，见 §cascade 语义）                                                                                                                                                                        |
+| `showIcon` / `showOutline`                                                                                           | **不采纳（删字段）** | 当前 schema 未定义图标数据来源（无 `iconField`/`iconKey`），实现需一整套图标解析设计；属 feature 而非漂移修复。已从 `InputTreeSchema` 移除以消除"声明了但设了无效"的契约漂移。如后续需要，须以独立 feature plan 提供完整图标来源设计后再加字段 |
+| 异步懒加载（`deferApi`/`deferField`）                                                                                | **计划实现（E2d）**  | 走 data-source deferApi 语义，不在组件开 api                                                                                                                                                                                                   |
+| 远程搜索（`searchApi`）                                                                                              | **计划实现（E2d）**  | 走 data-source；当前仅本地子串过滤                                                                                                                                                                                                             |
+| 虚拟滚动（`virtualThreshold`）                                                                                       | **计划实现（E2d）**  | 深树性能                                                                                                                                                                                                                                       |
+| 节点 CRUD（`creatable`/`editable`/`removable` + addApi/editApi/deleteApi/saveOrderApi）                              | **暂不实现**         | 场景窄，后续按需（见 §4）                                                                                                                                                                                                                      |
+| `nodeBehavior`、`itemActions`                                                                                        | **暂不实现**         | 后续按需                                                                                                                                                                                                                                       |
+| `enableNodePath`+`pathSeparator`（值作为路径串）、`hideRoot`/`rootLabel`                                             | **暂不实现**         | 后续按需                                                                                                                                                                                                                                       |
+| amis 组件级 `api`/`autoComplete`/`initFetch` SchemaApi 生命周期                                                      | **不采纳**           | 请求下沉 data-source + action（见 analysis §0.2/§5）                                                                                                                                                                                           |
+| amis `mobileUI` 双实现                                                                                               | **不采纳**           | 移动端走响应式（见 mobile-roadmap）                                                                                                                                                                                                            |
+
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'input-tree'`
@@ -36,19 +59,27 @@ interface InputTreeSchema extends InputSchema {
   cascade?: boolean;
   searchable?: boolean;
   onlyLeaf?: boolean;
-  showIcon?: boolean;
-  showOutline?: boolean;
   showPathLabel?: boolean;
 }
 ```
 
-后续阶段再考虑：
+> `showIcon` / `showOutline` 已于 E0b 移除（见决策表"不采纳（删字段）"）。
 
-- `creatable`
-- `editable`
-- `removable`
-- `draggable`
-- `addApi` / `editApi` / `deleteApi` / `saveOrderApi`
+### cascade 语义（E0b 最终裁定）
+
+`cascade: true` 仅在多选模式（`treeMode: 'checkbox'` 或 multiple 语义）下生效；单选模式（`treeMode: 'radio'` / `'normal'`）**不受影响**，`cascade` 被忽略。
+
+- **向下传播（点击父节点）**：点击父节点翻转其全部"可选后代"的选中态（连父节点本身，当 `onlyLeaf: false`）：
+  - 选中父节点 → 所有可选子孙加入当前 value；
+  - 取消父节点 → 所有可选子孙（及父值）从当前 value 移除。
+  - "可选后代" 集合由 `onlyLeaf` 决定：`onlyLeaf: true` 时只收集叶子后代；`onlyLeaf: false` 时收集全部后代。
+  - 叶子节点（无 children）的 cascade 退化为单点翻转。
+- **向上派生（父节点 checked / indeterminate 状态）**：父节点的选中态不是独立存储的，而是由其可选后代的选中态派生：
+  - 全部可选后代已选 → 父节点 `checked: true`；
+  - 部分（非全部）可选后代已选 → 父节点 `indeterminate: true`、`checked: false`；
+  - 无可选后代已选 → 父节点 `checked: false`、`indeterminate: false`。
+- **`onlyLeaf` 优先级**：`onlyLeaf: true` 优先于 `cascade` —— 父节点（非叶节点）的值**永不写入** value 数组；cascade 仅向叶子后代传播；父节点仍显示派生的 `checked` / `indeterminate` 视觉态（不响应把自身写入 value 的"直接选中"），点击父节点会批量翻转其叶子后代。`onlyLeaf: true` 且某父节点的可选后代集合为空（例如其全部后代均为内部节点）时，父节点不响应 cascade 选中。
+- **提交值**：只有真正被翻转的值进入表单 value 数组。`onlyLeaf: true` 下父/内部节点值不进入数组；`onlyLeaf: false` 下被批量翻转的父值与其全部后代值一起进入数组。
 
 ## 5. 字段分类
 

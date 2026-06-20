@@ -15,6 +15,27 @@ AMIS 已有成熟参考：
 
 Flux 可以先保留较小首版，再按 field family 演进。
 
+### Flux 决策表
+
+amis 仅作参考之一，**非标尺**。`tree-select` 与 `input-tree` 共享底层 tree option 模型，决策方向一致。
+
+| 能力                                                                                                                 | 决定                 | 理由                                                                                                                                                                                    |
+| -------------------------------------------------------------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| popover 触发 + 树面板（与 input-tree 共享 option 模型）                                                              | **实现**             | 当前基线                                                                                                                                                                                |
+| `treeMode: normal\|radio\|checkbox`、`onlyLeaf`、`showPathLabel`                                                     | **实现**             | 当前基线                                                                                                                                                                                |
+| 自定义 `childrenKey`/`labelField`/`valueField`                                                                       | **实现**             | 当前基线                                                                                                                                                                                |
+| `clearable`、`placeholder`                                                                                           | **实现**             | 当前基线                                                                                                                                                                                |
+| 本地搜索（`searchable`）+ zero-results empty state + clear affordance + roving focus（同步 `aria-activedescendant`） | **实现**             | 当前基线                                                                                                                                                                                |
+| `cascade` 级联半选 + indeterminate                                                                                   | **实现**             | 层级选择器头号需求；父子传播 + indeterminate 派生（E0b 收口，语义与 `input-tree/design.md` 的 cascade 语义节一致）                                                                      |
+| `showIcon` 图标                                                                                                      | **不采纳（删字段）** | 当前 schema 未定义图标数据来源；实现需一整套图标解析设计，属 feature 而非漂移修复。已从 `TreeSelectSchema` 移除以消除"声明了但设了无效"的契约漂移。`showOutline` 从不适用于 tree-select |
+| 异步懒加载（`deferApi`/`deferField`）                                                                                | **计划实现（E2d）**  | 走 data-source deferApi 语义，不在组件开 api                                                                                                                                            |
+| 远程搜索（`searchApi`）                                                                                              | **计划实现（E2d）**  | 走 data-source；当前仅本地子串过滤                                                                                                                                                      |
+| 虚拟滚动（`virtualThreshold`）                                                                                       | **计划实现（E2d）**  | 深树性能                                                                                                                                                                                |
+| 节点 CRUD（`creatable`/`editable`/`removable` + addApi/editApi/deleteApi/saveOrderApi）                              | **暂不实现**         | 场景窄，后续按需                                                                                                                                                                        |
+| `nodeBehavior`、`itemActions`、`enableNodePath`+`pathSeparator`                                                      | **暂不实现**         | 后续按需                                                                                                                                                                                |
+| amis 组件级 `api`/`autoComplete`/`initFetch` SchemaApi 生命周期                                                      | **不采纳**           | 请求下沉 data-source + action（见 analysis §0.2/§5）                                                                                                                                    |
+| amis `mobileUI` 双实现                                                                                               | **不采纳**           | 移动端走响应式（见 mobile-roadmap）                                                                                                                                                     |
+
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'tree-select'`
@@ -36,12 +57,13 @@ interface TreeSelectSchema extends InputSchema {
   cascade?: boolean;
   searchable?: boolean;
   onlyLeaf?: boolean;
-  showIcon?: boolean;
   showPathLabel?: boolean;
   clearable?: boolean;
   placeholder?: SchemaValue;
 }
 ```
+
+> `showIcon` 已于 E0b 移除（见决策表"不采纳（删字段）"）。`showOutline` 从不适用于 tree-select。`cascade` 的完整语义（父子传播方向、indeterminate 触发条件、`onlyLeaf` 优先级、单选不受影响）见 `input-tree/design.md` 的 "cascade 语义" 节，tree-select 共享同一套语义与同一套 cascade helper。
 
 ## 5. 字段分类
 
