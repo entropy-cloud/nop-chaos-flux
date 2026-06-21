@@ -44,6 +44,21 @@ Before using any prompt here, read:
 | Run AI tone / filler review on generated text                                                          | `docs/skills/ai-tone-and-filler-review.md`                                                                                                       |
 | Explore next-gen low-code attractors and capability opportunities                                      | `docs/skills/next-gen-lowcode-attractor-discovery-prompt.md`                                                                                     |
 
+## Skill Selection Guardrails
+
+Several skills overlap in name. Pick by the question you are answering, not by keyword similarity:
+
+| If you are deciding…                         | Use                                        | Do NOT use                                                                                  |
+| -------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| "Is this plan ready to execute?"             | `implementation-contract-review-prompt.md` | `deep-audit-prompts.md` (that audits live code, not a draft)                                |
+| "Is the landed code actually correct?"       | `deep-audit-prompts.md`                    | `implementation-contract-review-prompt.md` (that reviews a plan, not code)                  |
+| "Find unknown problems by probing live code" | `open-ended-adversarial-review-prompt.md`  | `deep-audit-prompts.md` (that uses a fixed checklist)                                       |
+| "Did we hit a real bug?"                     | `bug-diagnosis-prompt.md`                  | `exploratory-e2e-testing-prompt.md` (that finds symptoms, not root cause)                   |
+| "Is this React 19 usage correct?"            | `react19-best-practices-review.md`         | `code-quality-audit-prompt.md` (broader, less specific)                                     |
+| "Should this surface be refactored?"         | `code-refactor-discovery-prompt.md`        | `architecture-deepening-review-prompt.md` (that targets module seams, not a single surface) |
+
+Rule: when two skills could both apply, prefer the **narrower** one. A skill is a _method selector_ — it never replaces the owner doc or active requirement as the source of truth.
+
 ## Recommended Starting Set
 
 For the most common engineering work in this repo, start with:

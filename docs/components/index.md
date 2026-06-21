@@ -296,6 +296,8 @@ UI primitive 对齐补充规则：
 
 下面这份清单不是 AMIS 全量组件镜像，而是结合当前 `nop-chaos-flux` 已有 renderer、现有 UI primitives、以及 Flux 简化后的 DSL 方向整理出的常用 renderer 基线。
 
+> **实现进度与编排：** 各 renderer 的实现状态（`runtime`/`targetContract`）见 `docs/components/amis-baseline-matrix.md`；组件实现 roadmap（工作项 / wave / phase 状态 / 依赖）见 `docs/components/roadmap.md`。
+
 ### 当前代码已注册的通用 renderer
 
 - `fragment`

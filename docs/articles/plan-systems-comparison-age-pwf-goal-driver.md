@@ -9,7 +9,7 @@ Planning-with-Files是一个流行的claude code插件，它为claude code补充
 
 **自动化层（执行引擎）**
 
-- **AGE Goal Driver** — `nop-entropy/ai-dev/tools/opencode-goal-driver/` 中的独立进程状态机，把 AGE Plan 的文字规则工程化为可运行代码。AGE Goal Driver 是 AGE Plan 的一种可选执行机制。
+- **AGE Goal Driver** — `attractor-guided-engineering-template/tools/goal-driver/` 中的独立进程状态机，把 AGE Plan 的文字规则工程化为可运行代码。AGE Goal Driver 是 AGE Plan 的一种可选执行机制。
 
 **AGE Plan 管完成是否真实，PwF 管上下文是否还在。** 一个防止 plan 虚假完成，一个防止 agent 丢失目标。这个分歧决定了后续所有机制差异。
 

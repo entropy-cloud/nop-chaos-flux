@@ -251,7 +251,7 @@ src/
 | `input-email`    | 字段  | runtime        | 邮箱输入   |
 | `input-password` | 字段  | runtime        | 密码输入   |
 | `textarea`       | 字段  | runtime        | 多行文本   |
-| `input-number`   | 字段  | targetContract | 数字输入   |
+| `input-number`   | 字段  | runtime        | 数字输入   |
 | `select`         | 字段  | runtime        | 下拉选择   |
 | `checkbox`       | 字段  | runtime        | 复选框     |
 | `radio-group`    | 字段  | runtime        | 单选组     |
@@ -335,14 +335,14 @@ detail-field、detail-surface、projected-form-runtime、projected-scope、value
 
 **依赖**：`flux-react`, `flux-runtime`, `flux-formula`, `flux-core`, `flux-renderers-basic`, `flux-renderers-form`（用于共享 field-utils、form owner 类型和 shared/ 模块）, `ui`, `lucide-react`, `@dnd-kit/core`, `@dnd-kit/sortable`。
 
-**关于 `editor`（富文本）的分包说明**：
+**关于 `editor`（TipTap WYSIWYG）的分包说明**：
 
-`editor` 放在 form-advanced 而非独立成包，原因如下：
+`editor` 放在 form-advanced，使用 TipTap（~50-70KB gzip，MIT）实现 WYSIWYG 富文本。决策依据：
 
-1. `code-editor` 独立是因为 CodeMirror 是重量级依赖（~2MB），且有独立的 plugin 体系和配置系统。
-2. `editor`（富文本）如果使用轻量实现（如 `contentEditable` + 基础格式化工具栏），不需要独立包。
-3. 如果后续确认 `editor` 需要重量级富文本库（如 TipTap、Slate），应在此文档中追加决策：将 `editor` 提升为独立包 `flux-rich-text-editor`，遵循 `flux-code-editor` 的模式。
-4. 当前默认假设为轻量实现，归入 form-advanced。
+1. TipTap 比 CodeMirror 轻（CodeMirror ~2MB vs TipTap ~50-70KB gzip），不需要独立包。
+2. `editor` 对应 AMIS `input-rich-text`，是表单字段语义，与 form-advanced 中的复合字段并列合理。
+3. Markdown 源码编辑场景由 `markdown-editor`（Textarea + react-markdown，零新依赖）覆盖，归入 `flux-renderers-form`。
+4. 如果后续 TipTap 扩展导致包体积显著增长，可提升为独立包 `flux-rich-text-editor`。
 
 **内部结构建议**：
 
@@ -506,7 +506,7 @@ src/
 | `input-email`    | runtime        | —    |
 | `input-password` | runtime        | —    |
 | `textarea`       | runtime        | —    |
-| `input-number`   | targetContract | 2    |
+| `input-number`   | runtime        | —    |
 | `select`         | runtime        | —    |
 | `checkbox`       | runtime        | —    |
 | `radio-group`    | runtime        | —    |

@@ -2,39 +2,48 @@
 
 ## 1. 组件定位
 
-- `editor` 是 rich-text editor 字段 renderer。
-- 它只承接 WYSIWYG/富文本内容编辑，不承接代码、公式、SQL、JSON 或 schema 文本编辑。
+- `editor` 是 WYSIWYG 富文本表单字段 renderer。
+- 对应 AMIS `input-rich-text`，使用 TipTap 实现。
+- 用户在表单中直接看到格式化效果（加粗、标题、列表、链接），无需了解 markdown 语法。
+- 与 `word-editor`（页面级文档编辑器）和 `markdown-editor`（markdown 源码编辑）职责不同。
 
-## 2. 与 AMIS 或既有产品的能力对照
+## 2. 与相关组件的边界
 
-- 对应 AMIS `input-rich-text`。
-- 这里的 retained Flux `editor` 与 audited AMIS top-level `editor` 不是一回事：前者是 rich-text owner，后者的代码编辑语义已经收敛到 `code-editor`。
+| 组件              | 场景                          | 实现底层                  |
+| ----------------- | ----------------------------- | ------------------------- |
+| `editor`          | 表单字段级 WYSIWYG 富文本输入 | TipTap                    |
+| `markdown-editor` | markdown 源码编辑 + 预览      | Textarea + react-markdown |
+| `code-editor`     | 代码/公式/SQL 编辑            | CodeMirror                |
+| `word-editor`     | 页面级文档编辑（类 Word）     | 领域包独立                |
 
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'editor'`
-- 预期归属 `@nop-chaos/flux-renderers-form`
+- 预期归属 `@nop-chaos/flux-renderers-form-advanced`
 - 预期 `wrap: true`
+- 新增依赖：`@tiptap/react` + `@tiptap/starter-kit` + 按需扩展（~50-70KB gzip，MIT 协议）
 
 ## 4. schema 设计
 
-- 建议正式字段为 `name`、`label`、`toolbar`、`placeholder`、`outputFormat`、`readOnly`、`required`。
+- 建议正式字段为 `name`、`label`、`placeholder`、`toolbar`、`outputFormat`、`readOnly`、`required`。
+- `outputFormat`：`html`（默认）或 `json`（TipTap JSON）。
+- `toolbar`：工具栏配置，控制显示哪些格式按钮。
 
 ## 5. 字段分类
 
 - `label`: `value-or-region`
-- `name`、`toolbar`、`placeholder`、`outputFormat`、`readOnly`、`required`: `value`
+- `name`、`placeholder`、`toolbar`、`outputFormat`、`readOnly`、`required`: `value`
 - `onChange`、`onFocus`、`onBlur`: `event`
 
 ## 6. regions 与 slot 约定
 
 - `label` 复用统一 field frame。
-- 富文本工具栏属于组件内部 feature surface，而不是外部自由 region。
+- 工具栏属于组件内部 feature surface，不由外部 region 驱动。
 
 ## 7. 运行期状态归属
 
-- 富文本值归最近表单或 owner scope。
-- 选择范围、格式面板、局部工具栏状态属于字段内部交互状态。
+- 编辑器值（HTML 或 TipTap JSON）归最近表单或 owner scope。
+- 光标位置、选区、工具栏激活态属于字段内部交互状态。
 
 ## 8. 事件、动作与组件句柄能力
 
@@ -49,11 +58,15 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点输出 `nop-editor` marker。
+- TipTap 的 ProseMirror DOM 需要通过 CSS 变量对齐 `@nop-chaos/ui` 主题。
 
 ## 11. 实现拆分建议
 
-- 富文本适配器、toolbar bridge、值归一化、sanitization 边界分开实现。
+- TipTap 适配器、工具栏 bridge、值序列化/反序列化（HTML ↔ TipTap JSON）、sanitization 边界分开实现。
+- 工具栏按钮样式复用 `@nop-chaos/ui` Button/Tooltip。
 
 ## 12. 风险、取舍与后续阶段
 
-- 最大风险是再次和 `code-editor` 混成一个“所有编辑器”的黑盒 family。
+- TipTap 是积极维护的 MIT 库（3.0 稳定，有 2026 路线图），~50-70KB gzip。
+- 如需图片上传、表格编辑等高级功能，通过 TipTap 扩展渐进引入。
+- 与 `code-editor` 职责分离清晰：`editor` 是富文本 WYSIWYG，`code-editor` 是代码编辑。
