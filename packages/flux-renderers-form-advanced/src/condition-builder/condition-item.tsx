@@ -4,6 +4,7 @@ import { GripVerticalIcon, Trash2Icon } from 'lucide-react';
 import { Button } from '@nop-chaos/ui';
 import type {
   ConditionField,
+  ConditionFormulaConfig,
   ConditionItemValue,
   ConditionOperatorOverrides,
   BaseConditionField,
@@ -14,6 +15,7 @@ import { ValueInput } from './value-input.js';
 import { resolveOperators, resolveDefaultOp } from './operators.js';
 import { WrappedFieldAction } from '../wrapped-field-action.js';
 import { t } from '@nop-chaos/flux-i18n';
+import type { EvaluateConditionFormula } from './condition-builder.js';
 
 interface ConditionItemProps {
   value: ConditionItemValue;
@@ -27,6 +29,8 @@ interface ConditionItemProps {
   uniqueFields?: boolean;
   draggable?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
+  formulas?: ConditionFormulaConfig;
+  evaluateFormula?: EvaluateConditionFormula;
   renderCustomSchema?: (schema: BaseSchema, options: RenderCustomSchemaOptions) => React.ReactNode;
   projectedForm?: FormRuntime;
   projectedScope?: ScopeRef;
@@ -65,6 +69,8 @@ export function ConditionItem({
   uniqueFields,
   draggable,
   dragHandleProps,
+  formulas,
+  evaluateFormula,
   renderCustomSchema,
   projectedForm,
   projectedScope,
@@ -162,6 +168,8 @@ export function ConditionItem({
         value={value.right}
         onChange={handleValueChange}
         disabled={disabled}
+        formulas={formulas}
+        evaluateFormula={evaluateFormula}
         renderCustomSchema={renderCustomSchema}
         projectedForm={projectedForm}
         projectedScope={projectedScope}

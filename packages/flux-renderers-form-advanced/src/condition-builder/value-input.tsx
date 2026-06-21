@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { BaseSchema, FormRuntime, ScopeRef, ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -7,7 +7,8 @@ import { XIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@nop-chaos/ui';
 import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import { Badge } from '@nop-chaos/ui';
-import type { ConditionCustomField, ConditionField, ConditionSelectField } from './types.js';
+import type { ConditionCustomField, ConditionField, ConditionFormulaConfig, ConditionSelectField } from './types.js';
+import type { EvaluateConditionFormula } from './condition-builder.js';
 
 interface ValueInputProps {
   inputIdPrefix?: string;
@@ -16,6 +17,8 @@ interface ValueInputProps {
   value: unknown;
   onChange: (value: unknown) => void;
   disabled?: boolean;
+  formulas?: ConditionFormulaConfig;
+  evaluateFormula?: EvaluateConditionFormula;
   renderCustomSchema?: (schema: BaseSchema, options: RenderCustomSchemaOptions) => React.ReactNode;
   projectedForm?: FormRuntime;
   projectedScope?: ScopeRef;
@@ -50,6 +53,8 @@ export function ValueInput({
   value,
   onChange,
   disabled,
+  formulas,
+  evaluateFormula,
   renderCustomSchema,
   projectedForm,
   projectedScope,
@@ -60,6 +65,18 @@ export function ValueInput({
 
   if (op === 'between' || op === 'not_between') {
     return <BetweenInput field={field} value={value} onChange={onChange} disabled={disabled} />;
+  }
+
+  if (formulas?.enabled) {
+    return (
+      <FormulaValueSlot
+        inputId={inputIdPrefix}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        evaluateFormula={evaluateFormula}
+      />
+    );
   }
 
   if (field.type === 'custom' && field.value) {
@@ -134,6 +151,72 @@ function CustomValueEditorHost({
         </ValidationContext.Provider>
       </ScopeContext.Provider>
     </FormContext.Provider>
+  );
+}
+
+function FormulaValueSlot({
+  inputId,
+  value,
+  onChange,
+  disabled,
+  evaluateFormula,
+}: {
+  inputId?: string;
+  value: unknown;
+  onChange: (v: unknown) => void;
+  disabled?: boolean;
+  evaluateFormula?: EvaluateConditionFormula;
+}) {
+  const formulaStr = typeof value === 'string' ? value : '';
+  const [preview, setPreview] = useState<string | null>(null);
+  const canEvaluate = Boolean(formulaStr && evaluateFormula);
+
+  useEffect(() => {
+    if (!canEvaluate || !evaluateFormula) return;
+    let cancelled = false;
+    evaluateFormula(formulaStr)
+      .then((result) => {
+        if (cancelled) return;
+        if (result.error) {
+          setPreview(t('conditionBuilder.formulaEvalError'));
+        } else {
+          setPreview(t('conditionBuilder.formulaPreview', { value: String(result.value) }));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPreview(t('conditionBuilder.formulaEvalError'));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [formulaStr, evaluateFormula, canEvaluate]);
+
+  const displayPreview = canEvaluate ? preview : null;
+
+  return (
+    <div className="flex flex-col gap-0.5 min-w-[100px]">
+      <div className="flex items-center gap-1">
+        <span className="text-[10px] font-mono text-muted-foreground select-none" aria-hidden>
+          {t('conditionBuilder.formulaValuePrefix')}
+        </span>
+        <Input
+          id={inputId}
+          data-slot="condition-formula-value"
+          type="text"
+          value={formulaStr}
+          aria-label={t('conditionBuilder.formulaValueLabel')}
+          placeholder={t('conditionBuilder.formulaValuePlaceholder')}
+          disabled={disabled}
+          className="h-7 text-xs min-w-[80px] font-mono"
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </div>
+      {displayPreview && (
+        <span data-slot="condition-formula-preview" className="text-[10px] text-muted-foreground truncate">
+          {displayPreview}
+        </span>
+      )}
+    </div>
   );
 }
 

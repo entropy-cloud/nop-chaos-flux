@@ -1,0 +1,57 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "text",
+      "text": "### Condition Builder Formula (E3)\n\n以下演示 condition-builder 的 `formulas` / `formulaForIf` runtime 消费（E3 收口）。当 `formulas.enabled=true` 时，条件项右侧切换为表达式值槽（`data-slot=\"condition-formula-value\"`），可输入 Flux 表达式串。当 `formulaForIf.enabled=true` 时，组级 `if` 输入标注为可求值表达式。"
+    },
+    {
+      "type": "form",
+      "id": "condition-formula-test-form",
+      "body": [
+        {
+          "type": "condition-builder",
+          "name": "formulaConditions",
+          "label": "Formula 值槽（formulas.enabled + formula seed）",
+          "embed": true,
+          "builderMode": "full",
+          "showAndOr": true,
+          "showNot": true,
+          "showIf": true,
+          "formulas": {
+            "enabled": true,
+            "formula": "${data.defaultExpr}"
+          },
+          "formulaForIf": {
+            "enabled": true
+          },
+          "fields": [
+            { "name": "name", "label": "名称", "type": "text", "placeholder": "输入名称" },
+            { "name": "age", "label": "年龄", "type": "number" },
+            {
+              "name": "status",
+              "label": "状态",
+              "type": "select",
+              "options": [
+                { "label": "活跃", "value": "active" },
+                { "label": "停用", "value": "inactive" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "condition-builder",
+          "name": "literalConditions",
+          "label": "字面量值槽（formulas 缺省，无回归基线）",
+          "embed": true,
+          "builderMode": "full",
+          "showAndOr": true,
+          "fields": [
+            { "name": "title", "label": "标题", "type": "text" },
+            { "name": "count", "label": "数量", "type": "number" }
+          ]
+        }
+      ]
+    }
+  ]
+}

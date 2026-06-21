@@ -114,6 +114,11 @@ export const enUS: Resource = {
       reorderCondition: 'Reorder condition',
       ifExpressionPlaceholder: 'if expression, e.g. ${age > 18}',
       ifExpressionLabel: 'Group if expression',
+      formulaValuePlaceholder: 'Expression, e.g. ${age + 1}',
+      formulaValueLabel: 'Condition formula expression',
+      formulaValuePrefix: 'fx',
+      formulaPreview: '→ {{value}}',
+      formulaEvalError: '⚠ eval error',
       operators: {
         equal: 'Equals',
         notEqual: 'Does not equal',

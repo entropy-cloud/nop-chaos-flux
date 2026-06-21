@@ -24,6 +24,7 @@ import type {
   ConditionBuilderSchema,
   ConditionConjunction,
   ConditionField,
+  ConditionFormulaConfig,
   ConditionGroupValue,
   ConditionItemValue,
   ConditionOperatorOverrides,
@@ -34,6 +35,7 @@ import { genId } from './id-utils.js';
 import { resolveDefaultOp } from './operators.js';
 import { computeUsedFields } from './utils.js';
 import { WrappedFieldAction } from '../wrapped-field-action.js';
+import type { EvaluateConditionFormula } from './condition-builder.js';
 
 interface ConditionGroupProps {
   value: ConditionGroupValue;
@@ -44,6 +46,9 @@ interface ConditionGroupProps {
   onRemove?: () => void;
   disabled?: boolean;
   depth: number;
+  formulas?: ConditionFormulaConfig;
+  formulaForIf?: ConditionFormulaConfig;
+  evaluateFormula?: EvaluateConditionFormula;
   renderCustomSchema?: (schema: BaseSchema, options: RenderCustomSchemaOptions) => React.ReactNode;
   projectedFormFactory?: (item: ConditionItemValue) => FormRuntime | undefined;
   projectedScopeFactory?: (item: ConditionItemValue) => ScopeRef;
@@ -67,6 +72,9 @@ export function ConditionGroup({
   onRemove,
   disabled,
   depth,
+  formulas,
+  formulaForIf,
+  evaluateFormula,
   renderCustomSchema,
   projectedFormFactory,
   projectedScopeFactory,
@@ -140,14 +148,15 @@ export function ConditionGroup({
       (firstField as BaseConditionField | undefined)?.defaultOp,
       operatorsOverride,
     );
+    const formulaSeed = formulas?.enabled && formulas.formula ? formulas.formula : undefined;
     const newItem: ConditionItemValue = {
       id: genId('item'),
       left: { type: 'field', field: fieldName },
       op: defaultOp,
-      right: undefined,
+      right: formulaSeed,
     };
     onChange({ ...value, children: [...value.children, newItem] });
-  }, [fields, onChange, operatorsOverride, value]);
+  }, [fields, onChange, operatorsOverride, value, formulas]);
 
   const handleAddGroup = useCallback(() => {
     const newGroup: ConditionGroupValue = {
@@ -202,6 +211,9 @@ export function ConditionGroup({
                   onRemove={() => handleChildRemove(index)}
                   disabled={disabled}
                   depth={depth + 1}
+                  formulas={formulas}
+                  formulaForIf={formulaForIf}
+                  evaluateFormula={evaluateFormula}
                   renderCustomSchema={renderCustomSchema}
                   projectedFormFactory={projectedFormFactory}
                   projectedScopeFactory={projectedScopeFactory}
@@ -226,6 +238,8 @@ export function ConditionGroup({
                   uniqueFields={uniqueFields}
                   draggable={draggable}
                   dragHandleProps={dragHandleProps}
+                  formulas={formulas}
+                  evaluateFormula={evaluateFormula}
                   renderCustomSchema={renderCustomSchema}
                   projectedForm={projectedFormFactory?.(child)}
                   projectedScope={projectedScopeFactory?.(child)}
@@ -256,6 +270,9 @@ export function ConditionGroup({
               onRemove={() => handleChildRemove(index)}
               disabled={disabled}
               depth={depth + 1}
+              formulas={formulas}
+              formulaForIf={formulaForIf}
+              evaluateFormula={evaluateFormula}
               renderCustomSchema={renderCustomSchema}
               projectedFormFactory={projectedFormFactory}
               projectedScopeFactory={projectedScopeFactory}
@@ -274,6 +291,8 @@ export function ConditionGroup({
               usedFields={uniqueFields ? computeUsedFields(value.children, child.id) : undefined}
               uniqueFields={uniqueFields}
               draggable={draggable}
+              formulas={formulas}
+              evaluateFormula={evaluateFormula}
               renderCustomSchema={renderCustomSchema}
               projectedForm={projectedFormFactory?.(child)}
               projectedScope={projectedScopeFactory?.(child)}
@@ -357,13 +376,14 @@ export function ConditionGroup({
 
             {showIf && (
               <Input
-                data-slot="condition-group-if-input"
+                data-slot={formulaForIf?.enabled ? 'condition-group-if-formula' : 'condition-group-if-input'}
                 type="text"
                 value={value.if ?? ''}
                 onChange={handleIfChange}
                 disabled={disabled}
                 placeholder={t('conditionBuilder.ifExpressionPlaceholder')}
                 aria-label={t('conditionBuilder.ifExpressionLabel')}
+                aria-describedby={formulaForIf?.enabled ? 'condition-if-formula-hint' : undefined}
                 className="ml-auto h-7 text-xs min-w-[120px] max-w-[200px]"
               />
             )}

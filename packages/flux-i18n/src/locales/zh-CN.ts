@@ -114,6 +114,11 @@ export const zhCN: Resource = {
       reorderCondition: '重新排序条件',
       ifExpressionPlaceholder: 'if 表达式，如 ${age > 18}',
       ifExpressionLabel: '组级 if 表达式',
+      formulaValuePlaceholder: '表达式，如 ${age + 1}',
+      formulaValueLabel: '条件公式表达式',
+      formulaValuePrefix: 'fx',
+      formulaPreview: '→ {{value}}',
+      formulaEvalError: '⚠ 求值错误',
       operators: {
         equal: '等于',
         notEqual: '不等于',

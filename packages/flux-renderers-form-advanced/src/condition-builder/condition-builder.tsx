@@ -6,6 +6,7 @@ import type {
   RendererDefinition,
   RuntimeFieldRegistration,
   ScopeRef,
+  SourceSchema,
   ValidationRule,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
@@ -17,6 +18,7 @@ import { ChevronDownIcon } from 'lucide-react';
 import type {
   ConditionBuilderSchema,
   ConditionField,
+  ConditionFormulaConfig,
   ConditionGroupValue,
   ConditionItemValue,
   ConditionOperatorOverrides,
@@ -78,6 +80,40 @@ function getRequiredMessage(label: string): string {
   return t('conditionBuilder.requiredMessage', { label });
 }
 
+export interface FormulaEvaluationResult {
+  value: unknown;
+  error: boolean;
+}
+
+export type EvaluateConditionFormula = (formula: string) => Promise<FormulaEvaluationResult>;
+
+function createFormulaEvaluator(
+  helpers: RendererComponentProps<ConditionBuilderSchema>['helpers'],
+  scope: ScopeRef,
+  formulas: ConditionFormulaConfig | undefined,
+): EvaluateConditionFormula {
+  return async (formula: string): Promise<FormulaEvaluationResult> => {
+    if (!formula) return { value: undefined, error: false };
+    try {
+      let contextScope = scope;
+      const sourceExpr = formulas?.source;
+      if (sourceExpr) {
+        const sourceSchema: SourceSchema = { type: 'source', formula: sourceExpr };
+        const result = await helpers.executeSource(sourceSchema, { scope });
+        const sourceData = (result as { data?: unknown } | undefined)?.data ?? result;
+        if (sourceData && typeof sourceData === 'object' && !Array.isArray(sourceData)) {
+          contextScope = helpers.createScope(sourceData as Record<string, unknown>);
+        }
+      }
+      const value = helpers.evaluate(formula, contextScope);
+      return { value, error: false };
+    } catch (err) {
+      console.warn('[condition-builder] formula eval error:', err);
+      return { value: formula, error: true };
+    }
+  };
+}
+
 export function ConditionBuilderRenderer(props: RendererComponentProps<ConditionBuilderSchema>) {
   const name = String(props.props.name ?? '');
   const { currentForm, scope, value, handlers, presentation } = useFormFieldController(name, {
@@ -91,6 +127,13 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   const schemaProps = useSchemaProps(props) as ConditionBuilderSchema;
   const operatorsOverride = schemaProps.operators;
   const fields = (schemaProps.fields ?? []) as ConditionField[];
+  const formulas = schemaProps.formulas;
+  const formulaForIf = schemaProps.formulaForIf;
+
+  const evaluateFormula = useCallback(
+    () => createFormulaEvaluator(props.helpers, scope, formulas),
+    [props.helpers, scope, formulas],
+  )();
 
   const valueRef = useRef<ConditionGroupValue>(toGroupValue(undefined));
   const registrationRef = useRef<RuntimeFieldRegistration | undefined>(undefined);
@@ -256,6 +299,9 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
         operatorsOverride={operatorsOverride}
         onChange={syncValue}
         disabled={disabled}
+        formulas={formulas}
+        formulaForIf={formulaForIf}
+        evaluateFormula={evaluateFormula}
         renderCustomSchema={renderCustomSchema}
         projectedFormFactory={createItemForm}
         projectedScopeFactory={createItemScope}
@@ -276,6 +322,9 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
         onChange={syncValue}
         disabled={disabled}
         depth={0}
+        formulas={formulas}
+        formulaForIf={formulaForIf}
+        evaluateFormula={evaluateFormula}
         renderCustomSchema={renderCustomSchema}
         projectedFormFactory={createItemForm}
         projectedScopeFactory={createItemScope}
@@ -352,6 +401,9 @@ function PickerModeContent({
   operatorsOverride,
   onChange,
   disabled,
+  formulas,
+  formulaForIf,
+  evaluateFormula,
   renderCustomSchema,
   projectedFormFactory,
   projectedScopeFactory,
@@ -364,6 +416,9 @@ function PickerModeContent({
   operatorsOverride?: ConditionOperatorOverrides;
   onChange: (v: ConditionGroupValue) => void;
   disabled?: boolean;
+  formulas?: ConditionFormulaConfig;
+  formulaForIf?: ConditionFormulaConfig;
+  evaluateFormula?: EvaluateConditionFormula;
   renderCustomSchema?: (schema: BaseSchema, options: { field: Extract<ConditionField, { type: 'custom' }>; op: string; value: unknown; disabled?: boolean; scope: ScopeRef }) => React.ReactNode;
   projectedFormFactory?: (item: ConditionItemValue) => FormRuntime | undefined;
   projectedScopeFactory?: (item: ConditionItemValue) => ScopeRef;
@@ -401,6 +456,9 @@ function PickerModeContent({
               onChange={onChange}
               disabled={disabled}
               depth={0}
+              formulas={formulas}
+              formulaForIf={formulaForIf}
+              evaluateFormula={evaluateFormula}
               renderCustomSchema={renderCustomSchema}
               projectedFormFactory={projectedFormFactory}
               projectedScopeFactory={projectedScopeFactory}

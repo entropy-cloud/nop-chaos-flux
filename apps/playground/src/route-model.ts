@@ -387,6 +387,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'Standalone condition-builder renderer with embedded and picker modes.',
   },
   {
+    id: 'condition-builder-formula',
+    title: 'Condition Builder Formula',
+    eyebrow: 'Form Control (E3)',
+    description:
+      'E3 condition-builder formula integration: formulas.enabled expression value slots, formula seed defaults, formulaForIf group if markers.',
+  },
+  {
     id: 'code-editor',
     title: 'Code Editor',
     eyebrow: 'CodeMirror 6',

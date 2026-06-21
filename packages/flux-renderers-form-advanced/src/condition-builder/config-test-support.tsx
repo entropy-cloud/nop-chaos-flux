@@ -3,7 +3,8 @@ import { afterEach, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { ConditionGroup } from './condition-group.js';
-import type { ConditionBuilderSchema, ConditionField, ConditionGroupValue } from './types.js';
+import type { ConditionBuilderSchema, ConditionField, ConditionFormulaConfig, ConditionGroupValue } from './types.js';
+import type { EvaluateConditionFormula } from './condition-builder.js';
 
 vi.mock('@dnd-kit/core', () => ({
   DndContext: ({ children }: any) => <>{children}</>,
@@ -204,6 +205,9 @@ export function renderGroup(
     operatorsOverride?: import('./types.js').ConditionOperatorOverrides;
     disabled?: boolean;
     depth?: number;
+    formulas?: ConditionFormulaConfig;
+    formulaForIf?: ConditionFormulaConfig;
+    evaluateFormula?: EvaluateConditionFormula;
   },
 ): ReturnType<typeof render> {
   const fullSchema: ConditionBuilderSchema = {
@@ -222,6 +226,9 @@ export function renderGroup(
       onChange={handleChange}
       disabled={options?.disabled}
       depth={options?.depth ?? 0}
+      formulas={options?.formulas ?? schema.formulas}
+      formulaForIf={options?.formulaForIf ?? schema.formulaForIf}
+      evaluateFormula={options?.evaluateFormula}
     />,
   );
 }

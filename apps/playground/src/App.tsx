@@ -29,6 +29,9 @@ const LazyDebuggerLabPage = lazy(() =>
 const LazyConditionBuilderPage = lazy(() =>
   import('./pages/condition-builder-page').then((m) => ({ default: m.ConditionBuilderPage })),
 );
+const LazyConditionBuilderFormulaPage = lazy(() =>
+  import('./pages/condition-builder-formula-page').then((m) => ({ default: m.ConditionBuilderFormulaPage })),
+);
 const LazyWordEditorPage = lazy(() =>
   import('./pages/word-editor-page').then((m) => ({ default: m.WordEditorPage })),
 );
@@ -112,6 +115,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <LazyDebuggerLabPage debuggerController={debuggerController} onBack={goHome} />;
         case 'condition-builder':
           return <LazyConditionBuilderPage onBack={goHome} />;
+        case 'condition-builder-formula':
+          return <LazyConditionBuilderFormulaPage onBack={goHome} />;
         case 'code-editor':
           return <CodeEditorPage onBack={goHome} />;
         case 'word-editor':
