@@ -380,9 +380,25 @@ describe('combine-cells helper', () => {
     ];
     const columns: TableColumnSchema[] = [{ type: 'column', name: 'a' }] as TableColumnSchema[];
 
-    expect(computeCombinePlan(rows, columns, undefined)).toEqual([{}, {}]);
-    expect(computeCombinePlan(rows, columns, 0)).toEqual([{}, {}]);
+    expect(computeCombinePlan(rows, columns, undefined)).toEqual([]);
+    expect(computeCombinePlan(rows, columns, 0)).toEqual([]);
     expect(computeCombinePlan([], columns, 1)).toEqual([]);
+  });
+
+  it('returns a stable singleton empty plan when no merging is active', () => {
+    const rows: TableRowEntry[] = [
+      { rowKey: '1', sourceIndex: 0, record: { a: 1 } },
+      { rowKey: '2', sourceIndex: 1, record: { a: 1 } },
+    ];
+    const columns: TableColumnSchema[] = [{ type: 'column', name: 'a' }] as TableColumnSchema[];
+
+    const planA = computeCombinePlan(rows, columns, undefined);
+    const planB = computeCombinePlan(rows, columns, 0);
+    const planC = computeCombinePlan(rows, columns, 1, { virtualEnabled: true });
+    expect(planA).toBe(planB);
+    expect(planA).toBe(planC);
+    expect(getCellRowSpan(planA, 0, columns[0]!, 0)).toBeUndefined();
+    expect(getCellRowSpan(planA, 1, columns[0]!, 0)).toBeUndefined();
   });
 
   it('degrades to no-merge plan when virtualEnabled is true', () => {
@@ -392,7 +408,7 @@ describe('combine-cells helper', () => {
     ];
     const columns: TableColumnSchema[] = [{ type: 'column', name: 'a' }] as TableColumnSchema[];
     const plan = computeCombinePlan(rows, columns, 1, { virtualEnabled: true });
-    expect(plan).toEqual([{}, {}]);
+    expect(plan).toEqual([]);
   });
 
   it('computes rowSpan plan for first N columns merging consecutive same values', () => {

@@ -449,8 +449,12 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const actionScope = options?.actionScope ?? currentActionScope;
   const componentRegistry = options?.componentRegistry ?? currentComponentRegistry;
   const scope = fragmentScope ?? explicitScope ?? currentScope;
-  const instancePath =
-    options?.instancePath ?? ownerNodeInstance?.instancePath ?? currentInstancePath;
+  const ownerInstancePath = ownerNodeInstance?.instancePath;
+  const explicitInstancePath = options?.instancePath;
+  const instancePath = useMemo(
+    () => explicitInstancePath ?? ownerInstancePath ?? currentInstancePath,
+    [explicitInstancePath, ownerInstancePath, currentInstancePath],
+  );
   const renderFragment = React.useCallback(
     (renderInput: RenderNodeInput, renderOptions?: RenderFragmentOptions) => {
       const nextOwnerNodeInstance =

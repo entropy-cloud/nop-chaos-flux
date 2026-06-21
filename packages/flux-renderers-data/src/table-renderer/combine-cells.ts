@@ -3,6 +3,15 @@ import type { TableRowEntry } from './types.js';
 
 export type CombinePlan = Array<Record<string, number>>;
 
+/**
+ * Stable singleton returned by `computeCombinePlan` whenever no merging is
+ * active (`combineNum` unset/non-positive, empty rows, or virtual mode). Using
+ * a stable reference keeps `React.memo` comparisons on `combinePlan` valid
+ * across re-renders, so unchanged rows are not forced to re-render simply
+ * because the surrounding `processedData` array was rebuilt.
+ */
+export const EMPTY_COMBINE_PLAN: CombinePlan = [];
+
 function getCellValue(record: Record<string, unknown>, column: TableColumnSchema): unknown {
   if (!column.name) return undefined;
   return record[column.name];
@@ -35,16 +44,16 @@ export function computeCombinePlan(
   options: { virtualEnabled?: boolean } = {},
 ): CombinePlan {
   if (typeof combineNum !== 'number' || combineNum <= 0 || rows.length === 0) {
-    return rows.map(() => ({}));
+    return EMPTY_COMBINE_PLAN;
   }
 
   if (options.virtualEnabled) {
-    return rows.map(() => ({}));
+    return EMPTY_COMBINE_PLAN;
   }
 
   const n = Math.min(Math.floor(combineNum), columns.length);
   if (n <= 0) {
-    return rows.map(() => ({}));
+    return EMPTY_COMBINE_PLAN;
   }
 
   const plan: CombinePlan = rows.map(() => ({}));
