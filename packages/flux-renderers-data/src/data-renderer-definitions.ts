@@ -463,6 +463,10 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'initiallyExpanded', kind: 'prop' },
       { key: 'expandOnClickNode', kind: 'prop' },
       { key: 'statusPath', kind: 'prop' },
+      { key: 'searchable', kind: 'prop', valueType: 'boolean' },
+      { key: 'showIcon', kind: 'prop', valueType: 'boolean' },
+      { key: 'iconField', kind: 'prop' },
+      { key: 'showGuideLine', kind: 'prop', valueType: 'boolean' },
       {
         key: 'node',
         kind: 'region',

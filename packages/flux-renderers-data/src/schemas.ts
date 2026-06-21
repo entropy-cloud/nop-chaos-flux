@@ -163,6 +163,10 @@ export interface TreeSchema extends BaseSchema {
   expandOnClickNode?: boolean;
   statusPath?: string;
   multiple?: boolean;
+  searchable?: boolean;
+  showIcon?: boolean;
+  iconField?: string;
+  showGuideLine?: boolean;
 }
 
 export * from './chart-schemas.js';

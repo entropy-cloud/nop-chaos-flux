@@ -7,11 +7,20 @@ import {
   resolveRendererSlotContent,
   useStatusPathPublication,
 } from '@nop-chaos/flux-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  Input,
+  cn,
+  resolveLucideIcon,
+} from '@nop-chaos/ui';
 import { ChevronRightIcon } from 'lucide-react';
 import type { TreeSchema } from './schemas.js';
 
 const TREE_EXPANDED_CHILD_BATCH_SIZE = 50;
+const TREE_INDENT_PX = 16;
+const TREE_BASE_PADDING_PX = 8;
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -119,6 +128,128 @@ function collectTreeNodeIds(
   return nodeIds;
 }
 
+interface TreeSearchState {
+  query: string;
+  active: boolean;
+  visibleNodeIds: Set<string>;
+  forcedOpenNodeIds: Set<string>;
+}
+
+const EMPTY_TREE_SEARCH: TreeSearchState = {
+  query: '',
+  active: false,
+  visibleNodeIds: new Set<string>(),
+  forcedOpenNodeIds: new Set<string>(),
+};
+
+function computeTreeSearch(
+  nodes: readonly TreeNodeRecord[],
+  rawQuery: string,
+  childrenKey: string,
+  labelField: string,
+  keyField: string,
+): TreeSearchState {
+  const query = rawQuery.trim();
+  const normalizedQuery = query.toLowerCase();
+  if (!normalizedQuery) {
+    return { ...EMPTY_TREE_SEARCH, visibleNodeIds: new Set(), forcedOpenNodeIds: new Set() };
+  }
+
+  const matchedNodeIds = new Set<string>();
+  const forcedOpenNodeIds = new Set<string>();
+
+  const walk = (
+    nodesList: readonly TreeNodeRecord[],
+    parentTreeNodeId: string | undefined,
+    ancestorIds: readonly string[],
+  ): boolean => {
+    let subtreeHasMatch = false;
+    nodesList.forEach((node, index) => {
+      const nodeKey = toNodeKey(node, keyField, index);
+      const treeNodeId = createTreeNodeId(parentTreeNodeId, nodeKey);
+      const labelValue = getIn(node, labelField);
+      const labelStr = String(labelValue ?? '').toLowerCase();
+      const isMatch = labelStr.includes(normalizedQuery);
+      const childNodes = toTreeNodes(getIn(node, childrenKey));
+      const childAncestors = [...ancestorIds, treeNodeId];
+      const childHasMatch = walk(childNodes, treeNodeId, childAncestors);
+
+      if (isMatch) {
+        matchedNodeIds.add(treeNodeId);
+        ancestorIds.forEach((aid) => forcedOpenNodeIds.add(aid));
+        subtreeHasMatch = true;
+      }
+
+      if (childHasMatch) {
+        forcedOpenNodeIds.add(treeNodeId);
+        ancestorIds.forEach((aid) => forcedOpenNodeIds.add(aid));
+        subtreeHasMatch = true;
+      }
+    });
+    return subtreeHasMatch;
+  };
+
+  walk(nodes, undefined, []);
+
+  const visibleNodeIds = new Set<string>(matchedNodeIds);
+  forcedOpenNodeIds.forEach((id) => visibleNodeIds.add(id));
+
+  return { query, active: true, visibleNodeIds, forcedOpenNodeIds };
+}
+
+function renderHighlightedLabel(label: string, query: string): React.ReactNode {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) {
+    return <span>{label}</span>;
+  }
+
+  const lower = label.toLowerCase();
+  const parts: React.ReactNode[] = [];
+  let cursor = 0;
+  let key = 0;
+  let idx = lower.indexOf(normalizedQuery, cursor);
+
+  while (idx !== -1) {
+    if (idx > cursor) {
+      parts.push(label.slice(cursor, idx));
+    }
+    parts.push(
+      <mark
+        key={`hl-${key}`}
+        data-slot="tree-search-highlight"
+        className="rounded-sm bg-yellow-200/70 px-0.5 text-inherit"
+      >
+        {label.slice(idx, idx + normalizedQuery.length)}
+      </mark>,
+    );
+    key += 1;
+    cursor = idx + normalizedQuery.length;
+    idx = lower.indexOf(normalizedQuery, cursor);
+  }
+
+  if (cursor < label.length) {
+    parts.push(label.slice(cursor));
+  }
+
+  return <span>{parts}</span>;
+}
+
+function renderNodeIcon(node: TreeNodeRecord, iconField: string): React.ReactNode {
+  const rawIcon = getIn(node, iconField);
+  if (rawIcon === undefined || rawIcon === null || rawIcon === '') {
+    return null;
+  }
+
+  const Icon = resolveLucideIcon(String(rawIcon));
+  return (
+    <Icon
+      data-slot="tree-node-icon"
+      aria-hidden="true"
+      className="size-4 shrink-0 text-muted-foreground"
+    />
+  );
+}
+
 function TreeNodeRenderer(props: {
   owner: RendererComponentProps<TreeSchema>;
   node: TreeNodeRecord;
@@ -139,6 +270,10 @@ function TreeNodeRenderer(props: {
   moveFocus: (nodeId: string, key: TreeNavigationKey) => void;
   focusFirstChild: (nodeId: string, depth: number) => void;
   focusParent: (nodeId: string, depth: number) => void;
+  searchState: TreeSearchState;
+  showIcon: boolean;
+  iconField: string | undefined;
+  showGuideLine: boolean;
 }) {
   const {
     owner,
@@ -160,6 +295,10 @@ function TreeNodeRenderer(props: {
     moveFocus,
     focusFirstChild,
     focusParent,
+    searchState,
+    showIcon,
+    iconField,
+    showGuideLine,
   } = props;
   const nodeKey = toNodeKey(node, keyField, index);
   const treeNodeId = createTreeNodeId(parentTreeNodeId, nodeKey);
@@ -168,6 +307,9 @@ function TreeNodeRenderer(props: {
   const hasChildren = childNodes.length > 0;
   const initiallyOpen = hasChildren && shouldExpandInitially(initiallyExpanded, depth);
   const [open, setOpen] = useState(() => initiallyOpen);
+  const searchActive = searchState.active;
+  const searchForcedOpen = searchActive && searchState.forcedOpenNodeIds.has(treeNodeId);
+  const effectiveOpen = searchActive ? searchForcedOpen : open;
   const [renderedChildCount, setRenderedChildCount] = useState(() => {
     if (!initiallyOpen) {
       return 0;
@@ -190,6 +332,10 @@ function TreeNodeRenderer(props: {
   const isTabbable = (activeNodeId ?? treeNodeId) === treeNodeId;
 
   React.useEffect(() => {
+    if (searchActive) {
+      return;
+    }
+
     if (!open) {
       setRenderedChildCount(0);
       return;
@@ -215,9 +361,13 @@ function TreeNodeRenderer(props: {
     return () => {
       window.clearTimeout(timer);
     };
-  }, [childNodes.length, open]);
+  }, [childNodes.length, open, searchActive]);
 
   const handleOpenChange = (nextOpen: boolean) => {
+    if (searchActive) {
+      return;
+    }
+
     if (!nextOpen && activeNodeId?.startsWith(`${treeNodeId}/`)) {
       setActiveNodeId(treeNodeId);
     }
@@ -230,16 +380,42 @@ function TreeNodeRenderer(props: {
       return;
     }
 
-    handleOpenChange(!open);
+    handleOpenChange(effectiveOpen ? false : true);
   };
+
+  if (searchActive && !searchState.visibleNodeIds.has(treeNodeId)) {
+    return null;
+  }
+
+  const childRenderCount = searchActive ? childNodes.length : renderedChildCount;
+  const rowPaddingInlineStart = showGuideLine
+    ? TREE_BASE_PADDING_PX
+    : depth * TREE_INDENT_PX + TREE_BASE_PADDING_PX;
+  const labelString = String(label ?? nodeKey);
+  const hasCustomNodeContent = hasRendererSlotContent(asReactNode(nodeContent));
 
   return (
     <div data-slot="tree-node" data-depth={depth} data-node-key={nodeKey} data-tree-node-id={treeNodeId}>
-      <Collapsible open={open} onOpenChange={handleOpenChange}>
-        <div className="flex items-center gap-2" style={{ paddingInlineStart: `${depth * 16 + 8}px` }}>
+      <Collapsible open={effectiveOpen} onOpenChange={handleOpenChange}>
+        <div
+          data-slot="tree-node-row"
+          data-tree-node-id={treeNodeId}
+          className="flex items-center gap-2"
+          style={{ paddingInlineStart: `${rowPaddingInlineStart}px` }}
+        >
+          {showGuideLine && depth > 0
+            ? Array.from({ length: depth }, (_, guideIndex) => (
+                <span
+                  key={`tree-guide-${guideIndex}`}
+                  data-slot="tree-guide-line"
+                  aria-hidden="true"
+                  className="inline-block w-4 shrink-0 self-stretch border-l border-border"
+                />
+              ))
+            : null}
           {hasChildren && !interactiveNode ? (
             <CollapsibleTrigger
-              aria-label={open ? t('flux.common.collapse') : t('flux.common.expand')}
+              aria-label={effectiveOpen ? t('flux.common.collapse') : t('flux.common.expand')}
               className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-accent"
               tabIndex={-1}
               onMouseDown={(event) => {
@@ -250,7 +426,7 @@ function TreeNodeRenderer(props: {
               }}
             >
               <ChevronRightIcon
-                className={cn('size-3.5 transition-transform', open ? 'rotate-90' : '')}
+                className={cn('size-3.5 transition-transform', effectiveOpen ? 'rotate-90' : '')}
               />
             </CollapsibleTrigger>
           ) : hasChildren ? (
@@ -259,7 +435,7 @@ function TreeNodeRenderer(props: {
               aria-hidden="true"
             >
               <ChevronRightIcon
-                className={cn('size-3.5 transition-transform', open ? 'rotate-90' : '')}
+                className={cn('size-3.5 transition-transform', effectiveOpen ? 'rotate-90' : '')}
               />
             </span>
           ) : (
@@ -272,7 +448,7 @@ function TreeNodeRenderer(props: {
           <div
             className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             role="treeitem"
-            aria-expanded={hasChildren ? open : undefined}
+            aria-expanded={hasChildren ? effectiveOpen : undefined}
             aria-level={depth + 1}
             aria-selected={isTabbable}
             data-depth={depth}
@@ -304,7 +480,7 @@ function TreeNodeRenderer(props: {
 
                 e.preventDefault();
 
-                if (!open) {
+                if (!effectiveOpen) {
                   handleOpenChange(true);
                   return;
                 }
@@ -314,7 +490,7 @@ function TreeNodeRenderer(props: {
               }
 
               if (e.key === 'ArrowLeft') {
-                if (hasChildren && open) {
+                if (hasChildren && effectiveOpen) {
                   e.preventDefault();
                   handleOpenChange(false);
                   return;
@@ -330,20 +506,19 @@ function TreeNodeRenderer(props: {
 
               if ((e.key === 'Enter' || e.key === ' ') && hasChildren) {
                 e.preventDefault();
-
-                if (interactiveNode) {
-                  handleOpenChange(!open);
-                  return;
-                }
-
-                handleOpenChange(!open);
+                handleOpenChange(effectiveOpen ? false : true);
               }
             }}
           >
-            {hasRendererSlotContent(asReactNode(nodeContent)) ? (
+            {hasCustomNodeContent ? (
               asReactNode(nodeContent)
             ) : (
-              <span>{String(label ?? nodeKey)}</span>
+              <>
+                {showIcon && iconField ? renderNodeIcon(node, iconField) : null}
+                {searchActive
+                  ? renderHighlightedLabel(labelString, searchState.query)
+                  : <span>{labelString}</span>}
+              </>
             )}
           </div>
         </div>
@@ -351,7 +526,7 @@ function TreeNodeRenderer(props: {
         {hasChildren ? (
           <CollapsibleContent>
             <div data-slot="tree-children" role="group">
-              {childNodes.slice(0, renderedChildCount).map((childNode, childIndex) => (
+              {childNodes.slice(0, childRenderCount).map((childNode, childIndex) => (
                 <TreeNodeRenderer
                   key={`${nodeKey}:${toNodeKey(childNode, keyField, childIndex)}`}
                   owner={owner}
@@ -362,25 +537,29 @@ function TreeNodeRenderer(props: {
                   childrenKey={childrenKey}
                   labelField={labelField}
                   keyField={keyField}
-                   expandOnClickNode={expandOnClickNode}
-                   initiallyExpanded={initiallyExpanded}
-                   parentInstancePath={instancePath}
-                   parentTreeNodeId={treeNodeId}
-                   repeatedTemplateId={repeatedTemplateId}
-                   activeNodeId={activeNodeId}
-                   setActiveNodeId={setActiveNodeId}
-                   focusNode={focusNode}
-                   moveFocus={moveFocus}
-                   focusFirstChild={focusFirstChild}
-                    focusParent={focusParent}
-                  />
-                ))}
-              {open && renderedChildCount < childNodes.length ? (
+                  expandOnClickNode={expandOnClickNode}
+                  initiallyExpanded={initiallyExpanded}
+                  parentInstancePath={instancePath}
+                  parentTreeNodeId={treeNodeId}
+                  repeatedTemplateId={repeatedTemplateId}
+                  activeNodeId={activeNodeId}
+                  setActiveNodeId={setActiveNodeId}
+                  focusNode={focusNode}
+                  moveFocus={moveFocus}
+                  focusFirstChild={focusFirstChild}
+                  focusParent={focusParent}
+                  searchState={searchState}
+                  showIcon={showIcon}
+                  iconField={iconField}
+                  showGuideLine={showGuideLine}
+                />
+              ))}
+              {effectiveOpen && childRenderCount < childNodes.length ? (
                 <div data-slot="tree-children-more" hidden aria-hidden="true" />
               ) : null}
               </div>
             </CollapsibleContent>
-         ) : null}
+          ) : null}
       </Collapsible>
     </div>
   );
@@ -402,6 +581,13 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
       ? schemaProps.keyField
       : DEFAULT_KEY_FIELD;
   const expandOnClickNode = schemaProps.expandOnClickNode === true;
+  const searchable = schemaProps.searchable === true;
+  const showIcon = schemaProps.showIcon === true;
+  const iconField =
+    typeof schemaProps.iconField === 'string' && schemaProps.iconField
+      ? schemaProps.iconField
+      : undefined;
+  const showGuideLine = schemaProps.showGuideLine === true;
   const emptyContent = resolveRendererSlotContent(props, 'empty', {
     fallback: t('flux.common.noData'),
   });
@@ -416,6 +602,12 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const [activeNodeId, setActiveNodeId] = useState<string | undefined>(() => {
     return firstRootNodeId;
   });
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchState = searchable
+    ? computeTreeSearch(data, searchQuery, childrenKey, labelField, keyField)
+    : EMPTY_TREE_SEARCH;
+  const searchActive = searchState.active;
+  const searchHasMatch = searchState.visibleNodeIds.size > 0;
   const resolvedActiveNodeId =
     activeNodeId && knownNodeIds.has(activeNodeId) ? activeNodeId : firstRootNodeId;
 
@@ -531,7 +723,25 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
       aria-label={treeLabel}
       aria-multiselectable={multiple || undefined}
     >
-      {data.map((node, index) => (
+      {searchable ? (
+        <div data-slot="tree-search" className="px-1 pb-2">
+          <Input
+            data-slot="tree-search-input"
+            type="search"
+            size="sm"
+            placeholder={t('flux.common.search')}
+            value={searchQuery}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setSearchQuery(event.target.value);
+            }}
+          />
+        </div>
+      ) : null}
+      {searchActive && !searchHasMatch
+        ? hasRendererSlotContent(emptyContent)
+          ? <div data-slot="tree-empty">{emptyContent}</div>
+          : <div data-slot="tree-empty" className="px-2 py-1.5 text-sm text-muted-foreground">{t('flux.common.noData')}</div>
+        : data.map((node, index) => (
         <TreeNodeRenderer
           key={toNodeKey(node, keyField, index)}
           owner={props}
@@ -551,6 +761,10 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
           moveFocus={moveFocus}
           focusFirstChild={focusFirstChild}
           focusParent={focusParent}
+          searchState={searchState}
+          showIcon={showIcon}
+          iconField={iconField}
+          showGuideLine={showGuideLine}
         />
       ))}
     </div>
