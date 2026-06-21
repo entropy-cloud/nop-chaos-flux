@@ -11,6 +11,20 @@
 - 当前已支持 `direction`、`wrap`、`align`、`justify`、`gap`。
 - 文档建议保留 `items` 作为等价 region 名，以兼容未来更接近设计器的集合式建模。
 
+### Flux 决策表（X5 扩展，E3）
+
+| 能力                                                                                                  | 首版决定       | 理由                                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `direction: 'row-reverse' / 'column-reverse'`（反向主轴）                                             | **实现**       | amis flex schema 常见枚举值；Tailwind `flex-row-reverse` / `flex-col-reverse` 一一映射；纯 class 映射无运行时副作用，解锁 amis flex schema 直接迁移。                                               |
+| `justify: 'evenly'`（`space-evenly`）                                                                 | **实现**       | 与现有 `between`/`around` 同族；Tailwind `justify-evenly`；两侧等距分布在工具栏/操作组场景常见。                                                                                                    |
+| `align: 'baseline'`（基线对齐）                                                                       | **实现**       | 与现有 `start`/`center`/`end`/`stretch` 同族；Tailwind `items-baseline`；文字混排基线对齐是 P2 高频需求。                                                                                           |
+| `alignContent?: 'start'\|'center'\|'end'\|'between'\|'around'\|'evenly'\|'stretch'`（多行交叉轴分布） | **实现**       | 与 CSS flex `align-content` 一致；`align` 单行交叉轴、`alignContent` 多行交叉轴（与 CSS 语义一致，见 Decision）；仅在 `wrap` 多行时生效，单行场景无副作用；Tailwind `content-*`。                   |
+| amis `flex-item`（per-child flex/basis/grow）                                                         | 不采纳（后续） | per-child 弹性参数需独立子 schema（子节点声明 `flex`/`basis`/`grow`/`order`），与当前 region-only body 模型不同架构；当前可用嵌套 flex + className 组合绕过；归后续独立增强（详见 plan Deferred）。 |
+| 自由 `style` 内联样式 prop                                                                            | 不采纳         | 违反 styling contract（`docs/architecture/styling-system.md`）—— layout renderer 仅输出 marker class + 语义字段，不开 style 透传逃逸口。视觉差异应通过 `className` / 设计 token 表达。              |
+| amis `draggable`（拖拽排序子项）                                                                      | 不采纳         | `flex` 是纯布局原语，不承载 children 列表的可变性（§7「子节点增删排布应由外部 schema/loader 负责」）；拖拽排序应作为独立组件或设计器能力处理，与 `flex` 解耦。                                      |
+
+**Decision（`alignContent` 与 `align` 语义边界）**：与 CSS flex 一致 —— `align`（单行/单元素交叉轴对齐，Tailwind `items-*`）与 `alignContent`（多行交叉轴整体分布，Tailwind `content-*`）是两条独立的语义轴。单行场景下 `alignContent` 不生效（与 CSS 一致，无回归）；当 `wrap=true` 且内容溢出产生多行时，`alignContent` 控制行间分布。两者并存、互不覆盖。
+
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'flex'`
@@ -20,12 +34,13 @@
 
 ## 4. schema 设计
 
-- 当前导出字段为 `direction`、`wrap`、`align`、`justify`、`gap`、`className`。
+- 当前导出字段为 `direction`（`'row' | 'column' | 'row-reverse' | 'column-reverse'`）、`wrap`、`align`（`'start' | 'center' | 'end' | 'stretch' | 'baseline'`）、`justify`（`'start' | 'center' | 'end' | 'between' | 'around' | 'evenly'`）、`alignContent`（`'start' | 'center' | 'end' | 'between' | 'around' | 'evenly' | 'stretch'`）、`gap`、`className`。
 - 推荐正式契约允许 `body` 或 `items` 二选一作为子项集合输入，但对外只保留一个主集合字段更利于长期收敛；当前阶段优先以 `body` 为主、`items` 为兼容 region。
+- `alignContent` 仅在 `wrap=true` 且内容溢出产生多行时生效（与 CSS flex `align-content` 一致）；单行场景下不应用 `content-*` class。
 
 ## 5. 字段分类
 
-- `direction`、`wrap`、`align`、`justify`、`gap`: `value`
+- `direction`、`wrap`、`align`、`justify`、`alignContent`、`gap`: `value`
 - `body`、`items`: `region`
 
 ## 6. regions 与 slot 约定
@@ -52,7 +67,8 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点保留 `nop-flex` marker。
-- `direction`/`justify`/`align` 是布局语义，不应再发明第二套 `flexMode` 或 `layoutMode` 命名。
+- `direction`/`justify`/`align`/`alignContent` 是布局语义，不应再发明第二套 `flexMode` 或 `layoutMode` 命名。
+- 枚举到 Tailwind class 的映射：`direction: row-reverse → flex-row-reverse`、`column-reverse → flex-col-reverse`；`justify: evenly → justify-evenly`；`align: baseline → items-baseline`；`alignContent: *` → `content-*`（如 `content-center`/`content-between`）。
 
 ## 11. 与其他容器的边界
 

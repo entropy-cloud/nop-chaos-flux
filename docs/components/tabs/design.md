@@ -30,6 +30,23 @@
 - 使用明确的状态 ownership，而不是把所有交互状态写死在本地 React state
 - 对 `@nop-chaos/ui` / Base UI 已有 props，优先直接沿用其名称，如 `value`、`defaultValue`、`orientation`、`variant`
 
+### Flux 决策表（X5 扩展，E3）
+
+| 能力                                                                                        | 首版决定       | 理由                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| per-tab `badge?: string \| number`（数值角标）                                              | **实现**       | 管理 UI / 后台 tabs 极常见能力；DOM marker `data-slot="tab-badge"`；非数字非字符串值用 `String()` 兜底渲染（Failure Path `tabs-badge-invalid`，不抛错）。                                                                                                                           |
+| per-tab `icon?: string`（Lucide 图标名）                                                    | **实现**       | 复用 `resolveLucideIcon`（与 button/icon renderer 一致）；DOM marker `data-slot="tab-icon"`；图标名无法 resolve 时占位图标兜底（不抛错）。                                                                                                                                          |
+| per-tab `mountOnEnter?: boolean`（首次进入才挂载）                                          | **实现**       | 当前 `keepMounted={true}` 硬编码（`tabs.tsx:192`），per-tab 无法配置；本字段覆盖全局行为：`mountOnEnter: true` 时 inactive tab content 首次进入前不在 DOM；DOM marker `data-slot="tabs-content"` 保留。配合 `unmountOnExit` 实现懒挂载/卸载组合（见 Decision）。                    |
+| per-tab `unmountOnExit?: boolean`（切走后卸载）                                             | **实现**       | 与 `mountOnEnter` 正交的卸载轴：`unmountOnExit: true` 时切走后 content 卸载（释放 DOM 与内部 owner runtime 状态）；缺省继承全局 keepMounted=true（保留状态，避免重建 form/detail 草稿丢失）。                                                                                       |
+| amis `addable` / `closable` / `draggable` / `editable` / `hash` / `source` / `swipeable` 等 | 不采纳（后续） | §3/§17/§19 已显式列举延后理由：Flux 当前已有更明确的 action/runtime/component 分层，不应为兼容 AMIS 旧实现而把浏览器地址（hash）、DOM 滚动细节、ad hoc class 插槽提前固化成首版契约；这些能力的补齐应等真实宿主需求出现，并以独立 feature plan 重新评估（Non-Blocking Follow-up）。 |
+
+**Decision（`mountOnEnter` / `unmountOnExit` 优先级）**：全局 `keepMounted=true`（当前 `tabs.tsx:192` 硬编码）作为缺省，per-tab `mountOnEnter` / `unmountOnExit` 覆盖。优先级规则（同时配 `mountOnEnter: true` + `unmountOnExit: true` 时）：**mountOnEnter 优先** —— tab content 首次进入才挂载（lazy mount），离开后按 `unmountOnExit` 卸载（Failure Path `tabs-mountOnEnter-conflict`）。具体语义：
+
+- 两者均未配（缺省）：`keepMounted=true` 行为不变（inactive content 在 DOM，无回归，form/detail 草稿保留）。
+- 仅 `mountOnEnter: true`：首次激活前不在 DOM；激活后保持 mounted（不再卸载，即便后续切走）。
+- 仅 `unmountOnExit: true`：初始即 mounted；切走后卸载。
+- 两者都配：首次激活前不在 DOM；激活后切走时按 `unmountOnExit` 卸载（每次进出均重新挂载/卸载）。
+
 ## 3. 与 AMIS 的能力对照
 
 建议把 AMIS `tabs` 的能力拆成三层：
@@ -137,6 +154,10 @@ interface TabItemSchema extends BaseSchemaWithoutType {
   title?: string;
   label?: string;
   disabled?: boolean | string;
+  badge?: string | number;
+  icon?: string;
+  mountOnEnter?: boolean;
+  unmountOnExit?: boolean;
   titleRegionKey?: string;
   bodyRegionKey?: string;
   toolbarRegionKey?: string;
@@ -148,6 +169,9 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 - 当前 live item 结构通过 `titleRegionKey`、`bodyRegionKey`、`toolbarRegionKey` 把 item 内部 region 显式编译成命名 handle；renderer 不直接回收原始子 schema。
 - `title` 与 `label` 当前都可作为静态标题来源，最终显示值按 `titleRegion -> title -> label -> value` 的顺序回退。
 - `key` / `value` 共同参与激活值解析，当前实现优先 `value ?? key ?? index`。
+- `badge?: string | number` 在标题旁渲染角标（`@nop-chaos/ui` Badge，DOM marker `data-slot="tab-badge"`）；非数字非字符串值用 `String()` 兜底（不抛错）。
+- `icon?: string` 在标题前渲染 Lucide 图标（`resolveLucideIcon`，DOM marker `data-slot="tab-icon"`）；无法 resolve 时占位图标兜底。
+- `mountOnEnter?: boolean` / `unmountOnExit?: boolean` 覆盖全局 `keepMounted=true`（缺省），详见 §2 Decision 优先级规则。
 
 ## 6. 字段分类
 
@@ -168,14 +192,18 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 单个 `TabItemSchema` 的关键字段：
 
-| 字段               | 语义       | 说明                    |
-| ------------------ | ---------- | ----------------------- |
-| `title`            | value      | 静态标题文本            |
-| `label`            | value      | 兼容静态标题别名        |
-| `titleRegionKey`   | region key | 指向标题 region handle  |
-| `bodyRegionKey`    | region key | 指向内容 region handle  |
-| `toolbarRegionKey` | region key | 指向 item 工具区 handle |
-| `disabled`         | value      | 可为表达式              |
+| 字段               | 语义       | 说明                                            |
+| ------------------ | ---------- | ----------------------------------------------- |
+| `title`            | value      | 静态标题文本                                    |
+| `label`            | value      | 兼容静态标题别名                                |
+| `titleRegionKey`   | region key | 指向标题 region handle                          |
+| `bodyRegionKey`    | region key | 指向内容 region handle                          |
+| `toolbarRegionKey` | region key | 指向 item 工具区 handle                         |
+| `disabled`         | value      | 可为表达式                                      |
+| `badge`            | value      | 标题旁角标（string/number）                     |
+| `icon`             | value      | 标题前 Lucide 图标名（string）                  |
+| `mountOnEnter`     | value      | 首次进入才挂载（boolean，覆盖全局 keepMounted） |
+| `unmountOnExit`    | value      | 切走后卸载（boolean，覆盖全局 keepMounted）     |
 
 `items` 数组本身不适合简单作为普通 `prop`。推荐为 `items` 增加专门的 renderer-level 解析流程：
 
@@ -363,6 +391,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 - 标题项使用 `TabsTrigger`
 - 内容区使用 `TabsContent`
 - 根节点与关键内部槽位输出 `data-slot`，遵守 `@nop-chaos/ui` 既有模式
+- per-tab `badge` 在 `TabsTrigger` 内输出 `data-slot="tab-badge"`；per-tab `icon` 在 `TabsTrigger` 内输出 `data-slot="tab-icon"`
 
 样式规则：
 

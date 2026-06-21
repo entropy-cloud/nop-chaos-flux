@@ -11,6 +11,21 @@
 - 当前已落地的最小能力是 `title` 和 `body`，并已经在 renderer 定义中预留 `header`、`footer` regions。
 - 面包屑、页面级 toolbar、生命周期事件和路由协作仍应作为后续阶段补齐，而不是在首版文档里发散出私有协议。
 
+### Flux 决策表（X5 扩展，E3）
+
+| 能力                                                                         | 首版决定               | 理由                                                                                                                                                                                                                                               |
+| ---------------------------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `aside?: BaseSchema[]` region（侧边栏布局）                                  | **实现**               | amis page 管理布局迁移的单点最大缺口；与 `body` 并列作为页面侧栏 region，DOM marker `data-slot="page-aside"`；`asidePosition?: 'left' \| 'right'`（缺省 `left`）控制左右；`asideClassName?` 开放样式；空 aside 折叠（不渲染占位列，见 Decision）。 |
+| `asidePosition?: 'left' \| 'right'`                                          | **实现**               | 上述 aside region 的方向补充；缺省 `left`，配 `right` 时 aside 在 body 之后（DOM 顺序与视觉顺序一致，便于响应式堆叠）。                                                                                                                            |
+| `subTitle?: string`（标题副文案）                                            | **实现**               | 与 `title` 并列的副标题文本，DOM marker `data-slot="page-subtitle"`；纯文本（非 region），避免与 `title` 的 value-or-region 双轨；如需富文本副标题走 `title` region 自定义。                                                                       |
+| `remark?: string`（标题旁 Tooltip info）                                     | **实现**               | amis page `remark` 同义；标题旁渲染 info 图标 + `@nop-chaos/ui` Tooltip，DOM marker `data-slot="page-remark"`；hover/focus 显示说明文本，纯文本输入。                                                                                              |
+| amis `initApi` / `initFetch` / `interval` / `silentPolling`（页面请求/轮询） | 不采纳                 | Flux 请求下沉 data-source（设计原则 §4「请求下沉」+ plan Non-Goals）；页面级异步装配应落在 `loader`、page runtime 或 `data-source`，page renderer 自身不承担请求型职责（§9 同义）。                                                                |
+| amis `toolbar` 独立 region                                                   | 不采纳                 | 当前 `header` region 已 subsume toolbar 用途（amis 同时有 `header` 和 `toolbar` 是历史包袱，本仓库 `header` 渲染为 `data-slot="page-toolbar"` 已涵盖）；新增平行 region 增加契约面而无新能力，归 Deferred。                                        |
+| amis `pullRefresh`（下拉刷新）                                               | 归 `mobile-roadmap.md` | 移动端原生交互；归 `flux-renderers-mobile`（mobile-roadmap M3a 已显式列出依赖「改进 roadmap page aside 落地」，本 plan 解锁该依赖）。                                                                                                              |
+| amis `css` / `cssVars`（页面级自定义 CSS）                                   | 不采纳                 | 违反 styling contract（`docs/architecture/styling-system.md`）；视觉差异走 `className` / 设计 token，不开运行时 CSS 注入逃逸口（安全 + 可静态分析）。                                                                                              |
+
+**Decision（aside 布局与空 aside 折叠）**：aside 与 body 用 CSS flex 双列布局（aside 左/右、body 占主区）；`asidePosition: 'right'` 时 aside DOM 顺序在 body 之后（视觉在右）。空 aside 折叠：当 `aside` region 配了但实际渲染为空（无子节点或子节点全部 resolved 为空），不渲染 `data-slot="page-aside"` 列，避免空白侧栏占位。该判定复用 `hasRendererSlotContent`（与现有 title/header/footer 折叠逻辑一致）。
+
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'page'`
@@ -21,15 +36,20 @@
 
 ## 4. schema 设计
 
-- 建议正式字段为 `title`、`header`、`body`、`footer`、`data`。
-- 当前 `packages/flux-renderers-basic/src/schemas.ts` 只显式导出 `title`、`body`；文档基线应以 renderer definition 已公开的 region 契约为准，并推动类型补齐。
+- 建议正式字段为 `title`、`subTitle`、`remark`、`header`、`body`、`aside`、`asidePosition`、`footer`、`data`。
+- 当前 `packages/flux-renderers-basic/src/schemas.ts` 导出 `PageSchema` 含 `title?`、`subTitle?`、`remark?`、`body?`、`header?`、`footer?`、`aside?`、`asidePosition?`（`'left' | 'right'`，缺省 `left`）、`asideClassName?`、`bodyClassName?`、`headerClassName?`、`footerClassName?`、`toolbarClassName?`、`statusPath?`。
+- `aside?: BaseSchema[]` 是侧边栏 region，与 `body` 并列；`asidePosition` 控制 DOM 顺序（`left` 在 body 前，`right` 在 body 后）；空 aside（`aside: []`）折叠不渲染。
+- `subTitle?: string` 是标题旁副文案（纯文本，非 region）；`remark?: string` 是标题旁 Tooltip info（hover/focus 显示，纯文本）。
 - 如果后续 page lifecycle 进入 schema-visible 契约，目标上应优先增加 `statusPath` 一类只读状态摘要发布字段，而不是把 child owner 状态都上卷到 page。
 
 ## 5. 字段分类
 
 - `title`: `value-or-region`
+- `subTitle`: `value`（纯文本字符串）
+- `remark`: `value`（纯文本字符串）
 - `data`: `value`
-- `header`、`body`、`footer`: `region`
+- `header`、`body`、`footer`、`aside`: `region`
+- `asidePosition`: `value`（`'left' | 'right'`）
 - `className`、`classAliases`、`visible`、`disabled`: 继承 `BaseSchema` 元字段
 
 ## 6. regions 与 slot 约定
@@ -63,6 +83,8 @@
 
 - 根节点保留 `nop-page` 语义 marker。
 - 页面布局、间距和背景来自 schema 样式字段，不应在 renderer 内硬编码页面专属 spacing 规则。
+- DOM marker：`data-slot="page-header"`（标题区，含 title + subTitle + remark）、`data-slot="page-subtitle"`（副文案 span）、`data-slot="page-remark"`（Tooltip 触发 button）、`data-slot="page-toolbar"`（header region 内容）、`data-slot="page-body"`（body region）、`data-slot="page-aside"`（aside region）、`data-slot="page-footer"`（footer region）。
+- aside 与 body 是 DOM 兄弟节点（aside 在前当 `asidePosition: 'left'`，在后当 `'right'`）；视觉两列布局由 schema `className`（如 `flex`）或全局 CSS 控制。
 
 ## 11. 与其他容器的边界
 
