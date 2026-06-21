@@ -202,6 +202,35 @@ export function booleanStringAdapter(): ValueAdapter<unknown, boolean> {
   });
 }
 
+/**
+ * Boolean value adapter that maps between an internal `boolean` (the checkbox /
+ * switch UI primitive state) and a configurable external representation.
+ *
+ * - `in(external)`: returns `true` iff `Object.is(external, trueValue)`. Any
+ *   other value (including `falseValue`, `null`, or unrelated values) is
+ *   treated as unchecked. This matches the `value-neither` failure path: a
+ *   value that matches neither mapping is preserved untouched by the caller
+ *   until the next `onChange` overwrites it.
+ * - `out(internal)`: returns `trueValue` when checked, `falseValue` otherwise.
+ *
+ * Defaults (`true` / `false`) reproduce the legacy `booleanStringAdapter.out`
+ * contract so schemas without `trueValue`/`falseValue` are byte-for-byte
+ * backward compatible.
+ */
+export function booleanMappingAdapter(
+  trueValue: unknown = true,
+  falseValue: unknown = false,
+): ValueAdapter<unknown, boolean> {
+  return markSyncAdapter({
+    in(value) {
+      return Object.is(value, trueValue);
+    },
+    out(value) {
+      return value ? trueValue : falseValue;
+    },
+  });
+}
+
 export function numberAdapter(): ValueAdapter<unknown, number | undefined> {
   return markSyncAdapter({
     in(value: unknown) {

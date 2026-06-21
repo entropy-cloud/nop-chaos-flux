@@ -15,6 +15,7 @@ import { DingTalkFlowDemo } from './pages/ding-talk-flow-demo';
 import { PerformanceTablePage } from './pages/performance-table-page';
 import { ComponentHandlesDemoPage } from './pages/component-handles-demo';
 import { EventPreventionDemoPage } from './pages/event-prevention-demo';
+import { BooleanControlValueContractDemoPage } from './pages/boolean-control-value-contract-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -133,6 +134,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <ComponentHandlesDemoPage onBack={goHome} />;
         case 'event-prevention':
           return <EventPreventionDemoPage onBack={goHome} />;
+        case 'boolean-control-value-contract':
+          return <BooleanControlValueContractDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

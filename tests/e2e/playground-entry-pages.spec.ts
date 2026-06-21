@@ -40,6 +40,12 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     });
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
   },
+  'condition-builder-formula': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: '条件构建器 Formula 集成', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+  },
   'code-editor': async (page) => {
     await expect(
       page.getByRole('heading', { name: 'Code Editor Playground', level: 1 }),
@@ -76,6 +82,17 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.getByTestId('native-submit-button')).toBeVisible();
     await expect(page.getByTestId('native-link')).toBeVisible();
     await expect(page.getByTestId('native-keydown-input')).toBeVisible();
+  },
+  'boolean-control-value-contract': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: '布尔控件值契约 — trueValue / falseValue',
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.getByTestId('boolean-contract-value-enabled')).toBeVisible();
+    await expect(page.getByTestId('boolean-contract-value-notify')).toBeVisible();
   },
 };
 

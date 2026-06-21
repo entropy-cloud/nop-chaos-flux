@@ -193,6 +193,8 @@ export interface CheckboxSchema extends InputSchema {
     label: string;
     value?: string | boolean;
   };
+  trueValue?: SchemaValue;
+  falseValue?: SchemaValue;
 }
 
 export interface SwitchSchema extends InputSchema {
@@ -200,6 +202,8 @@ export interface SwitchSchema extends InputSchema {
     onLabel?: string;
     offLabel?: string;
   };
+  trueValue?: SchemaValue;
+  falseValue?: SchemaValue;
 }
 
 export interface TagListSchema extends InputSchema {

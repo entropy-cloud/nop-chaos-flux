@@ -426,6 +426,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'Live demo of the X2 schema-driven preventDefault / stopPropagation fields on action nodes across native form submit, link navigation, and keydown blocking.',
   },
+  {
+    id: 'boolean-control-value-contract',
+    title: 'Boolean Control Value Contract',
+    eyebrow: 'Form Control (E3)',
+    description:
+      'E3 boolean control value contract: checkbox/switch schema-driven trueValue/falseValue mapping with default true/false fallback.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
-  booleanStringAdapter,
+  booleanMappingAdapter,
   stringAdapter,
   type RendererComponentProps,
   type ValueAdapter,
@@ -49,7 +49,6 @@ export type ChoiceOption = {
 };
 
 const stringValueAdapter = stringAdapter();
-const booleanValueAdapter = booleanStringAdapter();
 
 const SELECT_METHODS = ['clear', 'focus', 'open'] as const;
 const FOCUS_ONLY_METHODS = ['focus'] as const;
@@ -463,8 +462,11 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
 
 export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
   const name = String(props.props.name ?? '');
+  const trueValue = (props.props as CheckboxSchema).trueValue ?? true;
+  const falseValue = (props.props as CheckboxSchema).falseValue ?? false;
+  const adapter = booleanMappingAdapter(trueValue, falseValue);
   const { value, handlers, presentation } = useFormFieldController(name, {
-    adapter: booleanValueAdapter,
+    adapter,
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
@@ -483,7 +485,7 @@ export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) 
         aria-invalid={presentation.showError ? true : undefined}
         aria-label={optionLabel ?? name}
         onFocus={handlers.onFocus}
-        onCheckedChange={(checked) => handlers.onChange(Boolean(checked))}
+        onCheckedChange={(nextChecked) => handlers.onChange(Boolean(nextChecked))}
         onBlur={handlers.onBlur}
       />
       {optionLabel ? <span data-slot="checkbox-label">{optionLabel}</span> : null}
@@ -493,8 +495,11 @@ export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) 
 
 export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   const name = String(props.props.name ?? '');
+  const trueValue = (props.props as SwitchSchema).trueValue ?? true;
+  const falseValue = (props.props as SwitchSchema).falseValue ?? false;
+  const adapter = booleanMappingAdapter(trueValue, falseValue);
   const { value, handlers, presentation } = useFormFieldController(name, {
-    adapter: booleanValueAdapter,
+    adapter,
     disabled: props.props.disabled,
     required: props.props.required,
     readOnly: props.props.readOnly,
