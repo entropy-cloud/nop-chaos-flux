@@ -405,6 +405,12 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         description:
           'Cancel any in-flight request and stop the controller. No-op when no request is active.',
       },
+      {
+        handle: 'start',
+        displayName: 'Start',
+        description:
+          'Start (or resume) the controller. Idempotent: no-op when already started. Used by polling orchestrators (e.g. crud `polling.enabled`) to resume upstream data-source polling.',
+      },
     ],
     fields: [
       { key: 'sendOn', kind: 'prop' },

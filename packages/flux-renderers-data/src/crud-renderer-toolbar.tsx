@@ -1,5 +1,5 @@
 import { t } from '@nop-chaos/flux-i18n';
-import { Label, NativeSelect, NativeSelectOption, PaginationPrevious, PaginationNext } from '@nop-chaos/ui';
+import { Button, Label, NativeSelect, NativeSelectOption, PaginationPrevious, PaginationNext } from '@nop-chaos/ui';
 import type { CrudStatusSummary } from './crud-schema.js';
 import { isRecord } from '@nop-chaos/flux-core';
 import { DEFAULT_PAGE_SIZE_OPTIONS, type CrudPaginationState } from './crud-renderer-state.js';
@@ -49,6 +49,11 @@ export function CrudToolbarBlocks(props: {
   pagination: CrudPaginationState;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
+  pollingToggle?: {
+    visible: boolean;
+    active: boolean;
+    onToggle(): void;
+  };
 }) {
   const {
     blocks,
@@ -59,9 +64,10 @@ export function CrudToolbarBlocks(props: {
     pagination,
     onPageChange,
     onPageSizeChange,
+    pollingToggle,
   } = props;
 
-  if (blocks.length === 0) {
+  if (blocks.length === 0 && !pollingToggle?.visible) {
     return null;
   }
 
@@ -151,12 +157,28 @@ export function CrudToolbarBlocks(props: {
     }
   }
 
+  const pollingToggleNode = pollingToggle?.visible ? (
+    <div key={`${slot}-polling-toggle`} data-slot={`${slot}-toolbar-polling-toggle`}>
+      <Button
+        variant="outline"
+        size="sm"
+        data-active={pollingToggle.active || undefined}
+        onClick={pollingToggle.onToggle}
+      >
+        {pollingToggle.active ? t('flux.crud.pollingStop') : t('flux.crud.pollingStart')}
+      </Button>
+    </div>
+  ) : null;
+
   return (
     <div
       className="flex flex-wrap items-center justify-between gap-3"
       data-slot={`${slot}-toolbar-layout`}
     >
-      <div className="flex flex-wrap items-center gap-3">{leftBlocks.map(renderBlock)}</div>
+      <div className="flex flex-wrap items-center gap-3">
+        {leftBlocks.map(renderBlock)}
+        {pollingToggleNode}
+      </div>
       <div className="flex flex-wrap items-center gap-3">{rightBlocks.map(renderBlock)}</div>
     </div>
   );

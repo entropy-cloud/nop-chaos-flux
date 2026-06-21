@@ -41,6 +41,17 @@ export const enUS: Resource = {
       previous: 'Previous',
       next: 'Next',
     },
+    crud: {
+      pollingStart: 'Resume polling',
+      pollingStop: 'Stop polling',
+      expandQuery: 'Expand',
+      collapseQuery: 'Collapse',
+      activeFilters: '{{count}} active',
+      noMoreData: 'No more data',
+      loadFailed: 'Load failed. Click to retry',
+      loadedAll: 'Loaded all ({{count}})',
+      loadingMore: 'Loading more...',
+    },
     table: {
       columns: 'Columns',
       expand: 'Expand',

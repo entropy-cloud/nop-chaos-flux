@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
@@ -32,6 +32,9 @@ import {
   useCrudQueryBridge,
   useCrudVisibleColumnNames,
 } from './crud-renderer-ownership.js';
+import { useCrudPolling } from './use-crud-polling.js';
+import { CrudQueryRegion, resolvePaginationMode, isAtLastPage } from './crud-query-region.js';
+import { useInfiniteScroll } from './use-infinite-scroll.js';
 
 type CrudRefreshContext = Parameters<NonNullable<RendererComponentProps<CrudSchema>['events']['onRefresh']>>[1];
 
@@ -185,6 +188,43 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
   useCrudStatusPublisher(scope, normalizedSchema.statusPath, summary);
 
+  const pollingState = useCrudPolling({
+    polling: normalizedSchema.polling,
+    componentRegistry,
+    scope,
+  });
+
+  const paginationMode = resolvePaginationMode(normalizedSchema.pagination, undefined);
+  const loadDataOnce = normalizedSchema.clientMode?.loadDataOnce === true;
+  const atLastPage = isAtLastPage(resolvedSource.total, paginationState.currentPage, paginationState.pageSize);
+  const infiniteActive = paginationMode === 'infinite' && !loadDataOnce;
+  const infiniteSentinelEnabled = infiniteActive && filteredRows.length > 0;
+  const infiniteSentinelRef = useRef<HTMLDivElement | null>(null);
+
+  const handleLoadMore = () => {
+    if (loadDataOnce || atLastPage) {
+      return;
+    }
+    if (normalizedSchema.autoClearSelectionOnRefresh) {
+      scope?.update(selectionStatePath, []);
+    }
+    scope?.update(queryStatePath, {
+      values: queryState.values,
+      refreshCount: queryState.refreshCount + 1,
+    });
+    scope?.update(paginationStatePath, {
+      currentPage: paginationState.currentPage + 1,
+      pageSize: paginationState.pageSize,
+    });
+    handleRefresh();
+  };
+
+  const infiniteState = useInfiniteScroll({
+    enabled: infiniteSentinelEnabled,
+    sentinelRef: infiniteSentinelRef,
+    onLoadMore: handleLoadMore,
+  });
+
   function resolveCrudSlotContent(
     slotKey: string,
     options?: { metaKey?: string; fallback?: React.ReactNode },
@@ -218,11 +258,28 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const footerToolbarContent = resolveCrudSlotContent('footerToolbar');
   const tableEmptyContent = normalizedSchema.empty ?? defaultEmptyLabel;
 
-  const headerBlocks = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header');
-  const footerBlocks = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer');
+  const headerBlocksRaw = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header');
+  const footerBlocksRaw = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer');
+  const headerBlocks = paginationMode === 'infinite'
+    ? headerBlocksRaw.filter((block) => block.type !== 'pagination' && block.type !== 'switch-per-page')
+    : headerBlocksRaw;
+  const footerBlocks = paginationMode === 'infinite'
+    ? footerBlocksRaw.filter((block) => block.type !== 'pagination' && block.type !== 'switch-per-page')
+    : footerBlocksRaw;
   const hasToolbar = hasRendererSlotContent(asReactNode(toolbarContent));
   const hasListActions = hasRendererSlotContent(asReactNode(listActionsContent));
   const hasFooterToolbar = hasRendererSlotContent(asReactNode(footerToolbarContent));
+
+  const pollingToggleBlockVisible =
+    headerBlocks.some((block) => block.type === 'polling-toggle') ||
+    footerBlocks.some((block) => block.type === 'polling-toggle');
+  const pollingToggleProps = pollingToggleBlockVisible
+    ? {
+        visible: true,
+        active: pollingState.effectiveEnabled && pollingState.userToggle,
+        onToggle: pollingState.toggle,
+      }
+    : undefined;
 
   const tableSchema = (() => {
     const base: Record<string, unknown> = {
@@ -240,11 +297,15 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       filterOwnership: 'scope',
       filterStatePath,
       pagination: {
-        enabled: true,
+        enabled: paginationMode === 'pages',
         currentPage: paginationState.currentPage,
-        pageSize: paginationState.pageSize,
+        pageSize:
+          paginationMode === 'infinite'
+            ? Math.max(paginationState.pageSize, paginationState.currentPage * paginationState.pageSize)
+            : paginationState.pageSize,
         pageSizeOptions: DEFAULT_PAGE_SIZE_OPTIONS,
-        showSizeChanger: true,
+        showSizeChanger: paginationMode === 'pages',
+        mode: paginationMode,
       },
       empty: tableEmptyContent,
       quickSaveAction: normalizedSchema.quickSaveAction,
@@ -341,25 +402,24 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       data-cid={props.meta.cid || undefined}
     >
       {hasQueryForm ? (
-        <div className="nop-crud-query" data-slot="crud-query">
-          {asReactNode(
-            props.regions.queryFormRegion?.render({
-              pathSuffix: 'queryForm',
-              scope: crudScope,
-            }),
-          )}
-          <div className="mt-2 flex gap-2" data-slot="crud-query-controls">
-            <Button variant="outline" size="sm" onClick={handleQuerySubmitWithFeedback}>
-              {t('flux.common.search')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleQueryReset}>
-              {t('flux.common.reset')}
-            </Button>
-          </div>
-        </div>
+        <CrudQueryRegion
+          filterTogglable={normalizedSchema.filterTogglable}
+          queryState={queryState}
+          defaultQuery={defaultQuery}
+          queryFormRegionRender={() =>
+            asReactNode(
+              props.regions.queryFormRegion?.render({
+                pathSuffix: 'queryForm',
+                scope: crudScope,
+              }),
+            )
+          }
+          onSubmit={handleQuerySubmitWithFeedback}
+          onReset={handleQueryReset}
+        />
       ) : null}
 
-      {hasToolbar || hasListActions || headerBlocks.length > 0 ? (
+      {hasToolbar || hasListActions || headerBlocks.length > 0 || pollingToggleProps ? (
         <div className="nop-crud-toolbar flex flex-col gap-3" data-slot="crud-toolbar">
           <div className="flex flex-wrap items-center gap-3">
           {hasToolbar ? (
@@ -378,6 +438,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
             pagination={paginationState}
             onPageChange={handleToolbarPageChange}
             onPageSizeChange={handleToolbarPageSizeChange}
+            pollingToggle={pollingToggleProps}
           />
         </div>
       ) : null}
@@ -386,12 +447,48 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         <TableRenderer {...tableRendererProps} />
       </div>
 
-      {hasFooterToolbar || footerBlocks.length > 0 ? (
+      {paginationMode === 'infinite' ? (
+        <div className="nop-crud-infinite" data-slot="crud-infinite">
+          <div data-slot="crud-infinite-status">
+            {loadDataOnce
+              ? t('flux.crud.loadedAll', { count: filteredRows.length })
+              : atLastPage
+                ? t('flux.crud.noMoreData')
+                : infiniteState.error
+                  ? t('flux.crud.loadFailed')
+                  : infiniteState.loading
+                    ? t('flux.crud.loadingMore')
+                    : ''}
+          </div>
+          {infiniteSentinelEnabled ? (
+            <div
+              ref={infiniteSentinelRef}
+              data-slot="crud-infinite-sentinel"
+              style={{ height: 1 }}
+              aria-hidden
+            />
+          ) : null}
+          {infiniteState.error ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                infiniteState.setError(undefined);
+                handleLoadMore();
+              }}
+            >
+              {t('flux.common.retry')}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {hasFooterToolbar || footerBlocks.length > 0 || pollingToggleProps ? (
         <div className="nop-crud-footer" data-slot="crud-footer">
           {hasFooterToolbar ? (
             <div data-slot="crud-footer-toolbar">{asReactNode(footerToolbarContent)}</div>
           ) : null}
-          {footerBlocks.length > 0 ? (
+          {footerBlocks.length > 0 || pollingToggleProps ? (
             <>
               <Separator />
               <CrudToolbarBlocks
@@ -403,6 +500,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
                 pagination={paginationState}
                 onPageChange={handleToolbarPageChange}
                 onPageSizeChange={handleToolbarPageSizeChange}
+                pollingToggle={pollingToggleProps}
               />
             </>
           ) : null}

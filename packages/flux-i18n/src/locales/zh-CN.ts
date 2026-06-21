@@ -41,6 +41,17 @@ export const zhCN: Resource = {
       previous: '上一页',
       next: '下一页',
     },
+    crud: {
+      pollingStart: '恢复轮询',
+      pollingStop: '停止轮询',
+      expandQuery: '展开',
+      collapseQuery: '折叠',
+      activeFilters: '{{count}} 个筛选',
+      noMoreData: '没有更多了',
+      loadFailed: '加载失败，点击重试',
+      loadedAll: '已加载全部 ({{count}})',
+      loadingMore: '加载更多...',
+    },
     table: {
       columns: '列设置',
       expand: '展开',

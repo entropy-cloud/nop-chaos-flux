@@ -21,6 +21,21 @@ export interface CrudQueryFormConfig extends SchemaObject {
         enable?: boolean;
         types?: Array<'boolean' | 'number'>;
       };
+  defaultCollapsed?: boolean;
+  collapsedLabel?: string;
+  expandedLabel?: string;
+}
+
+export interface CrudPollingConfig extends SchemaObject {
+  enabled?: boolean | string;
+  sourceId?: string;
+  stopWhen?: string;
+}
+
+export interface CrudFilterToggleConfig extends SchemaObject {
+  defaultCollapsed?: boolean;
+  collapsedLabel?: string;
+  expandedLabel?: string;
 }
 
 export interface CrudColumnFilterOption extends SchemaObject {
@@ -152,6 +167,9 @@ export interface CrudSchema extends BaseSchema {
         showFieldPicker?: boolean;
       };
   clientMode?: CrudClientModeConfig;
+  polling?: CrudPollingConfig;
+  filterTogglable?: boolean | CrudFilterToggleConfig;
+  pagination?: CrudPaginationConfig;
   quickSaveAction?: ActionSchema;
   quickSaveItemAction?: ActionSchema;
   migrationHints?: CrudMigrationHints;
@@ -160,6 +178,10 @@ export interface CrudSchema extends BaseSchema {
   onRowClick?: ActionSchema;
   onSelectionChange?: ActionSchema;
   onRefresh?: ActionSchema;
+}
+
+export interface CrudPaginationConfig extends SchemaObject {
+  mode?: 'pages' | 'infinite';
 }
 
 export interface CrudStatusSummary {

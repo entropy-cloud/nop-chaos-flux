@@ -63,13 +63,18 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
             return { ok: true };
           }
 
+          if (method === 'start') {
+            controller.start();
+            return { ok: true };
+          }
+
           return { ok: false, error: new Error(`Unsupported data-source handle method: ${method}`) };
         },
         hasMethod(method) {
-          return method === 'refresh' || method === 'cancel';
+          return method === 'refresh' || method === 'cancel' || method === 'start';
         },
         listMethods() {
-          return ['refresh', 'cancel'];
+          return ['refresh', 'cancel', 'start'];
         },
       },
     };

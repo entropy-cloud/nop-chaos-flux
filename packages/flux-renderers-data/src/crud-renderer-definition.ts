@@ -269,6 +269,39 @@ export const crudRendererDefinition: RendererDefinition = {
         'Column visibility and order management, including overlay and inline entry modes; drag reorder is still deferred.',
       editorType: 'object',
     },
+    polling: {
+      shape: { kind: 'object', fields: {} },
+      displayName: 'Polling',
+      description:
+        'Polling orchestration that toggles the upstream data-source controller start/stop based on the enabled gate and optional sourceId addressing.',
+      editorType: 'object',
+    },
+    filterTogglable: {
+      shape: { kind: 'object', fields: {} },
+      displayName: 'Filter Togglable',
+      description:
+        'Collapsible query region configuration; when truthy the queryForm region renders inside a collapse container with a toggle button.',
+      editorType: 'object',
+    },
+    pagination: {
+      shape: {
+        kind: 'object',
+        fields: {
+          mode: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'pages' },
+              { kind: 'literal', value: 'infinite' },
+            ],
+          },
+        },
+      },
+      displayName: 'Pagination',
+      description:
+        "Pagination mode: 'pages' (default, standard pagination) or 'infinite' (infinite scroll with IntersectionObserver).",
+      editorType: 'object',
+      defaultValue: 'pages',
+    },
   },
   eventContracts: {
     onQuerySubmit: {
@@ -391,6 +424,9 @@ export const crudRendererDefinition: RendererDefinition = {
     { key: 'autoClearSelectionOnRefresh', kind: 'prop' },
     { key: 'autoGenerateQueryForm', kind: 'prop' },
     { key: 'clientMode', kind: 'prop' },
+    { key: 'polling', kind: 'prop' },
+    { key: 'filterTogglable', kind: 'prop' },
+    { key: 'pagination', kind: 'prop' },
     { key: 'quickSaveAction', kind: 'prop' },
     { key: 'quickSaveItemAction', kind: 'prop' },
     { key: 'queryForm', kind: 'prop' },
