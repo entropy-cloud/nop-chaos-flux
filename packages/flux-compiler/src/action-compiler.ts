@@ -78,6 +78,20 @@ function compileActionNode(
     ) as unknown as CompiledRuntimeValue<boolean>;
   }
 
+  if (action.preventDefault !== undefined) {
+    node.preventDefault = compiler.compileValue(
+      action.preventDefault,
+      options,
+    ) as unknown as CompiledRuntimeValue<boolean>;
+  }
+
+  if (action.stopPropagation !== undefined) {
+    node.stopPropagation = compiler.compileValue(
+      action.stopPropagation,
+      options,
+    ) as unknown as CompiledRuntimeValue<boolean>;
+  }
+
   const nextDepth = depth + 1;
 
   if (action.then !== undefined) {
@@ -122,6 +136,14 @@ function isNodeFullyStatic(node: CompiledActionNode, depth = 0): boolean {
   if (depth > MAX_ACTION_COMPILE_DEPTH) return true;
 
   if (node.when !== undefined && !node.when.isStatic) {
+    return false;
+  }
+
+  if (node.preventDefault !== undefined && !node.preventDefault.isStatic) {
+    return false;
+  }
+
+  if (node.stopPropagation !== undefined && !node.stopPropagation.isStatic) {
     return false;
   }
 

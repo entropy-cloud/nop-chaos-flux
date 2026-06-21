@@ -412,6 +412,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'Live demo of the X1 unified component:<method> vocabulary: focus/clear/reset on inputs, open/close/toggle on dialog/drawer, focus on button.',
   },
+  {
+    id: 'event-prevention',
+    title: 'Event Prevention',
+    eyebrow: 'Schema-Driven preventDefault',
+    description:
+      'Live demo of the X2 schema-driven preventDefault / stopPropagation fields on action nodes across native form submit, link navigation, and keydown blocking.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

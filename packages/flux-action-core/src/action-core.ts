@@ -370,4 +370,48 @@ export function shouldRunActionWhen(
     : Boolean(evaluateCompiledInActionContext<boolean>(action.when, ctx, evaluator));
 }
 
+export function shouldPreventDefault(
+  action: CompiledActionNode,
+  ctx: ActionContext,
+  evaluator: ActionEvaluator,
+): boolean {
+  if (action.preventDefault === undefined) {
+    return false;
+  }
+
+  try {
+    return Boolean(
+      evaluateCompiledInActionContext<boolean>(action.preventDefault, ctx, evaluator),
+    );
+  } catch (error) {
+    console.error(
+      '[flux] preventDefault expression evaluation failed; falling back to falsy (no prevent).',
+      error,
+    );
+    return false;
+  }
+}
+
+export function shouldStopPropagation(
+  action: CompiledActionNode,
+  ctx: ActionContext,
+  evaluator: ActionEvaluator,
+): boolean {
+  if (action.stopPropagation === undefined) {
+    return false;
+  }
+
+  try {
+    return Boolean(
+      evaluateCompiledInActionContext<boolean>(action.stopPropagation, ctx, evaluator),
+    );
+  } catch (error) {
+    console.error(
+      '[flux] stopPropagation expression evaluation failed; falling back to falsy (no stop).',
+      error,
+    );
+    return false;
+  }
+}
+
 export { isAbortError } from '@nop-chaos/flux-core';

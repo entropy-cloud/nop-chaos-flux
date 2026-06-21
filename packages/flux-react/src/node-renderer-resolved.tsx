@@ -38,7 +38,7 @@ import { useNodeDebugData } from './use-node-debug-data.js';
 import { useNodeSourceProps } from './use-node-source-props.js';
 import { useNodeLifecycleActions, useRenderMonitor } from './node-renderer-effects.js';
 import { NodeRendererProviders } from './node-renderer-providers.js';
-import { createNormalizedActionEvent, createRendererHelpers } from './renderer-helpers.js';
+import { createNormalizedActionEvent, applySchemaDrivenPrevention, createRendererHelpers } from './renderer-helpers.js';
 import { buildSlotFrame, readSlotFrame, SLOT_KEY } from './slot-frame.js';
 import { useSyncExternalStoreWithSelector } from './use-sync-external-store-with-selector.js';
 
@@ -243,13 +243,22 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
 
         return [
           key,
-          (event?: unknown, eventContext?: Partial<import('@nop-chaos/flux-core').ActionContext>) =>
-            helpers.dispatch(action, {
+          (event?: unknown, eventContext?: Partial<import('@nop-chaos/flux-core').ActionContext>) => {
+            const dispatchScope = eventContext?.scope ?? nodeInstance.scope;
+            const normalizedEvent = createNormalizedActionEvent(event);
+            applySchemaDrivenPrevention({
+              program: action,
+              normalizedEvent,
+              scope: dispatchScope,
+              evaluateCompiled: helpers.evaluateCompiled,
+            });
+            return helpers.dispatch(action, {
               ...eventContext,
-              scope: eventContext?.scope ?? nodeInstance.scope,
+              scope: dispatchScope,
               nodeInstance: eventContext?.nodeInstance ?? nodeInstance,
-              event: createNormalizedActionEvent(event),
-            }),
+              event: normalizedEvent,
+            });
+          },
         ];
       }),
     );

@@ -65,6 +65,18 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Open Dialog (component:open)' })).toBeVisible();
   },
+  'event-prevention': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: 'X2 Schema-Driven preventDefault / stopPropagation',
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.getByTestId('native-submit-button')).toBeVisible();
+    await expect(page.getByTestId('native-link')).toBeVisible();
+    await expect(page.getByTestId('native-keydown-input')).toBeVisible();
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

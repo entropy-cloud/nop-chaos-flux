@@ -209,6 +209,82 @@ describe('shape validation action and source diagnostics', () => {
     );
   });
 
+  it('reports invalid preventDefault shape on action', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      fields: [{ key: 'onClick', kind: 'event' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(
+      compiler.validate?.({
+        type: 'button',
+        onClick: { action: 'test', preventDefault: { bad: true } },
+      }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-action-shape',
+          path: '/onClick/preventDefault',
+          message:
+            'Action preventDefault must be a boolean or expression string when provided.',
+        }),
+      ]),
+    );
+  });
+
+  it('reports invalid stopPropagation shape on action', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      fields: [{ key: 'onClick', kind: 'event' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(
+      compiler.validate?.({
+        type: 'button',
+        onClick: { action: 'test', stopPropagation: 42 },
+      }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-action-shape',
+          path: '/onClick/stopPropagation',
+          message:
+            'Action stopPropagation must be a boolean or expression string when provided.',
+        }),
+      ]),
+    );
+  });
+
+  it('accepts valid boolean and expression forms for preventDefault and stopPropagation', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      fields: [{ key: 'onClick', kind: 'event' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    const diagnostics = compiler.validate?.({
+      type: 'button',
+      onClick: {
+        action: 'test',
+        preventDefault: true,
+        stopPropagation: '${shouldStop}',
+      },
+    });
+
+    const preventionIssues = (diagnostics ?? []).filter(
+      (d) =>
+        d.code === 'invalid-action-shape' &&
+        (d.path === '/onClick/preventDefault' || d.path === '/onClick/stopPropagation'),
+    );
+
+    expect(preventionIssues).toEqual([]);
+  });
+
   it('reports invalid source shape', () => {
     const renderer: RendererDefinition = {
       type: 'page',

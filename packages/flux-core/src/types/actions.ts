@@ -137,6 +137,8 @@ export interface ActionShapeFields extends SchemaObject {
   retry?: OperationControlConfig['retry'];
   debounce?: number;
   when?: boolean | string;
+  preventDefault?: boolean | string;
+  stopPropagation?: boolean | string;
   parallel?: ActionSchema[];
   continueOnError?: boolean;
   then?: ActionSchema | ActionSchema[];
@@ -413,6 +415,8 @@ export interface CompiledActionControl {
 export interface CompiledActionNode {
   action: string;
   when?: CompiledRuntimeValue<boolean>;
+  preventDefault?: CompiledRuntimeValue<boolean>;
+  stopPropagation?: CompiledRuntimeValue<boolean>;
   payload: CompiledActionPayload;
   targeting: CompiledActionTargeting;
   control: CompiledActionControl;

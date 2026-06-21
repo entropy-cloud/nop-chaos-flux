@@ -9,6 +9,7 @@ const performanceTablePageSpy = vi.fn();
 
 vi.mock('@nop-chaos/flux-react', () => ({
   createDefaultRegistry: () => ({ register: () => undefined }),
+  createSchemaRenderer: () => () => null,
 }));
 
 vi.mock('@nop-chaos/flux-renderers-basic', () => ({
@@ -87,6 +88,10 @@ vi.mock('./pages/performance-table-page', () => ({
 
 vi.mock('./pages/component-handles-demo', () => ({
   ComponentHandlesDemoPage: () => <div data-testid="component-handles-page">component-handles</div>,
+}));
+
+vi.mock('./pages/event-prevention-demo', () => ({
+  EventPreventionDemoPage: () => <div data-testid="event-prevention-page">event-prevention</div>,
 }));
 
 import { App } from './App';

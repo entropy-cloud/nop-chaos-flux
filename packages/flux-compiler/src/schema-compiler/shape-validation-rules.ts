@@ -268,6 +268,38 @@ export function validateActionShape(
     );
   }
 
+  if (
+    value.preventDefault !== undefined &&
+    typeof value.preventDefault !== 'boolean' &&
+    typeof value.preventDefault !== 'string'
+  ) {
+    emitSchemaDiagnostic(
+      diagnostics,
+      {
+        code: 'invalid-action-shape',
+        path: appendJsonPointer(path, 'preventDefault'),
+        message: 'Action preventDefault must be a boolean or expression string when provided.',
+      },
+      enabled,
+    );
+  }
+
+  if (
+    value.stopPropagation !== undefined &&
+    typeof value.stopPropagation !== 'boolean' &&
+    typeof value.stopPropagation !== 'string'
+  ) {
+    emitSchemaDiagnostic(
+      diagnostics,
+      {
+        code: 'invalid-action-shape',
+        path: appendJsonPointer(path, 'stopPropagation'),
+        message: 'Action stopPropagation must be a boolean or expression string when provided.',
+      },
+      enabled,
+    );
+  }
+
   if (value.parallel !== undefined && !Array.isArray(value.parallel)) {
     emitSchemaDiagnostic(
       diagnostics,

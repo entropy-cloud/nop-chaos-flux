@@ -19,6 +19,8 @@ export {
   evaluateCompiledInActionContext,
   evaluateActionArgs,
   shouldRunActionWhen,
+  shouldPreventDefault,
+  shouldStopPropagation,
   isAbortError,
   type ActionResultClass,
   type ActionEvaluator,
