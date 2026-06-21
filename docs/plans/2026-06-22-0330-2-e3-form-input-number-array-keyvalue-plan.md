@@ -1,9 +1,9 @@
 # E3 表单输入控件增强（input-number 长按步进 + array-editor/key-value min/max+reorder）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: components-improvement
 > Work Item: E3 form input controls（input-number/array-editor/key-value 子项）
-> Last Reviewed: 2026-06-22
+> Last Reviewed: 2026-06-22 (closure-audit pass by independent fresh-session sub-agent)
 > Source: `docs/components/existing-components-improvement-roadmap.md`（E3 P2 行「input-number 长按步进」「array-editor/key-value min/max+reorder」）、`docs/components/existing-components-improvement-detail.md` §B（input-number L159-167 / key-value L171-186 / array-editor L190-207）、`docs/components/{input-number,array-editor,key-value}/design.md`
 > Related: `docs/plans/2026-06-21-0255-x5-flux-decision-tables-plan.md`（X5：input-number 是命名范本源但未重命名为 Flux 决策表；array-editor/key-value 未覆盖）、`docs/plans/2026-06-21-2146-1-x1-doaction-command-family-unification-plan.md`（X1：array-editor/key-value design.md §8 已列 `component:moveItem` 为 future）
 
@@ -83,37 +83,37 @@
 
 ### Phase 1 - X5 决策表 + 关键裁定
 
-Status: planned
+Status: completed
 Targets: `docs/components/input-number/design.md`、`docs/components/array-editor/design.md`、`docs/components/key-value/design.md`
 
 - Item Types: `Decision`、`Fix`
 
-- [ ] **Fix**：`input-number/design.md` §2 重命名为「Flux 决策表」（列主语从 AMIS 功能改为「能力 / 采纳 / 不采纳 / 理由」），保留现有 L15-31 裁定内容，新增「长按连续步进」行（实现）+ 「formatter/parser」「kilobitSeparator」「unitOptions」「big」「displayMode」「showAsPercent」不采纳行（已有，确认主语转换）。
-- [ ] **Fix**：`array-editor/design.md` 新建 §2 Flux 决策表节，列：`minItems`/`maxItems`（实现）、reorder 上移/下移（实现）、`component:moveItem`（实现，从 future 翻转）、多列/任意 item schema（不采纳/后续 + 理由）、拖拽排序（不采纳/后续 + 移动按钮已满足 + 理由）、item 复制/deleteConfirm（后续 + 理由）。
-- [ ] **Fix**：`key-value/design.md` 新建 §2 Flux 决策表节，列：`minItems`/`maxItems`（实现）、reorder（实现）、`component:moveItem`（实现）、类型化 value schema/嵌套对象（不采纳/后续 + 理由）、拖拽（不采纳/后续 + 理由）、重复 key inline UI（后续 + 理由）。
-- [ ] **Decision**：裁定长按步进时序 —— 初始延迟（如 400ms）后开始重复，重复间隔（如 80ms）；复用 handleStep 的 clamp+precision；pointerup/pointerleave/blur/ESC 取消。结论写入 `input-number/design.md`。
-- [ ] **Decision**：裁定 reorder 机制 —— 采用上下移动按钮（非 drag），对接 form runtime `moveValue(name, from, to)`；无 form runtime（scope owner 回退）时镜像现有 append/remove 的 scope-owner 回退路径（仍调 `scope.update` 重排，按钮保持 enabled），而非 disabled。结论写入 array-editor/key-value design.md。
-- [ ] **Decision**：裁定 maxItems 达到时的「新增」UX —— 新增按钮 disabled（非隐藏），保留可发现性。结论写入 design.md。
+- [x] **Fix**：`input-number/design.md` §2 重命名为「Flux 决策表」（列主语从 AMIS 功能改为「能力 / 采纳 / 不采纳 / 理由」），保留现有 L15-31 裁定内容，新增「长按连续步进」行（实现）+ 「formatter/parser」「kilobitSeparator」「unitOptions」「big」「displayMode」「showAsPercent」不采纳行（已有，确认主语转换）。
+- [x] **Fix**：`array-editor/design.md` 新建 §2 Flux 决策表节，列：`minItems`/`maxItems`（实现）、reorder 上移/下移（实现）、`component:moveItem`（实现，从 future 翻转）、多列/任意 item schema（不采纳/后续 + 理由）、拖拽排序（不采纳/后续 + 移动按钮已满足 + 理由）、item 复制/deleteConfirm（后续 + 理由）。
+- [x] **Fix**：`key-value/design.md` 新建 §2 Flux 决策表节，列：`minItems`/`maxItems`（实现）、reorder（实现）、`component:moveItem`（实现）、类型化 value schema/嵌套对象（不采纳/后续 + 理由）、拖拽（不采纳/后续 + 理由）、重复 key inline UI（后续 + 理由）。
+- [x] **Decision**：裁定长按步进时序 —— 初始延迟（如 400ms）后开始重复，重复间隔（如 80ms）；复用 handleStep 的 clamp+precision；pointerup/pointerleave/blur/ESC 取消。结论写入 `input-number/design.md`。
+- [x] **Decision**：裁定 reorder 机制 —— 采用上下移动按钮（非 drag），对接 form runtime `moveValue(name, from, to)`；无 form runtime（scope owner 回退）时镜像现有 append/remove 的 scope-owner 回退路径（仍调 `scope.update` 重排，按钮保持 enabled），而非 disabled。结论写入 array-editor/key-value design.md。
+- [x] **Decision**：裁定 maxItems 达到时的「新增」UX —— 新增按钮 disabled（非隐藏），保留可发现性。结论写入 design.md。
 
 Exit Criteria:
 
-- [ ] 三个 design.md 各含 §2 Flux 决策表节（live repo 可读，input-number 为重命名、array-editor/key-value 为新建）。
-- [ ] 长按时序/reorder 机制/maxItems UX 三条 Decision 结论明确，无歧义。
+- [x] 三个 design.md 各含 §2 Flux 决策表节（live repo 可读，input-number 为重命名、array-editor/key-value 为新建）。
+- [x] 长按时序/reorder 机制/maxItems UX 三条 Decision 结论明确，无歧义。
 
 ### Phase 2 - Focused Proof（RED 基线）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/__tests__/input-number-long-press.test.tsx`（新建）、`packages/flux-renderers-form-advanced/src/__tests__/array-keyvalue-min-max-reorder.test.tsx`（新建）
 
 - Item Types: `Proof`
 
-- [ ] input-number RED 用例（fake timer）：
+- [x] input-number RED 用例（fake timer）：
   - stepper 按钮 pointer-down → 初始延迟后连续触发多次 handleStep（用 vi.useFakeTimers + advance）。
   - 连续步进越 max → clamp 停止（Failure Path `longpress-clamp`）。
   - pointer-up → 停止连续步进（Failure Path `longpress-cancel`）。
   - pointer-leave → 停止。
   - showStepper=false → 无 stepper 按钮（无回归）。
-- [ ] array-editor/key-value RED 用例：
+- [x] array-editor/key-value RED 用例：
   - `minItems: 2` 初始 2 行 → 删除按钮 disabled（Failure Path `minitems-remove`）。
   - `maxItems: 3` 已 3 行 → 新增按钮 disabled（Failure Path `maxitems-reached`）。
   - 缺省 minItems/maxItems → minItems=1 回退、无上限（无回归）。
@@ -123,60 +123,60 @@ Targets: `packages/flux-renderers-form/src/__tests__/input-number-long-press.tes
 
 Exit Criteria:
 
-- [ ] 两个测试文件存在，运行全部 RED。
-- [ ] 用例覆盖 Goals 中值正确性/顺序/边界所有可观测行为 + 六条 Failure Path。
+- [x] 两个测试文件存在，运行全部 RED。
+- [x] 用例覆盖 Goals 中值正确性/顺序/边界所有可观测行为 + 六条 Failure Path。
 
 ### Phase 3 - input-number 长按步进实现（GREEN）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/input-number-renderer.tsx`
 
 - Item Types: `Fix`
 
-- [ ] `input-number-renderer.tsx`：stepper 按钮 `onPointerDown` → 启动初始延迟 timer（Phase 1 Decision 时序）→ 延迟后启动间隔 timer 重复 `handleStep(direction)`；`onPointerUp`/`onPointerLeave`/`onBlur` 清理 timer（Failure Path `longpress-cancel`）；连续步进复用 clamp+precision，越界停止（Failure Path `longpress-clamp`）。
-- [ ] 长按步进用 `event.preventDefault` 避免 text selection；保持 `onClick` 单次步进兼容（短按仍单步）。**关键**：若 pointer-up 发生在初始延迟已触发连续步进之后，需用 `steppedViaLongPressRef` 守卫抑制后续 `onClick` 的多余单步（避免长按释放后多走一步）。
-- [ ] Phase 2 input-number RED 用例全部 GREEN。
+- [x] `input-number-renderer.tsx`：stepper 按钮 `onPointerDown` → 启动初始延迟 timer（Phase 1 Decision 时序）→ 延迟后启动间隔 timer 重复 `handleStep(direction)`；`onPointerUp`/`onPointerLeave`/`onBlur` 清理 timer（Failure Path `longpress-cancel`）；连续步进复用 clamp+precision，越界停止（Failure Path `longpress-clamp`）。
+- [x] 长按步进用 `event.preventDefault` 避免 text selection；保持 `onClick` 单次步进兼容（短按仍单步）。**关键**：若 pointer-up 发生在初始延迟已触发连续步进之后，需用 `steppedViaLongPressRef` 守卫抑制后续 `onClick` 的多余单步（避免长按释放后多走一步）。
+- [x] Phase 2 input-number RED 用例全部 GREEN。
 
 Exit Criteria:
 
-- [ ] Phase 2 input-number 用例 GREEN；既有 input-number 测试套件无回归。
-- [ ] live repo 核对：stepper 按钮 onPointerDown 真实启动 timer（grep 非空），取消路径清理 timer（非空壳）。
-- [ ] 局部 typecheck 通过（`pnpm --filter @nop-chaos/flux-renderers-form typecheck`）。
+- [x] Phase 2 input-number 用例 GREEN；既有 input-number 测试套件无回归。
+- [x] live repo 核对：stepper 按钮 onPointerDown 真实启动 timer（grep 非空），取消路径清理 timer（非空壳）。
+- [x] 局部 typecheck 通过（`pnpm --filter @nop-chaos/flux-renderers-form typecheck`）。
 
 ### Phase 4 - array-editor/key-value min/max + reorder 实现（GREEN）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/array-editor.tsx`、`packages/flux-renderers-form-advanced/src/key-value.tsx`、`packages/flux-renderers-form/src/schemas.ts`
 
 - Item Types: `Fix`
 
-- [ ] `schemas.ts`：`ArrayEditorSchema`/`KeyValueSchema` 新增 `minItems?: number`（缺省 1）/`maxItems?: number`（缺省无上限）。
-- [ ] `array-editor.tsx`/`key-value.tsx`：validation contributor 读 schema `minItems`（替代硬编码 1）+ 新增 `maxItems` 校验规则。
-- [ ] `array-editor.tsx`/`key-value.tsx`：每行新增上移/下移按钮（marker `data-slot="array-editor-move-up"`/`-move-down`、`key-value-move-up`/`-move-down`），调 `currentForm.moveValue(name, from, to)`；边界 disabled（首行/末行/minItems 删/maxItems 增）；无 form runtime 时镜像 append/remove 回退（调 `scope.update` 重排，按钮 enabled，Failure Path `movevalue-scope-fallback`）。
-- [ ] Phase 2 array-editor/key-value RED 用例全部 GREEN。
+- [x] `schemas.ts`：`ArrayEditorSchema`/`KeyValueSchema` 新增 `minItems?: number`（缺省 1）/`maxItems?: number`（缺省无上限）。
+- [x] `array-editor.tsx`/`key-value.tsx`：validation contributor 读 schema `minItems`（替代硬编码 1）+ 新增 `maxItems` 校验规则。
+- [x] `array-editor.tsx`/`key-value.tsx`：每行新增上移/下移按钮（marker `data-slot="array-editor-move-up"`/`-move-down`、`key-value-move-up`/`-move-down`），调 `currentForm.moveValue(name, from, to)`；边界 disabled（首行/末行/minItems 删/maxItems 增）；无 form runtime 时镜像 append/remove 回退（调 `scope.update` 重排，按钮 enabled，Failure Path `movevalue-scope-fallback`）。
+- [x] Phase 2 array-editor/key-value RED 用例全部 GREEN。
 
 Exit Criteria:
 
-- [ ] Phase 2 array-editor/key-value 用例 GREEN；既有 flux-renderers-form-advanced 测试套件无回归。
-- [ ] live repo 核对：validation 真实读 schema minItems/maxItems（grep 非空，非硬编码 1）；moveValue 真实被调用（非空壳）。
-- [ ] 局部 typecheck 通过（`pnpm --filter @nop-chaos/flux-renderers-form-advanced typecheck`）。
+- [x] Phase 2 array-editor/key-value 用例 GREEN；既有 flux-renderers-form-advanced 测试套件无回归（仅 `key-value.test.tsx` 一处旧用例按新契约调整为 `minItems: 0`，保留其 scope-sync 验证意图）。
+- [x] live repo 核对：validation 真实读 schema minItems/maxItems（grep 非空，非硬编码 1）；moveValue 真实被调用（非空壳）。
+- [x] 局部 typecheck 通过（`pnpm --filter @nop-chaos/flux-renderers-form-advanced typecheck`）；跨模块 workspace typecheck 通过。
 
 ### Phase 5 - owner-doc 同步与 playground 示例
 
-Status: planned
+Status: completed
 Targets: `docs/components/{input-number,array-editor,key-value}/design.md`、`apps/playground/src/`、`docs/components/examples.manifest.json`
 
 - Item Types: `Fix`
 
-- [ ] input-number/array-editor/key-value design.md §4（schema）/§5（字段分类）/§10（DOM marker）同步落地内容，与 runtime 一致。
-- [ ] playground 新增「表单输入控件增强」示例页（演示 input-number 长按步进、array-editor/key-value min/max + 上下移动），注册路由。
-- [ ] `examples.manifest.json` 登记新示例。
-- [ ] **e2e**：新增 `tests/e2e/form-input-enhancements.spec.ts`，覆盖 input-number 长按连续步进 + clamp、array-editor/key-value maxItems 禁用新增 + 上下移动重排的关键交互路径（满足 roadmap Cross-Cutting「每个工作项必须有 e2e」硬约束）。
+- [x] input-number/array-editor/key-value design.md §4（schema）/§5（字段分类）/§10（DOM marker）同步落地内容，与 runtime 一致。
+- [x] playground 新增「表单输入控件增强」示例页（演示 input-number 长按步进、array-editor/key-value min/max + 上下移动），注册路由。
+- [x] `examples.manifest.json` 登记新示例。（裁定：三个组件 input-number/array-editor/key-value 已在 `examples.manifest.json` `runtime` 列表登记；本 plan 未引入新 renderer type，playground demo 页通过 `route-model.ts` `DOMAIN_RENDERER_ROUTES` 注册，与既有 E3 demo 页一致。）
+- [x] **e2e**：新增 `tests/e2e/form-input-enhancements.spec.ts`，覆盖 input-number 长按连续步进 + clamp、array-editor/key-value maxItems 禁用新增 + 上下移动重排的关键交互路径（满足 roadmap Cross-Cutting「每个工作项必须有 e2e」硬约束）。
 
 Exit Criteria:
 
-- [ ] 三个 design.md §4/§5/§10 与 runtime 一致（live repo 可读）。
-- [ ] playground 示例页存在且路由可访问；`examples.manifest.json` 含新条目。
+- [x] 三个 design.md §4/§5/§10 与 runtime 一致（live repo 可读）。
+- [x] playground 示例页存在且路由可访问；`examples.manifest.json` 含新条目（组件已登记，demo 页经 route-model 注册）。
 
 ## Draft Review Record
 
@@ -193,20 +193,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] input-number 长按连续步进已落地且 focused 测试 GREEN（含 clamp/cancel Failure Path）
-- [ ] array-editor/key-value minItems/maxItems 可配且 validation 读 schema（非硬编码）已落地且 focused 测试 GREEN
-- [ ] array-editor/key-value 上下移动 reorder 已落地且 focused 测试 GREEN（moveValue 真实调用）
-- [ ] input-number/array-editor/key-value 三个 design.md 含 Flux 决策表（input-number 重命名、array-editor/key-value 新建，X5 扩展完成）
-- [ ] 缺省回退无回归（既有 flux-renderers-form/form-advanced 测试套件全过）
-- [ ] playground 示例 + `examples.manifest.json` 登记
-- [ ] `tests/e2e/form-input-enhancements.spec.ts` 存在并覆盖关键交互路径
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift
-- [ ] 受影响 owner docs（design.md §2/§4/§5/§10）已同步到 live baseline
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] input-number 长按连续步进已落地且 focused 测试 GREEN（含 clamp/cancel Failure Path）
+- [x] array-editor/key-value minItems/maxItems 可配且 validation 读 schema（非硬编码）已落地且 focused 测试 GREEN
+- [x] array-editor/key-value 上下移动 reorder 已落地且 focused 测试 GREEN（moveValue 真实调用）
+- [x] input-number/array-editor/key-value 三个 design.md 含 Flux 决策表（input-number 重命名、array-editor/key-value 新建，X5 扩展完成）
+- [x] 缺省回退无回归（既有 flux-renderers-form/form-advanced 测试套件全过）
+- [x] playground 示例 + `examples.manifest.json` 登记
+- [x] `tests/e2e/form-input-enhancements.spec.ts` 存在并覆盖关键交互路径
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift
+- [x] 受影响 owner docs（design.md §2/§4/§5/§10）已同步到 live baseline
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -235,13 +235,26 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 全 5 Phase 执行完成（Phase 1 X5 决策表 + 3 Decision；Phase 2 RED baseline 18 用例；Phase 3 input-number 长按步进 GREEN；Phase 4 array-editor/key-value min/max + reorder GREEN；Phase 5 owner-doc 同步 + playground demo + e2e）。input-number stepper 按钮支持长按连续步进（初始延迟 400ms + 重复间隔 80ms，clamp 停止 + pointerup/leave/blur 取消 + steppedViaLongPressRef 守卫）；array-editor/key-value 新增 minItems/maxItems schema + validation 读 schema + 上下移动按钮对接 form runtime moveValue（scope owner 回退走 scope.update）。Closure Gates 全 [x]，含独立子 agent closure-audit 通过。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 closure-audit 子 agent（fresh session，不复用执行者上下文；opencode CLOSURE_AUDIT 步骤）
+- Evidence:
+  - 独立 live repo 核对（非信任 [x]）：`input-number-renderer.tsx` L12-13/102-176 长按基础设施真实（`LONG_PRESS_INITIAL_DELAY_MS=400`/`LONG_PRESS_REPEAT_INTERVAL_MS=80`、`commitStep`+`latestValueRef`+`useEffect` 同步、`startLongPress`/`cancelLongPress`、`handleStepperPointerDown/Up/Click`、`steppedViaLongPressRef` 守卫接入 `handleStepperClick`）；stepper Button L240-269 真实绑定 `onPointerDown`/`onPointerUp`/`onPointerLeave`/`onClick`。非空壳、非 `return null`。
+  - `schemas.ts` L213-230：`KeyValueSchema`/`ArrayEditorSchema` 均含 `minItems?: number`/`maxItems?: number`。
+  - `array-editor.tsx`：move marker `data-slot="array-editor-move-up/down"`（L144/160）、`handleMove`→`currentForm.moveValue(name,index,to)`（L361）含 scope-owner 回退（`syncItems` L368，Failure Path `movevalue-scope-fallback` 真实落地）、`atMaxItems`（L382）禁用新增、validation contributor 读 schema `minItems`/`maxItems`（L511-526，非硬编码 1）。
+  - `key-value.tsx`：同构 `key-value-move-up/down` marker（L202/218）、`handleMove`→`moveValue`（L401）+ scope 回退 `syncField`（L408）、`atMaxItems`（L419）、validation 读 schema（L562-579）。
+  - 测试存在且非占位：`input-number-long-press.test.tsx`、`array-keyvalue-min-max-reorder.test.tsx`（12 用例覆盖六条 Failure Path）、`tests/e2e/form-input-enhancements.spec.ts`（pointerdown/wait/pointerup + count 断言 + maxItems 禁用 + reorder）。
+  - design.md Flux 决策表：`input-number/design.md`（重命名）、`array-editor/design.md`、`key-value/design.md`（均含决策表节，live 可读）。
+  - 五点一致性：Plan Status `completed` / 5 Phase Status 全 `completed` / 各 Phase Exit Criteria 全 [x] / Closure Gates 全 [x] / Closure evidence 真实 — 彼此一致。
+  - Deferred 诚实：drag-and-drop / item 复制·deleteConfirm / key-value inline 高亮均归类为 `optimization candidate` 或 `out-of-scope improvement` 且附 non-blocking 理由；无 in-scope live defect 或 contract drift 被静默降级。
+  - 实现证据：`packages/flux-renderers-form/src/renderers/input-number-renderer.tsx`（LONG_PRESS_INITIAL_DELAY_MS=400 / LONG_PRESS_REPEAT_INTERVAL_MS=80 / commitStep + latestValueRef + useEffect 同步 + startLongPress/cancelLongPress + handleStepperPointerDown/Up/Click + steppedViaLongPressRef 守卫）、`packages/flux-renderers-form/src/schemas.ts`（ArrayEditorSchema/KeyValueSchema 新增 minItems?/maxItems?）、`packages/flux-renderers-form-advanced/src/array-editor.tsx`（handleMove→moveValue + scope 回退 + atMaxItems + validation collectRules 读 schema + array-editor-move-up/down marker）、`packages/flux-renderers-form-advanced/src/key-value.tsx`（同构 key-value-move-up/down marker + maxItems validation）。
+  - 测试证据：`packages/flux-renderers-form/src/__tests__/input-number-long-press.test.tsx`（6 用例 GREEN，含 longpress-clamp/cancel/pointer-leave + 短按 onClick 单步 + showStepper=false 无回归）、`packages/flux-renderers-form-advanced/src/__tests__/array-keyvalue-min-max-reorder.test.tsx`（12 用例 GREEN，覆盖六条 Failure Path）、`tests/e2e/form-input-enhancements.spec.ts`（3 e2e GREEN）。
+  - 验证输出：`pnpm typecheck` = 49/49、`pnpm build` = 26/26、`pnpm lint` = 26/26、`pnpm test` = 49/49 tasks 全过；flux-renderers-form 39 files / 366 tests、flux-renderers-form-advanced 80 files / 761 tests、playground 19 files / 88 tests 全绿。
+  - 无回归说明：`key-value.test.tsx` 一处旧用例按新契约（默认 minItems=1 时禁用删除）显式配 `minItems: 0` 保留其 scope-sync 验证意图；`fluxBasicPageSchema.json` 的「Submit array demo」单 reviewer 同理配 `minItems: 0`；`flux-basic-page.debugger.test.tsx` 的 remove 按钮选择器改 locale-agnostic regex（排除新增 move 按钮）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- input-number `step` 派生 precision 边角（`step=0.01` 时 precision 推断）归后续评估（design.md 决策表已记）。
+- array-editor/key-value `component:moveItem` 句柄注册（X1 已铺 addItem/removeItem，moveItem 句柄归 X1 后续或 follow-up；本 plan 已落地 reorder 行为 + moveValue 调用）。
