@@ -95,15 +95,15 @@
 - `> Last Reviewed: YYYY-MM-DD`
 - `> Source: <<说明>>`
 
-说明（规范词，与 `mission-driver` 的 `flow-loader.js` 扫描器严格对齐）：
+说明（规范词，用于 plan 状态机；状态转换条件见 `Plan Review Rule`）：
 
-- `draft`: 刚写好、等待 `REVIEW_PLANS` 审通过。新 plan 起手始终用这个。
-- `active`: 审过、进入 `EXEC_PLANS` 执行队列。
+- `draft`: 刚写好、尚未通过独立子 agent review。新 plan 起手始终用这个。
+- `active`: 已通过独立子 agent review（起草者与审阅子 agent 达成共识）、可进入执行队列。
 - `completed`: 所有 closure gates 通过、in-scope checklist 全勾。
 - `superseded` / `replaced` 适合历史计划或已被新计划接管的计划。
 - `deferred` 适合明确延后、不作为当前 active queue 的计划。
 
-> 注意区分：本节是 **plan-level**（blockquote `> Plan Status:`，被 driver 扫描）；下面 Execution-Slice Status 是 **slice-level**（裸 `Status:`，driver 不扫，仅人类阅读用），两套词表独立，不要混用。
+> 注意区分：本节是 **plan-level**（blockquote `> Plan Status:`，用于 plan 状态机）；下面 Execution-Slice Status 是 **slice-level**（裸 `Status:`，仅人类阅读用），两套词表独立，不要混用。
 
 ### Execution-Slice Status
 
@@ -330,15 +330,15 @@ This guide uses two distinct concepts that were previously conflated under "audi
 
 ### Plan Review (draft gate)
 
-Happens in the `REVIEW_PLANS` flow step. The sub-agent reads the draft plan, checks against this guide, verifies references against the live repo, and either promotes the plan to `active` (ready for execution) or rejects it to `failed`.
+起草完成后立即进行：由独立子 agent（fresh session，不复用起草者上下文）通读 draft plan，对照本 guide 检查并核对 live repo，与起草者反复迭代直到达成共识（零 Blocker/Major）。达成共识后 plan 升级为 `active`；审查证据记入 plan 的 `## Draft Review Record`。
 
 ### Closure Audit (completion gate)
 
-Happens in the `plan-execution` subflow's `CLOSURE_AUDIT` step. The sub-agent verifies every item has landed, exit criteria are met, deferred items are honestly classified, and the plan's text is internally consistent. If anything is missing, the plan goes back to execute.
+执行完成、标记 `completed` 之前进行：由独立子 agent 核对每个 item 已落地、exit criteria 已满足、deferred 项分类诚实、plan 文本内部一致。发现缺漏则退回执行。
 
 ### Deep Audit (fallback)
 
-Happens in the `DEEP_AUDIT` flow step (max 3 rounds). When the roadmap has no remaining `todo` items and no deferred items can be drafted, the goal-driver runs a deep audit to probe for contract drift, dead code, anti-patterns, or convention violations. Unlike Plan Review and Closure Audit (which operate on a specific plan file), Deep Audit operates on the whole codebase and may produce new draft plans from findings.
+针对整个代码库的探查式审计，用于发现 contract drift、死代码、反模式或规范违背。与 Plan Review / Closure Audit（针对单个 plan 文件）不同，Deep Audit 作用于全仓库，并可能从发现中产出新的 draft plan。
 
 ## How To Use The Template
 
@@ -363,7 +363,10 @@ Happens in the `DEEP_AUDIT` flow step (max 3 rounds). When the roadmap has no re
 
 ### Plan Review Rule
 
-计划起草完成后、开始执行前，必须由**独立**审阅者或独立子 agent（fresh session，不复用起草者的 task session）做一轮 plan review。起草者自己的 self-review 不能单独作为"可执行"的依据。
+计划起草完成后、开始执行前，**必须**由独立子 agent（fresh session，不复用起草者上下文）反复 review，直到与起草者达成共识（零 Blocker / Major）。起草者自己的 self-review 不能单独作为"可执行"的依据。
+
+- **达成共识**：plan 才能从 `draft` 改为 `active`，并把审查证据记入 `## Draft Review Record`。
+- **未达成共识**：plan 维持 `draft`，不得自行改为 `active`，由后续补救审计兜底。
 
 plan review 检查四项：
 
@@ -372,9 +375,7 @@ plan review 检查四项：
 3. **内容稳健性** —— Goals/Non-Goals 清晰；Phase 切分合理；Exit Criteria 可在仓库中观测；工作量足够（非微小变更堆砌）。
 4. **引用准确性** —— 引用的路径、行号、函数/组件名经 live repo 核对。
 
-**通过 = 零 Blocker 且零 Major。** Minor 不阻塞、不触发返工。最多 2 轮 review；之后进入 degraded 模式（继续执行，由下游 closure/deep audit 兜底）。
-
-审查证据以 `## Draft Review Record` 记录在 plan 内（格式见模板）：reviewer/agent、verdict、轮数、已处理的 Blocker/Major。
+**通过 = 零 Blocker 且零 Major。** Minor 不阻塞、不触发返工。
 
 ### When Executing
 
