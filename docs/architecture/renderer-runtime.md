@@ -670,6 +670,60 @@ This rule exists so imported namespace providers, component-handle actions, and 
 
 Non-DOM semantic payloads are still allowed when a renderer emits higher-level interaction data, but those payloads should still carry a meaningful `type` field.
 
+### Schema-Driven Prevention
+
+In addition to forwarding the native event through `ActionContext.event`, the per-event handler at `NodeRenderer` (built in `packages/flux-react/src/node-renderer-resolved.tsx`) applies **schema-declared** `preventDefault` / `stopPropagation` **synchronously**, before dispatching the action body.
+
+#### Field contract
+
+Two optional fields on `ActionShapeFields` (defined in `packages/flux-core/src/types/actions.ts`):
+
+- `preventDefault?: boolean | string`
+- `stopPropagation?: boolean | string`
+
+Each accepts either a boolean literal or an expression string (parallel to the existing `when` field shape). They are compiled onto `CompiledActionNode.preventDefault` / `CompiledActionNode.stopPropagation` as `CompiledRuntimeValue<boolean>` by the action compiler, and type-validated by `validateActionShape` in `packages/flux-compiler/src/schema-compiler/shape-validation-rules.ts` (same rule shape as `when`).
+
+#### Sync timing model
+
+When a DOM/React event triggers a compiled action program, the per-event handler runs the following steps **in order**, all synchronously, before `helpers.dispatch(...)` is awaited:
+
+1. Normalize the raw event into a `FluxActionEvent` shape (existing `createNormalizedActionEvent`).
+2. For every top-level node in the program, evaluate `preventDefault` against the dispatch scope (using `helpers.evaluateCompiled`):
+   - If the runtime value is `undefined` → no-op.
+   - If evaluation throws → fallback to `falsy` (do not prevent) and emit a dev console error (`x2-expr-eval-error`).
+   - Non-boolean results are coerced truthy/falsy (mirrors `when`).
+   - If **any** top-level node yields truthy → call `event.preventDefault()` on the normalized event (or its `nativeEvent`).
+3. Repeat step 2 for `stopPropagation`; if truthy → call `event.stopPropagation()`.
+4. If the normalized event has no `preventDefault`/`stopPropagation` callable (e.g. lifecycle/non-DOM context), the request is a no-op and a dev console warning is emitted (`x2-no-native-event`).
+5. Finally invoke `helpers.dispatch(action, ctx)` as before. The existing imperative `ctx.event?.preventDefault?.()` path inside the action body continues to work for async-side-effect use cases, but it is no longer relied on for blocking the native default — that is now the schema field's responsibility.
+
+The sync ordering is what makes `preventDefault: true` able to actually block form submit, link navigation, and keystroke scrolling. The pre-existing imperative `ctx.event?.preventDefault?.()` path used to race with the native default because `helpers.dispatch` returns a `Promise<ActionResult>`; the schema field removes that race.
+
+#### Orthogonality with `when`
+
+`preventDefault` / `stopPropagation` are **evaluated and applied independently of `when`**. Concretely:
+
+- `when` gates whether the action body **runs**.
+- `preventDefault` / `stopPropagation` gate whether the **native default fires**.
+
+`when: false ∧ preventDefault: true` therefore still blocks the native default even though the action body is skipped. Rationale: prevention is an event-level declaration that the author wants to take effect regardless of whether the action body executes. The two fields are evaluated in the same scope but on independent gates; there is no implicit coupling.
+
+#### Failure paths
+
+| Scenario                           | Trigger                                                                     | Behavior                                                                                                |
+| ---------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `x2-no-native-event`               | `preventDefault` declared but runtime ctx has no event (lifecycle/init)     | no-op + dev console warn                                                                                |
+| `x2-expr-non-boolean`              | expression evaluates to non-boolean                                         | truthy/falsy coerce (mirrors `when`) + dev console warn                                                 |
+| `x2-expr-eval-error`               | expression evaluation throws                                                | catch → fallback falsy (do not prevent) + dev console error                                             |
+| `x2-already-prevented-by-renderer` | renderer-internal code already called `event.preventDefault()`              | idempotent; second call is a no-op                                                                      |
+| `x2-async-action-chain`            | action has `then` chain; only the first-level node carries `preventDefault` | sync prevention applies to the first-level trigger event only; downstream chain has no timing guarantee |
+
+#### Out of scope
+
+- `stopImmediatePropagation` (same-element listener ordering) — deferred; add only when a concrete use case appears.
+- Per-renderer hardcoded `preventDefault()` migrations (e.g. `input-number` ArrowUp/ArrowDown step, `tree` keyboard navigation, `chart` resize) — those are renderer-internal UX decisions, separate from author-facing schema declaration.
+- amis `rendererEvent` compatibility shim — explicitly rejected (see `docs/components/existing-components-improvement-analysis.md` §2.8).
+
 ## Lifecycle Actions
 
 `BaseSchema` now reserves two lifecycle action fields:

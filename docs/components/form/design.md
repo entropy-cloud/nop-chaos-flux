@@ -110,6 +110,20 @@
   - 该行为对齐 AMIS 默认（`Form.preventEnterSubmitDefault: false`）+ 用户对 form 的 Enter 提交预期。
   - **不**把 `<section>` 改为 `<form>` 元素（见 Non-Goals）；Enter 处理通过 React `onKeyDown` 实现。
 
+### `preventEnterSubmit` 与 schema-driven `preventDefault` 的关系（X2 裁定）
+
+X2 工作项落地后，`ActionShapeFields.preventDefault` / `stopPropagation` 提供了 action 级、声明式的 native default 阻止能力（见 `docs/architecture/renderer-runtime.md` "Schema-Driven Prevention"）。裁定：
+
+- **保留 `preventEnterSubmit` 作为 form-level 便捷 shorthand，不标 deprecated。**
+- 二者**层级不同、互不冲突**：
+  - `preventEnterSubmit` 控制 **form shell 自己的** enter-submit 逻辑（form 内部决定是否在 Enter 上调用 `ownedForm.submit()`），是 form 组件自身的 UX 配置。
+  - action 上的 `preventDefault` 控制 **native default**（如 form 提交、链接跳转、键盘滚动），是事件级声明，作用于任意组件的任意 event handler。
+- 典型组合：
+  - 仅想阻止 form 的自动 Enter 提交、但保留其他默认行为 → 用 `preventEnterSubmit: true`。
+  - 想在某个 button/input 的 `onClick`/`onKeyDown` action 上阻止 native default（如阻止链接跳转、阻止空格滚动）→ 用 action 上的 `preventDefault: true`。
+  - 想完全阻止 Enter 触发的 native form submission（HTML form default）→ 因为 Flux form shell 用 `<section>` 而非 `<form>`，本就不会触发 native submit；`preventEnterSubmit` 控制的是 Flux 自己的 submit 调用。
+- **不**强求 author 用 `preventDefault` 替换 `preventEnterSubmit`：前者要附在某个具体 action 上，后者是 form 容器配置，迁移成本不带来语义增量。
+
 ## 9. 数据源、表达式、导入能力接入点
 
 - 初始值通过 `data` 注入。

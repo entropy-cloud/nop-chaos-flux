@@ -1,6 +1,6 @@
 # Existing Components Improvement Roadmap
 
-> Last Updated: 2026-06-21 (E2f done)
+> Last Updated: 2026-06-22 (X2 done)
 > Source: `docs/components/existing-components-improvement-analysis.md`（v2 分析报告）、`docs/components/amis-baseline-matrix.md`
 > 关联：`roadmap.md`（新增组件，独立）、`mobile-roadmap.md`（移动端响应式，独立）
 
@@ -53,7 +53,7 @@
 - E2g form shell 增强: `done`
 - E2h code-editor diff + 语言: `done`
 - X1 doAction 命令族统一: `done`（`docs/plans/2026-06-21-2146-1-x1-doaction-command-family-unification-plan.md`，closed）
-- X2 可阻止事件: `planned`（`docs/plans/2026-06-21-2146-2-x2-preventable-events-plan.md`，active）
+- X2 可阻止事件: `done`（`docs/plans/2026-06-21-2146-2-x2-preventable-events-plan.md`，completed）
 - X4 data-source 请求层增强: `done`
 - E3 P2 体验完善（按需启动）: `todo`
 
@@ -117,7 +117,7 @@
 | Work item                     | 组件                                  | 依赖 | design.md 更新                                                                                                                            | 说明                                                                                      |
 | ----------------------------- | ------------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | **X1** doAction 命令族统一 ✅ | 全部输入控件 + dialog/drawer + button | X3   | 相关输入控件 design.md 补 `component:clear/reset/focus` 契约；dialog/drawer 补 `component:open/close/toggle`；button 补 `component:focus` | 按 Flux component:\* 句柄规范（已落地：`docs/references/component-handle-vocabulary.md`） |
-| **X2** 可阻止事件             | 全部交互控件                          | X3   | 事件系统设计文档补 preventDefault 语义                                                                                                    | 按 Flux 事件系统设计，不照搬 amis renderer event                                          |
+| **X2** 可阻止事件 ✅          | 全部交互控件                          | X3   | 事件系统设计文档补 preventDefault 语义                                                                                                    | 按 Flux 事件系统设计，不照搬 amis renderer event                                          |
 | **X4** data-source 请求层增强 | data-source                           | Q6   | `data-source/design.md`（sendOn/initFetch gate/生命周期事件契约；ws 低优先）                                                              | data-source runtime                                                                       |
 
 ### 第 3 批 — P2 体验完善（按需启动）
