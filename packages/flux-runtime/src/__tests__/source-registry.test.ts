@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import type { CompiledDataSource, RendererRuntime, ScopeRef } from '@nop-chaos/flux-core';
+import type { CompiledDataSource, DataSourceRefreshResult, RendererRuntime, ScopeRef } from '@nop-chaos/flux-core';
 import { createRuntimeSourceRegistry } from '../async-data/source-registry.js';
 import {
   __getSourceCascadeDepthForTests,
@@ -13,7 +13,7 @@ afterEach(() => {
 
 describe('createRuntimeSourceRegistry', () => {
   it('does not hit a TDZ when scope subscribe synchronously emits during registration', () => {
-    const refresh = vi.fn().mockResolvedValue(undefined);
+    const refresh = vi.fn().mockResolvedValue({ skipped: false });
     const stop = vi.fn();
 
     const scope = {
@@ -104,7 +104,7 @@ describe('createRuntimeSourceRegistry', () => {
       } as unknown as CompiledDataSource,
     });
 
-    registration.controller.refresh = refresh as () => Promise<void>;
+    registration.controller.refresh = refresh as () => Promise<DataSourceRefreshResult>;
     emitChange?.({ paths: ['query'] });
     await Promise.resolve();
     await Promise.resolve();
@@ -115,10 +115,10 @@ describe('createRuntimeSourceRegistry', () => {
 
   it('keeps async source cascade depth until refresh settles and blocks re-entry past the limit', async () => {
     let emitChange: ((change: { paths: string[] }) => void) | undefined;
-    let resolveRefresh: (() => void) | undefined;
+    let resolveRefresh: ((value: DataSourceRefreshResult) => void) | undefined;
     const refresh = vi.fn(
       () =>
-        new Promise<void>((resolve) => {
+        new Promise<DataSourceRefreshResult>((resolve) => {
           resolveRefresh = resolve;
         }),
     );
@@ -163,7 +163,7 @@ describe('createRuntimeSourceRegistry', () => {
       } as unknown as CompiledDataSource,
     });
 
-    registration.controller.refresh = refresh as () => Promise<void>;
+    registration.controller.refresh = refresh as () => Promise<DataSourceRefreshResult>;
     __setSourceCascadeDepthForTests(99);
 
     emitChange?.({ paths: ['query'] });
@@ -177,7 +177,7 @@ describe('createRuntimeSourceRegistry', () => {
     expect(notify).not.toHaveBeenCalledWith('error', 'Source cascade depth limit exceeded');
     expect(__getSourceCascadeDepthForTests()).toBe(99);
 
-    resolveRefresh?.();
+    resolveRefresh?.({ skipped: false });
     await Promise.resolve();
     await Promise.resolve();
 
@@ -188,10 +188,10 @@ describe('createRuntimeSourceRegistry', () => {
 
   it('isolates source cascade depth per registry instance', async () => {
     let emitFirstChange: ((change: { paths: string[] }) => void) | undefined;
-    let resolveFirstRefresh: (() => void) | undefined;
+    let resolveFirstRefresh: ((value: DataSourceRefreshResult) => void) | undefined;
     const firstRefresh = vi.fn(
       () =>
-        new Promise<void>((resolve) => {
+        new Promise<DataSourceRefreshResult>((resolve) => {
           resolveFirstRefresh = resolve;
         }),
     );
@@ -263,9 +263,9 @@ describe('createRuntimeSourceRegistry', () => {
         targetPath: { isStatic: true, value: 'result' },
       } as unknown as CompiledDataSource,
     });
-    firstRegistration.controller.refresh = firstRefresh as () => Promise<void>;
+    firstRegistration.controller.refresh = firstRefresh as () => Promise<DataSourceRefreshResult>;
 
-    const secondRefresh = vi.fn().mockResolvedValue(undefined);
+    const secondRefresh = vi.fn().mockResolvedValue({ skipped: false });
     const secondRegistration = secondRegistry.registerDataSource({
       id: 'source-2',
       scope: secondScope,
@@ -276,7 +276,7 @@ describe('createRuntimeSourceRegistry', () => {
         targetPath: { isStatic: true, value: 'result' },
       } as unknown as CompiledDataSource,
     });
-    secondRegistration.controller.refresh = secondRefresh as () => Promise<void>;
+    secondRegistration.controller.refresh = secondRefresh as () => Promise<DataSourceRefreshResult>;
 
     emitFirstChange?.({ paths: ['query'] });
     await Promise.resolve();
@@ -290,7 +290,7 @@ describe('createRuntimeSourceRegistry', () => {
     expect(secondRefresh).toHaveBeenCalledTimes(1);
     expect(secondNotify).not.toHaveBeenCalledWith('error', 'Source cascade depth limit exceeded');
 
-    resolveFirstRefresh?.();
+    resolveFirstRefresh?.({ skipped: false });
     await Promise.resolve();
     await Promise.resolve();
 

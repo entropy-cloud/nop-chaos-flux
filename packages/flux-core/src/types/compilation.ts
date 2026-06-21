@@ -297,6 +297,33 @@ export interface CompiledDataSource {
 
   /** Operation control configuration */
   control?: CompiledOperationControl;
+
+  /**
+   * Compiled sendOn gate (raw boolean expression). When evaluated falsy (or when
+   * evaluation throws) the refresh is skipped. Only consumed by action-kind sources.
+   */
+  sendOn?: CompiledRuntimeValue<boolean>;
+
+  /**
+   * Compiled initFetch gate. When explicitly `false`, the controller skips the
+   * first automatic fetch on start (the source is still registered). Only consumed
+   * by action-kind sources.
+   */
+  initFetch?: CompiledRuntimeValue<boolean>;
+
+  /**
+   * Compiled onSuccess lifecycle action. Dispatched with payload
+   * `{ data, dataUpdatedAt }` after each successful fetch. Only consumed by
+   * action-kind sources.
+   */
+  onSuccess?: CompiledActionProgram;
+
+  /**
+   * Compiled onError lifecycle action. Dispatched with payload
+   * `{ error, failureCount }` after each failed fetch. Only consumed by
+   * action-kind sources.
+   */
+  onError?: CompiledActionProgram;
 }
 
 /**

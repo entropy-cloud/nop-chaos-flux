@@ -3,6 +3,7 @@ import {
   type AsyncGovernanceStore,
   type CompiledRuntimeValue,
   type DataSourceController,
+  type DataSourceRefreshResult,
   type DataSourceState,
   type DynamicRuntimeValue,
   type RendererRuntime,
@@ -263,7 +264,7 @@ export function createFormulaDataSourceController(input: {
         fetchStatus: 'idle',
       }));
     },
-    async refresh() {
+    async refresh(): Promise<DataSourceRefreshResult> {
       if (stopped) {
         stopped = false;
         started = true;
@@ -273,6 +274,7 @@ export function createFormulaDataSourceController(input: {
         }));
       }
       publish();
+      return { skipped: false };
     },
     reset() {
       started = false;

@@ -154,6 +154,10 @@ export function createRuntimeSourceRegistry(input: {
           stopWhen: compiled.stopWhen as import('@nop-chaos/flux-core').CompiledRuntimeValue<boolean> | undefined,
           silent: evaluateCompiledValue(compiled.silent),
           initialData: evaluateCompiledValue(compiled.initialData),
+          sendOn: compiled.sendOn,
+          initFetch: compiled.initFetch,
+          onSuccess: compiled.onSuccess,
+          onError: compiled.onError,
           control: compiled.control
             ? {
                 dedup: compiled.control.dedup,

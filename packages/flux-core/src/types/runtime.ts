@@ -330,8 +330,13 @@ export interface DataSourceController {
   getState(): DataSourceState;
   start(): void;
   stop(): void;
-  refresh(): Promise<void>;
+  refresh(): Promise<DataSourceRefreshResult>;
   reset(): void;
+}
+
+export interface DataSourceRefreshResult {
+  /** true when the refresh was skipped (e.g. sendOn gate evaluated falsy) */
+  skipped: boolean;
 }
 
 export type DataSourceStatus = 'idle' | 'pending' | 'success' | 'error';

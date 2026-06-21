@@ -9,7 +9,6 @@ import type {
   ExpressionCompileOptions,
 } from '@nop-chaos/flux-core';
 import { compileActions } from './action-compiler.js';
-
 export interface SourceCompilerOptions extends ExpressionCompileOptions {
   basePath?: string;
 }
@@ -106,6 +105,34 @@ export function compileDataSource(
         sourcePath: `${basePath}.silent`,
       }) as unknown as CompiledRuntimeValue<boolean>;
     }
+
+    if (actionSchema.sendOn !== undefined) {
+      compiled.sendOn = compiler.compileValue(actionSchema.sendOn, {
+        ...options,
+        sourcePath: `${basePath}.sendOn`,
+      }) as unknown as CompiledRuntimeValue<boolean>;
+    }
+
+    if (actionSchema.initFetch !== undefined) {
+      compiled.initFetch = compiler.compileValue(actionSchema.initFetch, {
+        ...options,
+        sourcePath: `${basePath}.initFetch`,
+      }) as unknown as CompiledRuntimeValue<boolean>;
+    }
+
+    if (actionSchema.onSuccess !== undefined) {
+      compiled.onSuccess = compileActions(actionSchema.onSuccess, compiler, {
+        ...options,
+        basePath: `${basePath}.onSuccess`,
+      });
+    }
+
+    if (actionSchema.onError !== undefined) {
+      compiled.onError = compileActions(actionSchema.onError, compiler, {
+        ...options,
+        basePath: `${basePath}.onError`,
+      });
+    }
   }
 
   if (isFormulaSource) {
@@ -176,6 +203,8 @@ export function isDataSourceFullyStatic(compiled: CompiledDataSource): boolean {
     compiled.stopWhen,
     compiled.silent,
     compiled.initialData,
+    compiled.sendOn,
+    compiled.initFetch,
   ];
 
   for (const field of dynamicFields) {
@@ -185,6 +214,14 @@ export function isDataSourceFullyStatic(compiled: CompiledDataSource): boolean {
   }
 
   if (compiled.action && !compiled.action.isFullyStatic) {
+    return false;
+  }
+
+  if (compiled.onSuccess && !compiled.onSuccess.isFullyStatic) {
+    return false;
+  }
+
+  if (compiled.onError && !compiled.onError.isFullyStatic) {
     return false;
   }
 

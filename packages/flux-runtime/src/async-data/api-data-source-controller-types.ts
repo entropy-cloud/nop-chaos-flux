@@ -36,6 +36,14 @@ export interface CreateApiDataSourceControllerInput {
   initialData?: unknown;
   control?: OperationControlConfig;
   onDependenciesChange?: (dependencies: ScopeDependencySet | undefined) => void;
+  /** sendOn gate (compiled boolean expression); falsy or eval-error skips refresh */
+  sendOn?: CompiledRuntimeValue<boolean>;
+  /** initFetch gate; explicitly false skips the first automatic fetch on start */
+  initFetch?: CompiledRuntimeValue<boolean>;
+  /** onSuccess lifecycle action; dispatched with { data, dataUpdatedAt } after success */
+  onSuccess?: CompiledActionProgram;
+  /** onError lifecycle action; dispatched with { error, failureCount } after failure */
+  onError?: CompiledActionProgram;
 }
 
 export interface ApiDataSourceControllerMutableState {

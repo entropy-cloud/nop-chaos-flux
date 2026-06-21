@@ -1,4 +1,4 @@
-import { reportRuntimeHostIssue, type DataSourceController } from '@nop-chaos/flux-core';
+import { reportRuntimeHostIssue, type DataSourceController, type DataSourceRefreshResult } from '@nop-chaos/flux-core';
 import { createInitialDataSourceState } from './data-source-state.js';
 import { abortActiveControllers } from './api-data-source-controller-helpers.js';
 import {
@@ -6,8 +6,25 @@ import {
   publishControllerData,
   updateControllerState,
 } from './api-data-source-controller-state.js';
-import { createApiDataSourceRequestRunner } from './api-data-source-controller-runtime.js';
+import {
+  createApiDataSourceRequestRunner,
+  evaluateSendOnGate,
+} from './api-data-source-controller-runtime.js';
 import type { CreateApiDataSourceControllerInput } from './api-data-source-controller-types.js';
+
+function resolveInitFetch(input: CreateApiDataSourceControllerInput): boolean {
+  if (!input.initFetch) {
+    return true;
+  }
+  if (input.initFetch.isStatic) {
+    return input.initFetch.value !== false;
+  }
+  try {
+    return input.runtime.evaluateCompiled<boolean>(input.initFetch, input.scope) !== false;
+  } catch {
+    return true;
+  }
+}
 
 export function createDataSourceController(
   input: CreateApiDataSourceControllerInput,
@@ -29,7 +46,8 @@ export function createDataSourceController(
     }
 
     mutable.pollTimer = setTimeout(() => {
-      void runRequest()
+      const allowed = evaluateSendOnGate(input);
+      void (allowed ? runRequest() : Promise.resolve())
         .catch(reportRunRequestError)
         .finally(() => {
           if (!mutable.stopped) {
@@ -83,7 +101,9 @@ export function createDataSourceController(
 
     activateController(true);
 
-    void runRequest().catch(reportRunRequestError);
+    if (resolveInitFetch(input) && evaluateSendOnGate(input)) {
+      void runRequest().catch(reportRunRequestError);
+    }
 
     if (input.interval && input.interval > 0) {
       schedulePoll();
@@ -96,7 +116,7 @@ export function createDataSourceController(
     },
     start,
     stop,
-    refresh() {
+    refresh(): Promise<DataSourceRefreshResult> {
       if (!mutable.started || mutable.stopped) {
         activateController(false);
 
@@ -105,7 +125,11 @@ export function createDataSourceController(
         }
       }
 
-      return runRequest();
+      if (!evaluateSendOnGate(input)) {
+        return Promise.resolve({ skipped: true });
+      }
+
+      return runRequest().then(() => ({ skipped: false }));
     },
     reset() {
       mutable.started = false;

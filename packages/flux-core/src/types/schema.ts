@@ -187,6 +187,12 @@ export interface BaseDataSourceSchema extends BaseSchema {
   initialData?: SchemaValue;
   mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
   mergeKey?: string;
+  /**
+   * Raw boolean expression (no `${}` wrapper). Evaluated in the source owner scope
+   * at refresh time; when falsy (or when evaluation throws, following Flux `when`
+   * semantics) the refresh is skipped and no request is sent.
+   */
+  sendOn?: string;
 }
 
 export interface SourceActionSchema extends ActionShapeLikeFields {
@@ -210,6 +216,22 @@ export interface ActionDataSourceSchema extends BaseDataSourceSchema, SourceActi
   interval?: number;
   stopWhen?: string;
   silent?: boolean;
+  /**
+   * Whether to automatically fetch on mount/start. Defaults to `true`.
+   * When `false`, the source is still registered but the first refresh is skipped;
+   * `refresh()` / `component:refresh` can still trigger a fetch manually.
+   */
+  initFetch?: boolean;
+  /**
+   * Dispatched after a successful fetch completes. Payload available to the action:
+   * `{ data, dataUpdatedAt }`.
+   */
+  onSuccess?: ActionSchema | ActionSchema[];
+  /**
+   * Dispatched after a fetch fails. Payload available to the action:
+   * `{ error, failureCount }`.
+   */
+  onError?: ActionSchema | ActionSchema[];
 }
 
 export type DataSourceSchema = FormulaDataSourceSchema | ActionDataSourceSchema;

@@ -28,6 +28,56 @@ import type {
   CreateApiDataSourceControllerInput,
 } from './api-data-source-controller-types.js';
 
+function dispatchLifecycleAction(
+  input: CreateApiDataSourceControllerInput,
+  program: CreateApiDataSourceControllerInput['onSuccess'],
+  bindings: Record<string, unknown>,
+): void {
+  if (!program) {
+    return;
+  }
+
+  void input
+    .dispatch(program, {
+      runtime: input.runtime,
+      scope: input.scope,
+      evaluationBindings: bindings,
+    })
+    .catch((error: unknown) => {
+      reportRuntimeHostIssue({
+        env: input.runtime.env,
+        level: 'error',
+        message: 'Data source lifecycle action dispatch failed',
+        error,
+        phase: 'api',
+      });
+    });
+}
+
+export function evaluateSendOnGate(
+  input: CreateApiDataSourceControllerInput,
+): boolean {
+  if (!input.sendOn) {
+    return true;
+  }
+
+  try {
+    const value = input.sendOn.isStatic
+      ? input.sendOn.value
+      : input.runtime.evaluateCompiled<boolean>(input.sendOn, input.scope);
+    return Boolean(value);
+  } catch (error) {
+    reportRuntimeHostIssue({
+      env: input.runtime.env,
+      level: 'error',
+      message: 'Data source sendOn gate evaluation failed; treating as falsy',
+      error,
+      phase: 'api',
+    });
+    return false;
+  }
+}
+
 function toDispatchError(result: ActionResult): unknown {
   if (result.error) {
     return result.error;
@@ -263,6 +313,11 @@ export function createApiDataSourceRequestRunner(
             toSuccessDataSourceState(current, mappedValue),
           );
 
+          dispatchLifecycleAction(input, input.onSuccess, {
+            data: mappedValue,
+            dataUpdatedAt: mutable.state.dataUpdatedAt,
+          });
+
           const settledRun = settleControllerRunIfNeeded(input, mutable, run, requestSequence, {
             outcome: 'succeeded',
           });
@@ -321,6 +376,11 @@ export function createApiDataSourceRequestRunner(
         toSuccessDataSourceState(current, mappedValue),
       );
 
+      dispatchLifecycleAction(input, input.onSuccess, {
+        data: mappedValue,
+        dataUpdatedAt: mutable.state.dataUpdatedAt,
+      });
+
       const settledRun = settleControllerRunIfNeeded(input, mutable, run, requestSequence, {
         outcome: 'succeeded',
       });
@@ -373,6 +433,11 @@ export function createApiDataSourceRequestRunner(
       updateControllerState(input, mutable, (current) =>
         toErrorDataSourceState(current, caughtError),
       );
+
+      dispatchLifecycleAction(input, input.onError, {
+        error: caughtError,
+        failureCount: mutable.state.failureCount,
+      });
 
       if (!input.silent) {
         reportRuntimeHostIssue({
