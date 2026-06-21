@@ -30,6 +30,7 @@ export const zhCN: Resource = {
       saveFailed: '保存失败',
       saving: '保存中...',
       unsaved: '未保存',
+      retry: '重试',
     },
     pagination: {
       morePages: '更多页',

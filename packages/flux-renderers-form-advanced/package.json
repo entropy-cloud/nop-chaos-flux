@@ -21,7 +21,8 @@
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-renderers-form": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
-    "@nop-chaos/ui": "workspace:*"
+    "@nop-chaos/ui": "workspace:*",
+    "@tanstack/react-virtual": "^3.13.24"
   },
   "peerDependencies": {
     "lucide-react": "^1.17.0",

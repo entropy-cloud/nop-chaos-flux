@@ -1,16 +1,283 @@
 import React from 'react';
-import type { SourceTransientState } from '@nop-chaos/flux-react';
+import type { ActionSchema } from '@nop-chaos/flux-core';
+import type { RendererHelpers, SourceTransientState } from '@nop-chaos/flux-react';
+import type { TreeSourceConfig } from '@nop-chaos/flux-renderers-form';
 import {
   cascadeDeselectParent,
   cascadeSelectParent,
   deriveCheckedState,
   flattenTreeOptions,
   isTreeSelectionChecked,
+  mergeChildOptions,
   toggleTreeSelection,
   type TreeCheckedState,
   type TreeOptionConfig,
   type TreeOptionMeta,
 } from './tree-options.js';
+import { buildTreeOptionMetaList } from './tree-options.js';
+
+export interface TreeRemoteSearchResult {
+  remoteOptions: TreeOptionMeta[] | null;
+  loading: boolean;
+  error: string | undefined;
+}
+
+export interface TreeLazyNodeState {
+  loading: boolean;
+  error?: string;
+}
+
+/**
+ * Execute a tree source config (formula or action) against a scope patched
+ * with parameter values (e.g. `{ searchQuery }` or `{ expandedNodeValue }`).
+ *
+ * Uses `helpers.dispatch` / `helpers.evaluate` rather than
+ * `helpers.executeSource` because `executeSource` does not currently propagate
+ * the caller-provided scope through `mergeActionContext` — the render scope
+ * would override the child scope and the patched parameter would be invisible
+ * to the fetcher. `dispatch({ scope })` routes the scope correctly via
+ * `mergeActionContext(input, { scope })`.
+ */
+export async function executeTreeSource(
+  config: TreeSourceConfig,
+  helpers: RendererHelpers,
+  patch: Record<string, unknown>,
+): Promise<{ ok: boolean; data?: unknown; error?: unknown }> {
+  const scope = helpers.createScope(patch);
+  if (config.formula !== undefined) {
+    try {
+      const value = helpers.evaluate(config.formula, scope);
+      return { ok: true, data: value };
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  }
+  if (!config.action) {
+    return { ok: false, error: new Error('Tree source requires action or formula') };
+  }
+  const actionInput = { ...config } as unknown as ActionSchema;
+  try {
+    const result = await helpers.dispatch(actionInput, { scope });
+    return result;
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err : new Error(String(err)) };
+  }
+}
+
+/**
+ * Owns remote (data-source-driven) tree search.
+ *
+ * Caller wires `query` via the {@link useTreeOptionListController.onQueryChange}
+ * callback. This hook debounces (300ms) and then invokes executeTreeSource with
+ * `{ searchQuery: <trimmed query> }`. Schema authors reference `${searchQuery}`
+ * in the `searchSource` config's `args.data` / formula.
+ *
+ * Returns `remoteOptions: null` while inactive (no query or disabled) so the
+ * caller falls back to static options.
+ */
+export function useTreeRemoteSearch(input: {
+  query: string;
+  searchSource?: TreeSourceConfig;
+  searchable: boolean;
+  disabled: boolean;
+  helpers: RendererHelpers;
+  config: TreeOptionConfig;
+}): TreeRemoteSearchResult {
+  const { query, searchSource, searchable, disabled, helpers, config } = input;
+  const active = searchable && Boolean(searchSource) && !disabled;
+  const [remoteOptions, setRemoteOptions] = React.useState<TreeOptionMeta[] | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | undefined>(undefined);
+
+  React.useEffect(() => {
+    if (!active) {
+      setRemoteOptions(null);
+      setLoading(false);
+      setError(undefined);
+      return;
+    }
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setRemoteOptions(null);
+      setLoading(false);
+      setError(undefined);
+      return;
+    }
+    let cancelled = false;
+    const handle = setTimeout(() => {
+      if (cancelled) {
+        return;
+      }
+      setLoading(true);
+      setError(undefined);
+      executeTreeSource(searchSource!, helpers, { searchQuery: trimmed })
+        .then((result) => {
+          if (cancelled) {
+            return;
+          }
+          if (result.ok) {
+            setRemoteOptions(buildTreeOptionMetaList(result.data, config));
+          } else {
+            setError(
+              typeof result.error === 'string' && result.error
+                ? result.error
+                : result.error instanceof Error
+                  ? result.error.message
+                  : 'Search failed.',
+            );
+            setRemoteOptions([]);
+          }
+        })
+        .catch((err: unknown) => {
+          if (cancelled) {
+            return;
+          }
+          setError(err instanceof Error ? err.message : 'Search failed.');
+          setRemoteOptions([]);
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [active, config, helpers, query, searchSource]);
+
+  return { remoteOptions, loading, error };
+}
+
+export interface TreeLazyChildrenController {
+  options: TreeOptionMeta[];
+  nodeStates: ReadonlyMap<string, TreeLazyNodeState>;
+  loadChildren: (option: TreeOptionMeta) => void;
+  retryLoadChildren: (option: TreeOptionMeta) => void;
+  reset: () => void;
+}
+
+/**
+ * Owns lazy (on-demand) child loading for tree options.
+ *
+ * Tracks per-node loading/error state keyed by `valueKey`. When a
+ * `deferChildren` node is expanded, the renderer calls `loadChildren(option)`,
+ * which triggers `executeTreeSource(childrenSource, helpers,
+ * { expandedNodeValue: option.value })`. On success, children are merged
+ * immutably into the options tree via {@link mergeChildOptions} and
+ * `deferChildren` is cleared. On failure, the node shows inline error + retry.
+ *
+ * Coexists with cascade (E0b): after children arrive, the options change
+ * triggers re-derivation of `deriveCheckedState` for the parent.
+ */
+export function useTreeLazyChildren(input: {
+  baseOptions: TreeOptionMeta[];
+  childrenSource?: TreeSourceConfig;
+  helpers: RendererHelpers;
+  config: TreeOptionConfig;
+  enabled: boolean;
+}): TreeLazyChildrenController {
+  const { baseOptions, childrenSource, helpers, config, enabled } = input;
+  const [mergedOptions, setMergedOptions] = React.useState<TreeOptionMeta[] | null>(null);
+  const [nodeStates, setNodeStates] = React.useState<ReadonlyMap<string, TreeLazyNodeState>>(
+    new Map(),
+  );
+  const requestedRef = React.useRef<Set<string>>(new Set());
+
+  const reset = React.useCallback(() => {
+    setMergedOptions(null);
+    setNodeStates(new Map());
+    requestedRef.current = new Set();
+  }, []);
+
+  const runLoad = React.useCallback(
+    (option: TreeOptionMeta) => {
+      if (!childrenSource) {
+        return;
+      }
+      setNodeStates((prev) => {
+        const next = new Map(prev);
+        next.set(option.valueKey, { loading: true });
+        return next;
+      });
+
+      executeTreeSource(childrenSource, helpers, { expandedNodeValue: option.value })
+        .then((result) => {
+          if (result.ok) {
+            setMergedOptions((prev) =>
+              mergeChildOptions(prev ?? baseOptions, option.valueKey, result.data, config),
+            );
+            setNodeStates((prev) => {
+              const next = new Map(prev);
+              next.delete(option.valueKey);
+              return next;
+            });
+          } else {
+            const message =
+              typeof result.error === 'string'
+                ? result.error
+                : result.error instanceof Error
+                  ? result.error.message
+                  : 'Failed to load children.';
+            setNodeStates((prev) => {
+              const next = new Map(prev);
+              next.set(option.valueKey, { loading: false, error: message });
+              return next;
+            });
+          }
+        })
+        .catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : 'Failed to load children.';
+          setNodeStates((prev) => {
+            const next = new Map(prev);
+            next.set(option.valueKey, { loading: false, error: message });
+            return next;
+          });
+        });
+    },
+    [baseOptions, childrenSource, config, helpers],
+  );
+
+  const loadChildren = React.useCallback(
+    (option: TreeOptionMeta) => {
+      if (!enabled || option.deferChildren !== true || !childrenSource) {
+        return;
+      }
+      if (requestedRef.current.has(option.valueKey)) {
+        return;
+      }
+      requestedRef.current.add(option.valueKey);
+      runLoad(option);
+    },
+    [childrenSource, enabled, runLoad],
+  );
+
+  const retryLoadChildren = React.useCallback(
+    (option: TreeOptionMeta) => {
+      if (!enabled || option.deferChildren !== true || !childrenSource) {
+        return;
+      }
+      requestedRef.current.add(option.valueKey);
+      runLoad(option);
+    },
+    [childrenSource, enabled, runLoad],
+  );
+
+  React.useEffect(() => {
+    if (!enabled) {
+      reset();
+    }
+  }, [enabled, reset]);
+
+  return {
+    options: enabled ? mergedOptions ?? baseOptions : baseOptions,
+    nodeStates,
+    loadChildren,
+    retryLoadChildren,
+    reset,
+  };
+}
 
 export function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
   if (sourceState?.status !== 'error') {
@@ -110,7 +377,7 @@ export function useTreeOptionNodeController(input: {
       };
   const checked = checkedState.checked;
   const indeterminate = checkedState.indeterminate;
-  const hasChildren = option.children.length > 0;
+  const hasChildren = option.children.length > 0 || option.deferChildren === true;
 
   const handleSelect = React.useCallback(() => {
     if (disabled) {
@@ -239,8 +506,10 @@ export function useTreeOptionListController(input: {
   options: TreeOptionMeta[];
   searchable: boolean;
   disabled: boolean;
+  remoteSearch?: boolean;
+  onQueryChange?: (query: string) => void;
 }) {
-  const { options, searchable, disabled } = input;
+  const { options, searchable, disabled, remoteSearch, onQueryChange } = input;
   const [query, setQuery] = React.useState('');
   const [expandedKeys, setExpandedKeys] = React.useState<Set<string>>(() => {
     const keys = new Set<string>();
@@ -252,13 +521,20 @@ export function useTreeOptionListController(input: {
     return keys;
   });
 
+  React.useEffect(() => {
+    onQueryChange?.(query);
+  }, [onQueryChange, query]);
+
   const filteredOptions = React.useMemo(() => {
+    if (remoteSearch) {
+      return options;
+    }
     if (!searchable || !query.trim()) {
       return options;
     }
 
     return filterTreeOptions(options, query.trim().toLowerCase());
-  }, [options, query, searchable]);
+  }, [options, query, remoteSearch, searchable]);
 
   const visibleOptions = React.useMemo(
     () => flattenVisibleTreeOptions(filteredOptions, expandedKeys),
@@ -289,7 +565,7 @@ export function useTreeOptionListController(input: {
   }, [activeItemKey, disabled, visibleOptions]);
 
   const toggleExpanded = React.useCallback((option: TreeOptionMeta, nextExpanded: boolean) => {
-    if (option.children.length === 0) {
+    if (option.children.length === 0 && option.deferChildren !== true) {
       return;
     }
 

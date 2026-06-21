@@ -30,6 +30,7 @@ export const enUS: Resource = {
       saveFailed: 'Save failed',
       saving: 'Saving...',
       unsaved: 'Unsaved',
+      retry: 'Retry',
     },
     pagination: {
       morePages: 'More pages',

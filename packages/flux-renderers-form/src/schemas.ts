@@ -1,10 +1,26 @@
 import type {
   ActionSchema,
+  ActionShapeLikeFields,
   BaseSchema,
   BoundFieldSchemaBase,
   HiddenFieldPolicy,
+  SchemaValue,
   SourceSchema,
 } from '@nop-chaos/flux-core';
+
+/**
+ * Configuration shape for on-demand tree sources (lazy children / remote search).
+ *
+ * Stored without `type: 'source'` so the runtime source-prop auto-resolver does
+ * NOT pick it up. Renderers reconstruct a full {@link SourceSchema} via
+ * `{ type: 'source', ...config }` immediately before invoking
+ * `helpers.executeSource(...)`. This keeps the request path on the data-source
+ * runtime (X3 §1/§3 — no component-level api shortcut) while preserving the
+ * descriptor for on-demand, parameterised invocation.
+ */
+export interface TreeSourceConfig extends ActionShapeLikeFields {
+  formula?: SchemaValue;
+}
 
 export interface SelectOptionSchema {
   [key: string]: import('@nop-chaos/flux-core').SchemaValue;
@@ -105,6 +121,29 @@ export interface InputTreeSchema extends InputSchema {
   searchable?: boolean;
   onlyLeaf?: boolean;
   showPathLabel?: boolean;
+  /**
+   * Number of visible (flattened) tree options at which to switch from full
+   * rendering to virtualised rendering via `@tanstack/react-virtual`. Defaults
+   * to `100` (matching `select`). Set to `0` to disable virtualisation.
+   */
+  virtualThreshold?: number;
+  /**
+   * On-demand source descriptor for lazy child loading. When a node is marked
+   * `deferChildren: true` (see `TreeOptionRecord`), expanding it triggers an
+   * `executeSource` call with this descriptor. The descriptor's request may
+   * reference `${expandedNodeValue}` in `args`/`api.data` to fetch the right
+   * children. When undeclared, `deferChildren` nodes degrade to no children
+   * (dev schema warn).
+   */
+  childrenSource?: TreeSourceConfig;
+  /**
+   * On-demand source descriptor for remote search. When `searchable: true` AND
+   * `searchSource` is declared, the query (debounced) drives an
+   * `executeSource` call whose result replaces `options`. The descriptor's
+   * request may reference `${searchQuery}`. When undeclared, `searchable`
+   * falls back to local substring filtering (backward compat).
+   */
+  searchSource?: TreeSourceConfig;
 }
 
 export interface TreeSelectSchema extends InputSchema {
@@ -120,6 +159,12 @@ export interface TreeSelectSchema extends InputSchema {
   showPathLabel?: boolean;
   clearable?: boolean;
   placeholder?: string;
+  /** @see InputTreeSchema.virtualThreshold */
+  virtualThreshold?: number;
+  /** @see InputTreeSchema.childrenSource */
+  childrenSource?: TreeSourceConfig;
+  /** @see InputTreeSchema.searchSource */
+  searchSource?: TreeSourceConfig;
 }
 
 export interface CheckboxSchema extends InputSchema {
