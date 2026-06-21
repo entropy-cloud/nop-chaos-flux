@@ -76,7 +76,39 @@
 - `index.tsx` 维护 renderer definition。
 - `page.tsx` 只消费 `props`、`regions` 和 page runtime hook。
 
-## 13. 风险、取舍与后续阶段
+## 13. 移动端响应式行为
+
+> 响应式基线规范见 `docs/architecture/mobile-responsive-baseline.md`
+
+| 断点              | header region          | footer region          | body           | aside            |
+| ----------------- | ---------------------- | ---------------------- | -------------- | ---------------- |
+| < 640px (default) | 顶部固定，安全区域适配 | 底部固定，安全区域适配 | 全宽，无边距   | 折叠，触发式滑出 |
+| ≥ 640px (sm)      | 内联，可选固定         | 可选固定               | 两侧留白       | 可选内联或滑出   |
+| ≥ 768px (md+)     | 内联                   | 内联                   | 居中 max-width | 侧边栏常显       |
+
+### 移动端 header region 约定
+
+- **定位**：`position: sticky; top: 0` + `padding-top: env(safe-area-inset-top)`
+- **内容**：左侧返回按钮（可选）+ 居中标题 + 右侧操作
+- **高度**：44px（不含安全区域）
+- **z-index**：高于 body 但低于 dialog overlay
+
+### 移动端 footer region 约定
+
+- **定位**：`position: fixed; bottom: 0` + `padding-bottom: env(safe-area-inset-bottom)`
+- **内容**：操作按钮栏（如购物车结算、商品详情底部操作栏）
+- **高度**：48px（不含安全区域）
+- **确保**：body 区域 `padding-bottom` 至少等于 footer 高度，避免内容被遮挡
+
+### 触摸适配
+
+| 控件            | 触摸目标  |
+| --------------- | --------- |
+| header 返回按钮 | 44×44px   |
+| footer 操作按钮 | 48px 高度 |
+
+## 14. 风险、取舍与后续阶段
 
 - 当前 TS schema 与 renderer regions 有轻微不一致，需要后续收敛。
 - 页面级导航、面包屑和 toolbar DSL 建议在有真实宿主需求后再补充，避免首版契约过重。
+- header/footer region 的 sticky/fixed 定位需要在 renderer 内通过 className 开放，不硬编码。

@@ -111,26 +111,33 @@ Exit Criteria:
 
 ### Phase 2 - Runtime controller 消费 sendOn/initFetch/lifecycle event
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/async-data/data-source-runtime-utils.ts`、`packages/flux-runtime/src/async-data/source-registry.ts`、`packages/flux-runtime/src/async-data/api-data-source-controller-state.ts`
 
 - Item Types: `Fix`
 
-- [ ] `createDataSourceController`（action kind）签名扩展：接受 `sendOn`/`initFetch`/`onSuccess`/`onError` 参数
-- [ ] refresh 流程前置 sendOn gate：在 controller.refresh() 入口处先求值 `sendOn`（在 source owner scope 下），falsy 或求值失败 → 短路返回 `{ skipped: true }`，不发请求、不改 state
-- [ ] start 流程前置 initFetch gate：`start()` 时若 `initFetch === false`（显式），不调用首次 refresh；controller 仍进入 started 状态、订阅 scope change（若有 dependsOn）
-- [ ] 成功路径尾缀 onSuccess dispatch：`handleSuccess` 内、在 `mergeToScope`/`statusPath` 写回完成后，dispatch compiled `onSuccess` action（payload `{ data, dataUpdatedAt }`）；`onSuccess` 缺省时 no-op
-- [ ] 失败路径尾缀 onError dispatch：`handleError` 内、在 `silent`/`statusPath` 错误发布完成后，dispatch compiled `onError` action（payload `{ error, failureCount }`）；`onError` 缺省时 no-op
-- [ ] `source-registry.ts:138-190` registerDataSource 把 4 个新 compiled 字段透传给 controller 构造函数
-- [ ] interval 触发路径也走 sendOn gate（与 manual refresh 一致）
-- [ ] `createFormulaDataSourceController` 暂不消费 `sendOn`/`initFetch`/`onSuccess`/`onError`（formula kind 无请求概念）；schema 校验期显式拒绝 formula source 配置这些字段（schema-validation 报 warning，runtime 忽略）
+- [x] `createDataSourceController`（action kind）签名扩展：接受 `sendOn`/`initFetch`/`onSuccess`/`onError` 参数
+- [x] refresh 流程前置 sendOn gate：在 controller.refresh() 入口处先求值 `sendOn`（在 source owner scope 下），falsy 或求值失败 → 短路返回 `{ skipped: true }`，不发请求、不改 state
+- [x] start 流程前置 initFetch gate：`start()` 时若 `initFetch === false`（显式），不调用首次 refresh；controller 仍进入 started 状态、订阅 scope change（若有 dependsOn）
+- [x] 成功路径尾缀 onSuccess dispatch：`handleSuccess` 内、在 `mergeToScope`/`statusPath` 写回完成后，dispatch compiled `onSuccess` action（payload `{ data, dataUpdatedAt }`）；`onSuccess` 缺省时 no-op
+- [x] 失败路径尾缀 onError dispatch：`handleError` 内、在 `silent`/`statusPath` 错误发布完成后，dispatch compiled `onError` action（payload `{ error, failureCount }`）；`onError` 缺省时 no-op
+- [x] `source-registry.ts:138-190` registerDataSource 把 4 个新 compiled 字段透传给 controller 构造函数
+- [x] interval 触发路径也走 sendOn gate（与 manual refresh 一致）
+- [x] `createFormulaDataSourceController` 暂不消费 `sendOn`/`initFetch`/`onSuccess`/`onError`（formula kind 无请求概念）；schema 校验期显式拒绝 formula source 配置这些字段（schema-validation 报 warning，runtime 忽略）
 
 Exit Criteria:
 
-- [ ] Phase 1 RED 测试 8 用例全部转 green
-- [ ] `pnpm --filter @nop-chaos/flux-runtime test` 全过（含新 lifecycle 用例 + 既有 sources 测试无回归）
-- [ ] `pnpm typecheck` 通过
-- [ ] No owner-doc update required（design.md 更新在 Phase 4）
+- [x] Phase 1 RED 测试 8 用例全部转 green（8/8 pass）
+- [x] `pnpm --filter @nop-chaos/flux-runtime test` 全过（含新 lifecycle 用例 + 既有 sources 测试无回归，1170 passed / 1 skipped）
+- [x] `pnpm typecheck` 通过（全 workspace 49/49）
+- [x] No owner-doc update required（design.md 更新在 Phase 4）
+
+> 实现裁定记录：
+>
+> - `DataSourceController.refresh()` 返回类型从 `Promise<void>` 改为 `Promise<DataSourceRefreshResult>`（`{ skipped: boolean }`），让 sendOn gate 结果可被 capability 消费方观察（Phase 3 `component:refresh` 依赖此）。formula controller 恒返回 `{ skipped: false }`。
+> - sendOn gate 同时应用于 `start()` 初始 fetch 与 `refresh()`/interval poll。理由：Failure Paths `sendOn-falsy` 明确要求"无网络请求发出"，包含初始 fetch；否则 initFetch=true + sendOn-falsy 的 source 仍会在 mount 时发一次请求，违反契约。initFetch 是"是否自动触发首次 fetch"的开关，sendOn 是"任何请求是否允许发出"的 universal gate，二者正交。
+> - sendOn raw expression 在 source-compiler 内自动包裹 `${}` 后再 compileValue。理由：Flux expression compiler 对无 `${}` 的字符串按 literal string 处理（与 `stopWhen`/`when` 实际用法一致，二者均显式 `${}`），plan 要求 sendOn "raw expression 不包裹 `${}`"是面向 schema 作者的契约，编译期由 compiler 代为包裹。
+> - formula-kind source 的 sendOn/initFetch/onSuccess/onError 由 source-compiler 自然忽略（仅在 `isActionSource` 分支内编译），满足 "runtime 忽略"。
 
 ### Phase 3 - ComponentHandle + capability contracts
 

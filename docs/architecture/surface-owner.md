@@ -2,7 +2,7 @@
 
 ## Purpose
 
-本文档定义 `dialog`、`drawer` 以及未来同类浮层表面的共享 owner 规则。
+本文档定义 `dialog`、`drawer`、`sheet`（BottomSheet）以及未来同类浮层表面的共享 owner 规则。
 
 用它回答：
 
@@ -10,7 +10,7 @@
 - 为什么它们不应上卷到 `page`
 - 为什么 declarative surface 和 action-opened surface 不应长期保留两套 runtime
 - 为什么不建议分别发明 `$dialog`、`$drawer`
-- future `sheet` 应如何归类
+- `sheet`（BottomSheet）应如何归类
 
 ## Position
 
@@ -298,6 +298,25 @@ future `sheet` 不能因为名字不同就自动获得独立 owner family。
 
 不要先发明 `$sheet`，先完成 owner classification。
 
+### BottomSheet 归类确认
+
+`BottomSheet` 是 `surface owner` family 成员，与 `dialog` / `drawer` 共享 `SurfaceRuntime` / `SurfaceStore` / `SurfaceEntry` 基础设施。
+
+| 维度       | dialog                 | drawer                 | BottomSheet                   |
+| ---------- | ---------------------- | ---------------------- | ----------------------------- |
+| 位置       | 居中                   | 左右滑入               | 底部滑入                      |
+| 移动端变体 | < 640px 全屏           | 保持抽屉               | 仅小屏启用                    |
+| 打开方式   | action / declarative   | action / declarative   | 组件内部自动切换（如 Select） |
+| 状态管理   | SurfaceRuntime         | SurfaceRuntime         | SurfaceRuntime                |
+| UI 基座    | `@nop-chaos/ui` Dialog | `@nop-chaos/ui` Drawer | `@nop-chaos/ui` Sheet         |
+
+**实施规则**：
+
+- BottomSheet 不新建独立 `type`（不暴露 `type: 'bottom-sheet'` 给 schema）
+- 使用场景：Select/TreeSelect/Picker 在小屏自动使用 BottomSheet
+- 通过 `@nop-chaos/ui` Sheet 组件 + SurfaceRuntime 实现
+- UI 规格见 `mobile-responsive-baseline.md` §4.1
+
 ## Declarative And Action-Opened Surfaces
 
 长期基线下，二者不是两套 runtime，只是两种 authoring 入口：
@@ -334,4 +353,6 @@ This rule is part of the broader creator-owned boundary model documented in `doc
 - `docs/architecture/action-interaction-state.md`
 - `docs/components/dialog/design.md`
 - `docs/components/drawer/design.md`
+- `docs/components/bottom-sheet/design.md`
 - `docs/components/page/design.md`
+- `docs/architecture/mobile-responsive-baseline.md`
