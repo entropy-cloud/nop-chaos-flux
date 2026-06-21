@@ -6,9 +6,11 @@
 
 **Tech Stack**: React 19, Zustand, TypeScript 6.0, Vite 8, Vitest, pnpm workspace.
 
-Packages live under `packages/` as `@nop-chaos/<name>`. Use `ls packages/` and read individual `package.json` for the full list and dependency graph. Key layers: `flux-core` → `flux-formula` → `flux-compiler` → `flux-action-core` → `flux-runtime` → `flux-react` → `flux-renderers-*`.
+Packages live under `packages/` as `@nop-chaos/<name>`. Use `ls packages/` and read individual `package.json` for the full list and dependency graph. Key layers: `flux-core` → `flux-formula` → `flux-compiler` → `flux-action-core` → `flux-runtime` → `flux-react` → `flux-renderers-*`. Renderer packages: `flux-renderers-basic` (stable structural/display), `flux-renderers-form` (stable form fields), `flux-renderers-form-advanced` (stable composite fields), `flux-renderers-data` (stable data display), `flux-renderers-content` (NEW — content/feedback/media, app-level), `flux-renderers-layout` (NEW — layout/flow/actions, app-level). See `docs/components/package-reorganization-analysis.md` for the package assignment rationale.
 
 **Before reading source files for type signatures or hook APIs**, check `docs/references/quick-reference.md` first — it compresses the most-frequently-needed types, hooks, and renderer patterns into a single file, replacing the need to read `renderer-core.ts`, `runtime.ts`, `hooks.ts`, `schema.ts`, `actions.ts`, etc.
+
+**Before changing product behavior**, check `docs/context/` first — `docs/context/project-context.md` is the current snapshot (active work, AI autonomy, documentation freshness, blockers); `docs/context/ai-autonomy-policy.md` defines when you may proceed vs. must stop (protected areas, autonomy levels); `docs/context/source-of-truth-and-precedence.md` decides which artifact wins on conflict. If documentation freshness is `stale`/`unknown`, or AI autonomy is not `implement`, restrict to research/plan-first per that policy.
 
 ---
 
