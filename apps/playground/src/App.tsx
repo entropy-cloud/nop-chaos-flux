@@ -16,6 +16,7 @@ import { PerformanceTablePage } from './pages/performance-table-page';
 import { ComponentHandlesDemoPage } from './pages/component-handles-demo';
 import { EventPreventionDemoPage } from './pages/event-prevention-demo';
 import { BooleanControlValueContractDemoPage } from './pages/boolean-control-value-contract-demo';
+import { TextIconVisualFieldsDemoPage } from './pages/text-icon-visual-fields-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -136,6 +137,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <EventPreventionDemoPage onBack={goHome} />;
         case 'boolean-control-value-contract':
           return <BooleanControlValueContractDemoPage onBack={goHome} />;
+        case 'text-icon-visual-fields':
+          return <TextIconVisualFieldsDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

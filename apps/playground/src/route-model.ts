@@ -433,6 +433,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'E3 boolean control value contract: checkbox/switch schema-driven trueValue/falseValue mapping with default true/false fallback.',
   },
+  {
+    id: 'text-icon-visual-fields',
+    title: 'Text / Icon Visual Fields',
+    eyebrow: 'Basic Display (E3)',
+    description:
+      'E3 text copyable/maxLine + icon schema size/color: text one-click copy with toast feedback, line-clamp truncation, and schema-driven icon dimensions.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

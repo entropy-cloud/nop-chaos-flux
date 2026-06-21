@@ -8,4 +8,5 @@ export { ConditionBuilderPage } from './condition-builder-page';
 export { CodeEditorPage } from './code-editor-page';
 export { WordEditorPage } from './word-editor-page';
 export { PerformanceTablePage } from './performance-table-page';
+export { TextIconVisualFieldsDemoPage } from './text-icon-visual-fields-demo';
 export type { PageId } from './types';
