@@ -454,6 +454,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'E3 form input controls: input-number long-press continuous stepping + clamp, array-editor/key-value configurable minItems/maxItems + up/down reorder via moveValue.',
   },
+  {
+    id: 'tree-display-ux',
+    title: 'Tree Display UX',
+    eyebrow: 'Tree Display (E3)',
+    description:
+      'E3 tree display: searchable local filter + auto-expand matching ancestors + highlight, node icons via showIcon/iconField, indentation guide-line via showGuideLine.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [
