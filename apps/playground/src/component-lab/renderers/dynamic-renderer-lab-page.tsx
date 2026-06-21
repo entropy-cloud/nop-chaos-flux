@@ -42,6 +42,18 @@ const dynamicRendererEnv = {
       };
     }
 
+    if (api.url === '/api/component-lab/dynamic-renderer/manual-schema') {
+      return {
+        ok: true,
+        status: 200,
+        data: {
+          type: 'badge',
+          text: 'Loaded via component:refresh',
+          level: 'success',
+        } as T,
+      };
+    }
+
     return {
       ok: true,
       status: 200,
@@ -122,6 +134,35 @@ const schemaSwitcher = {
   ],
 };
 
+const manualLoadOnDemand = {
+  type: 'page',
+  body: [
+    {
+      type: 'text',
+      text: 'autoLoad:false defers the initial load until component:refresh is called explicitly.',
+    },
+    {
+      type: 'button',
+      label: 'Load Schema',
+      variant: 'outline',
+      onClick: { action: 'component:refresh', componentId: 'manual-dynamic' },
+    },
+    {
+      type: 'dynamic-renderer',
+      id: 'manual-dynamic',
+      autoLoad: false,
+      loadAction: {
+        action: 'ajax',
+        args: { url: '/api/component-lab/dynamic-renderer/manual-schema' },
+      },
+      body: {
+        type: 'text',
+        text: 'Click "Load Schema" to fetch the dynamic schema.',
+      },
+    },
+  ],
+};
+
 export function DynamicRendererLabPage() {
   return (
     <MultiScenarioLabPage
@@ -142,6 +183,13 @@ export function DynamicRendererLabPage() {
           data: {
             schemaType: 'badge',
           },
+          env: dynamicRendererEnv,
+        },
+        {
+          title: 'On-demand load via autoLoad:false + component:refresh',
+          description:
+            'autoLoad:false skips the initial fetch. Click "Load Schema" to trigger component:refresh, which fires loadAction and renders the returned schema.',
+          schema: manualLoadOnDemand,
           env: dynamicRendererEnv,
         },
       ]}

@@ -130,4 +130,22 @@ test.describe('dynamic-renderer renderer', () => {
       timeout: 5_000,
     });
   });
+
+  test('write: autoLoad:false defers load until component:refresh is triggered', async ({ page }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('dynamic-renderer');
+
+    const slug = scenarioSlug('On-demand load via autoLoad:false + component:refresh');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+
+    // autoLoad:false → the placeholder body is visible, the loaded schema is NOT.
+    await expect(stage.getByText('Click "Load Schema" to fetch the dynamic schema.')).toBeVisible();
+    await expect(stage.getByText('Loaded via component:refresh')).toHaveCount(0);
+
+    // Trigger component:refresh → the dynamic schema appears.
+    await stage.getByRole('button', { name: 'Load Schema' }).click();
+    await expect(stage.getByText('Loaded via component:refresh')).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('Click "Load Schema" to fetch the dynamic schema.')).toHaveCount(0);
+  });
 });
