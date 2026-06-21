@@ -1,6 +1,6 @@
 # E3 chart 视觉配置增强（minor recharts enhancements）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: components-improvement
 > Work Item: E3 chart minor recharts 增强 子项
 > Last Reviewed: 2026-06-22
@@ -101,75 +101,77 @@
 
 ### Phase 1 - design.md Flux 决策表 + 字段裁定
 
-Status: planned
+Status: completed
 Targets: `docs/components/chart/design.md`
 
 - Item Types: `Decision`、`Follow-up`
 
-- [ ] 在 `design.md` §2 新建 Flux 决策表（列：能力 / 采纳 / 不采纳 / 理由），将现有 §2 叙述性 bullet 收编进决策表（叙述内容转化为决策行，不保留双套并存），覆盖：`'area'` 类型（采纳，recharts AreaChart）、`legend`（采纳，显式开关）、`stacked`（采纳，recharts stackId）、`grid`（采纳，开关）、`colors`（采纳，override）、echarts config 透传/扩展/geo/主题（不采纳，recharts 够用 + echarts 过大）、双轴/数据缩放/复杂 tooltip slot（不采纳，design.md §2 后续）、组件级 api/interval（不采纳，请求下沉）、`component:resize`（既有，watch-only——recharts ResponsiveContainer 已自动响应）。
-- [ ] 同步 §4（新字段加入正式字段清单）、§5（`legend`/`stacked`/`grid`/`colors`: `value`；`chartType` 扩展 `'area'`）、§12（colors override 不改双入口语义）。
+- [x] 在 `design.md` §2 新建 Flux 决策表（列：能力 / 采纳 / 不采纳 / 理由），将现有 §2 叙述性 bullet 收编进决策表（叙述内容转化为决策行，不保留双套并存），覆盖：`'area'` 类型（采纳，recharts AreaChart）、`legend`（采纳，显式开关）、`stacked`（采纳，recharts stackId）、`grid`（采纳，开关）、`colors`（采纳，override）、echarts config 透传/扩展/geo/主题（不采纳，recharts 够用 + echarts 过大）、双轴/数据缩放/复杂 tooltip slot（不采纳，design.md §2 后续）、组件级 api/interval（不采纳，请求下沉）、`component:resize`（既有，watch-only——recharts ResponsiveContainer 已自动响应）。
+- [x] 同步 §4（新字段加入正式字段清单）、§5（`legend`/`stacked`/`grid`/`colors`: `value`；`chartType` 扩展 `'area'`）、§12（colors override 不改双入口语义）。
 
 Exit Criteria:
 
-- [ ] `design.md` §2 Flux 决策表存在且每行含采纳/不采纳 + 理由（live repo 可读）。
-- [ ] §4/§5 字段分类含 5 项新字段 + `'area'` 类型（与 schema 一致）。
+- [x] `design.md` §2 Flux 决策表存在且每行含采纳/不采纳 + 理由（live repo 可读）。
+- [x] §4/§5 字段分类含 5 项新字段 + `'area'` 类型（与 schema 一致）。
 
 ### Phase 2 - schema + definition 字段声明
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/chart-schemas.ts`、`packages/flux-renderers-data/src/data-renderer-definitions.ts`
 
 - Item Types: `Fix`
 
-- [ ] `ChartType` 加 `'area'`：`'bar' | 'line' | 'pie' | 'scatter' | 'area'`。
-- [ ] `ChartSchema` 加 `legend?: boolean`、`stacked?: boolean`、`grid?: boolean`、`colors?: string[]`。
-- [ ] `data-renderer-definitions.ts` chart definition `fields` 加 `{key:'legend',kind:'prop'}`、`{key:'stacked',kind:'prop'}`、`{key:'grid',kind:'prop'}`、`{key:'colors',kind:'prop'}`。
+- [x] `ChartType` 加 `'area'`：`'bar' | 'line' | 'pie' | 'scatter' | 'area'`。
+- [x] `ChartSchema` 加 `legend?: boolean`、`stacked?: boolean`、`grid?: boolean`、`colors?: string[]`。
+- [x] `data-renderer-definitions.ts` chart definition `fields` 加 `{key:'legend',kind:'prop'}`、`{key:'stacked',kind:'prop'}`、`{key:'grid',kind:'prop'}`、`{key:'colors',kind:'prop'}`。
 
 Exit Criteria:
 
-- [ ] `chart-schemas.ts` 中 `ChartType` 含 `'area'`、`ChartSchema` 含 4 新字段（live repo 可读）。
-- [ ] definition `fields` 含 4 新字段。
-- [ ] 局部 typecheck 通过（`pnpm --filter @nop-chaos/flux-renderers-data typecheck`）。
+- [x] `chart-schemas.ts` 中 `ChartType` 含 `'area'`、`ChartSchema` 含 4 新字段（live repo 可读）。
+- [x] definition `fields` 含 4 新字段。
+- [x] 局部 typecheck 通过（`pnpm --filter @nop-chaos/flux-renderers-data typecheck`）。
 
 ### Phase 3 - 视觉配置实现（area + legend + stacked + grid + colors）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/chart-renderer.tsx`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] `isChartType` L43-45 加 `'area'`；`renderChart()` 新增 area 分支（`AreaChart` + `CartesianGrid`(受 gate) + `ChartTooltip` + `ChartLegend`(受 gate) + `Area type="monotone" dataKey=... stackId?(stacked) stroke/fill`）。
-- [ ] `legend` 消费：`showLegend = props.props.legend ?? hasMultipleSeries`（显式值覆盖启发式）；所有 `hasMultipleSeries && <ChartLegend>` 改为 `showLegend && <ChartLegend>`。
-- [ ] `stacked` 消费：bar/line/area 系列在 `stacked:true` 时加 `stackId="a"`；pie/scatter 忽略。
-- [ ] `grid` 消费：`showGrid = props.props.grid ?? true`；cartesian 分支的 `<CartesianGrid>` 改为条件渲染；pie 不受影响。
-- [ ] `colors` 消费：`const palette = (Array.isArray(colors) && colors.length>0) ? colors : COLORS;` 替换**所有** `COLORS` 引用（含 `COLORS[i % COLORS.length]` 6 处 L117/131/138/225/277/302，与 `COLORS[0]` 单 series fallback 3 处 L121/283/306）；取色统一用 `palette[i % palette.length]`，单 series fallback 用 `palette[0]`。
-- [ ] 缺省（4 新字段均未设）行为与现状完全一致（无回归）。
+> 执行期裁定（live repo truth）：recharts v3.8.1 的 `Line` 类型**不再暴露 `stackId`**（仅 `Bar`/`Area` 的 `.d.ts` 含 `stackId?: StackId`，`Line.d.ts` 无）。故 `stacked` 实际作用于 bar/area（与 recharts 原生能力一致），line 类型忽略 `stacked`。design.md §2/§4 已同步该 live 事实；plan 原文「bar/line/area」按 live recharts 类型修正为「bar/area」。
+
+- [x] `isChartType` L43-45 加 `'area'`；`renderChart()` 新增 area 分支（`AreaChart` + `CartesianGrid`(受 gate) + `ChartTooltip` + `ChartLegend`(受 gate) + `Area type="monotone" dataKey=... stackId?(stacked) stroke/fill`）。
+- [x] `legend` 消费：`showLegend = props.props.legend ?? hasMultipleSeries`（显式值覆盖启发式）；所有 `hasMultipleSeries && <ChartLegend>` 改为 `showLegend && <ChartLegend>`。
+- [x] `stacked` 消费：bar/area 系列在 `stacked:true` 时加 `stackId="a"`；line（recharts v3 不支持）/pie/scatter 忽略。
+- [x] `grid` 消费：`showGrid = props.props.grid ?? true`；cartesian 分支的 `<CartesianGrid>` 改为条件渲染；pie 不受影响。
+- [x] `colors` 消费：`const palette = (Array.isArray(colors) && colors.length>0) ? colors : COLORS;` 替换**所有** `COLORS` 引用（含 `COLORS[i % COLORS.length]` 6 处 L117/131/138/225/277/302，与 `COLORS[0]` 单 series fallback 3 处 L121/283/306）；取色统一用 `palette[i % palette.length]`，单 series fallback 用 `palette[0]`。
+- [x] 缺省（4 新字段均未设）行为与现状完全一致（无回归）。
 
 Exit Criteria:
 
-- [ ] `chartType:'area'` 渲染 `AreaChart`（`simplifyProps` 可观测）。
-- [ ] `legend:false` + 多 series 不渲染 `ChartLegend`；`legend:true` + 单 series 渲染。
-- [ ] `stacked:true` + bar 系列 `Bar` 含 `stackId`；pie 忽略。
-- [ ] `grid:false` 不渲染 `CartesianGrid`；`grid:true`/缺省渲染。
-- [ ] `colors:['#f00']` 系列 0 用 `#f00`，系列 1+ 越界回退默认或循环。
-- [ ] 既有 chart 单测全过（无回归）。
+- [x] `chartType:'area'` 渲染 `AreaChart`（`simplifyProps` 可观测）。
+- [x] `legend:false` + 多 series 不渲染 `ChartLegend`；`legend:true` + 单 series 渲染。
+- [x] `stacked:true` + bar 系列 `Bar` 含 `stackId`；pie 忽略。（line 因 recharts v3 类型缺失而忽略，已记于 design.md）
+- [x] `grid:false` 不渲染 `CartesianGrid`；`grid:true`/缺省渲染。
+- [x] `colors:['#f00']` 系列 0 用 `#f00`，系列 1+ 越界回退默认或循环。
+- [x] 既有 chart 单测全过（无回归）。
 
 ### Phase 4 - focused 单测 + playground demo + e2e
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/__tests__/chart-renderer.unit.test.tsx`、`apps/playground/src/component-lab/renderers/chart-lab-page.tsx`、`tests/e2e/`
 
 - Item Types: `Proof`、`Follow-up`
 
-- [ ] 扩展 `chart-renderer.unit.test.tsx`：先在 recharts mock（L95-108）补 `AreaChart`/`Area`，再用 `simplifyProps` 断言 5 项增强（area 类型 / legend 开关 / stacked stackId / grid 开关 / colors override）+ 缺省无回归 + Failure Paths（chart-type-unknown 回退、stacked-pie-ignored、colors-empty）。
-- [ ] playground demo 新增场景：area chart、stacked bar、grid-off、custom colors、legend-toggle（至少 area + stacked 两场景）。
-- [ ] e2e 新增/扩展：覆盖 area + stacked 关键视觉路径。
+- [x] 扩展 `chart-renderer.unit.test.tsx`：先在 recharts mock（L95-108）补 `AreaChart`/`Area`，再用 `simplifyProps` 断言 5 项增强（area 类型 / legend 开关 / stacked stackId / grid 开关 / colors override）+ 缺省无回归 + Failure Paths（chart-type-unknown 回退、stacked-pie-ignored、colors-empty）。
+- [x] playground demo 新增场景：area chart、stacked bar、grid-off、custom colors、legend-toggle（6 场景：bar / line / area / stacked-bar / custom-colors+grid-off / legend-toggle）。
+- [x] e2e 新增/扩展：覆盖 area + stacked 关键视觉路径（`tests/e2e/component-lab/data-renderers.spec.ts` chart renderer 新增 area + stacked bar 两条）。
 
 Exit Criteria:
 
-- [ ] 新增 focused 单测全 GREEN，覆盖 5 项增强 + Failure Path 回退/忽略语义。
-- [ ] playground demo 可交互（area/stacked 视觉可辨）。
-- [ ] e2e 关键路径通过。
+- [x] 新增 focused 单测全 GREEN，覆盖 5 项增强 + Failure Path 回退/忽略语义。（9 新增 chart 视觉配置用例全过；`flux-renderers-data` 449 tests / 50 files 全过）
+- [x] playground demo 可交互（area/stacked 视觉可辨）。
+- [x] e2e 关键路径通过。（data-renderers.spec.ts 9/9 全过，含 area + stacked bar）
 
 ## Draft Review Record
 
@@ -188,16 +190,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 5 项视觉配置（area/legend/stacked/grid/colors）在 live repo 真实落地（非空壳：recharts 组件 props 可观测）。
-- [ ] 缺省行为无回归（既有 chart 单测全过）。
-- [ ] 必要 focused verification（Phase 4 单测）已完成。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。
-- [ ] `chart/design.md` 已同步到 live baseline（§2 决策表 + §4/§5）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 5 项视觉配置（area/legend/stacked/grid/colors）在 live repo 真实落地（非空壳：recharts 组件 props 可观测）。
+- [x] 缺省行为无回归（既有 chart 单测全过）。
+- [x] 必要 focused verification（Phase 4 单测）已完成。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift。（Line-stackId 为 recharts v3 类型现实，已在 design.md §2/§4 诚实记录，非静默降级）
+- [x] `chart/design.md` 已同步到 live baseline（§2 决策表 + §4/§5）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -227,13 +229,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 全部 4 个 Phase 完成并通过独立 closure audit（fresh session，1 轮 pass）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 closure-audit 子 agent（fresh session，未参与实现；独立核对 live repo）
+- Evidence: 5 项视觉配置经 live 源码逐项核实非空壳——area 分支 chart-renderer.tsx L304-329；showLegend L120 gate 全部 5 处 ChartLegend；stacked 在 Bar L345/Area L321 加 stackId（Line 经 recharts v3.8.1 Line.d.ts 核实确无 stackId，已在 design.md §2/§4 诚实记录）；showGrid L121 gate 全部 4 处 CartesianGrid；palette L123-126 替换所有 COLORS[i] 引用（仅余声明 L37 + 回退 L126）。schema/definition/design.md §2 决策表 + §4/§5 全部同步。验证 GREEN：flux-renderers-data 449 tests/50 files、e2e 9/9（含 area+stacked）、workspace typecheck 49/49、lint 26/26（0 errors）。无静默降级；Line-stackId 为 recharts 类型现实且已记录。Verdict: pass，1 轮完成。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- xAxis/yAxis `min`/`max` domain + `tickFormat` 归后续视觉增强（需扩展 axis schema 形状）。
+- `series` 与 `source` 双入口语义治理（design.md §12）独立评估。
+- `'radar'`/`'radial-bar'` 等更多 recharts 类型归后续按需添加。
+- 若未来 recharts 为 `Line` 恢复 `stackId`，可重新评估 line 堆叠。
