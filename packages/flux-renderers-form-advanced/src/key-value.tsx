@@ -16,7 +16,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
-import { Trash2Icon } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, Trash2Icon } from 'lucide-react';
 import {
   formFieldRules,
   getChildFieldUiState,
@@ -34,11 +34,15 @@ const EMPTY_KEY_VALUE_PAIRS: KeyValuePair[] = [];
 function KeyValueRow(props: {
   pair: KeyValuePair;
   index: number;
+  totalCount: number;
+  minItems: number;
   name: string;
   currentForm: FormRuntime | undefined;
   childBehavior: CompiledValidationBehavior;
   onSync(nextPairs: KeyValuePair[]): void;
   onRemove: (index: number) => void;
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
   pairs: KeyValuePair[];
   disabled?: boolean;
   readOnly?: boolean;
@@ -47,11 +51,15 @@ function KeyValueRow(props: {
   const {
     pair,
     index,
+    totalCount,
+    minItems,
     name,
     currentForm,
     childBehavior,
     onSync,
     onRemove,
+    onMoveUp,
+    onMoveDown,
     pairs,
     disabled,
     readOnly,
@@ -73,9 +81,12 @@ function KeyValueRow(props: {
     behavior: childBehavior,
     fieldState: valueFieldState,
   });
+  const canRemove = totalCount > minItems;
+  const canMoveUp = index > 0;
+  const canMoveDown = index < totalCount - 1;
 
   return (
-    <div className="grid grid-cols-[1fr_1fr_auto] gap-2.5 items-start">
+    <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2.5 items-start">
       <div
         className={keyUi.className}
         data-child-field-visited={keyUi['data-child-field-visited']}
@@ -185,14 +196,51 @@ function KeyValueRow(props: {
         <FieldHint errorMessage={valueUi.error?.message} showError={valueUi.showError} id={valueErrorId} />
       </div>
       <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-slot="key-value-move-up"
+        disabled={disabled || !canMoveUp}
+        aria-label={`Move up entry ${index + 1}`}
+        onClick={() => {
+          if (readOnly || !canMoveUp) {
+            return;
+          }
+          onMoveUp(index);
+        }}
+      >
+        <ChevronUpIcon className="size-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-slot="key-value-move-down"
+        disabled={disabled || !canMoveDown}
+        aria-label={`Move down entry ${index + 1}`}
+        onClick={() => {
+          if (readOnly || !canMoveDown) {
+            return;
+          }
+          onMoveDown(index);
+        }}
+      >
+        <ChevronDownIcon className="size-4" />
+      </Button>
+      <Button
         ref={removeButtonRef}
         type="button"
         variant="ghost"
         size="sm"
-        disabled={disabled}
+        disabled={disabled || !canRemove}
         className="hover:text-destructive"
         aria-label={`${t('flux.form.remove')} entry ${index + 1}`}
-        onClick={() => onRemove(index)}
+        onClick={() => {
+          if (!canRemove) {
+            return;
+          }
+          onRemove(index);
+        }}
       >
         <Trash2Icon className="size-4" />
       </Button>
@@ -228,6 +276,14 @@ function keyValuePairsEqual(a: KeyValuePair[], b: KeyValuePair[]): boolean {
 export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
   const name = String(props.props.name ?? '');
   const hasName = name.length > 0;
+  const minItems =
+    typeof props.props.minItems === 'number' && Number.isFinite(props.props.minItems)
+      ? Math.max(0, Math.floor(props.props.minItems))
+      : 1;
+  const maxItems =
+    typeof props.props.maxItems === 'number' && Number.isFinite(props.props.maxItems)
+      ? Math.max(0, Math.floor(props.props.maxItems))
+      : undefined;
   const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.props.disabled,
     required: props.props.required,
@@ -327,6 +383,41 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     [currentForm, name, pairs, syncField],
   );
 
+  const handleMove = React.useCallback(
+    (index: number, to: number) => {
+      if (index === to || to < 0 || to >= pairs.length) {
+        return;
+      }
+
+      const nextPairs = pairs.slice();
+      const [moved] = nextPairs.splice(index, 1);
+      if (!moved) {
+        return;
+      }
+      nextPairs.splice(to, 0, moved);
+      pairsRef.current = nextPairs;
+
+      if (currentForm && name) {
+        currentForm.moveValue(name, index, to);
+        if (shouldValidateOn(name, currentForm, 'change')) {
+          void currentForm.validateField(name, 'change');
+        }
+        return;
+      }
+
+      syncField(nextPairs);
+    },
+    [currentForm, name, pairs, syncField],
+  );
+
+  const handleMoveUp = React.useCallback((index: number) => handleMove(index, index - 1), [handleMove]);
+  const handleMoveDown = React.useCallback(
+    (index: number) => handleMove(index, index + 1),
+    [handleMove],
+  );
+
+  const atMaxItems = maxItems !== undefined && pairs.length >= maxItems;
+
   React.useEffect(() => {
     if (!currentForm || !name) {
       return;
@@ -403,11 +494,15 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             key={pair.id}
             pair={pair}
             index={index}
+            totalCount={pairs.length}
+            minItems={minItems}
             name={name}
             currentForm={currentForm}
             childBehavior={childBehavior}
             onSync={syncField}
             onRemove={handleRemove}
+            onMoveUp={handleMoveUp}
+            onMoveDown={handleMoveDown}
             pairs={pairs}
             disabled={presentation.effectiveDisabled || presentation.readOnly}
             readOnly={presentation.readOnly}
@@ -421,9 +516,9 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
         type="button"
         variant="outline"
         size="sm"
-        disabled={presentation.effectiveDisabled || presentation.readOnly}
+        disabled={presentation.effectiveDisabled || presentation.readOnly || atMaxItems}
         onClick={() => {
-          if (presentation.readOnly) {
+          if (presentation.readOnly || atMaxItems) {
             return;
           }
 
@@ -463,13 +558,32 @@ export const keyValueRendererDefinition: RendererDefinition = {
     },
     collectRules(schema: BaseSchema) {
       const keyValueSchema = schema as KeyValueSchema;
+      const configuredMinItems =
+        typeof keyValueSchema.minItems === 'number'
+          ? Math.max(0, Math.floor(keyValueSchema.minItems))
+          : 1;
       const rules: ValidationRule[] = [
         {
           kind: 'minItems',
-          value: 1,
-          message: `${schema.label ?? schema.name ?? 'Field'} requires at least one entry`,
+          value: configuredMinItems,
+          message:
+            configuredMinItems <= 1
+              ? `${schema.label ?? schema.name ?? 'Field'} requires at least one entry`
+              : `${schema.label ?? schema.name ?? 'Field'} requires at least ${configuredMinItems} entries`,
         },
       ];
+
+      if (typeof keyValueSchema.maxItems === 'number') {
+        const configuredMaxItems = Math.max(0, Math.floor(keyValueSchema.maxItems));
+        rules.push({
+          kind: 'maxItems',
+          value: configuredMaxItems,
+          message:
+            configuredMaxItems <= 1
+              ? `${schema.label ?? schema.name ?? 'Field'} must contain at most one entry`
+              : `${schema.label ?? schema.name ?? 'Field'} must contain at most ${configuredMaxItems} entries`,
+        });
+      }
 
       if (keyValueSchema.uniqueKeys) {
         rules.push({

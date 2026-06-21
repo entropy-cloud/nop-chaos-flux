@@ -6,6 +6,7 @@ import type {
   RendererComponentProps,
   RendererDefinition,
   RuntimeFieldRegistration,
+  ValidationRule,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import {
@@ -15,7 +16,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
-import { Trash2Icon } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, Trash2Icon } from 'lucide-react';
 import {
   formFieldRules,
   getChildFieldUiState,
@@ -33,11 +34,15 @@ const EMPTY_ARRAY_EDITOR_ITEMS: ArrayEditorItem[] = [];
 function ArrayEditorRow(props: {
   item: ArrayEditorItem;
   index: number;
+  totalCount: number;
+  minItems: number;
   name: string;
   currentForm: FormRuntime | undefined;
   childBehavior: CompiledValidationBehavior;
   onSync(nextItems: ArrayEditorItem[]): void;
   onRemove(index: number): void;
+  onMoveUp(index: number): void;
+  onMoveDown(index: number): void;
   items: ArrayEditorItem[];
   itemLabel?: string;
   disabled?: boolean;
@@ -47,11 +52,15 @@ function ArrayEditorRow(props: {
   const {
     item,
     index,
+    totalCount,
+    minItems,
     name,
     currentForm,
     childBehavior,
     onSync,
     onRemove,
+    onMoveUp,
+    onMoveDown,
     items,
     itemLabel,
     disabled,
@@ -66,9 +75,13 @@ function ArrayEditorRow(props: {
     behavior: childBehavior,
     fieldState: itemFieldState,
   });
+  const labelBase = itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`;
+  const canRemove = totalCount > minItems;
+  const canMoveUp = index > 0;
+  const canMoveDown = index < totalCount - 1;
 
   return (
-    <div className="grid grid-cols-[1fr_auto] gap-2.5 items-start">
+    <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2.5 items-start">
       <div
         className={itemUi.className}
         data-child-field-visited={itemUi['data-child-field-visited']}
@@ -128,11 +141,43 @@ function ArrayEditorRow(props: {
         type="button"
         variant="ghost"
         size="sm"
-        disabled={disabled}
-        className="hover:text-destructive"
-        aria-label={`${t('flux.form.remove')} ${itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}`}
+        data-slot="array-editor-move-up"
+        disabled={disabled || !canMoveUp}
+        aria-label={`Move up ${labelBase}`}
         onClick={() => {
-          if (readOnly) {
+          if (readOnly || !canMoveUp) {
+            return;
+          }
+          onMoveUp(index);
+        }}
+      >
+        <ChevronUpIcon className="size-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-slot="array-editor-move-down"
+        disabled={disabled || !canMoveDown}
+        aria-label={`Move down ${labelBase}`}
+        onClick={() => {
+          if (readOnly || !canMoveDown) {
+            return;
+          }
+          onMoveDown(index);
+        }}
+      >
+        <ChevronDownIcon className="size-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        disabled={disabled || !canRemove}
+        className="hover:text-destructive"
+        aria-label={`${t('flux.form.remove')} ${labelBase}`}
+        onClick={() => {
+          if (readOnly || !canRemove) {
             return;
           }
 
@@ -174,6 +219,14 @@ function arrayItemsEqual(a: ArrayEditorItem[], b: ArrayEditorItem[]): boolean {
 export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
   const name = String(props.props.name ?? '');
   const hasName = name.length > 0;
+  const minItems =
+    typeof props.props.minItems === 'number' && Number.isFinite(props.props.minItems)
+      ? Math.max(0, Math.floor(props.props.minItems))
+      : 1;
+  const maxItems =
+    typeof props.props.maxItems === 'number' && Number.isFinite(props.props.maxItems)
+      ? Math.max(0, Math.floor(props.props.maxItems))
+      : undefined;
   const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.props.disabled,
     required: props.props.required,
@@ -290,6 +343,44 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
     [currentForm, items, name, syncItems],
   );
 
+  const handleMove = React.useCallback(
+    (index: number, to: number) => {
+      if (index === to || to < 0 || to >= items.length) {
+        return;
+      }
+
+      const nextItems = items.slice();
+      const [moved] = nextItems.splice(index, 1);
+      if (!moved) {
+        return;
+      }
+      nextItems.splice(to, 0, moved);
+      itemsRef.current = nextItems;
+
+      if (currentForm && name) {
+        currentForm.moveValue(name, index, to);
+        if (shouldValidateOn(name, currentForm, 'change')) {
+          void currentForm.validateField(name, 'change');
+        }
+        return;
+      }
+
+      syncItems(nextItems);
+    },
+    [currentForm, items, name, syncItems],
+  );
+
+  const handleMoveUp = React.useCallback(
+    (index: number) => handleMove(index, index - 1),
+    [handleMove],
+  );
+  const handleMoveDown = React.useCallback(
+    (index: number) => handleMove(index, index + 1),
+    [handleMove],
+  );
+
+  const atMaxItems = maxItems !== undefined && items.length >= maxItems;
+
   React.useEffect(() => {
     if (!currentForm || !name) {
       return;
@@ -344,11 +435,15 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             key={item.id}
             item={item}
             index={index}
+            totalCount={items.length}
+            minItems={minItems}
             name={name}
             currentForm={currentForm}
             childBehavior={childBehavior}
             onSync={syncItems}
             onRemove={handleRemove}
+            onMoveUp={handleMoveUp}
+            onMoveDown={handleMoveDown}
             items={items}
             itemLabel={props.props.itemLabel ? String(props.props.itemLabel) : undefined}
             disabled={presentation.effectiveDisabled || presentation.readOnly}
@@ -368,9 +463,9 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
         type="button"
         variant="outline"
         size="sm"
-        disabled={presentation.effectiveDisabled || presentation.readOnly}
+        disabled={presentation.effectiveDisabled || presentation.readOnly || atMaxItems}
         onClick={() => {
-          if (presentation.readOnly) {
+          if (presentation.readOnly || atMaxItems) {
             return;
           }
 
@@ -411,13 +506,33 @@ export const arrayEditorRendererDefinition: RendererDefinition = {
       return typeof schema.name === 'string' ? schema.name : undefined;
     },
     collectRules(schema: BaseSchema) {
-      return [
+      const arraySchema = schema as ArrayEditorSchema;
+      const configuredMinItems =
+        typeof arraySchema.minItems === 'number' ? Math.max(0, Math.floor(arraySchema.minItems)) : 1;
+      const rules: ValidationRule[] = [
         {
           kind: 'minItems',
-          value: 1,
-          message: `${schema.label ?? schema.name ?? 'Field'} requires at least one item`,
+          value: configuredMinItems,
+          message:
+            configuredMinItems <= 1
+              ? `${schema.label ?? schema.name ?? 'Field'} requires at least one item`
+              : `${schema.label ?? schema.name ?? 'Field'} requires at least ${configuredMinItems} items`,
         },
       ];
+
+      if (typeof arraySchema.maxItems === 'number') {
+        const configuredMaxItems = Math.max(0, Math.floor(arraySchema.maxItems));
+        rules.push({
+          kind: 'maxItems',
+          value: configuredMaxItems,
+          message:
+            configuredMaxItems <= 1
+              ? `${schema.label ?? schema.name ?? 'Field'} must contain at most one item`
+              : `${schema.label ?? schema.name ?? 'Field'} must contain at most ${configuredMaxItems} items`,
+        });
+      }
+
+      return rules;
     },
   },
   frameRootTag: 'div',

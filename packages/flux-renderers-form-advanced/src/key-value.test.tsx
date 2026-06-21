@@ -52,6 +52,7 @@ describe('key-value renderer', () => {
               type: 'key-value',
               name: 'settings',
               addLabel: 'Add pair',
+              minItems: 0,
             },
           ],
         }}
