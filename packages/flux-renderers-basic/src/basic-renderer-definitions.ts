@@ -347,8 +347,17 @@ export const basicRendererDefinitions: RendererDefinition[] = [
         });
       }
     },
+    componentCapabilityContracts: [
+      {
+        handle: 'refresh',
+        displayName: 'Refresh',
+        description:
+          'Re-evaluate loadAction and reload the dynamic schema. Aborts any in-flight request and returns {ok:true} on success or {ok:false, error} when loadAction is missing or evaluation throws.',
+      },
+    ],
     fields: [
       { key: 'loadAction', kind: 'event' },
+      { key: 'autoLoad', kind: 'prop', valueType: 'boolean' },
       { key: 'body', kind: 'region', regionKey: 'body' },
     ],
   },

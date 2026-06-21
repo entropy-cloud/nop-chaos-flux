@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type {
   BaseSchema,
+  ComponentCapabilityResult,
+  ComponentHandle,
   DynamicRendererSchema,
   RendererComponentProps,
 } from '@nop-chaos/flux-core';
-import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentComponentRegistry, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { cn, Spinner } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { asReactNode } from './utils.js';
@@ -28,6 +30,8 @@ type DynamicRendererState = {
   schema: BaseSchema | null;
 };
 
+type LoadAction = NonNullable<DynamicRendererSchema['loadAction']>;
+
 function getLoadActionKey(loadAction?: DynamicRendererSchema['loadAction']): string | undefined {
   if (!loadAction) {
     return undefined;
@@ -40,7 +44,18 @@ function getLoadActionKey(loadAction?: DynamicRendererSchema['loadAction']): str
   }
 }
 
-function createDynamicRendererState(loadAction?: DynamicRendererSchema['loadAction']): DynamicRendererState {
+function createDynamicRendererState(
+  loadAction: DynamicRendererSchema['loadAction'] | undefined,
+  autoLoad: boolean,
+): DynamicRendererState {
+  if (!autoLoad) {
+    return {
+      loadActionKey: getLoadActionKey(loadAction),
+      loading: false,
+      error: undefined,
+      schema: null,
+    };
+  }
   return {
     loadActionKey: getLoadActionKey(loadAction),
     loading: Boolean(loadAction),
@@ -53,6 +68,8 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
   'use no memo';
 
   const scope = useRenderScope();
+  const componentRegistry = useCurrentComponentRegistry();
+  const autoLoad = props.props.autoLoad !== false;
   const loadActionKey = useScopeSelector(
     () =>
       getLoadActionKey(
@@ -65,61 +82,141 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
   const loadAction = props.helpers.evaluate(props.schema.loadAction, scope) as
     | DynamicRendererSchema['loadAction']
     | undefined;
-  const [state, setState] = useState<DynamicRendererState>(() => createDynamicRendererState(loadAction));
-  const visibleState = state.loadActionKey === loadActionKey ? state : createDynamicRendererState(loadAction);
+  const [state, setState] = useState<DynamicRendererState>(
+    () => createDynamicRendererState(loadAction, autoLoad),
+  );
+  const visibleState =
+    state.loadActionKey === loadActionKey
+      ? state
+      : createDynamicRendererState(loadAction, autoLoad);
+
+  const loadSchemaRef = useRef<{
+    run: () => Promise<ComponentCapabilityResult>;
+    abort: () => void;
+  } | null>(null);
 
   useEffect(() => {
-    const evaluatedLoadAction = props.helpers.evaluate(props.schema.loadAction, scope) as
-      | DynamicRendererSchema['loadAction']
-      | undefined;
+    let controller: AbortController | null = null;
 
-    if (!evaluatedLoadAction) {
-      return;
-    }
+    const run = async (): Promise<ComponentCapabilityResult> => {
+      loadSchemaRef.current?.abort();
 
-    const controller = new AbortController();
-
-    const loadSchema = async () => {
+      let evaluatedLoadAction: DynamicRendererSchema['loadAction'] | undefined;
       try {
-        const result = await props.helpers.dispatch(evaluatedLoadAction, { signal: controller.signal });
+        evaluatedLoadAction = props.helpers.evaluate(props.schema.loadAction, scope) as
+          | DynamicRendererSchema['loadAction']
+          | undefined;
+      } catch (err) {
+        return { ok: false, error: err };
+      }
 
-        if (controller.signal.aborted) return;
+      if (!evaluatedLoadAction) {
+        return {
+          ok: false,
+          error: new Error('dynamic-renderer loadAction is not configured'),
+        };
+      }
+
+      const key = getLoadActionKey(evaluatedLoadAction);
+      controller = new AbortController();
+      setState({ loadActionKey: key, loading: true, error: undefined, schema: null });
+
+      try {
+        const result = await props.helpers.dispatch(evaluatedLoadAction as LoadAction, {
+          signal: controller.signal,
+        });
+
+        if (controller.signal.aborted) {
+          return { ok: false, cancelled: true };
+        }
 
         if (!result.ok) {
           setState({
-            loadActionKey,
+            loadActionKey: key,
             loading: false,
             error: result.error ?? new Error('dynamic-renderer loadAction failed'),
             schema: null,
           });
-          return;
+          return { ok: false, error: result.error };
         }
 
         const nextSchema = isActionResult(result.data) ? result.data.data : result.data;
 
         if (!isBaseSchemaLike(nextSchema)) {
           setState({
-            loadActionKey,
+            loadActionKey: key,
             loading: false,
             error: 'Invalid schema received from action',
             schema: null,
           });
-          return;
+          return { ok: false, error: 'Invalid schema received from action' };
         }
 
-        setState({ loadActionKey, loading: false, error: undefined, schema: nextSchema });
+        setState({ loadActionKey: key, loading: false, error: undefined, schema: nextSchema });
+        return { ok: true };
       } catch (err) {
-        if (controller.signal.aborted) return;
-        setState({ loadActionKey, loading: false, error: err, schema: null });
+        if (controller.signal.aborted) {
+          return { ok: false, cancelled: true };
+        }
+        setState({ loadActionKey: key, loading: false, error: err, schema: null });
+        return { ok: false, error: err };
       }
     };
 
-    loadSchema();
+    loadSchemaRef.current = {
+      run,
+      abort: () => {
+        controller?.abort();
+      },
+    };
+
+    if (autoLoad && loadActionKey) {
+      void run();
+    }
 
     return () => {
-      controller.abort();
+      controller?.abort();
     };
-  }, [loadActionKey, props.helpers, props.schema.loadAction, scope]);
+  }, [loadActionKey, autoLoad, props.helpers, props.schema.loadAction, scope]);
+
+  useEffect(() => {
+    if (!componentRegistry) {
+      return;
+    }
+
+    const handle: ComponentHandle = {
+      id: props.id,
+      type: 'dynamic-renderer',
+      capabilities: {
+        invoke(method) {
+          if (method !== 'refresh') {
+            return Promise.resolve({
+              ok: false,
+              error: new Error(`Unsupported dynamic-renderer handle method: ${method}`),
+            });
+          }
+
+          const entry = loadSchemaRef.current;
+          if (!entry) {
+            return Promise.resolve({
+              ok: false,
+              error: new Error('dynamic-renderer load pipeline is not initialized'),
+            });
+          }
+
+          return entry.run();
+        },
+        hasMethod(method) {
+          return method === 'refresh';
+        },
+        listMethods() {
+          return ['refresh'];
+        },
+      },
+    };
+
+    return componentRegistry.register(handle, { cid: props.meta.cid });
+  }, [componentRegistry, props.id, props.meta.cid]);
 
   if (visibleState.error) {
     return (

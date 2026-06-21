@@ -251,4 +251,11 @@ export interface DynamicRendererSchema extends BaseSchema {
   type: 'dynamic-renderer';
   loadAction: ActionSchemaLike;
   body?: SchemaInput;
+  /**
+   * Whether to automatically trigger `loadAction` on mount. Defaults to `true`
+   * (backward compatible). When `false`, the renderer skips the auto-load on
+   * mount and stays in the `body` region (or empty) state until
+   * `component:refresh` is invoked.
+   */
+  autoLoad?: boolean;
 }

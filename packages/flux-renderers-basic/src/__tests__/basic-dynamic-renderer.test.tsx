@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
@@ -260,6 +260,263 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
     })).toEqual(
       expect.arrayContaining(['/api/badge', '/api/text']),
     );
+    cleanup();
+  });
+});
+
+describe('basicRendererDefinitions dynamic-renderer autoLoad + component:refresh (E3)', () => {
+  it('publishes autoLoad as a boolean prop field and refresh as a capability contract', () => {
+    const dynamicRenderer = basicRendererDefinitions.find((definition) => definition.type === 'dynamic-renderer');
+    expect(dynamicRenderer?.fields?.find((field) => field.key === 'autoLoad')?.valueType).toBe('boolean');
+    expect(dynamicRenderer?.componentCapabilityContracts?.map((contract) => contract.handle)).toEqual(['refresh']);
+  });
+
+  it('autoload-false-no-fire: autoLoad:false skips fetcher on mount and shows body region without spinner', () => {
+    const fetcher = createMockFetcher(async () => ({
+      ok: true,
+      status: 200,
+      data: { type: 'text', text: 'Should not load' },
+    }));
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dynamic-renderer',
+              id: 'dyn',
+              loadAction: { action: 'ajax', args: { url: '/api/schema' } },
+              autoLoad: false,
+              body: { type: 'text', text: 'Idle body' },
+            },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-slot="dynamic-renderer-loading"]')).toBeNull();
+    expect(document.querySelector('[data-loading]')).toBeNull();
+    expect(screen.getByText('Idle body')).toBeTruthy();
+    cleanup();
+  });
+
+  it('refresh-triggers-load: component:refresh triggers fetcher and schema replaces body', async () => {
+    const fetcher = createMockFetcher(async () => ({
+      ok: true,
+      status: 200,
+      data: { type: 'text', text: 'Refreshed schema' },
+    }));
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dynamic-renderer',
+              id: 'dyn',
+              loadAction: { action: 'ajax', args: { url: '/api/schema' } },
+              autoLoad: false,
+              body: { type: 'text', text: 'Idle body' },
+            },
+            {
+              type: 'button',
+              label: 'Refresh',
+              onClick: { action: 'component:refresh', componentId: 'dyn' },
+            },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(fetcher).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+
+    await waitFor(() => expect(screen.getByText('Refreshed schema')).toBeTruthy());
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    cleanup();
+  });
+
+  it('refresh-no-loadaction: component:refresh without loadAction returns ok:false and does not change state', async () => {
+    const fetcher = createMockFetcher(async () => ({
+      ok: true,
+      status: 200,
+      data: { type: 'text', text: 'Should not load' },
+    }));
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dynamic-renderer',
+              id: 'dyn',
+              autoLoad: false,
+              body: { type: 'text', text: 'Idle body' },
+            },
+            {
+              type: 'button',
+              label: 'Set Flag',
+              onClick: {
+                action: 'component:refresh',
+                componentId: 'dyn',
+                onError: {
+                  action: 'setValue',
+                  args: { path: 'refreshError', value: 'caught' },
+                },
+              },
+            },
+            { type: 'text', text: 'Error: ${refreshError}' },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Set Flag' }));
+
+    await waitFor(() => expect(screen.getByText('Error: caught')).toBeTruthy());
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(screen.getByText('Idle body')).toBeTruthy();
+    cleanup();
+  });
+
+  it('refresh-while-loading: second refresh aborts the in-flight request and starts a new one', async () => {
+    const pendingResolves: Array<(value: { ok: boolean; status: number; data: { type: string; text: string } }) => void> =
+      [];
+    const fetcher = vi.fn(
+      async () =>
+        new Promise((resolve) => {
+          pendingResolves.push(resolve);
+        }),
+    ) as RendererEnv['fetcher'];
+
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dynamic-renderer',
+              id: 'dyn',
+              loadAction: { action: 'ajax', args: { url: '/api/schema' } },
+              autoLoad: false,
+              body: { type: 'text', text: 'Idle body' },
+            },
+            {
+              type: 'button',
+              label: 'Refresh',
+              onClick: { action: 'component:refresh', componentId: 'dyn' },
+            },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
+
+    pendingResolves.shift()?.({ ok: true, status: 200, data: { type: 'text', text: 'First schema' } });
+    pendingResolves.shift()?.({ ok: true, status: 200, data: { type: 'text', text: 'Second schema' } });
+
+    await waitFor(() => expect(screen.getByText('Second schema')).toBeTruthy());
+    expect(screen.queryByText('First schema')).toBeNull();
+    cleanup();
+  });
+
+  it('refresh-eval-error: refresh returns ok:false when dispatch fails (error propagation)', async () => {
+    const fetcher = createMockFetcher(async () => ({
+      ok: false,
+      status: 500,
+      data: null,
+    }));
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dynamic-renderer',
+              id: 'dyn',
+              loadAction: { action: 'ajax', args: { url: '/api/fail' } },
+              autoLoad: false,
+              body: { type: 'text', text: 'Idle body' },
+            },
+            {
+              type: 'button',
+              label: 'Set Flag',
+              onClick: {
+                action: 'component:refresh',
+                componentId: 'dyn',
+                onError: {
+                  action: 'setValue',
+                  args: { path: 'refreshFailed', value: 'caught' },
+                },
+              },
+            },
+            { type: 'text', text: 'Failed: ${refreshFailed}' },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Set Flag' }));
+
+    await waitFor(() => expect(screen.getByText('Failed: caught')).toBeTruthy());
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    cleanup();
+  });
+
+  it('default autoLoad:true keeps current behavior (regression guard)', async () => {
+    const fetcher = createMockFetcher(async () => ({
+      ok: true,
+      status: 200,
+      data: { type: 'text', text: 'Auto-loaded' },
+    }));
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dynamic-renderer',
+              loadAction: { action: 'ajax', args: { url: '/api/schema' } },
+              body: { type: 'text', text: 'Loading...' },
+            },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Auto-loaded')).toBeTruthy());
+    expect(fetcher).toHaveBeenCalledTimes(1);
     cleanup();
   });
 });
