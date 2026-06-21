@@ -9,10 +9,10 @@
 
 ## 2. 参考实现
 
-| 来源                  | 文件/组件                                         | 行数 |
-| --------------------- | ------------------------------------------------- | ---- |
-| AMIS PullRefresh      | `packages/amis-ui/src/components/PullRefresh.tsx` | ~277 |
-| Vant van-pull-refresh | Vant 4                                            | —    |
+| 来源                  | 文件/组件                                              | 行数 |
+| --------------------- | ------------------------------------------------------ | ---- |
+| AMIS PullRefresh      | `amis/packages/amis-ui/src/components/PullRefresh.tsx` | ~277 |
+| Vant van-pull-refresh | Vant 4                                                 | —    |
 
 ## 3. Schema 设计
 

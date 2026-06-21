@@ -6,11 +6,11 @@
 
 ## 2. 来源 & 参考
 
-| 来源              | 位置                                      | 行数     |
-| ----------------- | ----------------------------------------- | -------- |
-| AMIS useTouch     | `packages/amis-ui/src/hooks/use-touch.ts` | ~100     |
-| Vant useTouch     | `vant/packages/vant-use/src/useTouch`     | 内部实现 |
-| react-use-gesture | 第三方库                                  | —        |
+| 来源              | 位置                                           | 行数     |
+| ----------------- | ---------------------------------------------- | -------- |
+| AMIS useTouch     | `amis/packages/amis-ui/src/hooks/use-touch.ts` | ~100     |
+| Vant useTouch     | `vant/packages/vant-use/src/useTouch`          | 内部实现 |
+| react-use-gesture | 第三方库                                       | —        |
 
 ## 3. API 设计
 
