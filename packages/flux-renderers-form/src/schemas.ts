@@ -213,6 +213,8 @@ export interface TagListSchema extends InputSchema {
 export interface KeyValueSchema extends InputSchema {
   addLabel?: string;
   uniqueKeys?: boolean | { message?: string };
+  minItems?: number;
+  maxItems?: number;
 }
 
 export interface KeyValuePair {
@@ -223,6 +225,8 @@ export interface KeyValuePair {
 
 export interface ArrayEditorSchema extends InputSchema {
   itemLabel?: string;
+  minItems?: number;
+  maxItems?: number;
 }
 
 export interface ArrayEditorItem {

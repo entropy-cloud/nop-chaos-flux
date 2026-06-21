@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent } from 'react';
+import { useEffect, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { numberAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { Button, cn, Input } from '@nop-chaos/ui';
@@ -8,6 +8,9 @@ import type { InputNumberSchema } from '../schemas.js';
 
 const numericAdapter = numberAdapter();
 const INPUT_NUMBER_METHODS = ['clear', 'reset', 'focus'] as const;
+
+const LONG_PRESS_INITIAL_DELAY_MS = 400;
+const LONG_PRESS_REPEAT_INTERVAL_MS = 80;
 
 function clamp(value: number, min: number | undefined, max: number | undefined): number {
   let result = value;
@@ -45,6 +48,28 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const initialValueRef = useRef<number | undefined>(numericValue);
+  const latestValueRef = useRef<number | undefined>(numericValue);
+
+  useEffect(() => {
+    latestValueRef.current = numericValue;
+  }, [numericValue]);
+
+  const longPressInitialTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressIntervalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const steppedViaLongPressRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (longPressInitialTimerRef.current) {
+        clearTimeout(longPressInitialTimerRef.current);
+        longPressInitialTimerRef.current = null;
+      }
+      if (longPressIntervalTimerRef.current) {
+        clearInterval(longPressIntervalTimerRef.current);
+        longPressIntervalTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useInputComponentHandle({
     id: props.id,
@@ -63,6 +88,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
   });
 
   function handleBlur() {
+    cancelLongPress();
     if (numericValue !== undefined) {
       const clamped = clamp(numericValue, min, max);
       const withPrecision = applyPrecision(clamped, precision);
@@ -73,16 +99,80 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
     handlers.onBlur();
   }
 
-  function handleStep(direction: 1 | -1) {
+  function commitStep(direction: 1 | -1): boolean {
     if (!presentation.interactive) {
-      return;
+      return false;
     }
 
-    const current = numericValue ?? 0;
+    const current = latestValueRef.current ?? 0;
     let next = current + direction * step;
     next = clamp(next, min, max);
     next = applyPrecision(next, precision);
+
+    if (next === current) {
+      return false;
+    }
+
+    latestValueRef.current = next;
     handlers.onChange(next);
+    return true;
+  }
+
+  function handleStep(direction: 1 | -1) {
+    commitStep(direction);
+  }
+
+  function cancelLongPress() {
+    if (longPressInitialTimerRef.current) {
+      clearTimeout(longPressInitialTimerRef.current);
+      longPressInitialTimerRef.current = null;
+    }
+    if (longPressIntervalTimerRef.current) {
+      clearInterval(longPressIntervalTimerRef.current);
+      longPressIntervalTimerRef.current = null;
+    }
+  }
+
+  function startLongPress(direction: 1 | -1) {
+    steppedViaLongPressRef.current = false;
+    cancelLongPress();
+
+    longPressInitialTimerRef.current = setTimeout(() => {
+      longPressInitialTimerRef.current = null;
+      if (!commitStep(direction)) {
+        return;
+      }
+      steppedViaLongPressRef.current = true;
+
+      longPressIntervalTimerRef.current = setInterval(() => {
+        if (!commitStep(direction)) {
+          if (longPressIntervalTimerRef.current) {
+            clearInterval(longPressIntervalTimerRef.current);
+            longPressIntervalTimerRef.current = null;
+          }
+        }
+      }, LONG_PRESS_REPEAT_INTERVAL_MS);
+    }, LONG_PRESS_INITIAL_DELAY_MS);
+  }
+
+  function handleStepperPointerDown(direction: 1 | -1, event: ReactPointerEvent<HTMLButtonElement>) {
+    if (!presentation.interactive) {
+      return;
+    }
+    event.preventDefault();
+    startLongPress(direction);
+  }
+
+  function handleStepperPointerUp() {
+    cancelLongPress();
+  }
+
+  function handleStepperClick(direction: 1 | -1) {
+    if (steppedViaLongPressRef.current) {
+      steppedViaLongPressRef.current = false;
+      return;
+    }
+    handleStep(direction);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -155,7 +245,10 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
               size="icon-xs"
               className="h-4 w-6 rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
               disabled={!presentation.interactive}
-              onClick={() => handleStep(1)}
+              onPointerDown={(event) => handleStepperPointerDown(1, event)}
+              onPointerUp={handleStepperPointerUp}
+              onPointerLeave={handleStepperPointerUp}
+              onClick={() => handleStepperClick(1)}
             >
               <ChevronUpIcon className="size-3" />
             </Button>
@@ -167,7 +260,10 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
               size="icon-xs"
               className="h-4 w-6 rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
               disabled={!presentation.interactive}
-              onClick={() => handleStep(-1)}
+              onPointerDown={(event) => handleStepperPointerDown(-1, event)}
+              onPointerUp={handleStepperPointerUp}
+              onPointerLeave={handleStepperPointerUp}
+              onClick={() => handleStepperClick(-1)}
             >
               <ChevronDownIcon className="size-3" />
             </Button>
