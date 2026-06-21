@@ -27,6 +27,38 @@ Flux 中推荐分层更清楚：
 - 表单树选择 -> future `input-tree` / `tree-select`
 - 纯结构递归 -> `loop + recurse`
 
+### Flux 决策表
+
+> Flux 决策主语。amis 仅作参考之一，**非标尺**。命名对齐 shadcn/ui、请求下沉 data-source + action、不学 amis 散落条件属性与皮肤枚举（X3 §1/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。本表由 E3 plan（`docs/plans/2026-06-22-0330-3-e3-tree-display-search-icons-plan.md`）补齐，X5 P0/P1 硬前置已覆盖；`tree` 属 P2，决策表随 E3 按需启动（roadmap 授权）。
+
+| 能力                                                                              | 采纳                                     | 不采纳     | 理由                                                                                                                                                                                                                                                                                                                                                |
+| --------------------------------------------------------------------------------- | ---------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 展开收起（chevron + 整行 click + 键盘 roving focus）                              | **实现**                                 | —          | 当前基线（§13/§14）。`expandOnClickNode` 仅扩 click 入口，不改焦点/导航模型                                                                                                                                                                                                                                                                         |
+| 节点模板 `node` region（绑定 `node/index/depth/key/parentNode`）                  | **实现**                                 | —          | 当前基线（§9）                                                                                                                                                                                                                                                                                                                                      |
+| Empty state（`empty` value-or-region）                                            | **实现**                                 | —          | 当前基线（§10）；搜索无匹配也复用此入口（§10）                                                                                                                                                                                                                                                                                                      |
+| 节点搜索/过滤（本地子串匹配 `labelField` + 自动展开匹配祖先链 + 高亮 + 清空恢复） | **实现**（`searchable: true`，E3）       | —          | 展示树头号 UX 缺口。`searchable` 肯定式布尔（X3 §2 命名）。本地子串过滤已覆盖展示树场景；远程搜索归 data-source（见下）。open-state：父级下发 `searchForcedOpenNodeIds` 受控覆盖子节点本地 `useState`（§8），搜索期间不写本地态，故清空自然恢复快照。高亮 marker `data-slot="tree-search-highlight"`，搜索框 marker `data-slot="tree-search-input"` |
+| 节点图标（从数据字段渲染 Lucide 图标）                                            | **实现**（`showIcon` + `iconField`，E3） | —          | 便捷快捷方式。`node` region 自定义优先：两者同存时 region 胜出，`showIcon`/`iconField` 仅在无 region 的 label 回退路径生效。图标 marker `data-slot="tree-node-icon"`。注意 input-tree 的 `showIcon` 漂移已在 E0b 删字段（input-tree 专属裁定），tree 展示组件独立引入                                                                               |
+| 缩进引导线（按 depth 垂直 guide-line）                                            | **实现**（`showGuideLine: true`，E3）    | —          | 文件树/深树可读性需求。`showGuideLine` 肯定式布尔。每层 depth 渲染一个引导线 spacer，marker `data-slot="tree-guide-line"`，Tailwind `border-l`。缺省不渲染（无回归）                                                                                                                                                                                |
+| 大批量缓解（`TREE_EXPANDED_CHILD_BATCH_SIZE` 增量挂载子节点）                     | **实现**                                 | —          | 当前基线；非视口虚拟化                                                                                                                                                                                                                                                                                                                              |
+| 选择 / 值绑定 / 勾选级联（checkbox/radio + cascade 半选）                         | —                                        | **不采纳** | 表单语义留给 `input-tree`/`tree-select`（§1/§8/§11）。E0b/E2d 已收口 input-tree/tree-select 的 cascade 半选。`tree` 是 interaction-owner 展示组件，不做 form 字段值绑定。`multiple` 字段当前仅驱动 `aria-multiselectable`，无选择逻辑                                                                                                               |
+| 节点拖拽（层级 DnD：跨层级移动、父子重排）                                        | **计划实现（successor/后续）**           | —          | Deferred（`optimization candidate`，见本 plan `Deferred But Adjudicated`）。无共享 dnd 工具：E1c table 行拖拽 `use-row-drag-sort` 为 table 专属原生 HTML5 DnD，绑定 TableRowEntry + orderField 持久化，不可复用；tree 拖拽是层级 DnD 比扁平列表复杂；§8 已明确延后。non-blocking：当前 tree 无值绑定，拖拽不影响展示契约                            |
+| 节点 CRUD（creatable/editable/removable）                                         | **计划实现（successor/后续）**           | —          | `out-of-scope improvement`。§8 延后；CRUD 需 addApi/editApi/deleteApi 请求下沉 data-source + action，属独立编辑能力，非展示 UX                                                                                                                                                                                                                      |
+| 异步懒加载（按需加载子节点）                                                      | **计划实现（successor/后续）**           | —          | `out-of-scope improvement`。属 input-tree/tree-select 范围（E2d 已收口）；tree 显示异步独立评估                                                                                                                                                                                                                                                     |
+| 虚拟滚动（视口虚拟化）                                                            | —                                        | **不采纳** | E2d 已将 tree 显示 renderer 虚拟化 Deferred 为 `out-of-scope`（`Successor Required: no`）。当前 `TREE_EXPANDED_CHILD_BATCH_SIZE=50` 增量挂载缓解首屏                                                                                                                                                                                                |
+| 远程搜索（searchApi）                                                             | —                                        | **不采纳** | 请求下沉 data-source + action（X3 §1/§3，analysis §5「组件级请求」）；本地子串过滤已覆盖展示树场景                                                                                                                                                                                                                                                  |
+| amis `nodeBehavior`/`itemActions`/`enableNodePath`/`unfoldedLevel`                | —                                        | **不采纳** | 归后续评估；当前无对应 Flux 契约需求（Non-Blocking Follow-ups）                                                                                                                                                                                                                                                                                     |
+| amis 组件级 `api`/`initFetch`/`interval`                                          | —                                        | **不采纳** | 请求下沉 data-source + action（X3 §3 amis 不采纳清单）                                                                                                                                                                                                                                                                                              |
+| amis `mobileUI` 双实现                                                            | —                                        | **不采纳** | 响应式归 `mobile-roadmap.md`，不双实现（X3 §3）                                                                                                                                                                                                                                                                                                     |
+
+### 2.1 关键裁定（E3 实现依据）
+
+E3 plan（搜索/图标/引导线）落地时对四条机制作出显式裁定，作为 runtime 实现契约：
+
+1. **搜索 open-state 管理** —— 采用**受控展开覆盖**（非「提升开合态到父」重构）。父 `TreeRenderer` 持有 `searchQuery` 状态，搜索激活时计算 `searchForcedOpenNodeIds`（所有匹配节点的祖先链集合）下发给 `TreeNodeRenderer`；子节点 `effectiveOpen = searchForcedOpenNodeIds.has(id) ? true : localOpen`。搜索期间**不写**子节点本地 `useState`，故清空搜索后本地态自然恢复（= 搜索前快照），无需显式快照/还原逻辑。非匹配、非祖先节点在搜索期间不渲染（DOM 隐藏）。
+2. **`showIcon` 与 `node` region 关系** —— `node` region 自定义优先。若 schema 同时声明 `node` region 与 `showIcon`/`iconField`，region 胜出，`showIcon`/`iconField` 被忽略；`showIcon`/`iconField` 仅在**无 region 的 label 回退路径**生效（在 label 前 prepend Lucide 图标）。
+3. **引导线实现** —— 按 depth 渲染垂直 `border-l` spacer（Tailwind）。`showGuideLine: true` 时，每个 `depth > 0` 的节点行内、chevron 之前渲染 `depth` 个 spacer（每个 `data-slot="tree-guide-line"`，`w-4 border-l border-border`），形成嵌套深度的引导线视觉。缺省不渲染。
+4. **节点拖拽裁定** —— **Deferred**（`optimization candidate`，`Successor Required: no`）。理由：无共享 dnd 工具（E1c table 行拖拽为 table 专属不可复用）+ tree 拖拽是层级 DnD（跨层级移动、父子重排）比扁平列表复杂 + §8 已明确延后。non-blocking：当前 tree 是展示组件无值绑定，拖拽不影响展示契约成立。若未来提取共享 `useFluxDragSort` 抽象（从 E1c table + 本 plan tree），可重新评估。
+
 ## 3. 设计判断
 
 - `tree` 应该保留为独立 UI 组件，而不是 `loop + recurse` 的视觉别名。
@@ -57,6 +89,11 @@ interface TreeSchema extends BaseSchema {
   initiallyExpanded?: boolean | number;
   expandOnClickNode?: boolean;
   statusPath?: string;
+  // E3 树展示 UX 增强（搜索/图标/引导线）
+  searchable?: boolean;
+  showIcon?: boolean;
+  iconField?: string;
+  showGuideLine?: boolean;
 }
 ```
 
@@ -66,9 +103,15 @@ interface TreeSchema extends BaseSchema {
 - `labelField: 'label'`
 - `keyField: 'id'`
 
+E3 新增字段（均缺省不渲染，无回归）：
+
+- `searchable?: boolean`（肯定式布尔，X3 §2 命名）—— 顶部渲染搜索输入框 `data-slot="tree-search-input"`，本地子串过滤 `labelField`；详见 §2.1 裁定 1。
+- `showIcon?: boolean` + `iconField?: string` —— 节点图标便捷快捷方式，从节点数据读 `iconField` 字段经 `resolveLucideIcon` 渲染；`node` region 自定义优先（同存时 region 胜出，图标仅在无 region 的 label 回退路径生效），详见 §2.1 裁定 2。
+- `showGuideLine?: boolean` —— 缩进引导线，按 depth 渲染垂直 `border-l` spacer，详见 §2.1 裁定 3。
+
 ## 6. 字段分类
 
-- `data`、`childrenKey`、`labelField`、`keyField`、`initiallyExpanded`、`expandOnClickNode`、`statusPath`: `value`
+- `data`、`childrenKey`、`labelField`、`keyField`、`initiallyExpanded`、`expandOnClickNode`、`statusPath`、`searchable`、`showIcon`、`iconField`、`showGuideLine`: `value`（prop）
 - `node`: `region`
 - `empty`: `value-or-region`
 
@@ -136,12 +179,50 @@ tree node scope = parent lexical visibility + { node, index, depth, optional key
 }
 ```
 
+### 9.1 节点图标便捷快捷方式（`showIcon`/`iconField`）与 region 的关系
+
+- `node` region 自定义优先：若 schema 同时声明 `node` region 与 `showIcon`/`iconField`，region 胜出，`showIcon`/`iconField` 被忽略（不在 region 输出上叠加图标）。
+- `showIcon`/`iconField` 仅在**无 region 的 label 回退路径**生效：在 `labelField` 文本前 prepend 一个 Lucide 图标（经 `resolveLucideIcon`）。
+- 节点缺 `iconField` 字段 → 该节点不渲染图标（不抛错）；icon 名无法 resolve → `resolveLucideIcon` 兜底（占位图标）。详见 §2.1 裁定 2 与 Failure Path `iconfield-missing`/`icon-name-invalid`。
+- 注意 input-tree 的 `showIcon` 漂移已在 E0b 删字段（input-tree 专属裁定）；tree 展示组件独立引入 `showIcon`/`iconField`。
+
+便捷图标示例（无 region）：
+
+```json
+{
+  "type": "tree",
+  "data": "${fileSystem}",
+  "showIcon": true,
+  "iconField": "icon"
+}
+```
+
+### 9.2 DOM markers
+
+tree 展示组件发布以下稳定 DOM marker（E2e/测试/styling 锚点）：
+
+| marker (`data-slot`)    | 出现条件                                                 | 含义                                                              |
+| ----------------------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
+| `tree-search-input`     | `searchable: true`                                       | 顶部搜索输入框                                                    |
+| `tree-search-highlight` | `searchable` + 当前节点 label 命中搜索词                 | 高亮匹配子串（`<mark>`）                                          |
+| `tree-node-icon`        | 无 `node` region + `showIcon: true` + 节点有 `iconField` | 节点 Lucide 图标                                                  |
+| `tree-guide-line`       | `showGuideLine: true` + `depth > 0`                      | 缩进引导线 spacer（每节点 `depth` 个）                            |
+| `tree-node-row`         | 总是                                                     | 单节点行容器（含 `data-tree-node-id`）                            |
+| `tree-node`             | 总是                                                     | 单节点外壳（含 `data-depth`/`data-node-key`/`data-tree-node-id`） |
+| `tree-children`         | 节点有子节点                                             | 子节点分组容器                                                    |
+| `tree-empty`            | `data` 为空 或 搜索无匹配                                | empty 提示容器                                                    |
+
 ## 10. Empty State
 
 如果 `data` 为空：
 
 - 有 `empty` -> 渲染 `empty`
 - 无 `empty` -> 不渲染节点内容
+
+搜索无匹配（`searchable: true` + 输入词命中零节点，Failure Path `search-no-match`）：
+
+- 复用同一 `empty` 入口：搜索框保持可见（用户可改词/清空），下方渲染 `tree-empty`（`empty` region 内容，或默认 `flux.common.noData` 文案）。
+- 搜索期间非匹配、非祖先节点不渲染（DOM 隐藏），故无匹配时树体为空，仅 empty 提示可见。
 
 ## 11. 与未来表单树控件的边界
 

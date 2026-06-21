@@ -1,6 +1,6 @@
 # Existing Components Improvement Roadmap
 
-> Last Updated: 2026-06-22 (E3 form input controls input-number/array-editor/key-value done)
+> Last Updated: 2026-06-22 (E3 tree display search/icon/guide-line done)
 > Source: `docs/components/existing-components-improvement-analysis.md`（v2 分析报告）、`docs/components/amis-baseline-matrix.md`
 > 关联：`roadmap.md`（新增组件，独立）、`mobile-roadmap.md`（移动端响应式，独立）
 
@@ -55,7 +55,7 @@
 - X1 doAction 命令族统一: `done`（`docs/plans/2026-06-21-2146-1-x1-doaction-command-family-unification-plan.md`，closed）
 - X2 可阻止事件: `done`（`docs/plans/2026-06-21-2146-2-x2-preventable-events-plan.md`，completed）
 - X4 data-source 请求层增强: `done`
-- E3 P2 体验完善（按需启动）: `planned`（condition-builder formula 子项 ✅ done（`docs/plans/2026-06-22-0149-1-e3-condition-builder-formula-completion-plan.md`）；布尔控件 trueValue-falseValue 子项 ✅ done（`docs/plans/2026-06-22-0149-2-e3-boolean-control-value-contract-plan.md`）；text+icon 视觉字段 ✅ done（`docs/plans/2026-06-22-0149-3-e3-basic-display-visual-fields-plan.md`，completed）；flex/page/tabs 布局族 ✅ done（`docs/plans/2026-06-22-0330-1-e3-layout-family-flex-page-tabs-plan.md`，completed）；input-number 长按步进 + array-editor/key-value min/max+reorder ✅ done（`docs/plans/2026-06-22-0330-2-e3-form-input-number-array-keyvalue-plan.md`，completed）；tree/dynamic-renderer/chart 等子项仍待后续 plan）
+- E3 P2 体验完善（按需启动）: `planned`（condition-builder formula 子项 ✅ done（`docs/plans/2026-06-22-0149-1-e3-condition-builder-formula-completion-plan.md`）；布尔控件 trueValue-falseValue 子项 ✅ done（`docs/plans/2026-06-22-0149-2-e3-boolean-control-value-contract-plan.md`）；text+icon 视觉字段 ✅ done（`docs/plans/2026-06-22-0149-3-e3-basic-display-visual-fields-plan.md`，completed）；flex/page/tabs 布局族 ✅ done（`docs/plans/2026-06-22-0330-1-e3-layout-family-flex-page-tabs-plan.md`，completed）；input-number 长按步进 + array-editor/key-value min/max+reorder ✅ done（`docs/plans/2026-06-22-0330-2-e3-form-input-number-array-keyvalue-plan.md`，completed）；tree display 搜索/图标/引导线 ✅ done（`docs/plans/2026-06-22-0330-3-e3-tree-display-search-icons-plan.md`，completed）；dynamic-renderer/chart 等子项仍待后续 plan）
 
 ## Status Values
 

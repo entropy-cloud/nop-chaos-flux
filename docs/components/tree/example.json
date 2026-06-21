@@ -2,6 +2,10 @@
   "type": "tree",
   "data": "${fileTree}",
   "initiallyExpanded": true,
+  "searchable": true,
+  "showIcon": true,
+  "iconField": "icon",
+  "showGuideLine": true,
   "node": [
     {
       "type": "text",
