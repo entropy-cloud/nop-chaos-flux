@@ -1,0 +1,14 @@
+{
+  "type": "countdown",
+  "time": 1800000,
+  "format": "HH:mm:ss",
+  "prefix": "还剩 ",
+  "suffix": " 结束",
+  "onFinish": {
+    "action": "showToast",
+    "args": {
+      "level": "warning",
+      "message": "倒计时结束"
+    }
+  }
+}

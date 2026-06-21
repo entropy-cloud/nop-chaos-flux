@@ -16,11 +16,11 @@
 
 ## 4. schema 设计
 
-- 建议字段为 `src`、`alt`、`title`、`preview`、`fit`、`width`、`height`。
+- 建议字段为 `src`、`alt`、`title`、`preview`、`fit`、`width`、`height`、`lazy`。
 
 ## 5. 字段分类
 
-- `src`、`alt`、`title`、`preview`、`fit`、`width`、`height`: `value`
+- `src`、`alt`、`title`、`preview`、`fit`、`width`、`height`、`lazy`: `value`
 
 ## 6. regions 与 slot 约定
 
@@ -46,7 +46,9 @@
 ## 11. 实现拆分建议
 
 - 图片显示、预览层和错误回退逻辑分模块。
+- **懒加载**：`lazy: true` 时使用原生 `loading="lazy"` 属性（现代浏览器支持），无需独立组件。旧浏览器 fallback 使用 IntersectionObserver 监测图片进入视口后再设置 `src`。这是移动端商城首页/商品列表大量图片场景的关键性能优化。
 
 ## 12. 风险、取舍与后续阶段
 
 - 需要和 `icon`、`avatar` 边界区分清楚：`image` 表达资源图片，不是语义图标。
+- 懒加载 `lazy` 字段对齐移动商城场景（van-lazyload 等价物），是 image renderer 的内建行为，不需要独立 LazyLoad 容器组件。

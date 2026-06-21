@@ -73,6 +73,7 @@ packages/
   flux-renderers-form/
   flux-renderers-form-advanced/
   flux-renderers-data/
+  flux-renderers-mobile/
   flux-code-editor/
   nop-debugger/
   flow-designer-core/

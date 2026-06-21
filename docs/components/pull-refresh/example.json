@@ -1,0 +1,19 @@
+{
+  "type": "pull-refresh",
+  "threshold": 60,
+  "loadingText": "加载中...",
+  "successText": "刷新成功",
+  "onRefresh": {
+    "action": "showToast",
+    "args": {
+      "level": "success",
+      "message": "数据已刷新"
+    }
+  },
+  "body": [
+    {
+      "type": "text",
+      "text": "下拉刷新此区域"
+    }
+  ]
+}

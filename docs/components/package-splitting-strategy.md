@@ -61,6 +61,7 @@ flux-core → flux-formula → flux-runtime → flux-react → renderer-*
                                                            ├─ flux-renderers-basic
                                                            ├─ flux-renderers-content
                                                            ├─ flux-renderers-layout
+                                                           ├─ flux-renderers-mobile
                                                            ├─ flux-renderers-form → flux-renderers-form-advanced
                                                            ├─ flux-renderers-data
                                                            ├─ flux-code-editor
@@ -238,7 +239,58 @@ src/
 - `steps` 和 `timeline` 虽然外观偏展示，但核心是"流程状态编排"，与 layout 的交互容器族更近。
 - `cards` 归入 content 而非 data，因为 `cards` 是纯模板渲染（从外部 scope 获取数据，逐项渲染卡片），不管理数据获取/分页/排序。相比之下，`list` 归 data 是因为它是有内置分页/排序的数据集合 owner。
 
-### 2.5 `@nop-chaos/flux-renderers-form` — 表单核心字段（拆分后）
+### 2.5 `@nop-chaos/flux-renderers-mobile` — 移动端原生交互组件（新包）
+
+**职责**：桌面端无等价物的移动端原生交互组件。这些组件依赖触摸手势（`useTouch` Hook），是移动端特有的交互模式，不是现有组件的响应式变体。
+
+**包名**：`@nop-chaos/flux-renderers-mobile`
+
+**分包判据**：组件是移动端原生交互模式（下拉刷新、无限滚动、滑动操作、倒计时、通知栏），桌面端无直接等价物。
+
+| 组件              | 类型 | 状态           | 说明         |
+| ----------------- | ---- | -------------- | ------------ |
+| `pull-refresh`    | 容器 | targetContract | 下拉刷新容器 |
+| `infinite-scroll` | 容器 | targetContract | 无限滚动容器 |
+| `swipe-cell`      | 容器 | targetContract | 左滑操作容器 |
+| `countdown`       | 展示 | targetContract | 倒计时展示   |
+| `notice-bar`      | 展示 | targetContract | 滚动通知栏   |
+
+**共享基础设施**：
+
+| 模块            | 位置                     | 说明                                          |
+| --------------- | ------------------------ | --------------------------------------------- |
+| `useTouch` Hook | `src/hooks/use-touch.ts` | 触摸手势追踪，供 PullRefresh/SwipeCell 等消费 |
+| 格式化工具      | `src/utils/format.ts`    | Countdown 格式化逻辑                          |
+
+**预估规模**：~2,000–3,000 行。
+
+**依赖**：`flux-react`, `flux-runtime`, `flux-formula`, `flux-core`, `ui`, `lucide-react`。不依赖 `flux-renderers-basic`（mobile 组件独立定义 schema）。
+
+**设计说明**：
+
+- 这些组件是**移动端原生交互模式**，不是桌面组件的响应式变体。桌面端项目不需要这些组件和它们的 `useTouch` 依赖，独立包实现依赖隔离。
+- `pull-refresh` 和 `infinite-scroll` 可被 `page`/`crud`/`list` 等其他 renderer 组合使用，但本包只提供独立 renderer 定义，组合关系在消费端处理。
+- `useTouch` Hook 是本包的核心基础设施，也导出供其他包（如 `flux-renderers-basic` 的 Tabs swipe）消费。
+
+**内部结构建议**：
+
+```
+src/
+├── index.tsx
+├── schemas.ts
+├── pull-refresh.tsx
+├── infinite-scroll.tsx
+├── swipe-cell.tsx
+├── countdown.tsx
+├── notice-bar.tsx
+├── hooks/
+│   └── use-touch.ts
+├── utils/
+│   └── format.ts
+└── __tests__/
+```
+
+### 2.6 `@nop-chaos/flux-renderers-form` — 表单核心字段（拆分后）
 
 **职责**：表单 owner（`form`）+ 参与 value/validation 通道的 **原子级** 字段组件。原子级字段指：直接映射到一个 `@nop-chaos/ui` primitive、无嵌套子 scope、无内部复杂状态机的字段。
 

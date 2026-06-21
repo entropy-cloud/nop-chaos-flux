@@ -1,0 +1,20 @@
+{
+  "type": "infinite-scroll",
+  "distance": 200,
+  "loadingText": "加载中...",
+  "finishedText": "没有更多了",
+  "errorText": "加载失败，点击重试",
+  "onLoadMore": {
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "加载更多数据"
+    }
+  },
+  "body": [
+    {
+      "type": "text",
+      "text": "滚动到底部自动加载更多"
+    }
+  ]
+}

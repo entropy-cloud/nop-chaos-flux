@@ -1,0 +1,27 @@
+{
+  "type": "swipe-cell",
+  "threshold": 30,
+  "direction": "left",
+  "left": [
+    {
+      "type": "button",
+      "label": "收藏",
+      "variant": "default",
+      "size": "sm"
+    }
+  ],
+  "right": [
+    {
+      "type": "button",
+      "label": "删除",
+      "variant": "destructive",
+      "size": "sm"
+    }
+  ],
+  "body": [
+    {
+      "type": "text",
+      "text": "左滑或右滑查看操作按钮"
+    }
+  ]
+}

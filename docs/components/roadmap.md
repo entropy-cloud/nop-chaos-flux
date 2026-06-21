@@ -20,6 +20,7 @@
 - W1a. 内容展示组（5）: `todo`
 - W1b. 容器与反馈组（5）: `todo`
 - W1c. 集合展示组（1）: `todo`
+- W1d. 移动端交互组（2）: `todo`
 - W2a. 数据组合组（5）: `todo`
 - W2b. 日期族（4）: `todo`
 - W3a. 布局组（2）: `todo`
@@ -78,11 +79,12 @@
 
 ### Wave 1 — 基础展示族
 
-| Work item             | 组件                                            | Package                        | 依赖 | Reuse                                        |
-| --------------------- | ----------------------------------------------- | ------------------------------ | ---- | -------------------------------------------- |
-| W1a 内容展示组（5）   | `markdown` `html` `link` `image` `json-view`    | `flux-renderers-content` (NEW) | L0   | `text`/`icon`/`badge`                        |
-| W1b 容器与反馈组（5） | `separator` `card` `progress` `spinner` `empty` | `flux-renderers-content` (NEW) | L0   | `@nop-chaos/ui` Card/Progress/Skeleton/Empty |
-| W1c 集合展示组（1）   | `list`                                          | `flux-renderers-data`          | L0   | `table`/`tree` 行模型                        |
+| Work item             | 组件                                            | Package                        | 依赖   | Reuse                                        |
+| --------------------- | ----------------------------------------------- | ------------------------------ | ------ | -------------------------------------------- |
+| W1a 内容展示组（5）   | `markdown` `html` `link` `image` `json-view`    | `flux-renderers-content` (NEW) | L0     | `text`/`icon`/`badge`                        |
+| W1b 容器与反馈组（5） | `separator` `card` `progress` `spinner` `empty` | `flux-renderers-content` (NEW) | L0     | `@nop-chaos/ui` Card/Progress/Skeleton/Empty |
+| W1c 集合展示组（1）   | `list`                                          | `flux-renderers-data`          | L0     | `table`/`tree` 行模型                        |
+| W1d 移动端交互组（2） | `pull-refresh` `infinite-scroll`                | `flux-renderers-mobile` (NEW)  | L0、M0 | `useTouch` Hook + `page` 集成                |
 
 ### Wave 2 — 数据组合与日期族
 
@@ -129,6 +131,16 @@
 ### W1c 集合展示组
 
 **目标：** `list` 作为有序集合展示 renderer，与 `table`/`tree` 明确边界。
+
+### W1d 移动端交互组
+
+**目标：** 提供移动端核心交互容器。`pull-refresh` 是容器型 renderer（包裹子内容，响应下拉手势触发刷新），`infinite-scroll` 是内建于集合 renderer 的行为（触底自动加载）。二者共用 `useTouch` Hook。归属 `@nop-chaos/flux-renderers-mobile` 包。
+
+| 组件              | 类型             | 集成目标                                               |
+| ----------------- | ---------------- | ------------------------------------------------------ |
+| `pull-refresh`    | renderer（容器） | page.pullRefresh、crud 内建                            |
+| `infinite-scroll` | 内建行为         | crud / list 内建                                       |
+| `useTouch`        | Hook             | PullRefresh、Tabs、BottomSheet、SwipeCell、Slider 共用 |
 
 ### W2a 数据组合组
 
@@ -191,7 +203,7 @@ graph TD
     W4c["W4c 复合表单 4"]
     D1a["D1a 设计器补充 2"]
 
-    L0 --> W1a & W1b & W1c
+    L0 --> W1a & W1b & W1c & W1d
     L0 & W1c --> W2a
     L0 --> W2b
     L0 --> W3a & W3b & W3c
@@ -220,6 +232,8 @@ graph TD
 | `spinner`            | W1b       | `flux-renderers-content`       | `docs/components/spinner/design.md`            |
 | `empty`              | W1b       | `flux-renderers-content`       | `docs/components/empty/design.md`              |
 | `list`               | W1c       | `flux-renderers-data`          | `docs/components/list/design.md`               |
+| `pull-refresh`       | W1d       | `flux-renderers-mobile`        | `docs/components/pull-refresh/design.md`       |
+| `infinite-scroll`    | W1d       | `flux-renderers-mobile`        | `docs/components/infinite-scroll/design.md`    |
 | `service`            | W2a       | `flux-renderers-data`          | `docs/components/service/design.md`            |
 | `pagination`         | W2a       | `flux-renderers-data`          | `docs/components/pagination/design.md`         |
 | `cards`              | W2a       | `flux-renderers-content`       | `docs/components/cards/design.md`              |
@@ -259,15 +273,17 @@ graph TD
 
 ## Cross-Cutting
 
-| 关注点         | 说明                                                                                                              |
-| -------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Renderer 契约  | 每个新组件必须有 `design.md` + `example.json` + renderer definition（见 `renderer-implementation-guidelines.md`） |
-| UI 组件来源    | 一律复用 `@nop-chaos/ui`，禁止裸 HTML                                                                             |
-| Field metadata | 表单类组件遵循 `field-metadata-slot-modeling.md` 契约                                                             |
-| 安全           | `html`/`markdown`/`editor`/`iframe` 等需受控渲染                                                                  |
-| 回归测试       | 每个落地组件配 focused 单测；跨组件 e2e 走 `tests/e2e/`                                                           |
-| Owner-doc 同步 | 工作项关闭时更新 `amis-baseline-matrix.md` 状态 + `docs/components/index.md`                                      |
-| Dev log        | 每次实现后更新 `docs/logs/{year}/`                                                                                |
+| 关注点              | 说明                                                                                                                  |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Renderer 契约       | 每个新组件必须有 `design.md` + `example.json` + renderer definition（见 `renderer-implementation-guidelines.md`）     |
+| UI 组件来源         | 一律复用 `@nop-chaos/ui`，禁止裸 HTML                                                                                 |
+| Field metadata      | 表单类组件遵循 `field-metadata-slot-modeling.md` 契约                                                                 |
+| 安全                | `html`/`markdown`/`editor`/`iframe` 等需受控渲染                                                                      |
+| 单测                | 每个落地组件配 focused 单测                                                                                           |
+| **Playground 示例** | **每个新组件或能力改进，必须在 `apps/playground/src/` 下有可交互示例页面，注册到 playground 路由**                    |
+| **E2E 测试**        | **每个新组件或能力改进，必须在 `tests/e2e/` 下有对应 e2e 测试文件，覆盖关键交互路径（视口切换、点击、输入、提交等）** |
+| Owner-doc 同步      | 工作项关闭时更新 `amis-baseline-matrix.md` 状态 + `docs/components/index.md`                                          |
+| Dev log             | 每次实现后更新 `docs/logs/{year}/`                                                                                    |
 
 ## Rule
 

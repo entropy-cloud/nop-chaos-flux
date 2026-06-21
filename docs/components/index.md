@@ -556,6 +556,15 @@ UI primitive 对齐补充规则：
 - `transfer/`
 - `input-table/`
 
+### 移动端原生组件
+
+- `pull-refresh/`
+- `infinite-scroll/`
+- `swipe-cell/`
+- `countdown/`
+- `notice-bar/`
+- `use-touch/`（Hook，非 renderer）
+
 说明：
 
 - `condition-builder/` 与 `code-editor/` 是组件 owner 文档目录。

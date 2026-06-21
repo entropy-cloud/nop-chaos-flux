@@ -5,6 +5,7 @@
   "width": 320,
   "height": 180,
   "preview": true,
+  "lazy": true,
   "onClick": {
     "action": "showToast",
     "args": {

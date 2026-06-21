@@ -1,0 +1,18 @@
+{
+  "type": "notice-bar",
+  "text": "限时优惠活动进行中，全场商品满 200 减 50！",
+  "scrollable": true,
+  "speed": 50,
+  "variant": "warning",
+  "closable": true,
+  "icon": {
+    "name": "volume-2"
+  },
+  "onClick": {
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "点击了通知栏"
+    }
+  }
+}
