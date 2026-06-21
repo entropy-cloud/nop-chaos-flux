@@ -91,15 +91,20 @@
 
 每个 plan 顶部必须有：
 
-- `> Plan Status: proposed | planned | in progress | partially completed | completed | superseded | replaced | deferred | cancelled`
+- `> Plan Status: draft | active | completed | superseded | replaced | deferred | cancelled`
 - `> Last Reviewed: YYYY-MM-DD`
 - `> Source: <<说明>>`
 
-说明：
+说明（规范词，与 `mission-driver` 的 `flow-loader.js` 扫描器严格对齐）：
 
-- `proposed` 适合已经成型但还未进入正式执行的计划。
+- `draft`: 刚写好、等待 `REVIEW_PLANS` 审通过。新 plan 起手始终用这个。
+- `active`: 审过、进入 `EXEC_PLANS` 执行队列。
+- `completed`: 所有 closure gates 通过、in-scope checklist 全勾。
 - `superseded` / `replaced` 适合历史计划或已被新计划接管的计划。
 - `deferred` 适合明确延后、不作为当前 active queue 的计划。
+
+> Driver 兼容性：`mission-driver` 的 `flow-loader.js` 还会容忍历史同义词 `drafted` / `proposed`（视作 `draft`）和 `planned` / `in progress` / `partially completed`（视作 `active`），但新 plan 必须用上面的规范词，不要依赖容错。
+> 注意区分：本节是 **plan-level**（blockquote `> Plan Status:`，被 driver 扫描）；下面 Execution-Slice Status 是 **slice-level**（裸 `Status:`，driver 不扫，仅人类阅读用），两套词表独立，不要混用。
 
 ### Execution-Slice Status
 
@@ -138,7 +143,7 @@
 ```md
 # NN <<计划标题>>
 
-> Plan Status: planned
+> Plan Status: draft
 > Last Reviewed: YYYY-MM-DD
 > Source: <<关联 architecture / analysis / logs>>
 > Related: <<相关计划，可选>>
@@ -250,6 +255,15 @@ Exit Criteria:
 - [ ] <<若该 Workstream 改变 live baseline：相关 `docs/architecture/` / `docs/components/` 已更新；否则明确写 `No owner-doc update required`>>
 - [ ] `docs/logs/` 对应日期条目已更新
 
+## Draft Review Record
+
+> 起草后、执行前的独立审查证据。详见本 guide 的 `Plan Review Rule`。由独立审阅者或独立子 agent 填写。
+
+- Reviewer / Agent: <<fresh session id 或 human>>
+- Verdict: `pass | pass-with-minors | revised | degraded`
+- Rounds: <<审查轮数，≤2>>
+- Findings addressed: <<每条已处理的 Blocker/Major 一行；Minor 不记>>
+
 ## Closure Gates
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。关闭流程详见本 guide 的 `When Closing The Plan` 和 `Closure Audit Rule`。
@@ -288,7 +302,7 @@ Status Note: <<完成或关闭时填写：为什么这个 plan 可以关闭>>
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<独立审阅者或独立子 agent>>
+- Auditor / Agent: <<独立审计者或独立子 agent>>
 - Evidence: <<task id / daily log link / findings 摘要>>
 
 Follow-up:
@@ -305,6 +319,27 @@ Follow-up:
 - `## Supersession Note`
 - `## Documentation Follow-Up`
 ```
+
+## Terminology: Plan Review vs Closure Audit
+
+This guide uses two distinct concepts that were previously conflated under "audit":
+
+| Term              | When                                        | Who                                   | What                                                                    | Output                                                              |
+| ----------------- | ------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Plan Review**   | After draft, before execution               | Independent sub-agent (fresh session) | Checks format, content, references, workload                            | `pass` / `fail` → plan promoted to `active` or rejected to `failed` |
+| **Closure Audit** | After execution, before marking `completed` | Independent sub-agent (fresh session) | Verifies landing, exit criteria, deferred honesty, baseline consistency | `approved` / `issues` → plan closed or sent back to execute         |
+
+### Plan Review (draft gate)
+
+Happens in the `REVIEW_PLANS` flow step. The sub-agent reads the draft plan, checks against this guide, verifies references against the live repo, and either promotes the plan to `active` (ready for execution) or rejects it to `failed`.
+
+### Closure Audit (completion gate)
+
+Happens in the `plan-execution` subflow's `CLOSURE_AUDIT` step. The sub-agent verifies every item has landed, exit criteria are met, deferred items are honestly classified, and the plan's text is internally consistent. If anything is missing, the plan goes back to execute.
+
+### Deep Audit (fallback)
+
+Happens in the `DEEP_AUDIT` flow step (max 3 rounds). When the roadmap has no remaining `todo` items and no deferred items can be drafted, the goal-driver runs a deep audit to probe for contract drift, dead code, anti-patterns, or convention violations. Unlike Plan Review and Closure Audit (which operate on a specific plan file), Deep Audit operates on the whole codebase and may produce new draft plans from findings.
 
 ## How To Use The Template
 
@@ -326,6 +361,21 @@ Follow-up:
 10. 当你犹豫“要不要新开一个 successor plan”时，先尝试在当前 owner plan 内新增一个 phase / workstream，并问自己：这样是否已经足够诚实地表达不同 proof 或 owner-doc obligations？如果足够，就不要新增 plan 文件。
 11. `## Failure Paths`：涉及错误处理、API 契约、鉴权、外部集成的计划应填写。每行至少包含触发条件、预期行为（含状态码/错误码）、是否可重试、用户可见表现。缺这一节，实现时容易只写 happy path。纯重构、纯文档、纯内部实现可跳过并写明“不适用”。
 12. `## Test Strategy`：声明本轮计划对测试投入的风险匹配策略。鉴权、对外 API 契约、核心回归路径应选“必须自动化”；一般功能选“建议有测”；纯文档/无行为变更选“不适用”并附理由。选“必须自动化”时，对应的 Proof 项应在 Fix/Implement 之前。
+
+### Plan Review Rule
+
+计划起草完成后、开始执行前，必须由**独立**审阅者或独立子 agent（fresh session，不复用起草者的 task session）做一轮 plan review。起草者自己的 self-review 不能单独作为"可执行"的依据。
+
+plan review 检查四项：
+
+1. **可想象性分析** —— 在脑中执行计划，找出设计↔代码的 gap。
+2. **格式完整性** —— 遵循本 guide 模板，必填字段齐全。
+3. **内容稳健性** —— Goals/Non-Goals 清晰；Phase 切分合理；Exit Criteria 可在仓库中观测；工作量足够（非微小变更堆砌）。
+4. **引用准确性** —— 引用的路径、行号、函数/组件名经 live repo 核对。
+
+**通过 = 零 Blocker 且零 Major。** Minor 不阻塞、不触发返工。最多 2 轮 review；之后进入 degraded 模式（继续执行，由下游 closure/deep audit 兜底）。
+
+审查证据以 `## Draft Review Record` 记录在 plan 内（格式见模板）：reviewer/agent、verdict、轮数、已处理的 Blocker/Major。
 
 ### When Executing
 
