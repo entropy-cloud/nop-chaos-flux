@@ -548,6 +548,7 @@ interface BaseDataSourceSchema extends BaseSchema {
   initialData?: SchemaValue;
   mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
   mergeKey?: string;
+  sendOn?: string;
 }
 
 interface FormulaDataSourceSchema extends BaseDataSourceSchema, ActionShapeFields {
@@ -561,6 +562,9 @@ interface ActionDataSourceSchema extends BaseDataSourceSchema, SourceActionSchem
   interval?: number;
   stopWhen?: string;
   silent?: boolean;
+  initFetch?: boolean;
+  onSuccess?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
 }
 
 type DataSourceSchema = FormulaDataSourceSchema | ActionDataSourceSchema;
@@ -576,6 +580,43 @@ Rules:
 - `mergeToScope: true` is the only narrowed special publish extension beyond the named publication path
 - `statusPath`, when present, is the readonly status-summary path for loading/error/stale state
 - `interval`, `stopWhen`, and publication controls remain `data-source`-specific extensions above plain `source`
+
+### Request Orchestration Fields (X4)
+
+`data-source` has request orchestration fields that control **when** to send requests and **what to do after**. These are distinct from `ApiSchema` (which controls **how** to send the HTTP request) and `control` (which controls **how to handle failures**).
+
+| Layer                     | Fields                                                    | Responsibility                          | Consumer                 |
+| ------------------------- | --------------------------------------------------------- | --------------------------------------- | ------------------------ |
+| **Request Orchestration** | `sendOn`, `initFetch`, `onSuccess`, `onError`             | When to send requests, what to do after | DataSourceController     |
+| **Operation Control**     | `control: { dedup, retry, throttle, cacheTTL, cacheKey }` | How to handle failures, dedup strategy  | DataSourceController     |
+| **HTTP Configuration**    | `args: ApiSchema { url, method, data, params, headers }`  | How to send the HTTP request            | action runtime → fetcher |
+
+Example with all three layers:
+
+```json
+{
+  "type": "data-source",
+  "name": "userData",
+  "action": "ajax",
+  "sendOn": "featureFlag === true",
+  "initFetch": false,
+  "onSuccess": { "action": "setValue", "args": { "path": "lastFetchTime", "value": "${now}" } },
+  "onError": { "action": "toast", "args": { "msg": "Fetch failed", "level": "error" } },
+  "args": {
+    "url": "/api/users",
+    "method": "GET",
+    "params": { "page": "${page}" }
+  },
+  "control": { "retry": { "times": 3 }, "dedup": "cancel-previous" }
+}
+```
+
+Key design decisions:
+
+- `sendOn` is a universal gate: any request (initial fetch, manual refresh, interval poll) must pass the sendOn check before being sent. `initFetch` only controls whether to automatically trigger the first fetch, not whether to bypass sendOn.
+- `onSuccess`/`onError` are fire-and-forget dispatch: consistent with Flux action system semantics, results are not awaited.
+- `ApiSchema` does not gain `sendOn`/`initFetch` fields: these are request orchestration properties, not HTTP configuration.
+- `sendOn` is placed on `BaseDataSourceSchema` (not `ActionDataSourceSchema`) because it has semantic meaning for both action and formula sources (though formula sources ignore it at runtime since they have no request concept).
 
 ### Refresh Dedup Semantics
 
@@ -616,6 +657,35 @@ Design intent:
 - request-runtime dedup describes transport-level overlap semantics for equivalent executable requests
 - source refresh dedup describes source-controller behavior when the same named source is invalidated again before its prior refresh settles
 - the two layers should stay aligned where possible, but source refresh policy remains runtime-owned source orchestration, not renderer-owned behavior
+
+### Component Capabilities and Lifecycle Events
+
+`data-source` exposes component handles and lifecycle events through the standard Flux component capability system.
+
+#### Refresh Mechanisms (Two Coexisting)
+
+| Mechanism                      | Addressing                  | Semantics                     | Use Case                              |
+| ------------------------------ | --------------------------- | ----------------------------- | ------------------------------------- |
+| `refreshSource` action         | By `targetId` (source name) | runtime-owned action API      | Cross-source refresh in action flows  |
+| `component:refresh` capability | By ComponentHandle id       | component capability contract | Interactive triggers (button onClick) |
+
+Both coexist and are not interchangeable. `component:refresh` returns `{ skipped: boolean }`, reflecting whether the sendOn gate suppressed the request.
+
+#### Component Handles
+
+| Handle    | Method              | Description                                                                |
+| --------- | ------------------- | -------------------------------------------------------------------------- |
+| `refresh` | `invoke('refresh')` | Trigger manual refresh, passes sendOn gate, returns `{ skipped: boolean }` |
+| `cancel`  | `invoke('cancel')`  | Cancel in-flight request, `statusPath` set to idle                         |
+
+#### Lifecycle Events
+
+| Event       | Trigger                                      | Payload                   |
+| ----------- | -------------------------------------------- | ------------------------- |
+| `onSuccess` | After successful fetch (including cache hit) | `{ data, dataUpdatedAt }` |
+| `onError`   | After failed fetch (including abort/cancel)  | `{ error, failureCount }` |
+
+Events are fire-and-forget dispatch, consistent with Flux action system semantics.
 
 ### Binding Target
 
@@ -888,6 +958,41 @@ Once those controls are resolved, request execution owns the actual retry/backof
   ]
 }
 ```
+
+#### Conditional fetch with lifecycle events
+
+```json
+{
+  "type": "container",
+  "body": [
+    {
+      "type": "data-source",
+      "name": "userProfile",
+      "action": "ajax",
+      "sendOn": "userId != null",
+      "initFetch": false,
+      "args": { "url": "/api/users/${userId}" },
+      "onSuccess": { "action": "console.log", "args": { "msg": "Profile loaded" } },
+      "onError": {
+        "action": "toast",
+        "args": { "msg": "Failed to load profile", "level": "error" }
+      }
+    },
+    {
+      "type": "button",
+      "label": "Refresh Profile",
+      "onClick": { "action": "component:refresh", "componentId": "userProfile" }
+    }
+  ]
+}
+```
+
+In this example:
+
+- `sendOn: "userId != null"` prevents fetch when no user is selected
+- `initFetch: false` prevents automatic fetch on mount
+- `component:refresh` on button click triggers manual refresh (still passes sendOn gate)
+- `onSuccess`/`onError` dispatch actions after fetch completes
 
 ## ReactionSchema
 

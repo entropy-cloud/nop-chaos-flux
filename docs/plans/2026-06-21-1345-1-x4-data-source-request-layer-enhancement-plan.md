@@ -1,6 +1,6 @@
 # X4 Data-Source 请求层增强
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-06-21
 > Source: `docs/components/existing-components-improvement-roadmap.md`（X4 行 L121）、`docs/components/data-source/design.md`（§4/§5/§8 标 `onSuccess`/`onError`/`component:cancel` 为后续增强）、live-repo audit（`DataSourceSchema`、`CompiledDataSource`、`source-registry.ts`、`data-source-renderer.tsx`）
 > Related: X3 naming-conventions（done）、Q6 data-source 范围裁决（已收口：本 plan 只覆盖 sendOn/initFetch gate + 生命周期事件 + component 句柄，不含 ws）、E1d CRUD 数据生命周期（X4 是 E1d 的硬前置）
@@ -141,52 +141,52 @@ Exit Criteria:
 
 ### Phase 3 - ComponentHandle + capability contracts
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/data-source-renderer.tsx`、`packages/flux-renderers-data/src/data-renderer-definitions.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `DataSourceRenderer` 通过 `useCurrentComponentRegistry` 注册 ComponentHandle（type `'data-source'`，capabilities: `refresh` / `cancel`）
-- [ ] `refresh` capability：同步调用 `registration.controller.refresh()`，返回 `{ skipped: boolean }`（反映 sendOn gate 是否生效）
-- [ ] `cancel` capability：同步调用 `registration.controller.stop()`；若当前无 in-flight，no-op
-- [ ] data-source renderer definition（`data-renderer-definitions.ts`）`propContracts` 补 `sendOn`（shape `'string'`）/`initFetch`（shape `'boolean'`）；`eventContracts` 补 `onSuccess`/`onError`（payload schema）；`componentCapabilityContracts` 补 `refresh`/`cancel`（result shape）
-- [ ] fields 注册：`sendOn`（kind: 'prop'）、`initFetch`（kind: 'prop', valueType: 'boolean'）、`onSuccess`（kind: 'event'）、`onError`（kind: 'event'）
-- [ ] **Proof**：新增 capability 用例到 `runtime-sources-lifecycle.test.ts` 或新建 `data-source-capabilities.test.tsx`：
-  - [ ] `component:refresh` capability 触发 → controller.refresh 被调用
-  - [ ] `component:refresh` 在 `sendOn` falsy 时 → 返回 `{ skipped: true }`，controller 不发请求
-  - [ ] `component:cancel` capability 触发 → controller.stop 被调用，in-flight 请求 abort
+- [x] `DataSourceRenderer` 通过 `useCurrentComponentRegistry` 注册 ComponentHandle（type `'data-source'`，capabilities: `refresh` / `cancel`）
+- [x] `refresh` capability：同步调用 `registration.controller.refresh()`，返回 `{ skipped: boolean }`（反映 sendOn gate 是否生效）
+- [x] `cancel` capability：同步调用 `registration.controller.stop()`；若当前无 in-flight，no-op
+- [x] data-source renderer definition（`data-renderer-definitions.ts`）`propContracts` 补 `sendOn`（shape `'string'`）/`initFetch`（shape `'boolean'`）；`eventContracts` 补 `onSuccess`/`onError`（payload schema）；`componentCapabilityContracts` 补 `refresh`/`cancel`（result shape）
+- [x] fields 注册：`sendOn`（kind: 'prop'）、`initFetch`（kind: 'prop', valueType: 'boolean'）、`onSuccess`（kind: 'event'）、`onError`（kind: 'event'）
+- [x] **Proof**：新增 capability 用例到 `runtime-sources-lifecycle.test.ts` 或新建 `data-source-capabilities.test.tsx`：
+  - [x] `component:refresh` capability 触发 → controller.refresh 被调用
+  - [x] `component:refresh` 在 `sendOn` falsy 时 → 返回 `{ skipped: true }`，controller 不发请求
+  - [x] `component:cancel` capability 触发 → controller.stop 被调用，in-flight 请求 abort
 
 Exit Criteria:
 
-- [ ] capability 用例 3 个全过
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data test` 全过
-- [ ] `pnpm typecheck` 通过
-- [ ] `scripts/check-finite-prop-contracts.mjs` 仍通过（新字段非 finite-union）
-- [ ] No owner-doc update required（design.md 更新在 Phase 4）
+- [x] capability 用例 3 个全过
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data test` 全过
+- [x] `pnpm typecheck` 通过
+- [x] `scripts/check-finite-prop-contracts.mjs` 仍通过（新字段非 finite-union）
+- [x] No owner-doc update required（design.md 更新在 Phase 4）
 
 ### Phase 4 - Owner-Doc Sync + Roadmap
 
-Status: planned
+Status: completed
 Targets: `docs/components/data-source/design.md`、`docs/components/existing-components-improvement-roadmap.md`、`docs/logs/2026/06-21.md`、`docs/components/amis-baseline-matrix.md`
 
 - Item Types: `Follow-up`
 
-- [ ] `data-source/design.md` §4 schema 设计：补 `sendOn`/`initFetch`/`onSuccess`/`onError` 字段说明 + 求值 scope + 缺省值
-- [ ] design.md §5 字段分类：补 `sendOn`（value，raw expression）、`initFetch`（value boolean）、`onSuccess`/`onError`（event）
-- [ ] design.md §7 运行期状态归属：补 sendOn gate 与 initFetch gate 对状态发布时机的影响说明
-- [ ] design.md §8 事件、动作与组件句柄能力：把 L24 `可作为后续增强` 的 `onSuccess`/`onError`/`component:cancel` 翻 `实现`；L44-46 把 `component:refresh`/`component:cancel` 翻 `实现`，注明与既有 `refreshSource` action 的语义差异
-- [ ] design.md §12 风险段补 `ws` deferred 说明（保留为后续独立 plan，理由：roadmap 标 `ws 低优先`）
-- [ ] `docs/components/existing-components-improvement-roadmap.md` X4 `todo`→`done`（L57）；Last Updated 改 `2026-06-21 (X4 done)`
-- [ ] `docs/components/amis-baseline-matrix.md` data-source 行（若有）retained 决策无变化（No update required — 全部为新增能力）
-- [ ] `docs/logs/2026/06-21.md` 新增 X4 收口条目
+- [x] `data-source/design.md` §4 schema 设计：补 `sendOn`/`initFetch`/`onSuccess`/`onError` 字段说明 + 求值 scope + 缺省值
+- [x] design.md §5 字段分类：补 `sendOn`（value，raw expression）、`initFetch`（value boolean）、`onSuccess`/`onError`（event）
+- [x] design.md §7 运行期状态归属：补 sendOn gate 与 initFetch gate 对状态发布时机的影响说明
+- [x] design.md §8 事件、动作与组件句柄能力：把 L24 `可作为后续增强` 的 `onSuccess`/`onError`/`component:cancel` 翻 `实现`；L44-46 把 `component:refresh`/`component:cancel` 翻 `实现`，注明与既有 `refreshSource` action 的语义差异
+- [x] design.md §12 风险段补 `ws` deferred 说明（保留为后续独立 plan，理由：roadmap 标 `ws 低优先`）
+- [x] `docs/components/existing-components-improvement-roadmap.md` X4 `todo`→`done`（L57）；Last Updated 改 `2026-06-21 (X4 done)`
+- [x] `docs/components/amis-baseline-matrix.md` data-source 行（若有）retained 决策无变化（No update required — 全部为新增能力）
+- [x] `docs/logs/2026/06-21.md` 新增 X4 收口条目
 
 Exit Criteria:
 
-- [ ] design.md §4 无残留 `可作为后续增强` 字样（针对 sendOn/initFetch/onSuccess/onError）
-- [ ] design.md §8 无残留 `可以作为后续增强` 字样（针对 component:refresh/cancel）
-- [ ] roadmap X4 标为 `done`
-- [ ] daily log 含 X4 条目
-- [ ] `docs/architecture/surface-owner.md` / `docs/architecture/api-data-source.md`（若存在）— 检查并按需更新；若无需更新，显式写 `No architecture doc update required`
+- [x] design.md §4 无残留 `可作为后续增强` 字样（针对 sendOn/initFetch/onSuccess/onError）
+- [x] design.md §8 无残留 `可以作为后续增强` 字样（针对 component:refresh/cancel）
+- [x] roadmap X4 标为 `done`
+- [x] daily log 含 X4 条目
+- [x] `docs/architecture/surface-owner.md` / `docs/architecture/api-data-source.md`（若存在）— 检查并按需更新；若无需更新，显式写 `No architecture doc update required`
 
 ## Draft Review Record
 
@@ -197,20 +197,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `BaseDataSourceSchema`/`ActionDataSourceSchema` 4 新字段全部定义
-- [ ] `CompiledDataSource` 4 字段 compiled shape 完整
-- [ ] `createDataSourceController` 正确消费 sendOn gate（falsy/求值失败均 skip）+ initFetch gate（false 跳过首次 fetch）+ onSuccess/onError dispatch
-- [ ] `DataSourceRenderer` 注册 ComponentHandle，`component:refresh`/`component:cancel` 可被调用
-- [ ] data-source renderer definition `propContracts`/`eventContracts`/`componentCapabilityContracts` 完整
-- [ ] focused 单测覆盖 sendOn/initFetch/onSuccess/onError/component:refresh/cancel 全部 11 用例（8 lifecycle + 3 capability）
-- [ ] design.md §4/§5/§7/§8 同步到 live baseline
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步到 live baseline（含 architecture docs 裁定）
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `BaseDataSourceSchema`/`ActionDataSourceSchema` 4 新字段全部定义
+- [x] `CompiledDataSource` 4 字段 compiled shape 完整
+- [x] `createDataSourceController` 正确消费 sendOn gate（falsy/求值失败均 skip）+ initFetch gate（false 跳过首次 fetch）+ onSuccess/onError dispatch
+- [x] `DataSourceRenderer` 注册 ComponentHandle，`component:refresh`/`component:cancel` 可被调用
+- [x] data-source renderer definition `propContracts`/`eventContracts`/`componentCapabilityContracts` 完整
+- [x] focused 单测覆盖 sendOn/initFetch/onSuccess/onError/component:refresh/cancel 全部 11 用例（8 lifecycle + 3 capability）
+- [x] design.md §4/§5/§7/§8 同步到 live baseline
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步到 live baseline（含 architecture docs 裁定）
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据（independent closure-audit fresh session 2026-06-21：见 `## Closure` 证据）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -242,14 +242,24 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写：为什么这个 plan 可以关闭>>
+Status Note: X4 全部 in-scope 代码与文档工作完成（Phase 1-4 全 `completed`，所有技术 Closure Gates `[x]`）。`sendOn`/`initFetch` gate + `onSuccess`/`onError` lifecycle event + `component:refresh`/`component:cancel` capability 三组能力全部落地并有 focused 测试覆盖（11 用例：8 lifecycle + 3 capability）。owner docs（`data-source/design.md` §4/§5/§7/§8/§12、`api-data-source.md`、roadmap、daily log）同步到 live baseline。Deferred 项（ws / formula-kind source / 更细粒度 lifecycle hook）均裁定为 non-blocking 并附理由。独立子 agent closure-audit 已在本 fresh session 完成（证据见下），Plan Status 置 `completed`。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 closure-audit fresh session（2026-06-21，不复用执行阶段 task session）。Audit pass。
+- Evidence: `docs/logs/2026/06-21.md` X4 条目；`pnpm typecheck` = 49/49、`pnpm build` = 26/26、`pnpm --filter @nop-chaos/flux-renderers-data test` = 48 files / 420 tests、`pnpm --filter @nop-chaos/flux-runtime test` = 1170 passed / 1 skipped；`scripts/check-finite-prop-contracts.mjs` 通过；`pnpm lint` 唯一失败为 pre-existing mobile-component anchor（与 X4 无关，经 `git stash` 对照确认）。
+- Audit Verification (本 fresh session 重核 live repo)：
+  - Schema (`packages/flux-core/src/types/schema.ts:195,224,229,234`) 与 Compiled shape (`compilation.ts:305,312,319,326`) 4 字段全部定义。
+  - Controller 真消费 4 字段（`api-data-source-controller.ts:16-23` initFetch gate、`api-data-source-controller-runtime.ts:60-73` sendOn gate + `:316,:379` onSuccess dispatch + `:437` onError dispatch + `:338` DataSourceRefreshResult `{ skipped }`）；`source-registry.ts:157-160` 透传 4 compiled 字段。
+  - Anti-hollow：sendOn/onSuccess/onError 调用点均有真实 runtime dispatch（`dispatchLifecycleAction`），非空壳；ComponentHandle 在 `data-source-renderer.tsx:44` 注册并被 capability 调用。
+  - capability 契约：`data-renderer-definitions.ts:355,362,400,410-411` propContracts/eventContracts/componentCapabilityContracts + fields 注册完整。
+  - Tests：`runtime-sources-lifecycle.test.ts`（8 lifecycle）+ `data-source-capabilities.test.tsx`（3 capability）全 green，本 session 复跑 `flux-runtime` 1170 passed / 1 skipped、`flux-renderers-data` 420 passed。
+  - Docs sync：`design.md` §4/§5/§7/§8/§12 已写最终设计状态（无 `可作为后续增强`/`可以作为后续增强` 残留针对 X4 字段）；roadmap X4 `done`（L57）；daily log `06-21.md` 含 X4 条目。
+  - Deferred honesty：`ws` / formula-kind source / 更细粒度 lifecycle hook 均为 out-of-scope improvement / optimization candidate，附 Why-Not-Blocking 理由，无 in-scope live defect 偷渡。
+  - 五点一致性：Plan Status `completed` / 4 Phase Status 全 `completed` / 4 Phase Exit Criteria 全 `[x]` / Closure Gates 全 `[x]` / daily log 收口记录 —— 彼此一致。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
-- <<或者明确写 no remaining plan-owned work>>
+- `refreshSource` action API 与 `component:refresh` capability 并存 naming audit（归 X1 风格）。
+- `CompiledOperationControl`（dedup/retry/throttle/cacheTTL/cacheKey）与 lifecycle event 协同的后续 audit。
+- WebSocket（`ws`）source kind 独立 plan（待 ws 业务需求触发）。
