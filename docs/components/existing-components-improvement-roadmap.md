@@ -55,7 +55,7 @@
 - X1 doAction 命令族统一: `done`（`docs/plans/2026-06-21-2146-1-x1-doaction-command-family-unification-plan.md`，closed）
 - X2 可阻止事件: `done`（`docs/plans/2026-06-21-2146-2-x2-preventable-events-plan.md`，completed）
 - X4 data-source 请求层增强: `done`
-- E3 P2 体验完善（按需启动）: `planned`（condition-builder formula 子项 ✅ done（`docs/plans/2026-06-22-0149-1-e3-condition-builder-formula-completion-plan.md`）；布尔控件 trueValue-falseValue 子项 ✅ done（`docs/plans/2026-06-22-0149-2-e3-boolean-control-value-contract-plan.md`）；text+icon 视觉字段仍待 plan；flex/page/tabs/input-number/tree/array-editor/dynamic-renderer/chart 等子项仍待后续 plan）
+- E3 P2 体验完善（按需启动）: `planned`（condition-builder formula 子项 ✅ done（`docs/plans/2026-06-22-0149-1-e3-condition-builder-formula-completion-plan.md`）；布尔控件 trueValue-falseValue 子项 ✅ done（`docs/plans/2026-06-22-0149-2-e3-boolean-control-value-contract-plan.md`）；text+icon 视觉字段 ✅ done（`docs/plans/2026-06-22-0149-3-e3-basic-display-visual-fields-plan.md`，completed）；flex/page/tabs/input-number/tree/array-editor/dynamic-renderer/chart 等子项仍待后续 plan）
 
 ## Status Values
 
