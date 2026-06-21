@@ -1,5 +1,5 @@
 import './code-editor-styles.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { resolveRendererSlotContent, useRenderScope } from '@nop-chaos/flux-react';
@@ -9,6 +9,7 @@ import { Maximize2Icon, XIcon } from 'lucide-react';
 import { ToolbarButton } from './code-editor-renderer/toolbar-button.js';
 import type { CodeEditorRendererProps } from './code-editor-renderer/shared.js';
 import { useCodeEditorBinding } from './code-editor-renderer/use-code-editor-binding.js';
+import { useCodeEditorHandle } from './code-editor-renderer/use-code-editor-handle.js';
 import { useSQLEditorSlots, hasSQLToolbarFlags } from './code-editor-renderer/sql-editor-assembly.js';
 import { createBaseExtensions } from './extensions/base.js';
 import {
@@ -29,6 +30,7 @@ import {
   getDefaultLineNumbers,
 } from './types.js';
 import { useCodeMirror } from './use-code-mirror.js';
+import { useMergeView } from './use-merge-view.js';
 
 function isEditorMode(value: unknown): value is EditorMode {
   return value === 'expression' || value === 'template' || value === 'code';
@@ -50,6 +52,7 @@ export const codeEditorFieldRules: SchemaFieldRule[] = [
   { key: 'label', kind: 'value-or-region', regionKey: 'label' },
   ...formFieldChromeRules,
   { key: 'value', kind: 'prop' },
+  { key: 'diffValue', kind: 'prop' },
   { key: 'language', kind: 'prop' },
   { key: 'mode', kind: 'prop' },
   { key: 'placeholder', kind: 'prop' },
@@ -68,6 +71,7 @@ export const codeEditorFieldRules: SchemaFieldRule[] = [
   { key: 'onChange', kind: 'event' },
   { key: 'onFocus', kind: 'event' },
   { key: 'onBlur', kind: 'event' },
+  { key: 'onEditorMount', kind: 'event' },
 ];
 
 export function CodeEditorRenderer(props: CodeEditorRendererProps) {
@@ -111,6 +115,9 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   const toggleFullscreen = () => setIsFullscreen((value) => !value);
 
   const { value, handleChange, handleFocus, handleBlur } = useCodeEditorBinding(props, name);
+
+  const diffValue = props.props.diffValue;
+  const isDiffMode = typeof diffValue === 'string';
 
   const resolvedVariables = useResolvedVariables(expressionConfig, scope);
   const resolvedFunctions = useResolvedFunctions(expressionConfig);
@@ -166,7 +173,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
 
-  const { editorRef, view } = useCodeMirror({
+  const singleEditor = useCodeMirror({
     initialValue: value,
     placeholder,
     readOnly,
@@ -177,7 +184,38 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
     onBlur: handleBlur,
   });
 
-  const isSQL = language === 'sql' && Boolean(sqlConfig);
+  const mergeEditor = useMergeView({
+    original: typeof diffValue === 'string' ? diffValue : '',
+    modified: value,
+    placeholder,
+    readOnly,
+    extensions,
+    contentAttributes,
+    onChange: handleChange,
+    onFocus: handleFocus,
+    onBlur: handleBlur,
+  });
+
+  const isSQL = !isDiffMode && language === 'sql' && Boolean(sqlConfig);
+  const editorRef = isDiffMode ? mergeEditor.editorRef : singleEditor.editorRef;
+  const view = isDiffMode ? mergeEditor.view : singleEditor.view;
+
+  const initialValueRef = useRef(value);
+  useEffect(() => {
+    initialValueRef.current = value;
+  }, [value]);
+
+  useCodeEditorHandle(props, { view, initialValueRef });
+
+  // Fire onEditorMount after the editor view is ready.
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    if (!view || mountedRef.current) return;
+    mountedRef.current = true;
+    const editorId = String(props.id ?? props.meta.cid ?? '');
+    props.events.onEditorMount?.({ editorId });
+  }, [view, props.events, props.id, props.meta.cid]);
+
   const sqlSlots = useSQLEditorSlots({
     props,
     sqlConfig,
@@ -200,6 +238,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
       data-fullscreen={isFullscreen || undefined}
       data-has-toolbar={showToolbar || undefined}
       data-readonly={readOnly || undefined}
+      data-diff={isDiffMode || undefined}
       style={!isFullscreen ? containerStyle : undefined}
     >
       {isFullscreen && allowFullscreen ? (
@@ -260,6 +299,13 @@ export const codeEditorRendererDefinition: RendererDefinition = {
       shape: { kind: 'string' },
       displayName: 'Value',
       description: 'Initial or controlled editor text value.',
+      editorType: 'textarea',
+    },
+    diffValue: {
+      shape: { kind: 'string' },
+      displayName: 'Diff Value',
+      description:
+        'Original text for side-by-side diff rendering. When set, the editor switches to a two-pane MergeView (left = diffValue, right = value).',
       editorType: 'textarea',
     },
     placeholder: {
@@ -343,7 +389,40 @@ export const codeEditorRendererDefinition: RendererDefinition = {
       displayName: 'Blur',
       description: 'Runs when the editor loses focus.',
     },
+    onEditorMount: {
+      displayName: 'Editor Mount',
+      description:
+        'Runs after the CodeMirror editor (or MergeView) is mounted. Payload: { editorId }. Use the `getEditorView` component handle for imperative access to the EditorView instance.',
+      payload: {
+        kind: 'object',
+        fields: { editorId: { kind: 'string' } },
+      },
+    },
   },
+  componentCapabilityContracts: [
+    {
+      handle: 'clear',
+      displayName: 'Clear',
+      description: 'Clear the editor content (sets value to empty string).',
+    },
+    {
+      handle: 'reset',
+      displayName: 'Reset',
+      description: 'Reset the editor content to its initial value.',
+    },
+    {
+      handle: 'focus',
+      displayName: 'Focus',
+      description: 'Focus the editor.',
+    },
+    {
+      handle: 'getEditorView',
+      displayName: 'Get EditorView',
+      description:
+        'Return the underlying CodeMirror EditorView instance. Result is an unserializable EditorView reference (treat as opaque handle).',
+      result: { kind: 'unknown' },
+    },
+  ],
   fields: codeEditorFieldRules,
   validation: {
     kind: 'field',

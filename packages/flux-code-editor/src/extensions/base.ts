@@ -10,6 +10,10 @@ import { sql, MySQL, PostgreSQL, SQLite, MSSQL } from '@codemirror/lang-sql';
 import { json, jsonParseLinter } from '@codemirror/lang-json';
 import { html } from '@codemirror/lang-html';
 import { css } from '@codemirror/lang-css';
+import { python } from '@codemirror/lang-python';
+import { markdown } from '@codemirror/lang-markdown';
+import { yaml } from '@codemirror/lang-yaml';
+import { xml } from '@codemirror/lang-xml';
 import { linter } from '@codemirror/lint';
 import { autocompletion } from '@codemirror/autocomplete';
 import { expressionCompletionSource } from './expression/completion.js';
@@ -61,6 +65,14 @@ export function createLanguageExtension(language: EditorLanguage): Extension {
       return html();
     case 'css':
       return css();
+    case 'python':
+      return python();
+    case 'markdown':
+      return markdown();
+    case 'yaml':
+      return yaml();
+    case 'xml':
+      return xml();
     case 'plaintext':
     default:
       return [];

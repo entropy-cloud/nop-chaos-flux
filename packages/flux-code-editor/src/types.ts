@@ -8,7 +8,11 @@ export type EditorLanguage =
   | 'typescript'
   | 'html'
   | 'css'
-  | 'plaintext';
+  | 'plaintext'
+  | 'python'
+  | 'yaml'
+  | 'xml'
+  | 'markdown';
 
 export type EditorMode = 'expression' | 'template' | 'code';
 
@@ -17,6 +21,7 @@ export interface CodeEditorSchema extends BaseSchema {
   language: EditorLanguage;
   mode?: EditorMode;
   value?: string;
+  diffValue?: string;
   placeholder?: string;
   width?: number | string;
   height?: number | string;
@@ -31,6 +36,7 @@ export interface CodeEditorSchema extends BaseSchema {
   onChange?: ActionSchema | ActionSchema[];
   onFocus?: ActionSchema | ActionSchema[];
   onBlur?: ActionSchema | ActionSchema[];
+  onEditorMount?: ActionSchema | ActionSchema[];
 }
 
 export interface ExpressionEditorAuthoringConfig extends SchemaObject {
@@ -195,6 +201,7 @@ export interface CodeEditorResolvedProps {
   language: EditorLanguage;
   mode: EditorMode;
   value: string;
+  diffValue: string;
   placeholder: string;
   readOnly: boolean;
   expressionConfig?: ExpressionEditorConfig;
