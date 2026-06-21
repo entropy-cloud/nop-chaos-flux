@@ -187,6 +187,49 @@ export const basicRendererDefinitions: RendererDefinition[] = [
         description: 'Disables user interaction when true.',
         editorType: 'switch',
       },
+      icon: {
+        shape: { kind: 'string' },
+        displayName: 'Icon',
+        description: 'Lucide icon name rendered before the label.',
+        editorType: 'text',
+      },
+      rightIcon: {
+        shape: { kind: 'string' },
+        displayName: 'Right Icon',
+        description: 'Lucide icon name rendered after the label.',
+        editorType: 'text',
+      },
+      loading: {
+        shape: { kind: 'boolean' },
+        displayName: 'Loading',
+        description:
+          'Shows a spinner and forces disabled. Accepts an expression string (subsumes amis loadingOn).',
+        editorType: 'switch',
+      },
+      tooltip: {
+        shape: { kind: 'string' },
+        displayName: 'Tooltip',
+        description: 'Hover tooltip text shown when the button is enabled.',
+        editorType: 'text',
+      },
+      disabledTip: {
+        shape: { kind: 'string' },
+        displayName: 'Disabled Tip',
+        description: 'Tooltip text shown when the button is disabled (overrides tooltip).',
+        editorType: 'text',
+      },
+      block: {
+        shape: { kind: 'boolean' },
+        displayName: 'Block',
+        description: 'Renders the button at full width.',
+        editorType: 'switch',
+      },
+      active: {
+        shape: { kind: 'boolean' },
+        displayName: 'Active',
+        description: 'Toggle/pressed state. Adds data-active and aria-pressed.',
+        editorType: 'switch',
+      },
     },
     eventContracts: {
       onClick: {
@@ -207,7 +250,14 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     component: ButtonRenderer,
     fields: [
       { key: 'disabled', kind: 'meta' },
+      { key: 'loading', kind: 'prop', valueType: 'boolean' },
       { key: 'onClick', kind: 'event' },
+      { key: 'icon', kind: 'prop' },
+      { key: 'rightIcon', kind: 'prop' },
+      { key: 'tooltip', kind: 'prop' },
+      { key: 'disabledTip', kind: 'prop' },
+      { key: 'block', kind: 'prop', valueType: 'boolean' },
+      { key: 'active', kind: 'prop', valueType: 'boolean' },
     ],
   },
   {

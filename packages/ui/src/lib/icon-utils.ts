@@ -50,3 +50,15 @@ export function resolveLucideIcon(iconName: string | undefined): LucideIconCompo
     (Circle as unknown as LucideIconComponent)
   );
 }
+
+export function resolveLucideIconStrict(
+  iconName: string | undefined,
+): LucideIconComponent | null {
+  const normalizedIconName = normalizeIconName(iconName);
+  if (!normalizedIconName) {
+    return null;
+  }
+
+  const key = toLucideKey(normalizedIconName);
+  return (icons as Record<string, LucideIconComponent>)[key] ?? null;
+}

@@ -146,6 +146,13 @@ export interface ButtonSchema extends BaseSchema {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon' | 'icon-xs' | 'icon-sm' | 'icon-lg';
   disabled?: boolean | string;
+  icon?: string;
+  rightIcon?: string;
+  loading?: boolean | string;
+  tooltip?: string;
+  disabledTip?: string;
+  block?: boolean;
+  active?: boolean | string;
 }
 
 export interface IconSchema extends BaseSchema {
