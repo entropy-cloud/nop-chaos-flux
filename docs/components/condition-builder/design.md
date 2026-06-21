@@ -16,24 +16,24 @@
 
 amis 仅作参考之一，**非标尺**。Flux 按 `existing-components-improvement-analysis.md` §0.2 原则裁决。condition-builder 已覆盖约 80% 主流程；下列决策区分已实现基线、契约漂移修复（E0d 已收口）与未来增强。
 
-| 能力                                                                               | 决定                                             | 理由                                                                                                                                                                                                                                                                   |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AND/OR 嵌套组 + `not`                                                              | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
-| `showAndOr`、`builderMode: full\|simple`、`embed`                                  | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
-| field-type → operator → value 三层映射 + operator 三级覆盖（field/schema/builtin） | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
-| `searchable` field select、`uniqueFields`                                          | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
-| `draggable`（dnd-kit 重排）                                                        | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
-| `maxDepth`、`maxItemsPerGroup`                                                     | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
-| 值消毒（`sanitizeRight`/`sanitizeNode`）、AMIS 格式转换、必填校验                  | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
-| i18n（`conditionBuilder.*`）                                                       | **实现**                                         | 当前基线                                                                                                                                                                                                                                                               |
-| `showIf`（按组 `if` 条件）                                                         | **实现**（E0d 收口）                             | 值槽 `ConditionGroupValue.if?: string` 已存在；组级条件是规则引擎常见能力；实现成本低，符合 declarative schema 原则。语义见 §7.4                                                                                                                                       |
-| `selectMode: tree`/`chained`                                                       | **不采纳（删字段）**（E0d 收口）                 | list 模式已通过 `ConditionFieldGroup` 扁平化 + `searchable` 覆盖；tree/chained 增加复杂度但边际价值低、非高频业务需求；按 §0.2 "核心已简化" 原则收敛为 list-only 并从 `ConditionBuilderSchema` 整体删字段。若 E3 出现明确树形/级联需求，再以独立 feature plan 重新引入 |
-| `formulas`/`formulaForIf`（formula 集成，值侧可为公式）                            | **进 types.ts**（DESIGN-ACK-NOT-IMPL，E0d 收口） | 提供 E3 实现的稳定契约；遵循 crud `matchFunc` 先例（声明 + deferred）。运行时 DESIGN-ACK-NOT-IMPL：字段被类型接受，但当前 runtime 静默忽略（不消费、不冒泡、不报错），实际 formula 求值/集成属 E3 P2 批。类型形状见 §4                                                 |
-| 异步 field/operator 元数据加载（`source` 走 api）                                  | **计划实现（E3 P2 批）**                         | 走 source；当前 `types.ts` 仅允许 `source?: string`（scope 路径）                                                                                                                                                                                                      |
-| `simple` 模式真正扁平单组限制                                                      | **暂不实现**                                     | 当前 simple 仅隐藏 AND/OR 开关，仍允许嵌套                                                                                                                                                                                                                             |
-| `description`/per-field description、`isRequired`、`labelsAndOp` 显示模式          | **暂不实现**                                     | 后续按需                                                                                                                                                                                                                                                               |
-| amis 组件级 `api`/`initFetch` SchemaApi 生命周期                                   | **不采纳**                                       | 请求下沉 data-source + action（见 analysis §0.2/§5）                                                                                                                                                                                                                   |
-| amis `mobileUI` 双实现                                                             | **不采纳**                                       | 移动端走响应式（见 mobile-roadmap）                                                                                                                                                                                                                                    |
+| 能力                                                                               | 决定                             | 理由                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------------------------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AND/OR 嵌套组 + `not`                                                              | **实现**                         | 当前基线                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `showAndOr`、`builderMode: full\|simple`、`embed`                                  | **实现**                         | 当前基线                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| field-type → operator → value 三层映射 + operator 三级覆盖（field/schema/builtin） | **实现**                         | 当前基线                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `searchable` field select、`uniqueFields`                                          | **实现**                         | 当前基线                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `draggable`（dnd-kit 重排）                                                        | **实现**                         | 当前基线                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `maxDepth`、`maxItemsPerGroup`                                                     | **实现**                         | 当前基线                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 值消毒（`sanitizeRight`/`sanitizeNode`）、AMIS 格式转换、必填校验                  | **实现**                         | 当前基线                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| i18n（`conditionBuilder.*`）                                                       | **实现**                         | 当前基线                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `showIf`（按组 `if` 条件）                                                         | **实现**（E0d 收口）             | 值槽 `ConditionGroupValue.if?: string` 已存在；组级条件是规则引擎常见能力；实现成本低，符合 declarative schema 原则。语义见 §7.4                                                                                                                                                                                                                                                                                                                |
+| `selectMode: tree`/`chained`                                                       | **不采纳（删字段）**（E0d 收口） | list 模式已通过 `ConditionFieldGroup` 扁平化 + `searchable` 覆盖；tree/chained 增加复杂度但边际价值低、非高频业务需求；按 §0.2 "核心已简化" 原则收敛为 list-only 并从 `ConditionBuilderSchema` 整体删字段。若 E3 出现明确树形/级联需求，再以独立 feature plan 重新引入                                                                                                                                                                          |
+| `formulas`/`formulaForIf`（formula 集成，值侧可为公式）                            | **实现**（E3 收口）              | E0d 进 types.ts 提供稳定契约；E3 收口 runtime 消费：`formulas.enabled=true` 时 condition-item right 侧切换为表达式值槽（`data-slot="condition-formula-value"`），`formula` 作为新增 item 默认 right 种子串，`source` 走 `helpers.executeSource` 提供求值上下文、`helpers.evaluate` 解析表达式串；`formulaForIf.enabled=true` 时组级 `if` 输入标注为可求值表达式（`data-slot="condition-group-if-formula"`）。求值语义见 §7.5，DOM marker 见 §10 |
+| 异步 field/operator 元数据加载（`source` 走 api）                                  | **计划实现（E3 P2 批）**         | 走 source；当前 `types.ts` 仅允许 `source?: string`（scope 路径）                                                                                                                                                                                                                                                                                                                                                                               |
+| `simple` 模式真正扁平单组限制                                                      | **暂不实现**                     | 当前 simple 仅隐藏 AND/OR 开关，仍允许嵌套                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `description`/per-field description、`isRequired`、`labelsAndOp` 显示模式          | **暂不实现**                     | 后续按需                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| amis 组件级 `api`/`initFetch` SchemaApi 生命周期                                   | **不采纳**                       | 请求下沉 data-source + action（见 analysis §0.2/§5）                                                                                                                                                                                                                                                                                                                                                                                            |
+| amis `mobileUI` 双实现                                                             | **不采纳**                       | 移动端走响应式（见 mobile-roadmap）                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -84,7 +84,7 @@ interface ConditionBuilderSchema extends BaseSchema {
 }
 ```
 
-`selectMode` 字段已由 E0d 删除（收敛为 list-only，见 §2 决策表）。`formulas` / `formulaForIf` 由 E0d 进 `types.ts`（DESIGN-ACK-NOT-IMPL，运行时静默忽略，实际求值属 E3 P2 批）。`ConditionFormulaConfig` 最小形状（足以让 E3 实现，运行时当前不消费）：
+`selectMode` 字段已由 E0d 删除（收敛为 list-only，见 §2 决策表）。`formulas` / `formulaForIf` 由 E0d 进 `types.ts`、E3 收口 runtime 消费（DESIGN-ACK-NOT-IMPL → 实现）。`ConditionFormulaConfig` 形状与运行期语义：
 
 ```ts
 interface ConditionFormulaConfig extends SchemaObject {
@@ -93,6 +93,12 @@ interface ConditionFormulaConfig extends SchemaObject {
   source?: string;
 }
 ```
+
+`ConditionFormulaConfig` 运行期语义（E3 收口）：
+
+- `enabled?: boolean` — 是否开启 formula 值槽。`true` 时 condition-item right 侧切换为表达式输入（`data-slot="condition-formula-value"`），写入值为表达式串（非字面量）。缺省 `false` 时为既有字面量值槽（无回归）。
+- `formula?: string` — 默认/种子表达式串。当 `enabled=true` 且本字段提供时，新增 condition-item 的 `right` 默认为本串（而非 `undefined`）。
+- `source?: string` — data-source 表达式或 scope 路径，用于提供 formula 求值的数据上下文/变量绑定。求值时通过 `helpers.executeSource({ type: 'source', formula: source }, { scope })` 解析上下文，再以 `helpers.evaluate` 求表达式串。缺省时值槽仍为表达式输入但无外部上下文（`formula-source-empty` Failure Path：降级为无上下文求值，值槽表现为普通表达式输入，不报错）。
 
 关键输入：
 
@@ -179,8 +185,28 @@ interface ConditionItemValue {
   - `disabled` 透传：组 `disabled` 时 if 输入也 disabled。
   - 不破坏现有 conjunction/not/add/remove 控件布局；if 输入位于同一头部行的尾端，邻近组删除按钮。
 - `showIf: false`（或缺省）：不渲染 if 输入；即使 `value.if` 已存在（外部写入），UI 也不暴露它。
-- 表达式求值属消费方职责（E3 formula 集成或宿主规则引擎）：本组件只负责"写入 if 表达式串"，不负责"求值 if"。`formulas`/`formulaForIf` 字段已进 types.ts（DESIGN-ACK-NOT-IMPL，见 §2/§4），其求值属 E3 P2 批。
+- 表达式求值属消费方职责（E3 formula 集成或宿主规则引擎）：本组件只负责"写入 if 表达式串"，不负责"求值 if"。`formulas`/`formulaForIf` 字段已由 E3 收口 runtime 消费（见 §2/§4/§7.5），`formulaForIf.enabled=true` 时 `if` 串标注为可求值表达式。
 - 边界：`showIf` 与 `addGroupBtnVisibleOn`（表达式开关，控制"添加组"按钮可见性）正交 —— 前者是组内 if 输入渲染开关，后者是按钮可见性表达式，互不影响。
+
+### 7.5 formula 求值对接契约（`formulas` / `formulaForIf`）
+
+E3 收口了 `formulas` / `formulaForIf` 的 runtime 消费（E0d 仅声明类型 + DESIGN-ACK-NOT-IMPL）。求值职责分离：
+
+- **`helpers.evaluate`**：负责"求表达式"——把 condition-item right 侧的表达式串（或 group `if` 串）作为 Flux expression 解析求值。组件不发明私有 formula 语法，复用 Flux expression runtime。
+- **`source`（data-source 名称/表达式）**：负责"提供数据上下文"——通过 `helpers.executeSource({ type: 'source', formula: source }, { scope })` 解析 `ConditionFormulaConfig.source` 指向的数据源，返回的数据作为 formula 求值的变量绑定上下文（注入子 scope）。与 E2d/X4 的 data-source `executeSource` 入口一致，不在组件开 `api` 短路径。
+
+两条路径职责分离：`helpers.evaluate` 负责"求表达式"，`source` 负责"提供数据上下文"。
+
+组件内求值入口：
+
+- `condition-builder.tsx` 主 renderer 创建 `evaluateFormula(formula: string)` 回调（async），下传给 condition-item / value-input 的表达式值槽。
+- 表达式值槽（`FormulaValueSlot`）用 `evaluateFormula` 计算预览值（`→ {result}`），让作者即时看到表达式效果。预览失败时显示 `⚠ eval error`，值槽仍保留原始表达式串。
+- 求值抛错时（`formula-eval-error` Failure Path）：`evaluateFormula` 捕获异常、降级返回原始串、控制台 `console.warn`（dev only），不冒泡到 form runtime。
+
+宿主消费契约：
+
+- condition-item 的 `right`（当 `formulas.enabled=true`）是表达式串；宿主/规则引擎按本节契约自行求值，或通过组件暴露的 `evaluateFormula` 入口求值。
+- group 的 `if`（当 `formulaForIf.enabled=true`）是可求值表达式串；宿主按同契约求值。`formulaForIf.enabled=false`/缺省时 `if` 串按 plain string 对待（E0d 行为，无回归）。
 
 ## 7.2 字段类型 → 运算符 → 值控件映射
 
@@ -387,6 +413,8 @@ interface ConditionCustomField extends BaseConditionField {
 - 根节点保留 `nop-condition-builder` marker。
 - 视觉层遵循 field frame 和 group/card 类 UI primitives，不内嵌组件私有布局体系。
 - 组容器、条件项、拖拽柄、删除按钮等视觉结构应使用稳定 marker 以便外部主题和测试定位。
+- 表达式值槽（当 `formulas.enabled=true` 时 condition-item right 侧）使用 `data-slot="condition-formula-value"` marker，视觉前缀区分「表达式」vs「字面量」。预览结果标注 `data-slot="condition-formula-preview"`。
+- 组级 `if` 表达式输入在 `formulaForIf.enabled=true` 时追加 `data-slot="condition-group-if-formula"` 标注（与 E0d 的 `condition-group-if-input` 共存，后者保留 plain-string 语义）。
 
 ## 11. 实现拆分
 

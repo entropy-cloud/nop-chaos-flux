@@ -220,9 +220,9 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- 若 Phase 1 / Phase 3 期间识别出 `showIf` 表达式输入需要语法高亮 / 自动补全 / 校验，记录到此节并指向 E3；本计划只提供最小文本输入。
-- 若识别出 `selectMode: tree/chained` 需要远程字段源（走 `source` api），记录到此节并指向 E3；本计划仅基于静态 `fields` 渲染。
-- 若 `ConditionFormulaConfig` 类型形状在 E3 实现时需要扩展，记录到此节；本计划只声明最小形状。
+- ~~若 Phase 1 / Phase 3 期间识别出 `showIf` 表达式输入需要语法高亮 / 自动补全 / 校验，记录到此节并指向 E3；本计划只提供最小文本输入。~~ 仍指向 E3 后续 UX 复盘（本 plan 不实现语法高亮）。
+- ~~若识别出 `selectMode: tree/chained` 需要远程字段源（走 `source` api），记录到此节并指向 E3；本计划仅基于静态 `fields` 渲染。~~ 仍指向 E3 后续独立 feature plan。
+- ~~若 `ConditionFormulaConfig` 类型形状在 E3 实现时需要扩展，记录到此节；本计划只声明最小形状。~~ **已由 E3 condition-builder formula plan 收口**：`ConditionFormulaConfig` 三字段（`enabled`/`formula`/`source`）runtime 语义已落地，无需扩展类型形状。
 
 ## Closure
 
@@ -242,6 +242,6 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- `formulas`/`formulaForIf` 实际 formula 求值/集成 → E3 P2 批（本计划 Non-Goal，roadmap 已路由）。
+- ~~`formulas`/`formulaForIf` 实际 formula 求值/集成 → E3 P2 批（本计划 Non-Goal，roadmap 已路由）。~~ **已由 E3 condition-builder formula plan 收口**（`docs/plans/2026-06-22-0149-1-e3-condition-builder-formula-completion-plan.md`，2026-06-22）。
 - `showIf` 表达式输入的语法高亮/自动补全/校验 → 若有需求，记录到 E3（本计划只提供最小文本输入，Non-Blocking Follow-ups 已列）。
 - 若 E3 出现明确树形/级联字段选择需求，`selectMode` 以独立 feature plan 重新引入（本计划裁定为删字段）。
