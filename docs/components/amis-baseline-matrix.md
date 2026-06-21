@@ -257,12 +257,12 @@ Notes:
 
 ### 4. Replaced By `code-editor` Or Editor Infrastructure
 
-| AMIS type            | Why not retained standalone                                                                                                  | Replacement                             |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| `formula`            | formula editing should not live as a second canonical editor family                                                          | `code-editor`                           |
-| `editor`             | audited top-level `editor` remains the code/text-editing family, not the canonical rich-text type name                       | `code-editor`                           |
-| `json-schema-editor` | structured schema text editing should stay in the code-editor family until a dedicated designer is justified                 | `code-editor`                           |
-| `diff`               | compare/diff editing should stay in the code-editor family or a future specialized tool, not a baseline standalone component | `code-editor` / future specialized tool |
+| AMIS type            | Why not retained standalone                                                                                                  | Replacement                                                                   |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `formula`            | formula editing should not live as a second canonical editor family                                                          | `code-editor`                                                                 |
+| `editor`             | audited top-level `editor` remains the code/text-editing family, not the canonical rich-text type name                       | `code-editor`                                                                 |
+| `json-schema-editor` | structured schema text editing should stay in the code-editor family until a dedicated designer is justified                 | `code-editor`                                                                 |
+| `diff`               | compare/diff editing should stay in the code-editor family or a future specialized tool, not a baseline standalone component | `code-editor` (`diffValue` MergeView landed in E2h) / future specialized tool |
 
 ### 5. Low-Value, Host-Coupled, Security-Sensitive, Or Deferred Optional Types
 

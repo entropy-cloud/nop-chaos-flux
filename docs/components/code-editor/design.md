@@ -18,6 +18,29 @@
   - change/focus/blur 事件接入 Flux 事件系统
   - SQL format / snippets / variable panel / execution preview
 
+### Flux 决策表
+
+> 语言模式契约见 §4（12 语言：expression/sql/json/javascript/typescript/html/css/plaintext/python/yaml/xml/markdown）。
+
+| 能力                                                                                                       | 决定                                | 理由                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 8 语言（expression/sql/json/javascript/typescript/html/css/plaintext）                                     | **实现**                            | 当前基线（见 §4 语言模式列表）                                                                                                                       |
+| 4 新增语言（python/yaml/xml/markdown，E2h）                                                                | **实现**                            | E2h 增量：原生 `@codemirror/lang-{python,markdown,yaml,xml}` 全部 npm 可用，无降级                                                                   |
+| 3 模式（expression/template/code）                                                                         | **实现**                            | 当前基线                                                                                                                                             |
+| `width`/`height`/`lineNumbers`/`folding`/`autoHeight`/`allowFullscreen`/`editorTheme`/`options`/`readOnly` | **实现**                            | 当前基线                                                                                                                                             |
+| `onChange`/`onFocus`/`onBlur`                                                                              | **实现**                            | 当前基线；接入 Flux 事件系统                                                                                                                         |
+| SQL 模式全功能（tables/dialects/completion/format/snippets/variable panel/执行预览）                       | **实现**                            | 当前基线                                                                                                                                             |
+| 全屏切换                                                                                                   | **实现**                            | 当前基线                                                                                                                                             |
+| diff 编辑器模式（并排 `diffValue`）                                                                        | **实现**                            | E2h：基于 `@codemirror/merge` `MergeView`；`diffValue` 有值（含空串）时切换并排双窗格（左=原文 readOnly，右=`value` 可编辑）；DOM marker `data-diff` |
+| 只读代码高亮显示（colorize）                                                                               | **计划实现（E2h）→ deferred to E3** | 当前 text 是纯 String()；colorize 是独立只读渲染范式（不需 EditorView），架构与 editor 主体不同；deferred to E3 optimization candidate               |
+| 语言预设扩展（按需加 python/yaml/xml/markdown 等高频）                                                     | **实现**                            | E2h：12 语言契约（8 既有 + 4 新增）                                                                                                                  |
+| `editorDidMount` 句柄（原始 editor 句柄）                                                                  | **实现**                            | E2h：`onEditorMount` 事件（payload `{ editorId }`，fire-and-forget）+ `component:getEditorView` 句柄（同步返回 EditorView，命令式访问）              |
+| `doAction` clear/reset/focus                                                                               | **实现**                            | E2h：`component:clear`/`reset`/`focus` 三个 capability contracts（对齐 form `component:submit` 命名风格；X1 统一时回头对齐）                         |
+| per-language renderer 类型（`{lang}-editor`）                                                              | **暂不实现**                        | 强制单 type + `language` prop，不注册平级 renderer type                                                                                              |
+| minimap                                                                                                    | **暂不实现**                        | 字段级编辑器低频                                                                                                                                     |
+| amis `size` 预设                                                                                           | **暂不实现**                        | 已有 width/height 精确控制                                                                                                                           |
+| amis `mobileUI`（响应式）                                                                                  | **不采纳**                          | 走响应式（见 mobile-roadmap），不引入双实现标志位                                                                                                    |
+
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'code-editor'`
@@ -34,6 +57,7 @@ interface CodeEditorSchema extends BaseSchema {
   language: EditorLanguage;
   mode?: EditorMode;
   value?: string;
+  diffValue?: string;
   placeholder?: string;
   width?: number | string;
   height?: number | string;
@@ -48,6 +72,7 @@ interface CodeEditorSchema extends BaseSchema {
   onChange?: ActionSchema;
   onFocus?: ActionSchema;
   onBlur?: ActionSchema;
+  onEditorMount?: ActionSchema | ActionSchema[];
 }
 ```
 
@@ -61,14 +86,23 @@ interface CodeEditorSchema extends BaseSchema {
 - `html`
 - `css`
 - `plaintext`
+- `python`（E2h 新增，`@codemirror/lang-python@^6.2.1`）
+- `yaml`（E2h 新增，`@codemirror/lang-yaml@^6.1.3`）
+- `xml`（E2h 新增，`@codemirror/lang-xml@^6.1.0`）
+- `markdown`（E2h 新增，`@codemirror/lang-markdown@^6.5.0`）
+
+E2h 新增字段：
+
+- `diffValue?: string`：原文文本。当 `typeof diffValue === 'string'`（含空串）时，渲染器切换到 CodeMirror 6 `MergeView`（并排双窗格 diff），左侧为 `diffValue`（原文，readOnly），右侧为 `value`（当前编辑值，可编辑）。省略（`undefined`）时渲染标准单 editor。
+- `onEditorMount?: ActionSchema | ActionSchema[]`：editor mount 完成后触发的动作（fire-and-forget）。payload：`{ editorId: string }`。EditorView 不可序列化，因此事件仅通知 mount 完成；如需命令式访问 EditorView 实例，使用 `component:getEditorView` 句柄。
 
 ## 5. 字段分类
 
 - `label`: `value-or-region`
-- `language`、`mode`、`value`、`placeholder`、`width`、`height`: `value`
+- `language`、`mode`、`value`、`diffValue`、`placeholder`、`width`、`height`: `value`
 - `lineNumbers`、`folding`、`autoHeight`、`allowFullscreen`、`editorTheme`、`options`: `value`
 - `expressionConfig`、`sqlConfig`: `value`
-- `onChange`、`onFocus`、`onBlur`: `event`
+- `onChange`、`onFocus`、`onBlur`、`onEditorMount`: `event`
 
 ## 6. regions 与 slot 约定
 
@@ -84,10 +118,17 @@ interface CodeEditorSchema extends BaseSchema {
 
 ## 8. 事件、动作与组件句柄能力
 
-- `onChange`、`onFocus`、`onBlur` 通过 Flux 事件系统接线。
-- `RendererDefinition` 当前也发布同名 `eventContracts`，并为 `language`、`mode`、`expressionConfig`、`sqlConfig`、fullscreen/theme/layout props 提供 `propContracts`，所以 authoring discovery 面与 live renderer contract 保持一致。
+- `onChange`、`onFocus`、`onBlur`、`onEditorMount` 通过 Flux 事件系统接线。
+- `RendererDefinition` 当前也发布同名 `eventContracts`，并为 `language`、`mode`、`expressionConfig`、`sqlConfig`、`diffValue`、fullscreen/theme/layout props 提供 `propContracts`，所以 authoring discovery 面与 live renderer contract 保持一致。
 - `onChange` 在 form context 中应走 `currentForm.setValue(name, newValue)`，无 form 时走 `scope.update(name, newValue)`。
+- `onEditorMount`（E2h）：editor mount 完成后触发（fire-and-forget），payload `{ editorId: string }`。事件只通知 mount 完成；EditorView 不可序列化，命令式访问走 `component:getEditorView` 句柄。
+- E2h 组件句柄（`componentCapabilityContracts`，对齐 form `component:submit` 命名风格）：
+  - `component:clear`：清空 editor 内容（dispatch `{ from: 0, to: doc.length, insert: '' }`），触发 onChange。
+  - `component:reset`：恢复 editor 到 initialValue（mount 时捕获的 value）。
+  - `component:focus`：`editorView.focus()`。
+  - `component:getEditorView`：同步返回 EditorView 实例（不透明句柄，result shape `unknown`——不可序列化）。
 - 组件可以长期提供局部 imperative capability，但不应演化成 namespaced host action owner。
+- X1 doAction 命令族统一后，`component:clear/reset/focus` 命名可能统一调整（non-breaking rename，归 `Deferred But Adjudicated`）。
 
 ## 9. 数据源、表达式、导入能力接入点
 
@@ -168,8 +209,13 @@ packages/flux-code-editor/src/
 当前已落地：
 
 - `CodeEditorSchema` 类型定义
-- `useCodeMirror` hook
+- `useCodeMirror` hook + `useMergeView` hook（E2h 新增，diff 模式）
+- `useCodeEditorHandle` hook（E2h 新增，组件句柄 clear/reset/focus/getEditorView）
 - `code-editor-renderer.tsx` 接入 `language`、`mode`、`placeholder`、`lineNumbers`、`folding`、`autoHeight`、`editorTheme`
+- 12 语言支持（E2h 增量）：expression/sql/json/javascript/typescript/html/css/plaintext（8 既有）+ python/yaml/xml/markdown（4 新增，全部原生 npm 包，无降级）
+- diff 编辑器模式（E2h 新增）：`diffValue` 有值时切换到 `@codemirror/merge` `MergeView`（左=原文 readOnly，右=`value` 可编辑），DOM marker `data-diff`
+- `onEditorMount` 事件（E2h 新增）：editor mount 完成后触发，payload `{ editorId }`
+- `component:clear`/`reset`/`focus`/`getEditorView` 句柄（E2h 新增）
 - 4 个 resolver hooks：变量、函数、表结构、SQL 变量；它们只消费 inline values 或 `scope` 引用。nested anonymous `SourceSchema` 的解析由 `flux-react` 在 renderer 前统一完成，而不是由 code-editor renderer/hook 自己处理 remote/source transport
 - change/focus/blur 事件与 Flux 表单/事件系统对齐
 - SQL 增强：format、snippets、variablePanel、execution preview
@@ -180,6 +226,9 @@ packages/flux-code-editor/src/
 - CM6 compartment 热替换
 - friendly-name decorations 的完整实现
 - 更多 builtin function-set 过滤策略
+- colorize 只读代码高亮（deferred to E3）
+- diff 模式的 `readOnlyOriginal` 配置（左侧原文是否可编辑）
+- `editorId` 可配置（当前自动生成）
 
 ## 13. 风险、取舍与后续阶段
 
