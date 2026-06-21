@@ -83,7 +83,7 @@ describe('data-source component capabilities (X4)', () => {
                 componentId: 'ds',
                 then: {
                   action: 'setValue',
-                  args: { path: 'skipFlag', value: '${result.skipped}' },
+                  args: { path: 'skipFlag', value: '${result.data.skipped}' },
                 },
               },
             },

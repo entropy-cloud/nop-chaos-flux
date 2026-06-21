@@ -397,7 +397,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         handle: 'refresh',
         displayName: 'Refresh',
         description:
-          'Trigger a manual refresh. The ActionResult carries `skipped` (boolean) at the top level, reflecting whether the sendOn gate suppressed the request.',
+          'Trigger a manual refresh. The ActionResult carries `skipped` (boolean) in `data`, reflecting whether the sendOn gate suppressed the request.',
       },
       {
         handle: 'cancel',

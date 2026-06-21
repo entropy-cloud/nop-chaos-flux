@@ -54,7 +54,7 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
           if (method === 'refresh') {
             return controller
               .refresh()
-              .then((result) => ({ ok: true, skipped: result.skipped }))
+              .then((result) => ({ ok: true, data: { skipped: result.skipped } }))
               .catch((error: unknown) => ({ ok: false, error }));
           }
 
