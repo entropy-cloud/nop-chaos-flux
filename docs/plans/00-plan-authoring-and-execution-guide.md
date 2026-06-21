@@ -103,7 +103,6 @@
 - `superseded` / `replaced` 适合历史计划或已被新计划接管的计划。
 - `deferred` 适合明确延后、不作为当前 active queue 的计划。
 
-> Driver 兼容性：`mission-driver` 的 `flow-loader.js` 还会容忍历史同义词 `drafted` / `proposed`（视作 `draft`）和 `planned` / `in progress` / `partially completed`（视作 `active`），但新 plan 必须用上面的规范词，不要依赖容错。
 > 注意区分：本节是 **plan-level**（blockquote `> Plan Status:`，被 driver 扫描）；下面 Execution-Slice Status 是 **slice-level**（裸 `Status:`，driver 不扫，仅人类阅读用），两套词表独立，不要混用。
 
 ### Execution-Slice Status
