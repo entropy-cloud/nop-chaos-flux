@@ -17,28 +17,28 @@
 
 > Flux 决策主语。amis 仅作参考之一，**非标尺**。命名对齐 shadcn/ui、请求下沉 data-source + action、移动端走响应式（X3 §1/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。
 
-| 能力                                                            | 采纳                                           | 不采纳     | 理由                                                                             |
-| --------------------------------------------------------------- | ---------------------------------------------- | ---------- | -------------------------------------------------------------------------------- |
-| `title`/`body`/`actions` region                                 | **实现**：三 region shell                      | —          | 当前基线                                                                         |
-| `data`/`open`/`defaultOpen`/`statusPath`                        | **实现**：受控/非受控打开态 + 状态发布         | —          | 当前基线                                                                         |
-| `closeOnOutsideClick`/`container`/`showMask`                    | **实现**                                       | —          | 当前基线                                                                         |
-| `onOpen`/`onClose` 事件                                         | **实现**：走 action schema                     | —          | 当前基线                                                                         |
-| 共享 `SurfaceRuntime` + declarative/`openDialog` 漏斗同栈       | **实现**：runtime 子 scope、重新打开新建 scope | —          | 当前基线                                                                         |
-| `closeOnEsc`（Esc 关闭）                                        | **计划实现（E2f）**                            | —          | 高频交互                                                                         |
-| `size` 预设（xs/sm/md/lg/xl/full）                              | **计划实现（E2f）**                            | —          | 对齐 shadcn size 语义（X3 §2）                                                   |
-| `width`/`height` 显式尺寸                                       | **计划实现（E2f）**                            | —          | size 之上的精确覆盖                                                              |
-| 独立 `header`/`footer` region（当前 footer 折进 `actions`）     | **计划实现（E2f）**                            | —          | header/footer 与 actions 解耦；命名沿用 region 语义（X3 §4.5）                   |
-| `confirm`（actions 省略时自动生成 cancel/confirm 按钮）         | **计划实现（E2f）**                            | —          | confirm 语义叠在 surface 之上，不混进 open-state                                 |
-| `showCloseButton` toggle                                        | **计划实现（E2f）**                            | —          | 显式开关，替代隐式假设                                                           |
-| `draggable` + 拖把（schema 暴露）                               | **暂不实现**                                   | —          | UI primitive 已支持拖把，schema 未暴露；非高频                                   |
-| `allowFullscreen` + setFullScreen                               | **暂不实现**                                   | —          | dialog 场景低频                                                                  |
-| `dialogType: 'confirm'` 类型判别                                | **暂不实现**                                   | —          | 用 `confirm` 布尔 + surface 语义，不引入判别树（X3 §4.2）                        |
-| `showErrorMsg`/`showLoading` 叠层                               | **暂不实现**                                   | —          | 走 statusPath + 外部组件表达                                                     |
-| `lazyRender`/`lazySchema`                                       | **暂不实现**                                   | —          | 当前重新打开即新建 scope，按需再评估                                             |
-| 动画/过渡钩子（entered/exited 驱动生命周期事件）                | **暂不实现**                                   | —          | 低频，后续按需                                                                   |
-| amis 文本/参数包 `msg`/`confirmText`/`cancelText`/`inputParams` | —                                              | **不采纳** | 用 Flux action + surface 表达，不在组件塞文本/参数包（X3 §3 button amis 化同源） |
-| amis 组件级 `api` 生命周期                                      | —                                              | **不采纳** | 请求下沉 data-source + action，不开短路径（X3 §1/§3）                            |
-| amis `mobileUI`（小屏全屏覆盖）                                 | —                                              | **不采纳** | 走响应式（见 mobile-roadmap），不引入双实现标志位（X3 §3）                       |
+| 能力                                                            | 采纳                                                                                                                                                | 不采纳     | 理由                                                                             |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------- |
+| `title`/`body`/`actions` region                                 | **实现**：三 region shell                                                                                                                           | —          | 当前基线                                                                         |
+| `data`/`open`/`defaultOpen`/`statusPath`                        | **实现**：受控/非受控打开态 + 状态发布                                                                                                              | —          | 当前基线                                                                         |
+| `closeOnOutsideClick`/`container`/`showMask`                    | **实现**                                                                                                                                            | —          | 当前基线                                                                         |
+| `onOpen`/`onClose` 事件                                         | **实现**：走 action schema                                                                                                                          | —          | 当前基线                                                                         |
+| 共享 `SurfaceRuntime` + declarative/`openDialog` 漏斗同栈       | **实现**：runtime 子 scope、重新打开新建 scope                                                                                                      | —          | 当前基线                                                                         |
+| `closeOnEsc`（Esc 关闭）                                        | **实现**：host `onOpenChange` reason-inspection（缺省 true；false 时拦截 escape-key reason）                                                        | —          | 高频交互（E2f）                                                                  |
+| `size` 预设（xs/sm/md/lg/xl/full）                              | **实现**：Flux 6 档映射 ui DialogContent `sm/default/lg`（xs→sm, sm/md→default, lg/xl→lg）+ `full` 走 inline 100vw/100vh                            | —          | 对齐 shadcn size 语义（X3 §2，E2f）                                              |
+| `width`/`height` 显式尺寸                                       | **实现**：inline style 覆盖（number→px）；与 size 并存时显式优先                                                                                    | —          | size 之上的精确覆盖（E2f）                                                       |
+| 独立 `header`/`footer` region（当前 footer 折进 `actions`）     | **实现**：`header` 与 `title` 并存于 DialogHeader；`footer` 与 `actions` 并存于 DialogFooter（渲染顺序 footer content → actions buttons）           | —          | header/footer 与 actions 解耦；命名沿用 region 语义（X3 §4.5，E2f）              |
+| `confirm`（actions 省略时自动生成 cancel/confirm 按钮）         | **实现**：`confirm` truthy 且无 `actions` 时自动生成 `[Cancel][Confirm]`；cancel→onClose，confirm→onConfirm+onClose；`confirm: '保存'` 用自定义文案 | —          | confirm 语义叠在 surface 之上，不混进 open-state（E2f）                          |
+| `showCloseButton` toggle                                        | **实现**：透传 ui DialogContent（已支持）                                                                                                           | —          | 显式开关，替代隐式假设（E2f）                                                    |
+| `draggable` + 拖把（schema 暴露）                               | **暂不实现**                                                                                                                                        | —          | UI primitive 已支持拖把，schema 未暴露；非高频                                   |
+| `allowFullscreen` + setFullScreen                               | **暂不实现**                                                                                                                                        | —          | dialog 场景低频                                                                  |
+| `dialogType: 'confirm'` 类型判别                                | **暂不实现**                                                                                                                                        | —          | 用 `confirm` 布尔 + surface 语义，不引入判别树（X3 §4.2）                        |
+| `showErrorMsg`/`showLoading` 叠层                               | **暂不实现**                                                                                                                                        | —          | 走 statusPath + 外部组件表达                                                     |
+| `lazyRender`/`lazySchema`                                       | **暂不实现**                                                                                                                                        | —          | 当前重新打开即新建 scope，按需再评估                                             |
+| 动画/过渡钩子（entered/exited 驱动生命周期事件）                | **暂不实现**                                                                                                                                        | —          | 低频，后续按需                                                                   |
+| amis 文本/参数包 `msg`/`confirmText`/`cancelText`/`inputParams` | —                                                                                                                                                   | **不采纳** | 用 Flux action + surface 表达，不在组件塞文本/参数包（X3 §3 button amis 化同源） |
+| amis 组件级 `api` 生命周期                                      | —                                                                                                                                                   | **不采纳** | 请求下沉 data-source + action，不开短路径（X3 §1/§3）                            |
+| amis `mobileUI`（小屏全屏覆盖）                                 | —                                                                                                                                                   | **不采纳** | 走响应式（见 mobile-roadmap），不引入双实现标志位（X3 §3）                       |
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -50,10 +50,11 @@
 ## 4. schema 设计
 
 - 当前与长期共同保留的基础字段为 `title`、`body`、`actions`、`open`、`defaultOpen`、`closeOnOutsideClick`、`container`、`showMask`、`statusPath`、`data`。
+- E2f 新增字段（已落地）：`closeOnEsc`（缺省 `true`）、`size?: 'xs'|'sm'|'md'|'lg'|'xl'|'full'`、`width`/`height`（number|string）、`showCloseButton`（缺省 `true`）、`header?: BaseSchema[]`、`footer?: BaseSchema[]`（独立 region，与 `title`/`actions` 并存）、`confirm?: boolean|string`（actions 省略时自动生成 Cancel/Confirm 按钮；string 提供自定义 confirm 文案）、`onConfirm?: ActionSchema|ActionSchema[]`、`bodyClassName`/`headerClassName`/`footerClassName`（透传到 ui `DialogBody`/`DialogHeader`/`DialogFooter`）。
 - `data` 的语义是初始化 dialog own child scope patch，而不是第二套局部 props 系统。
 - `open` / `defaultOpen` 继续作为 public DSL 的最小打开态接口。
 - 如果未来需要把打开轴正式外置到 scope/host，命名应沿用 surface family 语言，例如 `openOwnership` / `openStatePath`，而不是再为 dialog 发明私有命名。
-- `size`、`showCloseButton` 仍可作为后续扩展候选，但当前不应误写成已经稳定落地的基础 contract。
+- `size`/`showCloseButton`/`header`/`footer`/`confirm`/`onConfirm`/`bodyClassName`/`headerClassName`/`footerClassName` 已在 E2f 落地为基础 contract（propContracts + fields 已注册，dialog 为 closed-model renderer）。
 
 Current live implementation note:
 
@@ -63,9 +64,9 @@ Current live implementation note:
 ## 5. 字段分类
 
 - `title`: `value-or-region`
-- `body`、`actions`: `region`
-- `open`、`defaultOpen`、`closeOnOutsideClick`、`container`、`showMask`、`statusPath`、`data`: `value`
-- `onOpen`、`onClose`: `event`
+- `body`、`actions`、`header`、`footer`: `region`
+- `open`、`defaultOpen`、`closeOnOutsideClick`、`closeOnEsc`、`size`、`width`、`height`、`showCloseButton`、`container`、`showMask`、`statusPath`、`data`、`confirm`、`bodyClassName`、`headerClassName`、`footerClassName`: `value`
+- `onOpen`、`onClose`、`onConfirm`: `event`
 
 ## 6. regions 与 slot 约定
 
@@ -81,6 +82,7 @@ Current live implementation note:
 - dialog 不应复用 page store 作为自己的 owner store；它应使用 surface family 共用的 `SurfaceRuntime` / `SurfaceStore`。
 - drawer 与 dialog 属于同一 surface family，应共享同一种 runtime/store 结构，只通过 surface kind 区分具体表面类型。
 - 如果后续引入 confirm/commit 语义，那是叠加在 surface 之上的 semantic lifecycle，不应与 open-state 混成一份模糊状态。
+- E2f 落地 confirm 语义：`confirm: true` 且无 `actions` 时，host 自动生成 `[Cancel][Confirm]` 按钮；cancel button 触发 onClose，confirm button 先触发 `onConfirm` 事件（payload `{ surfaceId, kind, open }`）再触发 onClose。`confirm` 字段不替代 `actions`：当 `actions` 显式声明时，confirm 自动生成被抑制。
 - dialog 外部若需要读取其状态，应通过 `statusPath` 读取只读 summary DTO，而不是通过 page 或 id/name 做隐式查询。
 - 如果未来确认 subtree-local authoring 频繁需要读取当前弹层状态，优先考虑共享 `$surface`，而不是单独发明 `$dialog`。
 - 共享 surface owner 规则以 `docs/architecture/surface-owner.md` 为准。
@@ -107,7 +109,10 @@ Current live implementation note:
 
 ## 10. 样式与 DOM marker 约定
 
-- 根节点保留 `nop-dialog` marker。
+- 根节点保留 `nop-dialog` marker；host 在 DialogContent 上额外发布 `data-slot="dialog-surface"`（区别于 ui DialogContent 的 `data-slot="dialog-content"`）以及 `data-close-on-outside` / `data-close-on-esc` 状态 marker。
+- `size` 映射：Flux 6 档（xs/sm/md/lg/xl/full）映射到 ui DialogContent 三档（sm/default/lg）+ `full` 走 inline `width: 100vw; height: 100vh`。
+- `width`/`height` 显式 override：number→px，string 透传 CSS length；与 `size` 并存时显式优先。
+- `bodyClassName`/`headerClassName`/`footerClassName` 经 `cn()` 合并到 `DialogBody`/`DialogHeader`/`DialogFooter`，不污染 `nop-dialog` 根 marker。
 - 视觉和可访问性交互复用 `@nop-chaos/ui` Dialog。
 - 标准 shell 结构应为 `DialogContent -> DialogHeader? -> DialogBody -> DialogFooter?`。
 - `DialogContent` 负责弹层壳行为；默认 body spacing 应归 `DialogBody`，不要把正文 padding/gap 放回 `DialogContent`。

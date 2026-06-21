@@ -40,19 +40,21 @@
 9. 任何 execution slice 只要还有一项未完成、blocked、或未移出 scope，plan 就不能标 `completed`。
 10. 如果目标本身是一个用户可感知的完整 feature，优先写成能收口该 feature 的完整实现计划；不要默认先拆成多个彼此依赖的零散计划，除非 live repo 证据已经表明该 feature 无法由一个 owner plan 清晰收口。
 11. 关闭计划时，必须区分“contract surface 已出现”和“contract semantics 已落地”；前者不能替代后者。
-12. 标记 `completed` 前，必须完成一次由独立审阅者或独立子 agent 执行的 closure audit，并把证据写进 plan 或对应 daily log。self-audit 可用于执行中的自查，但不能替代 `completed` 所需的独立 closure audit。
+12. closure-audit **禁止在执行 session 内完成**。标记 `completed` 前，必须由独立子 agent（fresh session，不复用执行者的上下文）反复审核直到通过，审核证据写进 plan 的 `Closure Audit Evidence` 或对应 daily log。执行者自己的 self-audit 只能用于执行中自查，不能勾 Closure Gates 中的 audit 条目，也不能作为 `completed` 的依据。当执行链路里没有第二个独立 agent 可用时，禁止用"留 human gate"或自我声明替代——必须显式启动一个 fresh sub-agent session 来做审核，否则 plan 保持未关闭。
 13. **已经进入 `lint`、静态检查脚本、或 CI fail-fast 的固定规则，都是不可降级的硬约束。** 计划里不能把这些规则改写成 advisory、follow-up、或“如有时间再做”的事项。
 14. `docs/architecture/` 下的文档**只描述当前最新设计状态**：最终方案、选择原因、拒绝的替代方案及原因。不写历史变迁、不写"Proposed vs Current"对比、不写演进叙事。如果一个 design doc 包含 "Proposed Design" 或 "Current vs Proposed" 章节，说明它还停留在 draft 状态，实施完成后必须重写为最终设计文档。
 15. 每个 execution item 都必须能被归类为 `Fix`、`Decision`、`Proof`、或 `Follow-up`。已确认的 live defect 或 contract drift 只能属于 `Fix`，不能降级成 `Follow-up`。
 16. 允许 deferred 的是优化项或已裁定为 non-blocking 的 residual，不允许 deferred 的是已确认且仍在 scope 内的 live defect、contract gap、owner-doc drift、以及未满足的硬门禁。
-17. 如果某个 Phase 改变了 live baseline、public contract、或 owner behavior，该 Phase 的 Exit Criteria 必须包含相应文档更新项。纯测试拆分、纯工具整理、纯内部重构可以显式写明 `No owner-doc update required`，但不能默默跳过文档裁定。
-18. **Checklist 打勾是 closure 的前置条件，不是附带动作。** 执行完一个 item 后必须立即将对应 `- [ ]` 改为 `- [x]`。标记 `Plan Status: completed` 时，文件内不得残留任何未勾选的 in-scope checklist item。如果存在未勾选项，要么完成它，要么显式移入 `Deferred But Adjudicated` 并写清原因。
-19. **标记 `completed` 前，必须做一次文本一致性核对。** 至少逐项确认以下五处彼此一致：`Plan Status`、每个 slice 的 `Status`、每个 slice 的 `Exit Criteria`、`Closure Gates`、以及对应 `docs/logs/` 收口记录。任何一处仍显示未完成，都不能把 plan 视为真正关闭。
-20. **已标记 `completed` 的历史计划默认视为历史记录，不因后续规范演进、模板变化、或后续代码演化而主动回写。** 只有在用户明确要求、需要修复事实性错误/损坏链接、或当前活跃计划明确且经用户确认以“修订历史计划文本”为交付物时，才允许修改这类计划。对历史计划的新审计发现，默认记录在新的 analysis / active plan / daily log 中，而不是为了追求模板一致性去重写旧计划。
-21. **避免计划过度拆分。** 不要因为“每条 finding 都能单开 plan”就默认拆到最小粒度。若多条 finding 明显落在同一组件、同一模块、或同一 owner-doc/result surface，且通常会由同一组代码改动、同一组 focused proof、同一组 exit criteria 一起收口，优先合并成一个诚实的 owner plan。只有当合并后会产生多套彼此独立的 closure criteria、owner-doc obligations、或明显不同的 live result surface 时，才继续拆分。反过来，如果一个队列里出现大量 one-finding micro-plan，必须主动复审是否已经 over-split，而不是把“编号更多”误当成“边界更清晰”。
-22. **不要把文件长度或 finding 数量当作默认拆分阈值。** `docs/plans/` 中的单一 owner plan 在 30 KB 左右甚至更大都可以接受，只要它仍然服务同一个结果面，并且读者仍能清楚看懂 baseline、phase 状态、proof 和 closure。真正触发拆分的应是 closure 语义分叉，而不是“文档快到 30 KB”或“已经有很多 bullet”。
-23. **优先在单个 owner plan 内增加 phase / workstream，而不是新增 plan 文件。** 当问题仍属于同一个结果面，但 proof、owner-doc、或代码落点开始变多时，默认先在同一个 plan 里把 phase 写实、把 owner-doc obligations 写清楚、把 exit criteria 写窄。只有当这些 phase 之间已经形成彼此独立的 closure 单元，才升级为多个 plans。
-24. **审计驱动队列默认先合并再拆分。** 对来自 deep-audit、UX audit、adversarial review 的 findings，不要因为来源是逐条编号输出，就直接映射成逐条独立 plan。先判断这些 findings 是否共享同一 owner / 同一组件家族 / 同一验证路径；如果共享，就应先合并成一个 remediation owner plan，再在 plan 内部分 phase 收口。
+17. owner-doc 同步是 **plan 级**义务，不是每个 Phase 的固定项。只有当某个 Phase **真的改变了 live baseline / public contract / owner behavior** 时，它的 Exit Criteria 才写对应文档更新项；否则不要为了凑条目写 `No owner-doc update required`——没改动就不写。owner-doc 的整体一致性在 `When Closing The Plan` 第 4 步核对。纯测试拆分、纯工具整理、纯内部重构同理，不需要在 Exit Criteria 里显式声明无文档更新。
+18. **全量仓库验证（`pnpm typecheck`/`build`/`lint`/`test`）属于 Closure Gates，不是 Phase Exit Criteria 的默认项。** 一个 Phase 的 Exit Criteria 只写**保证后续 Phase 能继续**所必需的检查（通常是该 Phase 新增代码的 focused 单测 / 局部 typecheck），不要每个 Phase 都重复跑全量编译/测试。全量验证在 plan 收口时跑一次即可（Closure Gates 已覆盖）。例外：如果某个 Phase 改了公共契约且后续 Phase 立即依赖它，可在该 Phase Exit 写"局部 typecheck 通过"以解阻塞，但不必跑完整 `pnpm build`。
+19. **Checklist 打勾是 closure 的前置条件，不是附带动作。** 执行完一个 item 后必须立即将对应 `- [ ]` 改为 `- [x]`。标记 `Plan Status: completed` 时，文件内不得残留任何未勾选的 in-scope checklist item。如果存在未勾选项，要么完成它，要么显式移入 `Deferred But Adjudicated` 并写清原因。
+20. **标记 `completed` 前，必须做一次文本一致性核对。** 至少逐项确认以下五处彼此一致：`Plan Status`、每个 slice 的 `Status`、每个 slice 的 `Exit Criteria`、`Closure Gates`、以及对应 `docs/logs/` 收口记录。任何一处仍显示未完成，都不能把 plan 视为真正关闭。
+21. **已标记 `completed` 的历史计划默认视为历史记录，不因后续规范演进、模板变化、或后续代码演化而主动回写。** 只有在用户明确要求、需要修复事实性错误/损坏链接、或当前活跃计划明确且经用户确认以“修订历史计划文本”为交付物时，才允许修改这类计划。对历史计划的新审计发现，默认记录在新的 analysis / active plan / daily log 中，而不是为了追求模板一致性去重写旧计划。
+22. **避免计划过度拆分。** 不要因为“每条 finding 都能单开 plan”就默认拆到最小粒度。若多条 finding 明显落在同一组件、同一模块、或同一 owner-doc/result surface，且通常会由同一组代码改动、同一组 focused proof、同一组 exit criteria 一起收口，优先合并成一个诚实的 owner plan。只有当合并后会产生多套彼此独立的 closure criteria、owner-doc obligations、或明显不同的 live result surface 时，才继续拆分。反过来，如果一个队列里出现大量 one-finding micro-plan，必须主动复审是否已经 over-split，而不是把“编号更多”误当成“边界更清晰”。
+23. **不要把文件长度或 finding 数量当作默认拆分阈值。** `docs/plans/` 中的单一 owner plan 在 30 KB 左右甚至更大都可以接受，只要它仍然服务同一个结果面，并且读者仍能清楚看懂 baseline、phase 状态、proof 和 closure。真正触发拆分的应是 closure 语义分叉，而不是“文档快到 30 KB”或“已经有很多 bullet”。
+24. **优先在单个 owner plan 内增加 phase / workstream，而不是新增 plan 文件。** 当问题仍属于同一个结果面，但 proof、owner-doc、或代码落点开始变多时，默认先在同一个 plan 里把 phase 写实、把 owner-doc obligations 写清楚、把 exit criteria 写窄。只有当这些 phase 之间已经形成彼此独立的 closure 单元，才升级为多个 plans。
+25. **审计驱动队列默认先合并再拆分。** 对来自 deep-audit、UX audit、adversarial review 的 findings，不要因为来源是逐条编号输出，就直接映射成逐条独立 plan。先判断这些 findings 是否共享同一 owner / 同一组件家族 / 同一验证路径；如果共享，就应先合并成一个 remediation owner plan，再在 plan 内部分 phase 收口。
+26. **一个组件的多个独立能力优先合成一个 owner plan，而不是每个能力一个 plan。** 例如"组件 X 的能力 A/B/C 补齐"应写成单个 plan 内三个 Phase，而不是 A/B/C 各一个 plan——除非它们有不同的 closure criteria 或 owner-doc obligations。这条是 Rule 22 在"组件级能力增强"场景的具体化，目的是避免出现 one-capability-per-plan 的碎片队列。
 
 ## Anti-Slacking Rule
 
@@ -210,11 +212,11 @@ Targets: `<<文件/模块/文档>>`
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
+>
+> **写法原则**：只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续所必需的局部检查。不要写 boilerplate（无改动就不写 `No owner-doc update required`）；全量 `pnpm typecheck/build/lint/test` 是 Closure Gates 的事，不是每个 Phase 的默认项（见 Minimum Rule 18）。
 
-- [ ] <<完成判定>>
-- [ ] <<验证点>>
-- [ ] <<若该 Phase 改变 live baseline：相关 `docs/architecture/` / `docs/components/` 已更新；否则明确写 `No owner-doc update required`>>
-- [ ] `docs/logs/` 对应日期条目已更新
+- [ ] <<完成判定：本 Phase 交付了什么 repo-observable 结果>>
+- [ ] <<验证点：focused 单测 / 局部 typecheck / 关键行为抽查（仅当后续 Phase 依赖时）>>
 
 ### Phase 2 - <<名称>>
 
@@ -228,12 +230,10 @@ Targets: `<<文件/模块/文档>>`
 
 Exit Criteria:
 
-> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
+> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。写法原则同 Phase 1。
 
 - [ ] <<完成判定>>
 - [ ] <<验证点>>
-- [ ] <<若该 Phase 改变 live baseline：相关 `docs/architecture/` / `docs/components/` 已更新；否则明确写 `No owner-doc update required`>>
-- [ ] `docs/logs/` 对应日期条目已更新
 
 ### Workstream 1 - <<名称>>
 
@@ -247,12 +247,10 @@ Targets: `<<文件/模块/文档>>`
 
 Exit Criteria:
 
-> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
+> 每个 Workstream 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Workstream Status 改为 `completed`。写法原则同 Phase 1。
 
 - [ ] <<完成判定>>
 - [ ] <<验证点>>
-- [ ] <<若该 Workstream 改变 live baseline：相关 `docs/architecture/` / `docs/components/` 已更新；否则明确写 `No owner-doc update required`>>
-- [ ] `docs/logs/` 对应日期条目已更新
 
 ## Draft Review Record
 
@@ -267,6 +265,8 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。关闭流程详见本 guide 的 `When Closing The Plan` 和 `Closure Audit Rule`。
 >
+> **全量验证归此处**：`pnpm typecheck`/`build`/`lint`/`test` 是 plan 收口时跑一次的仓库级检查（见 Minimum Rule 18），不要在 Phase Exit Criteria 里重复。Phase 内只做保证后续 Phase 能继续的局部验证。
+>
 > **纯文档计划**：如果计划不涉及任何代码变更（仅修改 `docs/` 下的文件），`pnpm test`、`pnpm lint`、`pnpm typecheck`、`pnpm build` 这些条目可以直接从 Closure Gates 中删除，不需要执行。
 
 - [ ] <<所有 in-scope confirmed live defects 已修复>>
@@ -275,7 +275,7 @@ Exit Criteria:
 - [ ] <<必要 focused verification 已完成>>
 - [ ] <<不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift>>
 - [ ] <<受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required>>
-- [ ] <<独立子 agent / 独立审阅者 closure-audit 已完成并记录证据>>
+- [ ] <<由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项>>
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
@@ -356,7 +356,7 @@ This guide uses two distinct concepts that were previously conflated under "audi
      判断标准：读完这条 Exit Criteria 后，任何人都能在仓库里找到对应的文件、代码或文档，明确判断它是否成立。
 7. 如果计划要处理重构热点或大文件治理，先基于 live repo audit 写清当前超大文件清单、目标阈值，以及 closure 时将使用的复核命令；不要只引用旧日志或旧计划里的行数结论。
 8. 为每个 execution item 标记类型：`Fix`、`Decision`、`Proof`、`Follow-up`。如果一个项已经被确认为 live defect 或 contract drift，就不能写成 `Follow-up`。
-9. 如果某个 Phase 改了代码或行为，该 Phase 的 exit criteria 必须列出需要更新的 `docs/architecture/`、`docs/components/` 或 `docs/logs/` 条目；如果不需要 owner-doc 更新，也要显式写出 `No owner-doc update required`。文档更新不是全局收尾工作，而是 Phase 内的工作。`docs/architecture/` 下的文档只写最终设计状态（见 Minimum Rules 第 14 条）。
+9. owner-doc 同步按 Minimum Rule 17 处理：只有当 Phase **真的改了 live baseline / public contract / owner behavior** 时，才在它的 exit criteria 列出对应 `docs/architecture/`、`docs/components/`、`docs/logs/` 更新项；没改动就不要写 `No owner-doc update required` 凑条目。`docs/architecture/` 下的文档只写最终设计状态（见 Minimum Rules 第 14 条）。owner-doc 的整体一致性在 `When Closing The Plan` 第 4 步核对，不是每个 Phase 的固定开销。
 10. 当你犹豫“要不要新开一个 successor plan”时，先尝试在当前 owner plan 内新增一个 phase / workstream，并问自己：这样是否已经足够诚实地表达不同 proof 或 owner-doc obligations？如果足够，就不要新增 plan 文件。
 11. `## Failure Paths`：涉及错误处理、API 契约、鉴权、外部集成的计划应填写。每行至少包含触发条件、预期行为（含状态码/错误码）、是否可重试、用户可见表现。缺这一节，实现时容易只写 happy path。纯重构、纯文档、纯内部实现可跳过并写明“不适用”。
 12. `## Test Strategy`：声明本轮计划对测试投入的风险匹配策略。鉴权、对外 API 契约、核心回归路径应选“必须自动化”；一般功能选“建议有测”；纯文档/无行为变更选“不适用”并附理由。选“必须自动化”时，对应的 Proof 项应在 Fix/Implement 之前。
@@ -396,7 +396,7 @@ plan review 检查四项：
 4. 逐项核对文本一致性：`Plan Status`、每个 slice 的 `Status`、每个 slice 的 `Exit Criteria`、`Closure Gates`、`docs/logs/` 收口记录必须彼此一致，不能保留“顶部已 completed、内部仍未勾选”的状态。
 5. 把剩余工作写进 `Follow-up`，明确 successor plan 或明确无剩余 debt。
 6. 明确区分“接口存在”与“行为完成”（对代码变更计划：至少抽查一轮 live code path 和 focused tests；对纯文档计划：抽查文档内容与 live repo 代码的一致性），确认实现语义真的满足 exit criteria。
-7. 由独立审阅者或独立子 agent 做 closure-audit，并在 plan 或对应 daily log 中记录证据。这里的独立子 agent 指为 closure audit 单独启动的 fresh session，而不是复用实现阶段的同一 task session 继续自查。
+7. closure-audit 必须在执行 session **之外**完成——由独立子 agent（fresh session，不复用执行者上下文）反复审核直到通过，证据记入 plan 或对应 daily log。执行 session 不得自审、不得勾 Closure Gates 中的 audit 条目、不得以"留 human gate"替代；没有独立 agent 可用时必须显式启动一个 fresh sub-agent session，否则 plan 保持未关闭。
 8. 逐条检查 deferred / follow-up 项是否真的 non-blocking，确认没有把 in-scope live defect、contract drift、或硬门禁失败项偷偷改写成“后续再做”。
 
 如果这些事没做完，就不要把 `Plan Status` 改成 `completed`。
@@ -409,7 +409,7 @@ plan review 检查四项：
 
 1. 关闭动作必须发生在一次明确的 closure-audit pass 中，而不是某个实现 slice 的顺手附带动作。
 2. closure audit 要回看 live repo，而不是只看旧 completion note、旧 checklist、或最近一次提交说明。
-3. closure audit 必须由独立审阅者或独立子 agent 执行；实现者自己的 self-audit 不能单独作为 `completed` 的依据。
+3. closure audit 必须在执行 session **之外**完成——由独立子 agent（fresh session，不复用执行者上下文）反复审核直到通过。执行 session 不得勾选 Closure Gates 中的 audit 条目，也不得以"留 human gate"或 self-audit 替代。当执行链路没有第二个独立 agent 可用时，必须显式启动一个 fresh sub-agent session 来做审核；否则 plan 保持未关闭。
 4. 每个 `Phase` / `Workstream` 都必须已经是 `completed`，否则 plan 不能关闭。
 5. 如果某个 slice 的工作不再属于本 plan，先把它显式移到 successor plan 或标注取消原因，再关闭本 plan。
 6. `Closure Gates` 中的未完成项只能保留在 plan 仍未关闭时；若计划关闭，这些项也必须完成或被移出当前 scope。

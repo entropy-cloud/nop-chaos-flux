@@ -107,8 +107,208 @@
 | header 返回按钮 | 44×44px   |
 | footer 操作按钮 | 48px 高度 |
 
-## 14. 风险、取舍与后续阶段
+## 14. 移动端骨架模式（复合模式，非独立组件）
+
+> 来源：`docs/analysis/2026-06-21-flux-vs-vant-full-comparison.md` §4 + mobile-roadmap M3a 修订（2026-06-21）。
+>
+> **关键决策**：Tabbar / NavBar / ActionBar / SubmitBar / Sticky 这 5 类移动端页面骨架**不新增独立 renderer**，统一用 `page.header` / `page.footer` region + 现有组件（`flex` / `button` / `container`）+ 标准 schema 模板表达。这符合 Flux "page region 复用 + 同组件同属性" 策略。
+>
+> **重要澄清**：Tabbar ≠ `tabs`。`tabs`（`flux-renderers-basic`）是**内容切换控件**（切换同一页面内的面板）；Tabbar 是**路由级导航**（切换页面，配 `navigate` action）。二者语义不同，不可混用。
+
+### 14.1 Tabbar（底部路由导航）
+
+对应 Vant `van-tabbar` / `van-tabbar-item`。固定在 `page.footer`，点击触发页面跳转。
+
+> className 中的 `nop-safe-bottom` / `nop-haptic` 见 baseline §10（M0.1）。`navigate` args 字段为 `url`（跳转）/ `replace`（替换历史）/ `back`（后退），见 `flux-core` `NavigateActionArgs`。
+
+```json
+{
+  "type": "page",
+  "footer": {
+    "type": "flex",
+    "justify": "around",
+    "className": "nop-tabbar fixed bottom-0 inset-x-0 nop-safe-bottom bg-background border-t",
+    "items": [
+      {
+        "type": "button",
+        "variant": "ghost",
+        "className": "flex-col h-14 w-16 nop-haptic",
+        "label": "首页",
+        "icon": "home",
+        "onClick": { "action": "navigate", "args": { "url": "/home" } }
+      },
+      {
+        "type": "button",
+        "variant": "ghost",
+        "className": "flex-col h-14 w-16 nop-haptic",
+        "label": "分类",
+        "icon": "grid",
+        "onClick": { "action": "navigate", "args": { "url": "/category" } }
+      }
+    ]
+  },
+  "body": { "type": "container", "body": "/* 当前页内容 */" }
+}
+```
+
+- **active 态**：不应依赖"navigate 后新页面 schema 决定"——Tabbar 是同一段 schema 在多个页面复用，active 项应由**当前页路径**驱动。推荐用表达式 className：`className: "flex-col h-14 w-16 nop-haptic ${currentPath === '/home' ? 'text-primary' : ''}"`，或由 `page` 发布 `statusPath` 让 Tabbar 读取。具体表达式语法待 M3a 实现时落地。
+- 红点角标：在 `button` 外包 `badge`。
+- 与 `tabs` 的区别重申：Tabbar 切页面（navigate），`tabs` 切面板（同页面 region）。
+
+### 14.2 NavBar（顶部返回栏）
+
+对应 Vant `van-nav-bar`。固定在 `page.header`，左侧返回 + 居中标题 + 右侧操作。
+
+> `navigate { back: true }` = 浏览器/宿主路由后退（`NavigateActionArgs.back`）。
+
+```json
+{
+  "type": "page",
+  "header": {
+    "type": "flex",
+    "justify": "between",
+    "align": "center",
+    "className": "nop-navbar sticky top-0 h-11 px-2 nop-safe-top bg-background",
+    "items": [
+      {
+        "type": "button",
+        "variant": "ghost",
+        "icon": "arrow-left",
+        "className": "w-11 h-11 nop-haptic",
+        "onClick": { "action": "navigate", "args": { "back": true } }
+      },
+      { "type": "text", "text": "页面标题", "className": "flex-1 text-center font-medium" },
+      {
+        "type": "button",
+        "variant": "ghost",
+        "label": "更多",
+        "className": "w-11 h-11 nop-haptic"
+      }
+    ]
+  },
+  "body": { "type": "container", "body": "/* */" }
+}
+```
+
+### 14.3 ActionBar（商品详情底部操作栏）
+
+对应 Vant `van-action-bar` / `van-action-bar-icon` / `van-action-bar-button`。固定在 `page.footer`，左侧图标按钮组（客服/收藏）+ 右侧大号 CTA（加购/立即购买）。
+
+```json
+{
+  "type": "page",
+  "footer": {
+    "type": "flex",
+    "align": "center",
+    "className": "nop-action-bar fixed bottom-0 inset-x-0 h-14 nop-safe-bottom bg-background border-t",
+    "items": [
+      {
+        "type": "flex",
+        "direction": "col",
+        "align": "center",
+        "className": "w-14",
+        "items": [
+          { "type": "icon", "icon": "customer-service", "className": "nop-haptic" },
+          { "type": "text", "text": "客服", "className": "text-xs" }
+        ]
+      },
+      {
+        "type": "flex",
+        "direction": "col",
+        "align": "center",
+        "className": "w-14",
+        "items": [
+          { "type": "icon", "icon": "star", "className": "nop-haptic" },
+          { "type": "text", "text": "收藏", "className": "text-xs" }
+        ]
+      },
+      {
+        "type": "button",
+        "variant": "solid",
+        "label": "加入购物车",
+        "className": "flex-1 h-12 nop-haptic"
+      },
+      {
+        "type": "button",
+        "variant": "solid",
+        "label": "立即购买",
+        "className": "flex-1 h-12 nop-haptic bg-red-500"
+      }
+    ]
+  },
+  "body": { "type": "container", "body": "/* 商品详情 */" }
+}
+```
+
+### 14.4 SubmitBar（购物车结算栏）
+
+对应 Vant `van-submit-bar`。固定在 `page.footer`，全选复选 + 价格展示 + 结算 CTA。
+
+```json
+{
+  "type": "page",
+  "footer": {
+    "type": "flex",
+    "align": "center",
+    "justify": "between",
+    "className": "nop-submit-bar fixed bottom-0 inset-x-0 h-14 nop-safe-bottom bg-background border-t px-3",
+    "items": [
+      { "type": "checkbox", "label": "全选", "name": "selectAll" },
+      {
+        "type": "flex",
+        "align": "center",
+        "items": [
+          { "type": "text", "text": "合计：", "className": "text-sm" },
+          { "type": "text", "text": "¥199.00", "className": "text-red-500 font-bold" }
+        ]
+      },
+      {
+        "type": "button",
+        "variant": "solid",
+        "label": "结算(3)",
+        "className": "h-12 px-6 nop-haptic bg-red-500"
+      }
+    ]
+  },
+  "body": { "type": "container", "body": "/* 购物车列表 */" }
+}
+```
+
+### 14.5 Sticky（吸顶容器）
+
+对应 Vant `van-sticky`。不是 page region，是任意内容容器加 sticky className。分类页筛选条、列表头吸顶常用。
+
+> `top-[2.75rem]` 让出 navbar 高度（navbar `sticky top-0 h-11` = 2.75rem；含 safe-area 时 navbar 实际更高，需 M0.1a 落地后用 CSS 变量统一）。`z-10` 见 baseline §10.4 分层约定（固定栏层）。
+
+```json
+{
+  "type": "container",
+  "className": "nop-sticky sticky top-[2.75rem] z-10 bg-background",
+  "body": {
+    "type": "flex",
+    "items": [{ "type": "text", "text": "筛选条件" }]
+  }
+}
+```
+
+- 与 page header sticky 的关系：page header 已是 `sticky top-0`，内容区 sticky 需 `top-{header高度}` 让位。
+- 滚动容器：当 page body 是可滚动容器时，sticky 相对该容器生效。
+
+### 14.6 与 baseline / M0.1 的依赖
+
+| 模式      | 依赖的 baseline / M0.1 子项         |
+| --------- | ----------------------------------- |
+| Tabbar    | M0.1a safe-area、M0.1c haptics      |
+| NavBar    | M0.1a safe-area、M0.1c haptics      |
+| ActionBar | M0.1a safe-area、M0.1c haptics      |
+| SubmitBar | M0.1a safe-area、M0.1c haptics      |
+| Sticky    | M0.1d z-index 分层（固定栏层 z-10） |
+
+> 这些 className（`nop-haptic`、`nop-safe-bottom`）当前是 baseline §10 的契约（M0.1，`todo` 未落地）。M0.1 落地前可用 Tailwind 等价类临时替代（如 `pb-[env(safe-area-inset-bottom)]`、`active:opacity-70`），落地后切换为语义 class。
+
+## 15. 风险、取舍与后续阶段
 
 - 当前 TS schema 与 renderer regions 有轻微不一致，需要后续收敛。
 - 页面级导航、面包屑和 toolbar DSL 建议在有真实宿主需求后再补充，避免首版契约过重。
 - header/footer region 的 sticky/fixed 定位需要在 renderer 内通过 className 开放，不硬编码。
+- §14 移动端骨架模式是 schema 模板（非独立组件），若后续发现 5 类模式在某场景拼装成本过高，可回到人确认评估是否提升为独立 renderer（违反 M3a "不新增 `*-mobile` 组件"原则时需显式人审）。

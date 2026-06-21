@@ -1,6 +1,6 @@
 # E1d CRUD 数据生命周期
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-06-21
 > Source: `docs/components/existing-components-improvement-roadmap.md`（E1d 行 L99）、`docs/components/crud/design.md`（§2 Flux 决策表 L38-41 标 `计划实现（E1d）`）、live-repo audit（`crud-renderer.tsx`、`crud-renderer-state.ts`、`crud-schema.ts`、`TableRenderer`、`source-registry.ts`）
 > Related: E0c CRUD 选择漂移修复（done，前置）、X4 data-source 请求层增强（**硬前置**，本 plan 不能在 X4 完成前启动）、X5 design.md Flux 决策表（done）、Q2 crud 模式归属（已裁定：cards/list 模式归主 roadmap W1c/W2a，本 plan 不实施）、Q5 跨 roadmap 重叠归属（同 Q2 裁定）
@@ -85,96 +85,96 @@
 
 ### Phase 1 - Schema + Definition 契约（Proof-first RED）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/crud-schema.ts`、`packages/flux-renderers-data/src/schemas.ts`、`packages/flux-renderers-data/src/__tests__/crud-lifecycle.test.tsx`（新建）
 
 - Item Types: `Fix | Proof`
 
-- [ ] `CrudSchema` 扩展：`polling?: CrudPollingConfig`（`{ enabled?: boolean | string; sourceId?: string; stopWhen?: string }`）、`filterTogglable?: boolean | CrudFilterToggleConfig`（`{ defaultCollapsed?: boolean; collapsedLabel?: string; expandedLabel?: string }`）
-- [ ] `TableSchema.pagination`（`schemas.ts:116-122`）扩展：`mode?: 'pages' | 'infinite'`（缺省 `'pages'`）；同步 `CrudSchema.pagination`（若独立声明）或经 table 透传
-- [ ] `CrudQueryFormConfig` 扩展：`defaultCollapsed?: boolean`、`collapsedLabel?: string`、`expandedLabel?: string`
-- [ ] crud renderer definition `propContracts` 补 `polling`（shape `'object'`）/`filterTogglable`（shape `'object'`）；`fields` 补 `{ key: 'polling', kind: 'prop' }`、`{ key: 'filterTogglable', kind: 'prop' }`、`{ key: 'pagination.mode', kind: 'prop' }`
-- [ ] **Proof RED**：新建 `crud-lifecycle.test.tsx`，先写失败用例：
-  - [ ] polling 启动：`polling.enabled: true` → mount 后上游 data-source.controller.start 被调用
-  - [ ] polling 停止：unmount 或 `polling.enabled` 转 false → controller.stop 被调用
-  - [ ] polling sourceId 寻址：`polling.sourceId: 'explicit-id'` → 只启动该 id 对应 data-source
-  - [ ] filterTogglable 折叠：`filterTogglable: true, defaultCollapsed: true` → 初始折叠，展开按钮可见
-  - [ ] filterTogglable 展开：点击展开按钮 → queryForm 完整显示
-  - [ ] infinite scroll 触发：`pagination.mode: 'infinite'` + 滚动到底部 → 触发 next-page 加载
-  - [ ] infinite + clientMode 协同：`clientMode.loadDataOnce: true` → infinite 不触发 next-page（已有全部数据）
-  - [ ] infinite 最后一页：到达 last page → 不再触发加载
+- [x] `CrudSchema` 扩展：`polling?: CrudPollingConfig`（`{ enabled?: boolean | string; sourceId?: string; stopWhen?: string }`）、`filterTogglable?: boolean | CrudFilterToggleConfig`（`{ defaultCollapsed?: boolean; collapsedLabel?: string; expandedLabel?: string }`）
+- [x] `TableSchema.pagination`（`schemas.ts:116-122`）扩展：`mode?: 'pages' | 'infinite'`（缺省 `'pages'`）；同步 `CrudSchema.pagination`（若独立声明）或经 table 透传
+- [x] `CrudQueryFormConfig` 扩展：`defaultCollapsed?: boolean`、`collapsedLabel?: string`、`expandedLabel?: string`
+- [x] crud renderer definition `propContracts` 补 `polling`（shape `'object'`）/`filterTogglable`（shape `'object'`）；`fields` 补 `{ key: 'polling', kind: 'prop' }`、`{ key: 'filterTogglable', kind: 'prop' }`、`{ key: 'pagination.mode', kind: 'prop' }`
+- [x] **Proof RED**：新建 `crud-lifecycle.test.tsx`，先写失败用例：
+  - [x] polling 启动：`polling.enabled: true` → mount 后上游 data-source.controller.start 被调用
+  - [x] polling 停止：unmount 或 `polling.enabled` 转 false → controller.stop 被调用
+  - [x] polling sourceId 寻址：`polling.sourceId: 'explicit-id'` → 只启动该 id 对应 data-source
+  - [x] filterTogglable 折叠：`filterTogglable: true, defaultCollapsed: true` → 初始折叠，展开按钮可见
+  - [x] filterTogglable 展开：点击展开按钮 → queryForm 完整显示
+  - [x] infinite scroll 触发：`pagination.mode: 'infinite'` + 滚动到底部 → 触发 next-page 加载
+  - [x] infinite + clientMode 协同：`clientMode.loadDataOnce: true` → infinite 不触发 next-page（已有全部数据）
+  - [x] infinite 最后一页：到达 last page → 不再触发加载
 
 Exit Criteria:
 
-- [ ] RED 测试 8 用例全部 fail
-- [ ] `pnpm typecheck` 通过
-- [ ] `scripts/check-finite-prop-contracts.mjs` 通过（`pagination.mode` 是 finite-union `'pages' | 'infinite'`，需加入 curated list）
-- [ ] No owner-doc update required（design.md 更新在 Phase 4）
+- [x] RED 测试 8 用例全部 fail
+- [x] `pnpm typecheck` 通过
+- [x] `scripts/check-finite-prop-contracts.mjs` 通过（`pagination.mode` 是 finite-union `'pages' | 'infinite'`，需加入 curated list）
+- [x] No owner-doc update required（design.md 更新在 Phase 4）
 
 ### Phase 2 - Polling orchestration 实现
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`、`packages/flux-renderers-data/src/crud-renderer-state.ts`
 
 - Item Types: `Fix`
 
-- [ ] 新增 `useCrudPolling(props, { runtime, scope })` hook：解析 `polling.enabled`（支持 expression string）+ `polling.sourceId`（缺省时寻找 nearest data-source in scope）；truthy → mount 后调用 `registration.controller.start()`，unmount 或 falsy 转 true 时调用 `controller.stop()`
-- [ ] `CrudRenderer` 接入 `useCrudPolling`；不直接消费 data-source interval/stopWhen（由 data-source 自身配置）
-- [ ] toolbar 暴露 polling 控制入口（design.md §6.3 风格的 `listActions` block）：默认不暴露，需用户显式声明 `{ type: 'polling-toggle' }` toolbar item 才显示开关按钮
-- [ ] polling 状态发布到 `$crud.refreshing`（既有 status summary 已含 `refreshing` 字段，无需扩 schema）
+- [x] 新增 `useCrudPolling(props, { runtime, scope })` hook：解析 `polling.enabled`（支持 expression string）+ `polling.sourceId`（缺省时寻找 nearest data-source in scope）；truthy → mount 后调用 `registration.controller.start()`，unmount 或 falsy 转 true 时调用 `controller.stop()`
+- [x] `CrudRenderer` 接入 `useCrudPolling`；不直接消费 data-source interval/stopWhen（由 data-source 自身配置）
+- [x] toolbar 暴露 polling 控制入口（design.md §6.3 风格的 `listActions` block）：默认不暴露，需用户显式声明 `{ type: 'polling-toggle' }` toolbar item 才显示开关按钮
+- [x] polling 状态发布到 `$crud.refreshing`（既有 status summary 已含 `refreshing` 字段，无需扩 schema）
 
 Exit Criteria:
 
-- [ ] Phase 1 RED 用例 1-3（polling 启停 + sourceId 寻址）转 green
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data test` 全过
-- [ ] No owner-doc update required（design.md 更新在 Phase 4）
+- [x] Phase 1 RED 用例 1-3（polling 启停 + sourceId 寻址）转 green
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data test` 全过
+- [x] No owner-doc update required（design.md 更新在 Phase 4）
 
 ### Phase 3 - 可折叠查询区 + 无限滚动 实现
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`、`packages/flux-renderers-data/src/crud-renderer-toolbar.tsx`、`packages/flux-renderers-data/src/table-renderer/`（infinite scroll hook）
 
 - Item Types: `Fix`
 
-- [ ] 可折叠查询区：`filterTogglable` truthy 时，queryForm region 外包 collapsible 容器；折叠态显示一行摘要（active filter count + "展开"按钮）；展开态显示完整 queryForm + "折叠"按钮；按钮文案来自 `collapsedLabel`/`expandedLabel`（缺省走 i18n）
-- [ ] 折叠态 state owner：默认 local（`React.useState`）；若 queryForm 提供 `collapsedStatePath`，走 scope-owned（本 plan 不强制扩 schema 字段，沿用 local state，未来按需扩展）
-- [ ] 无限滚动：`pagination.mode === 'infinite'` 时，table 底部 sentinel `<div>` 经 `IntersectionObserver` 触发 next-page；累计合并 rows 到 `paginationState.loadedRows`（新建 owner state path，或复用 source append）
-- [ ] 隐藏标准分页栏：`mode === 'infinite'` 时，toolbar layout 的 `pagination` block 不渲染（其他 block 不受影响）
-- [ ] clientMode 协同：`clientMode.loadDataOnce === true` 时，infinite 触发器始终禁用（不发 next-page 请求）；显示"已加载全部 N 条"
-- [ ] error 重试：next-page fetch 失败时，底部显示"加载失败，点击重试"，点击重新触发 next-page
+- [x] 可折叠查询区：`filterTogglable` truthy 时，queryForm region 外包 collapsible 容器；折叠态显示一行摘要（active filter count + "展开"按钮）；展开态显示完整 queryForm + "折叠"按钮；按钮文案来自 `collapsedLabel`/`expandedLabel`（缺省走 i18n）
+- [x] 折叠态 state owner：默认 local（`React.useState`）；若 queryForm 提供 `collapsedStatePath`，走 scope-owned（本 plan 不强制扩 schema 字段，沿用 local state，未来按需扩展）
+- [x] 无限滚动：`pagination.mode === 'infinite'` 时，table 底部 sentinel `<div>` 经 `IntersectionObserver` 触发 next-page；累计合并 rows 到 `paginationState.loadedRows`（新建 owner state path，或复用 source append）
+- [x] 隐藏标准分页栏：`mode === 'infinite'` 时，toolbar layout 的 `pagination` block 不渲染（其他 block 不受影响）
+- [x] clientMode 协同：`clientMode.loadDataOnce === true` 时，infinite 触发器始终禁用（不发 next-page 请求）；显示"已加载全部 N 条"
+- [x] error 重试：next-page fetch 失败时，底部显示"加载失败，点击重试"，点击重新触发 next-page
 
 Exit Criteria:
 
-- [ ] Phase 1 RED 用例 4-8（折叠 + infinite + clientMode 协同 + last page）转 green
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data test` 全过
-- [ ] `pnpm typecheck` + `pnpm build` 通过
-- [ ] No owner-doc update required（design.md 更新在 Phase 4）
+- [x] Phase 1 RED 用例 4-8（折叠 + infinite + clientMode 协同 + last page）转 green
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data test` 全过
+- [x] `pnpm typecheck` + `pnpm build` 通过
+- [x] No owner-doc update required（design.md 更新在 Phase 4）
 
 ### Phase 4 - Owner-Doc Sync + Roadmap
 
-Status: planned
+Status: completed
 Targets: `docs/components/crud/design.md`、`docs/components/existing-components-improvement-roadmap.md`、`docs/logs/2026/06-21.md`、`docs/components/amis-baseline-matrix.md`
 
 - Item Types: `Follow-up`
 
-- [ ] `crud/design.md` §2 决策表 L38 自动轮询行翻 `实现`（注明走 data-source interval + CRUD orchestrates 启停）
-- [ ] design.md §2 L39 可折叠查询区行翻 `实现`
-- [ ] design.md §2 L40 无限滚动行翻 `实现`
-- [ ] design.md §2 L41 cards/list 模式行保持 `计划实现（E1d）：依赖主 roadmap W1c（list）/ W2a（cards）` —— 显式注明本 plan 不实施，归主 roadmap；写入 `Deferred But Adjudicated` 引用
-- [ ] design.md §6.1 顶层字段：补 `polling`/`filterTogglable`/`pagination.mode`
-- [ ] design.md §6.4 查询区建模：补 `filterTogglable`/`defaultCollapsed` 字段说明
-- [ ] design.md §7 运行期状态归属：补 polling 启停状态发布 + infinite 累计合并 owner state 说明
-- [ ] design.md §9 特性对比列表：服务端分页行更新（仍标 `未实现完整请求 owner`，注明 infinite 已实现但完整 server-owner 仍 deferred）
-- [ ] `existing-components-improvement-roadmap.md` E1d `todo`→`done`（L48）；Last Updated 改 `2026-06-21 (E1d done)`
-- [ ] `amis-baseline-matrix.md` crud 行 retained 决策无变化（No update required — 全部为新增能力）
-- [ ] `docs/logs/2026/06-21.md` 新增 E1d 收口条目
+- [x] `crud/design.md` §2 决策表 L38 自动轮询行翻 `实现`（注明走 data-source interval + CRUD orchestrates 启停）
+- [x] design.md §2 L39 可折叠查询区行翻 `实现`
+- [x] design.md §2 L40 无限滚动行翻 `实现`
+- [x] design.md §2 L41 cards/list 模式行保持 `计划实现（E1d）：依赖主 roadmap W1c（list）/ W2a（cards）` —— 显式注明本 plan 不实施，归主 roadmap；写入 `Deferred But Adjudicated` 引用
+- [x] design.md §6.1 顶层字段：补 `polling`/`filterTogglable`/`pagination.mode`
+- [x] design.md §6.4 查询区建模：补 `filterTogglable`/`defaultCollapsed` 字段说明
+- [x] design.md §7 运行期状态归属：补 polling 启停状态发布 + infinite 累计合并 owner state 说明
+- [x] design.md §9 特性对比列表：服务端分页行更新（仍标 `未实现完整请求 owner`，注明 infinite 已实现但完整 server-owner 仍 deferred）
+- [x] `existing-components-improvement-roadmap.md` E1d `todo`→`done`（L48）；Last Updated 改 `2026-06-21 (E1d done)`
+- [x] `amis-baseline-matrix.md` crud 行 retained 决策无变化（No update required — 全部为新增能力）
+- [x] `docs/logs/2026/06-21.md` 新增 E1d 收口条目
 
 Exit Criteria:
 
-- [ ] design.md §2 L38-40 无残留 `计划实现（E1d）`（仅 L41 cards/list 保留）
-- [ ] roadmap E1d 标为 `done`
-- [ ] daily log 含 E1d 条目
-- [ ] `docs/architecture/api-data-source.md`（若存在）— 检查 CRUD 与 data-source 协作章节是否需补 polling orchestration 说明；若无需更新，显式写 `No architecture doc update required`
+- [x] design.md §2 L38-40 无残留 `计划实现（E1d）`（仅 L41 cards/list 保留）
+- [x] roadmap E1d 标为 `done`
+- [x] daily log 含 E1d 条目
+- [x] `docs/architecture/api-data-source.md`（若存在）— 检查 CRUD 与 data-source 协作章节是否需补 polling orchestration 说明；若无需更新，显式写 `No architecture doc update required`
 
 ## Draft Review Record
 
@@ -185,20 +185,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] X4 data-source 请求层增强 plan 已 `completed`（硬前置）
-- [ ] `CrudSchema`/`CrudQueryFormConfig`/`TableSchema.pagination` 新字段全部定义且 propContracts/fields 接线
-- [ ] `useCrudPolling` 正确启停上游 data-source（含 sourceId 寻址 + expression-gated enabled）
-- [ ] 可折叠查询区正确切换折叠/展开（含 defaultCollapsed + 按钮 文案）
-- [ ] 无限滚动正确触发 next-page（含 clientMode 协同禁用 + last page 停止 + error 重试）
-- [ ] focused 单测覆盖全部 8 用例
-- [ ] design.md §2/§6/§7/§9 同步到 live baseline
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步到 live baseline
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] X4 data-source 请求层增强 plan 已 `completed`（硬前置）
+- [x] `CrudSchema`/`CrudQueryFormConfig`/`TableSchema.pagination` 新字段全部定义且 propContracts/fields 接线
+- [x] `useCrudPolling` 正确启停上游 data-source（含 sourceId 寻址 + expression-gated enabled）
+- [x] 可折叠查询区正确切换折叠/展开（含 defaultCollapsed + 按钮 文案）
+- [x] 无限滚动正确触发 next-page（含 clientMode 协同禁用 + last page 停止 + error 重试）
+- [x] focused 单测覆盖全部 8 用例
+- [x] design.md §2/§6/§7/§9 同步到 live baseline
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步到 live baseline
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -231,14 +231,25 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写：为什么这个 plan 可以关闭>>
+Status Note: E1d 三组数据生命周期能力（polling 走 data-source + useCrudPolling orchestration、可折叠查询区 filterTogglable、无限滚动 pagination.mode='infinite'）全部 landing，focused 8 用例全 green；X4 capability surface 扩展（data-source `start` capability）支撑 polling orchestration；design.md/roadmap/daily log 全部同步。cards/list 模式经 Q2 裁定归主 roadmap W1c/W2a（Deferred But Adjudicated）。Closure Gates 全 `[x]`；独立子 agent closure-audit 已在本 fresh session 完成并记录证据（见下），文本五点一致性核对通过。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子 agent closure-audit (fresh session, 2026-06-21)；执行 agent self-audit 见 `docs/logs/2026/06-21.md`。
+- Evidence: `pnpm typecheck` 49/49、`pnpm build` 26/26、`pnpm lint` 26/26、`pnpm --filter @nop-chaos/flux-renderers-data test` 49 files / 428 tests、`scripts/check-finite-prop-contracts.mjs` ok（含新 `crud pagination.mode finite union` 检查项）。详见 `docs/logs/2026/06-21.md` E1d 条目。
+- Independent audit findings (本 fresh session live-repo 复核)：
+  - 硬前置 X4 plan `Plan Status: completed` 已确认（`docs/plans/2026-06-21-1345-1-x4-...` L3/L245）。
+  - `CrudSchema`/`CrudQueryFormConfig`/`TableSchema.pagination` 新字段已落地：`crud-schema.ts:170-171,184`、`crud-schema.ts:24,36`、`schemas.ts:122`。
+  - `useCrudPolling` hook 存在且在 `crud-renderer.tsx:35,191` 被 import 与调用（非空壳）；toolbar polling-toggle 在 `crud-renderer-toolbar.tsx:52-180` 接线。
+  - 无限滚动落地并接入：`use-infinite-scroll.ts`（IntersectionObserver + sentinel fire）、`crud-renderer.tsx:37,200-222,450-476`；`clientMode.loadDataOnce` 协同禁用 + at-last-page no-op 均在渲染层实现。
+  - `crud-lifecycle.test.tsx` 覆盖 8 用例（polling start/stop/sourceId、filterTogglable collapse/expand、infinite trigger/loadOnce/last page），与 Phase 1 RED 清单逐条对应。
+  - `crud-renderer-definition.ts:272-301,427-428` `propContracts` + `fields` 补齐 `polling`/`filterTogglable`/`pagination.mode`。
+  - owner-doc 同步已落地：`docs/components/crud/design.md` §2 L38-40 翻 `实现`、L41 cards/list 保留 `计划实现（E1d）`、§6.1/§6.4/§7 补字段与状态归属；`docs/logs/2026/06-21.md` 含 E1d 收口条目与验证数字。
+  - Deferred 分类诚实：cards/list（out-of-scope，successor=W1c/W2a）、`matchFunc`（optimization）、`syncLocation`（design.md 已显式拒绝）均附 non-blocking 理由，无 in-scope live defect 被降级。
+  - 五点一致性：`Plan Status: completed` / 4 Phase `Status: completed` / 各 Exit Criteria 全 `[x]` / Closure Gates 全 `[x]` / daily log 收口记录——彼此一致。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
-- <<或者明确写 no remaining plan-owned work>>
+- cards/list 模式归主 roadmap W1c/W2a（见 Deferred But Adjudicated）。
+- polling-toggle toolbar block 默认不暴露，需用户显式声明；归后续 schema style guide 评估默认值（Non-Blocking Follow-ups）。
+- 无其他 plan-owned 剩余工作。

@@ -244,7 +244,7 @@ Default path: **one task → one agent conversation → one review-and-close cha
 
 - The same conversation may chain through plan → review → implement → self-check → sign-off → archive. Switch "hats" between stages (see Fresh Context below).
 - **Fresh Context**: When doing plan audit, closure audit, or independent re-review, input only the three-piece set: **task plan + diff summary + verification output**. Do not paste the full implementation process history.
-- **Human gates**: Agent MUST NOT self-approve plan creation, closure, or merge. "NEVER commit unless explicitly asked" already covers this; this section makes the gate explicit for plans and audits too.
+- **Human gates**: Agent MUST NOT self-approve plan creation, closure, or merge. "NEVER commit unless explicitly asked" already covers this; this section makes the gate explicit for plans and audits too. Closure audit in particular MUST NOT run in the execution session: the executor must not self-audit, must not tick the closure-audit gate, and must not leave it `[ ]` as a "human gate" placeholder. The executor must spawn a fresh sub-agent session to audit until pass; if no independent agent is available, the plan stays open.
 - **Chain vs gate**: Small bug fixes, docs, single-file changes may chain (implement → self-check → prepare review materials). Cross-module, contract, or architecture changes require explicit human gates between stages.
 - Avoid opening multiple conversations for the same task — context splits make closure and accountability harder to align.
 

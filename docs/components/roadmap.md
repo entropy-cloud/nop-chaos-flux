@@ -31,15 +31,17 @@
 - W4b. 流程展示组（2）: `todo`
 - W4c. 复合表单组（4）: `todo`
 - D1a. 设计器补充组（2）: `todo`
+- **M0.1 移动端基础设施（safe-area/hairline/haptics/z-index）: `todo`** ← 镜像自 `mobile-roadmap.md`（4 项子工作项，建议 1 plan 4 phase；Protected Area，执行前拟 plan）
 - O1. 非 retained 可选项（13）: 按需启动，不列工作项
 
 ## Status Values
 
-| Status    | 含义                                                                                           |
-| --------- | ---------------------------------------------------------------------------------------------- |
-| `done`    | 工作项全部组件已实现（`amis-baseline-matrix.md` 中为 `runtime`）且对应 plan 通过 closure audit |
-| `planned` | 已有对应 execution plan，正在或等待实现                                                        |
-| `todo`    | 尚未开始，无对应 plan                                                                          |
+| Status     | 含义                                                                                           |
+| ---------- | ---------------------------------------------------------------------------------------------- |
+| `done`     | 工作项全部组件已实现（`amis-baseline-matrix.md` 中为 `runtime`）且对应 plan 通过 closure audit |
+| `planned`  | 已有对应 execution plan，正在或等待实现                                                        |
+| `todo`     | 尚未开始，无对应 plan                                                                          |
+| `proposed` | 已有提案（含 design.md 立约 / 工作项定义），**待人确认后才可改 `todo`**；AI 不得自行转 `todo`  |
 
 ## Platform Reuse
 
@@ -269,7 +271,12 @@ graph TD
 | `designer-node-card` | D1a       | `flow-designer-renderers`      | `docs/components/designer-node-card/design.md` |
 | `designer-edge-row`  | D1a       | `flow-designer-renderers`      | `docs/components/designer-edge-row/design.md`  |
 
-**O1. 非 retained 可选项**（启动任一项前需先更新 `amis-baseline-matrix.md` 的 retained 决策，并为其建工作项）：`slider`/future `input-slider`、`rating`、`avatar`、`input-color`、`icon-picker`、`location-picker`、`input-city`、`input-signature`、`calendar`、`nav`、`anchor-nav`、`portlet`、`iframe`
+**O1. 非 retained 可选项**（启动任一项前需先更新 `amis-baseline-matrix.md` 的 retained 决策，并为其建工作项）：
+
+- AMIS-derived（有 AMIS 源 type）：`slider`/future `input-slider`、`rating`、`avatar`、`input-color`、`icon-picker`、`location-picker`、`input-city`、`input-signature`、`calendar`、`nav`、`anchor-nav`、`portlet`、`iframe`
+- Flux-native 移动端组件（无 AMIS 源，不走 amis-baseline-matrix，启动时建 `docs/components/<type>/design.md` + 工作项即可）：`area`（省市区选择，收货地址依赖）、`number-keyboard`（支付/验证码数字键盘）、`back-top`（长列表回到顶部）
+
+> Flux-native 移动端组件的 retained 决策类比 `mobile-roadmap.md` M5（pull-refresh 等 5 个移动端原生组件也无 AMIS 源，不经 amis-baseline-matrix，直接在 mobile-roadmap 立工作项）。上述 3 个 Flux-native 候选优先级低于 M0.1/M5，按需启动。
 
 ## Cross-Cutting
 
@@ -289,9 +296,11 @@ graph TD
 
 - 本文档是状态索引和粗粒度工作项划分，不是 execution plan。
 - **本文档是人与 AI 的对齐点**：工作项的增删、拆分、优先级重排需人确认——这体现人类规划。AI 按既定顺序取第一个 `todo` 工作项执行，不重新仲裁优先级、不跳过、不凭空新增工作项。
+- **`proposed` 状态的工作项是 AI 起草的提案，需人确认后才可改 `todo` 进入执行队列；AI 不得自行把 `proposed` 改为 `todo`。** AI 可自主推进 `todo`→`planned`→`done`（基于 plan 完成的客观事实），但不能跨过人审把 `proposed` 变成可执行项。
 - **plan 由 AI 自动拟制和执行，人不审 individual plan**；plan 质量靠 closure audit 兜底。人通过 Phase Status 观察 AI 进度。
-- **可标记单位是工作项**（W1a…D1a），不是 wave。wave 只是优先级分组。
+- **可标记单位是工作项**（W1a…D1a，以及镜像自 `mobile-roadmap.md` 的 M0.1），不是 wave。wave 只是优先级分组。
 - AI 可自主推进工作项状态（`todo`→`planned`→`done`），这是基于 plan 完成的客观事实记录，不需要人确认；但工作项本身的增删/重排需人确认。
+- 移动端轨道（M0.1/M1-M5）的主入口是 `mobile-roadmap.md`，本文件只做 Phase Status 镜像；M0.1 等移动端工作项的细节看 `mobile-roadmap.md`。
 - 根据 roadmap 拟制 plan 时，plan 对应一个或多个工作项；**plan 通过 closure audit 后，必须把对应工作项在 Phase Status 标记为 `done`**，并同步 `amis-baseline-matrix.md` 的组件状态。
 - 不得在 closure audit 通过前把工作项标为 `done`。
 - 工作项状态变更只需更新 Phase Status（本文档顶部）。

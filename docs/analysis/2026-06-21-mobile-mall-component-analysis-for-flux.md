@@ -4,6 +4,8 @@
 > 源码位置: `~/sources/`（newbee-mall-vue3-app、litemall/litemall-vue、yudao-mall-uniapp）
 > 关联: `docs/components/mobile-roadmap.md`、`docs/architecture/mobile-responsive-baseline.md`
 > 目的: 分析有赞 Vant 控件库在移动商城中的实际使用，评估如何在 Flux 中等价支持
+>
+> **修订注记（2026-06-21）**：本分析 §3.4 把底部 Tabbar 等同为 "`Tabs` + 固定定位 + `page.footer`" 的措辞**不准确**——Tabbar 是路由级导航（配 `navigate` action），与 `tabs`（内容切换控件）语义不同。页面骨架（Tabbar/NavBar/ActionBar/SubmitBar/Sticky）的标准 schema 模板已落地于 `docs/components/page/design.md` §14 移动端骨架模式。详见 `docs/analysis/2026-06-21-mobile-infra-and-skeleton-proposal.md`。
 
 ---
 
@@ -127,13 +129,17 @@
 
 ### 3.4 布局模式（非独立组件，但需要支撑）
 
-| Vant 模式                        | Flux 方案                                            | 优先级 |
-| -------------------------------- | ---------------------------------------------------- | ------ |
-| 底部 Tabbar（`van-tabbar`）      | `Tabs` + 固定定位 + `page.footer` region             | M3     |
-| 页面顶部 NavBar（`van-nav-bar`） | `page.header` region                                 | M3     |
-| 底部固定操作栏                   | `page.footer` region（已规划 `page` 的 region 机制） | M3     |
-| 商品卡片模板                     | 实现 `Card` 组件的移动端变体（水平布局）             | M4     |
-| 全屏选择器                       | `Select` 的小屏 bottom-sheet 模式                    | M1a    |
+> **修订（2026-06-21）**：早期下表把 Tabbar 等同为 "`Tabs` + 固定定位"，措辞不准确。Tabbar 是**路由级导航**（`navigate` action），**≠ `tabs`**（内容切换控件）。5 类页面骨架的标准 schema 模板已落地 `docs/components/page/design.md` §14，统一用 `page.header`/`page.footer` region + `flex`/`button`/`container` 表达，**不新增独立组件**。
+
+| Vant 模式                        | Flux 方案                                                                   | 优先级 | 模板位置                          |
+| -------------------------------- | --------------------------------------------------------------------------- | ------ | --------------------------------- |
+| 底部 Tabbar（`van-tabbar`）      | `page.footer` + `flex`+`button`+`navigate` action（**≠ `tabs`**，路由导航） | M3a    | `page/design.md` §14.1            |
+| 页面顶部 NavBar（`van-nav-bar`） | `page.header` region（返回 `navigate(-1)` + 标题 + 右操作）                 | M3a    | `page/design.md` §14.2            |
+| 底部固定操作栏（ActionBar）      | `page.footer` region（图标按钮组 + 大号 CTA）                               | M3a    | `page/design.md` §14.3            |
+| 结算栏（SubmitBar）              | `page.footer` region（复选 + 价格 + CTA）                                   | M3a    | `page/design.md` §14.4            |
+| 吸顶（Sticky）                   | `container` + `sticky top-{header高}` className                             | M3a    | `page/design.md` §14.5            |
+| 商品卡片模板                     | 实现 `Card` 组件的移动端水平变体（图片左文字右）                            | M4     | `cards/design.md`（W2a 范围内补） |
+| 全屏选择器                       | `Select` 的小屏 bottom-sheet 模式                                           | M1a    | `select/design.md` 增响应式小节   |
 
 ---
 

@@ -1,6 +1,6 @@
 # Existing Components Improvement Roadmap
 
-> Last Updated: 2026-06-21 (X4 done)
+> Last Updated: 2026-06-21 (E2f done)
 > Source: `docs/components/existing-components-improvement-analysis.md`（v2 分析报告）、`docs/components/amis-baseline-matrix.md`
 > 关联：`roadmap.md`（新增组件，独立）、`mobile-roadmap.md`（移动端响应式，独立）
 
@@ -42,14 +42,14 @@
 - E1a select 能力补齐: `done`
 - E1b table 列宽与聚合: `done`
 - E1c table 高级能力: `done`
-- E1d crud 数据生命周期: `todo`
+- E1d crud 数据生命周期: `done`
 - E2a 文本输入增强: `done`
 - E2a-bis password reveal: `done`
 - E2b textarea 自动高度: `done`
 - E2c checkbox-group 选择增强: `done`
 - E2d 树族异步与级联: `done`
 - E2e button 能力补齐: `done`
-- E2f 表面族统一收口: `todo`
+- E2f 表面族统一收口: `done`
 - E2g form shell 增强: `done`
 - E2h code-editor diff + 语言: `done`
 - X1 doAction 命令族统一: `todo`
@@ -208,3 +208,5 @@ graph TD
 - **design.md 更新是每个工作项的硬性子任务**：先写契约（Flux 决策表）再实现，是 Flux 文档纪律。
 - 不采纳的 amis 能力必须记入对应组件 design.md（不只在分析报告），避免后续重复评估。
 - 跨 roadmap 重叠（E1d ↔ W1c/W2a、E2d ↔ W4c、E2f ↔ surface Ongoing）归属见 Q5 裁决。
+- **单组件多能力优先合并为一个工作项**：同一组件的多个独立能力（如某 input 控件的 prefix/suffix/clearable/showCounter）应合成一个工作项，在 plan 内拆 Phase 收口，而不是每个能力一个工作项（如避免出现 "E2a 文本输入增强" + "E2a-bis password reveal" 这种父子工作项并列）。只有当能力之间有显著不同的 closure criteria、owner-doc obligations、或验证路径时，才拆成独立工作项。新增工作项时若发现与已有工作项同组件同 owner-doc，先合并。此条是 plan guide Minimum Rule 26 在本 roadmap 的具体化。
+- **plan 粒度服从 plan guide**：本 roadmap 只决定"哪些能力进队列"，plan 怎么拆 Phase / 怎么写 Exit Criteria / 全量验证归 closure 等执行纪律统一看 `docs/plans/00-plan-authoring-and-execution-guide.md`（特别是 Rule 17 owner-doc 按 Phase 实际职责、Rule 18 全量验证归 Closure Gates、Rule 26 单组件多能力合成一个 plan）。

@@ -54,6 +54,7 @@
 > **全文件唯一动态状态区。** 状态流转同其他 roadmap。
 
 - M0 响应式基线与断点规范: `done`
+- M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈）: `todo`
 - M1 高频交互控件响应式（select/tree/table/dialog/tabs）: `todo`
 - M2 表单控件触摸适配（input/textarea/checkbox/switch/button）: `todo`
 - M3 容器与布局响应式（page/flex/container/grid）: `todo`
@@ -62,11 +63,12 @@
 
 ## Status Values
 
-| Status    | 含义                                     |
-| --------- | ---------------------------------------- |
-| `done`    | 工作项全部交付且 plan 通过 closure audit |
-| `planned` | 已有 execution plan，正在或等待实现      |
-| `todo`    | 尚未开始                                 |
+| Status     | 含义                                                                                          |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| `done`     | 工作项全部交付且 plan 通过 closure audit                                                      |
+| `planned`  | 已有 execution plan，正在或等待实现                                                           |
+| `todo`     | 尚未开始                                                                                      |
+| `proposed` | 已有提案（含 design.md 立约 / 工作项定义），**待人确认后才可改 `todo`**；AI 不得自行转 `todo` |
 
 ### M0 衍生交付物
 
@@ -92,6 +94,21 @@
 
 > M0 已完成。M1-M4 无此硬前置阻塞。
 
+### M0.1 — 移动端基础设施
+
+> 来源：`docs/analysis/2026-06-21-flux-vs-vant-full-comparison.md` §3 基础设施核查发现：safe-area 辅助类 / hairline 0.5px 细线 / haptics 触感反馈 / global z-index 栈 在当前代码库**均未实现**（仅 baseline 文档有约定）。这 4 项是移动端体验基本盘，且都不是 schema 层能解决的，必须在 `@nop-chaos/ui` 与 surface-runtime 基础设施层补齐。契约定义见 `docs/architecture/mobile-responsive-baseline.md` §10。
+>
+> **执行约束**：M0.1 全部子项落在 Protected Area（`packages/ui/src/index.ts` ask-first + styling contract plan-first + surface-runtime plan-first），因此**必须先拟 execution plan 经 draft review 通过后才能动代码**，不能直接 implement。建议**1 个 plan 覆盖 4 个 Phase**（4 项共享同一批 ui 样式契约文件 + 同一次 ui 导出变更，拆多 plan 会重复走 Protected Area 审批）。
+
+| Work item | 内容                                                                                                                                                                                                                                       | 涉及（Protected Area）                                                                | 依赖 |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ---- |
+| **M0.1a** | safe-area 辅助类落地：在 `@nop-chaos/ui` 实现 `nop-safe-top/bottom/left/right`（`env(safe-area-inset-*)`），baseline §2 已立约                                                                                                             | `packages/ui/src/index.ts`（ask-first）                                               | M0   |
+| **M0.1b** | hairline 0.5px 细线工具：在 `@nop-chaos/ui` 或 `tailwind-preset` 提供 `nop-hairline` / `nop-hairline--top/right/bottom/left`（`::after` 伪元素 + transform scale，适配高 DPI），baseline §10 立约                                          | `packages/ui/src/index.ts`（ask-first）+ styling contract（plan-first）               | M0   |
+| **M0.1c** | haptics 触感反馈：定义 `nop-haptic` class（按压 `:active` 反馈，opacity/transition），并让 Button/Card/Cell 等高频可点击控件默认启用                                                                                                       | `packages/ui/src/index.ts`（ask-first）+ styling contract（plan-first）               | M0   |
+| **M0.1d** | global z-index 栈管理：在 surface-runtime 加共享 z-index 栈（dialog/drawer/sheet/toast/popover 共享自增计数器，对齐 Vant `useGlobalZIndex`）；当前所有 overlay 用扁平 `z-50` 存在叠加层级混乱风险；**plan 必须含现有 z-50 平滑迁移 Phase** | surface-runtime（plan-first，`docs/architecture/surface-owner.md` 需补 z-index 章节） | M0   |
+
+> M0.1 是 M1–M5 的**软前置**（虚线依赖）：不硬阻塞现有 `todo` 推进，但 M5 移动端原生组件落地前最好先有 M0.1c（haptics）与 M0.1d（z-index 栈）。
+
 ### M1 — 高频交互控件响应式
 
 | Work item | 组件               | 行为                                                                               | design.md 更新                                           | 依赖                 |
@@ -116,6 +133,18 @@
 | **M3a**   | page                | 小屏隐藏/折叠 aside（待改进 roadmap page aside 落地）、toolbar 响应式 | `page/design.md`                                          | M0、改进 roadmap page aside       |
 | **M3b**   | flex/container/grid | 断点切换 direction/wrap、容器查询                                     | `flex/design.md`、`container/design.md`、`grid/design.md` | M0、主 roadmap W3a（grid 未落地） |
 
+#### M3a 移动端页面骨架模式（5 类复合模式，非独立组件）
+
+> 修订（2026-06-21）：早期 mobile-mall analysis 把 Tabbar 等同为 "`Tabs` + 固定定位"，该措辞**不准确**。Tabbar 是**路由级导航**（配 `navigate` action），与 `tabs`（内容切换控件）语义不同。统一决策：这 5 类**不新增独立 renderer**，走 `page.header`/`page.footer` region + 标准 schema 模板，模板见 `docs/components/page/design.md` "移动端骨架模式"章节。
+
+| 模式      | 载体                    | 关键区别 / 实现                                                             | 模板位置                         |
+| --------- | ----------------------- | --------------------------------------------------------------------------- | -------------------------------- |
+| Tabbar    | `page.footer` region    | **≠ `tabs`**。路由导航：`flex` + `button`（图标+文字）+ `onClick: navigate` | `page/design.md` §移动端骨架模式 |
+| NavBar    | `page.header` region    | 返回按钮 `navigate {back:true}` + 居中标题 + 右操作槽                       | 同上                             |
+| ActionBar | `page.footer` region    | 图标按钮组 + 大号 CTA（商品详情底部"客服/收藏/加购/购买"）                  | 同上                             |
+| SubmitBar | `page.footer` region    | 复选 + 价格展示 + CTA（购物车结算栏）                                       | 同上                             |
+| Sticky    | `container` + className | `sticky top-0`，引用 baseline §2 safe-area                                  | 同上                             |
+
 ### M4 — 数据展示响应式
 
 | Work item | 组件       | 行为                                    | design.md 更新                      | 依赖                   |
@@ -139,6 +168,7 @@
 ```mermaid
 graph TD
     M0["M0 响应式基线与断点规范"]
+    M01["M0.1 移动端基础设施<br/>safe-area/hairline/haptics/z-index"]
     M1a["M1a select/tree-select"]
     M1b["M1b table"]
     M1c["M1c dialog/drawer"]
@@ -158,7 +188,11 @@ graph TD
     M5e["M5e notice-bar"]
 
     M0 --> M1a & M1b & M1c & M1d & M2a & M2b & M2c & M3a & M3b & M4a & M4b & M4c & M5a & M5b & M5c
+    M0 -. 软前置 .-> M01
+    M01 -. 软前置 .-> M5a & M5c
 ```
+
+> 虚线 = 软前置（M0.1 不硬阻塞 M1–M5，但 M5 落地前最好先有 M0.1c haptics + M0.1d z-index 栈）。M0.1 当前 `todo`，涉及 Protected Area，执行前必须先拟 plan 经 draft review。
 
 ## Cross-Cutting
 
@@ -176,8 +210,10 @@ graph TD
 
 - 本文档是状态索引，不是 execution plan。
 - **工作项增删/优先级重排需人确认**；AI 按既定顺序执行首个 `todo`，不重新仲裁。
+- **`proposed` 状态的工作项是 AI 起草的提案，需人确认后才可改 `todo` 进入执行队列；AI 不得自行把 `proposed` 改为 `todo`。** AI 可自主推进 `todo`→`planned`→`done`，但不能跨过人审把 `proposed` 变成可执行项。
 - **plan 通过 closure audit 后标记 `done`**，不得提前。
-- M0 是 M1-M5 硬前置。
+- M0 是 M1-M5 硬前置；M0.1 是软前置（不阻塞，但 M5 落地前最好先做）。
 - 严格遵循"同组件同属性 + 响应式实现"，任何工作项若演变为新建 `*-mobile` 组件（如 `select-mobile`）或引入 mobileUI 标志位，必须回到人确认。
 - M5 移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）归属 `flux-renderers-mobile` 包，这是独立于响应式改进的组件新增，遵循主 roadmap 的 renderer 实现规范。
+- M3a 的页面骨架模式（Tabbar/NavBar/ActionBar/SubmitBar/Sticky）**不新增独立 renderer**，走 `page.region` + 标准 schema 模板（见 `page/design.md` §移动端骨架模式）。Tabbar 是路由导航（navigate），≠ `tabs`（内容切换）。
 - 跨 roadmap：本 roadmap 不做桌面端功能（归改进 roadmap）、不做非移动原生的新组件（归主 roadmap）。

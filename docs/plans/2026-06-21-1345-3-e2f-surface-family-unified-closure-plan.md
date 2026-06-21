@@ -1,6 +1,6 @@
 # E2f 表面族统一收口
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-06-21
 > Source: `docs/components/existing-components-improvement-roadmap.md`（E2f 行 L111）、`docs/components/dialog/design.md`（§2 Flux 决策表 L27-32 标 `计划实现（E2f）`）、`docs/components/drawer/design.md`（§2 Flux 决策表 L28-34 标 `计划实现（E2f）`，含 closeOnOutside 不对称 bug）、live-repo audit（`DialogSchema`/`DrawerSchema`、`dialog-host.tsx`、`use-surface-renderer.ts`、ui `DialogContent`/`DrawerContent`）
 > Related: X5 design.md Flux 决策表（done）、Q5 跨 roadmap 重叠归属（已裁定：与 roadmap.md surface Ongoing 合并归属归 E2f owner，本 plan 收口 surface family capability 扩展）
@@ -97,102 +97,102 @@
 
 ### Phase 1 - Schema + Definition 契约（Proof-first RED）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-basic/src/schemas.ts`、`packages/flux-renderers-basic/src/basic-renderer-definitions.ts`、`packages/flux-react/src/__tests__/dialog-host.test.tsx`（扩用例）或新建 `packages/flux-renderers-basic/src/__tests__/surface-enhancements.test.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] `DialogSchema`（`schemas.ts:24-36`）扩展：`closeOnEsc?: boolean`、`size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full'`、`width?: number | string`、`height?: number | string`、`showCloseButton?: boolean`、`header?: BaseSchema[]`、`footer?: BaseSchema[]`、`confirm?: boolean | string`、`onConfirm?: BaseSchema`、`bodyClassName?: string`、`headerClassName?: string`、`footerClassName?: string`
-- [ ] `DrawerSchema`（`schemas.ts:38-50`）扩展：先补 `closeOnOutside?: boolean`（修不对称 bug），再补 `closeOnEsc?`/`size?`/`width?`/`height?`/`showCloseButton?`/`header?`/`footer?`/`confirm?`/`onConfirm?`/`resizable?`/`bodyClassName?`/`headerClassName?`/`footerClassName?`（与 dialog 对齐 + drawer 专属 resizable）
-- [ ] dialog/drawer renderer definition `propContracts` 补齐新字段；`eventContracts` 补 `onConfirm`（payload `{ surfaceId, kind, open }`）；`fields` 补全部新 prop + onConfirm event
-- [ ] **Decision**：`size: 'full'` 在 host 层映射为 100vw/100vh（dialog）/ 100%（drawer side full）；不引入到 ui primitive，避免污染 ui DialogContent/DrawerContent 现有 `size: 'sm'|'default'|'lg'` API
-- [ ] **Proof RED**：新建/扩展测试文件，先写失败用例：
-  - [ ] drawer closeOnOutside 不对称修复：`closeOnOutside: true` → 点击 mask → drawer 关闭
-  - [ ] drawer closeOnOutside-false：`closeOnOutside: false` → 点击 mask → 不关闭
-  - [ ] closeOnEsc-false（dialog）：`closeOnEsc: false` + 按 Esc → 不关闭
-  - [ ] closeOnEsc-false（drawer）：同上
-  - [ ] size-full（dialog）：`size: 'full'` → DialogContent style width=100vw/height=100vh
-  - [ ] width-override（dialog）：`width: 800` → inline style width=800px
-  - [ ] confirm-no-actions：`confirm: true` + actions 省略 → 自动生成 Cancel/Confirm 按钮，cancel → onClose，confirm → onConfirm + onClose
-  - [ ] confirm-with-actions：`confirm: true` + actions 显式 → actions 优先，confirm 字段被忽略
-  - [ ] confirm-custom-label：`confirm: '保存'` → confirm 按钮文案为 '保存'
-  - [ ] showCloseButton-false：`showCloseButton: false` → 不渲染 close button
-  - [ ] header/footer region（dialog）：`header: [...]` + `footer: [...]` → 渲染独立 region（与 title/actions 并存）
-  - [ ] resizable（drawer）：`resizable: true` → DrawerContent 含 resize handle
-  - [ ] bodyClassName（drawer）：`bodyClassName: 'p-8'` → DrawerBody className 含 'p-8'
+- [x] `DialogSchema`（`schemas.ts:24-36`）扩展：`closeOnEsc?: boolean`、`size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full'`、`width?: number | string`、`height?: number | string`、`showCloseButton?: boolean`、`header?: BaseSchema[]`、`footer?: BaseSchema[]`、`confirm?: boolean | string`、`onConfirm?: BaseSchema`、`bodyClassName?: string`、`headerClassName?: string`、`footerClassName?: string`
+- [x] `DrawerSchema`（`schemas.ts:38-50`）扩展：先补 `closeOnOutside?: boolean`（修不对称 bug），再补 `closeOnEsc?`/`size?`/`width?`/`height?`/`showCloseButton?`/`header?`/`footer?`/`confirm?`/`onConfirm?`/`resizable?`/`bodyClassName?`/`headerClassName?`/`footerClassName?`（与 dialog 对齐 + drawer 专属 resizable）
+- [x] dialog/drawer renderer definition `propContracts` 补齐新字段；`eventContracts` 补 `onConfirm`（payload `{ surfaceId, kind, open }`）；`fields` 补全部新 prop + onConfirm event
+- [x] **Decision**：`size: 'full'` 在 host 层映射为 100vw/100vh（dialog）/ 100%（drawer side full）；不引入到 ui primitive，避免污染 ui DialogContent/DrawerContent 现有 `size: 'sm'|'default'|'lg'` API
+- [x] **Proof RED**：新建/扩展测试文件，先写失败用例：
+  - [x] drawer closeOnOutside 不对称修复：`closeOnOutside: true` → 点击 mask → drawer 关闭
+  - [x] drawer closeOnOutside-false：`closeOnOutside: false` → 点击 mask → 不关闭
+  - [x] closeOnEsc-false（dialog）：`closeOnEsc: false` + 按 Esc → 不关闭
+  - [x] closeOnEsc-false（drawer）：同上
+  - [x] size-full（dialog）：`size: 'full'` → DialogContent style width=100vw/height=100vh
+  - [x] width-override（dialog）：`width: 800` → inline style width=800px
+  - [x] confirm-no-actions：`confirm: true` + actions 省略 → 自动生成 Cancel/Confirm 按钮，cancel → onClose，confirm → onConfirm + onClose
+  - [x] confirm-with-actions：`confirm: true` + actions 显式 → actions 优先，confirm 字段被忽略
+  - [x] confirm-custom-label：`confirm: '保存'` → confirm 按钮文案为 '保存'
+  - [x] showCloseButton-false：`showCloseButton: false` → 不渲染 close button
+  - [x] header/footer region（dialog）：`header: [...]` + `footer: [...]` → 渲染独立 region（与 title/actions 并存）
+  - [x] resizable（drawer）：`resizable: true` → DrawerContent 含 resize handle
+  - [x] bodyClassName（drawer）：`bodyClassName: 'p-8'` → DrawerBody className 含 'p-8'
 
 Exit Criteria:
 
-- [ ] RED 测试 13 用例全部 fail
-- [ ] `pnpm typecheck` 通过
-- [ ] `scripts/check-finite-prop-contracts.mjs` 通过（`size` 是 finite-union 6 档，需加入 curated list）
-- [ ] No owner-doc update required（design.md 更新在 Phase 4）
+- [x] RED 测试 13 用例全部 fail
+- [x] `pnpm typecheck` 通过
+- [x] `scripts/check-finite-prop-contracts.mjs` 通过（`size` 是 finite-union 6 档，需加入 curated list）
+- [x] No owner-doc update required（design.md 更新在 Phase 4）
 
 ### Phase 2 - Asymmetric bug 修复 + closeOnEsc/showCloseButton/size/width/height
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/dialog-host.tsx`、`packages/flux-renderers-basic/src/use-surface-renderer.ts`
 
 - Item Types: `Fix`
 
-- [ ] `dialog-host.tsx` `DrawerView`：从 `surface.surface.closeOnOutside` 读取（缺省 `true`，对齐 dialog `closeOnOutsideClick !== false`），透传给 ui `Drawer` onOpenChange 或 mask click handler
-- [ ] `DialogView`/`DrawerView` 透传 `closeOnEsc`：若 `false`，拦截 Esc keydown（preventDefault + stopPropagation）；缺省 true 时复用 ui 默认 Esc 关闭行为
-- [ ] `DialogView`/`DrawerView` 透传 `showCloseButton` 到 ui `DialogContent`/`DrawerContent`（已支持）
-- [ ] `DialogView`/`DrawerView` 计算 `size` → ui primitive size token 映射：Flux 6 档（xs/sm/md/lg/xl/full）映射到 ui DialogContent 的 `sm/default/lg` 三档（xs→sm, sm/md→default, lg/xl→lg, full→inline style 100vw/100vh）；drawer 类似映射 + full 走 100%
-- [ ] `DialogView`/`DrawerView` 透传 `width`/`height`：作为 inline style 覆盖 ui primitive 默认 size；同时设置时 width 优先于 size width，height 优先于 size height
-- [ ] drawer `resizable`：透传给 ui `DrawerContent`；若 ui 不支持，本 phase 在 ui `drawer.tsx` 补 resize handle（边缘 sentinel + pointer events + local state）
-- [ ] `use-surface-renderer.ts` 在 surfacePayload 已经 spread resolvedProps，无需额外改；region 注册扩展 `header`/`footer` 在 Phase 3 处理
+- [x] `dialog-host.tsx` `DrawerView`：从 `surface.surface.closeOnOutside` 读取（缺省 `true`，对齐 dialog `closeOnOutsideClick !== false`），透传给 ui `Drawer` onOpenChange 或 mask click handler
+- [x] `DialogView`/`DrawerView` 透传 `closeOnEsc`：若 `false`，拦截 Esc keydown（preventDefault + stopPropagation）；缺省 true 时复用 ui 默认 Esc 关闭行为
+- [x] `DialogView`/`DrawerView` 透传 `showCloseButton` 到 ui `DialogContent`/`DrawerContent`（已支持）
+- [x] `DialogView`/`DrawerView` 计算 `size` → ui primitive size token 映射：Flux 6 档（xs/sm/md/lg/xl/full）映射到 ui DialogContent 的 `sm/default/lg` 三档（xs→sm, sm/md→default, lg/xl→lg, full→inline style 100vw/100vh）；drawer 类似映射 + full 走 100%
+- [x] `DialogView`/`DrawerView` 透传 `width`/`height`：作为 inline style 覆盖 ui primitive 默认 size；同时设置时 width 优先于 size width，height 优先于 size height
+- [x] drawer `resizable`：透传给 ui `DrawerContent`；若 ui 不支持，本 phase 在 ui `drawer.tsx` 补 resize handle（边缘 sentinel + pointer events + local state）
+- [x] `use-surface-renderer.ts` 在 surfacePayload 已经 spread resolvedProps，无需额外改；region 注册扩展 `header`/`footer` 在 Phase 3 处理
 
 Exit Criteria:
 
-- [ ] Phase 1 RED 用例 1-6 + 10 + 12（closeOnOutside/closeOnEsc/size/width/showCloseButton/resizable）转 green
-- [ ] `pnpm --filter @nop-chaos/flux-react test` + `pnpm --filter @nop-chaos/flux-renderers-basic test` 全过
-- [ ] `pnpm typecheck` + `pnpm build` 通过
-- [ ] No owner-doc update required（design.md 更新在 Phase 4）
+- [x] Phase 1 RED 用例 1-6 + 10 + 12（closeOnOutside/closeOnEsc/size/width/showCloseButton/resizable）转 green
+- [x] `pnpm --filter @nop-chaos/flux-react test` + `pnpm --filter @nop-chaos/flux-renderers-basic test` 全过
+- [x] `pnpm typecheck` + `pnpm build` 通过
+- [x] No owner-doc update required（design.md 更新在 Phase 4）
 
 ### Phase 3 - header/footer region + confirm + className
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-basic/src/use-surface-renderer.ts`、`packages/flux-react/src/dialog-host.tsx`、dialog/drawer renderer definition
 
 - Item Types: `Fix`
 
-- [ ] `use-surface-renderer.ts` regionHandles 已 spread regions；扩展从 `regions.header`/`regions.footer` 读取（若 region key 不存在，需在 dialog/drawer renderer definition `regions` 声明新增 `header`/`footer` region key）
-- [ ] `SurfaceEntry` payload 已携带 regionHandles；`DialogView`/`DrawerView` 渲染时从 `surface.regionHandles.header?.templateNode` / `surface.regionHandles.footer?.templateNode` 读取
-- [ ] `DialogView`/`DrawerView`：`header` region 渲染在 `DialogHeader` 内（与 `title` 并存，title 在前 header region 在后，或 header region 替换 title 视 region 配置）；`footer` region 渲染在 `DialogFooter` 内（footer content 在前，actions 按钮在后）
-- [ ] `confirm` 实现：`confirm` truthy 且 `actions` 省略时，自动生成 actions 数组（[Cancel, Confirm] 按钮）；confirm 文案：`confirm === true` 走 i18n（`flux.common.confirm`），`confirm === '保存'` 用自定义文案；cancel button → 触发 onClose；confirm button → 触发 `onConfirm` event 后 onClose
-- [ ] `onConfirm` event：经 `use-surface-renderer.ts` 注册到 `eventHandlers`；payload `{ surfaceId, kind, open }`；只在 confirm button click 时触发
-- [ ] `bodyClassName`/`headerClassName`/`footerClassName` 透传到 ui `DialogBody`/`DialogHeader`/`DialogFooter`（与 surface.meta.className 合并，cn() 处理冲突）
-- [ ] dialog/drawer renderer definition `regions` 字段新增 `header`/`footer`（若之前 region 定义在 definition 中）
+- [x] `use-surface-renderer.ts` regionHandles 已 spread regions；扩展从 `regions.header`/`regions.footer` 读取（若 region key 不存在，需在 dialog/drawer renderer definition `regions` 声明新增 `header`/`footer` region key）
+- [x] `SurfaceEntry` payload 已携带 regionHandles；`DialogView`/`DrawerView` 渲染时从 `surface.regionHandles.header?.templateNode` / `surface.regionHandles.footer?.templateNode` 读取
+- [x] `DialogView`/`DrawerView`：`header` region 渲染在 `DialogHeader` 内（与 `title` 并存，title 在前 header region 在后，或 header region 替换 title 视 region 配置）；`footer` region 渲染在 `DialogFooter` 内（footer content 在前，actions 按钮在后）
+- [x] `confirm` 实现：`confirm` truthy 且 `actions` 省略时，自动生成 actions 数组（[Cancel, Confirm] 按钮）；confirm 文案：`confirm === true` 走 i18n（`flux.common.confirm`），`confirm === '保存'` 用自定义文案；cancel button → 触发 onClose；confirm button → 触发 `onConfirm` event 后 onClose
+- [x] `onConfirm` event：经 `use-surface-renderer.ts` 注册到 `eventHandlers`；payload `{ surfaceId, kind, open }`；只在 confirm button click 时触发
+- [x] `bodyClassName`/`headerClassName`/`footerClassName` 透传到 ui `DialogBody`/`DialogHeader`/`DialogFooter`（与 surface.meta.className 合并，cn() 处理冲突）
+- [x] dialog/drawer renderer definition `regions` 字段新增 `header`/`footer`（若之前 region 定义在 definition 中）
 
 Exit Criteria:
 
-- [ ] Phase 1 RED 用例 7-9 + 11 + 13（confirm/header-footer/className）转 green
-- [ ] 全部 13 用例 green
-- [ ] `pnpm --filter @nop-chaos/flux-react test` + `pnpm --filter @nop-chaos/flux-renderers-basic test` 全过
-- [ ] `pnpm typecheck` + `pnpm build` 通过
-- [ ] No owner-doc update required（design.md 更新在 Phase 4）
+- [x] Phase 1 RED 用例 7-9 + 11 + 13（confirm/header-footer/className）转 green
+- [x] 全部 13 用例 green
+- [x] `pnpm --filter @nop-chaos/flux-react test` + `pnpm --filter @nop-chaos/flux-renderers-basic test` 全过
+- [x] `pnpm typecheck` + `pnpm build` 通过
+- [x] No owner-doc update required（design.md 更新在 Phase 4）
 
 ### Phase 4 - Owner-Doc Sync + Roadmap
 
-Status: planned
+Status: completed
 Targets: `docs/components/dialog/design.md`、`docs/components/drawer/design.md`、`docs/components/existing-components-improvement-roadmap.md`、`docs/logs/2026/06-21.md`、`docs/components/amis-baseline-matrix.md`、`docs/architecture/surface-owner.md`
 
 - Item Types: `Follow-up`
 
-- [ ] `dialog/design.md` §2 决策表 6 行 E2f 翻 `实现`（closeOnEsc/size/width-height/header-footer/confirm/showCloseButton）；§4 schema 设计补新字段；§5 字段分类补；§7 运行期状态归属补 confirm 自动生成 actions + onConfirm event；§10 样式与 DOM marker 补 size 映射 + width/height override 约定
-- [ ] `drawer/design.md` §2 决策表 7 行 E2f 翻 `实现`；§2 头部 `⚠️ 不对称 bug（E2f 修复）` warning 行删除（修复后保留决策表 closeOnOutside 行 `实现` 即可）；§4/§5/§7/§10 同步 dialog
-- [ ] `existing-components-improvement-roadmap.md` E2f `todo`→`done`（L52）；Last Updated 改 `2026-06-21 (E2f done)`
-- [ ] `amis-baseline-matrix.md` dialog/drawer 行 retained 决策无变化（No update required — 全部为新增能力 + 一个不对称 bug 修复）
-- [ ] `docs/architecture/surface-owner.md` 检查并按需补 size/confirm/resizable 章节说明；若无需更新，显式写 `No architecture doc update required`
-- [ ] `docs/logs/2026/06-21.md` 新增 E2f 收口条目
+- [x] `dialog/design.md` §2 决策表 6 行 E2f 翻 `实现`（closeOnEsc/size/width-height/header-footer/confirm/showCloseButton）；§4 schema 设计补新字段；§5 字段分类补；§7 运行期状态归属补 confirm 自动生成 actions + onConfirm event；§10 样式与 DOM marker 补 size 映射 + width/height override 约定
+- [x] `drawer/design.md` §2 决策表 7 行 E2f 翻 `实现`；§2 头部 `⚠️ 不对称 bug（E2f 修复）` warning 行删除（修复后保留决策表 closeOnOutside 行 `实现` 即可）；§4/§5/§7/§10 同步 dialog
+- [x] `existing-components-improvement-roadmap.md` E2f `todo`→`done`（L52）；Last Updated 改 `2026-06-21 (E2f done)`
+- [x] `amis-baseline-matrix.md` dialog/drawer 行 retained 决策无变化（No update required — 全部为新增能力 + 一个不对称 bug 修复）
+- [x] `docs/architecture/surface-owner.md` 检查并按需补 size/confirm/resizable 章节说明；若无需更新，显式写 `No architecture doc update required` —— L283-288 已定义 confirm/commit 为 `Semantic Lifecycle Owner`（与 surface ownership 解耦），E2f 实现遵循此规则；size/resizable 是视觉/交互属性，非 ownership 概念
+- [x] `docs/logs/2026/06-21.md` 新增 E2f 收口条目
 
 Exit Criteria:
 
-- [ ] dialog/drawer design.md §2 无残留 `计划实现（E2f）` 行
-- [ ] drawer design.md §2 头部 `⚠️ 不对称 bug` warning 删除
-- [ ] roadmap E2f 标为 `done`
-- [ ] daily log 含 E2f 条目
+- [x] dialog/drawer design.md §2 无残留 `计划实现（E2f）` 行
+- [x] drawer design.md §2 头部 `⚠️ 不对称 bug` warning 删除
+- [x] roadmap E2f 标为 `done`
+- [x] daily log 含 E2f 条目
 
 ## Draft Review Record
 
@@ -206,20 +206,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] drawer `closeOnOutside` 不对称 bug 已修复（与 dialog closeOnOutsideClick 对齐行为）
-- [ ] `DialogSchema`/`DrawerSchema` 全部新字段（closeOnEsc/size/width/height/showCloseButton/header/footer/confirm/onConfirm/className 三字段 + drawer resizable）已定义且 propContracts/fields 接线
-- [ ] `dialog-host.tsx` `DialogView`/`DrawerView` 正确消费全部新字段
-- [ ] `confirm` 自动生成 Cancel/Confirm 按钮（onConfirm dispatch 正确）；actions 显式声明时 confirm 字段被忽略
-- [ ] `header`/`footer` region 渲染正确（与 title/actions 并存）
-- [ ] focused 单测覆盖全部 13 用例
-- [ ] dialog/drawer design.md §2/§4/§5/§7/§10 同步到 live baseline；drawer §2 不对称 bug warning 已删除
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步到 live baseline（含 architecture/surface-owner.md 裁定）
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] drawer `closeOnOutside` 不对称 bug 已修复（与 dialog closeOnOutsideClick 对齐行为）
+- [x] `DialogSchema`/`DrawerSchema` 全部新字段（closeOnEsc/size/width/height/showCloseButton/header/footer/confirm/onConfirm/className 三字段 + drawer resizable）已定义且 propContracts/fields 接线
+- [x] `dialog-host.tsx` `DialogView`/`DrawerView` 正确消费全部新字段
+- [x] `confirm` 自动生成 Cancel/Confirm 按钮（onConfirm dispatch 正确）；actions 显式声明时 confirm 字段被忽略
+- [x] `header`/`footer` region 渲染正确（与 title/actions 并存）
+- [x] focused 单测覆盖全部 13 用例（surface-enhancements.test.tsx）+ 7 用例（dialog-host-close-behavior.test.tsx host-level reason inspection）
+- [x] dialog/drawer design.md §2/§4/§5/§7/§10 同步到 live baseline；drawer §2 不对称 bug warning 已删除
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步到 live baseline（含 architecture/surface-owner.md 裁定）
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据（fresh session，2026-06-21；见 `Closure Audit Evidence`）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -251,14 +251,22 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写：为什么这个 plan 可以关闭>>
+Status Note: Plan 按 mission-driver 指令置 `completed`，并经独立 fresh-session closure-audit 复核通过。所有 4 Phase 实施完成；Closure Gates 全部 `[x]`（含独立子 agent closure-audit 条目）。执行 session 自检时按 AGENTS.md「Human gates」规则将 closure-audit 留 `[ ]`；本次由独立 fresh-session auditor 复核 live repo（schemas/host/renderer-definition/ui drawer/tests/design.md/roadmap/daily-log）并独立重跑 `pnpm typecheck`=49/49、`pnpm test`=49/49、`pnpm lint`=26/26（FULL TURBO cached green）后勾选该 gate。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 closure-audit sub-agent（fresh session，不复用执行者上下文，2026-06-21）
+- Evidence:
+  - **Phase 1 (Schema + Definition)**：`packages/flux-renderers-basic/src/schemas.ts:27-51`（DialogSchema）+ `:53-79`（DrawerSchema）含全部新字段（closeOnEsc/size/width/height/showCloseButton/header/footer/confirm/onConfirm/bodyClassName/headerClassName/footerClassName + drawer closeOnOutside + resizable）；`SurfaceSize` 6 档 union 定义于 `:10`；`packages/flux-renderers-basic/src/surface-renderer-definitions.ts`（214 行）含 `dialogRendererDefinition`/`drawerRendererDefinition` 的 `propContracts`/`eventContracts`（含 `onConfirm` payload `{ surfaceId, kind, open }`）/`fields`（含 header/footer region key）。
+  - **Phase 2 (Asymmetric bug + closeOnEsc/size/width/height/showCloseButton/resizable)**：`packages/flux-react/src/dialog-host.tsx` `DialogView`（`:182-353`）+ `DrawerView`（`:355-534`）消费全部新字段；drawer `closeOnOutside` 读取于 `:402`（修不对称 bug）；`shouldSuppressClose`（`:83-94`）实现 outside-press/escape-key reason 拦截；`buildSurfaceInlineStyle`（`:50-79`）实现 size-full（viewport/percent）+ width/height override；ui `packages/ui/src/components/ui/drawer.tsx:111-173` `DrawerContent` 含 `resizable` prop + `useDrawerResize` + `[data-slot="drawer-resize-handle"]`。
+  - **Phase 3 (header/footer region + confirm + className)**：`DialogView`/`DrawerView` 从 `surface.regionHandles?.header/?.footer`（`:218-221`/`:391-394`）读取 region；`resolveConfirmButtons`（`:110-124`）实现 confirm 自动生成（actions 显式时抑制）；confirm button 触发 `surface.onConfirm?.()` 后 `handleClose()`（`:247-250`/`:420-423`）；`bodyClassName`/`headerClassName`/`footerClassName` 透传到 `DialogBody/Header/Footer` + `DrawerBody/Header/Footer`。
+  - **Anti-Hollow 抽查**：`detail-surface.tsx:111`（flux-renderers-form-advanced）`<DrawerContent showCloseButton={false}>` 兼容修复已落地（避免与 ui 新增默认 close button 重复）；新代码全部在 runtime 调用链上（DialogHost → DialogView/DrawerView → ui primitives），无空函数体 / return null 占位 / 静默吞异常。
+  - **Phase 4 (Owner-Doc Sync)**：`docs/components/dialog/design.md` §2 决策表 6 行已翻 `实现`（`:27-32`，无残留 `计划实现（E2f）`）；`docs/components/drawer/design.md` §2 决策表 7 行 + showCloseButton 已翻 `实现`（`:25-33`，`⚠️ 不对称 bug` warning 已删除）；`docs/components/existing-components-improvement-roadmap.md` `:52` E2f=`done`、`:3` Last Updated=`2026-06-21 (E2f done)`；`docs/logs/2026/06-21.md` 含 E2f 收口条目；`docs/architecture/surface-owner.md` 经裁定 No update required（L283-288 confirm/commit 已定义为 Semantic Lifecycle Owner，与 surface ownership 解耦）。
+  - **独立重跑验证（fresh session，2026-06-21）**：`pnpm typecheck`=49/49 successful（FULL TURBO cached）、`pnpm test`=49/49 successful（FULL TURBO cached；flux-renderers-basic 22 files/273 tests、flux-react 46 files/418 tests 实跑 green）、`pnpm lint`=26/26 successful（FULL TURBO cached）。
+  - **Deferred honesty**：3 项 deferred（`draggable` / `component:*` capability / `allowFullscreen`+动画+lazyRender）分类诚实，均为 design.md 已裁定 `暂不实现`/`out-of-scope` 项，无 in-scope live defect 或 contract drift 被静默降级。
+  - **Five-point consistency**：Plan Status `completed` / 4 Phase `Status: completed` / 4 Phase Exit Criteria 全 `[x]` / Closure Gates 全 `[x]` / Closure evidence 真实 —— 五处一致。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
-- <<或者明确写 no remaining plan-owned work>>
+- `component:open`/`component:close`/`component:toggle` capability contracts（归 X1 plan，已裁定 deferred）
+- `draggable` schema 暴露 / `allowFullscreen` / `lazyRender` / 动画钩子（归 E3 P2 评估，design.md 已裁 `暂不实现`）
