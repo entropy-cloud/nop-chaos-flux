@@ -17,6 +17,7 @@ import { ComponentHandlesDemoPage } from './pages/component-handles-demo';
 import { EventPreventionDemoPage } from './pages/event-prevention-demo';
 import { BooleanControlValueContractDemoPage } from './pages/boolean-control-value-contract-demo';
 import { TextIconVisualFieldsDemoPage } from './pages/text-icon-visual-fields-demo';
+import { LayoutFamilyEnhancementsDemoPage } from './pages/layout-family-enhancements-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -139,6 +140,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <BooleanControlValueContractDemoPage onBack={goHome} />;
         case 'text-icon-visual-fields':
           return <TextIconVisualFieldsDemoPage onBack={goHome} />;
+        case 'layout-family-enhancements':
+          return <LayoutFamilyEnhancementsDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

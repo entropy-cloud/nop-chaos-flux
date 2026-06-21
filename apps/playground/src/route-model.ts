@@ -440,6 +440,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'E3 text copyable/maxLine + icon schema size/color: text one-click copy with toast feedback, line-clamp truncation, and schema-driven icon dimensions.',
   },
+  {
+    id: 'layout-family-enhancements',
+    title: 'Layout Family Enhancements',
+    eyebrow: 'Layout (E3)',
+    description:
+      'E3 flex/page/tabs layout family: flex reverse/evenly/baseline/alignContent enums, page aside region + subTitle/remark, tabs per-tab badge/icon + mountOnEnter/unmountOnExit.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [
