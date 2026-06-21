@@ -33,6 +33,12 @@ describe('basic renderer static contracts', () => {
   it('registers text tag as a resolved prop field', () => {
     const text = basicRendererDefinitions.find((definition) => definition.type === 'text');
 
-    expect(text?.fields?.map((field) => field.key)).toEqual(['text', 'body', 'tag']);
+    expect(text?.fields?.map((field) => field.key)).toEqual([
+      'text',
+      'body',
+      'tag',
+      'copyable',
+      'maxLine',
+    ]);
   });
 });

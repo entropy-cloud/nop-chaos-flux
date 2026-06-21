@@ -127,6 +127,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'text', kind: 'prop', allowSource: true },
       { key: 'body', kind: 'prop' },
       { key: 'tag', kind: 'prop' },
+      { key: 'copyable', kind: 'prop', valueType: 'boolean' },
+      { key: 'maxLine', kind: 'prop' },
     ],
     staticCapable: true,
   },
@@ -272,6 +274,11 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'content',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: IconRenderer,
+    fields: [
+      { key: 'icon', kind: 'prop' },
+      { key: 'size', kind: 'prop' },
+      { key: 'color', kind: 'prop' },
+    ],
     staticCapable: true,
   },
   {

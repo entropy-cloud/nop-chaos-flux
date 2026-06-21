@@ -9,16 +9,22 @@ export function IconRenderer(props: RendererComponentProps<IconSchema>) {
 
   const IconComp = Icon as React.ComponentType<Record<string, unknown>>;
 
+  const size = typeof props.props.size === 'number' && Number.isFinite(props.props.size)
+    ? Math.max(1, Math.floor(props.props.size))
+    : 16;
+  const color = typeof props.props.color === 'string' ? props.props.color : undefined;
+
   return (
     <IconComp
       className={cn('nop-icon', props.meta.className)}
       data-icon={icon}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
-      size={16}
+      size={size}
       strokeWidth={1.8}
       aria-hidden="true"
       focusable="false"
+      style={color ? { color } : undefined}
     />
   );
 }

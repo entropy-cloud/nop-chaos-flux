@@ -167,6 +167,8 @@ export interface TextSchema extends BaseSchema {
   text?: string;
   body?: string;
   tag?: 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'label' | 'div';
+  copyable?: boolean;
+  maxLine?: number;
 }
 
 export interface ButtonSchema extends BaseSchema {
@@ -188,6 +190,10 @@ export interface IconSchema extends BaseSchema {
   type: 'icon';
   /** 图标名称（kebab-case） */
   icon?: string;
+  /** 图标像素尺寸（缺省回退 16） */
+  size?: number;
+  /** CSS color 值，映射到 inline style color（lucide 走 currentColor） */
+  color?: string;
 }
 
 export interface BadgeSchema extends BaseSchema {
