@@ -447,6 +447,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'E3 flex/page/tabs layout family: flex reverse/evenly/baseline/alignContent enums, page aside region + subTitle/remark, tabs per-tab badge/icon + mountOnEnter/unmountOnExit.',
   },
+  {
+    id: 'form-input-enhancements',
+    title: 'Form Input Enhancements',
+    eyebrow: 'Form Input (E3)',
+    description:
+      'E3 form input controls: input-number long-press continuous stepping + clamp, array-editor/key-value configurable minItems/maxItems + up/down reorder via moveValue.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

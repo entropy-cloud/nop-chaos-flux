@@ -340,7 +340,8 @@
                           "type": "array-editor",
                           "name": "reviewers",
                           "label": "Reviewers",
-                          "itemLabel": "Reviewer"
+                          "itemLabel": "Reviewer",
+                          "minItems": 0
                         }
                       ],
                       "actions": [

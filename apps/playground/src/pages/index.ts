@@ -9,4 +9,5 @@ export { CodeEditorPage } from './code-editor-page';
 export { WordEditorPage } from './word-editor-page';
 export { PerformanceTablePage } from './performance-table-page';
 export { TextIconVisualFieldsDemoPage } from './text-icon-visual-fields-demo';
+export { FormInputEnhancementsDemoPage } from './form-input-enhancements-demo';
 export type { PageId } from './types';

@@ -284,7 +284,11 @@ describe('FluxBasicPage debugger wiring', () => {
     expect(form).toBeTruthy();
     expect(within(form as HTMLElement).getByPlaceholderText('Reviewer 1')).toBeTruthy();
 
-    fireEvent.click(within(form as HTMLElement).getByRole('button', { name: /Reviewer 1$/ }));
+    fireEvent.click(
+      within(form as HTMLElement).getByRole('button', {
+        name: /^(?!Move (up|down)).*Reviewer 1$/,
+      }),
+    );
 
     await waitFor(() => {
       expect(within(form as HTMLElement).queryByPlaceholderText('Reviewer 1')).toBeNull();
