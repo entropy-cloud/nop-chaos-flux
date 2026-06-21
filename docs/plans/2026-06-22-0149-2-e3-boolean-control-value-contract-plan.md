@@ -1,6 +1,6 @@
 # E3 布尔控件值契约规范化（checkbox/switch/radio-group trueValue-falseValue）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-06-22
 > Source: `docs/components/existing-components-improvement-roadmap.md`（E3 P2 行「radio-group/checkbox/switch trueValue-falseValue」）、`docs/components/checkbox/design.md` §4、`docs/components/switch/design.md` §4
 > Related: `docs/plans/2026-06-21-0255-x5-flux-decision-tables-plan.md`（X5 未覆盖 checkbox/switch/radio-group，本 plan 需扩展）
@@ -67,29 +67,29 @@
 
 ### Phase 1 - X5 决策表扩展 + radio-group 裁定
 
-Status: planned
+Status: completed
 Targets: `docs/components/checkbox/design.md`、`docs/components/switch/design.md`、`docs/components/radio-group/design.md`
 
 - Item Types: `Decision`、`Fix`
 
-- [ ] **Fix**：`checkbox/design.md` 新建 §2 Flux 决策表节（参考 `input-number/design.md:13-31` 范本），列：`trueValue`/`falseValue`（实现）、`indeterminate`（不采纳/后续 + 理由）、amis `option` 数组语法（不采纳 + 理由）。
-- [ ] **Fix**：`switch/design.md` 新建 §2 Flux 决策表节，列：`trueValue`/`falseValue`（实现）、与 checkbox 的语义边界（switch=即时开关 / checkbox=勾选项）、amis 旧字段（不采纳 + 理由）。
-- [ ] **Fix**：`radio-group/design.md` 新建 §2 Flux 决策表节。
-- [ ] **Decision**：裁定 radio-group 是否需要 trueValue/falseValue —— 核对 `RadioGroupRenderer` 已用 `stringValueAdapter` + options 任意值；若 boolean-radio 场景已被 options 覆盖，则 design.md 显式记「不采纳 trueValue/falseValue + 理由（options 已 subsume）」，本 plan 不加字段；否则加最小字段。结论写入三个 design.md。
+- [x] **Fix**：`checkbox/design.md` 新建 §2 Flux 决策表节（参考 `input-number/design.md:13-31` 范本），列：`trueValue`/`falseValue`（实现）、`indeterminate`（不采纳/后续 + 理由）、amis `option` 数组语法（不采纳 + 理由）。
+- [x] **Fix**：`switch/design.md` 新建 §2 Flux 决策表节，列：`trueValue`/`falseValue`（实现）、与 checkbox 的语义边界（switch=即时开关 / checkbox=勾选项）、amis 旧字段（不采纳 + 理由）。
+- [x] **Fix**：`radio-group/design.md` 新建 §2 Flux 决策表节。
+- [x] **Decision**：裁定 radio-group 是否需要 trueValue/falseValue —— 核对 `RadioGroupRenderer` 已用 `stringValueAdapter` + options 任意值；若 boolean-radio 场景已被 options 覆盖，则 design.md 显式记「不采纳 trueValue/falseValue + 理由（options 已 subsume）」，本 plan 不加字段；否则加最小字段。结论写入三个 design.md。
 
 Exit Criteria:
 
-- [ ] 三个 design.md 各含 §2 Flux 决策表节（live repo 可读，列含采纳/不采纳/理由三列）。
-- [ ] radio-group 裁定结论明确（采纳加字段 / 不采纳 + 理由），无歧义。
+- [x] 三个 design.md 各含 §2 Flux 决策表节（live repo 可读，列含采纳/不采纳/理由三列）。
+- [x] radio-group 裁定结论明确（采纳加字段 / 不采纳 + 理由），无歧义。
 
 ### Phase 2 - Focused Proof（RED 基线）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/__tests__/boolean-control-value-contract.test.tsx`（新建）
 
 - Item Types: `Proof`
 
-- [ ] 新建测试文件，先写失败用例（RED）：
+- [x] 新建测试文件，先写失败用例（RED）：
   - checkbox 配 `trueValue: 1, falseValue: 0` → 勾选存 `1`、取消存 `0`。
   - checkbox 缺省 trueValue/falseValue → 存 `true`/`false`（无回归）。
   - checkbox 表单初始值 `1`（=== trueValue）→ 控件初始 checked。
@@ -101,44 +101,44 @@ Targets: `packages/flux-renderers-form/src/__tests__/boolean-control-value-contr
 
 Exit Criteria:
 
-- [ ] 测试文件存在，运行 grep 全部 RED（断言未实现行为）。
-- [ ] 用例覆盖 Goals 中值映射维度所有可观测行为 + 三条 Failure Path。
-- [ ] 注：radio-group 相关用例依 Phase 1 裁定结论启用/删除；Phase 1 裁定不加字段时本 Phase 不含 radio-group 用例。
+- [x] 测试文件存在，运行 grep 全部 RED（断言未实现行为）。
+- [x] 用例覆盖 Goals 中值映射维度所有可观测行为 + 三条 Failure Path。
+- [x] 注：radio-group 相关用例依 Phase 1 裁定结论启用/删除；Phase 1 裁定不加字段时本 Phase 不含 radio-group 用例。
 
 ### Phase 3 - schema + runtime 实现（GREEN）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/schemas.ts`、`packages/flux-renderers-form/src/renderers/input-choice-renderers.tsx`
 
 - Item Types: `Fix`
 
-- [ ] `schemas.ts`：`CheckboxSchema` / `SwitchSchema` 新增 `trueValue?: SchemaValue` / `falseValue?: SchemaValue`（参考 X3 命名基线，扁平标量）。
-- [ ] `input-choice-renderers.tsx`：CheckboxRenderer / SwitchRenderer 读取 trueValue/falseValue，`checked = (value === trueValue ?? true)`，`onChange` 写入 `checked ? trueValue : falseValue`（缺省回退 `true`/`false`）；保持 `booleanValueAdapter` 兼容或引入轻量映射适配器（Decision in phase）。
-- [ ] （若 Phase 1 裁定加字段）RadioGroupSchema + RadioGroupRenderer 对应改动。
-- [ ] Phase 2 RED 用例全部转 GREEN。
+- [x] `schemas.ts`：`CheckboxSchema` / `SwitchSchema` 新增 `trueValue?: SchemaValue` / `falseValue?: SchemaValue`（参考 X3 命名基线，扁平标量）。
+- [x] `input-choice-renderers.tsx`：CheckboxRenderer / SwitchRenderer 读取 trueValue/falseValue，`checked = (value === trueValue ?? true)`，`onChange` 写入 `checked ? trueValue : falseValue`（缺省回退 `true`/`false`）；保持 `booleanValueAdapter` 兼容或引入轻量映射适配器（Decision in phase）。
+- [x] （若 Phase 1 裁定加字段）RadioGroupSchema + RadioGroupRenderer 对应改动。
+- [x] Phase 2 RED 用例全部转 GREEN。
 
 Exit Criteria:
 
-- [ ] Phase 2 全部用例 GREEN；既有 `input-choice-renderers` 测试套件无回归（`pnpm --filter @nop-chaos/flux-renderers-form test` 全过）。
-- [ ] live repo 核对：`CheckboxRenderer`/`SwitchRenderer` 真实读 trueValue/falseValue（grep 非空），runtime 路径调用映射逻辑（非空壳）。
-- [ ] 局部 typecheck 通过（`pnpm --filter @nop-chaos/flux-renderers-form typecheck`）。
+- [x] Phase 2 全部用例 GREEN；既有 `input-choice-renderers` 测试套件无回归（`pnpm --filter @nop-chaos/flux-renderers-form test` 全过）。
+- [x] live repo 核对：`CheckboxRenderer`/`SwitchRenderer` 真实读 trueValue/falseValue（grep 非空），runtime 路径调用映射逻辑（非空壳）。
+- [x] 局部 typecheck 通过（`pnpm --filter @nop-chaos/flux-renderers-form typecheck`）。
 
 ### Phase 4 - owner-doc 同步与 playground 示例
 
-Status: planned
+Status: completed
 Targets: `docs/components/{checkbox,switch,radio-group}/design.md`、`apps/playground/src/`、`docs/components/examples.manifest.json`
 
 - Item Types: `Fix`
 
-- [ ] 三个 design.md §4（schema 设计）/§5（字段分类）/§10（DOM marker，如新增）同步 trueValue/falseValue 落地内容，与 runtime 行为一致。
-- [ ] playground 新增「布尔控件值契约」示例页（演示 checkbox/switch 自定义 trueValue/falseValue + 缺省回退），注册路由。
-- [ ] `examples.manifest.json` 登记新示例。
-- [ ] **e2e**：新增 `tests/e2e/boolean-control-value-contract.spec.ts`，覆盖 checkbox/switch 自定义 trueValue/falseValue 勾选后表单值映射 + 缺省回退的关键交互路径（满足 roadmap Cross-Cutting「每个工作项必须有 e2e」硬约束）。
+- [x] 三个 design.md §4（schema 设计）/§5（字段分类）/§10（DOM marker，如新增）同步 trueValue/falseValue 落地内容，与 runtime 行为一致。
+- [x] playground 新增「布尔控件值契约」示例页（演示 checkbox/switch 自定义 trueValue/falseValue + 缺省回退），注册路由。
+- [x] `examples.manifest.json` 登记新示例。
+- [x] **e2e**：新增 `tests/e2e/boolean-control-value-contract.spec.ts`，覆盖 checkbox/switch 自定义 trueValue/falseValue 勾选后表单值映射 + 缺省回退的关键交互路径（满足 roadmap Cross-Cutting「每个工作项必须有 e2e」硬约束）。
 
 Exit Criteria:
 
-- [ ] 三个 design.md §4/§5 与 runtime 一致（live repo 可读）。
-- [ ] playground 示例页存在且路由可访问；`examples.manifest.json` 含新条目。
+- [x] 三个 design.md §4/§5 与 runtime 一致（live repo 可读）。
+- [x] playground 示例页存在且路由可访问；`examples.manifest.json` 含新条目。
 
 ## Draft Review Record
 
@@ -154,19 +154,19 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] checkbox/switch trueValue/falseValue 值映射已落地且 focused 测试 GREEN
-- [ ] radio-group 裁定结论已落地（加字段 or 显式不采纳 + 理由）
-- [ ] checkbox/switch/radio-group 三个 design.md 含 Flux 决策表（X5 扩展完成）
-- [ ] 缺省回退 `true`/`false` 无回归（既有测试套件全过）
-- [ ] playground 示例 + `examples.manifest.json` 登记
-- [ ] `tests/e2e/boolean-control-value-contract.spec.ts` 存在并覆盖关键交互路径
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift
-- [ ] 受影响 owner docs（design.md §2/§4/§5）已同步到 live baseline
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] checkbox/switch trueValue/falseValue 值映射已落地且 focused 测试 GREEN
+- [x] radio-group 裁定结论已落地（加字段 or 显式不采纳 + 理由）
+- [x] checkbox/switch/radio-group 三个 design.md 含 Flux 决策表（X5 扩展完成）
+- [x] 缺省回退 `true`/`false` 无回归（既有测试套件全过）
+- [x] playground 示例 + `examples.manifest.json` 登记
+- [x] `tests/e2e/boolean-control-value-contract.spec.ts` 存在并覆盖关键交互路径
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift
+- [x] 受影响 owner docs（design.md §2/§4/§5）已同步到 live baseline
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -189,15 +189,21 @@ Exit Criteria:
 
 ## Closure
 
-> 待 closure audit 通过后由独立审阅者 / 独立子 agent 填写。
-
-Status Note: <<关闭时填写>>
+Status Note: 4 个 Phase 全部 `completed`，所有 Closure Gates 与 Exit Criteria 已勾选。独立 fresh-session 子 agent 已对 live repo 做完整 closure audit（schema/runtime 行为、focused 单测、e2e、design.md 决策表、playground 登记、roadmap/log 同步），未发现 hollow 实现或隐藏的 in-scope defect。plan 可关闭。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent（fresh session）>>
-- Evidence: <<task id / daily log link / live repo 核对清单>>
+- Auditor / Agent: 独立子 agent（fresh session，closure-audit，不复用执行 session 上下文）
+- Live repo 核对清单（逐 Phase）：
+  - Phase 1：`docs/components/checkbox/design.md:13` / `switch/design.md:13` / `radio-group/design.md:13` 均含 §2 Flux 决策表；radio-group 显式「不采纳 trueValue/falseValue（options 已 subsume）+ 理由」（`radio-group/design.md:18`）。
+  - Phase 2/3：`packages/flux-renderers-form/src/schemas.ts:196-197`（CheckboxSchema）、`:205-206`（SwitchSchema）新增 `trueValue?: SchemaValue` / `falseValue?: SchemaValue`；`RadioGroupSchema:123-125` 无此字段（与裁决一致）。`input-choice-renderers.tsx:465-467`（Checkbox）/`:498-500`（Switch）读取 schema 并构造 `booleanMappingAdapter`。`packages/flux-core/src/value-adapter.ts:220-232` 双向映射（`in` 用 `Object.is`，`out` 按 `checked ? trueValue : falseValue`）。Anti-hollow 核对：`field-handlers.tsx:197-222` `setValue` 在 `onChange` 时调用 `adapter.out`，运行时映射真实触发（非空壳）；缺省 `true`/`false` 字节兼容旧契约。
+  - Phase 2 用例文件：`packages/flux-renderers-form/src/__tests__/boolean-control-value-contract.test.tsx`（11 用例，覆盖 only-trueValue-set / initial-value-custom / value-neither 三条 Failure Path + 缺省无回归）。
+  - Phase 4：`apps/playground/src/pages/boolean-control-value-contract-demo.tsx` 存在，注册于 `App.tsx:18,137` + `route-model.ts:430`；`docs/components/examples.manifest.json` 的 `runtime` 数组含 checkbox/switch/radio-group，对应 `example.json` 已含 trueValue/falseValue；e2e `tests/e2e/boolean-control-value-contract.spec.ts`（4 用例）+ `tests/e2e/playground-entry-pages.spec.ts:86` route assertion。
+- 全量验证基线（`docs/logs/2026/06-22.md`）：`pnpm typecheck` 49/49、`pnpm build` 26/26、`pnpm lint` 26/26、`pnpm test` 49/49 tasks（flux-renderers-form 38 files / 360 tests 含新增 11 用例全绿）；e2e `boolean-control-value-contract.spec.ts` 4/4 全过。
+- Owner-doc 同步：checkbox/switch `design.md` §4/§5 已记 `booleanMappingAdapter` 映射语义；roadmap `existing-components-improvement-roadmap.md:58` 标记本子项 ✅ done。
 
 Follow-up:
 
-- <<non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- 布尔控件 schema 级 `valueType` 强类型推断（Non-Blocking Follow-ups，归 form runtime 独立评估）。
+- checkbox `indeterminate` 半选态（Deferred But Adjudicated，out-of-scope improvement）。
+- 无剩余 plan-owned work，无被静默降级的 in-scope live defect 或 contract drift。

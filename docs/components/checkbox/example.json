@@ -3,8 +3,9 @@
   "name": "agreed",
   "label": "协议确认",
   "required": true,
+  "trueValue": 1,
+  "falseValue": 0,
   "option": {
-    "label": "我已阅读并同意相关条款",
-    "value": true
+    "label": "我已阅读并同意相关条款"
   }
 }

@@ -10,6 +10,17 @@
 - 当前已支持 `options`，并声明为 source-enabled field。
 - 内联布局、说明文案和按钮式单选样式可后续补充，但不应改变“单选集合”的核心语义。
 
+### Flux 决策表
+
+| AMIS / 候选能力                 | 价值评估 | Flux 决策  | 理由                                                                                                                                                                                                                                                     |
+| ------------------------------- | -------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `options` (`{label, value}`)    | 核心     | **实现**   | 单选集合的字段契约。`RadioGroupRenderer` 用 `stringValueAdapter`，表单存 option 的 `value`（任意字符串/数字/布尔标量）。                                                                                                                                 |
+| `trueValue` / `falseValue`      | —        | **不采纳** | **E3 裁决**：boolean-radio 场景已被 `options` subsume。例如「是/否」单选可配 `options: [{label:'是', value:'Y'}, {label:'否', value:'N'}]`，表单直接存 `'Y'`/`'N'`，无需平行 trueValue/falseValue 字段。引入它会与 option.value 产生双真值源、契约漂移。 |
+| `inline` 布局                   | 常用     | 后续       | 视觉字段，归独立增强（不改值契约）。                                                                                                                                                                                                                     |
+| `optionType`（button 样式）     | 低       | 后续       | 按钮式单选是视觉变体，归独立增强。                                                                                                                                                                                                                       |
+| amis `option` 数组 + value 别名 | 低       | 不采纳     | Flux 已用扁平 `options: [{label, value}]`；不保留 amis 旧 `option` 数组别名。                                                                                                                                                                            |
+| source-enabled `options`        | 核心     | **实现**   | 已支持 `optionsSourceState` + 远程加载（见 `input-source-state` 测试）。                                                                                                                                                                                 |
+
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'radio-group'`

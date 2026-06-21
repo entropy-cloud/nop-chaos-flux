@@ -8,7 +8,18 @@
 ## 2. 与 AMIS 或既有产品的能力对照
 
 - 当前已实现 `option.label` 和基础 field chrome。
-- 半选态、true/false 自定义值和描述文本可作为下一阶段增强。
+- `trueValue`/`falseValue` 自定义值映射已落地（E3）。半选态与描述文本仍作为后续增强。
+
+### Flux 决策表
+
+| AMIS / 候选能力            | 价值评估 | Flux 决策      | 理由                                                                                                                                     |
+| -------------------------- | -------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `trueValue` / `falseValue` | 核心     | **实现**（E3） | 布尔控件值契约：表单可存 `1/0`、`"yes"/"no"`、`"Y"/"N"` 等业务值，而非硬编码 `true`/`false`。缺省回退 `true`/`false`（无回归）。         |
+| `option` (label/value)     | 常用     | **实现**       | 单 checkbox 内联文案；`option.label` 已落地。`option.value` 不再作为值映射入口（与 `trueValue`/`falseValue` 语义重叠，已拒）。           |
+| amis `option` 数组语法     | 低       | 不采纳         | amis 旧式 `option: [{label, value}]` 数组用于多 checkbox 聚合，已被 `checkbox-group` 接管；单 checkbox 只需标量 `trueValue/falseValue`。 |
+| `indeterminate` 半选态     | 低       | 不采纳（后续） | 半选态是 UI 显示维度，与值映射维度正交；当前无明确业务需求驱动。归独立增强（见 §12）。                                                   |
+| `description` / `remark`   | 低       | 不采纳（后续） | 通用字段 chrome 已在 `formFieldChromeRules` 提供 `hint`/`description`/`remark`，单 checkbox 不再单独开同名字段。                         |
+| `name`（amis 多选聚合）    | 低       | 不采纳         | 多 checkbox 聚合归 `checkbox-group`；单 checkbox 只绑一个布尔字段。                                                                      |
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -19,13 +30,15 @@
 
 ## 4. schema 设计
 
-- 继承 `InputSchema` 并增加 `option`。
-- 建议后续允许 `trueValue`、`falseValue` 和 `indeterminate`，但需明确与 `switch` 的语义边界。
+- 继承 `InputSchema` 并增加 `option`、`trueValue`、`falseValue`。
+- `trueValue` / `falseValue`（E3 落地）：标量 `SchemaValue`，缺省回退 `true` / `false`。runtime 读取后用 `booleanMappingAdapter(trueValue, falseValue)` 做表单值 ↔ 内部布尔值的映射：`in` 判 `Object.is(value, trueValue)`，`out` 按 `checked ? trueValue : falseValue`。
+- 半选 `indeterminate` 仍列为后续（与值映射维度正交）。
 
 ## 5. 字段分类
 
 - `label`: `value-or-region`
 - `option`: `value`
+- `trueValue` / `falseValue`: `value`（标量，缺省回退 `true` / `false`）
 - `required`: `value`
 
 ## 6. regions 与 slot 约定
