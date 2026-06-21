@@ -93,6 +93,8 @@ vi.mock('@nop-chaos/ui/chart', () => ({
 }));
 
 vi.mock('recharts', () => ({
+  AreaChart: createMockComponent('AreaChart'),
+  Area: createMockComponent('Area'),
   BarChart: createMockComponent('BarChart'),
   Bar: createMockComponent('Bar'),
   LineChart: createMockComponent('LineChart'),
@@ -397,5 +399,229 @@ describe('ChartRenderer', () => {
     expect(screen.getAllByTestId('Bar')).toHaveLength(2);
     expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).toContain('Revenue');
     expect(document.querySelector('[data-slot="chart-empty"]')).toBeNull();
+  });
+
+  describe('visual configuration (area/legend/stacked/grid/colors)', () => {
+    it('renders an area chart when chartType is "area"', () => {
+      render(
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              chartType: 'area',
+              xAxis: { dataKey: 'month', label: 'Month' },
+              source: [
+                { month: 'Jan', revenue: 12 },
+                { month: 'Feb', revenue: 15 },
+              ],
+              series: [{ name: 'Revenue', dataRegionKey: 'revenue' }],
+            },
+          })}
+        />,
+      );
+
+      expect(screen.getByTestId('AreaChart')).toBeTruthy();
+      const area = screen.getByTestId('Area');
+      expect(area.getAttribute('data-props')).toContain('revenue');
+      expect(area.getAttribute('data-props')).toContain('monotone');
+    });
+
+    it('hides the legend when legend:false even with multiple series', () => {
+      render(
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              chartType: 'bar',
+              xAxis: { dataKey: 'month' },
+              source: [
+                { month: 'Jan', revenue: 12, expenses: 8 },
+                { month: 'Feb', revenue: 15, expenses: 9 },
+              ],
+              series: [
+                { name: 'Revenue', dataRegionKey: 'revenue' },
+                { name: 'Expenses', dataRegionKey: 'expenses' },
+              ],
+              legend: false,
+            },
+          })}
+        />,
+      );
+
+      expect(screen.getByTestId('BarChart')).toBeTruthy();
+      expect(screen.queryByTestId('ChartLegend')).toBeNull();
+    });
+
+    it('shows the legend when legend:true even with a single series', () => {
+      render(
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              chartType: 'bar',
+              source: [{ month: 'Jan', value: 12 }],
+              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+              legend: true,
+            },
+          })}
+        />,
+      );
+
+      expect(screen.getByTestId('ChartLegend')).toBeTruthy();
+    });
+
+    it('adds stackId to bar series when stacked:true', () => {
+      render(
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              chartType: 'bar',
+              xAxis: { dataKey: 'month' },
+              source: [
+                { month: 'Jan', revenue: 12, expenses: 8 },
+                { month: 'Feb', revenue: 15, expenses: 9 },
+              ],
+              series: [
+                { name: 'Revenue', dataRegionKey: 'revenue' },
+                { name: 'Expenses', dataRegionKey: 'expenses' },
+              ],
+              stacked: true,
+            },
+          })}
+        />,
+      );
+
+      const bars = screen.getAllByTestId('Bar');
+      expect(bars).toHaveLength(2);
+      expect(bars[0].getAttribute('data-props')).toContain('"stackId":"a"');
+      expect(bars[1].getAttribute('data-props')).toContain('"stackId":"a"');
+    });
+
+    it('adds stackId to area series when stacked:true', () => {
+      render(
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              chartType: 'area',
+              xAxis: { dataKey: 'month' },
+              source: [
+                { month: 'Jan', revenue: 12, expenses: 8 },
+                { month: 'Feb', revenue: 15, expenses: 9 },
+              ],
+              series: [
+                { name: 'Revenue', dataRegionKey: 'revenue' },
+                { name: 'Expenses', dataRegionKey: 'expenses' },
+              ],
+              stacked: true,
+            },
+          })}
+        />,
+      );
+
+      const areas = screen.getAllByTestId('Area');
+      expect(areas).toHaveLength(2);
+      expect(areas[0].getAttribute('data-props')).toContain('"stackId":"a"');
+      expect(areas[1].getAttribute('data-props')).toContain('"stackId":"a"');
+    });
+
+    it('ignores stacked on pie (no stackId semantics)', () => {
+      render(
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              chartType: 'pie',
+              xAxis: { dataKey: 'label' },
+              source: [
+                { label: 'Jan', value: 12 },
+                { label: 'Feb', value: 8 },
+              ],
+              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+              stacked: true,
+            },
+          })}
+        />,
+      );
+
+      expect(screen.getByTestId('PieChart')).toBeTruthy();
+      expect(screen.getByTestId('Pie').getAttribute('data-props')).not.toContain('stackId');
+    });
+
+    it('omits CartesianGrid when grid:false', () => {
+      render(
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              chartType: 'bar',
+              source: [{ month: 'Jan', value: 12 }],
+              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+              grid: false,
+            },
+          })}
+        />,
+      );
+
+      expect(screen.getByTestId('BarChart')).toBeTruthy();
+      expect(screen.queryByTestId('CartesianGrid')).toBeNull();
+    });
+
+    it('renders CartesianGrid by default (grid not set)', () => {
+      render(
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              chartType: 'bar',
+              source: [{ month: 'Jan', value: 12 }],
+              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+            },
+          })}
+        />,
+      );
+
+      expect(screen.getByTestId('CartesianGrid')).toBeTruthy();
+    });
+
+    it('uses custom colors palette when colors is a non-empty array', () => {
+      render(
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              chartType: 'bar',
+              xAxis: { dataKey: 'month' },
+              source: [
+                { month: 'Jan', revenue: 12, expenses: 8 },
+                { month: 'Feb', revenue: 15, expenses: 9 },
+              ],
+              series: [
+                { name: 'Revenue', dataRegionKey: 'revenue' },
+                { name: 'Expenses', dataRegionKey: 'expenses' },
+              ],
+              colors: ['#f00', '#0f0'],
+            },
+          })}
+        />,
+      );
+
+      const bars = screen.getAllByTestId('Bar');
+      expect(bars).toHaveLength(2);
+      expect(bars[0].getAttribute('data-props')).toContain('#f00');
+      expect(bars[1].getAttribute('data-props')).toContain('#0f0');
+      expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).not.toContain(
+        'hsl(var(--chart-',
+      );
+    });
+
+    it('falls back to default COLORS when colors is an empty array', () => {
+      render(
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              chartType: 'bar',
+              source: [{ month: 'Jan', value: 12 }],
+              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+              colors: [],
+            },
+          })}
+        />,
+      );
+
+      expect(screen.getByTestId('Bar').getAttribute('data-props')).toContain('hsl(var(--chart-1))');
+    });
   });
 });

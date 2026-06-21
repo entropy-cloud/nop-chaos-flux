@@ -1,6 +1,6 @@
 import type { BaseSchema, SchemaValue } from '@nop-chaos/flux-core';
 
-export type ChartType = 'bar' | 'line' | 'pie' | 'scatter';
+export type ChartType = 'bar' | 'line' | 'pie' | 'scatter' | 'area';
 
 export interface ChartSeriesSchema {
   name?: string;
@@ -21,4 +21,8 @@ export interface ChartSchema extends BaseSchema {
   height?: number | string;
   loading?: boolean;
   empty?: BaseSchema | BaseSchema[] | string;
+  legend?: boolean;
+  stacked?: boolean;
+  grid?: boolean;
+  colors?: string[];
 }

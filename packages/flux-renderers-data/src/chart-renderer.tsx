@@ -1,6 +1,8 @@
 import { useRef, useEffect, useId, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import {
+  AreaChart,
+  Area,
   BarChart,
   Bar,
   LineChart,
@@ -41,7 +43,13 @@ const COLORS = [
 ];
 
 function isChartType(value: unknown): value is ChartType {
-  return value === 'bar' || value === 'line' || value === 'pie' || value === 'scatter';
+  return (
+    value === 'bar' ||
+    value === 'line' ||
+    value === 'pie' ||
+    value === 'scatter' ||
+    value === 'area'
+  );
 }
 
 function isChartDatum(value: unknown): value is number | { name?: string; value: number } {
@@ -109,16 +117,23 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
 
   const xKey = xAxis?.dataKey;
   const hasMultipleSeries = series.length > 1;
+  const showLegend = (props.props.legend as boolean | undefined) ?? hasMultipleSeries;
+  const showGrid = (props.props.grid as boolean | undefined) ?? true;
+  const stacked = props.props.stacked === true;
+  const palette =
+    Array.isArray(props.props.colors) && props.props.colors.length > 0
+      ? (props.props.colors as string[])
+      : COLORS;
 
   const chartConfig: ChartConfig = (() => {
     const config: ChartConfig = {};
     series.forEach((s, i) => {
       if (s.name) {
-        config[s.name] = { label: s.name, color: COLORS[i % COLORS.length] };
+        config[s.name] = { label: s.name, color: palette[i % palette.length] };
       }
     });
     if (Object.keys(config).length === 0) {
-      config.value = { label: titleText ?? 'Value', color: COLORS[0] };
+      config.value = { label: titleText ?? 'Value', color: palette[0] };
     }
     return config;
   })();
@@ -128,14 +143,14 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       return source.map((item, i) => ({
         name: String(item[xKey] ?? ''),
         value: Number(series[0]?.dataRegionKey ? item[series[0].dataRegionKey] : (item.value ?? 0)),
-        fill: COLORS[i % COLORS.length],
+        fill: palette[i % palette.length],
       }));
     }
     if (series[0]?.data) {
       return series[0].data.map((d, i) => ({
         name: typeof d === 'object' && d !== null ? String(d.name ?? '') : '',
         value: typeof d === 'object' && d !== null ? d.value : d,
-        fill: COLORS[i % COLORS.length],
+        fill: palette[i % palette.length],
       }));
     }
     return [];
@@ -219,10 +234,10 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       return (
         <PieChart>
           <ChartTooltip content={<ChartTooltipContent />} />
-          {hasMultipleSeries && <ChartLegend content={<ChartLegendContent />} />}
+          {showLegend && <ChartLegend content={<ChartLegendContent />} />}
           <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%">
             {pieData.map((item, i) => (
-              <Cell key={item.name || `cell-${item.value}-${i}`} fill={COLORS[i % COLORS.length]} />
+              <Cell key={item.name || `cell-${item.value}-${i}`} fill={palette[i % palette.length]} />
             ))}
           </Pie>
         </PieChart>
@@ -232,11 +247,11 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     if (resolvedChartType === 'scatter') {
       return (
         <ScatterChart>
-          <CartesianGrid strokeDasharray="3 3" />
+          {showGrid && <CartesianGrid strokeDasharray="3 3" />}
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
           <YAxis name={yAxis?.label} />
           <ChartTooltip content={<ChartTooltipContent />} />
-          {hasMultipleSeries && <ChartLegend content={<ChartLegendContent />} />}
+          {showLegend && <ChartLegend content={<ChartLegendContent />} />}
           {series.length > 0 ? (
             series.map((s, i) => (
               <Scatter
@@ -262,11 +277,11 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     if (resolvedChartType === 'line') {
       return (
         <LineChart data={cartesianData}>
-          <CartesianGrid strokeDasharray="3 3" />
+          {showGrid && <CartesianGrid strokeDasharray="3 3" />}
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
           <YAxis name={yAxis?.label} />
           <ChartTooltip content={<ChartTooltipContent />} />
-          {hasMultipleSeries && <ChartLegend content={<ChartLegendContent />} />}
+          {showLegend && <ChartLegend content={<ChartLegendContent />} />}
           {series.length > 0 ? (
             series.map((s, i) => (
               <Line
@@ -274,36 +289,64 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
                 type="monotone"
                 dataKey={s.dataRegionKey ?? s.name ?? 'value'}
                 name={s.name}
-                stroke={COLORS[i % COLORS.length]}
+                stroke={palette[i % palette.length]}
                 strokeWidth={2}
                 dot={false}
               />
             ))
           ) : (
-            <Line type="monotone" dataKey="value" stroke={COLORS[0]} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="value" stroke={palette[0]} strokeWidth={2} dot={false} />
           )}
         </LineChart>
       );
     }
 
+    if (resolvedChartType === 'area') {
+      return (
+        <AreaChart data={cartesianData}>
+          {showGrid && <CartesianGrid strokeDasharray="3 3" />}
+          {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
+          <YAxis name={yAxis?.label} />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          {showLegend && <ChartLegend content={<ChartLegendContent />} />}
+          {series.length > 0 ? (
+            series.map((s, i) => (
+              <Area
+                key={s.name ?? `series-${i}`}
+                type="monotone"
+                dataKey={s.dataRegionKey ?? s.name ?? 'value'}
+                name={s.name}
+                stroke={palette[i % palette.length]}
+                fill={palette[i % palette.length]}
+                stackId={stacked ? 'a' : undefined}
+              />
+            ))
+          ) : (
+            <Area type="monotone" dataKey="value" stroke={palette[0]} fill={palette[0]} />
+          )}
+        </AreaChart>
+      );
+    }
+
     return (
       <BarChart data={cartesianData}>
-        <CartesianGrid strokeDasharray="3 3" />
+        {showGrid && <CartesianGrid strokeDasharray="3 3" />}
         {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
         <YAxis name={yAxis?.label} />
         <ChartTooltip content={<ChartTooltipContent />} />
-        {hasMultipleSeries && <ChartLegend content={<ChartLegendContent />} />}
+        {showLegend && <ChartLegend content={<ChartLegendContent />} />}
         {series.length > 0 ? (
           series.map((s, i) => (
             <Bar
               key={s.name ?? `series-${i}`}
               dataKey={s.dataRegionKey ?? s.name ?? 'value'}
               name={s.name}
-              fill={COLORS[i % COLORS.length]}
+              fill={palette[i % palette.length]}
+              stackId={stacked ? 'a' : undefined}
             />
           ))
         ) : (
-          <Bar dataKey="value" fill={COLORS[0]} />
+          <Bar dataKey="value" fill={palette[0]} />
         )}
       </BarChart>
     );
