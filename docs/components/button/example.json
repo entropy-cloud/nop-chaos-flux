@@ -4,6 +4,10 @@
   "variant": "default",
   "size": "default",
   "disabled": false,
+  "icon": "check",
+  "tooltip": "点击提交表单",
+  "block": false,
+  "active": false,
   "onClick": {
     "action": "showToast",
     "args": {
