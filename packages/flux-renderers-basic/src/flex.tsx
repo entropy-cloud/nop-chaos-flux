@@ -5,25 +5,49 @@ import { asReactNode, resolveDirection } from './utils.js';
 import { resolveGap } from '@nop-chaos/flux-react';
 import type { FlexSchema } from './schemas.js';
 
+const FLEX_ALIGN_CLASS_MAP: Record<NonNullable<FlexSchema['align']>, string> = {
+  start: 'items-start',
+  center: 'items-center',
+  end: 'items-end',
+  stretch: 'items-stretch',
+  baseline: 'items-baseline',
+};
+
+const FLEX_JUSTIFY_CLASS_MAP: Record<NonNullable<FlexSchema['justify']>, string> = {
+  start: 'justify-start',
+  center: 'justify-center',
+  end: 'justify-end',
+  between: 'justify-between',
+  around: 'justify-around',
+  evenly: 'justify-evenly',
+};
+
+const FLEX_ALIGN_CONTENT_CLASS_MAP: Record<NonNullable<FlexSchema['alignContent']>, string> = {
+  start: 'content-start',
+  center: 'content-center',
+  end: 'content-end',
+  between: 'content-between',
+  around: 'content-around',
+  evenly: 'content-evenly',
+  stretch: 'content-stretch',
+};
+
 export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
-  const direction = props.props.direction === 'column' || props.props.direction === 'row'
-    ? props.props.direction
-    : undefined;
-  const wrap = props.props.wrap === true;
-  const align =
-    props.props.align === 'start' ||
-    props.props.align === 'center' ||
-    props.props.align === 'end' ||
-    props.props.align === 'stretch'
-      ? props.props.align
+  const rawDirection = props.props.direction;
+  const direction =
+    rawDirection === 'row' ||
+    rawDirection === 'column' ||
+    rawDirection === 'row-reverse' ||
+    rawDirection === 'column-reverse'
+      ? rawDirection
       : undefined;
+  const wrap = props.props.wrap === true;
+  const align = props.props.align != null ? FLEX_ALIGN_CLASS_MAP[props.props.align] : undefined;
   const justify =
-    props.props.justify === 'start' ||
-    props.props.justify === 'center' ||
-    props.props.justify === 'end' ||
-    props.props.justify === 'between' ||
-    props.props.justify === 'around'
-      ? props.props.justify
+    props.props.justify != null ? FLEX_JUSTIFY_CLASS_MAP[props.props.justify] : undefined;
+  const alignContent =
+    props.props.alignContent != null
+      ? FLEX_ALIGN_CONTENT_CLASS_MAP[props.props.alignContent]
       : undefined;
   const gap = resolveGap(props.props.gap as number | string | undefined);
   const bodyContent = asReactNode(props.regions.body?.render());
@@ -35,15 +59,9 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
         'nop-flex',
         resolveDirection(direction),
         wrap && 'flex-wrap',
-        align === 'center' && 'items-center',
-        align === 'start' && 'items-start',
-        align === 'end' && 'items-end',
-        align === 'stretch' && 'items-stretch',
-        justify === 'center' && 'justify-center',
-        justify === 'start' && 'justify-start',
-        justify === 'end' && 'justify-end',
-        justify === 'between' && 'justify-between',
-        justify === 'around' && 'justify-around',
+        align,
+        justify,
+        alignContent,
         props.meta.className,
         gap.className,
       )}

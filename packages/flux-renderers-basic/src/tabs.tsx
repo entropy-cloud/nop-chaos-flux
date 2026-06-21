@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type {
   ComponentHandle,
   RendererComponentProps,
@@ -9,7 +9,15 @@ import {
   useCurrentComponentRegistry,
   useSchemaProps,
 } from '@nop-chaos/flux-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger, cn } from '@nop-chaos/ui';
+import {
+  Badge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  cn,
+  resolveLucideIcon,
+} from '@nop-chaos/ui';
 import type { TabsItemSchema, TabsSchema } from './schemas.js';
 import { useOwnedAxisValue } from './interaction-owner.js';
 import { useStatusPathPublication } from './status-hooks.js';
@@ -71,6 +79,43 @@ function createTabsChangePayload(items: TabsItemSchema[], nextValue: string) {
     activeIndex: nextIndex,
     item: nextIndex >= 0 ? items[nextIndex] : undefined,
   };
+}
+
+function resolveTabBadge(badge: TabsItemSchema['badge']): React.ReactNode {
+  if (badge === undefined || badge === null) {
+    return null;
+  }
+  return <Badge variant="default">{String(badge)}</Badge>;
+}
+
+function resolveTabIcon(icon: TabsItemSchema['icon']): React.ReactNode {
+  if (typeof icon !== 'string' || icon.length === 0) {
+    return null;
+  }
+  const IconComp = resolveLucideIcon(icon) as React.ComponentType<Record<string, unknown>>;
+  return <IconComp size={14} strokeWidth={1.8} aria-hidden="true" focusable="false" />;
+}
+
+function resolveTabKeepMounted(input: {
+  mountOnEnter: boolean;
+  unmountOnExit: boolean;
+  isActive: boolean;
+  activatedOnce: boolean;
+}): boolean {
+  const { mountOnEnter, unmountOnExit, isActive, activatedOnce } = input;
+  if (mountOnEnter) {
+    if (!activatedOnce) {
+      return false;
+    }
+    if (unmountOnExit && !isActive) {
+      return false;
+    }
+    return true;
+  }
+  if (unmountOnExit && !isActive) {
+    return false;
+  }
+  return true;
 }
 
 export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
@@ -156,6 +201,16 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     });
   }, [componentRegistry, props.meta.cid, tabsHandle]);
 
+  const [activated, setActivated] = useState<ReadonlySet<string>>(() => new Set());
+  const currentActiveValue = ownedAxis.value;
+  if (!activated.has(currentActiveValue)) {
+    setActivated((prev) => {
+      const next = new Set(prev);
+      next.add(currentActiveValue);
+      return next;
+    });
+  }
+
   const tabsList = (
     <TabsList variant={schemaProps.variant ?? variant}>
       {items.map((item, index) => {
@@ -165,9 +220,21 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
         const titleContent =
           asReactNode(titleRegion?.render(regionOptions)) ?? item.title ?? item.label ?? value;
+        const badgeContent = resolveTabBadge(item.badge);
+        const iconComp = resolveTabIcon(item.icon);
         return (
           <TabsTrigger key={value} value={value} disabled={isTabDisabled(item.disabled)}>
+            {iconComp ? (
+              <span data-slot="tab-icon" className="inline-flex shrink-0">
+                {iconComp}
+              </span>
+            ) : null}
             {titleContent}
+            {badgeContent ? (
+              <span data-slot="tab-badge" className="inline-flex shrink-0">
+                {badgeContent}
+              </span>
+            ) : null}
           </TabsTrigger>
         );
       })}
@@ -185,11 +252,19 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           typeof item.toolbarRegionKey === 'string'
             ? props.regions[item.toolbarRegionKey]
             : undefined;
+        const isActive = ownedAxis.value === value;
+        const activatedOnce = activated.has(value);
+        const keepMounted = resolveTabKeepMounted({
+          mountOnEnter: item.mountOnEnter === true,
+          unmountOnExit: item.unmountOnExit === true,
+          isActive,
+          activatedOnce,
+        });
         return (
           <TabsContent
             key={value}
             value={value}
-            keepMounted={true}
+            keepMounted={keepMounted}
             data-slot="tabs-content"
             className={cn(schemaProps.contentClassName)}
           >

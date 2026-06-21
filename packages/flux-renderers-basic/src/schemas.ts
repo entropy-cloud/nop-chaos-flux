@@ -12,15 +12,20 @@ export type SurfaceSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 export interface PageSchema extends BaseSchema {
   type: 'page';
   title?: string;
+  subTitle?: string;
+  remark?: string;
   data?: SchemaValue;
   statusPath?: string;
   body?: BaseSchema[];
   header?: BaseSchema[];
   footer?: BaseSchema[];
+  aside?: BaseSchema[];
+  asidePosition?: 'left' | 'right';
   modalContainer?: string;
   bodyClassName?: string;
   headerClassName?: string;
   footerClassName?: string;
+  asideClassName?: string;
   toolbarClassName?: string;
 }
 
@@ -84,6 +89,10 @@ export interface TabsItemSchema extends SchemaObject {
   title?: string;
   label?: string;
   disabled?: boolean | string;
+  badge?: string | number;
+  icon?: string;
+  mountOnEnter?: boolean;
+  unmountOnExit?: boolean;
   titleRegionKey?: string;
   bodyRegionKey?: string;
   toolbarRegionKey?: string;
@@ -204,10 +213,11 @@ export interface BadgeSchema extends BaseSchema {
 
 export interface FlexSchema extends BaseSchema {
   type: 'flex';
-  direction?: 'row' | 'column';
+  direction?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
   wrap?: boolean;
-  align?: 'start' | 'center' | 'end' | 'stretch';
-  justify?: 'start' | 'center' | 'end' | 'between' | 'around';
+  align?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
+  justify?: 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
+  alignContent?: 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly' | 'stretch';
   /** 间距：命名 token ('none'|'xs'|'sm'|'md'|'lg'|'xl')、数字(px) 或 CSS 值 (如 '1rem') */
   gap?: number | string;
   className?: string;
