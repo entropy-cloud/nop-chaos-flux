@@ -351,6 +351,67 @@ export const dataRendererDefinitions: RendererDefinition[] = [
     compilation: {
       artifacts: ['data-source'],
     },
+    propContracts: {
+      sendOn: {
+        shape: { kind: 'string' },
+        displayName: 'Send On',
+        description:
+          'Raw boolean expression (no `${}`). When falsy or evaluation throws, the request is skipped.',
+        editorType: 'expression',
+      },
+      initFetch: {
+        shape: { kind: 'boolean' },
+        displayName: 'Init Fetch',
+        description:
+          'Whether to automatically fetch on mount. Defaults to true; set to false to require an explicit refresh.',
+        editorType: 'switch',
+        defaultValue: true,
+      },
+    },
+    eventContracts: {
+      onSuccess: {
+        displayName: 'On Success',
+        description: 'Dispatched after a successful fetch. Payload: { data, dataUpdatedAt }.',
+        payload: {
+          kind: 'object',
+          fields: {
+            data: { kind: 'unknown' },
+            dataUpdatedAt: { kind: 'number' },
+          },
+        },
+      },
+      onError: {
+        displayName: 'On Error',
+        description: 'Dispatched after a failed fetch. Payload: { error, failureCount }.',
+        payload: {
+          kind: 'object',
+          fields: {
+            error: { kind: 'unknown' },
+            failureCount: { kind: 'number' },
+          },
+        },
+      },
+    },
+    componentCapabilityContracts: [
+      {
+        handle: 'refresh',
+        displayName: 'Refresh',
+        description:
+          'Trigger a manual refresh. The ActionResult carries `skipped` (boolean) at the top level, reflecting whether the sendOn gate suppressed the request.',
+      },
+      {
+        handle: 'cancel',
+        displayName: 'Cancel',
+        description:
+          'Cancel any in-flight request and stop the controller. No-op when no request is active.',
+      },
+    ],
+    fields: [
+      { key: 'sendOn', kind: 'prop' },
+      { key: 'initFetch', kind: 'prop', valueType: 'boolean' },
+      { key: 'onSuccess', kind: 'event' },
+      { key: 'onError', kind: 'event' },
+    ],
   },
   {
     type: 'chart',

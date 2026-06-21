@@ -107,7 +107,11 @@ export function compileDataSource(
     }
 
     if (actionSchema.sendOn !== undefined) {
-      compiled.sendOn = compiler.compileValue(actionSchema.sendOn, {
+      // sendOn is a raw boolean expression written without `${}` (per X4 contract).
+      // Wrap it so the expression compiler evaluates it as a condition rather than a
+      // literal string (same evaluation semantics as `when` / `stopWhen`).
+      const wrappedSendOn = `\${${actionSchema.sendOn}}`;
+      compiled.sendOn = compiler.compileValue(wrappedSendOn, {
         ...options,
         sourcePath: `${basePath}.sendOn`,
       }) as unknown as CompiledRuntimeValue<boolean>;
