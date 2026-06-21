@@ -15,6 +15,10 @@ stryker.log
 .turbo/
 tmp/
 dist-packages/
+_tmp/
+.playwright-mcp/
+.sisyphus/
+graphify-out/
 
 # Prevent TypeScript build artifacts from leaking into src/ directories.
 # All compiled output must go to dist/ via tsconfig.build.json (outDir: "dist").
