@@ -13,6 +13,7 @@ import { FlowDesignerPage } from './pages/flow-designer-page';
 import { TaskFlowDesignerPage } from './pages/taskflow-designer-page';
 import { DingTalkFlowDemo } from './pages/ding-talk-flow-demo';
 import { PerformanceTablePage } from './pages/performance-table-page';
+import { ComponentHandlesDemoPage } from './pages/component-handles-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -122,6 +123,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
               onBack={goHome}
             />
           );
+        case 'component-handles':
+          return <ComponentHandlesDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

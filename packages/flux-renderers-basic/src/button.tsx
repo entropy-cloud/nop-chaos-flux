@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import {
   Button,
   cn,
@@ -10,6 +11,8 @@ import {
   TooltipTrigger,
 } from '@nop-chaos/ui';
 import type { ButtonSchema } from './schemas.js';
+
+const BUTTON_METHODS = ['focus'] as const;
 
 type ButtonVariant = NonNullable<ButtonSchema['variant']>;
 type ButtonSize = NonNullable<ButtonSchema['size']>;
@@ -60,8 +63,21 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 
   const buttonClass = cn(props.meta.className, block && 'w-full');
 
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+
+  useInputComponentHandle({
+    id: props.id,
+    type: 'button',
+    cid: props.meta.cid,
+    methods: BUTTON_METHODS,
+    getFocusTarget: () => buttonRef.current,
+    isInteractive: () => !(disabled || loading),
+    isVisible: () => props.meta.visible !== false,
+  });
+
   const button = (
     <Button
+      ref={buttonRef}
       variant={variant}
       size={size}
       className={buttonClass}

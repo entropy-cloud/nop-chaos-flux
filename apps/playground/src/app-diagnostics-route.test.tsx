@@ -85,6 +85,10 @@ vi.mock('./pages/performance-table-page', () => ({
   },
 }));
 
+vi.mock('./pages/component-handles-demo', () => ({
+  ComponentHandlesDemoPage: () => <div data-testid="component-handles-page">component-handles</div>,
+}));
+
 import { App } from './App';
 
 describe('App diagnostics routing', () => {

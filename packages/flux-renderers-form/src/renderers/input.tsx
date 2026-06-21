@@ -1,5 +1,5 @@
 import type { ChangeEvent, ComponentProps, ReactNode } from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   type BaseSchema,
   stringAdapter,
@@ -17,6 +17,7 @@ import {
   InputGroupText,
   cn,
 } from '@nop-chaos/ui';
+import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { Eye, EyeOff, XIcon } from 'lucide-react';
 import { formFieldRules, useFormFieldController } from '../field-utils.js';
 import type {
@@ -28,14 +29,60 @@ import {
   RadioGroupRenderer,
   SelectRenderer,
   SwitchRenderer,
-  TextareaRenderer,
 } from './input-choice-renderers.js';
 import { CheckboxGroupRenderer } from './checkbox-group-renderer.js';
 import { InputNumberRenderer } from './input-number-renderer.js';
+import { TextareaRenderer } from './textarea-renderer.js';
 
 export function validateInputFieldSchema(context: RendererSchemaValidationContext<BaseSchema>) {
   validateHiddenFieldPolicySchema(context);
 }
+
+const INPUT_TEXT_METHODS = ['clear', 'reset', 'focus'] as const;
+
+const SCALAR_INPUT_CAPABILITY_CONTRACTS = [
+  {
+    handle: 'clear',
+    displayName: 'Clear',
+    description: 'Clear the field value to its empty representation (empty string).',
+  },
+  {
+    handle: 'reset',
+    displayName: 'Reset',
+    description: 'Restore the field to its initial value captured at mount.',
+  },
+  {
+    handle: 'focus',
+    displayName: 'Focus',
+    description: 'Focus the underlying input element.',
+  },
+] as const;
+
+const SELECT_CAPABILITY_CONTRACTS = [
+  {
+    handle: 'clear',
+    displayName: 'Clear',
+    description: 'Clear the selection (single-select to undefined, multi-select to []).',
+  },
+  {
+    handle: 'focus',
+    displayName: 'Focus',
+    description: 'Focus the select trigger element.',
+  },
+  {
+    handle: 'open',
+    displayName: 'Open',
+    description: 'Open the select dropdown menu.',
+  },
+] as const;
+
+const FOCUS_ONLY_CAPABILITY_CONTRACTS = [
+  {
+    handle: 'focus',
+    displayName: 'Focus',
+    description: 'Focus the control.',
+  },
+] as const;
 
 export const inputEnhancementFieldRules: SchemaFieldRule[] = [
   { key: 'prefix', kind: 'prop' },
@@ -183,6 +230,26 @@ export function createInputRenderer(inputType: string) {
     const inputValue = (value as string | undefined) ?? '';
     const errorId = name ? `${name}-error` : undefined;
 
+    const inputRef = useRef<HTMLInputElement | null>(null);
+    const initialValueRef = useRef(inputValue);
+
+    useInputComponentHandle({
+      id: props.id,
+      name,
+      type: inputType === 'text' ? 'input-text' : `input-${inputType}`,
+      cid: props.meta.cid,
+      methods: INPUT_TEXT_METHODS,
+      getFocusTarget: () => inputRef.current,
+      isInteractive: () => presentation.interactive,
+      isVisible: () => props.meta.visible !== false,
+      clearValue: () => handlers.onChange(''),
+      resetValue: () => {
+        const initial = initialValueRef.current;
+        handlers.onChange(initial);
+        return { fellBackToDefault: false };
+      },
+    });
+
     const revealEnabled = inputType === 'password' && props.props.revealPassword === true;
     const [revealed, setRevealed] = useState(false);
     const actualInputType = revealEnabled && revealed ? 'text' : inputType;
@@ -259,6 +326,7 @@ export function createInputRenderer(inputType: string) {
     const needsInputGroup = Boolean(prefix) || hasInlineEndSlot;
 
     const sharedInputProps: ComponentProps<typeof InputGroupInput> = {
+      ref: inputRef,
       type: actualInputType,
       id: name ? `${name}-control` : undefined,
       name: name || undefined,
@@ -342,6 +410,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: [...formFieldRules, ...inputEnhancementFieldRules],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: SCALAR_INPUT_CAPABILITY_CONTRACTS,
     wrap: true,
   },
   {
@@ -351,6 +420,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: [...formFieldRules, ...inputEnhancementFieldRules],
     validation: createFieldValidation(undefined, true),
     schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: SCALAR_INPUT_CAPABILITY_CONTRACTS,
     wrap: true,
   },
   {
@@ -360,6 +430,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: [...formFieldRules, ...inputEnhancementFieldRules],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: SCALAR_INPUT_CAPABILITY_CONTRACTS,
     wrap: true,
   },
   {
@@ -379,6 +450,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: SELECT_CAPABILITY_CONTRACTS,
     wrap: true,
     component: SelectRenderer,
   },
@@ -389,6 +461,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     component: TextareaRenderer,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: SCALAR_INPUT_CAPABILITY_CONTRACTS,
     wrap: true,
   },
   {
@@ -406,6 +479,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: formFieldRules,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: FOCUS_ONLY_CAPABILITY_CONTRACTS,
     wrap: true,
     component: SwitchRenderer,
   },
@@ -418,6 +492,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: FOCUS_ONLY_CAPABILITY_CONTRACTS,
     wrap: true,
     component: RadioGroupRenderer,
   },
@@ -433,6 +508,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: FOCUS_ONLY_CAPABILITY_CONTRACTS,
     wrap: true,
     component: CheckboxGroupRenderer,
   },
@@ -442,6 +518,23 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: formFieldRules,
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: [
+      {
+        handle: 'clear',
+        displayName: 'Clear',
+        description: 'Clear the numeric value to undefined.',
+      },
+      {
+        handle: 'reset',
+        displayName: 'Reset',
+        description: 'Restore the numeric value to its initial value captured at mount.',
+      },
+      {
+        handle: 'focus',
+        displayName: 'Focus',
+        description: 'Focus the underlying number input element.',
+      },
+    ],
     wrap: true,
     component: InputNumberRenderer,
   },

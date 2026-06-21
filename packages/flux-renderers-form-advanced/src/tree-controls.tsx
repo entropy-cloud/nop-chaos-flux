@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
-import type { SourceTransientState } from '@nop-chaos/flux-react';
+import { useInputComponentHandle, type SourceTransientState } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
@@ -30,6 +30,8 @@ import {
   useTreeSelectController,
 } from './tree-control-controllers.js';
 import { TreeOptionList } from './tree-option-list.js';
+
+const TREE_METHODS = ['clear', 'focus'] as const;
 
 function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const name = String(props.props.name ?? '');
@@ -89,8 +91,23 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const sourceErrorId = name ? `${name}-source-error` : undefined;
   const loadingId = name ? `${name}-source-loading` : undefined;
 
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useInputComponentHandle({
+    id: props.id,
+    name,
+    type: 'input-tree',
+    cid: props.meta.cid,
+    methods: TREE_METHODS,
+    getFocusTarget: () => rootRef.current?.querySelector<HTMLElement>('input, button, [tabindex]') ?? rootRef.current,
+    isInteractive: () => presentation.interactive,
+    isVisible: () => props.meta.visible !== false,
+    clearValue: () => handlers.onChange(multiple ? [] : undefined),
+  });
+
   return (
     <div
+      ref={rootRef}
       className={cn('nop-input-tree', props.meta.className)}
       data-slot="input-tree-control"
     >
@@ -200,8 +217,23 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const sourceErrorId = name ? `${name}-source-error` : undefined;
   const loadingId = name ? `${name}-source-loading` : undefined;
 
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useInputComponentHandle({
+    id: props.id,
+    name,
+    type: 'tree-select',
+    cid: props.meta.cid,
+    methods: TREE_METHODS,
+    getFocusTarget: () => rootRef.current?.querySelector<HTMLElement>('button, [tabindex]') ?? null,
+    isInteractive: () => presentation.interactive,
+    isVisible: () => props.meta.visible !== false,
+    clearValue: () => handlers.onChange(multiple ? [] : undefined),
+  });
+
   return (
     <div
+      ref={rootRef}
       className={cn('nop-tree-select', props.meta.className)}
       data-slot="tree-select-control"
     >
@@ -311,6 +343,18 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: [
+      {
+        handle: 'clear',
+        displayName: 'Clear',
+        description: 'Clear the tree selection (multi-select to [], single-select to undefined).',
+      },
+      {
+        handle: 'focus',
+        displayName: 'Focus',
+        description: 'Focus the tree control.',
+      },
+    ],
     wrap: true,
     frameRootTag: 'div',
     component: InputTreeRenderer,
@@ -327,6 +371,18 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
+    componentCapabilityContracts: [
+      {
+        handle: 'clear',
+        displayName: 'Clear',
+        description: 'Clear the tree-select selection.',
+      },
+      {
+        handle: 'focus',
+        displayName: 'Focus',
+        description: 'Focus the tree-select trigger.',
+      },
+    ],
     wrap: true,
     component: TreeSelectRenderer,
   },

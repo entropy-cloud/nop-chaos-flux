@@ -405,6 +405,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'Same-environment comparative page for a 1000-row paged table baseline plus aggregate, loop, selection, pagination, and editable-form stress scenarios.',
   },
+  {
+    id: 'component-handles',
+    title: 'Component Handles',
+    eyebrow: 'Capability Contracts',
+    description:
+      'Live demo of the X1 unified component:<method> vocabulary: focus/clear/reset on inputs, open/close/toggle on dialog/drawer, focus on button.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

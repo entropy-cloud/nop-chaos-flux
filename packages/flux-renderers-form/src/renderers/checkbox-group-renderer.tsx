@@ -1,5 +1,6 @@
+import { useRef } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import type { SourceTransientState } from '@nop-chaos/flux-react';
+import { useInputComponentHandle, type SourceTransientState } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Checkbox, cn, Label, Spinner } from '@nop-chaos/ui';
 import { useFormFieldController } from '../field-utils.js';
@@ -11,6 +12,8 @@ import {
   getSourceErrorMessage,
   sanitizeChoiceOptions,
 } from './input-choice-renderers.js';
+
+const FOCUS_ONLY_METHODS = ['focus'] as const;
 
 export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema>) {
   const name = String(props.props.name ?? '');
@@ -27,6 +30,19 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
   const errorMessage = getSourceErrorMessage(optionsSourceState);
   const errorId = name ? `${name}-source-error` : undefined;
   const groupLabel = String((props.props.label ?? name) || '') || undefined;
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  useInputComponentHandle({
+    id: props.id,
+    name,
+    type: 'checkbox-group',
+    cid: props.meta.cid,
+    methods: FOCUS_ONLY_METHODS,
+    getFocusTarget: () =>
+      wrapperRef.current?.querySelector<HTMLElement>('button, [role="checkbox"], input') ?? null,
+    isInteractive: () => presentation.interactive,
+    isVisible: () => props.meta.visible !== false,
+  });
 
   const checkAllEnabled = props.props.checkAll === true;
   const maxSelected =
@@ -99,6 +115,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
 
   return (
     <div
+      ref={wrapperRef}
       className={cn('nop-checkbox-group-wrapper', props.meta.className)}
       data-slot="checkbox-group-wrapper"
       role="group"

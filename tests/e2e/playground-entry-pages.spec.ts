@@ -58,6 +58,13 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     ).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('button', { name: 'Run 20 Host Mutations' })).toBeVisible();
   },
+  'component-handles': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'component:* Capability Handles Playground', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open Dialog (component:open)' })).toBeVisible();
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

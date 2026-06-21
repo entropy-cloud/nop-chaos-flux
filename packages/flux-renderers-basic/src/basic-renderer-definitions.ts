@@ -247,6 +247,13 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       },
     },
     component: ButtonRenderer,
+    componentCapabilityContracts: [
+      {
+        handle: 'focus',
+        displayName: 'Focus',
+        description: 'Focus the button element.',
+      },
+    ],
     fields: [
       { key: 'disabled', kind: 'meta' },
       { key: 'loading', kind: 'prop', valueType: 'boolean' },

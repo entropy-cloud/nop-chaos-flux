@@ -1,11 +1,13 @@
-import type { KeyboardEvent } from 'react';
+import { useRef, type KeyboardEvent } from 'react';
 import { numberAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
+import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { Button, cn, Input } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import { useFormFieldController } from '../field-utils.js';
 import type { InputNumberSchema } from '../schemas.js';
 
 const numericAdapter = numberAdapter();
+const INPUT_NUMBER_METHODS = ['clear', 'reset', 'focus'] as const;
 
 function clamp(value: number, min: number | undefined, max: number | undefined): number {
   let result = value;
@@ -40,6 +42,25 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
 
   const numericValue = value as number | undefined;
   const errorId = name ? `${name}-error` : undefined;
+
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const initialValueRef = useRef<number | undefined>(numericValue);
+
+  useInputComponentHandle({
+    id: props.id,
+    name,
+    type: 'input-number',
+    cid: props.meta.cid,
+    methods: INPUT_NUMBER_METHODS,
+    getFocusTarget: () => inputRef.current,
+    isInteractive: () => presentation.interactive,
+    isVisible: () => props.meta.visible !== false,
+    clearValue: () => handlers.onChange(undefined),
+    resetValue: () => {
+      handlers.onChange(initialValueRef.current);
+      return { fellBackToDefault: initialValueRef.current === undefined };
+    },
+  });
 
   function handleBlur() {
     if (numericValue !== undefined) {
@@ -87,6 +108,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
           </span>
         ) : null}
         <Input
+          ref={inputRef}
           type="number"
           id={name ? `${name}-control` : undefined}
           name={name || undefined}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   booleanStringAdapter,
@@ -7,6 +7,7 @@ import {
   type ValueAdapter,
 } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
+import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   Checkbox,
@@ -30,9 +31,7 @@ import {
   RadioGroupItem,
   Spinner,
   Switch,
-  Textarea,
 } from '@nop-chaos/ui';
-import { XIcon } from 'lucide-react';
 import { useFormFieldController } from '../field-utils.js';
 import type {
   CheckboxSchema,
@@ -40,7 +39,6 @@ import type {
   SelectOptionGroup,
   SelectSchema,
   SwitchSchema,
-  TextareaSchema,
 } from '../schemas.js';
 
 export type ChoiceOption = {
@@ -52,6 +50,9 @@ export type ChoiceOption = {
 
 const stringValueAdapter = stringAdapter();
 const booleanValueAdapter = booleanStringAdapter();
+
+const SELECT_METHODS = ['clear', 'focus', 'open'] as const;
+const FOCUS_ONLY_METHODS = ['focus'] as const;
 const selectMultipleAdapter: ValueAdapter<unknown, unknown[]> & { __syncIn: true; __syncOut: true } = {
   __syncIn: true,
   __syncOut: true,
@@ -298,6 +299,8 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const virtualEnabled = virtual && allOptions.length > virtualThreshold;
 
   const [inputValue, setInputValue] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const selectWrapperRef = useRef<HTMLDivElement | null>(null);
   const query = filterEnabled ? inputValue : '';
   const visibleOptions = query
     ? rawOptions.filter((option) => matchChoiceLabel(option.label, query, ignoreCase))
@@ -347,9 +350,37 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
 
   const triggerPlaceholder = loading ? loadingText : placeholder;
 
+  useInputComponentHandle({
+    id: props.id,
+    name,
+    type: 'select',
+    cid: props.meta.cid,
+    methods: SELECT_METHODS,
+    getFocusTarget: () =>
+      selectWrapperRef.current?.querySelector<HTMLElement>(
+        '[data-slot="combobox-trigger"], [data-slot="combobox-input"], input',
+      ) ?? null,
+    isInteractive: () => interactive,
+    isVisible: () => props.meta.visible !== false,
+    clearValue: () => {
+      if (multiple) {
+        handlers.onChange([]);
+      } else {
+        handlers.onChange(undefined);
+      }
+    },
+    openMenu: () => setMenuOpen(true),
+  });
+
   return (
-    <div className={cn('nop-select-wrapper', props.meta.className)} data-slot="select-wrapper">
+    <div
+      ref={selectWrapperRef}
+      className={cn('nop-select-wrapper', props.meta.className)}
+      data-slot="select-wrapper"
+    >
       <Combobox
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
         value={comboboxValue as ChoiceOption | ChoiceOption[] | null}
         onValueChange={interactive ? handleValueChange : undefined}
         multiple={multiple}
@@ -430,145 +461,6 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   );
 }
 
-const TEXTAREA_LINE_HEIGHT_FALLBACK_PX = 24;
-
-function resolveTextareaLineHeightPx(el: HTMLElement): number {
-  const computed = window.getComputedStyle(el);
-  const lh = computed.lineHeight;
-  if (lh && lh !== 'normal') {
-    const px = parseFloat(lh);
-    if (!Number.isNaN(px) && px > 0) {
-      return px;
-    }
-  }
-  const fs = parseFloat(computed.fontSize);
-  if (!Number.isNaN(fs) && fs > 0) {
-    return Math.round(fs * 1.5);
-  }
-  return TEXTAREA_LINE_HEIGHT_FALLBACK_PX;
-}
-
-export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
-  const name = String(props.props.name ?? '');
-  const { value, handlers, presentation } = useFormFieldController(name, {
-    adapter: stringValueAdapter,
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-  });
-  const textareaValue = (value as string | undefined) ?? '';
-  const errorId = name ? `${name}-error` : undefined;
-
-  const rows = typeof props.props.rows === 'number' ? props.props.rows : 4;
-  const minRows = typeof props.props.minRows === 'number' ? props.props.minRows : undefined;
-  const maxRows = typeof props.props.maxRows === 'number' ? props.props.maxRows : undefined;
-  const clearable = props.props.clearable === true;
-  const trimContents = props.props.trimContents === true;
-  const showCounter = props.props.showCounter === true;
-  const maxLength = typeof props.props.maxLength === 'number' ? props.props.maxLength : undefined;
-
-  const autoHeightEnabled = minRows !== undefined || maxRows !== undefined;
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  useEffect(() => {
-    if (!autoHeightEnabled) {
-      return;
-    }
-    const el = textareaRef.current;
-    if (!el) {
-      return;
-    }
-    const lineH = resolveTextareaLineHeightPx(el);
-    const minPx = minRows !== undefined ? minRows * lineH : 0;
-    const maxPx = maxRows !== undefined ? maxRows * lineH : Number.POSITIVE_INFINITY;
-    el.style.height = 'auto';
-    const scroll = el.scrollHeight;
-    const clamped = Math.max(minPx, Math.min(scroll, maxPx));
-    el.style.height = `${clamped}px`;
-    el.style.overflowY = scroll > maxPx ? 'auto' : 'hidden';
-  }, [textareaValue, autoHeightEnabled, minRows, maxRows]);
-
-  const showClearButton =
-    clearable &&
-    presentation.interactive &&
-    typeof textareaValue === 'string' &&
-    textareaValue.length > 0;
-
-  function handleBlur() {
-    if (trimContents && typeof textareaValue === 'string' && textareaValue.length > 0) {
-      const trimmed = textareaValue.trim();
-      if (trimmed !== textareaValue) {
-        handlers.onChange(trimmed);
-      }
-    }
-    handlers.onBlur();
-  }
-
-  function handleClear() {
-    handlers.onChange('');
-  }
-
-  const counterText =
-    showCounter && typeof textareaValue === 'string'
-      ? maxLength !== undefined
-        ? `${textareaValue.length} / ${maxLength}`
-        : `${textareaValue.length}`
-      : undefined;
-
-  const hasFooter = counterText !== undefined || clearable;
-
-  const textareaEl = (
-    <Textarea
-      ref={textareaRef}
-      id={name ? `${name}-control` : undefined}
-      name={name || undefined}
-      value={textareaValue}
-      rows={rows}
-      disabled={presentation.effectiveDisabled}
-      readOnly={presentation.readOnly}
-      aria-label={String((props.props.label ?? name) || '') || undefined}
-      aria-required={props.props.required ? true : undefined}
-      aria-invalid={presentation.showError ? true : undefined}
-      aria-describedby={presentation.showError ? errorId : undefined}
-      aria-errormessage={presentation.showError ? errorId : undefined}
-      placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
-      className={props.meta.className}
-      onFocus={handlers.onFocus}
-      onChange={(event) => handlers.onChange(event.target.value)}
-      onBlur={handleBlur}
-      maxLength={maxLength}
-    />
-  );
-
-  if (!hasFooter) {
-    return textareaEl;
-  }
-
-  return (
-    <div className={cn('nop-textarea-wrapper', 'flex flex-col gap-1')} data-slot="textarea-wrapper">
-      {textareaEl}
-      <div className="flex items-center justify-end gap-2" data-slot="textarea-footer">
-        {showClearButton ? (
-          <button
-            type="button"
-            data-slot="textarea-clear"
-            aria-label="Clear"
-            className="inline-flex size-5 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-            onClick={handleClear}
-          >
-            <XIcon className="pointer-events-none size-3.5" />
-          </button>
-        ) : null}
-        {counterText !== undefined ? (
-          <span data-slot="textarea-counter" className="text-xs text-muted-foreground tabular-nums">
-            {counterText}
-          </span>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
 export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
@@ -609,9 +501,25 @@ export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   });
   const option = props.props.option as SwitchSchema['option'] | undefined;
   const checked = value as boolean;
+  const switchRef = useRef<HTMLLabelElement | null>(null);
+
+  useInputComponentHandle({
+    id: props.id,
+    name,
+    type: 'switch',
+    cid: props.meta.cid,
+    methods: FOCUS_ONLY_METHODS,
+    getFocusTarget: () =>
+      switchRef.current?.querySelector<HTMLElement>('button, [role="switch"], input') ?? null,
+    isInteractive: () => presentation.interactive,
+    isVisible: () => props.meta.visible !== false,
+  });
 
   return (
-    <Label className={cn('nop-switch-wrapper', props.meta.className)} data-slot="switch-wrapper">
+    <Label
+      ref={switchRef}
+      className={cn('nop-switch-wrapper', props.meta.className)}
+      data-slot="switch-wrapper">
       <Switch
         id={name ? `${name}-control` : undefined}
         checked={checked}
@@ -645,9 +553,23 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
   const selectedValue = value as string;
   const errorId = name ? `${name}-source-error` : undefined;
   const groupLabel = String((props.props.label ?? name) || '') || undefined;
+  const radioRef = useRef<HTMLDivElement | null>(null);
+
+  useInputComponentHandle({
+    id: props.id,
+    name,
+    type: 'radio-group',
+    cid: props.meta.cid,
+    methods: FOCUS_ONLY_METHODS,
+    getFocusTarget: () =>
+      radioRef.current?.querySelector<HTMLElement>('button, [role="radio"], input') ?? null,
+    isInteractive: () => presentation.interactive,
+    isVisible: () => props.meta.visible !== false,
+  });
 
   return (
     <div
+      ref={radioRef}
       className={cn('nop-radio-group-wrapper', props.meta.className)}
       data-slot="radio-group-wrapper"
     >

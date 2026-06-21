@@ -64,6 +64,14 @@ export {
 } from './hooks.js';
 export { useRenderFragment } from './use-render-fragment.js';
 export {
+  useInputComponentHandle,
+  type UseInputComponentHandleOptions,
+} from './hooks/use-input-component-handle.js';
+export {
+  useSurfaceComponentHandle,
+  type UseSurfaceComponentHandleOptions,
+} from './hooks/use-surface-component-handle.js';
+export {
   EMPTY_FORM_STORE_STATE,
   isFieldEffectivelyRequired,
   selectCurrentFormErrors,

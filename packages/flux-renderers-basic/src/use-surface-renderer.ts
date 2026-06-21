@@ -5,7 +5,7 @@ import type {
   SurfaceEntry,
   SurfaceStatusSummary,
 } from '@nop-chaos/flux-core';
-import { useCurrentActionScope, useCurrentComponentRegistry, useCurrentSurfaceRuntime, useRendererRuntime } from '@nop-chaos/flux-react';
+import { useCurrentActionScope, useCurrentComponentRegistry, useCurrentSurfaceRuntime, useRendererRuntime, useSurfaceComponentHandle } from '@nop-chaos/flux-react';
 import type { DialogSchema, DrawerSchema } from './schemas.js';
 
 function getSurfaceScopeId(
@@ -409,6 +409,28 @@ export function useSurfaceRenderer(
       closing: false,
     }),
   );
+
+  useSurfaceComponentHandle({
+    id,
+    kind,
+    cid: resolvedMeta.cid,
+    methods: ['open', 'close', 'toggle'],
+    isControlled: () => controlledOpen !== undefined,
+    isOpen: () => {
+      if (!surfaceRuntime) {
+        return false;
+      }
+      return Boolean(
+        surfaceRuntime.store.getState().entries.find((entry) => entry.id === id),
+      );
+    },
+    setOpen: (nextOpen) => {
+      if (controlledOpen !== undefined) {
+        return;
+      }
+      surfaceRuntime?.store.setUncontrolledOpen(id, nextOpen);
+    },
+  });
 
   return {
     summary,

@@ -121,6 +121,27 @@ const sharedSurfaceFields = [
   { key: 'footerClassName', kind: 'prop' as const },
 ];
 
+const surfaceHandleCapabilityContracts = [
+  {
+    handle: 'open',
+    displayName: 'Open',
+    description:
+      'Open the declarative surface. No-op when already open or when the surface is externally controlled via the `open` prop; returns { ok: true, skipped: true } in those cases.',
+  },
+  {
+    handle: 'close',
+    displayName: 'Close',
+    description:
+      'Close the declarative surface. No-op when already closed or when the surface is externally controlled via the `open` prop; returns { ok: true, skipped: true } in those cases.',
+  },
+  {
+    handle: 'toggle',
+    displayName: 'Toggle',
+    description:
+      'Toggle the declarative surface open/close state. No-op when the surface is externally controlled via the `open` prop; returns { ok: true, skipped: true } in that case.',
+  },
+] as const;
+
 export const dialogRendererDefinition: RendererDefinition = {
   type: 'dialog',
   displayName: 'Dialog',
@@ -159,6 +180,7 @@ export const dialogRendererDefinition: RendererDefinition = {
     footerClassName: stringPropContract('Footer className', 'className applied to DialogFooter.'),
   },
   eventContracts: surfaceEventContracts,
+  componentCapabilityContracts: surfaceHandleCapabilityContracts,
   fields: sharedSurfaceFields.concat([
     { key: 'closeOnOutsideClick', kind: 'prop' as const, valueType: 'boolean' as const },
   ]),
@@ -206,6 +228,7 @@ export const drawerRendererDefinition: RendererDefinition = {
     footerClassName: stringPropContract('Footer className', 'className applied to DrawerFooter.'),
   },
   eventContracts: surfaceEventContracts,
+  componentCapabilityContracts: surfaceHandleCapabilityContracts,
   fields: sharedSurfaceFields.concat([
     { key: 'side', kind: 'prop' as const },
     { key: 'closeOnOutside', kind: 'prop' as const, valueType: 'boolean' as const },
