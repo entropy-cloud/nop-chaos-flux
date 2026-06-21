@@ -108,7 +108,7 @@ export function DetailSurface(props: DetailSurfaceProps) {
           if (!next) props.onClose();
         }}
         >
-          <DrawerContent>
+          <DrawerContent showCloseButton={false}>
           <DrawerHeader className="flex-row items-start justify-between gap-3">
             <DrawerTitle>{props.title}</DrawerTitle>
             <DrawerClose

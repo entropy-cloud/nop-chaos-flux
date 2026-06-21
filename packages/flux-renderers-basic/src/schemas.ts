@@ -1,10 +1,13 @@
 import type {
+  ActionSchema,
   BaseSchema,
   DynamicRendererSchema,
   SchemaInput,
   SchemaObject,
   SchemaValue,
 } from '@nop-chaos/flux-core';
+
+export type SurfaceSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
 export interface PageSchema extends BaseSchema {
   type: 'page';
@@ -33,6 +36,18 @@ export interface DialogSchema extends BaseSchema {
   closeOnOutsideClick?: boolean;
   container?: string;
   showMask?: boolean;
+  closeOnEsc?: boolean;
+  size?: SurfaceSize;
+  width?: number | string;
+  height?: number | string;
+  showCloseButton?: boolean;
+  header?: BaseSchema[];
+  footer?: BaseSchema[];
+  confirm?: boolean | string;
+  onConfirm?: ActionSchema | ActionSchema[];
+  bodyClassName?: string;
+  headerClassName?: string;
+  footerClassName?: string;
 }
 
 export interface DrawerSchema extends BaseSchema {
@@ -47,6 +62,20 @@ export interface DrawerSchema extends BaseSchema {
   statusPath?: string;
   container?: string;
   showMask?: boolean;
+  closeOnOutside?: boolean;
+  closeOnEsc?: boolean;
+  size?: SurfaceSize;
+  width?: number | string;
+  height?: number | string;
+  showCloseButton?: boolean;
+  header?: BaseSchema[];
+  footer?: BaseSchema[];
+  confirm?: boolean | string;
+  onConfirm?: ActionSchema | ActionSchema[];
+  resizable?: boolean;
+  bodyClassName?: string;
+  headerClassName?: string;
+  footerClassName?: string;
 }
 
 export interface TabsItemSchema extends SchemaObject {

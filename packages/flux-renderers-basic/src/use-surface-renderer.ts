@@ -74,8 +74,9 @@ export function useSurfaceRenderer(
     () => ({
     onOpen: events.onOpen,
     onClose: events.onClose,
+    onConfirm: events.onConfirm,
     }),
-    [events.onClose, events.onOpen],
+    [events.onClose, events.onConfirm, events.onOpen],
   );
 
   React.useEffect(() => {
@@ -220,6 +221,7 @@ export function useSurfaceRenderer(
       controlledOpen: controlledOpen !== undefined,
       onOpen: () => eventHandlers.onOpen?.({ surfaceId: id, kind, open: true }),
       onClose: () => eventHandlers.onClose?.({ surfaceId: id, kind, open: false }),
+      onConfirm: () => eventHandlers.onConfirm?.({ surfaceId: id, kind, open: true }),
     };
 
     const existing = surfaceRuntime.store.getState().entries.find((candidate) => candidate.id === id);
@@ -267,6 +269,7 @@ export function useSurfaceRenderer(
         controlledOpen: entry.controlledOpen,
         onOpen: entry.onOpen,
         onClose: entry.onClose,
+        onConfirm: entry.onConfirm,
       },
     });
   }, [

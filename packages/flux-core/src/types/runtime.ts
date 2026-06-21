@@ -254,6 +254,7 @@ export interface OwnedSurfaceStateBase {
   controlledOpen?: boolean;
   onOpen?: () => Promise<ActionResult> | ActionResult | void;
   onClose?: () => Promise<ActionResult> | ActionResult | void;
+  onConfirm?: () => Promise<ActionResult> | ActionResult | void;
 }
 
 export interface SurfaceEntry extends OwnedSurfaceStateBase {
@@ -311,6 +312,7 @@ export interface SurfaceRuntime {
       controlledOpen?: boolean;
       onOpen?: () => Promise<ActionResult> | ActionResult | void;
       onClose?: () => Promise<ActionResult> | ActionResult | void;
+      onConfirm?: () => Promise<ActionResult> | ActionResult | void;
     };
   }): string;
   upsert(entry: SurfaceEntry): void;

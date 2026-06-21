@@ -3,8 +3,6 @@ import { extractNestedSchemaRegions } from '@nop-chaos/flux-core';
 import { BadgeRenderer } from './badge.js';
 import { ButtonRenderer } from './button.js';
 import { ContainerRenderer } from './container.js';
-import { DialogRenderer } from './dialog.js';
-import { DrawerRenderer } from './drawer.js';
 import { DynamicRenderer } from './dynamic-renderer.js';
 import { FlexRenderer } from './flex.js';
 import { FragmentRenderer } from './fragment.js';
@@ -16,6 +14,7 @@ import { RecurseRenderer } from './recurse.js';
 import { ScopeDebugRenderer } from './scope-debug.js';
 import { TabsRenderer } from './tabs.js';
 import { TextRenderer } from './text.js';
+import { dialogRendererDefinition, drawerRendererDefinition } from './surface-renderer-definitions.js';
 
 export const basicRendererDefinitions: RendererDefinition[] = [
   {
@@ -353,40 +352,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'actions', kind: 'prop' },
     ],
   },
-  {
-    type: 'dialog',
-    displayName: 'Dialog',
-    category: 'layout',
-    sourcePackage: '@nop-chaos/flux-renderers-basic',
-    component: DialogRenderer,
-    fields: [
-      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
-      { key: 'body', kind: 'region', regionKey: 'body' },
-      { key: 'actions', kind: 'region', regionKey: 'actions' },
-      { key: 'onOpen', kind: 'event' },
-      { key: 'onClose', kind: 'event' },
-      { key: 'data', kind: 'prop' },
-      { key: 'container', kind: 'prop' },
-      { key: 'showMask', kind: 'prop' },
-    ],
-  },
-  {
-    type: 'drawer',
-    displayName: 'Drawer',
-    category: 'layout',
-    sourcePackage: '@nop-chaos/flux-renderers-basic',
-    component: DrawerRenderer,
-    fields: [
-      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
-      { key: 'body', kind: 'region', regionKey: 'body' },
-      { key: 'actions', kind: 'region', regionKey: 'actions' },
-      { key: 'onOpen', kind: 'event' },
-      { key: 'onClose', kind: 'event' },
-      { key: 'data', kind: 'prop' },
-      { key: 'container', kind: 'prop' },
-      { key: 'showMask', kind: 'prop' },
-    ],
-  },
+  dialogRendererDefinition,
+  drawerRendererDefinition,
   {
     type: 'tabs',
     displayName: 'Tabs',

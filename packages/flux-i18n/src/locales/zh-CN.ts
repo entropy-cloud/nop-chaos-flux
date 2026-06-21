@@ -130,6 +130,10 @@ export const zhCN: Resource = {
       dragHandleRoleDescription: '对话框拖动把手',
       moveDialogInstructions: '使用方向键移动对话框。按住 Shift 可进行更大步长移动。按 Home 可重置对话框位置。',
     },
+    drawer: {
+      close: '关闭',
+      resize: '调整大小',
+    },
     sheet: {
       close: '关闭',
       deleteTitle: '删除工作表',

@@ -66,4 +66,4 @@ export {
   type LucideIconComponent,
 } from './lib/icon-utils.js';
 
-export { setI18nGetter } from './lib/i18n.js';
+export { setI18nGetter, t } from './lib/i18n.js';

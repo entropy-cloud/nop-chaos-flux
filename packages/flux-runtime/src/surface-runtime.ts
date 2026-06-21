@@ -148,6 +148,7 @@ export function createManagedSurfaceRuntime(
         controlledOpen: options?.controlledOpen,
         onOpen: options?.onOpen,
         onClose: options?.onClose,
+        onConfirm: options?.onConfirm,
       };
 
       store.push(entry);

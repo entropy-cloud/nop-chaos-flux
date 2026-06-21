@@ -46,6 +46,22 @@ const checks = [
     label: 'crud ownership finite fields',
   },
   {
+    file: 'packages/flux-renderers-data/src/crud-renderer-definition.ts',
+    schemaPattern: /pagination:\s*\{[\s\S]*?kind:\s*'union'[\s\S]*?value:\s*'pages'[\s\S]*?value:\s*'infinite'/,
+    contractFile: 'packages/flux-renderers-data/src/crud-renderer-definition.ts',
+    contractPattern: /pagination:\s*\{[\s\S]*?kind:\s*'union'[\s\S]*?value:\s*'pages'[\s\S]*?value:\s*'infinite'/,
+    label: 'crud pagination.mode finite union',
+  },
+  {
+    file: 'packages/flux-renderers-basic/src/schemas.ts',
+    schemaPattern:
+      /export interface DialogSchema[\s\S]*?size\?:\s*SurfaceSize[\s\S]*?footerClassName\?:\s*string[\s\S]*?export interface DrawerSchema[\s\S]*?size\?:\s*SurfaceSize/,
+    contractFile: 'packages/flux-renderers-basic/src/surface-renderer-definitions.ts',
+    contractPattern:
+      /sizePropContract[\s\S]*?value:\s*'xs'[\s\S]*?value:\s*'sm'[\s\S]*?value:\s*'md'[\s\S]*?value:\s*'lg'[\s\S]*?value:\s*'xl'[\s\S]*?value:\s*'full'[\s\S]*?size:\s*sizePropContract/,
+    label: 'dialog.size + drawer.size finite union',
+  },
+  {
     file: 'packages/report-designer-renderers/src/schemas.ts',
     schemaPattern: /intent\?:\s*ActionIntent/,
     contractFile: 'packages/report-designer-renderers/src/renderers.tsx',

@@ -131,6 +131,10 @@ export const enUS: Resource = {
       moveDialogInstructions:
         'Use the arrow keys to move the dialog. Hold Shift for larger steps. Press Home to reset the dialog position.',
     },
+    drawer: {
+      close: 'Close',
+      resize: 'Resize',
+    },
     sheet: {
       close: 'Close',
       deleteTitle: 'Delete Sheet',
