@@ -59,6 +59,59 @@ function validateFormSchema(context: RendererSchemaValidationContext<BaseSchema>
     });
   }
 
+  if (schema.columnCount !== undefined) {
+    if (typeof schema.columnCount !== 'number' || !Number.isFinite(schema.columnCount)) {
+      emit({
+        code: 'invalid-property-shape',
+        path: toJsonPointer(path, 'columnCount'),
+        message: 'form.columnCount must be a number when provided.',
+      });
+    }
+  }
+
+  if (schema.rules !== undefined) {
+    if (!Array.isArray(schema.rules)) {
+      emit({
+        code: 'invalid-property-shape',
+        path: toJsonPointer(path, 'rules'),
+        message: 'form.rules must be an array of cross-field rule descriptors when provided.',
+      });
+    } else {
+      schema.rules.forEach((entry, index) => {
+        if (!entry || typeof entry !== 'object') {
+          emit({
+            code: 'invalid-property-shape',
+            path: toJsonPointer(path, 'rules', index),
+            message: 'form.rules entries must be objects.',
+          });
+          return;
+        }
+        if (entry.rule !== 'equalsField' && entry.rule !== 'notEqualsField') {
+          emit({
+            code: 'invalid-property-shape',
+            path: toJsonPointer(path, 'rules', index, 'rule'),
+            message:
+              'form.rules entry.rule must be one of: equalsField, notEqualsField. Other rule kinds are managed per-field.',
+          });
+        }
+        if (typeof entry.field !== 'string' || entry.field.length === 0) {
+          emit({
+            code: 'invalid-property-shape',
+            path: toJsonPointer(path, 'rules', index, 'field'),
+            message: 'form.rules entry.field must be a non-empty string.',
+          });
+        }
+        if (typeof entry.target !== 'string' || entry.target.length === 0) {
+          emit({
+            code: 'invalid-property-shape',
+            path: toJsonPointer(path, 'rules', index, 'target'),
+            message: 'form.rules entry.target must be a non-empty string.',
+          });
+        }
+      });
+    }
+  }
+
   validateHiddenFieldPolicySchema(context);
 }
 
@@ -97,6 +150,7 @@ export const formRendererDefinition: RendererDefinition = {
         anyOf: [
           { kind: 'literal', value: 'normal' },
           { kind: 'literal', value: 'horizontal' },
+          { kind: 'literal', value: 'inline' },
         ],
       },
       displayName: 'Mode',
@@ -129,6 +183,63 @@ export const formRendererDefinition: RendererDefinition = {
       displayName: 'Hidden Field Policy',
       description: 'Controls how hidden fields participate in validation and clearing.',
       editorType: 'hidden-field-policy',
+    },
+    columnCount: {
+      shape: { kind: 'number' },
+      displayName: 'Column Count',
+      description:
+        'Renders the form body as a CSS grid with the given number of columns. Values < 1 are clamped to 1 (single column).',
+      editorType: 'number',
+    },
+    submitOnChange: {
+      shape: { kind: 'boolean' },
+      displayName: 'Submit On Change',
+      description:
+        'When true and a submitAction is configured, debounced (300ms) submit is triggered automatically whenever form values change. The initial mount snapshot is ignored.',
+      editorType: 'boolean',
+      defaultValue: false,
+    },
+    preventEnterSubmit: {
+      shape: { kind: 'boolean' },
+      displayName: 'Prevent Enter Submit',
+      description:
+        'When true, pressing Enter inside the form does NOT trigger submit. Default behavior (when false or unset): Enter triggers submit if a submitAction is configured.',
+      editorType: 'boolean',
+      defaultValue: false,
+    },
+    autoFocus: {
+      shape: { kind: 'boolean' },
+      displayName: 'Auto Focus',
+      description:
+        'When true, focuses the first focusable control in the form body after mount.',
+      editorType: 'boolean',
+      defaultValue: false,
+    },
+    scrollToFirstError: {
+      shape: { kind: 'boolean' },
+      displayName: 'Scroll To First Error',
+      description:
+        'When true, the existing focus-on-first-invalid behavior additionally calls scrollIntoView({ behavior: "smooth", block: "center" }).',
+      editorType: 'boolean',
+      defaultValue: false,
+    },
+    static: {
+      shape: {
+        kind: 'union',
+        anyOf: [{ kind: 'boolean' }, { kind: 'string' }],
+      },
+      displayName: 'Static (read-only preview)',
+      description:
+        'When truthy, propagates a read-only presentation snapshot to all child fields via FormLayoutContext. Actions region is not hidden.',
+      editorType: 'static',
+      defaultValue: false,
+    },
+    rules: {
+      shape: { kind: 'array', item: { kind: 'unknown' } },
+      displayName: 'Cross-field Rules',
+      description:
+        'Form-level cross-field validation rules. Each entry translates to a field-level rule on the referenced field. Supported rule kinds: equalsField, notEqualsField.',
+      editorType: 'cross-field-rules',
     },
   },
   eventContracts: {
@@ -259,6 +370,13 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'labelWidth', kind: 'prop' },
     { key: 'bodyClassName', kind: 'prop' },
     { key: 'actionsClassName', kind: 'prop' },
+    { key: 'columnCount', kind: 'prop' },
+    { key: 'submitOnChange', kind: 'prop', valueType: 'boolean' },
+    { key: 'preventEnterSubmit', kind: 'prop', valueType: 'boolean' },
+    { key: 'autoFocus', kind: 'prop', valueType: 'boolean' },
+    { key: 'scrollToFirstError', kind: 'prop', valueType: 'boolean' },
+    { key: 'static', kind: 'prop', valueType: 'boolean' },
+    { key: 'rules', kind: 'prop' },
   ],
   scopePolicy: 'form',
   validationDefaults: {

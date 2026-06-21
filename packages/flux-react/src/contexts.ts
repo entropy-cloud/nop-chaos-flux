@@ -16,9 +16,11 @@ import type {
 } from '@nop-chaos/flux-core';
 
 export interface FormLayoutContextValue {
-  mode?: 'normal' | 'horizontal';
+  mode?: 'normal' | 'horizontal' | 'inline';
   labelAlign?: 'top' | 'left' | 'right';
   labelWidth?: string | number;
+  columnCount?: number;
+  staticReadOnly?: boolean;
 }
 
 export const NO_VALIDATION_OWNER = Symbol('NO_VALIDATION_OWNER');

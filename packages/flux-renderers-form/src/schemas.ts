@@ -4,9 +4,23 @@ import type {
   BaseSchema,
   BoundFieldSchemaBase,
   HiddenFieldPolicy,
+  SchemaObject,
   SchemaValue,
   SourceSchema,
+  ValidationRule,
 } from '@nop-chaos/flux-core';
+
+export type FormCrossFieldRuleKind = Extract<
+  ValidationRule['kind'],
+  'equalsField' | 'notEqualsField'
+>;
+
+export interface FormCrossFieldRule extends SchemaObject {
+  rule: FormCrossFieldRuleKind;
+  field: string;
+  target: string;
+  message?: string;
+}
 
 /**
  * Configuration shape for on-demand tree sources (lazy children / remote search).
@@ -63,7 +77,7 @@ export interface FormSchema extends BaseSchema {
   body?: BaseSchema[];
   actions?: BaseSchema[];
   data?: Record<string, any>;
-  mode?: 'normal' | 'horizontal';
+  mode?: 'normal' | 'horizontal' | 'inline';
   labelAlign?: 'top' | 'left' | 'right';
   labelWidth?: string | number;
   gap?: number | string;
@@ -77,6 +91,13 @@ export interface FormSchema extends BaseSchema {
   hiddenFieldPolicy?: HiddenFieldPolicy;
   bodyClassName?: string;
   actionsClassName?: string;
+  columnCount?: number;
+  submitOnChange?: boolean;
+  preventEnterSubmit?: boolean;
+  autoFocus?: boolean;
+  scrollToFirstError?: boolean;
+  static?: boolean | string;
+  rules?: FormCrossFieldRule[];
 }
 
 export type { FieldsetSchema } from './renderers/fieldset.js';

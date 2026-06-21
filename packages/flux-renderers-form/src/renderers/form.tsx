@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { reportRuntimeHostIssue, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
 import {
   FormContext,
@@ -17,6 +18,8 @@ import { cn } from '@nop-chaos/ui';
 import type { FormLayoutContextValue } from '@nop-chaos/flux-react';
 import { resolveGap } from '@nop-chaos/flux-react';
 import type { FormSchema } from '../schemas.js';
+import { compileFormLevelValidationModel } from './form-rules.js';
+
 function createFormLifecycleScope(
   scope: ScopeRef,
   importBindings: Readonly<Record<string, unknown>>,
@@ -155,6 +158,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const mountedFormRef = useRef(false);
   const activeOwnedFormRef = useRef<ReturnType<typeof runtime.createFormRuntime> | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+  const formRulesRef = useRef<FormSchema['rules']>((props.props as FormSchema).rules);
 
   const ownedForm = useMemo(
     () =>
@@ -166,7 +170,10 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         statusPath,
         valuesPath,
         page: currentPage,
-        validation: props.templateNode.validationPlan,
+        validation: compileFormLevelValidationModel(
+          props.templateNode.validationPlan,
+          formRulesRef.current, // eslint-disable-line react-hooks/refs -- intentional: form rules are captured at mount to avoid recreating the form runtime
+        ),
       }),
     [
       runtime,
@@ -356,6 +363,16 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     };
   }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm, props.path, runtime]);
 
+  const formMode = (props.props as FormSchema).mode;
+  const formLabelAlign = (props.props as FormSchema).labelAlign;
+  const formLabelWidth = (props.props as FormSchema).labelWidth;
+  const formColumnCount = (props.props as FormSchema).columnCount;
+  const formStatic = Boolean((props.props as FormSchema).static);
+  const autoFocus = (props.props as FormSchema).autoFocus === true;
+  const preventEnterSubmit = (props.props as FormSchema).preventEnterSubmit === true;
+  const scrollToFirstError = (props.props as FormSchema).scrollToFirstError === true;
+  const submitOnChange = (props.props as FormSchema).submitOnChange === true;
+
   useEffect(() => {
     let prevSubmitting = ownedForm.store.getState().submitting;
 
@@ -373,6 +390,12 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             const firstInvalid = sectionRef.current?.querySelector('[aria-invalid="true"]');
             if (firstInvalid instanceof HTMLElement) {
               firstInvalid.focus();
+              if (scrollToFirstError) {
+                firstInvalid.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center',
+                });
+              }
             }
           });
         }
@@ -380,19 +403,92 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     });
 
     return unsubscribe;
-  }, [ownedForm.store]);
-
-  const formMode = (props.props as FormSchema).mode;
-  const formLabelAlign = (props.props as FormSchema).labelAlign;
-  const formLabelWidth = (props.props as FormSchema).labelWidth;
+  }, [ownedForm.store, scrollToFirstError]);
 
   const formLayoutValue = useMemo(() => {
     const value: FormLayoutContextValue = {};
     if (formMode) value.mode = formMode;
     if (formLabelAlign) value.labelAlign = formLabelAlign;
     if (formLabelWidth !== undefined) value.labelWidth = formLabelWidth;
+    if (formColumnCount !== undefined && Number.isFinite(formColumnCount)) {
+      value.columnCount = Math.max(1, Math.floor(formColumnCount));
+    }
+    if (formStatic) value.staticReadOnly = true;
     return Object.keys(value).length > 0 ? value : undefined;
-  }, [formLabelAlign, formLabelWidth, formMode]);
+  }, [formLabelAlign, formLabelWidth, formMode, formColumnCount, formStatic]);
+
+  useEffect(() => {
+    if (!autoFocus) {
+      return;
+    }
+    const target = sectionRef.current?.querySelector<HTMLElement>(
+      'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [data-slot="combobox"]',
+    );
+    target?.focus();
+  }, [autoFocus]);
+
+  useEffect(() => {
+    if (!submitOnChange || !submitAction) {
+      return;
+    }
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastValues: unknown = ownedForm.store.getState().values;
+
+    const unsubscribe = ownedForm.store.subscribe(() => {
+      const state = ownedForm.store.getState();
+      if (Object.is(state.values, lastValues)) {
+        return;
+      }
+      lastValues = state.values;
+      if (state.submitting) {
+        return;
+      }
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
+        void ownedForm.submit();
+      }, 300);
+    });
+
+    return () => {
+      unsubscribe();
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
+      }
+    };
+  }, [submitOnChange, submitAction, ownedForm.store, ownedForm]);
+
+  const handleSectionKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key !== 'Enter') {
+      return;
+    }
+    if (preventEnterSubmit) {
+      return;
+    }
+    const target = event.target as HTMLElement | null;
+    if (target) {
+      const tag = target.tagName;
+      if (tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'A') {
+        return;
+      }
+      const isContentEditable =
+        target.isContentEditable ||
+        target.getAttribute('contenteditable') === 'true' ||
+        target.getAttribute('contenteditable') === '';
+      if (isContentEditable) {
+        return;
+      }
+    }
+    if (!submitAction) {
+      return;
+    }
+    event.preventDefault();
+    void ownedForm.submit();
+  };
 
   useEffect(() => {
     if (!currentComponentRegistry) {
@@ -404,21 +500,47 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     });
   }, [currentComponentRegistry, ownedForm, props.meta.cid]);
 
+  const isInline = formMode === 'inline';
+  const resolvedColumnCount =
+    formColumnCount !== undefined && Number.isFinite(formColumnCount)
+      ? Math.max(1, Math.floor(formColumnCount))
+      : undefined;
+  const showGrid = !isInline && resolvedColumnCount !== undefined && resolvedColumnCount > 1;
+
+  const bodyStyle = useMemo(() => {
+    const style: React.CSSProperties = { ...formGap.style };
+    if (showGrid) {
+      style.display = 'grid';
+      style.gridTemplateColumns = `repeat(${resolvedColumnCount}, minmax(0, 1fr))`;
+    }
+    return style;
+  }, [formGap.style, showGrid, resolvedColumnCount]);
+
   return (
     <FormContext.Provider value={ownedForm}>
       <ScopeContext.Provider value={ownedForm.scope}>
         <FormLayoutContext.Provider value={formLayoutValue}>
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Enter-to-submit form convention; section is a structural form shell, not a generic interactive widget */}
           <section
             ref={sectionRef}
             className={cn('nop-form', props.meta.className)}
             data-testid={props.meta.testid || undefined}
             data-cid={props.meta.cid || undefined}
+            data-form-mode={formMode ?? undefined}
+            data-form-static={formStatic ? '' : undefined}
+            data-form-columns={resolvedColumnCount ?? undefined}
+            onKeyDown={handleSectionKeyDown}
           >
             {hasRendererSlotContent(bodyContent) ? (
               <div
                 data-slot="form-body"
-                className={cn(formGap.className, slotProps.bodyClassName)}
-                style={formGap.style}
+                className={cn(
+                  formGap.className,
+                  isInline && 'nop-form-body--inline',
+                  slotProps.bodyClassName,
+                )}
+                data-form-mode={formMode ?? undefined}
+                style={bodyStyle}
               >
                 {bodyContent}
               </div>

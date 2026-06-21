@@ -5,6 +5,7 @@ import {
   useCurrentForm,
   useCurrentFormState,
   useCurrentValidationValues,
+  useFormLayout,
   useOwnedFieldState,
 } from '@nop-chaos/flux-react';
 import { isFieldEffectivelyRequired } from '@nop-chaos/flux-react';
@@ -45,6 +46,9 @@ export function useFieldPresentation(
   },
 ) {
   const fieldState = useFormFieldState(name);
+  const formLayout = useFormLayout();
+  const staticReadOnly = formLayout.staticReadOnly === true;
+  const effectiveReadOnly = options?.readOnly === true || staticReadOnly;
   const behavior = getValidationBehaviorForOwner(name, currentValidationScope);
   const validationField = getCompiledValidationField(currentValidationScope?.validation, name);
   const dynamicRequiredDependencyPaths = getDynamicRequiredDependencyPaths(validationField);
@@ -66,7 +70,7 @@ export function useFieldPresentation(
         path: name,
         validation: currentValidationScope?.validation,
         disabled: options?.disabled,
-        readOnly: options?.readOnly,
+        readOnly: effectiveReadOnly,
         required: options?.required,
         query: { path: name, ownerPath: name },
       }),
@@ -111,8 +115,8 @@ export function useFieldPresentation(
             submitAttempted: fieldState.submitAttempted,
           }),
         ),
-        interactive: !options?.disabled && !options?.readOnly,
-        readOnly: options?.readOnly ?? false,
+        interactive: !options?.disabled && !effectiveReadOnly,
+        readOnly: effectiveReadOnly,
       };
 
   return {
