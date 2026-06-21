@@ -117,4 +117,28 @@ test.describe('chart renderer', () => {
     const chartEl = stage.locator('svg, canvas, [class*="chart"], [class*="recharts"]').first();
     await expect(chartEl).toBeVisible({ timeout: 10_000 });
   });
+
+  test('read: area chart container renders', async ({ page }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('chart');
+
+    const slug = scenarioSlug('Area chart — regional fill under each line');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+
+    const chartEl = stage.locator('svg, canvas, [class*="chart"], [class*="recharts"]').first();
+    await expect(chartEl).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('read: stacked bar chart container renders', async ({ page }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('chart');
+
+    const slug = scenarioSlug('Stacked bar chart — series sum into one column');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+
+    const chartEl = stage.locator('svg, canvas, [class*="chart"], [class*="recharts"]').first();
+    await expect(chartEl).toBeVisible({ timeout: 10_000 });
+  });
 });
