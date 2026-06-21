@@ -63,6 +63,7 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 与基础文本输入一致。
+- X1 起落地 `component:clear`/`reset`/`focus` handle（与 input-text 同语义，详见 `docs/components/input-text/design.md` §8）。
 
 ## 9. 数据源、表达式、导入能力接入点
 

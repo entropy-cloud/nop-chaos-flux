@@ -260,6 +260,6 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- `refreshSource` action API 与 `component:refresh` capability 并存 naming audit（归 X1 风格）。
+- `refreshSource` action API 与 `component:refresh` capability 并存 naming audit（归 X1 风格）。**已由 X1 plan 收口**（`docs/plans/2026-06-21-2146-1-x1-doaction-command-family-unification-plan.md` Phase 1 裁定 (a) 保留双入口 + 文档分层；Phase 4 同步 `docs/components/data-source/design.md` 与 `docs/architecture/api-data-source.md`）。
 - `CompiledOperationControl`（dedup/retry/throttle/cacheTTL/cacheKey）与 lifecycle event 协同的后续 audit。
 - WebSocket（`ws`）source kind 独立 plan（待 ws 业务需求触发）。

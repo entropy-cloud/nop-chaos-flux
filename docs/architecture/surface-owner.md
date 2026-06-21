@@ -257,7 +257,7 @@ surface owner 的目标态 instance capability 可以是：
 - runtime 内部统一 lower 到单一 surface 内核，例如 `surface:open` / `surface:close`
 - `closeDialog` / `closeDrawer` 不应成为长期正式基线
 
-当前 `dialog` / `drawer` renderer definitions 还没有发布 `componentCapabilityContracts`，因此不要把 `component:open` / `component:close` / `component:toggle` 当作已经支持的 live component handle。
+X1 起 `dialog` / `drawer` renderer definitions 已发布 `componentCapabilityContracts`（`open`/`close`/`toggle`），`component:open` / `component:close` / `component:toggle` 现已是受支持的 live component handle。详见下方 §Surface Handle Coexistence 与 `docs/references/component-handle-vocabulary.md`。
 
 建议语义：
 
@@ -286,6 +286,16 @@ Current live affordance baseline:
 - confirm/commit 应视为叠加在 surface 之上的 `Semantic Lifecycle Owner`
 
 不要把两者压成一个模糊的 `dialog.status`。
+
+## Surface Handle Coexistence
+
+X1 落地 `component:open`/`close`/`toggle` handle（dialog/drawer），与既有 `openDialog`/`openDrawer`/`closeSurface` action API 共存。关系裁定（详见 `docs/references/component-handle-vocabulary.md` §surface-family）：
+
+- **action API**（`openDialog`/`openDrawer`/`closeSurface`）：跨 target，surface body 可在 action 内联声明（ad-hoc surface）。按 `surfaceId`/top-most 寻址。
+- **component capability handle**（`component:open`/`close`/`toggle`）：同 component，操作已声明的 declarative dialog/drawer 实例。按 `componentId`/`componentName` 寻址（target 必须是已渲染的 dialog/drawer renderer 节点）。
+- 二者最终 lower 到同一 `SurfaceRuntime` 内核（同一 surface stack、同一 focus/dismiss/child scope/status publication 规则），**不存在双状态源**。
+- authoring 建议：declarative dialog/drawer 用 `component:*`；ad-hoc 弹层用 `openDialog`/`openDrawer`。
+- Failure paths：`x1-open-no-target`（component target 未注册）、`x1-close-not-open`（已 closed 时 close → `{ok:true, skipped:true}`）。
 
 ## Future Sheet Rule
 

@@ -39,6 +39,7 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 主要交互是 `onChange`。
+- X1 起落地 `component:focus` handle（choice 字段不暴露 clear/reset）。renderer definition 已发布 `componentCapabilityContracts: ['focus']`。
 
 ## 9. 数据源、表达式、导入能力接入点
 

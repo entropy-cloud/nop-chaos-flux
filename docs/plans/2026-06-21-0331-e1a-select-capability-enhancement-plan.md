@@ -48,7 +48,7 @@
 
 ### Out Of Scope
 
-- `component:focus`/`component:open` 句柄（design.md §8 "后续可考虑"，归 X1）。
+- `component:focus`/`component:open` 句柄（design.md §8 "后续可考虑"，归 X1）。**已由 X1 plan 收口**（select 现已发布 `clear`/`focus`/`open` contracts）。
 - 远程异步搜索 debounce（走 data-source，已有 `optionsSourceState`；搜索关键字驱动 data-source 刷新是组合层职责，不在 select renderer 开 api 短路径）。
 - option 模板 region（见 Deferred）。
 
@@ -220,7 +220,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- `component:focus`/`component:open` 句柄归 X1（doAction 命令族统一）。
+- `component:focus`/`component:open` 句柄归 X1（doAction 命令族统一）。**已由 X1 plan 收口**（`docs/plans/2026-06-21-2146-1-x1-doaction-command-family-unification-plan.md` Phase 2）：select renderer definition 已发布 `componentCapabilityContracts`（`clear`/`focus`/`open`），通过 `useInputComponentHandle` + `createInputComponentHandle` 注册 handle。
 - `maxSelected`/`minSelected`（多选数量限制）若未来需要，归后续增强。
 
 ## Closure
@@ -244,5 +244,5 @@ Follow-up:
 
 - option 模板 region (deferred — see Deferred But Adjudicated).
 - 远程异步搜索 debounce (covered by data-source + action composition; `filterOption: false` is the entry hook).
-- `component:focus`/`component:open` 句柄归 X1.
+- `component:focus`/`component:open` 句柄归 X1. **已由 X1 plan 收口**（select 现已发布 `clear`/`focus`/`open` contracts）。
 - `maxSelected`/`minSelected` 若未来需要归后续增强.

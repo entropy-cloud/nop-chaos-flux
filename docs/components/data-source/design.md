@@ -122,5 +122,6 @@ data-source 的属性分布在三个层级，职责正交：
 
 - 最大风险是让 `data-source` 和各展示组件的 source-enabled field 重复负责请求逻辑，需要通过文档明确主从关系。
 - **WebSocket source（ws）**：roadmap 明确 `ws 低优先`，当前不实现。ws 是连接生命周期（open/message/close/reconnect），与 HTTP 请求生命周期（请求→成功/失败）语义不同，混入会污染 sendOn/initFetch 契约。归后续独立 plan。
-- **refreshSource 与 component:refresh 并存**：两者语义不同（action API vs component capability），归后续 naming audit（X1）评估是否需要统一。
+- **refreshSource 与 component:refresh 并存**（X1 naming audit 已裁定）：裁定 (a) 保留双入口 + 文档分层。`refreshSource`（action API）= 跨 target，按 `sourceName` 寻址；`component:refresh`（capability）= 同 component，按 `componentId`/`componentName` 寻址。二者 lower 到同一 `DataSourceController.refresh()`，不 deprecate 任一入口。详见 `docs/references/component-handle-vocabulary.md` §data-source-refresh。
+- **`component:start` handle**（X1 补齐）：data-source 还发布 `start` capability（恢复/启动 controller，幂等），被 crud polling orchestrator 等消费。三方法（`refresh`/`cancel`/`start`）均在 renderer definition `componentCapabilityContracts` 发布。
 - **onSuccess/onError fire-and-forget**：异步 dispatch 不 await，如果用户在事件 handler 中做重要状态更新（如跳转登录页），可能有时序问题。这是 Flux action system 的固有语义，非 X4 引入。

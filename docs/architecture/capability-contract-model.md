@@ -274,6 +274,7 @@ Important rule:
 
 - ordinary renderer metadata should **not** be wrapped in host-family/version/projection manifest envelope
 - use one canonical field name set on `RendererDefinition`; avoid aliasing `capabilityContracts` and `componentCapabilityContracts`
+- the method names published in `componentCapabilityContracts` (e.g. `clear`/`reset`/`focus`/`open`/`close`/`toggle`) must follow the unified vocabulary in `docs/references/component-handle-vocabulary.md` (X1 baseline)
 
 ## Runtime Lookup Split
 

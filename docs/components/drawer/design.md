@@ -84,10 +84,15 @@ Current live implementation note:
 
 ## 8. 事件、动作与组件句柄能力
 
-- 推荐支持 `component:open`、`component:close`，可选支持 `component:toggle`。
+- X1 起落地 `component:open`、`component:close`、`component:toggle` handle（drawer renderer definition 已发布 `componentCapabilityContracts`），与既有 `openDrawer`/`closeSurface` action API **共存**。
+- **共存关系**（X1 裁定，详见 `docs/references/component-handle-vocabulary.md` §surface-family 与 `docs/architecture/surface-owner.md` §Surface Handle Coexistence）：
+  - `openDrawer`/`closeSurface`（action API）= 跨 target，surface body 可在 action 内联声明（ad-hoc surface）。
+  - `component:open`/`close`/`toggle`（capability handle）= 同 component，操作已声明的 declarative drawer 实例。
+  - 二者 lower 到同一 `SurfaceRuntime` 内核，不存在双状态源。
+  - authoring 建议：declarative drawer 用 `component:*`；ad-hoc 弹层用 `openDrawer`。
 - `onOpen`、`onClose` 通过 action schema 触发，示例应覆盖至少一组最小事件用法。
 - `component:open` / `component:close` 只解决 surface control；内部表单提交、source 刷新等仍应进入更具体 owner 的语义入口。
-- 内置动作 authoring 应优先使用 `openDrawer` / `closeSurface`；runtime 内部不应为 `drawer` 单独再长出第二套 open/close 内核。
+- Failure paths：`x1-open-no-target`、`x1-close-not-open`（已 closed 时 close → `{ok:true, skipped:true}`）。
 
 ## 9. 数据源、表达式、导入能力接入点
 

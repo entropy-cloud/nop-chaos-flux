@@ -77,6 +77,7 @@
 - 当前唯一正式事件入口是 `onClick`。
 - 点击后的业务执行走 `ActionSchema`，不应把字符串脚本重新引回 schema。
 - `example.json` 应至少展示一个最小 `onClick` 用法，避免文档声明与示例脱节。
+- X1 起落地 `component:focus` handle（收口 E2e deferred）。renderer definition 已发布 `componentCapabilityContracts: ['focus']`。详见 `docs/references/component-handle-vocabulary.md`。
 
 ## 9. 数据源、表达式、导入能力接入点
 

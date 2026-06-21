@@ -54,7 +54,7 @@
 
 ## 8. 事件、动作与组件句柄能力
 
-- 与 `input-text` 相同。
+- 与 `input-text` 相同（X1 起共享 `createInputRenderer` 工厂，同样发布 `component:clear`/`reset`/`focus`）。
 
 ## 9. 数据源、表达式、导入能力接入点
 

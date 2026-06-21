@@ -236,6 +236,7 @@ Exit Criteria:
 - Why Not Blocking Closure: design.md §8（dialog）L96 + §8（drawer）L86 注明仍属 future capability 方向。当前打开/关闭走 `openDialog`/`openDrawer`/`closeSurface` action API（runtime-owned，已稳定）。`component:*` capability 是另一套寻址机制（按 ComponentHandle），归 X1 doAction 命令族统一收口。
 - Successor Required: yes
 - Successor Path: X1 plan（doAction 命令族统一）。
+- **已由 X1 plan 收口**（`docs/plans/2026-06-21-2146-1-x1-doaction-command-family-unification-plan.md` Phase 3）：dialog/drawer renderer definition 已发布 `componentCapabilityContracts`（`open`/`close`/`toggle`），通过 `createSurfaceComponentHandle` + `useSurfaceComponentHandle` 注册 handle，与 `openDialog`/`openDrawer`/`closeSurface` action API 共存于同一 `SurfaceRuntime`。详见 `docs/references/component-handle-vocabulary.md` §surface-family 与 `docs/architecture/surface-owner.md` §Surface Handle Coexistence。
 
 ### `allowFullscreen` + setFullScreen / 动画过渡钩子 / lazyRender
 
@@ -268,5 +269,5 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- `component:open`/`component:close`/`component:toggle` capability contracts（归 X1 plan，已裁定 deferred）
+- `component:open`/`component:close`/`component:toggle` capability contracts（归 X1 plan，已裁定 deferred）**已由 X1 plan 收口**（`docs/plans/2026-06-21-2146-1-x1-doaction-command-family-unification-plan.md` Phase 3）：dialog/drawer renderer definition 已发布 `componentCapabilityContracts`，通过 `createSurfaceComponentHandle` + `useSurfaceComponentHandle` 注册 handle，与 `openDialog`/`openDrawer`/`closeSurface` 共存于同一 `SurfaceRuntime`。
 - `draggable` schema 暴露 / `allowFullscreen` / `lazyRender` / 动画钩子（归 E3 P2 评估，design.md 已裁 `暂不实现`）

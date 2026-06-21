@@ -115,6 +115,13 @@ interface InputTreeSchema extends InputSchema {
 
 二者可共享底层 tree option model，但交互外壳不同。
 
+### Component Handles（X1）
+
+- X1 起落地 `component:clear`/`focus` handle（tree 字段不暴露 reset，因 tree state 复杂；详见 vocabulary §字段类型裁定表）。renderer definition 已发布 `componentCapabilityContracts`：
+  - `clear`：清空选中（多选 checkbox → `[]`，单选 → `undefined`）。
+  - `focus`：focus tree 容器内首个可聚焦元素。
+- 详见 `docs/references/component-handle-vocabulary.md`。
+
 ## 9. 数据源与选项模型
 
 - `options` 应优先接最终树节点数组

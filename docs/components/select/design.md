@@ -73,7 +73,11 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 标准 `onChange` 由 field 交互自然触发。
-- 后续可考虑 `component:focus`、`component:open`，但不应暴露底层第三方组件 ref。
+- X1 起落地 `component:clear`/`focus`/`open` handle（收口 E1a deferred）。renderer definition 已发布 `componentCapabilityContracts`：
+  - `clear`：清空选中（单选 → `undefined`，多选 → `[]`）。
+  - `focus`：focus trigger 元素（ComboboxTrigger/ComboboxInput）。
+  - `open`：focus trigger + 打开 dropdown menu（controlled `open` state 驱动 base-ui Combobox）。
+- 详见 `docs/references/component-handle-vocabulary.md`。
 
 ## 9. 数据源、表达式、导入能力接入点
 

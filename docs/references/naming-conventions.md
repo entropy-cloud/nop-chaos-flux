@@ -144,3 +144,15 @@
 本基线是 **X5 的硬前置**：各组件 design.md 的 Flux 决策表（列：能力 / 采纳 / 不采纳 / 理由，主语为 Flux 而非 amis）在裁定每个字段命名时，必须引用本基线 §2 映射表与 §3 不采纳清单。X5 的决策表范本是 `input-number/design.md:13-31`（当前主语仍为 AMIS，X5 翻转为 Flux 主语），本基线应与之相容。
 
 如 X5 实施中发现某 shadcn 映射需修订，回写本基线 §2 并记 `Last Updated`（见 plan Non-Blocking Follow-ups）。
+
+---
+
+## 6. Component Handle 命名（X1）
+
+X1（`docs/plans/2026-06-21-2146-1-x1-doaction-command-family-unification-plan.md`）补齐 component handle 命名基线。详见 `docs/references/component-handle-vocabulary.md`。
+
+- handle 名一律**小写连字符**核心词：`clear`/`reset`/`focus`/`open`/`close`/`toggle`/`refresh`/`submit`/`validate`。
+- 既有 camelCase 动作型方法（`setValue`/`getValue`/`getValues`/`setValues`/`getSelection`/`setSelection`/`getEditorView`/`resize`/`cancel`/`start`）保留，不强制 rename。
+- 新增 handle 优先用 vocabulary 核心词；动作型特化语义允许保留特化名。
+- data-source `refreshSource`（action API）与 `component:refresh`（capability）**共存**（裁定 (a)，见 vocabulary §data-source-refresh）。
+- code-editor `clear`/`reset`/`focus` **保持现状**（裁定：已是标准 vocabulary）。

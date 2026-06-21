@@ -95,6 +95,13 @@ interface TreeSelectSchema extends InputSchema {
 
 二者共享树 option model，但不共享同一交互壳。
 
+### Component Handles（X1）
+
+- X1 起落地 `component:clear`/`focus` handle。renderer definition 已发布 `componentCapabilityContracts`：
+  - `clear`：清空选中。
+  - `focus`：focus tree-select trigger 按钮。
+- 详见 `docs/references/component-handle-vocabulary.md`。
+
 ## 9. Searchable Baseline + E2d 数据源
 
 - 当 `searchable=true` 时，popup 内的树搜索必须提供本地 query 输入、zero-results empty state 和 clear affordance 的完整基础微交互。

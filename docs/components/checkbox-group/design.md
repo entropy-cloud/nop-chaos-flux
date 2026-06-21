@@ -64,6 +64,7 @@
 - 主要交互是 `onChange`。
 - E2c 内建全选/清空句柄：`checkAll: true` 时顶部「Select All」Checkbox —— 点击（unchecked/indeterminate →）选中所有当前非 disabled 可选 option（受 `maxSelected` 钳制）；点击（checked →）清空所有可选 option 值。无需外部 action 组合。
 - 选择约束：`maxSelected` 到达上限时未选项 disabled；`minSelected` 已选数等于下限时取消被阻止（即时反馈，对称）。
+- X1 起落地 `component:focus` handle（choice 字段不暴露 clear/reset，语义不清）。renderer definition 已发布 `componentCapabilityContracts: ['focus']`。
 
 ## 9. 数据源、表达式、导入能力接入点
 

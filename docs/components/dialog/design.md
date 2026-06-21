@@ -95,11 +95,16 @@ Current live implementation note:
 
 ## 8. 事件、动作与组件句柄能力
 
-- 当前 live baseline 仍以 `openDialog` / `closeSurface` 为正式入口；`component:open`、`component:close`、`component:toggle` 仍属于 future capability 方向，不应伪装成已落地句柄。
+- X1 起落地 `component:open`、`component:close`、`component:toggle` handle（dialog renderer definition 已发布 `componentCapabilityContracts`），与既有 `openDialog`/`closeSurface` action API **共存**。
+- **共存关系**（X1 裁定，详见 `docs/references/component-handle-vocabulary.md` §surface-family 与 `docs/architecture/surface-owner.md` §Surface Handle Coexistence）：
+  - `openDialog`/`closeSurface`（action API）= 跨 target，surface body 可在 action 内联声明（ad-hoc surface）。
+  - `component:open`/`close`/`toggle`（capability handle）= 同 component，操作已声明的 declarative dialog 实例（target 必须是已渲染 dialog 节点）。
+  - 二者 lower 到同一 `SurfaceRuntime` 内核（同一 surface stack、focus/dismiss/scope 规则），不存在双状态源。
+  - authoring 建议：declarative dialog 用 `component:*`；ad-hoc 弹层用 `openDialog`。
 - `onOpen`、`onClose` 通过 action schema 触发。
 - `example.json` 应同时展示 `onOpen` / `onClose` 的最小事件示例。
-- 如果未来补齐 `component:open` / `component:close`，它们解决的也只是 surface control，不应替代 dialog 内 form 的 `component:submit` 或其他更具体 semantic owner 入口。
-- 内置动作 authoring 应优先使用 `openDialog` / `closeSurface`；runtime 内部不应为 `dialog` 单独再长出第二套 open/close 内核。
+- `component:open` / `component:close` 只解决 surface control，不替代内部 form 的 `component:submit` 等更具体 semantic owner 入口。
+- Failure paths：`x1-open-no-target`（目标未注册）、`x1-close-not-open`（已 closed 时 close → `{ok:true, skipped:true}`）。
 
 ## 9. 数据源、表达式、导入能力接入点
 

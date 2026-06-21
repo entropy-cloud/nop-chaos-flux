@@ -78,7 +78,12 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 当前交互通过标准输入行为和表单 runtime 完成。
-- 后续如需 `component:focus`、`component:setValue`，应遵循统一 field handle 语言。
+- X1 起落地 `component:clear`/`reset`/`focus` handle（renderer definition 已发布 `componentCapabilityContracts`，共享 `useInputComponentHandle` hook + `createInputComponentHandle` 工厂）。详见 `docs/references/component-handle-vocabulary.md`。
+  - `clear`：清空值为 `''`（disabled/readOnly 时 `{ok:true, skipped:true}`）。
+  - `reset`：还原到 mount 时捕获的 initial value。
+  - `focus`：focus 底层 `<input>` 元素（卸载时 `{ok:false, code:'not-mounted'}`，`when:false` 时 `{ok:false, code:'not-visible'}`）。
+- 与 `form.reset` 的语义区别：`form.reset` 还原整个表单；`component:reset`（field-level）只还原单个字段。
+- input-email/input-password 共享同一 `createInputRenderer` 工厂，因此同样发布 clear/reset/focus。
 
 ## 9. 数据源、表达式、导入能力接入点
 

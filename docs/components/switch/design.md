@@ -39,7 +39,7 @@
 ## 8. 事件、动作与组件句柄能力
 
 - 标准切换走 `onChange`。
-- 若需要外部强制切换，后续可以通过统一 field handle 暴露 `component:setValue`。
+- X1 起落地 `component:focus` handle（boolean 字段不暴露 clear/reset，语义不清；详见 vocabulary §字段类型裁定表）。renderer definition 已发布 `componentCapabilityContracts: ['focus']`。
 
 ## 9. 数据源、表达式、导入能力接入点
 

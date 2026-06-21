@@ -200,7 +200,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- `component:focus`/`component:open` 句柄归 X1（doAction 命令族统一）——E1a Non-Blocking Follow-ups 已路由。
+- `component:focus`/`component:open` 句柄归 X1（doAction 命令族统一）——E1a Non-Blocking Follow-ups 已路由。**已由 X1 plan 收口**（`docs/plans/2026-06-21-2146-1-x1-doaction-command-family-unification-plan.md` Phase 2）：button renderer definition 已发布 `componentCapabilityContracts: ['focus']`，通过 `useInputComponentHandle` 注册 handle（`component:open` 不属于 button 范围，已由 select / dialog / drawer 落地）。
 - `loadingOn` 若后续需要与 `loading` 并存的独立 expression gate（当前由 expression-string `loading` 子sume），归后续增强评估。
 
 ## Closure

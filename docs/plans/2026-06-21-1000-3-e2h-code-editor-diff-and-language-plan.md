@@ -237,6 +237,7 @@ Exit Criteria:
 - Why Not Blocking Closure: 本 plan 实现 `component:clear`/`reset`/`focus` 采用 form 句柄命名风格（`component:<verb>`）。X1（doAction 命令族统一）落地后可能统一为不同命名规范。当前命名可用，X1 统一时回头对齐（non-breaking rename）。
 - Successor Required: yes
 - Successor Path: X1 doAction 命令族统一 plan。
+- **已由 X1 plan 收口**（`docs/plans/2026-06-21-2146-1-x1-doaction-command-family-unification-plan.md` Phase 1 裁定）：保持现状（已是 Flux 标准 vocabulary，`clear`/`reset`/`focus` 与 `docs/references/component-handle-vocabulary.md` 完全一致，无需 non-breaking rename）。
 
 ## Non-Blocking Follow-ups
 
@@ -256,6 +257,6 @@ Closure Audit Evidence:
 Follow-up:
 
 - 独立审阅者执行 closure-audit（human gate）。
-- X1 doAction 命令族统一时对齐 `component:clear`/`reset`/`focus` 命名（non-breaking rename）。
+- X1 doAction 命令族统一时对齐 `component:clear`/`reset`/`focus` 命名（non-breaking rename）。**已由 X1 plan 裁定**：保持现状（已是 Flux 标准 vocabulary，无需 rename）。
 - colorize 只读高亮 deferred to E3（optimization candidate）。
 - diff 模式 `readOnlyOriginal` 配置 / `editorId` 可配置 / per-language `{lang}-editor` renderer type / minimap / amis size 仍按 design.md §2 `暂不实现`。
