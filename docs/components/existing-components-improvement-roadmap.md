@@ -1,6 +1,6 @@
 # Existing Components Improvement Roadmap
 
-> Last Updated: 2026-06-21 (E2e done)
+> Last Updated: 2026-06-21 (E2g done)
 > Source: `docs/components/existing-components-improvement-analysis.md`（v2 分析报告）、`docs/components/amis-baseline-matrix.md`
 > 关联：`roadmap.md`（新增组件，独立）、`mobile-roadmap.md`（移动端响应式，独立）
 
@@ -50,7 +50,7 @@
 - E2d 树族异步与级联: `done`
 - E2e button 能力补齐: `done`
 - E2f 表面族统一收口: `todo`
-- E2g form shell 增强: `todo`
+- E2g form shell 增强: `done`
 - E2h code-editor diff + 语言: `todo`
 - X1 doAction 命令族统一: `todo`
 - X2 可阻止事件: `todo`

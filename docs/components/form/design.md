@@ -15,29 +15,29 @@
 
 > Flux 决策主语。amis 仅作参考之一，**非标尺**。Flux 按 `existing-components-improvement-analysis.md` §0.2 原则裁决，命名对齐 X3 基线（`docs/references/naming-conventions.md` §1/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。
 
-| 能力                                                                                 | 采纳                | 不采纳                                                                                                                   | 理由                                                                                                          |
-| ------------------------------------------------------------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `body`/`actions` region、`data` 初始值                                               | **实现**            | —                                                                                                                        | 当前基线                                                                                                      |
-| `mode: normal\|horizontal` + `labelAlign`/`labelWidth`/`gap`                         | **实现**（见 §13）  | —                                                                                                                        | 当前基线                                                                                                      |
-| `statusPath`/`valuesPath` 只读发布                                                   | **实现**            | —                                                                                                                        | 当前基线                                                                                                      |
-| `hiddenFieldPolicy`                                                                  | **实现**            | —                                                                                                                        | 当前基线                                                                                                      |
-| 事件 `initAction`/`submitAction`/`onSubmitSuccess`/`onSubmitError`/`onValidateError` | **实现**            | —                                                                                                                        | 当前基线                                                                                                      |
-| 组件句柄 `component:submit`/`validate`/`reset`/`setValue`/`setValues`/`getValues`    | **实现**            | —                                                                                                                        | 当前基线                                                                                                      |
-| `$form` reactive 注入、提交失败聚焦首无效字段、`FormLayoutContext`                   | **实现**            | —                                                                                                                        | 当前基线                                                                                                      |
-| `columnCount` 多列表单布局                                                           | **计划实现（E2g）** | —                                                                                                                        | 高频表单布局需求                                                                                              |
-| `inline`/flex mode（amis 4 模式 → Flux 当前仅 normal/horizontal）                    | **计划实现（E2g）** | —                                                                                                                        | 模式枚举扩展                                                                                                  |
-| `submitOnChange`                                                                     | **计划实现（E2g）** | —                                                                                                                        | 搜索/筛选表单常见                                                                                             |
-| `preventEnterSubmit`                                                                 | **计划实现（E2g）** | —                                                                                                                        | 避免误提交                                                                                                    |
-| `autoFocus`                                                                          | **计划实现（E2g）** | —                                                                                                                        | 表单可用性                                                                                                    |
-| `scrollToFirstError`                                                                 | **计划实现（E2g）** | —                                                                                                                        | 当前仅 focus 无 scroll                                                                                        |
-| `static` 只读预览模式                                                                | **计划实现（E2g）** | —                                                                                                                        | 详情页常用                                                                                                    |
-| `rules` 跨字段组合校验                                                               | **计划实现（E2g）** | —                                                                                                                        | 当前仅单字段校验                                                                                              |
-| 组件级请求/生命周期                                                                  | —                   | **不采纳**：amis `api`/`submitApi`/`initApi`/`asyncApi`、async submit 轮询（`asyncApi`+`checkInterval`+`finishedField`） | 请求下沉 `submitAction`/`initAction` action graph（见 §4、§9，X3 §1/§3）；async 轮询走 data-source 统一请求层 |
-| amis `wizard`/step mode                                                              | —                   | **不采纳**                                                                                                               | 独立组件族，归主 roadmap wizard                                                                               |
-| `persistData`/`persistDataKeys`/`clearPersistDataAfterSubmit`（localStorage 草稿）   | —                   | **不采纳**                                                                                                               | 状态管理职责，不进组件（X3 §3 路由持久化）                                                                    |
-| `promptPageLeave`/`promptPageLeaveMessage`                                           | —                   | **不采纳**                                                                                                               | 宿主路由职责（X3 §3）                                                                                         |
-| `redirect`/`reload`/`target`                                                         | —                   | **不采纳**                                                                                                               | 走 action graph 组合（X3 §3）                                                                                 |
-| `debug`/`debugConfig` 调试面板                                                       | —                   | **不采纳**                                                                                                               | 独立 scope-debug renderer                                                                                     |
+| 能力                                                                                 | 采纳               | 不采纳                                                                                                                   | 理由                                                                                                          |
+| ------------------------------------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `body`/`actions` region、`data` 初始值                                               | **实现**           | —                                                                                                                        | 当前基线                                                                                                      |
+| `mode: normal\|horizontal` + `labelAlign`/`labelWidth`/`gap`                         | **实现**（见 §13） | —                                                                                                                        | 当前基线                                                                                                      |
+| `statusPath`/`valuesPath` 只读发布                                                   | **实现**           | —                                                                                                                        | 当前基线                                                                                                      |
+| `hiddenFieldPolicy`                                                                  | **实现**           | —                                                                                                                        | 当前基线                                                                                                      |
+| 事件 `initAction`/`submitAction`/`onSubmitSuccess`/`onSubmitError`/`onValidateError` | **实现**           | —                                                                                                                        | 当前基线                                                                                                      |
+| 组件句柄 `component:submit`/`validate`/`reset`/`setValue`/`setValues`/`getValues`    | **实现**           | —                                                                                                                        | 当前基线                                                                                                      |
+| `$form` reactive 注入、提交失败聚焦首无效字段、`FormLayoutContext`                   | **实现**           | —                                                                                                                        | 当前基线                                                                                                      |
+| `columnCount` 多列表单布局                                                           | **实现**           | —                                                                                                                        | 高频表单布局需求                                                                                              |
+| `inline`/flex mode（amis 4 模式 → Flux 当前 normal/horizontal/inline）               | **实现**           | —                                                                                                                        | 模式枚举扩展                                                                                                  |
+| `submitOnChange`                                                                     | **实现**           | —                                                                                                                        | 搜索/筛选表单常见；debounce 300ms，仅当 `submitAction` 配置时生效，跳过 init 快照                             |
+| `preventEnterSubmit`                                                                 | **实现**           | —                                                                                                                        | 避免误提交；默认 Enter 触发 submit（当 `submitAction` 配置时），`preventEnterSubmit: true` 显式禁用           |
+| `autoFocus`                                                                          | **实现**           | —                                                                                                                        | 表单可用性                                                                                                    |
+| `scrollToFirstError`                                                                 | **实现**           | —                                                                                                                        | 现有 focus-on-first-invalid 之上追加 `scrollIntoView`                                                         |
+| `static` 只读预览模式                                                                | **实现**           | —                                                                                                                        | 详情页常用；仅经 `FormLayoutContext.staticReadOnly` 传播 readOnly 到字段层，actions 区域不隐藏                |
+| `rules` 跨字段组合校验                                                               | **实现**           | —                                                                                                                        | 当前仅单字段校验；form 级 rules 通过 `compileFormLevelValidationModel` 注入到对应子字段的 validation 节点     |
+| 组件级请求/生命周期                                                                  | —                  | **不采纳**：amis `api`/`submitApi`/`initApi`/`asyncApi`、async submit 轮询（`asyncApi`+`checkInterval`+`finishedField`） | 请求下沉 `submitAction`/`initAction` action graph（见 §4、§9，X3 §1/§3）；async 轮询走 data-source 统一请求层 |
+| amis `wizard`/step mode                                                              | —                  | **不采纳**                                                                                                               | 独立组件族，归主 roadmap wizard                                                                               |
+| `persistData`/`persistDataKeys`/`clearPersistDataAfterSubmit`（localStorage 草稿）   | —                  | **不采纳**                                                                                                               | 状态管理职责，不进组件（X3 §3 路由持久化）                                                                    |
+| `promptPageLeave`/`promptPageLeaveMessage`                                           | —                  | **不采纳**                                                                                                               | 宿主路由职责（X3 §3）                                                                                         |
+| `redirect`/`reload`/`target`                                                         | —                  | **不采纳**                                                                                                               | 走 action graph 组合（X3 §3）                                                                                 |
+| `debug`/`debugConfig` 调试面板                                                       | —                  | **不采纳**                                                                                                               | 独立 scope-debug renderer                                                                                     |
 
 **BY-DESIGN**：请求下沉 action graph 是架构选择（非缺口）；`submitApi` 与 data-source 的边界统一见 §16。
 
@@ -52,9 +52,18 @@
 ## 4. schema 设计
 
 - 目标导出字段为 `body`、`actions`、`data`、`statusPath`、`valuesPath`、`initAction`、`submitAction`、`onSubmitSuccess`、`onSubmitError`、`onValidateError`。
+- E2g 增强字段（8 组）：
+  - `columnCount?: number` — body 容器使用 CSS grid 多列布局（`repeat(N, minmax(0, 1fr))`）；`< 1` clamp 到 `1`；`1` 时不应用 grid（默认纵向流式）。
+  - `mode?: 'normal' | 'horizontal' | 'inline'` — `inline` 让 body 使用 `nop-form-body--inline` flex-row 类，actions 区域可内联。
+  - `submitOnChange?: boolean` — truthy 时订阅 form store values，debounce（300ms）后触发 `submit()`；仅当 `submitAction` 配置时生效；init 快照不触发。
+  - `preventEnterSubmit?: boolean` — 默认 Enter 在 form shell 内触发 submit（当 `submitAction` 配置时，且 target 非 textarea/button/link/contenteditable）；`preventEnterSubmit: true` 显式禁用。
+  - `autoFocus?: boolean` — mount 后自动 focus body 内首个 `input/select/textarea/[data-slot="combobox"]`；无目标则空操作。
+  - `scrollToFirstError?: boolean` — 在现有 focus-on-first-invalid 行为之上，额外调用 `scrollIntoView({ behavior: 'smooth', block: 'center' })`。
+  - `static?: boolean | string` — truthy 时经 `FormLayoutContext.staticReadOnly` 传播 `readOnly` 到所有子字段（复用 `FormFieldPresentationSnapshot.readOnly`）。actions 区域不隐藏（预览态可能仍需可见的"返回编辑"等按钮）。
+  - `rules?: FormCrossFieldRule[]` — form 级跨字段校验规则；每项 `{ rule: 'equalsField' | 'notEqualsField'; field: string; target: string; message?: string }`，编译时翻译为挂在 `field` 字段节点上的 `{ kind: '<ruleKind>', path: target, message }`，并加入 `dependents[target]` 以触发联动重校验。
 - `statusPath` 用于把当前 form 的只读语义状态摘要发布到外层 scope。
 - `valuesPath` 用于把当前 form 的只读 values snapshot 发布到外层 scope。
-- `name` 仍是 form owner identity，不应在组件文档里被解释成“自动对外发布路径”；外部值发布边界见 `docs/architecture/form-external-publication-and-reserved-bindings.md`。
+- `name` 仍是 form owner identity，不应在组件文档里被解释成"自动对外发布路径"；外部值发布边界见 `docs/architecture/form-external-publication-and-reserved-bindings.md`。
 - `data` 的正式语义是 form owner 的 initial values snapshot：如果其中含表达式，应在 form 创建时基于 parent lexical scope 求值一次，再把结果写入 form-owned working state。
 - `form.data` 不是 live binding。parent scope 后续变化默认不应覆盖 form 内已经初始化或已编辑的值；需要重同步时应通过显式 `reset`、`setValues`、`initAction` 或 remount 完成。
 - 提交逻辑继续以 action/runtime 为主，不直接把请求逻辑塞进 renderer JSX。
@@ -67,6 +76,10 @@
 - `statusPath`: `value`
 - `valuesPath`: `value`
 - `initAction`、`submitAction`、`onSubmitSuccess`、`onSubmitError`、`onValidateError`: `event`
+- E2g 字段分类：
+  - `columnCount`、`submitOnChange`、`preventEnterSubmit`、`autoFocus`、`scrollToFirstError`、`rules`: `value`（form schema 上的结构配置）
+  - `static`: `value`（影响子字段 readOnly，传播通过 `FormLayoutContext.staticReadOnly`）
+  - `mode` 扩展为三态（`'normal' | 'horizontal' | 'inline'`），分类仍为 `value`
 
 ## 6. regions 与 slot 约定
 
@@ -82,12 +95,20 @@
 - form subtree 外若需要读取同一状态，应通过 `statusPath` 读取只读 summary DTO，而不是通过 `id` / `name` 做隐式查找。
 - form subtree 外若需要读取当前 values，应通过 `valuesPath` 读取只读 values snapshot，而不是扩大默认 `formName.*` sibling 可见性。
 - `$form`、`statusPath`、`valuesPath` 都不暴露底层 store 或可调用方法。
+- `submitOnChange` 的 debounce 状态由 form shell 内部维护（`useEffect` + `setTimeout`，300ms）。重渲染或 form owner 切换时清理 in-flight timer。`submitOnChange` 不写入 `$form` / `statusPath` / `valuesPath`。
+- `static` 预览态通过 `FormLayoutContext.staticReadOnly` 传播，不进入 form store。子字段的 `useFieldPresentation` 读取 context 并将 `staticReadOnly` 与字段自身的 `readOnly` 取或运算。
+- form 级 `rules` 在 form shell 内通过 `compileFormLevelValidationModel` 后处理合入 `validationPlan`，注入到对应子字段节点的 `rules` 数组与 `dependents` 图。rules 本身不进入 form store，也不作为 `$form` 字段。
 
 ## 8. 事件、动作与组件句柄能力
 
 - `form` 应长期支持 `component:submit`、`component:reset`、`component:validate` 一类句柄能力。
 - `component:setValue`、`component:setValues` 也属于合理的 form instance capability。
 - 当前动作和事件语义应以 `FormRuntime` 暴露的 API 为准。
+- **Enter key 处理契约（E2g）**：form shell 的 `<section>` 监听 `onKeyDown`：
+  - 默认行为：当用户在 form body 内按 Enter，且事件 target 不是 `textarea`/`button`/`a`/`contenteditable`，且 `submitAction` 已配置时，`preventDefault()` 并调用 `ownedForm.submit()`。
+  - `preventEnterSubmit: true` 时，handler 提前返回，不触发 submit。这是唯一的禁用路径。
+  - 该行为对齐 AMIS 默认（`Form.preventEnterSubmitDefault: false`）+ 用户对 form 的 Enter 提交预期。
+  - **不**把 `<section>` 改为 `<form>` 元素（见 Non-Goals）；Enter 处理通过 React `onKeyDown` 实现。
 
 ## 9. 数据源、表达式、导入能力接入点
 
@@ -117,30 +138,47 @@
 
 ### 13.1 Form mode
 
-Form 通过 `mode` 控制全局标签位置，所有字段默认继承：
+Form 通过 `mode` 控制全局标签位置与 body 布局，所有字段默认继承：
 
-| `mode`         | 标签位置   | 布局方式         | 对应 AMIS                 |
-| -------------- | ---------- | ---------------- | ------------------------- |
-| `"normal"`     | 输入框上方 | 纵向排列         | AMIS `mode: "normal"`     |
-| `"horizontal"` | 输入框左侧 | flex/grid 行布局 | AMIS `mode: "horizontal"` |
+| `mode`         | 标签位置   | 布局方式                        | 对应 AMIS                 |
+| -------------- | ---------- | ------------------------------- | ------------------------- |
+| `"normal"`     | 输入框上方 | 纵向排列                        | AMIS `mode: "normal"`     |
+| `"horizontal"` | 输入框左侧 | flex/grid 行布局                | AMIS `mode: "horizontal"` |
+| `"inline"`     | 输入框左侧 | flex-row 内联（actions 可同行） | AMIS `mode: "inline"`     |
 
 默认值为 `"normal"`。
+
+#### 13.1.1 `columnCount` 多列布局
+
+`columnCount?: number` 在任何 `mode` 下都可叠加使用。当 `columnCount > 1` 时，form body 容器使用 CSS grid：
+
+```css
+display: grid;
+grid-template-columns: repeat(columnCount, minmax(0, 1fr));
+```
+
+- `columnCount` 不影响 actions 区域（actions 始终在 body 之外，独立排列）。
+- `columnCount <= 1`：不应用 grid（保持默认纵向流式）。
+- `inline` 模式下 `columnCount` 不生效（`inline` 强制 flex-row，二者冲突时以 `inline` 优先）。
+- `columnCount` 经 `FormLayoutContext.columnCount` 传播，子 fieldset 可感知（但当前子 fieldset 自身不消费该值，预留扩展）。
 
 ### 13.2 Form 级标签配置
 
 ```ts
 interface FormSchema extends BaseSchema {
-  mode?: 'normal' | 'horizontal';
+  mode?: 'normal' | 'horizontal' | 'inline';
   labelAlign?: 'top' | 'left' | 'right';
   labelWidth?: string | number;
+  columnCount?: number;
 }
 ```
 
-| 字段         | 类型                         | 说明                                                                     | 对应 AMIS                                            |
-| ------------ | ---------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
-| `mode`       | `'normal' \| 'horizontal'`   | 表单布局模式                                                             | `Form.mode`                                          |
-| `labelAlign` | `'top' \| 'left' \| 'right'` | 标签文本对齐方向，默认 `"top"`                                           | `Form.labelAlign`                                    |
-| `labelWidth` | `string \| number`           | 标签列宽度（如 `"120px"`、`2` 表示 grid 比例），仅 `horizontal` 模式生效 | `Form.horizontal.leftFixed` / `Form.horizontal.left` |
+| 字段          | 类型                                   | 说明                                                                           | 对应 AMIS                                            |
+| ------------- | -------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `mode`        | `'normal' \| 'horizontal' \| 'inline'` | 表单布局模式                                                                   | `Form.mode`                                          |
+| `labelAlign`  | `'top' \| 'left' \| 'right'`           | 标签文本对齐方向，默认 `"top"`                                                 | `Form.labelAlign`                                    |
+| `labelWidth`  | `string \| number`                     | 标签列宽度（如 `"120px"`、`2` 表示 grid 比例），仅 `horizontal` 模式生效       | `Form.horizontal.leftFixed` / `Form.horizontal.left` |
+| `columnCount` | `number`                               | body 容器 CSS grid 列数；`> 1` 时启用 grid；`<= 1` 时不应用 grid（见 §13.1.1） | AMIS `Form.columnCount`                              |
 
 ### 13.3 传播机制
 
