@@ -14,8 +14,8 @@
     "typecheck": "pnpm typecheck"
   },
   "prompts": {
-    "multiAudit": "docs/skills/multi-dimensional-audit-prompt.md",
-    "openAudit": "docs/skills/open-ended-audit-prompt.md"
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
   },
   "commitFormat": "feat(<scope>): <description>"
 }

@@ -1,0 +1,21 @@
+{
+  "name": "components-improvement",
+  "description": "Improve already-implemented runtime renderers: capability gaps (select search/multi, table resize/sticky/aggregation, crud polling/collapsible-query, form shell, button icon/loading/tooltip, dialog/drawer size/Esc), naming standardization (shadcn/ui alignment), and contract-drift fixes (input-text minLength/maxLength/pattern, tree cascade, crud selection fields, condition-builder showIf/selectMode). Driven by existing-components-improvement-roadmap.md. amis is reference only, NOT the yardstick; requests sink to data-source; no frontend export; chart stays recharts.",
+  "roadmapPath": "docs/components/existing-components-improvement-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": "packages",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "feat(<scope>): <description>"
+}
