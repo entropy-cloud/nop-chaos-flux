@@ -11,6 +11,7 @@ export interface SelectOptionSchema {
   label: string;
   value: string | number | boolean;
   disabled?: boolean;
+  disabledTip?: string;
 }
 
 export type SelectOptionsValue = SelectOptionSchema[] | SourceSchema;
@@ -88,6 +89,9 @@ export interface RadioGroupSchema extends InputSchema {
 
 export interface CheckboxGroupSchema extends InputSchema {
   options?: SelectOptionsValue;
+  checkAll?: boolean;
+  maxSelected?: number;
+  minSelected?: number;
 }
 
 export interface InputTreeSchema extends InputSchema {

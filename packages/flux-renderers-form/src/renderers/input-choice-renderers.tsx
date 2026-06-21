@@ -35,7 +35,6 @@ import {
 import { XIcon } from 'lucide-react';
 import { useFormFieldController } from '../field-utils.js';
 import type {
-  CheckboxGroupSchema,
   CheckboxSchema,
   RadioGroupSchema,
   SelectOptionGroup,
@@ -44,7 +43,12 @@ import type {
   TextareaSchema,
 } from '../schemas.js';
 
-type ChoiceOption = { label: string; value: string | number | boolean; disabled?: boolean };
+export type ChoiceOption = {
+  label: string;
+  value: string | number | boolean;
+  disabled?: boolean;
+  disabledTip?: string;
+};
 
 const stringValueAdapter = stringAdapter();
 const booleanValueAdapter = booleanStringAdapter();
@@ -68,8 +72,9 @@ const checkboxGroupAdapter: ValueAdapter<unknown, unknown[]> & { __syncIn: true;
     return Array.isArray(value) ? value : [];
   },
 };
+export { checkboxGroupAdapter };
 
-function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
+export function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
   if (sourceState?.status !== 'error') {
     return undefined;
   }
@@ -90,11 +95,11 @@ function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
   return t('flux.form.failedToLoadOptions');
 }
 
-function getChoiceOptionKey(value: ChoiceOption['value']): string {
+export function getChoiceOptionKey(value: ChoiceOption['value']): string {
   return String(value);
 }
 
-function sanitizeChoiceOptions(value: unknown): ChoiceOption[] {
+export function sanitizeChoiceOptions(value: unknown): ChoiceOption[] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -104,7 +109,12 @@ function sanitizeChoiceOptions(value: unknown): ChoiceOption[] {
       return [];
     }
 
-    const candidate = entry as { label?: unknown; value?: unknown; disabled?: unknown };
+    const candidate = entry as {
+      label?: unknown;
+      value?: unknown;
+      disabled?: unknown;
+      disabledTip?: unknown;
+    };
     if (
       typeof candidate.label !== 'string' ||
       !(
@@ -121,6 +131,7 @@ function sanitizeChoiceOptions(value: unknown): ChoiceOption[] {
         label: candidate.label,
         value: candidate.value,
         disabled: candidate.disabled === true ? true : undefined,
+        disabledTip: typeof candidate.disabledTip === 'string' ? candidate.disabledTip : undefined,
       },
     ];
   });
@@ -680,73 +691,3 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
   );
 }
 
-export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema>) {
-  const name = String(props.props.name ?? '');
-  const { value, handlers, presentation } = useFormFieldController(name, {
-    adapter: checkboxGroupAdapter,
-    disabled: props.props.disabled,
-    required: props.props.required,
-    readOnly: props.props.readOnly,
-  });
-  const selectedValues = value as unknown[];
-  const options = sanitizeChoiceOptions(props.props.options);
-  const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
-  const loading = optionsSourceState?.loading === true;
-  const errorMessage = getSourceErrorMessage(optionsSourceState);
-  const errorId = name ? `${name}-source-error` : undefined;
-  const groupLabel = String((props.props.label ?? name) || '') || undefined;
-
-  return (
-    <div
-      className={cn('nop-checkbox-group-wrapper', props.meta.className)}
-      data-slot="checkbox-group-wrapper"
-      role="group"
-      aria-label={groupLabel}
-      aria-required={props.props.required ? true : undefined}
-      aria-readonly={presentation.readOnly ? true : undefined}
-      aria-describedby={errorMessage ? errorId : undefined}
-    >
-      {loading ? (
-        <span data-slot="checkbox-group-loading" role="status" aria-live="polite">
-          <Spinner className="size-4" aria-hidden="true" />
-          <span>{t('flux.common.loading')}</span>
-        </span>
-      ) : null}
-      {options.map((option) => {
-        const checked = selectedValues.some((candidate: unknown) => Object.is(candidate, option.value));
-
-        return (
-          <Label key={getChoiceOptionKey(option.value)} data-slot="checkbox-group-item">
-            <Checkbox
-              checked={checked}
-              disabled={loading || presentation.effectiveDisabled}
-              aria-invalid={presentation.showError ? true : undefined}
-              aria-label={option.label}
-              aria-describedby={errorMessage ? errorId : undefined}
-              aria-errormessage={errorMessage ? errorId : undefined}
-              onFocus={handlers.onFocus}
-              onCheckedChange={(nextChecked) => {
-                if (!presentation.interactive) {
-                  return;
-                }
-
-                const checkedValue = Boolean(nextChecked);
-                const nextValue = checkedValue
-                  ? [...selectedValues, option.value]
-                  : selectedValues.filter((candidate: unknown) => !Object.is(candidate, option.value));
-                handlers.onChange(nextValue);
-              }}
-              onBlur={handlers.onBlur}
-            />
-            <span data-slot="checkbox-group-item-label">{option.label}</span>
-          </Label>
-        );
-      })}
-      {errorMessage ? (
-        <span id={errorId} data-slot="checkbox-group-error" role="alert">
-          {errorMessage}
-        </span>
-      ) : null}
-    </div>
-  );
-}

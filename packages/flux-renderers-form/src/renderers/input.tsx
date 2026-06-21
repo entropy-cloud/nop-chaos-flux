@@ -24,13 +24,13 @@ import type {
 } from '../schemas.js';
 import { validateHiddenFieldPolicySchema } from './hidden-field-policy-schema.js';
 import {
-  CheckboxGroupRenderer,
   CheckboxRenderer,
   RadioGroupRenderer,
   SelectRenderer,
   SwitchRenderer,
   TextareaRenderer,
 } from './input-choice-renderers.js';
+import { CheckboxGroupRenderer } from './checkbox-group-renderer.js';
 import { InputNumberRenderer } from './input-number-renderer.js';
 
 export function validateInputFieldSchema(context: RendererSchemaValidationContext<BaseSchema>) {
@@ -427,6 +427,9 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      { key: 'checkAll', kind: 'prop', valueType: 'boolean' },
+      { key: 'maxSelected', kind: 'prop' },
+      { key: 'minSelected', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
