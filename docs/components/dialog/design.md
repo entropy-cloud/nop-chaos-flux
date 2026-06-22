@@ -140,3 +140,26 @@ Current live implementation note:
 
 - 最大风险是 surface family 统一收口做一半，留下 declarative 与 action-opened 两套并存实现。
 - `dialog` 的第一优先级不是继续扩字段，而是先完成统一 surface runtime 的收口。
+
+## 14. 响应式行为
+
+引用 `docs/architecture/mobile-responsive-baseline.md`（M0 基线 + M0.1 基础设施 §4.2 FullScreen Dialog）。
+
+| 断点              | 行为                                                                         | 实现方式                                                                                                         |
+| ----------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | dialog 自动全屏覆盖（`fullSize: 'viewport'`，`width: 100vw; height: 100vh`） | `dialog-host.tsx` `DialogView` 消费 `useIsMobile()`；当 schema 未显式声明 `size` 时强制 `effectiveSize = 'full'` |
+| ≥ 768px (desktop) | 按 schema `size` / `width` / `height` 渲染（行为不变）                       | 同 E2f 后 `buildSurfaceInlineStyle` 路径                                                                         |
+
+### 实现细节
+
+- **schema 透明**：无新 `mobileUI` 标志位、无 `*-mobile` 组件。mobile 分支完全在 host 内部，由 `useIsMobile()`（断点 768）决定。
+- **显式 size 优先**：当 schema 显式声明 `size`（包括 `size: 'full'`）时，mobile 不再强制覆盖（用户可显式要求非全屏 sized dialog）。仅当 `typeof size !== 'string'`（即未声明）时才在 mobile 强制 `effectiveSize = 'full'`。
+- **观察性 marker**：mobile 全屏覆盖时 `DialogContent` 额外发布 `data-mobile-fullscreen="true"`，便于 e2e / 调试识别。
+- **安全区域**：全屏覆盖时 body 应配合 `nop-safe-top` / `nop-safe-bottom`（M0.1a）适配 notch（由 dialog body className 注入）。
+- **z-index**：经 `DialogContent` 内 `useGlobalZIndex()`（M0.1d）取值，多浮层叠加按打开顺序正确叠放。
+- **close 行为**：`closeOnOutsideClick` / `closeOnEsc` / `showCloseButton` 在 mobile 不变；全屏 dialog 仍按 schema 配置响应遮罩点击 / ESC。
+
+### 触摸适配
+
+- 触摸目标：close button 复用 ui DialogContent 默认尺寸（满足 baseline §3）。
+- 全屏覆盖避免小屏 dialog 内容被裁剪；正文滚动归 `DialogBody`。

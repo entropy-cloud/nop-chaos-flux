@@ -20,7 +20,7 @@
 | `@nop-chaos/flux-renderers-mobile` 包 | **5 个组件已落地**（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar 实现 + focused 单测 + `mobileRendererDefinitions` + `registerMobileRenderers` + playground `/mobile-components` 演示页 + e2e 验证）。M5 工作项已完成。 |
 | M0 响应式基线                         | `done`（文档基线 + M0.1 基础设施代码已落地，见下）。                                                                                                                                                                                    |
 | M0.1 基础设施代码                     | `done`（safe-area/hairline/haptics/z-index 栈已落地于 `packages/ui/src/`，详见 `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）。                                                                                     |
-| M1–M4 实现进度                        | **0%**。桌面组件响应式改进均未开始。M5 已 `done`。                                                                                                                                                                                      |
+| M1–M4 实现进度                        | **M1 done**（select/tree-select bottom-sheet、dialog 全屏、drawer 底部、tabs swipe、table expand 卡片，见 `docs/plans/2026-06-22-2335-1-m1-high-frequency-controls-responsive-plan.md`）。M2–M4 **0%**。M5 已 `done`。                  |
 | design.md 立约                        | ✅ 已存在：`pull-refresh`/`infinite-scroll`/`swipe-cell`/`countdown`/`notice-bar`/`bottom-sheet`/`use-touch` 共 7 份（99~152 行），属**文档先行**，现在代码已对齐契约。                                                                 |
 
 **读法约定**：本文中"已有初稿/design.md 已立约"一律指**契约文档**已写，不是代码已实现。代码是否落地只看本表，不看 design.md 是否存在。
@@ -71,7 +71,7 @@
 
 - M0 响应式基线与断点规范: `done`（含基础设施代码，见 M0.1）
 - M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈，4 子项，建议 1 plan 4 phase）: `done`（`docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）
-- M1 高频交互控件响应式（select/tree/table/dialog/tabs，5 子项 M1a~M1d）: `todo`
+- M1 高频交互控件响应式（select/tree/table/dialog/tabs，5 子项 M1a~M1d）: `done`（`docs/plans/2026-06-22-2335-1-m1-high-frequency-controls-responsive-plan.md`）
 - M2 表单控件触摸适配（input/textarea/checkbox/switch/button，3 子项 M2a~M2c）: `todo`
 - M3 容器与布局响应式（page/flex/container/grid，2 子项 M3a~M3b）: `todo`
 - M4 数据展示响应式（crud/cards/list/chart，3 子项 M4a~M4c）: `todo`
@@ -135,14 +135,16 @@
 
 > M0.1 是 M1–M5 的**软前置**（虚线依赖）：不硬阻塞现有 `todo` 推进，但 M5 移动端原生组件落地前最好先有 M0.1c（haptics）与 M0.1d（z-index 栈）。
 
-### M1 — 高频交互控件响应式
+### M1 — 高频交互控件响应式 ✅
 
-| Work item | 组件               | 行为                                                                               | design.md 更新                                           | 依赖                 |
-| --------- | ------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------- | -------------------- |
-| **M1a**   | select/tree-select | 小屏 bottom-sheet 选项面板（复用 surface runtime + `@nop-chaos/ui` Sheet）         | `select/design.md`、`tree-select/design.md` 增响应式小节 | M0、改进 roadmap E1a |
-| **M1b**   | table              | 小屏卡片堆叠（复用 `responsive.mode:'expand'`；评估是否需更丰富 mobile card 布局） | `table/design.md` 增响应式小节                           | M0、改进 roadmap E1b |
-| **M1c**   | dialog/drawer      | 小屏 Dialog 全屏覆盖；Drawer 小屏行为统一                                          | `dialog/design.md`、`drawer/design.md` 增响应式小节      | M0、改进 roadmap E2f |
-| **M1d**   | tabs               | 小屏横向滚动 + swipe 手势                                                          | `tabs/design.md` 增响应式小节                            | M0                   |
+> **代码已落地（执行期完成 2026-06-23）**。select/tree-select 小屏 bottom-sheet、dialog 全屏、drawer 底部统一、tabs 横向滚动 + swipe、table expand 卡片堆叠 + 6 份 design.md 响应式小节 + playground 演示页（`/m1-responsive`）+ e2e 全部交付。Execution plan：`docs/plans/2026-06-22-2335-1-m1-high-frequency-controls-responsive-plan.md`。
+
+| Work item  | 组件               | 行为                                                                                                | design.md 更新                                           | 依赖                 |
+| ---------- | ------------------ | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | -------------------- |
+| **M1a** ✅ | select/tree-select | 小屏 bottom-sheet 选项面板（renderer 内部 `useIsMobile()` + `@nop-chaos/ui` Sheet）                 | `select/design.md`、`tree-select/design.md` 增响应式小节 | M0、改进 roadmap E1a |
+| **M1b** ✅ | table              | 小屏卡片堆叠（复用 `responsive.mode:'expand'`；mobile card 视觉增强 `nop-hairline` + 触摸 padding） | `table/design.md` 增响应式小节                           | M0、改进 roadmap E1b |
+| **M1c** ✅ | dialog/drawer      | 小屏 Dialog 自动全屏（`fullSize: 'viewport'`）；Drawer 小屏 side 视觉层切 bottom                    | `dialog/design.md`、`drawer/design.md` 增响应式小节      | M0、改进 roadmap E2f |
+| **M1d** ✅ | tabs               | 小屏横向滚动（`overflow-x-auto` + scrollIntoView）+ swipe 手势（内联 50px 阈值）                    | `tabs/design.md` 增响应式小节                            | M0                   |
 
 ### M2 — 表单控件触摸适配
 

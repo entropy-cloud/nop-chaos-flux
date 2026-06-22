@@ -124,3 +124,26 @@ Current live implementation note:
 ## 13. 风险、取舍与后续阶段
 
 - 需要避免 dialog/drawer 在统一 surface family 收口过程中再次分裂成 declarative 与 action-opened 两套生命周期模型；二者差异应尽量只保留在 `kind` 和 `side`。
+
+## 14. 响应式行为
+
+引用 `docs/architecture/mobile-responsive-baseline.md`（M0 基线 + M0.1 基础设施）。
+
+| 断点              | 行为                                                                               | 实现方式                                                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | drawer `side` 视觉层强制切为 `bottom`（底部滑入），与 mobile bottom-sheet 体验一致 | `dialog-host.tsx` `DrawerView` 消费 `useIsMobile()`；`effectiveSide = isMobile && schemaSide !== 'bottom' ? 'bottom' : schemaSide` |
+| ≥ 768px (desktop) | 按 schema `side`（left/right/top/bottom）渲染（行为不变）                          | 同 E2f 后 direction 映射路径                                                                                                       |
+
+### 实现细节
+
+- **schema 透明 / 视觉层调整**：mobile 仅覆盖 `Drawer` 的 `direction` prop 与视觉，**不改 `SurfaceEntry.side` 值**（避免状态不一致）。schema 侧语义保留原始 side；resize/重开仍读 schema 原值。
+- **观察性 marker**：mobile 覆盖方向时 `DrawerContent` 额外发布 `data-mobile-side-overridden="true"`，便于 e2e / 调试识别。
+- **已是 bottom 不重复覆盖**：`schemaSide === 'bottom'` 时不触发覆盖（marker 也不发布）。
+- **size / width / height**：mobile 不强制 size（与 dialog 不同），保留 schema 配置；如需全屏 drawer 仍可显式 `size: 'full'`。
+- **z-index**：经 `DrawerContent` 内 `useGlobalZIndex()`（M0.1d）取值。
+- **close 行为**：`closeOnOutside` / `closeOnEsc` / `showCloseButton` / `resizable` 在 mobile 不变。
+
+### 触摸适配
+
+- 底部滑入符合移动端单手操作习惯（baseline §4 BottomSheet 约定）。
+- 全宽底部 drawer 配合 `nop-safe-bottom`（M0.1a）适配 home indicator。

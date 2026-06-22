@@ -215,3 +215,42 @@
   - **showOnOverflow 首次渲染 false-negative**（Failure Path `popover-showonoverflow-false-negative`）：ref 首次挂载前判定为不显示，下次重绘/resize 再判定（useLayoutEffect 监听）。极少数情况下图标延迟出现，属可观测预期行为。
   - **Base UI portal 行为差异**：Base UI Popover portal 在 trigger row 卸载/裁剪时自动关闭浮层（与 Radix 行为对齐）；Phase 1 已抽查实际行为一致，无需补充显式 unmount 逻辑。
 - **E1c copyable 单元格剪贴板降级**：`navigator.clipboard.writeText` 拒绝时回退 `document.execCommand('copy')`，再失败静默 + dev warn（Failure Path `e1c-copy-clipboard-denied`）。
+
+## 13. 响应式行为
+
+引用 `docs/architecture/mobile-responsive-baseline.md`（M0 基线 + M0.1 基础设施 §4.3 CardStack）。
+
+| 断点              | 行为                                                                                                             | 实现方式                                                                                                                                                                                                |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | 表格切到 `responsive.mode: 'expand'` 卡片堆叠布局：primary 列保留为表格行，其余列折叠为可展开的 card-like detail | `useIsBelowResponsiveBreakpoint()`（JS `window.innerWidth` + resize）+ `splitResponsiveColumns()` 切分 primary/hidden 列；hidden 列在 expand detail row 内以 `table-responsive-expanded-item` card 渲染 |
+| ≥ 768px (desktop) | 完整表格列（行为不变）                                                                                           | hidden 列回退为空，`responsiveExpandActive = false`                                                                                                                                                     |
+
+### M1b 评估结论（裁定 A）
+
+M1b 评估现有 `responsive.mode: 'expand'` 在移动端的 card 布局：**裁定 (A) — 现有 expand 已满足移动端需求**，仅做视觉增强。理由：
+
+- expand 模式已在 E1b/E1c 验证（`splitResponsiveColumns` 正确切分 primary/hidden 列，expand detail row 渲染 hidden 列为 label-value card）。
+- mobile 不需要独立的 `responsive.mode: 'card'`（纯卡片堆叠，无表格行）——会引入更大 scope 且与现有 expand 语义重叠。`responsive.mode: 'card'` 记为 Non-Blocking Follow-up，待未来有明确场景再评估。
+
+### M1b mobile 视觉增强（已落地）
+
+- expand detail row 容器加 `nop-safe-bottom`（M0.1a）适配 notch；mobile 额外加 `p-2` padding（`sm:p-1` 收窄）。
+- 每个 hidden 列 card（`table-responsive-expanded-item`）加 `nop-hairline nop-hairline--bottom`（M0.1b）做 0.5px 分隔线；mobile padding 提升到 `py-3`（`sm:py-2`）适配触摸目标（baseline §3）。
+- 表格根节点发布 `data-responsive-expand="true"` marker（仅 mobile + `mode: 'expand'` 激活时），便于 e2e / 调试识别当前在 mobile card 布局。
+
+### schema 字段
+
+```typescript
+interface TableResponsiveConfig {
+  mode?: 'table' | 'expand'; // 默认 'table'；'expand' 启用窄屏列折叠
+  breakpoint?: 'xs' | 'sm' | 'md' | 'lg' | number; // 默认 'md' (768)
+  expandTrigger?: 'button' | 'row'; // 默认 'button'；'row' 允许整行点击展开
+  defaultExpanded?: boolean; // 默认 false；true 时 mobile 默认展开所有 detail row
+}
+```
+
+### 触摸适配
+
+- 触摸目标：expand/collapse 按钮复用 ui 默认尺寸；mobile card 内 label-value padding `py-3` 满足 baseline §3。
+- 手势：expand 通过按钮点击或整行点击（`expandTrigger: 'row'`）；无 swipe 手势（表格行内容多样，swipe 易误触）。
+- 软键盘：表格内通常无 input；quick-edit 场景归 E1c quickEdit 路径。

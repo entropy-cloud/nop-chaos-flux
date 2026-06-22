@@ -130,3 +130,30 @@ interface TreeSelectSchema extends InputSchema {
 - `tree-select` 与 `input-tree` 可以共享 tree option helper 层，但不应强行共享同一个交互 controller：`tree-select` 额外拥有 trigger/popup open-state、placeholder/trigger text、popover close/open 等外壳语义。
 - 若未来扩展到 async search、lazy expand、批量展开或 richer controlled open/expanded state，再评估是否需要进一步下沉到 shared runtime helper；在此之前，本地 controller hook 仍应视为 renderer 内部实现细节。
 - 实现时应遵循 `docs/references/renderer-implementation-guidelines.md`：优先最小正确实现，先抽 pure helpers，再在行为复杂时抽 local controller hook，不机械追求 renderless/headless 化。
+
+## 12. 响应式行为
+
+引用 `docs/architecture/mobile-responsive-baseline.md`（M0 基线 + M0.1 基础设施）。
+
+| 断点              | 行为                                                                                  | 实现方式                                                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | tree 选项面板从 Popover 切换为 `@nop-chaos/ui` `Sheet`（`side="bottom"`）底部滑入面板 | renderer 内部 `useIsMobile()` 运行时分支；trigger 渲染为 Button，Sheet 内复用 `TreeOptionList`（expand/collapse/search/lazy/remote 不变） |
+| ≥ 768px (desktop) | Popover（行为不变）                                                                   | 同 E2d 后 Popover + `TreeOptionList` 渲染路径                                                                                             |
+
+### 实现细节
+
+- **schema 透明**：无新 `type`、无 `mobileUI` 标志位。mobile 分支完全在 renderer 内部，由 `useIsMobile()`（断点 768）决定。
+- **trigger**：mobile 触发器是 `Button`（`variant="outline"`，`data-slot="tree-select-mobile-trigger"`），与 desktop 共享 `tree-select-value` / `tree-select-icons` 子 marker。
+- **Sheet 内容**：`SheetContent side="bottom"` + `nop-safe-bottom`（M0.1a）+ `nop-hairline--bottom`（M0.1b）；Sheet 内 `TreeOptionList` 完整保留 expand/collapse、search、lazy children、remote search、虚拟滚动语义。
+- **选择行为**：与 desktop 一致（单选/多选由 `treeMode` 决定）；Sheet 不因选择自动关闭（树选择通常需多步浏览，保持打开更符合预期）。
+- **clearable**：trigger 右侧清除按钮在 mobile/desktop 下一致。
+- **z-index**：Sheet 经 `SheetContent` 内 `useGlobalZIndex()`（M0.1d）取值。
+
+### 触摸适配
+
+- 触摸目标：tree 节点复用 `TreeOptionList` 内部尺寸（满足 baseline §3）。
+- 手势：Sheet 遮罩点击关闭；expand/collapse 走 chevron 点击。
+
+## 13. 实现拆分建议（原 §11 内容延续）
+
+响应式 mobile 分支不引入新 controller；`sheetOpen` 状态归 renderer 本地管理，与 `query` 状态同级。

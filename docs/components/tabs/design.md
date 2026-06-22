@@ -511,3 +511,40 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 - 外部动作与组件句柄能力以 `action-scope-and-imports.md`、`component-resolution.md` 为准
 - 样式输出边界以 `styling-system.md` 为准
 - `source` 和最终模型边界以 `api-data-source.md`、`flux-dsl-vm-extensibility.md` 为准
+
+## 21. 响应式行为
+
+引用 `docs/architecture/mobile-responsive-baseline.md`（M0 基线 + M0.1 基础设施 + §5 触摸手势约定）。
+
+| 断点              | 行为                                                                                                                | 实现方式                                                                                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | TabsList 横向滚动（`overflow-x-auto` + 隐藏滚动条）；active tab 自动 scrollIntoView；panels 区支持左右 swipe 切 tab | renderer 内部 `useIsMobile()` 运行时分支；`useEffect` 监听 active value 调 `scrollIntoView({ inline: 'nearest' })`；内联 `onTouchStart`/`onTouchMove`/`onTouchEnd`（deltaX threshold 50px） |
+| ≥ 768px (desktop) | 标准 TabsList（无横向滚动注入，无 swipe 监听）                                                                      | 同 E3 后 Tabs 原语渲染路径                                                                                                                                                                  |
+
+### M1d Decision：swipe 触摸检测方案（裁定 A）
+
+`flux-renderers-basic` 不能反向依赖 `flux-renderers-mobile`（`useTouch` 所在包）。两个方案：
+
+- **(A)** tabs 内联最小水平 swipe 检测（`onTouchStart`/`onTouchMove`/`onTouchEnd` + deltaX threshold ~50px + 方向判定，约 20 行）。
+- **(B)** 将 `useTouch` 上移到 `@nop-chaos/ui` hooks 并从 mobile re-export。
+
+**裁定 (A)**：tabs 只需简单左右 swipe 切换，不需要 useTouch 的完整状态机（方向/threshold/reset）。内联避免包依赖方向问题 + 不触发 M5 contract 变更。
+
+### 实现细节
+
+- **横向滚动**：mobile + horizontal orientation 时 TabsList 加 `overflow-x-auto` + `nop-scrollbar-hide`（隐藏滚动条，`[scrollbar-width:none]` + `[&::-webkit-scrollbar]:hidden`）。desktop 不注入这些 class（避免影响非溢出场景）。
+- **scrollIntoView**：mobile 下 `useEffect` 监听 `ownedAxis.value` 变化，查找 `[data-slot="tabs-trigger"][data-active="true"]` 调 `scrollIntoView({ inline: 'nearest', block: 'nearest' })`，保证 active tab 可见。
+- **swipe 手势**：mobile + horizontal 时 panels 外包一层 `data-slot="tabs-panels-swipe"` div，绑定 `onTouchStart`/`onTouchMove`/`onTouchEnd`。阈值 `TABS_SWIPE_THRESHOLD = 50`（> 50px 触发切换），`TABS_SWIPE_DIRECTION_THRESHOLD = 10`（区分水平/垂直）。
+  - **左滑（deltaX < -50）**：切到下一个 tab（若有）。
+  - **右滑（deltaX > 50）**：切到上一个 tab（若有）。
+  - **垂直优先**：move 阶段 `deltaY > deltaX && deltaY > 10` 时取消 swipe（不干扰垂直滚动）。
+  - **边界**：第一个 tab 左滑无效；最后一个 tab 右滑无效；disabled tab 不切换。
+  - **触发**：`ownedAxis.setValue(nextValue)` + `props.events.onChange` payload（与点击切换一致）。
+- **仅 mobile 注入**：desktop 不渲染 swipe div（无 onTouch\* 监听），避免干扰 mouse 选择。
+- **sidebar / vertical tabs**：不注入横向滚动 + swipe（vertical tabs 是桌面布局概念，移动端走 M3a page 骨架模式）。
+
+### 触摸适配
+
+- 触摸目标：TabsTrigger 复用 ui 默认尺寸（满足 baseline §3）。
+- 手势：水平 swipe（baseline §5 `swipe-left`/`swipe-right`，阈值对齐 baseline `Swipe 完成阈值 30px`，本组件取更保守的 50px 避免误触）。
+- 软键盘：tabs 内通常无 input；如有 form 内容，归 form renderer 处理。

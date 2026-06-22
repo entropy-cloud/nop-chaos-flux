@@ -106,3 +106,34 @@
 - Combobox 迁移后，`SelectOptionSchema.value` 从 `string` 放宽为 `string | number | boolean`；renderer 内部以 `Object.is` 匹配 option，不需 amis 值编码。
 - 虚拟滚动（`virtual: true`）对 base-ui Combobox 的键盘导航有影响：仅可见 option 参与导航（scroll 后其余 option 进入 DOM）。对 < 100 option 的场景无影响（走 `StaticComboboxList`）。
 - option 模板 region（`optionTemplate`）已由 E3 落地：受控参数化 region，per-option scope 绑定，`ComboboxItem value={option}` 选中值匹配契约不变。虚拟滚动 + region 兼容（自定义内容随虚拟项挂载/卸载，见 Failure Path `option-template-virtual-compat`）；region 编译失败时回退 `option.label` 纯文本（Failure Path `option-template-region-compile-fail`）。
+
+## 13. 响应式行为
+
+引用 `docs/architecture/mobile-responsive-baseline.md`（M0 基线 + M0.1 基础设施）。
+
+| 断点              | 行为                                                                                      | 实现方式                                                                                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| < 768px (mobile)  | 选项面板从 Combobox Popover 切换为 `@nop-chaos/ui` `Sheet`（`side="bottom"`）底部滑入面板 | renderer 内部 `useIsMobile()` 运行时分支；trigger 渲染为 Button（显示当前选中 label），Sheet 内复用 option/groups/optionTemplate/search/clearable/loading/error 渲染逻辑 |
+| ≥ 768px (desktop) | Combobox Popover（行为不变）                                                              | 同 E1a 后 Combobox 原语族渲染路径                                                                                                                                        |
+
+### 实现细节
+
+- **schema 透明**：无新 `type`、无 `mobileUI` 标志位、无 `*-mobile` 组件。mobile 分支完全在 renderer 内部，由 `useIsMobile()`（断点 768）决定。
+- **trigger**：mobile 触发器是普通 `Button`（`variant="outline"`），右侧带 `ChevronDownIcon`；显示当前选中 label（多选为逗号拼接），无选中时显示 placeholder。
+- **Sheet 内容**：`SheetContent side="bottom"` + `nop-safe-bottom`（M0.1a）+ `nop-hairline--bottom`（M0.1b）分隔 header。可选 search input（`searchable: true`）+ 滚动 option 列表（每行 `min-h-touch` 满足触摸目标）。
+- **选择行为**：单选点击 option 后立即 `handlers.onChange` + 关闭 Sheet；多选点击 option 切换选中态但保持 Sheet 打开。
+- **clearable**：mobile 触发器右侧额外渲染清除按钮（`select-mobile-clear` slot），与 desktop `ComboboxClear` 对齐。
+- **optionTemplate region**：mobile 列表项复用 `optionTemplate` region 渲染逻辑（与 desktop `ComboboxItem` 一致），region 失败回退 `option.label`。
+- **z-index**：Sheet 经 `SheetContent` 内 `useGlobalZIndex()`（M0.1d）取值，多浮层叠加按打开顺序正确叠放。
+- **disabled / readOnly**：mobile 触发器 `disabled`，不响应点击。
+- **根 marker 不变**：`data-slot="select-wrapper"` + `nop-select-wrapper` class 不变；mobile 仅在内部增加 `data-slot="select-mobile-trigger"` / `select-mobile-option` / `select-mobile-sheet` 等子 marker。
+
+### 触摸适配
+
+- 触摸目标：option 行 `min-h-touch`（44px），符合 baseline §3。
+- 手势：Sheet 遮罩点击关闭（base-ui 默认），无下滑手势关闭（归 Non-Blocking Follow-up）。
+- 软键盘：search input 聚焦时 Sheet 内容区可滚动（`overflow-y-auto`），不被键盘遮挡。
+
+## 14. 风险、取舍与后续阶段（合并）
+
+原 §12 内容向上合并到本节后续维护。响应式 mobile 分支不引入新 schema surface；mobile 虚拟化（> 100 option 时 mobile Sheet 内是否虚拟化）归 Non-Blocking Follow-up。
