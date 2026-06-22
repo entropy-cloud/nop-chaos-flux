@@ -412,6 +412,9 @@ importers:
         specifier: ^15.7.3
         version: 15.7.3
     devDependencies:
+      '@lezer/common':
+        specifier: ^1.2.0
+        version: 1.5.1
       '@nop-chaos/flux-renderers-basic':
         specifier: workspace:*
         version: link:../flux-renderers-basic

@@ -278,3 +278,28 @@
   overflow: auto;
   max-height: 170px;
 }
+
+.nop-code-editor[data-colorize-container] {
+  border: 1px solid var(--nop-field-border, #d1d5db);
+  border-radius: 6px;
+  background-color: var(--nop-code-editor-surface, hsl(var(--background)));
+  overflow: hidden;
+}
+
+.nop-code-editor[data-colorize-container][data-theme='dark'] {
+  background-color: var(--nop-code-editor-dark-surface, #282c34);
+}
+
+.nop-code-editor-colorize {
+  white-space: pre-wrap;
+  word-break: break-word;
+  tab-size: 2;
+}
+
+.nop-code-editor-colorize code {
+  font-family: inherit;
+}
+
+.nop-code-editor-colorize span {
+  font-family: inherit;
+}

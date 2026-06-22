@@ -22,6 +22,7 @@ export interface CodeEditorSchema extends BaseSchema {
   mode?: EditorMode;
   value?: string;
   diffValue?: string;
+  colorize?: boolean;
   placeholder?: string;
   width?: number | string;
   height?: number | string;

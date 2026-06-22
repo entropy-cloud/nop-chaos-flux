@@ -8,6 +8,7 @@ import { cn } from '@nop-chaos/ui';
 import { Maximize2Icon, XIcon } from 'lucide-react';
 import { ToolbarButton } from './code-editor-renderer/toolbar-button.js';
 import type { CodeEditorRendererProps } from './code-editor-renderer/shared.js';
+import { ColorizeView } from './code-editor-renderer/colorize.js';
 import { useCodeEditorBinding } from './code-editor-renderer/use-code-editor-binding.js';
 import { useCodeEditorHandle } from './code-editor-renderer/use-code-editor-handle.js';
 import { useSQLEditorSlots, hasSQLToolbarFlags } from './code-editor-renderer/sql-editor-assembly.js';
@@ -53,6 +54,7 @@ export const codeEditorFieldRules: SchemaFieldRule[] = [
   ...formFieldChromeRules,
   { key: 'value', kind: 'prop' },
   { key: 'diffValue', kind: 'prop' },
+  { key: 'colorize', kind: 'prop', valueType: 'boolean' },
   { key: 'language', kind: 'prop' },
   { key: 'mode', kind: 'prop' },
   { key: 'placeholder', kind: 'prop' },
@@ -118,6 +120,8 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
 
   const diffValue = props.props.diffValue;
   const isDiffMode = typeof diffValue === 'string';
+  const colorizeFlag = props.props.colorize === true;
+  const isColorizeMode = colorizeFlag && !isDiffMode;
 
   const resolvedVariables = useResolvedVariables(expressionConfig, scope);
   const resolvedFunctions = useResolvedFunctions(expressionConfig);
@@ -231,6 +235,35 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   const showToolbar =
     (allowFullscreen && !isFullscreen) || hasSQLToolbar;
 
+  if (isColorizeMode) {
+    return (
+      <div
+        className={cn('nop-code-editor', props.meta.className)}
+        data-theme={editorTheme}
+        data-colorize-container=""
+        data-readonly
+        style={!isFullscreen ? containerStyle : undefined}
+      >
+        <ColorizeView
+          value={value}
+          language={language}
+          editorTheme={editorTheme}
+          className="nop-code-editor-colorize"
+          style={{
+            margin: 0,
+            padding: '8px 12px',
+            fontFamily:
+              "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+            fontSize: '13px',
+            lineHeight: 1.5,
+            overflow: autoHeight ? undefined : 'auto',
+            height: '100%',
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn('nop-code-editor', props.meta.className)}
@@ -307,6 +340,13 @@ export const codeEditorRendererDefinition: RendererDefinition = {
       description:
         'Original text for side-by-side diff rendering. When set, the editor switches to a two-pane MergeView (left = diffValue, right = value).',
       editorType: 'textarea',
+    },
+    colorize: {
+      shape: { kind: 'boolean' },
+      displayName: 'Colorize',
+      description:
+        'When true (and diffValue is not set), render the value as a read-only statically-highlighted <pre> without instantiating an EditorView. Orthogonal to readOnly.',
+      editorType: 'boolean',
     },
     placeholder: {
       shape: { kind: 'string' },

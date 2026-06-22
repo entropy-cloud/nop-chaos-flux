@@ -56,6 +56,10 @@ export {
 export { useCodeMirror } from './use-code-mirror.js';
 export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror.js';
 
+export { getLanguageParser } from './extensions/base.js';
+export { ColorizeView } from './code-editor-renderer/colorize.js';
+export type { ColorizeViewProps } from './code-editor-renderer/colorize.js';
+
 export { CodeEditorRenderer };
 export const codeEditorRendererDefinition: typeof _codeEditorRendererDefinition = {
   ..._codeEditorRendererDefinition,

@@ -5,15 +5,16 @@ import { foldGutter } from '@codemirror/language';
 import { indentWithTab, history } from '@codemirror/commands';
 import { keymap } from '@codemirror/view';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { javascript } from '@codemirror/lang-javascript';
-import { sql, MySQL, PostgreSQL, SQLite, MSSQL } from '@codemirror/lang-sql';
-import { json, jsonParseLinter } from '@codemirror/lang-json';
-import { html } from '@codemirror/lang-html';
-import { css } from '@codemirror/lang-css';
-import { python } from '@codemirror/lang-python';
-import { markdown } from '@codemirror/lang-markdown';
-import { yaml } from '@codemirror/lang-yaml';
-import { xml } from '@codemirror/lang-xml';
+import { javascript, javascriptLanguage, typescriptLanguage } from '@codemirror/lang-javascript';
+import { sql, MySQL, PostgreSQL, SQLite, MSSQL, StandardSQL } from '@codemirror/lang-sql';
+import { json, jsonParseLinter, jsonLanguage } from '@codemirror/lang-json';
+import { html, htmlLanguage } from '@codemirror/lang-html';
+import { css, cssLanguage } from '@codemirror/lang-css';
+import { python, pythonLanguage } from '@codemirror/lang-python';
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { yaml, yamlLanguage } from '@codemirror/lang-yaml';
+import { xml, xmlLanguage } from '@codemirror/lang-xml';
+import type { Parser } from '@lezer/common';
 import { linter } from '@codemirror/lint';
 import { autocompletion } from '@codemirror/autocomplete';
 import { expressionCompletionSource } from './expression/completion.js';
@@ -92,6 +93,35 @@ export function createSQLDialectExtension(dialect: SQLDialectType): Extension {
     case 'standard':
     default:
       return sql();
+  }
+}
+
+export function getLanguageParser(language: EditorLanguage): Parser | null {
+  switch (language) {
+    case 'expression':
+    case 'javascript':
+      return javascriptLanguage.parser;
+    case 'typescript':
+      return typescriptLanguage.parser;
+    case 'sql':
+      return StandardSQL.language.parser;
+    case 'json':
+      return jsonLanguage.parser;
+    case 'html':
+      return htmlLanguage.parser;
+    case 'css':
+      return cssLanguage.parser;
+    case 'python':
+      return pythonLanguage.parser;
+    case 'markdown':
+      return markdownLanguage.parser;
+    case 'yaml':
+      return yamlLanguage.parser;
+    case 'xml':
+      return xmlLanguage.parser;
+    case 'plaintext':
+    default:
+      return null;
   }
 }
 

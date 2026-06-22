@@ -48,6 +48,74 @@ test('navigates to code editor page and renders all editor types', async ({ page
   await expect(page.locator('.nop-field').filter({ hasText: 'Read-Only Viewer' })).toBeVisible();
   await expect(page.locator('.nop-field').filter({ hasText: 'CSS Editor' })).toBeVisible();
   await expect(page.locator('.nop-field').filter({ hasText: 'Plain Text' })).toBeVisible();
+  await expect(
+    page.locator('.nop-field').filter({ hasText: 'Colorized JS (read-only highlight)' }),
+  ).toBeVisible();
+  await expect(
+    page.locator('.nop-field').filter({ hasText: 'Colorized SQL (read-only highlight)' }),
+  ).toBeVisible();
+  await expect(
+    page.locator('.nop-field').filter({ hasText: 'Colorized JSON (dark, read-only highlight)' }),
+  ).toBeVisible();
+});
+
+test('colorize renders static highlight without EditorView', async ({ page }) => {
+  await openCodeEditor(page);
+
+  const field = findEditorByLabel(page, 'Colorized JS (read-only highlight)');
+  await expect(field).toBeVisible();
+
+  const container = field.locator('[data-colorize-container]').first();
+  await expect(container).toBeVisible();
+
+  const pre = container.locator('[data-colorize]').first();
+  await expect(pre).toBeVisible();
+
+  await expect(field.locator('.cm-editor')).toHaveCount(0);
+
+  const spanCount = await pre.evaluate((el) => el.querySelectorAll('span[class]').length);
+  expect(spanCount).toBeGreaterThan(0);
+
+  const codeText = await pre.locator('code').innerText();
+  expect(codeText).toContain('function greet');
+  expect(codeText).toContain('Hello');
+});
+
+test('colorize SQL renders highlighted tokens', async ({ page }) => {
+  await openCodeEditor(page);
+
+  const field = findEditorByLabel(page, 'Colorized SQL (read-only highlight)');
+  await expect(field).toBeVisible();
+
+  const pre = field.locator('[data-colorize]').first();
+  await expect(pre).toBeVisible();
+
+  await expect(field.locator('.cm-editor')).toHaveCount(0);
+
+  const spanCount = await pre.evaluate((el) => el.querySelectorAll('span[class]').length);
+  expect(spanCount).toBeGreaterThan(0);
+
+  const codeText = await pre.locator('code').innerText();
+  expect(codeText.toUpperCase()).toContain('SELECT');
+  expect(codeText.toUpperCase()).toContain('FROM');
+});
+
+test('colorize JSON dark theme aligns via data-colorize-theme', async ({ page }) => {
+  await openCodeEditor(page);
+
+  const field = findEditorByLabel(page, 'Colorized JSON (dark, read-only highlight)');
+  await expect(field).toBeVisible();
+
+  const pre = field.locator('[data-colorize]').first();
+  await expect(pre).toBeVisible();
+
+  const theme = await pre.getAttribute('data-colorize-theme');
+  expect(theme).toBe('dark');
+
+  await expect(field.locator('.cm-editor')).toHaveCount(0);
+
+  const spanCount = await pre.evaluate((el) => el.querySelectorAll('span[class]').length);
+  expect(spanCount).toBeGreaterThan(0);
 });
 
 test('SQL enhanced editor has all toolbar buttons', async ({ page }) => {

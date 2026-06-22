@@ -14,6 +14,13 @@ const schema = {
     {
       type: 'form',
       name: 'codeEditorForm',
+      data: {
+        colorizeJs:
+          'function greet(name) {\n  return `Hello, ${name}!`;\n}\n\nconsole.log(greet("world"));',
+        colorizeSql: 'SELECT id, name, email\nFROM users\nWHERE active = 1\nORDER BY name ASC;',
+        colorizeJson:
+          '{\n  "name": "flux",\n  "version": 3,\n  "features": ["diff", "colorize"]\n}',
+      },
       body: [
         {
           type: 'code-editor',
@@ -286,6 +293,31 @@ const schema = {
           language: 'plaintext',
           height: 100,
           placeholder: 'Just plain text...',
+        },
+        {
+          type: 'code-editor',
+          name: 'colorizeJs',
+          label: 'Colorized JS (read-only highlight)',
+          language: 'javascript',
+          colorize: true,
+          height: 160,
+        },
+        {
+          type: 'code-editor',
+          name: 'colorizeSql',
+          label: 'Colorized SQL (read-only highlight)',
+          language: 'sql',
+          colorize: true,
+          height: 120,
+        },
+        {
+          type: 'code-editor',
+          name: 'colorizeJson',
+          label: 'Colorized JSON (dark, read-only highlight)',
+          language: 'json',
+          colorize: true,
+          editorTheme: 'dark',
+          height: 140,
         },
       ],
     },
