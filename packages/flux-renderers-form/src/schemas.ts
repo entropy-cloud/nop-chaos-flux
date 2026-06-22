@@ -54,6 +54,7 @@ export interface SelectOptionGroup {
 
 export interface InputSchema extends BoundFieldSchemaBase {
   placeholder?: string;
+  inputMode?: string;
   minLength?: number;
   maxLength?: number;
   pattern?: string;
@@ -245,6 +246,7 @@ export interface ArrayEditorItem {
 export interface InputNumberSchema extends BoundFieldSchemaBase {
   type: 'input-number';
   placeholder?: string;
+  inputMode?: string;
   min?: number;
   max?: number;
   step?: number;

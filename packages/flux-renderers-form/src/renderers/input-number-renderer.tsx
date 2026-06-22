@@ -1,10 +1,11 @@
 import { useEffect, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { numberAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
-import { Button, cn, Input } from '@nop-chaos/ui';
+import { Button, cn, Input, useIsMobile } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import { useFormFieldController } from '../field-utils.js';
 import type { InputNumberSchema } from '../schemas.js';
+import { scrollRefIntoViewOnMobile, type InputModeValue } from './mobile-touch-utils.js';
 
 const numericAdapter = numberAdapter();
 const INPUT_NUMBER_METHODS = ['clear', 'reset', 'focus'] as const;
@@ -27,6 +28,7 @@ function applyPrecision(value: number, precision: number | undefined): number {
 
 export function InputNumberRenderer(props: RendererComponentProps<InputNumberSchema>) {
   const name = String(props.props.name ?? '');
+  const isMobile = useIsMobile();
   const min = typeof props.props.min === 'number' ? props.props.min : undefined;
   const max = typeof props.props.max === 'number' ? props.props.max : undefined;
   const step = typeof props.props.step === 'number' ? props.props.step : 1;
@@ -45,6 +47,10 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
 
   const numericValue = value as number | undefined;
   const errorId = name ? `${name}-error` : undefined;
+  const inputMode: InputModeValue =
+    typeof props.props.inputMode === 'string' && props.props.inputMode.length > 0
+      ? (props.props.inputMode as InputModeValue)
+      : 'decimal';
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const initialValueRef = useRef<number | undefined>(numericValue);
@@ -200,6 +206,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
         <Input
           ref={inputRef}
           type="number"
+          inputMode={inputMode}
           id={name ? `${name}-control` : undefined}
           name={name || undefined}
           value={numericValue !== undefined ? numericValue : ''}
@@ -215,7 +222,10 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
           max={max}
           step={step}
           className={cn(prefix && 'pl-8', suffix && 'pr-8', showStepper && 'pr-16')}
-          onFocus={handlers.onFocus}
+          onFocus={() => {
+            handlers.onFocus();
+            scrollRefIntoViewOnMobile(isMobile, inputRef);
+          }}
           onChange={(event) => {
             const raw = event.target.value;
             if (raw === '') {

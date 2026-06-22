@@ -16,6 +16,7 @@ import {
   InputGroupInput,
   InputGroupText,
   cn,
+  useIsMobile,
 } from '@nop-chaos/ui';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { Eye, EyeOff, XIcon } from 'lucide-react';
@@ -25,6 +26,7 @@ import type {
 } from '../schemas.js';
 import { validateHiddenFieldPolicySchema } from './hidden-field-policy-schema.js';
 import { useInputSuggest } from './input-suggest.js';
+import { resolveInputMode, scrollRefIntoViewOnMobile } from './mobile-touch-utils.js';
 import {
   CheckboxRenderer,
   RadioGroupRenderer,
@@ -92,6 +94,7 @@ export const inputEnhancementFieldRules: SchemaFieldRule[] = [
   { key: 'trimContents', kind: 'prop', valueType: 'boolean' },
   { key: 'showCounter', kind: 'prop', valueType: 'boolean' },
   { key: 'nativeAutoComplete', kind: 'prop' },
+  { key: 'inputMode', kind: 'prop' },
   { key: 'revealPassword', kind: 'prop', valueType: 'boolean' },
   { key: 'placeholder', kind: 'prop' },
   { key: 'minLength', kind: 'prop' },
@@ -228,6 +231,7 @@ function InputGroupFieldControl(props: InputGroupFieldControlProps) {
 export function createInputRenderer(inputType: string) {
   return function InputRenderer(props: RendererComponentProps<InputSchema>) {
     const name = String(props.props.name ?? '');
+    const isMobile = useIsMobile();
     const { value, handlers, presentation } = useFormFieldController(name, {
       adapter: stringAdapter(),
       disabled: props.props.disabled,
@@ -349,12 +353,15 @@ export function createInputRenderer(inputType: string) {
     const hasInlineEndSlot = Boolean(suffix) || clearable || showCounter || revealEnabled;
     const needsInputGroup = Boolean(prefix) || hasInlineEndSlot;
 
+    const inputMode = resolveInputMode(inputType, props.props.inputMode);
+
     const sharedInputProps: ComponentProps<typeof InputGroupInput> = {
       ref: inputRef,
       type: actualInputType,
       id: name ? `${name}-control` : undefined,
       name: name || undefined,
       value: inputValue,
+      inputMode,
       disabled: presentation.effectiveDisabled,
       readOnly: presentation.readOnly,
       'aria-label': String((props.props.label ?? name) || '') || undefined,
@@ -367,6 +374,7 @@ export function createInputRenderer(inputType: string) {
         void event;
         handlers.onFocus();
         suggest.handleFocus();
+        scrollRefIntoViewOnMobile(isMobile, inputRef);
       },
       onChange: (event: ChangeEvent<HTMLInputElement>) => handlers.onChange(event.target.value),
       onBlur: () => {

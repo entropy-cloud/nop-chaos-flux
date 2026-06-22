@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { stringAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
-import { cn, Textarea } from '@nop-chaos/ui';
+import { cn, Textarea, useIsMobile } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
 import { useFormFieldController } from '../field-utils.js';
 import type { TextareaSchema } from '../schemas.js';
+import { scrollRefIntoViewOnMobile } from './mobile-touch-utils.js';
 
 const stringValueAdapter = stringAdapter();
 const TEXTAREA_METHODS = ['clear', 'reset', 'focus'] as const;
@@ -28,6 +29,7 @@ function resolveTextareaLineHeightPx(el: HTMLElement): number {
 
 export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
   const name = String(props.props.name ?? '');
+  const isMobile = useIsMobile();
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter: stringValueAdapter,
     disabled: props.props.disabled,
@@ -129,7 +131,10 @@ export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) 
       aria-errormessage={presentation.showError ? errorId : undefined}
       placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
       className={props.meta.className}
-      onFocus={handlers.onFocus}
+      onFocus={() => {
+        handlers.onFocus();
+        scrollRefIntoViewOnMobile(isMobile, textareaRef);
+      }}
       onChange={(event) => handlers.onChange(event.target.value)}
       onBlur={handleBlur}
       maxLength={maxLength}

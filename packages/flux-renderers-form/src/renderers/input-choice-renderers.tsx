@@ -41,6 +41,7 @@ import type {
 } from '../schemas.js';
 import { SelectMobile } from './select-mobile-renderer.js';
 import { StaticComboboxList, VirtualizedComboboxList } from './select-combobox-lists.js';
+import { shouldStackChoicesVertically } from './mobile-touch-utils.js';
 
 export type ChoiceOption = {
   [key: string]: SchemaValue;
@@ -480,6 +481,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
 
 export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
   const name = String(props.props.name ?? '');
+  const isMobile = useIsMobile();
   const trueValue = (props.props as CheckboxSchema).trueValue ?? true;
   const falseValue = (props.props as CheckboxSchema).falseValue ?? false;
   const adapter = booleanMappingAdapter(trueValue, falseValue);
@@ -494,7 +496,14 @@ export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) 
   const checked = value as boolean;
 
   return (
-    <Label className={cn('nop-checkbox-wrapper', props.meta.className)} data-slot="checkbox-wrapper">
+    <Label
+      className={cn(
+        'nop-checkbox-wrapper',
+        'nop-haptic',
+        isMobile && 'min-h-11 py-2',
+        props.meta.className,
+      )}
+      data-slot="checkbox-wrapper">
       <Checkbox
         id={name ? `${name}-control` : undefined}
         checked={checked}
@@ -513,6 +522,7 @@ export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) 
 
 export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   const name = String(props.props.name ?? '');
+  const isMobile = useIsMobile();
   const trueValue = (props.props as SwitchSchema).trueValue ?? true;
   const falseValue = (props.props as SwitchSchema).falseValue ?? false;
   const adapter = booleanMappingAdapter(trueValue, falseValue);
@@ -541,7 +551,12 @@ export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   return (
     <Label
       ref={switchRef}
-      className={cn('nop-switch-wrapper', props.meta.className)}
+      className={cn(
+        'nop-switch-wrapper',
+        'nop-haptic',
+        isMobile && 'min-h-11 py-2',
+        props.meta.className,
+      )}
       data-slot="switch-wrapper">
       <Switch
         id={name ? `${name}-control` : undefined}
@@ -563,6 +578,7 @@ export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
 
 export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
   const name = String(props.props.name ?? '');
+  const isMobile = useIsMobile();
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter: stringValueAdapter,
     disabled: props.props.disabled,
@@ -570,6 +586,7 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
     readOnly: props.props.readOnly,
   });
   const options = sanitizeChoiceOptions(props.props.options);
+  const mobileStack = shouldStackChoicesVertically(isMobile, options.length);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = optionsSourceState?.loading === true;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
@@ -595,6 +612,7 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
       ref={radioRef}
       className={cn('nop-radio-group-wrapper', props.meta.className)}
       data-slot="radio-group-wrapper"
+      data-mobile-stack={mobileStack ? 'true' : undefined}
     >
       {loading ? (
         <span data-slot="radio-group-loading" role="status" aria-live="polite">
@@ -604,6 +622,7 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
       ) : null}
       <RadioGroup
         data-slot="radio-group-options"
+        className={mobileStack ? 'flex flex-col gap-1' : undefined}
         value={selectedValue}
         disabled={loading || presentation.effectiveDisabled}
         aria-readonly={presentation.readOnly ? true : undefined}
@@ -617,7 +636,11 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
         onBlur={handlers.onBlur}
       >
         {options.map((option) => (
-          <Label key={getChoiceOptionKey(option.value)} data-slot="radio-group-item">
+          <Label
+            key={getChoiceOptionKey(option.value)}
+            data-slot="radio-group-item"
+            className={cn('nop-haptic', isMobile && 'min-h-11 py-2')}
+          >
             <RadioGroupItem
               value={option.value}
               aria-label={option.label}

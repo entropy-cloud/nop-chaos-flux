@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle, type SourceTransientState } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Checkbox, cn, Label, Spinner } from '@nop-chaos/ui';
+import { Checkbox, cn, Label, Spinner, useIsMobile } from '@nop-chaos/ui';
 import { useFormFieldController } from '../field-utils.js';
 import type { CheckboxGroupSchema } from '../schemas.js';
 import {
@@ -12,11 +12,13 @@ import {
   getSourceErrorMessage,
   sanitizeChoiceOptions,
 } from './input-choice-renderers.js';
+import { shouldStackChoicesVertically } from './mobile-touch-utils.js';
 
 const FOCUS_ONLY_METHODS = ['focus'] as const;
 
 export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema>) {
   const name = String(props.props.name ?? '');
+  const isMobile = useIsMobile();
   const { value, handlers, presentation } = useFormFieldController(name, {
     adapter: checkboxGroupAdapter,
     disabled: props.props.disabled,
@@ -25,6 +27,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
   });
   const selectedValues = value as unknown[];
   const options = sanitizeChoiceOptions(props.props.options);
+  const mobileStack = shouldStackChoicesVertically(isMobile, options.length);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = optionsSourceState?.loading === true;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
@@ -116,8 +119,13 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
   return (
     <div
       ref={wrapperRef}
-      className={cn('nop-checkbox-group-wrapper', props.meta.className)}
+      className={cn(
+        'nop-checkbox-group-wrapper',
+        mobileStack && 'flex flex-col gap-1',
+        props.meta.className,
+      )}
       data-slot="checkbox-group-wrapper"
+      data-mobile-stack={mobileStack ? 'true' : undefined}
       role="group"
       aria-label={groupLabel}
       aria-required={props.props.required ? true : undefined}
@@ -131,7 +139,10 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
         </span>
       ) : null}
       {checkAllEnabled && (selectableOptions.length > 0 || loading) ? (
-        <Label data-slot="checkbox-group-checkall-item">
+        <Label
+          data-slot="checkbox-group-checkall-item"
+          className={cn('nop-haptic', isMobile && 'min-h-11 py-2')}
+        >
           <Checkbox
             data-slot="checkbox-group-checkall"
             checked={checkAllState.checked}
@@ -156,6 +167,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
           <Label
             key={getChoiceOptionKey(option.value)}
             data-slot="checkbox-group-item"
+            className={cn('nop-haptic', isMobile && 'min-h-11 py-2')}
             title={disabledTip}
             data-disabled-tip={disabledTip || undefined}
           >

@@ -9,6 +9,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  useIsMobile,
 } from '@nop-chaos/ui';
 import type { ButtonSchema } from './schemas.js';
 
@@ -16,6 +17,8 @@ const BUTTON_METHODS = ['focus'] as const;
 
 type ButtonVariant = NonNullable<ButtonSchema['variant']>;
 type ButtonSize = NonNullable<ButtonSchema['size']>;
+
+const MOBILE_TOUCH_TARGET_SIZES: readonly ButtonSize[] = ['default', 'lg'];
 
 function renderIconSlot(
   icon: React.ComponentType<Record<string, unknown>> | null,
@@ -40,6 +43,7 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
   const label = props.props.label;
   const variant = (props.props.variant ?? 'default') as ButtonVariant;
   const size = (props.props.size ?? 'default') as ButtonSize;
+  const isMobile = useIsMobile();
 
   const disabled = props.props.disabled === true;
   const loading = props.props.loading === true;
@@ -61,7 +65,12 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
   );
   const trailingSlot = renderIconSlot(rightIconComp, 'inline-end');
 
-  const buttonClass = cn(props.meta.className, block && 'w-full');
+  const mobileTouchTarget = isMobile && MOBILE_TOUCH_TARGET_SIZES.includes(size);
+  const buttonClass = cn(
+    props.meta.className,
+    block && 'w-full',
+    mobileTouchTarget && 'min-h-11',
+  );
 
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
