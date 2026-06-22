@@ -1,9 +1,12 @@
 import { useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import type { ReactNode } from 'react';
 import {
   booleanMappingAdapter,
   stringAdapter,
   type RendererComponentProps,
+  type RenderRegionHandle,
+  type SchemaValue,
   type ValueAdapter,
 } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
@@ -42,6 +45,7 @@ import type {
 } from '../schemas.js';
 
 export type ChoiceOption = {
+  [key: string]: SchemaValue;
   label: string;
   value: string | number | boolean;
   disabled?: boolean;
@@ -128,6 +132,7 @@ export function sanitizeChoiceOptions(value: unknown): ChoiceOption[] {
 
     return [
       {
+        ...(entry as Record<string, unknown>),
         label: candidate.label,
         value: candidate.value,
         disabled: candidate.disabled === true ? true : undefined,
@@ -173,14 +178,39 @@ function matchChoiceLabel(label: string, query: string, ignoreCase: boolean): bo
 const VIRTUAL_ITEM_ESTIMATE = 32;
 const VIRTUAL_OVERSCAN = 6;
 
-function renderComboboxItem(option: ChoiceOption) {
+export type OptionTemplateRenderer = (
+  option: ChoiceOption,
+  index: number,
+) => ReactNode | undefined;
+
+function renderComboboxItem(
+  option: ChoiceOption,
+  index: number,
+  renderOptionTemplate?: OptionTemplateRenderer,
+) {
+  let content: ReactNode = option.label;
+  if (renderOptionTemplate) {
+    try {
+      const custom = renderOptionTemplate(option, index);
+      if (custom !== undefined && custom !== null && custom !== false) {
+        content = custom;
+      }
+    } catch (error) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn(
+          '[flux-select] optionTemplate region render failed; falling back to option.label',
+          error,
+        );
+      }
+    }
+  }
   return (
     <ComboboxItem
       key={getChoiceOptionKey(option.value)}
       value={option}
       disabled={option.disabled}
     >
-      {option.label}
+      {content}
     </ComboboxItem>
   );
 }
@@ -189,6 +219,7 @@ function StaticComboboxList(props: {
   renderGroups: boolean;
   groups: SelectOptionGroup[];
   flatOptions: ChoiceOption[];
+  renderOptionTemplate?: OptionTemplateRenderer;
 }) {
   if (props.renderGroups) {
     return (
@@ -196,20 +227,29 @@ function StaticComboboxList(props: {
         {props.groups.map((group) => (
           <ComboboxGroup key={group.label}>
             <ComboboxLabel>{group.label}</ComboboxLabel>
-            {group.options.map(renderComboboxItem)}
+            {group.options.map((option, index) =>
+              renderComboboxItem(option, index, props.renderOptionTemplate),
+            )}
           </ComboboxGroup>
         ))}
       </ComboboxList>
     );
   }
 
-  return <ComboboxList>{props.flatOptions.map(renderComboboxItem)}</ComboboxList>;
+  return (
+    <ComboboxList>
+      {props.flatOptions.map((option, index) =>
+        renderComboboxItem(option, index, props.renderOptionTemplate),
+      )}
+    </ComboboxList>
+  );
 }
 
 function VirtualizedComboboxList(props: {
   renderGroups: boolean;
   groups: SelectOptionGroup[];
   flatOptions: ChoiceOption[];
+  renderOptionTemplate?: OptionTemplateRenderer;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const flatItems: ChoiceOption[] = props.renderGroups
@@ -248,7 +288,7 @@ function VirtualizedComboboxList(props: {
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
-              {renderComboboxItem(option)}
+              {renderComboboxItem(option, virtualItem.index, props.renderOptionTemplate)}
             </div>
           );
         })}
@@ -296,6 +336,17 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const effectiveDisabled = loading || presentation.effectiveDisabled;
   const interactive = presentation.interactive && !loading;
   const virtualEnabled = virtual && allOptions.length > virtualThreshold;
+
+  const optionTemplateRegion = props.regions.optionTemplate as
+    | RenderRegionHandle<ReactNode>
+    | undefined;
+  const hasOptionTemplate = Boolean(optionTemplateRegion?.templateNode);
+  const renderOptionTemplate: OptionTemplateRenderer | undefined = hasOptionTemplate
+    ? (option, index) =>
+        optionTemplateRegion!.render({
+          bindings: { option, index },
+        }) as ReactNode
+    : undefined;
 
   const [inputValue, setInputValue] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -430,12 +481,14 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
               renderGroups={useGroups}
               groups={visibleGroups}
               flatOptions={visibleOptions}
+              renderOptionTemplate={renderOptionTemplate}
             />
           ) : (
             <StaticComboboxList
               renderGroups={useGroups}
               groups={visibleGroups}
               flatOptions={visibleOptions}
+              renderOptionTemplate={renderOptionTemplate}
             />
           )}
         </ComboboxContent>

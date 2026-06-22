@@ -245,6 +245,34 @@ test.describe('select renderer', () => {
     await page.getByRole('option', { name: 'United Kingdom' }).click();
     await expect(triggerEl).toContainText('uk', { timeout: 5_000 });
   });
+
+  test('write: custom optionTemplate renders rich content and binds the option value on select', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('select');
+
+    const slug = scenarioSlug(
+      'Custom option template (icon + label + description + badge)',
+    );
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+
+    const triggerEl = stage.getByRole('combobox', { name: 'Team Member' });
+    await triggerEl.click();
+
+    // Custom content: both the primary label and the secondary "role" text render per option.
+    const aliceOption = page.getByRole('option').filter({ hasText: 'Alice Chen' });
+    await expect(aliceOption).toBeVisible({ timeout: 5_000 });
+    await expect(aliceOption).toContainText('Frontend Lead');
+
+    await aliceOption.click();
+
+    // After selection, the searchable combobox input shows the option label.
+    await expect(triggerEl).toHaveValue('Alice Chen', { timeout: 5_000 });
+  });
 });
 
 // ---------------------------------------------------------------------------

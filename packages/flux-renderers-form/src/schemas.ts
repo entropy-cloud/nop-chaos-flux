@@ -112,6 +112,7 @@ export interface SelectSchema extends InputSchema {
   searchPlaceholder?: string;
   noResultsText?: string;
   virtual?: boolean;
+  optionTemplate?: BaseSchema[];
 }
 
 export interface TextareaSchema extends InputSchema {

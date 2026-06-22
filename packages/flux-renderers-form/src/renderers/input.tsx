@@ -447,6 +447,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       { key: 'searchPlaceholder', kind: 'prop' },
       { key: 'noResultsText', kind: 'prop' },
       { key: 'virtual', kind: 'prop', valueType: 'boolean' },
+      { key: 'optionTemplate', kind: 'region', params: ['option', 'index'] },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
