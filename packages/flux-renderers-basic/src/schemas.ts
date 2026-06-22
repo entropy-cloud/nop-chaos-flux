@@ -9,6 +9,18 @@ import type {
 
 export type SurfaceSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
+export type FlexDirection = 'row' | 'column' | 'row-reverse' | 'column-reverse';
+
+export type ContainerDirection = 'row' | 'column';
+
+export type ResponsiveBreakpoint = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+
+export type ResponsiveFlexDirection = Partial<Record<ResponsiveBreakpoint, FlexDirection>>;
+
+export type ResponsiveContainerDirection = Partial<Record<ResponsiveBreakpoint, ContainerDirection>>;
+
+export type ResponsiveWrap = Partial<Record<ResponsiveBreakpoint, boolean>>;
+
 export interface PageSchema extends BaseSchema {
   type: 'page';
   title?: string;
@@ -129,7 +141,7 @@ export interface TabsSchema extends BaseSchema {
 
 export interface ContainerSchema extends BaseSchema {
   type: 'container';
-  direction?: 'row' | 'column';
+  direction?: ContainerDirection;
   wrap?: boolean;
   align?: 'start' | 'center' | 'end' | 'stretch';
   gap?: number | string;
@@ -139,6 +151,8 @@ export interface ContainerSchema extends BaseSchema {
   bodyClassName?: string;
   headerClassName?: string;
   footerClassName?: string;
+  responsiveDirection?: ResponsiveContainerDirection;
+  responsiveWrap?: ResponsiveWrap;
 }
 
 export interface FragmentSchema extends BaseSchema {
@@ -216,7 +230,7 @@ export interface BadgeSchema extends BaseSchema {
 
 export interface FlexSchema extends BaseSchema {
   type: 'flex';
-  direction?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
+  direction?: FlexDirection;
   wrap?: boolean;
   align?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
   justify?: 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
@@ -224,6 +238,8 @@ export interface FlexSchema extends BaseSchema {
   /** 间距：命名 token ('none'|'xs'|'sm'|'md'|'lg'|'xl')、数字(px) 或 CSS 值 (如 '1rem') */
   gap?: number | string;
   className?: string;
+  responsiveDirection?: ResponsiveFlexDirection;
+  responsiveWrap?: ResponsiveWrap;
 }
 
 export interface ScopeDebugSchema extends BaseSchema {

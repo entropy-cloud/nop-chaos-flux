@@ -100,13 +100,24 @@
 
 ## 13. 移动端响应式行为
 
-> 响应式基线规范见 `docs/architecture/mobile-responsive-baseline.md`
+> 响应式基线规范见 `docs/architecture/mobile-responsive-baseline.md`。
+>
+> 实现落地于 M3a（`docs/plans/2026-06-23-0410-1-m3-container-and-layout-responsive-plan.md`）。`page` renderer 消费 `@nop-chaos/ui` `useIsMobile()`（阈值 768px，与 M1/M2 一致）。下方断点表反映 live 行为（非理论约定）。
 
-| 断点              | header region          | footer region          | body           | aside            |
-| ----------------- | ---------------------- | ---------------------- | -------------- | ---------------- |
-| < 640px (default) | 顶部固定，安全区域适配 | 底部固定，安全区域适配 | 全宽，无边距   | 折叠，触发式滑出 |
-| ≥ 640px (sm)      | 内联，可选固定         | 可选固定               | 两侧留白       | 可选内联或滑出   |
-| ≥ 768px (md+)     | 内联                   | 内联                   | 居中 max-width | 侧边栏常显       |
+### 断点行为表
+
+| 断点（`useIsMobile()`） | aside                                                                                                                                                                                                                     | header/toolbar                                                                                                                    | footer                                                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| mobile（视口 < 768px）  | **折叠为触发式 Sheet 滑出**（非纯 `hidden`）。`data-slot="page-aside-toggle"`（Menu icon button）触发，`@nop-chaos/ui` Sheet side=`asidePosition`（`left`/`right`），aside 内容渲染于 `data-page-aside-sheet="true"` 内。 | toolbar 区强制 `flex flex-col` 纵列堆叠（与 `toolbarClassName` 经 `cn()` 合并，`flex-row` 由 tailwind-merge 收敛为 `flex-col`）。 | 若 `footerClassName` 含 `fixed`，软键盘弹起时由 VisualViewport hook 注入 `style.bottom: {键盘高度}px`（见下）。否则不动。 |
+| desktop（视口 ≥ 768px） | 按既有 `asidePosition`（`left`/`right`）内联渲染 `data-slot="page-aside"`。                                                                                                                                               | toolbar 不额外加类，按 `toolbarClassName` 渲染。                                                                                  | 不做 VisualViewport 处理；按 `footerClassName` 渲染。                                                                     |
+
+### Decision（aside 小屏策略）
+
+对齐 `mobile-responsive-baseline.md` §7 禁止清单（不新建 `*-mobile` 组件、不引入 `mobileUI` 标志位）。小屏 aside 行为为「**折叠为触发式 Sheet 滑出**」（**非纯 `hidden`**），原因：
+
+- aside 是页面级导航/筛选 region，纯 `hidden` 会让用户在小屏完全失去该 region 入口。
+- 复用 `@nop-chaos/ui` Sheet（已含 z-index 栈 + 触摸关闭 + safe-area）作为滑出载体，符合 baseline §4.1「不新建独立体系」。
+- 触发按钮标记 `data-slot="page-aside-toggle"`，`aria-label="Toggle aside"`，挂 `nop-haptic`（baseline §10.3）。
 
 ### 移动端 header region 约定
 
@@ -122,12 +133,23 @@
 - **高度**：48px（不含安全区域）
 - **确保**：body 区域 `padding-bottom` 至少等于 footer 高度，避免内容被遮挡
 
+### 软键盘 VisualViewport 处理（footer fixed 栏）
+
+- baseline §6 约定 fixed 元素在软键盘弹起时应保持在视口底部。
+- 实现：`useFixedFooterVisualViewport(enabled)` hook（`packages/flux-renderers-basic/src/use-fixed-footer-visual-viewport.ts`）。
+- 启用条件：`useIsMobile()` 为 true **且** `footerClassName` 字符串含 `fixed`（识别移动端骨架模式 §14 的 `fixed bottom-0 inset-x-0` 约定）。
+- 无 `window.visualViewport` 时早返回，footer 维持正常流布局（不抛错，见 Failure Paths）。
+- 偏移值 = `window.innerHeight - visualViewport.height - visualViewport.offsetTop`（layout viewport 坐标系下的键盘高度）。
+- 应用方式：`<footer style={{ bottom: `${offset}px` }} data-keyboard-offset={offset > 0 ? String(offset) : undefined}>`。键盘收起时 offset=0，inline style 不注入（无桌面回归）。
+- 收口路由：M2 plan Deferred「page footer fixed 栏 VisualViewport」、M0.1 plan Deferred「软键盘 VisualViewport 监听 M3a 部分」由本节落地。
+
 ### 触摸适配
 
-| 控件            | 触摸目标  |
-| --------------- | --------- |
-| header 返回按钮 | 44×44px   |
-| footer 操作按钮 | 48px 高度 |
+| 控件                     | 触摸目标                 |
+| ------------------------ | ------------------------ |
+| header 返回按钮          | 44×44px                  |
+| footer 操作按钮          | 48px 高度                |
+| aside 触发按钮（mobile） | 44×44px（`size="icon"`） |
 
 ## 14. 移动端骨架模式（复合模式，非独立组件）
 
@@ -146,10 +168,10 @@
 ```json
 {
   "type": "page",
+  "footerClassName": "nop-tabbar fixed bottom-0 inset-x-0 nop-safe-bottom bg-background border-t",
   "footer": {
     "type": "flex",
     "justify": "around",
-    "className": "nop-tabbar fixed bottom-0 inset-x-0 nop-safe-bottom bg-background border-t",
     "items": [
       {
         "type": "button",
@@ -173,6 +195,8 @@
 }
 ```
 
+> 模板修正（M3a 落地核查）：`fixed bottom-0 inset-x-0 nop-safe-bottom bg-background border-t` 提升至 `footerClassName`（page-footer wrapper），而非挂在 inner flex 上。原因：(1) `page.tsx` VisualViewport hook 检测 `footerClassName.includes('fixed')` 才注入软键盘 `style.bottom` 偏移（见 §13 软键盘小节），className 在 flex 上检测不到；(2) page-footer wrapper 才是 fixed 元素的正确语义 owner。inner flex 只承担横向布局（`justify: around`）+ `nop-tabbar` 视觉 marker。playground `/m3-layout` 验证可渲染 + VisualViewport 行为生效。
+
 - **active 态**：不应依赖"navigate 后新页面 schema 决定"——Tabbar 是同一段 schema 在多个页面复用，active 项应由**当前页路径**驱动。推荐用表达式 className：`className: "flex-col h-14 w-16 nop-haptic ${currentPath === '/home' ? 'text-primary' : ''}"`，或由 `page` 发布 `statusPath` 让 Tabbar 读取。具体表达式语法待 M3a 实现时落地。
 - 红点角标：在 `button` 外包 `badge`。
 - 与 `tabs` 的区别重申：Tabbar 切页面（navigate），`tabs` 切面板（同页面 region）。
@@ -186,11 +210,12 @@
 ```json
 {
   "type": "page",
+  "toolbarClassName": "nop-navbar sticky top-0 nop-safe-top bg-background",
   "header": {
     "type": "flex",
     "justify": "between",
     "align": "center",
-    "className": "nop-navbar sticky top-0 h-11 px-2 nop-safe-top bg-background",
+    "className": "h-11 px-2",
     "items": [
       {
         "type": "button",
@@ -212,6 +237,8 @@
 }
 ```
 
+> 模板修正（M3a 落地核查）：`sticky top-0 nop-safe-top bg-background` 提升至 `toolbarClassName`（`data-slot="page-toolbar"` wrapper），**不是** `headerClassName`。原因：`page.tsx` 的 `data-slot="page-header"` wrapper 仅在配置了 `title`/`subTitle`/`remark` 或 mobile aside-toggle 时渲染，§14.2 NavBar 模板没有这些字段（标题文本在 `header` region flex 内），`headerClassName` 不生效；而 `header` region 内容渲染进 `data-slot="page-toolbar"`，由 `toolbarClassName` 样式化。inner flex 只承担 `h-11 px-2` 尺寸。
+
 ### 14.3 ActionBar（商品详情底部操作栏）
 
 对应 Vant `van-action-bar` / `van-action-bar-icon` / `van-action-bar-button`。固定在 `page.footer`，左侧图标按钮组（客服/收藏）+ 右侧大号 CTA（加购/立即购买）。
@@ -219,14 +246,14 @@
 ```json
 {
   "type": "page",
+  "footerClassName": "nop-action-bar fixed bottom-0 inset-x-0 h-14 nop-safe-bottom bg-background border-t",
   "footer": {
     "type": "flex",
     "align": "center",
-    "className": "nop-action-bar fixed bottom-0 inset-x-0 h-14 nop-safe-bottom bg-background border-t",
     "items": [
       {
         "type": "flex",
-        "direction": "col",
+        "direction": "column",
         "align": "center",
         "className": "w-14",
         "items": [
@@ -236,7 +263,7 @@
       },
       {
         "type": "flex",
-        "direction": "col",
+        "direction": "column",
         "align": "center",
         "className": "w-14",
         "items": [
@@ -246,13 +273,13 @@
       },
       {
         "type": "button",
-        "variant": "solid",
+        "variant": "default",
         "label": "加入购物车",
         "className": "flex-1 h-12 nop-haptic"
       },
       {
         "type": "button",
-        "variant": "solid",
+        "variant": "default",
         "label": "立即购买",
         "className": "flex-1 h-12 nop-haptic bg-red-500"
       }
@@ -262,6 +289,8 @@
 }
 ```
 
+> 模板修正（M3a 落地核查）：三处修正 —— (1) `flex.direction` 枚举为 `'row' | 'column' | 'row-reverse' | 'column-reverse'`（无 `'col'` 简写）；(2) `button.variant` 枚举为 `'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'`（无 `'solid'`，主 CTA 用 `'default'`，视觉强调走 `className` 如 `bg-red-500`）；(3) `fixed bottom-0 inset-x-0 ... bg-background border-t` 提升至 `footerClassName`（同 §14.1 Tabbar 修正原因，VisualViewport hook 检测点）。已对齐 live runtime，playground `/m3-layout` 演示页验证可渲染。
+
 ### 14.4 SubmitBar（购物车结算栏）
 
 对应 Vant `van-submit-bar`。固定在 `page.footer`，全选复选 + 价格展示 + 结算 CTA。
@@ -269,13 +298,13 @@
 ```json
 {
   "type": "page",
+  "footerClassName": "nop-submit-bar fixed bottom-0 inset-x-0 h-14 nop-safe-bottom bg-background border-t px-3",
   "footer": {
     "type": "flex",
     "align": "center",
     "justify": "between",
-    "className": "nop-submit-bar fixed bottom-0 inset-x-0 h-14 nop-safe-bottom bg-background border-t px-3",
     "items": [
-      { "type": "checkbox", "label": "全选", "name": "selectAll" },
+      { "type": "checkbox", "name": "selectAll", "option": { "label": "全选" } },
       {
         "type": "flex",
         "align": "center",
@@ -286,7 +315,7 @@
       },
       {
         "type": "button",
-        "variant": "solid",
+        "variant": "default",
         "label": "结算(3)",
         "className": "h-12 px-6 nop-haptic bg-red-500"
       }
@@ -295,6 +324,8 @@
   "body": { "type": "container", "body": "/* 购物车列表 */" }
 }
 ```
+
+> 模板修正（M3a 落地核查）：三处修正 —— (1) `button.variant: "solid"` → `"default"`（同 §14.3）；(2) `checkbox.option.label` 形式保留（与 form checkbox renderer 一致）；(3) `fixed ... bg-background border-t px-3` 提升至 `footerClassName`（同 §14.1 / §14.3 修正原因）。已对齐 live runtime。
 
 ### 14.5 Sticky（吸顶容器）
 

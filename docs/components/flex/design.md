@@ -86,3 +86,55 @@
 - `body` 和 `items` 的双 region 需要后续收敛为更清晰的外部契约。
 - 响应式断点支持应与全局 styling system 一起设计，不宜让 `flex` 单独扩展。
 - 要避免因为 `container` 也支持部分布局字段，就把 `flex` 降级成“可有可无的别名”。两者必须继续保持“纯布局”与“内容壳层”的边界。
+
+## 14. 响应式行为
+
+> 响应式基线规范见 `docs/architecture/mobile-responsive-baseline.md`。
+>
+> 实现落地于 M3b（`docs/plans/2026-06-23-0410-1-m3-container-and-layout-responsive-plan.md`）。采用 **per-breakpoint 字段**（`responsiveDirection` / `responsiveWrap`），实现走 Tailwind 响应式类（baseline §7 主力策略）；容器查询仅在 Tailwind 类无法表达时启用（当前不需要）。
+
+### 断点字段约定
+
+`flex` 与 `container` 共享同一断点字段约定（见 `container/design.md` §16）：
+
+- 断点 key：`sm` / `md` / `lg` / `xl` / `2xl`（对齐 Tailwind v4 默认断点）。
+- `responsiveDirection?: { sm?, md?, lg?, xl?, '2xl'? }: FlexDirection`：per-breakpoint 主轴方向，覆盖 base `direction`。
+- `responsiveWrap?: { sm?, md?, lg?, xl?, '2xl'? }: boolean`：per-breakpoint 换行。`true` → `<bp>:flex-wrap`、`false` → `<bp>:flex-nowrap`。
+- 缺省（无字段）输出与改动前完全一致（无回归）。
+
+### 类映射
+
+| 字段                       | base 输出          | responsive 输出（每断点）               |
+| -------------------------- | ------------------ | --------------------------------------- |
+| `direction: 'column'`      | `flex-col`         | `sm:flex-col` / `md:flex-row` / ...     |
+| `direction: 'row-reverse'` | `flex-row-reverse` | `lg:flex-row-reverse` / ...             |
+| `wrap: true`               | `flex-wrap`        | `md:flex-wrap` / `sm:flex-nowrap` / ... |
+
+实现位置：`packages/flux-renderers-basic/src/utils.ts` `resolveResponsiveDirection` / `resolveResponsiveWrap`，输出顺序固定 `sm → md → lg → xl → 2xl`，`cn()`（tailwind-merge）保证 base 与断点类不冲突。
+
+### 示例：小屏纵列、桌面行
+
+```json
+{
+  "type": "flex",
+  "direction": "column",
+  "responsiveDirection": { "md": "row" },
+  "gap": "md",
+  "body": [
+    { "type": "text", "text": "Card A" },
+    { "type": "text", "text": "Card B" }
+  ]
+}
+```
+
+输出类：`nop-flex flex-col md:flex-row gap-md`。小屏（<768px）纵列堆叠，桌面（≥768px）行排列。
+
+### 触摸适配
+
+- 触摸目标：`flex` 是纯布局原语，触摸目标由子组件负责（baseline §3）。
+- 手势：`flex` 不消费手势。
+- 软键盘：`flex` 不消费 `VisualViewport`（footer fixed 栏的处理在 `page` renderer，见 `page/design.md` §13）。
+
+### Decision（容器查询延后）
+
+baseline §7 标「容器查询为辅助/未来」。M3b 需求（per-breakpoint direction/wrap）完全由 Tailwind 响应式类表达，因此**不引入 `@container`**。未来若出现「父容器宽度」驱动的自适应（与视口宽度解耦），再评估容器查询。

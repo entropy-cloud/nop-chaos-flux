@@ -167,3 +167,53 @@ interface ContainerSchema extends BaseSchema {
 - `container` 最容易被误用成“什么都能包的视觉组件全集”；owner doc 需要持续强调它只是通用内容壳层。
 - `container` 同时支持轻量布局语义和 slot 壳层，已经覆盖不少日常场景；继续扩字段前，必须先证明 `flex`、`fragment`、`fieldset`、`card`、`collapse` 等边界无法承接。
 - 响应式专属 DSL、真正的 `Card` renderer、以及更强的 panel/collapse 协议，应在独立家族里设计，而不是继续堆到 `container` 上。
+
+## 16. 响应式行为
+
+> 响应式基线规范见 `docs/architecture/mobile-responsive-baseline.md`。
+>
+> 实现落地于 M3b（`docs/plans/2026-06-23-0410-1-m3-container-and-layout-responsive-plan.md`）。`container` 与 `flex` 同源解析 `direction`/`wrap`/`align`/`gap`，**共享同一 per-breakpoint 字段约定**（实现复用 `packages/flux-renderers-basic/src/utils.ts` 的 `resolveResponsiveDirection` / `resolveResponsiveWrap`）。
+
+### 断点字段约定
+
+- 断点 key：`sm` / `md` / `lg` / `xl` / `2xl`（对齐 Tailwind v4 默认断点）。
+- `responsiveDirection?: { sm?, md?, lg?, xl?, '2xl'? }: ContainerDirection`（即 `'row' | 'column'`，比 `flex` 少 reverse 枚举，对齐 §5 schema 现状）：per-breakpoint 主轴方向，覆盖 base `direction`。
+- `responsiveWrap?: { sm?, md?, lg?, xl?, '2xl'? }: boolean`：per-breakpoint 换行。
+- 缺省（无字段）输出与改动前完全一致（无回归）。
+
+### 启用条件（data-flex body）
+
+`container` 默认 body 是普通块流；仅当配置了任一布局字段（`direction` / `wrap` / `align` / `gap` / `responsiveDirection` / `responsiveWrap`）时，body 才切到 flex 容器（`data-slot="container-body" data-flex=""`）。M3b 扩展了 `useFlexChild` 判定：`hasResponsive`（任一 responsive 类输出）也触发 flex body，避免「只配 responsiveDirection 但 body 没切 flex」导致响应式类不生效。
+
+### 类映射（与 `flex` 一致）
+
+| 字段                  | base 输出   | responsive 输出（每断点）               |
+| --------------------- | ----------- | --------------------------------------- |
+| `direction: 'column'` | `flex-col`  | `sm:flex-col` / `md:flex-row` / ...     |
+| `wrap: true`          | `flex-wrap` | `md:flex-wrap` / `sm:flex-nowrap` / ... |
+
+### 示例：小屏纵列、桌面行
+
+```json
+{
+  "type": "container",
+  "direction": "column",
+  "responsiveDirection": { "md": "row" },
+  "body": [
+    { "type": "text", "text": "Column A" },
+    { "type": "text", "text": "Column B" }
+  ]
+}
+```
+
+输出类（body div）：`flex flex-col md:flex-row`。
+
+### 触摸适配
+
+- 触摸目标：`container` 是内容壳层，触摸目标由子组件负责（baseline §3）。
+- 手势：`container` 不消费手势。
+- 软键盘：`container` 不消费 `VisualViewport`。
+
+### Decision（与 `flex` 共享断点字段）
+
+`container` 与 `flex` 都解析 `direction`/`wrap`/`align`/`gap`（见 `container.tsx:8-69`、`flex.tsx`）。M3b 显式让二者共享同一 `responsiveDirection`/`responsiveWrap` 字段约定，避免读者在两个组件之间切换时需要学习两套断点 DSL。`container` 的 `responsiveDirection` 枚举更窄（仅 `'row' | 'column'`，无 reverse），反映 `container` 作为内容壳层不承担反向布局语义的现状。

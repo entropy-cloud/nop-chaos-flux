@@ -195,6 +195,7 @@ Exit Criteria:
 - Why Not Blocking Closure: baseline §6 约定，但实际消费方是 M2a（input 族）/ M3a（page footer fixed 栏），不属于基础设施工具类层。
 - Successor Required: yes
 - Successor Path: M2a / M3a
+- Closure Note (2026-06-23): M2a 部分（input 族 focus scrollIntoView）已在 M2 plan 收口；M3a 部分（page-footer fixed 栏 VisualViewport）已由 M3 Phase 1 收口（`docs/plans/2026-06-23-0410-1-m3-container-and-layout-responsive-plan.md`，落地于 `packages/flux-renderers-basic/src/use-fixed-footer-visual-viewport.ts`）。
 
 ## Non-Blocking Follow-ups
 

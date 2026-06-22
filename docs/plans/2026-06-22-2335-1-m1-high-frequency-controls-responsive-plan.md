@@ -231,6 +231,7 @@ Exit Criteria:
 - Why Not Blocking Closure: tabs `tabsMode: 'sidebar'` 是桌面布局概念（侧边 tab 导航）。小屏应走 M3a page 骨架模式（Tabbar/NavBar），不是 tabs renderer 的响应式变体。M1d 仅覆盖 `tabsMode: 'default'`（顶部 tab 切换）的小屏行为。
 - Successor Required: yes
 - Successor Path: M3a page 骨架模式
+- Closure Note (2026-06-23): 已由 M3a page 骨架模式收口（`docs/plans/2026-06-23-0410-1-m3-container-and-layout-responsive-plan.md` Phase 2 落地 §14 五类骨架模板 playground + e2e；小屏侧栏导航走 `page.footer` Tabbar / `page.header` NavBar，非 tabs renderer 变体）。
 
 ## Non-Blocking Follow-ups
 

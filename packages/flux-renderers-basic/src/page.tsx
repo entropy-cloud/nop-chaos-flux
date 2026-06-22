@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { PageStatusSummary, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
@@ -7,17 +7,23 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import {
+  Button,
   cn,
   resolveLucideIconStrict,
+  Sheet,
+  SheetContent,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  useIsMobile,
 } from '@nop-chaos/ui';
 import type { PageSchema } from './schemas.js';
 import { useStatusPathPublication } from './status-hooks.js';
 import { asReactNode } from './utils.js';
+import { useFixedFooterVisualViewport } from './use-fixed-footer-visual-viewport.js';
 
 const InfoIcon = resolveLucideIconStrict('info');
+const MenuIcon = resolveLucideIconStrict('menu');
 
 export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
@@ -54,7 +60,19 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
     summary,
   );
 
-  const asideNode = hasAside ? (
+  const isMobile = useIsMobile();
+  const showInlineAside = hasAside && !isMobile;
+  const showMobileAsideToggle = hasAside && isMobile;
+
+  const footerClassName = typeof slotProps.footerClassName === 'string' ? slotProps.footerClassName : '';
+  const footerIsFixed = footerClassName.includes('fixed');
+  const footerOffset = useFixedFooterVisualViewport(
+    isMobile && footerIsFixed && hasRendererSlotContent(footerContent),
+  );
+  const footerStyle =
+    footerOffset > 0 ? { bottom: `${footerOffset}px` } : undefined;
+
+  const asideNode = showInlineAside ? (
     <aside data-slot="page-aside" className={cn(slotProps.asideClassName)}>
       {asideContent}
     </aside>
@@ -84,10 +102,28 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
               <TooltipContent>{remark}</TooltipContent>
             </Tooltip>
           ) : null}
+          {showMobileAsideToggle ? (
+            <PageAsideToggle
+              asideContent={asideContent}
+              asidePosition={asidePosition}
+              asideClassName={slotProps.asideClassName}
+            />
+          ) : null}
+        </header>
+      ) : showMobileAsideToggle ? (
+        <header data-slot="page-header">
+          <PageAsideToggle
+            asideContent={asideContent}
+            asidePosition={asidePosition}
+            asideClassName={slotProps.asideClassName}
+          />
         </header>
       ) : null}
       {hasRendererSlotContent(headerContent) ? (
-        <div data-slot="page-toolbar" className={cn(slotProps.toolbarClassName)}>
+        <div
+          data-slot="page-toolbar"
+          className={cn(slotProps.toolbarClassName, isMobile && 'flex flex-col')}
+        >
           {headerContent}
         </div>
       ) : null}
@@ -97,10 +133,49 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
       </div>
       {asidePosition === 'right' && asideNode ? asideNode : null}
       {hasRendererSlotContent(footerContent) ? (
-        <footer data-slot="page-footer" className={cn(slotProps.footerClassName)}>
+        <footer
+          data-slot="page-footer"
+          className={cn(slotProps.footerClassName)}
+          style={footerStyle}
+          data-keyboard-offset={footerOffset > 0 ? String(footerOffset) : undefined}
+        >
           {footerContent}
         </footer>
       ) : null}
     </section>
+  );
+}
+
+function PageAsideToggle({
+  asideContent,
+  asidePosition,
+  asideClassName,
+}: {
+  asideContent: React.ReactNode;
+  asidePosition: 'left' | 'right';
+  asideClassName?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const side: 'left' | 'right' = asidePosition === 'right' ? 'right' : 'left';
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="icon"
+        data-slot="page-aside-toggle"
+        aria-label="Toggle aside"
+        className="nop-haptic"
+        onClick={() => setOpen(true)}
+      >
+        {MenuIcon ? <MenuIcon /> : null}
+      </Button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side={side} data-page-aside-sheet="true">
+          <aside data-slot="page-aside" className={cn(asideClassName)}>
+            {asideContent}
+          </aside>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

@@ -1,7 +1,12 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
-import { asReactNode, resolveDirection } from './utils.js';
+import {
+  asReactNode,
+  resolveDirection,
+  resolveResponsiveDirection,
+  resolveResponsiveWrap,
+} from './utils.js';
 import { resolveGap } from '@nop-chaos/flux-react';
 import type { FlexSchema } from './schemas.js';
 
@@ -50,6 +55,12 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
       ? FLEX_ALIGN_CONTENT_CLASS_MAP[props.props.alignContent]
       : undefined;
   const gap = resolveGap(props.props.gap as number | string | undefined);
+  const responsiveDirectionClasses = resolveResponsiveDirection(
+    props.props.responsiveDirection as Record<string, string | undefined> | undefined,
+  );
+  const responsiveWrapClasses = resolveResponsiveWrap(
+    props.props.responsiveWrap as Record<string, boolean | undefined> | undefined,
+  );
   const bodyContent = asReactNode(props.regions.body?.render());
   const itemsContent = asReactNode(props.regions.items?.render());
 
@@ -59,6 +70,8 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
         'nop-flex',
         resolveDirection(direction),
         wrap && 'flex-wrap',
+        ...responsiveDirectionClasses,
+        ...responsiveWrapClasses,
         align,
         justify,
         alignContent,

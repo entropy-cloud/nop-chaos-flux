@@ -193,6 +193,7 @@ Exit Criteria:
 - Why Not Blocking Closure: M0.1 plan Deferred 段记录"软键盘 VisualViewport 监听归 M2a / M3a"。M2a 收口 input/textarea/input-number focus 时的 scrollIntoView（元素级）；page footer fixed 栏在软键盘弹起时的适配（如 submit bar 不被键盘遮挡）是 page-level 布局问题，归 M3a page 骨架模式。两者不冲突——M2a 解决"正在输入的 field 可见"，M3a 解决"fixed footer 不被键盘遮挡"。
 - Successor Required: yes
 - Successor Path: M3a page
+- Closure Note (2026-06-23): page-footer 部分已由 M3 Phase 1 收口（`docs/plans/2026-06-23-0410-1-m3-container-and-layout-responsive-plan.md`）。落地：`packages/flux-renderers-basic/src/use-fixed-footer-visual-viewport.ts` + `page.tsx` 消费 hook，软键盘弹起时对 `footerClassName` 含 `fixed` 的 footer 注入 `style.bottom` 偏移；§14 骨架模式（Tabbar/ActionBar/SubmitBar 的 `fixed bottom-0` footer）经此 hook 不被键盘遮挡。
 
 ### input suggest / autocomplete 移动端优化
 

@@ -503,6 +503,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'M2 form control touch adaptation: input/textarea/input-number inputmode + font-size ≥16px + focus scrollIntoView, checkbox/radio/switch ≥44px hit area + small-screen vertical stack, button ≥44px min-height — switch viewport in DevTools to compare.',
   },
+  {
+    id: 'm3-layout',
+    title: 'M3 Layout Skeletons',
+    eyebrow: 'Mobile Layout (M3a)',
+    description:
+      'M3a mobile page skeleton patterns: Tabbar (footer navigate), NavBar (header back+title+action), ActionBar (icon group + CTA), SubmitBar (checkbox + price + CTA), Sticky (container sticky top) — page.header/page.footer region templates, not new renderers. Switch viewport in DevTools to compare.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [
