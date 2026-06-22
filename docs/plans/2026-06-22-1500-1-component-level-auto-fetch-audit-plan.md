@@ -1,6 +1,6 @@
 # 组件级 auto-fetch 模式全面审计与收口
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-06-22
 > Source: `docs/bugs/15-component-level-initfetch-analysis-and-fix.md`（condition-builder `source` 移除 + form `autoInit` gate 的分析报告）、live-repo 全量扫描
 > Related: `docs/plans/2026-06-22-1343-1-e3-condition-builder-async-metadata-loading-plan.md`（abandoned — 触发本审计的原始 plan）、`docs/components/roadmap.md` Cross-Cutting「请求下沉」约束（本审计的执行依据）
@@ -134,16 +134,16 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] `ConditionSelectField.source` 契约漂移字段已删除
-- [ ] `docs/bugs/15-*.md` 含全量扫描结论表（作为后续防回归基线）
-- [ ] roadmap Cross-Cutting「请求下沉」约束措辞核对完毕
-- [ ] 不存在被静默降级到 deferred/follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响 owner docs 已同步到 live baseline
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `ConditionSelectField.source` 契约漂移字段已删除
+- [x] `docs/bugs/15-*.md` 含全量扫描结论表（作为后续防回归基线）
+- [x] roadmap Cross-Cutting「请求下沉」约束措辞核对完毕
+- [x] 不存在被静默降级到 deferred/follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响 owner docs 已同步到 live baseline
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`（50/50 tasks successful）
+- [x] `pnpm build`（27/27 tasks successful）
+- [x] `pnpm lint`（27/27 tasks successful）
+- [x] `pnpm test`（50/50 tasks successful）
 
 ## Deferred But Adjudicated
 
@@ -156,12 +156,17 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 交付物全部落地并经 fresh-session 独立 closure-audit（verdict=approved，rounds=1）：`ConditionSelectField.source` drift 字段已删除且无 runtime 消费、`ConditionFormulaConfig.source` 保留（不同维度）、审计表/roadmap 约束/日志齐备；全量 `pnpm typecheck`/`build`/`lint`/`test` 全绿；无 in-scope 残留 defect 或被静默降级项。所有 Closure Gates 已 `[x]`，Plan Status → `completed`。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: fresh general sub-agent (closure audit, independent session)
+- Evidence: live-repo 独立核对（2026-06-22，rounds=1，verdict=approved）：
+  1. `packages/flux-renderers-form-advanced/src/condition-builder/types.ts:77-84` `ConditionSelectField` 无 `source` 字段；`ConditionFormulaConfig.source:146` 保留（formula 上下文，不同维度）；`ConditionBuilderSchema:149-175` 无 `source`。
+  2. `packages/` 全量 grep `ConditionSelectField.*source|selectField.*\.source` 零匹配；`value-input.tsx:287-318` 仅读 `field.options`/`field.multiple`/`field.placeholder`；`condition-builder.tsx:100` 读 `formulas?.source`（= 保留的 `ConditionFormulaConfig.source`，非 drift 字段）—— 无行为回归。
+  3. `docs/bugs/15-component-level-initfetch-analysis-and-fix.md` §6（L126-187）含全量扫描表（6.1-6.6）；`docs/components/roadmap.md:288` Cross-Cutting 含「请求下沉」行；`existing-components-improvement-roadmap.md:26` §4 含同约束；`docs/logs/2026/06-22.md:22-29` 记录本审计执行。
+  4. Deferred/Non-Blocking Follow-ups 无隐藏 live defect；两 Phase 均为 `completed`、Exit Criteria 全 `[x]`。
+     Minor：executor 未补勾技术/实质性 Closure Gates（`pnpm typecheck`/`build`/`lint`/`test` + 交付物条目），不影响 substance，留给 executor 收口时补勾。
 
 Follow-up:
 
