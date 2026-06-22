@@ -26,6 +26,7 @@ import { TablePopOverDemoPage } from './pages/table-popover-demo';
 import { MobileInfrastructureDemoPage } from './pages/mobile-infrastructure-demo';
 import { MobileComponentsDemoPage } from './pages/mobile-components-demo';
 import { M1ResponsiveDemoPage } from './pages/m1-responsive-demo';
+import { M2TouchDemoPage } from './pages/m2-touch-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -165,6 +166,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <MobileComponentsDemoPage onBack={goHome} />;
         case 'm1-responsive':
           return <M1ResponsiveDemoPage onBack={goHome} />;
+        case 'm2-touch':
+          return <M2TouchDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

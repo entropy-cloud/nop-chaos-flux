@@ -496,6 +496,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'M1 high-frequency controls responsive behavior: select/tree-select bottom-sheet, table expand card-stack, dialog fullscreen, drawer bottom, tabs scroll + swipe — switch viewport in DevTools to compare.',
   },
+  {
+    id: 'm2-touch',
+    title: 'M2 Touch Adaptation',
+    eyebrow: 'Mobile Touch (M2)',
+    description:
+      'M2 form control touch adaptation: input/textarea/input-number inputmode + font-size ≥16px + focus scrollIntoView, checkbox/radio/switch ≥44px hit area + small-screen vertical stack, button ≥44px min-height — switch viewport in DevTools to compare.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [
