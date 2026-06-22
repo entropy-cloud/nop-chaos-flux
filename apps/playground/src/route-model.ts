@@ -489,6 +489,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'M5 mobile-native renderers: pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar — mounted via SchemaRenderer in touch-friendly viewport.',
   },
+  {
+    id: 'm1-responsive',
+    title: 'M1 Responsive Controls',
+    eyebrow: 'Mobile Responsive (M1)',
+    description:
+      'M1 high-frequency controls responsive behavior: select/tree-select bottom-sheet, table expand card-stack, dialog fullscreen, drawer bottom, tabs scroll + swipe — switch viewport in DevTools to compare.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

@@ -169,6 +169,15 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-testid="demo-countdown"]')).toBeVisible();
     await expect(page.locator('[data-testid="demo-notice-bar"]')).toBeVisible();
   },
+  'm1-responsive': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /M1 高频交互控件响应式/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {
