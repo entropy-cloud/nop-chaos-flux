@@ -475,6 +475,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'E3 table cell detail popOver: column-level popOver config (trigger/placement/icon/content region/title/showOnOverflow/onEmpty), coexists with copyable icon, content region rendering.',
   },
+  {
+    id: 'mobile-infrastructure',
+    title: 'Mobile Infrastructure',
+    eyebrow: 'Mobile Baseline (M0.1)',
+    description:
+      'M0.1 mobile infra helpers: nop-safe-area, nop-hairline, nop-haptic, global z-index stack — visual + behavioral reference for M1–M5 mobile work.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

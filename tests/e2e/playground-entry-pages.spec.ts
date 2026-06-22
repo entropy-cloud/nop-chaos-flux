@@ -142,6 +142,18 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       timeout: 15_000,
     });
   },
+  'mobile-infrastructure': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: '移动端基础设施 — safe-area / hairline / haptics / z-index',
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="safe-area-preview"]')).toBeVisible();
+    await expect(page.locator('[data-testid="hairline-preview"]')).toBeVisible();
+    await expect(page.locator('[data-testid="haptic-preview"]')).toBeVisible();
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

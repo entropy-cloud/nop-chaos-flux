@@ -13,4 +13,5 @@ export { FormInputEnhancementsDemoPage } from './form-input-enhancements-demo';
 export { InputSuggestDemoPage } from './input-suggest-demo';
 export { TreeDisplayUxDemoPage } from './tree-display-ux-demo';
 export { TablePopOverDemoPage } from './table-popover-demo';
+export { MobileInfrastructureDemoPage } from './mobile-infrastructure-demo';
 export type { PageId } from './types';

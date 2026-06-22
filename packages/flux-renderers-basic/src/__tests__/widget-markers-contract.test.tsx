@@ -5,7 +5,7 @@ import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support
 describe('widget renderer data-slot and marker contract', () => {
   afterEach(() => cleanup());
 
-  it('button has no nop- marker class on root (uses shadcn/ui)', () => {
+  it('button has no nop- renderer marker class on root (uses shadcn/ui)', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
       <SchemaRenderer
@@ -18,7 +18,12 @@ describe('widget renderer data-slot and marker contract', () => {
     const button = container.querySelector('button');
     expect(button).toBeTruthy();
     expect(button?.getAttribute('data-slot')).toBe('button');
-    expect(button?.className).not.toContain('nop-');
+    // `nop-haptic` / `nop-safe-*` / `nop-hairline*` are @nop-chaos/ui mobile
+    // utility classes (see docs/architecture/mobile-responsive-baseline.md §10),
+    // not flux renderer markers. Block only renderer-identifier markers such as
+    // `nop-button`, `nop-table`, etc.
+    const rendererMarkerMatch = button?.className.match(/\bnop-(?!haptic|safe-|hairline)\w+/);
+    expect(rendererMarkerMatch).toBeNull();
   });
 
   it('text renderer emits nop-text marker', () => {
