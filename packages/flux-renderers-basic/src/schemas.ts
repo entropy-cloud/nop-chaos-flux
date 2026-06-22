@@ -171,6 +171,8 @@ export interface RecurseSchema extends BaseSchema {
   maxDepth?: number;
 }
 
+export type IconSize = number | 'sm' | 'md' | 'lg';
+
 export interface TextSchema extends BaseSchema {
   type: 'text';
   text?: string;
@@ -178,6 +180,7 @@ export interface TextSchema extends BaseSchema {
   tag?: 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'label' | 'div';
   copyable?: boolean;
   maxLine?: number;
+  maxLineToggle?: boolean;
 }
 
 export interface ButtonSchema extends BaseSchema {
@@ -199,8 +202,8 @@ export interface IconSchema extends BaseSchema {
   type: 'icon';
   /** 图标名称（kebab-case） */
   icon?: string;
-  /** 图标像素尺寸（缺省回退 16） */
-  size?: number;
+  /** 图标像素尺寸或 token（`sm`/`md`/`lg` 映射 `{ sm: 12, md: 16, lg: 20 }`）；缺省回退 16 */
+  size?: IconSize;
   /** CSS color 值，映射到 inline style color（lucide 走 currentColor） */
   color?: string;
 }

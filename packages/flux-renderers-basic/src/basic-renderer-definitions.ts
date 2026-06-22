@@ -133,6 +133,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'tag', kind: 'prop' },
       { key: 'copyable', kind: 'prop', valueType: 'boolean' },
       { key: 'maxLine', kind: 'prop' },
+      { key: 'maxLineToggle', kind: 'prop', valueType: 'boolean' },
     ],
     staticCapable: true,
   },

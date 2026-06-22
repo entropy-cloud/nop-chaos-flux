@@ -39,6 +39,7 @@ describe('basic renderer static contracts', () => {
       'tag',
       'copyable',
       'maxLine',
+      'maxLineToggle',
     ]);
   });
 });

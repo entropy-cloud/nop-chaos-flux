@@ -1,7 +1,32 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn, resolveLucideIcon } from '@nop-chaos/ui';
-import type { IconSchema } from './schemas.js';
+import type { IconSchema, IconSize } from './schemas.js';
+
+const ICON_SIZE_TOKEN_PIXELS = {
+  sm: 12,
+  md: 16,
+  lg: 20,
+} as const;
+
+function resolveIconSize(size: IconSize | undefined): number {
+  if (typeof size === 'number') {
+    return Number.isFinite(size) ? Math.max(1, Math.floor(size)) : 16;
+  }
+  if (typeof size === 'string' && size in ICON_SIZE_TOKEN_PIXELS) {
+    return ICON_SIZE_TOKEN_PIXELS[size as keyof typeof ICON_SIZE_TOKEN_PIXELS];
+  }
+  if (size !== undefined) {
+    if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+      console.warn(
+        `[flux-icon] Unrecognized size ${JSON.stringify(size)}; falling back to 16.`,
+      );
+    }
+  }
+  return 16;
+}
+
+export { ICON_SIZE_TOKEN_PIXELS, resolveIconSize };
 
 export function IconRenderer(props: RendererComponentProps<IconSchema>) {
   const icon = typeof props.props.icon === 'string' ? props.props.icon : undefined;
@@ -9,9 +34,7 @@ export function IconRenderer(props: RendererComponentProps<IconSchema>) {
 
   const IconComp = Icon as React.ComponentType<Record<string, unknown>>;
 
-  const size = typeof props.props.size === 'number' && Number.isFinite(props.props.size)
-    ? Math.max(1, Math.floor(props.props.size))
-    : 16;
+  const size = resolveIconSize(props.props.size);
   const color = typeof props.props.color === 'string' ? props.props.color : undefined;
 
   return (

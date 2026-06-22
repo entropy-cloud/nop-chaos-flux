@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { Button, cn, resolveLucideIconStrict, toast } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { TextSchema } from './schemas.js';
 import { copyToClipboard } from './copy-to-clipboard.js';
 
@@ -26,6 +27,15 @@ function resolveMaxLineClass(maxLine: unknown): string | null {
     return 'line-clamp-100';
   }
   return `line-clamp-${clamped}`;
+}
+
+function isPositiveFiniteMaxLine(maxLine: unknown): maxLine is number {
+  return typeof maxLine === 'number' && Number.isFinite(maxLine) && maxLine > 0;
+}
+
+function measureOverflow(el: HTMLElement | null): boolean {
+  if (!el) return false;
+  return el.scrollHeight > el.clientHeight;
 }
 
 const CopyIcon = resolveLucideIconStrict('copy');
@@ -79,18 +89,57 @@ export function TextRenderer(props: RendererComponentProps<TextSchema>) {
   const tag = VALID_TAGS.includes(props.props.tag as (typeof VALID_TAGS)[number])
     ? (props.props.tag as (typeof VALID_TAGS)[number])
     : 'span';
-  const Tag: keyof React.JSX.IntrinsicElements = tag;
+  const Tag = tag as React.ElementType;
   const copyable = props.props.copyable === true;
-  const maxLineClass = resolveMaxLineClass(props.props.maxLine);
+  const maxLine = props.props.maxLine;
+  const maxLineClass = resolveMaxLineClass(maxLine);
+  const toggleEnabled =
+    props.props.maxLineToggle === true && isPositiveFiniteMaxLine(maxLine);
+
+  const contentRef = React.useRef<HTMLElement | null>(null);
+  const [overflows, setOverflows] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(false);
+
+  React.useLayoutEffect(() => {
+    if (!toggleEnabled) {
+      setOverflows(false);
+      return;
+    }
+    setOverflows(measureOverflow(contentRef.current));
+  }, [toggleEnabled, resolvedText, maxLineClass]);
+
+  const showToggle = toggleEnabled && overflows;
+  const toggleId = React.useId();
+  const appliedMaxLineClass = showToggle && expanded ? null : maxLineClass;
 
   return (
     <Tag
-      className={cn('nop-text', maxLineClass, props.meta.className)}
+      ref={contentRef}
+      className={cn('nop-text', appliedMaxLineClass, props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
+      data-expanded={showToggle ? String(expanded) : undefined}
+      id={showToggle ? toggleId : undefined}
     >
       {resolvedText}
       {copyable ? <TextCopyButton value={resolvedText} /> : null}
+      {showToggle ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          data-slot="text-maxline-toggle"
+          className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-primary"
+          aria-expanded={expanded}
+          aria-controls={toggleId}
+          onClick={(event) => {
+            event.stopPropagation();
+            setExpanded((value) => !value);
+          }}
+        >
+          {expanded ? t('flux.common.collapse') : t('flux.common.expand')}
+        </Button>
+      ) : null}
     </Tag>
   );
 }

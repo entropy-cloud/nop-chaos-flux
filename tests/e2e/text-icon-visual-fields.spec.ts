@@ -98,4 +98,57 @@ test.describe('E3 text/icon visual fields (copyable / maxLine / icon size+color)
 
     await assertTrackedPageErrors(page);
   });
+
+  test('text maxLineToggle renders a toggle that expands and collapses (aria-expanded + line-clamp)', async ({
+    page,
+  }) => {
+    await openTextIconVisualFieldsPage(page);
+
+    const textRoot = page.getByTestId('text-visual-maxline-toggle');
+    await expect(textRoot).toBeVisible({ timeout: 10_000 });
+
+    const toggle = textRoot.locator('[data-slot="text-maxline-toggle"]');
+    await expect(toggle).toBeVisible();
+
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const collapsedClass = await textRoot.evaluate((node) => node.className);
+    expect(collapsedClass).toContain('line-clamp-2');
+
+    await toggle.click();
+
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(textRoot).toHaveAttribute('data-expanded', 'true');
+    const expandedClass = await textRoot.evaluate((node) => node.className);
+    expect(expandedClass).not.toMatch(/line-clamp-\d/);
+
+    await toggle.click();
+
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const reCollapsedClass = await textRoot.evaluate((node) => node.className);
+    expect(reCollapsedClass).toContain('line-clamp-2');
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('icon size token maps sm/md/lg to 12/16/20 pixels', async ({ page }) => {
+    await openTextIconVisualFieldsPage(page);
+
+    for (const [token, pixels] of [
+      ['sm', 12],
+      ['md', 16],
+      ['lg', 20],
+    ] as const) {
+      const icon = page.getByTestId(`text-visual-icon-token-${token}`);
+      await expect(icon).toBeVisible({ timeout: 10_000 });
+      const widthAttr = await icon.evaluate((node) =>
+        (node as SVGElement).getAttribute('width'),
+      );
+      const styleWidth = await icon.evaluate(
+        (node) => (node as SVGElement).style.width,
+      );
+      expect(widthAttr === String(pixels) || styleWidth === `${pixels}px`).toBeTruthy();
+    }
+
+    await assertTrackedPageErrors(page);
+  });
 });

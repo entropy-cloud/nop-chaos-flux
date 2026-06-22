@@ -10,6 +10,9 @@ import { Button } from '@nop-chaos/ui';
 const longText =
   'Flux 是 AMIS 低代码渲染器的现代化重写。text 组件现在支持 copyable（一键复制）与 maxLine（行数截断）。本段落演示 maxLine=2 的截断效果——超过两行的文本将被隐藏，纯 line-clamp 实现简单可观测。';
 
+const toggleOverflowText =
+  'maxLineToggle 演示：本段文本设置了 maxLine=2 且 maxLineToggle=true。当文本实际溢出（scrollHeight > clientHeight）时，右侧渲染「展开/收起」toggle 按钮，点击可在 line-clamp 截断态与全文本态之间切换，并同步 aria-expanded 与 data-expanded。无溢出时不渲染 toggle（避免视觉噪音）。Flux 是 AMIS 低代码渲染器的现代化重写，保留可观测性与 a11y 语义，复用既有 flux.common.expand/collapse i18n key。';
+
 const schema = {
   type: 'page',
   body: [
@@ -62,6 +65,22 @@ const schema = {
         {
           type: 'text',
           tag: 'h2',
+          text: 'maxLineToggle — 展开/收起 toggle',
+        },
+        {
+          type: 'text',
+          text: 'maxLine=2 + maxLineToggle=true：溢出时渲染 toggle，点击展开/收起。',
+        },
+        {
+          type: 'text',
+          text: toggleOverflowText,
+          maxLine: 2,
+          maxLineToggle: true,
+          testid: 'text-visual-maxline-toggle',
+        },
+        {
+          type: 'text',
+          tag: 'h2',
           text: 'icon — size / color',
         },
         {
@@ -91,6 +110,22 @@ const schema = {
               color: '#ef4444',
               testid: 'text-visual-icon-heart-red',
             },
+          ],
+        },
+        {
+          type: 'text',
+          tag: 'h2',
+          text: 'icon — size token（sm/md/lg）',
+        },
+        {
+          type: 'flex',
+          direction: 'row',
+          gap: 'lg',
+          align: 'center',
+          body: [
+            { type: 'icon', icon: 'star', size: 'sm', testid: 'text-visual-icon-token-sm' },
+            { type: 'icon', icon: 'star', size: 'md', testid: 'text-visual-icon-token-md' },
+            { type: 'icon', icon: 'star', size: 'lg', testid: 'text-visual-icon-token-lg' },
           ],
         },
       ],
