@@ -14,13 +14,25 @@
 | AMIS PullRefresh      | `amis/packages/amis-ui/src/components/PullRefresh.tsx` | ~277 |
 | Vant van-pull-refresh | Vant 4                                                 | —    |
 
+### Flux 决策表
+
+> Flux 决策主语。amis 仅作参考之一，**非标尺**。命名对齐 shadcn/ui、请求下沉 data-source + action（X3 §1/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。
+
+| 能力                                                         | 采纳     | 不采纳     | 理由                                                           |
+| ------------------------------------------------------------ | -------- | ---------- | -------------------------------------------------------------- |
+| `body` region + 下拉刷新容器                                 | **实现** | —          | 核心能力：容器型 renderer 包裹子内容                           |
+| `onRefresh` 事件驱动刷新                                     | **实现** | —          | 刷新行为由事件驱动，数据请求下沉 action/data-source            |
+| `direction`/`threshold`/`disabled` 配置                      | **实现** | —          | 标准交互配置                                                   |
+| `loadingText`/`pullingText`/`loosingText`/`successText` 文案 | **实现** | —          | i18n 友好的可配置文案                                          |
+| amis 组件级 `api`/`initFetch`                                | —        | **不采纳** | 请求下沉 data-source + action（X3 §1/§3）                      |
+| amis `source`/`schemaApi` 自动拉取                           | —        | **不采纳** | 组件级挂载时 auto-fetch 违反请求下沉（见 `docs/bugs/15-*.md`） |
+| polling/interval 自动刷新                                    | —        | **不采纳** | 归 data-source `interval`（X4）                                |
+
 ## 3. Schema 设计
 
 ```typescript
 interface PullRefreshSchema extends BaseSchema {
   type: 'pull-refresh';
-  /** 子内容 region */
-  body: SchemaNode;
   /** 刷新方向：'down' 下拉刷新，'up' 上拉加载 */
   direction?: 'down' | 'up';
   /** 触发刷新的下拉距离阈值，默认 60px */
@@ -41,6 +53,8 @@ interface PullRefreshSchema extends BaseSchema {
   disabled?: boolean;
 }
 ```
+
+- `body` 是 region（renderer definition 中声明 `{ key: 'body', kind: 'region' }`），不是 schema 内联字段。
 
 ### Events
 

@@ -15,13 +15,13 @@
 
 > **截至 2026-06-22 的实现事实（read-only 核查结论，不是计划）：**
 
-| 维度                                  | 状态                                                                                                                                                                                                                                                |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@nop-chaos/flux-renderers-mobile` 包 | **代码尚未落地**。master 分支 `packages/flux-renderers-mobile/` 目录不存在。commit `f52409b2`（标题 `feat(mobile): add flux-renderers-mobile package with 5 mobile-native components`）实际 diff 仅含 `AGENTS.md` + `docs/`，**未包含任何包代码**。 |
-| M0 响应式基线                         | `done` **仅指文档基线**（`docs/architecture/mobile-responsive-baseline.md` 立约）。safe-area/hairline/haptics/z-index 栈等基础设施代码未实现（见 M0.1）。                                                                                           |
-| M0.1 基础设施代码                     | **未实现**（safe-area/hairline/haptics/z-index 在 `packages/ui/src/` 中均为零）。                                                                                                                                                                   |
-| M1–M5 实现进度                        | **0%**。所有响应式改进与移动端原生组件均未开始。                                                                                                                                                                                                    |
-| design.md 立约                        | ✅ 已存在：`pull-refresh`/`infinite-scroll`/`swipe-cell`/`countdown`/`notice-bar`/`bottom-sheet`/`use-touch` 共 7 份（99~152 行），属**文档先行**，不等同于代码实现。                                                                               |
+| 维度                                  | 状态                                                                                                                                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@nop-chaos/flux-renderers-mobile` 包 | **包骨架已落地**（`package.json`/`tsconfig`/`vite alias`/`src/index.ts` + `schemas.ts` + `useTouch` Hook）。renderer definition（5 个组件注册）尚未落地，M5 工作项代码实现 0%。 |
+| M0 响应式基线                         | `done` **仅指文档基线**（`docs/architecture/mobile-responsive-baseline.md` 立约）。safe-area/hairline/haptics/z-index 栈等基础设施代码未实现（见 M0.1）。                       |
+| M0.1 基础设施代码                     | **未实现**（safe-area/hairline/haptics/z-index 在 `packages/ui/src/` 中均为零）。                                                                                               |
+| M1–M5 实现进度                        | **0%**。所有响应式改进与移动端原生组件均未开始。                                                                                                                                |
+| design.md 立约                        | ✅ 已存在：`pull-refresh`/`infinite-scroll`/`swipe-cell`/`countdown`/`notice-bar`/`bottom-sheet`/`use-touch` 共 7 份（99~152 行），属**文档先行**，不等同于代码实现。           |
 
 **读法约定**：本文中"已有初稿/design.md 已立约"一律指**契约文档**已写，不是代码已实现。代码是否落地只看本表，不看 design.md 是否存在。
 

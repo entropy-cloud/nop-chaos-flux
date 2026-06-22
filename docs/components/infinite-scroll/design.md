@@ -16,13 +16,25 @@
 | AMIS CRUD2    | `CRUD2.tsx:1680-1801`                  | 内部集成 load-more              |
 | 移动商城项目  | newbee-mall ProductList.vue, Order.vue | 10+ 页面使用 `van-list`         |
 
+### Flux 决策表
+
+> Flux 决策主语。amis 仅作参考之一，**非标尺**。命名对齐 shadcn/ui、请求下沉 data-source + action（X3 §1/§3）。列：`能力 | 采纳 | 不采纳 | 理由`。
+
+| 能力                                             | 采纳     | 不采纳     | 理由                                                         |
+| ------------------------------------------------ | -------- | ---------- | ------------------------------------------------------------ |
+| `body` region + 触底加载容器                     | **实现** | —          | 核心能力：容器型 renderer 包裹列表内容                       |
+| `onLoadMore` 事件驱动加载                        | **实现** | —          | 加载行为由事件驱动，分页请求下沉 action/data-source          |
+| `distance`/`disabled`/`immediateCheck` 配置      | **实现** | —          | 标准交互配置                                                 |
+| `loadingText`/`finishedText`/`errorText` 文案    | **实现** | —          | i18n 友好的可配置文案                                        |
+| `hasMore`/`loading` 运行时 props（由数据层驱动） | **实现** | —          | infinite-scroll **不持有分页状态**，由 crud/data-source 驱动 |
+| amis 组件级 `api`/`initFetch`                    | —        | **不采纳** | 请求下沉 data-source + action（X3 §1/§3）                    |
+| 内部分页状态管理                                 | —        | **不采纳** | 分页状态（pageNo/pageSize/total/hasMore）归 crud/data-source |
+
 ## 3. Schema 设计
 
 ```typescript
 interface InfiniteScrollSchema extends BaseSchema {
   type: 'infinite-scroll';
-  /** 列表内容 region */
-  body: SchemaNode;
   /** 加载更多触发距离（px），默认 200px */
   distance?: number;
   /** 是否禁用滚动加载 */
@@ -37,6 +49,8 @@ interface InfiniteScrollSchema extends BaseSchema {
   immediateCheck?: boolean;
 }
 ```
+
+- `body` 是 region（renderer definition 中声明 `{ key: 'body', kind: 'region' }`），不是 schema 内联字段。
 
 ### Events
 

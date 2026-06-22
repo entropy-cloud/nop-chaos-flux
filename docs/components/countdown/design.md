@@ -53,10 +53,10 @@ interface CountdownSchema extends BaseSchema {
   paused?: boolean;
   /** 是否自动开始，默认 true */
   autoStart?: boolean;
-  /** 前缀内容 */
-  prefix?: SchemaNode;
-  /** 后缀内容 */
-  suffix?: SchemaNode;
+  /** 前缀文本 */
+  prefix?: string;
+  /** 后缀文本 */
+  suffix?: string;
 }
 ```
 
@@ -71,8 +71,7 @@ interface CountdownEvents {
 
 ### 字段分类
 
-- `time`、`targetTime`、`format`、`millisecond`、`paused`、`autoStart`: `value`
-- `prefix`、`suffix`: `value-or-region`
+- `time`、`targetTime`、`format`、`millisecond`、`paused`、`autoStart`、`prefix`、`suffix`: `value`
 - `onFinish`: `event`
 
 ## 5. 格式化规则
