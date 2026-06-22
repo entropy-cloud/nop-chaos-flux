@@ -12,15 +12,15 @@
 
 ### Flux 决策表（X5 扩展，E3）
 
-| 能力                                                             | 首版决定       | 理由                                                                                                                                                                                                                                                              |
-| ---------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `minItems?: number`（缺省 `1`，覆盖原硬编码）                    | **实现**（E3） | 列表字段标配约束；validation contributor 读 schema 而非硬编码 `1`，允许业务配置 `minItems: 0`（可空数组）或 `minItems: 2`（至少两项）。                                                                                                                           |
-| `maxItems?: number`（缺省无上限）                                | **实现**（E3） | 列表字段标配约束；达到 `maxItems` 时新增按钮 **disabled**（不隐藏，保留可发现性，见 Decision）。                                                                                                                                                                  |
-| 重排（上移 / 下移按钮）                                          | **实现**（E3） | 对接 form runtime `moveValue(name, from, to)`；边界 disabled（首行禁上移、末行禁下移）。a11y 友好、可观测、契约最小。                                                                                                                                             |
-| `component:moveItem` 句柄                                        | **实现**（E3） | 从 §8 future 翻转为实现：上下移动按钮已对接 `moveValue`，对外句柄可演进为 `component:moveItem`（与已落地的 `component:addItem/removeItem` 同族，归 X1 后续注册）；本 plan 落地的是 reorder 行为本身（按钮 + moveValue），句柄注册可作 follow-up。                 |
-| 多列 / 任意 per-item schema / tabs 模式 / 扁平值输出             | 不采纳（后续） | 高端 Combo 能力，与 `array-field`/`combo`/`input-table` 边界冲突；当前 `Array<{ id, value }>` 单列模型已覆盖简单数组编辑。需复杂 item schema 应升级为 `array-field`（per-item form region），而不是在 `array-editor` 偷偷开放任意 region（DESIGN-ACK-NOT-IMPL）。 |
-| 拖拽重排（drag-and-drop）                                        | 不采纳（后续） | 上下移动按钮已满足 reorder 契约（可观测、对接 moveValue、a11y 友好）；`@dnd-kit` 已是 `flux-renderers-form-advanced` 依赖可用，drag 是 DX 糖而非契约必需，归后续增强（见 plan Deferred）。                                                                        |
-| item 复制 / `deleteConfirmDialog` / `addable`-`removable` toggle | 不采纳（后续） | 次要 UX，当前 remove + append 已覆盖核心编辑；删除确认属全局 UX 模式，应在 form runtime 或表层统一处理，不在 `array-editor` 内嵌。归后续。                                                                                                                        |
+| 能力                                                             | 首版决定                 | 理由                                                                                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minItems?: number`（缺省 `1`，覆盖原硬编码）                    | **实现**（E3）           | 列表字段标配约束；validation contributor 读 schema 而非硬编码 `1`，允许业务配置 `minItems: 0`（可空数组）或 `minItems: 2`（至少两项）。                                                                                                                                                                                           |
+| `maxItems?: number`（缺省无上限）                                | **实现**（E3）           | 列表字段标配约束；达到 `maxItems` 时新增按钮 **disabled**（不隐藏，保留可发现性，见 Decision）。                                                                                                                                                                                                                                  |
+| 重排（上移 / 下移按钮）                                          | **实现**（E3）           | 对接 form runtime `moveValue(name, from, to)`；边界 disabled（首行禁上移、末行禁下移）。a11y 友好、可观测、契约最小。                                                                                                                                                                                                             |
+| `component:moveItem` 句柄                                        | **实现**（X1-successor） | 句柄注册已由 X1-successor plan（`docs/plans/2026-06-22-1137-1-x1-successor-composite-editor-handles-plan.md`）收口：`component:addItem`/`removeItem`/`moveItem` 三 handle 经共享 `createCompositeFieldHandle` 工厂注册，对接 form runtime `appendValue`/`removeValue`/`moveValue`（scope owner 回退调 `scope.update`）。详见 §8。 |
+| 多列 / 任意 per-item schema / tabs 模式 / 扁平值输出             | 不采纳（后续）           | 高端 Combo 能力，与 `array-field`/`combo`/`input-table` 边界冲突；当前 `Array<{ id, value }>` 单列模型已覆盖简单数组编辑。需复杂 item schema 应升级为 `array-field`（per-item form region），而不是在 `array-editor` 偷偷开放任意 region（DESIGN-ACK-NOT-IMPL）。                                                                 |
+| 拖拽重排（drag-and-drop）                                        | 不采纳（后续）           | 上下移动按钮已满足 reorder 契约（可观测、对接 moveValue、a11y 友好）；`@dnd-kit` 已是 `flux-renderers-form-advanced` 依赖可用，drag 是 DX 糖而非契约必需，归后续增强（见 plan Deferred）。                                                                                                                                        |
+| item 复制 / `deleteConfirmDialog` / `addable`-`removable` toggle | 不采纳（后续）           | 次要 UX，当前 remove + append 已覆盖核心编辑；删除确认属全局 UX 模式，应在 form runtime 或表层统一处理，不在 `array-editor` 内嵌。归后续。                                                                                                                                                                                        |
 
 **Decision（reorder 机制，E3）**：采用**上下移动按钮**（非 drag），对接 form runtime `moveValue(name, from, to)`。无 form runtime（scope owner 回退模式）时**镜像现有 append/remove 的 scope-owner 回退路径**：调 `scope.update` 重排数组，按钮**保持 enabled**（Failure Path `movevalue-scope-fallback`），而非 disabled —— 因为 scope owner 模式下值仍可写，禁用会让用户误以为不可用。
 
@@ -58,8 +58,14 @@
 
 ## 8. 事件、动作与组件句柄能力
 
-- 适合长期暴露 `component:addItem`、`component:removeItem`、`component:moveItem`。
-- 当前数组操作已经有 form runtime 一致的 append/insert/remove/move API 可以对接；E3 已落地上下移动按钮对接 `moveValue`，对外 `component:moveItem` 句柄注册可作 follow-up。
+- 已落地对外句柄：`component:addItem`、`component:removeItem`、`component:moveItem`（X1-successor plan 收口，经共享 `createCompositeFieldHandle` 工厂 + `useCompositeFieldHandle` hook 注册；卸载时 unregister）。
+- 对接路径与按钮同源：`addItem` → `currentForm.appendValue(name, item)`（无 form runtime 时 `scope.update` 回退）；`removeItem` → `currentForm.removeValue(name, index)`；`moveItem` → `currentForm.moveValue(name, from, to)`。
+- handle args/result 形状（capability contract）：
+  - `addItem`：args `{ value?: unknown }`（`value` 可选，缺省构造空 item `{ id, value: '' }`）；成功返回 `data: { index }`（index 由 renderer 基于 append 后 `items.length` 派生，`appendValue()` 返回 void）；达到 `maxItems` 时返回 `{ ok: true, skipped: true }`（不绕过约束）。
+  - `removeItem`：args `{ index: number }`（必填）；达到 `minItems` 时返回 `{ ok: true, skipped: true }`；index 越界返回 `{ ok: false, code: 'index-out-of-bounds' }`。
+  - `moveItem`：args `{ from: number, to: number }`（均必填）；越界返回 `{ ok: false, code: 'index-out-of-bounds' }`。
+- **不发布 result FluxValueShape**（与 `clear`/`reset`/`focus`/`open` 既有 vocabulary 一致）：action-adapter 对已发布 result 形状做强校验（`matchesFluxValueShape(result.data, result)`），而 `maxItems`/`minItems` 受限时须返回 `{ ok: true, skipped: true }`（无 data）；为兼容 skipped 语义且与既有句柄族一致，contract 仅发布 `args` 形状做 payload 校验，`data` 作为信息性返回（成功时含 `index`，供 action graph 后续节点读取）。
+- handle 在 `disabled`/`readOnly` 时返回 `{ ok: true, skipped: true }`（失败路径 `x1-composite-disabled`），与按钮 disabled 态一致。
 
 ## 9. 数据源、表达式、导入能力接入点
 

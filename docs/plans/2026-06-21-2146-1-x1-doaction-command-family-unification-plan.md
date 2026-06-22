@@ -261,6 +261,7 @@ Exit Criteria:
 - Why Not Blocking Closure: 这些组件在 roadmap 标 P2/P3，且其 design.md 已显式标「future」，不属于 X1 roadmap 工作项的「全部输入控件」范围。Phase 1 词汇表裁定后，它们可在未来按同一 vocabulary 单独立项。
 - Successor Required: yes
 - Successor Path: E3 P2 体验完善批启动时的新 plan（或独立 follow-up plan）。
+- Successor 收口注记（2026-06-22）：既有 runtime 实现的复合字段编辑器子集（`array-editor`/`key-value` 的 `component:addItem`/`removeItem`/`moveItem`）已由 `docs/plans/2026-06-22-1137-1-x1-successor-composite-editor-handles-plan.md`（completed）收口。`dynamic-renderer` 的 `component:refresh` 已由 E3 dynamic-renderer autoload-gate plan 落地。其余不存在 runtime 实现的组件（pagination/wizard/collapse/carousel/cards/alert/service/dropdown-button/picker）仍归 main roadmap 各自落地 plan；`reaction` 无 handle 语义（successor no）。
 
 ## Non-Blocking Follow-ups
 

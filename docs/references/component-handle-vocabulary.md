@@ -73,32 +73,36 @@
 
 ## 字段类型裁定表
 
-| 字段类型                               | `clear`          | `reset` | `focus` | `open`/`close`/`toggle` | 理由                                                                                          |
-| -------------------------------------- | ---------------- | ------- | ------- | ----------------------- | --------------------------------------------------------------------------------------------- |
-| text/email/password/textarea           | ✅               | ✅      | ✅      | —                       | 标量，clear/reset/focus 语义清晰                                                              |
-| input-number                           | ✅               | ✅      | ✅      | —                       | 标量                                                                                          |
-| select（单选/多选）                    | ✅               | —       | ✅      | ✅(`open` 打开下拉)     | clear 清空 selection；open 打开 dropdown menu；reset 语义对 controlled options 不清，故不暴露 |
-| checkbox-group/radio-group/switch      | —                | —       | ✅      | —                       | boolean/choice，clear/reset 语义不清（清空 selection？置 false？），只暴露 focus              |
-| input-tree/tree-select                 | ✅               | —       | ✅      | —                       | clear 清空 selection 数组；reset 因 tree state 复杂（含 expand 态）不暴露；focus tree 容器    |
-| button                                 | —                | —       | ✅      | —                       | 无值语义，只 focus                                                                            |
-| dialog/drawer                          | —                | —       | —       | ✅                      | surface，open/close/toggle                                                                    |
-| code-editor                            | ✅               | ✅      | ✅      | —                       | 已有，保持现状                                                                                |
-| form/table/crud/chart/data-source/tabs | （既有，不扩展） |         |         |                         | 见各自 design.md                                                                              |
+| 字段类型                               | `clear`          | `reset` | `focus` | `open`/`close`/`toggle`                | 理由                                                                                                                                                                                                                                      |
+| -------------------------------------- | ---------------- | ------- | ------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| text/email/password/textarea           | ✅               | ✅      | ✅      | —                                      | 标量，clear/reset/focus 语义清晰                                                                                                                                                                                                          |
+| input-number                           | ✅               | ✅      | ✅      | —                                      | 标量                                                                                                                                                                                                                                      |
+| select（单选/多选）                    | ✅               | —       | ✅      | ✅(`open` 打开下拉)                    | clear 清空 selection；open 打开 dropdown menu；reset 语义对 controlled options 不清，故不暴露                                                                                                                                             |
+| checkbox-group/radio-group/switch      | —                | —       | ✅      | —                                      | boolean/choice，clear/reset 语义不清（清空 selection？置 false？），只暴露 focus                                                                                                                                                          |
+| input-tree/tree-select                 | ✅               | —       | ✅      | —                                      | clear 清空 selection 数组；reset 因 tree state 复杂（含 expand 态）不暴露；focus tree 容器                                                                                                                                                |
+| button                                 | —                | —       | ✅      | —                                      | 无值语义，只 focus                                                                                                                                                                                                                        |
+| dialog/drawer                          | —                | —       | —       | ✅                                     | surface，open/close/toggle                                                                                                                                                                                                                |
+| code-editor                            | ✅               | ✅      | ✅      | —                                      | 已有，保持现状                                                                                                                                                                                                                            |
+| form/table/crud/chart/data-source/tabs | （既有，不扩展） |         |         |                                        | 见各自 design.md                                                                                                                                                                                                                          |
+| array-editor/key-value                 | —                | —       | —       | —（`addItem`/`removeItem`/`moveItem`） | 复合字段编辑器；三 handle 对接 form runtime `appendValue`/`removeValue`/`moveValue`，args 形状见各自 design.md §8。经共享 `createCompositeFieldHandle` 工厂注册（X1-successor plan）。不发布 result FluxValueShape（兼容 skipped 语义）。 |
 
 ## Failure Paths 汇总
 
-| code                        | 触发                                                            | 行为                                |
-| --------------------------- | --------------------------------------------------------------- | ----------------------------------- |
-| `not-mounted`               | `component:focus` 目标已卸载                                    | `{ok:false, code:'not-mounted'}`    |
-| `not-visible`               | `component:focus` 目标 `when:false`                             | `{ok:false, code:'not-visible'}`    |
-| `skipped`                   | clear 在 disabled/readOnly / close 在已 closed / open 在已 open | `{ok:true, skipped:true}`           |
-| `fellBackToDefault`         | reset 无 initial value                                          | `{ok:true, fellBackToDefault:true}` |
-| `no-target`                 | surface open 目标未注册                                         | `{ok:false, code:'no-target'}`      |
-| `payload-validation-failed` | payload 不匹配 published FluxValueShape                         | runtime adapter reject（既有行为）  |
+| code                        | 触发                                                                             | 行为                                                        |
+| --------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `not-mounted`               | `component:focus` 目标已卸载                                                     | `{ok:false, code:'not-mounted'}`                            |
+| `not-visible`               | `component:focus` 目标 `when:false`                                              | `{ok:false, code:'not-visible'}`                            |
+| `skipped`                   | clear 在 disabled/readOnly / close 在已 closed / open 在已 open                  | `{ok:true, skipped:true}`                                   |
+| `fellBackToDefault`         | reset 无 initial value                                                           | `{ok:true, fellBackToDefault:true}`                         |
+| `no-target`                 | surface open 目标未注册                                                          | `{ok:false, code:'no-target'}`                              |
+| `payload-validation-failed` | payload 不匹配 published FluxValueShape                                          | runtime adapter reject（既有行为）                          |
+| `index-out-of-bounds`       | `component:removeItem`/`moveItem`（array-editor/key-value）的 index/from/to 越界 | `{ok:false, code:'index-out-of-bounds'}`，不调 form runtime |
+| `x1-composite-disabled`     | array-editor/key-value handle 在 `disabled`/`readOnly` 时被调                    | `{ok:true, skipped:true}`（与按钮 disabled 态一致）         |
 
 ## 命名规则
 
 - handle 名一律 **小写连字符**（`clear`/`reset`/`focus`/`open`/`close`/`toggle`/`refresh`/`submit`/`validate`/`setValue`/`getValue`/`getValues`/`setValues`/`getSelection`/`setSelection`/`resize`/`cancel`/`start`）。
+- 复合字段编辑器（array-editor/key-value）handle 用 **`addItem`/`removeItem`/`moveItem`**（item 级操作，与 design.md §8 既有措辞一致，避免与 form-level `add`/`remove` 混淆）。args 形状：`addItem` `{ value?: unknown }`、`removeItem` `{ index: number }`、`moveItem` `{ from: number, to: number }`。
 - 既有 camelCase 方法（`setValue`/`getValue`/`getValues`/`setValues`/`getSelection`/`setSelection`/`getEditorView`）保留（它们是"动作型"语义，非 vocabulary 核心词），不强制 rename。
 - 新增 handle 优先用本文核心词；动作型语义（如 `resize`/`cancel`/`start`）允许保留特化名。
 

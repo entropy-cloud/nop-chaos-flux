@@ -12,16 +12,16 @@
 
 ### Flux 决策表（X5 扩展，E3）
 
-| 能力                                          | 首版决定       | 理由                                                                                                                                                                                                                                                     |
-| --------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `minItems?: number`（缺省 `1`，覆盖原硬编码） | **实现**（E3） | 列表字段标配约束；validation contributor 读 schema 而非硬编码 `1`。与 `array-editor` 同包同模式，对称收口。                                                                                                                                              |
-| `maxItems?: number`（缺省无上限）             | **实现**（E3） | 列表字段标配约束；达到 `maxItems` 时新增按钮 **disabled**（不隐藏，保留可发现性，见 Decision）。                                                                                                                                                         |
-| 重排（上移 / 下移按钮）                       | **实现**（E3） | 对接 form runtime `moveValue(name, from, to)`；边界 disabled（首行禁上移、末行禁下移）。与 `array-editor` 对称。                                                                                                                                         |
-| `component:moveItem` 句柄                     | **实现**（E3） | 从 §8 future 翻转为实现：上下移动按钮已对接 `moveValue`，对外句柄可演进为 `component:moveItem`（与 `addItem/removeItem` 同族）；本 plan 落地的是 reorder 行为本身（按钮 + moveValue），句柄注册可作 follow-up。                                          |
-| 类型化 value cell / schema 驱动 value 输入器  | 不采纳（后续） | 类型化 value 需独立 `valueSchema`/`valueRenderer` 协议；当前 `Array<{ id, key, value }>` 字符串模型已覆盖 headers/metadata 等小型映射场景。需类型化应升级为 `object-field` 数组或 `combo`，而不是在 `key-value` 偷塞任意 schema（DESIGN-ACK-NOT-IMPL）。 |
-| 嵌套对象编辑（value 为 object）               | 不采纳（后续） | 一旦需要对象级复杂值，应升级为 `array-field`/`combo`，而不是继续膨胀 `key-value`（见 §12）。                                                                                                                                                             |
-| 拖拽重排（drag-and-drop）                     | 不采纳（后续） | 上下移动按钮已满足 reorder 契约（可观测、对接 moveValue、a11y 友好）；`@dnd-kit` 已是依赖可用，drag 是 DX 糖而非契约必需，归后续增强（见 plan Deferred）。                                                                                               |
-| 重复 key inline 实时高亮                      | 不采纳（后续） | 提交时 `uniqueKeys` 校验消息已覆盖重复 key 检测；inline 实时高亮是 DX 增强，不影响契约成立，归后续优化。                                                                                                                                                 |
+| 能力                                          | 首版决定                 | 理由                                                                                                                                                                                                                                                      |
+| --------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minItems?: number`（缺省 `1`，覆盖原硬编码） | **实现**（E3）           | 列表字段标配约束；validation contributor 读 schema 而非硬编码 `1`。与 `array-editor` 同包同模式，对称收口。                                                                                                                                               |
+| `maxItems?: number`（缺省无上限）             | **实现**（E3）           | 列表字段标配约束；达到 `maxItems` 时新增按钮 **disabled**（不隐藏，保留可发现性，见 Decision）。                                                                                                                                                          |
+| 重排（上移 / 下移按钮）                       | **实现**（E3）           | 对接 form runtime `moveValue(name, from, to)`；边界 disabled（首行禁上移、末行禁下移）。与 `array-editor` 对称。                                                                                                                                          |
+| `component:moveItem` 句柄                     | **实现**（X1-successor） | 句柄注册已由 X1-successor plan（`docs/plans/2026-06-22-1137-1-x1-successor-composite-editor-handles-plan.md`）收口：`component:addItem`/`removeItem`/`moveItem` 三 handle 经共享 `createCompositeFieldHandle` 工厂注册，与 `array-editor` 对称。详见 §8。 |
+| 类型化 value cell / schema 驱动 value 输入器  | 不采纳（后续）           | 类型化 value 需独立 `valueSchema`/`valueRenderer` 协议；当前 `Array<{ id, key, value }>` 字符串模型已覆盖 headers/metadata 等小型映射场景。需类型化应升级为 `object-field` 数组或 `combo`，而不是在 `key-value` 偷塞任意 schema（DESIGN-ACK-NOT-IMPL）。  |
+| 嵌套对象编辑（value 为 object）               | 不采纳（后续）           | 一旦需要对象级复杂值，应升级为 `array-field`/`combo`，而不是继续膨胀 `key-value`（见 §12）。                                                                                                                                                              |
+| 拖拽重排（drag-and-drop）                     | 不采纳（后续）           | 上下移动按钮已满足 reorder 契约（可观测、对接 moveValue、a11y 友好）；`@dnd-kit` 已是依赖可用，drag 是 DX 糖而非契约必需，归后续增强（见 plan Deferred）。                                                                                                |
+| 重复 key inline 实时高亮                      | 不采纳（后续）           | 提交时 `uniqueKeys` 校验消息已覆盖重复 key 检测；inline 实时高亮是 DX 增强，不影响契约成立，归后续优化。                                                                                                                                                  |
 
 **Decision（reorder 机制，E3）**：采用**上下移动按钮**（非 drag），对接 form runtime `moveValue(name, from, to)`。无 form runtime（scope owner 回退模式）时**镜像现有 append/remove 的 scope-owner 回退路径**：调 `scope.update` 重排数组，按钮**保持 enabled**（Failure Path `movevalue-scope-fallback`）。
 
@@ -58,8 +58,14 @@
 
 ## 8. 事件、动作与组件句柄能力
 
-- 集合操作可演进为 `component:addItem`、`component:removeItem`、`component:moveItem`。
-- 当前删除/新增主要通过值更新驱动；E3 已落地上下移动按钮对接 `moveValue`，对外 `component:moveItem` 句柄注册可作 follow-up。
+- 已落地对外句柄：`component:addItem`、`component:removeItem`、`component:moveItem`（X1-successor plan 收口，经共享 `createCompositeFieldHandle` 工厂 + `useCompositeFieldHandle` hook 注册；与 `array-editor` 同工厂同模式）。
+- 对接路径与按钮同源：`addItem` → `currentForm.appendValue(name, pair)`（无 form runtime 时 `scope.update` 回退，pair = `{ id, key: '', value: '' }`）；`removeItem` → `currentForm.removeValue(name, index)`；`moveItem` → `currentForm.moveValue(name, from, to)`。
+- handle args/result 形状（capability contract，与 `array-editor` 对称）：
+  - `addItem`：args `{ value?: unknown }`（`value` 可选，缺省构造空 pair `{ id, key: '', value: '' }`）；成功返回 `data: { index }`（index 由 renderer 基于 `pairs.length` 派生）；达到 `maxItems` 时返回 `{ ok: true, skipped: true }`。
+  - `removeItem`：args `{ index: number }`（必填）；达到 `minItems` 时返回 `{ ok: true, skipped: true }`；index 越界返回 `{ ok: false, code: 'index-out-of-bounds' }`。
+  - `moveItem`：args `{ from: number, to: number }`（均必填）；越界返回 `{ ok: false, code: 'index-out-of-bounds' }`。
+- **不发布 result FluxValueShape**（理由同 `array-editor` §8：action-adapter 对 result 形状强校验与 skipped 语义冲突；与既有 vocabulary 一致，仅发布 args 形状）。
+- handle 在 `disabled`/`readOnly` 时返回 `{ ok: true, skipped: true }`（失败路径 `x1-composite-disabled`）。
 
 ## 9. 数据源、表达式、导入能力接入点
 

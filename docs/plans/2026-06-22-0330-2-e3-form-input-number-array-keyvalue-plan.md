@@ -231,7 +231,7 @@ Exit Criteria:
 ## Non-Blocking Follow-ups
 
 - input-number `step` 派生 precision 边角（`step=0.01` 时 precision 推断）归后续评估（design.md 决策表可记）。
-- array-editor/key-value `component:moveItem` 句柄（X1 已铺 `component:addItem/removeItem`，moveItem 句柄归 X1 后续或本 plan 一并——Phase 4 已含 moveValue 调用，句柄注册可 follow-up）。
+- array-editor/key-value `component:moveItem` 句柄（X1 已铺 `component:addItem/removeItem`，moveItem 句柄归 X1 后续或本 plan 一并——Phase 4 已含 moveValue 调用，句柄注册可 follow-up）。**已收口（2026-06-22）**：`docs/plans/2026-06-22-1137-1-x1-successor-composite-editor-handles-plan.md`（completed）已为 array-editor/key-value 注册 `component:addItem`/`removeItem`/`moveItem` 三 handle（共享 `createCompositeFieldHandle` 工厂 + `useCompositeFieldHandle` hook），对接本 plan 落地的 `appendValue`/`removeValue`/`moveValue` 行为。
 
 ## Closure
 
