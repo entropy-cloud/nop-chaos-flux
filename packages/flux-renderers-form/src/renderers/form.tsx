@@ -225,6 +225,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     [parentScope, formName, importBindings, ownedForm.store],
   );
   const initAction = props.events['initAction'];
+  const autoInit = props.props.autoInit !== false;
   const submitAction = props.events['submitAction'];
   const submitSuccessAction = props.events['onSubmitSuccess'];
   const submitErrorAction = props.events['onSubmitError'];
@@ -308,7 +309,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   ]);
 
   useEffect(() => {
-    if (!initAction || !importsReady) {
+    if (!initAction || !importsReady || !autoInit) {
       return;
     }
 
@@ -361,7 +362,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         initActionAbortRef.current = null;
       }
     };
-  }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm, props.path, runtime]);
+  }, [activationKey, autoInit, importsReady, initAction, lifecycleScope, ownedForm, props.path, runtime]);
 
   const formMode = (props.props as FormSchema).mode;
   const formLabelAlign = (props.props as FormSchema).labelAlign;

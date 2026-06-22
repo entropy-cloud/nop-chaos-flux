@@ -357,6 +357,7 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'body', kind: 'region', regionKey: 'body' },
     { key: 'actions', kind: 'region', regionKey: 'actions' },
     { key: 'data', kind: 'prop' },
+    { key: 'autoInit', kind: 'prop', valueType: 'boolean' },
     { key: 'initAction', kind: 'event' },
     { key: 'submitAction', kind: 'event' },
     { key: 'onSubmitSuccess', kind: 'event' },

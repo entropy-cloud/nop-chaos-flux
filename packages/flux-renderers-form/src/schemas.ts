@@ -89,6 +89,7 @@ export interface FormSchema extends BaseSchema {
   gap?: number | string;
   statusPath?: string;
   valuesPath?: string;
+  autoInit?: boolean;
   initAction?: ActionSchema | ActionSchema[];
   submitAction?: ActionSchema | ActionSchema[];
   onSubmitSuccess?: ActionSchema | ActionSchema[];

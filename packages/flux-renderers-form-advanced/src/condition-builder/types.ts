@@ -77,7 +77,6 @@ export interface ConditionDateTimeField extends BaseConditionField {
 export interface ConditionSelectField extends BaseConditionField {
   type: 'select';
   options?: Array<{ label: string; value: SchemaValue } & SchemaObject>;
-  source?: string;
   searchable?: boolean;
   multiple?: boolean;
   autoComplete?: string;
@@ -151,7 +150,6 @@ export interface ConditionBuilderSchema extends BaseSchema {
   type: 'condition-builder';
   name: string;
   fields?: ConditionFieldSchemaValue[];
-  source?: string;
   builderMode?: 'full' | 'simple';
   embed?: boolean;
   title?: string;

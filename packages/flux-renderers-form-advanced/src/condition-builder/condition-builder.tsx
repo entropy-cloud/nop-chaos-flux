@@ -26,6 +26,7 @@ import type {
 import { ConditionGroup } from './condition-group.js';
 import { genId } from './id-utils.js';
 import { groupValuesEqual, sanitizeNode, sanitizeRight } from './utils.js';
+
 import { createProjectedInlineForm } from '../composite-field/projected-inline-form.js';
 import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime.js';
 import { createProjectedOwnerScope } from '../projected-owner-scope.js';
@@ -126,9 +127,12 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
 
   const schemaProps = useSchemaProps(props) as ConditionBuilderSchema;
   const operatorsOverride = schemaProps.operators;
-  const fields = (schemaProps.fields ?? []) as ConditionField[];
+  const staticFields = (schemaProps.fields ?? []) as ConditionField[];
   const formulas = schemaProps.formulas;
   const formulaForIf = schemaProps.formulaForIf;
+
+  const fields = staticFields;
+  const effectiveOperatorsOverride = operatorsOverride;
 
   const evaluateFormula = useCallback(
     () => createFormulaEvaluator(props.helpers, scope, formulas),
@@ -296,7 +300,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
         fields={fields}
         schema={schemaProps}
         className={props.meta.className}
-        operatorsOverride={operatorsOverride}
+        operatorsOverride={effectiveOperatorsOverride}
         onChange={syncValue}
         disabled={disabled}
         formulas={formulas}
@@ -318,7 +322,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
         value={effectiveValue}
         schema={schemaProps}
         fields={fields}
-        operatorsOverride={operatorsOverride}
+        operatorsOverride={effectiveOperatorsOverride}
         onChange={syncValue}
         disabled={disabled}
         depth={0}

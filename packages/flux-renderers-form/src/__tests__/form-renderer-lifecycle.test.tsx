@@ -527,6 +527,34 @@ describe('FormRenderer lifecycle wiring', () => {
     expect((initCall?.[1] as { signal?: AbortSignal } | undefined)?.signal?.aborted).toBe(true);
   });
 
+  it('skips initAction when autoInit is false', async () => {
+    const initAction = vi.fn(async () => undefined);
+    const ownedScope = makeScope({ id: 'owned-autoinit', visible: { localValue: 'test' } });
+    const ownedForm = {
+      scope: ownedScope,
+      store: { getState: () => ({ values: {}, submitting: false, submitAttempted: false, fieldStates: {} }), subscribe: () => () => undefined, subscribeToSubmitting: () => () => undefined },
+      dispose: vi.fn(),
+      setLifecycleHandlers: vi.fn(),
+    } as any;
+    const runtime = {
+      getImportedExpressionBindings: vi.fn(() => ({ importedFlag: 'yes' })),
+      createFormRuntime: vi.fn(() => ownedForm),
+    } as any;
+    mocks.useRendererRuntime.mockReturnValue(runtime);
+
+    const props = buildProps({
+      props: { autoInit: false },
+      schema: { type: 'form', autoInit: false },
+      events: { initAction },
+    });
+
+    render(<FormRenderer {...props} />);
+
+    await waitFor(() => {
+      expect(initAction).not.toHaveBeenCalled();
+    });
+  });
+
   it('retries a rejected initAction on rerender within the same activation and reports the failure', async () => {
     const parentScope = makeScope({ id: 'parent', visible: { parentValue: 'plain' } });
     const ownedScope = makeScope({ id: 'owned-init', visible: { localValue: 'plain-owned' } });
