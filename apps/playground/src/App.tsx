@@ -19,6 +19,7 @@ import { BooleanControlValueContractDemoPage } from './pages/boolean-control-val
 import { TextIconVisualFieldsDemoPage } from './pages/text-icon-visual-fields-demo';
 import { LayoutFamilyEnhancementsDemoPage } from './pages/layout-family-enhancements-demo';
 import { FormInputEnhancementsDemoPage } from './pages/form-input-enhancements-demo';
+import { InputSuggestDemoPage } from './pages/input-suggest-demo';
 import { TreeDisplayUxDemoPage } from './pages/tree-display-ux-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
@@ -146,6 +147,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <LayoutFamilyEnhancementsDemoPage onBack={goHome} />;
         case 'form-input-enhancements':
           return <FormInputEnhancementsDemoPage onBack={goHome} />;
+        case 'input-suggest':
+          return <InputSuggestDemoPage onBack={goHome} />;
         case 'tree-display-ux':
           return <TreeDisplayUxDemoPage onBack={goHome} />;
         default:

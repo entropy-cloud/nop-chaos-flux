@@ -455,6 +455,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'E3 form input controls: input-number long-press continuous stepping + clamp, array-editor/key-value configurable minItems/maxItems + up/down reorder via moveValue.',
   },
   {
+    id: 'input-suggest',
+    title: 'Input Autocomplete',
+    eyebrow: 'Input Suggest (E3)',
+    description:
+      'E3 input-text autoComplete successor: data-source composition with refreshSource + sendOn gate, debounced trigger, Popover suggestion list, suggestTemplate region, select writeback.',
+  },
+  {
     id: 'tree-display-ux',
     title: 'Tree Display UX',
     eyebrow: 'Tree Display (E3)',

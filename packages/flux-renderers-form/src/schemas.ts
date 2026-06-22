@@ -70,6 +70,12 @@ export interface InputSchema extends BoundFieldSchemaBase {
     message?: string;
   };
   hiddenFieldPolicy?: HiddenFieldPolicy;
+  suggestSource?: string;
+  suggestDebounce?: number;
+  suggestTrigger?: 'input' | 'focus' | 'manual';
+  suggestMinInputLength?: number;
+  suggestTemplate?: BaseSchema[];
+  suggestEmpty?: string;
 }
 
 export interface FormSchema extends BaseSchema {

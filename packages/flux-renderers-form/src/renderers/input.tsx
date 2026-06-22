@@ -24,6 +24,7 @@ import type {
   InputSchema,
 } from '../schemas.js';
 import { validateHiddenFieldPolicySchema } from './hidden-field-policy-schema.js';
+import { useInputSuggest } from './input-suggest.js';
 import {
   CheckboxRenderer,
   RadioGroupRenderer,
@@ -98,6 +99,12 @@ export const inputEnhancementFieldRules: SchemaFieldRule[] = [
   { key: 'pattern', kind: 'prop' },
   { key: 'validate', kind: 'prop' },
   { key: 'hiddenFieldPolicy', kind: 'prop' },
+  { key: 'suggestSource', kind: 'prop' },
+  { key: 'suggestDebounce', kind: 'prop' },
+  { key: 'suggestTrigger', kind: 'prop' },
+  { key: 'suggestMinInputLength', kind: 'prop' },
+  { key: 'suggestTemplate', kind: 'region', params: ['suggestion', 'index'] },
+  { key: 'suggestEmpty', kind: 'prop' },
 ];
 
 export const textareaEnhancementFieldRules: SchemaFieldRule[] = [
@@ -254,6 +261,23 @@ export function createInputRenderer(inputType: string) {
     const [revealed, setRevealed] = useState(false);
     const actualInputType = revealEnabled && revealed ? 'text' : inputType;
 
+    const suggest = useInputSuggest({
+      config: {
+        suggestSource: typeof props.props.suggestSource === 'string' ? props.props.suggestSource : undefined,
+        suggestDebounce: typeof props.props.suggestDebounce === 'number' ? props.props.suggestDebounce : undefined,
+        suggestTrigger: props.props.suggestTrigger as 'input' | 'focus' | 'manual' | undefined,
+        suggestMinInputLength: typeof props.props.suggestMinInputLength === 'number'
+          ? props.props.suggestMinInputLength
+          : undefined,
+        suggestEmpty: typeof props.props.suggestEmpty === 'string' ? props.props.suggestEmpty : undefined,
+      },
+      regions: props.regions,
+      helpers: props.helpers,
+      interactive: presentation.interactive,
+      inputValue,
+      onChange: handlers.onChange,
+    });
+
     const nativeAttrs: { minLength?: number; maxLength?: number; pattern?: string } = {};
     if (typeof props.props.minLength === 'number') {
       nativeAttrs.minLength = props.props.minLength;
@@ -339,20 +363,30 @@ export function createInputRenderer(inputType: string) {
       'aria-describedby': presentation.showError ? errorId : undefined,
       'aria-errormessage': presentation.showError ? errorId : undefined,
       placeholder: props.props.placeholder ? String(props.props.placeholder) : undefined,
-      onFocus: handlers.onFocus,
+      onFocus: (event) => {
+        void event;
+        handlers.onFocus();
+        suggest.handleFocus();
+      },
       onChange: (event: ChangeEvent<HTMLInputElement>) => handlers.onChange(event.target.value),
-      onBlur: handleBlur,
+      onBlur: () => {
+        handleBlur();
+        suggest.handleBlur();
+      },
+      onKeyDown: (event) => {
+        suggest.handleKeyDown(event);
+      },
       ...(nativeAutoComplete ? { autoComplete: nativeAutoComplete } : {}),
       ...nativeAttrs,
     };
 
     if (!needsInputGroup) {
-      return (
-        <Input {...sharedInputProps} className={props.meta.className} />
+      return suggest.wrap(
+        <Input {...sharedInputProps} className={props.meta.className} />,
       );
     }
 
-    return (
+    return suggest.wrap(
       <InputGroupFieldControl
         className={cn('nop-input-group', props.meta.className)}
         inputProps={sharedInputProps}
@@ -362,7 +396,7 @@ export function createInputRenderer(inputType: string) {
         showClearButton={showClearButton}
         onClear={handleClear}
         revealSlot={revealSlot}
-      />
+      />,
     );
   };
 }
