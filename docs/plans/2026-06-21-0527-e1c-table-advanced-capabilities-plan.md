@@ -305,7 +305,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- `popOver 单元格` 实现归 E3 P2 / successor（本 plan 仅做 design.md 标签下调裁定）。
+- `popOver 单元格` 实现归 E3 P2 / successor（本 plan 仅做 design.md 标签下调裁定）。**已收口（2026-06-22）**：successor plan `docs/plans/2026-06-22-0901-2-e3-table-popover-cell-plan.md` 已完成全部 4 Phase（design.md 翻转、schema/region、TableCellPopOver 组件、playground/e2e、roadmap/log），table popOver 单元格能力 live。
 - 多列排序累积键（click vs shift-click vs `multiSort` 总开关）的 UX 最终裁定可在 E3 体验完善时复盘（本 plan Phase 2 内做临时 Decision 收口）。
 - 树表父子选择级联语义与 E0b tree-select 族的对齐，若后续 crud/tree-select 场景需要，单独评估。
 

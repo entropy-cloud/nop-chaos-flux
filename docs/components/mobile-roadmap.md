@@ -1,6 +1,6 @@
 # Mobile Roadmap（移动端响应式 + 移动端原生组件）
 
-> Last Updated: 2026-06-21
+> Last Updated: 2026-06-22
 > Source: `docs/components/existing-components-improvement-analysis.md` §8
 > 关联：`roadmap.md`（新增组件）、`existing-components-improvement-roadmap.md`（桌面端组件改进）— 三者独立不重叠
 
@@ -10,6 +10,20 @@
 
 1. **现有组件移动端响应式改进**：同组件同属性 + 响应式实现
 2. **移动端原生交互组件**：桌面端无等价物、依赖触摸手势的专用组件，归属 `flux-renderers-mobile` 包
+
+## Current Baseline
+
+> **截至 2026-06-22 的实现事实（read-only 核查结论，不是计划）：**
+
+| 维度                                  | 状态                                                                                                                                                                                                                                                |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@nop-chaos/flux-renderers-mobile` 包 | **代码尚未落地**。master 分支 `packages/flux-renderers-mobile/` 目录不存在。commit `f52409b2`（标题 `feat(mobile): add flux-renderers-mobile package with 5 mobile-native components`）实际 diff 仅含 `AGENTS.md` + `docs/`，**未包含任何包代码**。 |
+| M0 响应式基线                         | `done` **仅指文档基线**（`docs/architecture/mobile-responsive-baseline.md` 立约）。safe-area/hairline/haptics/z-index 栈等基础设施代码未实现（见 M0.1）。                                                                                           |
+| M0.1 基础设施代码                     | **未实现**（safe-area/hairline/haptics/z-index 在 `packages/ui/src/` 中均为零）。                                                                                                                                                                   |
+| M1–M5 实现进度                        | **0%**。所有响应式改进与移动端原生组件均未开始。                                                                                                                                                                                                    |
+| design.md 立约                        | ✅ 已存在：`pull-refresh`/`infinite-scroll`/`swipe-cell`/`countdown`/`notice-bar`/`bottom-sheet`/`use-touch` 共 7 份（99~152 行），属**文档先行**，不等同于代码实现。                                                                               |
+
+**读法约定**：本文中"已有初稿/design.md 已立约"一律指**契约文档**已写，不是代码已实现。代码是否落地只看本表，不看 design.md 是否存在。
 
 ## 架构决策（已确认）
 
@@ -52,14 +66,16 @@
 ## Phase Status
 
 > **全文件唯一动态状态区。** 状态流转同其他 roadmap。
+>
+> **可标记单位是 work item（M0.1/M1/M2/M3/M4/M5），不是单组件子项。** 每个 work item = 一个 execution plan 的合理交付范围，一个 plan 可覆盖该 work item 下的多个组件子项。plan 通过 closure audit 后，整组 work item 标 `done`。**禁止为单个 M5a/M5b… 各开独立 plan**（违反 plan guide §22，会重蹈 micro-plan 覆辙）。子项（M1a/M1b…/M5e）是同一 work item 的拆解说明，不是独立打勾单位。
 
-- M0 响应式基线与断点规范: `done`
-- M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈）: `todo`
-- M1 高频交互控件响应式（select/tree/table/dialog/tabs）: `todo`
-- M2 表单控件触摸适配（input/textarea/checkbox/switch/button）: `todo`
-- M3 容器与布局响应式（page/flex/container/grid）: `todo`
-- M4 数据展示响应式（crud/cards/list/chart）: `todo`
-- M5 移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）: `todo`
+- M0 响应式基线与断点规范: `done`（仅文档基线；基础设施代码见 M0.1，未实现）
+- M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈，4 子项，建议 1 plan 4 phase）: `todo`
+- M1 高频交互控件响应式（select/tree/table/dialog/tabs，5 子项 M1a~M1d）: `todo`
+- M2 表单控件触摸适配（input/textarea/checkbox/switch/button，3 子项 M2a~M2c）: `todo`
+- M3 容器与布局响应式（page/flex/container/grid，2 子项 M3a~M3b）: `todo`
+- M4 数据展示响应式（crud/cards/list/chart，3 子项 M4a~M4c）: `todo`
+- M5 移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar，5 子项 M5a~M5e，共用 useTouch Hook，建议 1 plan）: `todo`
 
 ## Status Values
 
@@ -155,13 +171,15 @@
 
 ### M5 — 移动端原生组件（`flux-renderers-mobile` 包）
 
-| Work item | 组件            | 行为                                        | design.md 更新                          | 依赖 |
-| --------- | --------------- | ------------------------------------------- | --------------------------------------- | ---- |
-| **M5a**   | pull-refresh    | 下拉刷新容器，状态机驱动                    | `pull-refresh/design.md`（已有初稿）    | M0   |
-| **M5b**   | infinite-scroll | 无限滚动容器，IntersectionObserver 触底加载 | `infinite-scroll/design.md`（已有初稿） | M0   |
-| **M5c**   | swipe-cell      | 左滑露出操作按钮，手势驱动                  | `swipe-cell/design.md`（新建）          | M0   |
-| **M5d**   | countdown       | 倒计时展示，支持格式化模板和结束回调        | `countdown/design.md`（新建）           | —    |
-| **M5e**   | notice-bar      | 滚动通知栏，支持滚动动画和点击交互          | `notice-bar/design.md`（新建）          | —    |
+> **代码未落地（见 Current Baseline）**。本组 5 个组件共用 `useTouch` Hook、同属一个包、同一组 closure criteria，按 plan guide §22 合并为**一个 work item / 一个 plan**，禁止拆成 5 个 micro-plan。design.md 已立约（文档先行），不等同于代码实现。
+
+| Work item | 组件            | 行为                                        | design.md 状态                   | 依赖 |
+| --------- | --------------- | ------------------------------------------- | -------------------------------- | ---- |
+| **M5a**   | pull-refresh    | 下拉刷新容器，状态机驱动                    | design.md 已立约，**代码未实现** | M0   |
+| **M5b**   | infinite-scroll | 无限滚动容器，IntersectionObserver 触底加载 | design.md 已立约，**代码未实现** | M0   |
+| **M5c**   | swipe-cell      | 左滑露出操作按钮，手势驱动                  | design.md 已立约，**代码未实现** | M0   |
+| **M5d**   | countdown       | 倒计时展示，支持格式化模板和结束回调        | design.md 已立约，**代码未实现** | —    |
+| **M5e**   | notice-bar      | 滚动通知栏，支持滚动动画和点击交互          | design.md 已立约，**代码未实现** | —    |
 
 ## Dependency Graph
 
@@ -209,11 +227,13 @@ graph TD
 ## Rule
 
 - 本文档是状态索引，不是 execution plan。
+- **可标记单位是 work item（M0.1/M1/M2/M3/M4/M5），不是单组件子项（M1a/M5a…）。** 每个 work item = 一个 execution plan 的合理交付范围，一个 plan 覆盖该 work item 下的多个组件子项；plan 通过 closure audit 后，整组 work item 在 Phase Status 标 `done`。**禁止为单个子项各开 plan**（违反 plan guide §22 合并准则，会重蹈 micro-plan 覆辙）。
 - **工作项增删/优先级重排需人确认**；AI 按既定顺序执行首个 `todo`，不重新仲裁。
 - **`proposed` 状态的工作项是 AI 起草的提案，需人确认后才可改 `todo` 进入执行队列；AI 不得自行把 `proposed` 改为 `todo`。** AI 可自主推进 `todo`→`planned`→`done`，但不能跨过人审把 `proposed` 变成可执行项。
 - **plan 通过 closure audit 后标记 `done`**，不得提前。
+- **代码落地状态以 Current Baseline 表为准，不以 design.md 是否存在为准**（design.md 立约 ≠ 代码实现）。
 - M0 是 M1-M5 硬前置；M0.1 是软前置（不阻塞，但 M5 落地前最好先做）。
 - 严格遵循"同组件同属性 + 响应式实现"，任何工作项若演变为新建 `*-mobile` 组件（如 `select-mobile`）或引入 mobileUI 标志位，必须回到人确认。
 - M5 移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）归属 `flux-renderers-mobile` 包，这是独立于响应式改进的组件新增，遵循主 roadmap 的 renderer 实现规范。
 - M3a 的页面骨架模式（Tabbar/NavBar/ActionBar/SubmitBar/Sticky）**不新增独立 renderer**，走 `page.region` + 标准 schema 模板（见 `page/design.md` §移动端骨架模式）。Tabbar 是路由导航（navigate），≠ `tabs`（内容切换）。
-- 跨 roadmap：本 roadmap 不做桌面端功能（归改进 roadmap）、不做非移动原生的新组件（归主 roadmap）。
+- 跨 roadmap：本 roadmap 不做桌面端功能（归改进 roadmap）、不做非移动原生的新组件（归主 roadmap）。本 roadmap 的 M0.1/M1-M5 在 `roadmap.md` 有镜像项，**口径以本文为准**。

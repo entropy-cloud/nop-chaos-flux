@@ -1,6 +1,6 @@
 # Components Roadmap
 
-> Last Updated: 2026-06-20
+> Last Updated: 2026-06-22
 > Source: `docs/components/amis-baseline-matrix.md`, `docs/components/index.md`
 
 ## Purpose
@@ -20,7 +20,7 @@
 - W1a. 内容展示组（5）: `todo`
 - W1b. 容器与反馈组（5）: `todo`
 - W1c. 集合展示组（1）: `todo`
-- W1d. 移动端交互组（2）: `todo`
+- W1d. 移动端交互组（2，pull-refresh/infinite-scroll）: `todo`（依赖 `mobile-roadmap.md` M5；`@nop-chaos/flux-renderers-mobile` 包**代码未落地**，见 mobile-roadmap Current Baseline；口径以 mobile-roadmap 为准）
 - W2a. 数据组合组（5）: `todo`
 - W2b. 日期族（4）: `todo`
 - W3a. 布局组（2）: `todo`
@@ -31,7 +31,7 @@
 - W4b. 流程展示组（2）: `todo`
 - W4c. 复合表单组（4）: `todo`
 - D1a. 设计器补充组（2）: `todo`
-- **M0.1 移动端基础设施（safe-area/hairline/haptics/z-index）: `todo`** ← 镜像自 `mobile-roadmap.md`（4 项子工作项，建议 1 plan 4 phase；Protected Area，执行前拟 plan）
+- **M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈）: `todo`** ← 镜像自 `mobile-roadmap.md`（4 子项 M0.1a~M0.1d，建议 1 plan 4 phase；Protected Area，执行前拟 plan；细节与口径以 mobile-roadmap 为准）
 - O1. 非 retained 可选项（13）: 按需启动，不列工作项
 
 ## Status Values
@@ -301,6 +301,7 @@ graph TD
 - **可标记单位是工作项**（W1a…D1a，以及镜像自 `mobile-roadmap.md` 的 M0.1），不是 wave。wave 只是优先级分组。
 - AI 可自主推进工作项状态（`todo`→`planned`→`done`），这是基于 plan 完成的客观事实记录，不需要人确认；但工作项本身的增删/重排需人确认。
 - 移动端轨道（M0.1/M1-M5）的主入口是 `mobile-roadmap.md`，本文件只做 Phase Status 镜像；M0.1 等移动端工作项的细节看 `mobile-roadmap.md`。
+- **W1d 移动端交互组（pull-refresh/infinite-scroll）与 `mobile-roadmap.md` M5 共享同一批交付物**（同属 `flux-renderers-mobile` 包，共用 `useTouch` Hook）。代码落地状态、口径、打勾单位以 `mobile-roadmap.md` Current Baseline 为准；当前两者代码均未落地。当 M5 plan 完成时，W1d 随 M5 一并标 `done`，避免重复打勾或漏打勾。
 - 根据 roadmap 拟制 plan 时，plan 对应一个或多个工作项；**plan 通过 closure audit 后，必须把对应工作项在 Phase Status 标记为 `done`**，并同步 `amis-baseline-matrix.md` 的组件状态。
 - 不得在 closure audit 通过前把工作项标为 `done`。
 - 工作项状态变更只需更新 Phase Status（本文档顶部）。
