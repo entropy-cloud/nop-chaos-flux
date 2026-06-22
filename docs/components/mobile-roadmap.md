@@ -15,13 +15,13 @@
 
 > **截至 2026-06-22 的实现事实（read-only 核查结论，不是计划）：**
 
-| 维度                                  | 状态                                                                                                                                                                            |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@nop-chaos/flux-renderers-mobile` 包 | **包骨架已落地**（`package.json`/`tsconfig`/`vite alias`/`src/index.ts` + `schemas.ts` + `useTouch` Hook）。renderer definition（5 个组件注册）尚未落地，M5 工作项代码实现 0%。 |
-| M0 响应式基线                         | `done`（文档基线 + M0.1 基础设施代码已落地，见下）。                                                                                                                            |
-| M0.1 基础设施代码                     | `done`（safe-area/hairline/haptics/z-index 栈已落地于 `packages/ui/src/`，详见 `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）。                             |
-| M1–M5 实现进度                        | **0%**。所有响应式改进与移动端原生组件均未开始。                                                                                                                                |
-| design.md 立约                        | ✅ 已存在：`pull-refresh`/`infinite-scroll`/`swipe-cell`/`countdown`/`notice-bar`/`bottom-sheet`/`use-touch` 共 7 份（99~152 行），属**文档先行**，不等同于代码实现。           |
+| 维度                                  | 状态                                                                                                                                                                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@nop-chaos/flux-renderers-mobile` 包 | **5 个组件已落地**（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar 实现 + focused 单测 + `mobileRendererDefinitions` + `registerMobileRenderers` + playground `/mobile-components` 演示页 + e2e 验证）。M5 工作项已完成。 |
+| M0 响应式基线                         | `done`（文档基线 + M0.1 基础设施代码已落地，见下）。                                                                                                                                                                                    |
+| M0.1 基础设施代码                     | `done`（safe-area/hairline/haptics/z-index 栈已落地于 `packages/ui/src/`，详见 `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）。                                                                                     |
+| M1–M4 实现进度                        | **0%**。桌面组件响应式改进均未开始。M5 已 `done`。                                                                                                                                                                                      |
+| design.md 立约                        | ✅ 已存在：`pull-refresh`/`infinite-scroll`/`swipe-cell`/`countdown`/`notice-bar`/`bottom-sheet`/`use-touch` 共 7 份（99~152 行），属**文档先行**，现在代码已对齐契约。                                                                 |
 
 **读法约定**：本文中"已有初稿/design.md 已立约"一律指**契约文档**已写，不是代码已实现。代码是否落地只看本表，不看 design.md 是否存在。
 
@@ -75,7 +75,7 @@
 - M2 表单控件触摸适配（input/textarea/checkbox/switch/button，3 子项 M2a~M2c）: `todo`
 - M3 容器与布局响应式（page/flex/container/grid，2 子项 M3a~M3b）: `todo`
 - M4 数据展示响应式（crud/cards/list/chart，3 子项 M4a~M4c）: `todo`
-- M5 移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar，5 子项 M5a~M5e，共用 useTouch Hook，建议 1 plan）: `todo`
+- M5 移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar，5 子项 M5a~M5e，共用 useTouch Hook，建议 1 plan）: `done`
 
 ## Status Values
 
@@ -179,17 +179,17 @@
 | **M4b**   | cards/list | 小屏单列、触摸滚动                      | `cards/design.md`、`list/design.md` | M0、主 roadmap W1c/W2a |
 | **M4c**   | chart      | 小屏尺寸自适应、图例位置                | `chart/design.md`                   | M0                     |
 
-### M5 — 移动端原生组件（`flux-renderers-mobile` 包）
+### M5 — 移动端原生组件（`flux-renderers-mobile` 包）✅
 
-> **代码未落地（见 Current Baseline）**。本组 5 个组件共用 `useTouch` Hook、同属一个包、同一组 closure criteria，按 plan guide §22 合并为**一个 work item / 一个 plan**，禁止拆成 5 个 micro-plan。design.md 已立约（文档先行），不等同于代码实现。
+> **代码已落地（执行期完成 2026-06-22）**。5 个组件实现 + focused 单测 + `mobileRendererDefinitions` + `registerMobileRenderers` + playground 演示页（`/mobile-components`）+ e2e 验证全部交付。Execution plan：`docs/plans/2026-06-22-2057-2-m5-mobile-native-components-plan.md`。
 
-| Work item | 组件            | 行为                                        | design.md 状态                   | 依赖 |
-| --------- | --------------- | ------------------------------------------- | -------------------------------- | ---- |
-| **M5a**   | pull-refresh    | 下拉刷新容器，状态机驱动                    | design.md 已立约，**代码未实现** | M0   |
-| **M5b**   | infinite-scroll | 无限滚动容器，IntersectionObserver 触底加载 | design.md 已立约，**代码未实现** | M0   |
-| **M5c**   | swipe-cell      | 左滑露出操作按钮，手势驱动                  | design.md 已立约，**代码未实现** | M0   |
-| **M5d**   | countdown       | 倒计时展示，支持格式化模板和结束回调        | design.md 已立约，**代码未实现** | —    |
-| **M5e**   | notice-bar      | 滚动通知栏，支持滚动动画和点击交互          | design.md 已立约，**代码未实现** | —    |
+| Work item  | 组件            | 行为                                        | design.md 状态                   | 依赖 |
+| ---------- | --------------- | ------------------------------------------- | -------------------------------- | ---- |
+| **M5a** ✅ | pull-refresh    | 下拉刷新容器，状态机驱动                    | design.md 已立约，**代码已实现** | M0   |
+| **M5b** ✅ | infinite-scroll | 无限滚动容器，IntersectionObserver 触底加载 | design.md 已立约，**代码已实现** | M0   |
+| **M5c** ✅ | swipe-cell      | 左滑露出操作按钮，手势驱动                  | design.md 已立约，**代码已实现** | M0   |
+| **M5d** ✅ | countdown       | 倒计时展示，支持格式化模板和结束回调        | design.md 已立约，**代码已实现** | —    |
+| **M5e** ✅ | notice-bar      | 滚动通知栏，支持滚动动画和点击交互          | design.md 已立约，**代码已实现** | —    |
 
 ## Dependency Graph
 

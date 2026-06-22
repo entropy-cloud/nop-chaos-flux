@@ -1,6 +1,6 @@
 # M5 移动端原生组件（pull-refresh / infinite-scroll / swipe-cell / countdown / notice-bar）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-06-22
 > Source: `docs/components/mobile-roadmap.md` M5；`docs/components/{pull-refresh,infinite-scroll,swipe-cell,countdown,notice-bar,use-touch}/design.md`（契约已立约）
 > Related: `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`（软前置：M0.1c haptics + M0.1d z-index 最好先落地）
@@ -85,91 +85,91 @@
 
 ### Phase 1 - useTouch Hook focused 单测（Proof 先行）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-mobile/src/hooks/use-touch.test.ts`（colocated，与 hook 同目录）
 
 - Item Types: `Proof`
 
-- [ ] **Proof**：为先行已有的 `useTouch` 写 focused 单测，覆盖：初始 state、onTouchStart 记录起点、onTouchMove 计算 deltaX/deltaY/offset/direction（horizontal/vertical/空，threshold 边界）、onTouchEnd 置 isTouching=false、reset 归零。
-- [ ] **Proof**：验证 `resolveDirection` 在 absX/absY 均 ≤ threshold 时返回 `''`，absX>absY 返回 horizontal，否则 vertical。
+- [x] **Proof**：为先行已有的 `useTouch` 写 focused 单测，覆盖：初始 state、onTouchStart 记录起点、onTouchMove 计算 deltaX/deltaY/offset/direction（horizontal/vertical/空，threshold 边界）、onTouchEnd 置 isTouching=false、reset 归零。
+- [x] **Proof**：验证 `resolveDirection` 在 absX/absY 均 ≤ threshold 时返回 `''`，absX>absY 返回 horizontal，否则 vertical。
 
 Exit Criteria:
 
-- [ ] `use-touch` focused 单测存在且 `pnpm --filter @nop-chaos/flux-renderers-mobile test` 通过。
-- [ ] 单测覆盖方向判定 / threshold 边界 / reset（不仅是"不报错"）。
+- [x] `use-touch` focused 单测存在且 `pnpm --filter @nop-chaos/flux-renderers-mobile test` 通过。
+- [x] 单测覆盖方向判定 / threshold 边界 / reset（不仅是"不报错"）。
 
 ### Phase 2 - pull-refresh + infinite-scroll（滚动触发容器族）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-mobile/src/pull-refresh.tsx`、`infinite-scroll.tsx`（新建）
 
 - Item Types: `Proof` + `Fix`
 
 > 执行顺序：本档为 `必须自动化`，先写失败 Proof 再实现 Fix（plan guide 模板用法 #12）。
 
-- [ ] **Proof**：pull-refresh focused 单测（threshold 边界触发 onRefresh / 不触发回弹）；infinite-scroll focused 单测（IntersectionObserver mock 触底触发 onLoadMore / finished 不再触发）。
-- [ ] **Fix**：`pull-refresh` 组件——容器型 renderer，消费 `body` region；useTouch 驱动状态机（pulling→loosing→loading→success）；`threshold`/`direction`/`loadingText`/`pullingText`/`loosingText`/`successText`/`successDuration`/`animationDuration`/`disabled` 从 `props.props` 读；`onRefresh` 走 `props.events`。
-- [ ] **Fix**：`infinite-scroll` 组件——容器型 renderer，消费 `body` region；IntersectionObserver + sentinel 触底触发；`distance`/`disabled`/`loadingText`/`finishedText`/`errorText`/`immediateCheck` 从 `props.props` 读；`onLoadMore` 走 `props.events`；finished/error 状态正确渲染。
+- [x] **Proof**：pull-refresh focused 单测（threshold 边界触发 onRefresh / 不触发回弹）；infinite-scroll focused 单测（IntersectionObserver mock 触底触发 onLoadMore / finished 不再触发）。
+- [x] **Fix**：`pull-refresh` 组件——容器型 renderer，消费 `body` region；useTouch 驱动状态机（pulling→loosing→loading→success）；`threshold`/`direction`/`loadingText`/`pullingText`/`loosingText`/`successText`/`successDuration`/`animationDuration`/`disabled` 从 `props.props` 读；`onRefresh` 走 `props.events`。
+- [x] **Fix**：`infinite-scroll` 组件——容器型 renderer，消费 `body` region；IntersectionObserver + sentinel 触底触发；`distance`/`disabled`/`loadingText`/`finishedText`/`errorText`/`immediateCheck` 从 `props.props` 读；`onLoadMore` 走 `props.events`；finished/error 状态正确渲染。
 
 Exit Criteria:
 
-- [ ] `pull-refresh`、`infinite-scroll` 组件实现，遵循 `RendererComponentProps`（不直接访问 store）。
-- [ ] 两者 focused 单测通过（验证 onRefresh/onLoadMore 触发与状态，不仅不报错）。
+- [x] `pull-refresh`、`infinite-scroll` 组件实现，遵循 `RendererComponentProps`（不直接访问 store）。
+- [x] 两者 focused 单测通过（验证 onRefresh/onLoadMore 触发与状态，不仅不报错）。
 
 ### Phase 3 - swipe-cell（手势驱动）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-mobile/src/swipe-cell.tsx`（新建）；操作按钮使用 `@nop-chaos/ui` `Button`（不写裸 `<button>`，遵循 AGENTS.md MANDATORY UI Component Usage）
 
 - Item Types: `Proof` + `Fix`
 
 > 执行顺序：先写失败 Proof 再实现 Fix。
 
-- [ ] **Proof**：focused 单测——`direction:'left'` 时右滑不响应、左滑露出 right region；`closeOnOutside:true` 点击外部触发 onClose；超过 threshold 露出操作区并触发 onOpen。
-- [ ] **Fix**：`swipe-cell` 组件——容器型 renderer，消费 `body`/`left`/`right` region；useTouch 驱动左/右滑露出操作区；`threshold`/`direction`/`disabled`/`closeOnOutside` 从 `props.props` 读；`onOpen`/`onClose`/`onAction` 走 `props.events`。
+- [x] **Proof**：focused 单测——`direction:'left'` 时右滑不响应、左滑露出 right region；`closeOnOutside:true` 点击外部触发 onClose；超过 threshold 露出操作区并触发 onOpen。
+- [x] **Fix**：`swipe-cell` 组件——容器型 renderer，消费 `body`/`left`/`right` region；useTouch 驱动左/右滑露出操作区；`threshold`/`direction`/`disabled`/`closeOnOutside` 从 `props.props` 读；`onOpen`/`onClose`/`onAction` 走 `props.events`。
 
 Exit Criteria:
 
-- [ ] `swipe-cell` 组件实现，遵循 `RendererComponentProps`。
-- [ ] focused 单测通过（方向限制 / closeOnOutside / threshold 露出，验证行为不仅不报错）。
+- [x] `swipe-cell` 组件实现，遵循 `RendererComponentProps`。
+- [x] focused 单测通过（方向限制 / closeOnOutside / threshold 露出，验证行为不仅不报错）。
 
 ### Phase 4 - countdown + notice-bar（展示族）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-mobile/src/countdown.tsx`、`notice-bar.tsx`（新建）；notice-bar 关闭按钮使用 `@nop-chaos/ui` `Button`（不写裸 `<button>`）
 
 - Item Types: `Proof` + `Fix`
 
 > 执行顺序：先写失败 Proof 再实现 Fix。
 
-- [ ] **Proof**：countdown focused 单测（format 渲染 / paused 暂停 / 归零触发 onFinish / 卸载清理定时器）；notice-bar focused 单测（variant 样式 / closable 触发 onClose / scrollable 文本短于容器时不滚动）。
-- [ ] **Fix**：`countdown` 组件——展示型 renderer；`time`/`targetTime`/`format`/`millisecond`/`paused`/`autoStart`/`prefix`/`suffix` 从 `props.props` 读；定时器（`setInterval`，`millisecond` 控制 1ms/帧粒度）；归零触发 `onFinish`（`props.events`）；卸载清理定时器。
-- [ ] **Fix**：`notice-bar` 组件——展示型 renderer；`text`（string|string[]）/`scrollable`/`speed`/`direction`/`loop`/`closable`/`icon`/`variant`（info/warning/success/error）从 `props.props` 读；滚动动画（CSS transform / requestAnimationFrame）；`closable` 关闭触发 `onClose`；点击触发 `onClick`。
+- [x] **Proof**：countdown focused 单测（format 渲染 / paused 暂停 / 归零触发 onFinish / 卸载清理定时器）；notice-bar focused 单测（variant 样式 / closable 触发 onClose / scrollable 文本短于容器时不滚动）。
+- [x] **Fix**：`countdown` 组件——展示型 renderer；`time`/`targetTime`/`format`/`millisecond`/`paused`/`autoStart`/`prefix`/`suffix` 从 `props.props` 读；定时器（`setInterval`，`millisecond` 控制 1ms/帧粒度）；归零触发 `onFinish`（`props.events`）；卸载清理定时器。
+- [x] **Fix**：`notice-bar` 组件——展示型 renderer；`text`（string|string[]）/`scrollable`/`speed`/`direction`/`loop`/`closable`/`icon`/`variant`（info/warning/success/error）从 `props.props` 读；滚动动画（CSS transform / requestAnimationFrame）；`closable` 关闭触发 `onClose`；点击触发 `onClick`。
 
 Exit Criteria:
 
-- [ ] `countdown`、`notice-bar` 组件实现，遵循 `RendererComponentProps`。
-- [ ] focused 单测通过（定时器/动画行为验证，不仅不报错）。
+- [x] `countdown`、`notice-bar` 组件实现，遵循 `RendererComponentProps`。
+- [x] focused 单测通过（定时器/动画行为验证，不仅不报错）。
 
 ### Phase 5 - renderer definition + 注册 + playground + e2e
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-mobile/src/mobile-renderer-definitions.ts`（新建，对齐 `flux-renderers-basic/src/basic-renderer-definitions.ts` 模式）；`src/index.ts`（导出组件 + definition + `registerMobileRenderers`）；`apps/playground/src/`（5 个演示页路由）；`tests/e2e/`（mobile 组件 e2e）
 
 - Item Types: `Fix`
 
-- [ ] **Fix**：新建 `mobile-renderer-definitions.ts`，声明 5 个 `RendererDefinition`（`type`/`displayName`/`category`/`sourcePackage:'@nop-chaos/flux-renderers-mobile'`/`defaultSchema`/`fields` region 声明：pull-refresh 的 body、infinite-scroll 的 body、swipe-cell 的 body/left/right），对齐 basic 包注册模式。
-- [ ] **Fix**：`src/index.ts` 导出 5 个组件 + `mobileRendererDefinitions` + `registerMobileRenderers(registry)`（对齐 `registerBasicRenderers` 模式）。
-- [ ] **Fix**：playground 增 5 个演示页（移动端视口，`<meta viewport>` + 窄屏样式），展示各组件交互。
-- [ ] **Proof**：e2e——用 Playwright `setViewportSize`（如 375×667）+ `page.evaluate`/`locator` 验证：pull-refresh 下拉触发刷新文本、infinite-scroll 触底加载、swipe-cell 滑动露出操作区、countdown 倒计时推进、notice-bar 滚动/关闭。**不靠截图诊断**（遵循 AGENTS.md）。
-- [ ] **Follow-up**：更新 `docs/components/mobile-roadmap.md` M5 子项（L178-182）的"代码未实现"标记为已实现 + M5 Phase Status（由 closure 阶段处理，非执行期自标）；仅在各组件 design.md 内已存在 status marker 时才翻转 design.md。
+- [x] **Fix**：新建 `mobile-renderer-definitions.ts`，声明 5 个 `RendererDefinition`（`type`/`displayName`/`category`/`sourcePackage:'@nop-chaos/flux-renderers-mobile'`/`defaultSchema`/`fields` region 声明：pull-refresh 的 body、infinite-scroll 的 body、swipe-cell 的 body/left/right），对齐 basic 包注册模式。
+- [x] **Fix**：`src/index.ts` 导出 5 个组件 + `mobileRendererDefinitions` + `registerMobileRenderers(registry)`（对齐 `registerBasicRenderers` 模式）。
+- [x] **Fix**：playground 增 5 个演示页（移动端视口，`<meta viewport>` + 窄屏样式），展示各组件交互。
+- [x] **Proof**：e2e——用 Playwright `setViewportSize`（如 375×667）+ `page.evaluate`/`locator` 验证：pull-refresh 下拉触发刷新文本、infinite-scroll 触底加载、swipe-cell 滑动露出操作区、countdown 倒计时推进、notice-bar 滚动/关闭。**不靠截图诊断**（遵循 AGENTS.md）。
+- [x] **Follow-up**：更新 `docs/components/mobile-roadmap.md` M5 子项（L178-182）的"代码未实现"标记为已实现 + M5 Phase Status（由 closure 阶段处理，非执行期自标）；仅在各组件 design.md 内已存在 status marker 时才翻转 design.md。
 
 Exit Criteria:
 
-- [ ] `mobileRendererDefinitions` + `registerMobileRenderers` 从 `src/index.ts` 导出，5 个 definition 的 region `fields` 声明正确。
-- [ ] playground 5 个演示页可访问、渲染正常、移动端视口下交互可用。
-- [ ] e2e 5 个组件关键交互验证通过（程序化断言，非截图）。
-- [ ] 各组件 design.md 实现状态标记翻转。
+- [x] `mobileRendererDefinitions` + `registerMobileRenderers` 从 `src/index.ts` 导出，5 个 definition 的 region `fields` 声明正确。
+- [x] playground 5 个演示页可访问、渲染正常、移动端视口下交互可用。
+- [x] e2e 5 个组件关键交互验证通过（程序化断言，非截图）。
+- [x] 各组件 design.md 实现状态标记翻转。
 
 ## Draft Review Record
 
@@ -186,19 +186,19 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 5 个移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）实现，遵循 `RendererComponentProps`（不直接访问 store）。
-- [ ] `mobileRendererDefinitions` + `registerMobileRenderers` 导出，5 个 definition region 声明正确。
-- [ ] useTouch + 5 个组件 focused 单测全部通过（验证行为，不仅不报错）。
-- [ ] playground 5 个演示页存在且移动端视口下交互可用。
-- [ ] e2e 5 个组件关键交互验证通过（Playwright 程序化断言，非截图）。
-- [ ] `mobile-roadmap.md` M5 子项（L178-182）"代码未实现"标记更新为已实现、M5 标 `done`（由 closure 阶段，非执行期自标）；design.md 仅在已有 status marker 时翻转。
-- [ ] 受影响 owner docs（design.md ×5、mobile-roadmap.md）已同步到 live baseline。
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 5 个移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）实现，遵循 `RendererComponentProps`（不直接访问 store）。— live: `packages/flux-renderers-mobile/src/{pull-refresh,infinite-scroll,swipe-cell,countdown,notice-bar}.tsx`
+- [x] `mobileRendererDefinitions` + `registerMobileRenderers` 导出，5 个 definition region 声明正确。— live: `src/mobile-renderer-definitions.ts`（5 definitions，regions body/left/right 声明齐全）+ `src/index.ts` 导出
+- [x] useTouch + 5 个组件 focused 单测全部通过（验证行为，不仅不报错）。— live: 7 test files / 79 tests（`use-touch.test.ts` + 5 组件 `.test.tsx` + `mobile-renderer-definitions.test.tsx`），`pnpm --filter @nop-chaos/flux-renderers-mobile test` 79/79 通过
+- [x] playground 5 个演示页存在且移动端视口下交互可用。— live: `apps/playground/src/pages/mobile-components-demo.tsx`（SchemaRenderer 真实挂载 5 个组件）+ `route-model.ts` `mobile-components` 路由 + `App.tsx` 注册 `registerMobileRenderers`
+- [x] e2e 5 个组件关键交互验证通过（Playwright 程序化断言，非截图）。— live: `tests/e2e/mobile-components.spec.ts`（8 case，`viewport: 390×844`，CDP touch drag / status attr / countdown 真实推进 / close button 隐藏等程序化断言）
+- [x] `mobile-roadmap.md` M5 子项（L188-192）"代码未实现"标记更新为已实现、M5 标 `done`（由 closure 阶段，非执行期自标）；design.md 仅在已有 status marker 时翻转。— live: `docs/components/mobile-roadmap.md` M5 ✅ + 5 子项（M5a~M5e）✅ + Current Baseline 表更新
+- [x] 受影响 owner docs（design.md ×5、mobile-roadmap.md）已同步到 live baseline。— live: `mobile-roadmap.md` L20 表 + L182-192；design.md ×5（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）契约字段对齐
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift。— `Deferred But Adjudicated` 两项（M0.1 haptics/z-index 消费 / useTouch 桌面 Pointer 兼容）均属 watch-only / out-of-scope，附明确 non-blocking 理由
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。— 本次 closure-audit 由独立 fresh session 完成（见 Closure Audit Evidence）
+- [x] `pnpm typecheck` — 51/51 通过（daily log `docs/logs/2026/06-22.md` L30）
+- [x] `pnpm build` — 27/27 通过（daily log L30）
+- [x] `pnpm lint` — 27/27 通过（daily log L30）
+- [x] `pnpm test` — 51/51 通过（daily log L30）
 
 ## Deferred But Adjudicated
 
@@ -223,13 +223,29 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<关闭时填写>>
+Status Note: M5 work item 完成。5 个移动端原生交互组件（pull-refresh / infinite-scroll / swipe-cell / countdown / notice-bar）作为 `@nop-chaos/flux-renderers-mobile` 包的 renderer 实现 + focused 单测 + renderer definition 注册 + playground 演示页 + e2e 验证全部落地，遵循 `RendererComponentProps` 契约。所有 in-scope checklist 已勾选，deferred 项均诚实裁定为 non-blocking，全量 `typecheck`/`build`/`lint`/`test` 通过。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 fresh-session closure auditor（本次审核，未复用执行 session 上下文）
+- Audit Scope: 重新核对整份 plan + live repo 抽查 + daily log 证据核对
+- Evidence:
+  - **Live code 抽查**（逐项核对 plan 的每个 Phase Exit Criteria 与 Closure Gates）：
+    - Phase 1：`packages/flux-renderers-mobile/src/hooks/use-touch.test.ts` 存在，13 tests 覆盖方向判定 / threshold 边界 / reset。
+    - Phase 2：`pull-refresh.tsx`（156 行，状态机 + useTouch）+ `infinite-scroll.tsx`（150 行，IntersectionObserver + sentinel）+ 各自 focused 单测存在。
+    - Phase 3：`swipe-cell.tsx`（190 行，body/left/right regions + closeOnOutside window listener）+ focused 单测存在。
+    - Phase 4：`countdown.tsx`（150 行，setInterval + 卸载清理 + onFinish 防重）+ `notice-bar.tsx`（215 行，CSS marquee + variant + closable Button）+ 各自 focused 单测存在。
+    - Phase 5：`mobile-renderer-definitions.ts` 声明 5 definitions（regions/props/events 齐全）；`src/index.ts` 导出 5 组件 + `mobileRendererDefinitions` + `registerMobileRenderers`；`apps/playground/src/pages/mobile-components-demo.tsx` + `route-model.ts` 注册；`tests/e2e/mobile-components.spec.ts` 8 case 程序化断言。
+  - **Anti-Hollow 抽查**：组件被 playground demo 真实挂载（`SchemaRenderer` 集成），e2e 通过 CDP touch / status attr / countdown 真实推进等运行时验证（非仅类型/接口存在）。
+  - **Five-point consistency**：Plan Status (`completed`) ↔ 5 Phase Status (`completed`) ↔ 各 Phase Exit Criteria (全 `[x]`) ↔ Closure Gates (全 `[x]`) ↔ `docs/logs/2026/06-22.md` 收口记录，彼此一致。
+  - **Deferred honesty**：`Deferred But Adjudicated` 两项（M0.1 haptics/z-index 消费 / useTouch 桌面 Pointer 兼容）均附明确 non-blocking 理由 + 分类（watch-only residual / out-of-scope improvement），无 in-scope live defect 被静默降级。
+  - **Verification 数字**（来自 `docs/logs/2026/06-22.md` L30，executor 自查 + 本次审核交叉核对路径真实存在）：mobile 包 79/79 tests、`pnpm typecheck` 51/51、`pnpm build` 27/27、`pnpm lint` 27/27、`pnpm test` 51/51。
+  - **Owner-doc 同步**：`docs/components/mobile-roadmap.md` M5 → `done`、5 子项 ✅、Current Baseline 表更新；5 份 design.md 契约字段与 live 实现对齐。
+  - **Verdict**: `approved` — 所有 closure gates 满足，plan 可正式关闭。
 
 Follow-up:
 
-- <<仅记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- M0.1 haptics / z-index 栈深度集成（M0.1 plan 已 done，但本 plan 组件用本地按压反馈/z-index 兜底；M0.1 产物替换属优化，归 successor ownership：`docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）。
+- Tabs 组件 swipe 手势接入（归 M1d，消费本 plan 的 useTouch）。
+- pull-refresh/infinite-scroll 与 crud/list 数据源深度集成（归后续组件响应式 work item）。
+- 除上述 non-blocking follow-up 外，无 remaining plan-owned work。
