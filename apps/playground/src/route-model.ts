@@ -510,6 +510,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'M3a mobile page skeleton patterns: Tabbar (footer navigate), NavBar (header back+title+action), ActionBar (icon group + CTA), SubmitBar (checkbox + price + CTA), Sticky (container sticky top) — page.header/page.footer region templates, not new renderers. Switch viewport in DevTools to compare.',
   },
+  {
+    id: 'm4-data',
+    title: 'M4 Data Display Responsive',
+    eyebrow: 'Mobile Data Display (M4a/M4c)',
+    description:
+      'M4a crud small-screen toolbar simplification (hide switch-per-page, stack vertically), query region default-collapsed, pagination simplification; M4c chart container-width height clamp + wrapping legend (ResizeObserver, fixed-height fallback). Switch viewport in DevTools to compare.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

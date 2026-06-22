@@ -28,6 +28,7 @@ import { MobileComponentsDemoPage } from './pages/mobile-components-demo';
 import { M1ResponsiveDemoPage } from './pages/m1-responsive-demo';
 import { M2TouchDemoPage } from './pages/m2-touch-demo';
 import { M3LayoutDemoPage } from './pages/m3-layout-demo';
+import { M4DataDisplayDemoPage } from './pages/m4-data-display-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -171,6 +172,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <M2TouchDemoPage onBack={goHome} />;
         case 'm3-layout':
           return <M3LayoutDemoPage onBack={goHome} />;
+        case 'm4-data':
+          return <M4DataDisplayDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

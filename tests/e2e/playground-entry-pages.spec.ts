@@ -178,6 +178,35 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
   },
+  'm2-touch': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /M2 表单控件触摸适配/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+  },
+  'm3-layout': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /M3a 移动端页面骨架模式/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+  },
+  'm4-data': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /M4 数据展示响应式/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="m4-crud-root"]')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-testid="m4-chart-root"]')).toBeVisible({ timeout: 15_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {
