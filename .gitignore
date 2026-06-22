@@ -4,6 +4,7 @@ dist/
 coverage/
 _cov.json
 .idea/
+.qoder/
 .vite/
 *.tsbuildinfo
 nop-task.md
