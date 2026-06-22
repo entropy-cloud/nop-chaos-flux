@@ -1,0 +1,39 @@
+{
+  "name": "@nop-chaos/flux-renderers-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-i18n": "workspace:*",
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@nop-chaos/flux-compiler": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-runtime": "workspace:*",
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "Mobile-native interaction renderers: pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar."
+}

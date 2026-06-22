@@ -61,6 +61,9 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-renderers-data': fileURLToPath(
     new URL('./packages/flux-renderers-data/src/index.tsx', import.meta.url),
   ),
+  '@nop-chaos/flux-renderers-mobile': fileURLToPath(
+    new URL('./packages/flux-renderers-mobile/src/index.ts', import.meta.url),
+  ),
   '@nop-chaos/theme-tokens/styles.css': fileURLToPath(
     new URL('./packages/theme-tokens/src/styles.css', import.meta.url),
   ),
