@@ -1,11 +1,12 @@
 import React from 'react';
-import type { InstanceFrame, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
+import type { InstanceFrame, RenderRegionHandle, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { Button, Checkbox, RadioGroupItem, TableCell, TableRow } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon, GripVerticalIcon, CopyIcon, CheckIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell.js';
+import { TableCellPopOver } from './table-cell-popover.js';
 import type { TableRowEntry } from './types.js';
 import type { TreeRowEntry } from './use-table-tree.js';
 import type { RowDragSortApi } from './use-row-drag-sort.js';
@@ -19,6 +20,58 @@ function asReactNode(value: unknown): React.ReactNode {
 function indentStyle(level: number): React.CSSProperties {
   if (level <= 0) return {};
   return { paddingLeft: `${level * 1.25}rem` };
+}
+
+interface CellContentWithPopOverProps {
+  column: import('../schemas.js').TableColumnSchema;
+  record: Record<string, unknown>;
+  rowIndex: number;
+  rowScope: ScopeRef;
+  rowInstancePath: InstanceFrame[];
+  columnIndex: number;
+  regions: RendererComponentProps<TableSchema>['regions'];
+}
+
+function CellContentWithPopOver(props: CellContentWithPopOverProps) {
+  const { column, record, rowIndex, rowScope, rowInstancePath, columnIndex, regions } = props;
+  const cellContentRef = React.useRef<HTMLElement | null>(null);
+  const popOverConfig = column.popOver;
+  const hasPopOver = Boolean(popOverConfig);
+
+  const cellText = column.name ? String(record[column.name] ?? '') : '';
+
+  let popOverContentRegion: Pick<RenderRegionHandle, 'render' | 'key'> | undefined;
+  if (
+    popOverConfig &&
+    typeof popOverConfig.contentRegionKey === 'string' &&
+    regions[popOverConfig.contentRegionKey]
+  ) {
+    popOverContentRegion = regions[popOverConfig.contentRegionKey];
+  }
+
+  return (
+    <span className="inline-flex items-center">
+      <span ref={hasPopOver ? cellContentRef : undefined} className="truncate">
+        {cellText}
+      </span>
+      {column.copyable === true && column.name ? (
+        <CopyButton value={String(record[column.name] ?? '')} />
+      ) : null}
+      {hasPopOver && popOverConfig ? (
+        <TableCellPopOver
+          popOver={popOverConfig}
+          rowValue={column.name ? record[column.name] : undefined}
+          record={record}
+          rowIndex={rowIndex}
+          rowScope={rowScope}
+          rowInstancePath={rowInstancePath}
+          contentRegion={popOverContentRegion}
+          cellContentRef={cellContentRef}
+          columnIndex={columnIndex}
+        />
+      ) : null}
+    </span>
+  );
 }
 
 function CopyButton({ value }: { value: string }) {
@@ -124,7 +177,8 @@ function areColumnsRenderEquivalent(
         column.fixed === nextColumn.fixed &&
         column.cellRegionKey === nextColumn.cellRegionKey &&
         column.buttonsRegionKey === nextColumn.buttonsRegionKey &&
-        column.labelRegionKey === nextColumn.labelRegionKey)
+        column.labelRegionKey === nextColumn.labelRegionKey &&
+        column.popOver === nextColumn.popOver)
     );
   });
 }
@@ -472,14 +526,15 @@ function DataRowView({
           >
             {treeToggle}
             {treeSpacer}
-            <span className="inline-flex items-center">
-              <span>
-                {column.name ? String(entry.record[column.name] ?? '') : ''}
-              </span>
-              {column.copyable === true && column.name ? (
-                <CopyButton value={String(entry.record[column.name] ?? '')} />
-              ) : null}
-            </span>
+            <CellContentWithPopOver
+              column={column}
+              record={entry.record}
+              rowIndex={entry.sourceIndex}
+              rowScope={rowScope}
+              rowInstancePath={rowInstancePath}
+              columnIndex={columnIndex}
+              regions={parentProps.regions}
+            />
           </TableCell>
         );
       })}

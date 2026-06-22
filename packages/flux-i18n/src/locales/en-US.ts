@@ -67,6 +67,8 @@ export const enUS: Resource = {
       collapse: 'Collapse',
       search: 'Search',
       resizeColumn: 'Resize Column',
+      viewDetails: 'View details',
+      popoverEmpty: 'No content',
     },
     form: {
       required: 'Required',

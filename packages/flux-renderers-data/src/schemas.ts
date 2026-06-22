@@ -20,6 +20,34 @@ export interface TableColumnQuickEditConfig extends SchemaObject {
   saveImmediately?: boolean | SchemaValue;
 }
 
+export type TableColumnPopOverTrigger = 'click' | 'hover';
+
+export type TableColumnPopOverPlacement =
+  | 'top'
+  | 'top-start'
+  | 'top-end'
+  | 'right'
+  | 'right-start'
+  | 'right-end'
+  | 'bottom'
+  | 'bottom-start'
+  | 'bottom-end'
+  | 'left'
+  | 'left-start'
+  | 'left-end';
+
+export interface TableColumnPopOverConfig extends SchemaObject {
+  trigger?: TableColumnPopOverTrigger;
+  placement?: TableColumnPopOverPlacement;
+  icon?: string;
+  content?: BaseSchema[];
+  contentRegionKey?: string;
+  title?: string;
+  showOnOverflow?: boolean;
+  onEmpty?: 'hide' | 'show';
+  emptyText?: string;
+}
+
 export interface TableColumnSettingsConfig extends SchemaObject {
   enabled?: boolean;
   draggable?: boolean;
@@ -59,6 +87,7 @@ export interface TableColumnSchema extends BaseSchema {
   maxWidth?: number;
   children?: TableColumnSchema[];
   copyable?: boolean;
+  popOver?: TableColumnPopOverConfig;
 }
 
 export interface TableSummaryCell extends SchemaObject {

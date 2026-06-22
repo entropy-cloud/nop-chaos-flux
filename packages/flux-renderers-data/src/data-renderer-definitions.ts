@@ -27,7 +27,7 @@ function normalizeTableColumns(
       return column;
     }
 
-    const normalizedColumn = extractNestedSchemaRegions({
+    let normalizedColumn = extractNestedSchemaRegions({
       candidate: column as Record<string, unknown>,
       itemRegionPath: `${path}.columns[${index}]`,
       itemRegionKeyPrefix: `columns.${index}`,
@@ -56,6 +56,33 @@ function normalizeTableColumns(
       regions,
       compileSchema,
     }).value as Record<string, unknown>;
+
+    const popOverConfig = normalizedColumn.popOver;
+    if (
+      popOverConfig &&
+      typeof popOverConfig === 'object' &&
+      !Array.isArray(popOverConfig)
+    ) {
+      const popOverResult = extractNestedSchemaRegions({
+        candidate: popOverConfig as Record<string, unknown>,
+        itemRegionPath: `${path}.columns[${index}].popOver`,
+        itemRegionKeyPrefix: `columns.${index}.popOver`,
+        rules: [
+          {
+            key: 'content',
+            regionKeySuffix: 'content',
+            compiledKey: 'contentRegionKey',
+            params: ['record', 'index'] as readonly string[],
+            isolate: true,
+          },
+        ],
+        regions,
+        compileSchema,
+      });
+      if (popOverResult.changed) {
+        normalizedColumn = { ...normalizedColumn, popOver: popOverResult.value };
+      }
+    }
 
     const quickEdit = normalizedColumn.quickEdit;
     if (

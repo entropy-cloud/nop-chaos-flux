@@ -67,6 +67,8 @@ export const zhCN: Resource = {
       collapse: '收起',
       search: '搜索',
       resizeColumn: '调整列宽',
+      viewDetails: '查看详情',
+      popoverEmpty: '暂无内容',
     },
     form: {
       required: '必填',
