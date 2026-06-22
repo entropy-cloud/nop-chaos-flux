@@ -186,12 +186,14 @@ Exit Criteria:
 - Classification: `optimization candidate`
 - Why Not Blocking Closure: 首版纯 line-clamp 截断即可观测；toggle 增加局部 state 与 a11y 语义，属增值交互。Phase 1 Decision 裁定首版不加。
 - Successor Required: no
+- **已收口**：`docs/plans/2026-06-22-1137-2-e3-text-maxline-toggle-icon-size-token-plan.md`（`maxLineToggle?: boolean` + 溢出检测 + a11y + 复用 `flux.common.*` i18n，completed）。
 
 ### icon size 预设 token（sm/md/lg）
 
 - Classification: `optimization candidate`
 - Why Not Blocking Closure: number 像素值已满足可配；token 映射是 DX 糖，不影响契约成立。
 - Successor Required: no
+- **已收口**：`docs/plans/2026-06-22-1137-2-e3-text-maxline-toggle-icon-size-token-plan.md`（`IconSchema.size` 扩展为 `number | 'sm' | 'md' | 'lg'`，token 映射 `{ sm: 12, md: 16, lg: 20 }`，completed）。
 
 ## Non-Blocking Follow-ups
 
