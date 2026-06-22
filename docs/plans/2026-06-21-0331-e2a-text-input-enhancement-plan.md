@@ -211,7 +211,7 @@ Exit Criteria:
 - Classification: `optimization candidate`
 - Why Not Blocking Closure: 决策表标 "计划实现（E2a）：走 data-source"，但异步建议下拉本质是 data-source + action 组合层能力（搜索关键字驱动 data-source 刷新 → 渲染建议列表），不应在 input renderer 开 `api`/`initFetch` 短路径（X3 §1/§3）。本 plan 提供 `nativeAutoComplete`（HTML autocomplete 透传）覆盖浏览器原生 autofill 场景。data-source 建议下拉需要独立设计建议项数据源 + debounce + 选中回填契约，复杂度独立于 prefix/suffix/clearable/trim/counter。
 - Successor Required: yes
-- Successor Path: 后续 autocomplete-suggestions plan（或随 data-source X4 增强一并收口）。
+- Successor Path: ~~后续 autocomplete-suggestions plan（或随 data-source X4 增强一并收口）。~~ **已由 `docs/plans/2026-06-22-0901-1-e3-input-autocomplete-data-source-suggestions-plan.md` 收口（E3 successor，data-source composition 模式 A：`suggestSource` + `refreshSource` + `sendOn` gate）。**
 
 ## Non-Blocking Follow-ups
 

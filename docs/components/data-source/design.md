@@ -108,6 +108,11 @@ data-source 的属性分布在三个层级，职责正交：
 
 - 这是数据源能力本身的接入点，应支持表达式参数、scope 注入和 source registry 协作。
 - 导入的命名空间能力应通过 `xui:imports` 或 action namespace，而不是塞在 renderer 私有字段里。
+- **input-suggest consumption 模式**（E3 successor，`autoComplete` 落地）：文本输入族（input-text/email/password）通过 `suggestSource: <data-source-name>` 绑定一个命名 data-source，按 debounce 派发 `refreshSource { targetId: suggestSource }`。标准 composition：
+  - data-source 声明 `sendOn`（基于输入字段值的业务门控，如 `city.length >= 2`）+ `initFetch: false`（不自动首次拉取）+ `args` 引用输入字段值（如 `params: { q: "${city}" }`）。
+  - data-source `name`（= `suggestSource` 值）作为建议数组写入 scope 的 key；renderer 读 `scope[suggestSource]` 渲染浮层。
+  - 请求生命周期（abort/cache/retry）全归 data-source controller；renderer 不开 `api`/`initFetch`/`interval` 短路径（X3 §1/§3）。
+  - 见 `docs/components/input-text/design.md` §2/§4/§8 autoComplete 行 + §12 风险。
 
 ## 10. 样式与 DOM marker 约定
 

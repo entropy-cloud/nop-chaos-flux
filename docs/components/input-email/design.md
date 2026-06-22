@@ -14,7 +14,7 @@
 
 ### Flux 决策表
 
-> Flux 决策主语。文本输入族共享面（`name`/`placeholder`/`required`/`minLength`/`maxLength`/`pattern` 双重生效/prefix/suffix/clearable/trimContents/showCounter/autoComplete/nativeAutoComplete/input-mask/amis `addOn`/amis `transform`/amis `borderMode`/amis `clearValueOnEmpty`/amis 组件级 `api`）见 `input-text/design.md` §2 Flux 决策表，本表只列 input-email **特化差异**。命名对齐 X3 基线（`docs/references/naming-conventions.md`）。列：`能力 | 采纳 | 不采纳 | 理由`。
+> Flux 决策主语。文本输入族共享面（`name`/`placeholder`/`required`/`minLength`/`maxLength`/`pattern` 双重生效/prefix/suffix/clearable/trimContents/showCounter/autoComplete（suggest）/nativeAutoComplete/input-mask/amis `addOn`/amis `transform`/amis `borderMode`/amis `clearValueOnEmpty`/amis 组件级 `api`）见 `input-text/design.md` §2 Flux 决策表，本表只列 input-email **特化差异**。命名对齐 X3 基线（`docs/references/naming-conventions.md`）。列：`能力 | 采纳 | 不采纳 | 理由`。
 
 | 能力                                     | 采纳                                                                        | 不采纳             | 理由                                                              |
 | ---------------------------------------- | --------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------- |
@@ -34,6 +34,7 @@
 
 - 沿用 `InputSchema`。
 - 推荐只在邮箱语义明确的字段使用该 type，避免再用额外布尔字段标识邮箱模式。
+- E3 suggest 字段（`suggestSource`/`suggestDebounce`/`suggestTrigger`/`suggestMinInputLength`/`suggestTemplate`/`suggestEmpty`）声明在共享 `InputSchema`，input-email renderer 共享消费（走 data-source composition 模式 A，详见 `input-text/design.md` §4 E3 新增字段）。
 
 ## 5. 字段分类
 
