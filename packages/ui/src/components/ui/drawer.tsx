@@ -7,6 +7,7 @@ import { XIcon } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
 import { t } from '../../lib/i18n.js';
+import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
 
 type DrawerDirection = 'top' | 'bottom' | 'left' | 'right';
 
@@ -31,6 +32,8 @@ const DrawerContext = React.createContext<DrawerContextValue>({
   direction: 'bottom',
   containerElement: null,
 });
+
+const DrawerZIndexContext = React.createContext<number | undefined>(undefined);
 
 function Drawer({
   direction = 'bottom',
@@ -93,16 +96,18 @@ function DrawerOverlay({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Backdrop>) {
   const { containerElement } = React.useContext(DrawerContext);
+  const zIndex = React.useContext(DrawerZIndexContext);
   const isContained = containerElement != null;
 
   return (
     <DrawerPrimitive.Backdrop
       data-slot="drawer-overlay"
       className={cn(
-        'z-50 bg-surface-overlay supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+        'bg-surface-overlay supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
         isContained ? 'absolute inset-0' : 'fixed inset-0',
         className,
       )}
+      style={zIndex === undefined ? undefined : { zIndex }}
       {...props}
     />
   );
@@ -124,6 +129,7 @@ function DrawerContent({
   const { direction, containerElement } = React.useContext(DrawerContext);
   const isContained = containerElement != null;
   const resizeController = useDrawerResize(direction, resizable);
+  const zIndex = useGlobalZIndex();
 
   const handleClassName = cn(
     'pointer-events-auto absolute z-20 flex items-center justify-center bg-transparent transition-colors hover:bg-muted/40',
@@ -141,10 +147,11 @@ function DrawerContent({
     : style ?? {};
 
   const layers = (
-    <>
+    <DrawerZIndexContext.Provider value={zIndex}>
       {showMask && <DrawerOverlay />}
       <DrawerPrimitive.Viewport
-        className={cn('inset-0 z-50 pointer-events-none', isContained ? 'absolute' : 'fixed')}
+        className={cn('inset-0 pointer-events-none', isContained ? 'absolute' : 'fixed')}
+        style={{ zIndex }}
       >
         <DrawerPrimitive.Popup
           data-slot="drawer-popup"
@@ -200,7 +207,7 @@ function DrawerContent({
           </DrawerPrimitive.Content>
         </DrawerPrimitive.Popup>
       </DrawerPrimitive.Viewport>
-    </>
+    </DrawerZIndexContext.Provider>
   );
 
   return (

@@ -7,6 +7,7 @@ import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from './input-group.js';
 import { ChevronDownIcon, XIcon, CheckIcon } from 'lucide-react';
+import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
 
 const Combobox = ComboboxPrimitive.Root;
 
@@ -85,6 +86,7 @@ function ComboboxContent({
     ComboboxPrimitive.Positioner.Props,
     'side' | 'align' | 'sideOffset' | 'alignOffset' | 'anchor'
   >) {
+  const zIndex = useGlobalZIndex();
   return (
     <ComboboxPrimitive.Portal>
       <ComboboxPrimitive.Positioner
@@ -93,7 +95,8 @@ function ComboboxContent({
         align={align}
         alignOffset={alignOffset}
         anchor={anchor}
-        className="isolate z-50"
+        className="isolate"
+        style={{ zIndex }}
       >
         <ComboboxPrimitive.Popup
           data-slot="combobox-content"

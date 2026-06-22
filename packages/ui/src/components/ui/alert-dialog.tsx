@@ -3,6 +3,9 @@ import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog
 
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
+import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
+
+const AlertDialogZIndexContext = React.createContext<number | undefined>(undefined);
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -17,13 +20,16 @@ function AlertDialogPortal({ ...props }: AlertDialogPrimitive.Portal.Props) {
 }
 
 function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdrop.Props) {
+  const zIndex = React.useContext(AlertDialogZIndexContext);
+
   return (
     <AlertDialogPrimitive.Backdrop
       data-slot="alert-dialog-overlay"
       className={cn(
-        'fixed inset-0 isolate z-50 bg-surface-overlay duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:pointer-events-none data-closed:animate-out data-closed:fade-out-0',
+        'fixed inset-0 isolate bg-surface-overlay duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:pointer-events-none data-closed:animate-out data-closed:fade-out-0',
         className,
       )}
+      style={zIndex === undefined ? undefined : { zIndex }}
       {...props}
     />
   );
@@ -36,18 +42,22 @@ function AlertDialogContent({
 }: AlertDialogPrimitive.Popup.Props & {
   size?: 'default' | 'sm';
 }) {
+  const zIndex = useGlobalZIndex();
   return (
     <AlertDialogPortal>
-      <AlertDialogOverlay />
-      <AlertDialogPrimitive.Popup
-        data-slot="alert-dialog-content"
-        data-size={size}
-        className={cn(
-          'group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
-          className,
-        )}
-        {...props}
-      />
+      <AlertDialogZIndexContext.Provider value={zIndex}>
+        <AlertDialogOverlay />
+        <AlertDialogPrimitive.Popup
+          data-slot="alert-dialog-content"
+          data-size={size}
+          className={cn(
+            'group/alert-dialog-content fixed top-1/2 left-1/2 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+            className,
+          )}
+          style={{ zIndex }}
+          {...props}
+        />
+      </AlertDialogZIndexContext.Provider>
     </AlertDialogPortal>
   );
 }

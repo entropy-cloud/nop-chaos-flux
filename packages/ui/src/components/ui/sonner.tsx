@@ -7,6 +7,8 @@ import {
   Loader2Icon,
 } from 'lucide-react';
 
+const TOASTER_Z_INDEX = 10000;
+
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
@@ -25,6 +27,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--normal-text': 'hsl(var(--popover-foreground, var(--card-foreground)))',
           '--normal-border': 'hsl(var(--border))',
           '--border-radius': 'var(--radius)',
+          zIndex: TOASTER_Z_INDEX,
+          ...props.style,
         } as React.CSSProperties
       }
       toastOptions={{
@@ -37,4 +41,4 @@ const Toaster = ({ ...props }: ToasterProps) => {
   );
 };
 
-export { Toaster };
+export { Toaster, TOASTER_Z_INDEX };

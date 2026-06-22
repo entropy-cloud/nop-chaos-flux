@@ -36,4 +36,10 @@ describe('Button', () => {
     const button = screen.getByRole('button', { name: 'Submit' });
     expect(button.getAttribute('type')).toBe('submit');
   });
+
+  it('applies nop-haptic press-feedback class by default (M0.1c)', () => {
+    const { container } = render(<Button>Press me</Button>);
+    const button = container.querySelector('[data-slot="button"]');
+    expect(button?.className).toContain('nop-haptic');
+  });
 });

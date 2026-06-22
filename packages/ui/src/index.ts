@@ -53,10 +53,17 @@ export * from './components/ui/toggle.js';
 export * from './components/ui/toggle-group.js';
 export * from './components/ui/tooltip.js';
 export * from './components/toolbar/index.js';
-export { Toaster } from './components/ui/sonner.js';
+export { Toaster, TOASTER_Z_INDEX } from './components/ui/sonner.js';
 export { toast } from 'sonner';
 export { cn } from './lib/utils.js';
 export { useIsMobile } from './hooks/use-mobile.js';
+export {
+  useGlobalZIndex,
+  nextGlobalZIndex,
+  peekGlobalZIndex,
+  setGlobalZIndex,
+  GLOBAL_Z_INDEX_BASELINE_VALUE,
+} from './hooks/use-global-z-index.js';
 export {
   toIconLookupKey,
   normalizeIconName,

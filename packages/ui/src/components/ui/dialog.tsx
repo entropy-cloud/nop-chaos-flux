@@ -8,6 +8,7 @@ import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
 import { GripHorizontalIcon, XIcon } from 'lucide-react';
 import { useDialogDrag } from './use-dialog-drag.js';
+import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
 
 interface DialogContextValue {
   draggable: boolean;
@@ -31,6 +32,8 @@ const DialogContext = React.createContext<DialogContextValue>({
   closeOnOutsideClick: true,
   containerElement: null,
 });
+
+const DialogZIndexContext = React.createContext<number | undefined>(undefined);
 
 const DialogDragContext = React.createContext<DialogDragContextValue>({
   enabled: false,
@@ -84,16 +87,18 @@ function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
 
 function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
   const { containerElement } = React.useContext(DialogContext);
+  const zIndex = React.useContext(DialogZIndexContext);
   const isContained = containerElement != null;
 
   return (
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        'isolate z-50 bg-surface-overlay duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+        'isolate bg-surface-overlay duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
         isContained ? 'absolute inset-0' : 'fixed inset-0',
         className,
       )}
+      style={zIndex === undefined ? undefined : { zIndex }}
       {...props}
     />
   );
@@ -122,6 +127,7 @@ const DialogContent = React.forwardRef<
   const { draggable, noOverlay, noCenter, containerElement } = React.useContext(DialogContext);
   const descriptionId = React.useId();
   const isContained = containerElement != null;
+  const zIndex = useGlobalZIndex();
   const effectiveBaseTransform = noCenter
     ? isContained
       ? ''
@@ -145,47 +151,49 @@ const DialogContent = React.forwardRef<
 
   return (
     <DialogPortal data-slot="dialog-portal" container={containerElement ?? undefined}>
-      {!noOverlay && <DialogOverlay />}
-      <DialogPrimitive.Popup
-        ref={contentRef}
-        data-slot="dialog-content"
-        data-size={size}
-        className={cn(
-          'z-50 flex w-full max-w-[calc(100%-2rem)] flex-col rounded-xl bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
-          'data-[size=sm]:sm:max-w-sm data-[size=default]:sm:max-w-lg data-[size=lg]:sm:max-w-2xl',
-          isContained ? 'absolute' : 'fixed',
-          noCenter ? '' : 'top-[50%] left-[50%]',
-          !draggable &&
-            !noCenter &&
-            '-translate-x-1/2 -translate-y-1/2 data-open:zoom-in-95 data-closed:zoom-out-95',
-          className,
-        )}
-        {...props}
-        style={
-          draggable
-            ? { transform: noCenter ? undefined : effectiveBaseTransform, ...props.style }
-            : props.style
-        }
-        onPointerDown={draggable ? handlePointerDown : props.onPointerDown}
-      >
-        <DialogDragContext.Provider value={dragContextValue}>
-          {children}
-          {draggable ? (
-            <p id={descriptionId} className="sr-only">
-              {t('flux.dialog.moveDialogInstructions')}
-            </p>
-          ) : null}
-        </DialogDragContext.Provider>
-        {showCloseButton && (
-          <DialogPrimitive.Close
-            data-slot="dialog-close"
-            render={<Button variant="ghost" className="absolute top-2 right-2" size="icon-sm" />}
-          >
-            <XIcon />
-            <span className="sr-only">{t('flux.dialog.close')}</span>
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Popup>
+      <DialogZIndexContext.Provider value={zIndex}>
+        {!noOverlay && <DialogOverlay />}
+        <DialogPrimitive.Popup
+          ref={contentRef}
+          data-slot="dialog-content"
+          data-size={size}
+          className={cn(
+            'flex w-full max-w-[calc(100%-2rem)] flex-col rounded-xl bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+            'data-[size=sm]:sm:max-w-sm data-[size=default]:sm:max-w-lg data-[size=lg]:sm:max-w-2xl',
+            isContained ? 'absolute' : 'fixed',
+            noCenter ? '' : 'top-[50%] left-[50%]',
+            !draggable &&
+              !noCenter &&
+              '-translate-x-1/2 -translate-y-1/2 data-open:zoom-in-95 data-closed:zoom-out-95',
+            className,
+          )}
+          {...props}
+          style={
+            draggable
+              ? { transform: noCenter ? undefined : effectiveBaseTransform, zIndex, ...props.style }
+              : { zIndex, ...props.style }
+          }
+          onPointerDown={draggable ? handlePointerDown : props.onPointerDown}
+        >
+          <DialogDragContext.Provider value={dragContextValue}>
+            {children}
+            {draggable ? (
+              <p id={descriptionId} className="sr-only">
+                {t('flux.dialog.moveDialogInstructions')}
+              </p>
+            ) : null}
+          </DialogDragContext.Provider>
+          {showCloseButton && (
+            <DialogPrimitive.Close
+              data-slot="dialog-close"
+              render={<Button variant="ghost" className="absolute top-2 right-2" size="icon-sm" />}
+            >
+              <XIcon />
+              <span className="sr-only">{t('flux.dialog.close')}</span>
+            </DialogPrimitive.Close>
+          )}
+        </DialogPrimitive.Popup>
+      </DialogZIndexContext.Provider>
     </DialogPortal>
   );
 });
