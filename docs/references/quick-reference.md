@@ -86,6 +86,55 @@ interface RendererComponentProps<S = BaseSchema, P = RendererResolvedProps<S>> {
 | `props.events`  | Runtime event handlers from schema                     | Attaching click/change/submit handlers    |
 | `props.helpers` | Stable runtime helpers                                 | render, evaluate, dispatch                |
 
+### Field lifecycle: schema type → field rule → runtime channel
+
+The table above shows **runtime consumption** channels. It does NOT mean these are different _kinds_ of fields. Every runtime channel originates from the **same author-facing schema**. A single schema field flows through three layers:
+
+```
+Layer 1 — Schema type (author contract)
+  The TypeScript interface declares ALL fields the author can write,
+  including props, regions, and events.
+
+  interface MySchema extends BaseSchema {
+    type: 'my-widget';
+    title?: string;          // will become a prop
+    body?: SchemaInput;      // will become a region
+    onClose?: ActionSchema;  // will become an event
+  }
+
+  Author writes in JSON:
+  { "type": "my-widget", "title": "Hello", "body": [...], "onClose": {...} }
+
+    ↓
+
+Layer 2 — Renderer definition field rules (compiler directive)
+  The `fields` array tells the compiler HOW to process each declared field:
+  which channel it goes into (prop / region / event / meta / value-or-region).
+
+  fields: [
+    { key: 'title',   kind: 'prop' },
+    { key: 'body',    kind: 'region' },
+    { key: 'onClose', kind: 'event' },
+  ]
+
+  The compiler reads the field rule, then pre-compiles the raw schema
+  value into the appropriate compiled form (resolved value, TemplateRegion,
+  compiled action program, etc.).
+
+    ↓
+
+Layer 3 — Runtime channels (renderer consumption)
+  The compiled results appear on RendererComponentProps as separate channels:
+
+  props.props.title     → resolved string "Hello"
+  props.regions.body    → RenderRegionHandle (call .render() to get JSX)
+  props.events.onClose  → RendererEventHandler (call to dispatch action)
+```
+
+**Key rule**: the schema type (Layer 1) must declare **every** author-facing field, including those that will become regions or events. The field rule (Layer 2) tells the compiler what to _do_ with the field — it does not replace the type declaration. Omitting `body` from the schema type while declaring `{ key: 'body', kind: 'region' }` in the renderer definition is an error: the author still needs to write `"body": [...]` in JSON, and the type must reflect that.
+
+For the full field-to-channel mapping, see `docs/architecture/field-binding-and-renderer-contract.md` Frozen Contract Matrix.
+
 ---
 
 ## RendererHelpers
