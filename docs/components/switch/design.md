@@ -70,3 +70,18 @@
 ## 12. 风险、取舍与后续阶段
 
 - 需要避免和 `checkbox` 契约重复演化，只保留开关语义差异。
+
+## 13. 响应式行为
+
+引用 `docs/architecture/mobile-responsive-baseline.md`（M0 基线 §3 触摸目标、§10.3 haptics）。详细约定见 `docs/components/checkbox/design.md` §13（choice 族共用）。
+
+| 断点              | 行为                                                               | 实现方式                                                               |
+| ----------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| < 768px (mobile)  | switch Label 触摸目标 ≥ 44px（`min-h-11 py-2`）；`nop-haptic` 启用 | renderer 内 `useIsMobile()` 分支：Label wrapper 条件加 `min-h-11 py-2` |
+| ≥ 768px (desktop) | Label 自然高度；`nop-haptic` 仍启用                                | 同上条件分支（仅 mobile 加 touch 类）                                  |
+
+### 触摸适配
+
+- **触摸目标**：mobile 视口下 switch Label wrapper 加 `min-h-11` + `py-2`，hit area 经 Label 扩展，switch 控件本身视觉不变。
+- **nop-haptic**：无条件启用（desktop-safe）。
+- **无新 schema surface / 无 mobileUI 标志位**。

@@ -93,3 +93,18 @@
 - **auto-height 不写表单值**：测量为 local state（命令式 `style` 写入），不触发 form value change，不持久化（`form-state-probe` 单测验证）。
 - **counter 行不污染测量**：counter/clear 在 `<textarea>` 外的 footer 行，不参与 `scrollHeight` 测量（单测 `textarea.contains(counter) === false` 验证）。
 - **prefix/suffix 暂不实现**：多行前后缀视觉不典型，且 InputGroup 包裹会破坏 auto-height 测量与 `field-sizing` 行为；归 E3 P2 评估。
+
+## 13. 响应式行为
+
+引用 `docs/architecture/mobile-responsive-baseline.md`（M0 基线 §3 触摸目标、§6 软键盘视口处理）。
+
+| 断点              | 行为                                                                                                                 | 实现方式                                                                                                                                    |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | font-size ≥ 16px（防 iOS Safari focus 自动缩放）；focus 时 `scrollIntoView({ block: 'center', behavior: 'smooth' })` | font-size 由 `@nop-chaos/ui` `Textarea` 基础类 `text-base md:text-sm` 提供；scrollIntoView 由 renderer 内 `useIsMobile()` 分支 onFocus 触发 |
+| ≥ 768px (desktop) | font-size 14px（text-sm），focus 不强制滚动（行为不变）                                                              | 同上基础类 + 仅 mobile 启用 scrollIntoView                                                                                                  |
+
+### 触摸适配
+
+- **inputmode**：textarea 不设默认 inputmode（多行文本无需键盘 hint）。
+- **软键盘**：focus 时 scrollIntoView 保证当前 textarea 不被软键盘遮挡（mobile only）；iOS 缩放由 font-size ≥ 16px 防止。
+- **无新 schema surface / 无 mobileUI 标志位**：mobile 分支完全在 renderer 内部，由 `useIsMobile()` 决定。

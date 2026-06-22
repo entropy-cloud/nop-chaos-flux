@@ -128,3 +128,19 @@
 - **no-source-configured**：声明了 `suggestDebounce`/`suggestTrigger` 但未配置 `suggestSource` → dev-warn，浮层不显示（Failure Path `suggest-no-source-configured`）。
 - **disabled/readOnly 不触发**：字段 `disabled` 或 `readOnly` 时不派发 refresh，浮层不显示（Failure Path `suggest-disabled-or-readonly`）。
 - **multi-value tags input / WebSocket 实时建议 / 本地点过滤**：本 plan 不覆盖（见 successor plan Non-Goals）。
+
+## 13. 响应式行为
+
+引用 `docs/architecture/mobile-responsive-baseline.md`（M0 基线 §3 触摸目标、§6 软键盘视口处理）。
+
+| 断点              | 行为                                                                                                                 | 实现方式                                                                                                                                                             |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | font-size ≥ 16px（防 iOS Safari focus 自动缩放）；focus 时 `scrollIntoView({ block: 'center', behavior: 'smooth' })` | font-size 由 `@nop-chaos/ui` `Input` 基础类 `text-base md:text-sm` 提供（mobile 即 text-base=16px）；scrollIntoView 由 renderer 内 `useIsMobile()` 分支 onFocus 触发 |
+| ≥ 768px (desktop) | font-size 14px（text-sm），focus 不强制滚动（行为不变）                                                              | 同上基础类 + 仅 mobile 启用 scrollIntoView                                                                                                                           |
+
+### 触摸适配
+
+- **inputmode 映射**：renderer 根据 `inputType` 自动设置 `<input inputmode>` —— `email→email`、`tel→tel`、`search→search`、`url→url`；`text`/`password` 不设默认 inputmode。schema `inputMode` prop 可覆盖映射值（任意 inputType 均生效）。
+- **触摸目标**：input 高度由 `@nop-chaos/ui` Input `data-[size=default]:h-9`（36px）提供；mobile 视口下软键盘正确性优先于 44px hit area（input 本身可点击区域足够）。
+- **软键盘**：focus 时 scrollIntoView 保证当前 input 不被软键盘遮挡（mobile only）；iOS 缩放由 font-size ≥ 16px 防止。page-level fixed footer 的 VisualViewport 处理归 M3a（非本组件 scope）。
+- **无新 schema surface / 无 mobileUI 标志位**：mobile 分支完全在 renderer 内部，由 `useIsMobile()` 决定。

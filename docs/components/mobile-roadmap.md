@@ -15,13 +15,13 @@
 
 > **截至 2026-06-22 的实现事实（read-only 核查结论，不是计划）：**
 
-| 维度                                  | 状态                                                                                                                                                                                                                                    |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@nop-chaos/flux-renderers-mobile` 包 | **5 个组件已落地**（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar 实现 + focused 单测 + `mobileRendererDefinitions` + `registerMobileRenderers` + playground `/mobile-components` 演示页 + e2e 验证）。M5 工作项已完成。 |
-| M0 响应式基线                         | `done`（文档基线 + M0.1 基础设施代码已落地，见下）。                                                                                                                                                                                    |
-| M0.1 基础设施代码                     | `done`（safe-area/hairline/haptics/z-index 栈已落地于 `packages/ui/src/`，详见 `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）。                                                                                     |
-| M1–M4 实现进度                        | **M1 done**（select/tree-select bottom-sheet、dialog 全屏、drawer 底部、tabs swipe、table expand 卡片，见 `docs/plans/2026-06-22-2335-1-m1-high-frequency-controls-responsive-plan.md`）。M2–M4 **0%**。M5 已 `done`。                  |
-| design.md 立约                        | ✅ 已存在：`pull-refresh`/`infinite-scroll`/`swipe-cell`/`countdown`/`notice-bar`/`bottom-sheet`/`use-touch` 共 7 份（99~152 行），属**文档先行**，现在代码已对齐契约。                                                                 |
+| 维度                                  | 状态                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@nop-chaos/flux-renderers-mobile` 包 | **5 个组件已落地**（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar 实现 + focused 单测 + `mobileRendererDefinitions` + `registerMobileRenderers` + playground `/mobile-components` 演示页 + e2e 验证）。M5 工作项已完成。                                                                                                                                                                                                                                                 |
+| M0 响应式基线                         | `done`（文档基线 + M0.1 基础设施代码已落地，见下）。                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| M0.1 基础设施代码                     | `done`（safe-area/hairline/haptics/z-index 栈已落地于 `packages/ui/src/`，详见 `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）。                                                                                                                                                                                                                                                                                                                                     |
+| M1–M4 实现进度                        | **M1 done**（select/tree-select bottom-sheet、dialog 全屏、drawer 底部、tabs swipe、table expand 卡片，见 `docs/plans/2026-06-22-2335-1-m1-high-frequency-controls-responsive-plan.md`）。**M2 done**（input/textarea/input-number inputmode + font-size ≥16px + focus scrollIntoView、checkbox/radio/switch 触摸目标 ≥44px + nop-haptic + 小屏纵列、button 触摸目标 ≥44px，见 `docs/plans/2026-06-22-2335-2-m2-form-controls-touch-adaptation-plan.md`）。M3–M4 **0%**。M5 已 `done`。 |
+| design.md 立约                        | ✅ 已存在：`pull-refresh`/`infinite-scroll`/`swipe-cell`/`countdown`/`notice-bar`/`bottom-sheet`/`use-touch` 共 7 份（99~152 行），属**文档先行**，现在代码已对齐契约。                                                                                                                                                                                                                                                                                                                 |
 
 **读法约定**：本文中"已有初稿/design.md 已立约"一律指**契约文档**已写，不是代码已实现。代码是否落地只看本表，不看 design.md 是否存在。
 
@@ -72,7 +72,7 @@
 - M0 响应式基线与断点规范: `done`（含基础设施代码，见 M0.1）
 - M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈，4 子项，建议 1 plan 4 phase）: `done`（`docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）
 - M1 高频交互控件响应式（select/tree/table/dialog/tabs，5 子项 M1a~M1d）: `done`（`docs/plans/2026-06-22-2335-1-m1-high-frequency-controls-responsive-plan.md`）
-- M2 表单控件触摸适配（input/textarea/checkbox/switch/button，3 子项 M2a~M2c）: `todo`
+- M2 表单控件触摸适配（input/textarea/checkbox/switch/button，3 子项 M2a~M2c）: `done`（`docs/plans/2026-06-22-2335-2-m2-form-controls-touch-adaptation-plan.md`）
 - M3 容器与布局响应式（page/flex/container/grid，2 子项 M3a~M3b）: `todo`
 - M4 数据展示响应式（crud/cards/list/chart，3 子项 M4a~M4c）: `todo`
 - M5 移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar，5 子项 M5a~M5e，共用 useTouch Hook，建议 1 plan）: `done`
@@ -146,13 +146,15 @@
 | **M1c** ✅ | dialog/drawer      | 小屏 Dialog 自动全屏（`fullSize: 'viewport'`）；Drawer 小屏 side 视觉层切 bottom                    | `dialog/design.md`、`drawer/design.md` 增响应式小节      | M0、改进 roadmap E2f |
 | **M1d** ✅ | tabs               | 小屏横向滚动（`overflow-x-auto` + scrollIntoView）+ swipe 手势（内联 50px 阈值）                    | `tabs/design.md` 增响应式小节                            | M0                   |
 
-### M2 — 表单控件触摸适配
+### M2 — 表单控件触摸适配 ✅
 
-| Work item | 组件                                            | 行为                                             | design.md 更新                  | 依赖 |
-| --------- | ----------------------------------------------- | ------------------------------------------------ | ------------------------------- | ---- |
-| **M2a**   | input-text/email/password/textarea/input-number | 增大触摸目标、软键盘弹起视口处理、合适 inputmode | 各 input design.md 增响应式小节 | M0   |
-| **M2b**   | checkbox/checkbox-group/radio-group/switch      | 增大触摸目标、小屏列表式布局                     | 各 design.md 增响应式小节       | M0   |
-| **M2c**   | button                                          | 触摸目标尺寸、小屏 block 全宽                    | `button/design.md` 增响应式小节 | M0   |
+> **代码已落地（执行期完成 2026-06-23）**。input/textarea/input-number inputmode + font-size ≥16px + focus scrollIntoView、checkbox/radio/switch 触摸目标 ≥44px + nop-haptic + 小屏纵列、button 触摸目标 ≥44px + 3 份 design.md 响应式小节 + playground 演示页（`/m2-touch`）+ e2e 全部交付。Execution plan：`docs/plans/2026-06-22-2335-2-m2-form-controls-touch-adaptation-plan.md`。
+
+| Work item  | 组件                                            | 行为                                                                                                                | design.md 更新                                                                      | 依赖 |
+| ---------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---- |
+| **M2a** ✅ | input-text/email/password/textarea/input-number | inputmode 映射（email/tel/search/url + decimal）、font-size ≥16px 防 iOS 缩放（UI text-base）、focus scrollIntoView | `input-text/design.md`、`textarea/design.md`、`input-number/design.md` 增响应式小节 | M0   |
+| **M2b** ✅ | checkbox/checkbox-group/radio-group/switch      | 触摸目标 ≥44px（min-h-11）+ nop-haptic；checkbox-group/radio-group 小屏选项 >3 自动纵列（flex-col）                 | `checkbox/design.md`、`switch/design.md` 增响应式小节                               | M0   |
+| **M2c** ✅ | button                                          | 触摸目标 ≥44px（default/lg min-h-11，mobile only）；schema block 行为不变（Decision A）                             | `button/design.md` 增响应式小节                                                     | M0   |
 
 ### M3 — 容器与布局响应式
 

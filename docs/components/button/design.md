@@ -103,3 +103,20 @@
 
 - `button` 很容易吸收过多行为型能力，需要持续拒绝把所有动作类型拆成新 renderer。
 - 若引入链接模式，需要清晰区分导航动作和普通 click action 的优先级。
+
+## 13. 响应式行为
+
+引用 `docs/architecture/mobile-responsive-baseline.md`（M0 基线 §3 触摸目标、§10.3 haptics）。
+
+| 断点              | 行为                                                                                                            | 实现方式                                                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | `default`/`lg` size button 触摸目标 ≥ 44px（`min-h-11` 覆盖 `h-8`/`h-9`）；`sm`/`xs`/`icon*` 不强制（保持紧凑） | renderer 内 `useIsMobile()` 分支：当 `isMobile && size ∈ {default, lg}` 时 className 加 `min-h-11`（min-height 优先于 height，故 44px 生效） |
+| ≥ 768px (desktop) | button 尺寸不变（不加 `min-h-11`）；`nop-haptic` 仍启用                                                         | 同上条件分支（仅 mobile 加 touch 类）                                                                                                        |
+
+### 触摸适配
+
+- **触摸目标**：mobile 视口下 `default`/`lg` size button 加 `min-h-11`（44px）。`sm`/`xs`/`icon*` 不强制（用于 toolbar/button-group 的紧凑按钮；icon-only button 的 hit area 增强归 Non-Blocking Follow-up）。`min-height` 优先于 size 变体的 `height`，故 `h-8 min-h-11` 实际渲染 44px。
+- **nop-haptic**：由 `@nop-chaos/ui` `button.tsx` 基础 cva 无条件提供（`nop-haptic ...`，M0.1c 产物），desktop-safe。
+- **block 行为（Decision A）**：保持 schema `block` prop 驱动（`block && 'w-full'`），**不**在 mobile 自动 block。理由：auto-block 会导致 button-group/toolbar 多按钮各自 full-width 堆叠。primary action 建议在 schema 显式声明 `block: true`。
+- **多按钮排列**：`min-h-11` 只作用于单个 button 的高度，不影响 flex/button-group 的横向排列（每个 button 独立 min-height，不互相变形）。
+- **无新 schema surface / 无 mobileUI 标志位**：mobile 分支完全在 renderer 内部，由 `useIsMobile()` 决定。

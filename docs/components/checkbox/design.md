@@ -73,3 +73,20 @@
 ## 12. 风险、取舍与后续阶段
 
 - 需要持续区分 `checkbox` 与 `switch`：前者强调勾选项，后者强调即时开关。
+
+## 13. 响应式行为
+
+> 适用 `checkbox`、`checkbox-group`、`radio-group`（radio/design.md 未单列，响应式约定合入本节）。引用 `docs/architecture/mobile-responsive-baseline.md`（M0 基线 §3 触摸目标、§10.3 haptics）。
+
+| 断点              | 行为                                                                                                                       | 实现方式                                                                                                                                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | 每个选项 Label 触摸目标 ≥ 44px（`min-h-11 py-2`）；`nop-haptic` 按压反馈；checkbox-group/radio-group 选项数 > 3 时纵列堆叠 | renderer 内 `useIsMobile()` 分支：item Label 条件加 `min-h-11 py-2`；wrapper 在 `shouldStackChoicesVertically()` 为真时加 `flex flex-col gap-1` + `data-mobile-stack="true"` |
+| ≥ 768px (desktop) | item Label 自然高度（不加 `min-h-11`）；`nop-haptic` 仍启用（desktop `:active` 同样适用，baseline §10.3）；布局不变        | 同上条件分支（仅 mobile 加 touch 类）                                                                                                                                        |
+
+### 触摸适配
+
+- **触摸目标**：mobile 视口下每个 checkbox/switch/radio 选项的 Label wrapper 加 `min-h-11`（44px min-height）+ `py-2` padding 扩展 hit area；视觉上 checkbox/switch/radio 控件本身尺寸不变，hit area 经 Label 扩展。
+- **nop-haptic**：所有 choice item Label 无条件加 `nop-haptic`（desktop-safe，与 Button/Card 一致）。
+- **小屏纵列布局**：`checkbox-group` / `radio-group` 在 mobile 视口 + 选项数 > 3（`MOBILE_CHOICE_STACK_THRESHOLD`）时自动切 `flex flex-col gap-1` 纵列并发布 `data-mobile-stack="true"` marker；选项 ≤ 3 或 desktop 时保持原布局。schema 无 `inline` 字段（默认即为纵列），未来如新增显式横排模式，mobile 仍以此阈值强制纵列。
+- **radio-group-item slot 复用**：radio-group 的 item Label 与 `RadioGroupItem` 原语共享 `data-slot="radio-group-item"` 命名空间（前者为 label wrapper、后者为 radio root），hit area 类加在 Label wrapper 上，不影响原语内部样式。
+- **无新 schema surface / 无 mobileUI 标志位**：mobile 分支完全在 renderer 内部，由 `useIsMobile()` 决定。
