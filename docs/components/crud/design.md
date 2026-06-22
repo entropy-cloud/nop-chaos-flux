@@ -376,3 +376,38 @@ interface CrudStatusSummary {
 - `docs/components/dialog/design.md`
 - `docs/components/data-source/design.md`
 - `docs/architecture/action-interaction-state.md`
+
+## 14. 响应式行为
+
+> 来源：`docs/architecture/mobile-responsive-baseline.md`（M0 基线）、mobile-roadmap M4a。
+> 裁定（Decision）：小屏行为仅在 `useIsMobile()`（< 768px）为真时生效，**桌面（缺省）行为完全不变**。响应式是内部运行时分支，不新增任何 schema 字段（遵循 baseline §7「不引入 mobileUI 标志位 / 不新建 \*-mobile 组件」）。
+
+### 工具栏简化
+
+| 断点              | 行为                                                                                                                       | 实现                                                                                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | `switch-per-page`（每页条数切换）block 隐藏；toolbar layout 由横排 `flex-wrap ... justify-between` 改为纵列堆叠 `flex-col` | `crud-renderer.tsx` `resolveToolbarBlocks` 复用既有 headerBlocks 过滤机制；`crud-renderer-toolbar.tsx` `CrudToolbarBlocks` 消费 `useIsMobile()` |
+| ≥ 768px (desktop) | 全部 toolbar block 渲染；横向 `justify-between` 布局                                                                       | 维持现状，无回归                                                                                                                                |
+
+保留的小屏 block：`listActions`（selection-aware 列表动作）、`statistics`（总数）、`pagination`（上一页/下一页 + 页码指示）、`polling-toggle`。隐藏的低频 block：`switch-per-page`。`bulkActions` 不在 toolbar 协议内（已由 `normalizeToolbarBlocks` 丢弃，归 `listActions`），无单独折叠动作（业务出现高频多选场景时再细化，见 mobile-roadmap Non-Blocking Follow-ups）。
+
+`pagination` block 在小屏保留「上一页 / 当前页 of 总页 / 下一页」的最简形态；当前本就没有页码 jumper，故「页码简化」即保留该最简形态、仅去掉 page-size 切换。infinite 模式的既有 `pagination`/`switch-per-page` 过滤优先级不变，mobile 过滤与之叠加。
+
+### 查询区默认折叠
+
+| 断点              | 行为                                                                                           | 实现                                                                                                                |
+| ----------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| < 768px (mobile)  | 即便 schema 配置 `filterTogglable.defaultCollapsed: false`，初次渲染仍强制折叠；用户可手动展开 | `crud-query-region.tsx` `CrudQueryRegion` 接收 `isMobile`，初始 `collapsed = isMobile \|\| config.defaultCollapsed` |
+| ≥ 768px (desktop) | 维持 schema 配置（缺省展开）                                                                   | 维持现状，无回归                                                                                                    |
+
+折叠态仍显示 active filter 数量摘要 + 展开按钮（E1d 落地的 collapse UI 不变）；移动端仅改变 **默认** 初值，不改变折叠/展开交互本身。未启用 `filterTogglable` 的查询区不受影响（始终内联，无折叠 UI）。
+
+### DOM marker（供样式 / e2e 程序化断言）
+
+- `.nop-crud` 根在小屏增 `data-responsive="narrow"`（桌面缺省不输出该属性）。
+- `[data-slot="<slot>-toolbar-layout"]`（header/footer）在小屏同样增 `data-responsive="narrow"`，class 由 `flex-wrap items-center justify-between` 切到 `flex-col items-stretch`。
+
+### 触摸适配
+
+- 工具栏切换按钮、分页按钮复用 `@nop-chaos/ui` Button 的既有触摸目标（M2c 已保证 default/lg ≥44px），crud 不重复声明。
+- 表格小屏卡片堆叠（`responsive.mode: 'expand'` + `nop-hairline`/`nop-safe-bottom`）由 M1b 在内嵌 table 层落地，crud 仅透传 `responsive`（见 §6.1），不重复实现。

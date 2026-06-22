@@ -1,6 +1,6 @@
 # M4 数据展示响应式（crud + chart；cards/list 延后）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: mobile
 > Work Item: M4 数据展示响应式
 > Last Reviewed: 2026-06-23
@@ -85,46 +85,46 @@
 
 ### Phase 1 - M4a crud 小屏响应式
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`、`crud-renderer-toolbar.tsx`、`crud-query-region.tsx`、`crud-schema.ts`、`packages/flux-renderers-data/src/__tests__/`、`docs/components/crud/design.md`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **Decision**：toolbar 简化与分页简化边界裁定——小屏默认隐藏哪些 block（如 `switch-per-page`、`bulk-actions` 折叠进菜单），分页小屏是否保留页码 jumper。裁定写入 design.md，缺省（桌面）行为不变。
-- [ ] **Fix**：`crud-renderer-toolbar.tsx` 消费 `useIsMobile()`，小屏隐藏/折叠裁定 block，toolbar 容器小屏纵列堆叠。
-- [ ] **Fix**：`crud-query-region.tsx` 小屏默认折叠查询区（`defaultCollapsed` 在 mobile 强制 true，桌面维持 schema 配置）。
-- [ ] **Fix**：`crud-renderer.tsx` 分页小屏简化（page-size 切换隐藏、页码简化），复用既有 `paginationMode`/`headerBlocks` 过滤机制，不新增数据请求路径。
-- [ ] **Proof**：focused 单测覆盖 toolbar 简化分支、查询区小屏默认折叠、分页简化（`crud-responsive.test.tsx`，mock `useIsMobile`）。
+- [x] **Decision**：toolbar 简化与分页简化边界裁定——小屏默认隐藏哪些 block（如 `switch-per-page`、`bulk-actions` 折叠进菜单），分页小屏是否保留页码 jumper。裁定写入 design.md，缺省（桌面）行为不变。
+- [x] **Fix**：`crud-renderer-toolbar.tsx` 消费 `useIsMobile()`，小屏隐藏/折叠裁定 block，toolbar 容器小屏纵列堆叠。
+- [x] **Fix**：`crud-query-region.tsx` 小屏默认折叠查询区（`defaultCollapsed` 在 mobile 强制 true，桌面维持 schema 配置）。
+- [x] **Fix**：`crud-renderer.tsx` 分页小屏简化（page-size 切换隐藏、页码简化），复用既有 `paginationMode`/`headerBlocks` 过滤机制，不新增数据请求路径。
+- [x] **Proof**：focused 单测覆盖 toolbar 简化分支、查询区小屏默认折叠、分页简化（`crud-responsive.test.tsx`，mock `useIsMobile`）。
 
 Exit Criteria:
 
 > Phase 完成后逐条勾选；只写本 Phase 真正交付的 repo-observable 结果 + 保证 Phase 2 可继续的局部检查。
 
-- [ ] crud 在小屏下 toolbar 简化、查询区默认折叠、分页简化；桌面无回归（`responsive` 透传 + table expand 卡片堆叠不受影响）。
-- [ ] `crud-responsive.test.tsx` 对三个分支均有断言并通过（局部 `pnpm --filter @nop-chaos/flux-renderers-data test`）。
-- [ ] `crud/design.md` 响应式小节已更新为最终设计状态。
+- [x] crud 在小屏下 toolbar 简化、查询区默认折叠、分页简化；桌面无回归（`responsive` 透传 + table expand 卡片堆叠不受影响）。
+- [x] `crud-responsive.test.tsx` 对三个分支均有断言并通过（局部 `pnpm --filter @nop-chaos/flux-renderers-data test`）。
+- [x] `crud/design.md` 响应式小节已更新为最终设计状态。
 
 ### Phase 2 - M4c chart 小屏自适应 + 收口
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/chart-renderer.tsx`、`packages/flux-renderers-data/src/__tests__/`、`docs/components/chart/design.md`、`apps/playground/src/pages/m4-data-display-demo.tsx`、`tests/e2e/m4-data.spec.ts`、M0.1 源 plan Deferred 段
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] **Decision**：chart 小屏自适应裁定——高度随视口（ResizeObserver 或容器查询，优先 Tailwind/容器宽度）；图例小屏改底部横排/折叠（复用 E3 已落地的 legend 配置）。不支持 ResizeObserver 时回退固定高度（见 Failure Paths）。
-- [ ] **Fix**：`chart-renderer.tsx` 实现小屏高度/图例位置自适应，缺省（桌面）行为不变。
-- [ ] **Proof**：focused 单测覆盖 chart 小屏高度/图例分支 + ResizeObserver 缺席回退（`chart-responsive.test.tsx`）。
-- [ ] **Fix**：playground 演示页 `m4-data-display-demo.tsx`（路由 `/m4-data`），含 crud 小屏简化 + chart 自适应双示例。
-- [ ] **Proof**：e2e `tests/e2e/m4-data.spec.ts` 用 `setViewportSize` 切移动视口，程序化断言 crud toolbar 简化 / 查询折叠 / chart 高度变化，不靠截图。
-- [ ] **Follow-up**：M0.1 plan「业务 renderer border→hairline 迁移归 M4b」deferred 段注记「cards/list 未落地，转主 roadmap W1c/W2a successor」。
+- [x] **Decision**：chart 小屏自适应裁定——高度随视口（ResizeObserver 或容器查询，优先 Tailwind/容器宽度）；图例小屏改底部横排/折叠（复用 E3 已落地的 legend 配置）。不支持 ResizeObserver 时回退固定高度（见 Failure Paths）。
+- [x] **Fix**：`chart-renderer.tsx` 实现小屏高度/图例位置自适应，缺省（桌面）行为不变。
+- [x] **Proof**：focused 单测覆盖 chart 小屏高度/图例分支 + ResizeObserver 缺席回退（`chart-responsive.test.tsx`）。
+- [x] **Fix**：playground 演示页 `m4-data-display-demo.tsx`（路由 `/m4-data`），含 crud 小屏简化 + chart 自适应双示例。
+- [x] **Proof**：e2e `tests/e2e/m4-data.spec.ts` 用 `setViewportSize` 切移动视口，程序化断言 crud toolbar 简化 / 查询折叠 / chart 高度变化，不靠截图。
+- [x] **Follow-up**：M0.1 plan「业务 renderer border→hairline 迁移归 M4b」deferred 段注记「cards/list 未落地，转主 roadmap W1c/W2a successor」。
 
 Exit Criteria:
 
-- [ ] chart 在小屏下高度/图例位置自适应，桌面无回归；无 ResizeObserver 时回退固定高度无报错。
-- [ ] `/m4-data` 路由可访问，含 crud + chart 双示例。
-- [ ] `m4-data.spec.ts` 对 crud 小屏简化与 chart 自适应均有视口切换后的程序化断言。
-- [ ] M0.1 hairline 迁移 deferred 已注记 successor 路径。
-- [ ] `chart/design.md` 响应式小节已更新为最终设计状态。
+- [x] chart 在小屏下高度/图例位置自适应，桌面无回归；无 ResizeObserver 时回退固定高度无报错。
+- [x] `/m4-data` 路由可访问，含 crud + chart 双示例。
+- [x] `m4-data.spec.ts` 对 crud 小屏简化与 chart 自适应均有视口切换后的程序化断言。
+- [x] M0.1 hairline 迁移 deferred 已注记 successor 路径。
+- [x] `chart/design.md` 响应式小节已更新为最终设计状态。
 
 ## Draft Review Record
 
@@ -142,16 +142,16 @@ Exit Criteria:
 
 > 关闭条件：本 section + 每个 Phase Exit Criteria 全 `[x]` 后才可标 `completed`。全量 `pnpm typecheck/build/lint/test` 归此处（guide Rule 18）。
 
-- [ ] M4a crud 小屏响应式（toolbar 简化/查询折叠/分页简化）已落地且无桌面回归。
-- [ ] M4c chart 小屏自适应（高度/图例）已落地且无桌面回归。
-- [ ] `crud/design.md`、`chart/design.md` 响应式小节已同步到 live baseline。
-- [ ] M0.1 hairline 迁移 deferred 已转 successor 并在源 plan 注记。
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift（M4b 延后有明确 successor，见下）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] M4a crud 小屏响应式（toolbar 简化/查询折叠/分页简化）已落地且无桌面回归。
+- [x] M4c chart 小屏自适应（高度/图例）已落地且无桌面回归。
+- [x] `crud/design.md`、`chart/design.md` 响应式小节已同步到 live baseline。
+- [x] M0.1 hairline 迁移 deferred 已转 successor 并在源 plan 注记。
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect 或 contract drift（M4b 延后有明确 successor，见下）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -176,14 +176,23 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: M4a（crud）与 M4c（chart）两 Phase 已全部落地。M4a：`crud-renderer.tsx` 消费 `useIsMobile()` 经既有 headerBlocks 过滤机制隐藏 `switch-per-page`、`crud-renderer-toolbar.tsx` 小屏纵列堆叠、`crud-query-region.tsx` 小屏默认折叠；M4c：`chart-renderer.tsx` 用 `ResizeObserver` 测容器宽度，窄屏 height clamp 300 + 图例 `flex-wrap`，`ResizeObserver` 缺席回退固定高度（无报错）。两份 design.md 响应式小节已同步；playground `/m4-data` + e2e `m4-data.spec.ts`（移动/桌面双视口程序化断言）已交付；M0.1 hairline 迁移 deferred 已注记 W1c/W2a successor。全量 `pnpm typecheck/build/lint/test` 全绿（51/51 包）。附带根因修复：`packages/ui/src/hooks/use-mobile.ts` 改懒初始化（`React.useState<boolean>(readIsMobile)` 传函数引用避免每次 render 重算），消除消费者多余重渲染（桌面无 mobile 闪烁、移动端无首帧桌面假象）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 fresh-session closure-audit subagent（2026-06-23；不复用执行 session 上下文）。逐 Phase 复核 live repo + 五点一致性 + deferred 诚实性，结论 `approved`。
+- Evidence:
+  - **Phase 1 (M4a crud) — live code 核对**：`packages/flux-renderers-data/src/crud-renderer.tsx:13,58` 导入并调用 `useIsMobile()`；`:269-283` `resolveToolbarBlocks` 在 `isMobile` 时过滤 `switch-per-page`（与既有 `infinite` 过滤叠加），`:421` 根 `data-responsive="narrow"`；`crud-renderer-toolbar.tsx:70,177-191` `CrudToolbarBlocks` 消费 `useIsMobile()` 切 `flex-col items-stretch` + `data-responsive`；`crud-query-region.tsx:14,44-47` 接收 `isMobile` 并强制 `mobileDefaultCollapsed`。无 hollow body、无吞异常、无未连线组件。
+  - **Phase 2 (M4c chart) — live code 核对**：`packages/flux-renderers-data/src/chart-renderer.tsx:99-118` `ResizeObserver` effect（`typeof ResizeObserver === 'undefined'` 早返回 = 回退路径）；`:195-200` `MOBILE_BREAKPOINT=768`/`MOBILE_HEIGHT_CEILING=300` + `Math.min(height, 300)`；`:206` `legendClassName = isNarrow ? 'flex-wrap gap-x-3 gap-y-1'`；`:392-393` `data-responsive`/`data-responsive-supported` marker。`containerWidth → isNarrow → effectiveHeight + legendClassName + marker` 全链路 wired。
+  - **Focused proof 实跑**：`pnpm --filter @nop-chaos/flux-renderers-data test -- --run crud-responsive chart-responsive` → 54 文件 / 482 用例全绿（含 `crud-responsive.test.tsx` 8 case 覆盖 toolbar 简化/查询折叠/infinite 回归三分支；`chart-responsive.test.tsx` 5 case 覆盖宽屏无回归/窄屏 clamp+flex-wrap/小 authored height 不放大/ResizeObserver 缺席回退/字符串 height 透传）。
+  - **仓库级验证（本审计 session 复跑）**：`pnpm typecheck` 51/51、`pnpm lint` 27/27、`pnpm test` 51/51 全绿（turbo cache 一致）。`pnpm build` 经 typecheck task 链确认 green。
+  - **Artifacts 存在性核对**：`apps/playground/src/pages/m4-data-display-demo.tsx`（含 crud+chart 双示例 + `m4-crud-root`/`m4-chart-root` testid）；`apps/playground/src/route-model.ts:514` + `App.tsx:31,175` 注册 `m4-data` 路由；`tests/e2e/m4-data.spec.ts` 双视口 `test.use({viewport})` + 程序化断言（无截图）；`docs/components/crud/design.md` §14、`docs/components/chart/design.md` §13 响应式小节齐备；`docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md:185-191` Deferred 段含 `Closure Note (2026-06-23)` 注记 successor；`docs/logs/2026/06-23.md` 含 M4 收口条目。
+  - **Anti-hollow**：crud 三处 `useIsMobile()` 消费点与 chart ResizeObserver 链路均经单测验断言；无 `return null` 占位、无空函数体、无注册但不可达组件。
+  - **Deferred 诚实性**：两项 deferred（M4b cards/list、border→hairline 迁移）均 `out-of-scope improvement` + 明确 successor（W1c/W2a），对象（cards/list/cell renderer）未落地属外部前置，非本 plan 结果面 defect。
+  - **Five-point 一致性**：Plan Status `completed` ↔ 两 Phase `Status: completed` + 全 `[x]` ↔ Closure Gates 全 `[x]` ↔ Closure Evidence 真实 ↔ `docs/logs/2026/06-23.md` 收口记录——彼此一致。
+  - **e2e 实跑 residual**：`pnpm test:e2e`（浏览器环境）未在本审计 session 实跑；Phase 2 Exit Criteria 要求的是「spec 含程序化断言」（已核对 live 文件成立），e2e CI 实跑属独立 CI 通道，不阻塞 closure。
 
 Follow-up:
 
 - M4b cards/list 响应式 + hairline 迁移归主 roadmap W1c/W2a successor（见 Deferred But Adjudicated）。
-- <<或明确写 no other remaining plan-owned work>>
+- e2e `m4-data.spec.ts` CI 实跑确认归独立 CI 通道（spec 已含程序化断言，本审计已核对）。

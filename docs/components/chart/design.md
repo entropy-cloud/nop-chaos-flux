@@ -86,3 +86,43 @@
 
 - `series` 与 `source` 的双入口如果不收敛，后续会产生重复语义，需要持续规范。
 - `colors` override 只改取色来源（默认 `COLORS` → 自定义 palette），不改 `series`/`source` 双入口语义或数据归一化路径。
+
+## 13. 响应式行为
+
+> 来源：`docs/architecture/mobile-responsive-baseline.md`（M0 基线）、mobile-roadmap M4c。
+> 裁定（Decision）：小屏自适应**优先容器宽度**（`ResizeObserver`），不用 `useIsMobile()`（视口宽度）——chart 常被嵌入非满宽容器，容器宽度才是真实绘图宽度。`ChartContainer` 内部 `ResponsiveContainer` 已自动响应容器**宽度**；本节补的是**高度**与**图例**的小屏适配。响应式是内部运行时分支，不新增任何 schema 字段。
+
+### 高度自适应
+
+| 容器宽度                                 | 行为                                                            | 实现                                                                                                   |
+| ---------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| < 768px (narrow)                         | 数值型 `height` clamp 到移动端上限 `300px`（已小于 300 则不改） | `chart-renderer.tsx` 用 `ResizeObserver` 测 `chart-canvas` 宽度 → `isNarrow` → `Math.min(height, 300)` |
+| ≥ 768px (wide)                           | 维持 schema `height`（缺省 `400px`）                            | 维持现状，无回归                                                                                       |
+| 字符串型 `height`（如 `'50vh'`/`'50%'`） | 原样透传，不 clamp                                              | 字符串无法数值比较，保持作者意图                                                                       |
+
+### 图例位置
+
+| 容器宽度         | 行为                                                                                                                         | 实现                                          |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| < 768px (narrow) | 图例维持底部横排（`verticalAlign="bottom"`，复用 E3 legend 配置），但增 `flex-wrap gap-x-3 gap-y-1` 让多项换行而非挤压绘图区 | `ChartLegendContent` className 在 narrow 切换 |
+| ≥ 768px (wide)   | 图例底部横排，单行（`justify-center`）                                                                                       | 维持现状，无回归                              |
+
+> baseline §4.3 / mobile-roadmap Failure Path：图例本就底部横排，小屏只解决「多项挤压」——换行后不遮挡数据。
+
+### ResizeObserver 缺席回退（Failure Path）
+
+| 场景                       | 触发                                    | 行为                                                        | 用户可见表现                             |
+| -------------------------- | --------------------------------------- | ----------------------------------------------------------- | ---------------------------------------- |
+| ResizeObserver 不支持/缺席 | `typeof ResizeObserver === 'undefined'` | 不测量容器宽度，回退固定 `height` 缺省（400px），**不抛错** | 小屏图表高度不随容器收缩（降级，无报错） |
+
+实现：`ResizeObserver` effect 在 `typeof ResizeObserver === 'undefined'` 或 `chartRef` 为空（空态不渲染 canvas）时早返回，`containerWidth` 保持 `null` → `isNarrow=false` → 固定高度。
+
+### DOM marker（供样式 / e2e 程序化断言）
+
+- `.nop-chart` 根在 narrow 增 `data-responsive="narrow"`（宽屏缺省不输出）。
+- `.nop-chart` 根在 ResizeObserver 可用且已测量到宽度时增 `data-responsive-supported="true"`；缺席时不输出（用于 e2e/单测区分降级路径）。
+
+### 触摸适配
+
+- chart 是只读展示 renderer，无内建可点击控件（`onClick`/`onHover` 事件除外）；触摸目标规范不适用。
+- 小屏 X 轴标签旋转/抽稀属增强，归后续评估（见 mobile-roadmap Non-Blocking Follow-ups）。

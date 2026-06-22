@@ -188,6 +188,7 @@ Exit Criteria:
 - Why Not Blocking Closure: 本 plan 只交付 hairline 工具类 + 高频控件默认启用；业务 renderer（list/cards/cell 分隔线等）的 border 替换归 M4b（cards/list）等组件响应式 work item，不在 M0.1 结果面内。
 - Successor Required: yes
 - Successor Path: M4b / 各组件响应式 work item
+- Closure Note (2026-06-23): M4b 经 `docs/plans/2026-06-23-0410-2-m4-data-display-responsive-plan.md` 裁定为 `out-of-scope improvement`——`cards`/`list`/`cell` renderer 尚未落地（主 roadmap W1c `list` / W2a `cards` 均 `todo`，`flux-renderers-content` 包不存在），无可迁移对象。本 deferred 项随 cards/list/cell 一同转主 roadmap W1c/W2a successor（落地后其响应式 + hairline 迁移随对应 design.md 响应式小节或独立 follow-up 收口）。
 
 ### 软键盘 VisualViewport 监听
 
