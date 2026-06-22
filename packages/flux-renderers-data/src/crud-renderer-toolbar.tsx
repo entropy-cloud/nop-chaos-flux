@@ -1,5 +1,5 @@
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Label, NativeSelect, NativeSelectOption, PaginationPrevious, PaginationNext } from '@nop-chaos/ui';
+import { Button, Label, NativeSelect, NativeSelectOption, PaginationPrevious, PaginationNext, cn, useIsMobile } from '@nop-chaos/ui';
 import type { CrudStatusSummary } from './crud-schema.js';
 import { isRecord } from '@nop-chaos/flux-core';
 import { DEFAULT_PAGE_SIZE_OPTIONS, type CrudPaginationState } from './crud-renderer-state.js';
@@ -66,6 +66,8 @@ export function CrudToolbarBlocks(props: {
     onPageSizeChange,
     pollingToggle,
   } = props;
+
+  const isMobile = useIsMobile();
 
   if (blocks.length === 0 && !pollingToggle?.visible) {
     return null;
@@ -172,14 +174,20 @@ export function CrudToolbarBlocks(props: {
 
   return (
     <div
-      className="flex flex-wrap items-center justify-between gap-3"
+      className={cn(
+        'flex gap-3',
+        isMobile ? 'flex-col items-stretch' : 'flex-wrap items-center justify-between',
+      )}
       data-slot={`${slot}-toolbar-layout`}
+      data-responsive={isMobile ? 'narrow' : undefined}
     >
-      <div className="flex flex-wrap items-center gap-3">
+      <div className={cn('gap-3', isMobile ? 'flex flex-col' : 'flex flex-wrap items-center')}>
         {leftBlocks.map(renderBlock)}
         {pollingToggleNode}
       </div>
-      <div className="flex flex-wrap items-center gap-3">{rightBlocks.map(renderBlock)}</div>
+      <div className={cn('gap-3', isMobile ? 'flex flex-col' : 'flex flex-wrap items-center')}>
+        {rightBlocks.map(renderBlock)}
+      </div>
     </div>
   );
 }

@@ -11,6 +11,7 @@ export interface CrudQueryRegionProps {
   queryFormRegionRender: () => React.ReactNode;
   onSubmit: () => void;
   onReset: () => void;
+  isMobile?: boolean;
 }
 
 function countActiveFilters(values: Record<string, unknown>): number {
@@ -36,11 +37,14 @@ function resolveFilterToggleConfig(
 }
 
 export function CrudQueryRegion(props: CrudQueryRegionProps) {
-  const { filterTogglable, queryState, defaultQuery, queryFormRegionRender, onSubmit, onReset } =
+  const { filterTogglable, queryState, defaultQuery, queryFormRegionRender, onSubmit, onReset, isMobile } =
     props;
   const { enabled: toggleEnabled, config } = resolveFilterToggleConfig(filterTogglable);
 
-  const [collapsed, setCollapsed] = useState<boolean>(config.defaultCollapsed === true);
+  const mobileDefaultCollapsed = isMobile === true;
+  const [collapsed, setCollapsed] = useState<boolean>(
+    mobileDefaultCollapsed || config.defaultCollapsed === true,
+  );
 
   if (!toggleEnabled) {
     return (

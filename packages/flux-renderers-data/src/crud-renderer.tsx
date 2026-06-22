@@ -10,7 +10,7 @@ import {
   useSchemaProps,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Separator, cn } from '@nop-chaos/ui';
+import { Button, Separator, cn, useIsMobile } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema.js';
 import type { TableSchema } from './schemas.js';
 import { normalizeCrudSchema } from './crud-schema.js';
@@ -25,7 +25,11 @@ import {
   useCrudRuntimeState,
   useCrudStatusPublisher,
 } from './crud-renderer-state.js';
-import { CrudToolbarBlocks, normalizeToolbarBlocks } from './crud-renderer-toolbar.js';
+import {
+  CrudToolbarBlocks,
+  normalizeToolbarBlocks,
+  type ToolbarBlockDefinition,
+} from './crud-renderer-toolbar.js';
 import { createCrudQueryFormId } from './crud-query-form-id.js';
 import {
   createCrudOwnerPaths,
@@ -51,6 +55,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const scope = useRenderScope();
   const componentRegistry = useCurrentComponentRegistry();
   const env = useRendererEnv();
+  const isMobile = useIsMobile();
 
   const ownerPaths = createCrudOwnerPaths({ id: props.id, cid: props.meta.cid, schema: normalizedSchema });
   const defaultQuery = {
@@ -260,12 +265,25 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
   const headerBlocksRaw = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header');
   const footerBlocksRaw = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer');
-  const headerBlocks = paginationMode === 'infinite'
-    ? headerBlocksRaw.filter((block) => block.type !== 'pagination' && block.type !== 'switch-per-page')
-    : headerBlocksRaw;
-  const footerBlocks = paginationMode === 'infinite'
-    ? footerBlocksRaw.filter((block) => block.type !== 'pagination' && block.type !== 'switch-per-page')
-    : footerBlocksRaw;
+
+  function resolveToolbarBlocks(
+    blocks: ToolbarBlockDefinition[],
+    mode: 'pages' | 'infinite',
+  ): ToolbarBlockDefinition[] {
+    let resolved = blocks;
+    if (mode === 'infinite') {
+      resolved = resolved.filter(
+        (block) => block.type !== 'pagination' && block.type !== 'switch-per-page',
+      );
+    }
+    if (isMobile) {
+      resolved = resolved.filter((block) => block.type !== 'switch-per-page');
+    }
+    return resolved;
+  }
+
+  const headerBlocks = resolveToolbarBlocks(headerBlocksRaw, paginationMode);
+  const footerBlocks = resolveToolbarBlocks(footerBlocksRaw, paginationMode);
   const hasToolbar = hasRendererSlotContent(asReactNode(toolbarContent));
   const hasListActions = hasRendererSlotContent(asReactNode(listActionsContent));
   const hasFooterToolbar = hasRendererSlotContent(asReactNode(footerToolbarContent));
@@ -400,12 +418,14 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       className={cn('nop-crud', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
+      data-responsive={isMobile ? 'narrow' : undefined}
     >
       {hasQueryForm ? (
         <CrudQueryRegion
           filterTogglable={normalizedSchema.filterTogglable}
           queryState={queryState}
           defaultQuery={defaultQuery}
+          isMobile={isMobile}
           queryFormRegionRender={() =>
             asReactNode(
               props.regions.queryFormRegion?.render({

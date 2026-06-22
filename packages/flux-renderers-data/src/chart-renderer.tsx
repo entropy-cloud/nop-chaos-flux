@@ -1,4 +1,4 @@
-import { useRef, useEffect, useId, useMemo } from 'react';
+import { useRef, useEffect, useId, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import {
   AreaChart,
@@ -96,6 +96,27 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const chartRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const node = chartRef.current;
+    if (!node) {
+      return;
+    }
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      const width = entry?.contentRect?.width;
+      if (typeof width === 'number' && Number.isFinite(width)) {
+        setContainerWidth(width);
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   const chartType = isChartType(props.props.chartType) ? props.props.chartType : 'bar';
   const titleContent = resolveRendererSlotContent(props, 'title');
   const titleText = typeof props.props.title === 'string' ? props.props.title : undefined;
@@ -171,8 +192,18 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     return [];
   })();
 
-  const chartHeight = typeof height === 'number' ? `${height}px` : height || '400px';
+  const MOBILE_BREAKPOINT = 768;
+  const MOBILE_HEIGHT_CEILING = 300;
+  const isNarrow = containerWidth !== null && containerWidth < MOBILE_BREAKPOINT;
+  const responsiveSupported = containerWidth !== null;
+  const effectiveHeight =
+    isNarrow && typeof height === 'number' ? Math.min(height, MOBILE_HEIGHT_CEILING) : height;
+  const chartHeight =
+    typeof effectiveHeight === 'number'
+      ? `${effectiveHeight}px`
+      : effectiveHeight || '400px';
   const hasTitleContent = hasRendererSlotContent(titleContent);
+  const legendClassName = isNarrow ? 'flex-wrap gap-x-3 gap-y-1' : undefined;
   const chartAccessibleName = titleText?.trim() || t('flux.common.chart');
   const resolvedChartType = (
     series.length > 0 ? (series[0].type ?? chartType) : chartType
@@ -234,7 +265,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       return (
         <PieChart>
           <ChartTooltip content={<ChartTooltipContent />} />
-          {showLegend && <ChartLegend content={<ChartLegendContent />} />}
+          {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
           <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%">
             {pieData.map((item, i) => (
               <Cell key={item.name || `cell-${item.value}-${i}`} fill={palette[i % palette.length]} />
@@ -251,7 +282,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
           <YAxis name={yAxis?.label} />
           <ChartTooltip content={<ChartTooltipContent />} />
-          {showLegend && <ChartLegend content={<ChartLegendContent />} />}
+          {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
           {series.length > 0 ? (
             series.map((s, i) => (
               <Scatter
@@ -281,7 +312,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
           <YAxis name={yAxis?.label} />
           <ChartTooltip content={<ChartTooltipContent />} />
-          {showLegend && <ChartLegend content={<ChartLegendContent />} />}
+          {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
           {series.length > 0 ? (
             series.map((s, i) => (
               <Line
@@ -308,7 +339,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
           <YAxis name={yAxis?.label} />
           <ChartTooltip content={<ChartTooltipContent />} />
-          {showLegend && <ChartLegend content={<ChartLegendContent />} />}
+          {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
           {series.length > 0 ? (
             series.map((s, i) => (
               <Area
@@ -334,7 +365,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
         <YAxis name={yAxis?.label} />
         <ChartTooltip content={<ChartTooltipContent />} />
-        {showLegend && <ChartLegend content={<ChartLegendContent />} />}
+        {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
         {series.length > 0 ? (
           series.map((s, i) => (
             <Bar
@@ -358,6 +389,8 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       style={{ height: chartHeight } as CSSProperties}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
+      data-responsive={isNarrow ? 'narrow' : undefined}
+      data-responsive-supported={responsiveSupported ? 'true' : undefined}
     >
       {hasTitleContent ? <div data-slot="chart-title" id={titleId}>{titleContent}</div> : null}
       {isEmpty ? (
