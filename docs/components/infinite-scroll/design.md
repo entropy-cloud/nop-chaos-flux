@@ -35,6 +35,8 @@
 ```typescript
 interface InfiniteScrollSchema extends BaseSchema {
   type: 'infinite-scroll';
+  /** 列表内容 region */
+  body?: SchemaInput;
   /** 加载更多触发距离（px），默认 200px */
   distance?: number;
   /** 是否禁用滚动加载 */
@@ -50,7 +52,7 @@ interface InfiniteScrollSchema extends BaseSchema {
 }
 ```
 
-- `body` 是 region（renderer definition 中声明 `{ key: 'body', kind: 'region' }`），不是 schema 内联字段。
+- `body` 是 region 字段，在 renderer definition 中声明 `{ key: 'body', kind: 'region' }`，编译器预编译为 `props.regions.body`。
 
 ### Events
 

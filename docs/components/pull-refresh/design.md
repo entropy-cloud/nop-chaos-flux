@@ -33,6 +33,8 @@
 ```typescript
 interface PullRefreshSchema extends BaseSchema {
   type: 'pull-refresh';
+  /** 子内容 region */
+  body?: SchemaInput;
   /** 刷新方向：'down' 下拉刷新，'up' 上拉加载 */
   direction?: 'down' | 'up';
   /** 触发刷新的下拉距离阈值，默认 60px */
@@ -54,7 +56,7 @@ interface PullRefreshSchema extends BaseSchema {
 }
 ```
 
-- `body` 是 region（renderer definition 中声明 `{ key: 'body', kind: 'region' }`），不是 schema 内联字段。
+- `body` 是 region 字段，在 renderer definition 中声明 `{ key: 'body', kind: 'region' }`，编译器预编译为 `props.regions.body`。author 在 schema 中写 `body: [{ type: '...' }]`。
 
 ### Events
 

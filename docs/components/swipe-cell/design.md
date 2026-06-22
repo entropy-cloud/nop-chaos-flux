@@ -40,6 +40,12 @@
 ```typescript
 interface SwipeCellSchema extends BaseSchema {
   type: 'swipe-cell';
+  /** 主体内容 region */
+  body?: SchemaInput;
+  /** 左滑露出的操作区 region */
+  left?: SchemaInput;
+  /** 右滑露出的操作区 region */
+  right?: SchemaInput;
   /** 滑动触发阈值（px），默认 30 */
   threshold?: number;
   /** 限制滑动方向 */
@@ -51,7 +57,7 @@ interface SwipeCellSchema extends BaseSchema {
 }
 ```
 
-- `body`（主体内容）、`left`（左滑操作区）、`right`（右滑操作区）是 region（renderer definition 中声明 `{ key: 'body', kind: 'region' }` 等），不是 schema 内联字段。
+- `body`/`left`/`right` 是 region 字段，在 renderer definition 中声明 `{ key: 'body', kind: 'region' }` 等，编译器预编译为 `props.regions.body`/`left`/`right`。
 
 ### Events
 

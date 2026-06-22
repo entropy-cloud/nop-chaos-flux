@@ -1,36 +1,65 @@
-import type { BaseSchema, SchemaValue } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaInput, SchemaValue } from '@nop-chaos/flux-core';
 import type { ActionSchema } from '@nop-chaos/flux-core';
 
 export interface PullRefreshSchema extends BaseSchema {
   type: 'pull-refresh';
+  /** 子内容 region */
+  body?: SchemaInput;
+  /** 刷新方向：'down' 下拉刷新，'up' 上拉加载 */
   direction?: 'down' | 'up';
+  /** 触发刷新的下拉距离阈值，默认 60px */
   threshold?: number;
+  /** 加载中提示文本 */
   loadingText?: string;
+  /** 下拉提示文本 */
   pullingText?: string;
+  /** 到达释放阈值时提示文本 */
   loosingText?: string;
+  /** 成功提示文本，默认 '刷新成功' */
   successText?: string;
+  /** 成功提示持续时间 ms，默认 500 */
   successDuration?: number;
+  /** 动画持续时间 ms，默认 300 */
   animationDuration?: number;
+  /** 禁用下拉刷新 */
   disabled?: boolean;
   onRefresh?: ActionSchema;
 }
 
 export interface InfiniteScrollSchema extends BaseSchema {
   type: 'infinite-scroll';
+  /** 列表内容 region */
+  body?: SchemaInput;
+  /** 加载更多触发距离（px），默认 200px */
   distance?: number;
+  /** 是否禁用滚动加载 */
   disabled?: boolean;
+  /** 加载中提示文本 */
   loadingText?: string;
+  /** 加载完成文本（所有数据已加载） */
   finishedText?: string;
+  /** 加载出错文本 */
   errorText?: string;
+  /** 是否立即检查加载，默认 true（内容不足一屏时自动加载） */
   immediateCheck?: boolean;
   onLoadMore?: ActionSchema;
 }
 
 export interface SwipeCellSchema extends BaseSchema {
   type: 'swipe-cell';
+  /** 主体内容 region */
+  body?: SchemaInput;
+  /** 左滑露出的操作区 region */
+  left?: SchemaInput;
+  /** 右滑露出的操作区 region */
+  right?: SchemaInput;
+  /** 滑动触发阈值（px），默认 30 */
   threshold?: number;
+  /** 限制滑动方向 */
   direction?: 'left' | 'right' | 'both';
+  /** 禁用滑动交互 */
   disabled?: boolean;
+  /** 点击外部区域自动关闭，默认 true */
   closeOnOutside?: boolean;
   onAction?: ActionSchema;
   onOpen?: ActionSchema;
