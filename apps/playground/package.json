@@ -25,6 +25,7 @@
     "@nop-chaos/flux-renderers-data": "workspace:*",
     "@nop-chaos/flux-renderers-form": "workspace:*",
     "@nop-chaos/flux-renderers-form-advanced": "workspace:*",
+    "@nop-chaos/flux-renderers-mobile": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/nop-debugger": "workspace:*",
     "@nop-chaos/report-designer-core": "workspace:*",

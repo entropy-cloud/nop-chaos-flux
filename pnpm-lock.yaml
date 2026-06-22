@@ -176,6 +176,9 @@ importers:
       '@nop-chaos/flux-renderers-form-advanced':
         specifier: workspace:*
         version: link:../../packages/flux-renderers-form-advanced
+      '@nop-chaos/flux-renderers-mobile':
+        specifier: workspace:*
+        version: link:../../packages/flux-renderers-mobile
       '@nop-chaos/flux-runtime':
         specifier: workspace:*
         version: link:../../packages/flux-runtime

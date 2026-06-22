@@ -482,6 +482,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'M0.1 mobile infra helpers: nop-safe-area, nop-hairline, nop-haptic, global z-index stack — visual + behavioral reference for M1–M5 mobile work.',
   },
+  {
+    id: 'mobile-components',
+    title: 'Mobile Native Components',
+    eyebrow: 'Mobile Renderers (M5)',
+    description:
+      'M5 mobile-native renderers: pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar — mounted via SchemaRenderer in touch-friendly viewport.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

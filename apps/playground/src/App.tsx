@@ -5,6 +5,7 @@ import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
+import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { HomePage } from './pages/home-page';
 import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
@@ -23,6 +24,7 @@ import { InputSuggestDemoPage } from './pages/input-suggest-demo';
 import { TreeDisplayUxDemoPage } from './pages/tree-display-ux-demo';
 import { TablePopOverDemoPage } from './pages/table-popover-demo';
 import { MobileInfrastructureDemoPage } from './pages/mobile-infrastructure-demo';
+import { MobileComponentsDemoPage } from './pages/mobile-components-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -48,6 +50,7 @@ registerBasicRenderers(registry);
 registerFormRenderers(registry);
 registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
+registerMobileRenderers(registry);
 
 if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefined') {
   window.__NOP_DEBUGGER__ = {
@@ -157,6 +160,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <TablePopOverDemoPage onBack={goHome} />;
         case 'mobile-infrastructure':
           return <MobileInfrastructureDemoPage onBack={goHome} />;
+        case 'mobile-components':
+          return <MobileComponentsDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

@@ -154,6 +154,21 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-testid="hairline-preview"]')).toBeVisible();
     await expect(page.locator('[data-testid="haptic-preview"]')).toBeVisible();
   },
+  'mobile-components': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: '移动端原生组件 — pull-refresh / infinite-scroll / swipe-cell / countdown / notice-bar',
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="mobile-renderer-host"]')).toBeVisible();
+    await expect(page.locator('[data-testid="demo-pull-refresh"]')).toBeVisible();
+    await expect(page.locator('[data-testid="demo-infinite-scroll"]')).toBeVisible();
+    await expect(page.locator('[data-testid="demo-swipe-cell"]')).toBeVisible();
+    await expect(page.locator('[data-testid="demo-countdown"]')).toBeVisible();
+    await expect(page.locator('[data-testid="demo-notice-bar"]')).toBeVisible();
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {
