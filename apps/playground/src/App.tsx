@@ -21,6 +21,7 @@ import { LayoutFamilyEnhancementsDemoPage } from './pages/layout-family-enhancem
 import { FormInputEnhancementsDemoPage } from './pages/form-input-enhancements-demo';
 import { InputSuggestDemoPage } from './pages/input-suggest-demo';
 import { TreeDisplayUxDemoPage } from './pages/tree-display-ux-demo';
+import { TablePopOverDemoPage } from './pages/table-popover-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -151,6 +152,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <InputSuggestDemoPage onBack={goHome} />;
         case 'tree-display-ux':
           return <TreeDisplayUxDemoPage onBack={goHome} />;
+        case 'table-popover':
+          return <TablePopOverDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

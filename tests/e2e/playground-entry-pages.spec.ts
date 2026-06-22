@@ -94,6 +94,54 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.getByTestId('boolean-contract-value-enabled')).toBeVisible();
     await expect(page.getByTestId('boolean-contract-value-notify')).toBeVisible();
   },
+  'text-icon-visual-fields': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'text copyable/maxLine + icon size/color', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+  },
+  'layout-family-enhancements': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: 'flex / page / tabs 布局族能力补齐',
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+  },
+  'form-input-enhancements': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: '表单输入控件增强 — 长按步进 + min/max + 重排',
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+  },
+  'input-suggest': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: 'Input Autocomplete — Data-Source Async Suggestions',
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+  },
+  'tree-display-ux': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'tree 搜索/图标/引导线', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+  },
+  'table-popover': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'table popOver 单元格（详情弹层）', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-slot="table-cell-popover-trigger"]').first()).toBeVisible({
+      timeout: 15_000,
+    });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

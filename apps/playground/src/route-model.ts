@@ -468,6 +468,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'E3 tree display: searchable local filter + auto-expand matching ancestors + highlight, node icons via showIcon/iconField, indentation guide-line via showGuideLine.',
   },
+  {
+    id: 'table-popover',
+    title: 'Table popOver Cell',
+    eyebrow: 'Table Cell popOver (E3)',
+    description:
+      'E3 table cell detail popOver: column-level popOver config (trigger/placement/icon/content region/title/showOnOverflow/onEmpty), coexists with copyable icon, content region rendering.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

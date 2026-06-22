@@ -11,4 +11,6 @@ export { PerformanceTablePage } from './performance-table-page';
 export { TextIconVisualFieldsDemoPage } from './text-icon-visual-fields-demo';
 export { FormInputEnhancementsDemoPage } from './form-input-enhancements-demo';
 export { InputSuggestDemoPage } from './input-suggest-demo';
+export { TreeDisplayUxDemoPage } from './tree-display-ux-demo';
+export { TablePopOverDemoPage } from './table-popover-demo';
 export type { PageId } from './types';
