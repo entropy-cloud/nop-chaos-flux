@@ -22,6 +22,14 @@ const schema = {
         color: 'red',
         tags: ['apple', 'banana'],
         pick: 'apple',
+        reviewers: [
+          { id: 'item-1', value: 'alice' },
+          { id: 'item-2', value: 'bob' },
+        ],
+        metadata: [
+          { id: 'pair-1', key: 'env', value: 'prod' },
+          { id: 'pair-2', key: 'region', value: 'us' },
+        ],
       },
       body: [
         {
@@ -143,6 +151,92 @@ const schema = {
             },
           ],
         },
+        {
+          type: 'flex',
+          direction: 'row',
+          gap: 'md',
+          className: 'flex-wrap',
+          body: [
+            {
+              type: 'button',
+              label: 'Add Reviewer (component:addItem)',
+              onClick: { action: 'component:addItem', componentId: 'arr-field' },
+            },
+            {
+              type: 'button',
+              label: 'Remove Reviewer #0 (component:removeItem)',
+              onClick: {
+                action: 'component:removeItem',
+                componentId: 'arr-field',
+                args: { index: 0 },
+              },
+            },
+            {
+              type: 'button',
+              label: 'Move Reviewer 0→1 (component:moveItem)',
+              onClick: {
+                action: 'component:moveItem',
+                componentId: 'arr-field',
+                args: { from: 0, to: 1 },
+              },
+            },
+            {
+              type: 'button',
+              label: 'Add Entry (component:addItem)',
+              onClick: { action: 'component:addItem', componentId: 'kv-field' },
+            },
+            {
+              type: 'button',
+              label: 'Remove Entry #0 (component:removeItem)',
+              onClick: {
+                action: 'component:removeItem',
+                componentId: 'kv-field',
+                args: { index: 0 },
+              },
+            },
+            {
+              type: 'button',
+              label: 'Move Entry 0→1 (component:moveItem)',
+              onClick: {
+                action: 'component:moveItem',
+                componentId: 'kv-field',
+                args: { from: 0, to: 1 },
+              },
+            },
+          ],
+        },
+        {
+          type: 'array-editor',
+          id: 'arr-field',
+          name: 'reviewers',
+          label: 'Reviewers',
+          itemLabel: 'Reviewer',
+        },
+        {
+          type: 'key-value',
+          id: 'kv-field',
+          name: 'metadata',
+          label: 'Metadata',
+        },
+        {
+          type: 'flex',
+          direction: 'column',
+          gap: 'sm',
+          className: 'mt-4 p-4 rounded-lg bg-muted/40',
+          body: [
+            { type: 'text', text: 'Live composite editor values:' },
+            {
+              type: 'text',
+              testid: 'composite-handles-reviewer-count',
+              text: 'reviewer inputs = ${reviewers.length}',
+            },
+            {
+              type: 'text',
+              testid: 'composite-handles-metadata-count',
+              text: 'metadata entries = ${metadata.length}',
+            },
+          ],
+        },
       ],
     },
     {
@@ -242,6 +336,7 @@ export function ComponentHandlesDemoPage({ onBack }: ComponentHandlesDemoPagePro
             schemaUrl="playground://pages/component-handles-demo"
             schema={schema}
             env={env}
+            registry={registry as any}
             formulaCompiler={formulaCompiler}
           />
         </div>

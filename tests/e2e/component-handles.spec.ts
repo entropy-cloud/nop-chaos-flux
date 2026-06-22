@@ -45,7 +45,7 @@ test.describe('component:* capability handles (X1)', () => {
   test('component:focus on button moves focus to the button DOM', async ({ page }) => {
     await openComponentHandlesDemo(page);
 
-    const target = page.getByRole('button', { name: 'Target Button' });
+    const target = page.getByRole('button', { name: 'Target Button', exact: true });
     await expect(target).not.toBeFocused();
 
     await page.getByRole('button', { name: 'Focus Target Button' }).click();
@@ -66,6 +66,9 @@ test.describe('component:* capability handles (X1)', () => {
     });
 
     // Toggle closes the now-open dialog.
+    // NOTE: this and the drawer close assertion are pre-existing failures — once a
+    // modal surface opens, the page-level trigger becomes inert, so the click times
+    // out. Tracked as an X1 surface test-design issue, unrelated to composite editors.
     await page.getByRole('button', { name: 'Toggle Dialog' }).click();
     await expect(page.getByText('Opened via component:open capability handle.')).toHaveCount(0);
     await assertTrackedPageErrors(page);
