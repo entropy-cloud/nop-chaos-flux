@@ -72,6 +72,10 @@ export {
   type UseSurfaceComponentHandleOptions,
 } from './hooks/use-surface-component-handle.js';
 export {
+  useCompositeFieldHandle,
+  type UseCompositeFieldHandleOptions,
+} from './hooks/use-composite-field-handle.js';
+export {
   EMPTY_FORM_STORE_STATE,
   isFieldEffectivelyRequired,
   selectCurrentFormErrors,

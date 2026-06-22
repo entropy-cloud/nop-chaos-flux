@@ -10,6 +10,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import {
+  useCompositeFieldHandle,
   useCurrentFormState,
   useCurrentFormModelGeneration,
   useScopeSelector,
@@ -28,6 +29,10 @@ import {
 import type { ArrayEditorItem, ArrayEditorSchema } from '@nop-chaos/flux-renderers-form';
 import { FieldHint } from '@nop-chaos/flux-renderers-form';
 import { createNextCompositeItemId } from './composite-field/composite-item-id.js';
+import {
+  COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
+  COMPOSITE_EDITOR_METHODS,
+} from './composite-field/composite-editor-capability-contracts.js';
 
 const EMPTY_ARRAY_EDITOR_ITEMS: ArrayEditorItem[] = [];
 
@@ -381,6 +386,86 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
   const atMaxItems = maxItems !== undefined && items.length >= maxItems;
 
+  useCompositeFieldHandle({
+    id: props.id,
+    name: name || undefined,
+    type: 'array-editor',
+    cid: props.meta.cid,
+    methods: COMPOSITE_EDITOR_METHODS,
+    isInteractive: () => !presentation.effectiveDisabled && !presentation.readOnly,
+    addItem: (value) => {
+      if (atMaxItems) {
+        return { skipped: true };
+      }
+      const nextItem =
+        value && typeof value === 'object' && !Array.isArray(value)
+          ? {
+              id:
+                typeof (value as Record<string, unknown>).id === 'string'
+                  ? ((value as Record<string, unknown>).id as string)
+                  : createNextCompositeItemId(items, 'item-'),
+              value:
+                typeof (value as Record<string, unknown>).value === 'string'
+                  ? ((value as Record<string, unknown>).value as string)
+                  : '',
+            }
+          : { id: createNextCompositeItemId(items, 'item-'), value: '' };
+      const nextItems = [...items, nextItem];
+      itemsRef.current = nextItems;
+      pendingFocusRef.current = { kind: 'add' };
+      if (currentForm && name) {
+        currentForm.appendValue(name, nextItem);
+        if (shouldValidateOn(name, currentForm, 'change')) {
+          void currentForm.validateField(name, 'change');
+        }
+      } else {
+        syncItems(nextItems);
+      }
+      return { index: items.length };
+    },
+    removeItem: (index) => {
+      if (index < 0 || index >= items.length) {
+        return { outOfBounds: true };
+      }
+      if (items.length <= minItems) {
+        return { skipped: true };
+      }
+      pendingFocusRef.current = { kind: 'remove', index };
+      const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
+      itemsRef.current = nextItems;
+      if (currentForm && name) {
+        currentForm.removeValue(name, index);
+        if (shouldValidateOn(name, currentForm, 'change')) {
+          void currentForm.validateSubtree(name, 'change');
+        }
+      } else {
+        syncItems(nextItems);
+      }
+      return {};
+    },
+    moveItem: (from, to) => {
+      if (from < 0 || from >= items.length || to < 0 || to >= items.length) {
+        return { outOfBounds: true };
+      }
+      const nextItems = items.slice();
+      const [moved] = nextItems.splice(from, 1);
+      if (!moved) {
+        return { outOfBounds: true };
+      }
+      nextItems.splice(to, 0, moved);
+      itemsRef.current = nextItems;
+      if (currentForm && name) {
+        currentForm.moveValue(name, from, to);
+        if (shouldValidateOn(name, currentForm, 'change')) {
+          void currentForm.validateField(name, 'change');
+        }
+      } else {
+        syncItems(nextItems);
+      }
+      return {};
+    },
+  });
+
   React.useEffect(() => {
     if (!currentForm || !name) {
       return;
@@ -499,6 +584,7 @@ export const arrayEditorRendererDefinition: RendererDefinition = {
   component: ArrayEditorRenderer,
   wrap: true,
   fields: formFieldRules,
+  componentCapabilityContracts: COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
   validation: {
     kind: 'field',
     valueKind: 'array',

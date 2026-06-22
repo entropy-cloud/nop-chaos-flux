@@ -192,8 +192,14 @@ export function validateActionSelector(input: {
 
       if (resolution.componentContract.args) {
         const argsPath = appendJsonPointer(input.path, 'args');
+        // Omitting `args` in the schema is equivalent to an empty payload `{}`.
+        // This mirrors the runtime adapter (`action-adapter.ts`) which coerces
+        // an undefined payload to `{}` before matching against the contract
+        // args shape, so an all-optional object args contract (e.g. composite
+        // editor `addItem` with optional `value`) accepts a no-args call.
+        const argsValue = input.args ?? {};
         const valid = validateFluxValueShape(
-          input.args,
+          argsValue,
           resolution.componentContract.args,
           argsPath,
           diagnostics,

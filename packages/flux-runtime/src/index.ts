@@ -15,6 +15,13 @@ export {
   type SurfaceHandleBindingsHolder,
   type SurfaceHandleMethod,
 } from './surface-component-handle.js';
+export {
+  createCompositeFieldHandle,
+  type CompositeFieldHandleBindings,
+  type CompositeFieldHandleBindingsHolder,
+  type CompositeFieldHandleMethod,
+  type CompositeFieldHandleOpResult,
+} from './composite-field-handle.js';
 export { createFormStoreDiagnosticsBridge } from './form-store-diagnostics-bridge.js';
 export { createRootDependencySet, scopeChangeHitsDependencies } from './scope-change.js';
 export { publishOwnerStatus } from './status-owner.js';

@@ -425,6 +425,42 @@ describe('host action validation xui:actions validation', () => {
     );
   });
 
+  it('accepts omitted args for a component capability whose args shape is an all-optional object (mirrors runtime undefined→{})', () => {
+    const editorRendererWithContracts: RendererDefinition = {
+      type: 'array-editor',
+      component: () => null,
+      componentCapabilityContracts: [
+        {
+          handle: 'addItem',
+          displayName: 'Add Item',
+          args: {
+            kind: 'object',
+            fields: { value: { kind: 'unknown' } },
+            optional: ['value'],
+          },
+        },
+      ],
+    };
+    const compiler = createCompiler(pageRenderer, eventRenderer, editorRendererWithContracts);
+
+    const diagnostics = compiler.validate?.({
+      type: 'page',
+      body: [
+        { type: 'array-editor', id: 'arr' },
+        {
+          type: 'event-text',
+          text: 'Hello',
+          onClick: { action: 'component:addItem', componentId: 'arr' },
+        },
+      ],
+    } as any);
+
+    const offending = (diagnostics as { code: string; path: string }[] | undefined)?.filter(
+      (d) => d.code === 'invalid-host-capability-args',
+    );
+    expect(offending).toEqual([]);
+  });
+
   it('keeps component selectors warning-only when componentId is duplicate or componentName-based', () => {
     const formRendererWithContracts: RendererDefinition = {
       type: 'form',

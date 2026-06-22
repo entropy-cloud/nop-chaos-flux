@@ -10,6 +10,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import {
+  useCompositeFieldHandle,
   useCurrentFormState,
   useCurrentFormModelGeneration,
   useScopeSelector,
@@ -28,6 +29,10 @@ import {
 import type { KeyValuePair, KeyValueSchema } from '@nop-chaos/flux-renderers-form';
 import { FieldHint } from '@nop-chaos/flux-renderers-form';
 import { createNextCompositeItemId } from './composite-field/composite-item-id.js';
+import {
+  COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
+  COMPOSITE_EDITOR_METHODS,
+} from './composite-field/composite-editor-capability-contracts.js';
 
 const EMPTY_KEY_VALUE_PAIRS: KeyValuePair[] = [];
 
@@ -418,6 +423,92 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
   const atMaxItems = maxItems !== undefined && pairs.length >= maxItems;
 
+  useCompositeFieldHandle({
+    id: props.id,
+    name: name || undefined,
+    type: 'key-value',
+    cid: props.meta.cid,
+    methods: COMPOSITE_EDITOR_METHODS,
+    isInteractive: () => !presentation.effectiveDisabled && !presentation.readOnly,
+    addItem: (value) => {
+      if (atMaxItems) {
+        return { skipped: true };
+      }
+      const nextEntry =
+        value && typeof value === 'object' && !Array.isArray(value)
+          ? {
+              id:
+                typeof (value as Record<string, unknown>).id === 'string'
+                  ? ((value as Record<string, unknown>).id as string)
+                  : createNextCompositeItemId(pairs, 'pair-'),
+              key:
+                typeof (value as Record<string, unknown>).key === 'string'
+                  ? ((value as Record<string, unknown>).key as string)
+                  : '',
+              value:
+                typeof (value as Record<string, unknown>).value === 'string'
+                  ? ((value as Record<string, unknown>).value as string)
+                  : '',
+            }
+          : { id: createNextCompositeItemId(pairs, 'pair-'), key: '', value: '' };
+      const nextPairs = [...pairs, nextEntry];
+      pairsRef.current = nextPairs;
+      if (currentForm && name) {
+        currentForm.appendValue(name, nextEntry);
+        if (shouldValidateOn(name, currentForm, 'change')) {
+          void currentForm.validateField(name, 'change');
+        }
+      } else {
+        syncField(nextPairs);
+      }
+      return { index: pairs.length };
+    },
+    removeItem: (index) => {
+      if (index < 0 || index >= pairs.length) {
+        return { outOfBounds: true };
+      }
+      if (pairs.length <= minItems) {
+        return { skipped: true };
+      }
+      const nextPairs = pairs.filter((_, candidateIndex) => candidateIndex !== index);
+      const nextFocusIndex = Math.min(index, nextPairs.length - 1);
+      pairsRef.current = nextPairs;
+      if (currentForm && name) {
+        currentForm.removeValue(name, index);
+        void currentForm.validateSubtree(name);
+      } else {
+        syncField(nextPairs);
+      }
+      queueMicrotask(() => {
+        if (nextFocusIndex >= 0) {
+          removeButtonRefs.current[nextFocusIndex]?.focus();
+        }
+      });
+      return {};
+    },
+    moveItem: (from, to) => {
+      if (from < 0 || from >= pairs.length || to < 0 || to >= pairs.length) {
+        return { outOfBounds: true };
+      }
+      const nextPairs = pairs.slice();
+      const [moved] = nextPairs.splice(from, 1);
+      if (!moved) {
+        return { outOfBounds: true };
+      }
+      nextPairs.splice(to, 0, moved);
+      pairsRef.current = nextPairs;
+      if (currentForm && name) {
+        currentForm.moveValue(name, from, to);
+        if (shouldValidateOn(name, currentForm, 'change')) {
+          void currentForm.validateField(name, 'change');
+        }
+      } else {
+        syncField(nextPairs);
+      }
+      return {};
+    },
+  });
+
   React.useEffect(() => {
     if (!currentForm || !name) {
       return;
@@ -550,6 +641,7 @@ export const keyValueRendererDefinition: RendererDefinition = {
   wrap: true,
   frameRootTag: 'div',
   fields: formFieldRules,
+  componentCapabilityContracts: COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
   validation: {
     kind: 'field',
     valueKind: 'array',
