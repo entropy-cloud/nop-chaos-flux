@@ -31,7 +31,7 @@
 - W4b. 流程展示组（2）: `todo`
 - W4c. 复合表单组（4）: `todo`
 - D1a. 设计器补充组（2）: `todo`
-- **M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈）: `todo`** ← 镜像自 `mobile-roadmap.md`（4 子项 M0.1a~M0.1d，建议 1 plan 4 phase；Protected Area，执行前拟 plan；细节与口径以 mobile-roadmap 为准）
+- **M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈）: `done`** ← 镜像自 `mobile-roadmap.md`（4 子项 M0.1a~M0.1d 已全部落地；plan: `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`；细节与口径以 mobile-roadmap 为准）
 - O1. 非 retained 可选项（13）: 按需启动，不列工作项
 
 ## Status Values

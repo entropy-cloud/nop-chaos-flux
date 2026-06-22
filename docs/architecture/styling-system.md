@@ -429,6 +429,18 @@ Renderer components emit marker classes and schema-derived classes only. Default
 
 The default spacing rules in `@layer base` apply `display: flex`, `flex-direction`, `gap`, and `padding` to layout renderer slots (page-body, form-body, fieldset-body, container-body, tabs-content, field-frame). For container bodies, this CSS baseline applies to both the bare path and the semantic flex-child path; renderer code only contributes explicit direction, wrap, alignment, and gap overrides requested by schema props. These defaults remain overridable because Tailwind utilities live in `@layer utilities` which takes precedence over `@layer base`.
 
+### Mobile Infrastructure Helper Classes
+
+`@nop-chaos/ui` ships three groups of mobile-focused helper classes via `packages/ui/src/styles/mobile.css` (loaded by `index.css`). Contract source: `docs/architecture/mobile-responsive-baseline.md` §2 / §10.
+
+| Class                                                                           | Purpose                                                                                         | Notes                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nop-safe-top` / `nop-safe-bottom` / `nop-safe-left` / `nop-safe-right`         | Safe-area padding via `env(safe-area-inset-*)`                                                  | Apply to fixed bars, page header/footer, BottomSheet containers, full-screen dialog content. Degrades to 0 on non-notch devices.                                                                              |
+| `nop-hairline` (base) + `nop-hairline--top` / `--right` / `--bottom` / `--left` | 0.5px hairline borders via `::after` + `transform: scale(0.5)`                                  | Use the base class for `position: relative` context, pair with one direction modifier to draw the edge. Color via `--nop-hairline-color` (defaults to `hsl(var(--border))`). Adapts scale to 0.333 on 3x DPI. |
+| `nop-haptic`                                                                    | Press feedback (`:active { opacity: 0.7 }`, `cursor: pointer`, `transition: opacity 0.1s ease`) | Enabled by default on `Button`; enabled on `Card` only when `onClick` is provided. Disabled state naturally does not trigger `:active`.                                                                       |
+
+These classes are part of the public `@nop-chaos/ui` styling surface; dist consumers inherit them via `@nop-chaos/ui/styles.css`.
+
 ### Per-Slot ClassName Props
 
 Layout containers support per-slot `className` props for controlling inner slot styling (grid layout, flex direction on body, etc.):

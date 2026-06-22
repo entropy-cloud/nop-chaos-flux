@@ -18,8 +18,8 @@
 | 维度                                  | 状态                                                                                                                                                                            |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@nop-chaos/flux-renderers-mobile` 包 | **包骨架已落地**（`package.json`/`tsconfig`/`vite alias`/`src/index.ts` + `schemas.ts` + `useTouch` Hook）。renderer definition（5 个组件注册）尚未落地，M5 工作项代码实现 0%。 |
-| M0 响应式基线                         | `done` **仅指文档基线**（`docs/architecture/mobile-responsive-baseline.md` 立约）。safe-area/hairline/haptics/z-index 栈等基础设施代码未实现（见 M0.1）。                       |
-| M0.1 基础设施代码                     | **未实现**（safe-area/hairline/haptics/z-index 在 `packages/ui/src/` 中均为零）。                                                                                               |
+| M0 响应式基线                         | `done`（文档基线 + M0.1 基础设施代码已落地，见下）。                                                                                                                            |
+| M0.1 基础设施代码                     | `done`（safe-area/hairline/haptics/z-index 栈已落地于 `packages/ui/src/`，详见 `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）。                             |
 | M1–M5 实现进度                        | **0%**。所有响应式改进与移动端原生组件均未开始。                                                                                                                                |
 | design.md 立约                        | ✅ 已存在：`pull-refresh`/`infinite-scroll`/`swipe-cell`/`countdown`/`notice-bar`/`bottom-sheet`/`use-touch` 共 7 份（99~152 行），属**文档先行**，不等同于代码实现。           |
 
@@ -69,8 +69,8 @@
 >
 > **可标记单位是 work item（M0.1/M1/M2/M3/M4/M5），不是单组件子项。** 每个 work item = 一个 execution plan 的合理交付范围，一个 plan 可覆盖该 work item 下的多个组件子项。plan 通过 closure audit 后，整组 work item 标 `done`。**禁止为单个 M5a/M5b… 各开独立 plan**（违反 plan guide §22，会重蹈 micro-plan 覆辙）。子项（M1a/M1b…/M5e）是同一 work item 的拆解说明，不是独立打勾单位。
 
-- M0 响应式基线与断点规范: `done`（仅文档基线；基础设施代码见 M0.1，未实现）
-- M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈，4 子项，建议 1 plan 4 phase）: `todo`
+- M0 响应式基线与断点规范: `done`（含基础设施代码，见 M0.1）
+- M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈，4 子项，建议 1 plan 4 phase）: `done`（`docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）
 - M1 高频交互控件响应式（select/tree/table/dialog/tabs，5 子项 M1a~M1d）: `todo`
 - M2 表单控件触摸适配（input/textarea/checkbox/switch/button，3 子项 M2a~M2c）: `todo`
 - M3 容器与布局响应式（page/flex/container/grid，2 子项 M3a~M3b）: `todo`
@@ -110,18 +110,28 @@
 
 > M0 已完成。M1-M4 无此硬前置阻塞。
 
-### M0.1 — 移动端基础设施
+### M0.1 — 移动端基础设施 ✅
 
 > 来源：`docs/analysis/2026-06-21-flux-vs-vant-full-comparison.md` §3 基础设施核查发现：safe-area 辅助类 / hairline 0.5px 细线 / haptics 触感反馈 / global z-index 栈 在当前代码库**均未实现**（仅 baseline 文档有约定）。这 4 项是移动端体验基本盘，且都不是 schema 层能解决的，必须在 `@nop-chaos/ui` 与 surface-runtime 基础设施层补齐。契约定义见 `docs/architecture/mobile-responsive-baseline.md` §10。
 >
 > **执行约束**：M0.1 全部子项落在 Protected Area（`packages/ui/src/index.ts` ask-first + styling contract plan-first + surface-runtime plan-first），因此**必须先拟 execution plan 经 draft review 通过后才能动代码**，不能直接 implement。建议**1 个 plan 覆盖 4 个 Phase**（4 项共享同一批 ui 样式契约文件 + 同一次 ui 导出变更，拆多 plan 会重复走 Protected Area 审批）。
+>
+> **状态（2026-06-22）**：✅ done。Execution plan: `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`。落地位置：
+>
+> - safe-area / hairline / haptics 三组 CSS 辅助类 → `packages/ui/src/styles/mobile.css`（经 `index.css` 加载链导出）
+> - `nop-haptic` 默认启用 → `packages/ui/src/components/ui/button.tsx`（无条件）、`card.tsx`（条件：传入 `onClick`）
+> - global z-index 计数器 → `packages/ui/src/hooks/use-global-z-index.ts`，导出 `useGlobalZIndex` / `setGlobalZIndex` / `nextGlobalZIndex` / `peekGlobalZIndex` / `GLOBAL_Z_INDEX_BASELINE_VALUE`
+> - 12 个 overlay 组件 + sonner 完成 z-50 平滑迁移：`dialog`/`alert-dialog`/`drawer`/`sheet`/`popover`/`tooltip`/`hover-card`/`dropdown-menu`/`context-menu`/`combobox`/`select`/`navigation-menu` 从扁平 `z-50` 改为 `useGlobalZIndex()` 计数器取值；`sonner` Toaster 固定 `z-index: 10000`（顶层协调）
+> - `docs/architecture/surface-owner.md` 新增 `Global z-index Stack` 章节
+> - `docs/architecture/styling-system.md` 新增 `Mobile Infrastructure Helper Classes` 章节
+> - playground 演示页：`apps/playground/src/pages/mobile-infrastructure-demo.tsx`（路由 `/mobile-infrastructure`）
 
-| Work item | 内容                                                                                                                                                                                                                                       | 涉及（Protected Area）                                                                | 依赖 |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ---- |
-| **M0.1a** | safe-area 辅助类落地：在 `@nop-chaos/ui` 实现 `nop-safe-top/bottom/left/right`（`env(safe-area-inset-*)`），baseline §2 已立约                                                                                                             | `packages/ui/src/index.ts`（ask-first）                                               | M0   |
-| **M0.1b** | hairline 0.5px 细线工具：在 `@nop-chaos/ui` 或 `tailwind-preset` 提供 `nop-hairline` / `nop-hairline--top/right/bottom/left`（`::after` 伪元素 + transform scale，适配高 DPI），baseline §10 立约                                          | `packages/ui/src/index.ts`（ask-first）+ styling contract（plan-first）               | M0   |
-| **M0.1c** | haptics 触感反馈：定义 `nop-haptic` class（按压 `:active` 反馈，opacity/transition），并让 Button/Card/Cell 等高频可点击控件默认启用                                                                                                       | `packages/ui/src/index.ts`（ask-first）+ styling contract（plan-first）               | M0   |
-| **M0.1d** | global z-index 栈管理：在 surface-runtime 加共享 z-index 栈（dialog/drawer/sheet/toast/popover 共享自增计数器，对齐 Vant `useGlobalZIndex`）；当前所有 overlay 用扁平 `z-50` 存在叠加层级混乱风险；**plan 必须含现有 z-50 平滑迁移 Phase** | surface-runtime（plan-first，`docs/architecture/surface-owner.md` 需补 z-index 章节） | M0   |
+| Work item    | 内容                                                                                                                                                                                                                                       | 涉及（Protected Area）                                                                | 依赖 |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ---- |
+| **M0.1a** ✅ | safe-area 辅助类落地：在 `@nop-chaos/ui` 实现 `nop-safe-top/bottom/left/right`（`env(safe-area-inset-*)`），baseline §2 已立约                                                                                                             | `packages/ui/src/index.ts`（ask-first）                                               | M0   |
+| **M0.1b** ✅ | hairline 0.5px 细线工具：在 `@nop-chaos/ui` 或 `tailwind-preset` 提供 `nop-hairline` / `nop-hairline--top/right/bottom/left`（`::after` 伪元素 + transform scale，适配高 DPI），baseline §10 立约                                          | `packages/ui/src/index.ts`（ask-first）+ styling contract（plan-first）               | M0   |
+| **M0.1c** ✅ | haptics 触感反馈：定义 `nop-haptic` class（按压 `:active` 反馈，opacity/transition），并让 Button/Card/Cell 等高频可点击控件默认启用                                                                                                       | `packages/ui/src/index.ts`（ask-first）+ styling contract（plan-first）               | M0   |
+| **M0.1d** ✅ | global z-index 栈管理：在 surface-runtime 加共享 z-index 栈（dialog/drawer/sheet/toast/popover 共享自增计数器，对齐 Vant `useGlobalZIndex`）；当前所有 overlay 用扁平 `z-50` 存在叠加层级混乱风险；**plan 必须含现有 z-50 平滑迁移 Phase** | surface-runtime（plan-first，`docs/architecture/surface-owner.md` 需补 z-index 章节） | M0   |
 
 > M0.1 是 M1–M5 的**软前置**（虚线依赖）：不硬阻塞现有 `todo` 推进，但 M5 移动端原生组件落地前最好先有 M0.1c（haptics）与 M0.1d（z-index 栈）。
 
@@ -210,7 +220,7 @@ graph TD
     M01 -. 软前置 .-> M5a & M5c
 ```
 
-> 虚线 = 软前置（M0.1 不硬阻塞 M1–M5，但 M5 落地前最好先有 M0.1c haptics + M0.1d z-index 栈）。M0.1 当前 `todo`，涉及 Protected Area，执行前必须先拟 plan 经 draft review。
+> 虚线 = 软前置（M0.1 不硬阻塞 M1–M5，但 M5 落地前最好先有 M0.1c haptics + M0.1d z-index 栈）。M0.1 已 `done`（plan：`docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）。
 
 ## Cross-Cutting
 

@@ -326,7 +326,7 @@
 | SubmitBar | M0.1a safe-area、M0.1c haptics      |
 | Sticky    | M0.1d z-index 分层（固定栏层 z-10） |
 
-> 这些 className（`nop-haptic`、`nop-safe-bottom`）当前是 baseline §10 的契约（M0.1，`todo` 未落地）。M0.1 落地前可用 Tailwind 等价类临时替代（如 `pb-[env(safe-area-inset-bottom)]`、`active:opacity-70`），落地后切换为语义 class。
+> 这些 className（`nop-haptic`、`nop-safe-bottom`）是 baseline §10 的契约，**M0.1 已落地**（见 `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）：`nop-safe-*` / `nop-haptic` 辅助类归属 `@nop-chaos/ui` `packages/ui/src/styles/mobile.css`，经 `@nop-chaos/ui/styles.css` 入口加载。直接使用语义 class 即可。
 
 ## 15. 风险、取舍与后续阶段
 
