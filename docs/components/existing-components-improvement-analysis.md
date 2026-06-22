@@ -83,7 +83,9 @@ v1 以"amis 有 Flux 无"为缺口定义，已被否决。**amis 的设计本身
 
 ### 2.1 请求下沉 — data-source 作为统一请求层的增强（保留，重新定性）
 
-请求不下沉到组件（不采纳 amis 组件级 `api`/`initFetch`/`interval`）。但 data-source 作为**统一请求层**可补强，让组合路径更完整：
+请求不下沉到组件（不采纳 amis 组件级 `api`/`initFetch`/`interval`）。但 data-source 作为**统一请求层**可补强，让组合路径更完整。
+
+**关键判定细则**：组件 schema 上任何"挂载时自动加载数据"的专用字段（即使路由经过 `executeSource` data-source 层）都是 `initFetch` 的变形，违反原则。异步数据应通过**外部 data-source 组件 → scope → 表达式**的方式组合：`data-source` 加载数据到 scope，组件通过 `"${expr}"` 读取。用户交互驱动的按需加载（如 tree 展开节点触发 `childrenSource`）是合法的例外，因其加载由用户行为触发而非挂载自动发起。详见 `docs/bugs/15-component-level-initfetch-analysis-and-fix.md`。
 
 | 增强项                             | 是否做         | 说明                                              |
 | ---------------------------------- | -------------- | ------------------------------------------------- |

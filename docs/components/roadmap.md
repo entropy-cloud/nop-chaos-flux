@@ -280,17 +280,18 @@ graph TD
 
 ## Cross-Cutting
 
-| 关注点              | 说明                                                                                                                  |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Renderer 契约       | 每个新组件必须有 `design.md` + `example.json` + renderer definition（见 `renderer-implementation-guidelines.md`）     |
-| UI 组件来源         | 一律复用 `@nop-chaos/ui`，禁止裸 HTML                                                                                 |
-| Field metadata      | 表单类组件遵循 `field-metadata-slot-modeling.md` 契约                                                                 |
-| 安全                | `html`/`markdown`/`editor`/`iframe` 等需受控渲染                                                                      |
-| 单测                | 每个落地组件配 focused 单测                                                                                           |
-| **Playground 示例** | **每个新组件或能力改进，必须在 `apps/playground/src/` 下有可交互示例页面，注册到 playground 路由**                    |
-| **E2E 测试**        | **每个新组件或能力改进，必须在 `tests/e2e/` 下有对应 e2e 测试文件，覆盖关键交互路径（视口切换、点击、输入、提交等）** |
-| Owner-doc 同步      | 工作项关闭时更新 `amis-baseline-matrix.md` 状态 + `docs/components/index.md`                                          |
-| Dev log             | 每次实现后更新 `docs/logs/{year}/`                                                                                    |
+| 关注点              | 说明                                                                                                                                                                                                                                                                                                                                               |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Renderer 契约       | 每个新组件必须有 `design.md` + `example.json` + renderer definition（见 `renderer-implementation-guidelines.md`）                                                                                                                                                                                                                                  |
+| UI 组件来源         | 一律复用 `@nop-chaos/ui`，禁止裸 HTML                                                                                                                                                                                                                                                                                                              |
+| Field metadata      | 表单类组件遵循 `field-metadata-slot-modeling.md` 契约                                                                                                                                                                                                                                                                                              |
+| 请求下沉            | 新组件**不得声明挂载时自动加载数据的 schema 字段**（如 `initFetch`/`api`/`source` 等挂载触发语义）。数据请求必须通过 `data-source` + action graph 下沉到请求层。用户交互驱动的按需加载（如 tree `childrenSource` 展开加载、input `suggestSource` 输入建议）不在此限。违反示例与裁定见 `docs/bugs/15-component-level-initfetch-analysis-and-fix.md` |
+| 安全                | `html`/`markdown`/`editor`/`iframe` 等需受控渲染                                                                                                                                                                                                                                                                                                   |
+| 单测                | 每个落地组件配 focused 单测                                                                                                                                                                                                                                                                                                                        |
+| **Playground 示例** | **每个新组件或能力改进，必须在 `apps/playground/src/` 下有可交互示例页面，注册到 playground 路由**                                                                                                                                                                                                                                                 |
+| **E2E 测试**        | **每个新组件或能力改进，必须在 `tests/e2e/` 下有对应 e2e 测试文件，覆盖关键交互路径（视口切换、点击、输入、提交等）**                                                                                                                                                                                                                              |
+| Owner-doc 同步      | 工作项关闭时更新 `amis-baseline-matrix.md` 状态 + `docs/components/index.md`                                                                                                                                                                                                                                                                       |
+| Dev log             | 每次实现后更新 `docs/logs/{year}/`                                                                                                                                                                                                                                                                                                                 |
 
 ## Rule
 

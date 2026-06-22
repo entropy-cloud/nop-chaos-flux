@@ -10,7 +10,7 @@
 
 - 目标能力对标 AMIS `condition-builder`：字段类型、运算符映射、AND/OR 嵌套组、NOT、simple/full mode、embed/picker mode、远程字段配置、字段搜索、条件触发、unique fields。
 - 当前仓库已落地基础 condition group 编辑、字段清单、值输入与 required 校验。
-- 更复杂的嵌套逻辑、运算符扩展、异步字段元数据加载、公式增强属于后续阶段。
+- 更复杂的嵌套逻辑、运算符扩展、公式增强属于后续阶段。异步字段元数据加载由外部 `data-source` 组件加载到 scope，组件通过 `fields` 表达式（`${expr}`）读取，不设组件级加载字段。
 
 ### Flux 决策表
 
@@ -29,7 +29,7 @@ amis 仅作参考之一，**非标尺**。Flux 按 `existing-components-improvem
 | `showIf`（按组 `if` 条件）                                                         | **实现**（E0d 收口）             | 值槽 `ConditionGroupValue.if?: string` 已存在；组级条件是规则引擎常见能力；实现成本低，符合 declarative schema 原则。语义见 §7.4                                                                                                                                                                                                                                                                                                                |
 | `selectMode: tree`/`chained`                                                       | **不采纳（删字段）**（E0d 收口） | list 模式已通过 `ConditionFieldGroup` 扁平化 + `searchable` 覆盖；tree/chained 增加复杂度但边际价值低、非高频业务需求；按 §0.2 "核心已简化" 原则收敛为 list-only 并从 `ConditionBuilderSchema` 整体删字段。若 E3 出现明确树形/级联需求，再以独立 feature plan 重新引入                                                                                                                                                                          |
 | `formulas`/`formulaForIf`（formula 集成，值侧可为公式）                            | **实现**（E3 收口）              | E0d 进 types.ts 提供稳定契约；E3 收口 runtime 消费：`formulas.enabled=true` 时 condition-item right 侧切换为表达式值槽（`data-slot="condition-formula-value"`），`formula` 作为新增 item 默认 right 种子串，`source` 走 `helpers.executeSource` 提供求值上下文、`helpers.evaluate` 解析表达式串；`formulaForIf.enabled=true` 时组级 `if` 输入标注为可求值表达式（`data-slot="condition-group-if-formula"`）。求值语义见 §7.5，DOM marker 见 §10 |
-| 异步 field/operator 元数据加载（`source` 走 api）                                  | **计划实现（E3 P2 批）**         | 走 source；当前 `types.ts` 仅允许 `source?: string`（scope 路径）                                                                                                                                                                                                                                                                                                                                                                               |
+| 异步 field/operator 元数据加载（`source` 走 api）                                  | **不采纳**                       | 组件级挂载时自动加载（initFetch 等价物），违反「请求必须下沉」原则。异步元数据应由外部 `data-source` 组件加载到 scope，condition-builder 通过 `fields` 表达式（`${expr}`）从 scope 读取。见 `docs/bugs/15-component-level-initfetch-analysis-and-fix.md`                                                                                                                                                                                        |
 | `simple` 模式真正扁平单组限制                                                      | **暂不实现**                     | 当前 simple 仅隐藏 AND/OR 开关，仍允许嵌套                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `description`/per-field description、`isRequired`、`labelsAndOp` 显示模式          | **暂不实现**                     | 后续按需                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | amis 组件级 `api`/`initFetch` SchemaApi 生命周期                                   | **不采纳**                       | 请求下沉 data-source + action（见 analysis §0.2/§5）                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -52,7 +52,6 @@ interface ConditionBuilderSchema extends BaseSchema {
   name: string;
 
   fields: ConditionField[];
-  source?: string | ApiSchema;
 
   builderMode?: 'full' | 'simple';
   embed?: boolean;
@@ -102,8 +101,7 @@ interface ConditionFormulaConfig extends SchemaObject {
 
 关键输入：
 
-- 条件字段定义：`fields`
-- 远程字段来源：`source`
+- 条件字段定义：`fields`（支持 Flux 标准表达式解析，如 `"${myFields}"`，由外部 data-source 加载后写 scope）
 - 编辑模式：`builderMode`、`embed`
 - 逻辑和交互开关：`showAndOr`、`showNot`、`showIf`、`draggable`、`uniqueFields`
 - 文案与按钮可见性：`placeholder`、`addConditionLabel`、`addGroupLabel`、`addBtnVisibleOn`、`addGroupBtnVisibleOn`
@@ -117,7 +115,7 @@ Operator naming baseline:
 ## 5. 字段分类
 
 - `label`: `value-or-region`
-- `fields`、`source`、`operators`、`formulas`、`formulaForIf`: `value`
+- `fields`、`operators`、`formulas`、`formulaForIf`: `value`
 - `builderMode`、`embed`、`searchable`、`draggable`、`showAndOr`、`showNot`、`showIf`、`uniqueFields`: `value`
 - `addConditionLabel`、`addGroupLabel`、`removeConditionLabel`、`removeGroupLabel`、`placeholder`: `value`
 
@@ -131,9 +129,7 @@ Operator naming baseline:
 
 - 条件值整体归 form runtime，通过 `name` 绑定读写。
 - 展开态、局部编辑态、下拉打开态属于局部 UI 状态。
-- 远程字段解析属于组件内受控加载逻辑，不应反向发明新的宿主级状态协议。
-
-值结构：
+  值结构：
 
 ```ts
 interface ConditionGroupValue {
@@ -404,8 +400,7 @@ interface ConditionCustomField extends BaseConditionField {
 
 ## 9. 数据源、表达式、导入能力接入点
 
-- 字段元数据可来自内联 `fields`，或来自 `source` 指向的 scope/api 数据源。
-- `source` 返回的数据应解析为字段配置，而不是任意 UI 片段。
+- 字段元数据来自 `fields` schema 属性，支持 Flux 标准表达式解析（如 `"${myFields}"`）。异步字段数据应由外部 `data-source` 组件加载到 scope，组件通过表达式读取。
 - 条件 DSL 本身是 value，不应再内嵌动作脚本或平台宿主桥接语义。
 
 ## 10. 样式与 DOM marker 约定

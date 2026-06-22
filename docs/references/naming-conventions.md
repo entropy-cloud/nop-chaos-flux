@@ -122,6 +122,13 @@
 
 - **普通字段即可承载表达式**，不发明 `xxxExpr`/`xxxFormula` 平行命名（`field-binding-and-renderer-contract.md` Rule 1）。例：`{ "type": "text", "text": "${user.name}" }`，不写 `textExpr`。
 
+### 4.7 禁止组件级 auto-fetch 字段
+
+- **组件 schema 不得开设"挂载时自动加载数据"的专用字段**。这类字段（如 condition-builder 已移除的 `source`）本质是 amis 组件级 `initFetch` 的变形——即使路由经过 `executeSource`（data-source 层），组件 schema 上的 auto-fetch 入口本身就是与「请求必须下沉」原则冲突。
+- **正确路径**：数据由外部 `data-source` 组件加载到 scope，组件通过标准表达式（`${expr}`）或 `allowSource` prop 读取。组件只消费数据，不主动发起挂载时查询。
+- **唯一例外**：用户交互驱动的按需加载（如 tree `childrenSource` 在点击展开时触发）是合法的——数据加载由用户行为触发，非组件挂载自动发起。
+- 相关分析：`docs/bugs/15-component-level-initfetch-analysis-and-fix.md`
+
 ---
 
 ## 5. 新增字段审查 Checklist
