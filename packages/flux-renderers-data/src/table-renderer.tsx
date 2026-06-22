@@ -380,6 +380,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       className={cn('nop-table', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
+      data-responsive-expand={responsiveExpandActive ? 'true' : undefined}
     >
       {hasRendererSlotContent(headerContent) ? (
         <div data-slot="table-header-region">{asReactNode(headerContent)}</div>

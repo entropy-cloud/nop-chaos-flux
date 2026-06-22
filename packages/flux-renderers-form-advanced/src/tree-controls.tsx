@@ -7,8 +7,13 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
   Spinner,
   cn,
+  useIsMobile,
 } from '@nop-chaos/ui';
 import { ChevronsUpDownIcon, XIcon } from 'lucide-react';
 import {
@@ -173,6 +178,8 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const treeConfig = getTreeOptionConfig(props.props as TreeSelectSchema);
   const baseOptions = buildTreeOptionMetaList(props.props.options, treeConfig);
   const [query, setQuery] = React.useState('');
+  const [sheetOpen, setSheetOpen] = React.useState(false);
+  const isMobile = useIsMobile();
   const remoteSearchActive =
     props.props.searchable === true && Boolean(props.props.searchSource);
   const lazyEnabled = Boolean(props.props.childrenSource);
@@ -231,16 +238,82 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
     clearValue: () => handlers.onChange(multiple ? [] : undefined),
   });
 
+  const triggerDisabled =
+    presentation.effectiveDisabled ||
+    presentation.readOnly ||
+    optionsSourceState?.loading === true;
+
+  const treeOptionListElement = (
+    <TreeOptionList
+      options={options}
+      value={value}
+      multiple={multiple}
+      cascade={props.props.cascade === true}
+      onlyLeaf={props.props.onlyLeaf === true}
+      showPathLabel={props.props.showPathLabel === true}
+      searchable={props.props.searchable === true}
+      disabled={triggerDisabled}
+      onChange={(nextValue) => handlers.onChange(nextValue)}
+      ariaLabel={fieldLabel}
+      searchLabel={searchLabel}
+      describedBy={sourceError ? sourceErrorId : undefined}
+      loadingDescriptionId={loadingId}
+      loading={optionsSourceState?.loading === true || searchLoading}
+      errorMessage={sourceError ? sourceErrorId : undefined}
+      invalid={Boolean(sourceError)}
+      virtualThreshold={props.props.virtualThreshold}
+      remoteSearch={remoteSearchActive}
+      onQueryChange={setQuery}
+      lazyNodeStates={lazyNodeStates}
+      onLazyExpand={lazyLoadChildren}
+      onLazyRetry={lazyRetryChildren}
+    />
+  );
+
+  const triggerValueSpan = (
+    <span
+      data-slot="tree-select-value"
+      className={cn(triggerText ? undefined : 'text-muted-foreground')}
+    >
+      {triggerText || triggerLabel}
+    </span>
+  );
+  const triggerIconsSpan = (
+    <span data-slot="tree-select-icons">
+      <ChevronsUpDownIcon className="size-4 text-muted-foreground" />
+    </span>
+  );
+
   return (
     <div
       ref={rootRef}
       className={cn('nop-tree-select', props.meta.className)}
       data-slot="tree-select-control"
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
     >
-      <Popover>
-        <div className="flex items-center gap-2" data-slot="tree-select-trigger-row">
-          <PopoverTrigger
-            render={
+      <div className="flex items-center gap-2" data-slot="tree-select-trigger-row">
+        {isMobile ? (
+          <Button
+            type="button"
+            variant="outline"
+            aria-label={fieldLabel}
+            aria-haspopup="dialog"
+            aria-expanded={sheetOpen}
+            aria-describedby={sourceError ? sourceErrorId : undefined}
+            aria-errormessage={sourceError ? sourceErrorId : undefined}
+            aria-invalid={sourceError ? true : undefined}
+            disabled={triggerDisabled}
+            data-slot="tree-select-mobile-trigger"
+            onClick={() => setSheetOpen(true)}
+          >
+            {triggerValueSpan}
+            {triggerIconsSpan}
+          </Button>
+        ) : (
+          <Popover>
+            <PopoverTrigger
+              render={
                 <Button
                   type="button"
                   variant="outline"
@@ -248,68 +321,53 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
                   aria-describedby={sourceError ? sourceErrorId : undefined}
                   aria-errormessage={sourceError ? sourceErrorId : undefined}
                   aria-invalid={sourceError ? true : undefined}
-                  disabled={presentation.effectiveDisabled || presentation.readOnly || optionsSourceState?.loading === true}
+                  disabled={triggerDisabled}
                 >
-                <span
-                  data-slot="tree-select-value"
-                  className={cn(triggerText ? undefined : 'text-muted-foreground')}
-                >
-                  {triggerText || triggerLabel}
-                </span>
-                <span data-slot="tree-select-icons">
-                  <ChevronsUpDownIcon className="size-4 text-muted-foreground" />
-                </span>
-              </Button>
-            }
-          />
-          {props.props.clearable === true && hasSelection ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                aria-label={t('flux.common.clear')}
-                disabled={presentation.effectiveDisabled || presentation.readOnly || optionsSourceState?.loading === true}
-               onClick={(event) => {
-                 event.preventDefault();
-                 event.stopPropagation();
-                 handlers.onChange(multiple ? [] : '');
-               }}
-             >
-               <XIcon className="size-4" />
-             </Button>
-          ) : null}
-        </div>
-        <PopoverContent align="start">
-          <TreeOptionList
-            options={options}
-            value={value}
-            multiple={multiple}
-            cascade={props.props.cascade === true}
-            onlyLeaf={props.props.onlyLeaf === true}
-            showPathLabel={props.props.showPathLabel === true}
-            searchable={props.props.searchable === true}
-            disabled={
-              presentation.effectiveDisabled ||
-              presentation.readOnly ||
-              optionsSourceState?.loading === true
-            }
-            onChange={(nextValue) => handlers.onChange(nextValue)}
-            ariaLabel={fieldLabel}
-            searchLabel={searchLabel}
-            describedBy={sourceError ? sourceErrorId : undefined}
-            loadingDescriptionId={loadingId}
-            loading={optionsSourceState?.loading === true || searchLoading}
-            errorMessage={sourceError ? sourceErrorId : undefined}
-            invalid={Boolean(sourceError)}
-            virtualThreshold={props.props.virtualThreshold}
-            remoteSearch={remoteSearchActive}
-            onQueryChange={setQuery}
-            lazyNodeStates={lazyNodeStates}
-            onLazyExpand={lazyLoadChildren}
-            onLazyRetry={lazyRetryChildren}
-          />
-        </PopoverContent>
-      </Popover>
+                  {triggerValueSpan}
+                  {triggerIconsSpan}
+                </Button>
+              }
+            />
+            <PopoverContent align="start">{treeOptionListElement}</PopoverContent>
+          </Popover>
+        )}
+        {props.props.clearable === true && hasSelection ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={t('flux.common.clear')}
+            disabled={triggerDisabled}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              handlers.onChange(multiple ? [] : '');
+            }}
+          >
+            <XIcon className="size-4" />
+          </Button>
+        ) : null}
+      </div>
+      {isMobile ? (
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent
+            side="bottom"
+            showCloseButton={false}
+            className="nop-safe-bottom max-h-[80vh] gap-0"
+            data-testid="tree-select-mobile-sheet"
+          >
+            <SheetHeader className="nop-hairline nop-hairline--bottom">
+              <SheetTitle className="truncate">{fieldLabel}</SheetTitle>
+            </SheetHeader>
+            <div
+              className="flex max-h-[65vh] flex-col overflow-y-auto p-2"
+              data-slot="tree-select-mobile-options"
+            >
+              {treeOptionListElement}
+            </div>
+          </SheetContent>
+        </Sheet>
+      ) : null}
       {sourceError ? (
         <span id={sourceErrorId} data-slot="tree-select-source-error" role="alert">
           {sourceError}

@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import type { ReactNode } from 'react';
 import {
   booleanMappingAdapter,
@@ -22,11 +21,7 @@ import {
   ComboboxClear,
   ComboboxContent,
   ComboboxEmpty,
-  ComboboxGroup,
   ComboboxInput,
-  ComboboxItem,
-  ComboboxLabel,
-  ComboboxList,
   ComboboxTrigger,
   ComboboxValue,
   Label,
@@ -34,6 +29,7 @@ import {
   RadioGroupItem,
   Spinner,
   Switch,
+  useIsMobile,
 } from '@nop-chaos/ui';
 import { useFormFieldController } from '../field-utils.js';
 import type {
@@ -43,6 +39,8 @@ import type {
   SelectSchema,
   SwitchSchema,
 } from '../schemas.js';
+import { SelectMobile } from './select-mobile-renderer.js';
+import { StaticComboboxList, VirtualizedComboboxList } from './select-combobox-lists.js';
 
 export type ChoiceOption = {
   [key: string]: SchemaValue;
@@ -175,127 +173,10 @@ function matchChoiceLabel(label: string, query: string, ignoreCase: boolean): bo
     : label.includes(query);
 }
 
-const VIRTUAL_ITEM_ESTIMATE = 32;
-const VIRTUAL_OVERSCAN = 6;
-
 export type OptionTemplateRenderer = (
   option: ChoiceOption,
   index: number,
 ) => ReactNode | undefined;
-
-function renderComboboxItem(
-  option: ChoiceOption,
-  index: number,
-  renderOptionTemplate?: OptionTemplateRenderer,
-) {
-  let content: ReactNode = option.label;
-  if (renderOptionTemplate) {
-    try {
-      const custom = renderOptionTemplate(option, index);
-      if (custom !== undefined && custom !== null && custom !== false) {
-        content = custom;
-      }
-    } catch (error) {
-      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-        console.warn(
-          '[flux-select] optionTemplate region render failed; falling back to option.label',
-          error,
-        );
-      }
-    }
-  }
-  return (
-    <ComboboxItem
-      key={getChoiceOptionKey(option.value)}
-      value={option}
-      disabled={option.disabled}
-    >
-      {content}
-    </ComboboxItem>
-  );
-}
-
-function StaticComboboxList(props: {
-  renderGroups: boolean;
-  groups: SelectOptionGroup[];
-  flatOptions: ChoiceOption[];
-  renderOptionTemplate?: OptionTemplateRenderer;
-}) {
-  if (props.renderGroups) {
-    return (
-      <ComboboxList>
-        {props.groups.map((group) => (
-          <ComboboxGroup key={group.label}>
-            <ComboboxLabel>{group.label}</ComboboxLabel>
-            {group.options.map((option, index) =>
-              renderComboboxItem(option, index, props.renderOptionTemplate),
-            )}
-          </ComboboxGroup>
-        ))}
-      </ComboboxList>
-    );
-  }
-
-  return (
-    <ComboboxList>
-      {props.flatOptions.map((option, index) =>
-        renderComboboxItem(option, index, props.renderOptionTemplate),
-      )}
-    </ComboboxList>
-  );
-}
-
-function VirtualizedComboboxList(props: {
-  renderGroups: boolean;
-  groups: SelectOptionGroup[];
-  flatOptions: ChoiceOption[];
-  renderOptionTemplate?: OptionTemplateRenderer;
-}) {
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const flatItems: ChoiceOption[] = props.renderGroups
-    ? props.groups.flatMap((group) => group.options)
-    : props.flatOptions;
-  const virtualizer = useVirtualizer({
-    count: flatItems.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => VIRTUAL_ITEM_ESTIMATE,
-    overscan: VIRTUAL_OVERSCAN,
-    getItemKey: (index) => getChoiceOptionKey(flatItems[index]?.value ?? index),
-  });
-
-  return (
-    <ComboboxList ref={scrollRef} data-slot="combobox-list">
-      <div
-        style={{
-          height: virtualizer.getTotalSize(),
-          position: 'relative',
-          width: '100%',
-        }}
-      >
-        {virtualizer.getVirtualItems().map((virtualItem) => {
-          const option = flatItems[virtualItem.index];
-          if (!option) {
-            return null;
-          }
-          return (
-            <div
-              key={virtualItem.key}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                transform: `translateY(${virtualItem.start}px)`,
-              }}
-            >
-              {renderComboboxItem(option, virtualItem.index, props.renderOptionTemplate)}
-            </div>
-          );
-        })}
-      </div>
-    </ComboboxList>
-  );
-}
 
 export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const name = String(props.props.name ?? '');
@@ -350,7 +231,9 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
 
   const [inputValue, setInputValue] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const selectWrapperRef = useRef<HTMLDivElement | null>(null);
+  const isMobile = useIsMobile();
   const query = filterEnabled ? inputValue : '';
   const visibleOptions = query
     ? rawOptions.filter((option) => matchChoiceLabel(option.label, query, ignoreCase))
@@ -387,6 +270,46 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     }
   };
 
+  const mobileTriggerText = multiple
+    ? (allOptions
+        .filter((option) => {
+          const arr = Array.isArray(value) ? value : [];
+          return arr.some((candidate) => Object.is(candidate, option.value));
+        })
+        .map((option) => option.label)
+        .join(', '))
+    : (allOptions.find((option) => Object.is(option.value, value))?.label ?? '');
+  const mobileHasSelection = multiple
+    ? Array.isArray(value) && value.length > 0
+    : allOptions.some((option) => Object.is(option.value, value));
+
+  const toggleMobileOption = (option: ChoiceOption) => {
+    if (!interactive || option.disabled) {
+      return;
+    }
+    if (multiple) {
+      const arr = Array.isArray(value) ? value : [];
+      const exists = arr.some((candidate) => Object.is(candidate, option.value));
+      handlers.onChange(
+        exists ? arr.filter((candidate) => !Object.is(candidate, option.value)) : [...arr, option.value],
+      );
+    } else {
+      handlers.onChange(option.value);
+      setSheetOpen(false);
+    }
+  };
+
+  const mobileClear = () => {
+    if (!interactive) {
+      return;
+    }
+    if (multiple) {
+      handlers.onChange([]);
+    } else {
+      handlers.onChange(undefined);
+    }
+  };
+
   const controlProps = {
     id: name ? `${name}-control` : undefined,
     'aria-label': ariaLabel,
@@ -408,7 +331,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     methods: SELECT_METHODS,
     getFocusTarget: () =>
       selectWrapperRef.current?.querySelector<HTMLElement>(
-        '[data-slot="combobox-trigger"], [data-slot="combobox-input"], input',
+        '[data-slot="combobox-trigger"], [data-slot="combobox-input"], [data-slot="select-mobile-trigger"], input',
       ) ?? null,
     isInteractive: () => interactive,
     isVisible: () => props.meta.visible !== false,
@@ -419,7 +342,13 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
         handlers.onChange(undefined);
       }
     },
-    openMenu: () => setMenuOpen(true),
+    openMenu: () => {
+      if (isMobile) {
+        setSheetOpen(true);
+      } else {
+        setMenuOpen(true);
+      }
+    },
   });
 
   return (
@@ -427,72 +356,108 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
       ref={selectWrapperRef}
       className={cn('nop-select-wrapper', props.meta.className)}
       data-slot="select-wrapper"
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
     >
-      <Combobox
-        open={menuOpen}
-        onOpenChange={setMenuOpen}
-        value={comboboxValue as ChoiceOption | ChoiceOption[] | null}
-        onValueChange={interactive ? handleValueChange : undefined}
-        multiple={multiple}
-        disabled={effectiveDisabled}
-        itemToStringLabel={(option: ChoiceOption) => option.label}
-        isItemEqualToValue={(a: ChoiceOption, b: ChoiceOption) => Object.is(a.value, b.value)}
-        onInputValueChange={(nextQuery: string) => setInputValue(nextQuery)}
-      >
-        {multiple ? (
-          <ComboboxChips className="w-full min-h-9">
-            {(comboboxValue as ChoiceOption[]).map((option) => (
-              <ComboboxChip key={getChoiceOptionKey(option.value)}>
-                {option.label}
-              </ComboboxChip>
-            ))}
-            <ComboboxChipsInput
+      {isMobile ? (
+        <SelectMobile
+          ariaLabel={ariaLabel}
+          triggerPlaceholder={triggerPlaceholder}
+          searchPlaceholder={searchPlaceholder}
+          placeholder={placeholder}
+          mobileTriggerText={mobileTriggerText}
+          mobileHasSelection={mobileHasSelection}
+          effectiveDisabled={effectiveDisabled}
+          interactive={interactive}
+          sheetOpen={sheetOpen}
+          setSheetOpen={setSheetOpen}
+          searchable={searchable}
+          inputValue={inputValue}
+          setInputValue={setInputValue}
+          useGroups={useGroups}
+          visibleGroups={visibleGroups}
+          visibleOptions={visibleOptions}
+          loading={loading}
+          loadingText={loadingText}
+          errorMessage={errorMessage}
+          noResultsText={noResultsText}
+          renderOptionTemplate={renderOptionTemplate}
+          multiple={multiple}
+          value={value}
+          onToggleOption={toggleMobileOption}
+          onClear={mobileClear}
+          clearable={clearable}
+          controlProps={controlProps}
+          errorId={errorId}
+          handlers={handlers}
+        />
+      ) : (
+        <Combobox
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+          value={comboboxValue as ChoiceOption | ChoiceOption[] | null}
+          onValueChange={interactive ? handleValueChange : undefined}
+          multiple={multiple}
+          disabled={effectiveDisabled}
+          itemToStringLabel={(option: ChoiceOption) => option.label}
+          isItemEqualToValue={(a: ChoiceOption, b: ChoiceOption) => Object.is(a.value, b.value)}
+          onInputValueChange={(nextQuery: string) => setInputValue(nextQuery)}
+        >
+          {multiple ? (
+            <ComboboxChips className="w-full min-h-9">
+              {(comboboxValue as ChoiceOption[]).map((option) => (
+                <ComboboxChip key={getChoiceOptionKey(option.value)}>
+                  {option.label}
+                </ComboboxChip>
+              ))}
+              <ComboboxChipsInput
+                {...controlProps}
+                placeholder={searchable ? (searchPlaceholder ?? '') : ''}
+                readOnly={!searchable}
+              />
+            </ComboboxChips>
+          ) : searchable ? (
+            <ComboboxInput
               {...controlProps}
-              placeholder={searchable ? (searchPlaceholder ?? '') : ''}
-              readOnly={!searchable}
-            />
-          </ComboboxChips>
-        ) : searchable ? (
-          <ComboboxInput
-            {...controlProps}
-            className="w-full"
-            placeholder={loading ? loadingText : (searchPlaceholder ?? triggerPlaceholder)}
-            showClear={clearable}
-            disabled={effectiveDisabled}
-          />
-        ) : (
-          <div className="flex w-full items-center gap-1">
-            <ComboboxTrigger
-              {...controlProps}
-              className="flex-1 justify-between"
+              className="w-full"
+              placeholder={loading ? loadingText : (searchPlaceholder ?? triggerPlaceholder)}
+              showClear={clearable}
               disabled={effectiveDisabled}
-            >
-              <ComboboxValue placeholder={triggerPlaceholder} />
-            </ComboboxTrigger>
-            {clearable && comboboxValue ? (
-              <ComboboxClear disabled={effectiveDisabled} aria-label={t('flux.common.clear')} />
-            ) : null}
-          </div>
-        )}
-        <ComboboxContent>
-          <ComboboxEmpty>{noResultsText}</ComboboxEmpty>
-          {virtualEnabled ? (
-            <VirtualizedComboboxList
-              renderGroups={useGroups}
-              groups={visibleGroups}
-              flatOptions={visibleOptions}
-              renderOptionTemplate={renderOptionTemplate}
             />
           ) : (
-            <StaticComboboxList
-              renderGroups={useGroups}
-              groups={visibleGroups}
-              flatOptions={visibleOptions}
-              renderOptionTemplate={renderOptionTemplate}
-            />
+            <div className="flex w-full items-center gap-1">
+              <ComboboxTrigger
+                {...controlProps}
+                className="flex-1 justify-between"
+                disabled={effectiveDisabled}
+              >
+                <ComboboxValue placeholder={triggerPlaceholder} />
+              </ComboboxTrigger>
+              {clearable && comboboxValue ? (
+                <ComboboxClear disabled={effectiveDisabled} aria-label={t('flux.common.clear')} />
+              ) : null}
+            </div>
           )}
-        </ComboboxContent>
-      </Combobox>
+          <ComboboxContent>
+            <ComboboxEmpty>{noResultsText}</ComboboxEmpty>
+            {virtualEnabled ? (
+              <VirtualizedComboboxList
+                renderGroups={useGroups}
+                groups={visibleGroups}
+                flatOptions={visibleOptions}
+                renderOptionTemplate={renderOptionTemplate}
+              />
+            ) : (
+              <StaticComboboxList
+                renderGroups={useGroups}
+                groups={visibleGroups}
+                flatOptions={visibleOptions}
+                renderOptionTemplate={renderOptionTemplate}
+              />
+            )}
+          </ComboboxContent>
+        </Combobox>
+      )}
       {loading ? (
         <span
           data-slot="select-loading"

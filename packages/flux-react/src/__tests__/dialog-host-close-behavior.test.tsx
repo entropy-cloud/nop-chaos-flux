@@ -29,6 +29,7 @@ vi.mock('../container-hooks', () => ({
 
 vi.mock('@nop-chaos/ui', () => ({
   cn: (...values: Array<string | undefined>) => values.filter(Boolean).join(' '),
+  useIsMobile: () => false,
   Dialog: ({ children, onOpenChange }: any) => (
     <div data-testid="dialog-root">
       <button type="button" data-testid="dialog-outside-press" onClick={() => onOpenChange(false, { reason: 'outside-press' })}>

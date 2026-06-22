@@ -649,7 +649,10 @@ export function renderExpandedRow(
     <TableRow data-slot="table-expanded-row">
       <TableCell colSpan={item.columnCount} data-slot="table-expanded-cell">
         {hasResponsiveHiddenColumns ? (
-          <div className="grid gap-2 sm:grid-cols-2" data-slot="table-responsive-expanded">
+          <div
+            className="nop-safe-bottom grid gap-2 p-2 sm:grid-cols-2 sm:p-1"
+            data-slot="table-responsive-expanded"
+          >
             {responsiveHiddenColumns.map((column, index) => {
               const cellRegion =
                 typeof column.cellRegionKey === 'string'
@@ -666,7 +669,7 @@ export function renderExpandedRow(
               return (
                 <div
                   key={columnKey}
-                  className="rounded-md border bg-muted/20 px-3 py-2"
+                  className="nop-hairline nop-hairline--bottom rounded-md border bg-muted/20 px-3 py-3 sm:py-2"
                   data-slot="table-responsive-expanded-item"
                 >
                   <div

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ComponentHandle,
   RendererComponentProps,
@@ -17,6 +17,7 @@ import {
   TabsTrigger,
   cn,
   resolveLucideIcon,
+  useIsMobile,
 } from '@nop-chaos/ui';
 import type { TabsItemSchema, TabsSchema } from './schemas.js';
 import { useOwnedAxisValue } from './interaction-owner.js';
@@ -24,6 +25,9 @@ import { useStatusPathPublication } from './status-hooks.js';
 import { asReactNode } from './utils.js';
 
 const EMPTY_ITEMS: TabsItemSchema[] = [];
+
+const TABS_SWIPE_THRESHOLD = 50;
+const TABS_SWIPE_DIRECTION_THRESHOLD = 10;
 
 function isTabDisabled(input: unknown): boolean {
   if (input === true) {
@@ -132,6 +136,10 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     fallbackValue: firstValue,
   });
 
+  const isMobile = useIsMobile();
+  const tabsListRef = useRef<HTMLDivElement | null>(null);
+  const swipeStateRef = useRef<{ startX: number; startY: number; tracking: boolean } | null>(null);
+
   const tabsMode = schemaProps.tabsMode ?? '';
   const sidePosition = schemaProps.sidePosition ?? 'left';
   const isSidebarRight = tabsMode === 'sidebar' && sidePosition === 'right';
@@ -201,6 +209,18 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     });
   }, [componentRegistry, props.meta.cid, tabsHandle]);
 
+  useEffect(() => {
+    if (!isMobile || !tabsListRef.current) {
+      return;
+    }
+    const activeTrigger = tabsListRef.current.querySelector<HTMLElement>(
+      '[data-slot="tabs-trigger"][data-active="true"]',
+    );
+    if (activeTrigger && typeof activeTrigger.scrollIntoView === 'function') {
+      activeTrigger.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+    }
+  }, [isMobile, ownedAxis.value, items.length]);
+
   const [activated, setActivated] = useState<ReadonlySet<string>>(() => new Set());
   const currentActiveValue = ownedAxis.value;
   if (!activated.has(currentActiveValue)) {
@@ -211,8 +231,55 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     });
   }
 
+  const handleSwipeMove = (clientX: number, clientY: number) => {
+    const state = swipeStateRef.current;
+    if (!state || !state.tracking) {
+      return;
+    }
+    const deltaX = clientX - state.startX;
+    const deltaY = clientY - state.startY;
+    if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > TABS_SWIPE_DIRECTION_THRESHOLD) {
+      state.tracking = false;
+    }
+  };
+
+  const handleSwipeEnd = (clientX: number) => {
+    const state = swipeStateRef.current;
+    if (!state || !state.tracking) {
+      swipeStateRef.current = null;
+      return;
+    }
+    const deltaX = clientX - state.startX;
+    swipeStateRef.current = null;
+    if (Math.abs(deltaX) < TABS_SWIPE_THRESHOLD) {
+      return;
+    }
+    const nextIndex = deltaX < 0 ? activeIndex + 1 : activeIndex - 1;
+    if (nextIndex < 0 || nextIndex >= items.length) {
+      return;
+    }
+    const nextValue = getItemValue(items[nextIndex]!, nextIndex);
+    if (isTabDisabled(items[nextIndex]!.disabled)) {
+      return;
+    }
+    ownedAxis.setValue(nextValue);
+    const payload = createTabsChangePayload(items, nextValue);
+    void props.events.onChange?.(payload, {
+      event: payload,
+      evaluationBindings: payload,
+    });
+  };
+
   const tabsList = (
-    <TabsList variant={schemaProps.variant ?? variant}>
+    <TabsList
+      ref={tabsListRef as React.Ref<HTMLDivElement>}
+      variant={schemaProps.variant ?? variant}
+      className={cn(
+        isMobile && orientation === 'horizontal'
+          ? 'nop-scrollbar-hide overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+          : undefined,
+      )}
+    >
       {items.map((item, index) => {
         const value = getItemValue(item, index);
         const regionOptions = createTabRegionOptions(item, index);
@@ -308,7 +375,32 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
         className={cn(isSidebarRight && 'flex-row-reverse')}
       >
         {tabsList}
-        {tabsPanels}
+        {isMobile && orientation === 'horizontal' ? (
+          <div
+            data-slot="tabs-panels-swipe"
+            onTouchStart={(event) => {
+              if (event.touches.length !== 1) return;
+              const touch = event.touches[0]!;
+              swipeStateRef.current = {
+                startX: touch.clientX,
+                startY: touch.clientY,
+                tracking: true,
+              };
+            }}
+            onTouchMove={(event) => {
+              const touch = event.touches[0];
+              if (touch) handleSwipeMove(touch.clientX, touch.clientY);
+            }}
+            onTouchEnd={(event) => {
+              const touch = event.changedTouches[0];
+              handleSwipeEnd(touch ? touch.clientX : swipeStateRef.current?.startX ?? 0);
+            }}
+          >
+            {tabsPanels}
+          </div>
+        ) : (
+          tabsPanels
+        )}
       </Tabs>
     </section>
   );

@@ -21,6 +21,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   t,
+  useIsMobile,
 } from '@nop-chaos/ui';
 import { resolveContainerElement } from './container-hooks.js';
 import { NodeErrorBoundary } from './node-error-boundary.js';
@@ -185,6 +186,7 @@ function DialogView(props: {
   modalContainer?: string;
 }) {
   const { surface, surfaceRuntime } = props;
+  const isMobile = useIsMobile();
   const handleDeclarativeOpenChange = surface.surface.__handleOpenChange as
     | ((nextOpen: boolean) => void)
     | undefined;
@@ -230,9 +232,12 @@ function DialogView(props: {
   const closeOnEsc = surface.surface.closeOnEsc !== false;
   const showCloseButton = surface.surface.showCloseButton !== false;
   const size = surface.surface.size as FluxSurfaceSize | undefined;
-  const primitiveSize = resolveDialogPrimitiveSize(size);
+  const hasExplicitSize = typeof size === 'string' && size.length > 0;
+  const effectiveSize: FluxSurfaceSize | undefined =
+    isMobile && !hasExplicitSize ? 'full' : size;
+  const primitiveSize = resolveDialogPrimitiveSize(effectiveSize);
   const inlineStyle = buildSurfaceInlineStyle({
-    size,
+    size: effectiveSize,
     width: surface.surface.width,
     height: surface.surface.height,
     fullSize: 'viewport',
@@ -281,6 +286,7 @@ function DialogView(props: {
         data-slot="dialog-surface"
         data-close-on-outside={closeOnOutsideClick ? 'true' : 'false'}
         data-close-on-esc={closeOnEsc ? 'true' : 'false'}
+        data-mobile-fullscreen={isMobile && !hasExplicitSize ? 'true' : undefined}
         size={primitiveSize}
         showCloseButton={showCloseButton}
         style={inlineStyle}
@@ -358,6 +364,7 @@ function DrawerView(props: {
   modalContainer?: string;
 }) {
   const { surface, surfaceRuntime } = props;
+  const isMobile = useIsMobile();
   const handleDeclarativeOpenChange = surface.surface.__handleOpenChange as
     | ((nextOpen: boolean) => void)
     | undefined;
@@ -404,6 +411,9 @@ function DrawerView(props: {
   const showCloseButton = surface.surface.showCloseButton !== false;
   const size = surface.surface.size as FluxSurfaceSize | undefined;
   const resizable = surface.surface.resizable === true;
+  const schemaSide = surface.surface.side;
+  const effectiveSide =
+    isMobile && schemaSide !== 'bottom' ? 'bottom' : schemaSide;
   const inlineStyle = buildSurfaceInlineStyle({
     size,
     width: surface.surface.width,
@@ -444,11 +454,11 @@ function DrawerView(props: {
       open
       onOpenChange={handleOpenChange}
       direction={
-        surface.surface.side === 'left'
+        effectiveSide === 'left'
           ? 'left'
-          : surface.surface.side === 'top'
+          : effectiveSide === 'top'
             ? 'top'
-            : surface.surface.side === 'bottom'
+            : effectiveSide === 'bottom'
               ? 'bottom'
               : 'right'
       }
@@ -461,6 +471,7 @@ function DrawerView(props: {
         data-slot="drawer-surface"
         data-close-on-outside={closeOnOutside ? 'true' : 'false'}
         data-close-on-esc={closeOnEsc ? 'true' : 'false'}
+        data-mobile-side-overridden={isMobile && schemaSide !== 'bottom' ? 'true' : undefined}
         showMask={showMask}
         showCloseButton={showCloseButton}
         resizable={resizable}
