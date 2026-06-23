@@ -22,7 +22,7 @@
 - W1c. 集合展示组（1）: `done`（plan: `docs/plans/2026-06-24-0040-3-w1c-list-collection-display-plan.md`；`list` renderer 落地于 `flux-renderers-data`——视觉壳 + `nop-list` marker + 单一 `items` 字段 + `item` region + `empty` value-or-region + `selectionMode` local controlled state + `onItemClick`/`onSelectionChange`；复用 loop/table repeated-instance substrate；解锁 W2a `L0 & W1c → W2a`）
 - W1d. 移动端交互组（2，pull-refresh/infinite-scroll）: `todo`（依赖 `mobile-roadmap.md` M5；`@nop-chaos/flux-renderers-mobile` 包**代码未落地**，见 mobile-roadmap Current Baseline；口径以 mobile-roadmap 为准）
 - W2a. 数据组合组（5）: `done`（plan: `docs/plans/2026-06-24-0335-1-w2a-data-composition-family-plan.md`；`service`/`pagination` 落 `flux-renderers-data`、`cards`/`alert` 落 `flux-renderers-content`、`wizard` 落首次 bootstrap 的 `flux-renderers-layout`；service 遵循请求下沉约束——零组件级请求字段；wizard interaction/lifecycle 状态分层；首次 bootstrap `flux-renderers-layout` 包，解锁 W3a/W3b/W4b）
-- W2b. 日期族（4）: `todo`
+- W2b. 日期族（4）: `done`（plan: `docs/plans/2026-06-24-0335-2-w2b-date-family-form-plan.md`；`input-date`/`input-datetime`/`input-time`/`date-range` 落地于 `flux-renderers-form`——首次建立共享日期格式化/解析/校验底层（react-day-picker + 原生 Date/Intl，无重型日期库）；`date-range` 以 `rangeKind` 统一 date/datetime/time 三态，不分裂三个 canonical type；calendar↔UTC 存储时区桥接消除 day-shift 漂移；解锁 W3d `W2b → W3d`，进而解锁 W4c）
 - W3a. 布局组（2）: `todo`
 - W3b. 动作分组组（2）: `todo`
 - W3c. 值映射组（2）: `todo`
@@ -61,7 +61,7 @@
 
 **已实现（L0，约 55 个 renderer）：**
 
-通用 renderer：`fragment` `loop` `recurse` `page` `container` `flex` `text` `button` `icon` `badge` `dynamic-renderer` `reaction` `dialog` `drawer` `tabs` `form` `fieldset` `code-editor` `input-text` `input-email` `input-password` `textarea` `select` `checkbox` `switch` `radio-group` `checkbox-group` `input-tree` `tree-select` `tag-list` `key-value` `array-editor` `condition-builder` `object-field` `array-field` `variant-field` `detail-field` `detail-view` `table` `tree` `data-source` `chart` `crud` `list` `input-number`
+通用 renderer：`fragment` `loop` `recurse` `page` `container` `flex` `text` `button` `icon` `badge` `dynamic-renderer` `reaction` `dialog` `drawer` `tabs` `form` `fieldset` `code-editor` `input-text` `input-email` `input-password` `textarea` `select` `checkbox` `switch` `radio-group` `checkbox-group` `input-tree` `tree-select` `tag-list` `key-value` `array-editor` `condition-builder` `object-field` `array-field` `variant-field` `detail-field` `detail-view` `table` `tree` `data-source` `chart` `crud` `list` `input-number` `input-date` `input-datetime` `input-time` `date-range`
 
 领域 renderer（package 已提供 definition，宿主是否启用取决于 registry 装配）：`designer-page` `designer-field` `designer-canvas` `designer-palette` `report-inspector-shell` `report-inspector` `report-field-panel` `report-designer-page` `report-toolbar` `spreadsheet-page` `word-editor-page`
 
