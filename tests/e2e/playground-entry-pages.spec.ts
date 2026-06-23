@@ -207,6 +207,37 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-testid="m4-crud-root"]')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-testid="m4-chart-root"]')).toBeVisible({ timeout: 15_000 });
   },
+  'w1b-content': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: /容器与反馈组/, level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="w1b-renderer-host"]')).toBeVisible();
+  },
+  'w1a-content': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: /内容展示组/, level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="w1a-renderer-host"]')).toBeVisible();
+  },
+  'w2a-data-composition': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /数据组合组/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="demo-service"]')).toBeVisible({ timeout: 15_000 });
+  },
+  'w2b-date-family': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: /日期族/, level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="w2b-renderer-host"]')).toBeVisible();
+  },
   'w3a-w3b-layout-action-family': async (page) => {
     await expect(
       page.getByRole('heading', {
@@ -219,6 +250,17 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-testid="demo-collapse"]')).toBeVisible();
     await expect(page.locator('[data-testid="demo-button-group"]')).toBeVisible();
     await expect(page.locator('[data-testid="demo-dropdown-button"]')).toBeVisible();
+  },
+  'w3c-value-mapping': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /值映射组/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="mapping-hit"]')).toBeVisible();
+    await expect(page.locator('[data-testid="status-success"]')).toBeVisible();
   },
 };
 

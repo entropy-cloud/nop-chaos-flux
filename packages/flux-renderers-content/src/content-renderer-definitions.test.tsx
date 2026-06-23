@@ -11,10 +11,12 @@ import type {
   ImageSchema,
   JsonViewSchema,
   LinkSchema,
+  MappingSchema,
   MarkdownSchema,
   ProgressSchema,
   SeparatorSchema,
   SpinnerSchema,
+  StatusSchema,
 } from './schemas.js';
 
 afterEach(() => {
@@ -34,10 +36,12 @@ const TYPES = [
   'html',
   'cards',
   'alert',
+  'mapping',
+  'status',
 ] as const;
 
 describe('contentRendererDefinitions', () => {
-  it('declares 12 renderer definitions for the content family (W1a + W1b + W2a cards/alert)', () => {
+  it('declares 14 renderer definitions for the content family (W1a + W1b + W2a + W3c)', () => {
     expect(contentRendererDefinitions.map((d) => d.type).sort()).toEqual([...TYPES].sort());
   });
 
@@ -220,5 +224,61 @@ describe('contentRendererDefinitions', () => {
     const Comp = def?.component as React.ComponentType<typeof props>;
     const view = render(<Comp {...props} />);
     expect(view.container.querySelector('[data-slot="markdown"] h2')).toBeTruthy();
+  });
+
+  it('mapping declares value/map/defaultLabel/placeholder props + item region', () => {
+    const mapping = contentRendererDefinitions.find((d) => d.type === 'mapping');
+    expect(mapping?.fields?.find((f) => f.key === 'value')?.kind).toBe('prop');
+    expect(mapping?.fields?.find((f) => f.key === 'map')?.kind).toBe('prop');
+    expect(mapping?.fields?.find((f) => f.key === 'defaultLabel')?.kind).toBe('prop');
+    expect(mapping?.fields?.find((f) => f.key === 'placeholder')?.kind).toBe('prop');
+    expect(mapping?.fields?.find((f) => f.key === 'item')?.kind).toBe('region');
+    expect(mapping?.category).toBe('content');
+  });
+
+  it('status declares value/labelMap/levelMap/iconMap/placeholder props (no events/regions)', () => {
+    const status = contentRendererDefinitions.find((d) => d.type === 'status');
+    expect(status?.fields?.find((f) => f.key === 'value')?.kind).toBe('prop');
+    expect(status?.fields?.find((f) => f.key === 'labelMap')?.kind).toBe('prop');
+    expect(status?.fields?.find((f) => f.key === 'levelMap')?.kind).toBe('prop');
+    expect(status?.fields?.find((f) => f.key === 'iconMap')?.kind).toBe('prop');
+    expect(status?.fields?.find((f) => f.key === 'placeholder')?.kind).toBe('prop');
+    expect(status?.fields?.some((f) => f.kind === 'region')).toBe(false);
+    expect(status?.fields?.some((f) => f.kind === 'event')).toBe(false);
+    expect(status?.category).toBe('content');
+  });
+
+  it('mapping component renders nop-mapping marker via its definition', () => {
+    const mapping = contentRendererDefinitions.find((d) => d.type === 'mapping');
+    const props = createMockRendererProps<MappingSchema>({
+      schema: { type: 'mapping' },
+      props: { value: 'active', map: { active: 'Active' } },
+    });
+    const Comp = mapping?.component as React.ComponentType<typeof props>;
+    const view = render(<Comp {...props} />);
+    const root = view.container.querySelector('[data-slot="mapping-root"]') as HTMLElement;
+    expect(root).toBeTruthy();
+    expect(root.className).toContain('nop-mapping');
+    expect(root.getAttribute('data-state')).toBe('hit');
+  });
+
+  it('status component renders nop-status marker via its definition', () => {
+    const status = contentRendererDefinitions.find((d) => d.type === 'status');
+    const props = createMockRendererProps<StatusSchema>({
+      schema: { type: 'status' },
+      props: {
+        value: 'ok',
+        labelMap: { ok: 'OK' },
+        levelMap: { ok: 'success' },
+      },
+    });
+    const Comp = status?.component as React.ComponentType<typeof props>;
+    const view = render(<Comp {...props} />);
+    const root = view.container.querySelector('[data-slot="status-root"]') as HTMLElement;
+    expect(root).toBeTruthy();
+    expect(root.className).toContain('nop-status');
+    expect(root.getAttribute('data-state')).toBe('hit');
+    expect(root.getAttribute('data-level')).toBe('success');
+    expect(root.querySelector('[data-slot="status-badge"]')).toBeTruthy();
   });
 });

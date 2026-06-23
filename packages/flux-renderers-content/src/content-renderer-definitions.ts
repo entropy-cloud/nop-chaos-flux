@@ -7,10 +7,12 @@ import { HtmlRenderer } from './html.js';
 import { ImageRenderer } from './image.js';
 import { JsonViewRenderer } from './json-view.js';
 import { LinkRenderer } from './link.js';
+import { MappingRenderer } from './mapping.js';
 import { MarkdownRenderer } from './markdown.js';
 import { ProgressRenderer } from './progress.js';
 import { SeparatorRenderer } from './separator.js';
 import { SpinnerRenderer } from './spinner.js';
+import { StatusRenderer } from './status.js';
 import type {
   AlertSchema,
   CardSchema,
@@ -20,10 +22,12 @@ import type {
   ImageSchema,
   JsonViewSchema,
   LinkSchema,
+  MappingSchema,
   MarkdownSchema,
   ProgressSchema,
   SeparatorSchema,
   SpinnerSchema,
+  StatusSchema,
 } from './schemas.js';
 
 export const contentRendererDefinitions: RendererDefinition[] = [
@@ -321,6 +325,94 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'onClose', kind: 'event' },
     ],
   },
+  {
+    type: 'mapping',
+    displayName: 'Mapping',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'mapping' },
+    component: MappingRenderer,
+    propContracts: {
+      value: {
+        shape: { kind: 'unknown' },
+        displayName: 'Value',
+        description: 'The input value to map. Looked up against the map table (key coerced to string).',
+        editorType: 'expression',
+      },
+      map: {
+        shape: { kind: 'record', value: { kind: 'unknown' } },
+        displayName: 'Map',
+        description: 'Lookup table: keys are string-coerced values, values are the rendered result (text/badge fragment).',
+        editorType: 'expression',
+      },
+      defaultLabel: {
+        shape: { kind: 'string' },
+        displayName: 'Default Label',
+        description: 'Shown when the value is present but misses the map; takes precedence over placeholder on miss.',
+        editorType: 'expression',
+      },
+      placeholder: {
+        shape: { kind: 'string' },
+        displayName: 'Placeholder',
+        description: 'Shown when the value is empty (null/undefined), or when missing with no defaultLabel.',
+        editorType: 'expression',
+      },
+    },
+    fields: [
+      { key: 'value', kind: 'prop' },
+      { key: 'map', kind: 'prop' },
+      { key: 'defaultLabel', kind: 'prop' },
+      { key: 'placeholder', kind: 'prop' },
+      { key: 'item', kind: 'region', regionKey: 'item' },
+    ],
+  },
+  {
+    type: 'status',
+    displayName: 'Status',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'status' },
+    component: StatusRenderer,
+    propContracts: {
+      value: {
+        shape: { kind: 'unknown' },
+        displayName: 'Value',
+        description: 'The business status value to project onto a labelled, level-colored Badge.',
+        editorType: 'expression',
+      },
+      labelMap: {
+        shape: { kind: 'record', value: { kind: 'string' } },
+        displayName: 'Label Map',
+        description: 'Value→display label table. A value not present here is treated as a miss (placeholder fallback).',
+        editorType: 'expression',
+      },
+      levelMap: {
+        shape: { kind: 'record', value: { kind: 'string' } },
+        displayName: 'Level Map',
+        description: 'Value→semantic level table (success/warning/error/info/default/processing/pending/inactive). Projects to Badge color.',
+        editorType: 'expression',
+      },
+      iconMap: {
+        shape: { kind: 'record', value: { kind: 'string' } },
+        displayName: 'Icon Map',
+        description: 'Value→lucide icon name table. Optional; missing keys render without an icon.',
+        editorType: 'expression',
+      },
+      placeholder: {
+        shape: { kind: 'string' },
+        displayName: 'Placeholder',
+        description: 'Shown when the value is empty or misses the labelMap.',
+        editorType: 'expression',
+      },
+    },
+    fields: [
+      { key: 'value', kind: 'prop' },
+      { key: 'labelMap', kind: 'prop' },
+      { key: 'levelMap', kind: 'prop' },
+      { key: 'iconMap', kind: 'prop' },
+      { key: 'placeholder', kind: 'prop' },
+    ],
+  },
 ];
 
 export type ContentRendererSchema =
@@ -335,4 +427,6 @@ export type ContentRendererSchema =
   | MarkdownSchema
   | HtmlSchema
   | CardsSchema
-  | AlertSchema;
+  | AlertSchema
+  | MappingSchema
+  | StatusSchema;

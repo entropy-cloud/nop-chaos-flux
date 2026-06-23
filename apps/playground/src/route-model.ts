@@ -581,6 +581,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'W3a/W3b layout + action family: grid (explicit 2D grid), collapse (valueOwnership layered expand), button-group (selectionMode toggle), dropdown-button (trigger/menu actions) — mounted via SchemaRenderer.',
   },
   {
+    id: 'w3c-value-mapping',
+    title: 'Value Mapping Family',
+    eyebrow: 'Content Renderers (W3c)',
+    description:
+      'W3c value mapping renderers: mapping (value→display-result, hit/miss/defaultLabel/placeholder + item region), status (value→Badge semantic level + label + icon) — mounted via SchemaRenderer.',
+  },
+  {
     id: 'm1-responsive',
     title: 'M1 Responsive Controls',
     eyebrow: 'Mobile Responsive (M1)',

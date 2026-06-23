@@ -184,3 +184,43 @@ export interface AlertSchema extends BaseSchema {
   actions?: SchemaInput;
   onClose?: ActionSchema;
 }
+
+// ───────────────────────────── W3c 值映射组 ─────────────────────────────
+
+export interface MappingSchema extends BaseSchema {
+  type: 'mapping';
+  /** 待映射的值（可来自表达式/source） */
+  value?: SchemaValue;
+  /** 映射表：键为值的字符串形式，值为命中后的展示结果（文本/badge 片段） */
+  map?: Record<string, SchemaValue>;
+  /** 未命中时优先显示的默认标签 */
+  defaultLabel?: string;
+  /** 值为空或未命中且无 defaultLabel 时的占位文本 */
+  placeholder?: string;
+  /** 命中项的可选模板区（命中时经 item region 渲染，替代 map 查找的纯文本） */
+  item?: SchemaInput;
+}
+
+export type StatusLevel =
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'info'
+  | 'default'
+  | 'processing'
+  | 'pending'
+  | 'inactive';
+
+export interface StatusSchema extends BaseSchema {
+  type: 'status';
+  /** 业务状态值（可来自表达式/source） */
+  value?: SchemaValue;
+  /** 状态值→展示文本映射表 */
+  labelMap?: Record<string, SchemaValue>;
+  /** 状态值→语义级别映射表（投影到 Badge 语义色） */
+  levelMap?: Record<string, SchemaValue>;
+  /** 状态值→图标名映射表（lucide 图标名） */
+  iconMap?: Record<string, SchemaValue>;
+  /** 值为空或未命中时的占位文本 */
+  placeholder?: string;
+}
