@@ -574,6 +574,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'W2b date family: input-date/input-datetime/input-time/date-range on a shared date底层 (no heavy date lib), with date-range converging date/datetime/time via rangeKind.',
   },
   {
+    id: 'w3a-w3b-layout-action-family',
+    title: 'Layout & Action Family',
+    eyebrow: 'Layout Renderers (W3a + W3b)',
+    description:
+      'W3a/W3b layout + action family: grid (explicit 2D grid), collapse (valueOwnership layered expand), button-group (selectionMode toggle), dropdown-button (trigger/menu actions) — mounted via SchemaRenderer.',
+  },
+  {
     id: 'm1-responsive',
     title: 'M1 Responsive Controls',
     eyebrow: 'Mobile Responsive (M1)',

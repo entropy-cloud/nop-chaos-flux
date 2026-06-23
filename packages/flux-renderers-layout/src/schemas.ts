@@ -79,3 +79,129 @@ export interface WizardStatusSummary {
   lastCommitStatus: WizardLastCommitStatus;
   stepError?: string;
 }
+
+// ───────────────────────────── W3a Grid ─────────────────────────────
+
+export interface GridItemSchema extends SchemaObject {
+  /** Grid item body region */
+  body?: SchemaInput;
+  /** Number of columns to span (normalized/clamped to valid range) */
+  colSpan?: number;
+  /** Number of rows to span (normalized/clamped to valid range) */
+  rowSpan?: number;
+}
+
+export interface GridSchema extends BaseSchema {
+  type: 'grid';
+  /** Grid items collection */
+  items?: GridItemSchema[];
+  /** Number of columns (number → repeat(N, 1fr); string → raw grid-template-columns) */
+  columns?: number | string;
+  /** Gap between grid items (number → px; string → raw CSS) */
+  gap?: number | string;
+  /** CSS grid-auto-flow value */
+  autoFlow?: 'row' | 'column' | 'dense' | 'row dense' | 'column dense';
+  /** CSS align-items value */
+  alignItems?: 'start' | 'end' | 'center' | 'stretch';
+  /** CSS justify-items value */
+  justifyItems?: 'start' | 'end' | 'center' | 'stretch';
+}
+
+// ───────────────────────────── W3a Collapse ─────────────────────────────
+
+export interface CollapseItemSchema extends SchemaObject {
+  /** Collapse item key (falls back to index) */
+  key?: string | number;
+  /** Collapse item title (value-or-region) */
+  title?: SchemaValue | SchemaInput;
+  /** Collapse item body region */
+  body?: SchemaInput;
+  /** Item disabled (cannot toggle) */
+  disabled?: SchemaValue;
+}
+
+export interface CollapseSchema extends BaseSchema {
+  type: 'collapse';
+  /** Collapse panel items collection */
+  items: CollapseItemSchema[];
+  /** Currently expanded key(s) — single key when multiple=false, array of keys when multiple=true */
+  value?: string | number | (string | number)[];
+  /** Initial expanded value when `value` is not provided */
+  defaultValue?: string | number | (string | number)[];
+  /** Expand-state ownership: local (renderer state) / controlled (parent drives) / scope (valueStatePath) */
+  valueOwnership?: 'local' | 'controlled' | 'scope';
+  /** Scope path publishing the writable expand-state value */
+  valueStatePath?: string;
+  /** Allow multiple panels open simultaneously (default true) */
+  multiple?: boolean;
+  /** Whether each panel can re-collapse itself (default true) */
+  collapsible?: boolean;
+  onChange?: ActionSchema;
+}
+
+// ───────────────────────────── W3b Button Group ─────────────────────────────
+
+export interface ButtonGroupItemSchema extends SchemaObject {
+  /** Item key (used for selection; falls back to index) */
+  key?: string | number;
+  /** Button label */
+  label?: string;
+  /** Button variant override (falls back to group-level variant) */
+  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive' | 'link';
+  /** Action dispatched on click (no action → static button) */
+  action?: ActionSchema | ActionSchema[];
+  /** Disabled flag */
+  disabled?: boolean;
+}
+
+export interface ButtonGroupSchema extends BaseSchema {
+  type: 'button-group';
+  /** Button items (pure value prop — no nested regions) */
+  items: ButtonGroupItemSchema[];
+  /** Layout orientation */
+  orientation?: 'horizontal' | 'vertical';
+  /** Default button variant for all items */
+  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive' | 'link';
+  /** Button size */
+  size?: 'default' | 'xs' | 'sm' | 'lg';
+  /** Selection mode: none (pure actions), single, multiple (toggle-like selection) */
+  selectionMode?: 'none' | 'single' | 'multiple';
+  /** Currently selected key(s) */
+  value?: string | number | (string | number)[];
+  /** Initial selected value */
+  defaultValue?: string | number | (string | number)[];
+  onChange?: ActionSchema;
+}
+
+// ───────────────────────────── W3b Dropdown Button ─────────────────────────────
+
+export interface DropdownButtonItemSchema extends SchemaObject {
+  /** Menu item key */
+  key?: string | number;
+  /** Menu item label */
+  label?: string;
+  /** Action dispatched on click */
+  action?: ActionSchema | ActionSchema[];
+  /** Disabled flag */
+  disabled?: boolean;
+  /** Destructive styling */
+  destructive?: boolean;
+}
+
+export interface DropdownButtonSchema extends BaseSchema {
+  type: 'dropdown-button';
+  /** Main button label (value-or-region, inherits string from BaseSchema; compiler extracts region) */
+  // label inherited from BaseSchema as string; declared as value-or-region in fields
+  /** Icon name (Lucide) */
+  icon?: string;
+  /** Button variant */
+  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive' | 'link';
+  /** Button size */
+  size?: 'default' | 'xs' | 'sm' | 'lg';
+  /** Menu items (pure value prop — no nested regions) */
+  items?: DropdownButtonItemSchema[];
+  /** Menu open trigger */
+  trigger?: 'click' | 'hover';
+  /** Disabled flag */
+  disabled?: boolean;
+}

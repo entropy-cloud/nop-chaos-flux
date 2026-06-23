@@ -207,6 +207,19 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-testid="m4-crud-root"]')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-testid="m4-chart-root"]')).toBeVisible({ timeout: 15_000 });
   },
+  'w3a-w3b-layout-action-family': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /布局与动作分组族/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="demo-grid"]')).toBeVisible();
+    await expect(page.locator('[data-testid="demo-collapse"]')).toBeVisible();
+    await expect(page.locator('[data-testid="demo-button-group"]')).toBeVisible();
+    await expect(page.locator('[data-testid="demo-dropdown-button"]')).toBeVisible();
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {
