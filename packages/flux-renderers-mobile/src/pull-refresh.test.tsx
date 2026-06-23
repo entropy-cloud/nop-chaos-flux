@@ -514,4 +514,17 @@ describe('PullRefreshRenderer', () => {
       'normal',
     );
   });
+
+  it('uses the documented cubic-bezier easing on the resting transition (MM-21)', () => {
+    // MM-21: the resting rebound transition must carry the documented
+    // cubic-bezier(0.25, 0.46, 0.45, 0.94) curve (design.md §5), aligning with
+    // swipe-cell.tsx:11. Previously this drifted to `ease`. This assertion
+    // FAILS against the pre-fix code (transition contained ` ease`, not the
+    // cubic-bezier).
+    const { view } = renderPullRefresh();
+    const root = view.container.querySelector('[data-slot="pull-refresh"]') as HTMLElement;
+    // At rest (not touching) the transition string is active.
+    expect(root.style.transition).toContain('cubic-bezier(0.25, 0.46, 0.45, 0.94)');
+    expect(root.style.transition).not.toContain(' ease');
+  });
 });

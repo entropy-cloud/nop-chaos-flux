@@ -655,4 +655,49 @@ describe('InfiniteScrollRenderer', () => {
     fireEvent.click(btn);
     expect(onLoadMore).not.toHaveBeenCalled();
   });
+
+  it('roots the IntersectionObserver at the nearest scrollable ancestor (MM-20)', async () => {
+    // MM-20: the dominant mobile list pattern nests a list inside an inner
+    // scrollable <div> (page header + scrollable list + footer). Previously the
+    // observer never passed `root`, so it always observed viewport intersection
+    // — a nested list whose own scroller bottomed out never fired onLoadMore.
+    // The fix walks up from the sentinel to the first `overflow-y: auto/scroll`
+    // ancestor and roots the observer there. This assertion FAILS against
+    // pre-fix main (root was always undefined).
+    const onLoadMore = vi.fn(async () => {
+      /* no-op */
+    });
+    const props = createMockRendererProps<InfiniteScrollSchema>({
+      schema: { type: 'infinite-scroll' },
+      props: { immediateCheck: false, hasMore: true },
+      regions: { body: <div data-testid="body-content">Body</div> },
+      events: { onLoadMore: onLoadMore as never },
+    });
+    const scrollRef = React.createRef<HTMLDivElement>();
+    render(
+      <div
+        ref={scrollRef}
+        data-testid="scroll-ancestor"
+        style={{ height: 100, overflowY: 'auto' }}
+      >
+        <InfiniteScrollRenderer {...props} />
+      </div>,
+    );
+
+    expect(MockIntersectionObserver.lastInstance).toBeTruthy();
+    // The observer MUST be rooted at the scrollable ancestor, not the viewport.
+    expect(MockIntersectionObserver.lastInstance!.options?.root).toBe(scrollRef.current);
+
+    // The rooted observer still fires onLoadMore when intersection triggers.
+    MockIntersectionObserver.triggerLast(true);
+    await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
+  });
+
+  it('falls back to the viewport (no root) when no scrollable ancestor exists (MM-20)', () => {
+    // MM-20: without a `overflow-y: auto/scroll` ancestor, `root` is omitted so
+    // the observer keeps the original viewport-observing behavior.
+    renderInfiniteScroll({ immediateCheck: false, hasMore: true });
+    expect(MockIntersectionObserver.lastInstance).toBeTruthy();
+    expect(MockIntersectionObserver.lastInstance!.options?.root).toBeUndefined();
+  });
 });

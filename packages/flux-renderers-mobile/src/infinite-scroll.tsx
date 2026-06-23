@@ -27,6 +27,25 @@ function resolveStatus(runtime: {
   return 'normal';
 }
 
+// MM-20: the dominant mobile list pattern nests a list inside an inner
+// scrollable <div> (page header + scrollable list + footer). Previously the
+// observer never passed `root`, so it always observed viewport intersection —
+// a nested list whose own scroller bottomed out never fired onLoadMore. Walk
+// up from the sentinel to the first ancestor with `overflow-y: auto/scroll`
+// and use it as the IO root; fall back to the viewport (current behavior) when
+// none is found. Detection happens at observe time only (no new schema field).
+function findScrollableAncestor(node: HTMLElement | null): HTMLElement | null {
+  let current = node?.parentElement ?? null;
+  while (current) {
+    const overflowY = getComputedStyle(current).overflowY;
+    if (overflowY === 'auto' || overflowY === 'scroll') {
+      return current;
+    }
+    current = current.parentElement;
+  }
+  return null;
+}
+
 export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScrollSchema>) {
   const slotProps = props.props;
   const disabled = slotProps.disabled === true;
@@ -114,6 +133,18 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
     const node = sentinelRef.current;
     if (!node) return;
 
+    // MM-20: root the observer at the nearest scrollable ancestor when one
+    // exists, so a list nested inside an inner scroller fires onLoadMore when
+    // THAT scroller (not the viewport) reaches the bottom. Omit `root` to keep
+    // the viewport-observing behavior when no scrollable ancestor is found.
+    const scrollableAncestor = findScrollableAncestor(node);
+    const observerOptions: IntersectionObserverInit = {
+      rootMargin: `0px 0px ${distance}px 0px`,
+    };
+    if (scrollableAncestor) {
+      observerOptions.root = scrollableAncestor;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (disabled) return;
@@ -130,7 +161,7 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
           }
         }
       },
-      { rootMargin: `0px 0px ${distance}px 0px` },
+      observerOptions,
     );
 
     observer.observe(node);

@@ -214,7 +214,11 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
         touchAction: 'pan-x',
         overscrollBehaviorY: 'contain',
         transform: `translateY(${trackTranslate}px)`,
-        transition: state.isTouching ? 'none' : `transform ${animationDuration}ms ease`,
+        // MM-21: align the resting rebound transition with the documented curve
+        // (design.md §5) and swipe-cell.tsx:11. Previously this drifted to `ease`.
+        transition: state.isTouching
+          ? 'none'
+          : `transform ${animationDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
       }}
       onTouchStart={disabled ? undefined : touchHandlers.onTouchStart}
       onTouchMove={disabled ? undefined : touchHandlers.onTouchMove}
