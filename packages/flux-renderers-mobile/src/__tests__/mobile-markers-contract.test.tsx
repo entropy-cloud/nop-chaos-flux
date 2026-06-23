@@ -3,6 +3,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import React from 'react';
+import * as MobileEntry from '../index.js';
 import type {
   CountdownSchema,
   InfiniteScrollSchema,
@@ -183,5 +184,33 @@ describe('mobile renderer markers contract (MA-03/MA-25)', () => {
     expect(RENDERER_TYPES.length).toBe(5);
     expect(RENDERER_TYPES).toContain('notice-bar');
     expect(RENDERER_TYPES).toContain('countdown');
+  });
+});
+
+describe('mobile package public API surface (MM-11)', () => {
+  it('exports exactly the five renderers + definitions + registerer, and NOT the zero-consumer helpers', () => {
+    // MM-11: the public `.` entry is frozen to the renderer surface. The
+    // helper hooks/types (useTouch, useCountdownTimer, formatCountdown,
+    // TouchState, ...) were dropped after grep confirmed zero external
+    // consumers; they remain in-package via their internal modules.
+    const runtimeExports = Object.keys(MobileEntry).sort();
+    expect(runtimeExports).toEqual(
+      [
+        'CountdownRenderer',
+        'InfiniteScrollRenderer',
+        'NoticeBarRenderer',
+        'PullRefreshRenderer',
+        'SwipeCellRenderer',
+        'mobileRendererDefinitions',
+        'registerMobileRenderers',
+      ].sort(),
+    );
+    // Explicitly assert the dropped helpers are absent from the public surface.
+    expect(MobileEntry).not.toHaveProperty('useTouch');
+    expect(MobileEntry).not.toHaveProperty('useCountdownTimer');
+    expect(MobileEntry).not.toHaveProperty('formatCountdown');
+    // The renderers + registerer are callable values.
+    expect(typeof MobileEntry.registerMobileRenderers).toBe('function');
+    expect(typeof MobileEntry.mobileRendererDefinitions).toBe('object');
   });
 });

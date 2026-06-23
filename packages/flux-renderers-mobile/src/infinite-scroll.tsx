@@ -6,6 +6,16 @@ import type { InfiniteScrollSchema } from './schemas.js';
 
 type InfiniteScrollStatus = 'normal' | 'loading' | 'finished' | 'error';
 
+// MM-12: onLoadMore emits a structured payload like the package's other 5
+// semantic events. `source` discriminates the three trigger paths so action
+// authors can distinguish auto-paginate from a user-initiated retry.
+type LoadMoreSource = 'intersection' | 'immediate' | 'retry';
+
+export interface LoadMoreEvent {
+  type: 'loadmore';
+  source: LoadMoreSource;
+}
+
 function resolveStatus(runtime: {
   hasMore?: boolean;
   loading?: boolean;
@@ -68,10 +78,10 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
   // emitted on rejection/throw so debugging a misconfigured action does not
   // require guessing why nothing happens; runtime control flow is unchanged
   // and non-DEV builds stay silent.
-  const fireLoadMore = React.useCallback(() => {
+  const fireLoadMore = React.useCallback((source: LoadMoreSource) => {
     isLoadingRef.current = true;
     try {
-      void Promise.resolve(onLoadMoreRef.current?.()).catch((err: unknown) => {
+      void Promise.resolve(onLoadMoreRef.current?.({ type: 'loadmore', source })).catch((err: unknown) => {
         if (import.meta.env?.DEV) {
           console.error('[flux.infinite-scroll] onLoadMore rejected.', err);
         }
@@ -102,7 +112,7 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
         for (const entry of entries) {
           if (entry.isIntersecting) {
             if (isLoadingRef.current) continue;
-            fireLoadMore();
+            fireLoadMore('intersection');
           }
         }
       },
@@ -122,14 +132,14 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
     if (loading === true) return;
     if (hasError) return;
     if (isLoadingRef.current) return;
-    fireLoadMore();
+    fireLoadMore('immediate');
   }, [immediateCheck, disabled, isFinished, loading, hasError, fireLoadMore]);
 
   const triggerLoadMore = () => {
     if (disabled) return;
     if (isFinished) return;
     if (isLoadingRef.current) return;
-    fireLoadMore();
+    fireLoadMore('retry');
   };
 
   // OA-17 (Decision a): a host-supplied error string overrides the default

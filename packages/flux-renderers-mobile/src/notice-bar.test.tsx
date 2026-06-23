@@ -289,6 +289,106 @@ describe('NoticeBarRenderer', () => {
     }
   });
 
+  it('clamps currentIndex when text shrinks, never rendering blank (OA-19/MM-07)', () => {
+    // OA-19/MM-07: when the host rerenders `text` from a multi-item list to a
+    // single item while `currentIndex > 0`, the index must clamp to 0 —
+    // otherwise `activeText = textList[currentIndex]` is undefined and the bar
+    // renders permanently blank.
+    vi.useFakeTimers();
+    try {
+      const initialProps = createMockRendererProps<NoticeBarSchema>({
+        schema: { type: 'notice-bar' },
+        props: { text: ['a', 'b', 'c'], scrollable: true },
+        events: {},
+      });
+      const view = render(<NoticeBarRenderer {...initialProps} />);
+      expect(
+        view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent,
+      ).toContain('a');
+      // Advance the carousel to index 2 ('c').
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(
+        view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent,
+      ).toContain('c');
+
+      // Host rerenders with a single-item text list while currentIndex === 2.
+      const shrunkProps = createMockRendererProps<NoticeBarSchema>({
+        schema: { type: 'notice-bar' },
+        props: { text: ['x'], scrollable: true },
+        events: {},
+      });
+      view.rerender(<NoticeBarRenderer {...shrunkProps} />);
+
+      // currentIndex must clamp to 0 so the bar renders 'x' (never blank).
+      expect(
+        view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent,
+      ).toContain('x');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not advance an overflowing multi-text item before its marquee completes (OA-20)', () => {
+    // OA-20: an overflowing item's dwell must be at least one full marquee
+    // cycle (animationDuration). The pre-fix CAROUSEL_INTERVAL_MS (3000ms)
+    // timer truncated a 12s marquee at ~25% of its scroll. Simulate overflow
+    // via the scrollWidth/clientWidth prototype spies (happy-dom does not
+    // measure layout), then assert the carousel does not advance before the
+    // full animationDuration elapses.
+    const scrollWidthSpy = vi
+      .spyOn(HTMLElement.prototype, 'scrollWidth', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        return this.getAttribute('data-slot') === 'notice-bar-text' ? 500 : 0;
+      });
+    const clientWidthSpy = vi
+      .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        return this.getAttribute('data-slot') === 'notice-bar-content' ? 120 : 0;
+      });
+    try {
+      vi.useFakeTimers();
+      const { view } = renderNoticeBar({
+        text: ['long overflowing item one', 'long overflowing item two'],
+        scrollable: true,
+        speed: 50,
+      });
+      // animationDuration = ceil((textWidth + 100) / speed) = ceil(600/50) = 12s.
+      const textEl = view.container.querySelector(
+        '[data-slot="notice-bar-text"]',
+      ) as HTMLElement;
+      expect(textEl.style.animationDuration).toBe('12s');
+      expect(
+        view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent,
+      ).toContain('one');
+
+      // Advance past CAROUSEL_INTERVAL_MS (3000ms) but before the full marquee
+      // cycle (12000ms). The carousel MUST NOT have advanced yet.
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(
+        view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent,
+      ).toContain('one');
+
+      // Advance the remainder to complete one full marquee cycle (12000ms total).
+      act(() => {
+        vi.advanceTimersByTime(9000);
+      });
+      expect(
+        view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent,
+      ).toContain('two');
+      vi.useRealTimers();
+    } finally {
+      scrollWidthSpy.mockRestore();
+      clientWidthSpy.mockRestore();
+    }
+  });
+
   it('does not schedule a carousel timer for single-text bars', () => {
     vi.useFakeTimers();
     try {

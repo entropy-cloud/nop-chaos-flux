@@ -183,10 +183,15 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
   const bodyContent = props.regions.body?.render() as React.ReactNode;
   const indicatorText = resolveIndicatorText(resolvedStatus, texts);
 
-  const trackTranslate =
-    resolvedStatus === 'loading' || resolvedStatus === 'success'
-      ? threshold
-      : pullDistance;
+  // OA-18: gate the RESTING translate on `isTouching`. use-touch.onTouchEnd
+  // only clears `isTouching`, not deltaY/deltaX (documented above) — so after
+  // a release the un-gated `pullDistance` stays at the stale damped value and
+  // the root `translateY` never rebound to 0px. This gate makes the resting
+  // `'normal'` state yield 0px across all release paths (below-threshold
+  // release, success -> normal, and the onRefresh reject path). It mirrors the
+  // existing `resolvedStatus` isTouching gate. `isBusy` holds the spinner at
+  // `threshold` during loading/success.
+  const trackTranslate = isBusy ? threshold : state.isTouching ? pullDistance : 0;
 
   return (
     <div

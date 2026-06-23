@@ -349,6 +349,42 @@ describe('useCountdownTimer', () => {
     }
   });
 
+  it('autoStart runtime toggle does not reset remaining/finishedRef (MM-08)', () => {
+    // MM-08: `autoStart` is a mount-time option (schemas.ts:87,
+    // countdown/design.md:54). A runtime toggle must only recompute `started`,
+    // not reset `remaining` to the initial value nor clear `finishedRef`. The
+    // pre-fix combined effect coupled an `autoStart`-only change to
+    // setRemaining(computeInitialRemaining()), wiping elapsed progress.
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    try {
+      const view = render(<CountdownTimerHarness time={5_000} format="ss" autoStart />);
+      const harness = () =>
+        view.container.querySelector('[data-testid="harness"]') as HTMLElement;
+      expect(harness().getAttribute('data-started')).toBe('true');
+      expect(harness().textContent).toBe('05');
+
+      // tick 2s -> remaining 3000 -> '03'
+      act(() => {
+        vi.advanceTimersByTime(2_000);
+      });
+      expect(harness().textContent).toBe('03');
+
+      // rerender with autoStart:false (runtime toggle of a mount-time option).
+      // Only `started` should change; remaining must NOT reset to 5000 ('05').
+      view.rerender(<CountdownTimerHarness time={5_000} format="ss" autoStart={false} />);
+      expect(harness().getAttribute('data-started')).toBe('false');
+      expect(harness().textContent).toBe('03');
+
+      // rerender back to autoStart:true; remaining still preserved.
+      view.rerender(<CountdownTimerHarness time={5_000} format="ss" autoStart />);
+      expect(harness().getAttribute('data-started')).toBe('true');
+      expect(harness().textContent).toBe('03');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('does not keep re-rendering after finish in millisecond mode (targetTime branch, MA-16)', () => {
     vi.useFakeTimers();
     vi.setSystemTime(0);

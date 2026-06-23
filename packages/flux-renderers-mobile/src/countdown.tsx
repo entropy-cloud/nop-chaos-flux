@@ -44,7 +44,7 @@ export interface CountdownTimerResult {
   start: () => void;
 }
 
-function useCountdownTimer(options: CountdownTimerOptions): CountdownTimerResult {
+export function useCountdownTimer(options: CountdownTimerOptions): CountdownTimerResult {
   const { time, targetTime, paused, autoStart, millisecond, format, onFinish } = options;
   const interval = millisecond ? 30 : 1000;
 
@@ -69,11 +69,22 @@ function useCountdownTimer(options: CountdownTimerOptions): CountdownTimerResult
     onFinishRef.current = onFinish;
   }, [onFinish]);
 
+  // MM-08: split the reset lifecycle. `autoStart` is a mount-time option
+  // (schemas.ts:87, countdown/design.md:54) — a runtime toggle must only
+  // recompute `started`, not reset `remaining`/`finishedRef`. The previous
+  // single effect coupled an `autoStart`-only change to
+  // setRemaining(computeInitialRemaining()), wiping elapsed progress on every
+  // toggle. The two effects below keep the `time`/`targetTime` reset path
+  // (remaining + finishedRef) separate from the `autoStart`-only `started`
+  // recompute.
   React.useEffect(() => {
     setRemaining(computeInitialRemaining());
-    setStarted(autoStart !== false);
     finishedRef.current = false;
-  }, [computeInitialRemaining, autoStart]);
+  }, [computeInitialRemaining]);
+
+  React.useEffect(() => {
+    setStarted(autoStart !== false);
+  }, [autoStart]);
 
   const isFinished = remaining <= 0;
 
@@ -191,5 +202,3 @@ export function CountdownRenderer(props: RendererComponentProps<CountdownSchema>
     </span>
   );
 }
-
-export { useCountdownTimer };

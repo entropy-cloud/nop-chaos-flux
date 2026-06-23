@@ -195,8 +195,12 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
   // auto-rebounds (close-after-action). design.md §8/§11 document this contract.
   // Listened via a capture-phase ref handler (not JSX onClick) so the native
   // <button> elements inside remain the single keyboard/a11y-interactive source
-  // — no fake interactive role is attached to the region container. Full a11y
-  // polish (focus management, announcements) is plan 3 scope.
+  // — no fake interactive role is attached to the region container. A11y
+  // state (MM-10): OA-08 `inert` gating keeps off-screen actions out of the tab
+  // order and accessibility tree while closed; a keyboard-open affordance and
+  // open-state announcement are deliberately NOT added here — swipe-cell is
+  // mobile-only and design.md §1 transfers the keyboard-equivalent
+  // responsibility to the consumer as a product decision.
   const onActionRef = React.useRef(props.events.onAction);
   React.useEffect(() => {
     onActionRef.current = props.events.onAction;

@@ -72,13 +72,13 @@ function renderInfiniteScroll(
     hasMore?: boolean;
     loading?: boolean;
     error?: boolean | string;
-    onLoadMore?: () => Promise<void> | void;
+    onLoadMore?: (event?: unknown) => Promise<void> | void;
     body?: React.ReactNode;
   } = {},
 ) {
   const onLoadMore = vi.fn(
     options.onLoadMore ??
-      (async () => {
+      (async (_event?: unknown) => {
         /* no-op */
       }),
   );
@@ -555,6 +555,53 @@ describe('InfiniteScrollRenderer', () => {
       expect(diagnostic).toHaveLength(1);
     } finally {
       errorSpy.mockRestore();
+    }
+  });
+
+  it('emits a { type: "loadmore", source } payload on every trigger path (MM-12)', async () => {
+    // MM-12: onLoadMore was the only semantic event emitting no `{ type, ... }`
+    // payload. It now aligns with the package's other 5 semantic events and
+    // carries a `source` discriminator across its three trigger paths. The
+    // payload is captured via a closure (not .mock.calls indexing) so the
+    // assertion is independent of vi.fn call-tuple typing.
+    const makeCapture = () => {
+      const captured: unknown[] = [];
+      const onLoadMore = vi.fn(async (event?: unknown) => {
+        captured.push(event);
+      });
+      return { captured, onLoadMore };
+    };
+
+    // immediate check path
+    {
+      const { captured, onLoadMore } = makeCapture();
+      renderInfiniteScroll({ immediateCheck: true, hasMore: true, onLoadMore });
+      await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
+      expect(captured[0]).toEqual({ type: 'loadmore', source: 'immediate' });
+      cleanup();
+    }
+    // intersection path
+    {
+      const { captured, onLoadMore } = makeCapture();
+      renderInfiniteScroll({ immediateCheck: false, hasMore: true, onLoadMore });
+      MockIntersectionObserver.triggerLast(true);
+      await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
+      expect(captured[0]).toEqual({ type: 'loadmore', source: 'intersection' });
+      cleanup();
+    }
+    // retry button path
+    {
+      const { captured, onLoadMore } = makeCapture();
+      const { view } = renderInfiniteScroll({
+        immediateCheck: false,
+        hasMore: true,
+        error: true,
+        errorText: '重试',
+        onLoadMore,
+      });
+      fireEvent.click(view.container.querySelector('button') as HTMLButtonElement);
+      await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
+      expect(captured[0]).toEqual({ type: 'loadmore', source: 'retry' });
     }
   });
 });

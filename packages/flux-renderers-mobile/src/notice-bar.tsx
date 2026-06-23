@@ -79,6 +79,22 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
     setTextWidth(textEl.scrollWidth);
   }, [scrollableConfig, textList, currentIndex]);
 
+  // animationDuration (one full marquee cycle, in seconds). Computed before the
+  // carousel effect so the dwell can reference it. The `+100` buffer keeps a
+  // seamless loop handoff (the trailing gap equals one buffer-width); the
+  // max/ceil guards against zero/sub-second durations. See design.md §5.
+  const animationDuration = shouldScroll
+    ? Math.max(1, Math.ceil((textWidth + 100) / speed))
+    : 0;
+
+  // OA-19/MM-07: clamp `currentIndex` when the host shrinks `text`. The carousel
+  // effect below returns early for `textList.length <= 1`, so without this
+  // clamp a rerender from ['a','b','c'] (advanced to idx 2) to ['x'] leaves
+  // `currentIndex === 2` and `activeText = textList[2]` undefined -> blank bar.
+  React.useEffect(() => {
+    setCurrentIndex((idx) => (idx < textList.length ? idx : 0));
+  }, [textList.length]);
+
   // OA-15: drive multi-text carousel via an independent timer, decoupled from
   // overflow detection. Previously `currentIndex` only advanced inside
   // `onAnimationIteration`, which the renderer only attaches when
@@ -87,6 +103,14 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
   // The timer re-schedules itself after each advance; `loop: false` halts at
   // the last item. The marquee animation (when overflowing) still plays as a
   // pure visual effect and no longer drives the index change.
+  // OA-20: when the current item overflows, its dwell must be at least one full
+  // marquee cycle (animationDuration) so the item scrolls fully before
+  // advancing — otherwise CAROUSEL_INTERVAL_MS (3000ms) truncates a long
+  // marquee at ~25% of its scroll. Non-overflowing items keep the fixed
+  // CAROUSEL_INTERVAL_MS dwell (OA-15 preserved).
+  const carouselDwellMs = shouldScroll
+    ? Math.max(CAROUSEL_INTERVAL_MS, animationDuration * 1000)
+    : CAROUSEL_INTERVAL_MS;
   React.useEffect(() => {
     if (textList.length <= 1) return;
     if (!loop && currentIndex >= textList.length - 1) return;
@@ -96,9 +120,9 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
         if (loop) return next % textList.length;
         return next >= textList.length ? idx : next;
       });
-    }, CAROUSEL_INTERVAL_MS);
+    }, carouselDwellMs);
     return () => clearTimeout(id);
-  }, [textList.length, currentIndex, loop]);
+  }, [textList.length, currentIndex, loop, carouselDwellMs]);
 
   const handleClose = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     setVisible(false);
@@ -130,10 +154,6 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
 
   const activeText = textList[currentIndex] ?? '';
   const animationDirection = direction === 'left' ? 'reverse' : 'normal';
-
-  const animationDuration = shouldScroll
-    ? Math.max(1, Math.ceil((textWidth + 100) / speed))
-    : 0;
 
   // OA-04: a notice bar is advisory, not an alert. Split the semantics by use:
   // when onClick is bound the bar is an operable control (role=button, in tab
