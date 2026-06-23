@@ -607,6 +607,22 @@ export const enUS: Resource = {
       notEqualsField: '{{label}} must not match {{field}}',
       async: '{{label}} failed async validation',
     },
+    mobile: {
+      pullRefresh: {
+        pulling: 'Pull to refresh',
+        loosing: 'Release to refresh',
+        loading: 'Loading...',
+        success: 'Refresh successful',
+      },
+      infiniteScroll: {
+        loading: 'Loading...',
+        finished: 'No more',
+        error: 'Load failed, tap to retry',
+      },
+      noticeBar: {
+        close: 'Close',
+      },
+    },
   },
 };
 

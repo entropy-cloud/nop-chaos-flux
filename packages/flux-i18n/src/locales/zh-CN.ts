@@ -605,6 +605,22 @@ export const zhCN: Resource = {
       notEqualsField: '{{label}}不能与{{field}}相同',
       async: '{{label}}异步验证失败',
     },
+    mobile: {
+      pullRefresh: {
+        pulling: '下拉刷新',
+        loosing: '释放刷新',
+        loading: '加载中...',
+        success: '刷新成功',
+      },
+      infiniteScroll: {
+        loading: '加载中...',
+        finished: '没有更多了',
+        error: '加载失败，点击重试',
+      },
+      noticeBar: {
+        close: '关闭',
+      },
+    },
   },
 };
 
