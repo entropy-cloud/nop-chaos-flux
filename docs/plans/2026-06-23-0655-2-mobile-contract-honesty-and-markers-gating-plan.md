@@ -1,6 +1,6 @@
 # 2 Mobile Renderers Contract Honesty & Markers Gating
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-06-23
 > Source: `docs/audits/2026-06-22-2039-multi-audit-mobile.md` (MA-03, MA-04, MA-08, MA-09, MA-11, MA-17, MA-18, MA-19, MA-25), `docs/audits/2026-06-22-2039-open-audit-mobile.md` (OA-01, OA-02, OA-03, OA-06, OA-11)
 > Related: `2026-06-23-0655-1-mobile-async-and-state-machine-correctness-plan.md`（执行顺序 1，先稳住状态机）、`2026-06-23-0655-3-mobile-ux-a11y-and-styling-hygiene-plan.md`（顺序 3）
@@ -90,82 +90,82 @@
 
 ### Phase 1 - Markers 契约门禁与 BEM 清理（先建门禁，后清理）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-mobile/src/__tests__/mobile-markers-contract.test.tsx`（新）、`notice-bar.tsx`、`pull-refresh.tsx`、`infinite-scroll.tsx`、`swipe-cell.tsx`
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof`（MA-25）：新建 `mobile-markers-contract.test.tsx`，镜像 `flux-renderers-basic/.../widget-markers-contract.test.tsx:135-137`，渲染全 5 渲染器后断言无 `.nop-(notice-bar|pull-refresh|infinite-scroll|swipe-cell|countdown)__*`、无 `.nop-notice-bar--*`，并正向断言 `data-slot`/`data-status`/`data-variant` 存在（先写成失败测试）。
-- [ ] `Fix`（MA-03）：删除四渲染器全部 `nop-X__region` 类字符串与 `nop-notice-bar--${variant}` modifier（`data-slot`/`data-variant` 保留）。
+- [x] `Proof`（MA-25）：新建 `mobile-markers-contract.test.tsx`，镜像 `flux-renderers-basic/.../widget-markers-contract.test.tsx:135-137`，渲染全 5 渲染器后断言无 `.nop-(notice-bar|pull-refresh|infinite-scroll|swipe-cell|countdown)__*`、无 `.nop-notice-bar--*`，并正向断言 `data-slot`/`data-status`/`data-variant` 存在（先写成失败测试）。
+- [x] `Fix`（MA-03）：删除四渲染器全部 `nop-X__region` 类字符串与 `nop-notice-bar--${variant}` modifier（`data-slot`/`data-variant` 保留）。
 
 Exit Criteria:
 
-- [ ] `mobile-markers-contract.test.tsx` 存在且全绿（门禁生效）。
-- [ ] live 四渲染器 className 不再含任何 `nop-X__`/`nop-X--` BEM。
-- [ ] 本包单测通过（门禁先于后续 phase 的样式改动，保证 plan 3 改样式时不会被旧 BEM 干扰）。
+- [x] `mobile-markers-contract.test.tsx` 存在且全绿（门禁生效）。
+- [x] live 四渲染器 className 不再含任何 `nop-X__`/`nop-X--` BEM。
+- [x] 本包单测通过（门禁先于后续 phase 的样式改动，保证 plan 3 改样式时不会被旧 BEM 干扰）。
 
 ### Phase 2 - Schema / field-rule / 类型表面对齐
 
-Status: planned
+Status: completed
 Targets: `schemas.ts`、`mobile-renderer-definitions.ts`、`infinite-scroll.tsx`、`notice-bar.tsx`、`countdown.tsx`、`index.ts`、`hooks/use-touch.ts`、`pull-refresh.tsx`、`swipe-cell.tsx`、`package.json`
 
 - Item Types: `Fix | Decision`
 
-- [ ] `Fix`（MA-08）：`InfiniteScrollSchema` 增 `hasMore?: boolean; loading?: boolean; error?: boolean | string;`；删 `infinite-scroll.tsx:6-29` 的本地 `InfiniteScrollRuntimeProps` 与 `as` 强转。
-- [ ] `Fix`（MA-17）：`schemas.ts:92` `icon?: SchemaValue` → `icon?: string`。
-- [ ] `Fix`（MA-11）：`use-touch.ts:25` 接口 `onTouchEnd: () => void`；`pull-refresh.tsx:81`、`swipe-cell.tsx:121` 去 `({} as React.TouchEvent)`；同步 `use-touch.test.ts:162`。
-- [ ] `Fix`（MA-18）：`countdown.tsx` 给 `CountdownTimerOptions`/`CountdownTimerResult` 加 `export`；`index.ts` 增 `export type { CountdownTimerOptions, CountdownTimerResult } from './countdown.js';`。
-- [ ] `Fix`（MA-19）：`package.json` 删 `dependencies` 的 `flux-i18n`、`flux-react` 与 `devDependencies` 的 `flux-compiler`、`flux-formula`、`flux-runtime`（保留 `flux-core`、`ui`）——**除非 OA-03 i18n 裁定决定保留 `flux-i18n`**（见 Phase 4，二选一）。
-- [ ] `Decision`（MA-19 与 OA-03 联动）：若 OA-03 裁定引入 i18n seam，则保留 `flux-i18n` 依赖；否则删除并在 design.md 记录“v1 中文硬编码、i18n 后置”。
+- [x] `Fix`（MA-08）：`InfiniteScrollSchema` 增 `hasMore?: boolean; loading?: boolean; error?: boolean | string;`；删 `infinite-scroll.tsx:6-29` 的本地 `InfiniteScrollRuntimeProps` 与 `as` 强转。
+- [x] `Fix`（MA-17）：`schemas.ts:92` `icon?: SchemaValue` → `icon?: string`。
+- [x] `Fix`（MA-11）：`use-touch.ts:25` 接口 `onTouchEnd: () => void`；`pull-refresh.tsx:81`、`swipe-cell.tsx:121` 去 `({} as React.TouchEvent)`；同步 `use-touch.test.ts:162`。
+- [x] `Fix`（MA-18）：`countdown.tsx` 给 `CountdownTimerOptions`/`CountdownTimerResult` 加 `export`；`index.ts` 增 `export type { CountdownTimerOptions, CountdownTimerResult } from './countdown.js';`。
+- [x] `Fix`（MA-19）：`package.json` 删 `dependencies` 的 `flux-i18n`、`flux-react` 与 `devDependencies` 的 `flux-compiler`、`flux-formula`、`flux-runtime`（保留 `flux-core`、`ui`）——**除非 OA-03 i18n 裁定决定保留 `flux-i18n`**（见 Phase 4，二选一）。
+- [x] `Decision`（MA-19 与 OA-03 联动）：若 OA-03 裁定引入 i18n seam，则保留 `flux-i18n` 依赖；否则删除并在 design.md 记录“v1 中文硬编码、i18n 后置”。
 
 Exit Criteria:
 
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-mobile typecheck` 通过（无 `as` 强转、接口已导出、icon 收窄、onTouchEnd 签名一致）。
-- [ ] 本包单测通过；`use-touch.test.ts` 已同步新签名。
-- [ ] `package.json` 与实际 import 一致（`pnpm install` 后无幽灵依赖）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-mobile typecheck` 通过（无 `as` 强转、接口已导出、icon 收窄、onTouchEnd 签名一致）。
+- [x] 本包单测通过；`use-touch.test.ts` 已同步新签名。
+- [x] `package.json` 与实际 import 一致（`pnpm install` 后无幽灵依赖）。
 
 ### Phase 3 - 事件直通契约（MA-04）
 
-Status: planned
+Status: completed
 Targets: `notice-bar.tsx`、`pull-refresh.tsx`、`swipe-cell.tsx`、`countdown.tsx`
 
 - Item Types: `Proof | Fix`
 
-- [ ] `Proof`：新增 notice-bar 用例断言 `onClick`/`onClose` 派发时携带原生事件（可读 `event.type`/`currentTarget`）；语义事件用例断言 payload 含 `type` 字段。
-- [ ] `Fix`（MA-04 DOM 入口）：`notice-bar.tsx:100,104` 改为转发原生事件（close 按钮先 `event.stopPropagation()` 再 `props.events.onClose?.(event)`）。
-- [ ] `Fix`（MA-04 语义事件）：`onRefresh`/`onOpen`/`onClose`/`onFinish` 传结构化 payload（如 `{type:'refresh',direction,threshold}`、`{type:'open',side:'open-left'|'open-right'}`）。
+- [x] `Proof`：新增 notice-bar 用例断言 `onClick`/`onClose` 派发时携带原生事件（可读 `event.type`/`currentTarget`）；语义事件用例断言 payload 含 `type` 字段。
+- [x] `Fix`（MA-04 DOM 入口）：`notice-bar.tsx:100,104` 改为转发原生事件（close 按钮先 `event.stopPropagation()` 再 `props.events.onClose?.(event)`）。
+- [x] `Fix`（MA-04 语义事件）：`onRefresh`/`onOpen`/`onClose`/`onFinish` 传结构化 payload（如 `{type:'refresh',direction,threshold}`、`{type:'open',side:'open-left'|'open-right'}`）。
 
 Exit Criteria:
 
-- [ ] live 四渲染器 DOM 入口转发事件、语义事件带 `{type,...}` 载荷。
-- [ ] 对应用例全绿。
+- [x] live 四渲染器 DOM 入口转发事件、语义事件带 `{type,...}` 载荷。
+- [x] 对应用例全绿。
 
 ### Phase 4 - design.md ↔ 代码契约对齐（OA-01/02/06/11 + i18n 裁定）
 
-Status: planned
+Status: completed
 Targets: `notice-bar.tsx`、`swipe-cell.tsx`、`countdown.tsx`、`hooks/use-touch.ts`、`docs/components/{notice-bar,swipe-cell,countdown}/design.md`、`schemas.ts` docstring
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] `Decision`（OA-11 format）：选定 countdown format 单一真相源——默认裁定：实现现状即 `DD HH mm ss SSS`，收窄 schema docstring 为该集合，修 `design.md:92` 示例 `"ss"→"45"`，删 `YYYY/MM` 承诺。
-- [ ] `Fix`（OA-11）：按裁定更新 `design.md:47-49` docstring、`:79-92` token 表/示例。
-- [ ] `Proof`（OA-11）：`countdown.test.tsx` 增“未支持 token 字面透传”与 `YYYY/MM` 行为用例（按裁定）。
-- [ ] `Decision`（OA-01 多文本轮播）：裁定实现还是移除——默认裁定：实现多文本轮播（修复 `onAnimationIteration` 守卫：`loop` 分支正确触发 `currentIndex` 推进）。
-- [ ] `Fix`（OA-01）：`notice-bar.tsx:186-190` 修守卫使多文本轮播在 `loop:true` 下推进；若裁定移除，则删死代码并改 `design.md`。
-- [ ] `Decision`+`Fix`（MA-09 + OA-02 onAction/close-after-action）：统一裁定——默认裁定：操作区按钮点击派发 `props.events.onAction?.({type:'action',side})` 并自动回弹关闭（实现 close-after-action）；据此更新 `swipe-cell.tsx` 与 `docs/components/swipe-cell/design.md:8,67,130`。若裁定“移除”，则从 `schemas.ts:64`、`mobile-renderer-definitions.ts:73`、design.md 删 `onAction`。
-- [ ] `Proof`（MA-09/OA-02）：swipe-cell 增“左/右操作区按钮点击 → onAction 派发 + cell 关闭”用例。
-- [ ] `Decision`（OA-06 useTouch preventDefault）：裁定收紧 design.md 还是实现——默认裁定：收紧 `design.md:127,151` 为“渲染器层面不 preventDefault；手势所有权由 CSS `touch-action` 提供（见 plan 3 MA-07）”，避免与 plan 3 耦合的 JS preventDefault。
-- [ ] `Fix`（OA-06）：按裁定更新 design.md；若裁定实现，则最小化在 use-touch 加 preventDefault 并配 touch-action（与 plan 3 协调）。
-- [ ] `Decision`（OA-03 i18n）：裁定引入 seam 还是后置——默认裁定：v1 引入最小 `t()` seam（保留 `flux-i18n` 依赖，默认中文资源就地），为后续翻译留口；据此落地调用点或记录后置决定。
+- [x] `Decision`（OA-11 format）：选定 countdown format 单一真相源——默认裁定：实现现状即 `DD HH mm ss SSS`，收窄 schema docstring 为该集合，修 `design.md:92` 示例 `"ss"→"45"`，删 `YYYY/MM` 承诺。
+- [x] `Fix`（OA-11）：按裁定更新 `design.md:47-49` docstring、`:79-92` token 表/示例。
+- [x] `Proof`（OA-11）：`countdown.test.tsx` 增“未支持 token 字面透传”与 `YYYY/MM` 行为用例（按裁定）。
+- [x] `Decision`（OA-01 多文本轮播）：裁定实现还是移除——默认裁定：实现多文本轮播（修复 `onAnimationIteration` 守卫：`loop` 分支正确触发 `currentIndex` 推进）。
+- [x] `Fix`（OA-01）：`notice-bar.tsx:186-190` 修守卫使多文本轮播在 `loop:true` 下推进；若裁定移除，则删死代码并改 `design.md`。
+- [x] `Decision`+`Fix`（MA-09 + OA-02 onAction/close-after-action）：统一裁定——默认裁定：操作区按钮点击派发 `props.events.onAction?.({type:'action',side})` 并自动回弹关闭（实现 close-after-action）；据此更新 `swipe-cell.tsx` 与 `docs/components/swipe-cell/design.md:8,67,130`。若裁定“移除”，则从 `schemas.ts:64`、`mobile-renderer-definitions.ts:73`、design.md 删 `onAction`。
+- [x] `Proof`（MA-09/OA-02）：swipe-cell 增“左/右操作区按钮点击 → onAction 派发 + cell 关闭”用例。
+- [x] `Decision`（OA-06 useTouch preventDefault）：裁定收紧 design.md 还是实现——默认裁定：收紧 `design.md:127,151` 为“渲染器层面不 preventDefault；手势所有权由 CSS `touch-action` 提供（见 plan 3 MA-07）”，避免与 plan 3 耦合的 JS preventDefault。
+- [x] `Fix`（OA-06）：按裁定更新 design.md；若裁定实现，则最小化在 use-touch 加 preventDefault 并配 touch-action（与 plan 3 协调）。
+- [x] `Decision`（OA-03 i18n）：裁定引入 seam 还是后置——默认裁定：v1 引入最小 `t()` seam（保留 `flux-i18n` 依赖，默认中文资源就地），为后续翻译留口；据此落地调用点或记录后置决定。
 
 Exit Criteria:
 
-- [ ] countdown format 在 schema docstring/token 表/示例/实现四处一致，并有 token 用例。
-- [ ] notice-bar 多文本轮播按裁定实现或移除，design.md 一致。
-- [ ] swipe-cell onAction/close-after-action 按裁定实现或从三层移除，design.md 一致，有点击用例。
-- [ ] useTouch preventDefault 契约 design.md 与实现一致。
-- [ ] i18n 决定落地（seam 或显式后置记录），`package.json` 依赖与决定一致。
-- [ ] 本包单测 + typecheck 通过。
+- [x] countdown format 在 schema docstring/token 表/示例/实现四处一致，并有 token 用例。
+- [x] notice-bar 多文本轮播按裁定实现或移除，design.md 一致。
+- [x] swipe-cell onAction/close-after-action 按裁定实现或从三层移除，design.md 一致，有点击用例。
+- [x] useTouch preventDefault 契约 design.md 与实现一致。
+- [x] i18n 决定落地（seam 或显式后置记录），`package.json` 依赖与决定一致。
+- [x] 本包单测 + typecheck 通过。
 
 ## Draft Review Record
 
@@ -178,16 +178,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed contract drift（MA-03、MA-04、MA-08、MA-09、MA-11、MA-17、MA-18、MA-19、MA-25、OA-01、OA-02、OA-03、OA-06、OA-11）已收敛。
-- [ ] mobile markers 契约门禁测试已落地并阻止回退。
-- [ ] 不存在被静默降级到 deferred 的 in-scope contract drift。
-- [ ] 必要 focused verification（markers 门禁、schema 类型、onAction、format token、事件直通）已完成。
-- [ ] 受影响 owner docs（5 个 `docs/components/*/design.md` 相关段、`schemas.ts` docstring）已同步到 live baseline。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不自审。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed contract drift（MA-03、MA-04、MA-08、MA-09、MA-11、MA-17、MA-18、MA-19、MA-25、OA-01、OA-02、OA-03、OA-06、OA-11）已收敛。
+- [x] mobile markers 契约门禁测试已落地并阻止回退。
+- [x] 不存在被静默降级到 deferred 的 in-scope contract drift。
+- [x] 必要 focused verification（markers 门禁、schema 类型、onAction、format token、事件直通）已完成。
+- [x] 受影响 owner docs（5 个 `docs/components/*/design.md` 相关段、`schemas.ts` docstring）已同步到 live baseline。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不自审。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -205,13 +205,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （关闭时填写）
+Status Note: 全 14 条 in-scope contract drift（MA-03/04/08/09/11/17/18/19/25 + OA-01/02/03/06/11）收敛，markers 契约门禁落地锁死回退，schema/field-rule/design.md/运行时四方一致。仓库级 typecheck/build/lint（含 check-i18n-keys 硬门禁）/test 全绿（mobile 包 119 测试），focused Proof 先于 Fix。Plan Status → completed。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立子 agent，fresh session）
-- Evidence: （task id / daily log link / findings 摘要）
+- Auditor / Agent: 独立 general sub-agent（fresh session `ses_10cf7a601ffefB7R4cz1b8xoFy`），未参与执行
+- Verdict: `approved`（零 Blocker / 零 Major / 零 Minor）
+- Evidence: 重跑 `pnpm --filter @nop-chaos/flux-renderers-mobile test` 119/119 green、typecheck/lint/build pass、`node scripts/check-i18n-keys.mjs` 0 undefined；live repo 逐条核对——markers 门禁零 BEM 残留且 data-\* 在位（`__tests__/mobile-markers-contract.test.tsx`）、schema 字段/icon 收窄/onTouchEnd 签名/Countdown 接口导出/package.json 依赖均与实现一致、事件直通（DOM 转发 native + 语义 `{type,...}`）、OA-01 守卫 `loop &&` 可达、OA-02 onAction 经 capture-phase ref 监听实装且 close-after-action 生效、OA-11 format 四方一致、owner-doc 无残留旧 BEM/签名/preventDefault 契约、Deferred 仅“全量 i18n 翻译资源”（out-of-scope）。接口↔语义抽查通过（onAction listener 已 attach、carousel guard 在 loop:true 下可触发）。无 src 下散落构建产物。daily log: `docs/logs/2026/06-23.md`。
 
 Follow-up:
 
-- （仅 non-blocking 项）
+- （仅 non-blocking）plan 3 落地 MA-07 touch-action CSS 后，可回看 OA-06 design.md 措辞是否再精简。
+- 全量 i18n 翻译资源落地属独立本地化工作（见 Deferred But Adjudicated）。
+- no remaining plan-owned work.

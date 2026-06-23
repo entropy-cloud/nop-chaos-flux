@@ -97,12 +97,12 @@ interface NoticeBarEvents {
 ## 6. 样式与 DOM marker
 
 ```html
-<div class="nop-notice-bar nop-notice-bar--info" data-slot="notice-bar" role="alert">
-  <div data-slot="notice-bar-icon">
+<div class="nop-notice-bar" data-slot="notice-bar" data-variant="info" role="alert">
+  <span data-slot="notice-bar-icon">
     <!-- icon region 或默认 info 图标 -->
-  </div>
-  <div class="nop-notice-bar__content" data-slot="notice-bar-content">
-    <span class="nop-notice-bar__text" data-slot="notice-bar-text"> 通知文本 </span>
+  </span>
+  <div data-slot="notice-bar-content">
+    <span data-slot="notice-bar-text"> 通知文本 </span>
   </div>
   <button data-slot="notice-bar-close" aria-label="关闭">
     <!-- 关闭图标 -->
@@ -110,7 +110,8 @@ interface NoticeBarEvents {
 </div>
 ```
 
-- 根节点 `nop-notice-bar` marker + variant 修饰符
+- 根节点 `nop-notice-bar` marker；variant 通过 `data-variant` 承载（不发 BEM 修饰符，遵循 markers 契约）
+- 内部 region 仅用 `data-slot` 标识结构身份，不使用 `nop-X__region` BEM 类
 - `role="alert"` 确保无障碍
 - 滚动容器 `overflow: hidden`，内部文本 `white-space: nowrap`
 - 关闭按钮使用 `@nop-chaos/ui` Button（`size: 'sm'`，icon only）

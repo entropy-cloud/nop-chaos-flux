@@ -45,7 +45,7 @@ interface CountdownSchema extends BaseSchema {
   /** 目标时间戳（毫秒），与 time 二选一 */
   targetTime?: number;
   /** 格式化模板，默认 'HH:mm:ss'。
-   *  支持：YYYY MM DD HH mm ss SSS */
+   *  支持的占位符：DD HH mm ss SSS（其它字符按字面输出） */
   format?: string;
   /** 是否显示毫秒，默认 false */
   millisecond?: boolean;
@@ -89,7 +89,7 @@ interface CountdownEvents {
 - `"HH:mm:ss"` → `"02:30:45"`
 - `"DD:HH:mm:ss"` → `"01:02:30:45"`
 - `"mm:ss"` → `"30:45"`
-- `"ss"` → `"1845"`
+- `"ss"` → `"45"`（1845 秒 = 30 分 45 秒，`ss` 取秒分量；`YYYY`/`MM` 等未列出 token 按字面输出）
 
 ## 6. 定时器实现
 

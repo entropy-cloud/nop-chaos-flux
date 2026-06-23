@@ -99,23 +99,24 @@ closed → sliding-right → open-right → closing
 ## 7. 样式与 DOM marker
 
 ```html
-<div class="nop-swipe-cell" data-slot="swipe-cell">
-  <div class="nop-swipe-cell__left" data-slot="swipe-cell-left">
+<div class="nop-swipe-cell" data-slot="swipe-cell" data-state="closed">
+  <div data-slot="swipe-cell-left">
     <!-- left region 内容 -->
   </div>
-  <div class="nop-swipe-cell__content" data-slot="swipe-cell-content">
+  <div data-slot="swipe-cell-content">
     <!-- body region 内容 -->
   </div>
-  <div class="nop-swipe-cell__right" data-slot="swipe-cell-right">
+  <div data-slot="swipe-cell-right">
     <!-- right region 内容 -->
   </div>
 </div>
 ```
 
-- 根节点 `nop-swipe-cell` marker
+- 根节点 `nop-swipe-cell` marker；开合状态通过 `data-state`（closed/open-left/open-right）承载
+- 内部 region 仅用 `data-slot` 标识结构身份，不使用 `nop-X__region` BEM 类
 - `overflow: hidden` 防止操作区在 closed 状态下可见
 - 操作区使用 `position: absolute` 定位在 content 两侧
-- 操作按钮建议使用 `Button` 组件，`size: 'sm'` 或 `size: 'md'`
+- 操作按钮建议使用 `Button` 组件，`size: 'sm'` 或 `size: 'md'`；点击操作区会派发 `onAction` 并自动回弹关闭（MA-09/OA-02）
 
 ## 8. 边界情况
 
@@ -149,7 +150,7 @@ closed → sliding-right → open-right → closing
 
 ## 11. 风险、取舍与后续阶段
 
-- 手势与滚动容器的冲突是最常见问题：需要在 `useTouch` 中正确判断方向并阻止 `preventDefault`
+- 手势与滚动容器的冲突是最常见问题：`useTouch` 仅判定方向（horizontal/vertical）做状态机分发，**不在 JS 层 `preventDefault`**；手势所有权与滚动抑制由消费组件的 CSS `touch-action` 提供（见 plan 3 MA-07）。渲染器层只负责方向判定与 `translateX`，不抢占浏览器原生滚动
 - **触摸目标尺寸**：操作按钮需满足 M0 基线规范（`docs/architecture/mobile-responsive-baseline.md` §3）的 44×44px 最小尺寸
 - 后续可考虑增加 `autoClose` timeout（无操作自动回弹）
 - 与 `pull-refresh` 共用 `useTouch`，需确保手势不冲突（水平 vs 垂直方向分离）

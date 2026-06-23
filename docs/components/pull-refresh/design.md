@@ -109,7 +109,7 @@ normal → pulling → loosing → loading → success → normal
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | 页面内容不足一屏                                              | PullRefresh 仍可拖拽                                                                                  |
 | 与 InfiniteScroll 共存                                        | 上拉加载使用 InfiniteScroll，下拉刷新使用 PullRefresh，不互斥                                         |
-| 嵌套滚动容器                                                  | PullRefresh 应阻止内部垂直滚动冒泡                                                                    |
+| 嵌套滚动容器                                                  | PullRefresh 不在 JS 层阻止滚动；手势所有权由 CSS `touch-action` 提供（见 plan 3 MA-07）               |
 | disabled=true                                                 | 完全不响应触摸事件                                                                                    |
 | loading 状态再次拖拽                                          | 忽略，不重复触发                                                                                      |
 | 系统 touchcancel（多点/滚动接管/来电，2026-06-23 OA-05 裁定） | **不提交**：恢复到 `normal`（回弹），不触发 `onRefresh`。touchcancel 与 touchend 拆分为两条独立路径   |

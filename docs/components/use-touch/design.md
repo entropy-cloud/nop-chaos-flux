@@ -46,7 +46,7 @@ interface UseTouchReturn {
   touchHandlers: {
     onTouchStart: (e: React.TouchEvent) => void;
     onTouchMove: (e: React.TouchEvent) => void;
-    onTouchEnd: (e: React.TouchEvent) => void;
+    onTouchEnd: () => void;
   };
   /** 重置触摸状态 */
   reset: () => void;
@@ -94,9 +94,9 @@ function PullRefresh({ children, onRefresh }: PullRefreshProps) {
 
 ## 8. 边界情况
 
-| 场景                 | 行为                            |
-| -------------------- | ------------------------------- |
-| 快速滑动后 touchEnd  | 触发 swipe，delta 取最终值      |
-| 滑动中途手指离开屏幕 | touchCancel 视为异常终止，reset |
-| 多指触摸             | 只跟踪第一个 touch              |
-| 嵌套滚动容器         | 水平手势阻止滚动，垂直手势放行  |
+| 场景                 | 行为                                                                                                                                |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 快速滑动后 touchEnd  | 触发 swipe，delta 取最终值                                                                                                          |
+| 滑动中途手指离开屏幕 | touchCancel 视为异常终止，reset                                                                                                     |
+| 多指触摸             | 只跟踪第一个 touch                                                                                                                  |
+| 嵌套滚动容器         | `useTouch` 仅判定方向（horizontal/vertical），不在 JS 层阻止滚动；手势所有权由消费组件的 CSS `touch-action` 提供（见 plan 3 MA-07） |

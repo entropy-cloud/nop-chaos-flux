@@ -1,6 +1,6 @@
 # Mobile Roadmap（移动端响应式 + 移动端原生组件）
 
-> Last Updated: 2026-06-23（M4a/M4c 收口）
+> Last Updated: 2026-06-23（plan 2 契约/markers 加固收口）
 > Source: `docs/components/existing-components-improvement-analysis.md` §8
 > 关联：`roadmap.md`（新增组件）、`existing-components-improvement-roadmap.md`（桌面端组件改进）— 三者独立不重叠
 
@@ -192,6 +192,8 @@
 > **代码已落地（执行期完成 2026-06-22）**。5 个组件实现 + focused 单测 + `mobileRendererDefinitions` + `registerMobileRenderers` + playground 演示页（`/mobile-components`）+ e2e 验证全部交付。Execution plan：`docs/plans/2026-06-22-2057-2-m5-mobile-native-components-plan.md`。
 >
 > **异步/状态机正确性加固（2026-06-23，audit remediation plan 1 已完成）**：`docs/plans/2026-06-23-0655-1-mobile-async-and-state-machine-correctness-plan.md` 收敛了 4 个交互类渲染器（pull-refresh/infinite-scroll/swipe-cell/countdown）的异步链路与状态机——MA-01/02/12/13/14/15/16 + MA-20 observer/touchCancel 子项 + OA-05/10/13 共 12 条 finding 全部修复且有 focused 回归测试（包测试 78→101），独立 fresh-session closure audit `approved`。后续 plan 2（契约/marker）、plan 3（UX/a11y/样式）在同批文件上推进。审计来源：`docs/audits/2026-06-22-2039-multi-audit-mobile.md` + `docs/audits/2026-06-22-2039-open-audit-mobile.md`。
+>
+> **契约诚实性 + markers 门禁加固（2026-06-23，audit remediation plan 2 已完成）**：`docs/plans/2026-06-23-0655-2-mobile-contract-honesty-and-markers-gating-plan.md` 把 schema/field-rule/design.md/运行时四方收敛到一致——MA-03/04/08/09/11/17/18/19/25 + OA-01/02/03/06/11 共 14 条 contract drift 全部收敛：新增 markers 契约门禁测试（锁死 `nop-X__region`/`nop-X--modifier` 回退）、删 16 region + 1 modifier 死 BEM 类、InfiniteScrollSchema 补字段删 `as` 强转、icon 收窄 `string`、useTouch `onTouchEnd` 签名对齐、Countdown 接口导出、package.json 删 4 幽灵依赖、DOM 入口转发原生事件 + 语义事件结构化 payload、countdown format 三方对齐、notice-bar 多文本轮播死代码修复、swipe-cell `onAction`+close-after-action 实装、useTouch preventDefault 契约收紧、引入最小 i18n `t()` seam（+ `flux-i18n` locale 8 键）。包测试 101→119，仓库级 typecheck/build/lint（含 `check-i18n-keys` 门禁）/test 全绿。审计来源同上。
 
 | Work item  | 组件            | 行为                                        | design.md 状态                   | 依赖 |
 | ---------- | --------------- | ------------------------------------------- | -------------------------------- | ---- |
