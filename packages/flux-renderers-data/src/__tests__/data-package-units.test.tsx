@@ -25,9 +25,11 @@ describe('data package units', () => {
       'data-source',
       'chart',
       'tree',
+      'list',
       'crud',
     ]);
     expect(registry.get('table')?.type).toBe('table');
+    expect(registry.get('list')?.type).toBe('list');
     expect(registry.get('crud')?.type).toBe('crud');
   });
 

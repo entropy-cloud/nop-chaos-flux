@@ -327,6 +327,14 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes: 'Verify hierarchical tree nodes render in the initially expanded state',
   },
   {
+    id: 'list',
+    title: 'List',
+    tier: 'write',
+    primaryScenario: 'Single selection + onItemClick',
+    notes:
+      'Verify item region renders N entries, empty state shows fallback, and selectionMode single/multiple toggle aria-selected highlight',
+  },
+  {
     id: 'data-source',
     title: 'Data Source',
     tier: 'read',

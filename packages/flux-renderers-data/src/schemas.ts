@@ -198,4 +198,17 @@ export interface TreeSchema extends BaseSchema {
   showGuideLine?: boolean;
 }
 
+export type ListSelectionMode = 'single' | 'multiple' | 'none';
+
+export interface ListSchema extends BaseSchema {
+  type: 'list';
+  items?: SchemaValue;
+  item?: SchemaInput;
+  empty?: SchemaInput | string;
+  selectionMode?: ListSelectionMode;
+  keyField?: string;
+  onItemClick?: BaseSchema;
+  onSelectionChange?: BaseSchema;
+}
+
 export * from './chart-schemas.js';

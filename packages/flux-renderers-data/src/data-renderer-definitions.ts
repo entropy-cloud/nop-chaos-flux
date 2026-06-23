@@ -3,6 +3,7 @@ import { createTemplateRegion, extractNestedSchemaRegions, isSchemaInput } from 
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import { DataSourceRenderer } from './data-source-renderer.js';
 import { validateTableSchema } from './data-schema-validation.js';
+import { ListRenderer } from './list-renderer.js';
 import { TableRenderer } from './table-renderer.js';
 import { TreeRenderer } from './tree-renderer.js';
 import { crudRendererDefinition } from './crud-renderer-definition.js';
@@ -504,6 +505,81 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         params: ['node', 'index', 'depth', 'key', 'parentNode'],
         isolate: false,
       },
+    ],
+  },
+  {
+    type: 'list',
+    displayName: 'List',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    component: ListRenderer,
+    propContracts: {
+      items: {
+        shape: { kind: 'array', item: { kind: 'unknown' } },
+        displayName: 'Items',
+        description:
+          'The single collection field: the array of records rendered through the item region.',
+        editorType: 'expression',
+      },
+      selectionMode: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'none' },
+            { kind: 'literal', value: 'single' },
+            { kind: 'literal', value: 'multiple' },
+          ],
+        },
+        displayName: 'Selection Mode',
+        description:
+          'Selection ownership is local controlled state. "none" disables selection, "single" is mutually exclusive, "multiple" accumulates.',
+        editorType: 'select',
+        defaultValue: 'none',
+      },
+      keyField: {
+        shape: { kind: 'string' },
+        displayName: 'Key Field',
+        description:
+          'Field used to derive a stable per-item key for selection and React reconciliation. Falls back to the item index when absent.',
+        editorType: 'expression',
+        defaultValue: 'id',
+      },
+    },
+    eventContracts: {
+      onItemClick: {
+        displayName: 'On Item Click',
+        description:
+          'Dispatched when a list item is clicked. Payload: { item, index, key }. The action scope is the per-item scope, so item/index are also reachable as scope values.',
+        payload: {
+          kind: 'object',
+          fields: {
+            item: { kind: 'unknown' },
+            index: { kind: 'number' },
+            key: { kind: 'string' },
+          },
+        },
+      },
+      onSelectionChange: {
+        displayName: 'On Selection Change',
+        description:
+          'Dispatched when the local selection changes. Payload: { selectedKeys, selectionMode }.',
+        payload: {
+          kind: 'object',
+          fields: {
+            selectedKeys: { kind: 'array', item: { kind: 'string' } },
+            selectionMode: { kind: 'string' },
+          },
+        },
+      },
+    },
+    fields: [
+      { key: 'items', kind: 'prop' },
+      { key: 'selectionMode', kind: 'prop' },
+      { key: 'keyField', kind: 'prop' },
+      { key: 'onItemClick', kind: 'event' },
+      { key: 'onSelectionChange', kind: 'event' },
+      { key: 'item', kind: 'region', params: ['item', 'index'], isolate: false },
+      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     ],
   },
   crudRendererDefinition,

@@ -44,6 +44,7 @@ import {
   TreeLabPage,
   DataSourceLabPage,
   ChartLabPage,
+  ListLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -91,4 +92,5 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   tree: TreeLabPage,
   'data-source': DataSourceLabPage,
   chart: ChartLabPage,
+  list: ListLabPage,
 };

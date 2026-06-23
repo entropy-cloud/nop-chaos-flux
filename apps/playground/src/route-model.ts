@@ -327,6 +327,14 @@ export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Hierarchical tree view with expand/collapse and optional custom node templates.',
   },
   {
+    id: 'list',
+    title: 'List',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    description:
+      'Ordered collection renderer with an item region, empty state, and local controlled selection (single/multiple/none).',
+  },
+  {
     id: 'data-source',
     title: 'Data Source',
     category: 'logic',
