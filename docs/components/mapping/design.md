@@ -13,7 +13,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'mapping'`
-- 预期归属 `@nop-chaos/flux-renderers-basic`
+- 归属 `@nop-chaos/flux-renderers-content`
 
 ## 4. schema 设计
 
