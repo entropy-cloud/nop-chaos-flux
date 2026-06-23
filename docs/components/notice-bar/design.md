@@ -84,11 +84,12 @@ interface NoticeBarEvents {
 ### 滚动模式（`scrollable: true`）
 
 - 单条文本：使用 CSS `@keyframes marquee` 或 `transform: translateX()` 动画
-- 多条文本（`text: string[]`）：轮播显示，每条停留 `CAROUSEL_INTERVAL_MS`（默认 3000ms）后切换下一条
-- 计算公式：`duration = (contentWidth / speed) * 1000` ms（marquee 视觉滚动）
+- 多条文本（`text: string[]`）：轮播显示，每条停留 `carouselDwell` 后切换下一条
+- 计算公式：`duration = max(1, ceil((textWidth + 100) / speed))` 秒（`+100px` 缓冲保证无缝循环衔接；单位为秒；`max/ceil` 防止零/极小值）
 - `loop: true` 时轮播无限循环
 - `loop: false` 时滚动到末条停止
 - **OA-15**：轮播切换由独立 `setTimeout` 驱动，**不依赖** marquee 动画的 `animationiteration` 事件。这样即使某条文本不溢出容器（`scrollWidth <= clientWidth`，marquee 不启动），多文本 bar 仍能正常轮播。marquee 动画只负责视觉滚动，不再驱动 index 变更
+- **OA-20**：轮播停留时长 `carouselDwell` 按当前项是否溢出分流——不溢出时为固定 `CAROUSEL_INTERVAL_MS`（默认 3000ms，保留 OA-15 的非溢出轮播）；溢出时为 `max(CAROUSEL_INTERVAL_MS, 一个完整 marquee 周期)`，保证溢出项跑完一整圈再切换（否则 3000ms 会把长 marquee 截断在约 25% 处）
 
 ### 静态模式（`scrollable: false`）
 
@@ -144,7 +145,7 @@ interface NoticeBarEvents {
 - `NoticeBar` renderer：纯展示组件，接收 `RendererComponentProps`
 - 滚动逻辑用 CSS animation 实现（性能更好），不用 JS 定时器
 - 关闭状态用 React 本地 state `visible` 控制
-- 多条文本轮播用 index + timeout 切换（OA-15：独立 `setTimeout`，不依赖 marquee 的 `animationiteration`；不溢出容器也能轮播）
+- 多条文本轮播用 index + timeout 切换（OA-15：独立 `setTimeout`，不依赖 marquee 的 `animationiteration`；不溢出容器也能轮播；OA-20：停留时长按是否溢出分流——溢出项 `max(CAROUSEL_INTERVAL_MS, 一个完整 marquee 周期)`，不溢出项固定 `CAROUSEL_INTERVAL_MS`）
 - 不需要 store 或 scope 状态——纯展示，不参与表单
 
 ## 10. 风险、取舍与后续阶段

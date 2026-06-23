@@ -1,6 +1,6 @@
 # Mobile Roadmap（移动端响应式 + 移动端原生组件）
 
-> Last Updated: 2026-06-23（plan 4 post-reaudit remediation 收口）
+> Last Updated: 2026-06-23（plan 5 post-reaudit #2 remediation 收口：OA-18..20 + MM-07..13，含 pull-refresh 反弹几何与 data-\*-only 测试缺口关闭）
 > Source: `docs/components/existing-components-improvement-analysis.md` §8
 > 关联：`roadmap.md`（新增组件）、`existing-components-improvement-roadmap.md`（桌面端组件改进）— 三者独立不重叠
 
