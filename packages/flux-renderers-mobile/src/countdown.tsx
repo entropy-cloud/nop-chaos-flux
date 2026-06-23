@@ -69,6 +69,18 @@ export function useCountdownTimer(options: CountdownTimerOptions): CountdownTime
     onFinishRef.current = onFinish;
   }, [onFinish]);
 
+  // MM-14/OA-21: wall-clock derivation. `remainingRef` always mirrors the
+  // latest committed remaining (synced at every setRemaining site). When a run
+  // segment (re)starts, `startTimestampRef` captures Date.now() and
+  // `remainingAtStartRef` captures the remaining to count down from. Each tick
+  // then derives `remaining = max(0, remainingAtStart - (Date.now() - start))`,
+  // so BOTH the targetTime and time branches are drift-proof under a throttled
+  // setInterval (OA-21) and resume continues from the paused value instead of
+  // recomputing targetTime - Date.now() and swallowing the pause window (MM-14).
+  const remainingRef = React.useRef<number>(computeInitialRemaining());
+  const startTimestampRef = React.useRef<number>(0);
+  const remainingAtStartRef = React.useRef<number>(computeInitialRemaining());
+
   // MM-08: split the reset lifecycle. `autoStart` is a mount-time option
   // (schemas.ts:87, countdown/design.md:54) — a runtime toggle must only
   // recompute `started`, not reset `remaining`/`finishedRef`. The previous
@@ -78,7 +90,14 @@ export function useCountdownTimer(options: CountdownTimerOptions): CountdownTime
   // (remaining + finishedRef) separate from the `autoStart`-only `started`
   // recompute.
   React.useEffect(() => {
-    setRemaining(computeInitialRemaining());
+    const initial = computeInitialRemaining();
+    setRemaining(initial);
+    // MM-14/OA-21: re-anchor the wall-clock origin on a config change so the
+    // tick effect (which reads these refs in declaration order after this
+    // effect) counts down from the new initial using fresh wall-clock elapsed.
+    remainingRef.current = initial;
+    remainingAtStartRef.current = initial;
+    startTimestampRef.current = Date.now();
     finishedRef.current = false;
   }, [computeInitialRemaining]);
 
@@ -108,18 +127,26 @@ export function useCountdownTimer(options: CountdownTimerOptions): CountdownTime
     // an infinite re-render storm on every finished countdown.
     if (isFinished) return;
 
+    // MM-14/OA-21: anchor this run-segment's wall-clock origin. `remainingRef`
+    // holds the latest committed remaining — frozen across pause/stop, or reset
+    // to the initial value by the config-change effect above (which runs before
+    // this effect in declaration order). Anchoring here makes resume continue
+    // from the paused value (MM-14) instead of recomputing targetTime - now,
+    // and makes every tick wall-clock-derived (OA-21) so a throttled setInterval
+    // can no longer drift the display. This unifies the targetTime and time
+    // branches: targetTime seeded initialRemaining as targetTime - mountNow, so
+    // remainingAtStart - elapsed == targetTime - Date.now() (algebraically
+    // equivalent to the previous targetTime branch, but pause-safe).
+    startTimestampRef.current = Date.now();
+    remainingAtStartRef.current = remainingRef.current;
+
     const tick = () => {
-      setRemaining((prev) => {
-        if (typeof targetTime === 'number') {
-          // MA-16: clamp so remaining never goes negative (stabilises at 0,
-          // which lets React bail out of further re-renders).
-          return Math.max(0, targetTime - Date.now());
-        }
-        if (typeof time === 'number') {
-          return Math.max(0, prev - interval);
-        }
-        return prev;
-      });
+      const elapsed = Date.now() - startTimestampRef.current;
+      // MA-16: clamp so remaining never goes negative (stabilises at 0, which
+      // lets isFinished flip and the effect cleanup stop the interval).
+      const next = Math.max(0, remainingAtStartRef.current - elapsed);
+      remainingRef.current = next;
+      setRemaining(next);
     };
 
     const timer = setInterval(tick, interval);
@@ -139,7 +166,9 @@ export function useCountdownTimer(options: CountdownTimerOptions): CountdownTime
     // and avoids the old bug where reset silently restarted because the tick
     // interval was never stopped.
     reset() {
-      setRemaining(computeInitialRemaining());
+      const initial = computeInitialRemaining();
+      setRemaining(initial);
+      remainingRef.current = initial;
       setStarted(false);
       finishedRef.current = false;
     },

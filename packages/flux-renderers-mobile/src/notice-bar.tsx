@@ -112,6 +112,12 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
     ? Math.max(CAROUSEL_INTERVAL_MS, animationDuration * 1000)
     : CAROUSEL_INTERVAL_MS;
   React.useEffect(() => {
+    // MM-15: once the bar is closed (visible=false) the component renders null,
+    // but this effect still runs (hooks precede the render-time early return at
+    // the bottom). Guard here AND keep `visible` in the deps so the cleanup
+    // cancels any in-flight carousel setTimeout on close — otherwise it kept
+    // firing setCurrentIndex + rescheduling every 3s while hidden.
+    if (!visible) return;
     if (textList.length <= 1) return;
     if (!loop && currentIndex >= textList.length - 1) return;
     const id = setTimeout(() => {
@@ -122,7 +128,7 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
       });
     }, carouselDwellMs);
     return () => clearTimeout(id);
-  }, [textList.length, currentIndex, loop, carouselDwellMs]);
+  }, [textList.length, currentIndex, loop, carouselDwellMs, visible]);
 
   const handleClose = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     setVisible(false);
@@ -153,6 +159,11 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
   }
 
   const activeText = textList[currentIndex] ?? '';
+  // OA-22: the keyframe `nop-notice-bar-marquee` travels right-to-left under
+  // 'normal'. `direction` inverts vs the intuitive motion — 'left' (default)
+  // plays it in reverse so text moves left→right, 'right' plays it normal so
+  // text moves right→left. The mapping is locked by test (MM-24) and kept
+  // as-is for public-schema stability; see notice-bar/design.md §5.
   const animationDirection = direction === 'left' ? 'reverse' : 'normal';
 
   // OA-04: a notice bar is advisory, not an alert. Split the semantics by use:

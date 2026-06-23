@@ -142,6 +142,81 @@ describe('NoticeBarRenderer', () => {
     }
   });
 
+  it('locks animationDirection for both direction branches (MM-24, OA-22)', () => {
+    // MM-24: the `direction: 'right'` branch (animationDirection: 'normal') had
+    // zero coverage. OA-22: the mapping is counterintuitive (direction:'left'
+    // → 'reverse' → text moves left→right), so this test LOCKS the chosen
+    // semantics (Decision A: keep the mapping, clarify the doc) against future
+    // regressions. The keyframe `nop-notice-bar-marquee` travels right-to-left
+    // under 'normal', so:
+    //   direction:'right'         → 'normal'  → right-to-left motion
+    //   direction:'left'/default  → 'reverse' → left-to-right motion
+    const withOverflow = () => {
+      const sw = vi
+        .spyOn(HTMLElement.prototype, 'scrollWidth', 'get')
+        .mockImplementation(function (this: HTMLElement) {
+          return this.getAttribute('data-slot') === 'notice-bar-text' ? 500 : 0;
+        });
+      const cw = vi
+        .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+        .mockImplementation(function (this: HTMLElement) {
+          return this.getAttribute('data-slot') === 'notice-bar-content' ? 120 : 0;
+        });
+      return () => {
+        sw.mockRestore();
+        cw.mockRestore();
+      };
+    };
+
+    // direction: 'right' → 'normal'
+    {
+      const restore = withOverflow();
+      try {
+        const { view } = renderNoticeBar({
+          text: 'long overflowing text',
+          scrollable: true,
+          direction: 'right',
+        });
+        const textEl = view.container.querySelector(
+          '[data-slot="notice-bar-text"]',
+        ) as HTMLElement;
+        expect(textEl.style.animationDirection).toBe('normal');
+      } finally {
+        restore();
+      }
+    }
+    // direction: 'left' (explicit) → 'reverse'
+    {
+      const restore = withOverflow();
+      try {
+        const { view } = renderNoticeBar({
+          text: 'long overflowing text',
+          scrollable: true,
+          direction: 'left',
+        });
+        const textEl = view.container.querySelector(
+          '[data-slot="notice-bar-text"]',
+        ) as HTMLElement;
+        expect(textEl.style.animationDirection).toBe('reverse');
+      } finally {
+        restore();
+      }
+    }
+    // default (no direction) → 'reverse'
+    {
+      const restore = withOverflow();
+      try {
+        const { view } = renderNoticeBar({ text: 'long overflowing text', scrollable: true });
+        const textEl = view.container.querySelector(
+          '[data-slot="notice-bar-text"]',
+        ) as HTMLElement;
+        expect(textEl.style.animationDirection).toBe('reverse');
+      } finally {
+        restore();
+      }
+    }
+  });
+
   it('renders close button when closable and triggers onClose', () => {
     const { view, onClose } = renderNoticeBar({ text: 'closable', closable: true });
     const closeBtn = view.container.querySelector(
@@ -386,6 +461,52 @@ describe('NoticeBarRenderer', () => {
     } finally {
       scrollWidthSpy.mockRestore();
       clientWidthSpy.mockRestore();
+    }
+  });
+
+  it('stops the carousel timer after close (no churn while hidden) (MM-15)', () => {
+    // MM-15: `visible` was neither in the carousel effect's dep array nor
+    // checked in its body. After handleClose set visible=false the bar returned
+    // null, but the pending 3s setTimeout still fired → setCurrentIndex →
+    // re-render → reschedule, churning every 3s while hidden. The fix adds
+    // `visible` to the deps + an early return so no carousel timer survives close.
+    vi.useFakeTimers();
+    try {
+      const { view, onClose } = renderNoticeBar({
+        text: ['a', 'b', 'c'],
+        scrollable: true,
+        closable: true,
+      });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'a',
+      );
+      // Put a carousel setTimeout in flight and confirm it advances.
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'b',
+      );
+
+      // Close the bar.
+      fireEvent.click(
+        view.container.querySelector('[data-slot="notice-bar-close"]') as HTMLButtonElement,
+      );
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(view.container.querySelector('[data-slot="notice-bar"]')).toBeNull();
+
+      // Advance well past two carousel intervals (6s). Pre-fix, the pending
+      // carousel setTimeout kept firing + rescheduling every 3s while hidden.
+      // Post-fix, the effect cleanup cancels it and the early return prevents a
+      // reschedule — no carousel timer remains pending.
+      act(() => {
+        vi.advanceTimersByTime(6000);
+      });
+      expect(vi.getTimerCount()).toBe(0);
+      // Still hidden; the churn never makes it reappear.
+      expect(view.container.querySelector('[data-slot="notice-bar"]')).toBeNull();
+    } finally {
+      vi.useRealTimers();
     }
   });
 

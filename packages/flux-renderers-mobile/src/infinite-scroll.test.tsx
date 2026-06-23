@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { InfiniteScrollSchema } from './schemas.js';
 import { InfiniteScrollRenderer } from './infinite-scroll.js';
@@ -603,5 +604,55 @@ describe('InfiniteScrollRenderer', () => {
       await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
       expect(captured[0]).toEqual({ type: 'loadmore', source: 'retry' });
     }
+  });
+
+  it('fires onLoadMore exactly once on mount under React StrictMode (MM-16)', async () => {
+    // MM-16: effects run in declaration order with no cleanup-aware guard reset.
+    // Under React 19 StrictMode (setup → cleanup → setup) the [loading,error]
+    // reset effect re-ran on the second setup and cleared isLoadingRef.current
+    // BEFORE the immediateCheck effect re-ran, which then saw the guard clear and
+    // dispatched onLoadMore a second time. The fix only releases the guard when
+    // loading/error actually change, so the second setup keeps the guard set.
+    const onLoadMore = vi.fn(async () => {
+      /* no-op */
+    });
+    const props = createMockRendererProps<InfiniteScrollSchema>({
+      schema: { type: 'infinite-scroll' },
+      props: { immediateCheck: true, hasMore: true },
+      regions: { body: <div data-testid="body-content">Body</div> },
+      events: { onLoadMore: onLoadMore as never },
+    });
+    render(
+      <React.StrictMode>
+        <InfiniteScrollRenderer {...props} />
+      </React.StrictMode>,
+    );
+    await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
+    // Settle any queued microtasks; a second StrictMode setup must NOT bump it.
+    await Promise.resolve();
+    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the retry button when disabled && error (MM-25)', () => {
+    // MM-25: with disabled:true && error:true the retry <Button> rendered fully
+    // enabled, but clicking it called triggerLoadMore() which silently returned
+    // on the disabled guard — a dead-button UX that violates WCAG 4.1.2
+    // operability. The fix forwards `disabled` so the control is honestly
+    // disabled (and a native disabled button does not dispatch click).
+    const { view, onLoadMore } = renderInfiniteScroll({
+      immediateCheck: false,
+      hasMore: true,
+      disabled: true,
+      error: true,
+      errorText: '加载失败',
+    });
+    const btn = view.container.querySelector('button') as HTMLButtonElement;
+    expect(btn).toBeTruthy();
+    expect(btn.disabled).toBe(true);
+    // Clicking a genuinely disabled button must not dispatch onLoadMore.
+    fireEvent.click(btn);
+    expect(onLoadMore).not.toHaveBeenCalled();
   });
 });

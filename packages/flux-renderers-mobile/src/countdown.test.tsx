@@ -385,6 +385,78 @@ describe('useCountdownTimer', () => {
     }
   });
 
+  it('preserves the displayed value across a targetTime pause window (MM-14)', () => {
+    // MM-14: in targetTime mode, pausing cleared the interval but Date.now()
+    // kept advancing; on resume the first tick recomputed targetTime - Date.now()
+    // and swallowed the whole pause window (e.g. 60s display → ~40s). The fix
+    // re-anchors the run-segment on resume so the pause window is excluded.
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    try {
+      const view = render(<CountdownTimerHarness targetTime={60_000} format="ss" />);
+      const harness = () => view.container.querySelector('[data-testid="harness"]') as HTMLElement;
+      expect(Number(harness().getAttribute('data-remaining'))).toBe(60_000);
+
+      // run 10s → remaining 50_000
+      act(() => {
+        vi.advanceTimersByTime(10_000);
+      });
+      expect(Number(harness().getAttribute('data-remaining'))).toBe(50_000);
+
+      // pause; wall-clock advances 10s during the pause
+      view.rerender(<CountdownTimerHarness targetTime={60_000} format="ss" paused />);
+      act(() => {
+        vi.advanceTimersByTime(10_000);
+      });
+      // Paused → display frozen at the paused value (50_000), not advanced.
+      expect(Number(harness().getAttribute('data-remaining'))).toBe(50_000);
+
+      // resume → the run-segment is re-anchored; the pause window is excluded.
+      view.rerender(<CountdownTimerHarness targetTime={60_000} format="ss" />);
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+      });
+      const remaining = Number(harness().getAttribute('data-remaining'));
+      // Fix: continues from 50_000 → ~49_000 after one resumed tick.
+      // Pre-fix: recomputed targetTime - Date.now() = 60000 - 21000 = 39_000.
+      expect(remaining).toBeGreaterThanOrEqual(48_000);
+      expect(remaining).toBeLessThanOrEqual(50_000);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('time mode stays wall-clock accurate under a throttled setInterval (OA-21)', () => {
+    // OA-21: the `time` branch tick was purely subtractive (prev - interval),
+    // which is only correct if setInterval fires exactly every `interval` ms.
+    // Real browsers throttle background setInterval; this test simulates a
+    // background-tab throttle where 30s of wall-clock elapse but only ONE 1000ms
+    // tick is delivered. Date.now is decoupled from the faked setInterval queue.
+    vi.useFakeTimers();
+    let wallClock = 0;
+    const dateSpy = vi.spyOn(Date, 'now').mockImplementation(() => wallClock);
+    try {
+      const view = render(<CountdownTimerHarness time={60_000} format="ss" />);
+      const harness = () => view.container.querySelector('[data-testid="harness"]') as HTMLElement;
+      expect(Number(harness().getAttribute('data-remaining'))).toBe(60_000);
+
+      // 30s of wall-clock elapse, but only ONE interval tick is delivered.
+      wallClock = 30_000;
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+      });
+
+      const remaining = Number(harness().getAttribute('data-remaining'));
+      // Wall-clock accurate: ~30_000 remaining. Pre-fix subtractive tick
+      // (prev - interval) yields 59_000 — pure drift invisible to ideal-timer tests.
+      expect(remaining).toBeGreaterThanOrEqual(29_000);
+      expect(remaining).toBeLessThanOrEqual(30_000);
+    } finally {
+      dateSpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it('does not keep re-rendering after finish in millisecond mode (targetTime branch, MA-16)', () => {
     vi.useFakeTimers();
     vi.setSystemTime(0);
@@ -418,6 +490,34 @@ describe('useCountdownTimer', () => {
       });
       expect(onFinish).toHaveBeenCalledTimes(1);
       expect(commits).toBe(commitsAtFinish);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('fires onFinish exactly once when time reaches zero under StrictMode (MM-23)', () => {
+    // MM-23: countdown had no StrictMode coverage (unlike pull-refresh/swipe-cell).
+    // This is coverage hardening for MA-02's effect-based dispatch + finishedRef:
+    // React 19 StrictMode double-invokes effects only on the initial mount, so
+    // when isFinished flips on a later commit the finish effect runs once and
+    // finishedRef guarantees a single onFinish dispatch.
+    vi.useFakeTimers();
+    const onFinish = vi.fn();
+    try {
+      render(
+        <React.StrictMode>
+          <CountdownTimerHarness time={1_000} format="ss" onFinish={onFinish} />
+        </React.StrictMode>,
+      );
+      act(() => {
+        vi.advanceTimersByTime(1_100);
+      });
+      expect(onFinish).toHaveBeenCalledTimes(1);
+      // A subsequent tick window must not re-dispatch.
+      act(() => {
+        vi.advanceTimersByTime(2_000);
+      });
+      expect(onFinish).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }

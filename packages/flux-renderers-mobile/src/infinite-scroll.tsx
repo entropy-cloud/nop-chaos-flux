@@ -67,8 +67,22 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
   // If neither prop ever updates, the guard stays — over-locking is the
   // conservative, safe failure mode (better than duplicate requests).
   const isLoadingRef = React.useRef(false);
+  // MM-16: only release the in-flight guard when `loading`/`error` actually
+  // change — not on every effect invocation. Under React 19 StrictMode the
+  // effect re-runs on the second mount setup (setup → cleanup → setup);
+  // unconditionally clearing isLoadingRef.current there wiped the guard before
+  // the immediateCheck effect re-ran, producing a duplicate onLoadMore
+  // dispatch. Tracking the previous values keeps the guard set across the
+  // StrictMode re-setup while preserving OA-16 (host clearing `error` still
+  // releases the guard) and MA-13 (observer-vs-immediateCheck dedupe within a
+  // single mount).
+  const prevLoadingErrorRef = React.useRef<{ loading?: boolean; error?: boolean | string }>({});
   React.useEffect(() => {
-    isLoadingRef.current = false;
+    const prev = prevLoadingErrorRef.current;
+    if (prev.loading !== loading || prev.error !== error) {
+      isLoadingRef.current = false;
+    }
+    prevLoadingErrorRef.current = { loading, error };
   }, [loading, error]);
 
   // MA-14: every onLoadMore dispatch is guarded against reject / sync-throw so
@@ -195,6 +209,7 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
             variant="ghost"
             size="sm"
             className="w-full justify-center"
+            disabled={disabled}
             onClick={(event) => {
               event.stopPropagation();
               triggerLoadMore();
