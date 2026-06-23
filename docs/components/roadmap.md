@@ -17,7 +17,7 @@
 > 工作项按 wave 分组（W1 最优先 → W4 最后）。状态流转：draft review 通过 → `todo` 改 `planned`；closure audit 通过 → `planned` 改 `done`（不得提前）。一个 plan 可覆盖多个工作项，届时一并标记。
 
 - L0. 已落地基线（landed）: `done`
-- W1a. 内容展示组（5）: `planned`（plan: `docs/plans/2026-06-24-0040-2-w1a-content-family-sanitization-plan.md`）
+- W1a. 内容展示组（5）: `done`（plan: `docs/plans/2026-06-24-0040-2-w1a-content-family-sanitization-plan.md`；markdown/html/link/image/json-view 5 个 renderer 落地于 `flux-renderers-content`；首次建立受控渲染安全门禁——html 默认 DOMPurify sanitize、markdown allowHtml 门禁）
 - W1b. 容器与反馈组（5）: `done`（plan: `docs/plans/2026-06-24-0040-1-w1b-feedback-family-content-package-bootstrap-plan.md`；首次落地 NEW 包 `flux-renderers-content` + separator/card/progress/spinner/empty 5 个 renderer；解锁 W1a/W2a-content/W3c/W4a）
 - W1c. 集合展示组（1）: `planned`（plan: `docs/plans/2026-06-24-0040-3-w1c-list-collection-display-plan.md`）
 - W1d. 移动端交互组（2，pull-refresh/infinite-scroll）: `todo`（依赖 `mobile-roadmap.md` M5；`@nop-chaos/flux-renderers-mobile` 包**代码未落地**，见 mobile-roadmap Current Baseline；口径以 mobile-roadmap 为准）
