@@ -43,3 +43,5 @@ export { TreeLabPage } from './tree-lab-page';
 export { DataSourceLabPage } from './data-source-lab-page';
 export { ChartLabPage } from './chart-lab-page';
 export { ListLabPage } from './list-lab-page';
+export { ServiceLabPage } from './service-lab-page';
+export { PaginationLabPage } from './pagination-lab-page';

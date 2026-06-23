@@ -41,6 +41,15 @@ export const zhCN: Resource = {
       previous: '上一页',
       next: '下一页',
     },
+    wizard: {
+      previous: '上一步',
+      next: '下一步',
+      complete: '完成',
+      committing: '提交中...',
+      noSteps: '未定义步骤',
+      stepNav: '向导步骤',
+      close: '关闭',
+    },
     crud: {
       pollingStart: '恢复轮询',
       pollingStop: '停止轮询',

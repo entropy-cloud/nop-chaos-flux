@@ -32,10 +32,12 @@ const TYPES = [
   'json-view',
   'markdown',
   'html',
+  'cards',
+  'alert',
 ] as const;
 
 describe('contentRendererDefinitions', () => {
-  it('declares 10 renderer definitions for the content family (W1a + W1b)', () => {
+  it('declares 12 renderer definitions for the content family (W1a + W1b + W2a cards/alert)', () => {
     expect(contentRendererDefinitions.map((d) => d.type).sort()).toEqual([...TYPES].sort());
   });
 

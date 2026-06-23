@@ -179,6 +179,9 @@ importers:
       '@nop-chaos/flux-renderers-form-advanced':
         specifier: workspace:*
         version: link:../../packages/flux-renderers-form-advanced
+      '@nop-chaos/flux-renderers-layout':
+        specifier: workspace:*
+        version: link:../../packages/flux-renderers-layout
       '@nop-chaos/flux-renderers-mobile':
         specifier: workspace:*
         version: link:../../packages/flux-renderers-mobile
@@ -703,6 +706,28 @@ importers:
       '@nop-chaos/flux-renderers-data':
         specifier: workspace:*
         version: link:../flux-renderers-data
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+
+  packages/flux-renderers-layout:
+    dependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
+      '@nop-chaos/flux-i18n':
+        specifier: workspace:*
+        version: link:../flux-i18n
+      '@nop-chaos/flux-react':
+        specifier: workspace:*
+        version: link:../flux-react
+      '@nop-chaos/ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.4)

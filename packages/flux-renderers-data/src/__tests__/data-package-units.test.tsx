@@ -26,11 +26,15 @@ describe('data package units', () => {
       'chart',
       'tree',
       'list',
+      'service',
+      'pagination',
       'crud',
     ]);
     expect(registry.get('table')?.type).toBe('table');
     expect(registry.get('list')?.type).toBe('list');
     expect(registry.get('crud')?.type).toBe('crud');
+    expect(registry.get('service')?.type).toBe('service');
+    expect(registry.get('pagination')?.type).toBe('pagination');
   });
 
   it('normalizes toolbar block layouts and ignores unsupported values', () => {

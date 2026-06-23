@@ -1,0 +1,3 @@
+/* flux-renderers-layout marker styles.
+   Layout renderers emit marker classes only; widget renderers are self-styled
+   via @nop-chaos/ui primitives. */

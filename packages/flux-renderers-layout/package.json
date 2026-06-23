@@ -1,0 +1,41 @@
+{
+  "name": "@nop-chaos/flux-renderers-layout",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": [
+    "*.css"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": {
+      "default": "./dist/styles.css"
+    }
+  },
+  "dependencies": {
+    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-i18n": "workspace:*",
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "lucide-react": "^1.17.0",
+    "react": "^19.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "Layout / flow / actions renderers: wizard, steps, timeline, grid, collapse, button-group, dropdown-button."
+}

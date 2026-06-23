@@ -335,6 +335,22 @@ export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
       'Ordered collection renderer with an item region, empty state, and local controlled selection (single/multiple/none).',
   },
   {
+    id: 'service',
+    title: 'Service',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    description:
+      'Visual data-composition shell that reads already-loaded data from scope via the items expression. Owns NO request protocol (request-sink contract: api/initFetch/interval/sendOn belong to <data-source>).',
+  },
+  {
+    id: 'pagination',
+    title: 'Pagination',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    description:
+      'Standalone pagination interaction owner. Reuses ui Pagination; normalizes out-of-range currentPage; page-size change resets to page 1.',
+  },
+  {
     id: 'data-source',
     title: 'Data Source',
     category: 'logic',
@@ -510,6 +526,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     eyebrow: 'Content Renderers (W1a)',
     description:
       'W1a content display renderers: markdown, html, link, image, json-view — with the controlled-rendering XSS sanitize gate (DOMPurify) for html/markdown, mounted via SchemaRenderer.',
+  },
+  {
+    id: 'w2a-data-composition',
+    title: 'Data Composition Family',
+    eyebrow: 'Data/Layout Renderers (W2a)',
+    description:
+      'W2a data composition renderers: service (request-sink visual shell over data-source), pagination (standalone interaction owner), cards (card collection), alert (inline feedback), wizard (layered step-switching + commit lifecycle) — first bootstrap of flux-renderers-layout package.',
   },
   {
     id: 'm1-responsive',

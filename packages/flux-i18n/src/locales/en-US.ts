@@ -41,6 +41,15 @@ export const enUS: Resource = {
       previous: 'Previous',
       next: 'Next',
     },
+    wizard: {
+      previous: 'Previous',
+      next: 'Next',
+      complete: 'Complete',
+      committing: 'Committing...',
+      noSteps: 'No steps defined',
+      stepNav: 'Wizard steps',
+      close: 'Close',
+    },
     crud: {
       pollingStart: 'Resume polling',
       pollingStop: 'Stop polling',

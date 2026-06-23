@@ -43,6 +43,14 @@
         "./packages/flux-renderers-form/src/form-renderers.css"
       ],
       "@nop-chaos/flux-renderers-data": ["./packages/flux-renderers-data/src/index.tsx"],
+      "@nop-chaos/flux-renderers-content": ["./packages/flux-renderers-content/src/index.ts"],
+      "@nop-chaos/flux-renderers-content/styles.css": [
+        "./packages/flux-renderers-content/src/styles.css"
+      ],
+      "@nop-chaos/flux-renderers-layout": ["./packages/flux-renderers-layout/src/index.ts"],
+      "@nop-chaos/flux-renderers-layout/styles.css": [
+        "./packages/flux-renderers-layout/src/styles.css"
+      ],
       "@nop-chaos/flux-code-editor": ["./packages/flux-code-editor/src/index.ts"],
       "@nop-chaos/flux-code-editor/code-editor-styles.css": [
         "./packages/flux-code-editor/src/code-editor-styles.css"

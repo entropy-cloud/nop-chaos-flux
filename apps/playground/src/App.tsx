@@ -7,6 +7,7 @@ import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-ad
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
+import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { HomePage } from './pages/home-page';
 import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
@@ -28,6 +29,7 @@ import { MobileInfrastructureDemoPage } from './pages/mobile-infrastructure-demo
 import { MobileComponentsDemoPage } from './pages/mobile-components-demo';
 import { W1bContentFeedbackDemoPage } from './pages/w1b-content-feedback-demo';
 import { W1aContentDisplayDemoPage } from './pages/w1a-content-display-demo';
+import { W2aDataCompositionDemoPage } from './pages/w2a-data-composition-demo';
 import { M1ResponsiveDemoPage } from './pages/m1-responsive-demo';
 import { M2TouchDemoPage } from './pages/m2-touch-demo';
 import { M3LayoutDemoPage } from './pages/m3-layout-demo';
@@ -59,6 +61,7 @@ registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
 registerMobileRenderers(registry);
 registerContentRenderers(registry);
+registerLayoutRenderers(registry);
 
 if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefined') {
   window.__NOP_DEBUGGER__ = {
@@ -174,6 +177,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <W1bContentFeedbackDemoPage onBack={goHome} />;
         case 'w1a-content':
           return <W1aContentDisplayDemoPage onBack={goHome} />;
+        case 'w2a-data-composition':
+          return <W2aDataCompositionDemoPage onBack={goHome} />;
         case 'm1-responsive':
           return <M1ResponsiveDemoPage onBack={goHome} />;
         case 'm2-touch':

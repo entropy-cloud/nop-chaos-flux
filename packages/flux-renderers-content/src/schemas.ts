@@ -140,3 +140,47 @@ export interface HtmlSchema extends BaseSchema {
   /** 空态（value-or-region） */
   empty?: SchemaInput;
 }
+
+// ───────────────────────────── W2a 数据组合组 ─────────────────────────────
+
+export type CardsSelectionMode = 'single' | 'multiple' | 'none';
+
+export interface CardsSchema extends BaseSchema {
+  type: 'cards';
+  /** 唯一集合字段：卡片集合数据数组（表达式值绑定，从 scope 读取） */
+  items?: SchemaValue;
+  /** 单卡片模板 region（运行在每条记录的 item/index 作用域内） */
+  card?: SchemaInput;
+  /** 空态（value-or-region） */
+  empty?: SchemaInput | string;
+  /** 单项 key 字段，缺省按 index 派生 */
+  keyField?: string;
+  /** 选择模式：none 禁用、single 互斥、multiple 累积 */
+  selectionMode?: CardsSelectionMode;
+  /** 选择所有权：local controlled state（renderer 自维护） */
+  selectionOwnership?: 'local' | 'controlled' | 'scope';
+  /** 发布选择状态的 scope 路径 */
+  selectionStatePath?: string;
+  onItemClick?: ActionSchema;
+  onSelectionChange?: ActionSchema;
+  onPageChange?: ActionSchema;
+}
+
+export type AlertLevel = 'info' | 'success' | 'warning' | 'error';
+
+export interface AlertSchema extends BaseSchema {
+  type: 'alert';
+  /** 反馈级别，映射视觉变体，默认 'info' */
+  level?: AlertLevel;
+  /** 自定义图标（lucide 图标名），缺省按 level 派生 */
+  icon?: string;
+  /** 是否可关闭，默认 false */
+  closable?: boolean;
+  /** 标题（value-or-region） */
+  title?: SchemaInput;
+  /** 主要反馈内容（value-or-region） */
+  body?: SchemaInput;
+  /** 可选操作区 region */
+  actions?: SchemaInput;
+  onClose?: ActionSchema;
+}

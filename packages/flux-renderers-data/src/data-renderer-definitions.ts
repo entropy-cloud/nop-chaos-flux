@@ -7,6 +7,7 @@ import { ListRenderer } from './list-renderer.js';
 import { TableRenderer } from './table-renderer.js';
 import { TreeRenderer } from './tree-renderer.js';
 import { crudRendererDefinition } from './crud-renderer-definition.js';
+import { w2aDataCompositionDefinitions } from './w2a-data-composition-definitions.js';
 import type { ChartSchema } from './chart-schemas.js';
 
 function normalizeTableColumns(
@@ -582,5 +583,6 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     ],
   },
+  ...w2aDataCompositionDefinitions,
   crudRendererDefinition,
 ];

@@ -45,6 +45,8 @@ import {
   DataSourceLabPage,
   ChartLabPage,
   ListLabPage,
+  ServiceLabPage,
+  PaginationLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -93,4 +95,6 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   'data-source': DataSourceLabPage,
   chart: ChartLabPage,
   list: ListLabPage,
+  service: ServiceLabPage,
+  pagination: PaginationLabPage,
 };
