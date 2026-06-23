@@ -262,3 +262,50 @@ export interface InputNumberSchema extends BoundFieldSchemaBase {
   };
   hiddenFieldPolicy?: HiddenFieldPolicy;
 }
+
+export interface InputDateSchema extends BoundFieldSchemaBase {
+  type: 'input-date';
+  placeholder?: string;
+  valueFormat?: string;
+  displayFormat?: string;
+  minDate?: string;
+  maxDate?: string;
+  utc?: boolean;
+  clearable?: boolean;
+}
+
+export interface InputDatetimeSchema extends BoundFieldSchemaBase {
+  type: 'input-datetime';
+  placeholder?: string;
+  valueFormat?: string;
+  displayFormat?: string;
+  timeFormat?: string;
+  minDate?: string;
+  maxDate?: string;
+  utc?: boolean;
+  clearable?: boolean;
+}
+
+export interface InputTimeSchema extends BoundFieldSchemaBase {
+  type: 'input-time';
+  placeholder?: string;
+  valueFormat?: string;
+  displayFormat?: string;
+  minTime?: string;
+  maxTime?: string;
+  clearable?: boolean;
+}
+
+export interface DateRangeSchema extends BoundFieldSchemaBase {
+  type: 'date-range';
+  placeholder?: string;
+  rangeKind?: 'date' | 'datetime' | 'time';
+  valueFormat?: string;
+  displayFormat?: string;
+  delimiter?: string;
+  minDate?: string;
+  maxDate?: string;
+  utc?: boolean;
+  clearable?: boolean;
+  shortcuts?: Array<{ label: string; start: string; end: string }>;
+}

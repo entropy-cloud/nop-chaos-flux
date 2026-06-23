@@ -47,6 +47,10 @@ import {
   ListLabPage,
   ServiceLabPage,
   PaginationLabPage,
+  InputDateLabPage,
+  InputDatetimeLabPage,
+  InputTimeLabPage,
+  DateRangeLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -97,4 +101,8 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   list: ListLabPage,
   service: ServiceLabPage,
   pagination: PaginationLabPage,
+  'input-date': InputDateLabPage,
+  'input-datetime': InputDatetimeLabPage,
+  'input-time': InputTimeLabPage,
+  'date-range': DateRangeLabPage,
 };

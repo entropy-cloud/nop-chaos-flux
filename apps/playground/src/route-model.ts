@@ -177,6 +177,38 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Numeric input with min/max, precision, stepper, and prefix/suffix support.',
   },
   {
+    id: 'input-date',
+    title: 'Input Date',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description:
+      'Single-value date field on the shared date底层: valueFormat/displayFormat, min/max bounds, UTC storage, clearable.',
+  },
+  {
+    id: 'input-datetime',
+    title: 'Input Datetime',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description:
+      'Single-value date+time field combining the shared calendar with hour/minute precision.',
+  },
+  {
+    id: 'input-time',
+    title: 'Input Time',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description:
+      'Single-value time field with valueFormat/displayFormat conversion and minTime/maxTime clamping.',
+  },
+  {
+    id: 'date-range',
+    title: 'Date Range',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description:
+      'Canonical range owner: one type unifies date/datetime/time via rangeKind, normalizes start>end, joins ends with a delimiter.',
+  },
+  {
     id: 'textarea',
     title: 'Textarea',
     category: 'form',
@@ -533,6 +565,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     eyebrow: 'Data/Layout Renderers (W2a)',
     description:
       'W2a data composition renderers: service (request-sink visual shell over data-source), pagination (standalone interaction owner), cards (card collection), alert (inline feedback), wizard (layered step-switching + commit lifecycle) — first bootstrap of flux-renderers-layout package.',
+  },
+  {
+    id: 'w2b-date-family',
+    title: 'Date Family',
+    eyebrow: 'Form Renderers (W2b)',
+    description:
+      'W2b date family: input-date/input-datetime/input-time/date-range on a shared date底层 (no heavy date lib), with date-range converging date/datetime/time via rangeKind.',
   },
   {
     id: 'm1-responsive',

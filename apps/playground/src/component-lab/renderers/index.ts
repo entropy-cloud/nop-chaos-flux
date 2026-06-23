@@ -45,3 +45,7 @@ export { ChartLabPage } from './chart-lab-page';
 export { ListLabPage } from './list-lab-page';
 export { ServiceLabPage } from './service-lab-page';
 export { PaginationLabPage } from './pagination-lab-page';
+export { InputDateLabPage } from './input-date-lab-page';
+export { InputDatetimeLabPage } from './input-datetime-lab-page';
+export { InputTimeLabPage } from './input-time-lab-page';
+export { DateRangeLabPage } from './date-range-lab-page';
