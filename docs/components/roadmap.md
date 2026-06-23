@@ -23,8 +23,8 @@
 - W1d. 移动端交互组（2，pull-refresh/infinite-scroll）: `todo`（依赖 `mobile-roadmap.md` M5；`@nop-chaos/flux-renderers-mobile` 包**代码未落地**，见 mobile-roadmap Current Baseline；口径以 mobile-roadmap 为准）
 - W2a. 数据组合组（5）: `done`（plan: `docs/plans/2026-06-24-0335-1-w2a-data-composition-family-plan.md`；`service`/`pagination` 落 `flux-renderers-data`、`cards`/`alert` 落 `flux-renderers-content`、`wizard` 落首次 bootstrap 的 `flux-renderers-layout`；service 遵循请求下沉约束——零组件级请求字段；wizard interaction/lifecycle 状态分层；首次 bootstrap `flux-renderers-layout` 包，解锁 W3a/W3b/W4b）
 - W2b. 日期族（4）: `done`（plan: `docs/plans/2026-06-24-0335-2-w2b-date-family-form-plan.md`；`input-date`/`input-datetime`/`input-time`/`date-range` 落地于 `flux-renderers-form`——首次建立共享日期格式化/解析/校验底层（react-day-picker + 原生 Date/Intl，无重型日期库）；`date-range` 以 `rangeKind` 统一 date/datetime/time 三态，不分裂三个 canonical type；calendar↔UTC 存储时区桥接消除 day-shift 漂移；解锁 W3d `W2b → W3d`，进而解锁 W4c）
-- W3a. 布局组（2）: `todo`
-- W3b. 动作分组组（2）: `todo`
+- W3a. 布局组（2）: `done`（plan: `docs/plans/2026-06-24-0608-1-w3a-w3b-layout-action-family-plan.md`；`grid`/`collapse` 落地于 `flux-renderers-layout`——grid 从 schema 读布局值映射 CSS Grid（不硬编码视觉类名）、colSpan/rowSpan 归一化；collapse 展开态 valueOwnership local/controlled/scope 三态分层、multiple 单选互斥）
+- W3b. 动作分组组（2）: `done`（plan: `docs/plans/2026-06-24-0608-1-w3a-w3b-layout-action-family-plan.md`；`button-group`/`dropdown-button` 落地于 `flux-renderers-layout`——button-group selectionMode none/single/multiple local controlled toggle + onChange；dropdown-button trigger click/hover + 菜单项 action 派发 + 关闭；items 纯 value prop 无 nestedRegions）
 - W3c. 值映射组（2）: `todo`
 - W3d. 高级输入族（7）: `todo`
 - W4a. 多媒体组（4）: `todo`

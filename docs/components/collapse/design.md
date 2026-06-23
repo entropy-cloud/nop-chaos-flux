@@ -13,7 +13,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'collapse'`
-- 预期归属 `@nop-chaos/flux-renderers-basic`
+- 归属 `@nop-chaos/flux-renderers-layout`
 
 ## 4. schema 设计
 
