@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SwipeCellSchema } from './schemas.js';
 import { SwipeCellRenderer } from './swipe-cell.js';
@@ -28,6 +29,7 @@ function renderSwipeCell(
     body?: React.ReactNode;
     left?: React.ReactNode;
     right?: React.ReactNode;
+    strictMode?: boolean;
   } = {},
 ) {
   const onOpen = vi.fn(options.onOpen ?? (() => undefined));
@@ -58,7 +60,14 @@ function renderSwipeCell(
       onClose: onClose as never,
     },
   });
-  const view = render(<SwipeCellRenderer {...props} />);
+  const tree = options.strictMode ? (
+    <React.StrictMode>
+      <SwipeCellRenderer {...props} />
+    </React.StrictMode>
+  ) : (
+    <SwipeCellRenderer {...props} />
+  );
+  const view = render(tree);
   return { view, onOpen, onClose, props };
 }
 
@@ -230,5 +239,55 @@ describe('SwipeCellRenderer', () => {
     expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
       'closed',
     );
+  });
+
+  it('dispatches onOpen exactly once under React StrictMode (MA-02)', async () => {
+    const onOpen = vi.fn(() => undefined);
+    const { view } = renderSwipeCell({ threshold: 30, onOpen, strictMode: true });
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+    fireEvent.touchStart(root, touch(50, 50));
+    fireEvent.touchMove(root, touch(120, 50));
+    fireEvent.touchEnd(root);
+
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'open-left',
+      ),
+    );
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not commit on touchCancel and leaves the cell closed (OA-05)', () => {
+    const { view, onOpen } = renderSwipeCell({ threshold: 30 });
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+    fireEvent.touchStart(root, touch(50, 50));
+    fireEvent.touchMove(root, touch(120, 50));
+    // System cancel instead of a user lift — must not open or dispatch.
+    fireEvent.touchCancel(root);
+
+    expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+      'closed',
+    );
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it('touchCancel on an already-open cell does not close it spuriously (OA-05)', async () => {
+    const { view, onClose } = renderSwipeCell({ threshold: 30 });
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+    fireEvent.touchStart(root, touch(50, 50));
+    fireEvent.touchMove(root, touch(120, 50));
+    fireEvent.touchEnd(root);
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'open-left',
+      ),
+    );
+
+    // A subsequent system cancel must not generate a spurious close dispatch.
+    fireEvent.touchCancel(root);
+    expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+      'open-left',
+    );
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

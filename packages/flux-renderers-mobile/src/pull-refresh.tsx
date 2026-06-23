@@ -51,12 +51,28 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
   const { state, touchHandlers } = useTouch({ threshold: 10 });
   const [status, setStatus] = React.useState<PullRefreshStatus>('normal');
 
+  // statusRef mirrors the committed status so event handlers can read the
+  // current value synchronously. This is required because the onRefresh
+  // dispatch was moved OUT of the setStatus updater (MA-02): previously the
+  // updater read `current` to guard re-entrancy, but updaters must stay pure.
+  const statusRef = React.useRef<PullRefreshStatus>('normal');
+  React.useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
   const successTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Unmount guard for the in-flight refresh promise and the success timer.
+  // Without this, resolving the promise after unmount schedules a timer that
+  // is never cleared (the cleanup only inspects successTimerRef at unmount).
+  const isMountedRef = React.useRef(true);
 
   React.useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current);
+        successTimerRef.current = null;
       }
     };
   }, []);
@@ -80,20 +96,36 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
   const handleTouchEnd = React.useCallback(() => {
     touchHandlers.onTouchEnd({} as React.TouchEvent);
     if (disabled) return;
-    setStatus((current) => {
-      if (current === 'loading' || current === 'success') return current;
-      if (directionalDelta >= threshold) {
-        void Promise.resolve(props.events.onRefresh?.(undefined)).then(() => {
+    // Re-entrancy guard (previously lived inside the updater, reading `current`).
+    const current = statusRef.current;
+    if (current === 'loading' || current === 'success') return;
+
+    if (directionalDelta >= threshold) {
+      setStatus('loading');
+      // MA-01: a rejected onRefresh must return to 'normal' instead of locking
+      // the spinner; MA-12: both branches guard against post-unmount setState.
+      // Dispatch lives in the handler body (not in an updater) so React 19
+      // StrictMode does not double-invoke it (MA-02).
+      void Promise.resolve()
+        .then(() => props.events.onRefresh?.(undefined))
+        .then(() => {
+          if (!isMountedRef.current) return;
           setStatus('success');
           if (successTimerRef.current) clearTimeout(successTimerRef.current);
           successTimerRef.current = setTimeout(() => {
+            if (!isMountedRef.current) return;
+            successTimerRef.current = null;
             setStatus('normal');
           }, successDuration);
+        })
+        .catch(() => {
+          if (!isMountedRef.current) return;
+          setStatus('normal');
         });
-        return 'loading';
-      }
-      return 'normal';
-    });
+      return;
+    }
+
+    setStatus('normal');
   }, [
     touchHandlers,
     disabled,
@@ -102,6 +134,17 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
     props.events,
     successDuration,
   ]);
+
+  // OA-05: a system touchcancel (multi-touch, scroll takeover, incoming call,
+  // gesture interruption) is NOT a user lift — it must not commit the pull or
+  // dispatch onRefresh. Restore to the resting state and let the body rebound.
+  const handleTouchCancel = React.useCallback(() => {
+    touchHandlers.onTouchEnd({} as React.TouchEvent);
+    if (disabled) return;
+    const current = statusRef.current;
+    if (current === 'loading' || current === 'success') return;
+    setStatus('normal');
+  }, [touchHandlers, disabled]);
 
   const bodyContent = props.regions.body?.render() as React.ReactNode;
   const isBusy = status === 'loading' || status === 'success';
@@ -129,7 +172,7 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
       onTouchStart={disabled ? undefined : touchHandlers.onTouchStart}
       onTouchMove={disabled ? undefined : touchHandlers.onTouchMove}
       onTouchEnd={disabled ? undefined : handleTouchEnd}
-      onTouchCancel={disabled ? undefined : handleTouchEnd}
+      onTouchCancel={disabled ? undefined : handleTouchCancel}
     >
       <div
         data-slot="pull-refresh-indicator"

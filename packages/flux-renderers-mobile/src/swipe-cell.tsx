@@ -37,6 +37,17 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
   const [rightWidth, setRightWidth] = React.useState(0);
   const [openState, setOpenState] = React.useState<SwipeOpenState>('closed');
 
+  // openStateRef mirrors the committed open state so open/close guards can run
+  // in the handler body. This is required because the onOpen/onClose dispatch
+  // was moved OUT of the setOpenState updater (MA-02): the updater must stay
+  // pure so React 19 StrictMode does not double-dispatch on each gesture. The
+  // ref is updated synchronously on every state transition so rapid successive
+  // calls still see the latest intent (matching the old updater `current`).
+  const openStateRef = React.useRef<SwipeOpenState>('closed');
+  React.useEffect(() => {
+    openStateRef.current = openState;
+  }, [openState]);
+
   const { state, touchHandlers, reset } = useTouch({ threshold: 10 });
 
   React.useLayoutEffect(() => {
@@ -81,24 +92,21 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
   const isAnimating = activeDragOffset === 0;
 
   const closeCell = React.useCallback(() => {
-    setOpenState((current) => {
-      if (current !== 'closed') {
-        void props.events.onClose?.(undefined);
-        return 'closed';
-      }
-      return current;
-    });
+    // Dispatch lives in the handler body (not in an updater) so StrictMode
+    // does not double-invoke onClose (MA-02). The ref mirror preserves the
+    // old `current !== 'closed'` re-entrancy guard.
+    if (openStateRef.current === 'closed') return;
+    openStateRef.current = 'closed';
+    setOpenState('closed');
+    void props.events.onClose?.(undefined);
   }, [props.events]);
 
   const openCell = React.useCallback(
     (target: 'open-left' | 'open-right') => {
-      setOpenState((current) => {
-        if (current !== target) {
-          void props.events.onOpen?.(undefined);
-          return target;
-        }
-        return current;
-      });
+      if (openStateRef.current === target) return;
+      openStateRef.current = target;
+      setOpenState(target);
+      void props.events.onOpen?.(undefined);
     },
     [props.events],
   );
@@ -150,6 +158,14 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
     reset,
   ]);
 
+  // OA-05: a system touchcancel (multi-touch, scroll takeover, gesture
+  // interruption) is NOT a user lift — it must not commit the swipe or
+  // dispatch onOpen/onClose. Release touch tracking so the cell rebounds to
+  // its pre-drag openState (which stays unchanged because we never committed).
+  const handleTouchCancel = React.useCallback(() => {
+    reset();
+  }, [reset]);
+
   const bodyContent = props.regions.body?.render() as React.ReactNode;
   const leftContent = props.regions.left?.render() as React.ReactNode;
   const rightContent = props.regions.right?.render() as React.ReactNode;
@@ -183,7 +199,7 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
       onTouchStart={disabled ? undefined : touchHandlers.onTouchStart}
       onTouchMove={disabled ? undefined : touchHandlers.onTouchMove}
       onTouchEnd={disabled ? undefined : handleTouchEnd}
-      onTouchCancel={disabled ? undefined : handleTouchEnd}
+      onTouchCancel={disabled ? undefined : handleTouchCancel}
     >
       {hasLeft ? (
         <div

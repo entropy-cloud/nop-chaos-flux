@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 
 import { act, cleanup, render } from '@testing-library/react';
+import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CountdownSchema } from './schemas.js';
-import { CountdownRenderer, formatCountdown } from './countdown.js';
+import { CountdownRenderer, formatCountdown, useCountdownTimer } from './countdown.js';
 import { createMockRendererProps } from './test-support.js';
 
 afterEach(() => {
@@ -177,5 +178,193 @@ describe('CountdownRenderer', () => {
     // 90 seconds -> ss format shows the seconds part (00..59), but it's > 5
     expect(Number(value)).toBeGreaterThanOrEqual(0);
     expect(Number(value)).toBeLessThanOrEqual(59);
+  });
+
+  it('formats the targetTime seconds part exactly (MA-15 strict)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    try {
+      const { view } = renderCountdown({ targetTime: 90_000, format: 'ss' });
+      // remaining = 90000 → ss = floor(90000/1000) % 60 = 30
+      expect(view.container.querySelector('[data-slot="countdown-value"]')?.textContent).toBe('30');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('ticks at the 30ms granularity in millisecond mode (MA-15)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    try {
+      const { view } = renderCountdown({
+        time: 120,
+        millisecond: true,
+        format: 'ss:SSS',
+      });
+      expect(view.container.querySelector('[data-slot="countdown-value"]')?.textContent).toBe(
+        '00:120',
+      );
+      act(() => {
+        vi.advanceTimersByTime(30);
+      });
+      expect(view.container.querySelector('[data-slot="countdown-value"]')?.textContent).toBe(
+        '00:090',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('clamps an elapsed targetTime to zero and fires onFinish once (MA-16)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(10_000);
+    try {
+      const onFinish = vi.fn();
+      const { view } = renderCountdown({
+        targetTime: 5_000,
+        format: 'ss',
+        onFinish,
+      });
+      expect(view.container.querySelector('[data-finished]')?.getAttribute('data-finished')).toBe(
+        'true',
+      );
+      expect(view.container.querySelector('[data-slot="countdown-value"]')?.textContent).toBe('00');
+      expect(onFinish).toHaveBeenCalledTimes(1);
+
+      // Advancing well past the elapsed target must not re-dispatch or change state.
+      act(() => {
+        vi.advanceTimersByTime(5_000);
+      });
+      expect(onFinish).toHaveBeenCalledTimes(1);
+      expect(view.container.querySelector('[data-slot="countdown-value"]')?.textContent).toBe('00');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('useCountdownTimer', () => {
+  interface HarnessHandle {
+    reset: () => void;
+    start: () => void;
+  }
+
+  interface HarnessProps {
+    time?: number;
+    targetTime?: number;
+    format?: string;
+    millisecond?: boolean;
+    paused?: boolean;
+    autoStart?: boolean;
+    onFinish?: () => void;
+    onHandle?: (handle: HarnessHandle) => void;
+    onCommit?: () => void;
+  }
+
+  function CountdownTimerHarness(props: HarnessProps) {
+    const result = useCountdownTimer({
+      time: props.time,
+      targetTime: props.targetTime,
+      format: props.format ?? 'ss',
+      millisecond: props.millisecond,
+      paused: props.paused,
+      autoStart: props.autoStart,
+      onFinish: props.onFinish ?? (() => undefined),
+    });
+    React.useEffect(() => {
+      props.onCommit?.();
+    });
+    React.useEffect(() => {
+      props.onHandle?.({ reset: result.reset, start: result.start });
+    });
+    return (
+      <span
+        data-testid="harness"
+        data-remaining={result.remaining}
+        data-started={String(result.started)}
+        data-finished={result.isFinished ? 'true' : 'false'}
+      >
+        {result.formatted}
+      </span>
+    );
+  }
+
+  it('reset() stops the timer; start() resumes it (OA-13)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    try {
+      let handle: HarnessHandle | null = null;
+      const view = render(
+        <CountdownTimerHarness
+          time={5_000}
+          format="ss"
+          onHandle={(h) => {
+            handle = h;
+          }}
+        />,
+      );
+      const harness = () => view.container.querySelector('[data-testid="harness"]') as HTMLElement;
+
+      // autoStart default → started=true, remaining=5000 → '05'
+      expect(harness().getAttribute('data-started')).toBe('true');
+      expect(harness().textContent).toBe('05');
+
+      act(() => handle?.reset());
+      // OA-13: started=false (stopped), remaining returns to initial, no auto-resume.
+      expect(harness().getAttribute('data-started')).toBe('false');
+      expect(harness().textContent).toBe('05');
+      act(() => {
+        vi.advanceTimersByTime(2_000);
+      });
+      // timer is stopped → display does not advance
+      expect(harness().textContent).toBe('05');
+
+      act(() => handle?.start());
+      expect(harness().getAttribute('data-started')).toBe('true');
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+      });
+      expect(harness().textContent).toBe('04');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not keep re-rendering after finish in millisecond mode (targetTime branch, MA-16)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    try {
+      let commits = 0;
+      const onFinish = vi.fn();
+      render(
+        <CountdownTimerHarness
+          targetTime={30}
+          millisecond
+          format="ss:SSS"
+          onFinish={onFinish}
+          onCommit={() => {
+            commits += 1;
+          }}
+        />,
+      );
+      // tick at 30ms: remaining 30 → clamped 0 → finish
+      act(() => {
+        vi.advanceTimersByTime(60);
+      });
+      expect(onFinish).toHaveBeenCalledTimes(1);
+      const commitsAtFinish = commits;
+
+      // Original MA-16 defect: targetTime - Date.now() stays negative AND keeps
+      // changing every tick → a re-render storm every 30ms. The fix clamps the
+      // targetTime branch AND clears the interval on finish, so the commit
+      // count must remain stable here.
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+      });
+      expect(onFinish).toHaveBeenCalledTimes(1);
+      expect(commits).toBe(commitsAtFinish);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

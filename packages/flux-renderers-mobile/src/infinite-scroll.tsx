@@ -38,6 +38,40 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
     onLoadMoreRef.current = props.events.onLoadMore;
   }, [props.events.onLoadMore]);
 
+  // Semantic resolution (kept as explicit booleans so implicit-truthy values
+  // do not accidentally engage the guards): `hasMore === false` means the host
+  // explicitly declared "no more data"; any other value (true/undefined) keeps
+  // loading eligible. `error === true | string` fully suspends auto-loading.
+  const isFinished = hasMore === false;
+  const hasError = error === true || typeof error === 'string';
+
+  // MA-13: local in-flight guard. The host `loading` prop only flips AFTER the
+  // host receives the onLoadMore event, so the IntersectionObserver callback
+  // and the immediateCheck effect can both fire before `loading` turns true.
+  // This ref synchronously dedupes those auto paths. It is released on any
+  // `loading` transition (the host has acknowledged or concluded the request);
+  // if the host never updates `loading`, the guard stays — over-locking is the
+  // conservative, safe failure mode (better than duplicate requests).
+  const isLoadingRef = React.useRef(false);
+  React.useEffect(() => {
+    isLoadingRef.current = false;
+  }, [loading]);
+
+  // MA-14: every onLoadMore dispatch is guarded against reject / sync-throw so
+  // a failing action never crashes the renderer; the host surfaces failure via
+  // the `error` prop (retry <Button>). The call itself stays synchronous to
+  // preserve the original timing contract.
+  const fireLoadMore = React.useCallback(() => {
+    isLoadingRef.current = true;
+    try {
+      void Promise.resolve(onLoadMoreRef.current?.()).catch(() => {
+        /* host owns error surfacing via the `error` prop */
+      });
+    } catch {
+      /* sync throw swallowed; in-flight guard stays until host clears loading */
+    }
+  }, []);
+
   const status = resolveStatus({ hasMore, loading, error });
 
   React.useEffect(() => {
@@ -48,11 +82,16 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
     const observer = new IntersectionObserver(
       (entries) => {
         if (disabled) return;
-        if (hasMore === false) return;
+        if (isFinished) return;
         if (loading === true) return;
+        // OA-10: an error state fully suspends automatic loading — only the
+        // explicit retry <Button> (triggerLoadMore) may resume, so the user
+        // is always routed through the retry UX instead of silent re-fetches.
+        if (hasError) return;
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            void onLoadMoreRef.current?.();
+            if (isLoadingRef.current) continue;
+            fireLoadMore();
           }
         }
       },
@@ -61,20 +100,25 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [distance, disabled, hasMore, loading]);
+    // `error` (via hasError) is included so the observer is rebuilt armed with
+    // the correct guard when entering/leaving the error state (OA-10, MA-20).
+  }, [distance, disabled, isFinished, loading, hasError, fireLoadMore]);
 
   React.useEffect(() => {
     if (!immediateCheck) return;
     if (disabled) return;
-    if (hasMore === false) return;
+    if (isFinished) return;
     if (loading === true) return;
-    void onLoadMoreRef.current?.();
-  }, [immediateCheck, disabled, hasMore, loading]);
+    if (hasError) return;
+    if (isLoadingRef.current) return;
+    fireLoadMore();
+  }, [immediateCheck, disabled, isFinished, loading, hasError, fireLoadMore]);
 
   const triggerLoadMore = () => {
     if (disabled) return;
-    if (hasMore === false) return;
-    void onLoadMoreRef.current?.();
+    if (isFinished) return;
+    if (isLoadingRef.current) return;
+    fireLoadMore();
   };
 
   const bodyContent = props.regions.body?.render() as React.ReactNode;

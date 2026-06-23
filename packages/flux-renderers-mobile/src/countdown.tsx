@@ -50,7 +50,10 @@ function useCountdownTimer(options: CountdownTimerOptions): CountdownTimerResult
 
   const computeInitialRemaining = React.useCallback(() => {
     if (typeof targetTime === 'number') {
-      return targetTime - Date.now();
+      // MA-16: clamp the targetTime branch to 0 so an already-elapsed target
+      // does not seed a negative remaining (which would bypass the finish
+      // guard and keep ticking with ever-changing negative values).
+      return Math.max(0, targetTime - Date.now());
     }
     if (typeof time === 'number') {
       return time;
@@ -72,35 +75,46 @@ function useCountdownTimer(options: CountdownTimerOptions): CountdownTimerResult
     finishedRef.current = false;
   }, [computeInitialRemaining, autoStart]);
 
+  const isFinished = remaining <= 0;
+
+  // Finish dispatch lives in an EFFECT (not in the setRemaining updater) so
+  // React 19 StrictMode does not double-dispatch onFinish (MA-02). The updater
+  // stays pure; finishedRef guarantees onFinish fires exactly once per finish.
+  React.useEffect(() => {
+    if (!isFinished) return;
+    if (!started || paused) return;
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    onFinishRef.current();
+  }, [isFinished, started, paused]);
+
   React.useEffect(() => {
     if (!started) return;
     if (paused) return;
+    // MA-16: once finished, stop the tick entirely (clearInterval via effect
+    // cleanup when isFinished flips). Without this the 30ms millisecond timer
+    // would keep firing and, combined with unclamped targetTime math, caused
+    // an infinite re-render storm on every finished countdown.
+    if (isFinished) return;
 
     const tick = () => {
       setRemaining((prev) => {
-        let next: number;
         if (typeof targetTime === 'number') {
-          next = targetTime - Date.now();
-        } else if (typeof time === 'number') {
-          next = Math.max(0, prev - interval);
-        } else {
-          next = prev;
+          // MA-16: clamp so remaining never goes negative (stabilises at 0,
+          // which lets React bail out of further re-renders).
+          return Math.max(0, targetTime - Date.now());
         }
-
-        if (next <= 0 && !finishedRef.current) {
-          finishedRef.current = true;
-          onFinishRef.current();
-          return 0;
+        if (typeof time === 'number') {
+          return Math.max(0, prev - interval);
         }
-        return next;
+        return prev;
       });
     };
 
     const timer = setInterval(tick, interval);
     return () => clearInterval(timer);
-  }, [started, paused, targetTime, time, interval]);
+  }, [started, paused, isFinished, targetTime, time, interval]);
 
-  const isFinished = remaining <= 0;
   const formatted = formatCountdown(remaining, format);
 
   return {
@@ -108,10 +122,17 @@ function useCountdownTimer(options: CountdownTimerOptions): CountdownTimerResult
     formatted,
     isFinished,
     started,
+    // OA-13 reset contract: `remaining` returns to its initial value AND the
+    // timer is STOPPED (started=false). A subsequent countdown only begins on
+    // an explicit `start()` call. This aligns with `autoStart:false` semantics
+    // and avoids the old bug where reset silently restarted because the tick
+    // interval was never stopped.
     reset() {
       setRemaining(computeInitialRemaining());
+      setStarted(false);
       finishedRef.current = false;
     },
+    // start() resumes the timer (after reset() or after autoStart:false).
     start() {
       setStarted(true);
     },
