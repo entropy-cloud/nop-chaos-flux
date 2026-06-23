@@ -87,6 +87,9 @@ normal → pulling → loosing → loading → success → normal
 - 仅垂直方向触发（`direction: 'vertical'`）
 - 拖拽距离弹性阻尼：`Math.min(deltaY * 0.5, maxPullDistance)`
 - 松手回弹动画：`transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`
+- 几何跟手 1:1（OA-09）：indicator 绝对定位（`position:absolute; transform:translateY(-100%)`）被提出文档流，translated track 内 `body` 是唯一 in-flow 子元素，因此 body 屏幕位移 === 根 translate === 手指位移（不再因 indicator 堆叠高度造成 ~2× 过冲）
+- `pulling`/`loosing` 标签渲染期派生（MA-10）：`status` state 只承载真实状态机迁移（normal/loading/success），touchmove 过程中的瞬态标签由 `state.isTouching && directionalDelta > 0` 派生，无 `useEffect+setState` 镜像
+- 根 `touch-action: pan-x` + `overscroll-behavior-y: contain`（MA-07）：声明垂直手势所有权，浏览器不与原生滚动/overscroll 竞争
 
 ## 6. 与 Page / CRUD 的集成
 

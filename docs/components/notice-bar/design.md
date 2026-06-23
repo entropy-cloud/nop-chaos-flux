@@ -97,7 +97,7 @@ interface NoticeBarEvents {
 ## 6. 样式与 DOM marker
 
 ```html
-<div class="nop-notice-bar" data-slot="notice-bar" data-variant="info" role="alert">
+<div class="nop-notice-bar" data-slot="notice-bar" data-variant="info" role="status">
   <span data-slot="notice-bar-icon">
     <!-- icon region 或默认 info 图标 -->
   </span>
@@ -112,10 +112,11 @@ interface NoticeBarEvents {
 
 - 根节点 `nop-notice-bar` marker；variant 通过 `data-variant` 承载（不发 BEM 修饰符，遵循 markers 契约）
 - 内部 region 仅用 `data-slot` 标识结构身份，不使用 `nop-X__region` BEM 类
-- `role="alert"` 确保无障碍
+- 无障碍角色按用途分流（OA-04）：绑定了 `onClick` 时根节点为 `role="button"`（可聚焦、Enter/Space 激活）；未绑定 `onClick` 时为 `role="status"`（advisory 公告，不聚焦）。不再混用 `role="alert"` 的 assertive 语义
 - 滚动容器 `overflow: hidden`，内部文本 `white-space: nowrap`
 - 关闭按钮使用 `@nop-chaos/ui` Button（`size: 'sm'`，icon only）
-- 背景色通过 variant 对应 Tailwind 语义色：`bg-blue-50 text-blue-800`（info）、`bg-amber-50 text-amber-800`（warning）等
+- 变体配色走主题 token，不再在组件内硬编码 Tailwind 调色板字面量（MA-06）：组件只发 `data-variant`，包 CSS（`packages/flux-renderers-mobile/src/styles.css`）用 `[data-slot="notice-bar"][data-variant="..."]` 选择 `--nop-notice-bar-*-bg/-fg` token，并带 `.dark` / `:root[data-mode='dark']` 暗色变体
+- 跑马灯 `@keyframes nop-notice-bar-marquee` 也已从运行时 `document.head` 注入迁入包 CSS（MA-05），消除全局样式注入
 
 ## 7. 边界情况
 

@@ -175,6 +175,25 @@ safe-area-inset-right
 | Swipe 完成阈值 | 30px                                         |
 | 触摸响应优化   | `touch-action: manipulation` 关闭 300ms 延迟 |
 
+### 手势所有权（touch-action / overscroll-behavior）
+
+每个监听 touchmove 的移动端渲染器必须在根元素上声明 `touch-action`，告诉浏览器该渲染器拥有的手势轴，从而避免真机上原生滚动 / overscroll / 浏览器回退手势抢夺触摸序列。`overscroll-behavior` 用于防止父滚动容器的链式滚动/回弹。这些是 CSS 提示（不是 JS 拦截），由浏览器在手势判定阶段消费。
+
+> 语义提醒：`touch-action` 的值命名的是 **浏览器允许 pan 的轴**，而不是元素自己处理的轴。`pan-y` = 浏览器可垂直滚动、元素接收水平手势；`pan-x` = 浏览器可水平滚动、元素接收垂直手势。因此渲染器要"拥有"某轴，就必须声明**对侧**的 `pan-*`。
+
+| 渲染器         | 根元素 `touch-action` | 根元素 `overscroll-behavior`     | 理由                                                                                     |
+| -------------- | --------------------- | -------------------------------- | ---------------------------------------------------------------------------------------- |
+| `pull-refresh` | `pan-x`               | `overscroll-behavior-y: contain` | pull-refresh 拥有垂直下拉：`pan-x` 让浏览器水平 pan、把垂直手势留给渲染器的 JS           |
+| `swipe-cell`   | `pan-y`               | —                                | swipe-cell 拥有水平滑动：`pan-y` 让浏览器垂直 pan（页面可滚）、把水平手势留给渲染器的 JS |
+
+> 来源：`docs/plans/2026-06-23-0655-3-mobile-ux-a11y-and-styling-hygiene-plan.md`（MA-07）。这两个值在 `packages/flux-renderers-mobile/src/{pull-refresh,swipe-cell}.tsx` 根元素 inline style 落地，并有 `getComputedStyle` 契约测试。
+
+### 拖拽中的文本选择抑制（select-none）
+
+水平/垂直拖拽过程中，浏览器可能选中被拖过的文本或图标，污染交互观感。监听触摸拖拽的渲染器（`swipe-cell`）在拖拽进行中（`state.isTouching`）或操作区已展开（`openState !== 'closed'`）时，对 content pane 加 `select-none` + `user-select: none`，松手/收起后清除。这仅是观感卫生，不影响可达性或契约。
+
+> 来源：同上 plan（MA-24）。`packages/flux-renderers-mobile/src/swipe-cell.tsx` 的 content pane 在 `suppressSelect` 为真时附加该类。
+
 ---
 
 ## 6. 软键盘视口处理

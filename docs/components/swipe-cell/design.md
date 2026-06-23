@@ -114,7 +114,9 @@ closed → sliding-right → open-right → closing
 
 - 根节点 `nop-swipe-cell` marker；开合状态通过 `data-state`（closed/open-left/open-right）承载
 - 内部 region 仅用 `data-slot` 标识结构身份，不使用 `nop-X__region` BEM 类
-- `overflow: hidden` 防止操作区在 closed 状态下可见
+- `overflow: hidden` 防止操作区在 closed 状态下可见；并配合 `inert` 真正移出可访问性树/Tab 序列（OA-08：`overflow:hidden` 只裁绘制，不阻止键盘 Tab/读屏到达屏幕外的删除按钮；非当前 open 侧的 wrapper 设 `inert`，open 时清除）
+- 根节点 `touch-action: pan-y`（MA-07）：把水平手势所有权留给渲染器 JS，垂直滚动仍交给浏览器
+- 拖拽中（`isTouching` 或非 closed）content pane 加 `select-none`（MA-24），避免横滑选中文字/图标
 - 操作区使用 `position: absolute` 定位在 content 两侧
 - 操作按钮建议使用 `Button` 组件，`size: 'sm'` 或 `size: 'md'`；点击操作区会派发 `onAction` 并自动回弹关闭（MA-09/OA-02）
 
@@ -145,7 +147,7 @@ closed → sliding-right → open-right → closing
 - `SwipeCell` renderer：接收 `RendererComponentProps`，通过 `props.regions.left/right/body` 渲染三个区域
 - 内部使用 `useTouch` Hook 追踪水平手势
 - 滑动动画用 `transform: translateX()` + CSS transition
-- 操作区宽度通过 `useRef` + `getBoundingClientRect` 测量
+- 操作区宽度通过 `ResizeObserver` 观察左/右 wrapper 自动测量（OA-12：region 内容变化——异步图标、locale 长文案、条件按钮——后自动重测，不再只在挂载时测一次）
 - 全局互斥（同一时间只允许一个 SwipeCell 打开）可通过父容器 scope 状态管理，不在组件内硬编码全局 store
 
 ## 11. 风险、取舍与后续阶段
