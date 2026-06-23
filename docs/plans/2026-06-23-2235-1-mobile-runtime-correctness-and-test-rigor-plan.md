@@ -1,7 +1,7 @@
 # Mobile Runtime Correctness And Test Rigor Plan
 
-> Plan Status: active
-> Last Reviewed: 2026-06-23
+> Plan Status: completed
+> Last Reviewed: 2026-06-24
 > Source: `docs/audits/2026-06-23-1824-multi-audit-mobile.md` (MM-14..MM-16, MM-22..MM-25), `docs/audits/2026-06-23-1824-open-audit-mobile.md` (OA-21, OA-22)
 > Related: `docs/plans/2026-06-23-2031-1-mobile-reaudit-2-remediation-owner-plan.md` (sibling — covers MM-07..MM-13 + OA-18..OA-20; same package, independent closure surface)
 > Execution Order: {1}
@@ -97,90 +97,90 @@ The structural deliverable — a throttled-timer countdown test + StrictMode dis
 
 ### Phase 1 - Countdown wall-clock correctness + §6 doc reconciliation (MM-14, OA-21, MM-22)
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-mobile/src/countdown.tsx`, `docs/components/countdown/design.md`, `packages/flux-renderers-mobile/src/countdown.test.tsx`
 
 - Item Types: `Proof` (before Fix, per must-automate), `Fix`, `Decision`
 
-- [ ] **Proof (MM-14)**: Add a regression test — mount `targetTime = Date.now() + 60_000`, advance fake timers 10s, set `paused:true`, advance fake timers another 10s (simulating wall-clock passage during pause), set `paused:false`, run one tick; assert `remaining` is unchanged across the pause window (no 60→50 jump). Must FAIL against current `main`.
-- [ ] **Proof (OA-21)**: Add a regression test that simulates a throttled `setInterval` — mount `time: 60_000, millisecond: false`, mock `Date.now` so that 30s of wall-clock pass with only ONE 1000ms tick actually delivered (background-tab throttle); assert `remaining ≈ 30_000` (wall-clock accurate), NOT `≈ 59_000` (subtractive drift). Must FAIL against current `main`. (The existing `vi.advanceTimersByTime(30)` test fires exactly one precise tick and asserts the ideal subtractive math — it stays as a happy-path check; the new test closes the ideal-timer blind spot.)
-- [ ] **Decision**: Choose the unification strategy. Recommended (converges both branches, matches `design.md:99`): introduce a `startTimestampRef` + `initialRemainingRef` captured on start/resume/reset; BOTH branches compute `remaining = Math.max(0, initialRemaining - (Date.now() - startTimestamp))`. For `targetTime` this is algebraically equivalent to the current `targetTime - Date.now()` (set `initialRemaining = targetTime - startTimestamp`); for `time` it replaces the subtractive `prev - interval` with wall-clock elapsed. For MM-14's pause: on a `paused:true` transition capture `remainingAtPause`; on resume rebase `startTimestamp = Date.now() - (initialRemaining - remainingAtPause)` so the next tick continues from the paused value. Record the chosen strategy in the commit evidence.
-- [ ] **Fix (MM-14 + OA-21 code)**: Apply the chosen strategy in `countdown.tsx:91-116` (tick body) + the reset/start/reset-on-pause paths. Preserve MA-16's `Math.max(0, …)` clamp and OA-13's `reset()` contract (`remaining` returns to initial + `started=false`). The `finishedRef` MA-02 finish-dispatch effect (`:83-89`) is unchanged.
-- [ ] **Decision (MM-22 doc)**: Decide rAF fate. Option A (honest-doc, recommended — code already drift-free after the wall-clock fix): correct `countdown/design.md §6:96` to "使用 `setInterval` 驱动（wall-clock 派生，毫秒精度模式仍用 30ms `setInterval`；`requestAnimationFrame` 补偿为后续优化，见 §11）" and reconcile `:99` to "`剩余时间 = max(0, initialRemaining - (Date.now() - startTimestamp))`（`targetTime` 与 `time` 两支统一为 wall-clock 派生）"; remove the §6↔§11 contradiction. Option B (implement rAF): add a `requestAnimationFrame`-driven 30ms interpolation layer for millisecond mode. Default to Option A unless profiling shows the 30ms `setInterval` produces visible stutter; record the Decision.
-- [ ] **Fix (MM-22 doc)**: Apply the chosen doc edit to `countdown/design.md §6` (and §8 `:128` "快速切换 `paused` 正确恢复，不丢失已过时间" — keep, now genuinely true after the MM-14 fix). Per Plan Guide Rule 14, write only the final design state, no "Proposed vs Current".
-- [ ] **Proof**: Both Phase-1 regression tests now pass; the existing happy-path tick-granularity test (`countdown.test.tsx:199-220`) and finish/`reset()`/`start()` tests still pass unchanged.
+- [x] **Proof (MM-14)**: Add a regression test — mount `targetTime = Date.now() + 60_000`, advance fake timers 10s, set `paused:true`, advance fake timers another 10s (simulating wall-clock passage during pause), set `paused:false`, run one tick; assert `remaining` is unchanged across the pause window (no 60→50 jump). Must FAIL against current `main`.
+- [x] **Proof (OA-21)**: Add a regression test that simulates a throttled `setInterval` — mount `time: 60_000, millisecond: false`, mock `Date.now` so that 30s of wall-clock pass with only ONE 1000ms tick actually delivered (background-tab throttle); assert `remaining ≈ 30_000` (wall-clock accurate), NOT `≈ 59_000` (subtractive drift). Must FAIL against current `main`. (The existing `vi.advanceTimersByTime(30)` test fires exactly one precise tick and asserts the ideal subtractive math — it stays as a happy-path check; the new test closes the ideal-timer blind spot.)
+- [x] **Decision**: Choose the unification strategy. Recommended (converges both branches, matches `design.md:99`): introduce a `startTimestampRef` + `initialRemainingRef` captured on start/resume/reset; BOTH branches compute `remaining = Math.max(0, initialRemaining - (Date.now() - startTimestamp))`. For `targetTime` this is algebraically equivalent to the current `targetTime - Date.now()` (set `initialRemaining = targetTime - startTimestamp`); for `time` it replaces the subtractive `prev - interval` with wall-clock elapsed. For MM-14's pause: on a `paused:true` transition capture `remainingAtPause`; on resume rebase `startTimestamp = Date.now() - (initialRemaining - remainingAtPause)` so the next tick continues from the paused value. Record the chosen strategy in the commit evidence.
+- [x] **Fix (MM-14 + OA-21 code)**: Apply the chosen strategy in `countdown.tsx:91-116` (tick body) + the reset/start/reset-on-pause paths. Preserve MA-16's `Math.max(0, …)` clamp and OA-13's `reset()` contract (`remaining` returns to initial + `started=false`). The `finishedRef` MA-02 finish-dispatch effect (`:83-89`) is unchanged.
+- [x] **Decision (MM-22 doc)**: Decide rAF fate. Option A (honest-doc, recommended — code already drift-free after the wall-clock fix): correct `countdown/design.md §6:96` to "使用 `setInterval` 驱动（wall-clock 派生，毫秒精度模式仍用 30ms `setInterval`；`requestAnimationFrame` 补偿为后续优化，见 §11）" and reconcile `:99` to "`剩余时间 = max(0, initialRemaining - (Date.now() - startTimestamp))`（`targetTime` 与 `time` 两支统一为 wall-clock 派生）"; remove the §6↔§11 contradiction. Option B (implement rAF): add a `requestAnimationFrame`-driven 30ms interpolation layer for millisecond mode. Default to Option A unless profiling shows the 30ms `setInterval` produces visible stutter; record the Decision.
+- [x] **Fix (MM-22 doc)**: Apply the chosen doc edit to `countdown/design.md §6` (and §8 `:128` "快速切换 `paused` 正确恢复，不丢失已过时间" — keep, now genuinely true after the MM-14 fix). Per Plan Guide Rule 14, write only the final design state, no "Proposed vs Current".
+- [x] **Proof**: Both Phase-1 regression tests now pass; the existing happy-path tick-granularity test (`countdown.test.tsx:199-220`) and finish/`reset()`/`start()` tests still pass unchanged.
 
 Exit Criteria:
 
 > Owner-doc (`countdown/design.md §6`) genuinely changes here — the MM-22 doc reconciliation is a doc obligation. Per Rule 17 it belongs in this Phase's Exit Criteria.
 
-- [ ] A `targetTime` pause/resume regression test proves the displayed value is unchanged across the pause window, failing without the MM-14 fix.
-- [ ] A throttled-tick `time`-mode regression test proves wall-clock accuracy (≈30s drop for 30s wall-clock with 1 tick), failing without the OA-21 fix.
-- [ ] `countdown.tsx:91-116` derives `remaining` from wall-clock elapsed in both branches; `targetTime` and `time` modes are equally drift-proof; pause/resume preserves the displayed value.
-- [ ] `countdown/design.md §6` no longer promises rAF compensation the code lacks, and `:99` matches the wall-clock derivation; §6↔§11 no longer contradict.
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-mobile test` passes for the countdown suite (focused check; full-repo verification is a Closure Gate).
+- [x] A `targetTime` pause/resume regression test proves the displayed value is unchanged across the pause window, failing without the MM-14 fix.
+- [x] A throttled-tick `time`-mode regression test proves wall-clock accuracy (≈30s drop for 30s wall-clock with 1 tick), failing without the OA-21 fix.
+- [x] `countdown.tsx:91-116` derives `remaining` from wall-clock elapsed in both branches; `targetTime` and `time` modes are equally drift-proof; pause/resume preserves the displayed value.
+- [x] `countdown/design.md §6` no longer promises rAF compensation the code lacks, and `:99` matches the wall-clock derivation; §6↔§11 no longer contradict.
+- [x] `pnpm --filter @nop-chaos/flux-renderers-mobile test` passes for the countdown suite (focused check; full-repo verification is a Closure Gate).
 
 ### Phase 2 - Notice-bar carousel timer lifecycle after close (MM-15)
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-mobile/src/notice-bar.tsx`, `packages/flux-renderers-mobile/src/notice-bar.test.tsx`
 
 - Item Types: `Proof` (before Fix), `Fix`
 
-- [ ] **Proof**: Add a regression test — mount a multi-text bar (`text: ['a','b','c']`, `closable: true`), advance fake timers to put a carousel `setTimeout` in flight, click close, advance fake timers 6s (two carousel intervals); assert zero `setCurrentIndex`-driven re-renders after `visible=false` (e.g. spy on a render-driven `data-slot="notice-bar-text"` text mutation, or assert the pending-timer count is 0). Must FAIL against current `main`.
-- [ ] **Fix**: In `notice-bar.tsx:90-101` add `if (!visible) return;` at the top of the carousel effect body AND include `visible` in the dep array: `}, [textList.length, currentIndex, loop, visible]);`. Verify the early-return ordering stays AFTER all hooks (the existing `if (!visible) return null;` at `:123-125` stays where it is — the new guard is inside the effect, not a render-time early return).
+- [x] **Proof**: Add a regression test — mount a multi-text bar (`text: ['a','b','c']`, `closable: true`), advance fake timers to put a carousel `setTimeout` in flight, click close, advance fake timers 6s (two carousel intervals); assert zero `setCurrentIndex`-driven re-renders after `visible=false` (e.g. spy on a render-driven `data-slot="notice-bar-text"` text mutation, or assert the pending-timer count is 0). Must FAIL against current `main`.
+- [x] **Fix**: In `notice-bar.tsx:90-101` add `if (!visible) return;` at the top of the carousel effect body AND include `visible` in the dep array: `}, [textList.length, currentIndex, loop, visible]);`. Verify the early-return ordering stays AFTER all hooks (the existing `if (!visible) return null;` at `:123-125` stays where it is — the new guard is inside the effect, not a render-time early return).
 
 Exit Criteria:
 
-- [ ] A close-and-advance regression test proves no carousel re-render fires after `visible=false`, failing without the `visible` dep + guard.
-- [ ] `notice-bar.tsx:90-101` carousel effect early-returns when `!visible` and lists `visible` in its dep array.
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-mobile test` passes for the notice-bar suite (focused check).
+- [x] A close-and-advance regression test proves no carousel re-render fires after `visible=false`, failing without the `visible` dep + guard.
+- [x] `notice-bar.tsx:90-101` carousel effect early-returns when `!visible` and lists `visible` in its dep array.
+- [x] `pnpm --filter @nop-chaos/flux-renderers-mobile test` passes for the notice-bar suite (focused check).
 
 ### Phase 3 - Infinite-scroll StrictMode correctness + missing StrictMode/branch tests (MM-16, MM-23, MM-25)
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-mobile/src/infinite-scroll.tsx`, `packages/flux-renderers-mobile/src/infinite-scroll.test.tsx`, `packages/flux-renderers-mobile/src/countdown.test.tsx`
 
 - Item Types: `Proof` (before Fix for MM-16), `Fix`, `Decision`
 
-- [ ] **Proof (MM-16)**: Add a regression test — mount `infinite-scroll` with `immediateCheck: true` wrapped in `<React.StrictMode>`; assert `onLoadMore` is called **exactly once** on mount. Must FAIL against current `main` (it will fire twice today).
-- [ ] **Decision (MM-16 fix surface)**: Choose the guard-robustness strategy. Recommended (most faithful to MA-13's "release on actual change" intent): track previous `loading`/`error` values via a ref and only reset `isLoadingRef.current = false` when one of them actually changed since the last setup — not on every effect invocation. Alternative: move the in-flight guard reset into the same effect that consumes it (collapse the two effects). Record the chosen strategy.
-- [ ] **Fix (MM-16)**: Apply the chosen strategy in `infinite-scroll.tsx:59-62` (and/or `:118-126`) so a StrictMode double-setup does not clear the guard before the `immediateCheck` effect re-runs. Preserve OA-16's contract (host clearing `error` releases the guard) and MA-13's observer-vs-immediateCheck dedupe within a single mount.
-- [ ] **Proof (MM-16)**: The StrictMode test now passes (`onLoadMore` once on mount); the existing MA-13 observer-vs-immediateCheck test and OA-16 error-clear-retry test still pass.
-- [ ] **Proof (MM-23 countdown)**: Add a `<React.StrictMode>` test for countdown asserting `onFinish` fires exactly once when `time` reaches 0 (mirrors `pull-refresh.test.tsx:292-311` / `swipe-cell.test.tsx:247-261`). Should PASS today (MA-02's effect-based dispatch + `finishedRef` already handles StrictMode) — this is coverage hardening, not a regression proof.
-- [ ] **Proof (MM-25)**: Add a test combining `disabled: true` + `error: true` asserting the retry `<Button>` is disabled (or hidden). Must FAIL against current `main`.
-- [ ] **Fix (MM-25)**: In `infinite-scroll.tsx:182-195`, forward `disabled={disabled}` to the retry `<Button>` (or hide the retry row entirely when `disabled && status === 'error'`, per Decision). Recommended: forward `disabled` so the WCAG 4.1.2 operability signal is honest.
+- [x] **Proof (MM-16)**: Add a regression test — mount `infinite-scroll` with `immediateCheck: true` wrapped in `<React.StrictMode>`; assert `onLoadMore` is called **exactly once** on mount. Must FAIL against current `main` (it will fire twice today).
+- [x] **Decision (MM-16 fix surface)**: Choose the guard-robustness strategy. Recommended (most faithful to MA-13's "release on actual change" intent): track previous `loading`/`error` values via a ref and only reset `isLoadingRef.current = false` when one of them actually changed since the last setup — not on every effect invocation. Alternative: move the in-flight guard reset into the same effect that consumes it (collapse the two effects). Record the chosen strategy.
+- [x] **Fix (MM-16)**: Apply the chosen strategy in `infinite-scroll.tsx:59-62` (and/or `:118-126`) so a StrictMode double-setup does not clear the guard before the `immediateCheck` effect re-runs. Preserve OA-16's contract (host clearing `error` releases the guard) and MA-13's observer-vs-immediateCheck dedupe within a single mount.
+- [x] **Proof (MM-16)**: The StrictMode test now passes (`onLoadMore` once on mount); the existing MA-13 observer-vs-immediateCheck test and OA-16 error-clear-retry test still pass.
+- [x] **Proof (MM-23 countdown)**: Add a `<React.StrictMode>` test for countdown asserting `onFinish` fires exactly once when `time` reaches 0 (mirrors `pull-refresh.test.tsx:292-311` / `swipe-cell.test.tsx:247-261`). Should PASS today (MA-02's effect-based dispatch + `finishedRef` already handles StrictMode) — this is coverage hardening, not a regression proof.
+- [x] **Proof (MM-25)**: Add a test combining `disabled: true` + `error: true` asserting the retry `<Button>` is disabled (or hidden). Must FAIL against current `main`.
+- [x] **Fix (MM-25)**: In `infinite-scroll.tsx:182-195`, forward `disabled={disabled}` to the retry `<Button>` (or hide the retry row entirely when `disabled && status === 'error'`, per Decision). Recommended: forward `disabled` so the WCAG 4.1.2 operability signal is honest.
 
 Exit Criteria:
 
-- [ ] A StrictMode regression test proves `infinite-scroll` `onLoadMore` fires exactly once on mount, failing without the MM-16 fix.
-- [ ] A countdown StrictMode test asserts `onFinish` fires exactly once (coverage hardening for MA-02).
-- [ ] A `disabled + error` test proves the retry `<Button>` is disabled or hidden, failing without the MM-25 fix.
-- [ ] `infinite-scroll.tsx:59-62,118-126` guard is robust to StrictMode/remount; MA-13 and OA-16 contracts preserved.
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-mobile test` passes for the infinite-scroll + countdown suites (focused check).
+- [x] A StrictMode regression test proves `infinite-scroll` `onLoadMore` fires exactly once on mount, failing without the MM-16 fix.
+- [x] A countdown StrictMode test asserts `onFinish` fires exactly once (coverage hardening for MA-02).
+- [x] A `disabled + error` test proves the retry `<Button>` is disabled or hidden, failing without the MM-25 fix.
+- [x] `infinite-scroll.tsx:59-62,118-126` guard is robust to StrictMode/remount; MA-13 and OA-16 contracts preserved.
+- [x] `pnpm --filter @nop-chaos/flux-renderers-mobile test` passes for the infinite-scroll + countdown suites (focused check).
 
 ### Phase 4 - Notice-bar direction branch coverage + naming smell decision (MM-24, OA-22)
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-mobile/src/notice-bar.test.tsx`, `packages/flux-renderers-mobile/src/notice-bar.tsx`, `packages/flux-renderers-mobile/src/schemas.ts`, `docs/components/notice-bar/design.md`
 
 - Item Types: `Decision`, `Proof`, `Fix`
 
-- [ ] **Decision (OA-22)**: Decide the direction-prop semantics. Options:
+- [x] **Decision (OA-22)**: Decide the direction-prop semantics. Options:
   - (A) **Lock current mapping + clarify doc** (lowest churn, code already matches doc intent): keep `direction: 'left'` → `animationDirection: 'reverse'` → left-to-right motion; rewrite `design.md:26,52` to make the semantics explicit ("`direction: 'left'` 表示文本从左向右滚动（默认）；`direction: 'right'` 表示从右向左滚动" — i.e. the value names the **motion direction**, not the keyframe direction). Add a one-line code comment at `notice-bar.tsx:132` documenting the inversion vs the keyframe.
   - (B) **Swap the mapping** so `direction: 'left'` → conventional leftward motion (`animationDirection: 'normal'`): swap the ternary at `notice-bar.tsx:132`; update `design.md:26` decision-table note. Risk: silent behavior change for any existing schema that sets `direction: 'right'` (none in-repo per grep, but the schema value is public).
   - (C) **Rename the values** to `'toward-left'`/`'toward-right'` (or `'ltr'`/`'rtl'`): cleanest semantics, but a public-schema rename — defer unless the team explicitly wants v1 API churn.
   - Default recommendation: **(A)** — the inversion is documented, the public schema is stable, and the smell is resolved by making the semantics unambiguous. Record the Decision; if (B) or (C) is chosen, escalate as a schema-change gate.
-- [ ] **Proof (MM-24)**: Extend the marquee test to cover BOTH branches — assert `animationDirection === 'normal'` for `direction: 'right'` AND `animationDirection === 'reverse'` for `direction: 'left'` (and the default). If Decision (B) was chosen, invert the expected values. Lock the chosen mapping regardless of Decision outcome.
-- [ ] **Fix (OA-22 doc)**: Apply the chosen doc edit to `notice-bar/design.md:26,52` (and §5 if it references direction). Per Rule 14, write only the final design state.
+- [x] **Proof (MM-24)**: Extend the marquee test to cover BOTH branches — assert `animationDirection === 'normal'` for `direction: 'right'` AND `animationDirection === 'reverse'` for `direction: 'left'` (and the default). If Decision (B) was chosen, invert the expected values. Lock the chosen mapping regardless of Decision outcome.
+- [x] **Fix (OA-22 doc)**: Apply the chosen doc edit to `notice-bar/design.md:26,52` (and §5 if it references direction). Per Rule 14, write only the final design state.
 
 Exit Criteria:
 
 > Owner-doc (`notice-bar/design.md`) changes here only if Decision (A)/(B)/(C) requires a doc edit. Per Rule 17 the doc obligation is listed only because it is genuine.
 
-- [ ] The marquee test asserts `animationDirection` for both `direction: 'right'` (`'normal'` or swapped per Decision) and `direction: 'left'`/default, locking the chosen mapping.
-- [ ] The OA-22 Decision is recorded; if (A)/(B)/(C) changed doc or code, `notice-bar/design.md` (and `notice-bar.tsx:132` / `schemas.ts` if renamed) reflects the final semantics with no "Proposed vs Current" residual.
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-mobile test` passes for the notice-bar suite (focused check).
+- [x] The marquee test asserts `animationDirection` for both `direction: 'right'` (`'normal'` or swapped per Decision) and `direction: 'left'`/default, locking the chosen mapping.
+- [x] The OA-22 Decision is recorded; if (A)/(B)/(C) changed doc or code, `notice-bar/design.md` (and `notice-bar.tsx:132` / `schemas.ts` if renamed) reflects the final semantics with no "Proposed vs Current" residual.
+- [x] `pnpm --filter @nop-chaos/flux-renderers-mobile test` passes for the notice-bar suite (focused check).
 
 ## Draft Review Record
 
@@ -201,22 +201,22 @@ Exit Criteria:
 
 > Full-repo verification runs once here (Plan Guide Rule 18). Phase Exit Criteria carry only focused per-package checks. Owner-doc consistency is checked here per Rule 17 / When-Closing step 4.
 
-- [ ] MM-14: `targetTime` pause/resume preserves the displayed value; regression test fails without the fix.
-- [ ] OA-21: `time` mode is wall-clock accurate under throttled `setInterval`; throttled-tick regression test fails without the fix.
-- [ ] MM-22: `countdown/design.md §6` no longer promises rAF compensation the code lacks; §6↔§11 reconciled.
-- [ ] MM-15: notice-bar carousel timer does not churn after close; close-and-advance test fails without the fix.
-- [ ] MM-16: `infinite-scroll` `onLoadMore` fires exactly once under StrictMode; regression test fails without the fix.
-- [ ] MM-23: countdown + infinite-scroll have StrictMode dispatch tests (countdown hardening; infinite-scroll regression).
-- [ ] MM-24: marquee test locks `animationDirection` for both direction branches.
-- [ ] MM-25: retry `<Button>` is disabled/hidden under `disabled + error`; regression test fails without the fix.
-- [ ] OA-22: direction naming Decision recorded; doc/code reflect the final semantics.
-- [ ] No in-scope confirmed live defect or contract drift is silently degraded to deferred/follow-up (MM-14/OA-21/MM-15/MM-16/MM-25 are runtime defects — Fixed, not deferred).
-- [ ] Owner-doc consistency: `countdown/design.md §6/§8` reflects the wall-clock derivation + pause/resume correctness; `notice-bar/design.md` reflects the OA-22 decision; other mobile design docs unchanged (no drift introduced; MM-17/MM-18/MM-19/MM-20/MM-21 are owned by Plan 2).
-- [ ] Closure-audit completed by an independent sub-agent (fresh session) with evidence recorded; the execution session did not self-audit this gate.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] MM-14: `targetTime` pause/resume preserves the displayed value; regression test fails without the fix.
+- [x] OA-21: `time` mode is wall-clock accurate under throttled `setInterval`; throttled-tick regression test fails without the fix.
+- [x] MM-22: `countdown/design.md §6` no longer promises rAF compensation the code lacks; §6↔§11 reconciled.
+- [x] MM-15: notice-bar carousel timer does not churn after close; close-and-advance test fails without the fix.
+- [x] MM-16: `infinite-scroll` `onLoadMore` fires exactly once under StrictMode; regression test fails without the fix.
+- [x] MM-23: countdown + infinite-scroll have StrictMode dispatch tests (countdown hardening; infinite-scroll regression).
+- [x] MM-24: marquee test locks `animationDirection` for both direction branches.
+- [x] MM-25: retry `<Button>` is disabled/hidden under `disabled + error`; regression test fails without the fix.
+- [x] OA-22: direction naming Decision recorded; doc/code reflect the final semantics.
+- [x] No in-scope confirmed live defect or contract drift is silently degraded to deferred/follow-up (MM-14/OA-21/MM-15/MM-16/MM-25 are runtime defects — Fixed, not deferred).
+- [x] Owner-doc consistency: `countdown/design.md §6/§8` reflects the wall-clock derivation + pause/resume correctness; `notice-bar/design.md` reflects the OA-22 decision; other mobile design docs unchanged (no drift introduced; MM-17/MM-18/MM-19/MM-20/MM-21 are owned by Plan 2).
+- [x] Closure-audit completed by an independent sub-agent (fresh session) with evidence recorded; the execution session did not self-audit this gate.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -234,12 +234,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<filled when closed — why every owned finding (MM-14, OA-21/MM-22, MM-15, MM-16, MM-23, MM-24, MM-25, OA-22) is resolved and the data-\*-only/ideal-timer-only test gap is materially closed>>
+Status Note: All owned findings resolved and the data-\*-only/ideal-timer-only test gap materially closed. MM-14/OA-21 unified the countdown tick to wall-clock derivation (`remaining = max(0, remainingAtStart - (Date.now() - startTimestamp))`) across both `targetTime` and `time` branches with a run-segment anchor that re-bases on start/resume/config-change — pause/resume now preserves the displayed value (no 50→39 jump) and throttled `setInterval` no longer drifts. MM-22 reconciled `countdown/design.md §6↔§11` to honest `setInterval` + wall-clock (rAF deferred, no longer promised). MM-15 added the `visible` guard + dep to the notice-bar carousel effect (no churn after close). MM-16 made the infinite-scroll in-flight guard StrictMode-robust (release only on actual `loading`/`error` change), preserving OA-16/MA-13. MM-25 forwards `disabled` to the retry `<Button>` (honest WCAG operability). MM-23 added countdown + infinite-scroll StrictMode dispatch tests; MM-24 locked both `direction` branches; OA-22 Decision A locked the mapping and clarified `notice-bar/design.md`. 7 new behavior tests added (mobile suite 147→154); the structural "ideal-timer-only" blind spot is now closed by the throttled-tick + StrictMode + geometry(`animationDirection`) assertions. Independent fresh-session closure audit `approved`.
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<independent sub-agent, fresh session>>
-- Evidence: <<task id / daily log link / findings summary>>
+- Auditor / Agent: independent general sub-agent, fresh session (task `ses_10acae81fffebNY4S17eaUulNr`)
+- Evidence: Verdict `approved`; zero Blocker/Major. Re-verified every owned finding against live code (`countdown.tsx` wall-clock tick + refs, `notice-bar.tsx` `visible` guard + direction comment, `infinite-scroll.tsx` conditional guard + `disabled` Button), confirmed all 5 regression proofs (MM-14/OA-21/MM-15/MM-16/MM-25) genuinely fail pre-fix via `git diff`, confirmed no `[ ]` remains in Phases 1-4 / Exit Criteria, confirmed deferred items honestly classified (`out-of-scope improvement` / `optimization candidate`), confirmed MA-16/OA-13/MA-02/MM-08/OA-16/MA-13 contracts preserved. `pnpm --filter @nop-chaos/flux-renderers-mobile test` → 154 passed (9 files).
 
 Follow-up:
 

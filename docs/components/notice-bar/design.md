@@ -17,19 +17,19 @@
 
 ### Flux 决策表
 
-| 能力                 | 采纳                                        | 不采纳     | 理由                                             |
-| -------------------- | ------------------------------------------- | ---------- | ------------------------------------------------ | --------- |
-| 滚动模式（marquee）  | **实现**：`scrollable: true`                | —          | 核心交互                                         |
-| 静态模式（多行文字） | **实现**：`scrollable: false`（默认）       | —          | 多行通知                                         |
-| 可关闭               | **实现**：`closable: true` + `onClose` 事件 | —          | 用户可控                                         |
-| 滚动速度             | **实现**：`speed`（px/s，默认 50）          | —          | 控制阅读节奏                                     |
-| 滚动方向             | **实现**：`direction: 'left'                | 'right'`   | —                                                | 默认左→右 |
-| 左侧图标             | **实现**：`icon`（Icon schema 或 region）   | —          | 视觉提示                                         |
-| 自定义内容           | **实现**：`body` region 替代默认文本        | —          | 灵活展示                                         |
-| 点击回调             | **实现**：`onClick: ActionSchema`           | —          | 跳转详情                                         |
-| 循环滚动             | **实现**：`loop: true`（默认 true）         | —          | 持续展示                                         |
-| amis 组件级 `api`    | —                                           | **不采纳** | 请求下沉 data-source + action                    |
-| 多条轮播             | —                                           | **不采纳** | 用 `loop` + 多条文本自动轮播，不引入复杂轮播逻辑 |
+| 能力                 | 采纳                                             | 不采纳     | 理由                                                                                 |
+| -------------------- | ------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------ |
+| 滚动模式（marquee）  | **实现**：`scrollable: true`                     | —          | 核心交互                                                                             |
+| 静态模式（多行文字） | **实现**：`scrollable: false`（默认）            | —          | 多行通知                                                                             |
+| 可关闭               | **实现**：`closable: true` + `onClose` 事件      | —          | 用户可控                                                                             |
+| 滚动速度             | **实现**：`speed`（px/s，默认 50）               | —          | 控制阅读节奏                                                                         |
+| 滚动方向             | **实现**：`direction: 'left'`（默认）/ `'right'` | —          | 见 §5：值与运动方向**相反**（`'left'`→文本左→右移动，`'right'`→右→左移动）；锁定不变 |
+| 左侧图标             | **实现**：`icon`（Icon schema 或 region）        | —          | 视觉提示                                                                             |
+| 自定义内容           | **实现**：`body` region 替代默认文本             | —          | 灵活展示                                                                             |
+| 点击回调             | **实现**：`onClick: ActionSchema`                | —          | 跳转详情                                                                             |
+| 循环滚动             | **实现**：`loop: true`（默认 true）              | —          | 持续展示                                                                             |
+| amis 组件级 `api`    | —                                                | **不采纳** | 请求下沉 data-source + action                                                        |
+| 多条轮播             | —                                                | **不采纳** | 用 `loop` + 多条文本自动轮播，不引入复杂轮播逻辑                                     |
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -48,7 +48,7 @@ interface NoticeBarSchema extends BaseSchema {
   scrollable?: boolean;
   /** 滚动速度（px/s），默认 50 */
   speed?: number;
-  /** 滚动方向 */
+  /** 滚动方向：`'left'`（默认）文本左→右移动；`'right'` 文本右→左移动。值与运动方向相反（历史命名，锁定不变，见 §5） */
   direction?: 'left' | 'right';
   /** 是否循环滚动，默认 true（仅 scrollable 模式） */
   loop?: boolean;
@@ -90,6 +90,13 @@ interface NoticeBarEvents {
 - `loop: false` 时滚动到末条停止
 - **OA-15**：轮播切换由独立 `setTimeout` 驱动，**不依赖** marquee 动画的 `animationiteration` 事件。这样即使某条文本不溢出容器（`scrollWidth <= clientWidth`，marquee 不启动），多文本 bar 仍能正常轮播。marquee 动画只负责视觉滚动，不再驱动 index 变更
 - **OA-20**：轮播停留时长 `carouselDwell` 按当前项是否溢出分流——不溢出时为固定 `CAROUSEL_INTERVAL_MS`（默认 3000ms，保留 OA-15 的非溢出轮播）；溢出时为 `max(CAROUSEL_INTERVAL_MS, 一个完整 marquee 周期)`，保证溢出项跑完一整圈再切换（否则 3000ms 会把长 marquee 截断在约 25% 处）
+
+### 滚动方向（`direction`）
+
+- `@keyframes nop-notice-bar-marquee`（`packages/flux-renderers-mobile/src/styles.css`）是常规的"右→左"跑马灯（`from translateX(100%) to translateX(-100%)`），`animation-direction: normal` 即右→左运动
+- `direction: 'left'`（默认）→ `animation-direction: reverse` → 文本**左→右**移动
+- `direction: 'right'` → `animation-direction: normal` → 文本**右→左**移动
+- **OA-22 裁定**：`direction` 的值与实际文本运动方向**相反**（`'left'` 使文本向右移动），属历史命名异味。为保持公开 schema 稳定（仓库内无 schema 设置 `direction: 'right'`），Decision A 选择锁定当前映射并在此显式说明语义，不做重命名。映射由 `notice-bar.test.tsx`（MM-24）锁定；若未来要改为"值即运动方向"，需同时翻转 `notice-bar.tsx` 的 `animationDirection` 三元映射并升级 schema 版本
 
 ### 静态模式（`scrollable: false`）
 

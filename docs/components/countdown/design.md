@@ -93,11 +93,11 @@ interface CountdownEvents {
 
 ## 6. 定时器实现
 
-- 使用 `setInterval` 驱动（毫秒精度用 `setInterval` + `requestAnimationFrame` 补偿）
-- `paused` 变为 `true` 时暂停计时器，`false` 时恢复
+- 使用 `setInterval` 驱动（**wall-clock 派生**：每次 tick 用 `Date.now()` 计算已过时间，毫秒精度模式仍用 30ms `setInterval`）；`requestAnimationFrame` 补偿为后续优化，见 §11
+- `paused` 变为 `true` 时停止 tick 并冻结显示值，`false` 时从冻结值继续（暂停窗口不计入剩余时间）
 - 组件卸载时清理定时器
-- 剩余时间 = `targetTime - Date.now()` 或 `time - elapsed`
-- **结束即停 tick（2026-06-23 OA-13/MA-16 裁定）**：`remaining <= 0` 时 `clearInterval`，不再继续 tick；`targetTime` 分支 `Math.max(0, targetTime - Date.now())` clamp 到 0，避免已过期的 target 产生负数 remaining 触发毫秒模式下的无限重渲染。
+- 剩余时间 = `max(0, remainingAtStart - (Date.now() - startTimestamp))`（`targetTime` 与 `time` 两支统一为 wall-clock 派生；`startTimestamp`/`remainingAtStart` 在每次 start/resume/config 变更时重新锚定，因此 `paused` 期间的时间不计入、恢复后从暂停值继续）。`targetTime` 分支的初始 `remainingAtStart = targetTime - mountNow`，故与 `targetTime - Date.now()` 代数等价；`time` 分支不再用 `prev - interval` 的减法（该写法仅在 `setInterval` 精确触发时正确，后台节流会漂移）
+- **结束即停 tick（2026-06-23 OA-13/MA-16 裁定）**：`remaining <= 0` 时 `clearInterval`，不再继续 tick；`Math.max(0, …)` clamp 到 0，避免已过期的 target 产生负数 remaining 触发毫秒模式下的无限重渲染。
 - **`useCountdownTimer.reset()` 行为契约（2026-06-23 OA-13 裁定）**：`reset()` 把 `remaining` 回到初始值**并** `started=false`（停止并等待显式 `start()`），与 `autoStart:false` 语义对齐、最小惊讶；不沿用"reset 后 started 恢复为 `autoStart !== false`"（默认 autoStart 下会静默重启）。`start()` 恢复计时。
 
 ## 7. 样式与 DOM marker
@@ -144,7 +144,7 @@ interface CountdownEvents {
 
 ## 11. 风险、取舍与后续阶段
 
-- `setInterval` 在后台标签页可能被节流（浏览器策略），对精度要求高的场景可考虑 `requestAnimationFrame` 补偿
+- `setInterval` 在后台标签页可能被浏览器节流，但剩余时间按 wall-clock（`Date.now()`）派生，因此节流只影响显示的刷新频率、不影响剩余时间的准确性。`requestAnimationFrame` 补偿仅作为毫秒精度模式下 30ms 视觉刷新平滑度的后续优化（不是准确性所需）
 - **触摸目标**：倒计时组件本身是展示型，不需要触摸交互。但如果倒计时结束后有操作按钮，按钮需满足 M0 基线规范（`docs/architecture/mobile-responsive-baseline.md` §3）的 44×44px 最小尺寸
 - 后续可考虑 `autoStart` 配合表达式实现条件触发倒计时
 - 毫秒精度场景（`millisecond: true`）性能开销略高，仅在秒杀等场景启用
