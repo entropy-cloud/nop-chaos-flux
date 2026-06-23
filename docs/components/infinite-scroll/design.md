@@ -98,8 +98,8 @@ interface InfiniteScrollRuntimeProps {
 
 ### 检测机制
 
-- 使用 `IntersectionObserver`（优先）监测底部 sentinel 元素进入视口
-- fallback：滚动容器 `scrollHeight - scrollTop - clientHeight < distance` 判断
+- 使用 `IntersectionObserver` 监测底部 sentinel 元素进入视口
+- **前置条件**：要求运行环境支持 `IntersectionObserver`。不支持 IO 的环境（旧版内嵌 webview）不会自动加载，host 需自行接线手动重试路径。v1 不提供 scroll-math 回退（所有常青浏览器均内置 IO）
 
 ### 状态
 
@@ -112,18 +112,18 @@ interface InfiniteScrollRuntimeProps {
 
 ## 5. 边界情况
 
-| 场景                                              | 行为                                                                                                        |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| 内容不足一屏                                      | `immediateCheck=true` 时自动触发首次加载                                                                    |
-| 快速滚动到底部                                    | 只触发一次 `onLoadMore`，避免重复调用（本地 in-flight guard）                                               |
-| 组件卸载                                          | IntersectionObserver 断开连接                                                                               |
-| 与 PullRefresh 共存                               | PullRefresh 在外层包裹，InfiniteScroll 在内层包裹列表                                                       |
-| 容器滚动 vs 视口滚动                              | 自动检测最近的可滚动父容器                                                                                  |
-| data-source 正在 loading                          | 不重复触发 onLoadMore                                                                                       |
-| host 清 `error` 但不动 `loading`（OA-16）         | 释放 in-flight guard，后续 intersection/重试按钮重新触发 `onLoadMore`                                       |
-| host 传 `error: string`（OA-17 Decision a）       | 错误行呈现该字符串；`error: true`/空字符串回落 `errorText`                                                  |
-| `onLoadMore` reject / 同步抛出（MA-14/NEW-MM-01） | 渲染器不崩；DEV 构建打印 `[flux.infinite-scroll]` 诊断，非 DEV 静默                                         |
-| **触摸目标**                                      | 底部加载指示器需满足 M0 基线规范（`docs/architecture/mobile-responsive-baseline.md` §3）的 44×44px 最小尺寸 |
+| 场景                                              | 行为                                                                                                                 |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 内容不足一屏                                      | `immediateCheck=true` 时自动触发首次加载                                                                             |
+| 快速滚动到底部                                    | 只触发一次 `onLoadMore`，避免重复调用（本地 in-flight guard）                                                        |
+| 组件卸载                                          | IntersectionObserver 断开连接                                                                                        |
+| 与 PullRefresh 共存                               | PullRefresh 在外层包裹，InfiniteScroll 在内层包裹列表                                                                |
+| 容器滚动 vs 视口滚动                              | MM-20：从 sentinel 向上遍历至第一个 `overflow-y: auto/scroll` 祖先作为 IO `root`；无滚动祖先时回落到视口（viewport） |
+| data-source 正在 loading                          | 不重复触发 onLoadMore                                                                                                |
+| host 清 `error` 但不动 `loading`（OA-16）         | 释放 in-flight guard，后续 intersection/重试按钮重新触发 `onLoadMore`                                                |
+| host 传 `error: string`（OA-17 Decision a）       | 错误行呈现该字符串；`error: true`/空字符串回落 `errorText`                                                           |
+| `onLoadMore` reject / 同步抛出（MA-14/NEW-MM-01） | 渲染器不崩；DEV 构建打印 `[flux.infinite-scroll]` 诊断，非 DEV 静默                                                  |
+| **触摸目标**                                      | 底部加载指示器需满足 M0 基线规范（`docs/architecture/mobile-responsive-baseline.md` §3）的 44×44px 最小尺寸          |
 
 ## 6. 包归属
 

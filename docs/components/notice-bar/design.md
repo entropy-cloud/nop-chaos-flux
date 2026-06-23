@@ -17,25 +17,25 @@
 
 ### Flux 决策表
 
-| 能力                 | 采纳                                             | 不采纳     | 理由                                                                                 |
-| -------------------- | ------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------ |
-| 滚动模式（marquee）  | **实现**：`scrollable: true`                     | —          | 核心交互                                                                             |
-| 静态模式（多行文字） | **实现**：`scrollable: false`（默认）            | —          | 多行通知                                                                             |
-| 可关闭               | **实现**：`closable: true` + `onClose` 事件      | —          | 用户可控                                                                             |
-| 滚动速度             | **实现**：`speed`（px/s，默认 50）               | —          | 控制阅读节奏                                                                         |
-| 滚动方向             | **实现**：`direction: 'left'`（默认）/ `'right'` | —          | 见 §5：值与运动方向**相反**（`'left'`→文本左→右移动，`'right'`→右→左移动）；锁定不变 |
-| 左侧图标             | **实现**：`icon`（Icon schema 或 region）        | —          | 视觉提示                                                                             |
-| 自定义内容           | **实现**：`body` region 替代默认文本             | —          | 灵活展示                                                                             |
-| 点击回调             | **实现**：`onClick: ActionSchema`                | —          | 跳转详情                                                                             |
-| 循环滚动             | **实现**：`loop: true`（默认 true）              | —          | 持续展示                                                                             |
-| amis 组件级 `api`    | —                                                | **不采纳** | 请求下沉 data-source + action                                                        |
-| 多条轮播             | —                                                | **不采纳** | 用 `loop` + 多条文本自动轮播，不引入复杂轮播逻辑                                     |
+| 能力                 | 采纳                                                  | 不采纳     | 理由                                                                                  |
+| -------------------- | ----------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------- |
+| 滚动模式（marquee）  | **实现**：`scrollable: true`                          | —          | 核心交互                                                                              |
+| 静态模式（多行文字） | **实现**：`scrollable: false`（默认）                 | —          | 多行通知                                                                              |
+| 可关闭               | **实现**：`closable: true` + `onClose` 事件           | —          | 用户可控                                                                              |
+| 滚动速度             | **实现**：`speed`（px/s，默认 50）                    | —          | 控制阅读节奏                                                                          |
+| 滚动方向             | **实现**：`direction: 'left'`（默认）/ `'right'`      | —          | 见 §5：值与运动方向**相反**（`'left'`→文本左→右移动，`'right'`→右→左移动）；锁定不变  |
+| 左侧图标             | **实现**：`icon`（lucide 图标名 `string`，非 region） | —          | 视觉提示；经 `resolveLucideIconStrict` 解析，未提供时回落变体默认图标                 |
+| 自定义内容 region    | —                                                     | **不采纳** | v1 仅支持 `text`/`text[]`；自定义内容请用外层 wrapper renderer。schema 无 `body` 字段 |
+| 点击回调             | **实现**：`onClick: ActionSchema`                     | —          | 跳转详情                                                                              |
+| 循环滚动             | **实现**：`loop: true`（默认 true）                   | —          | 持续展示                                                                              |
+| amis 组件级 `api`    | —                                                     | **不采纳** | 请求下沉 data-source + action                                                         |
+| 多条轮播             | —                                                     | **不采纳** | 用 `loop` + 多条文本自动轮播，不引入复杂轮播逻辑                                      |
 
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'notice-bar'`
 - `sourcePackage: '@nop-chaos/flux-renderers-mobile'`
-- regions: `body`（自定义内容，替代默认文本）、`icon`（左侧图标）
+- regions: 无（v1 不提供 `body`/`icon` region；内容由 `text` 文本提供）
 
 ## 4. Schema 设计
 
@@ -54,8 +54,8 @@ interface NoticeBarSchema extends BaseSchema {
   loop?: boolean;
   /** 是否可关闭，默认 false */
   closable?: boolean;
-  /** 左侧图标 */
-  icon?: IconSchema;
+  /** 左侧图标（lucide 图标名字符串，如 `'info'`、`'megaphone'`；经 `resolveLucideIconStrict` 解析；未提供时回落变体默认图标） */
+  icon?: string;
   /** 语义颜色变体 */
   variant?: 'info' | 'warning' | 'success' | 'error';
 }
@@ -75,8 +75,7 @@ interface NoticeBarEvents {
 ### 字段分类
 
 - `text`、`scrollable`、`speed`、`direction`、`loop`、`closable`、`variant`: `value`
-- `icon`: `value`（Icon schema）
-- `body`: `region`
+- `icon`: `value`（lucide 图标名字符串）
 - `onClick`、`onClose`: `event`
 
 ## 5. 滚动实现
@@ -108,7 +107,7 @@ interface NoticeBarEvents {
 ```html
 <div class="nop-notice-bar" data-slot="notice-bar" data-variant="info" role="status">
   <span data-slot="notice-bar-icon">
-    <!-- icon region 或默认 info 图标 -->
+    <!-- icon（lucide name）或变体默认图标 -->
   </span>
   <div data-slot="notice-bar-content">
     <span data-slot="notice-bar-text"> 通知文本 </span>
@@ -124,7 +123,7 @@ interface NoticeBarEvents {
 - 无障碍角色按用途分流（OA-04）：绑定了 `onClick` 时根节点为 `role="button"`（可聚焦、Enter/Space 激活）；未绑定 `onClick` 时为 `role="status"`（advisory 公告，不聚焦）。不再混用 `role="alert"` 的 assertive 语义
 - 滚动容器 `overflow: hidden`，内部文本 `white-space: nowrap`
 - 关闭按钮使用 `@nop-chaos/ui` Button（`size: 'sm'`，icon only）
-- 变体配色走主题 token，不再在组件内硬编码 Tailwind 调色板字面量（MA-06）：组件只发 `data-variant`，包 CSS（`packages/flux-renderers-mobile/src/styles.css`）用 `[data-slot="notice-bar"][data-variant="..."]` 选择 `--nop-notice-bar-*-bg/-fg` token，并带 `.dark` / `:root[data-mode='dark']` 暗色变体
+- 变体配色使用包内固定 hsl 字面量 + 公开 `--nop-notice-bar-*` override 变量（**不**派生自共享主题 token；NEW-MM-06 修正）。独立使用（无 host theme）仍可渲染；需要品牌色的 host 在 `:root` 或 wrapper 上 override 这些变量。组件只发 `data-variant`，包 CSS（`packages/flux-renderers-mobile/src/styles.css`）用 `[data-slot="notice-bar"][data-variant="..."]` 选择 `--nop-notice-bar-*-bg/-fg`，并带 `.dark` / `:root[data-mode='dark']` 暗色变体
 - 跑马灯 `@keyframes nop-notice-bar-marquee` 也已从运行时 `document.head` 注入迁入包 CSS（MA-05），消除全局样式注入
 
 ## 7. 边界情况
