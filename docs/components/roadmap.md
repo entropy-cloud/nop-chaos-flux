@@ -1,6 +1,6 @@
 # Components Roadmap
 
-> Last Updated: 2026-06-22
+> Last Updated: 2026-06-24
 > Source: `docs/components/amis-baseline-matrix.md`, `docs/components/index.md`
 
 ## Purpose
@@ -17,9 +17,9 @@
 > 工作项按 wave 分组（W1 最优先 → W4 最后）。状态流转：draft review 通过 → `todo` 改 `planned`；closure audit 通过 → `planned` 改 `done`（不得提前）。一个 plan 可覆盖多个工作项，届时一并标记。
 
 - L0. 已落地基线（landed）: `done`
-- W1a. 内容展示组（5）: `todo`
-- W1b. 容器与反馈组（5）: `todo`
-- W1c. 集合展示组（1）: `todo`
+- W1a. 内容展示组（5）: `planned`（plan: `docs/plans/2026-06-24-0040-2-w1a-content-family-sanitization-plan.md`）
+- W1b. 容器与反馈组（5）: `done`（plan: `docs/plans/2026-06-24-0040-1-w1b-feedback-family-content-package-bootstrap-plan.md`；首次落地 NEW 包 `flux-renderers-content` + separator/card/progress/spinner/empty 5 个 renderer；解锁 W1a/W2a-content/W3c/W4a）
+- W1c. 集合展示组（1）: `planned`（plan: `docs/plans/2026-06-24-0040-3-w1c-list-collection-display-plan.md`）
 - W1d. 移动端交互组（2，pull-refresh/infinite-scroll）: `todo`（依赖 `mobile-roadmap.md` M5；`@nop-chaos/flux-renderers-mobile` 包**代码未落地**，见 mobile-roadmap Current Baseline；口径以 mobile-roadmap 为准）
 - W2a. 数据组合组（5）: `todo`
 - W2b. 日期族（4）: `todo`

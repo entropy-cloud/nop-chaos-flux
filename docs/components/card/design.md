@@ -12,7 +12,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'card'`
-- 预期归属 `@nop-chaos/flux-renderers-basic`
+- 预期归属 `@nop-chaos/flux-renderers-content`
 - 预期 regions: `header`、`body`、`footer`、`actions`
 
 ## 4. schema 设计
