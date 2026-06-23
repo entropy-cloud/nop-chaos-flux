@@ -19,7 +19,7 @@
 - L0. 已落地基线（landed）: `done`
 - W1a. 内容展示组（5）: `done`（plan: `docs/plans/2026-06-24-0040-2-w1a-content-family-sanitization-plan.md`；markdown/html/link/image/json-view 5 个 renderer 落地于 `flux-renderers-content`；首次建立受控渲染安全门禁——html 默认 DOMPurify sanitize、markdown allowHtml 门禁）
 - W1b. 容器与反馈组（5）: `done`（plan: `docs/plans/2026-06-24-0040-1-w1b-feedback-family-content-package-bootstrap-plan.md`；首次落地 NEW 包 `flux-renderers-content` + separator/card/progress/spinner/empty 5 个 renderer；解锁 W1a/W2a-content/W3c/W4a）
-- W1c. 集合展示组（1）: `planned`（plan: `docs/plans/2026-06-24-0040-3-w1c-list-collection-display-plan.md`）
+- W1c. 集合展示组（1）: `done`（plan: `docs/plans/2026-06-24-0040-3-w1c-list-collection-display-plan.md`；`list` renderer 落地于 `flux-renderers-data`——视觉壳 + `nop-list` marker + 单一 `items` 字段 + `item` region + `empty` value-or-region + `selectionMode` local controlled state + `onItemClick`/`onSelectionChange`；复用 loop/table repeated-instance substrate；解锁 W2a `L0 & W1c → W2a`）
 - W1d. 移动端交互组（2，pull-refresh/infinite-scroll）: `todo`（依赖 `mobile-roadmap.md` M5；`@nop-chaos/flux-renderers-mobile` 包**代码未落地**，见 mobile-roadmap Current Baseline；口径以 mobile-roadmap 为准）
 - W2a. 数据组合组（5）: `todo`
 - W2b. 日期族（4）: `todo`
@@ -61,7 +61,7 @@
 
 **已实现（L0，约 55 个 renderer）：**
 
-通用 renderer：`fragment` `loop` `recurse` `page` `container` `flex` `text` `button` `icon` `badge` `dynamic-renderer` `reaction` `dialog` `drawer` `tabs` `form` `fieldset` `code-editor` `input-text` `input-email` `input-password` `textarea` `select` `checkbox` `switch` `radio-group` `checkbox-group` `input-tree` `tree-select` `tag-list` `key-value` `array-editor` `condition-builder` `object-field` `array-field` `variant-field` `detail-field` `detail-view` `table` `tree` `data-source` `chart` `crud` `input-number`
+通用 renderer：`fragment` `loop` `recurse` `page` `container` `flex` `text` `button` `icon` `badge` `dynamic-renderer` `reaction` `dialog` `drawer` `tabs` `form` `fieldset` `code-editor` `input-text` `input-email` `input-password` `textarea` `select` `checkbox` `switch` `radio-group` `checkbox-group` `input-tree` `tree-select` `tag-list` `key-value` `array-editor` `condition-builder` `object-field` `array-field` `variant-field` `detail-field` `detail-view` `table` `tree` `data-source` `chart` `crud` `list` `input-number`
 
 领域 renderer（package 已提供 definition，宿主是否启用取决于 registry 装配）：`designer-page` `designer-field` `designer-canvas` `designer-palette` `report-inspector-shell` `report-inspector` `report-field-panel` `report-designer-page` `report-toolbar` `spreadsheet-page` `word-editor-page`
 

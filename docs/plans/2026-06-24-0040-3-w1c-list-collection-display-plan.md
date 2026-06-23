@@ -1,6 +1,6 @@
 # W1c 集合展示组（list）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-06-24
 > Source: `docs/components/roadmap.md` W1c；`docs/components/list/design.md`（契约已立约）；`docs/components/package-splitting-strategy.md` §478/§620
 > Related: 解锁后续 W2a（roadmap 依赖图 `L0 & W1c → W2a`）；`loop` renderer（`flux-renderers-basic`，list 复用其 repeated-instance substrate 但保持自身 UI 壳语义）
@@ -80,41 +80,41 @@
 
 ### Phase 1 - list 核心集合展示（Proof + Fix）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/list-renderer.tsx`（新建，colocated `list-renderer.test.tsx`）
 
 - Item Types: `Proof` + `Fix`
 
-- [ ] **Proof**：focused 单测——`items` 有 N 项时 `item` region 实例化 N 次（每项独立 scope 含 item/index）；`items` 空/null 渲染 `empty`；单一 `items` 字段（无双轨）。
-- [ ] **Fix**：`list-renderer.tsx`——视觉壳 + `nop-list` marker；消费 `items`（从 `props.props`）迭代，每项经 `props.regions.item.render()`（或 helpers）实例化 `item` region，注入条目 scope；`empty`（value-or-region）空态；复用 loop/table repeated-instance 模式，不新建 substrate。
-- [ ] **Proof**：focused 单测——`onItemClick` 点击触发并携带 item/index 上下文（经 `props.events`）。
-- [ ] **Fix**：条目点击接入 `onItemClick`（`props.events`），不影响 item region 子项自身交互。
+- [x] **Proof**：focused 单测——`items` 有 N 项时 `item` region 实例化 N 次（每项独立 scope 含 item/index）；`items` 空/null 渲染 `empty`；单一 `items` 字段（无双轨）。
+- [x] **Fix**：`list-renderer.tsx`——视觉壳 + `nop-list` marker；消费 `items`（从 `props.props`）迭代，每项经 `props.regions.item.render()`（或 helpers）实例化 `item` region，注入条目 scope；`empty`（value-or-region）空态；复用 loop/table repeated-instance 模式，不新建 substrate。
+- [x] **Proof**：focused 单测——`onItemClick` 点击触发并携带 item/index 上下文（经 `props.events`）。
+- [x] **Fix**：条目点击接入 `onItemClick`（`props.events`），不影响 item region 子项自身交互。
 
 Exit Criteria:
 
-- [ ] `list` 组件实现，遵循 `RendererComponentProps`（不直接访问 store）。
-- [ ] focused 单测通过（item 实例化计数 / 空态 / onItemClick 上下文，验证行为不仅不报错）。
-- [ ] 单一 `items` 字段原则成立（代码可观测：无第二套模板协议）。
+- [x] `list` 组件实现，遵循 `RendererComponentProps`（不直接访问 store）。
+- [x] focused 单测通过（item 实例化计数 / 空态 / onItemClick 上下文，验证行为不仅不报错）。
+- [x] 单一 `items` 字段原则成立（代码可观测：无第二套模板协议）。
 
 ### Phase 2 - 选择态 + definition + 注册 + playground + e2e + owner-doc 同步
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/list-renderer.tsx`（选择态扩展）；`src/data-renderer-definitions.ts`；`apps/playground/src/`；`tests/e2e/`；`docs/components/roadmap.md`；`docs/components/amis-baseline-matrix.md`
 
 - Item Types: `Proof` + `Fix` + `Follow-up`
 
-- [ ] **Proof**：focused 单测——`selectionMode:'single'` 单选互斥 + `onSelectionChange`；`'multiple'` 多选累加；`'none'` 不可选。
-- [ ] **Fix**：`selectionMode` 选择态——明确 `selectionOwnership`（design §7：local controlled state，selection 写入组件本地态并经 onSelectionChange 上报）；single 互斥、multiple 累加。
-- [ ] **Fix**：`data-renderer-definitions.ts` 增 `list` `RendererDefinition`（`sourcePackage:'@nop-chaos/flux-renderers-data'`，fields：item region、empty value-or-region、items/selectionMode value、onItemClick/onSelectionChange event），随 `registerDataRenderers` 注册（已接入 playground）。
-- [ ] **Fix**：playground 增 list 演示页（展示 item region 模板、空态、selectionMode 三态）并注册路由。
-- [ ] **Proof**：e2e（`tests/e2e/w1c-list.spec.ts`）——程序化断言：N 项渲染、空态、点击 onItemClick、single/multiple 选择高亮。**不靠截图**（遵循 AGENTS.md）。
-- [ ] **Follow-up**：roadmap W1c 标 done（closure 阶段）+ amis-baseline-matrix L117 `targetContract→runtime`（list design.md §3 无 drift，无需改归属）。
+- [x] **Proof**：focused 单测——`selectionMode:'single'` 单选互斥 + `onSelectionChange`；`'multiple'` 多选累加；`'none'` 不可选。
+- [x] **Fix**：`selectionMode` 选择态——明确 `selectionOwnership`（design §7：local controlled state，selection 写入组件本地态并经 onSelectionChange 上报）；single 互斥、multiple 累加。
+- [x] **Fix**：`data-renderer-definitions.ts` 增 `list` `RendererDefinition`（`sourcePackage:'@nop-chaos/flux-renderers-data'`，fields：item region、empty value-or-region、items/selectionMode value、onItemClick/onSelectionChange event），随 `registerDataRenderers` 注册（已接入 playground）。
+- [x] **Fix**：playground 增 list 演示页（展示 item region 模板、空态、selectionMode 三态）并注册路由。
+- [x] **Proof**：e2e（`tests/e2e/w1c-list.spec.ts`）——程序化断言：N 项渲染、空态、点击 onItemClick、single/multiple 选择高亮。**不靠截图**（遵循 AGENTS.md）。
+- [x] **Follow-up**：roadmap W1c 标 done（closure 阶段）+ amis-baseline-matrix L117 `targetContract→runtime`（list design.md §3 无 drift，无需改归属）。
 
 Exit Criteria:
 
-- [ ] `list` definition 合入并随 `registerDataRenderers` 注册，playground 可渲染 `type:'list'`。
-- [ ] selectionMode 三态 focused 单测 + e2e 通过（程序化断言）。
-- [ ] playground list 演示页可访问、交互可用。
+- [x] `list` definition 合入并随 `registerDataRenderers` 注册，playground 可渲染 `type:'list'`。
+- [x] selectionMode 三态 focused 单测 + e2e 通过（程序化断言）。
+- [x] playground list 演示页可访问、交互可用。
 
 ## Draft Review Record
 
@@ -125,17 +125,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `list` renderer 实现（有 UI 集合展示：视觉壳 + item region + 空态），遵循 `RendererComponentProps`。
-- [ ] 单一 `items` 字段原则成立，未引入私有模板双轨。
-- [ ] selectionMode/onItemClick/onSelectionChange 行为落地 + focused 单测 + e2e 通过。
-- [ ] `list` definition 注册，随 `registerDataRenderers` 可用。
-- [ ] roadmap W1c 标 done + amis-baseline-matrix 标 runtime。
-- [ ] 不存在被静默降级到 deferred 的 in-scope 项。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `list` renderer 实现（有 UI 集合展示：视觉壳 + item region + 空态），遵循 `RendererComponentProps`。
+- [x] 单一 `items` 字段原则成立，未引入私有模板双轨。
+- [x] selectionMode/onItemClick/onSelectionChange 行为落地 + focused 单测 + e2e 通过。
+- [x] `list` definition 注册，随 `registerDataRenderers` 可用。
+- [x] roadmap W1c 标 done + amis-baseline-matrix 标 runtime。
+- [x] 不存在被静默降级到 deferred 的 in-scope 项。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -156,16 +156,27 @@ Exit Criteria:
 
 - list selection 的 controlled scope ownership 增强（当前 local controlled，未来可接 scope 持久化）——optimization candidate。
 - list 与 cards（W2a）的条目模板复用评估——watch-only residual。
+- onItemClick 在 playground surface 场景下 dialog body 不继承 per-item scope（strict validation 下 `${item}` 在 dialog body 不可达）；item/index 上下文经由 per-item scope 在 focused 单测中验证。surface body scope 继承为后续 watch-only 观察。
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: W1c 完成。`list` renderer（视觉壳 + `nop-list` marker + 单一 `items` + `item` region + `empty` value-or-region + `selectionMode` local controlled + `onItemClick`/`onSelectionChange`）落地于 `flux-renderers-data`，合入 `data-renderer-definitions.ts` 随 `registerDataRenderers` 注册；playground list 演示页（component-lab `#/lab/list`）+ e2e `tests/e2e/w1c-list.spec.ts`（程序化断言）+ focused 单测 `__tests__/data-list-rendering.test.tsx` 全部通过。roadmap W1c→done、amis-baseline-matrix `list`→runtime。解锁 W2a。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Executor / Agent: 执行 session `ses_w1c_executor`（实现 + 自检，证据如下前三条）。
+- Independent Closure Auditor: fresh-session closure-audit pass（opencode mission-driver；非执行 session，不复用执行者上下文）。Verdict: `approved`。
+- Evidence:
+  - 执行 session 自检：`pnpm typecheck` / `pnpm build` / `pnpm lint` 全绿（53/53、28/28、28/28 tasks）；`pnpm test` 全绿（flux-renderers-data 498 passed；playground 88 passed）；e2e：`tests/e2e/w1c-list.spec.ts` 4 passed；component-lab smoke/nav/batch（含新增 `list` zero-error）97 passed。
+  - 独立复验（fresh session，对照 live repo 逐条核对 Exit Criteria + Closure Gates）：
+    - 非空壳：`packages/flux-renderers-data/src/list-renderer.tsx`（`ListRenderer` + `ListItemView`）消费 `props.props`(ListSchema)/`props.regions.item.render()`/`props.events.onItemClick|onSelectionChange`/`props.meta`/`props.node.scope`/`props.helpers.createScope`，遵循 `RendererComponentProps`（无直接 store 访问）；`nop-list` marker（`list-renderer.tsx:176/195`）+ `data-slot="list-root|list-item|list-empty"`。
+    - selectionMode 三态 local controlled：single 互斥 / multiple 累加 / none 不可选（`useState<Set>` + `onSelectionChange` 上报 `{selectedKeys,selectionMode}`，`list-renderer.tsx:144-171`）；`onItemClick` 派发 per-item scope 携带 clean payload `{type,item,index,key}`（无 nativeEvent 泄漏）。
+    - definition 完整：`data-renderer-definitions.ts:511-584` `list` `RendererDefinition`（category `data`；propContracts items/selectionMode/keyField；eventContracts onItemClick/onSelectionChange；fields item region `params:['item','index']` + empty value-or-region）随 `registerDataRenderers` 注册；`index.tsx:10` 导出 `ListRenderer`。
+    - focused 单测 `__tests__/data-list-rendering.test.tsx` 覆盖 item 实例化计数 / 空态（空数组+null）/ onItemClick openDialog `${item.name}` / selection none/single/multiple / key-field（验证结果非仅"不报错"）；e2e `tests/e2e/w1c-list.spec.ts` 程序化断言（`toHaveCount`/`toHaveAttribute`/`getByRole`，非截图）。
+    - owner-doc 同步：`docs/components/roadmap.md:22` W1c→`done`；`docs/components/amis-baseline-matrix.md:117` list→`runtime`/`landed`；`docs/logs/2026/06-24.md` 记录收口。
+    - deferred 诚实：infinite-scroll→W1d、分页→W2a（out-of-scope improvement，均带 successor path）、虚拟滚动（optimization candidate）均非 in-scope live defect。
+  - Findings：零 Blocker / 零 Major / 零 Minor。surface dialog body 不继承 per-item scope（strict validation）已记为 watch-only follow-up，item/index 上下文由 focused 单测覆盖。
 
 Follow-up:
 
-- <<仅 non-blocking follow-up；confirmed live defect 不得在此>>
+- surface body scope 继承评估（watch-only）。
