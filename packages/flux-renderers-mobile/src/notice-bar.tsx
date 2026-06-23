@@ -11,6 +11,11 @@ const VARIANT_ICON_MAP: Record<NoticeBarVariant, string> = {
   error: 'circle-x',
 };
 
+// OA-15: dwell time per item for multi-text carousels. Decoupled from the
+// marquee animation so that non-overflowing multi-text bars still advance.
+// Aligned with design.md §9 ("index + timeout 切换").
+const CAROUSEL_INTERVAL_MS = 3000;
+
 const CloseIcon = resolveLucideIconStrict('x');
 const DefaultVariantIcons: Record<NoticeBarVariant, ReturnType<typeof resolveLucideIconStrict>> = {
   info: resolveLucideIconStrict(VARIANT_ICON_MAP.info),
@@ -73,6 +78,27 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
     setShouldScroll(overflow > 0);
     setTextWidth(textEl.scrollWidth);
   }, [scrollableConfig, textList, currentIndex]);
+
+  // OA-15: drive multi-text carousel via an independent timer, decoupled from
+  // overflow detection. Previously `currentIndex` only advanced inside
+  // `onAnimationIteration`, which the renderer only attaches when
+  // `shouldScroll === true` (scrollWidth > clientWidth) — so a multi-text bar
+  // whose content did NOT overflow silently never advanced (dead carousel).
+  // The timer re-schedules itself after each advance; `loop: false` halts at
+  // the last item. The marquee animation (when overflowing) still plays as a
+  // pure visual effect and no longer drives the index change.
+  React.useEffect(() => {
+    if (textList.length <= 1) return;
+    if (!loop && currentIndex >= textList.length - 1) return;
+    const id = setTimeout(() => {
+      setCurrentIndex((idx) => {
+        const next = idx + 1;
+        if (loop) return next % textList.length;
+        return next >= textList.length ? idx : next;
+      });
+    }, CAROUSEL_INTERVAL_MS);
+    return () => clearTimeout(id);
+  }, [textList.length, currentIndex, loop]);
 
   const handleClose = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     setVisible(false);
@@ -158,11 +184,6 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
                 }
               : undefined
           }
-          onAnimationIteration={() => {
-            if (loop && textList.length > 1) {
-              setCurrentIndex((idx) => (idx + 1) % textList.length);
-            }
-          }}
         >
           {activeText}
         </span>

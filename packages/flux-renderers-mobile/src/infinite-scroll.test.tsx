@@ -375,4 +375,186 @@ describe('InfiniteScrollRenderer', () => {
     expect(MockIntersectionObserver.instances).toHaveLength(6);
     expect(fifth.disconnected).toBe(true);
   });
+
+  it('error row exposes exactly one focusable control (inner <Button>); outer status div is not operable (NEW-MM-02)', () => {
+    const { view } = renderInfiniteScroll({
+      immediateCheck: false,
+      hasMore: true,
+      error: true,
+      errorText: '加载失败',
+    });
+    const statusRow = view.container.querySelector(
+      '[data-slot="infinite-scroll-status"]',
+    ) as HTMLElement;
+    expect(statusRow).toBeTruthy();
+    // Outer status div carries announcement semantics only.
+    expect(statusRow.getAttribute('role')).toBe('status');
+    expect(statusRow.getAttribute('aria-live')).toBe('polite');
+    // NOT operable / NOT focusable.
+    expect(statusRow.hasAttribute('tabindex')).toBe(false);
+    expect(statusRow.hasAttribute('onclick')).toBe(false);
+    expect(statusRow.hasAttribute('onkeydown')).toBe(false);
+    // Exactly one focusable control: the retry <Button>.
+    const buttons = statusRow.querySelectorAll('button');
+    expect(buttons).toHaveLength(1);
+    const allFocusable = statusRow.querySelectorAll(
+      'button, a, input, select, textarea, [tabindex]',
+    );
+    expect(allFocusable).toHaveLength(1);
+  });
+
+  it('releases the in-flight guard when host clears `error` without touching `loading` (OA-16)', async () => {
+    const onLoadMore = vi.fn(async () => {
+      /* no-op */
+    });
+    const props = createMockRendererProps<InfiniteScrollSchema>({
+      schema: { type: 'infinite-scroll' },
+      props: { immediateCheck: false, hasMore: true, loading: false },
+      regions: { body: <div data-testid="body-content">Body</div> },
+      events: { onLoadMore: onLoadMore as never },
+    });
+    const view = render(<InfiniteScrollRenderer {...props} />);
+
+    // 1) first intersection triggers onLoadMore; in-flight guard set
+    MockIntersectionObserver.triggerLast(true);
+    await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
+
+    // 2) host surfaces failure via `error: true` WITHOUT flipping `loading`.
+    //    With the OA-16 fix, the `error` dep transition releases the guard.
+    view.rerender(
+      <InfiniteScrollRenderer {...props} props={{ ...props.props, error: true }} />,
+    );
+
+    // 3) host clears `error` (documented recovery lever) — `loading` is never
+    //    touched. Without OA-16 this path deadlocks the list.
+    view.rerender(
+      <InfiniteScrollRenderer {...props} props={{ ...props.props, error: undefined }} />,
+    );
+
+    // 4) a subsequent intersection must fire onLoadMore a second time.
+    MockIntersectionObserver.triggerLast(true);
+    await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(2));
+  });
+
+  it('renders the host-supplied error string when error is a non-empty string (OA-17 / Decision a)', () => {
+    const { view } = renderInfiniteScroll({
+      immediateCheck: false,
+      hasMore: true,
+      error: '网络超时',
+      errorText: '加载失败，点击重试',
+    });
+    const statusRow = view.container.querySelector(
+      '[data-slot="infinite-scroll-status"]',
+    ) as HTMLElement;
+    // Host string overrides default errorText in both data-status-text and the
+    // retry button label.
+    expect(statusRow.getAttribute('data-status-text')).toBe('网络超时');
+    expect(statusRow.querySelector('button')?.textContent).toBe('网络超时');
+  });
+
+  it('falls back to errorText when error is boolean true or an empty string (OA-17)', () => {
+    const { view: viewBool } = renderInfiniteScroll({
+      immediateCheck: false,
+      hasMore: true,
+      error: true,
+      errorText: '加载失败，点击重试',
+    });
+    expect(
+      viewBool
+        .container!.querySelector('[data-slot="infinite-scroll-status"]')
+        ?.getAttribute('data-status-text'),
+    ).toBe('加载失败，点击重试');
+
+    cleanup();
+
+    const { view: viewEmpty } = renderInfiniteScroll({
+      immediateCheck: false,
+      hasMore: true,
+      error: '',
+      errorText: '加载失败，点击重试',
+    });
+    expect(
+      viewEmpty
+        .container!.querySelector('[data-slot="infinite-scroll-status"]')
+        ?.getAttribute('data-status-text'),
+    ).toBe('加载失败，点击重试');
+  });
+
+  it('emits a DEV-only console.error when onLoadMore rejects (NEW-MM-01)', async () => {
+    const onLoadMore = vi.fn(async () => {
+      throw new Error('network');
+    });
+    const props = createMockRendererProps<InfiniteScrollSchema>({
+      schema: { type: 'infinite-scroll' },
+      props: { immediateCheck: false, hasMore: true },
+      regions: { body: <div data-testid="body-content">Body</div> },
+      events: { onLoadMore: onLoadMore as never },
+    });
+    render(<InfiniteScrollRenderer {...props} />);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      // vitest sets import.meta.env.DEV = true by default.
+      MockIntersectionObserver.triggerLast(true);
+      await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
+      await Promise.resolve();
+      await Promise.resolve();
+      const diagnostic = errorSpy.mock.calls.filter((c) =>
+        /\[flux\.infinite-scroll\]/.test(String(c[0])),
+      );
+      expect(diagnostic).toHaveLength(1);
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
+  it('stays silent in non-DEV builds when onLoadMore rejects (NEW-MM-01)', async () => {
+    const onLoadMore = vi.fn(async () => {
+      throw new Error('network');
+    });
+    const props = createMockRendererProps<InfiniteScrollSchema>({
+      schema: { type: 'infinite-scroll' },
+      props: { immediateCheck: false, hasMore: true },
+      regions: { body: <div data-testid="body-content">Body</div> },
+      events: { onLoadMore: onLoadMore as never },
+    });
+    render(<InfiniteScrollRenderer {...props} />);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      vi.stubEnv('DEV', false);
+      MockIntersectionObserver.triggerLast(true);
+      await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
+      await Promise.resolve();
+      await Promise.resolve();
+      const diagnostic = errorSpy.mock.calls.filter((c) =>
+        /\[flux\.infinite-scroll\]/.test(String(c[0])),
+      );
+      expect(diagnostic).toHaveLength(0);
+    } finally {
+      vi.unstubAllEnvs();
+      errorSpy.mockRestore();
+    }
+  });
+
+  it('emits a DEV-only console.error when onLoadMore throws synchronously (NEW-MM-01)', () => {
+    const onLoadMoreSync = vi.fn(() => {
+      throw new Error('sync boom');
+    });
+    const props = createMockRendererProps<InfiniteScrollSchema>({
+      schema: { type: 'infinite-scroll' },
+      props: { immediateCheck: false, hasMore: true },
+      regions: { body: <div data-testid="body-content">Body</div> },
+      events: { onLoadMore: onLoadMoreSync as never },
+    });
+    render(<InfiniteScrollRenderer {...props} />);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      MockIntersectionObserver.triggerLast(true);
+      const diagnostic = errorSpy.mock.calls.filter((c) =>
+        /\[flux\.infinite-scroll\]/.test(String(c[0])),
+      );
+      expect(diagnostic).toHaveLength(1);
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
 });

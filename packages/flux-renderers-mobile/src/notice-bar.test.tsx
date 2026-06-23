@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { NoticeBarSchema } from './schemas.js';
 import { NoticeBarRenderer } from './notice-bar.js';
@@ -187,36 +187,125 @@ describe('NoticeBarRenderer', () => {
     );
   });
 
-  it('advances to the next text on each animation iteration (loop carousel, OA-01)', () => {
-    const { view } = renderNoticeBar({ text: ['first', 'second', 'third'], scrollable: true });
-    const textEl = view.container.querySelector(
-      '[data-slot="notice-bar-text"]',
-    ) as HTMLElement;
-    expect(textEl.textContent).toContain('first');
-    fireEvent.animationIteration(textEl);
-    expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
-      'second',
-    );
-    fireEvent.animationIteration(textEl);
-    expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
-      'third',
-    );
-    // wraps around
-    fireEvent.animationIteration(textEl);
-    expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
-      'first',
-    );
+  it('advances to the next text on a timer and wraps around (loop carousel, OA-15)', () => {
+    vi.useFakeTimers();
+    try {
+      const { view } = renderNoticeBar({ text: ['first', 'second', 'third'], scrollable: true });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'first',
+      );
+      // OA-15: carousel is now driven by an independent setTimeout, not by
+      // onAnimationIteration (which never fired for non-overflowing bars).
+      // Wrap timer advance in act() so React flushes the state update.
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'second',
+      );
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'third',
+      );
+      // wraps around (loop: true is default)
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'first',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
-  it('does not carousel-advance when loop is false (OA-01)', () => {
-    const { view } = renderNoticeBar({ text: ['first', 'second'], scrollable: true, loop: false });
-    const textEl = view.container.querySelector(
-      '[data-slot="notice-bar-text"]',
-    ) as HTMLElement;
-    fireEvent.animationIteration(textEl);
-    expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
-      'first',
-    );
+  it('halts at the last item when loop is false (OA-15)', () => {
+    vi.useFakeTimers();
+    try {
+      const { view } = renderNoticeBar({ text: ['first', 'second'], scrollable: true, loop: false });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'first',
+      );
+      // loop:false still advances to the last item, then halts.
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'second',
+      );
+      // Already at the last item — timer is not rescheduled; advancing time
+      // must NOT wrap back to 'first'.
+      act(() => {
+        vi.advanceTimersByTime(6000);
+      });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'second',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('carousels multi-text even when text does not overflow (OA-15)', () => {
+    // OA-15 Proof: the dead path. Previously `currentIndex` only advanced inside
+    // `onAnimationIteration`, which the renderer only attached when
+    // `shouldScroll === true` (scrollWidth > clientWidth). happy-dom returns 0
+    // for both measurements, so without overflow the carousel was silent. The
+    // new timer-driven carousel advances regardless of overflow.
+    vi.useFakeTimers();
+    try {
+      const { view } = renderNoticeBar({ text: ['short A', 'short B', 'short C'], scrollable: true });
+      // happy-dom: scrollWidth === clientWidth === 0 → no overflow → no marquee.
+      expect(view.container.querySelector('[data-scrollable]')?.getAttribute('data-scrollable')).toBe(
+        'false',
+      );
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'short A',
+      );
+      // Despite no overflow, the carousel advances on the timer.
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'short B',
+      );
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'short C',
+      );
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      // wraps around modulo
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'short A',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not schedule a carousel timer for single-text bars', () => {
+    vi.useFakeTimers();
+    try {
+      const { view } = renderNoticeBar({ text: 'only', scrollable: false });
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'only',
+      );
+      act(() => {
+        vi.advanceTimersByTime(10000);
+      });
+      // unchanged — single-text bars never carousel
+      expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+        'only',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('renders custom icon when icon provided', () => {

@@ -5,8 +5,12 @@ export interface PullRefreshSchema extends BaseSchema {
   type: 'pull-refresh';
   /** 子内容 region */
   body?: SchemaInput;
-  /** 刷新方向：'down' 下拉刷新，'up' 上拉加载 */
-  direction?: 'down' | 'up';
+  /**
+   * 刷新方向。OA-14: 仅 `'down'`（下拉刷新）受支持；上拉加载使用
+   * `infinite-scroll`（见 design.md §8）。保留字段以兼容现有 `direction:'down'`
+   * schema；`'up'` 已从类型中移除，传 `'up'` 会触发编译期 TS 错误。
+   */
+  direction?: 'down';
   /** 触发刷新的下拉距离阈值，默认 60px */
   threshold?: number;
   /** 加载中提示文本 */

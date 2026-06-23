@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PullRefreshSchema } from './schemas.js';
@@ -21,7 +21,7 @@ function touch(x: number, y: number) {
 function renderPullRefresh(
   options: {
     threshold?: number;
-    direction?: 'down' | 'up';
+    direction?: 'down';
     disabled?: boolean;
     loadingText?: string;
     pullingText?: string;
@@ -193,17 +193,18 @@ describe('PullRefreshRenderer', () => {
     );
   });
 
-  it('respects up direction (delta sign reversed)', async () => {
-    const { view, onRefresh } = renderPullRefresh({ threshold: 50, direction: 'up' });
+  it('does not commit when direction is omitted (OA-14: only `down` is supported)', async () => {
+    // OA-14: the `'up'` option has been removed. Pull-up loading belongs to
+    // `infinite-scroll`. A downward pull commits; an upward swipe never does.
+    const { view, onRefresh } = renderPullRefresh({ threshold: 50 });
     const root = view.container.querySelector('[data-slot="pull-refresh"]') as HTMLElement;
-    // direction 'up' means swipe upward (deltaY negative) triggers
+    expect(root.getAttribute('data-direction')).toBe('down');
+    // upward swipe: deltaY negative → directionalDelta clamped to 0 → no commit
     fireEvent.touchStart(root, touch(0, 200));
     fireEvent.touchMove(root, touch(0, 0));
     fireEvent.touchEnd(root);
-    await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
-    expect(view.container.querySelector('[data-direction]')?.getAttribute('data-direction')).toBe(
-      'up',
-    );
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(onRefresh).not.toHaveBeenCalled();
   });
 
   it('recovers to normal when onRefresh rejects instead of locking the spinner (MA-01)', async () => {
@@ -229,18 +230,27 @@ describe('PullRefreshRenderer', () => {
     );
   });
 
-  it('does not setState after unmount during in-flight refresh (MA-12)', () => {
-    vi.useFakeTimers();
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  it('isMountedRef guard blocks the success-timer schedule after unmount (NEW-MM-04)', async () => {
+    // NEW-MM-04: the previous test asserted React 19's removed "unmount"
+    // console.error warning — which never fires, so the test passed even with
+    // `isMountedRef` deleted. This rewrite observes the guard's observable
+    // side effect: after unmount, the `.then()` branch must NOT schedule the
+    // success `setTimeout`. We spy on `setTimeout` and filter for the unique
+    // `successDuration` delay. With the guard, zero such calls; without the
+    // guard (verified by temporarily deleting it during plan execution), one
+    // such call would slip through after unmount — making this test fail.
+    // Real timers are used (not vi.useFakeTimers) to avoid leaking timer
+    // state into subsequent tests.
+    let resolveRefresh: () => void = () => undefined;
+    const onRefreshImpl = () =>
+      new Promise<void>((resolve) => {
+        resolveRefresh = resolve;
+      });
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
     try {
-      let resolveRefresh: () => void = () => undefined;
-      const onRefreshImpl = () =>
-        new Promise<void>((resolve) => {
-          resolveRefresh = resolve;
-        });
-      const { view } = renderPullRefresh({
+      const { view, onRefresh } = renderPullRefresh({
         threshold: 60,
-        successDuration: 200,
+        successDuration: 234,
         onRefresh: onRefreshImpl,
       });
       const root = view.container.querySelector('[data-slot="pull-refresh"]') as HTMLElement;
@@ -248,24 +258,34 @@ describe('PullRefreshRenderer', () => {
       fireEvent.touchMove(root, touch(0, 200));
       fireEvent.touchEnd(root);
 
-      // Unmount while the refresh promise is still in-flight.
+      // Wait for the renderer's microtask chain to call onRefresh (which
+      // assigns resolveRefresh).
+      await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
+      // Clear any calls captured during mount/handler setup so the assertion
+      // only observes post-unmount scheduling.
+      setTimeoutSpy.mockClear();
+
+      // Unmount while the refresh promise is still in-flight. The cleanup
+      // sets isMountedRef.current = false.
       view.unmount();
 
-      // Resolving now + advancing the success-timer window must not schedule
-      // or invoke any setState on the unmounted instance.
+      // Resolving now triggers the .then() callback. The isMountedRef guard
+      // must short-circuit BEFORE scheduling the success setTimeout.
       resolveRefresh();
-      act(() => {
-        vi.advanceTimersByTime(1000);
-      });
+      // Drain the promise microtask chain (the .then() guard runs here).
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
 
-      expect(view.container.querySelector('[data-slot="pull-refresh"]')).toBeNull();
-      const unmountWarnings = errorSpy.mock.calls.filter((c) =>
-        /unmount/i.test(String(c[0])),
+      // Filter for the success-timer schedule (unique delay = successDuration).
+      // The .then() guard returns early on unmount, so ZERO such calls.
+      const successTimerCalls = setTimeoutSpy.mock.calls.filter(
+        (call) => call[1] === 234,
       );
-      expect(unmountWarnings).toHaveLength(0);
+      expect(successTimerCalls).toHaveLength(0);
+      expect(view.container.querySelector('[data-slot="pull-refresh"]')).toBeNull();
     } finally {
-      errorSpy.mockRestore();
-      vi.useRealTimers();
+      setTimeoutSpy.mockRestore();
     }
   });
 
@@ -324,6 +344,42 @@ describe('PullRefreshRenderer', () => {
         'success',
       ),
     );
+  });
+
+  it('synchronously mirrors statusRef so back-to-back touchEnds do not double-dispatch (NEW-MM-03)', async () => {
+    // NEW-MM-03: aligns with swipe-cell's synchronous statusRef mirror. The
+    // handler writes statusRef.current inline with setStatus('loading'), so a
+    // second touchEnd fired in immediate succession (before any awaitable
+    // settles) sees the new value and short-circuits. With a pure passive
+    // useEffect mirror, this guard could in principle miss when a second
+    // handler runs inside the same commit window. This test exercises the
+    // stricter back-to-back path (no `await waitFor(loading)` between the two
+    // touchEnds) to prove the synchronous write is in place.
+    let resolveRefresh: () => void = () => undefined;
+    const onRefreshImpl = () =>
+      new Promise<void>((resolve) => {
+        resolveRefresh = resolve;
+      });
+    const { view, onRefresh } = renderPullRefresh({
+      threshold: 60,
+      onRefresh: onRefreshImpl,
+    });
+    const root = view.container.querySelector('[data-slot="pull-refresh"]') as HTMLElement;
+
+    // First completed pull → enters loading synchronously, statusRef mirrored inline.
+    fireEvent.touchStart(root, touch(0, 0));
+    fireEvent.touchMove(root, touch(0, 200));
+    fireEvent.touchEnd(root);
+
+    // Second completed pull fired immediately — no `await` in between. The
+    // synchronous statusRef.current === 'loading' read must reject it.
+    fireEvent.touchStart(root, touch(0, 0));
+    fireEvent.touchMove(root, touch(0, 200));
+    fireEvent.touchEnd(root);
+
+    await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+    resolveRefresh();
   });
 
   it('does not commit on touchCancel and restores normal state (OA-05)', () => {

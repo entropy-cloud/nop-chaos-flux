@@ -22,6 +22,9 @@ export const mobileRendererDefinitions: RendererDefinition[] = [
     component: PullRefreshRenderer,
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
+      // OA-14: `direction` is locked to 'down' (pull-up loading belongs to
+      // `infinite-scroll`). Kept as a field so existing schemas with
+      // `direction: 'down'` remain valid; `'up'` is now a TS compile error.
       { key: 'direction', kind: 'prop' },
       { key: 'threshold', kind: 'prop' },
       { key: 'loadingText', kind: 'prop' },

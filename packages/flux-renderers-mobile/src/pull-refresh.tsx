@@ -35,7 +35,10 @@ function resolveIndicatorText(
 
 export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSchema>) {
   const slotProps = props.props;
-  const direction = slotProps.direction === 'up' ? 'up' : 'down';
+  // OA-14: only `'down'` (pull-down-to-refresh) is supported. Pull-up loading
+  // belongs to `infinite-scroll` (see design.md §8). The previous `'up'`
+  // branch produced geometrically inverted movement on every device.
+  const direction = 'down';
   const threshold = typeof slotProps.threshold === 'number' ? slotProps.threshold : 60;
   const disabled = slotProps.disabled === true;
   const animationDuration =
@@ -56,6 +59,11 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
   // current value synchronously. This is required because the onRefresh
   // dispatch was moved OUT of the setStatus updater (MA-02): previously the
   // updater read `current` to guard re-entrancy, but updaters must stay pure.
+  // NEW-MM-03: align with swipe-cell's synchronous mirror pattern — every
+  // handler that calls setStatus also assigns statusRef.current inline, so
+  // rapid successive calls see the latest intent. The passive useEffect
+  // mirror below is kept only as a safety net for any future transition path
+  // that forgets to write the ref, matching swipe-cell.tsx's pattern.
   const statusRef = React.useRef<PullRefreshStatus>('normal');
   React.useEffect(() => {
     statusRef.current = status;
@@ -78,9 +86,12 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
     };
   }, []);
 
-  const sign = direction === 'down' ? 1 : -1;
-  const rawOffset = state.deltaY * sign;
-  const directionalDelta = Math.max(0, rawOffset);
+  // OA-14: with `direction` fixed to `'down'`, the pull is simply the positive
+  // part of deltaY (finger moving DOWN on screen). The previous sign logic
+  // only gated the threshold check for `'up'`, but the body translate stayed
+  // positive — which is exactly the inverted-geometry bug. Now there is no
+  // sign flip and no `'up'` branch.
+  const directionalDelta = Math.max(0, state.deltaY);
   const pullDistance = Math.min(directionalDelta * DAMPING_FACTOR, MAX_PULL_DISTANCE);
   const reachedThreshold = directionalDelta >= threshold;
 
@@ -112,6 +123,11 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
     if (current === 'loading' || current === 'success') return;
 
     if (directionalDelta >= threshold) {
+      // NEW-MM-03: synchronous statusRef mirror aligned with swipe-cell's
+      // pattern — write the ref inline with every setStatus so a rapid second
+      // touchEnd in the same tick sees 'loading' and short-circuits (the
+      // passive useEffect mirror would only fire after commit).
+      statusRef.current = 'loading';
       setStatus('loading');
       // MA-01: a rejected onRefresh must return to 'normal' instead of locking
       // the spinner; MA-12: both branches guard against post-unmount setState.
@@ -121,21 +137,25 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
         .then(() => props.events.onRefresh?.({ type: 'refresh', direction, threshold }))
         .then(() => {
           if (!isMountedRef.current) return;
+          statusRef.current = 'success';
           setStatus('success');
           if (successTimerRef.current) clearTimeout(successTimerRef.current);
           successTimerRef.current = setTimeout(() => {
             if (!isMountedRef.current) return;
             successTimerRef.current = null;
+            statusRef.current = 'normal';
             setStatus('normal');
           }, successDuration);
         })
         .catch(() => {
           if (!isMountedRef.current) return;
+          statusRef.current = 'normal';
           setStatus('normal');
         });
       return;
     }
 
+    statusRef.current = 'normal';
     setStatus('normal');
   }, [
     touchHandlers,
@@ -155,6 +175,8 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
     if (disabled) return;
     const current = statusRef.current;
     if (current === 'loading' || current === 'success') return;
+    // NEW-MM-03: synchronous statusRef mirror (see handleTouchEnd).
+    statusRef.current = 'normal';
     setStatus('normal');
   }, [touchHandlers, disabled]);
 

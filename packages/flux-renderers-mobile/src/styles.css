@@ -21,12 +21,14 @@
   }
 }
 
-/* MA-06: variant palette now derives from theme tokens with explicit dark
- * overrides instead of the literal `bg-*-50/text-*-800` classes that had no
- * `dark:` variants. Selectors key off the stable `[data-slot][data-variant]`
- * contract that the renderer already emits. Tokens use hsl() fragments from
- * the shared theme layer with package-local fallbacks so standalone usage
- * still renders. */
+/* MA-06: variant palette uses package-local fixed hsl literals + public
+ * `--nop-notice-bar-*` override variables (NEW-MM-06: comment corrected — this
+ * stylesheet does NOT derive from shared theme tokens; it publishes its own
+ * fixed palette and lets hosts override via the `--nop-notice-bar-*` custom
+ * properties). Selectors key off the stable `[data-slot][data-variant]`
+ * contract that the renderer already emits. The fixed hsl values let
+ * standalone usage (without a host theme) still render; hosts that want
+ * brand-specific colors override the variables at `:root` or a wrapper. */
 :root {
   --nop-notice-bar-info-bg: hsl(217 89% 96%);
   --nop-notice-bar-info-fg: hsl(217 89% 35%);
@@ -38,9 +40,9 @@
   --nop-notice-bar-error-fg: hsl(0 70% 38%);
 }
 
-/* Dark overrides: map to the muted/strong token pairs the classic theme
- * already publishes. `.dark` (Tailwind class strategy) and the project's
- * `:root[data-mode='dark']` attribute strategy are both covered. */
+/* Dark overrides: also fixed hsl literals, gated by the host's dark-mode
+ * strategy (`.dark` Tailwind class and/or `:root[data-mode='dark']`).
+ * Override `--nop-notice-bar-*` at these selectors (or your own) to retune. */
 .dark,
 :root[data-mode='dark'] {
   --nop-notice-bar-info-bg: hsl(217 30% 20%);
