@@ -80,6 +80,20 @@ interface InfiniteScrollRuntimeProps {
 }
 ```
 
+### 错误/重试契约（OA-16 / OA-17）
+
+`loading` 与 `error` 是 host 控制的**两条独立 documented lever**，各自单独可用：
+
+| Lever                                        | 用途                     | 对 in-flight guard 的影响 |
+| -------------------------------------------- | ------------------------ | ------------------------- |
+| `loading: true → false`（或任意迁移）        | host 确认/结束请求       | 释放 guard（MA-13）       |
+| `error: undefined ↔ true/string`（任意迁移） | host 上报失败 / 清除失败 | 释放 guard（OA-16）       |
+
+- **OA-16**：host 清除 `error`（不触碰 `loading`）即可解锁重试与自动加载——这是 documented-contract-compliant 的恢复路径，渲染器在 `error` 迁移时同步复位 in-flight guard。任意一条 lever 迁移都释放 guard，不要求 host 同时操作两个 lever。
+- **OA-17（Decision a）**：`error?: boolean | string` union 兑现其声明价值——当 host 传字符串（如 `'网络超时'`），错误行（`data-status-text` 与重试 `<Button>` label）**呈现该字符串**；`error: true`（或字符串为空）回落到 `errorText`。
+- **错误行 a11y（NEW-MM-02）**：外层 `<div data-slot="infinite-scroll-status">` 仅承载 `role="status" + aria-live="polite"` 公告语义，**不可聚焦、不可操作**；重试 `<Button>` 是错误态唯一的 focusable/operable 控制（`w-full` 铺满行，触控目标与原可点击外层等价，不再产生重复 tab stop）。
+- **DEV 诊断（NEW-MM-01）**：`onLoadMore` reject 或同步抛出时，DEV 构建打印 `console.error('[flux.infinite-scroll] onLoadMore rejected.', err)`；非 DEV 构建静默。运行时控制流不变（失败始终被吞，host 通过 `error` prop 上报）。
+
 ## 4. 实现方式
 
 ### 检测机制
@@ -98,15 +112,18 @@ interface InfiniteScrollRuntimeProps {
 
 ## 5. 边界情况
 
-| 场景                     | 行为                                                                                                        |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| 内容不足一屏             | `immediateCheck=true` 时自动触发首次加载                                                                    |
-| 快速滚动到底部           | 只触发一次 `onLoadMore`，避免重复调用                                                                       |
-| 组件卸载                 | IntersectionObserver 断开连接                                                                               |
-| 与 PullRefresh 共存      | PullRefresh 在外层包裹，InfiniteScroll 在内层包裹列表                                                       |
-| 容器滚动 vs 视口滚动     | 自动检测最近的可滚动父容器                                                                                  |
-| data-source 正在 loading | 不重复触发 onLoadMore                                                                                       |
-| **触摸目标**             | 底部加载指示器需满足 M0 基线规范（`docs/architecture/mobile-responsive-baseline.md` §3）的 44×44px 最小尺寸 |
+| 场景                                              | 行为                                                                                                        |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 内容不足一屏                                      | `immediateCheck=true` 时自动触发首次加载                                                                    |
+| 快速滚动到底部                                    | 只触发一次 `onLoadMore`，避免重复调用（本地 in-flight guard）                                               |
+| 组件卸载                                          | IntersectionObserver 断开连接                                                                               |
+| 与 PullRefresh 共存                               | PullRefresh 在外层包裹，InfiniteScroll 在内层包裹列表                                                       |
+| 容器滚动 vs 视口滚动                              | 自动检测最近的可滚动父容器                                                                                  |
+| data-source 正在 loading                          | 不重复触发 onLoadMore                                                                                       |
+| host 清 `error` 但不动 `loading`（OA-16）         | 释放 in-flight guard，后续 intersection/重试按钮重新触发 `onLoadMore`                                       |
+| host 传 `error: string`（OA-17 Decision a）       | 错误行呈现该字符串；`error: true`/空字符串回落 `errorText`                                                  |
+| `onLoadMore` reject / 同步抛出（MA-14/NEW-MM-01） | 渲染器不崩；DEV 构建打印 `[flux.infinite-scroll]` 诊断，非 DEV 静默                                         |
+| **触摸目标**                                      | 底部加载指示器需满足 M0 基线规范（`docs/architecture/mobile-responsive-baseline.md` §3）的 44×44px 最小尺寸 |
 
 ## 6. 包归属
 

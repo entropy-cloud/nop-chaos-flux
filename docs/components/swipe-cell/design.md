@@ -92,7 +92,7 @@ closed → sliding-right → open-right → closing
 
 - 使用 `useTouch` Hook 检测水平拖拽
 - 仅水平方向触发（`direction: 'horizontal'`）
-- 拖拽阻尼：接近操作区边缘时减速 `deltaX * 0.3`
+- 拖拽跟手 1:1，在操作区宽度处硬 clamp（`effectiveOffset = clamp(dragOffset, 0, leftWidth)` 或 `clamp(dragOffset, -rightWidth, 0)`），无边缘阻尼（NEW-MM-05：与运行时一致；早期文档误标 `deltaX * 0.3` 阻尼系数，但实现从未引入该系数。pull-refresh 的 `0.5` 垂直 pull elastic damping 是另一套模型，不适用于水平 swipe）
 - 松手回弹：`transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`
 - 操作区宽度自动测量，滑动距离不超过操作区宽度
 

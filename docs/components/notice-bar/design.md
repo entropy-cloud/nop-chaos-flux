@@ -84,10 +84,11 @@ interface NoticeBarEvents {
 ### 滚动模式（`scrollable: true`）
 
 - 单条文本：使用 CSS `@keyframes marquee` 或 `transform: translateX()` 动画
-- 多条文本（`text: string[]`）：轮播显示，每条滚动完毕后切换下一条
-- 计算公式：`duration = (contentWidth / speed) * 1000` ms
-- `loop: true` 时动画无限循环
-- `loop: false` 时滚动一次停止
+- 多条文本（`text: string[]`）：轮播显示，每条停留 `CAROUSEL_INTERVAL_MS`（默认 3000ms）后切换下一条
+- 计算公式：`duration = (contentWidth / speed) * 1000` ms（marquee 视觉滚动）
+- `loop: true` 时轮播无限循环
+- `loop: false` 时滚动到末条停止
+- **OA-15**：轮播切换由独立 `setTimeout` 驱动，**不依赖** marquee 动画的 `animationiteration` 事件。这样即使某条文本不溢出容器（`scrollWidth <= clientWidth`，marquee 不启动），多文本 bar 仍能正常轮播。marquee 动画只负责视觉滚动，不再驱动 index 变更
 
 ### 静态模式（`scrollable: false`）
 
@@ -123,10 +124,10 @@ interface NoticeBarEvents {
 | 场景                                | 行为                                                      |
 | ----------------------------------- | --------------------------------------------------------- |
 | `text` 为空或未提供                 | 不渲染                                                    |
-| `text` 为数组但只有一条             | 按单条处理                                                |
-| `scrollable: true` 但文本不溢出容器 | 不滚动，静态展示                                          |
+| `text` 为数组但只有一条             | 按单条处理，不轮播                                        |
+| `scrollable: true` 但文本不溢出容器 | marquee 不启动；多文本仍由独立 timer 轮播（OA-15）        |
 | `closable: true`                    | 显示关闭按钮，点击后触发 `onClose` 并隐藏                 |
-| 快速切换 `scrollable`               | 正确启停动画                                              |
+| 快速切换 `scrollable`               | 正确启停 marquee 动画                                     |
 | 容器宽度变化（响应式）              | 重新计算滚动距离                                          |
 | 嵌套在 SwipeCell 内                 | 滚动手势不与 SwipeCell 水平滑动冲突（垂直容器内滚动优先） |
 
@@ -143,7 +144,7 @@ interface NoticeBarEvents {
 - `NoticeBar` renderer：纯展示组件，接收 `RendererComponentProps`
 - 滚动逻辑用 CSS animation 实现（性能更好），不用 JS 定时器
 - 关闭状态用 React 本地 state `visible` 控制
-- 多条文本轮播可用简单的 index + timeout 切换
+- 多条文本轮播用 index + timeout 切换（OA-15：独立 `setTimeout`，不依赖 marquee 的 `animationiteration`；不溢出容器也能轮播）
 - 不需要 store 或 scope 状态——纯展示，不参与表单
 
 ## 10. 风险、取舍与后续阶段
