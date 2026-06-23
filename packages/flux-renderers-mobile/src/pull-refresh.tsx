@@ -84,15 +84,25 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
   const pullDistance = Math.min(directionalDelta * DAMPING_FACTOR, MAX_PULL_DISTANCE);
   const reachedThreshold = directionalDelta >= threshold;
 
-  React.useEffect(() => {
-    if (disabled) return;
-    if (!state.isTouching) return;
-    if (status === 'loading' || status === 'success') return;
-
-    if (directionalDelta > 0) {
-      setStatus(reachedThreshold ? 'loosing' : 'pulling');
-    }
-  }, [state.isTouching, directionalDelta, reachedThreshold, disabled, status]);
+  // MA-10: derive the displayed status at render time instead of mirroring it
+  // through a useEffect+setStatus on every touchmove frame (60-120Hz double
+  // render). `status` state now only holds the COMMITTED machine state
+  // (normal/loading/success); the transient 'pulling'/'loosing' labels are
+  // pure functions of the current touch.
+  //
+  // The derivation MUST be gated on `state.isTouching`: use-touch.onTouchEnd
+  // only clears isTouching, not deltaY/deltaX (those reset on the next
+  // touchStart). Without the gate, a release-without-commit would leave a
+  // stale 'pulling'/'loosing' label and data-status because the (now stale)
+  // directionalDelta is still > 0.
+  const isBusy = status === 'loading' || status === 'success';
+  const resolvedStatus: PullRefreshStatus = isBusy
+    ? status
+    : state.isTouching && directionalDelta > 0
+      ? reachedThreshold
+        ? 'loosing'
+        : 'pulling'
+      : 'normal';
 
   const handleTouchEnd = React.useCallback(() => {
     touchHandlers.onTouchEnd();
@@ -149,15 +159,12 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
   }, [touchHandlers, disabled]);
 
   const bodyContent = props.regions.body?.render() as React.ReactNode;
-  const isBusy = status === 'loading' || status === 'success';
-  const indicatorText = resolveIndicatorText(status, texts);
+  const indicatorText = resolveIndicatorText(resolvedStatus, texts);
 
   const trackTranslate =
-    status === 'loading'
+    resolvedStatus === 'loading' || resolvedStatus === 'success'
       ? threshold
-      : status === 'success'
-        ? threshold
-        : pullDistance;
+      : pullDistance;
 
   return (
     <div
@@ -165,9 +172,20 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="pull-refresh"
-      data-status={status}
+      data-status={resolvedStatus}
       data-direction={direction}
       style={{
+        position: 'relative',
+        // MA-07: declare vertical gesture ownership so the browser does not
+        // compete with native scrolling / overscroll / back-forward during a
+        // pull. `pan-x` reserves the VERTICAL axis for this element's JS
+        // (touch-action names the axis the BROWSER may pan, so pan-x means the
+        // browser pans horizontally and the element receives vertical
+        // touchmove — which is what a pull-refresh needs). `overscroll-behavior-
+        // y: contain` stops the pull from chaining to a parent scroller.
+        // Contract: docs/architecture/mobile-responsive-baseline.md §5.
+        touchAction: 'pan-x',
+        overscrollBehaviorY: 'contain',
         transform: `translateY(${trackTranslate}px)`,
         transition: state.isTouching ? 'none' : `transform ${animationDuration}ms ease`,
       }}
@@ -176,10 +194,20 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
       onTouchEnd={disabled ? undefined : handleTouchEnd}
       onTouchCancel={disabled ? undefined : handleTouchCancel}
     >
+      {/* OA-09: indicator is out of flow (position:absolute + translateY(-100%))
+       * so the body is the only in-flow child of the translated track. The
+       * body's screen offset then equals the root translate 1:1 with the
+       * finger. The previous in-flow indicator stacked its height on top of
+       * the root translate, producing a ~2× overtravel. */}
       <div
         data-slot="pull-refresh-indicator"
         style={{
-          height: status === 'normal' && pullDistance === 0 ? 0 : trackTranslate,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: resolvedStatus === 'normal' && pullDistance === 0 ? 0 : trackTranslate,
+          transform: 'translateY(-100%)',
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
@@ -191,9 +219,7 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
         {isBusy ? <Spinner className="size-4" /> : null}
         <span>{indicatorText}</span>
       </div>
-      <div data-slot="pull-refresh-body">
-        {bodyContent}
-      </div>
+      <div data-slot="pull-refresh-body">{bodyContent}</div>
     </div>
   );
 }

@@ -1,0 +1,74 @@
+/* flux-renderers-mobile package styles.
+ * Contract source: docs/architecture/mobile-responsive-baseline.md §5,
+ * docs/architecture/theme-compatibility.md, docs/architecture/styling-system.md.
+ *
+ * Consumed via the public `@nop-chaos/flux-renderers-mobile/styles.css` entry
+ * (see package.json `exports`). Hosts import this once alongside the theme
+ * tokens so the mobile renderers own their keyframes/variant palette instead
+ * of injecting them into document.head at runtime (MA-05) or pinning literal
+ * Tailwind palette classes without dark variants (MA-06). */
+
+/* MA-05: marquee keyframes previously injected into document.head by
+ * ensureMarqueeKeyframes(). Moving them here removes the runtime style
+ * injection (no cleanup, CSP/iframe/shadow-DOM unfriendly) and keeps
+ * styling inside the documented Tailwind/CSS layer. */
+@keyframes nop-notice-bar-marquee {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+/* MA-06: variant palette now derives from theme tokens with explicit dark
+ * overrides instead of the literal `bg-*-50/text-*-800` classes that had no
+ * `dark:` variants. Selectors key off the stable `[data-slot][data-variant]`
+ * contract that the renderer already emits. Tokens use hsl() fragments from
+ * the shared theme layer with package-local fallbacks so standalone usage
+ * still renders. */
+:root {
+  --nop-notice-bar-info-bg: hsl(217 89% 96%);
+  --nop-notice-bar-info-fg: hsl(217 89% 35%);
+  --nop-notice-bar-warning-bg: hsl(38 92% 95%);
+  --nop-notice-bar-warning-fg: hsl(33 80% 35%);
+  --nop-notice-bar-success-bg: hsl(142 71% 92%);
+  --nop-notice-bar-success-fg: hsl(142 65% 30%);
+  --nop-notice-bar-error-bg: hsl(0 84% 95%);
+  --nop-notice-bar-error-fg: hsl(0 70% 38%);
+}
+
+/* Dark overrides: map to the muted/strong token pairs the classic theme
+ * already publishes. `.dark` (Tailwind class strategy) and the project's
+ * `:root[data-mode='dark']` attribute strategy are both covered. */
+.dark,
+:root[data-mode='dark'] {
+  --nop-notice-bar-info-bg: hsl(217 30% 20%);
+  --nop-notice-bar-info-fg: hsl(217 89% 82%);
+  --nop-notice-bar-warning-bg: hsl(38 30% 20%);
+  --nop-notice-bar-warning-fg: hsl(38 82% 75%);
+  --nop-notice-bar-success-bg: hsl(142 30% 18%);
+  --nop-notice-bar-success-fg: hsl(142 60% 75%);
+  --nop-notice-bar-error-bg: hsl(0 30% 20%);
+  --nop-notice-bar-error-fg: hsl(0 70% 78%);
+}
+
+[data-slot='notice-bar'][data-variant='info'] {
+  background-color: var(--nop-notice-bar-info-bg);
+  color: var(--nop-notice-bar-info-fg);
+}
+
+[data-slot='notice-bar'][data-variant='warning'] {
+  background-color: var(--nop-notice-bar-warning-bg);
+  color: var(--nop-notice-bar-warning-fg);
+}
+
+[data-slot='notice-bar'][data-variant='success'] {
+  background-color: var(--nop-notice-bar-success-bg);
+  color: var(--nop-notice-bar-success-fg);
+}
+
+[data-slot='notice-bar'][data-variant='error'] {
+  background-color: var(--nop-notice-bar-error-bg);
+  color: var(--nop-notice-bar-error-fg);
+}

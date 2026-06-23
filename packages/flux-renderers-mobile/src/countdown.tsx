@@ -164,7 +164,7 @@ export function CountdownRenderer(props: RendererComponentProps<CountdownSchema>
   if (!hasTimeConfig) {
     return (
       <span
-        className={cn('nop-countdown', props.meta.className)}
+        className={cn('nop-countdown tabular-nums', props.meta.className)}
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}
         data-slot="countdown"
@@ -176,13 +176,12 @@ export function CountdownRenderer(props: RendererComponentProps<CountdownSchema>
 
   return (
     <span
-      className={cn('nop-countdown', props.meta.className)}
+      className={cn('nop-countdown tabular-nums', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="countdown"
       data-finished={result.isFinished ? 'true' : 'false'}
       aria-live="off"
-      style={{ fontVariantNumeric: 'tabular-nums' }}
     >
       {prefix ? <span data-slot="countdown-prefix">{prefix}</span> : null}
       <span data-slot="countdown-value" data-remaining={result.remaining}>

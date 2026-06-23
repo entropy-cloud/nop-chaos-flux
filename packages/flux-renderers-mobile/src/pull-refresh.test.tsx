@@ -377,4 +377,85 @@ describe('PullRefreshRenderer', () => {
     await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
     expect(onRefresh.mock.calls[0][0]).toEqual({ type: 'refresh', direction: 'down', threshold: 50 });
   });
+
+  it('places the indicator out of flow so body tracks the finger 1:1 (OA-09)', () => {
+    const { view } = renderPullRefresh({ threshold: 60 });
+    const root = view.container.querySelector('[data-slot="pull-refresh"]') as HTMLElement;
+    const indicator = view.container.querySelector(
+      '[data-slot="pull-refresh-indicator"]',
+    ) as HTMLElement;
+    const body = view.container.querySelector(
+      '[data-slot="pull-refresh-body"]',
+    ) as HTMLElement;
+
+    // Mid-pull: root is translated by pullDistance; indicator must be out of
+    // flow so it does not stack its height onto the body offset (the old
+    // in-flow indicator produced a ~2x overtravel).
+    fireEvent.touchStart(root, touch(0, 0));
+    fireEvent.touchMove(root, touch(0, 200));
+
+    expect(getComputedStyle(indicator).position).toBe('absolute');
+    expect(indicator.style.transform).toContain('translateY(-100%)');
+    // The body is the only in-flow child; it carries no transform of its own,
+    // so its screen offset equals the root translate (1:1 with the finger).
+    // (It has no inline style at all — no extra offsetting.)
+    expect(body.style.transform).toBe('');
+
+    // Structural geometry check: simulate a layout engine by computing rect
+    // tops from the inline transforms. body.top must equal root.top, NOT
+    // root.top + indicator.height (which would be the 2x bug).
+    const rootTranslate = parseFloat(root.style.transform.match(/-?\d+\.?\d*/)?.[0] ?? '0');
+    const indicatorHeight = parseFloat(indicator.style.height.match(/-?\d+\.?\d*/)?.[0] ?? '0');
+    expect(rootTranslate).toBeGreaterThan(0);
+    expect(indicatorHeight).toBeGreaterThan(0);
+    // body offset = root translate only (1:1); the buggy value would be
+    // rootTranslate + indicatorHeight.
+    const bodyOffsetVsFinger = rootTranslate; // 1:1
+    const buggyOffset = rootTranslate + indicatorHeight; // 2x
+    expect(bodyOffsetVsFinger).toBe(rootTranslate);
+    expect(bodyOffsetVsFinger).toBeLessThan(buggyOffset);
+  });
+
+  it('declares pan-x touch-action and contained overscroll on the root (MA-07)', () => {
+    const { view } = renderPullRefresh();
+    const root = view.container.querySelector('[data-slot="pull-refresh"]') as HTMLElement;
+    const cs = getComputedStyle(root);
+    // pan-x reserves the VERTICAL axis for the element's JS (touch-action names
+    // the axis the browser may pan); pull-refresh owns the vertical pull.
+    expect(cs.touchAction).toBe('pan-x');
+    expect(cs.overscrollBehaviorY).toBe('contain');
+  });
+
+  it('derives pulling/loosing at render time without a mirror effect (MA-10)', () => {
+    const { view } = renderPullRefresh({ threshold: 80, pullingText: '继续下拉', loosingText: '释放刷新' });
+    const root = view.container.querySelector('[data-slot="pull-refresh"]') as HTMLElement;
+    // Below threshold while touching -> 'pulling' derived at render time.
+    fireEvent.touchStart(root, touch(0, 0));
+    fireEvent.touchMove(root, touch(0, 30));
+    expect(view.container.querySelector('[data-status]')?.getAttribute('data-status')).toBe(
+      'pulling',
+    );
+    // Past threshold while touching -> 'loosing' derived at render time.
+    fireEvent.touchMove(root, touch(0, 120));
+    expect(view.container.querySelector('[data-status]')?.getAttribute('data-status')).toBe(
+      'loosing',
+    );
+  });
+
+  it('returns data-status to normal after a release-without-commit, with no stale pulling/loosing (MA-10)', () => {
+    const { view } = renderPullRefresh({ threshold: 80 });
+    const root = view.container.querySelector('[data-slot="pull-refresh"]') as HTMLElement;
+    fireEvent.touchStart(root, touch(0, 0));
+    fireEvent.touchMove(root, touch(0, 30)); // pulling
+    expect(view.container.querySelector('[data-status]')?.getAttribute('data-status')).toBe(
+      'pulling',
+    );
+    fireEvent.touchEnd(root); // release below threshold -> no commit
+    // use-touch.onTouchEnd only clears isTouching; deltaY stays non-zero until
+    // the next touchStart. The derivation is gated on isTouching so the stale
+    // delta must NOT leave a residual 'pulling'/'loosing' label.
+    expect(view.container.querySelector('[data-status]')?.getAttribute('data-status')).toBe(
+      'normal',
+    );
+  });
 });

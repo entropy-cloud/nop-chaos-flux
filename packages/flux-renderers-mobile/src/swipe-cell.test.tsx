@@ -380,4 +380,143 @@ describe('SwipeCellRenderer', () => {
       'closed',
     );
   });
+
+  it('hides off-screen action regions from AT/focus when closed via inert (OA-08)', () => {
+    const { view } = renderSwipeCell();
+    const left = view.container.querySelector(
+      '[data-slot="swipe-cell-left"]',
+    ) as HTMLElement;
+    const right = view.container.querySelector(
+      '[data-slot="swipe-cell-right"]',
+    ) as HTMLElement;
+    // Both action regions are visually clipped AND must be removed from the
+    // tab order / accessibility tree. `overflow:hidden` alone only clips
+    // painting; `inert` is what keeps screen readers and Tab away from the
+    // off-screen Delete button.
+    expect(left.hasAttribute('inert')).toBe(true);
+    expect(right.hasAttribute('inert')).toBe(true);
+  });
+
+  it('clears inert on the revealed side and keeps the hidden side inert when open (OA-08)', async () => {
+    const { view } = renderSwipeCell({ threshold: 30 });
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+    fireEvent.touchStart(root, touch(50, 50));
+    fireEvent.touchMove(root, touch(120, 50));
+    fireEvent.touchEnd(root);
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'open-left',
+      ),
+    );
+    const left = view.container.querySelector(
+      '[data-slot="swipe-cell-left"]',
+    ) as HTMLElement;
+    const right = view.container.querySelector(
+      '[data-slot="swipe-cell-right"]',
+    ) as HTMLElement;
+    expect(left.hasAttribute('inert')).toBe(false);
+    expect(right.hasAttribute('inert')).toBe(true);
+  });
+
+  it('re-measures region width when action region content changes (OA-12)', async () => {
+    // happy-dom ships a no-op ResizeObserver stub, so install a controllable
+    // mock that records (callback, target) pairs and lets the test fire the
+    // callback bound to a specific observed target. This proves the renderer
+    // re-measures via ResizeObserver (not a one-shot useLayoutEffect) when the
+    // off-screen action region content changes size.
+    type ROEntry = { target: Element; contentRect: { width: number } };
+    const observers: Array<{ cb: (e: ROEntry[]) => void; targets: Set<Element> }> = [];
+    class MockResizeObserver {
+      cb: (entries: ROEntry[]) => void;
+      targets = new Set<Element>();
+      constructor(cb: (entries: ROEntry[]) => void) {
+        this.cb = cb;
+        observers.push(this);
+      }
+      observe(target: Element) {
+        this.targets.add(target);
+      }
+      unobserve(target: Element) {
+        this.targets.delete(target);
+      }
+      disconnect() {
+        this.targets.clear();
+      }
+    }
+    const NativeRO = globalThis.ResizeObserver;
+    globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
+    function fireForTarget(target: Element, width: number) {
+      for (const obs of observers) {
+        if (obs.targets.has(target)) {
+          obs.cb([{ target, contentRect: { width } }]);
+        }
+      }
+    }
+
+    try {
+      const { view } = renderSwipeCell({ threshold: 30, direction: 'both' });
+      const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+      const leftWrapper = view.container.querySelector(
+        '[data-slot="swipe-cell-left"]',
+      ) as HTMLElement;
+
+      // Seed the initial narrow width and open-left.
+      fireForTarget(leftWrapper, 80);
+      fireEvent.touchStart(root, touch(50, 50));
+      fireEvent.touchMove(root, touch(120, 50));
+      fireEvent.touchEnd(root);
+      await waitFor(() =>
+        expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+          'open-left',
+        ),
+      );
+      const content = view.container.querySelector(
+        '[data-slot="swipe-cell-content"]',
+      ) as HTMLElement;
+      const narrowPx = parseFloat(content.style.transform.match(/-?\d+\.?\d*/)?.[0] ?? '0');
+      expect(narrowPx).toBe(80);
+
+      // Simulate the action region content growing (locale switch, async
+      // icon, condition change). The ResizeObserver must re-measure and the
+      // committed open-left offset must grow accordingly.
+      fireForTarget(leftWrapper, 220);
+
+      await waitFor(() => {
+        const widePx = parseFloat(content.style.transform.match(/-?\d+\.?\d*/)?.[0] ?? '0');
+        expect(widePx).toBe(220);
+      });
+    } finally {
+      globalThis.ResizeObserver = NativeRO;
+    }
+  });
+
+  it('declares pan-y touch-action on the root (MA-07)', () => {
+    const { view } = renderSwipeCell();
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+    // pan-y reserves the HORIZONTAL axis for the element's JS (touch-action
+    // names the axis the browser may pan); swipe-cell owns the horizontal swipe
+    // while the browser keeps vertical page scroll.
+    expect(getComputedStyle(root).touchAction).toBe('pan-y');
+  });
+
+  it('suppresses text selection on the content pane while a side is open (MA-24)', async () => {
+    const { view } = renderSwipeCell({ threshold: 30 });
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+    const content = view.container.querySelector(
+      '[data-slot="swipe-cell-content"]',
+    ) as HTMLElement;
+    // closed initially -> no select-none
+    expect(content.classList.contains('select-none')).toBe(false);
+    fireEvent.touchStart(root, touch(50, 50));
+    fireEvent.touchMove(root, touch(120, 50));
+    fireEvent.touchEnd(root);
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'open-left',
+      ),
+    );
+    expect(content.classList.contains('select-none')).toBe(true);
+    expect(getComputedStyle(content).userSelect).toBe('none');
+  });
 });

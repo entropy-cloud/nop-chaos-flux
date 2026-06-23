@@ -40,7 +40,9 @@ function renderNoticeBar(
       icon: options.icon,
     },
     events: {
-      onClick: onClick as never,
+      // Only bind onClick when the caller provided one, so the renderer's
+      // hasClick check (and thus role=status vs role=button) reflects intent.
+      ...(options.onClick ? { onClick: onClick as never } : {}),
       onClose: onClose as never,
     },
   });
@@ -49,34 +51,38 @@ function renderNoticeBar(
 }
 
 describe('NoticeBarRenderer', () => {
-  it('renders text and defaults to info variant with role=alert', () => {
+  it('renders text and defaults to info variant with role=status (OA-04)', () => {
     const { view } = renderNoticeBar({ text: 'Hello world' });
     const root = view.container.querySelector('[data-slot="notice-bar"]') as HTMLElement;
-    expect(root.getAttribute('role')).toBe('alert');
+    // No onClick -> advisory status region, not focusable, not an alert.
+    expect(root.getAttribute('role')).toBe('status');
+    expect(root.hasAttribute('tabindex')).toBe(false);
     expect(root.getAttribute('data-variant')).toBe('info');
     expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
       'Hello world',
     );
   });
 
-  it('applies warning variant styling and data-variant', () => {
-    const { view } = renderNoticeBar({ text: 'warn', variant: 'warning' });
+  it('exposes role=button and tabindex when onClick is bound (OA-04)', () => {
+    const { view } = renderNoticeBar({ text: 'clickable', onClick: () => undefined });
     const root = view.container.querySelector('[data-slot="notice-bar"]') as HTMLElement;
-    expect(root.getAttribute('data-variant')).toBe('warning');
-    expect(root.className).toContain('bg-amber-50');
-    expect(root.className).toContain('text-amber-800');
+    expect(root.getAttribute('role')).toBe('button');
+    expect(root.getAttribute('tabindex')).toBe('0');
   });
 
-  it('applies success variant styling', () => {
-    const { view } = renderNoticeBar({ text: 'ok', variant: 'success' });
-    const root = view.container.querySelector('[data-slot="notice-bar"]');
-    expect(root?.className).toContain('bg-emerald-50');
-  });
-
-  it('applies error variant styling', () => {
-    const { view } = renderNoticeBar({ text: 'err', variant: 'error' });
-    const root = view.container.querySelector('[data-slot="notice-bar"]');
-    expect(root?.className).toContain('bg-red-50');
+  it('publishes the variant via the data-variant protocol (MA-06/MA-21)', () => {
+    const variants: Array<{ variant: 'info' | 'warning' | 'success' | 'error' }> = [
+      { variant: 'info' },
+      { variant: 'warning' },
+      { variant: 'success' },
+      { variant: 'error' },
+    ];
+    for (const { variant } of variants) {
+      cleanup();
+      const { view } = renderNoticeBar({ text: 'v', variant });
+      const root = view.container.querySelector('[data-slot="notice-bar"]') as HTMLElement;
+      expect(root.getAttribute('data-variant')).toBe(variant);
+    }
   });
 
   it('does not render when text is empty', () => {
@@ -105,6 +111,37 @@ describe('NoticeBarRenderer', () => {
     expect(root?.getAttribute('data-scrollable')).toBe('false');
   });
 
+  it('marks data-scrollable=true and applies the marquee animation when text overflows (MA-20)', () => {
+    // happy-dom returns 0 for scrollWidth/clientWidth, so the overflow branch
+    // (scrollWidth > clientWidth) is unreachable without measurement. Spy on
+    // the prototype getters to simulate overflow and cover the marquee
+    // true-branch that the false-branch-only test missed.
+    const scrollWidthSpy = vi
+      .spyOn(HTMLElement.prototype, 'scrollWidth', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        return this.getAttribute('data-slot') === 'notice-bar-text' ? 500 : 0;
+      });
+    const clientWidthSpy = vi
+      .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        return this.getAttribute('data-slot') === 'notice-bar-content' ? 120 : 0;
+      });
+
+    try {
+      const { view } = renderNoticeBar({ text: 'long overflowing notice text', scrollable: true });
+      const root = view.container.querySelector('[data-slot="notice-bar"]') as HTMLElement;
+      expect(root.getAttribute('data-scrollable')).toBe('true');
+      const textEl = view.container.querySelector(
+        '[data-slot="notice-bar-text"]',
+      ) as HTMLElement;
+      expect(textEl.style.animationName).toBe('nop-notice-bar-marquee');
+      expect(textEl.style.animationDuration).toMatch(/s$/);
+    } finally {
+      scrollWidthSpy.mockRestore();
+      clientWidthSpy.mockRestore();
+    }
+  });
+
   it('renders close button when closable and triggers onClose', () => {
     const { view, onClose } = renderNoticeBar({ text: 'closable', closable: true });
     const closeBtn = view.container.querySelector(
@@ -123,7 +160,7 @@ describe('NoticeBarRenderer', () => {
   });
 
   it('fires onClick when bar is clicked', () => {
-    const { view, onClick } = renderNoticeBar({ text: 'clickable' });
+    const { view, onClick } = renderNoticeBar({ text: 'clickable', onClick: () => undefined });
     const root = view.container.querySelector('[data-slot="notice-bar"]') as HTMLElement;
     fireEvent.click(root);
     expect(onClick).toHaveBeenCalledTimes(1);
@@ -133,6 +170,7 @@ describe('NoticeBarRenderer', () => {
     const { view, onClick, onClose } = renderNoticeBar({
       text: 'both',
       closable: true,
+      onClick: () => undefined,
     });
     const closeBtn = view.container.querySelector(
       '[data-slot="notice-bar-close"]',

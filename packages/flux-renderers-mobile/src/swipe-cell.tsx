@@ -50,13 +50,36 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
 
   const { state, touchHandlers, reset } = useTouch({ threshold: 10 });
 
-  React.useLayoutEffect(() => {
-    if (leftRef.current) {
-      setLeftWidth(leftRef.current.offsetWidth);
+  // OA-12: measure region widths with ResizeObserver so locale/icon/condition
+  // changes that mutate the off-screen action region content re-measure the
+  // committed open offset. The previous useLayoutEffect only ran on
+  // [hasLeft,hasRight], so any later content size change left leftWidth/
+  // rightWidth stale and the open offset wrong.
+  React.useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const targets: Array<{ el: HTMLElement | null; set: (n: number) => void }> = [
+      { el: leftRef.current, set: setLeftWidth },
+      { el: rightRef.current, set: setRightWidth },
+    ];
+    const observers: ResizeObserver[] = [];
+    for (const { el, set } of targets) {
+      if (!el) continue;
+      set(el.offsetWidth);
+      const ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const width =
+            entry.contentRect?.width ??
+            (entry.target as HTMLElement).clientWidth ??
+            0;
+          set(width);
+        }
+      });
+      ro.observe(el);
+      observers.push(ro);
     }
-    if (rightRef.current) {
-      setRightWidth(rightRef.current.offsetWidth);
-    }
+    return () => {
+      for (const ro of observers) ro.disconnect();
+    };
   }, [hasLeft, hasRight]);
 
   const canSwipeLeft = (directionConfig === 'both' || directionConfig === 'left') && hasRight;
@@ -206,6 +229,19 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
   const leftContent = props.regions.left?.render() as React.ReactNode;
   const rightContent = props.regions.right?.render() as React.ReactNode;
 
+  // OA-08: a region is focusable/AT-reachable only when it is the committed
+  // open side. When closed (or when the opposite side is open) the off-screen
+  // wrapper is `inert` so keyboard Tab and the accessibility tree skip the
+  // visually hidden Delete/Archive buttons. `overflow:hidden` on the root
+  // only clips painting — without inert the actions stayed in the tab order.
+  const leftInert = openState !== 'open-left';
+  const rightInert = openState !== 'open-right';
+
+  // MA-24: while a drag is active or a side is open, suppress native text
+  // selection on the content pane so a horizontal swipe does not highlight
+  // icons/labels under the finger.
+  const suppressSelect = state.isTouching || openState !== 'closed';
+
   if (!hasLeft && !hasRight) {
     return (
       <div
@@ -231,7 +267,19 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
       data-cid={props.meta.cid || undefined}
       data-slot="swipe-cell"
       data-state={openState}
-      style={{ overflow: 'hidden', position: 'relative' }}
+      style={{
+        overflow: 'hidden',
+        position: 'relative',
+        // MA-07: declare horizontal gesture ownership so a horizontal swipe is
+        // not stolen by native horizontal back-forward or vertical scrolling.
+        // `pan-x` would let the browser pan horizontally and steal the swipe;
+        // `pan-y` reserves the HORIZONTAL axis for this element's JS (the
+        // browser pans vertically for page scroll, the element receives
+        // horizontal touchmove for the swipe). touch-action names the axis the
+        // BROWSER may pan.
+        // Contract: docs/architecture/mobile-responsive-baseline.md §5.
+        touchAction: 'pan-y',
+      }}
       onTouchStart={disabled ? undefined : touchHandlers.onTouchStart}
       onTouchMove={disabled ? undefined : touchHandlers.onTouchMove}
       onTouchEnd={disabled ? undefined : handleTouchEnd}
@@ -241,6 +289,7 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
         <div
           ref={leftRef}
           data-slot="swipe-cell-left"
+          inert={leftInert}
           style={{
             position: 'absolute',
             top: 0,
@@ -258,6 +307,7 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
         <div
           ref={rightRef}
           data-slot="swipe-cell-right"
+          inert={rightInert}
           style={{
             position: 'absolute',
             top: 0,
@@ -273,9 +323,11 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
       ) : null}
       <div
         data-slot="swipe-cell-content"
+        className={suppressSelect ? 'select-none' : undefined}
         style={{
           transform: `translateX(${effectiveOffset}px)`,
           transition: isAnimating ? TRANSITION : 'none',
+          userSelect: suppressSelect ? 'none' : undefined,
         }}
       >
         {bodyContent}

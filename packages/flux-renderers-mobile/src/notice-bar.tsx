@@ -4,13 +4,6 @@ import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, resolveLucideIconStrict } from '@nop-chaos/ui';
 import type { NoticeBarSchema, NoticeBarVariant } from './schemas.js';
 
-const VARIANT_CLASS_MAP: Record<NoticeBarVariant, string> = {
-  info: 'bg-blue-50 text-blue-800',
-  warning: 'bg-amber-50 text-amber-800',
-  success: 'bg-emerald-50 text-emerald-800',
-  error: 'bg-red-50 text-red-800',
-};
-
 const VARIANT_ICON_MAP: Record<NoticeBarVariant, string> = {
   info: 'info',
   warning: 'triangle-alert',
@@ -25,17 +18,6 @@ const DefaultVariantIcons: Record<NoticeBarVariant, ReturnType<typeof resolveLuc
   success: resolveLucideIconStrict(VARIANT_ICON_MAP.success),
   error: resolveLucideIconStrict(VARIANT_ICON_MAP.error),
 };
-
-const NOTICE_BAR_KEYFRAMES_ID = 'nop-notice-bar-keyframes';
-
-function ensureMarqueeKeyframes() {
-  if (typeof document === 'undefined') return;
-  if (document.getElementById(NOTICE_BAR_KEYFRAMES_ID)) return;
-  const style = document.createElement('style');
-  style.id = NOTICE_BAR_KEYFRAMES_ID;
-  style.textContent = `@keyframes nop-notice-bar-marquee { from { transform: translateX(100%); } to { transform: translateX(-100%); } }`;
-  document.head.appendChild(style);
-}
 
 export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>) {
   const slotProps = props.props;
@@ -74,10 +56,6 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
   const [currentIndex, setCurrentIndex] = React.useState<number>(0);
   const [textWidth, setTextWidth] = React.useState<number>(0);
 
-  React.useEffect(() => {
-    ensureMarqueeKeyframes();
-  }, []);
-
   React.useLayoutEffect(() => {
     if (!scrollableConfig) {
       setShouldScroll(false);
@@ -101,6 +79,8 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
     void props.events.onClose?.(event);
   }, [props.events]);
 
+  const hasClick = Boolean(props.events.onClick);
+
   const handleClick = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     void props.events.onClick?.(event);
   }, [props.events]);
@@ -123,32 +103,34 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
   }
 
   const activeText = textList[currentIndex] ?? '';
-  const variantClass = VARIANT_CLASS_MAP[variant] ?? VARIANT_CLASS_MAP.info;
   const animationDirection = direction === 'left' ? 'reverse' : 'normal';
 
   const animationDuration = shouldScroll
     ? Math.max(1, Math.ceil((textWidth + 100) / speed))
     : 0;
 
+  // OA-04: a notice bar is advisory, not an alert. Split the semantics by use:
+  // when onClick is bound the bar is an operable control (role=button, in tab
+  // order, keyboard-activatable); otherwise it is a polite status region that
+  // screen readers announce without making it focusable. Mixing role=alert
+  // with tabIndex=0 on the same element conflated assertive announcement with
+  // operability.
+  const interactiveProps = hasClick
+    ? { role: 'button' as const, tabIndex: 0 as const, onClick: handleClick, onKeyDown: handleKeyDown }
+    : { role: 'status' as const };
+
   return (
     <div
-      role="alert"
-      className={cn('nop-notice-bar', variantClass, props.meta.className)}
+      {...interactiveProps}
+      className={cn(
+        'nop-notice-bar flex items-center gap-2 overflow-hidden px-3 py-2',
+        props.meta.className,
+      )}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="notice-bar"
       data-variant={variant}
       data-scrollable={shouldScroll ? 'true' : 'false'}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '8px 12px',
-        overflow: 'hidden',
-      }}
     >
       <span data-slot="notice-bar-icon">
         {iconComp ? (() => {
@@ -159,15 +141,14 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
       <div
         ref={contentRef}
         data-slot="notice-bar-content"
-        style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
+        className="relative flex-1 overflow-hidden"
       >
         <span
           ref={textRef}
           data-slot="notice-bar-text"
-          style={{
-            display: 'inline-block',
-            whiteSpace: 'nowrap',
-            ...(shouldScroll
+          className="inline-block whitespace-nowrap"
+          style={
+            shouldScroll
               ? {
                   animationName: 'nop-notice-bar-marquee',
                   animationDuration: `${animationDuration}s`,
@@ -175,8 +156,8 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
                   animationIterationCount: loop ? 'infinite' : '1',
                   animationDirection,
                 }
-              : null),
-          }}
+              : undefined
+          }
           onAnimationIteration={() => {
             if (loop && textList.length > 1) {
               setCurrentIndex((idx) => (idx + 1) % textList.length);
