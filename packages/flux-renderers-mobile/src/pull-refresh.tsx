@@ -1,5 +1,6 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { Spinner, cn } from '@nop-chaos/ui';
 import type { PullRefreshSchema } from './schemas.js';
 import { useTouch } from './hooks/use-touch.js';
@@ -20,13 +21,13 @@ function resolveIndicatorText(
 ): string {
   switch (status) {
     case 'pulling':
-      return texts.pullingText ?? '下拉刷新';
+      return texts.pullingText ?? t('flux.mobile.pullRefresh.pulling', { defaultValue: '下拉刷新' });
     case 'loosing':
-      return texts.loosingText ?? '释放刷新';
+      return texts.loosingText ?? t('flux.mobile.pullRefresh.loosing', { defaultValue: '释放刷新' });
     case 'loading':
-      return texts.loadingText ?? '加载中...';
+      return texts.loadingText ?? t('flux.mobile.pullRefresh.loading', { defaultValue: '加载中...' });
     case 'success':
-      return texts.successText ?? '刷新成功';
+      return texts.successText ?? t('flux.mobile.pullRefresh.success', { defaultValue: '刷新成功' });
     default:
       return '';
   }
@@ -94,7 +95,7 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
   }, [state.isTouching, directionalDelta, reachedThreshold, disabled, status]);
 
   const handleTouchEnd = React.useCallback(() => {
-    touchHandlers.onTouchEnd({} as React.TouchEvent);
+    touchHandlers.onTouchEnd();
     if (disabled) return;
     // Re-entrancy guard (previously lived inside the updater, reading `current`).
     const current = statusRef.current;
@@ -107,7 +108,7 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
       // Dispatch lives in the handler body (not in an updater) so React 19
       // StrictMode does not double-invoke it (MA-02).
       void Promise.resolve()
-        .then(() => props.events.onRefresh?.(undefined))
+        .then(() => props.events.onRefresh?.({ type: 'refresh', direction, threshold }))
         .then(() => {
           if (!isMountedRef.current) return;
           setStatus('success');
@@ -130,6 +131,7 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
     touchHandlers,
     disabled,
     directionalDelta,
+    direction,
     threshold,
     props.events,
     successDuration,
@@ -139,7 +141,7 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
   // gesture interruption) is NOT a user lift — it must not commit the pull or
   // dispatch onRefresh. Restore to the resting state and let the body rebound.
   const handleTouchCancel = React.useCallback(() => {
-    touchHandlers.onTouchEnd({} as React.TouchEvent);
+    touchHandlers.onTouchEnd();
     if (disabled) return;
     const current = statusRef.current;
     if (current === 'loading' || current === 'success') return;
@@ -176,7 +178,6 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
     >
       <div
         data-slot="pull-refresh-indicator"
-        className="nop-pull-refresh__indicator"
         style={{
           height: status === 'normal' && pullDistance === 0 ? 0 : trackTranslate,
           overflow: 'hidden',
@@ -188,9 +189,9 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
         data-indicator-text={indicatorText || undefined}
       >
         {isBusy ? <Spinner className="size-4" /> : null}
-        <span className="nop-pull-refresh__text">{indicatorText}</span>
+        <span>{indicatorText}</span>
       </div>
-      <div data-slot="pull-refresh-body" className="nop-pull-refresh__body">
+      <div data-slot="pull-refresh-body">
         {bodyContent}
       </div>
     </div>

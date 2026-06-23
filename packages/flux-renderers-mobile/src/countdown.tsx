@@ -25,7 +25,7 @@ export function formatCountdown(remainingMs: number, format: string): string {
     .replace(/SSS/g, String(milliseconds).padStart(3, '0'));
 }
 
-interface CountdownTimerOptions {
+export interface CountdownTimerOptions {
   time?: number;
   targetTime?: number;
   paused?: boolean;
@@ -35,7 +35,7 @@ interface CountdownTimerOptions {
   onFinish: () => void;
 }
 
-interface CountdownTimerResult {
+export interface CountdownTimerResult {
   remaining: number;
   formatted: string;
   isFinished: boolean;
@@ -151,7 +151,7 @@ export function CountdownRenderer(props: RendererComponentProps<CountdownSchema>
     millisecond: slotProps.millisecond === true,
     format,
     onFinish: () => {
-      void props.events.onFinish?.(undefined);
+      void props.events.onFinish?.({ type: 'finish' });
     },
   });
 

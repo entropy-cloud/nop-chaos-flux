@@ -1,4 +1,4 @@
-import type { BaseSchema, SchemaInput, SchemaValue } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaInput } from '@nop-chaos/flux-core';
 import type { ActionSchema } from '@nop-chaos/flux-core';
 
 export interface PullRefreshSchema extends BaseSchema {
@@ -42,6 +42,12 @@ export interface InfiniteScrollSchema extends BaseSchema {
   errorText?: string;
   /** 是否立即检查加载，默认 true（内容不足一屏时自动加载） */
   immediateCheck?: boolean;
+  /** 是否还有更多数据（host 运行时受控值）。`hasMore === false` 表示已全部加载 */
+  hasMore?: boolean;
+  /** host 是否正在加载（运行时受控值），为 true 时暂停自动触发 */
+  loading?: boolean;
+  /** host 错误状态（运行时受控值）。`true` 或错误字符串将暂停自动加载并显示重试 */
+  error?: boolean | string;
   onLoadMore?: ActionSchema;
 }
 
@@ -70,6 +76,7 @@ export interface CountdownSchema extends BaseSchema {
   type: 'countdown';
   time?: number;
   targetTime?: number;
+  /** 格式化模板，默认 'HH:mm:ss'。支持占位符：DD HH mm ss SSS；其它字符按字面输出 */
   format?: string;
   millisecond?: boolean;
   paused?: boolean;
@@ -89,7 +96,7 @@ export interface NoticeBarSchema extends BaseSchema {
   direction?: 'left' | 'right';
   loop?: boolean;
   closable?: boolean;
-  icon?: SchemaValue;
+  icon?: string;
   variant?: NoticeBarVariant;
   onClick?: ActionSchema;
   onClose?: ActionSchema;

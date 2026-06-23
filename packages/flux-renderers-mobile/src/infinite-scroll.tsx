@@ -1,17 +1,16 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, Spinner, cn } from '@nop-chaos/ui';
 import type { InfiniteScrollSchema } from './schemas.js';
 
-interface InfiniteScrollRuntimeProps {
+type InfiniteScrollStatus = 'normal' | 'loading' | 'finished' | 'error';
+
+function resolveStatus(runtime: {
   hasMore?: boolean;
   loading?: boolean;
   error?: boolean | string;
-}
-
-type InfiniteScrollStatus = 'normal' | 'loading' | 'finished' | 'error';
-
-function resolveStatus(runtime: InfiniteScrollRuntimeProps): InfiniteScrollStatus {
+}): InfiniteScrollStatus {
   if (runtime.error === true || typeof runtime.error === 'string') return 'error';
   if (runtime.hasMore === false) return 'finished';
   if (runtime.loading === true) return 'loading';
@@ -24,13 +23,16 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
   const distance = typeof slotProps.distance === 'number' ? slotProps.distance : 200;
   const immediateCheck = slotProps.immediateCheck !== false;
 
-  const hasMore = (slotProps as InfiniteScrollRuntimeProps).hasMore;
-  const loading = (slotProps as InfiniteScrollRuntimeProps).loading;
-  const error = (slotProps as InfiniteScrollRuntimeProps).error;
+  const hasMore = slotProps.hasMore;
+  const loading = slotProps.loading;
+  const error = slotProps.error;
 
-  const loadingText = slotProps.loadingText ?? '加载中...';
-  const finishedText = slotProps.finishedText ?? '没有更多了';
-  const errorText = slotProps.errorText ?? '加载失败，点击重试';
+  const loadingText =
+    slotProps.loadingText ?? t('flux.mobile.infiniteScroll.loading', { defaultValue: '加载中...' });
+  const finishedText =
+    slotProps.finishedText ?? t('flux.mobile.infiniteScroll.finished', { defaultValue: '没有更多了' });
+  const errorText =
+    slotProps.errorText ?? t('flux.mobile.infiniteScroll.error', { defaultValue: '加载失败，点击重试' });
 
   const sentinelRef = React.useRef<HTMLDivElement | null>(null);
   const onLoadMoreRef = React.useRef(props.events.onLoadMore);
@@ -131,19 +133,17 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
       data-slot="infinite-scroll"
       data-status={status}
     >
-      <div data-slot="infinite-scroll-body" className="nop-infinite-scroll__body">
+      <div data-slot="infinite-scroll-body">
         {bodyContent}
       </div>
       <div
         data-slot="infinite-scroll-sentinel"
         ref={sentinelRef}
-        className="nop-infinite-scroll__sentinel"
         aria-hidden="true"
         style={{ height: 1 }}
       />
       <div
         data-slot="infinite-scroll-status"
-        className="nop-infinite-scroll__status"
         role="status"
         aria-live="polite"
         onClick={status === 'error' ? triggerLoadMore : undefined}
@@ -168,18 +168,17 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
         }
       >
         {status === 'loading' ? (
-          <span className="nop-infinite-scroll__loading">
+          <span>
             <Spinner className="size-4" />
             <span className="ml-2">{loadingText}</span>
           </span>
         ) : null}
-        {status === 'finished' ? <span className="nop-infinite-scroll__finished">{finishedText}</span> : null}
+        {status === 'finished' ? <span>{finishedText}</span> : null}
         {status === 'error' ? (
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="nop-infinite-scroll__error"
             onClick={(event) => {
               event.stopPropagation();
               triggerLoadMore();

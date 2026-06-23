@@ -1,5 +1,6 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, resolveLucideIconStrict } from '@nop-chaos/ui';
 import type { NoticeBarSchema, NoticeBarVariant } from './schemas.js';
 
@@ -95,22 +96,22 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
     setTextWidth(textEl.scrollWidth);
   }, [scrollableConfig, textList, currentIndex]);
 
-  const handleClose = React.useCallback(() => {
+  const handleClose = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     setVisible(false);
-    void props.events.onClose?.(undefined);
+    void props.events.onClose?.(event);
   }, [props.events]);
 
-  const handleClick = React.useCallback(() => {
-    void props.events.onClick?.(undefined);
+  const handleClick = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    void props.events.onClick?.(event);
   }, [props.events]);
 
   const handleKeyDown = React.useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
-      handleClick();
+      void props.events.onClick?.(event);
     },
-    [handleClick],
+    [props.events],
   );
 
   if (!visible) {
@@ -132,12 +133,7 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
   return (
     <div
       role="alert"
-      className={cn(
-        'nop-notice-bar',
-        `nop-notice-bar--${variant}`,
-        variantClass,
-        props.meta.className,
-      )}
+      className={cn('nop-notice-bar', variantClass, props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="notice-bar"
@@ -154,7 +150,7 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
         overflow: 'hidden',
       }}
     >
-      <span data-slot="notice-bar-icon" className="nop-notice-bar__icon">
+      <span data-slot="notice-bar-icon">
         {iconComp ? (() => {
           const IconComp = iconComp;
           return <IconComp className="size-4" aria-hidden="true" />;
@@ -163,13 +159,11 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
       <div
         ref={contentRef}
         data-slot="notice-bar-content"
-        className="nop-notice-bar__content"
         style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
       >
         <span
           ref={textRef}
           data-slot="notice-bar-text"
-          className="nop-notice-bar__text"
           style={{
             display: 'inline-block',
             whiteSpace: 'nowrap',
@@ -184,7 +178,7 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
               : null),
           }}
           onAnimationIteration={() => {
-            if (!loop && textList.length > 1) {
+            if (loop && textList.length > 1) {
               setCurrentIndex((idx) => (idx + 1) % textList.length);
             }
           }}
@@ -199,11 +193,10 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
           size="icon-sm"
           data-testid={props.meta.testid ? `${props.meta.testid}-close` : undefined}
           data-slot="notice-bar-close"
-          aria-label="关闭"
-          className="nop-notice-bar__close"
+          aria-label={t('flux.mobile.noticeBar.close', { defaultValue: '关闭' })}
           onClick={(event) => {
             event.stopPropagation();
-            handleClose();
+            handleClose(event);
           }}
         >
           {CloseIcon ? (() => {

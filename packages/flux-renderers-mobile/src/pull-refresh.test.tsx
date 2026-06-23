@@ -29,7 +29,7 @@ function renderPullRefresh(
     successText?: string;
     successDuration?: number;
     animationDuration?: number;
-    onRefresh?: () => Promise<void> | void;
+    onRefresh?: (event?: unknown) => Promise<void> | void;
     body?: React.ReactNode;
     strictMode?: boolean;
   } = {},
@@ -366,5 +366,15 @@ describe('PullRefreshRenderer', () => {
       'loading',
     );
     resolveRefresh();
+  });
+
+  it('dispatches onRefresh with a structured {type:"refresh"} payload (MA-04)', async () => {
+    const { view, onRefresh } = renderPullRefresh({ threshold: 50, direction: 'down' });
+    const root = view.container.querySelector('[data-slot="pull-refresh"]') as HTMLElement;
+    fireEvent.touchStart(root, touch(0, 0));
+    fireEvent.touchMove(root, touch(0, 200));
+    fireEvent.touchEnd(root);
+    await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
+    expect(onRefresh.mock.calls[0][0]).toEqual({ type: 'refresh', direction: 'down', threshold: 50 });
   });
 });

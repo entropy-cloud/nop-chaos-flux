@@ -22,7 +22,7 @@ export interface UseTouchReturn {
   touchHandlers: {
     onTouchStart: (e: React.TouchEvent) => void;
     onTouchMove: (e: React.TouchEvent) => void;
-    onTouchEnd: (e: React.TouchEvent) => void;
+    onTouchEnd: () => void;
   };
   reset: () => void;
 }

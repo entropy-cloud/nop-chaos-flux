@@ -95,10 +95,11 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
     // Dispatch lives in the handler body (not in an updater) so StrictMode
     // does not double-invoke onClose (MA-02). The ref mirror preserves the
     // old `current !== 'closed'` re-entrancy guard.
-    if (openStateRef.current === 'closed') return;
+    const previous = openStateRef.current;
+    if (previous === 'closed') return;
     openStateRef.current = 'closed';
     setOpenState('closed');
-    void props.events.onClose?.(undefined);
+    void props.events.onClose?.({ type: 'close', side: previous });
   }, [props.events]);
 
   const openCell = React.useCallback(
@@ -106,7 +107,7 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
       if (openStateRef.current === target) return;
       openStateRef.current = target;
       setOpenState(target);
-      void props.events.onOpen?.(undefined);
+      void props.events.onOpen?.({ type: 'open', side: target });
     },
     [props.events],
   );
@@ -126,7 +127,7 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
   }, [closeOnOutside, closeCell, disabled]);
 
   const handleTouchEnd = React.useCallback(() => {
-    touchHandlers.onTouchEnd({} as React.TouchEvent);
+    touchHandlers.onTouchEnd();
     if (state.direction !== 'horizontal') {
       return;
     }
@@ -166,6 +167,41 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
     reset();
   }, [reset]);
 
+  // MA-09 / OA-02: tapping an interactive control (button/link) inside a
+  // revealed action region dispatches onAction with the opening side and then
+  // auto-rebounds (close-after-action). design.md §8/§11 document this contract.
+  // Listened via a capture-phase ref handler (not JSX onClick) so the native
+  // <button> elements inside remain the single keyboard/a11y-interactive source
+  // — no fake interactive role is attached to the region container. Full a11y
+  // polish (focus management, announcements) is plan 3 scope.
+  const onActionRef = React.useRef(props.events.onAction);
+  React.useEffect(() => {
+    onActionRef.current = props.events.onAction;
+  }, [props.events.onAction]);
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const handler = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      const interactive = target.closest(
+        'button, a, [role="button"], input, select, textarea',
+      );
+      if (!interactive) return;
+      const region = target.closest(
+        '[data-slot="swipe-cell-left"], [data-slot="swipe-cell-right"]',
+      );
+      if (!region) return;
+      const slot = region.getAttribute('data-slot');
+      const side: 'open-left' | 'open-right' =
+        slot === 'swipe-cell-left' ? 'open-left' : 'open-right';
+      void onActionRef.current?.({ type: 'action', side });
+      closeCell();
+    };
+    container.addEventListener('click', handler, true);
+    return () => container.removeEventListener('click', handler, true);
+  }, [closeCell]);
+
   const bodyContent = props.regions.body?.render() as React.ReactNode;
   const leftContent = props.regions.left?.render() as React.ReactNode;
   const rightContent = props.regions.right?.render() as React.ReactNode;
@@ -180,7 +216,7 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
         data-slot="swipe-cell"
         data-state="closed"
       >
-        <div data-slot="swipe-cell-content" className="nop-swipe-cell__content">
+        <div data-slot="swipe-cell-content">
           {bodyContent}
         </div>
       </div>
@@ -205,7 +241,6 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
         <div
           ref={leftRef}
           data-slot="swipe-cell-left"
-          className="nop-swipe-cell__left"
           style={{
             position: 'absolute',
             top: 0,
@@ -223,7 +258,6 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
         <div
           ref={rightRef}
           data-slot="swipe-cell-right"
-          className="nop-swipe-cell__right"
           style={{
             position: 'absolute',
             top: 0,
@@ -239,7 +273,6 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
       ) : null}
       <div
         data-slot="swipe-cell-content"
-        className="nop-swipe-cell__content"
         style={{
           transform: `translateX(${effectiveOffset}px)`,
           transition: isAnimating ? TRANSITION : 'none',

@@ -159,7 +159,7 @@ describe('useTouch', () => {
     expect(result.current.state.startY).toBe(60);
     expect(result.current.state.isTouching).toBe(true);
     act(() => {
-      result.current.touchHandlers.onTouchEnd({} as React.TouchEvent);
+      result.current.touchHandlers.onTouchEnd();
     });
     expect(result.current.state.isTouching).toBe(false);
     expect(result.current.state.deltaX).toBe(30);

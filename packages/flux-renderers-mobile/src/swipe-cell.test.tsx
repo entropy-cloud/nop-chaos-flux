@@ -24,16 +24,18 @@ function renderSwipeCell(
     direction?: 'left' | 'right' | 'both';
     disabled?: boolean;
     closeOnOutside?: boolean;
-    onOpen?: () => void;
-    onClose?: () => void;
+    onOpen?: (event?: unknown) => void;
+    onClose?: (event?: unknown) => void;
+    onAction?: (event?: unknown) => void;
     body?: React.ReactNode;
     left?: React.ReactNode;
     right?: React.ReactNode;
     strictMode?: boolean;
   } = {},
 ) {
-  const onOpen = vi.fn(options.onOpen ?? (() => undefined));
-  const onClose = vi.fn(options.onClose ?? (() => undefined));
+  const onOpen = vi.fn<(event?: unknown) => void>(options.onOpen ?? (() => undefined));
+  const onClose = vi.fn<(event?: unknown) => void>(options.onClose ?? (() => undefined));
+  const onAction = vi.fn<(event?: unknown) => void>(options.onAction ?? (() => undefined));
   const props = createMockRendererProps<SwipeCellSchema>({
     schema: { type: 'swipe-cell' },
     props: {
@@ -58,6 +60,7 @@ function renderSwipeCell(
     events: {
       onOpen: onOpen as never,
       onClose: onClose as never,
+      onAction: onAction as never,
     },
   });
   const tree = options.strictMode ? (
@@ -68,7 +71,7 @@ function renderSwipeCell(
     <SwipeCellRenderer {...props} />
   );
   const view = render(tree);
-  return { view, onOpen, onClose, props };
+  return { view, onOpen, onClose, onAction, props };
 }
 
 describe('SwipeCellRenderer', () => {
@@ -289,5 +292,92 @@ describe('SwipeCellRenderer', () => {
       'open-left',
     );
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('dispatches onOpen with a structured {type:"open",side} payload (MA-04)', async () => {
+    const onOpen = vi.fn<(event?: unknown) => void>(() => undefined);
+    const { view } = renderSwipeCell({ threshold: 30, onOpen });
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+    fireEvent.touchStart(root, touch(50, 50));
+    fireEvent.touchMove(root, touch(120, 50));
+    fireEvent.touchEnd(root);
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'open-left',
+      ),
+    );
+    expect(onOpen.mock.calls[0][0]).toEqual({ type: 'open', side: 'open-left' });
+  });
+
+  it('dispatches onClose with a structured {type:"close",side} payload (MA-04)', async () => {
+    const onClose = vi.fn<(event?: unknown) => void>(() => undefined);
+    const { view } = renderSwipeCell({ threshold: 30, onClose, closeOnOutside: true });
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+    // open-left first
+    fireEvent.touchStart(root, touch(50, 50));
+    fireEvent.touchMove(root, touch(120, 50));
+    fireEvent.touchEnd(root);
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'open-left',
+      ),
+    );
+    // outside pointer down closes the open-left cell deterministically
+    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'closed',
+      ),
+    );
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose.mock.calls[0][0]).toEqual({ type: 'close', side: 'open-left' });
+  });
+
+  it('dispatches onAction and closes when the left action area is clicked (MA-09/OA-02)', async () => {
+    const onAction = vi.fn(() => undefined);
+    const { view, onAction: onActionMock } = renderSwipeCell({ threshold: 30, onAction });
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+    // open-left reveals the left action region
+    fireEvent.touchStart(root, touch(50, 50));
+    fireEvent.touchMove(root, touch(120, 50));
+    fireEvent.touchEnd(root);
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'open-left',
+      ),
+    );
+    const leftAction = view.container.querySelector(
+      '[data-testid="left-action"]',
+    ) as HTMLButtonElement;
+    fireEvent.click(leftAction);
+    expect(onActionMock).toHaveBeenCalledTimes(1);
+    expect(onActionMock.mock.calls[0][0]).toEqual({ type: 'action', side: 'open-left' });
+    expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+      'closed',
+    );
+  });
+
+  it('dispatches onAction with the right side when the right action area is clicked (MA-09/OA-02)', async () => {
+    const onAction = vi.fn(() => undefined);
+    const { view, onAction: onActionMock } = renderSwipeCell({ threshold: 30, onAction });
+    const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
+    // open-right reveals the right action region (leftward swipe)
+    fireEvent.touchStart(root, touch(120, 50));
+    fireEvent.touchMove(root, touch(40, 50));
+    fireEvent.touchEnd(root);
+    await waitFor(() =>
+      expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+        'open-right',
+      ),
+    );
+    const rightAction = view.container.querySelector(
+      '[data-testid="right-action"]',
+    ) as HTMLButtonElement;
+    fireEvent.click(rightAction);
+    expect(onActionMock).toHaveBeenCalledTimes(1);
+    expect(onActionMock.mock.calls[0][0]).toEqual({ type: 'action', side: 'open-right' });
+    expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
+      'closed',
+    );
   });
 });

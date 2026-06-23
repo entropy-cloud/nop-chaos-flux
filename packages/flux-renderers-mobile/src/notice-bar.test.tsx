@@ -21,8 +21,8 @@ function renderNoticeBar(
     loop?: boolean;
     closable?: boolean;
     icon?: string;
-    onClick?: () => void;
-    onClose?: () => void;
+    onClick?: (event?: unknown) => void;
+    onClose?: (event?: unknown) => void;
   } = {},
 ) {
   const onClick = vi.fn(options.onClick ?? (() => undefined));
@@ -149,10 +149,79 @@ describe('NoticeBarRenderer', () => {
     );
   });
 
+  it('advances to the next text on each animation iteration (loop carousel, OA-01)', () => {
+    const { view } = renderNoticeBar({ text: ['first', 'second', 'third'], scrollable: true });
+    const textEl = view.container.querySelector(
+      '[data-slot="notice-bar-text"]',
+    ) as HTMLElement;
+    expect(textEl.textContent).toContain('first');
+    fireEvent.animationIteration(textEl);
+    expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+      'second',
+    );
+    fireEvent.animationIteration(textEl);
+    expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+      'third',
+    );
+    // wraps around
+    fireEvent.animationIteration(textEl);
+    expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+      'first',
+    );
+  });
+
+  it('does not carousel-advance when loop is false (OA-01)', () => {
+    const { view } = renderNoticeBar({ text: ['first', 'second'], scrollable: true, loop: false });
+    const textEl = view.container.querySelector(
+      '[data-slot="notice-bar-text"]',
+    ) as HTMLElement;
+    fireEvent.animationIteration(textEl);
+    expect(view.container.querySelector('[data-slot="notice-bar-text"]')?.textContent).toContain(
+      'first',
+    );
+  });
+
   it('renders custom icon when icon provided', () => {
     const { view } = renderNoticeBar({ text: 'with icon', icon: 'megaphone' });
     const iconSlot = view.container.querySelector('[data-slot="notice-bar-icon"]');
     expect(iconSlot).toBeTruthy();
     expect(iconSlot?.querySelector('svg') || iconSlot?.firstElementChild).toBeTruthy();
+  });
+
+  it('forwards the native click event to onClick (MA-04)', () => {
+    let capturedType = '';
+    let capturedCurrentTarget: Element | null = null;
+    const { view } = renderNoticeBar({
+      text: 'clickable',
+      onClick: (event: unknown) => {
+        const e = event as { type?: string; currentTarget?: Element | null } | undefined;
+        capturedType = e?.type ?? '';
+        capturedCurrentTarget = e?.currentTarget ?? null;
+      },
+    });
+    const root = view.container.querySelector('[data-slot="notice-bar"]') as HTMLElement;
+    fireEvent.click(root);
+    expect(capturedType).toBe('click');
+    expect(capturedCurrentTarget).toBe(root);
+  });
+
+  it('forwards the native click event to onClose on close button (MA-04)', () => {
+    let capturedType = '';
+    let capturedCurrentTarget: Element | null = null;
+    const { view } = renderNoticeBar({
+      text: 'closable',
+      closable: true,
+      onClose: (event: unknown) => {
+        const e = event as { type?: string; currentTarget?: Element | null } | undefined;
+        capturedType = e?.type ?? '';
+        capturedCurrentTarget = e?.currentTarget ?? null;
+      },
+    });
+    const closeBtn = view.container.querySelector(
+      '[data-slot="notice-bar-close"]',
+    ) as HTMLButtonElement;
+    fireEvent.click(closeBtn);
+    expect(capturedType).toBe('click');
+    expect(capturedCurrentTarget).toBe(closeBtn);
   });
 });

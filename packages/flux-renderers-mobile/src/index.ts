@@ -22,6 +22,7 @@ export { PullRefreshRenderer } from './pull-refresh.js';
 export { InfiniteScrollRenderer } from './infinite-scroll.js';
 export { SwipeCellRenderer } from './swipe-cell.js';
 export { CountdownRenderer, useCountdownTimer, formatCountdown } from './countdown.js';
+export type { CountdownTimerOptions, CountdownTimerResult } from './countdown.js';
 export { NoticeBarRenderer } from './notice-bar.js';
 
 export { mobileRendererDefinitions } from './mobile-renderer-definitions.js';

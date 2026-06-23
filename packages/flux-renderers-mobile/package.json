@@ -15,7 +15,6 @@
   "dependencies": {
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
-    "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/ui": "workspace:*"
   },
   "peerDependencies": {
@@ -23,9 +22,6 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
-    "@nop-chaos/flux-compiler": "workspace:*",
-    "@nop-chaos/flux-formula": "workspace:*",
-    "@nop-chaos/flux-runtime": "workspace:*",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },

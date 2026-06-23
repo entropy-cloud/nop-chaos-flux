@@ -23,7 +23,7 @@ function renderCountdown(
     autoStart?: boolean;
     prefix?: string;
     suffix?: string;
-    onFinish?: () => void;
+    onFinish?: (event?: unknown) => void;
   } = {},
 ) {
   const onFinish = vi.fn(options.onFinish ?? (() => undefined));
@@ -75,6 +75,10 @@ describe('formatCountdown', () => {
 
   it('clamps negative remaining to zero', () => {
     expect(formatCountdown(-500, 'HH:mm:ss')).toBe('00:00:00');
+  });
+
+  it('passes through unsupported YYYY/MM tokens literally (OA-11)', () => {
+    expect(formatCountdown(0, 'YYYY年MM月')).toBe('YYYY年MM月');
   });
 });
 
@@ -237,6 +241,21 @@ describe('CountdownRenderer', () => {
       });
       expect(onFinish).toHaveBeenCalledTimes(1);
       expect(view.container.querySelector('[data-slot="countdown-value"]')?.textContent).toBe('00');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('dispatches onFinish with a structured {type:"finish"} payload (MA-04)', () => {
+    vi.useFakeTimers();
+    const onFinish = vi.fn();
+    try {
+      renderCountdown({ time: 1000, format: 'ss', onFinish });
+      act(() => {
+        vi.advanceTimersByTime(1100);
+      });
+      expect(onFinish).toHaveBeenCalledTimes(1);
+      expect(onFinish.mock.calls[0][0]).toEqual({ type: 'finish' });
     } finally {
       vi.useRealTimers();
     }
