@@ -97,6 +97,8 @@ interface CountdownEvents {
 - `paused` 变为 `true` 时暂停计时器，`false` 时恢复
 - 组件卸载时清理定时器
 - 剩余时间 = `targetTime - Date.now()` 或 `time - elapsed`
+- **结束即停 tick（2026-06-23 OA-13/MA-16 裁定）**：`remaining <= 0` 时 `clearInterval`，不再继续 tick；`targetTime` 分支 `Math.max(0, targetTime - Date.now())` clamp 到 0，避免已过期的 target 产生负数 remaining 触发毫秒模式下的无限重渲染。
+- **`useCountdownTimer.reset()` 行为契约（2026-06-23 OA-13 裁定）**：`reset()` 把 `remaining` 回到初始值**并** `started=false`（停止并等待显式 `start()`），与 `autoStart:false` 语义对齐、最小惊讶；不沿用"reset 后 started 恢复为 `autoStart !== false`"（默认 autoStart 下会静默重启）。`start()` 恢复计时。
 
 ## 7. 样式与 DOM marker
 
@@ -114,15 +116,16 @@ interface CountdownEvents {
 
 ## 8. 边界情况
 
-| 场景                            | 行为                                                 |
-| ------------------------------- | ---------------------------------------------------- |
-| `time` 和 `targetTime` 都未提供 | 不渲染倒计时，显示空                                 |
-| `time` 和 `targetTime` 同时提供 | `targetTime` 优先                                    |
-| 倒计时已结束                    | 显示 `00:00:00`（或格式化后的零值），触发 `onFinish` |
-| `paused=true`                   | 冻结当前显示值，暂停计时器                           |
-| `autoStart=false`               | 不自动开始，等待外部设置 `paused=false` 启动         |
-| 时间为负数                      | 视为已结束，显示零值                                 |
-| 快速切换 `paused`               | 正确恢复，不丢失已过时间                             |
+| 场景                            | 行为                                                                                                 |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `time` 和 `targetTime` 都未提供 | 不渲染倒计时，显示空                                                                                 |
+| `time` 和 `targetTime` 同时提供 | `targetTime` 优先                                                                                    |
+| 倒计时已结束                    | 显示 `00:00:00`（或格式化后的零值），触发 `onFinish`，**并停止 tick**（`clearInterval`，不再重渲染） |
+| `paused=true`                   | 冻结当前显示值，暂停计时器                                                                           |
+| `autoStart=false`               | 不自动开始，等待显式 `start()` 启动（`useCountdownTimer`）                                           |
+| `targetTime` 已过期             | `remaining` clamp 到 0，立即触发 `onFinish` 一次，不产生负数 remaining                               |
+| 时间为负数                      | 视为已结束，显示零值                                                                                 |
+| 快速切换 `paused`               | 正确恢复，不丢失已过时间                                                                             |
 
 ## 9. 包归属
 

@@ -190,6 +190,8 @@
 ### M5 — 移动端原生组件（`flux-renderers-mobile` 包）✅
 
 > **代码已落地（执行期完成 2026-06-22）**。5 个组件实现 + focused 单测 + `mobileRendererDefinitions` + `registerMobileRenderers` + playground 演示页（`/mobile-components`）+ e2e 验证全部交付。Execution plan：`docs/plans/2026-06-22-2057-2-m5-mobile-native-components-plan.md`。
+>
+> **异步/状态机正确性加固（2026-06-23，audit remediation plan 1 已完成）**：`docs/plans/2026-06-23-0655-1-mobile-async-and-state-machine-correctness-plan.md` 收敛了 4 个交互类渲染器（pull-refresh/infinite-scroll/swipe-cell/countdown）的异步链路与状态机——MA-01/02/12/13/14/15/16 + MA-20 observer/touchCancel 子项 + OA-05/10/13 共 12 条 finding 全部修复且有 focused 回归测试（包测试 78→101），独立 fresh-session closure audit `approved`。后续 plan 2（契约/marker）、plan 3（UX/a11y/样式）在同批文件上推进。审计来源：`docs/audits/2026-06-22-2039-multi-audit-mobile.md` + `docs/audits/2026-06-22-2039-open-audit-mobile.md`。
 
 | Work item  | 组件            | 行为                                        | design.md 状态                   | 依赖 |
 | ---------- | --------------- | ------------------------------------------- | -------------------------------- | ---- |

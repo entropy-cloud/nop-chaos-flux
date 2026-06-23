@@ -105,11 +105,13 @@ normal → pulling → loosing → loading → success → normal
 
 ## 8. 边界情况
 
-| 场景                   | 行为                                                                                                  |
-| ---------------------- | ----------------------------------------------------------------------------------------------------- |
-| 页面内容不足一屏       | PullRefresh 仍可拖拽                                                                                  |
-| 与 InfiniteScroll 共存 | 上拉加载使用 InfiniteScroll，下拉刷新使用 PullRefresh，不互斥                                         |
-| 嵌套滚动容器           | PullRefresh 应阻止内部垂直滚动冒泡                                                                    |
-| disabled=true          | 完全不响应触摸事件                                                                                    |
-| loading 状态再次拖拽   | 忽略，不重复触发                                                                                      |
-| **触摸目标**           | 触摸区域需满足 M0 基线规范（`docs/architecture/mobile-responsive-baseline.md` §3）的 44×44px 最小尺寸 |
+| 场景                                                          | 行为                                                                                                  |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 页面内容不足一屏                                              | PullRefresh 仍可拖拽                                                                                  |
+| 与 InfiniteScroll 共存                                        | 上拉加载使用 InfiniteScroll，下拉刷新使用 PullRefresh，不互斥                                         |
+| 嵌套滚动容器                                                  | PullRefresh 应阻止内部垂直滚动冒泡                                                                    |
+| disabled=true                                                 | 完全不响应触摸事件                                                                                    |
+| loading 状态再次拖拽                                          | 忽略，不重复触发                                                                                      |
+| 系统 touchcancel（多点/滚动接管/来电，2026-06-23 OA-05 裁定） | **不提交**：恢复到 `normal`（回弹），不触发 `onRefresh`。touchcancel 与 touchend 拆分为两条独立路径   |
+| onRefresh reject（2026-06-23 MA-01 裁定）                     | `status` 回到 `normal`（不卡 `loading`），用户可再次下拉重试                                          |
+| **触摸目标**                                                  | 触摸区域需满足 M0 基线规范（`docs/architecture/mobile-responsive-baseline.md` §3）的 44×44px 最小尺寸 |
