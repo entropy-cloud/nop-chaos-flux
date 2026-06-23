@@ -490,6 +490,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'M5 mobile-native renderers: pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar — mounted via SchemaRenderer in touch-friendly viewport.',
   },
   {
+    id: 'w1b-content',
+    title: 'Content & Feedback Family',
+    eyebrow: 'Content Renderers (W1b)',
+    description:
+      'W1b content/feedback renderers: separator, spinner, progress, empty, card — the first wave of the flux-renderers-content package, mounted via SchemaRenderer.',
+  },
+  {
     id: 'm1-responsive',
     title: 'M1 Responsive Controls',
     eyebrow: 'Mobile Responsive (M1)',

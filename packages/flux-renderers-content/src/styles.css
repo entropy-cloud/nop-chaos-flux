@@ -1,0 +1,31 @@
+/* flux-renderers-content marker styles.
+   Layout renderers emit marker classes only; widget renderers are self-styled
+   via @nop-chaos/ui primitives. The separator marker guarantees an overflow-safe
+   cross-axis size for both orientations (the underlying primitive keys its
+   orientation sizing on data-attributes that are not always emitted, so the
+   marker owns the visual contract here via the stable aria-orientation). */
+
+.nop-separator[aria-orientation='vertical'] {
+  width: 1px;
+  align-self: stretch;
+}
+
+.nop-separator[aria-orientation='horizontal'] {
+  height: 1px;
+  width: 100%;
+}
+
+/* Progress variant theming recolors the inner indicator (the ui Progress builds
+   its own indicator with bg-primary; the marker overrides per data-variant). */
+
+.nop-progress[data-variant='success'] [data-slot='progress-indicator'] {
+  background-color: oklch(72% 0.17 152);
+}
+
+.nop-progress[data-variant='warning'] [data-slot='progress-indicator'] {
+  background-color: oklch(75% 0.18 70);
+}
+
+.nop-progress[data-variant='danger'] [data-slot='progress-indicator'] {
+  background-color: oklch(58% 0.22 27);
+}

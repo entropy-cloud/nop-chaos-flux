@@ -22,6 +22,7 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
+    "@nop-chaos/flux-renderers-content": "workspace:*",
     "@nop-chaos/flux-renderers-data": "workspace:*",
     "@nop-chaos/flux-renderers-form": "workspace:*",
     "@nop-chaos/flux-renderers-form-advanced": "workspace:*",

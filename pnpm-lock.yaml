@@ -167,6 +167,9 @@ importers:
       '@nop-chaos/flux-renderers-basic':
         specifier: workspace:*
         version: link:../../packages/flux-renderers-basic
+      '@nop-chaos/flux-renderers-content':
+        specifier: workspace:*
+        version: link:../../packages/flux-renderers-content
       '@nop-chaos/flux-renderers-data':
         specifier: workspace:*
         version: link:../../packages/flux-renderers-data
@@ -534,6 +537,28 @@ importers:
       '@nop-chaos/flux-runtime':
         specifier: workspace:*
         version: link:../flux-runtime
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+
+  packages/flux-renderers-content:
+    dependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
+      '@nop-chaos/flux-i18n':
+        specifier: workspace:*
+        version: link:../flux-i18n
+      '@nop-chaos/flux-react':
+        specifier: workspace:*
+        version: link:../flux-react
+      '@nop-chaos/ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.4)

@@ -14,6 +14,7 @@
     { "path": "./packages/flux-renderers-form-advanced" },
     { "path": "./packages/flux-renderers-data" },
     { "path": "./packages/flux-renderers-mobile" },
+    { "path": "./packages/flux-renderers-content" },
     { "path": "./packages/flux-code-editor" },
     { "path": "./packages/tailwind-preset" },
     { "path": "./packages/theme-tokens" },
