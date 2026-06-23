@@ -1,13 +1,17 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { Button, Card, CardContent, CardHeader, CardTitle, toast, Toaster } from '@nop-chaos/ui';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
-import type { RendererEnv } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
-import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
+import {
+  InfiniteScrollRenderer,
+  registerMobileRenderers,
+} from '@nop-chaos/flux-renderers-mobile';
+import type { InfiniteScrollSchema } from '@nop-chaos/flux-renderers-mobile';
 
 interface MobileComponentsDemoPageProps {
   onBack: () => void;
@@ -52,17 +56,9 @@ export function MobileComponentsDemoPage({ onBack }: MobileComponentsDemoPagePro
           onRefresh: { action: 'setValue', args: { path: 'refreshedAt', value: '${Date.now()}' } },
           body: [{ type: 'text', text: '主体内容 — 向下拖拽触发刷新', testid: 'pull-refresh-body-text' }],
         },
-        {
-          type: 'infinite-scroll',
-          testid: 'demo-infinite-scroll',
-          distance: 80,
-          hasMore: true,
-          loading: false,
-          loadingText: '加载中...',
-          finishedText: '没有更多了',
-          onLoadMore: { action: 'setValue', args: { path: 'loadTrigger', value: '${Date.now()}' } },
-          body: [{ type: 'text', text: '滚动到底部触发加载更多', testid: 'infinite-scroll-body-text' }],
-        },
+        // OA-07: infinite-scroll is now driven by a real controllable host
+        // (InfiniteScrollDemoHost below) instead of the previous static
+        // hasMore:true / loading:false literals that produced a runaway loop.
         {
           type: 'swipe-cell',
           testid: 'demo-swipe-cell',
@@ -130,7 +126,9 @@ export function MobileComponentsDemoPage({ onBack }: MobileComponentsDemoPagePro
                 schema={schema as never}
                 env={env}
                 formulaCompiler={formulaCompiler}
+                registry={registry as React.ComponentProps<typeof SchemaRenderer>['registry']}
               />
+              <InfiniteScrollDemoHost />
             </div>
           </CardContent>
         </Card>
@@ -173,4 +171,83 @@ export function MobileComponentsDemoPage({ onBack }: MobileComponentsDemoPagePro
       <Toaster />
     </main>
   );
+}
+
+// OA-07: a real controllable host for the infinite-scroll renderer.
+//
+// The previous demo used static `hasMore: true, loading: false` literals with
+// no host state, which (before the renderer in-flight guard) produced a
+// runaway onLoadMore loop and (after the guard) a degenerate stuck demo.
+// This host owns the loading/hasMore/items state, simulates bounded async
+// pagination, and stops after MAX_PAGES so the demo never loops.
+const MAX_PAGES = 3;
+const PAGE_SIZE = 4;
+const LOAD_DELAY_MS = 400;
+
+function buildPageItems(page: number): string[] {
+  const start = page * PAGE_SIZE;
+  return Array.from({ length: PAGE_SIZE }, (_, i) => `条目 ${start + i + 1}`);
+}
+
+function InfiniteScrollDemoHost() {
+  const [page, setPage] = useState(0);
+  const [items, setItems] = useState<string[]>(() => buildPageItems(0));
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleLoadMore = useCallback(() => {
+    // Ignore requests while a page is already in-flight or once finished.
+    if (loading || !hasMore) return;
+    setLoading(true);
+    timerRef.current = setTimeout(() => {
+      const nextPage = page + 1;
+      setItems((prev) => [...prev, ...buildPageItems(nextPage)]);
+      setPage(nextPage);
+      setLoading(false);
+      // Finite pagination: stop after MAX_PAGES so the demo never loops.
+      setHasMore(nextPage + 1 < MAX_PAGES);
+    }, LOAD_DELAY_MS);
+  }, [loading, hasMore, page]);
+
+  const rendererProps: RendererComponentProps<InfiniteScrollSchema> = {
+    id: 'demo-infinite-scroll',
+    path: 'demo.infinite-scroll',
+    schema: { type: 'infinite-scroll' },
+    templateNode: {} as RendererComponentProps<InfiniteScrollSchema>['templateNode'],
+    node: {} as RendererComponentProps<InfiniteScrollSchema>['node'],
+    props: {
+      distance: 80,
+      hasMore,
+      loading,
+      loadingText: '加载中...',
+      finishedText: '没有更多了',
+    } as RendererComponentProps<InfiniteScrollSchema>['props'],
+    meta: { testid: 'demo-infinite-scroll' } as RendererComponentProps<InfiniteScrollSchema>['meta'],
+    regions: {
+      body: {
+        key: 'body',
+        templateNode: null,
+        render: () => (
+          <div data-testid="infinite-scroll-body-text">
+            {items.map((item) => (
+              <div key={item} className="border-b border-border/60 py-2">
+                {item}
+              </div>
+            ))}
+          </div>
+        ),
+      },
+    },
+    events: { onLoadMore: handleLoadMore as never },
+    helpers: {} as RendererComponentProps<InfiniteScrollSchema>['helpers'],
+  };
+
+  return <InfiniteScrollRenderer {...rendererProps} />;
 }

@@ -2,6 +2,7 @@
 @import '@nop-chaos/theme-tokens/styles.css';
 @import '@nop-chaos/flux-react/default-spacing.css';
 @import '@nop-chaos/ui/base.css';
+@import '@nop-chaos/flux-renderers-mobile/styles.css';
 @import './styles-theme-utilities.css';
 @source "../../../packages";
 
