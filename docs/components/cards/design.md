@@ -13,7 +13,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'cards'`
-- 预期归属 `@nop-chaos/flux-renderers-data`
+- 归属 `@nop-chaos/flux-renderers-content`（roadmap §95 authoritative；package-reorganization-analysis L210 验证。卡片集合是"内容族"，不是"数据族"，尽管与 `list`(data) 共享 collection 协议——见 §12 watch-only residual）
 - 组件性质：`category: 'data'`
 
 ## 4. schema 设计

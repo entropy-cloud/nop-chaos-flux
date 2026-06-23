@@ -21,7 +21,7 @@
 - W1b. 容器与反馈组（5）: `done`（plan: `docs/plans/2026-06-24-0040-1-w1b-feedback-family-content-package-bootstrap-plan.md`；首次落地 NEW 包 `flux-renderers-content` + separator/card/progress/spinner/empty 5 个 renderer；解锁 W1a/W2a-content/W3c/W4a）
 - W1c. 集合展示组（1）: `done`（plan: `docs/plans/2026-06-24-0040-3-w1c-list-collection-display-plan.md`；`list` renderer 落地于 `flux-renderers-data`——视觉壳 + `nop-list` marker + 单一 `items` 字段 + `item` region + `empty` value-or-region + `selectionMode` local controlled state + `onItemClick`/`onSelectionChange`；复用 loop/table repeated-instance substrate；解锁 W2a `L0 & W1c → W2a`）
 - W1d. 移动端交互组（2，pull-refresh/infinite-scroll）: `todo`（依赖 `mobile-roadmap.md` M5；`@nop-chaos/flux-renderers-mobile` 包**代码未落地**，见 mobile-roadmap Current Baseline；口径以 mobile-roadmap 为准）
-- W2a. 数据组合组（5）: `todo`
+- W2a. 数据组合组（5）: `done`（plan: `docs/plans/2026-06-24-0335-1-w2a-data-composition-family-plan.md`；`service`/`pagination` 落 `flux-renderers-data`、`cards`/`alert` 落 `flux-renderers-content`、`wizard` 落首次 bootstrap 的 `flux-renderers-layout`；service 遵循请求下沉约束——零组件级请求字段；wizard interaction/lifecycle 状态分层；首次 bootstrap `flux-renderers-layout` 包，解锁 W3a/W3b/W4b）
 - W2b. 日期族（4）: `todo`
 - W3a. 布局组（2）: `todo`
 - W3b. 动作分组组（2）: `todo`

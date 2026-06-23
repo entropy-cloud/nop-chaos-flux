@@ -35,6 +35,9 @@
 
 - 当前页与页大小属于 `pagination` 自己的交互状态。
 - 外部若需要读取摘要，应通过 `statusPath` 发布只读 summary DTO。
+- **边界归一裁定（W2a 落地）**：`currentPage` 超出 `Math.ceil(total/pageSize)` 时归一到末页；`currentPage < 1` 归一到第 1 页。`onChange` 携带归一后的 `currentPage`。
+- **页大小变更裁定（W2a 落地）**：`onPageSizeChange` 触发时**重置 `currentPage` 到第 1 页**——避免新页大小下出现空页（如从 pageSize=10/page=3 切到 pageSize=20，旧 page=3 在新分页下不存在）。同时 `onChange` 也会以归一后的 `{ currentPage: 1, pageSize: next }` 上报，保证下游刷新只触发一次实际数据请求。
+- `statusPath` summary 形状：`{ kind: 'pagination', currentPage, pageSize, total, totalPages, canGoNext, canGoPrev }`。
 
 ## 8. 事件、动作与组件句柄能力
 

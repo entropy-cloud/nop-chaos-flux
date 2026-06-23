@@ -17,7 +17,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'wizard'`
-- 预期归属 `@nop-chaos/flux-renderers-basic`
+- 归属 `@nop-chaos/flux-renderers-layout`（roadmap §102 authoritative；首次 bootstrap 该包）
 - 预期 category: `layout`
 
 ## 4. schema 设计

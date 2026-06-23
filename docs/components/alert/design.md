@@ -13,7 +13,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'alert'`
-- 预期归属 `@nop-chaos/flux-renderers-basic`
+- 归属 `@nop-chaos/flux-renderers-content`（roadmap §95 authoritative；package-reorganization-analysis L210 验证）
 
 ## 4. schema 设计
 

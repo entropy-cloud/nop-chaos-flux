@@ -69,12 +69,12 @@ The canonicalization rules below explain why the same AMIS source type may appea
 | `grid`         | explicit grid layout container | `grid`                                                                         | `targetContract` | `docs/components/grid/design.md`      | wave 3              |
 | `separator`    | visual divider                 | `divider`                                                                      | `runtime`        | `docs/components/separator/design.md` | wave 1              |
 | `card`         | single card container          | `card`                                                                         | `runtime`        | `docs/components/card/design.md`      | wave 1              |
-| `cards`        | card collection renderer       | `cards`                                                                        | `targetContract` | `docs/components/cards/design.md`     | wave 2              |
+| `cards`        | card collection renderer       | `cards`                                                                        | `runtime`        | `docs/components/cards/design.md`     | wave 2              |
 | `tabs`         | tabbed interaction container   | `tabs`                                                                         | `runtime`        | `docs/components/tabs/design.md`      | landed              |
 | `collapse`     | collapsible content group      | `collapse`, `collapse-group`                                                   | `targetContract` | `docs/components/collapse/design.md`  | wave 3              |
 | `steps`        | step-progress renderer         | `steps`                                                                        | `targetContract` | `docs/components/steps/design.md`     | wave 4              |
 | `timeline`     | timeline renderer              | `timeline`                                                                     | `targetContract` | `docs/components/timeline/design.md`  | wave 4              |
-| `wizard`       | multi-step workflow container  | `wizard`                                                                       | `targetContract` | `docs/components/wizard/design.md`    | wave 2              |
+| `wizard`       | multi-step workflow container  | `wizard`                                                                       | `runtime`        | `docs/components/wizard/design.md`    | wave 2              |
 | `dialog`       | modal surface owner            | `dialog`                                                                       | `runtime`        | `docs/components/dialog/design.md`    | landed              |
 | `drawer`       | drawer surface owner           | `drawer`                                                                       | `runtime`        | `docs/components/drawer/design.md`    | landed              |
 
@@ -96,7 +96,7 @@ The canonicalization rules below explain why the same AMIS source type may appea
 | `spinner`         | loading indicator                     | `spinner`                                                                         | `runtime`        | `docs/components/spinner/design.md`         | wave 1              |
 | `empty`           | empty-state renderer                  | no single AMIS top-level type; absorbs placeholder/no-result scenes               | `runtime`        | `docs/components/empty/design.md`           | wave 1              |
 | `json-view`       | JSON display                          | `json`, `static-json`                                                             | `runtime`        | `docs/components/json-view/design.md`       | wave 1              |
-| `alert`           | inline feedback block                 | `alert`                                                                           | `targetContract` | `docs/components/alert/design.md`           | wave 2              |
+| `alert`           | inline feedback block                 | `alert`                                                                           | `runtime`        | `docs/components/alert/design.md`           | wave 2              |
 | `mapping`         | value-to-label/status mapping display | `map`, `mapping`                                                                  | `targetContract` | `docs/components/mapping/design.md`         | wave 3              |
 | `status`          | business status display               | `status`                                                                          | `targetContract` | `docs/components/status/design.md`          | wave 3              |
 | `audio`           | audio media renderer                  | `audio`                                                                           | `targetContract` | `docs/components/audio/design.md`           | wave 4              |
@@ -106,18 +106,18 @@ The canonicalization rules below explain why the same AMIS source type may appea
 
 ### 3. Data And Workflow
 
-| Flux component     | Role                                    | AMIS source                                                                            | Status           | Owner doc                                    | Implementation wave |
-| ------------------ | --------------------------------------- | -------------------------------------------------------------------------------------- | ---------------- | -------------------------------------------- | ------------------- |
-| `reaction`         | declarative side-effect watcher         | no single AMIS top-level type; absorbs local linkage and reaction-style patterns       | `runtime`        | `docs/components/reaction/design.md`         | landed              |
-| `dynamic-renderer` | runtime renderer switching              | no single AMIS top-level type; absorbs dynamic schema indirection scenes               | `runtime`        | `docs/components/dynamic-renderer/design.md` | landed              |
-| `data-source`      | non-visual named source owner           | part of AMIS `service` data-loading semantics plus the Flux source/runtime model       | `runtime`        | `docs/components/data-source/design.md`      | landed              |
-| `service`          | visual data-composition container       | `service`                                                                              | `targetContract` | `docs/components/service/design.md`          | wave 2              |
-| `table`            | structured table renderer               | `table`, `static-table`, `table2`                                                      | `runtime`        | `docs/components/table/design.md`            | landed              |
-| `crud`             | composite data-workflow renderer        | `crud`, `crud2`                                                                        | `runtime`        | `docs/components/crud/design.md`             | landed              |
-| `list`             | ordered collection renderer             | `list`, `static-list`                                                                  | `runtime`        | `docs/components/list/design.md`             | landed              |
-| `pagination`       | standalone pagination interaction owner | `pagination`                                                                           | `targetContract` | `docs/components/pagination/design.md`       | wave 2              |
-| `tree`             | hierarchical display renderer           | no direct audited AMIS top-level display tree type; Flux canonical tree display family | `runtime`        | `docs/components/tree/design.md`             | landed              |
-| `chart`            | chart renderer                          | `chart`                                                                                | `runtime`        | `docs/components/chart/design.md`            | landed              |
+| Flux component     | Role                                    | AMIS source                                                                            | Status    | Owner doc                                    | Implementation wave |
+| ------------------ | --------------------------------------- | -------------------------------------------------------------------------------------- | --------- | -------------------------------------------- | ------------------- |
+| `reaction`         | declarative side-effect watcher         | no single AMIS top-level type; absorbs local linkage and reaction-style patterns       | `runtime` | `docs/components/reaction/design.md`         | landed              |
+| `dynamic-renderer` | runtime renderer switching              | no single AMIS top-level type; absorbs dynamic schema indirection scenes               | `runtime` | `docs/components/dynamic-renderer/design.md` | landed              |
+| `data-source`      | non-visual named source owner           | part of AMIS `service` data-loading semantics plus the Flux source/runtime model       | `runtime` | `docs/components/data-source/design.md`      | landed              |
+| `service`          | visual data-composition container       | `service`                                                                              | `runtime` | `docs/components/service/design.md`          | wave 2              |
+| `table`            | structured table renderer               | `table`, `static-table`, `table2`                                                      | `runtime` | `docs/components/table/design.md`            | landed              |
+| `crud`             | composite data-workflow renderer        | `crud`, `crud2`                                                                        | `runtime` | `docs/components/crud/design.md`             | landed              |
+| `list`             | ordered collection renderer             | `list`, `static-list`                                                                  | `runtime` | `docs/components/list/design.md`             | landed              |
+| `pagination`       | standalone pagination interaction owner | `pagination`                                                                           | `runtime` | `docs/components/pagination/design.md`       | wave 2              |
+| `tree`             | hierarchical display renderer           | no direct audited AMIS top-level display tree type; Flux canonical tree display family | `runtime` | `docs/components/tree/design.md`             | landed              |
+| `chart`            | chart renderer                          | `chart`                                                                                | `runtime` | `docs/components/chart/design.md`            | landed              |
 
 ### 4. Form Core
 
