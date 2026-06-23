@@ -4,16 +4,38 @@ import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { contentRendererDefinitions } from './content-renderer-definitions.js';
 import { createMockRendererProps } from './test-support.js';
-import type { CardSchema, EmptySchema, ProgressSchema, SeparatorSchema, SpinnerSchema } from './schemas.js';
+import type {
+  CardSchema,
+  EmptySchema,
+  HtmlSchema,
+  ImageSchema,
+  JsonViewSchema,
+  LinkSchema,
+  MarkdownSchema,
+  ProgressSchema,
+  SeparatorSchema,
+  SpinnerSchema,
+} from './schemas.js';
 
 afterEach(() => {
   cleanup();
 });
 
-const TYPES = ['separator', 'spinner', 'progress', 'empty', 'card'] as const;
+const TYPES = [
+  'separator',
+  'spinner',
+  'progress',
+  'empty',
+  'card',
+  'link',
+  'image',
+  'json-view',
+  'markdown',
+  'html',
+] as const;
 
 describe('contentRendererDefinitions', () => {
-  it('declares 5 renderer definitions for the W1b feedback family', () => {
+  it('declares 10 renderer definitions for the content family (W1a + W1b)', () => {
     expect(contentRendererDefinitions.map((d) => d.type).sort()).toEqual([...TYPES].sort());
   });
 
@@ -109,5 +131,92 @@ describe('contentRendererDefinitions', () => {
     expect(root.querySelector('[data-testid="b"]')).toBeTruthy();
     expect(root.querySelector('[data-testid="f"]')).toBeTruthy();
     expect(root.querySelector('[data-testid="a"]')).toBeTruthy();
+  });
+
+  it('link declares label value-or-region + href/target/rel props + onClick event', () => {
+    const link = contentRendererDefinitions.find((d) => d.type === 'link');
+    expect(link?.fields?.find((f) => f.key === 'label')?.kind).toBe('value-or-region');
+    expect(link?.fields?.find((f) => f.key === 'href')?.kind).toBe('prop');
+    expect(link?.fields?.find((f) => f.key === 'onClick')?.kind).toBe('event');
+  });
+
+  it('image declares src/alt/fit props + onClick/onLoadError events', () => {
+    const image = contentRendererDefinitions.find((d) => d.type === 'image');
+    expect(image?.fields?.find((f) => f.key === 'src')?.kind).toBe('prop');
+    expect(image?.fields?.find((f) => f.key === 'lazy')?.kind).toBe('prop');
+    expect(image?.fields?.find((f) => f.key === 'onClick')?.kind).toBe('event');
+    expect(image?.fields?.find((f) => f.key === 'onLoadError')?.kind).toBe('event');
+  });
+
+  it('json-view declares value/collapsed/showCopy props + empty value-or-region', () => {
+    const json = contentRendererDefinitions.find((d) => d.type === 'json-view');
+    expect(json?.fields?.find((f) => f.key === 'value')?.kind).toBe('prop');
+    expect(json?.fields?.find((f) => f.key === 'empty')?.kind).toBe('value-or-region');
+  });
+
+  it('markdown/html declare content prop + empty value-or-region + boolean toggle', () => {
+    const markdown = contentRendererDefinitions.find((d) => d.type === 'markdown');
+    expect(markdown?.fields?.find((f) => f.key === 'content')?.kind).toBe('prop');
+    expect(markdown?.fields?.find((f) => f.key === 'allowHtml')?.kind).toBe('prop');
+    expect(markdown?.fields?.find((f) => f.key === 'empty')?.kind).toBe('value-or-region');
+    const html = contentRendererDefinitions.find((d) => d.type === 'html');
+    expect(html?.fields?.find((f) => f.key === 'content')?.kind).toBe('prop');
+    expect(html?.fields?.find((f) => f.key === 'sanitize')?.kind).toBe('prop');
+    expect(html?.fields?.find((f) => f.key === 'empty')?.kind).toBe('value-or-region');
+  });
+
+  it('link/image/json-view/html components render via their definitions', () => {
+    const cases = [
+      {
+        type: 'link',
+        schema: { type: 'link' } as LinkSchema,
+        props: { label: 'L', href: '/x' },
+        slot: 'link',
+        passProps: {} as Record<string, unknown>,
+      },
+      {
+        type: 'image',
+        schema: { type: 'image' } as ImageSchema,
+        props: { src: '/a.png', alt: 'a' },
+        slot: 'image',
+        passProps: {} as Record<string, unknown>,
+      },
+      {
+        type: 'json-view',
+        schema: { type: 'json-view' } as JsonViewSchema,
+        props: { value: { x: 1 } },
+        slot: 'json-view',
+        passProps: {} as Record<string, unknown>,
+      },
+      {
+        type: 'html',
+        schema: { type: 'html' } as HtmlSchema,
+        props: { content: '<b>s</b>' },
+        slot: 'html',
+        passProps: {} as Record<string, unknown>,
+      },
+    ];
+    for (const c of cases) {
+      const def = contentRendererDefinitions.find((d) => d.type === c.type);
+      const props = createMockRendererProps<typeof c.schema>({
+        schema: c.schema,
+        props: c.props,
+      });
+      const Comp = def?.component as React.ComponentType<typeof props>;
+      const view = render(<Comp {...props} />);
+      expect(view.container.querySelector(`[data-slot="${c.slot}"]`)).toBeTruthy();
+      cleanup();
+    }
+  });
+
+  it('markdown component renders via its definition', () => {
+    const def = contentRendererDefinitions.find((d) => d.type === 'markdown');
+    const props = createMockRendererProps<MarkdownSchema>({
+      schema: { type: 'markdown' },
+      props: { content: '## hi' },
+    });
+    const Comp = def?.component as React.ComponentType<typeof props>;
+    const view = render(<Comp {...props} />);
+    expect(view.container.querySelector('[data-slot="markdown"] h2')).toBeTruthy();
   });
 });

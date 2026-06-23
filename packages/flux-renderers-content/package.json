@@ -24,12 +24,21 @@
     "@nop-chaos/ui": "workspace:*"
   },
   "peerDependencies": {
+    "dompurify": "^3.4.11",
     "lucide-react": "^1.17.0",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "dompurify": "^3.4.11",
+    "jsdom": "^29.1.1",
     "lucide-react": "^1.17.0",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css",
@@ -37,5 +46,5 @@
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
   },
-  "description": "Content & feedback renderers: separator, card, progress, spinner, empty."
+  "description": "Content & feedback renderers: separator, card, progress, spinner, empty, markdown, html, link, image, json-view."
 }

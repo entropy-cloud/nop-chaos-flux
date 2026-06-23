@@ -13,7 +13,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'html'`
-- 预期归属 `@nop-chaos/flux-renderers-basic`
+- 实际归属 `@nop-chaos/flux-renderers-content`
 
 ## 4. schema 设计
 
@@ -52,3 +52,4 @@
 ## 12. 风险、取舍与后续阶段
 
 - 安全边界是核心风险；任何 `html` 能力都必须与安全设计要求文档对齐。
+- 受控渲染安全门禁决策见 `docs/plans/2026-06-24-0040-2-w1a-content-family-sanitization-plan.md`：DOMPurify sanitize 默认 on（strip `<script>`/事件处理器/`javascript:` URI），`sanitize:false` 为显式 trusted 逃生口；`dangerouslySetInnerHTML` 仅承载 sanitized 输出。以 `docs/architecture/security-design-requirements.md` 为安全边界父文档。

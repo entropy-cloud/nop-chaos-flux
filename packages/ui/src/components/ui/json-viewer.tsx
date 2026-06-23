@@ -7,15 +7,28 @@ import { cn } from '../../lib/utils.js';
 type JsonViewerProps = {
   data: Record<string, unknown> | unknown[];
   defaultExpand?: boolean;
+  /** When set, expand only nodes whose depth is below `expandLevel` (0 = collapse all nested). */
+  expandLevel?: number;
   className?: string;
 };
 
-function JsonViewer({ data, defaultExpand = true, className }: JsonViewerProps) {
+function JsonViewer({
+  data,
+  defaultExpand = true,
+  expandLevel,
+  className,
+}: JsonViewerProps) {
+  const shouldExpandNode =
+    typeof expandLevel === 'number'
+      ? (level: number) => level < expandLevel
+      : defaultExpand
+        ? allExpanded
+        : (level: number) => level === 0;
   return (
     <div className={cn('json-viewer', className)}>
       <JsonView
         data={data}
-        shouldExpandNode={defaultExpand ? allExpanded : undefined}
+        shouldExpandNode={shouldExpandNode as never}
         style={defaultStyles}
       />
     </div>

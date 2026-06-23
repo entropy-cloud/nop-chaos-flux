@@ -13,7 +13,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'markdown'`
-- 预期归属 `@nop-chaos/flux-renderers-basic`
+- 实际归属 `@nop-chaos/flux-renderers-content`
 
 ## 4. schema 设计
 
@@ -52,4 +52,5 @@
 
 ## 12. 风险、取舍与后续阶段
 
-- 最大风险是 `markdown` 与 `html` 边界不清，需要持续坚持“受控格式化文本”定位。
+- 最大风险是 `markdown` 与 `html` 边界不清，需要持续坚持"受控格式化文本"定位。
+- 受控渲染安全门禁决策见 `docs/plans/2026-06-24-0040-2-w1a-content-family-sanitization-plan.md`：`allowHtml` 默认 off（react-markdown 转义），开启时先经 DOMPurify sanitize 再由 rehype-raw 渲染存活安全标签。`docs/architecture/security-design-requirements.md` 为安全边界父文档。

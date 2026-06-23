@@ -27,6 +27,7 @@ import { TablePopOverDemoPage } from './pages/table-popover-demo';
 import { MobileInfrastructureDemoPage } from './pages/mobile-infrastructure-demo';
 import { MobileComponentsDemoPage } from './pages/mobile-components-demo';
 import { W1bContentFeedbackDemoPage } from './pages/w1b-content-feedback-demo';
+import { W1aContentDisplayDemoPage } from './pages/w1a-content-display-demo';
 import { M1ResponsiveDemoPage } from './pages/m1-responsive-demo';
 import { M2TouchDemoPage } from './pages/m2-touch-demo';
 import { M3LayoutDemoPage } from './pages/m3-layout-demo';
@@ -171,6 +172,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <MobileComponentsDemoPage onBack={goHome} />;
         case 'w1b-content':
           return <W1bContentFeedbackDemoPage onBack={goHome} />;
+        case 'w1a-content':
+          return <W1aContentDisplayDemoPage onBack={goHome} />;
         case 'm1-responsive':
           return <M1ResponsiveDemoPage onBack={goHome} />;
         case 'm2-touch':

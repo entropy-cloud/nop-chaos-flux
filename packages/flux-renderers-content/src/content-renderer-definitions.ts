@@ -1,12 +1,22 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { CardRenderer } from './card.js';
 import { EmptyRenderer } from './empty.js';
+import { HtmlRenderer } from './html.js';
+import { ImageRenderer } from './image.js';
+import { JsonViewRenderer } from './json-view.js';
+import { LinkRenderer } from './link.js';
+import { MarkdownRenderer } from './markdown.js';
 import { ProgressRenderer } from './progress.js';
 import { SeparatorRenderer } from './separator.js';
 import { SpinnerRenderer } from './spinner.js';
 import type {
   CardSchema,
   EmptySchema,
+  HtmlSchema,
+  ImageSchema,
+  JsonViewSchema,
+  LinkSchema,
+  MarkdownSchema,
   ProgressSchema,
   SeparatorSchema,
   SpinnerSchema,
@@ -86,6 +96,81 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'onClick', kind: 'event' },
     ],
   },
+  {
+    type: 'link',
+    displayName: 'Link',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'link' },
+    component: LinkRenderer,
+    fields: [
+      { key: 'label', kind: 'value-or-region', regionKey: 'label' },
+      { key: 'href', kind: 'prop' },
+      { key: 'target', kind: 'prop' },
+      { key: 'rel', kind: 'prop' },
+      { key: 'onClick', kind: 'event' },
+    ],
+  },
+  {
+    type: 'image',
+    displayName: 'Image',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'image' },
+    component: ImageRenderer,
+    fields: [
+      { key: 'src', kind: 'prop' },
+      { key: 'alt', kind: 'prop' },
+      { key: 'title', kind: 'prop' },
+      { key: 'preview', kind: 'prop', valueType: 'boolean' },
+      { key: 'fit', kind: 'prop' },
+      { key: 'width', kind: 'prop' },
+      { key: 'height', kind: 'prop' },
+      { key: 'lazy', kind: 'prop', valueType: 'boolean' },
+      { key: 'onClick', kind: 'event' },
+      { key: 'onLoadError', kind: 'event' },
+    ],
+  },
+  {
+    type: 'json-view',
+    displayName: 'JSON View',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'json-view' },
+    component: JsonViewRenderer,
+    fields: [
+      { key: 'value', kind: 'prop' },
+      { key: 'collapsed', kind: 'prop' },
+      { key: 'showCopy', kind: 'prop', valueType: 'boolean' },
+      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+    ],
+  },
+  {
+    type: 'markdown',
+    displayName: 'Markdown',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'markdown' },
+    component: MarkdownRenderer,
+    fields: [
+      { key: 'content', kind: 'prop' },
+      { key: 'allowHtml', kind: 'prop', valueType: 'boolean' },
+      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+    ],
+  },
+  {
+    type: 'html',
+    displayName: 'HTML',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'html' },
+    component: HtmlRenderer,
+    fields: [
+      { key: 'content', kind: 'prop' },
+      { key: 'sanitize', kind: 'prop', valueType: 'boolean' },
+      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+    ],
+  },
 ];
 
 export type ContentRendererSchema =
@@ -93,4 +178,9 @@ export type ContentRendererSchema =
   | SpinnerSchema
   | ProgressSchema
   | EmptySchema
-  | CardSchema;
+  | CardSchema
+  | LinkSchema
+  | ImageSchema
+  | JsonViewSchema
+  | MarkdownSchema
+  | HtmlSchema;

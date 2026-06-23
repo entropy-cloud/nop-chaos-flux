@@ -497,6 +497,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'W1b content/feedback renderers: separator, spinner, progress, empty, card — the first wave of the flux-renderers-content package, mounted via SchemaRenderer.',
   },
   {
+    id: 'w1a-content',
+    title: 'Content Display Family',
+    eyebrow: 'Content Renderers (W1a)',
+    description:
+      'W1a content display renderers: markdown, html, link, image, json-view — with the controlled-rendering XSS sanitize gate (DOMPurify) for html/markdown, mounted via SchemaRenderer.',
+  },
+  {
     id: 'm1-responsive',
     title: 'M1 Responsive Controls',
     eyebrow: 'Mobile Responsive (M1)',
