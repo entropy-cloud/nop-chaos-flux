@@ -19,10 +19,13 @@
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/flux-renderers-content": "workspace:*",
     "@nop-chaos/flux-renderers-form": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "@tanstack/react-virtual": "^3.13.24"
+    "@tanstack/react-virtual": "^3.13.24",
+    "@tiptap/react": "^3.27.1",
+    "@tiptap/starter-kit": "^3.27.1"
   },
   "peerDependencies": {
     "lucide-react": "^1.17.0",
