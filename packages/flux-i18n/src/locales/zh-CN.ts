@@ -93,6 +93,13 @@ export const zhCN: Resource = {
       addEntry: '添加条目',
       confirming: '确认中...',
       failedToLoadOptions: '加载选项失败。',
+      uploadFile: '上传文件',
+      uploadFiles: '上传多个文件',
+      uploading: '上传中…',
+      clear: '清空',
+      uploadFailed: '上传失败',
+      uploadActionMissing: '未配置 uploadAction —— 无法上传。',
+      uploadNoResult: '上传动作未返回可用结果',
     },
     conditionBuilder: {
       conditionLabel: '条件',

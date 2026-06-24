@@ -93,6 +93,13 @@ export const enUS: Resource = {
       addEntry: 'Add entry',
       confirming: 'Confirming...',
       failedToLoadOptions: 'Failed to load options.',
+      uploadFile: 'Upload file',
+      uploadFiles: 'Upload files',
+      uploading: 'Uploading…',
+      clear: 'Clear',
+      uploadFailed: 'Upload failed',
+      uploadActionMissing: 'uploadAction is not configured — cannot upload.',
+      uploadNoResult: 'Upload action did not return a usable result',
     },
     conditionBuilder: {
       conditionLabel: 'Condition',

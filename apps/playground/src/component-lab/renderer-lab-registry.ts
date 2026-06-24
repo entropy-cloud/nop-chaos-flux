@@ -51,6 +51,13 @@ import {
   InputDatetimeLabPage,
   InputTimeLabPage,
   DateRangeLabPage,
+  InputMonthLabPage,
+  InputQuarterLabPage,
+  InputYearLabPage,
+  MarkdownEditorLabPage,
+  InputFileLabPage,
+  InputImageLabPage,
+  EditorLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -105,4 +112,11 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   'input-datetime': InputDatetimeLabPage,
   'input-time': InputTimeLabPage,
   'date-range': DateRangeLabPage,
+  'input-month': InputMonthLabPage,
+  'input-quarter': InputQuarterLabPage,
+  'input-year': InputYearLabPage,
+  'markdown-editor': MarkdownEditorLabPage,
+  'input-file': InputFileLabPage,
+  'input-image': InputImageLabPage,
+  editor: EditorLabPage,
 };
