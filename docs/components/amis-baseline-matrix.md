@@ -142,24 +142,24 @@ The canonicalization rules below explain why the same AMIS source type may appea
 
 ### 5. Form Advanced And Composite
 
-| Flux component      | Role                                             | AMIS source                                                         | Status           | Owner doc                                     | Implementation wave |
-| ------------------- | ------------------------------------------------ | ------------------------------------------------------------------- | ---------------- | --------------------------------------------- | ------------------- |
-| `condition-builder` | condition editor                                 | `condition-builder`                                                 | `runtime`        | `docs/components/condition-builder/design.md` | landed              |
-| `code-editor`       | code, expression, formula, or schema text editor | `editor` in code/text mode, `formula`, `json-schema-editor`, `diff` | `runtime`        | `docs/components/code-editor/design.md`       | landed              |
-| `combo`             | composite repeated/object field container        | `combo`                                                             | `targetContract` | `docs/components/combo/design.md`             | wave 4              |
-| `picker`            | popup picker field                               | `picker`                                                            | `targetContract` | `docs/components/picker/design.md`            | wave 4              |
-| `transfer`          | transfer-selection field                         | `transfer`                                                          | `targetContract` | `docs/components/transfer/design.md`          | wave 4              |
-| `input-table`       | table-shaped array/object field                  | `input-table`                                                       | `targetContract` | `docs/components/input-table/design.md`       | wave 4              |
-| `input-date`        | date field                                       | `input-date`, `native-date`                                         | `runtime`        | `docs/components/input-date/design.md`        | wave 2              |
-| `input-datetime`    | datetime field                                   | `input-datetime`                                                    | `runtime`        | `docs/components/input-datetime/design.md`    | wave 2              |
-| `input-time`        | time field                                       | `input-time`, `native-time`                                         | `runtime`        | `docs/components/input-time/design.md`        | wave 2              |
-| `date-range`        | canonical range date/time field family           | `input-date-range`, `input-datetime-range`, `input-time-range`      | `runtime`        | `docs/components/date-range/design.md`        | wave 2              |
-| `input-month`       | month field                                      | `input-month`, `input-month-range`                                  | `runtime`        | `docs/components/input-month/design.md`       | landed              |
-| `input-quarter`     | quarter field                                    | `input-quarter`, `input-quarter-range`                              | `runtime`        | `docs/components/input-quarter/design.md`     | landed              |
-| `input-year`        | year field                                       | `input-year`                                                        | `runtime`        | `docs/components/input-year/design.md`        | landed              |
-| `input-file`        | file-upload field                                | `input-file`                                                        | `runtime`        | `docs/components/input-file/design.md`        | landed              |
-| `input-image`       | image-upload field                               | `input-image`                                                       | `runtime`        | `docs/components/input-image/design.md`       | landed              |
-| `editor`            | rich-text editor field                           | `input-rich-text`                                                   | `runtime`        | `docs/components/editor/design.md`            | landed              |
+| Flux component      | Role                                             | AMIS source                                                         | Status    | Owner doc                                     | Implementation wave |
+| ------------------- | ------------------------------------------------ | ------------------------------------------------------------------- | --------- | --------------------------------------------- | ------------------- |
+| `condition-builder` | condition editor                                 | `condition-builder`                                                 | `runtime` | `docs/components/condition-builder/design.md` | landed              |
+| `code-editor`       | code, expression, formula, or schema text editor | `editor` in code/text mode, `formula`, `json-schema-editor`, `diff` | `runtime` | `docs/components/code-editor/design.md`       | landed              |
+| `combo`             | composite repeated/object field container        | `combo`                                                             | `runtime` | `docs/components/combo/design.md`             | landed              |
+| `picker`            | popup picker field                               | `picker`                                                            | `runtime` | `docs/components/picker/design.md`            | landed              |
+| `transfer`          | transfer-selection field                         | `transfer`                                                          | `runtime` | `docs/components/transfer/design.md`          | landed              |
+| `input-table`       | table-shaped array/object field                  | `input-table`                                                       | `runtime` | `docs/components/input-table/design.md`       | landed              |
+| `input-date`        | date field                                       | `input-date`, `native-date`                                         | `runtime` | `docs/components/input-date/design.md`        | wave 2              |
+| `input-datetime`    | datetime field                                   | `input-datetime`                                                    | `runtime` | `docs/components/input-datetime/design.md`    | wave 2              |
+| `input-time`        | time field                                       | `input-time`, `native-time`                                         | `runtime` | `docs/components/input-time/design.md`        | wave 2              |
+| `date-range`        | canonical range date/time field family           | `input-date-range`, `input-datetime-range`, `input-time-range`      | `runtime` | `docs/components/date-range/design.md`        | wave 2              |
+| `input-month`       | month field                                      | `input-month`, `input-month-range`                                  | `runtime` | `docs/components/input-month/design.md`       | landed              |
+| `input-quarter`     | quarter field                                    | `input-quarter`, `input-quarter-range`                              | `runtime` | `docs/components/input-quarter/design.md`     | landed              |
+| `input-year`        | year field                                       | `input-year`                                                        | `runtime` | `docs/components/input-year/design.md`        | landed              |
+| `input-file`        | file-upload field                                | `input-file`                                                        | `runtime` | `docs/components/input-file/design.md`        | landed              |
+| `input-image`       | image-upload field                               | `input-image`                                                       | `runtime` | `docs/components/input-image/design.md`       | landed              |
+| `editor`            | rich-text editor field                           | `input-rich-text`                                                   | `runtime` | `docs/components/editor/design.md`            | landed              |
 
 Notes:
 

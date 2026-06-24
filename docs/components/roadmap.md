@@ -29,7 +29,7 @@
 - W3d. 高级输入族（7）: `done`（plan: `docs/plans/2026-06-24-0718-1-w3d-advanced-input-family-plan.md`；period 输入 input-month/quarter/year + markdown-editor 落 `flux-renderers-form`、upload 族 input-file/input-image + editor(TipTap) 落 `flux-renderers-form-advanced`；period 复用 W2b date 底层、upload 走 action 下沉、editor 复用 W1a sanitize 门禁、markdown-editor 预览经运行时 registry 组合（不引入 react-markdown 到 form 包）；解锁 W4c `W3d → W4c`）
 - W4a. 多媒体组（4）: `done`（plan: `docs/plans/2026-06-24-0718-2-w4a-multimedia-family-plan.md`；audio/video/carousel/qrcode 落 `flux-renderers-content`——audio/video 原生媒体元素 + marker、carousel 复用 ui Carousel(embla，零新依赖) + 注册 next/prev/setValue 句柄收口 X1 deferred、qrcode 引入轻量 MIT 库 `qrcode`(canvas) + 单一 canonical 名；4 份 design §3 drift basic→content 收敛）
 - W4b. 流程展示组（2）: `done`（plan: `docs/plans/2026-06-24-0718-3-w4b-process-display-family-plan.md`；steps/timeline 落地于 `flux-renderers-layout`——steps 复用 W3a collapse valueOwnership 三态分层（不承担流程 owner，与 wizard 边界清晰，scope 缺 valueStatePath 显式降级 local controlled + dev 告警）、value 越界 clamp、orientation 横/纵；timeline 展示型集合 item 归一化（time/title/detail/icon/level）+ mode/orientation/reverse + 缺字段项降级，无 owner 状态；2 份 design §3 drift basic→layout 收敛）
-- W4c. 复合表单组（4）: `todo`
+- W4c. 复合表单组（4）: `done`（plan: `docs/plans/2026-06-24-1300-1-w4c-composite-form-family-plan.md`；combo/input-table/transfer/picker 落地于 `flux-renderers-form-advanced`——combo/input-table 复用 W3d staged owner 内核（`createItemScope`/`createItemFormProxy`/`createProjectedValidationRuntime` + `currentForm.append/remove/moveValue` + canonical `addItem`/`removeItem`/`moveItem` 句柄）；transfer/picker 新建最小 valueKey/labelKey 归一化 helper（`option-normalize.ts`），picker 复用 dialog surface + `useInputComponentHandle` 的 open/clear slot；4 份 design §3 归属 drift 收敛 form-advanced；含 playground 演示页 + e2e + focused 单测；main roadmap Wave 1–4 收尾）
 - D1a. 设计器补充组（2）: `todo`
 - **M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈）: `done`** ← 镜像自 `mobile-roadmap.md`（4 子项 M0.1a~M0.1d 已全部落地；plan: `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`；细节与口径以 mobile-roadmap 为准）
 - O1. 非 retained 可选项（13）: 按需启动，不列工作项
@@ -181,6 +181,8 @@
 **状态：** `done` — steps/timeline 2 个组件全部落地注册于 `flux-renderers-layout`，含 playground 演示页 + e2e + focused 单测。steps 复用 W3a valueOwnership 三态分层（不承担流程提交 owner，与 wizard 边界清晰）；timeline 展示型集合无 owner 状态。
 
 ### W4c 复合表单组
+
+**状态：** `done` — 4 个组件全部落地注册（combo/input-table/transfer/picker → `flux-renderers-form-advanced`），含 playground 演示页 + e2e + focused 单测。combo/input-table 复用复合值字段 staged owner 语义；picker/transfer 明确与 `select`/`tree-select` 的边界（新建 valueKey/labelKey 归一化 helper，不复用 select 下拉协议）。
 
 **目标：** 高级复合选择/编辑控件。`combo`/`input-table` 复用复合值字段 staged owner；`picker`/`transfer` 明确与 `select`/`tree-select` 的边界。
 
