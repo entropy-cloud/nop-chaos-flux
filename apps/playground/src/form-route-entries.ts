@@ -182,6 +182,38 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Structured array editor with per-item column fields and add/remove controls.',
   },
   {
+    id: 'combo',
+    title: 'Combo',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
+    description:
+      'Repeated composite-item field editor. Card-stacked items via the items region; reuses array-field staged owner + canonical addItem/removeItem/moveItem handle.',
+  },
+  {
+    id: 'input-table',
+    title: 'Input Table',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
+    description:
+      'Tabular object-array field editor. Inline row editing + column headers; reuses array-field staged owner + canonical addItem/removeItem/moveItem handle (addRow/removeRow/moveRow aliases).',
+  },
+  {
+    id: 'transfer',
+    title: 'Transfer',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
+    description:
+      'Two-pane shuttle selection field. valueKey/labelKey option normalization helper + searchable candidate/selected panes.',
+  },
+  {
+    id: 'picker',
+    title: 'Picker',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
+    description:
+      'Dialog-layer selection field. Reuses dialog surface + valueKey/labelKey normalization; open/clear via useInputComponentHandle.',
+  },
+  {
     id: 'condition-builder',
     title: 'Condition Builder',
     category: 'form',

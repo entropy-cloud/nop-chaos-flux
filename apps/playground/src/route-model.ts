@@ -416,6 +416,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'W4b process display renderers: steps (lightweight step progress, valueOwnership three-state, orientation, value clamp — not a flow submit owner) — mounted via SchemaRenderer.',
   },
   {
+    id: 'w4c-composite-form-family',
+    title: 'Composite Form Family',
+    eyebrow: 'Form Renderers (W4c)',
+    description:
+      'W4c composite form renderers: combo (repeated composite-item field editor), input-table (tabular object-array field editor), transfer (two-pane shuttle selection), picker (dialog-layer selection) — combo/input-table reuse array-field staged owner + canonical composite handle; transfer/picker add a minimal valueKey/labelKey normalization helper. Main roadmap Wave 1–4 capstone.',
+  },
+  {
     id: 'm1-responsive',
     title: 'M1 Responsive Controls',
     eyebrow: 'Mobile Responsive (M1)',
