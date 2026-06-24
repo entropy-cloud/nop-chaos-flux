@@ -30,4 +30,8 @@ export {
   useFieldHandlers,
   useFormFieldController,
 } from './field-utils.js';
+export {
+  MarkdownEditorRenderer,
+  markdownEditorFieldRules,
+} from './renderers/markdown-editor-renderer.js';
 export * from './schemas.js';

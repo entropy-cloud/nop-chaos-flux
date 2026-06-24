@@ -9,7 +9,10 @@
  * so the caller can surface them as validation rather than as crashes.
  */
 
-export type RangeKind = 'date' | 'datetime' | 'time';
+export type RangeKind = 'date' | 'datetime' | 'time' | 'month' | 'quarter' | 'year';
+
+/** Coarse-grained period kinds (month/quarter/year) — the W3d period family. */
+export type PeriodKind = 'month' | 'quarter' | 'year';
 
 export interface DateOptions {
   /** Operate on UTC components instead of local components. */
@@ -21,6 +24,14 @@ export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm';
 export const DEFAULT_DATETIME_SECONDS_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 export const DEFAULT_TIME_FORMAT = 'HH:mm';
 export const DEFAULT_TIME_SECONDS_FORMAT = 'HH:mm:ss';
+
+/**
+ * Period formats. Month/year reuse the date token system (`YYYY-MM` / `YYYY`);
+ * quarter needs a dedicated parse path because there is no calendar `Q` token.
+ */
+export const DEFAULT_MONTH_FORMAT = 'YYYY-MM';
+export const DEFAULT_QUARTER_FORMAT = 'YYYY-Qq';
+export const DEFAULT_YEAR_FORMAT = 'YYYY';
 
 /**
  * Token definitions in priority order (longest first so `YYYY` wins over `YY`).
@@ -367,6 +378,12 @@ export function defaultFormatForRangeKind(kind: RangeKind): string {
       return DEFAULT_DATETIME_FORMAT;
     case 'time':
       return DEFAULT_TIME_FORMAT;
+    case 'month':
+      return DEFAULT_MONTH_FORMAT;
+    case 'quarter':
+      return DEFAULT_QUARTER_FORMAT;
+    case 'year':
+      return DEFAULT_YEAR_FORMAT;
     case 'date':
     default:
       return DEFAULT_DATE_FORMAT;
@@ -420,4 +437,148 @@ export function toCalendarDate(parsed: Date | undefined, utc: boolean): Date | u
     parsed.getUTCMinutes(),
     parsed.getUTCSeconds(),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Period family (month / quarter / year) — W3d
+// ---------------------------------------------------------------------------
+
+export interface PeriodComponents {
+  year: number;
+  /** 1-12 for month, 1-4 for quarter, always 1 for year. */
+  unit: number;
+}
+
+function pad4(value: number): string {
+  return String(value).padStart(4, '0');
+}
+
+function quarterToMonth(quarter: number): number {
+  return (quarter - 1) * 3;
+}
+
+/** Resolve the quarter (1-4) for a given calendar month (1-12). */
+export function monthToQuarter(month: number): number {
+  return Math.floor((month - 1) / 3) + 1;
+}
+
+/**
+ * Parse a period-formatted value into a comparable start-of-period Date.
+ *
+ * Month (`YYYY-MM`) and year (`YYYY`) reuse the date token system. Quarter
+ * (`YYYY-Qq`) uses a dedicated parser since there is no calendar quarter token.
+ * Returns `undefined` when the value is empty or malformed (never throws).
+ */
+export function parsePeriod(
+  value: string | undefined,
+  kind: PeriodKind,
+  format: string,
+  options?: DateOptions,
+): Date | undefined {
+  if (value == null || value === '') {
+    return undefined;
+  }
+  const str = String(value).trim();
+  if (kind === 'quarter') {
+    // The quarter format is `YYYY-Qq` (e.g. 2024-Q3). The literal `-Q` is the
+    // conventional separator; the trailing digit is the quarter.
+    const match = /^(\d{4})-Q([1-4])$/.exec(str);
+    if (!match) {
+      return undefined;
+    }
+    const year = Number(match[1]);
+    const quarter = Number(match[2]);
+    return new Date(year, quarterToMonth(quarter), 1);
+  }
+  // month/year delegate to the token parser.
+  return parseDate(str, format, options);
+}
+
+/**
+ * Format a Date into the period display string. For month/year this reuses the
+ * token formatter; for quarter it derives the quarter from the calendar month.
+ */
+export function formatPeriod(
+  date: Date | undefined,
+  kind: PeriodKind,
+  format: string,
+  options?: DateOptions,
+): string | undefined {
+  if (!date || Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+  if (kind === 'quarter') {
+    const components = getDateComponents(date, options?.utc === true);
+    const quarter = monthToQuarter(components.month);
+    return `${pad4(components.year)}-Q${quarter}`;
+  }
+  return formatDate(date, format, options);
+}
+
+/** Extract canonical period components (year + unit) from a Date. */
+export function dateToPeriod(
+  date: Date | undefined,
+  kind: PeriodKind,
+  utc?: boolean,
+): PeriodComponents | undefined {
+  if (!date || Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+  const components = getDateComponents(date, utc === true);
+  switch (kind) {
+    case 'month':
+      return { year: components.year, unit: components.month };
+    case 'quarter':
+      return { year: components.year, unit: monthToQuarter(components.month) };
+    case 'year':
+    default:
+      return { year: components.year, unit: 1 };
+  }
+}
+
+/**
+ * Normalize a period range expressed as two period-formatted strings. When both
+ * ends parse and `start > end`, the ends are swapped so the stored value is
+ * always well-formed. Mirrors {@link normalizeRange} semantics for the period
+ * kinds (month/quarter/year share no single token grammar, so the comparison
+ * goes through {@link parsePeriod}).
+ */
+export function normalizePeriodRange(
+  start: string | undefined,
+  end: string | undefined,
+  kind: PeriodKind,
+  format: string,
+  options?: DateOptions,
+): NormalizedRange {
+  const startDate = parsePeriod(start, kind, format, options);
+  const endDate = parsePeriod(end, kind, format, options);
+  if (startDate && endDate && compareDates(startDate, endDate) > 0) {
+    return {
+      start: formatPeriod(endDate, kind, format, options),
+      end: formatPeriod(startDate, kind, format, options),
+      swapped: true,
+    };
+  }
+  return { start, end, swapped: false };
+}
+
+/**
+ * Parse a delimited period range string into two comparable start-of-period
+ * Dates. Mirrors {@link parseDateRange} for the period kinds.
+ */
+export function parsePeriodRange(
+  value: string | undefined,
+  delimiter: string,
+  kind: PeriodKind,
+  format: string,
+  options?: DateOptions,
+): ParsedRange {
+  if (!value) {
+    return { start: undefined, end: undefined };
+  }
+  const parts = value.split(delimiter);
+  return {
+    start: parsePeriod(parts[0], kind, format, options),
+    end: parsePeriod(parts[1], kind, format, options),
+  };
 }

@@ -309,3 +309,35 @@ export interface DateRangeSchema extends BoundFieldSchemaBase {
   clearable?: boolean;
   shortcuts?: Array<{ label: string; start: string; end: string }>;
 }
+
+/**
+ * Period input family (W3d). Month/quarter/year share a single canonical owner
+ * per kind and distinguish single-value vs range via `selectionMode` — no
+ * second `*-range` canonical type (design §2/§12).
+ */
+export interface InputPeriodSchema extends BoundFieldSchemaBase {
+  type: 'input-month' | 'input-quarter' | 'input-year';
+  placeholder?: string;
+  /** `single` (default) emits one period value; `range` emits delimiter-joined start,end. */
+  selectionMode?: 'single' | 'range';
+  valueFormat?: string;
+  displayFormat?: string;
+  delimiter?: string;
+  minDate?: string;
+  maxDate?: string;
+  clearable?: boolean;
+  shortcuts?: Array<{ label: string; start: string; end: string }>;
+}
+
+export interface MarkdownEditorSchema extends BoundFieldSchemaBase {
+  type: 'markdown-editor';
+  placeholder?: string;
+  /**
+   * Editor view layout. Named `viewMode` (not `mode`) because
+   * `BoundFieldSchemaBase.mode` is reserved for field layout (normal/horizontal).
+   * split (default): side-by-side edit+preview; edit: editor only; preview: preview only.
+   */
+  viewMode?: 'split' | 'edit' | 'preview';
+  /** Show the markdown syntax toolbar. Defaults to `true`. */
+  toolbar?: boolean;
+}

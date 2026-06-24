@@ -4,14 +4,22 @@ import {
   convertValueFormat,
   DEFAULT_DATE_FORMAT,
   DEFAULT_DATETIME_FORMAT,
+  DEFAULT_MONTH_FORMAT,
+  DEFAULT_QUARTER_FORMAT,
   DEFAULT_TIME_FORMAT,
+  DEFAULT_YEAR_FORMAT,
   formatDate,
+  formatPeriod,
   fromUtc,
   isWithinRange,
   joinDateRange,
+  monthToQuarter,
+  normalizePeriodRange,
   normalizeRange,
   parseDate,
   parseDateRange,
+  parsePeriod,
+  parsePeriodRange,
   toCalendarDate,
   toStorageDate,
   toUtc,
@@ -218,5 +226,70 @@ describe('date-utils — calendar↔storage timezone bridge', () => {
   it('toStorageDate/toCalendarDate pass undefined through safely', () => {
     expect(toStorageDate(undefined, true)).toBeUndefined();
     expect(toCalendarDate(undefined, true)).toBeUndefined();
+  });
+});
+
+describe('date-utils — period family (month/quarter/year)', () => {
+  it('month round-trips through YYYY-MM via the token system', () => {
+    const date = parsePeriod('2024-06', 'month', DEFAULT_MONTH_FORMAT);
+    expect(date?.getFullYear()).toBe(2024);
+    expect(date?.getMonth()).toBe(5);
+    expect(formatPeriod(date, 'month', DEFAULT_MONTH_FORMAT)).toBe('2024-06');
+  });
+
+  it('year round-trips through YYYY via the token system', () => {
+    const date = parsePeriod('2024', 'year', DEFAULT_YEAR_FORMAT);
+    expect(date?.getFullYear()).toBe(2024);
+    expect(formatPeriod(date, 'year', DEFAULT_YEAR_FORMAT)).toBe('2024');
+  });
+
+  it('quarter round-trips through the dedicated YYYY-Qq parser/formatter', () => {
+    const date = parsePeriod('2024-Q3', 'quarter', DEFAULT_QUARTER_FORMAT);
+    expect(date?.getFullYear()).toBe(2024);
+    // Q3 starts in July (month index 6).
+    expect(date?.getMonth()).toBe(6);
+    expect(formatPeriod(date, 'quarter', DEFAULT_QUARTER_FORMAT)).toBe('2024-Q3');
+  });
+
+  it('monthToQuarter maps calendar months to quarters 1-4', () => {
+    expect(monthToQuarter(1)).toBe(1);
+    expect(monthToQuarter(4)).toBe(2);
+    expect(monthToQuarter(6)).toBe(2);
+    expect(monthToQuarter(7)).toBe(3);
+    expect(monthToQuarter(12)).toBe(4);
+  });
+
+  it('parsePeriod returns undefined for empty/malformed values (never throws)', () => {
+    expect(parsePeriod(undefined, 'month', DEFAULT_MONTH_FORMAT)).toBeUndefined();
+    expect(parsePeriod('', 'quarter', DEFAULT_QUARTER_FORMAT)).toBeUndefined();
+    expect(parsePeriod('not-a-period', 'month', DEFAULT_MONTH_FORMAT)).toBeUndefined();
+    expect(parsePeriod('2024-Q5', 'quarter', DEFAULT_QUARTER_FORMAT)).toBeUndefined();
+    expect(parsePeriod('2024-Q0', 'quarter', DEFAULT_QUARTER_FORMAT)).toBeUndefined();
+  });
+
+  it('normalizePeriodRange swaps reversed ends and leaves ordered ends intact', () => {
+    const swapped = normalizePeriodRange('2024-Q4', '2024-Q1', 'quarter', DEFAULT_QUARTER_FORMAT);
+    expect(swapped.swapped).toBe(true);
+    expect(swapped.start).toBe('2024-Q1');
+    expect(swapped.end).toBe('2024-Q4');
+
+    const ordered = normalizePeriodRange('2024-Q1', '2024-Q4', 'quarter', DEFAULT_QUARTER_FORMAT);
+    expect(ordered.swapped).toBe(false);
+    expect(ordered.start).toBe('2024-Q1');
+    expect(ordered.end).toBe('2024-Q4');
+  });
+
+  it('parsePeriodRange splits a delimited period range into comparable dates', () => {
+    const range = parsePeriodRange('2024-01,2024-12', ',', 'month', DEFAULT_MONTH_FORMAT);
+    expect(compareDates(range.start, range.end)).toBeLessThan(0);
+    expect(formatPeriod(range.start, 'month', DEFAULT_MONTH_FORMAT)).toBe('2024-01');
+    expect(formatPeriod(range.end, 'month', DEFAULT_MONTH_FORMAT)).toBe('2024-12');
+  });
+
+  it('quarter comparisons order correctly via start-of-quarter dates', () => {
+    const q1 = parsePeriod('2024-Q1', 'quarter', DEFAULT_QUARTER_FORMAT)!;
+    const q4 = parsePeriod('2024-Q4', 'quarter', DEFAULT_QUARTER_FORMAT)!;
+    expect(compareDates(q1, q4)).toBeLessThan(0);
+    expect(compareDates(q4, q1)).toBeGreaterThan(0);
   });
 });
