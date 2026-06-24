@@ -38,10 +38,14 @@ const TYPES = [
   'alert',
   'mapping',
   'status',
+  'audio',
+  'video',
+  'carousel',
+  'qrcode',
 ] as const;
 
 describe('contentRendererDefinitions', () => {
-  it('declares 14 renderer definitions for the content family (W1a + W1b + W2a + W3c)', () => {
+  it('declares 18 renderer definitions for the content family (W1a + W1b + W2a + W3c + W4a)', () => {
     expect(contentRendererDefinitions.map((d) => d.type).sort()).toEqual([...TYPES].sort());
   });
 

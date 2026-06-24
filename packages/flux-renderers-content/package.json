@@ -21,7 +21,8 @@
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
-    "@nop-chaos/ui": "workspace:*"
+    "@nop-chaos/ui": "workspace:*",
+    "qrcode": "^1.5.4"
   },
   "peerDependencies": {
     "dompurify": "^3.4.11",
@@ -32,6 +33,7 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.6",
     "dompurify": "^3.4.11",
     "jsdom": "^29.1.1",
     "lucide-react": "^1.17.0",
@@ -46,5 +48,5 @@
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
   },
-  "description": "Content & feedback renderers: separator, card, progress, spinner, empty, markdown, html, link, image, json-view."
+  "description": "Content, feedback & multimedia renderers: separator, card, progress, spinner, empty, markdown, html, link, image, json-view, mapping, status, audio, video, carousel, qrcode."
 }

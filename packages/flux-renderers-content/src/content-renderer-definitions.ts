@@ -1,7 +1,9 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { AlertRenderer } from './alert-renderer.js';
+import { AudioRenderer } from './audio.js';
 import { CardRenderer } from './card.js';
 import { CardsRenderer } from './cards-renderer.js';
+import { CarouselRenderer } from './carousel.js';
 import { EmptyRenderer } from './empty.js';
 import { HtmlRenderer } from './html.js';
 import { ImageRenderer } from './image.js';
@@ -10,13 +12,17 @@ import { LinkRenderer } from './link.js';
 import { MappingRenderer } from './mapping.js';
 import { MarkdownRenderer } from './markdown.js';
 import { ProgressRenderer } from './progress.js';
+import { QrCodeRenderer } from './qrcode.js';
 import { SeparatorRenderer } from './separator.js';
 import { SpinnerRenderer } from './spinner.js';
 import { StatusRenderer } from './status.js';
+import { VideoRenderer } from './video.js';
 import type {
   AlertSchema,
+  AudioSchema,
   CardSchema,
   CardsSchema,
+  CarouselSchema,
   EmptySchema,
   HtmlSchema,
   ImageSchema,
@@ -25,9 +31,11 @@ import type {
   MappingSchema,
   MarkdownSchema,
   ProgressSchema,
+  QrCodeSchema,
   SeparatorSchema,
   SpinnerSchema,
   StatusSchema,
+  VideoSchema,
 } from './schemas.js';
 
 export const contentRendererDefinitions: RendererDefinition[] = [
@@ -413,6 +421,82 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'placeholder', kind: 'prop' },
     ],
   },
+  {
+    type: 'audio',
+    displayName: 'Audio',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'audio' },
+    component: AudioRenderer,
+    fields: [
+      { key: 'src', kind: 'prop' },
+      { key: 'poster', kind: 'prop' },
+      { key: 'autoPlay', kind: 'prop', valueType: 'boolean' },
+      { key: 'loop', kind: 'prop', valueType: 'boolean' },
+      { key: 'controls', kind: 'prop', valueType: 'boolean' },
+      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'onLoadError', kind: 'event' },
+    ],
+  },
+  {
+    type: 'video',
+    displayName: 'Video',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'video' },
+    component: VideoRenderer,
+    fields: [
+      { key: 'src', kind: 'prop' },
+      { key: 'poster', kind: 'prop' },
+      { key: 'autoPlay', kind: 'prop', valueType: 'boolean' },
+      { key: 'loop', kind: 'prop', valueType: 'boolean' },
+      { key: 'controls', kind: 'prop', valueType: 'boolean' },
+      { key: 'muted', kind: 'prop', valueType: 'boolean' },
+      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'onLoadError', kind: 'event' },
+    ],
+  },
+  {
+    type: 'carousel',
+    displayName: 'Carousel',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'carousel' },
+    component: CarouselRenderer,
+    propContracts: {
+      items: {
+        shape: { kind: 'array', item: { kind: 'unknown' } },
+        displayName: 'Items',
+        description: 'The slide collection: each item may carry image/title/caption.',
+        editorType: 'expression',
+      },
+    },
+    fields: [
+      { key: 'items', kind: 'prop' },
+      { key: 'autoPlay', kind: 'prop', valueType: 'boolean' },
+      { key: 'interval', kind: 'prop' },
+      { key: 'loop', kind: 'prop', valueType: 'boolean' },
+      { key: 'controls', kind: 'prop', valueType: 'boolean' },
+      { key: 'indicators', kind: 'prop', valueType: 'boolean' },
+      { key: 'onChange', kind: 'event' },
+    ],
+  },
+  {
+    type: 'qrcode',
+    displayName: 'QR Code',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'qrcode' },
+    component: QrCodeRenderer,
+    fields: [
+      { key: 'value', kind: 'prop' },
+      { key: 'size', kind: 'prop' },
+      { key: 'level', kind: 'prop' },
+      { key: 'foreground', kind: 'prop' },
+      { key: 'background', kind: 'prop' },
+      { key: 'label', kind: 'value-or-region', regionKey: 'label' },
+    ],
+  },
 ];
 
 export type ContentRendererSchema =
@@ -429,4 +513,8 @@ export type ContentRendererSchema =
   | CardsSchema
   | AlertSchema
   | MappingSchema
-  | StatusSchema;
+  | StatusSchema
+  | AudioSchema
+  | VideoSchema
+  | CarouselSchema
+  | QrCodeSchema;

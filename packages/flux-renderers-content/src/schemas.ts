@@ -1,4 +1,4 @@
-import type { ActionSchema, BaseSchema, SchemaInput, SchemaValue } from '@nop-chaos/flux-core';
+import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
 
 export interface SeparatorSchema extends BaseSchema {
   type: 'separator';
@@ -223,4 +223,85 @@ export interface StatusSchema extends BaseSchema {
   iconMap?: Record<string, SchemaValue>;
   /** 值为空或未命中时的占位文本 */
   placeholder?: string;
+}
+
+// ───────────────────────────── W4a 多媒体组 ─────────────────────────────
+
+export interface AudioSchema extends BaseSchema {
+  type: 'audio';
+  /** 音频资源地址（可来自表达式/source） */
+  src?: string;
+  /** 封面地址（音频无视频帧，poster 作为视觉封面） */
+  poster?: string;
+  /** 自动播放（受浏览器自动播放策略约束） */
+  autoPlay?: boolean;
+  /** 循环播放 */
+  loop?: boolean;
+  /** 显示原生控件，默认 true */
+  controls?: boolean;
+  // `title` 继承 BaseSchema（string）；renderer definition 用 value-or-region 规则。
+  onLoadError?: ActionSchema;
+}
+
+export interface VideoSchema extends BaseSchema {
+  type: 'video';
+  /** 视频资源地址（可来自表达式/source） */
+  src?: string;
+  /** 封面地址（播放前展示的预览帧） */
+  poster?: string;
+  /** 自动播放（受浏览器自动播放策略约束） */
+  autoPlay?: boolean;
+  /** 循环播放 */
+  loop?: boolean;
+  /** 显示原生控件，默认 true */
+  controls?: boolean;
+  /** 静音播放（仅 video：autoplay 场景常需 muted 才能生效） */
+  muted?: boolean;
+  // `title` 继承 BaseSchema（string）；renderer definition 用 value-or-region 规则。
+  onLoadError?: ActionSchema;
+}
+
+export interface CarouselItemSchema extends SchemaObject {
+  /** 轮播项媒体地址（图片/视频） */
+  image?: string;
+  /** 轮播项标题 */
+  title?: string;
+  /** 轮播项说明文字 */
+  caption?: string;
+  /** 轮播项自定义内容（受限 schema） */
+  body?: SchemaInput;
+}
+
+export interface CarouselSchema extends BaseSchema {
+  type: 'carousel';
+  /** 轮播项集合（每项可带 body region / image / title） */
+  items?: CarouselItemSchema[];
+  /** 自动轮播 */
+  autoPlay?: boolean;
+  /** 自动轮播间隔（毫秒），默认 5000 */
+  interval?: number;
+  /** 循环（末尾回到开头） */
+  loop?: boolean;
+  /** 显示前后切换控件，默认 true */
+  controls?: boolean;
+  /** 显示底部指示点，默认 true */
+  indicators?: boolean;
+  onChange?: ActionSchema;
+}
+
+export type QrCodeLevel = 'L' | 'M' | 'Q' | 'H';
+
+export interface QrCodeSchema extends BaseSchema {
+  type: 'qrcode';
+  /** 待编码的值（可来自表达式/source） */
+  value?: SchemaValue;
+  /** 二维码尺寸（px），默认 128 */
+  size?: number;
+  /** 纠错等级 L/M/Q/H，默认 M */
+  level?: QrCodeLevel;
+  /** 前景色（深色模块），默认 #000 */
+  foreground?: string;
+  /** 背景色（浅色模块），默认 #fff */
+  background?: string;
+  // `label` 继承 BaseSchema（string）；renderer definition 用 value-or-region 规则。
 }

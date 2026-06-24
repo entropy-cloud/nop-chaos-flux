@@ -23,6 +23,12 @@ export type {
   MappingSchema,
   StatusSchema,
   StatusLevel,
+  AudioSchema,
+  VideoSchema,
+  CarouselSchema,
+  CarouselItemSchema,
+  QrCodeSchema,
+  QrCodeLevel,
 } from './schemas.js';
 
 export { SeparatorRenderer } from './separator.js';
@@ -39,6 +45,10 @@ export { CardsRenderer } from './cards-renderer.js';
 export { AlertRenderer } from './alert-renderer.js';
 export { MappingRenderer } from './mapping.js';
 export { StatusRenderer } from './status.js';
+export { AudioRenderer } from './audio.js';
+export { VideoRenderer } from './video.js';
+export { CarouselRenderer } from './carousel.js';
+export { QrCodeRenderer } from './qrcode.js';
 export { sanitizeHtml, type SanitizeOptions } from './sanitize.js';
 
 export { contentRendererDefinitions } from './content-renderer-definitions.js';
