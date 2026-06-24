@@ -5,6 +5,7 @@ import { CollapseRenderer } from './collapse-renderer.js';
 import { ButtonGroupRenderer } from './button-group-renderer.js';
 import { DropdownButtonRenderer } from './dropdown-button-renderer.js';
 import { WizardRenderer } from './wizard-renderer.js';
+import { stepsRendererDefinition, timelineRendererDefinition } from './process-display-definitions.js';
 
 export const layoutRendererDefinitions: RendererDefinition[] = [
   {
@@ -693,4 +694,6 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
       { key: 'disabled', kind: 'prop', valueType: 'boolean' },
     ],
   },
+  stepsRendererDefinition,
+  timelineRendererDefinition,
 ];

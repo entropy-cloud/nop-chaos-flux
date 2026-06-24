@@ -205,3 +205,76 @@ export interface DropdownButtonSchema extends BaseSchema {
   /** Disabled flag */
   disabled?: boolean;
 }
+
+// ───────────────────────────── W4b Steps ─────────────────────────────
+
+export type StepsItemStatus = 'wait' | 'process' | 'finish' | 'error';
+
+export interface StepsItemSchema extends SchemaObject {
+  /** Step key/value (falls back to index when absent). */
+  value?: string | number;
+  /** Alias of `value`. */
+  key?: string | number;
+  /** Step title. */
+  title?: string;
+  /** Step description rendered beneath the title. */
+  description?: string;
+  /** Explicit step status override; otherwise derived from the current step value. */
+  status?: StepsItemStatus;
+  /** Disabled steps cannot be entered. */
+  disabled?: boolean;
+}
+
+export interface StepsSchema extends BaseSchema {
+  type: 'steps';
+  /** Step items collection (pure value prop — no nested regions). */
+  items: StepsItemSchema[];
+  /** Current step key/value (or numeric index when no key matches). */
+  value?: string | number;
+  /** Initial current step value when `value` is not provided. */
+  defaultValue?: string | number;
+  /** Current-step ownership: local / controlled / scope (scope requires `valueStatePath`). */
+  valueOwnership?: 'local' | 'controlled' | 'scope';
+  /** Scope path publishing the writable current-step value. */
+  valueStatePath?: string;
+  /** Layout orientation (default horizontal). */
+  orientation?: 'horizontal' | 'vertical';
+  onChange?: ActionSchema;
+}
+
+// ───────────────────────────── W4b Timeline ─────────────────────────────
+
+export type TimelineItemLevel =
+  | 'default'
+  | 'primary'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'info';
+
+export type TimelineMode = 'left' | 'right' | 'alternate';
+
+export interface TimelineItemSchema extends SchemaObject {
+  /** Timestamp/label shown beside the event (value-or-region candidate; plain string here). */
+  time?: string;
+  /** Event title. */
+  title?: string;
+  /** Event detail/body text. */
+  detail?: string;
+  /** Lucide icon name rendered in the event marker. */
+  icon?: string;
+  /** Semantic level driving the marker color. */
+  level?: TimelineItemLevel;
+}
+
+export interface TimelineSchema extends BaseSchema {
+  type: 'timeline';
+  /** Event items collection (pure value prop — no nested regions). Display-only, no owner state. */
+  items: TimelineItemSchema[];
+  /** Content placement relative to the axis (default left). */
+  mode?: TimelineMode;
+  /** Layout orientation (default vertical). */
+  orientation?: 'horizontal' | 'vertical';
+  /** Render items in reverse chronological order. */
+  reverse?: boolean;
+}

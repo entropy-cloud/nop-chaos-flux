@@ -198,6 +198,35 @@ export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
         { key: 'disabled', kind: 'prop', valueType: 'boolean' },
       ],
     },
+    {
+      type: 'steps',
+      displayName: 'Steps',
+      category: 'layout',
+      sourcePackage: '@nop-chaos/flux-renderers-layout',
+      component: StepsRendererForTest,
+      fields: [
+        { key: 'items', kind: 'prop' },
+        { key: 'value', kind: 'prop' },
+        { key: 'defaultValue', kind: 'prop' },
+        { key: 'valueOwnership', kind: 'prop' },
+        { key: 'valueStatePath', kind: 'prop' },
+        { key: 'orientation', kind: 'prop' },
+        { key: 'onChange', kind: 'event' },
+      ],
+    },
+    {
+      type: 'timeline',
+      displayName: 'Timeline',
+      category: 'layout',
+      sourcePackage: '@nop-chaos/flux-renderers-layout',
+      component: TimelineRendererForTest,
+      fields: [
+        { key: 'items', kind: 'prop' },
+        { key: 'mode', kind: 'prop' },
+        { key: 'orientation', kind: 'prop' },
+        { key: 'reverse', kind: 'prop', valueType: 'boolean' },
+      ],
+    },
   ]);
 }
 
@@ -207,6 +236,8 @@ import { CollapseRenderer as CollapseRendererForTest } from './collapse-renderer
 import { ButtonGroupRenderer as ButtonGroupRendererForTest } from './button-group-renderer.js';
 import { DropdownButtonRenderer as DropdownButtonRendererForTest } from './dropdown-button-renderer.js';
 import { WizardRenderer as WizardRendererForTest } from './wizard-renderer.js';
+import { StepsRenderer as StepsRendererForTest } from './steps-renderer.js';
+import { TimelineRenderer as TimelineRendererForTest } from './timeline-renderer.js';
 
 function wizardStepsNormalize(input: {
   value: unknown;
