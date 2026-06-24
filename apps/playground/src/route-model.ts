@@ -402,6 +402,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'W3d advanced input renderers: period family input-month/quarter/year + markdown-editor (flux-renderers-form), upload family input-file/input-image + editor TipTap WYSIWYG (flux-renderers-form-advanced) — period reuses W2b date底层, upload walks the action-sink bridge, editor reuses the W1a sanitize gate.',
   },
   {
+    id: 'w4a-multimedia',
+    title: 'Multimedia Family',
+    eyebrow: 'Content Renderers (W4a)',
+    description:
+      'W4a multimedia renderers: audio/video (native media elements + marker, src/poster/autoPlay/loop/controls + muted on video), carousel (reuses ui Carousel/embla, next/prev/setValue handles), qrcode (canvas QR, single canonical name) — mounted via SchemaRenderer.',
+  },
+  {
     id: 'm1-responsive',
     title: 'M1 Responsive Controls',
     eyebrow: 'Mobile Responsive (M1)',

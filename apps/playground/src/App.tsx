@@ -34,6 +34,7 @@ import { W2bDateFamilyDemoPage } from './pages/w2b-date-family-demo';
 import { W3aW3bLayoutActionFamilyDemoPage } from './pages/w3a-w3b-layout-action-family-demo';
 import { W3cValueMappingDemoPage } from './pages/w3c-value-mapping-demo';
 import { W3dAdvancedInputFamilyDemoPage } from './pages/w3d-advanced-input-family-demo';
+import { W4aMultimediaDemoPage } from './pages/w4a-multimedia-demo';
 import { M1ResponsiveDemoPage } from './pages/m1-responsive-demo';
 import { M2TouchDemoPage } from './pages/m2-touch-demo';
 import { M3LayoutDemoPage } from './pages/m3-layout-demo';
@@ -191,6 +192,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <W3cValueMappingDemoPage onBack={goHome} />;
         case 'w3d-advanced-input-family':
           return <W3dAdvancedInputFamilyDemoPage onBack={goHome} />;
+        case 'w4a-multimedia':
+          return <W4aMultimediaDemoPage onBack={goHome} />;
         case 'm1-responsive':
           return <M1ResponsiveDemoPage onBack={goHome} />;
         case 'm2-touch':

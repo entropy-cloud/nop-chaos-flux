@@ -262,6 +262,29 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-testid="mapping-hit"]')).toBeVisible();
     await expect(page.locator('[data-testid="status-success"]')).toBeVisible();
   },
+  'w3d-advanced-input-family': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /高级输入族/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="w3d-renderer-host"]')).toBeVisible();
+  },
+  'w4a-multimedia': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /多媒体组/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="demo-audio"]')).toBeVisible();
+    await expect(page.locator('[data-testid="demo-video"]')).toBeVisible();
+    await expect(page.locator('[data-testid="demo-carousel"]')).toBeVisible();
+    await expect(page.locator('[data-testid="demo-qrcode"]')).toBeVisible();
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {
