@@ -88,6 +88,90 @@ export interface DetailFieldSchema extends BoundFieldSchemaBase {
   validateValueAction?: ActionSchema | ActionSchema[];
 }
 
+/**
+ * W4c — combo: repeated composite-item field editor. Value owner is the form
+ * field system (staged owner reuse); each item is an independent composite field
+ * rendered via the `items` region inside a projected item scope.
+ */
+export interface ComboSchema extends BoundFieldSchemaBase {
+  type: 'combo';
+  items: SchemaInput;
+  multiple?: boolean;
+  addable?: boolean;
+  removable?: boolean;
+  reorderable?: boolean;
+  minItems?: number;
+  maxItems?: number;
+  itemKey?: string;
+  onAdd?: ActionSchema | ActionSchema[];
+  onRemove?: ActionSchema | ActionSchema[];
+  onReorder?: ActionSchema | ActionSchema[];
+}
+
+/**
+ * W4c — input-table: tabular object-array field editor. Value owner is the form
+ * field system; each row renders its cells through the `item` region inside a
+ * projected item scope. `columns` provides the header row.
+ */
+export interface InputTableColumn extends SchemaObject {
+  label?: string;
+  width?: string | number;
+}
+
+export interface InputTableSchema extends BoundFieldSchemaBase {
+  type: 'input-table';
+  columns?: InputTableColumn[];
+  item: SchemaInput;
+  rowKey?: string;
+  addable?: boolean;
+  removable?: boolean;
+  reorderable?: boolean;
+  minItems?: number;
+  maxItems?: number;
+  onAdd?: ActionSchema | ActionSchema[];
+  onRemove?: ActionSchema | ActionSchema[];
+  onReorder?: ActionSchema | ActionSchema[];
+}
+
+/**
+ * W4c — transfer: two-pane shuttle selection field. `options` is the candidate
+ * set; selected values are written back to the field. valueKey/labelKey map
+ * arbitrary option records to the canonical {label,value} form.
+ */
+export interface TransferSchema extends BoundFieldSchemaBase {
+  type: 'transfer';
+  options?: SchemaValue;
+  multiple?: boolean;
+  valueKey?: string;
+  labelKey?: string;
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  onAdd?: ActionSchema | ActionSchema[];
+  onRemove?: ActionSchema | ActionSchema[];
+  onChange?: ActionSchema | ActionSchema[];
+}
+
+/**
+ * W4c — picker: dialog-layer selection field. `pickerDialog` configures the
+ * dialog surface (title/placement/size); selection inside the dialog writes back
+ * through valueKey/labelKey normalization.
+ */
+export interface PickerDialogConfig extends SchemaObject {
+  title?: string;
+  size?: string;
+  placement?: string;
+}
+
+export interface PickerSchema extends BoundFieldSchemaBase {
+  type: 'picker';
+  options?: SchemaValue;
+  valueKey?: string;
+  labelKey?: string;
+  multiple?: boolean;
+  pickerDialog?: PickerDialogConfig | boolean;
+  onPick?: ActionSchema | ActionSchema[];
+}
+
 export interface DetailViewSchema extends BaseSchema {
   type: 'detail-view';
   readOnly?: boolean;
