@@ -285,6 +285,16 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-testid="demo-carousel"]')).toBeVisible();
     await expect(page.locator('[data-testid="demo-qrcode"]')).toBeVisible();
   },
+  'w4b-process-display': async (page) => {
+    await expect(
+      page.getByRole('heading', {
+        name: /流程展示组/,
+        level: 1,
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.locator('[data-testid="w4b-renderer-host"]')).toBeVisible();
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

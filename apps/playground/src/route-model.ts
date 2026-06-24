@@ -409,6 +409,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'W4a multimedia renderers: audio/video (native media elements + marker, src/poster/autoPlay/loop/controls + muted on video), carousel (reuses ui Carousel/embla, next/prev/setValue handles), qrcode (canvas QR, single canonical name) — mounted via SchemaRenderer.',
   },
   {
+    id: 'w4b-process-display',
+    title: 'Process Display Family',
+    eyebrow: 'Layout Renderers (W4b)',
+    description:
+      'W4b process display renderers: steps (lightweight step progress, valueOwnership three-state, orientation, value clamp — not a flow submit owner) — mounted via SchemaRenderer.',
+  },
+  {
     id: 'm1-responsive',
     title: 'M1 Responsive Controls',
     eyebrow: 'Mobile Responsive (M1)',
