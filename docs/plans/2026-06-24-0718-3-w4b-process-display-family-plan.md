@@ -1,6 +1,6 @@
 # W4b 流程展示组（steps / timeline）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-06-24
 > Source: `docs/components/roadmap.md` W4b；`docs/components/{steps,timeline}/design.md`（契约已立约）
 > Related: roadmap 依赖图 `L0 → W4b`（无前置阻塞，与 W3d/W4a 互相独立）；W3a collapse/wizard value 三态分层（steps valueOwnership 复用）；W1c list 集合展示范式（timeline item 归一化复用）
@@ -76,38 +76,38 @@
 
 ### Phase 1 - steps（步骤进度 + value 三态）
 
-Status: planned
+Status: completed
 Targets: 新增 `packages/flux-renderers-layout/src/steps-renderer.tsx`；`layout-renderer-definitions.ts`、`schemas.ts`、`index.ts`；playground route-model + example；`tests/e2e/`
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] **Decision**：steps↔wizard 边界裁定 —— steps 只承担步骤进度展示/轻交互（当前步骤值 + `onChange`），不承担多步流程提交 lifecycle（`wizard` 范畴）。当前步骤值复用 W3a `valueOwnership`（local/controlled/scope）+ `valueStatePath` 三态分层，不新建第二套值模型。**退化分支显式实现**：`valueOwnership:scope` 但缺 `valueStatePath` 时，须显式降级为 local controlled + dev 告警（注意复用源 `collapse-renderer.tsx` 的 `setExpanded` 在该态当前是 silent no-op，steps 不可照搬该 no-op，须实现可交互的降级）。裁定写入 design + log。
-- [ ] **Fix**：实现 steps（items 归一化 title/description/status + 当前步骤 value 三态 + `orientation` 横/纵 + value 越界 clamp + 空 items empty 态），输出 `nop-steps` marker。
-- [ ] **Fix**：`RendererDefinition` 合入 `layoutRendererDefinitions`，随 `registerLayoutRenderers` 注册；schema + 字段分类（design §4/§5）；收敛 steps design §3（basic→layout）。
-- [ ] **Proof**：focused 单测 —— item 归一化、value 三态写回（local/controlled/scope + `valueStatePath` 缺失降级）、value 越界 clamp、orientation 横/纵、空 items empty。
-- [ ] **Proof**：playground 演示页（三态 + 横/纵 + 表达式 items）+ e2e（程序化断言：切换步骤→value 写回正确；scope 模式写 scope）。
+- [x] **Decision**：steps↔wizard 边界裁定 —— steps 只承担步骤进度展示/轻交互（当前步骤值 + `onChange`），不承担多步流程提交 lifecycle（`wizard` 范畴）。当前步骤值复用 W3a `valueOwnership`（local/controlled/scope）+ `valueStatePath` 三态分层，不新建第二套值模型。**退化分支显式实现**：`valueOwnership:scope` 但缺 `valueStatePath` 时，须显式降级为 local controlled + dev 告警（注意复用源 `collapse-renderer.tsx` 的 `setExpanded` 在该态当前是 silent no-op，steps 不可照搬该 no-op，须实现可交互的降级）。裁定写入 design + log。
+- [x] **Fix**：实现 steps（items 归一化 title/description/status + 当前步骤 value 三态 + `orientation` 横/纵 + value 越界 clamp + 空 items empty 态），输出 `nop-steps` marker。
+- [x] **Fix**：`RendererDefinition` 合入 `layoutRendererDefinitions`，随 `registerLayoutRenderers` 注册；schema + 字段分类（design §4/§5）；收敛 steps design §3（basic→layout）。
+- [x] **Proof**：focused 单测 —— item 归一化、value 三态写回（local/controlled/scope + `valueStatePath` 缺失降级）、value 越界 clamp、orientation 横/纵、空 items empty。
+- [x] **Proof**：playground 演示页（三态 + 横/纵 + 表达式 items）+ e2e（程序化断言：切换步骤→value 写回正确；scope 模式写 scope）。
 
 Exit Criteria:
 
-- [ ] steps 落地于 `flux-renderers-layout`，输出 marker，随 `registerLayoutRenderers` 注册；value 三态写回 + 越界 clamp focused 单测通过；切换/写回 e2e 程序化断言通过。
-- [ ] steps 不承担流程 owner（与 wizard 边界清晰）；steps design §3 收敛为 layout。
+- [x] steps 落地于 `flux-renderers-layout`，输出 marker，随 `registerLayoutRenderers` 注册；value 三态写回 + 越界 clamp focused 单测通过；切换/写回 e2e 程序化断言通过。
+- [x] steps 不承担流程 owner（与 wizard 边界清晰）；steps design §3 收敛为 layout。
 
 ### Phase 2 - timeline（时间线展示集合）
 
-Status: planned
+Status: completed
 Targets: 新增 `packages/flux-renderers-layout/src/timeline-renderer.tsx`；`layout-renderer-definitions.ts`、`schemas.ts`、`index.ts`；playground route-model + example；`tests/e2e/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] **Fix**：实现 timeline（items 归一化 time/title/detail/icon/level + `mode`/`orientation`/`reverse` + 缺字段项降级 + 空 items empty），无 owner 状态，输出 `nop-timeline` marker。
-- [ ] **Fix**：`RendererDefinition` 合入 layout 注册；schema + 字段分类（design §4/§5）；收敛 timeline design §3（basic→layout）。
-- [ ] **Proof**：focused 单测 —— item 归一化（time/title/detail/icon/level）、`reverse` 反转、`orientation` 横/纵、`mode` 切换、缺字段项降级、空 items empty。
-- [ ] **Proof**：playground 演示页 + e2e（程序化断言：items 渲染顺序、`reverse` 反转后 DOM 顺序、level→视觉）。
+- [x] **Fix**：实现 timeline（items 归一化 time/title/detail/icon/level + `mode`/`orientation`/`reverse` + 缺字段项降级 + 空 items empty），无 owner 状态，输出 `nop-timeline` marker。
+- [x] **Fix**：`RendererDefinition` 合入 layout 注册；schema + 字段分类（design §4/§5）；收敛 timeline design §3（basic→layout）。
+- [x] **Proof**：focused 单测 —— item 归一化（time/title/detail/icon/level）、`reverse` 反转、`orientation` 横/纵、`mode` 切换、缺字段项降级、空 items empty。
+- [x] **Proof**：playground 演示页 + e2e（程序化断言：items 渲染顺序、`reverse` 反转后 DOM 顺序、level→视觉）。
 
 Exit Criteria:
 
-- [ ] timeline 落地于 `flux-renderers-layout`，输出 marker，随 `registerLayoutRenderers` 注册；item 归一化/reverse/orientation focused 单测 + e2e 程序化断言通过。
-- [ ] timeline 无流程 owner 语义（与 steps/list 边界清晰）；timeline design §3 收敛为 layout。
+- [x] timeline 落地于 `flux-renderers-layout`，输出 marker，随 `registerLayoutRenderers` 注册；item 归一化/reverse/orientation focused 单测 + e2e 程序化断言通过。
+- [x] timeline 无流程 owner 语义（与 steps/list 边界清晰）；timeline design §3 收敛为 layout。
 
 ## Draft Review Record
 
@@ -123,18 +123,18 @@ Exit Criteria:
 
 > 关闭条件：本 section 及每个 Phase Exit Criteria 全部 `[x]` 后，经独立子 agent closure-audit，方可将 Plan Status 改 `completed`。
 
-- [ ] 2 个 renderer（steps/timeline）全部落地并注册于 `flux-renderers-layout`
-- [ ] steps 复用 W3a value 三态分层、不承担流程 owner；timeline 展示型无 owner；三者（steps/wizard/timeline）边界清晰
-- [ ] 行为/契约结果已达成（focused 单测 + e2e 程序化断言全绿）
-- [ ] 2 份 design §3 归属 drift 收敛 basic→layout
-- [ ] roadmap W4b 标 done + amis-baseline-matrix 2 组件 `targetContract→runtime`
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect / contract drift
-- [ ] 受影响 owner docs（2 份 design.md、roadmap、amis-baseline-matrix）已同步 live baseline
-- [ ] 独立子 agent（fresh session）closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 2 个 renderer（steps/timeline）全部落地并注册于 `flux-renderers-layout`
+- [x] steps 复用 W3a value 三态分层、不承担流程 owner；timeline 展示型无 owner；三者（steps/wizard/timeline）边界清晰
+- [x] 行为/契约结果已达成（focused 单测 + e2e 程序化断言全绿）
+- [x] 2 份 design §3 归属 drift 收敛 basic→layout
+- [x] roadmap W4b 标 done + amis-baseline-matrix 2 组件 `targetContract→runtime`
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect / contract drift
+- [x] 受影响 owner docs（2 份 design.md、roadmap、amis-baseline-matrix）已同步 live baseline
+- [x] 独立子 agent（fresh session）closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -151,12 +151,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: `<<完成时填写>>`
+Status Note: 2 个 renderer（steps/timeline）全部落地注册于 `flux-renderers-layout`，含 focused 单测（layout 包 50 tests）+ e2e 程序化断言（4 tests）+ playground 演示页。steps 复用 W3a valueOwnership 三态分层（scope 缺 valueStatePath 显式降级 local controlled + dev 告警，Draft Review minor 已修复）、value 越界 clamp、orientation；timeline 展示型无 owner、reverse/mode/orientation、缺字段项降级。2 份 design §3 basic→layout 收敛；roadmap W4b done；amis-baseline-matrix 2 组件 runtime。全量 `pnpm typecheck/build/lint/test` 全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: `<<独立审计者 / fresh sub-agent>>`
-- Evidence: `<<task id / daily log link / findings 摘要>>`
+- Auditor / Agent: 独立 sub-agent（fresh session，task `ses_10817ed05ffemrDf2LLuaaXz9X`）
+- Verdict: `approved`
+- Evidence: 通读 plan + live repo 核对。steps-renderer.tsx `nop-steps` marker + valueOwnership 三态 + clampIndex + scope-degradation（`scopeDegraded`→`ownership='local'` + `warnScopeDegraded()`，非 silent no-op，Draft Review minor 已修复）；timeline-renderer.tsx `nop-timeline` marker + reverse/mode/orientation + 缺字段降级 + 无 owner 状态。focused 单测断言结果（scope 写回 `scope:b`、clamp 99→2、reverse `['Third','Second','First']`、缺字段项不崩）。owner-doc drift 已收敛（steps/timeline design §3 → layout、roadmap W4b done、matrix runtime）。deferred 仅 remote items loader（legit non-blocking）。独立重跑 `pnpm --filter flux-renderers-layout test/typecheck/lint` 全绿。
 
 Follow-up:
 

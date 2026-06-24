@@ -58,25 +58,25 @@ The canonicalization rules below explain why the same AMIS source type may appea
 
 ### 1. Structural And Layout
 
-| Flux component | Role                           | AMIS source                                                                    | Status           | Owner doc                             | Implementation wave |
-| -------------- | ------------------------------ | ------------------------------------------------------------------------------ | ---------------- | ------------------------------------- | ------------------- |
-| `fragment`     | no-UI grouping node            | none; absorbs generic grouping and wrapper-like authoring patterns             | `runtime`        | `docs/components/fragment/design.md`  | landed              |
-| `loop`         | repeated structural node       | `each`                                                                         | `runtime`        | `docs/components/loop/design.md`      | landed              |
-| `recurse`      | lexical recursion node         | none; tree/recursive template support rather than a direct AMIS top-level type | `runtime`        | `docs/components/recurse/design.md`   | landed              |
-| `page`         | page shell owner               | `page`                                                                         | `runtime`        | `docs/components/page/design.md`      | landed              |
-| `container`    | generic visual container       | `container`, part of `wrapper` / `panel` composition scenes                    | `runtime`        | `docs/components/container/design.md` | landed              |
-| `flex`         | generic layout container       | `flex`, `hbox`, `vbox`                                                         | `runtime`        | `docs/components/flex/design.md`      | landed              |
-| `grid`         | explicit grid layout container | `grid`                                                                         | `runtime`        | `docs/components/grid/design.md`      | wave 3              |
-| `separator`    | visual divider                 | `divider`                                                                      | `runtime`        | `docs/components/separator/design.md` | wave 1              |
-| `card`         | single card container          | `card`                                                                         | `runtime`        | `docs/components/card/design.md`      | wave 1              |
-| `cards`        | card collection renderer       | `cards`                                                                        | `runtime`        | `docs/components/cards/design.md`     | wave 2              |
-| `tabs`         | tabbed interaction container   | `tabs`                                                                         | `runtime`        | `docs/components/tabs/design.md`      | landed              |
-| `collapse`     | collapsible content group      | `collapse`, `collapse-group`                                                   | `runtime`        | `docs/components/collapse/design.md`  | wave 3              |
-| `steps`        | step-progress renderer         | `steps`                                                                        | `targetContract` | `docs/components/steps/design.md`     | wave 4              |
-| `timeline`     | timeline renderer              | `timeline`                                                                     | `targetContract` | `docs/components/timeline/design.md`  | wave 4              |
-| `wizard`       | multi-step workflow container  | `wizard`                                                                       | `runtime`        | `docs/components/wizard/design.md`    | wave 2              |
-| `dialog`       | modal surface owner            | `dialog`                                                                       | `runtime`        | `docs/components/dialog/design.md`    | landed              |
-| `drawer`       | drawer surface owner           | `drawer`                                                                       | `runtime`        | `docs/components/drawer/design.md`    | landed              |
+| Flux component | Role                           | AMIS source                                                                    | Status    | Owner doc                             | Implementation wave |
+| -------------- | ------------------------------ | ------------------------------------------------------------------------------ | --------- | ------------------------------------- | ------------------- |
+| `fragment`     | no-UI grouping node            | none; absorbs generic grouping and wrapper-like authoring patterns             | `runtime` | `docs/components/fragment/design.md`  | landed              |
+| `loop`         | repeated structural node       | `each`                                                                         | `runtime` | `docs/components/loop/design.md`      | landed              |
+| `recurse`      | lexical recursion node         | none; tree/recursive template support rather than a direct AMIS top-level type | `runtime` | `docs/components/recurse/design.md`   | landed              |
+| `page`         | page shell owner               | `page`                                                                         | `runtime` | `docs/components/page/design.md`      | landed              |
+| `container`    | generic visual container       | `container`, part of `wrapper` / `panel` composition scenes                    | `runtime` | `docs/components/container/design.md` | landed              |
+| `flex`         | generic layout container       | `flex`, `hbox`, `vbox`                                                         | `runtime` | `docs/components/flex/design.md`      | landed              |
+| `grid`         | explicit grid layout container | `grid`                                                                         | `runtime` | `docs/components/grid/design.md`      | wave 3              |
+| `separator`    | visual divider                 | `divider`                                                                      | `runtime` | `docs/components/separator/design.md` | wave 1              |
+| `card`         | single card container          | `card`                                                                         | `runtime` | `docs/components/card/design.md`      | wave 1              |
+| `cards`        | card collection renderer       | `cards`                                                                        | `runtime` | `docs/components/cards/design.md`     | wave 2              |
+| `tabs`         | tabbed interaction container   | `tabs`                                                                         | `runtime` | `docs/components/tabs/design.md`      | landed              |
+| `collapse`     | collapsible content group      | `collapse`, `collapse-group`                                                   | `runtime` | `docs/components/collapse/design.md`  | wave 3              |
+| `steps`        | step-progress renderer         | `steps`                                                                        | `runtime` | `docs/components/steps/design.md`     | wave 4              |
+| `timeline`     | timeline renderer              | `timeline`                                                                     | `runtime` | `docs/components/timeline/design.md`  | wave 4              |
+| `wizard`       | multi-step workflow container  | `wizard`                                                                       | `runtime` | `docs/components/wizard/design.md`    | wave 2              |
+| `dialog`       | modal surface owner            | `dialog`                                                                       | `runtime` | `docs/components/dialog/design.md`    | landed              |
+| `drawer`       | drawer surface owner           | `drawer`                                                                       | `runtime` | `docs/components/drawer/design.md`    | landed              |
 
 ### 2. Actions, Content, And Feedback
 

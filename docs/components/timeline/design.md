@@ -13,7 +13,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'timeline'`
-- 预期归属 `@nop-chaos/flux-renderers-basic`
+- 归属 `@nop-chaos/flux-renderers-layout`（流程状态编排族，与 steps/wizard 同包）
 
 ## 4. schema 设计
 
