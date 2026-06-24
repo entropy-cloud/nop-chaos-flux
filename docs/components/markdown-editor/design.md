@@ -42,6 +42,14 @@
 - **工具栏**（可选）：粗体/斜体/标题/链接/代码块按钮，在 Textarea 光标位置插入 markdown 语法
 - **滚动同步**：编辑区与预览区可选滚动联动
 
+### 预览复用机制（W3d 裁定）
+
+react-markdown 仅是 `flux-renderers-content` 的依赖，**不是** `flux-renderers-form` 的依赖（pnpm 不解析未声明依赖）。因此预览区采用**运行时 registry 组合**：通过 `props.helpers.render({ type: 'markdown', content: '${__mdPreview}' }, { bindings: { __mdPreview: <当前源码> } })` 渲染一个子 `markdown` 节点，由已注册的 `markdown` renderer（content 包）完成渲染。
+
+flux 的组合模型是 **scope-bound**：传给子节点的字面量 prop 值只在编译期解析一次，不会随父组件 re-render 刷新。因此实时源码必须经由 **fragment-scope binding**（`bindings: { __mdPreview: source }`）+ 子节点 `content` 读取 scope 表达式 `${__mdPreview}` 才能保证每次按键预览都更新。这样 `flux-renderers-form` 不直接依赖 react-markdown、不新增 workspace-external 依赖、且保证预览与 `markdown` 渲染一致性。
+
+拒绝替代方案：不在 form 包重复声明 react-markdown peerDeps（重复依赖）；不新增 form→content workspace 依赖边（违反包边界，Phase 2 明确禁止）；不把 `content` 当字面量传递（flux 组合非 reactive，预览不会更新）。
+
 ## 7. 运行期状态归属
 
 - 编辑器值（markdown 源码字符串）归最近表单或 owner scope。

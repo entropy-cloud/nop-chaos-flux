@@ -69,4 +69,12 @@
 
 - TipTap 是积极维护的 MIT 库（3.0 稳定，有 2026 路线图），~50-70KB gzip。
 - 如需图片上传、表格编辑等高级功能，通过 TipTap 扩展渐进引入。
+
+### W3d TipTap 引入裁定 + sanitize 边界
+
+- `flux-renderers-form-advanced` 新增 `@tiptap/react` + `@tiptap/starter-kit`（MIT，~50-70KB gzip）依赖，并新增 `@nop-chaos/flux-renderers-content` workspace 依赖以复用 W1a 的 `sanitizeHtml`（DOMPurify 门禁）。
+- `outputFormat: html`（默认）时，进入编辑器的存储 HTML 先经 `sanitizeHtml` 受控（白名单裁剪危险标签/事件处理器/`javascript:` URI），ProseMirror 再按自身 schema 解析；`outputFormat: json` 存 TipTap JSON，不需 sanitize。
+- 工具栏 bridge 复用 `@nop-chaos/ui`；工具栏按钮 `onMouseDown` preventDefault，避免抢占焦点导致选区丢失。
+- 受控渲染边界：编辑器输出（getHTML）只含 ProseMirror schema 允许的安全子集，永不泄漏 `<script>`（见 sanitize Failure Path）。
+- TipTap 高级扩展（图片上传节点 / 表格编辑 / 协同 / mentions）归 successor，按 design §12 渐进引入，首版不实现。
 - 与 `code-editor` 职责分离清晰：`editor` 是富文本 WYSIWYG，`code-editor` 是代码编辑。

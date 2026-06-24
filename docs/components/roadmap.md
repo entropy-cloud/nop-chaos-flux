@@ -26,9 +26,9 @@
 - W3a. 布局组（2）: `done`（plan: `docs/plans/2026-06-24-0608-1-w3a-w3b-layout-action-family-plan.md`；`grid`/`collapse` 落地于 `flux-renderers-layout`——grid 从 schema 读布局值映射 CSS Grid（不硬编码视觉类名）、colSpan/rowSpan 归一化；collapse 展开态 valueOwnership local/controlled/scope 三态分层、multiple 单选互斥）
 - W3b. 动作分组组（2）: `done`（plan: `docs/plans/2026-06-24-0608-1-w3a-w3b-layout-action-family-plan.md`；`button-group`/`dropdown-button` 落地于 `flux-renderers-layout`——button-group selectionMode none/single/multiple local controlled toggle + onChange；dropdown-button trigger click/hover + 菜单项 action 派发 + 关闭；items 纯 value prop 无 nestedRegions）
 - W3c. 值映射组（2）: `done`（plan: `docs/plans/2026-06-24-0608-2-w3c-value-mapping-family-plan.md`；`mapping`/`status` 落地于 `flux-renderers-content`——mapping 值→展示结果映射（命中/defaultLabel/placeholder 优先级 + item region 可选模板）、status 投影到 ui `Badge`（levelMap→语义色 + labelMap→文本 + iconMap→图标）；mapping/status/badge 三者边界清晰，status 不退化为 badge 别名）
-- W3d. 高级输入族（7）: `todo`
-- W4a. 多媒体组（4）: `todo`
-- W4b. 流程展示组（2）: `todo`
+- W3d. 高级输入族（7）: `done`（plan: `docs/plans/2026-06-24-0718-1-w3d-advanced-input-family-plan.md`；period 输入 input-month/quarter/year + markdown-editor 落 `flux-renderers-form`、upload 族 input-file/input-image + editor(TipTap) 落 `flux-renderers-form-advanced`；period 复用 W2b date 底层、upload 走 action 下沉、editor 复用 W1a sanitize 门禁、markdown-editor 预览经运行时 registry 组合（不引入 react-markdown 到 form 包）；解锁 W4c `W3d → W4c`）
+- W4a. 多媒体组（4）: `planned`（plan: `docs/plans/2026-06-24-0718-2-w4a-multimedia-family-plan.md`；audio/video/carousel/qrcode 落 `flux-renderers-content`——audio/video 原生媒体元素 + marker、carousel 复用 ui Carousel(embla，零新依赖) + 注册 next/prev/setValue 句柄收口 X1 deferred、qrcode 引入轻量 QR 库 + 单一 canonical 名；4 份 design §3 drift basic→content 收敛）
+- W4b. 流程展示组（2）: `planned`（plan: `docs/plans/2026-06-24-0718-3-w4b-process-display-family-plan.md`；steps/timeline 落 `flux-renderers-layout`——steps 复用 W3a collapse valueOwnership 三态分层（不承担流程 owner，与 wizard 边界清晰）、timeline 展示型集合 item 归一化；2 份 design §3 drift basic→layout 收敛）
 - W4c. 复合表单组（4）: `todo`
 - D1a. 设计器补充组（2）: `todo`
 - **M0.1 移动端基础设施（safe-area/hairline/haptics/z-index 栈）: `done`** ← 镜像自 `mobile-roadmap.md`（4 子项 M0.1a~M0.1d 已全部落地；plan: `docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`；细节与口径以 mobile-roadmap 为准）
@@ -166,7 +166,9 @@
 
 ### W3d 高级输入族
 
-**目标：** 周期输入（月/季/年）、上传（文件/图片）、WYSIWYG 富文本（TipTap）、markdown 编辑器。`editor` 用 TipTap 实现 WYSIWYG 表单字段；`markdown-editor` 用 Textarea + react-markdown 实现源码编辑+预览，零新依赖。上传族标注为跨宿主集成点。
+**目标：** 周期输入（月/季/年）、上传（文件/图片）、WYSIWYG 富文本（TipTap）、markdown 编辑器。`editor` 用 TipTap 实现 WYSIWYG 表单字段；`markdown-editor` 用 Textarea + 运行时组合 `markdown` renderer 实现源码编辑+预览（form 包零新依赖）。上传族标注为跨宿主集成点。
+
+**状态：** `done` — 7 个组件全部落地注册（period/markdown-editor → `flux-renderers-form`；input-file/input-image/editor → `flux-renderers-form-advanced`），含 playground 演示页 + e2e + focused 单测，解锁 W4c。
 
 ### W4a 多媒体组
 
@@ -199,7 +201,7 @@ graph TD
     W3a["W3a 布局 2"]
     W3b["W3b 动作分组 2"]
     W3c["W3c 值映射 2"]
-    W3d["W3d 高级输入 6"]
+    W3d["W3d 高级输入 7"]
     W4a["W4a 多媒体 4"]
     W4b["W4b 流程展示 2"]
     W4c["W4c 复合表单 4"]

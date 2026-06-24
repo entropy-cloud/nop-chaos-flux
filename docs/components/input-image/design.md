@@ -13,7 +13,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'input-image'`
-- 预期归属 `@nop-chaos/flux-renderers-form`
+- 归属 `@nop-chaos/flux-renderers-form-advanced`（roadmap 权威包分配；与 `input-file`/`editor` 同属 form-advanced 复合字段层）
 
 ## 4. schema 设计
 

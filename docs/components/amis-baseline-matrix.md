@@ -154,12 +154,12 @@ The canonicalization rules below explain why the same AMIS source type may appea
 | `input-datetime`    | datetime field                                   | `input-datetime`                                                    | `runtime`        | `docs/components/input-datetime/design.md`    | wave 2              |
 | `input-time`        | time field                                       | `input-time`, `native-time`                                         | `runtime`        | `docs/components/input-time/design.md`        | wave 2              |
 | `date-range`        | canonical range date/time field family           | `input-date-range`, `input-datetime-range`, `input-time-range`      | `runtime`        | `docs/components/date-range/design.md`        | wave 2              |
-| `input-month`       | month field                                      | `input-month`, `input-month-range`                                  | `targetContract` | `docs/components/input-month/design.md`       | wave 3              |
-| `input-quarter`     | quarter field                                    | `input-quarter`, `input-quarter-range`                              | `targetContract` | `docs/components/input-quarter/design.md`     | wave 3              |
-| `input-year`        | year field                                       | `input-year`                                                        | `targetContract` | `docs/components/input-year/design.md`        | wave 3              |
-| `input-file`        | file-upload field                                | `input-file`                                                        | `targetContract` | `docs/components/input-file/design.md`        | wave 3              |
-| `input-image`       | image-upload field                               | `input-image`                                                       | `targetContract` | `docs/components/input-image/design.md`       | wave 3              |
-| `editor`            | rich-text editor field                           | `input-rich-text`                                                   | `targetContract` | `docs/components/editor/design.md`            | wave 3              |
+| `input-month`       | month field                                      | `input-month`, `input-month-range`                                  | `runtime`        | `docs/components/input-month/design.md`       | landed              |
+| `input-quarter`     | quarter field                                    | `input-quarter`, `input-quarter-range`                              | `runtime`        | `docs/components/input-quarter/design.md`     | landed              |
+| `input-year`        | year field                                       | `input-year`                                                        | `runtime`        | `docs/components/input-year/design.md`        | landed              |
+| `input-file`        | file-upload field                                | `input-file`                                                        | `runtime`        | `docs/components/input-file/design.md`        | landed              |
+| `input-image`       | image-upload field                               | `input-image`                                                       | `runtime`        | `docs/components/input-image/design.md`       | landed              |
+| `editor`            | rich-text editor field                           | `input-rich-text`                                                   | `runtime`        | `docs/components/editor/design.md`            | landed              |
 
 Notes:
 

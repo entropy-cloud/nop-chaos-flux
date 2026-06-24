@@ -13,7 +13,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'input-file'`
-- 预期归属 `@nop-chaos/flux-renderers-form`
+- 归属 `@nop-chaos/flux-renderers-form-advanced`（roadmap 权威包分配；与 `editor` 同属 form-advanced 复合字段层）
 
 ## 4. schema 设计
 
@@ -43,6 +43,7 @@
 ## 9. 数据源、表达式、导入能力接入点
 
 - 上传本身应走显式 action/source 路线，不把完整请求协议重新塞进字段 JSX。
+- **W3d upload action 桥接裁定**：`uploadAction` 是 action 引用（schema 里以 `kind: 'prop'` 透传原始 ActionSchema）。renderer 在文件选择后通过 `props.helpers.dispatch(uploadAction, { scope })` 派发——派发用的子 scope 携带 `__uploadFile`（{ name, size, type }）与 `__uploadFileRef`（原始 File），由宿主 action（ajax 等）从 `ctx.scope` 读取并发起真正网络请求。renderer 不在挂载期发请求、不实现上传网络层（请求下沉约束）。action 结果（`ActionResult.data`，需含 `url`，可含 `name`/`size`）经 `valueMode`（url/object/array）归一化后写回字段值；失败触发 `onUploadError`、值不污染。
 
 ## 10. 样式与 DOM marker 约定
 
