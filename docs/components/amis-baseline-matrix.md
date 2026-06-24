@@ -114,7 +114,7 @@ The canonicalization rules below explain why the same AMIS source type may appea
 | `service`          | visual data-composition container       | `service`                                                                              | `runtime` | `docs/components/service/design.md`          | wave 2              |
 | `table`            | structured table renderer               | `table`, `static-table`, `table2`                                                      | `runtime` | `docs/components/table/design.md`            | landed              |
 | `crud`             | composite data-workflow renderer        | `crud`, `crud2`                                                                        | `runtime` | `docs/components/crud/design.md`             | landed              |
-| `list`             | ordered collection renderer             | `list`, `static-list`                                                                  | `runtime` | `docs/components/list/design.md`             | landed              |
+| `list`             | ordered collection renderer             | `list`, `static-list`                                                                  | `runtime` | `docs/components/list/design.md`             | wave 1              |
 | `pagination`       | standalone pagination interaction owner | `pagination`                                                                           | `runtime` | `docs/components/pagination/design.md`       | wave 2              |
 | `tree`             | hierarchical display renderer           | no direct audited AMIS top-level display tree type; Flux canonical tree display family | `runtime` | `docs/components/tree/design.md`             | landed              |
 | `chart`            | chart renderer                          | `chart`                                                                                | `runtime` | `docs/components/chart/design.md`            | landed              |
@@ -146,20 +146,20 @@ The canonicalization rules below explain why the same AMIS source type may appea
 | ------------------- | ------------------------------------------------ | ------------------------------------------------------------------- | --------- | --------------------------------------------- | ------------------- |
 | `condition-builder` | condition editor                                 | `condition-builder`                                                 | `runtime` | `docs/components/condition-builder/design.md` | landed              |
 | `code-editor`       | code, expression, formula, or schema text editor | `editor` in code/text mode, `formula`, `json-schema-editor`, `diff` | `runtime` | `docs/components/code-editor/design.md`       | landed              |
-| `combo`             | composite repeated/object field container        | `combo`                                                             | `runtime` | `docs/components/combo/design.md`             | landed              |
-| `picker`            | popup picker field                               | `picker`                                                            | `runtime` | `docs/components/picker/design.md`            | landed              |
-| `transfer`          | transfer-selection field                         | `transfer`                                                          | `runtime` | `docs/components/transfer/design.md`          | landed              |
-| `input-table`       | table-shaped array/object field                  | `input-table`                                                       | `runtime` | `docs/components/input-table/design.md`       | landed              |
+| `combo`             | composite repeated/object field container        | `combo`                                                             | `runtime` | `docs/components/combo/design.md`             | wave 4              |
+| `picker`            | popup picker field                               | `picker`                                                            | `runtime` | `docs/components/picker/design.md`            | wave 4              |
+| `transfer`          | transfer-selection field                         | `transfer`                                                          | `runtime` | `docs/components/transfer/design.md`          | wave 4              |
+| `input-table`       | table-shaped array/object field                  | `input-table`                                                       | `runtime` | `docs/components/input-table/design.md`       | wave 4              |
 | `input-date`        | date field                                       | `input-date`, `native-date`                                         | `runtime` | `docs/components/input-date/design.md`        | wave 2              |
 | `input-datetime`    | datetime field                                   | `input-datetime`                                                    | `runtime` | `docs/components/input-datetime/design.md`    | wave 2              |
 | `input-time`        | time field                                       | `input-time`, `native-time`                                         | `runtime` | `docs/components/input-time/design.md`        | wave 2              |
 | `date-range`        | canonical range date/time field family           | `input-date-range`, `input-datetime-range`, `input-time-range`      | `runtime` | `docs/components/date-range/design.md`        | wave 2              |
-| `input-month`       | month field                                      | `input-month`, `input-month-range`                                  | `runtime` | `docs/components/input-month/design.md`       | landed              |
-| `input-quarter`     | quarter field                                    | `input-quarter`, `input-quarter-range`                              | `runtime` | `docs/components/input-quarter/design.md`     | landed              |
-| `input-year`        | year field                                       | `input-year`                                                        | `runtime` | `docs/components/input-year/design.md`        | landed              |
-| `input-file`        | file-upload field                                | `input-file`                                                        | `runtime` | `docs/components/input-file/design.md`        | landed              |
-| `input-image`       | image-upload field                               | `input-image`                                                       | `runtime` | `docs/components/input-image/design.md`       | landed              |
-| `editor`            | rich-text editor field                           | `input-rich-text`                                                   | `runtime` | `docs/components/editor/design.md`            | landed              |
+| `input-month`       | month field                                      | `input-month`, `input-month-range`                                  | `runtime` | `docs/components/input-month/design.md`       | wave 3              |
+| `input-quarter`     | quarter field                                    | `input-quarter`, `input-quarter-range`                              | `runtime` | `docs/components/input-quarter/design.md`     | wave 3              |
+| `input-year`        | year field                                       | `input-year`                                                        | `runtime` | `docs/components/input-year/design.md`        | wave 3              |
+| `input-file`        | file-upload field                                | `input-file`                                                        | `runtime` | `docs/components/input-file/design.md`        | wave 3              |
+| `input-image`       | image-upload field                               | `input-image`                                                       | `runtime` | `docs/components/input-image/design.md`       | wave 3              |
+| `editor`            | rich-text editor field                           | `input-rich-text`                                                   | `runtime` | `docs/components/editor/design.md`            | wave 3              |
 
 Notes:
 
@@ -186,9 +186,10 @@ Notes:
 
 ### 7. Flux-Only Form Component Families
 
-| Flux component | Role                 | AMIS source | Status    | Owner doc                            |
-| -------------- | -------------------- | ----------- | --------- | ------------------------------------ |
-| `fieldset`     | form group container | none        | `runtime` | `docs/components/fieldset/design.md` |
+| Flux component    | Role                                        | AMIS source | Status    | Owner doc                                   |
+| ----------------- | ------------------------------------------- | ----------- | --------- | ------------------------------------------- |
+| `fieldset`        | form group container                        | none        | `runtime` | `docs/components/fieldset/design.md`        |
+| `markdown-editor` | markdown source editor + live preview (W3d) | none        | `runtime` | `docs/components/markdown-editor/design.md` |
 
 ## Not Retained As Standalone Flux Component Types
 

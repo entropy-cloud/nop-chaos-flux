@@ -20,7 +20,7 @@
 - W1a. 内容展示组（5）: `done`（plan: `docs/plans/2026-06-24-0040-2-w1a-content-family-sanitization-plan.md`；markdown/html/link/image/json-view 5 个 renderer 落地于 `flux-renderers-content`；首次建立受控渲染安全门禁——html 默认 DOMPurify sanitize、markdown allowHtml 门禁）
 - W1b. 容器与反馈组（5）: `done`（plan: `docs/plans/2026-06-24-0040-1-w1b-feedback-family-content-package-bootstrap-plan.md`；首次落地 NEW 包 `flux-renderers-content` + separator/card/progress/spinner/empty 5 个 renderer；解锁 W1a/W2a-content/W3c/W4a）
 - W1c. 集合展示组（1）: `done`（plan: `docs/plans/2026-06-24-0040-3-w1c-list-collection-display-plan.md`；`list` renderer 落地于 `flux-renderers-data`——视觉壳 + `nop-list` marker + 单一 `items` 字段 + `item` region + `empty` value-or-region + `selectionMode` local controlled state + `onItemClick`/`onSelectionChange`；复用 loop/table repeated-instance substrate；解锁 W2a `L0 & W1c → W2a`）
-- W1d. 移动端交互组（2，pull-refresh/infinite-scroll）: `todo`（依赖 `mobile-roadmap.md` M5；`@nop-chaos/flux-renderers-mobile` 包**代码未落地**，见 mobile-roadmap Current Baseline；口径以 mobile-roadmap 为准）
+- W1d. 移动端交互组（2，pull-refresh/infinite-scroll）: `done`（随 `mobile-roadmap.md` M5 一并 done；M5 plan: `docs/plans/2026-06-22-2057-2-m5-mobile-native-components-plan.md`，独立 closure audit `approved`；`pull-refresh`/`infinite-scroll` 已注册于 `packages/flux-renderers-mobile/src/mobile-renderer-definitions.ts:17`/`:41`（含 type + `defaultSchema`）；口径以 mobile-roadmap 为准）
 - W2a. 数据组合组（5）: `done`（plan: `docs/plans/2026-06-24-0335-1-w2a-data-composition-family-plan.md`；`service`/`pagination` 落 `flux-renderers-data`、`cards`/`alert` 落 `flux-renderers-content`、`wizard` 落首次 bootstrap 的 `flux-renderers-layout`；service 遵循请求下沉约束——零组件级请求字段；wizard interaction/lifecycle 状态分层；首次 bootstrap `flux-renderers-layout` 包，解锁 W3a/W3b/W4b）
 - W2b. 日期族（4）: `done`（plan: `docs/plans/2026-06-24-0335-2-w2b-date-family-form-plan.md`；`input-date`/`input-datetime`/`input-time`/`date-range` 落地于 `flux-renderers-form`——首次建立共享日期格式化/解析/校验底层（react-day-picker + 原生 Date/Intl，无重型日期库）；`date-range` 以 `rangeKind` 统一 date/datetime/time 三态，不分裂三个 canonical type；calendar↔UTC 存储时区桥接消除 day-shift 漂移；解锁 W3d `W2b → W3d`，进而解锁 W4c）
 - W3a. 布局组（2）: `done`（plan: `docs/plans/2026-06-24-0608-1-w3a-w3b-layout-action-family-plan.md`；`grid`/`collapse` 落地于 `flux-renderers-layout`——grid 从 schema 读布局值映射 CSS Grid（不硬编码视觉类名）、colSpan/rowSpan 归一化；collapse 展开态 valueOwnership local/controlled/scope 三态分层、multiple 单选互斥）
@@ -63,6 +63,8 @@
 
 通用 renderer：`fragment` `loop` `recurse` `page` `container` `flex` `text` `button` `icon` `badge` `dynamic-renderer` `reaction` `dialog` `drawer` `tabs` `form` `fieldset` `code-editor` `input-text` `input-email` `input-password` `textarea` `select` `checkbox` `switch` `radio-group` `checkbox-group` `input-tree` `tree-select` `tag-list` `key-value` `array-editor` `condition-builder` `object-field` `array-field` `variant-field` `detail-field` `detail-view` `table` `tree` `data-source` `chart` `crud` `list` `input-number` `input-date` `input-datetime` `input-time` `date-range`
 
+> 口径说明（避免与 wave 计数矛盾）：本清单是「当前已注册落地」的 renderer 全集。其中 `list`（W1c）、`input-date`/`input-datetime`/`input-time`/`date-range`（W2b）是 wave 工作项交付的 renderer，在此一并列出**仅因它们现已注册落地**——它们计入下方 Work Items 的 43 个 wave 组件（全 `runtime`），不重复计为「未实现」，也不另计入 retained-but-unimplemented。L0 = 已落地基线，wave 工作项在其之上交付的新 renderer 在落地后并入此基线。
+
 领域 renderer（package 已提供 definition，宿主是否启用取决于 registry 装配）：`designer-page` `designer-field` `designer-canvas` `designer-palette` `report-inspector-shell` `report-inspector` `report-field-panel` `report-designer-page` `report-toolbar` `spreadsheet-page` `word-editor-page`
 
 **Ongoing 巩固（与 wave 并行的持续工作）：**
@@ -71,7 +73,14 @@
 - 保持 `docs/components/<type>/design.md` 与实际 renderer definition 一致
 - surface family（`dialog`/`drawer`）收口为统一 runtime/host/entry 模型，消除 declarative path 与 action-opened path 双轨
 
-**核心缺口：** 43 个 retained-but-unimplemented renderer（W1–W4，12 个工作项）+ 2 个 declared-but-unregistered（D1a）+ 13 个非 retained 可选项（O1）。
+**核心缺口：** **0 个 retained-but-unimplemented renderer**（W1–W4 共 43 个 wave 组件已全部 `runtime`，12 个工作项 W1a–W4c 均 `done`；逐组件状态以 `amis-baseline-matrix.md` 为权威）。剩余仅为：
+
+- D1a（2 个 declared-but-unregistered）：`designer-node-card`/`designer-edge-row`——schema 已声明于 `packages/flow-designer-renderers/src/schemas.ts:45-53`，但 renderer **刻意未注册**，受各 design.md §12「需等 host bridge 稳定后再注册」的稳定性裁定约束，分类为 `deferred`（非本 wave 收尾范畴，见 Non-Goals）。
+- O1（13 个非 retained 可选项）：按需启动，启动前需先更新 `amis-baseline-matrix.md` 的 retained 决策并建工作项。
+- W1d（2 个 Flux-native 移动端组件）：`pull-refresh`/`infinite-scroll`——无 AMIS 源、不经 `amis-baseline-matrix`，已随 `mobile-roadmap.md` M5 一并 `done`。
+- W1c list-scrolling successor：`list` 的 infinite-scroll/分页集成（区别于 M5 移动端 `infinite-scroll` 组件本身）不在主 wave 收尾范畴，归 successor plan `docs/plans/2026-06-24-1633-2-list-scrolling-pagination-integration-plan.md`。
+
+> 尾部归属总结：主组件 wave（W1a–W4c + W1d）已**全部 `done`**，43 个 wave 组件全 `runtime`，0 retained-but-unimplemented。剩余仅为 deferred（D1a）、optional（O1）、successor（list-scrolling）三类，均不在本主 wave 收尾范畴。
 
 ---
 
@@ -308,7 +317,7 @@ graph TD
 - **可标记单位是工作项**（W1a…D1a，以及镜像自 `mobile-roadmap.md` 的 M0.1），不是 wave。wave 只是优先级分组。
 - AI 可自主推进工作项状态（`todo`→`planned`→`done`），这是基于 plan 完成的客观事实记录，不需要人确认；但工作项本身的增删/重排需人确认。
 - 移动端轨道（M0.1/M1-M5）的主入口是 `mobile-roadmap.md`，本文件只做 Phase Status 镜像；M0.1 等移动端工作项的细节看 `mobile-roadmap.md`。
-- **W1d 移动端交互组（pull-refresh/infinite-scroll）与 `mobile-roadmap.md` M5 共享同一批交付物**（同属 `flux-renderers-mobile` 包，共用 `useTouch` Hook）。代码落地状态、口径、打勾单位以 `mobile-roadmap.md` Current Baseline 为准；当前两者代码均未落地。当 M5 plan 完成时，W1d 随 M5 一并标 `done`，避免重复打勾或漏打勾。
+- **W1d 移动端交互组（pull-refresh/infinite-scroll）与 `mobile-roadmap.md` M5 共享同一批交付物**（同属 `flux-renderers-mobile` 包，共用 `useTouch` Hook）。代码落地状态、口径、打勾单位以 `mobile-roadmap.md` Current Baseline 为准；M5 已 `done`，`pull-refresh`/`infinite-scroll` 代码已落地于 `flux-renderers-mobile`（注册证据见 `mobile-renderer-definitions.ts`），W1d 已随 M5 一并标 `done`，避免重复打勾或漏打勾。
 - 根据 roadmap 拟制 plan 时，plan 对应一个或多个工作项；**plan 通过 closure audit 后，必须把对应工作项在 Phase Status 标记为 `done`**，并同步 `amis-baseline-matrix.md` 的组件状态。
 - 不得在 closure audit 通过前把工作项标为 `done`。
 - 工作项状态变更只需更新 Phase Status（本文档顶部）。
