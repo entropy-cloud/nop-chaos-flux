@@ -7,12 +7,13 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 对应 AMIS `qrcode` / `qr-code`，但 Flux 只保留 canonical `qrcode` 名称。
+- 对应 AMIS `qrcode` / `qr-code`，但 Flux 只保留 canonical `qrcode` 名称（`qr-code` 不保留为独立 type，见 amis-baseline-matrix）。
 
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'qrcode'`
-- 预期归属 `@nop-chaos/flux-renderers-basic`
+- 归属 `@nop-chaos/flux-renderers-content`（roadmap 权威包分配；组件重组后从 basic 拆出）
+- QR 生成库：引入轻量 MIT 库 `qrcode`（canvas 输出，单一 canonical 名 `qrcode`）
 
 ## 4. schema 设计
 

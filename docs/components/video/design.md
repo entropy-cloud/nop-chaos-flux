@@ -13,7 +13,7 @@
 ## 3. Flux 中的 renderer/type 定义
 
 - 目标 `type: 'video'`
-- 预期归属 `@nop-chaos/flux-renderers-basic`
+- 归属 `@nop-chaos/flux-renderers-content`（roadmap 权威包分配；组件重组后从 basic 拆出）
 
 ## 4. schema 设计
 

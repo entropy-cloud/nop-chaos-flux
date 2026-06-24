@@ -262,6 +262,7 @@ Exit Criteria:
 - Successor Required: yes
 - Successor Path: E3 P2 体验完善批启动时的新 plan（或独立 follow-up plan）。
 - Successor 收口注记（2026-06-22）：既有 runtime 实现的复合字段编辑器子集（`array-editor`/`key-value` 的 `component:addItem`/`removeItem`/`moveItem`）已由 `docs/plans/2026-06-22-1137-1-x1-successor-composite-editor-handles-plan.md`（completed）收口。`dynamic-renderer` 的 `component:refresh` 已由 E3 dynamic-renderer autoload-gate plan 落地。其余不存在 runtime 实现的组件（pagination/wizard/collapse/carousel/cards/alert/service/dropdown-button/picker）仍归 main roadmap 各自落地 plan；`reaction` 无 handle 语义（successor no）。
+- 收口注记（2026-06-24）：`carousel` 的 `component:next`/`prev`/`setValue` 句柄已由 `docs/plans/2026-06-24-0718-2-w4a-multimedia-family-plan.md`（W4a）落地收口——carousel renderer 复用 ui Carousel(embla) 并注册三句柄。剩余 pagination/wizard/collapse/cards/alert/service/dropdown-button/picker 仍归各自 main roadmap 落地 plan。
 
 ## Non-Blocking Follow-ups
 
