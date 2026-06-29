@@ -196,7 +196,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     moveColumn,
   } = useTableVisibleColumns(tableSchemaProps, columns);
   const [inlineColumnSettingsOpen, setInlineColumnSettingsOpen] = useState(false);
-  const { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage } =
+  const { paginationEnabled, serverPaged, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage } =
     useTablePagination(tableSchemaProps, props.events.onPageChange, helpers);
   const {
     selectedRowKeys,
@@ -258,8 +258,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     handleToggleTreeExpand,
   } = useTableTree(tableSchemaProps, filteredData);
   const processedData = useMemo(
-    () => paginateTableData(treeFlattenedData, paginationEnabled, currentPage, pageSize),
-    [treeFlattenedData, paginationEnabled, currentPage, pageSize],
+    () => paginateTableData(treeFlattenedData, paginationEnabled && !serverPaged, currentPage, pageSize),
+    [treeFlattenedData, paginationEnabled, serverPaged, currentPage, pageSize],
   );
   const fixedColumnLayout = useMemo(
     () => createFixedColumnLayout(tableSchemaProps, mainColumns, showExpandColumn),
@@ -320,10 +320,16 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     setSelectionExternal,
   );
 
+  const paginationTotal = schemaProps.pagination?.total;
+  const effectiveTotalRows =
+    serverPaged && typeof paginationTotal === 'number' && Number.isFinite(paginationTotal)
+      ? paginationTotal
+      : treeFlattenedData.length;
+
   const totalPages = useMemo(() => {
     if (!paginationEnabled) return 1;
-    return Math.max(1, Math.ceil(treeFlattenedData.length / pageSize));
-  }, [treeFlattenedData.length, pageSize, paginationEnabled]);
+    return Math.max(1, Math.ceil(effectiveTotalRows / pageSize));
+  }, [effectiveTotalRows, pageSize, paginationEnabled]);
 
   const isLoading = schemaProps.loading === true;
   const isStriped = schemaProps.stripe === true;
@@ -598,7 +604,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
           currentPage={currentPage}
           pageSize={pageSize}
           totalPages={totalPages}
-          totalRows={treeFlattenedData.length}
+          totalRows={effectiveTotalRows}
           pageSizeOptions={schemaProps.pagination?.pageSizeOptions}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}

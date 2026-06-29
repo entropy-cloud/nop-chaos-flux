@@ -4,11 +4,17 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
+import { dataRendererDefinitions } from '@nop-chaos/flux-renderers-data';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { env, formStateProbeRenderer, formulaCompiler } from '../test-support.js';
 
-const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
+const allFormDefs = [
+  ...basicRendererDefinitions,
+  ...dataRendererDefinitions,
+  ...formRendererDefinitions,
+  ...formAdvancedRendererDefinitions,
+];
 
 beforeEach(() => {
   cleanup();
@@ -19,11 +25,7 @@ afterEach(() => {
 });
 
 function renderSchema(schema: object) {
-  const SchemaRenderer = createSchemaRenderer([
-    ...basicRendererDefinitions,
-    ...allFormDefs,
-    formStateProbeRenderer,
-  ]);
+  const SchemaRenderer = createSchemaRenderer([...allFormDefs, formStateProbeRenderer]);
   return render(
     <SchemaRenderer
       schemaUrl="test://picker"
@@ -231,6 +233,144 @@ describe('picker: open → select → writeback + clear + handle', () => {
     });
 
     expect(document.querySelector('.nop-picker')).toBeTruthy();
+  });
+
+  it('loadAction mode renders embedded CRUD and writes back valueKey', async () => {
+    const calls: Array<Record<string, unknown> | undefined> = [];
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://picker-load"
+        schema={{
+          type: 'form',
+          id: 'f',
+          data: { owner: undefined },
+          body: [
+            {
+              type: 'picker',
+              id: 'pk',
+              name: 'owner',
+              label: 'Owner',
+              valueKey: 'id',
+              labelKey: 'title',
+              columns: [{ name: 'title', label: 'Title' }],
+              loadAction: { action: 'probe:load' },
+              pickerDialog: { title: 'Pick owner' },
+            },
+            { type: 'form-state-probe', name: 'owner' },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onActionScopeChange={(actionScope) => {
+          if (!actionScope) {
+            return;
+          }
+          actionScope.registerNamespace('probe', {
+            kind: 'host',
+            invoke(method: string, _payload: Record<string, unknown> | undefined, ctx: any) {
+              if (method === 'load') {
+                calls.push(ctx.evaluationBindings);
+                return {
+                  ok: true,
+                  data: { items: [{ id: 'u1', title: 'Alice' }, { id: 'u2', title: 'Bob' }], total: 2 },
+                };
+              }
+              return { ok: false, error: new Error(`Unsupported method: ${method}`) };
+            },
+          });
+        }}
+      />,
+    );
+
+    openDialog();
+    await screen.findByText('Pick owner');
+    await screen.findByText('Alice');
+    expect(calls.length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getAllByRole('radio')[0]!);
+    fireEvent.click(document.querySelector('[data-slot="picker-confirm"]')!);
+
+    await waitFor(() => {
+      expect(resolveFormState('form-state:owner')).toBe('u1');
+    });
+  });
+
+  it('labelResolveAction caches trigger label and autoFill writes sibling field', async () => {
+    let resolveCalls = 0;
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://picker-label-resolve"
+        schema={{
+          type: 'form',
+          id: 'f',
+          data: { owner: 'u2', ownerName: '' },
+          body: [
+            {
+              type: 'picker',
+              id: 'pk',
+              name: 'owner',
+              label: 'Owner',
+              valueKey: 'id',
+              labelKey: 'title',
+              columns: [{ name: 'title', label: 'Title' }],
+              loadAction: { action: 'probe:load' },
+              labelResolveAction: { action: 'probe:resolve' },
+              autoFill: { ownerName: '${row.title}' },
+              pickerDialog: { title: 'Pick owner' },
+            },
+            { type: 'form-state-probe', name: 'owner' },
+            { type: 'form-state-probe', name: 'ownerName' },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onActionScopeChange={(actionScope) => {
+          if (!actionScope) {
+            return;
+          }
+          actionScope.registerNamespace('probe', {
+            kind: 'host',
+            invoke(method: string) {
+              if (method === 'load') {
+                return {
+                  ok: true,
+                  data: { items: [{ id: 'u1', title: 'Alice' }, { id: 'u2', title: 'Bob' }], total: 2 },
+                };
+              }
+              if (method === 'resolve') {
+                resolveCalls += 1;
+                return { ok: true, data: { items: [{ id: 'u2', title: 'Bob' }] } };
+              }
+              return { ok: false, error: new Error(`Unsupported method: ${method}`) };
+            },
+          });
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('picker-selected-label').textContent).toContain('Bob');
+    });
+    expect(resolveCalls).toBe(1);
+
+    openDialog();
+    await screen.findByText('Pick owner');
+    fireEvent.click(screen.getAllByRole('radio')[0]!);
+    fireEvent.click(document.querySelector('[data-slot="picker-confirm"]')!);
+
+    await waitFor(() => {
+      expect(resolveFormState('form-state:owner')).toBe('u1');
+      expect(resolveFormState('form-state:ownerName')).toBe('Alice');
+      expect(screen.getByTestId('picker-selected-label').textContent).toContain('Alice');
+    });
+
+    openDialog();
+    await screen.findByText('Pick owner');
+    expect(resolveCalls).toBe(1);
   });
 });
 

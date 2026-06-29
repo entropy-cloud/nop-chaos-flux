@@ -24,7 +24,7 @@ function CrudQueryBridgeHarness(props: {
     queryStatePath: '$._query',
     queryDraftStatePath: '$._query.$draft',
     paginationStatePath: '$._pagination',
-    queryState: { values: {}, refreshCount: 2 },
+    queryState: {},
     paginationState: { currentPage: 1, pageSize: 10 },
     defaultQuery: {},
     shouldFetchOnQueryChange: true,
@@ -389,8 +389,7 @@ describe('CRUD query and pagination', () => {
     await waitFor(() => {
       expect(update).toHaveBeenCalledTimes(1);
       expect(update).toHaveBeenCalledWith('$._query', {
-        values: { keyword: 'second' },
-        refreshCount: 3,
+        keyword: 'second',
       });
       expect(onQuerySubmit).toHaveBeenCalledTimes(1);
       expect((onQuerySubmit.mock.calls[0] as any)?.[0]).toEqual({
@@ -434,7 +433,7 @@ describe('CRUD query and pagination', () => {
         scope: { update } as any,
         queryStatePath: '$._query',
         paginationStatePath: '$._pagination',
-        queryState: { values: { keyword: 'draft' }, refreshCount: 4 },
+        queryState: { keyword: 'draft' },
         paginationState: { currentPage: 3, pageSize: 20 },
         defaultQuery: {},
         shouldFetchOnQueryChange: true,

@@ -51,7 +51,7 @@
 
 - 不保留 AMIS 的字符串脚本事件、`actionType` 风格事件协议、`xxxApi` 顶层命名作为 Flux 正式命名。
 - 不在本轮把 `crud` 运行时一次性扩成巨型实现。
-- 不把 `crud` 定义成新的请求 owner；请求仍由 `source`、`data-source` 或 action 承担。
+- `crud` 通过 `loadAction` 成为自身列表数据的获取者（编排入口），但请求语义（ajax/formula/custom dispatch、网络、缓存）仍由 action 引擎统一处理；`crud` 不重造请求层，也不取代 `data-source` 的请求 owner 地位。`source` 路径保留为降级兼容。
 
 ## 4. 核心原则
 
@@ -62,6 +62,16 @@
 - 对话框和抽屉仍由按钮自己通过 action 打开。
 - `crud` 负责的是这些子能力的组合协作和迁移友好 authoring 面。
 - 当前 live baseline 中，`crud.empty` 保持与底层 `table.empty` 相同的 `value-or-region` 契约，不再把 richer empty content 压平成纯文本。
+
+### 4.1.1 CRUD 的请求入口属于 workflow shell，不属于 table
+
+- `crud` 可以拥有列表请求的**编排入口**，但这不改变 `table` 的 interaction-owner 边界。
+- `table` 继续拥有 selection / pagination / sort / filter / visible-columns 等交互轴；它消费 rows，不拥有请求协议。
+- 因此 `loadAction` 的定位应是：`crud` 自带的数据获取入口，用于把 query + table interaction + request dispatch 收敛成一个上层 workflow，而不是把 `table` 升级成请求 owner。
+- `source` 与 `loadAction` 是两条并存路径：
+  - `source`：消费父级已准备好的数据，或上游 `data-source` 的结果。
+  - `loadAction`：由 CRUD 自己声明“如何拉取这份列表数据”。
+- 无论走哪条路径，`table` 都仍然只是数据消费与交互 owner，不承载请求语义。
 
 ### 4.2 Operation 列继续由用户声明
 
@@ -74,6 +84,18 @@
 - Flux 正式字段使用 `queryForm`、`toolbar`、`footerToolbar`、`rowKey`、`pageSizeField`、`columnSettings` 等命名。
 - 对应 AMIS 的 `filter`、`headerToolbar`、`footerToolbar`、`primaryField`、`perPageField`、`columns-toggler` 能稳定映射过来。
 - 迁移示例里允许通过 `migrationHints` 记录原始 AMIS 来源，方便工具链和人工核对，但它不是运行时依赖。
+
+### 4.4 CRUD 对表达式暴露稳定语义字段，不暴露内部重算信号
+
+- CRUD scope / `evaluationBindings` 的目标，是给 schema 表达式提供**稳定语义字段**，而不是泄露 renderer 内部的实现技巧。
+- 推荐公开的字段形状是：
+  - `query.*`
+  - `pagination.currentPage` / `pagination.pageSize`
+  - `sort.column` / `sort.direction`
+  - `filters.*`
+  - `selection`
+- 像 `refreshCount` 这类只服务 renderer 内部重算或强制刷新的计数器，不应进入 author-facing contract。
+- 一旦内部抖动信号进入 `$crud` 或 `evaluationBindings`，作者就会开始依赖偶然实现，后续 contract 很难收敛。
 
 ## 5. 组件边界
 
@@ -101,6 +123,8 @@
 - `statusPath`
 - `queryForm`
 - `source`
+- `loadAction`
+- `loadAllData`
 - `toolbar`
 - `footerToolbar`
 - `toolbarLayout`
@@ -125,7 +149,13 @@
 - `pagination.mode`（`'pages' | 'infinite'`，缺省 `'pages'`，E1d；顶层 `pagination: { mode }` 配置入口）
 - `quickSaveAction` / `quickSaveItemAction`
 - `migrationHints`
-- `onQuerySubmit` / `onQueryReset` / `onRowClick` / `onSelectionChange` / `onRefresh`
+- `onQuerySubmit` / `onQueryReset` / `onRowClick` / `onSelectionChange` / `onRefresh` / `onError`
+
+其中新增字段的设计语义为：
+
+- `loadAction`: CRUD 自带的数据加载入口。运行时以 CRUD scope 的稳定 bindings 执行。
+- `loadAllData`: 仅在 `loadAction` 模式下生效。首次拉全量 rows，后续分页/排序/筛选在前端完成。
+- `onError`: `loadAction` 失败时的可选覆盖钩子；缺省行为仍是“保持当前数据 + 默认错误提示”。
 
 ### 6.2 列字段
 
@@ -212,7 +242,7 @@ clientMode: {
 ## 7. 运行期状态归属
 
 - 查询提交状态 -> `queryForm` 内部 `form`
-- 列表加载/刷新/错误 -> `source` owner
+- 列表加载/刷新/错误 -> `source` owner 或 CRUD `loadAction` workflow owner
 - 表格分页/排序/筛选/选择/展开 -> 底层 `table`
 - table visible-columns / ordered-columns -> 底层 `table` column-settings owner state
 - dialog/drawer 开合 -> 对应 surface owner
@@ -252,6 +282,18 @@ interface CrudStatusSummary {
 
 `onQuerySubmit` / `onQueryReset` 的 live payload 也已回到支持中的 semantic contract：它们都会发布带 `type`, `query`, `page`, `pageSize`, `pagination` 的语义事件对象，因此 action handlers 可同时读取 `ActionContext.event` 与同形的 `evaluationBindings`。
 
+### 7.2 `loadAction` 的 bindings 边界
+
+- `loadAction` 看到的 bindings 应当是 CRUD workflow 的**稳定查询摘要**，不是 renderer 内部状态机快照。
+- 推荐暴露的 bindings 为：
+  - `query`
+  - `pagination`
+  - `sort`
+  - `filters`
+  - `selection`
+- 这些 bindings 的目标，是让一次 dispatch 拿到需要的查询上下文；它们不是新的持久 owner scope，也不替代 `statusPath`。
+- 如果只是为了 action/evaluation 暂时暴露一份查询上下文，应优先使用 `evaluationBindings`，而不是为一次 dispatch 额外创建短命 child scope。
+
 #### Polling 启停状态发布（E1d）
 
 `polling.enabled` truthy 时，`useCrudPolling` 在 CRUD mount/effect 阶段经 `componentRegistry.resolve({ componentId: polling.sourceId })` 寻址上游 data-source handle，调用其 `start` capability（data-source renderer 注册的 capability 之一）；CRUD unmount 或 `effectiveEnabled` 转 false 时调用 `cancel` capability。`polling.sourceId` 缺省时回退到 nearest data-source。`interval` / `stopWhen` 由上游 data-source 自身配置，CRUD 不重造请求层。Polling 状态本身不新增 schema 字段——`$crud.refreshing`/`statusPath.refreshing` 已由既有 status summary 暴露；toolbar polling-toggle block（`toolbarLayout.header/footer` 含 `{ type: 'polling-toggle' }`）暴露 user-controlled override。
@@ -280,28 +322,29 @@ interface CrudStatusSummary {
 
 ## 8. AMIS 迁移映射
 
-| AMIS 字段                              | Flux 正式字段                    | 说明                                                                                                                                                                    |
-| -------------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `api`                                  | `source`                         | canonical 迁移目标统一收敛到 `source`；当前 live baseline 已证明数组型 `source` 与上游 source-result object（如 `{ items, total }`）工作流，请求 owner 协作仍属后续范围 |
-| `filter`                               | `queryForm`                      | 查询表单统一映射                                                                                                                                                        |
-| `autoGenerateFilter`                   | `autoGenerateQueryForm`          | 自动生成查询区                                                                                                                                                          |
-| `headerToolbar`                        | `toolbar`                        | 顶部工具栏 region                                                                                                                                                       |
-| `footerToolbar`                        | `footerToolbar`                  | 底部工具栏 region                                                                                                                                                       |
-| `bulkActions`                          | `listActions`                    | 批量动作降级为列表级动作中的 selection-aware 普通 action                                                                                                                |
-| `primaryField`                         | `rowKey`                         | 行唯一键                                                                                                                                                                |
-| `pageField`                            | `pageField`                      | 分页页码参数名                                                                                                                                                          |
-| `perPageField`                         | `pageSizeField`                  | 每页数量参数名                                                                                                                                                          |
-| `columnsTogglable` / `columns-toggler` | `columnSettings`                 | 列选择/列排序入口                                                                                                                                                       |
-| `keepItemSelectionOnPageChange`        | `selection.keepOnPageChange`     | 跨页保留勾选                                                                                                                                                            |
-| `maxItemSelectionLength`               | `selection.maxSelectionLength`   | 选择总量上限（达上限 disabled + select-all 截断）                                                                                                                       |
-| `maxKeepItemSelectionLength`           | **不采纳（删字段）**             | 超限策略属 feature 设计（LRU/FIFO/block-new），超出漂移修复范围；如需由 E1d 连同 `selectionRetentionStrategy` 重新引入                                                  |
-| `itemCheckableOn`                      | `selection.checkableWhen`        | 按行可勾选条件（Flux 表达式，falsy → disabled）                                                                                                                         |
-| `loadDataOnce`                         | `clientMode.loadDataOnce`        | 前端一次性加载                                                                                                                                                          |
-| `loadDataOnceFetchOnFilter`            | `clientMode.fetchOnFilter`       | 查询后是否重新请求                                                                                                                                                      |
-| `matchFunc`                            | `clientMode.matchFunc`           | 前端匹配函数                                                                                                                                                            |
-| `quickSaveApi`                         | `quickSaveAction`                | 批量 quick edit 保存                                                                                                                                                    |
-| `quickSaveItemApi`                     | `quickSaveItemAction`            | 单条即时保存                                                                                                                                                            |
-| `itemAction`                           | `onRowClick` 或 operation 列按钮 | 推荐落到显式 row action                                                                                                                                                 |
+| AMIS 字段                              | Flux 正式字段                                                                  | 说明                                                                                                                                                                                                                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api`                                  | `loadAction`（首选）/ `source`（降级）                                         | `loadAction` 是 CRUD 自带的 action 入口：翻页/查询/排序/筛选/刷新自动 dispatch，零手工事件接线，响应经 `normalizeCrudSourceValue` 消化并同步 `page`/`total`。`source` 路径保留为降级兼容（消费父级或上游 `data-source` 已准备好的数据）。两条路径并存，不互改 |
+| `loadDataOnce`                         | `loadAllData`（`loadAction` 模式）/ `clientMode.loadDataOnce`（`source` 模式） | `loadAllData` 仅在 `loadAction` 模式下生效：首次拉全量 rows，后续分页/排序/筛选在前端完成。`clientMode.loadDataOnce` 仅用于 `source` 模式。两者命名独立、不互改，避免跨路径语义混淆                                                                           |
+| `filter`                               | `queryForm`                                                                    | 查询表单统一映射                                                                                                                                                                                                                                              |
+| `autoGenerateFilter`                   | `autoGenerateQueryForm`                                                        | 自动生成查询区                                                                                                                                                                                                                                                |
+| `headerToolbar`                        | `toolbar`                                                                      | 顶部工具栏 region                                                                                                                                                                                                                                             |
+| `footerToolbar`                        | `footerToolbar`                                                                | 底部工具栏 region                                                                                                                                                                                                                                             |
+| `bulkActions`                          | `listActions`                                                                  | 批量动作降级为列表级动作中的 selection-aware 普通 action                                                                                                                                                                                                      |
+| `primaryField`                         | `rowKey`                                                                       | 行唯一键                                                                                                                                                                                                                                                      |
+| `pageField`                            | `pageField`                                                                    | 分页页码参数名                                                                                                                                                                                                                                                |
+| `perPageField`                         | `pageSizeField`                                                                | 每页数量参数名                                                                                                                                                                                                                                                |
+| `columnsTogglable` / `columns-toggler` | `columnSettings`                                                               | 列选择/列排序入口                                                                                                                                                                                                                                             |
+| `keepItemSelectionOnPageChange`        | `selection.keepOnPageChange`                                                   | 跨页保留勾选                                                                                                                                                                                                                                                  |
+| `maxItemSelectionLength`               | `selection.maxSelectionLength`                                                 | 选择总量上限（达上限 disabled + select-all 截断）                                                                                                                                                                                                             |
+| `maxKeepItemSelectionLength`           | **不采纳（删字段）**                                                           | 超限策略属 feature 设计（LRU/FIFO/block-new），超出漂移修复范围；如需由 E1d 连同 `selectionRetentionStrategy` 重新引入                                                                                                                                        |
+| `itemCheckableOn`                      | `selection.checkableWhen`                                                      | 按行可勾选条件（Flux 表达式，falsy → disabled）                                                                                                                                                                                                               |
+| `loadDataOnce`                         | `clientMode.loadDataOnce`                                                      | 前端一次性加载                                                                                                                                                                                                                                                |
+| `loadDataOnceFetchOnFilter`            | `clientMode.fetchOnFilter`                                                     | 查询后是否重新请求                                                                                                                                                                                                                                            |
+| `matchFunc`                            | `clientMode.matchFunc`                                                         | 前端匹配函数                                                                                                                                                                                                                                                  |
+| `quickSaveApi`                         | `quickSaveAction`                                                              | 批量 quick edit 保存                                                                                                                                                                                                                                          |
+| `quickSaveItemApi`                     | `quickSaveItemAction`                                                          | 单条即时保存                                                                                                                                                                                                                                                  |
+| `itemAction`                           | `onRowClick` 或 operation 列按钮                                               | 推荐落到显式 row action                                                                                                                                                                                                                                       |
 
 ## 9. 特性对比列表
 

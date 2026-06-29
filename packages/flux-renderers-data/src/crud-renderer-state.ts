@@ -1,7 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   getIn,
   type ActionContext,
+  type ActionSchema,
+  type ActionResult,
+  type RendererEnv,
+  type RendererHelpers,
   type RendererComponentProps,
   type ScopeRef,
 } from '@nop-chaos/flux-core';
@@ -34,14 +38,22 @@ export interface CrudSortState {
 
 export type CrudFilterState = Record<string, { filters?: string[]; keyword?: string }>;
 
-export interface CrudQueryState {
-  values: Record<string, unknown>;
-  refreshCount: number;
-}
+// Flat query state: query fields are stored directly under the query scope path
+// (e.g. $_crud.<id>.query.keyword) with no `values` wrapper. `refreshCount` is
+// tracked internally by the component (not exposed to CRUD scope/bindings).
+export type CrudQueryState = Record<string, unknown>;
 
 export interface CrudResolvedSource {
   rows: unknown[];
   total?: number;
+  serverPagination?: { currentPage?: number; pageSize?: number };
+}
+
+export interface CrudNormalizedSourceContext {
+  rows: unknown[];
+  total: number;
+  page?: number;
+  pageSize?: number;
 }
 
 import {
@@ -224,9 +236,38 @@ export function normalizeCrudSourceValue(value: unknown): CrudResolvedSource {
         ? record.count
         : rows.length;
 
+  const serverPage =
+    typeof record.page === 'number' && Number.isFinite(record.page)
+      ? record.page
+      : typeof record.currentPage === 'number' && Number.isFinite(record.currentPage)
+        ? record.currentPage
+        : undefined;
+  const serverPageSize =
+    typeof record.pageSize === 'number' && Number.isFinite(record.pageSize)
+      ? record.pageSize
+      : typeof record.perPage === 'number' && Number.isFinite(record.perPage)
+        ? record.perPage
+        : undefined;
+
+  const serverPagination =
+    serverPage !== undefined || serverPageSize !== undefined
+      ? { currentPage: serverPage, pageSize: serverPageSize }
+      : undefined;
+
   return {
     rows,
     total,
+    serverPagination,
+  };
+}
+
+export function createCrudNormalizedSourceContext(value: unknown): CrudNormalizedSourceContext {
+  const normalized = normalizeCrudSourceValue(value);
+  return {
+    rows: normalized.rows,
+    total: normalized.total ?? normalized.rows.length,
+    page: normalized.serverPagination?.currentPage,
+    pageSize: normalized.serverPagination?.pageSize,
   };
 }
 
@@ -236,6 +277,22 @@ export function useCrudStatusPublisher(
   summary: CrudStatusSummary,
 ) {
   useStatusPathPublication(scope, statusPath, summary);
+}
+
+export function createCrudEvaluationBindings(args: {
+  pagination: CrudPaginationState;
+  query: Record<string, unknown>;
+  sort: CrudSortState;
+  filters: CrudFilterState;
+  selection: string[];
+}): Record<string, unknown> {
+  return {
+    pagination: { currentPage: args.pagination.currentPage, pageSize: args.pagination.pageSize },
+    query: { ...args.query },
+    sort: { column: args.sort.column, direction: args.sort.direction },
+    filters: { ...args.filters },
+    selection: [...args.selection],
+  };
 }
 
 export function useCrudHandle(
@@ -310,13 +367,10 @@ export function useCrudRuntimeState(args: {
 
   const queryState = useScopeSelector(
     (scopeData) => {
-      const query = toRecord(getIn(scopeData, queryStatePath));
-      return {
-        values: isRecord(query) && isRecord(query.values) ? toRecord(query.values) : defaultQuery,
-        refreshCount: isRecord(query) ? toPositiveNumber(query.refreshCount, 0) : 0,
-      } satisfies CrudQueryState;
+      const query = getIn(scopeData, queryStatePath);
+      return isRecord(query) ? toRecord(query) : defaultQuery;
     },
-    (a, b) => a.refreshCount === b.refreshCount && shallowEqualRecords(a.values, b.values),
+    shallowEqualRecords,
     { paths: [queryStatePath] },
   );
 
@@ -352,7 +406,7 @@ export function useCrudRuntimeState(args: {
     const snapshot = scope.readVisible();
 
     if (!isRecord(getIn(snapshot, queryStatePath))) {
-      scope.update(queryStatePath, { values: defaultQuery, refreshCount: 0 });
+      scope.update(queryStatePath, defaultQuery);
     }
     if (!getIn(snapshot, paginationStatePath)) {
       scope.update(paginationStatePath, { currentPage: 1, pageSize: fallbackPageSize });
@@ -380,5 +434,211 @@ export function useCrudRuntimeState(args: {
   return useMemo(
     () => ({ queryState, paginationState, sortState, filterState, selectedRowKeys }),
     [queryState, paginationState, sortState, filterState, selectedRowKeys],
+  );
+}
+
+function serializeCrudRequest(args: {
+  pagination: CrudPaginationState;
+  query: Record<string, unknown>;
+  sort: CrudSortState;
+  filters: CrudFilterState;
+}): string {
+  return JSON.stringify({
+    page: args.pagination.currentPage,
+    pageSize: args.pagination.pageSize,
+    query: args.query,
+    sort: { column: args.sort.column, direction: args.sort.direction },
+    filters: args.filters,
+  });
+}
+
+export interface CrudLoadActionResult {
+  rows: unknown[];
+  total: number | undefined;
+  loading: boolean;
+  error: Error | undefined;
+  reload: () => void;
+}
+
+export function useCrudLoadAction(args: {
+  enabled: boolean;
+  loadAction: ActionSchema | undefined;
+  loadAllData: boolean;
+  onError: RendererComponentProps<CrudSchema>['events']['onError'];
+  helpers: RendererHelpers;
+  env: RendererEnv | undefined;
+  scope: ScopeRef | undefined;
+  nodeScope: ScopeRef | undefined;
+  pagination: CrudPaginationState;
+  query: Record<string, unknown>;
+  sort: CrudSortState;
+  filters: CrudFilterState;
+  selection: string[];
+  paginationStatePath: string;
+}): CrudLoadActionResult {
+  const {
+    enabled,
+    loadAction,
+    loadAllData,
+    onError,
+    helpers,
+    env,
+    scope,
+    nodeScope,
+    pagination,
+    query,
+    sort,
+    filters,
+    selection,
+    paginationStatePath,
+  } = args;
+
+  const [rows, setRows] = useState<unknown[]>(EMPTY_ROWS);
+  const [total, setTotal] = useState<number | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | undefined>(undefined);
+
+  const lastRequestKeyRef = useRef<string | undefined>(undefined);
+  const loadedAllRef = useRef(false);
+  const abortRef = useRef<AbortController | undefined>(undefined);
+  const [reloadNonce, setReloadNonce] = useState(0);
+
+  const reload = useCallback(() => {
+    lastRequestKeyRef.current = undefined;
+    loadedAllRef.current = false;
+    setReloadNonce((n) => n + 1);
+  }, []);
+
+  const requestKey = enabled
+    ? serializeCrudRequest({ pagination, query, sort, filters })
+    : undefined;
+
+  const reportError = useCallback(
+    (err: Error, evaluationBindings: Record<string, unknown>) => {
+      setError(err);
+      if (onError) {
+        void onError(
+          { type: 'load-error', error: err },
+          {
+            scope: scope ?? nodeScope,
+            event: { type: 'load-error', error: err },
+            evaluationBindings: { ...evaluationBindings, error: err },
+          },
+        );
+        return;
+      }
+      env?.notify?.('error', err.message);
+    },
+    [env, nodeScope, onError, scope],
+  );
+
+  useEffect(() => {
+    if (!enabled || !loadAction) {
+      return;
+    }
+
+    if (loadAllData && loadedAllRef.current) {
+      return;
+    }
+
+    if (requestKey === lastRequestKeyRef.current) {
+      return;
+    }
+
+    lastRequestKeyRef.current = requestKey;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const evaluationBindings = createCrudEvaluationBindings({
+      pagination,
+      query,
+      sort,
+      filters,
+      selection,
+    });
+
+    void (async () => {
+      setLoading(true);
+      setError(undefined);
+      try {
+        const result: ActionResult = await helpers.dispatch(loadAction, {
+          signal: controller.signal,
+          scope: scope ?? nodeScope,
+          evaluationBindings,
+        });
+
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        if (!result.ok || result.cancelled) {
+          const err =
+            result.error instanceof Error
+              ? result.error
+              : typeof result.error === 'string'
+                ? new Error(result.error)
+                : new Error('loadAction failed');
+          reportError(err, evaluationBindings);
+          setLoading(false);
+          return;
+        }
+
+        const normalized = normalizeCrudSourceValue(result.data);
+        setRows(normalized.rows);
+        setTotal(normalized.total);
+
+        if (normalized.serverPagination && (scope ?? nodeScope)) {
+          const correctedPage = normalized.serverPagination.currentPage ?? pagination.currentPage;
+          const correctedPageSize = normalized.serverPagination.pageSize ?? pagination.pageSize;
+          const corrected = { currentPage: correctedPage, pageSize: correctedPageSize };
+          (scope ?? nodeScope)!.update(paginationStatePath, corrected);
+          lastRequestKeyRef.current = serializeCrudRequest({
+            pagination: corrected,
+            query,
+            sort,
+            filters,
+          });
+        }
+
+        if (loadAllData) {
+          loadedAllRef.current = true;
+        }
+
+        setLoading(false);
+      } catch (err) {
+        if (controller.signal.aborted) {
+          return;
+        }
+        const error = err instanceof Error ? err : new Error(String(err));
+        reportError(error, evaluationBindings);
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      controller.abort();
+    };
+  }, [
+    requestKey,
+    enabled,
+    loadAllData,
+    reloadNonce,
+    reportError,
+    loadAction,
+    helpers,
+    scope,
+    nodeScope,
+    pagination,
+    query,
+    sort,
+    filters,
+    selection,
+    paginationStatePath,
+  ]);
+
+  return useMemo(
+    () => ({ rows, total, loading, error, reload }),
+    [rows, total, loading, error, reload],
   );
 }

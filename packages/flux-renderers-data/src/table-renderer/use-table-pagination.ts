@@ -41,6 +41,7 @@ export function useTablePagination(
       ? schemaProps.paginationStatePath
       : undefined;
   const paginationEnabled = schemaProps.pagination?.enabled !== false;
+  const serverPaged = schemaProps.pagination?.serverPaged === true;
 
   const [localCurrentPage, setLocalCurrentPage] = useState(1);
   const [localPageSize, setLocalPageSize] = useState(schemaProps.pagination?.pageSize ?? 10);
@@ -163,5 +164,5 @@ export function useTablePagination(
     ],
   );
 
-  return { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage };
+  return { paginationEnabled, serverPaged, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage };
 }

@@ -302,6 +302,21 @@ export const crudRendererDefinition: RendererDefinition = {
       editorType: 'object',
       defaultValue: 'pages',
     },
+    loadAction: {
+      shape: { kind: 'unknown' },
+      displayName: 'Load Action',
+      description:
+        'Action dispatched to fetch CRUD data. Receives pagination/query/sort/filters bindings. Replaces the source + onRefresh pattern.',
+      editorType: 'object',
+    },
+    loadAllData: {
+      shape: { kind: 'boolean' },
+      displayName: 'Load All Data',
+      description:
+        'When true, fetch all data on first load and perform pagination/sort/filter client-side. Only effective when loadAction is set.',
+      editorType: 'boolean',
+      defaultValue: false,
+    },
   },
   eventContracts: {
     onQuerySubmit: {
@@ -329,6 +344,11 @@ export const crudRendererDefinition: RendererDefinition = {
     onRefresh: {
       displayName: 'Refresh',
       description: 'Runs when the CRUD refresh action executes.',
+    },
+    onError: {
+      displayName: 'Load Error',
+      description:
+        'Runs when a loadAction dispatch fails. When omitted, the default behavior shows an error toast and keeps the current data.',
     },
   },
   componentCapabilityContracts: [
@@ -429,6 +449,9 @@ export const crudRendererDefinition: RendererDefinition = {
     { key: 'pagination', kind: 'prop' },
     { key: 'quickSaveAction', kind: 'prop' },
     { key: 'quickSaveItemAction', kind: 'prop' },
+    { key: 'loadAction', kind: 'prop' },
+    { key: 'loadAllData', kind: 'prop' },
+    { key: 'dataStatePath', kind: 'prop' },
     { key: 'queryForm', kind: 'prop' },
     { key: 'queryFormRegion', kind: 'region', regionKey: 'queryFormRegion' },
     { key: 'toolbar', kind: 'region' },
@@ -440,5 +463,6 @@ export const crudRendererDefinition: RendererDefinition = {
     { key: 'onRowClick', kind: 'event' },
     { key: 'onSelectionChange', kind: 'event' },
     { key: 'onRefresh', kind: 'event' },
+    { key: 'onError', kind: 'event' },
   ],
 };

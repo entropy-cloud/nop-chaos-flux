@@ -250,6 +250,28 @@ Current helper lifecycle baseline:
 - renderers that retain child scopes across renders must dispose those scopes explicitly when the owning renderer no longer materializes them
 - one-off event payloads that only need expression visibility should prefer `evaluationBindings` overlays over creating disposable runtime-owned child scopes
 
+### Evaluation bindings versus child scopes
+
+The current design baseline treats `evaluationBindings` and child scopes as two different tools with different costs.
+
+- Use `evaluationBindings` when a renderer or owner needs to expose **one dispatch-local semantic snapshot** to an action or expression.
+- Use a child scope only when the subtree truly needs a **persistent lexical read/write environment** with lifecycle, reactivity, or ownership semantics.
+
+Practical rule:
+
+- `evaluationBindings` are for temporary query / row / event / summary overlays during one dispatch.
+- child scopes are for long-lived subtree execution contexts.
+
+Why this matters:
+
+- dispatch-local data such as CRUD query context, row-operation payloads, or temporary derived summary values should not be upgraded into runtime-owned child scopes by default
+- doing so creates extra lifecycle, teardown, and reactivity obligations for data that was only needed for one action dispatch
+- it also risks accidentally turning renderer-internal implementation details into apparent scope contract
+
+Related contract rule:
+
+- renderer-owned public bindings should expose stable semantic fields, not implementation jitter such as internal refresh counters or forced-rerender sentinels
+
 ### Resolved Boolean Props
 
 Boolean-like authoring fields have two distinct shapes:

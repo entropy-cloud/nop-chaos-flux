@@ -2,7 +2,7 @@ import { startTransition, useCallback, useMemo, useRef } from 'react';
 import { getIn, toRecord, type RendererEventHandler, type ScopeRef } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import type { CrudSchema } from './crud-schema.js';
-import type { CrudPaginationState, CrudQueryState } from './crud-renderer-state.js';
+import type { CrudPaginationState } from './crud-renderer-state.js';
 import { areStringArraysEqual } from './table-renderer/column-settings-state.js';
 
 interface CrudQueryFormHandle {
@@ -124,7 +124,7 @@ export function useCrudQueryBridge(args: {
   queryStatePath: string;
   queryDraftStatePath?: string;
   paginationStatePath: string;
-  queryState: CrudQueryState;
+  queryState: Record<string, unknown>;
   paginationState: CrudPaginationState;
   defaultQuery: Record<string, unknown>;
   shouldFetchOnQueryChange: boolean;
@@ -154,10 +154,7 @@ export function useCrudQueryBridge(args: {
       }
 
       if (scope) {
-        scope.update(queryStatePath, {
-          values: nextValues,
-          refreshCount: queryState.refreshCount + 1,
-        });
+        scope.update(queryStatePath, nextValues);
       }
 
       if (shouldFetchOnQueryChange && sequence === submitSequenceRef.current) {
@@ -179,7 +176,6 @@ export function useCrudQueryBridge(args: {
     [
       onQuerySubmit,
       paginationState.pageSize,
-      queryState.refreshCount,
       queryStatePath,
       scope,
       shouldFetchOnQueryChange,
@@ -199,10 +195,7 @@ export function useCrudQueryBridge(args: {
     }
 
     startTransition(() => {
-      scope.update(queryStatePath, {
-        values: defaultQuery,
-        refreshCount: queryState.refreshCount + 1,
-      });
+      scope.update(queryStatePath, defaultQuery);
       scope.update(paginationStatePath, { currentPage: 1, pageSize: paginationState.pageSize });
     });
 
@@ -226,7 +219,6 @@ export function useCrudQueryBridge(args: {
     paginationState.pageSize,
     paginationStatePath,
     queryFormId,
-    queryState.refreshCount,
     queryStatePath,
     scope,
     shouldFetchOnQueryChange,
@@ -261,10 +253,10 @@ export function useCrudQueryBridge(args: {
     }
 
     submitQueryValues(
-      Object.keys(draftQuery).length > 0 ? draftQuery : queryState.values,
+      Object.keys(draftQuery).length > 0 ? draftQuery : queryState,
       submitSequence,
     );
-  }, [componentRegistry, queryDraftStatePath, queryFormId, queryState.values, scope, submitQueryValues]);
+  }, [componentRegistry, queryDraftStatePath, queryFormId, queryState, scope, submitQueryValues]);
 
   return {
     handleQuerySubmit,

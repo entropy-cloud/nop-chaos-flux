@@ -149,6 +149,8 @@ export interface TableSchema extends BaseSchema {
     pageSizeOptions?: number[];
     showSizeChanger?: boolean;
     mode?: 'pages' | 'infinite';
+    serverPaged?: boolean;
+    total?: number;
   };
   rowSelection?: {
     type?: 'checkbox' | 'radio';

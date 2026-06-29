@@ -178,6 +178,10 @@ export interface CrudSchema extends BaseSchema {
   onRowClick?: ActionSchema;
   onSelectionChange?: ActionSchema;
   onRefresh?: ActionSchema;
+  loadAction?: ActionSchema;
+  loadAllData?: boolean;
+  onError?: ActionSchema;
+  dataStatePath?: string;
 }
 
 export interface CrudPaginationConfig extends SchemaObject {

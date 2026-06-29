@@ -5,6 +5,7 @@ import type {
   SchemaObject,
   SchemaValue,
 } from '@nop-chaos/flux-core';
+import type { CrudColumnSchema } from '@nop-chaos/flux-renderers-data';
 
 export type SchemaInput = BaseSchema | BaseSchema[];
 
@@ -165,9 +166,14 @@ export interface PickerDialogConfig extends SchemaObject {
 export interface PickerSchema extends BoundFieldSchemaBase {
   type: 'picker';
   options?: SchemaValue;
+  loadAction?: ActionSchema | ActionSchema[];
+  labelResolveAction?: ActionSchema | ActionSchema[];
   valueKey?: string;
   labelKey?: string;
   multiple?: boolean;
+  columns?: CrudColumnSchema[];
+  searchable?: boolean;
+  autoFill?: Record<string, string>;
   pickerDialog?: PickerDialogConfig | boolean;
   onPick?: ActionSchema | ActionSchema[];
 }

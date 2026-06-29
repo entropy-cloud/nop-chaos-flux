@@ -3,6 +3,8 @@ import { render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   applyQueryToRows,
+  createCrudNormalizedSourceContext,
+  createCrudEvaluationBindings,
   normalizeCrudSourceValue,
   normalizePagination,
   normalizeSort,
@@ -108,6 +110,55 @@ describe('crud-renderer-state helpers', () => {
       total: 1,
     });
     expect(normalizeCrudSourceValue(undefined)).toEqual({ rows: [], total: 0 });
+  });
+
+  it('creates a normalized source context with a single stable PageBean-like shape', () => {
+    expect(createCrudNormalizedSourceContext([{ id: 1 }])).toEqual({
+      rows: [{ id: 1 }],
+      total: 1,
+      page: undefined,
+      pageSize: undefined,
+    });
+    expect(createCrudNormalizedSourceContext({ items: [{ id: 2 }], total: 9, page: 3, pageSize: 20 })).toEqual({
+      rows: [{ id: 2 }],
+      total: 9,
+      page: 3,
+      pageSize: 20,
+    });
+  });
+});
+
+describe('createCrudEvaluationBindings', () => {
+  it('assembles flat query.* fields into evaluationBindings without values wrapper or refreshCount', () => {
+    const bindings = createCrudEvaluationBindings({
+      pagination: { currentPage: 2, pageSize: 20 },
+      query: { keyword: 'Ali', status: 'active' },
+      sort: { column: 'name', direction: 'asc' },
+      filters: { status: { filters: ['active'] } },
+      selection: ['r1', 'r2'],
+    });
+
+    expect(bindings).toEqual({
+      pagination: { currentPage: 2, pageSize: 20 },
+      query: { keyword: 'Ali', status: 'active' },
+      sort: { column: 'name', direction: 'asc' },
+      filters: { status: { filters: ['active'] } },
+      selection: ['r1', 'r2'],
+    });
+  });
+
+  it('exposes query fields directly (query.keyword) with no values wrapper', () => {
+    const bindings = createCrudEvaluationBindings({
+      pagination: { currentPage: 1, pageSize: 10 },
+      query: { keyword: 'test' },
+      sort: {},
+      filters: {},
+      selection: [],
+    });
+
+    expect((bindings.query as Record<string, unknown>).keyword).toBe('test');
+    expect((bindings.query as Record<string, unknown>).values).toBeUndefined();
+    expect(bindings.refreshCount).toBeUndefined();
   });
 });
 
@@ -248,7 +299,7 @@ describe('useCrudRuntimeState', () => {
   it('reads owner/scope state and initializes missing scope branches', () => {
     mockState.scopeData = {
       owner: {
-        query: { values: { role: 'admin' }, refreshCount: 2 },
+        query: { role: 'admin' },
         pagination: { currentPage: 4, pageSize: 25 },
         sort: { field: 'name', order: 'desc' },
         filters: { status: 'active' },
@@ -260,7 +311,7 @@ describe('useCrudRuntimeState', () => {
       update,
       readVisible: () => ({
         owner: {
-          query: { values: { role: 'admin' }, refreshCount: 2 },
+          query: { role: 'admin' },
           pagination: { currentPage: 4, pageSize: 25 },
           sort: { field: 'name', order: 'desc' },
           filters: { status: 'active' },
@@ -288,12 +339,12 @@ describe('useCrudRuntimeState', () => {
       />,
     );
 
-    expect(runtimeState.queryState).toEqual({ values: { role: 'user' }, refreshCount: 0 });
+    expect(runtimeState.queryState).toEqual({ role: 'user' });
     expect(runtimeState.paginationState).toEqual({ currentPage: 1, pageSize: 10 });
     expect(runtimeState.sortState).toEqual({ column: undefined, direction: undefined });
     expect(runtimeState.filterState).toEqual({});
     expect(runtimeState.selectedRowKeys).toEqual([]);
-    expect(update).toHaveBeenCalledWith('query', { values: { role: 'user' }, refreshCount: 0 });
+    expect(update).toHaveBeenCalledWith('query', { role: 'user' });
     expect(update).toHaveBeenCalledWith('pagination', { currentPage: 1, pageSize: 10 });
     expect(update).toHaveBeenCalledWith('sort', {});
     expect(update).toHaveBeenCalledWith('filters', {});
@@ -303,13 +354,13 @@ describe('useCrudRuntimeState', () => {
   it('prefers explicit scope state over owner fallbacks and avoids initialization when already present', () => {
     mockState.scopeData = {
       owner: {
-        query: { values: { role: 'owner' }, refreshCount: 1 },
+        query: { role: 'owner' },
         pagination: { currentPage: 9, pageSize: 50 },
         sort: { field: 'ownerField', order: 'asc' },
         filters: { status: 'owner' },
         selection: ['owner-key'],
       },
-      query: { values: { role: 'scope' }, refreshCount: 7 },
+      query: { role: 'scope' },
       pagination: { currentPage: 2, pageSize: 15 },
       sort: { field: 'scopeField', order: 'desc' },
       filters: { status: 'scope' },
@@ -341,7 +392,7 @@ describe('useCrudRuntimeState', () => {
       />,
     );
 
-    expect(runtimeState.queryState).toEqual({ values: { role: 'scope' }, refreshCount: 7 });
+    expect(runtimeState.queryState).toEqual({ role: 'scope' });
     expect(runtimeState.paginationState).toEqual({ currentPage: 2, pageSize: 15 });
     expect(runtimeState.sortState).toEqual({ column: 'scopeField', direction: 'desc' });
     expect(runtimeState.filterState).toEqual({ status: { filters: ['scope'] } });
@@ -352,13 +403,13 @@ describe('useCrudRuntimeState', () => {
   it('does not subscribe through ownerStatePath fallbacks once slice paths exist', () => {
     mockState.scopeData = {
       owner: {
-        query: { values: { role: 'owner' }, refreshCount: 9 },
+        query: { role: 'owner' },
         pagination: { currentPage: 9, pageSize: 99 },
         sort: { field: 'ownerField', order: 'asc' },
         filters: { status: 'owner' },
         selection: ['owner-key'],
       },
-      query: { values: { role: 'scope' }, refreshCount: 2 },
+      query: { role: 'scope' },
       pagination: { currentPage: 3, pageSize: 20 },
       sort: { field: 'scopeField', order: 'desc' },
       filters: { status: 'scope' },
@@ -390,18 +441,18 @@ describe('useCrudRuntimeState', () => {
       />,
     );
 
-    expect(runtimeState.queryState).toEqual({ values: { role: 'scope' }, refreshCount: 2 });
+    expect(runtimeState.queryState).toEqual({ role: 'scope' });
 
     mockState.scopeData = {
       ...mockState.scopeData,
       owner: {
-        query: { values: { role: 'owner-updated' }, refreshCount: 11 },
+        query: { role: 'owner-updated' },
         pagination: { currentPage: 5, pageSize: 15 },
         sort: { field: 'ownerOnly', order: 'asc' },
         filters: { status: 'owner-updated' },
         selection: ['owner-updated'],
       },
-      query: { values: { role: 'scope' }, refreshCount: 2 },
+      query: { role: 'scope' },
       pagination: { currentPage: 3, pageSize: 20 },
       sort: { field: 'scopeField', order: 'desc' },
       filters: { status: 'scope' },
@@ -426,7 +477,7 @@ describe('useCrudRuntimeState', () => {
       />,
     );
 
-    expect(runtimeState.queryState).toEqual({ values: { role: 'scope' }, refreshCount: 2 });
+    expect(runtimeState.queryState).toEqual({ role: 'scope' });
     expect(runtimeState.paginationState).toEqual({ currentPage: 3, pageSize: 20 });
     expect(runtimeState.sortState).toEqual({ column: 'scopeField', direction: 'desc' });
     expect(runtimeState.filterState).toEqual({ status: { filters: ['scope'] } });

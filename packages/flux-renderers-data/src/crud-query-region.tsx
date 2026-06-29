@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button } from '@nop-chaos/ui';
 import type { CrudFilterToggleConfig } from './crud-schema.js';
-import type { CrudQueryState } from './crud-renderer-state.js';
 
 export interface CrudQueryRegionProps {
   filterTogglable: boolean | CrudFilterToggleConfig | undefined;
-  queryState: CrudQueryState;
+  queryState: Record<string, unknown>;
   defaultQuery: Record<string, unknown>;
   queryFormRegionRender: () => React.ReactNode;
   onSubmit: () => void;
@@ -37,7 +36,7 @@ function resolveFilterToggleConfig(
 }
 
 export function CrudQueryRegion(props: CrudQueryRegionProps) {
-  const { filterTogglable, queryState, defaultQuery, queryFormRegionRender, onSubmit, onReset, isMobile } =
+  const { filterTogglable, queryState, queryFormRegionRender, onSubmit, onReset, isMobile } =
     props;
   const { enabled: toggleEnabled, config } = resolveFilterToggleConfig(filterTogglable);
 
@@ -62,7 +61,7 @@ export function CrudQueryRegion(props: CrudQueryRegionProps) {
     );
   }
 
-  const activeValues = queryState.refreshCount > 0 ? queryState.values : defaultQuery;
+  const activeValues = queryState;
   const activeCount = countActiveFilters(activeValues);
   const expandLabel = config.expandedLabel ?? t('flux.crud.expandQuery');
   const collapseLabel = config.collapsedLabel ?? t('flux.crud.collapseQuery');

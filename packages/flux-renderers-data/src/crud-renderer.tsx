@@ -22,6 +22,7 @@ import {
   EMPTY_ROWS,
   normalizeCrudSourceValue,
   useCrudHandle,
+  useCrudLoadAction,
   useCrudRuntimeState,
   useCrudStatusPublisher,
 } from './crud-renderer-state.js';
@@ -56,6 +57,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
   const env = useRendererEnv();
   const isMobile = useIsMobile();
+  const refreshCountRef = useRef(0);
 
   const ownerPaths = createCrudOwnerPaths({ id: props.id, cid: props.meta.cid, schema: normalizedSchema });
   const defaultQuery = {
@@ -98,20 +100,54 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     sortState,
   ]);
 
-  const resolvedSource = normalizeCrudSourceValue(schemaProps.source);
-  const source = resolvedSource.rows.length > 0 ? resolvedSource.rows : EMPTY_ROWS;
-  const effectiveQuery = queryState.refreshCount > 0 ? queryState.values : defaultQuery;
-  const filteredRows = applyQueryToRows(source, effectiveQuery);
+  const loadActionConfig = normalizedSchema.loadAction;
+  const useLoadAction = Boolean(loadActionConfig);
+  const loadAllData = normalizedSchema.loadAllData === true;
+  const dataStatePath = normalizedSchema.dataStatePath;
+
   const queryStatePath = ownerPaths.queryStatePath;
   const queryDraftStatePath = `${queryStatePath}.$draft`;
   const paginationStatePath = ownerPaths.paginationStatePath;
   const sortStatePath = ownerPaths.sortStatePath;
   const filterStatePath = ownerPaths.filterStatePath;
   const selectionStatePath = ownerPaths.selectionStatePath;
+
+  const loadResult = useCrudLoadAction({
+    enabled: useLoadAction,
+    loadAction: loadActionConfig,
+    loadAllData,
+    onError: props.events.onError,
+    helpers: props.helpers,
+    env,
+    scope,
+    nodeScope,
+    pagination: paginationState,
+    query: queryState,
+    sort: sortState,
+    filters: filterState,
+    selection: selectedRowKeys,
+    paginationStatePath,
+  });
+
+  const clientSideQueryFiltering =
+    !useLoadAction || loadAllData || normalizedSchema.clientMode?.loadDataOnce === true;
+  const resolvedSource = useLoadAction
+    ? { rows: loadResult.rows, total: loadResult.total }
+    : normalizeCrudSourceValue(schemaProps.source);
+  const source = resolvedSource.rows.length > 0 ? resolvedSource.rows : EMPTY_ROWS;
+  const effectiveQuery = queryState;
+  const filteredRows = clientSideQueryFiltering ? applyQueryToRows(source, effectiveQuery) : source;
+
+  useEffect(() => {
+    if (!dataStatePath || !scope) {
+      return;
+    }
+    scope.update(dataStatePath, source);
+  }, [dataStatePath, scope, source]);
   const shouldFetchOnQueryChange =
-    normalizedSchema.clientMode?.loadDataOnce === true
-      ? normalizedSchema.clientMode.fetchOnFilter === true
-      : true;
+    useLoadAction || normalizedSchema.clientMode?.loadDataOnce !== true
+      ? true
+      : normalizedSchema.clientMode.fetchOnFilter === true;
   const defaultColumnNames = (normalizedSchema.columns ?? [])
     .filter((column) => column.hidden !== true)
     .map((column, index) => column.name ?? `column-${index}`);
@@ -123,7 +159,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   });
 
   const summary: CrudStatusSummary = {
-    loading: false,
+    loading: useLoadAction ? loadResult.loading : false,
     refreshing: false,
     itemCount: filteredRows.length,
     total: resolvedSource.total,
@@ -143,15 +179,16 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       scope?.update(selectionStatePath, []);
     }
 
-    scope?.update(queryStatePath, {
-      values: queryState.values,
-      refreshCount: queryState.refreshCount + 1,
-    });
+    if (useLoadAction) {
+      loadResult.reload();
+    }
+
+    refreshCountRef.current += 1;
 
     const refreshSummary = {
       type: 'refresh',
-      refreshCount: queryState.refreshCount + 1,
-      query: queryState.values,
+      refreshCount: refreshCountRef.current,
+      query: queryState,
       selectionCleared: normalizedSchema.autoClearSelectionOnRefresh === true,
       selectedRowKeys,
     };
@@ -213,15 +250,13 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     if (normalizedSchema.autoClearSelectionOnRefresh) {
       scope?.update(selectionStatePath, []);
     }
-    scope?.update(queryStatePath, {
-      values: queryState.values,
-      refreshCount: queryState.refreshCount + 1,
-    });
     scope?.update(paginationStatePath, {
       currentPage: paginationState.currentPage + 1,
       pageSize: paginationState.pageSize,
     });
-    handleRefresh();
+    if (!useLoadAction) {
+      handleRefresh();
+    }
   };
 
   const infiniteState = useInfiniteScroll({
@@ -316,6 +351,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       filterStatePath,
       pagination: {
         enabled: paginationMode === 'pages',
+        serverPaged: useLoadAction && !loadAllData,
+        total: useLoadAction && !loadAllData ? resolvedSource.total : undefined,
         currentPage: paginationState.currentPage,
         pageSize:
           paginationMode === 'infinite'
@@ -398,10 +435,16 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
   const handleToolbarPageChange = (page: number) => {
     scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });
+    if (!useLoadAction) {
+      handleRefresh();
+    }
   };
 
   const handleToolbarPageSizeChange = (pageSize: number) => {
     scope?.update(paginationStatePath, { currentPage: 1, pageSize });
+    if (!useLoadAction) {
+      handleRefresh();
+    }
   };
 
   const handleQuerySubmitWithFeedback = () => {

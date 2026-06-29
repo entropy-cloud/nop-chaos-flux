@@ -11,6 +11,7 @@ export { ListRenderer } from './list-renderer.js';
 export { ServiceRenderer } from './service-renderer.js';
 export { PaginationRenderer } from './pagination-renderer.js';
 export { CrudRenderer } from './crud-renderer.js';
+export { createCrudNormalizedSourceContext } from './crud-renderer-state.js';
 export { crudRendererDefinition, dataRendererDefinitions } from './data-renderer-definitions.js';
 
 export function registerDataRenderers(registry: RendererRegistry) {

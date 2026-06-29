@@ -98,6 +98,14 @@ describe('data renderer definition contracts', () => {
     expect(crudRendererDefinition.eventContracts?.onSelectionChange?.payload?.kind).toBe('object');
   });
 
+  it('crud exposes loadAction/loadAllData as props and onError as an event only', () => {
+    expect(crudRendererDefinition.fields?.find((field) => field.key === 'loadAction')?.kind).toBe('prop');
+    expect(crudRendererDefinition.fields?.find((field) => field.key === 'loadAllData')?.kind).toBe('prop');
+    expect(crudRendererDefinition.fields?.filter((field) => field.key === 'onError')).toEqual([
+      expect.objectContaining({ key: 'onError', kind: 'event' }),
+    ]);
+  });
+
   it('crud compiles queryForm through an internal queryFormRegion instead of runtime raw schema rendering', () => {
     expect(crudRendererDefinition.fields?.find((field) => field.key === 'queryForm')?.kind).toBe('prop');
     expect(crudRendererDefinition.fields?.find((field) => field.key === 'queryFormRegion')?.kind).toBe(
