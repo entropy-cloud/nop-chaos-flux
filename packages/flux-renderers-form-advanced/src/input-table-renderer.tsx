@@ -28,6 +28,10 @@ import type { InputTableColumn, InputTableSchema } from './composite-field/compo
 import { createItemFormProxy, createItemScope } from './composite-field/array-field-runtime.js';
 import { createProjectedValidationRuntime } from './detail-view/projected-validation-runtime.js';
 import {
+  isRemoveBlockedByWhen,
+  isRemoveWhenConfigured,
+} from './composite-field/remove-when-gating.js';
+import {
   COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
   COMPOSITE_EDITOR_METHODS,
 } from './composite-field/composite-editor-capability-contracts.js';
@@ -99,6 +103,7 @@ type InputTableRowProps = {
   totalCount: number;
   minItems: number;
   columnCount: number;
+  removeBlocked: boolean;
   onRemove: (index: number) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
@@ -121,6 +126,7 @@ function InputTableRowView(props: InputTableRowProps) {
     totalCount,
     minItems,
     columnCount,
+    removeBlocked,
     onRemove,
     onMoveUp,
     onMoveDown,
@@ -163,6 +169,7 @@ function InputTableRowView(props: InputTableRowProps) {
   );
 
   const canRemove = totalCount > minItems;
+  const canRemoveNow = canRemove && !removeBlocked;
   const canMoveUp = index > 0;
   const canMoveDown = index < totalCount - 1;
 
@@ -214,10 +221,10 @@ function InputTableRowView(props: InputTableRowProps) {
                 variant="ghost"
                 size="icon-sm"
                 data-slot="input-table-remove"
-                disabled={readOnly || !canRemove}
+                disabled={readOnly || !canRemoveNow}
                 className="hover:text-destructive"
                 aria-label={t('flux.form.remove', { defaultValue: `Remove row ${index + 1}` })}
-                onClick={() => canRemove && onRemove(index)}
+                onClick={() => canRemoveNow && onRemove(index)}
               >
                 <Trash2Icon className="size-4" />
               </Button>
@@ -247,6 +254,7 @@ const InputTableRow = React.memo(InputTableRowView, (prev, next) =>
   prev.totalCount === next.totalCount &&
   prev.minItems === next.minItems &&
   prev.columnCount === next.columnCount &&
+  prev.removeBlocked === next.removeBlocked &&
   prev.onRemove === next.onRemove &&
   prev.onMoveUp === next.onMoveUp &&
   prev.onMoveDown === next.onMoveDown &&
@@ -343,6 +351,42 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
 
   const atMaxItems = maxItems !== undefined && itemsArray.length >= maxItems;
 
+  const removeWhenHandle = props.templateNode.structuralFields?.removeWhen;
+  const removeBlockedByIndex = React.useMemo(() => {
+    if (!isRemoveWhenConfigured(removeWhenHandle)) {
+      return null;
+    }
+    return itemsArray.map((_, index) => {
+      const itemIdentity = objectItemKeyResolution.itemKeys[index];
+      const itemScope = createItemScope(
+        parentScope,
+        name,
+        index,
+        'object',
+        readOnly || presentation.effectiveDisabled,
+        itemIdentity,
+      );
+      return isRemoveBlockedByWhen({
+        removeWhenHandle,
+        itemScope,
+        evaluateCompiled: (compiled, scope) => props.helpers.evaluateCompiled(compiled, scope),
+      });
+    });
+  }, [
+    removeWhenHandle,
+    itemsArray,
+    objectItemKeyResolution.itemKeys,
+    parentScope,
+    name,
+    readOnly,
+    presentation.effectiveDisabled,
+    props.helpers,
+  ]);
+  const isRemoveBlockedAt = React.useCallback(
+    (index: number) => Boolean(removeBlockedByIndex?.[index]),
+    [removeBlockedByIndex],
+  );
+
   const writeValue = React.useCallback(
     (next: unknown[]) => {
       if (parentForm && name) {
@@ -373,6 +417,10 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
       if (index < 0 || index >= itemsArray.length || itemsArray.length <= minItems) {
         return;
       }
+      if (isRemoveBlockedAt(index)) {
+        return;
+      }
+      compatRemoveAt(index);
       if (parentForm && name) {
         parentForm.removeValue(name, index);
         if (shouldValidateOn(name, parentForm, 'change')) {
@@ -383,7 +431,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
       }
       void props.events.onRemove?.();
     },
-    [itemsArray, minItems, name, parentForm, props.events, writeValue],
+    [itemsArray, minItems, name, parentForm, props.events, writeValue, compatRemoveAt, isRemoveBlockedAt],
   );
 
   const handleMove = React.useCallback(
@@ -442,6 +490,10 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
       if (itemsArray.length <= minItems) {
         return { skipped: true };
       }
+      if (isRemoveBlockedAt(index)) {
+        return { skipped: true };
+      }
+      compatRemoveAt(index);
       if (parentForm && name) {
         parentForm.removeValue(name, index);
         if (shouldValidateOn(name, parentForm, 'change')) {
@@ -533,6 +585,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
                   totalCount={itemsArray.length}
                   minItems={minItems}
                   columnCount={headerColumnCount}
+                  removeBlocked={isRemoveBlockedAt(index)}
                   onRemove={handleRemove}
                   onMoveUp={handleMoveUp}
                   onMoveDown={handleMoveDown}
@@ -578,6 +631,7 @@ export const inputTableRendererDefinition: RendererDefinition = {
     { key: 'reorderable', kind: 'prop', valueType: 'boolean' },
     { key: 'minItems', kind: 'prop' },
     { key: 'maxItems', kind: 'prop' },
+    { key: 'removeWhen', kind: 'prop', lazyEval: true, params: ['record', 'index', 'value'] },
     { key: 'readOnly', kind: 'prop' },
     { key: 'onAdd', kind: 'event' },
     { key: 'onRemove', kind: 'event' },

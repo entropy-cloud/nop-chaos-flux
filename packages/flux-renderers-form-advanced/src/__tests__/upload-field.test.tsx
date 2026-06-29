@@ -138,6 +138,36 @@ describe('input-file — upload success state machine', () => {
     expect(submitCalls[0].file).toBe('https://cdn.example.com/doc.txt');
   });
 
+  it('removes a committed upload without losing the cleared value (H26)', async () => {
+    renderSchema(
+      buildForm('input-file', 'file', {
+        valueMode: 'url',
+        uploadAction: { action: 'ajax', args: { url: '/api/upload', method: 'post' } },
+      }),
+    );
+    const input = document.querySelector<HTMLInputElement>(
+      'input[data-testid="nop-input-file-input"]',
+    )!;
+    setFiles(input, [new File(['hello'], 'doc.txt', { type: 'text/plain' })]);
+
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-testid="nop-input-file-item"][data-item-status="done"]'),
+      ).toBeTruthy(),
+    );
+
+    // removeExisting must read the committed-value ref (consistent with
+    // commitItems) so the just-completed upload is removed cleanly.
+    fireEvent.click(document.querySelector('[data-testid="nop-input-file-remove-0"]')!);
+
+    await waitFor(() =>
+      expect(document.querySelector('[data-testid="nop-input-file-item"]')).toBeNull(),
+    );
+
+    await submit();
+    expect(submitCalls[0].file).toBeUndefined();
+  });
+
   it('writes back the full object when valueMode is object', async () => {
     renderSchema(
       buildForm('input-file', 'file', {

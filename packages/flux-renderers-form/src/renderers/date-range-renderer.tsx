@@ -49,6 +49,24 @@ function buildDisabledMatchers(
   return matchers.length > 0 ? matchers : undefined;
 }
 
+/**
+ * Clamp a date into `[minDate, maxDate]` (calendar-local bounds, same frame as
+ * `startDate`/`endDate`). Mirrors `date-field-control`'s `clampToRange` so a
+ * time typed via `setTimeOn` (or any path through `commitRange`) cannot land
+ * outside the declared bounds — the calendar path already constrains via
+ * disabled matchers, but the time inputs bypass them.
+ */
+function clampDateToRange(
+  date: Date | undefined,
+  minDate: Date | undefined,
+  maxDate: Date | undefined,
+): Date | undefined {
+  if (!date) return date;
+  if (minDate && date.getTime() < minDate.getTime()) return new Date(minDate);
+  if (maxDate && date.getTime() > maxDate.getTime()) return new Date(maxDate);
+  return date;
+}
+
 export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>) {
   const name = String(props.props.name ?? '');
   const rangeKind = asRangeKind(props.props.rangeKind);
@@ -141,8 +159,13 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
       : '';
 
   function commitRange(nextStart: Date | undefined, nextEnd: Date | undefined) {
-    const startStr = formatDate(toStorageDate(nextStart, utc), valueFormat, options);
-    const endStr = formatDate(toStorageDate(nextEnd, utc), valueFormat, options);
+    // Enforce minDate/maxDate on every write path (time inputs, native time
+    // change, calendar select) so a value cannot be committed outside bounds —
+    // consistent with the single-field date control.
+    const clampedStart = clampDateToRange(nextStart, minDate, maxDate);
+    const clampedEnd = clampDateToRange(nextEnd, minDate, maxDate);
+    const startStr = formatDate(toStorageDate(clampedStart, utc), valueFormat, options);
+    const endStr = formatDate(toStorageDate(clampedEnd, utc), valueFormat, options);
     // Normalize order so start <= end whenever both are present.
     const normalized = normalizeRange(startStr, endStr, valueFormat, options);
     if (!normalized.start && !normalized.end) {

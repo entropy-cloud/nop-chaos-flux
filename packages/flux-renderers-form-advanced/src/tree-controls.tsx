@@ -47,8 +47,25 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
-  const treeConfig = getTreeOptionConfig(props.props as InputTreeSchema);
-  const baseOptions = buildTreeOptionMetaList(props.props.options, treeConfig);
+  const {
+    childrenKey,
+    labelField,
+    valueField,
+    onlyLeaf,
+    showPathLabel,
+    options: treeOptions,
+  } = props.props as InputTreeSchema;
+  // H8: getTreeOptionConfig returns a new object each call; without memoizing,
+  // the new `config` identity is a dep of useTreeRemoteSearch's 300ms debounce
+  // effect, so every re-render reset the timer and remote search never fired.
+  const treeConfig = React.useMemo(
+    () => getTreeOptionConfig({ childrenKey, labelField, valueField, onlyLeaf, showPathLabel }),
+    [childrenKey, labelField, valueField, onlyLeaf, showPathLabel],
+  );
+  const baseOptions = React.useMemo(
+    () => buildTreeOptionMetaList(treeOptions, treeConfig),
+    [treeOptions, treeConfig],
+  );
   const [query, setQuery] = React.useState('');
   const remoteSearchActive =
     props.props.searchable === true && Boolean(props.props.searchSource);
@@ -175,8 +192,29 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
-  const treeConfig = getTreeOptionConfig(props.props as TreeSelectSchema);
-  const baseOptions = buildTreeOptionMetaList(props.props.options, treeConfig);
+  const {
+    childrenKey: selectChildrenKey,
+    labelField: selectLabelField,
+    valueField: selectValueField,
+    onlyLeaf: selectOnlyLeaf,
+    showPathLabel: selectShowPathLabel,
+    options: selectTreeOptions,
+  } = props.props as TreeSelectSchema;
+  const treeConfig = React.useMemo(
+    () =>
+      getTreeOptionConfig({
+        childrenKey: selectChildrenKey,
+        labelField: selectLabelField,
+        valueField: selectValueField,
+        onlyLeaf: selectOnlyLeaf,
+        showPathLabel: selectShowPathLabel,
+      }),
+    [selectChildrenKey, selectLabelField, selectValueField, selectOnlyLeaf, selectShowPathLabel],
+  );
+  const baseOptions = React.useMemo(
+    () => buildTreeOptionMetaList(selectTreeOptions, treeConfig),
+    [selectTreeOptions, treeConfig],
+  );
   const [query, setQuery] = React.useState('');
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const isMobile = useIsMobile();

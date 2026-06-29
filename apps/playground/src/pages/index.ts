@@ -14,4 +14,5 @@ export { InputSuggestDemoPage } from './input-suggest-demo';
 export { TreeDisplayUxDemoPage } from './tree-display-ux-demo';
 export { TablePopOverDemoPage } from './table-popover-demo';
 export { MobileInfrastructureDemoPage } from './mobile-infrastructure-demo';
+export { M5MobileShowcaseDemoPage } from './m5-mobile-showcase-demo';
 export type { PageId } from './types';

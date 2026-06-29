@@ -129,6 +129,7 @@ export interface InputTableSchema extends BoundFieldSchemaBase {
   reorderable?: boolean;
   minItems?: number;
   maxItems?: number;
+  removeWhen?: string;
   onAdd?: ActionSchema | ActionSchema[];
   onRemove?: ActionSchema | ActionSchema[];
   onReorder?: ActionSchema | ActionSchema[];

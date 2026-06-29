@@ -1286,6 +1286,11 @@ Region handle objects should be reusable and renderer-friendly.
 
 List, table, and tree renderers should avoid eager child-scope creation for work that is not actually rendered.
 
+## Contract Honesty Production Isolation Notes (2026-06-27)
+
+- **Per-renderer source isolation (H7/G15)**: every production contract-honesty harness resolves each renderer definition's `componentSource` to that renderer's OWN implementation tree (via `buildPerRendererSourceResolver` in `@nop-chaos/flux-core`): the definition's `component:` ref is traced through imports to its file, then a bounded transitive closure (static + dynamic imports, excluding sibling renderer definition files and barrel `index` modules) forms the haystack. A sibling renderer's event/handle usage can no longer mask a missing implementation. Capability handles delegated to runtime factories (`input-component-handle`, `form-component-handle`, `composite-field-handle`, `surface-component-handle`) are mixed in only for renderers that actually reference the factory's hook.
+- **Capability anchor tightening (H16)**: `isCapabilityHandleReferenced` counts an array element only in a `methods`/`listMethods` property array or a `return [...]` method list — incidental UI arrays (e.g. `labels: ['save', 'cancel']`) no longer satisfy a common-word handle.
+
 ## Related Documents
 
 - `docs/references/terminology.md`

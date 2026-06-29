@@ -42,6 +42,7 @@ export async function executeTreeSource(
   config: TreeSourceConfig,
   helpers: RendererHelpers,
   patch: Record<string, unknown>,
+  signal?: AbortSignal,
 ): Promise<{ ok: boolean; data?: unknown; error?: unknown }> {
   const scope = helpers.createScope(patch);
   if (config.formula !== undefined) {
@@ -57,7 +58,7 @@ export async function executeTreeSource(
   }
   const actionInput = { ...config } as unknown as ActionSchema;
   try {
-    const result = await helpers.dispatch(actionInput, { scope });
+    const result = await helpers.dispatch(actionInput, { scope, signal });
     return result;
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err : new Error(String(err)) };
@@ -104,13 +105,17 @@ export function useTreeRemoteSearch(input: {
       return;
     }
     let cancelled = false;
+    // AUDIT-12: abort the in-flight request on cleanup (newer query, unmount,
+    // or dep change). The `cancelled` flag is retained as the stale-response
+    // guard for paths that do not honor the signal (e.g. formula sources).
+    const controller = new AbortController();
     const handle = setTimeout(() => {
       if (cancelled) {
         return;
       }
       setLoading(true);
       setError(undefined);
-      executeTreeSource(searchSource!, helpers, { searchQuery: trimmed })
+      executeTreeSource(searchSource!, helpers, { searchQuery: trimmed }, controller.signal)
         .then((result) => {
           if (cancelled) {
             return;
@@ -143,6 +148,7 @@ export function useTreeRemoteSearch(input: {
     }, 300);
     return () => {
       cancelled = true;
+      controller.abort();
       clearTimeout(handle);
     };
   }, [active, config, helpers, query, searchSource]);
@@ -185,6 +191,24 @@ export function useTreeLazyChildren(input: {
   );
   const requestedRef = React.useRef<Set<string>>(new Set());
 
+  // H14: guard lazy-load resolutions so they never setState after unmount or
+  // stale-merge into a baseOptions snapshot that has since changed. The mounted
+  // ref shields unmount; the generation token invalidates in-flight loads when
+  // the inputs that define the load (baseOptions/childrenSource/config/helpers)
+  // change.
+  const mountedRef = React.useRef(true);
+  const generationRef = React.useRef(0);
+  React.useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  React.useEffect(() => {
+    return () => {
+      generationRef.current += 1;
+    };
+  }, [baseOptions, childrenSource, config, helpers]);
+
   const reset = React.useCallback(() => {
     setMergedOptions(null);
     setNodeStates(new Map());
@@ -196,6 +220,10 @@ export function useTreeLazyChildren(input: {
       if (!childrenSource) {
         return;
       }
+      const generation = generationRef.current;
+      // Snapshot the base at dispatch time so a later resolve does not merge
+      // children into a stale base captured by an older closure.
+      const baseSnapshot = baseOptions;
       setNodeStates((prev) => {
         const next = new Map(prev);
         next.set(option.valueKey, { loading: true });
@@ -204,9 +232,12 @@ export function useTreeLazyChildren(input: {
 
       executeTreeSource(childrenSource, helpers, { expandedNodeValue: option.value })
         .then((result) => {
+          if (!mountedRef.current || generationRef.current !== generation) {
+            return;
+          }
           if (result.ok) {
             setMergedOptions((prev) =>
-              mergeChildOptions(prev ?? baseOptions, option.valueKey, result.data, config),
+              mergeChildOptions(prev ?? baseSnapshot, option.valueKey, result.data, config),
             );
             setNodeStates((prev) => {
               const next = new Map(prev);
@@ -228,6 +259,9 @@ export function useTreeLazyChildren(input: {
           }
         })
         .catch((err: unknown) => {
+          if (!mountedRef.current || generationRef.current !== generation) {
+            return;
+          }
           const message = err instanceof Error ? err.message : 'Failed to load children.';
           setNodeStates((prev) => {
             const next = new Map(prev);
@@ -543,6 +577,12 @@ export function useTreeOptionListController(input: {
 
   const [activeItemKey, setActiveItemKey] = React.useState<string | undefined>(undefined);
 
+  // H15: track which valueKeys were expandable before, so an options identity
+  // change (lazy children merge, refresh) does NOT wipe the user's manual
+  // collapses. Newly expandable nodes default to expanded; already-known
+  // expandable nodes keep their current expanded/collapsed state; keys that are
+  // no longer expandable are pruned.
+  const prevExpandableRef = React.useRef<ReadonlySet<string>>(new Set());
   React.useEffect(() => {
     const expandableKeys = new Set<string>();
     for (const option of flattenTreeOptions(options)) {
@@ -550,7 +590,22 @@ export function useTreeOptionListController(input: {
         expandableKeys.add(option.valueKey);
       }
     }
-    setExpandedKeys(expandableKeys);
+    const prevExpandable = prevExpandableRef.current;
+    prevExpandableRef.current = expandableKeys;
+    setExpandedKeys((previous) => {
+      const next = new Set(previous);
+      for (const key of expandableKeys) {
+        if (!prevExpandable.has(key)) {
+          next.add(key);
+        }
+      }
+      for (const key of next) {
+        if (!expandableKeys.has(key)) {
+          next.delete(key);
+        }
+      }
+      return next;
+    });
   }, [options]);
 
   React.useEffect(() => {

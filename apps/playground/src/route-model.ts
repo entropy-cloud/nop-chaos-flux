@@ -450,6 +450,19 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'M4a crud small-screen toolbar simplification (hide switch-per-page, stack vertically), query region default-collapsed, pagination simplification; M4c chart container-width height clamp + wrapping legend (ResizeObserver, fixed-height fallback). Switch viewport in DevTools to compare.',
   },
+  {
+    id: 'm5-showcase',
+    title: 'Mobile Component Showcase',
+    eyebrow: 'All Mobile (M1–M5)',
+    description:
+      'Comprehensive mobile showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers — all in one page.',
+  },
+  {
+    id: 'data-verify',
+    title: 'Data Source Verify',
+    eyebrow: 'Mechanism Test',
+    description: 'Minimal data-source + fetcher + loop mechanism verification.',
+  },
 ];
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

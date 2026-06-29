@@ -281,6 +281,13 @@ export function createRuntimeSourceRegistry(input: {
       targetPath,
       statusPath,
       dispose() {
+        // Do NOT call clearOwner here. Under React.StrictMode, the in-flight
+        // request may still be processing when dispose runs. clearOwner would
+        // delete the owner, causing settleRun to recreate it with a fresh
+        // activeHandles count, which breaks the second mount's isCurrentRun.
+        // Instead, let beginRun on the second mount naturally supersede via
+        // previousCurrent.supersededBy.
+
         if (abortController.signal.aborted) {
           return;
         }
@@ -295,7 +302,6 @@ export function createRuntimeSourceRegistry(input: {
         }
 
         currentBucket.delete(args.id);
-        input.asyncGovernance?.clearOwner(`data-source:${ownerScopeId}:${args.id}`);
         if (entry.name && nameIndex.get(entry.name) === entry) {
           nameIndex.delete(entry.name);
         }

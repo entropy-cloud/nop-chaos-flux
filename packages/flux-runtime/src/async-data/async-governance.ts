@@ -27,6 +27,11 @@ function summarizeError(error: unknown): AsyncErrorSummary | undefined {
 
 interface AsyncGovernanceOwnerRecord extends AsyncOwnerDebugState {
   nextRunId: number;
+  /** Tracks active (not yet settled) handles per runId.
+   *  Under React.StrictMode, two mounts share the same runId. Without
+   *  reference counting, settling the first mount's handle would clear
+   *  currentRun, causing the second mount's isCurrentRun to fail. */
+  activeHandles: Map<number, number>;
 }
 
 const DEFAULT_RETENTION = 8;
@@ -54,6 +59,7 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
       scopeId: input.scopeId,
       recentRuns: [],
       nextRunId: 1,
+      activeHandles: new Map(),
     };
     owners.set(input.ownerId, created);
     return created;
@@ -84,6 +90,7 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
       }
 
       owner.currentRun = currentRun;
+      owner.activeHandles.set(runId, (owner.activeHandles.get(runId) ?? 0) + 1);
 
       return {
         runId,
@@ -120,7 +127,14 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
     },
 
     isCurrentRun(handle) {
-      return owners.get(handle.ownerId)?.currentRun?.runId === handle.runId;
+      const owner = owners.get(handle.ownerId);
+      if (!owner) return false;
+      // A run is "current" if its runId matches AND at least one handle for
+      // this runId is still active (not yet settled). This prevents StrictMode's
+      // shared-runId double-mount from failing the check when the first mount's
+      // settleRun clears currentRun.
+      return owner.currentRun?.runId === handle.runId
+        && (owner.activeHandles.get(handle.runId) ?? 0) > 0;
     },
 
     settleRun(handle, input) {
@@ -144,7 +158,11 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
       appendRecentRun(owner, settled);
 
       if (!stale) {
-        owner.currentRun = settled.outcome === 'running' ? settled : undefined;
+        const remaining = (owner.activeHandles.get(settled.runId) ?? 1) - 1;
+        owner.activeHandles.set(settled.runId, remaining);
+        if (remaining <= 0) {
+          owner.currentRun = settled.outcome === 'running' ? settled : undefined;
+        }
       }
 
       return settled;

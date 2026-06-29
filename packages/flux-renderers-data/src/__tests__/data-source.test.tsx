@@ -1,4 +1,5 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
@@ -224,5 +225,33 @@ describe('dataRendererDefinitions data-source behavior', () => {
     );
     await waitFor(() => expect(screen.getByText('Value: cached')).toBeTruthy());
     expect(fetcherSpy.mock.calls.length).toBeGreaterThan(firstRenderCallCount);
+  });
+
+  it('works under React.StrictMode double-mount', async () => {
+    cleanup();
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      data: { name: 'Alice' },
+    })) as RendererEnv['fetcher'];
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <React.StrictMode>
+        <SchemaRenderer
+          schemaUrl="test://data/data-source-strict"
+          schema={{
+            type: 'page',
+            body: [
+              { type: 'data-source', action: 'ajax', args: { url: '/api/user/1' }, name: 'user' },
+              { type: 'text', text: 'Hello, ${user?.name}' },
+            ],
+          }}
+          env={{ ...env, fetcher }}
+          formulaCompiler={formulaCompiler}
+        />
+      </React.StrictMode>,
+    );
+    await waitFor(() => expect(fetcher).toHaveBeenCalled(), { timeout: 10000 });
+    await waitFor(() => expect(screen.getByText('Hello, Alice')).toBeTruthy(), { timeout: 10000 });
   });
 });

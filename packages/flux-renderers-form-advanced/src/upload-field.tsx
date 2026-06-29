@@ -286,7 +286,10 @@ export function UploadFieldRenderer(
   }
 
   function removeExisting(index: number) {
-    const next = existingItems().filter((_, idx) => idx !== index);
+    // H26: read from the committed-value ref (consistent with commitItems) so a
+    // removal landing in the commit→re-render window does not operate on a stale
+    // reactive `value` snapshot and lose/revive a just-completed upload.
+    const next = committedItems().filter((_, idx) => idx !== index);
     commitItems(next);
   }
 

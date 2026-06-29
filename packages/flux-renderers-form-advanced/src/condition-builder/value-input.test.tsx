@@ -124,14 +124,27 @@ describe('ValueInput', () => {
     expect(inputs.length).toBe(2);
   });
 
-  it('calls onChange with undefined when between has incomplete values', () => {
+  it('preserves the surviving side when one between slot is cleared (H3)', () => {
     const onChange = vi.fn();
     const { container } = render(
       <ValueInput field={numberField} op="between" value={[10, 20]} onChange={onChange} />,
     );
     const inputs = container.querySelectorAll('input[type="number"]');
     fireEvent.change(inputs[0], { target: { value: '' } });
-    expect(onChange).toHaveBeenCalledWith(undefined);
+    // Clearing start must NOT nuke the whole range to undefined; the surviving
+    // end value (20) is kept in a half-range tuple (sanitizeRight keeps the
+    // array as long as one side is defined).
+    expect(onChange).toHaveBeenCalledWith([undefined, 20]);
+  });
+
+  it('collapses to undefined only when both between slots are cleared (H3)', () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <ValueInput field={numberField} op="between" value={[undefined, 20]} onChange={onChange} />,
+    );
+    const inputs = container.querySelectorAll('input[type="number"]');
+    fireEvent.change(inputs[1], { target: { value: '' } });
+    expect(onChange).toHaveBeenCalledWith([undefined, undefined]);
   });
 
   it('calls onChange with array when between has both values', () => {

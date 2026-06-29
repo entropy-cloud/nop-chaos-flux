@@ -80,3 +80,32 @@ function conditionValueEqual(left: unknown, right: unknown): boolean {
 export function groupValuesEqual(a: unknown, b: unknown): boolean {
   return conditionValueEqual(a, b);
 }
+
+/**
+ * Rewrite a single condition item's `right` value, matched by id. Short-circuits
+ * on the FIRST matching item (DFS): item ids are expected to be unique, but if
+ * two items ever collide on an id, only the first is rewritten so the survivor
+ * is not silently cross-written (串值) with the other's value (H29).
+ */
+export function rewriteItemRight(
+  group: ConditionGroupValue,
+  itemId: string,
+  right: unknown,
+): ConditionGroupValue {
+  let resolved = false;
+  const walk = (node: ConditionGroupValue): ConditionGroupValue => ({
+    ...node,
+    children: node.children.map((child) => {
+      if (resolved) return child;
+      if ('children' in child) {
+        return walk(child);
+      }
+      if (child.id !== itemId) {
+        return child;
+      }
+      resolved = true;
+      return { ...child, right };
+    }),
+  });
+  return walk(group);
+}

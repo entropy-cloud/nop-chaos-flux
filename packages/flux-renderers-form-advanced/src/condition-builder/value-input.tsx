@@ -466,13 +466,13 @@ function BetweenInput({
         value={arr[0]}
         disabled={disabled}
         onChange={(v) => {
+          // Preserve the surviving side when one slot is cleared: emit the
+          // tuple with an `undefined` slot (sanitizeRight keeps the array as
+          // long as one side is defined) instead of nuking the whole range to
+          // `undefined` and silently destroying the entered value.
           const left = clean(v);
           const right = clean(arr[1]);
-          if (left !== undefined && right !== undefined) {
-            onChange([left, right]);
-          } else {
-            onChange(undefined);
-          }
+          onChange([left, right]);
         }}
       />
       <span className="text-muted-foreground text-xs select-none">~</span>
@@ -485,11 +485,7 @@ function BetweenInput({
         onChange={(v) => {
           const left = clean(arr[0]);
           const right = clean(v);
-          if (left !== undefined && right !== undefined) {
-            onChange([left, right]);
-          } else {
-            onChange(undefined);
-          }
+          onChange([left, right]);
         }}
       />
     </div>

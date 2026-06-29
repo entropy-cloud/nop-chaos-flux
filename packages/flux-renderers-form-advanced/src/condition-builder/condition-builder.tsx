@@ -25,7 +25,7 @@ import type {
 } from './types.js';
 import { ConditionGroup } from './condition-group.js';
 import { genId } from './id-utils.js';
-import { groupValuesEqual, sanitizeNode, sanitizeRight } from './utils.js';
+import { groupValuesEqual, rewriteItemRight, sanitizeNode, sanitizeRight } from './utils.js';
 
 import { createProjectedInlineForm } from '../composite-field/projected-inline-form.js';
 import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime.js';
@@ -156,19 +156,58 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     },
     [handlers],
   );
+  // Keep the latest syncValue in a ref so cached projection instances can call
+  // it without capturing a churny closure (handlers identity churns each render,
+  // which would otherwise reset the projection cache every render — H30). The
+  // ref is updated in an effect, which is safe because projections invoke it on
+  // user interaction (after the effect has flushed).
+  const syncValueRef = useRef(syncValue);
+  useEffect(() => {
+    syncValueRef.current = syncValue;
+  }, [syncValue]);
 
   const disabled = presentation.effectiveDisabled || presentation.fieldState.submitting;
 
+  // H30: projected form/scope/validation instances are stable per item across
+  // renders. `effectiveValue` is rebuilt every render (sanitizeNode), so child
+  // identity churns; the cache keys each projection by item id and reuses the
+  // cached instance as long as the item's `right` value is unchanged (deep
+  // equality via groupValuesEqual). When `right` changes the projection is
+  // rebuilt with the fresh item, so the editor never sees stale data; when it is
+  // unchanged the same instance is returned, so downstream memoization stays
+  // effective (no per-render churn). The cache itself resets whenever an input
+  // that changes projection identity changes (useMemo deps below).
+  const projectionCaches = React.useMemo(() => {
+    // These inputs define projection identity; referencing them makes the
+    // reset-on-change intent explicit (when any changes, the cache is rebuilt
+    // so instances wrapping the old parent/scope are discarded).
+    void currentForm;
+    void currentValidationScope;
+    void scope;
+    void name;
+    void disabled;
+    return {
+      form: new Map<string, { instance: FormRuntime | undefined; right: unknown }>(),
+      scope: new Map<string, { instance: ScopeRef; right: unknown }>(),
+      validation: new Map<string, ValidationScopeRuntime | undefined>(),
+    };
+  }, [currentForm, currentValidationScope, scope, name, disabled]);
+
   const createItemScope = useCallback(
-    (item: ConditionItemValue): ScopeRef =>
-      createProjectedOwnerScope({
+    (item: ConditionItemValue): ScopeRef => {
+      const id = item.id;
+      const cached = projectionCaches.scope.get(id);
+      if (cached && groupValuesEqual(cached.right, item.right)) {
+        return cached.instance;
+      }
+      const projected = createProjectedOwnerScope({
         parentScope: scope,
-        scopeId: `${scope.id}:condition-builder:${item.id}`,
-        scopePath: `${scope.path}.${name || '$conditionBuilder'}.${item.id}.value`,
+        scopeId: `${scope.id}:condition-builder:${id}`,
+        scopePath: `${scope.path}.${name || '$conditionBuilder'}.${id}.value`,
         readOnly: disabled,
         getValue: () => item.right,
         setValue(nextValue) {
-          syncValue(rewriteItemRight(valueRef.current, item.id, nextValue));
+          syncValueRef.current(rewriteItemRight(valueRef.current, id, nextValue));
         },
         getExtraPayload: () => ({ field: item.left.field, op: item.op, disabled }),
         getNestedValue(path) {
@@ -178,35 +217,44 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
           return readNestedPath(item.right, path) !== undefined;
         },
         setNestedValue(path, nextValue) {
-          syncValue(rewriteItemRight(valueRef.current, item.id, setNestedPath(item.right, path, nextValue)));
+          syncValueRef.current(rewriteItemRight(valueRef.current, id, setNestedPath(item.right, path, nextValue)));
         },
         merge(data) {
           if (data && typeof data === 'object' && 'value' in (data as Record<string, unknown>)) {
-            syncValue(rewriteItemRight(valueRef.current, item.id, (data as Record<string, unknown>).value));
+            syncValueRef.current(rewriteItemRight(valueRef.current, id, (data as Record<string, unknown>).value));
             return;
           }
 
-          syncValue(rewriteItemRight(valueRef.current, item.id, data));
+          syncValueRef.current(rewriteItemRight(valueRef.current, id, data));
         },
         replace(data) {
           if (data && typeof data === 'object' && 'value' in (data as Record<string, unknown>)) {
-            syncValue(rewriteItemRight(valueRef.current, item.id, (data as Record<string, unknown>).value));
+            syncValueRef.current(rewriteItemRight(valueRef.current, id, (data as Record<string, unknown>).value));
             return;
           }
 
-          syncValue(rewriteItemRight(valueRef.current, item.id, data));
+          syncValueRef.current(rewriteItemRight(valueRef.current, id, data));
         },
-      }),
-    [disabled, name, scope, syncValue],
+      });
+      projectionCaches.scope.set(id, { instance: projected, right: item.right });
+      return projected;
+    },
+    [disabled, name, scope, projectionCaches],
   );
 
   const createItemForm = useCallback(
     (item: ConditionItemValue): FormRuntime | undefined => {
+      const id = item.id;
+      const cached = projectionCaches.form.get(id);
+      if (cached && groupValuesEqual(cached.right, item.right)) {
+        return cached.instance;
+      }
       if (!currentForm) {
+        projectionCaches.form.set(id, { instance: undefined, right: item.right });
         return undefined;
       }
 
-      return createProjectedInlineForm({
+      const form = createProjectedInlineForm({
         parentForm: currentForm,
         ownerRootPath: name,
         prefixPath(path) {
@@ -222,29 +270,34 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
         },
         setValue(path, nextValue) {
           if (!path || path === 'value') {
-            syncValue(rewriteItemRight(valueRef.current, item.id, nextValue));
+            syncValueRef.current(rewriteItemRight(valueRef.current, id, nextValue));
             return;
           }
 
-          syncValue(rewriteItemRight(valueRef.current, item.id, setNestedPath(item.right, path, nextValue)));
+          syncValueRef.current(rewriteItemRight(valueRef.current, id, setNestedPath(item.right, path, nextValue)));
         },
         setValues(values) {
           if ('value' in values) {
-            syncValue(rewriteItemRight(valueRef.current, item.id, values.value));
+            syncValueRef.current(rewriteItemRight(valueRef.current, id, values.value));
           }
         },
       });
+      projectionCaches.form.set(id, { instance: form, right: item.right });
+      return form;
     },
-    [currentForm, name, syncValue],
+    [currentForm, name, projectionCaches],
   );
 
   const createItemValidationOwner = useCallback(
-    (_item: ConditionItemValue): ValidationScopeRuntime | undefined => {
+    (item: ConditionItemValue): ValidationScopeRuntime | undefined => {
+      const id = item.id;
+      const cached = projectionCaches.validation.get(id);
+      if (cached) return cached;
       if (!currentValidationScope || !name) {
         return undefined;
       }
 
-      return createProjectedValidationRuntime(currentValidationScope, {
+      const projected = createProjectedValidationRuntime(currentValidationScope, {
         ownerRootPath: name,
         prefixPath(path) {
           if (path === 'value') {
@@ -255,8 +308,10 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
         },
         scalarValueAlias: 'value',
       });
+      projectionCaches.validation.set(id, projected);
+      return projected;
     },
-    [currentValidationScope, name],
+    [currentValidationScope, name, projectionCaches],
   );
 
   const renderCustomSchema = useCallback(
@@ -336,26 +391,6 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
       />
     </div>
   );
-}
-
-function rewriteItemRight(group: ConditionGroupValue, itemId: string, right: unknown): ConditionGroupValue {
-  return {
-    ...group,
-    children: group.children.map((child) => {
-      if ('children' in child) {
-        return rewriteItemRight(child, itemId, right);
-      }
-
-      if (child.id !== itemId) {
-        return child;
-      }
-
-      return {
-        ...child,
-        right,
-      };
-    }),
-  };
 }
 
 function readNestedPath(value: unknown, path: string): unknown {

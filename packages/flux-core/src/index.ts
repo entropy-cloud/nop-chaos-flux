@@ -78,3 +78,17 @@ export type {
 export type { StructuralLoopBindings, StructuralLoopRenderContext } from './types/renderer-hooks.js';
 
 export { isAbortError, buildScopeChain } from './runtime-inspection.js';
+
+export {
+  findUnreferencedContracts,
+  isRendererEventKeyReferenced,
+  isCapabilityHandleReferenced,
+  buildPerRendererSourceResolver,
+} from './contract-honesty.js';
+export type {
+  ContractHonestyViolation,
+  ContractHonestySources,
+  ContractHonestySourceResolver,
+  ContractHonestySourceFile,
+  ContractHonestyHandleFactory,
+} from './contract-honesty.js';

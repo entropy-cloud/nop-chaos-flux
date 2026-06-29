@@ -262,4 +262,14 @@ export function executeArrayMutation(ctx: {
     ctx.revalidateDependents(ctx.arrayPath, 'change'),
     ctx.reportDependentRevalidationFailure ?? defaultReportDependentRevalidationFailure,
   );
+  // AUDIT-07 contract: a structural array mutation does NOT self-validate the
+  // array root's aggregate rules (uniqueBy / atLeastOneFilled / minItems / max).
+  // `revalidateDependents` deliberately skips `path === arrayPath`, so aggregate
+  // rules are only re-checked when the caller explicitly validates the root.
+  // All composite-editor callers (combo / key-value / input-table / array-editor
+  // / array-field) comply: they call `validateField(name)` / `validateSubtree
+  // (name)` (gated on validateOn) right after the mutation. Validating here
+  // unconditionally would publish errors on mutation regardless of validateOn,
+  // breaking submit-only validation. Any NEW caller of the runtime array API
+  // must validate the root itself.
 }

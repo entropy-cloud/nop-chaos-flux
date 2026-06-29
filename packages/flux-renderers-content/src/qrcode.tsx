@@ -39,6 +39,11 @@ export function QrCodeRenderer(props: RendererComponentProps<QrCodeSchema>) {
   const [failed, setFailed] = React.useState(false);
 
   // Render the QR matrix onto the canvas whenever inputs change.
+  // AUDIT-13 exemption: QRCode.toCanvas has no AbortSignal support, so this
+  // decoration/preview render uses a bare `cancelled` closure flag to suppress
+  // stale result handling. The canvas draw is idempotent (a newer render simply
+  // overwrites the stale frame), so there is no user-visible data-integrity
+  // impact; only the error-state side effect is guarded.
   React.useEffect(() => {
     setFailed(false);
     if (!canvasRef.current || valueStr.length === 0) {

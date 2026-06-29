@@ -1,0 +1,400 @@
+{
+  "type": "page",
+  "testid": "showcase-app",
+  "body": [
+    {
+      "type": "scope-debug",
+      "testid": "scope-debug"
+    },
+    {
+      "type": "data-source",
+      "name": "ds_products",
+      "action": "ajax",
+      "args": { "url": "/api/products" },
+      "resultMapping": { "data": "${payload}" },
+      "initialData": [],
+      "silent": true
+    },
+    {
+      "type": "data-source",
+      "name": "ds_categories",
+      "action": "ajax",
+      "args": { "url": "/api/categories" },
+      "resultMapping": { "data": "${payload}" },
+      "initialData": [],
+      "silent": true
+    },
+    {
+      "type": "data-source",
+      "name": "ds_cart",
+      "action": "ajax",
+      "args": { "url": "/api/cart" },
+      "resultMapping": { "data": "${payload}" },
+      "initialData": [],
+      "silent": true
+    },
+    {
+      "type": "data-source",
+      "name": "ds_profile",
+      "action": "ajax",
+      "args": { "url": "/api/profile" },
+      "resultMapping": { "data": "${payload}" },
+      "initialData": null,
+      "silent": true
+    },
+    {
+      "type": "data-source",
+      "name": "ds_orders",
+      "action": "ajax",
+      "args": { "url": "/api/orders" },
+      "resultMapping": { "data": "${payload}" },
+      "initialData": [],
+      "silent": true
+    },
+    {
+      "type": "tabs",
+      "testid": "showcase-app-tabs",
+      "valueOwnership": "scope",
+      "valueStatePath": "currentTab",
+      "items": [
+        {
+          "key": "home",
+          "title": "首页",
+          "body": [
+            {
+              "type": "notice-bar",
+              "testid": "showcase-home-notice",
+              "text": "🎉 全场满 500 减 50，限时优惠进行中！",
+              "variant": "info",
+              "closable": true
+            },
+            {
+              "type": "tabs",
+              "testid": "showcase-home-inner-tabs",
+              "items": [
+                {
+                  "key": "recommend",
+                  "title": "推荐",
+                  "body": [
+                    {
+                      "type": "pull-refresh",
+                      "testid": "showcase-home-refresh",
+                      "threshold": 50,
+                      "pullingText": "下拉刷新",
+                      "loosingText": "释放立即刷新",
+                      "loadingText": "加载中...",
+                      "successText": "刷新成功",
+                      "onRefresh": {
+                        "action": "ajax",
+                        "args": { "url": "/api/products?refresh=1" },
+                        "resultMapping": { "data": "${payload}" }
+                      },
+                      "body": [
+                        {
+                          "type": "loop",
+                          "items": "${ds_products?.data}",
+                          "body": [
+                            {
+                              "type": "flex",
+                              "gap": 12,
+                              "align": "center",
+                              "className": "p-3 border-b border-border/40",
+                              "body": [
+                                { "type": "image", "src": "${$slot.item.img}", "alt": "${$slot.item.name}", "className": "w-16 h-16 rounded-lg object-cover shrink-0" },
+                                {
+                                  "type": "flex",
+                                  "direction": "column",
+                                  "gap": 4,
+                                  "className": "flex-1 min-w-0",
+                                  "body": [
+                                    {
+                                      "type": "flex",
+                                      "align": "center",
+                                      "gap": 6,
+                                      "body": [
+                                        { "type": "text", "text": "${$slot.item.name}", "className": "font-medium text-sm truncate" },
+                                        { "type": "badge", "text": "${$slot.item.tag}", "level": "danger" }
+                                      ]
+                                    },
+                                    { "type": "text", "text": "${$slot.item.price}", "className": "text-red-500 font-bold text-sm" }
+                                  ]
+                                },
+                                {
+                                  "type": "button",
+                                  "label": "加入购物车",
+                                  "size": "sm",
+                                  "className": "shrink-0",
+                                  "onClick": {
+                                    "action": "ajax",
+                                    "args": { "url": "/api/cart/add", "method": "POST", "data": "${$slot.item}" },
+                                    "onSuccess": { "action": "notify", "args": { "level": "success", "message": "已加入购物车" } }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "key": "hot",
+                  "title": "热门",
+                  "body": [
+                    {
+                      "type": "loop",
+                      "items": "${ds_products?.data}",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "gap": 12,
+                          "align": "center",
+                          "className": "p-3 border-b border-border/40",
+                          "body": [
+                            { "type": "image", "src": "${$slot.item.img}", "alt": "${$slot.item.name}", "className": "w-14 h-14 rounded-lg object-cover shrink-0" },
+                            { "type": "text", "text": "${$slot.item.name}", "className": "text-sm flex-1" },
+                            { "type": "text", "text": "${$slot.item.price}", "className": "text-red-500 font-bold text-sm" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "key": "new",
+                  "title": "新品",
+                  "body": [
+                    {
+                      "type": "notice-bar",
+                      "text": "🆕 本周新品上架，限量抢购！",
+                      "variant": "info"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "category",
+          "title": "分类",
+          "body": [
+            { "type": "text", "text": "商品分类", "className": "font-bold p-3 pb-0" },
+            {
+              "type": "loop",
+              "items": "${ds_categories?.data}",
+              "body": [
+                {
+                  "type": "flex",
+                  "justify": "between",
+                  "align": "center",
+                  "className": "p-3 border-b border-border/40 nop-haptic",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "align": "center",
+                      "gap": 12,
+                      "body": [
+                        { "type": "icon", "icon": "${$slot.item.icon}", "className": "text-primary" },
+                        { "type": "text", "text": "${$slot.item.name}", "className": "text-sm" }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "align": "center",
+                      "gap": 4,
+                      "body": [
+                        { "type": "text", "text": "${$slot.item.count}", "className": "text-xs text-muted-foreground" },
+                        { "type": "icon", "icon": "chevron-right", "className": "text-muted-foreground" }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "cart",
+          "title": "购物车",
+          "body": [
+            {
+              "type": "flex",
+              "justify": "between",
+              "align": "center",
+              "className": "px-3 py-2",
+              "body": [
+                { "type": "text", "text": "", "className": "w-11" },
+                { "type": "text", "text": "购物车 (${(ds_cart?.data)?.length ?? 0})", "className": "flex-1 text-center font-medium" },
+                { "type": "button", "variant": "ghost", "label": "编辑" }
+              ]
+            },
+            {
+              "type": "loop",
+              "items": "${ds_cart?.data}",
+              "empty": { "type": "empty", "description": "购物车是空的，去首页看看吧" },
+              "body": [
+                {
+                  "type": "flex",
+                  "gap": 12,
+                  "align": "center",
+                  "className": "p-3 border-b border-border/40",
+                  "body": [
+                    { "type": "checkbox", "name": "cart-${$slot.item.id}", "option": { "label": "" }, "className": "shrink-0" },
+                    { "type": "image", "src": "${$slot.item.img}", "alt": "${$slot.item.name}", "className": "w-16 h-16 rounded-lg object-cover shrink-0" },
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 4,
+                      "className": "flex-1 min-w-0",
+                      "body": [
+                        { "type": "text", "text": "${$slot.item.name}", "className": "text-sm font-medium truncate" },
+                        { "type": "text", "text": "${$slot.item.price}", "className": "text-red-500 font-bold text-sm" }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "align": "center",
+                      "gap": 8,
+                      "body": [
+                        { "type": "button", "label": "-", "size": "sm", "variant": "outline" },
+                        { "type": "text", "text": "${$slot.item.qty}", "className": "text-sm w-6 text-center" },
+                        { "type": "button", "label": "+", "size": "sm", "variant": "outline" }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            { "type": "separator" },
+            {
+              "type": "flex",
+              "justify": "between",
+              "align": "center",
+              "className": "px-3 py-2",
+              "body": [
+                { "type": "checkbox", "name": "selectAll", "option": { "label": "全选" } },
+                { "type": "flex", "align": "center", "items": [{ "type": "text", "text": "合计：", "className": "text-sm" }, { "type": "text", "text": "¥${cartTotal}", "className": "text-red-500 font-bold" }] },
+                {
+                  "type": "button",
+                  "variant": "default",
+                  "label": "结算(${(ds_cart?.data)?.length ?? 0})",
+                  "className": "h-12 px-6 nop-haptic",
+                  "onClick": {
+                    "action": "ajax",
+                    "args": { "url": "/api/order/submit", "method": "POST" },
+                    "onSuccess": { "action": "notify", "args": { "level": "success", "message": "订单提交成功！" } }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "profile",
+          "title": "我的",
+          "body": [
+            {
+              "type": "flex",
+              "gap": 16,
+              "align": "center",
+              "className": "p-4 bg-gradient-to-r from-primary/10 to-primary/5",
+              "body": [
+                { "type": "image", "src": "${(ds_profile?.data)?.avatar}", "alt": "头像", "className": "w-16 h-16 rounded-full object-cover" },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 4,
+                  "body": [
+                    { "type": "text", "text": "${(ds_profile?.data)?.name}", "className": "font-bold text-lg" },
+                    { "type": "text", "text": "${(ds_profile?.data)?.level} · 积分 ${(ds_profile?.data)?.points}", "className": "text-xs text-muted-foreground" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "justify": "around",
+              "className": "py-4 border-b border-border/40",
+              "body": [
+                { "type": "flex", "direction": "column", "align": "center", "body": [{ "type": "text", "text": "${(ds_profile?.data)?.orders?.pendingPayment ?? 0}", "className": "font-bold text-lg" }, { "type": "text", "text": "待付款", "className": "text-xs text-muted-foreground" }] },
+                { "type": "flex", "direction": "column", "align": "center", "body": [{ "type": "text", "text": "${(ds_profile?.data)?.orders?.pendingShipment ?? 0}", "className": "font-bold text-lg" }, { "type": "text", "text": "待发货", "className": "text-xs text-muted-foreground" }] },
+                { "type": "flex", "direction": "column", "align": "center", "body": [{ "type": "text", "text": "${(ds_profile?.data)?.orders?.pendingReceipt ?? 0}", "className": "font-bold text-lg" }, { "type": "text", "text": "待收货", "className": "text-xs text-muted-foreground" }] },
+                { "type": "flex", "direction": "column", "align": "center", "body": [{ "type": "text", "text": "${(ds_profile?.data)?.orders?.returnExchange ?? 0}", "className": "font-bold text-lg" }, { "type": "text", "text": "退换/售后", "className": "text-xs text-muted-foreground" }] }
+              ]
+            },
+            { "type": "separator" },
+            {
+              "type": "collapse",
+              "testid": "showcase-profile-collapse",
+              "items": [
+                {
+                  "title": "📋 我的订单",
+                  "body": [
+                    {
+                      "type": "loop",
+                      "items": "${ds_orders?.data}",
+                      "empty": { "type": "text", "text": "暂无订单" },
+                      "body": [
+                        {
+                          "type": "flex",
+                          "justify": "between",
+                          "align": "center",
+                          "className": "py-2",
+                          "body": [
+                            { "type": "text", "text": "订单 #${$slot.item.orderNo}", "className": "text-sm" },
+                            { "type": "text", "text": "${$slot.item.statusText}", "className": "text-xs ${$slot.item.statusClass}" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "title": "⚙️ 账户设置",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 0,
+                      "className": "p-2",
+                      "body": [
+                        { "type": "flex", "justify": "between", "align": "center", "className": "py-2", "body": [{ "type": "text", "text": "通知设置", "className": "text-sm" }, { "type": "switch", "name": "notifications" }] },
+                        { "type": "flex", "justify": "between", "align": "center", "className": "py-2", "body": [{ "type": "text", "text": "深色模式", "className": "text-sm" }, { "type": "switch", "name": "darkMode" }] }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            { "type": "separator" },
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 0,
+              "body": [
+                { "type": "flex", "justify": "between", "align": "center", "className": "p-3", "body": [{ "type": "text", "text": "帮助中心", "className": "text-sm" }, { "type": "icon", "icon": "chevron-right", "className": "text-muted-foreground" }] },
+                { "type": "flex", "justify": "between", "align": "center", "className": "p-3", "body": [{ "type": "text", "text": "联系客服", "className": "text-sm" }, { "type": "icon", "icon": "chevron-right", "className": "text-muted-foreground" }] },
+                { "type": "flex", "justify": "between", "align": "center", "className": "p-3", "body": [{ "type": "text", "text": "关于我们", "className": "text-sm" }, { "type": "icon", "icon": "chevron-right", "className": "text-muted-foreground" }] }
+              ]
+            },
+            { "type": "empty", "testid": "showcase-profile-empty", "description": "暂无更多内容" }
+          ]
+        }
+      ]
+    }
+  ],
+  "footerClassName": "nop-tabbar fixed bottom-0 inset-x-0 nop-safe-bottom bg-background border-t z-50",
+  "footer": {
+    "type": "flex",
+    "justify": "around",
+    "className": "h-14",
+    "items": [
+      { "type": "button", "variant": "ghost", "className": "flex-col h-14 w-16 nop-haptic", "label": "首页", "icon": "home", "testid": "tabbar-home", "onClick": { "action": "setValue", "args": { "path": "currentTab", "value": "home" } } },
+      { "type": "button", "variant": "ghost", "className": "flex-col h-14 w-16 nop-haptic", "label": "分类", "icon": "grid", "testid": "tabbar-category", "onClick": { "action": "setValue", "args": { "path": "currentTab", "value": "category" } } },
+      { "type": "button", "variant": "ghost", "className": "flex-col h-14 w-16 nop-haptic", "label": "购物车", "icon": "shopping-cart", "testid": "tabbar-cart", "onClick": { "action": "setValue", "args": { "path": "currentTab", "value": "cart" } } },
+      { "type": "button", "variant": "ghost", "className": "flex-col h-14 w-16 nop-haptic", "label": "我的", "icon": "user", "testid": "tabbar-profile", "onClick": { "action": "setValue", "args": { "path": "currentTab", "value": "profile" } } }
+    ]
+  }
+}

@@ -27,6 +27,7 @@ import { isAbortError } from './error-utils.js';
 import { collectSubtreeValidationTargets } from './form-runtime-subtree.js';
 import {
   cancelValidationDebounce,
+  isLifecycleTransitional,
   validatePath,
   validateSubtreeByNode,
   waitForActiveLifecycle,
@@ -158,7 +159,10 @@ export function buildFormOwnerRuntime(input: {
       const existingFieldState = fieldStates[dependentPath];
 
       const nextFieldState: FieldState = { ...existingFieldState };
-      delete nextFieldState.validating;
+      // AUDIT-15: do NOT pre-clear `validating` here. Clearing it before
+      // batchUpdate opened a microtask flicker where async fields briefly showed
+      // not-validating before validateField (below) re-entered its validating
+      // lifecycle. validateField owns the validating flag for the whole run.
       if (isDirty) {
         nextFieldState.dirty = true;
       } else {
@@ -344,7 +348,10 @@ export function buildFormOwnerRuntime(input: {
 
     let currentValidation = input.getCurrentValidation();
 
-    if (!currentValidation) {
+    // AUDIT-14: gate on lifecycle even when a compiled model already exists,
+    // mirroring validatePath (which always checks isLifecycleTransitional).
+    // Previously this waited only when no model was compiled yet.
+    if (!currentValidation || isLifecycleTransitional(input.sharedState)) {
       const lifecycleActive = await waitForActiveLifecycle(input.sharedState);
       if (!lifecycleActive) {
         return createLifecycleBlockedValidationResult();
@@ -563,14 +570,19 @@ export function buildFormOwnerRuntime(input: {
 
     let currentValidation = input.getCurrentValidation();
 
-    if (!currentValidation) {
+    // AUDIT-14: gate on lifecycle even when a compiled model exists, mirroring
+    // validatePath (which always checks isLifecycleTransitional). Previously
+    // this waited only when no model was compiled yet.
+    if (!currentValidation || isLifecycleTransitional(input.sharedState)) {
       const lifecycleActive = await waitForActiveLifecycle(input.sharedState);
       if (!lifecycleActive) {
         return createLifecycleBlockedValidationResult();
       }
 
       currentValidation = input.getCurrentValidation();
+    }
 
+    if (!currentValidation) {
       const targetPaths = collectSubtreeValidationTargets(input.sharedState, path);
       if (targetPaths.length === 0) {
         return {
@@ -603,7 +615,7 @@ export function buildFormOwnerRuntime(input: {
       } as FormValidationResult;
     }
 
-    const nodeResult = await validateSubtreeByNode(input.sharedState, path, reason);
+    const nodeResult = await validateSubtreeByNode(input.sharedState, path, reason, options);
 
     if (nodeResult) {
       return nodeResult;

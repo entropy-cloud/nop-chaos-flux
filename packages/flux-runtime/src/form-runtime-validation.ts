@@ -62,7 +62,7 @@ function createBlockedValidationResult(
   };
 }
 
-function isLifecycleTransitional(state: FormRuntimeValidationState): boolean {
+export function isLifecycleTransitional(state: FormRuntimeValidationState): boolean {
   return state.lifecycleState === 'bootstrapping' || state.lifecycleState === 'refreshing';
 }
 
@@ -563,6 +563,7 @@ export async function validateSubtreeByNode(
   sharedState: FormRuntimeValidationState,
   path: string,
   reason?: ValidationReason,
+  options?: { signal?: AbortSignal },
 ): Promise<FormValidationResult | undefined> {
   if (!hasCompiledValidationNodes(sharedState.inputValue.validation)) {
     return undefined;
@@ -579,8 +580,11 @@ export async function validateSubtreeByNode(
   const fieldErrors: Record<string, ValidationError[]> = {};
 
   for (const targetPath of nodeTargets) {
+    if (options?.signal?.aborted) {
+      throw Object.assign(new Error('Validation aborted'), { name: 'AbortError' });
+    }
     remainingRuntimeTargets.delete(targetPath);
-    const result = await validatePath(sharedState, targetPath, reason);
+    const result = await validatePath(sharedState, targetPath, reason, options);
 
     if (!result.ok) {
       fieldErrors[targetPath] = result.errors;
@@ -589,7 +593,10 @@ export async function validateSubtreeByNode(
   }
 
   for (const targetPath of remainingRuntimeTargets) {
-    const result = await validatePath(sharedState, targetPath, reason);
+    if (options?.signal?.aborted) {
+      throw Object.assign(new Error('Validation aborted'), { name: 'AbortError' });
+    }
+    const result = await validatePath(sharedState, targetPath, reason, options);
 
     if (!result.ok) {
       fieldErrors[targetPath] = result.errors;

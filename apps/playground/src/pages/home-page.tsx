@@ -9,7 +9,8 @@ type NavigationTarget =
   | 'condition-builder'
   | 'code-editor'
   | 'word-editor'
-  | 'performance-table';
+  | 'performance-table'
+  | 'm5-showcase';
 import { Button } from '@nop-chaos/ui';
 
 interface NavCard {
@@ -96,6 +97,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Large Data Stress',
     description:
       'Same-environment comparative measurement page for a 1000-row paged table baseline plus nested loop cards, aggregate formulas, scope-backed selection/pagination, and many mounted editable controls.',
+  },
+  {
+    id: 'm5-showcase',
+    title: 'Mobile Showcase',
+    eyebrow: 'M1–M5 All Mobile',
+    description:
+      'Comprehensive mobile component showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers.',
   },
 ];
 

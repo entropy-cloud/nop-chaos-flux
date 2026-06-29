@@ -1169,6 +1169,13 @@ Flux validation uses the following architecture:
 7. partial validation is owner-scoped and path-aware
 8. draft validation is isolated until commit through explicit child-owner boundaries; in the supported detail path the renderer instantiates the child runtime at open time, while compiler/runtime metadata owns the boundary classification and parent-child coordination contract
 
+## Validation Lifecycle & Consistency Notes (2026-06-27)
+
+- **validateOn consistency**: composite editors (combo / key-value / input-table / array-editor / array-field) all gate add/move/remove revalidation on `shouldValidateOn(name, form, 'change')`. Remove uses `validateSubtree(name, 'change')`, add/move use `validateField(name, 'change')` — consistent across editors. (H27)
+- **Entry lifecycle gating**: `validateForm` and `validateSubtree` check `isLifecycleTransitional` and await `waitForActiveLifecycle` even when a compiled model already exists, mirroring `validatePath` (AUDIT-14). The compiled-model subtree path (`validateSubtreeByNode`) threads the caller `options.signal` end-to-end and aborts early per node (H28).
+- **validating flag ownership**: `revalidateDependents` no longer pre-clears `validating` before `batchUpdate`; `validateField` owns the validating lifecycle for the whole run, eliminating the microtask flicker on async fields (AUDIT-15).
+- **Array-mutation aggregate contract (AUDIT-07)**: a structural array mutation (`executeArrayMutation`) does NOT self-validate the array root's aggregate rules; `revalidateDependents` deliberately skips `path === arrayPath`. All composite-editor callers validate the root themselves (gated on `validateOn`) right after the mutation. Any new runtime-array API caller must validate the root itself.
+
 ## Related Documents
 
 - `docs/references/form-validation-runtime-types.md` — Complete TypeScript type definitions (companion reference)
