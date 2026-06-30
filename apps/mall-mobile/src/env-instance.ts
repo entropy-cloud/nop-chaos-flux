@@ -1,6 +1,7 @@
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createEnv } from './env';
 import { getToken } from './store';
+import { refreshAccessToken } from './auth/refresh';
 
 export function hashNavigate(to: string | number, options?: { replace?: boolean }): void {
   if (typeof to === 'string') {
@@ -40,6 +41,7 @@ export function getAppEnv(): RendererEnv {
   if (envSingleton) return envSingleton;
   envSingleton = createEnv({
     getToken,
+    refreshAccessToken,
     navigate: hashNavigate,
     onUnauthorized: () => {
       if (unauthorizedHandler) unauthorizedHandler();

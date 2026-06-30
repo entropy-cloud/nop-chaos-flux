@@ -3,35 +3,40 @@ import { useRoute, back } from './use-route';
 import { activeTabFromRoute, type TabKey, type AuthPageKey } from './route-model';
 import { useMallStore } from './store';
 import { getAppEnv } from './env-instance';
-import { TabView, AuthPlaceholder, PagePlaceholder } from './router-views';
+import { TabView, AuthView, PagePlaceholder } from './router-views';
 
 getAppEnv();
+
+function applyReturnTo(returnTo?: string) {
+  const dest = returnTo && returnTo !== '/' ? returnTo : '/tab/home';
+  const normalized = dest.startsWith('#') ? dest.slice(1) : dest;
+  window.location.hash = normalized;
+}
 
 export function App() {
   const [route, navigate] = useRoute();
   const cartBadge = useMallStore((s) => s.cartBadge);
 
-  const onTab = useCallback((tab: TabKey) => navigate({ kind: 'tab', tab }, { replace: true }), [navigate]);
-  const navigateAuth = useCallback(
-    (auth: AuthPageKey) => navigate({ kind: 'auth', auth }),
+  const onTab = useCallback(
+    (tab: TabKey) => navigate({ kind: 'tab', tab }, { replace: true }),
     [navigate],
   );
+  const navigateAuth = useCallback(
+    (auth: AuthPageKey, returnTo?: string) =>
+      navigate({ kind: 'auth', auth, ...(returnTo ? { returnTo } : {}) }),
+    [navigate],
+  );
+  const onLoggedIn = useCallback((returnTo?: string) => applyReturnTo(returnTo), []);
+  const onReset = useCallback(() => navigate({ kind: 'auth', auth: 'login' }), [navigate]);
 
   if (route.kind === 'auth') {
     return (
-      <AuthPlaceholder
+      <AuthView
         route={route}
         onBack={back}
         navigateAuth={navigateAuth}
-        onLogin={() => {
-          useMallStore.getState().setAuth({
-            accessToken: 'stub-token',
-            userInfo: { userId: 'stub', userName: 'stub' },
-          });
-          const dest = route.returnTo && route.returnTo !== '/' ? route.returnTo : '/tab/home';
-          const target = dest.startsWith('#') ? dest : `#${dest}`;
-          window.location.hash = target.startsWith('#') ? target.slice(1) : target;
-        }}
+        onLoggedIn={onLoggedIn}
+        onReset={onReset}
       />
     );
   }
@@ -40,14 +45,5 @@ export function App() {
     return <PagePlaceholder route={route} onBack={back} />;
   }
 
-  return (
-    <TabView
-      activeTab={activeTabFromRoute(route)}
-      cartBadge={cartBadge}
-      onTab={onTab}
-      onBack={back}
-      navigateAuth={navigateAuth}
-      onLogin={() => navigateAuth('login')}
-    />
-  );
+  return <TabView activeTab={activeTabFromRoute(route)} cartBadge={cartBadge} onTab={onTab} />;
 }

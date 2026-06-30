@@ -11,6 +11,7 @@ export interface NopEnvelope<T = unknown> {
 
 export interface EnvHooks {
   getToken?: () => string | null;
+  refreshAccessToken?: () => Promise<string | null>;
   onUnauthorized?: () => void;
   navigate?: (to: string | number, options?: { replace?: boolean }) => void;
   confirm?: (message: string, title?: string) => Promise<boolean>;
@@ -40,18 +41,22 @@ async function readResponseBody(res: Response): Promise<NopEnvelope | unknown> {
 }
 
 export function createFetcher(hooks: EnvHooks = {}) {
-  return async function fetcher<T = unknown>(
+  async function execute<T>(
     api: ExecutableApiRequest,
-    _ctx: ApiRequestContext,
+    options: { injectToken: boolean; forcedToken?: string },
   ): Promise<ApiResponse<T>> {
     const method = (api.method ?? 'post').toUpperCase();
     const headers: Record<string, string> = {
       Accept: 'application/json',
       ...(api.headers ?? {}),
     };
-    const token = hooks.getToken?.() ?? null;
-    if (token && !headers.Authorization && !headers.authorization) {
-      headers.Authorization = `Bearer ${token}`;
+    if (options.forcedToken) {
+      headers.Authorization = `Bearer ${options.forcedToken}`;
+    } else if (options.injectToken) {
+      const token = hooks.getToken?.() ?? null;
+      if (token && !headers.Authorization && !headers.authorization) {
+        headers.Authorization = `Bearer ${token}`;
+      }
     }
 
     const init: RequestInit = { method, headers };
@@ -60,16 +65,11 @@ export function createFetcher(hooks: EnvHooks = {}) {
       init.body = api.data === undefined ? undefined : (JSON.stringify(api.data) as BodyInit);
     }
 
-    const url = api.url;
-    const res = await fetch(url, init);
+    const res = await fetch(api.url, init);
     const body = (await readResponseBody(res)) as NopEnvelope | unknown;
 
     const envelope = (body && typeof body === 'object' ? (body as NopEnvelope) : null) ?? null;
     const httpOk = res.status >= 200 && res.status < 300;
-
-    if (res.status === 401) {
-      hooks.onUnauthorized?.();
-    }
 
     if (envelope && typeof envelope.status === 'number') {
       const ok = envelope.status === 0 && httpOk;
@@ -89,6 +89,25 @@ export function createFetcher(hooks: EnvHooks = {}) {
       headers: resHeaders(res),
       raw: body,
     };
+  }
+
+  return async function fetcher<T = unknown>(
+    api: ExecutableApiRequest,
+    _ctx: ApiRequestContext,
+  ): Promise<ApiResponse<T>> {
+    const first = await execute<T>(api, { injectToken: true });
+
+    if (first.status !== 401) return first;
+
+    if (hooks.refreshAccessToken) {
+      const newToken = await hooks.refreshAccessToken();
+      if (newToken) {
+        return execute<T>(api, { injectToken: false, forcedToken: newToken });
+      }
+    }
+
+    hooks.onUnauthorized?.();
+    return first;
   };
 }
 

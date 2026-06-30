@@ -115,6 +115,63 @@ describe('createFetcher', () => {
     expect(res.ok).toBe(true);
     expect(res.data).toEqual({ hello: 'world' });
   });
+
+  it('on 401: refreshes token via refreshAccessToken and replays the original request once', async () => {
+    let callCount = 0;
+    const authHeaders: (string | undefined)[] = [];
+    const fetchMock = buildFetchMock((_url, init) => {
+      callCount += 1;
+      authHeaders.push(init.headers?.['Authorization']);
+      if (callCount === 1) {
+        return { status: 401, body: { status: 401, msg: 'expired' } };
+      }
+      return { status: 200, body: { status: 0, data: { replayed: true } } };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const refreshAccessToken = vi.fn(async () => 'newtok');
+    const onUnauthorized = vi.fn();
+    const fetcher = createFetcher({
+      getToken: () => 'stale',
+      refreshAccessToken,
+      onUnauthorized,
+    });
+
+    const res = await fetcher({ url: '/api/protected', method: 'POST', data: { a: 1 } }, sampleCtx);
+
+    expect(callCount).toBe(2);
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(onUnauthorized).not.toHaveBeenCalled();
+    expect(authHeaders[0]).toBe('Bearer stale');
+    expect(authHeaders[1]).toBe('Bearer newtok');
+    expect(res.ok).toBe(true);
+    expect(res.data).toEqual({ replayed: true });
+  });
+
+  it('on 401 with refresh returning null: does not retry and calls onUnauthorized', async () => {
+    let callCount = 0;
+    const fetchMock = buildFetchMock(() => {
+      callCount += 1;
+      return { status: 401, body: { status: 401, msg: 'expired' } };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const refreshAccessToken = vi.fn(async () => null);
+    const onUnauthorized = vi.fn();
+    const fetcher = createFetcher({
+      getToken: () => 'stale',
+      refreshAccessToken,
+      onUnauthorized,
+    });
+
+    const res = await fetcher({ url: '/api/protected', method: 'POST' }, sampleCtx);
+
+    expect(callCount).toBe(1);
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(401);
+    expect(res.ok).toBe(false);
+  });
 });
 
 describe('Nop envelope helpers', () => {
